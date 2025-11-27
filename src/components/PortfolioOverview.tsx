@@ -10,6 +10,7 @@ interface PortfolioOverviewProps {
   lang?: "tr" | "en";
   onExchangeClick?: () => void;
   walletAddress?: string;
+  showActionButtons?: boolean;
 }
 
 const metalIcons: Record<string, string> = {
@@ -53,7 +54,12 @@ const CryptoIcons: Record<string, JSX.Element> = {
   ),
 };
 
-export function PortfolioOverview({ lang = "en", onExchangeClick, walletAddress }: PortfolioOverviewProps) {
+export function PortfolioOverview({ 
+  lang = "en", 
+  onExchangeClick, 
+  walletAddress,
+  showActionButtons = true 
+}: PortfolioOverviewProps) {
   const [mounted, setMounted] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const { address, isConnected } = useAccount();
@@ -76,7 +82,7 @@ export function PortfolioOverview({ lang = "en", onExchangeClick, walletAddress 
   const isLoading = balancesLoading || pricesLoading;
 
   // Get real changes from API
-  const { changes: metalChanges, directions: metalDirections } = useMetalsPrices();
+  const { changes: metalChanges } = useMetalsPrices();
 
   // Calculate metal holdings
   const metalHoldings = Object.entries(balances).map(([metal, balance]) => {
@@ -102,7 +108,6 @@ export function PortfolioOverview({ lang = "en", onExchangeClick, walletAddress 
   const ethBalanceNum = ethBalance ? parseFloat(ethBalance.formatted) : 0;
   const ethValue = ethBalanceNum * (cryptoPrices?.eth || 0);
 
-  // TODO: Get real crypto changes from API
   const cryptoHoldings = [
     {
       symbol: "ETH",
@@ -110,7 +115,7 @@ export function PortfolioOverview({ lang = "en", onExchangeClick, walletAddress 
       balance: ethBalanceNum,
       price: cryptoPrices?.eth || 0,
       value: ethValue,
-      change: 0, // Real-time changes not yet implemented
+      change: 0,
       type: "crypto" as const,
     },
     {
@@ -119,7 +124,7 @@ export function PortfolioOverview({ lang = "en", onExchangeClick, walletAddress 
       balance: 0,
       price: cryptoPrices?.btc || 0,
       value: 0,
-      change: 0, // Real-time changes not yet implemented
+      change: 0,
       type: "crypto" as const,
     },
     {
@@ -137,7 +142,7 @@ export function PortfolioOverview({ lang = "en", onExchangeClick, walletAddress 
       balance: 0,
       price: 1 / (cryptoPrices?.try || 34.5),
       value: 0,
-      change: 0, // Real-time changes not yet implemented
+      change: 0,
       type: "fiat" as const,
     },
   ];
@@ -308,7 +313,7 @@ export function PortfolioOverview({ lang = "en", onExchangeClick, walletAddress 
                 ${metalTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
               <div className="text-xs text-slate-500 mt-1">
-                {((metalTotal / totalValue) * 100).toFixed(1)}% {lang === "tr" ? "portföy" : "of portfolio"}
+                {totalValue > 0 ? ((metalTotal / totalValue) * 100).toFixed(1) : '0'}% {lang === "tr" ? "portföy" : "of portfolio"}
               </div>
             </div>
             <div className="p-4 bg-slate-800/50 rounded-lg">
@@ -319,10 +324,34 @@ export function PortfolioOverview({ lang = "en", onExchangeClick, walletAddress 
                 ${cryptoTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
               <div className="text-xs text-slate-500 mt-1">
-                {((cryptoTotal / totalValue) * 100).toFixed(1)}% {lang === "tr" ? "portföy" : "of portfolio"}
+                {totalValue > 0 ? ((cryptoTotal / totalValue) * 100).toFixed(1) : '0'}% {lang === "tr" ? "portföy" : "of portfolio"}
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Action Buttons - Only show if showActionButtons is true */}
+      {showActionButtons && (
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            onClick={onExchangeClick}
+            className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            {lang === "tr" ? "Dönüştür" : "Exchange"}
+          </button>
+          <button
+            onClick={() => setShowDetails(!showDetails)}
+            className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition-colors border border-slate-700"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            {lang === "tr" ? "Detaylar" : "Details"}
+          </button>
         </div>
       )}
     </div>
