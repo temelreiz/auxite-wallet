@@ -55,17 +55,17 @@ export function useMetalsPrices() {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-      const response = await fetch("/api/prices?type=live", {
+      
+      const response = await fetch("/api/prices", {
         signal: controller.signal,
       });
       
       clearTimeout(timeoutId);
-
+      
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-
+      
       const data = await response.json();
 
       // Only update if values have actually changed
@@ -73,17 +73,17 @@ export function useMetalsPrices() {
         setPrices(data.prices);
         prevPricesRef.current = data.prices;
       }
-
+      
       if (data.bidPrices && !areObjectsEqual(data.bidPrices, prevBidPricesRef.current)) {
         setBidPrices(data.bidPrices);
         prevBidPricesRef.current = data.bidPrices;
       }
-
+      
       if (data.changes && !areObjectsEqual(data.changes, prevChangesRef.current)) {
         setChanges(data.changes);
         prevChangesRef.current = data.changes;
       }
-
+      
       if (data.directions && !areObjectsEqual(data.directions, prevDirectionsRef.current)) {
         setDirections(data.directions as Record<string, "up" | "down" | "neutral">);
         prevDirectionsRef.current = data.directions;
@@ -104,7 +104,7 @@ export function useMetalsPrices() {
     } finally {
       setLoading(false);
     }
-  }, [prices, bidPrices]); // Add dependencies
+  }, []);
 
   // Initial fetch and periodic updates
   useEffect(() => {
