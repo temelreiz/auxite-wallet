@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { UiLang, UiTheme } from "@/app/page";
+type UiLang = "tr" | "en";
+type UiTheme = "dark" | "light";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 
 type Props = {

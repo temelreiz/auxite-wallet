@@ -1,7 +1,8 @@
 // src/components/PortfolioSummary.tsx
 "use client";
 
-import type { UiLang, UiTheme } from "@/app/page";
+type UiLang = "tr" | "en";
+type UiTheme = "dark" | "light";
 import { useWallet } from "@/hooks/useWallet";
 import { useAuxiteBalances } from "@/hooks/useAuxiteBalances";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
