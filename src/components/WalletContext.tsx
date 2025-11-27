@@ -148,7 +148,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       
       const provider = await EthereumProvider.init({
         projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "YOUR_PROJECT_ID",
-        chains: [}], // Sepolia
+        chains: [11155111], // Sepolia
         showQrModal: true,
         metadata: {
           name: "Auxite Wallet",
