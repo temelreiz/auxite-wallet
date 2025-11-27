@@ -38,7 +38,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         if (accounts.length === 0) {
           disconnectWallet();
         } else {
-          setAddress(accounts[0]);
+          setAddress((accounts as string[])[0]);
           setIsConnected(true);
         }
       };
@@ -66,7 +66,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         const ethereum = (window as any).ethereum;
         const accounts = await ethereum.request({ method: "eth_accounts" });
         if (accounts.length > 0) {
-          setAddress(accounts[0]);
+          setAddress((accounts as string[])[0]);
           setIsConnected(true);
           setWalletType(type);
           const currentChainId = await ethereum.request({ method: "eth_chainId" });
@@ -129,7 +129,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       throw new Error("No accounts found");
     }
 
-    setAddress(accounts[0]);
+    setAddress((accounts as string[])[0]);
 
     const currentChainId = await ethereum.request({ method: "eth_chainId" });
     setChainId(currentChainId);
@@ -161,8 +161,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       await provider.connect();
 
       const accounts = provider.accounts;
-      if (accounts && accounts.length > 0) {
-        setAddress(accounts[0]);
+      if (accounts && (accounts as string[]).length > 0) {
+        setAddress((accounts as string[])[0]);
         setChainId("0xaa36a7"); // Sepolia
         setIsConnected(true);
         setWalletType("walletconnect");
@@ -172,7 +172,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       // Listen for events
       provider.on("accountsChanged", (accounts: string[]) => {
         if (accounts.length > 0) {
-          setAddress(accounts[0]);
+          setAddress((accounts as string[])[0]);
         } else {
           disconnectWallet();
         }
@@ -205,8 +205,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         method: "eth_requestAccounts",
       });
 
-      if (accounts && accounts.length > 0) {
-        setAddress(accounts[0]);
+      if (accounts && (accounts as string[]).length > 0) {
+        setAddress((accounts as string[])[0]);
         setChainId("0xaa36a7");
         setIsConnected(true);
         setWalletType("coinbase");
