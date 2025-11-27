@@ -1,6 +1,6 @@
 "use client";
 
-import type { UiTheme } from "@/app/page";
+type UiTheme = "dark" | "light";
 
 type Props = {
   points: number[];
