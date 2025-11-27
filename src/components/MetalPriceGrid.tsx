@@ -113,7 +113,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
           return (
             <MetalPriceCard
               key={metal.id}
-              metalId={metal.symbol}
+              metalId={metal.symbol as "AUXG" | "AUXS" | "AUXPT" | "AUXPD"}
               symbol={metal.symbol}
               name={metalName}
               pricePerGram={priceData}
