@@ -22,7 +22,7 @@ const metalIcons: Record<string, string> = {
 };
 
 // Crypto icon components
-const CryptoIcons: Record<string, JSX.Element> = {
+const CryptoIcons: Record<string, React.ReactNode> = {
   ETH: (
     <svg className="w-5 h-5" viewBox="0 0 32 32" fill="none">
       <circle cx="16" cy="16" r="16" fill="#627EEA"/>
