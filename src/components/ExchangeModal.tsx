@@ -86,7 +86,8 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
 
   const getBalance = (asset: Asset): number => {
     if (metalAssets.includes(asset)) {
-      const balance = tokenBalances[asset];
+      const metalAsset = asset as "AUXG" | "AUXS" | "AUXPT" | "AUXPD";
+      const balance = tokenBalances[metalAsset];
       return balance ? parseFloat(balance) : 0;
     }
     if (asset === "ETH") {
