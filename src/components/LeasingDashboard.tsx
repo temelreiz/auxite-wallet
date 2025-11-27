@@ -1,0 +1,381 @@
+"use client";
+import { useState } from "react";
+import { useAccount } from "wagmi";
+import { AllocationModal } from "./AllocationModal";
+import { PositionsTab } from "./PositionsTab";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useLeaseRates } from "@/hooks/useLeaseRates";
+
+interface LeasingDashboardProps {
+  lang?: "tr" | "en";
+  onLanguageChange?: (lang: "tr" | "en") => void;
+  walletAddress?: string; // YENİ: Local veya external wallet adresi
+  isWalletConnected?: boolean; // YENİ: Cüzdan bağlı mı?
+}
+
+export function LeasingDashboard({ 
+  lang = "en", 
+  onLanguageChange,
+  walletAddress,
+  isWalletConnected: propIsConnected
+}: LeasingDashboardProps) {
+  // External wallet (wagmi) - fallback olarak kullan
+  const { address: externalAddress, isConnected: externalIsConnected } = useAccount();
+  
+  // Props varsa onları kullan, yoksa wagmi'den al
+  const isConnected = propIsConnected !== undefined ? propIsConnected : externalIsConnected;
+  const address = walletAddress || externalAddress;
+  
+  const [activeTab, setActiveTab] = useState<"allocate" | "positions">("allocate");
+  const [selectedOffer, setSelectedOffer] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Get real stats from blockchain
+  const stats = useDashboardStats();
+  
+  // Get dynamic lease rates from API
+  const { 
+    leaseOffers: availableOffers, 
+    formatAPYRange, 
+    isLoading: ratesLoading, 
+    lastUpdated, 
+    source,
+    sofr,
+    gofo 
+  } = useLeaseRates({ lang });
+
+  const handleOpenModal = (offer: any) => {
+    setSelectedOffer(offer);
+    setIsModalOpen(true);
+  };
+
+  if (!isConnected) {
+    return (
+      <div className="space-y-6">
+        {/* Description */}
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+          <h2 className="text-lg font-semibold text-slate-100 mb-1">
+            {lang === "tr"
+              ? "Metal tokenlerinizi tahsis edin ve getiri kazanın"
+              : "Allocate your metal tokens and earn yield"}
+          </h2>
+          <p className="text-sm text-slate-400">
+            {lang === "tr"
+              ? "Metallerinizi kurumsal ortaklara tahsis ederek metal cinsinden kazanç elde edin."
+              : "Allocate your metals to institutional partners and earn yield in metal."}
+          </p>
+        </div>
+
+        {/* Connect Wallet Message */}
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+          <div className="text-center py-12">
+            <div className="text-5xl mb-4">🔒</div>
+            <h3 className="text-lg font-semibold text-slate-200 mb-2">
+              {lang === "tr" ? "Cüzdan Bağlantısı Gerekli" : "Wallet Connection Required"}
+            </h3>
+            <p className="text-sm text-slate-400 mb-4">
+              {lang === "tr"
+                ? "Leasing özelliklerini kullanmak için cüzdanınızı bağlayın"
+                : "Connect your wallet to access leasing features"}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="space-y-6">
+        {/* Description */}
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+          <h2 className="text-lg font-semibold text-slate-100 mb-1">
+            {lang === "tr"
+              ? "Metal tokenlerinizi tahsis edin ve getiri kazanın"
+              : "Allocate your metal tokens and earn yield"}
+          </h2>
+          <p className="text-sm text-slate-400">
+            {lang === "tr"
+              ? "Metallerinizi kurumsal ortaklara tahsis ederek metal cinsinden kazanç elde edin."
+              : "Allocate your metals to institutional partners and earn yield in metal."}
+          </p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+            <div className="text-xs text-slate-500 mb-1">
+              {lang === "tr" ? "Toplam Tahsis Edilmiş" : "Total Allocated"}
+            </div>
+            <div className="text-2xl font-bold text-emerald-400">
+              ${stats.totalLocked.toLocaleString()}
+            </div>
+            <div className="text-xs text-slate-500 mt-1">USD</div>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+            <div className="text-xs text-slate-500 mb-1">
+              {lang === "tr" ? "Aktif Pozisyon" : "Active Positions"}
+            </div>
+            <div className="text-2xl font-bold text-blue-400">{stats.activePositions}</div>
+            <div className="text-xs text-slate-500 mt-1">
+              {lang === "tr" ? "pozisyon" : "positions"}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+            <div className="text-xs text-slate-500 mb-1">
+              {lang === "tr" ? "Tahmini Yıllık Kazanç" : "Est. Annual Earnings"}
+            </div>
+            <div className="text-2xl font-bold text-amber-400">
+              ${stats.totalEarnings.toLocaleString()}
+            </div>
+            <div className="text-xs text-slate-500 mt-1">USD</div>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+            <div className="text-xs text-slate-500 mb-1">
+              {lang === "tr" ? "Ortalama APY" : "Average APY"}
+            </div>
+            <div className="text-2xl font-bold text-purple-400">
+              {stats.avgAPY > 0 ? `${stats.avgAPY}%` : "-"}
+            </div>
+            <div className="text-xs text-slate-500 mt-1">APY</div>
+          </div>
+        </div>
+
+        {/* Rate Info Banner */}
+        {source && (
+          <div className="flex items-center justify-between px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-700">
+            <div className="flex items-center gap-4 text-xs text-slate-400">
+              <span>
+                {lang === "tr" ? "Kaynak:" : "Source:"} <span className="text-slate-300">{source}</span>
+              </span>
+              {sofr > 0 && (
+                <span>
+                  SOFR: <span className="text-emerald-400">{sofr.toFixed(2)}%</span>
+                </span>
+              )}
+              {gofo > 0 && (
+                <span>
+                  GOFO: <span className="text-amber-400">{gofo.toFixed(2)}%</span>
+                </span>
+              )}
+            </div>
+            <div className="text-xs text-slate-500">
+              {lang === "tr" ? "Son güncelleme:" : "Last updated:"} {new Date(lastUpdated).toLocaleString()}
+            </div>
+          </div>
+        )}
+
+        <div className="border-b border-slate-800">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTab("allocate")}
+              className={`pb-3 px-1 text-sm font-medium transition-colors relative ${
+                activeTab === "allocate" ? "text-emerald-400" : "text-slate-400 hover:text-slate-300"
+              }`}
+            >
+              {lang === "tr" ? "Tahsis Et" : "Allocate"}
+              {activeTab === "allocate" && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-400"></div>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("positions")}
+              className={`pb-3 px-1 text-sm font-medium transition-colors relative ${
+                activeTab === "positions" ? "text-emerald-400" : "text-slate-400 hover:text-slate-300"
+              }`}
+            >
+              {lang === "tr" ? "Pozisyonlarım" : "My Positions"}
+              {stats.activePositions > 0 && (
+                <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-emerald-500/20 text-emerald-400">
+                  {stats.activePositions}
+                </span>
+              )}
+              {activeTab === "positions" && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-400"></div>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {activeTab === "allocate" && (
+          <div>
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-slate-200 mb-2">
+                {lang === "tr" ? "Mevcut Teklifler" : "Available Offers"}
+              </h3>
+              <p className="text-sm text-slate-400">
+                {lang === "tr"
+                  ? "Metal tokenlerinizi seçin ve tahsis edin"
+                  : "Select and allocate your metal tokens"}
+              </p>
+            </div>
+
+            {ratesLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 animate-pulse">
+                    <div className="h-20 bg-slate-800 rounded mb-4"></div>
+                    <div className="h-10 bg-slate-800 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {availableOffers.map((offer) => (
+                  <div
+                    key={offer.metal}
+                    className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 hover:border-slate-700 transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <img src={offer.icon} alt={offer.name} className="w-10 h-10" />
+                        <div>
+                          <div className="font-semibold text-slate-200">{offer.metal}</div>
+                          <div className="text-xs text-slate-500">{offer.name}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-emerald-400">
+                          {formatAPYRange(offer)}
+                        </div>
+                        <div className="text-xs text-slate-500">APY</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-400">
+                          {lang === "tr" ? "Süre Seçenekleri" : "Period Options"}
+                        </span>
+                        <span className="text-slate-200 font-medium">3, 6, 12 {lang === "tr" ? "ay" : "months"}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-400">
+                          {lang === "tr" ? "Min. Miktar" : "Min. Amount"}
+                        </span>
+                        <span className="text-slate-200 font-medium">{offer.minAmount}g</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-400">TVL</span>
+                        <span className="text-slate-200 font-medium">
+                          ${offer.tvl.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleOpenModal(offer)}
+                      className="w-full px-4 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-semibold transition-colors"
+                    >
+                      {lang === "tr" ? "Tahsis Et" : "Allocate"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "positions" && <PositionsTab lang={lang} />}
+
+        {/* Info Boxes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* How It Works */}
+          <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
+            <div className="text-sm font-medium text-blue-300 mb-3 text-center">
+              {lang === "tr" ? "Nasıl Çalışır?" : "How It Works"}
+            </div>
+            <ul className="text-xs text-blue-200 space-y-2">
+              <li className="flex items-start gap-2">
+                <span className="text-blue-400">•</span>
+                <span>
+                  {lang === "tr"
+                    ? "Metal tokenlerinizi seçin ve tahsis edin"
+                    : "Select and allocate your metal tokens"}
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-400">•</span>
+                <span>
+                  {lang === "tr" ? "3, 6 veya 12 ay kilitleme süresi seçin" : "Choose 3, 6 or 12 month lock period"}
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-400">•</span>
+                <span>
+                  {lang === "tr" ? "APY bazında getiri kazanın" : "Earn yield based on APY"}
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-400">•</span>
+                <span>
+                  {lang === "tr"
+                    ? "Kilitleme süresi dolunca çekin"
+                    : "Withdraw after lock period expires"}
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Features */}
+          <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
+            <div className="text-sm font-medium text-blue-300 mb-3 text-center">
+              {lang === "tr" ? "Özellikler" : "Features"}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🔒</div>
+                <div className="text-xs text-blue-200">
+                  {lang === "tr" ? "Sigortalı Saklama" : "Fully Insured Storage"}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-lg">📦</div>
+                <div className="text-xs text-blue-200">
+                  {lang === "tr" ? "Tam Tahsisli" : "Allocated Metals"}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-lg">🏢</div>
+                <div className="text-xs text-blue-200">
+                  {lang === "tr" ? "Kurumsal Ortaklıklar" : "Institutional Partners"}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-lg">💰</div>
+                <div className="text-xs text-blue-200">
+                  {lang === "tr" ? "Metal Cinsinden Getiri" : "Metal-Denominated Yield"}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-lg">📊</div>
+                <div className="text-xs text-blue-200">
+                  {lang === "tr" ? "Şeffaf Raporlama" : "Transparent Reporting"}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-lg">⛓️</div>
+                <div className="text-xs text-blue-200">
+                  {lang === "tr" ? "Blokzinciri Kaydı" : "On-Chain Records"}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Allocation Modal */}
+      <AllocationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        offer={selectedOffer}
+        lang={lang}
+      />
+    </>
+  );
+}
+
+export default LeasingDashboard;

@@ -1,0 +1,18 @@
+{
+  "AUXG": {
+    "askAdjust": 2,
+    "bidAdjust": 1.4
+  },
+  "AUXS": {
+    "askAdjust": 2.1,
+    "bidAdjust": 5.5
+  },
+  "AUXPT": {
+    "askAdjust": 1.7,
+    "bidAdjust": 3.15
+  },
+  "AUXPD": {
+    "askAdjust": 1.7,
+    "bidAdjust": 3.95
+  }
+}

@@ -1,0 +1,182 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {"internalType": "address", "name": "_metalToken", "type": "address"},
+        {"internalType": "address", "name": "_registry", "type": "address"},
+        {"internalType": "address", "name": "_dealer", "type": "address"},
+        {"internalType": "uint64", "name": "_lockDuration", "type": "uint64"},
+        {"internalType": "uint256", "name": "_minAmount", "type": "uint256"},
+        {"internalType": "uint256", "name": "_maxAmount", "type": "uint256"}
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {"indexed": false, "internalType": "bool", "name": "isActive", "type": "bool"}
+      ],
+      "name": "ActiveStatusChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+        {"indexed": true, "internalType": "uint256", "name": "index", "type": "uint256"},
+        {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
+        {"indexed": false, "internalType": "uint64", "name": "startTime", "type": "uint64"}
+      ],
+      "name": "Deposited",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {"indexed": true, "internalType": "address", "name": "dealer", "type": "address"},
+        {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+        {"indexed": true, "internalType": "uint256", "name": "index", "type": "uint256"},
+        {"indexed": false, "internalType": "address", "name": "rewardToken", "type": "address"},
+        {"indexed": false, "internalType": "uint256", "name": "rewardAmount", "type": "uint256"}
+      ],
+      "name": "RewardSettled",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+        {"indexed": true, "internalType": "uint256", "name": "index", "type": "uint256"},
+        {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"}
+      ],
+      "name": "Withdrawn",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "dealer",
+      "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
+      "name": "deposit",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "user", "type": "address"}
+      ],
+      "name": "getAllPositions",
+      "outputs": [
+        {"internalType": "uint256[]", "name": "amounts", "type": "uint256[]"},
+        {"internalType": "uint64[]", "name": "startTimes", "type": "uint64[]"},
+        {"internalType": "bool[]", "name": "closeds", "type": "bool[]"},
+        {"internalType": "bool[]", "name": "rewardClaimeds", "type": "bool[]"}
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "user", "type": "address"},
+        {"internalType": "uint256", "name": "index", "type": "uint256"}
+      ],
+      "name": "getPosition",
+      "outputs": [
+        {"internalType": "uint256", "name": "amount", "type": "uint256"},
+        {"internalType": "uint64", "name": "startTime", "type": "uint64"},
+        {"internalType": "uint64", "name": "endTime", "type": "uint64"},
+        {"internalType": "bool", "name": "closed", "type": "bool"},
+        {"internalType": "bool", "name": "rewardClaimed", "type": "bool"}
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "isActive",
+      "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lockDuration",
+      "outputs": [{"internalType": "uint64", "name": "", "type": "uint64"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "maxAmount",
+      "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "metalToken",
+      "outputs": [{"internalType": "contract IERC20", "name": "", "type": "address"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "minAmount",
+      "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "user", "type": "address"}
+      ],
+      "name": "numPositions",
+      "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "registry",
+      "outputs": [{"internalType": "contract IAuxiteLeasingRegistry", "name": "", "type": "address"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "bool", "name": "_active", "type": "bool"}
+      ],
+      "name": "setActive",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "user", "type": "address"},
+        {"internalType": "uint256", "name": "index", "type": "uint256"},
+        {"internalType": "uint256", "name": "rewardAmount", "type": "uint256"},
+        {"internalType": "address", "name": "rewardToken", "type": "address"}
+      ],
+      "name": "settleReward",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "uint256", "name": "index", "type": "uint256"}
+      ],
+      "name": "withdraw",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ]
+}
