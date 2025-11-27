@@ -148,7 +148,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       
       const provider = await EthereumProvider.init({
         projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "YOUR_PROJECT_ID",
-        chains: [11155111], // Sepolia
+        chains: [}], // Sepolia
         showQrModal: true,
         metadata: {
           name: "Auxite Wallet",
@@ -196,9 +196,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         appLogoUrl: "https://auxite.io/icon.png",
       });
 
-      const ethereum = coinbaseWallet.makeWeb3Provider(
-        "https://rpc.sepolia.org",
-        11155111
+      const ethereum = coinbaseWallet.makeWeb3Provider({
+        options: "all",
+        }
       );
 
       const accounts = await ethereum.request({
