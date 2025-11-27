@@ -194,7 +194,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const coinbaseWallet = new CoinbaseWalletSDK({
         appName: "Auxite Wallet",
         appLogoUrl: "https://auxite.io/icon.png",
-        darkMode: true,
       });
 
       const ethereum = coinbaseWallet.makeWeb3Provider(
