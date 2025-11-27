@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFileSync, existsSync } from "fs";
-import { join } from "path";
 
 const API_BASE = "https://api.auxite.io/api/prices";
-const SETTINGS_FILE = join(process.cwd(), "price-settings.json");
 
 const DEFAULT_SETTINGS = {
   AUXG: { askAdjust: 2, bidAdjust: -1 },
@@ -11,45 +8,6 @@ const DEFAULT_SETTINGS = {
   AUXPT: { askAdjust: 2.5, bidAdjust: -1.25 },
   AUXPD: { askAdjust: 2.5, bidAdjust: -1.25 },
 };
-
-function getSettings() {
-  try {
-    if (existsSync(SETTINGS_FILE)) {
-      const data = readFileSync(SETTINGS_FILE, "utf-8");
-      const parsed = JSON.parse(data);
-      
-      // Format kontrolü ve dönüşümü
-      const converted: any = {};
-      for (const symbol of ["AUXG", "AUXS", "AUXPT", "AUXPD"]) {
-        if (parsed[symbol]) {
-          // Yeni format (askAdjust/bidAdjust) varsa kullan
-          if (typeof parsed[symbol].askAdjust === "number") {
-            converted[symbol] = {
-              askAdjust: parsed[symbol].askAdjust,
-              bidAdjust: parsed[symbol].bidAdjust,
-            };
-          }
-          // Eski format (buySpread/sellSpread) varsa dönüştür
-          else if (typeof parsed[symbol].buySpread === "number") {
-            converted[symbol] = {
-              askAdjust: parsed[symbol].buySpread,
-              bidAdjust: -parsed[symbol].sellSpread, // Negatife çevir
-            };
-          }
-          else {
-            converted[symbol] = DEFAULT_SETTINGS[symbol as keyof typeof DEFAULT_SETTINGS];
-          }
-        } else {
-          converted[symbol] = DEFAULT_SETTINGS[symbol as keyof typeof DEFAULT_SETTINGS];
-        }
-      }
-      return converted;
-    }
-  } catch (e) {
-    console.error("Error reading settings:", e);
-  }
-  return DEFAULT_SETTINGS;
-}
 
 let previousPrices: Record<string, number> = {};
 let lastPriceUpdate = 0;
@@ -80,7 +38,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const settings = getSettings();
+    const settings = DEFAULT_SETTINGS;
     const prices: Record<string, number> = {};
     const bidPrices: Record<string, number> = {};
     const basePrices: Record<string, number> = {};
@@ -92,7 +50,6 @@ export async function GET(request: NextRequest) {
                         (now - lastPriceUpdate > RESET_INTERVAL);
 
     if (shouldReset) {
-      console.log('🔄 Resetting price baseline');
       for (const item of json.data) {
         const symbol = item.symbol;
         const pricePerGram = item.price / 31.1035;
@@ -105,13 +62,9 @@ export async function GET(request: NextRequest) {
       const symbol = item.symbol;
       const basePricePerGram = item.price / 31.1035;
       
-      const metalSettings = settings[symbol] || DEFAULT_SETTINGS[symbol as keyof typeof DEFAULT_SETTINGS] || { askAdjust: 2, bidAdjust: -1 };
+      const metalSettings = settings[symbol as keyof typeof settings] || { askAdjust: 2, bidAdjust: -1 };
       
-      // Satış fiyatı (kullanıcı satın alırken) = Baz × (1 + askAdjust%)
       const askPrice = basePricePerGram * (1 + metalSettings.askAdjust / 100);
-      
-      // Alış fiyatı (kullanıcı satarken) = Baz × (1 + bidAdjust%)
-      // bidAdjust negatif olacağı için fiyat düşer
       const bidPrice = basePricePerGram * (1 + metalSettings.bidAdjust / 100);
       
       basePrices[symbol] = Math.round(basePricePerGram * 100) / 100;
@@ -140,7 +93,6 @@ export async function GET(request: NextRequest) {
       timestamp: now,
       source: "auxite",
       settings,
-      baselineAge: Math.round((now - lastPriceUpdate) / 60000),
     });
   } catch (error: any) {
     console.error("Price API error:", error);
