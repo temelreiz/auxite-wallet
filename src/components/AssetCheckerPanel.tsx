@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { UiLang } from "@/app/page";
+type UiLang = "tr" | "en";
 import { useAllocationChecker } from "@/hooks/useAllocationChecker";
 import { METALS } from "@/lib/metals";
 
