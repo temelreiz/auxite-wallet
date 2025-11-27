@@ -45,6 +45,29 @@ const metals = [
   },
 ];
 
+// Helper function to get direction styles
+function getDirectionStyles(change: number): { badgeBg: string; badgeText: string; arrow: string } {
+  if (change > 0.01) {
+    return {
+      badgeBg: "bg-emerald-500/20",
+      badgeText: "text-emerald-400",
+      arrow: "↑"
+    };
+  } else if (change < -0.01) {
+    return {
+      badgeBg: "bg-red-500/20",
+      badgeText: "text-red-400",
+      arrow: "↓"
+    };
+  } else {
+    return {
+      badgeBg: "bg-slate-500/20",
+      badgeText: "text-slate-300",
+      arrow: "~"
+    };
+  }
+}
+
 export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
   const { prices, bidPrices, directions, changes, loading } = useMetalsPrices();
   const { prices: cryptoPrices, changes: cryptoChanges, loading: cryptoLoading } = useCryptoPrices();
@@ -71,6 +94,12 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
       </div>
     );
   }
+
+  // Get styles for each crypto
+  const ethStyles = getDirectionStyles(cryptoChanges.eth);
+  const btcStyles = getDirectionStyles(cryptoChanges.btc);
+  const usdtStyles = getDirectionStyles(0); // Always neutral
+  const tryStyles = getDirectionStyles(cryptoChanges.try || 0);
 
   return (
     <div className="space-y-4">
@@ -145,12 +174,8 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
               </div>
               <span className="text-sm font-medium text-slate-200">ETH</span>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded ${
-              cryptoChanges.eth >= 0 
-                ? "bg-emerald-500/20 text-emerald-400" 
-                : "bg-red-500/20 text-red-400"
-            }`}>
-              {cryptoChanges.eth >= 0 ? "↑" : "↓"} {Math.abs(cryptoChanges.eth).toFixed(2)}%
+            <span className={`text-xs px-2 py-0.5 rounded ${ethStyles.badgeBg} ${ethStyles.badgeText}`}>
+              {ethStyles.arrow} {Math.abs(cryptoChanges.eth).toFixed(2)}%
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Ethereum</div>
@@ -179,12 +204,8 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
               </div>
               <span className="text-sm font-medium text-slate-200">BTC</span>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded ${
-              cryptoChanges.btc >= 0 
-                ? "bg-emerald-500/20 text-emerald-400" 
-                : "bg-red-500/20 text-red-400"
-            }`}>
-              {cryptoChanges.btc >= 0 ? "↑" : "↓"} {Math.abs(cryptoChanges.btc).toFixed(2)}%
+            <span className={`text-xs px-2 py-0.5 rounded ${btcStyles.badgeBg} ${btcStyles.badgeText}`}>
+              {btcStyles.arrow} {Math.abs(cryptoChanges.btc).toFixed(2)}%
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Bitcoin</div>
@@ -210,8 +231,8 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
               </div>
               <span className="text-sm font-medium text-slate-200">USDT</span>
             </div>
-            <span className="text-xs px-2 py-0.5 rounded bg-slate-500/20 text-slate-400">
-              ~ 0.00%
+            <span className={`text-xs px-2 py-0.5 rounded ${usdtStyles.badgeBg} ${usdtStyles.badgeText}`}>
+              {usdtStyles.arrow} 0.00%
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Tether</div>
@@ -237,8 +258,8 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
               </div>
               <span className="text-sm font-medium text-slate-200">TRY</span>
             </div>
-            <span className="text-xs px-2 py-0.5 rounded bg-red-500/20 text-red-400">
-              ↓ 0.00%
+            <span className={`text-xs px-2 py-0.5 rounded ${tryStyles.badgeBg} ${tryStyles.badgeText}`}>
+              {tryStyles.arrow} {Math.abs(cryptoChanges.try || 0).toFixed(2)}%
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Turkish Lira</div>
@@ -661,14 +682,15 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                   )}
                 </div>
                 <span className="text-xl font-bold text-white">{showCryptoDetail}/USDT</span>
-                <span className={`text-xs px-2 py-1 rounded ${
-                  (showCryptoDetail === "ETH" ? cryptoChanges.eth : cryptoChanges.btc) >= 0 
-                    ? "bg-emerald-500/20 text-emerald-400" 
-                    : "bg-red-500/20 text-red-400"
-                }`}>
-                  {(showCryptoDetail === "ETH" ? cryptoChanges.eth : cryptoChanges.btc) >= 0 ? "↑" : "↓"} 
-                  {Math.abs(showCryptoDetail === "ETH" ? cryptoChanges.eth : cryptoChanges.btc).toFixed(2)}%
-                </span>
+                {(() => {
+                  const change = showCryptoDetail === "ETH" ? cryptoChanges.eth : cryptoChanges.btc;
+                  const styles = getDirectionStyles(change);
+                  return (
+                    <span className={`text-xs px-2 py-1 rounded ${styles.badgeBg} ${styles.badgeText}`}>
+                      {styles.arrow} {Math.abs(change).toFixed(2)}%
+                    </span>
+                  );
+                })()}
               </div>
               <button
                 onClick={() => setShowCryptoDetail(null)}

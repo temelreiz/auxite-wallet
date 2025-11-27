@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import type { MetalId } from "@/lib/metals";
 import TradePanel from "./TradePanel";
 import TradingDetailPage from "./TradingDetailPage";
@@ -53,8 +53,6 @@ export default function MetalPriceCard({
     setShowTradingDetail(true);
   };
 
-  const isPositive = direction === "up";
-
   const handleBuy = (e: React.MouseEvent) => {
     e.stopPropagation();
     setTradeMode("buy");
@@ -67,7 +65,30 @@ export default function MetalPriceCard({
     setShowTradePanel(true);
   };
 
+  // Direction-based styling
+  const getDirectionStyles = () => {
+    if (direction === "up") {
+      return {
+        badgeBg: "bg-emerald-500/20",
+        badgeText: "text-emerald-400",
+        arrow: "↑"
+      };
+    } else if (direction === "down") {
+      return {
+        badgeBg: "bg-red-500/20",
+        badgeText: "text-red-400",
+        arrow: "↓"
+      };
+    } else {
+      return {
+        badgeBg: "bg-slate-500/20",
+        badgeText: "text-slate-300",
+        arrow: "~"
+      };
+    }
+  };
 
+  const directionStyles = getDirectionStyles();
 
   return (
     <>
@@ -88,13 +109,9 @@ export default function MetalPriceCard({
               )}
               <h3 className="text-sm font-semibold text-slate-200">{symbol}</h3>
               <span
-                className={`text-xs font-medium px-2 py-0.5 rounded ${
-                  isPositive
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "bg-red-500/20 text-red-400"
-                }`}
+                className={`text-xs font-medium px-2 py-0.5 rounded ${directionStyles.badgeBg} ${directionStyles.badgeText}`}
               >
-                {isPositive ? "↑" : "↓"} {Math.abs(change24h).toFixed(2)}%
+                {directionStyles.arrow} {Math.abs(change24h).toFixed(2)}%
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">{name}</p>

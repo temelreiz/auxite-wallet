@@ -110,7 +110,7 @@ export function useCryptoPrices() {
     fetchPrices();
     
     // Her 30 saniyede güncelle
-    const interval = setInterval(fetchPrices, 30000);
+    const interval = setInterval(fetchPrices, 10000);
     
     return () => clearInterval(interval);
   }, []);
