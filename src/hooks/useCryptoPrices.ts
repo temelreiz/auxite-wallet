@@ -73,7 +73,7 @@ export function useCryptoPrices() {
       try {
         // Fetch from CoinGecko API (free, no API key needed)
         const response = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,tether&vs_currencies=usd,try&include_24hr_change=true"
+          "/api/crypto"
         );
         
         if (response.ok) {
