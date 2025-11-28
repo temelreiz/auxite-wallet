@@ -5,6 +5,17 @@ import type { MetalId } from "@/lib/metals";
 import TradePanel from "./TradePanel";
 import TradingDetailPage from "./TradingDetailPage";
 
+// Direction-based styling helper
+function getDirectionStyles(direction: "up" | "down" | "neutral") {
+  if (direction === "up") {
+    return { badgeBg: "bg-emerald-500/20", badgeText: "text-emerald-400", arrow: "↑" };
+  } else if (direction === "down") {
+    return { badgeBg: "bg-red-500/20", badgeText: "text-red-400", arrow: "↓" };
+  } else {
+    return { badgeBg: "bg-slate-500/20", badgeText: "text-slate-300", arrow: "~" };
+  }
+}
+
 interface MetalPriceCardProps {
   metalId: MetalId;
   symbol: string;
