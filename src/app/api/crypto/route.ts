@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 const DEFAULT_SETTINGS = {
   ETH: { askAdjust: 1, bidAdjust: -0.5 },
@@ -10,8 +9,19 @@ const DEFAULT_SETTINGS = {
 
 const SETTINGS_KEY = "auxite:price-settings";
 
-// Redis'ten settings al
+// Settings cache (30 saniye)
+let settingsCache: any = null;
+let settingsCacheTime = 0;
+const SETTINGS_CACHE_DURATION = 30000;
+
 async function getSettings() {
+  const now = Date.now();
+  
+  // Cache geçerliyse döndür
+  if (settingsCache && (now - settingsCacheTime) < SETTINGS_CACHE_DURATION) {
+    return settingsCache;
+  }
+  
   try {
     const { Redis } = await import("@upstash/redis");
     const redis = new Redis({
@@ -20,38 +30,25 @@ async function getSettings() {
     });
     const settings = await redis.get(SETTINGS_KEY);
     if (settings && typeof settings === "object") {
-      return { ...DEFAULT_SETTINGS, ...(settings as any) };
+      settingsCache = { ...DEFAULT_SETTINGS, ...(settings as any) };
+      settingsCacheTime = now;
+      return settingsCache;
     }
-  } catch (e) {
-    // Redis hata verirse default döndür
-  }
+  } catch (e) {}
+  
   return DEFAULT_SETTINGS;
 }
 
 export async function GET() {
-  // Settings al
   const settings = await getSettings();
   const ethSettings = settings.ETH || DEFAULT_SETTINGS.ETH;
   const btcSettings = settings.BTC || DEFAULT_SETTINGS.BTC;
-
-  // TRY kuru
-  let tryRate = 34.5;
-  try {
-    const tryRes = await fetch(
-      "https://api.exchangerate-api.com/v4/latest/USD",
-      { cache: 'no-store', next: { revalidate: 0 } }
-    );
-    if (tryRes.ok) {
-      const tryData = await tryRes.json();
-      tryRate = tryData.rates?.TRY || 34.5;
-    }
-  } catch {}
 
   // Kraken API
   try {
     const res = await fetch(
       "https://api.kraken.com/0/public/Ticker?pair=ETHUSD,XBTUSD",
-      { cache: 'no-store', next: { revalidate: 0 } }
+      { cache: 'no-store' }
     );
 
     if (res.ok) {
@@ -71,6 +68,16 @@ export async function GET() {
         // Spread uygula
         const ethAsk = ethBase * (1 + ethSettings.askAdjust / 100);
         const btcAsk = btcBase * (1 + btcSettings.askAdjust / 100);
+
+        // TRY - paralel fetch
+        let tryRate = 34.5;
+        try {
+          const tryRes = await fetch("https://api.exchangerate-api.com/v4/latest/USD", { cache: 'no-store' });
+          if (tryRes.ok) {
+            const tryData = await tryRes.json();
+            tryRate = tryData.rates?.TRY || 34.5;
+          }
+        } catch {}
 
         if (ethBase > 0 && btcBase > 0) {
           return NextResponse.json({
@@ -95,7 +102,7 @@ export async function GET() {
   return NextResponse.json({
     ethereum: { usd: 3500, usd_24h_change: 0 },
     bitcoin: { usd: 95000, usd_24h_change: 0 },
-    tether: { try: tryRate },
+    tether: { try: 34.5 },
     source: "fallback",
     timestamp: Date.now(),
   });

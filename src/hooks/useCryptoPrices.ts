@@ -123,7 +123,7 @@ export function useCryptoPrices() {
     };
 
     fetchPrices();
-    const interval = setInterval(fetchPrices, 2000);
+    const interval = setInterval(fetchPrices, 1500);
 
     return () => {
       mounted = false;
