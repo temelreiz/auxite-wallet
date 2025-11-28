@@ -79,117 +79,151 @@ export function useCryptoPrices() {
   const prevPricesRef = useRef<CryptoPrices>({ eth: 0, btc: 0, usdt: 1, try: 34.50 });
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const useWebSocketRef = useRef(true);
 
   useEffect(() => {
     let mounted = true;
 
-    // TRY kurunu API'den al
-    const fetchTryRate = async () => {
+    // API'den fiyat çek (fallback ve TRY için)
+    const fetchFromAPI = async () => {
       try {
         const res = await fetch("/api/crypto");
         if (res.ok) {
           const data = await res.json();
-          if (data.tether?.try && mounted) {
-            setPrices(prev => ({ ...prev, try: data.tether.try }));
+          if (mounted) {
+            const newPrices = {
+              eth: data.ethereum?.usd || prices.eth,
+              btc: data.bitcoin?.usd || prices.btc,
+              usdt: 1,
+              try: data.tether?.try || 34.50,
+            };
+
+            // Direction hesapla
+            const newDirections: CryptoDirections = {
+              eth: newPrices.eth > prevPricesRef.current.eth ? "up" : 
+                   newPrices.eth < prevPricesRef.current.eth ? "down" : "neutral",
+              btc: newPrices.btc > prevPricesRef.current.btc ? "up" : 
+                   newPrices.btc < prevPricesRef.current.btc ? "down" : "neutral",
+              usdt: "neutral",
+              try: newPrices.try > prevPricesRef.current.try ? "up" : 
+                   newPrices.try < prevPricesRef.current.try ? "down" : "neutral",
+            };
+
+            setPrices(newPrices);
+            setDirections(newDirections);
+            prevPricesRef.current = newPrices;
             
-            // 24h change'leri de al
+            // 24h change'leri al
             if (data.ethereum?.usd_24h_change !== undefined) {
-              setChanges(prev => ({
-                ...prev,
+              setChanges({
                 eth: data.ethereum.usd_24h_change,
                 btc: data.bitcoin?.usd_24h_change || 0,
-              }));
+                usdt: 0,
+                try: 0,
+              });
             }
-          }
-        }
-      } catch (e) {}
-    };
-
-    // Coinbase WebSocket - gerçek zamanlı fiyatlar
-    const connectWebSocket = () => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) return;
-
-      const ws = new WebSocket("wss://ws-feed.exchange.coinbase.com");
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        console.log("Coinbase WebSocket connected");
-        ws.send(JSON.stringify({
-          type: "subscribe",
-          product_ids: ["ETH-USD", "BTC-USD"],
-          channels: ["ticker"]
-        }));
-      };
-
-      ws.onmessage = (event) => {
-        if (!mounted) return;
-        
-        try {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === "ticker") {
-            const price = parseFloat(data.price);
-            const productId = data.product_id;
-            
-            setPrices(prev => {
-              const newPrices = { ...prev };
-              
-              if (productId === "ETH-USD") {
-                newPrices.eth = price;
-              } else if (productId === "BTC-USD") {
-                newPrices.btc = price;
-              }
-              
-              // Direction hesapla
-              const newDirections: CryptoDirections = { ...directions };
-              
-              if (productId === "ETH-USD") {
-                newDirections.eth = price > prevPricesRef.current.eth ? "up" : 
-                                    price < prevPricesRef.current.eth ? "down" : "neutral";
-              } else if (productId === "BTC-USD") {
-                newDirections.btc = price > prevPricesRef.current.btc ? "up" : 
-                                    price < prevPricesRef.current.btc ? "down" : "neutral";
-              }
-              
-              setDirections(newDirections);
-              prevPricesRef.current = newPrices;
-              
-              return newPrices;
-            });
             
             setLoading(false);
           }
-        } catch (e) {}
-      };
-
-      ws.onerror = (error) => {
-        console.log("WebSocket error, will reconnect...");
-      };
-
-      ws.onclose = () => {
-        console.log("WebSocket closed, reconnecting in 3s...");
-        if (mounted) {
-          reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
         }
-      };
+      } catch (e) {
+        console.log("API fetch failed");
+      }
+    };
+
+    // Coinbase WebSocket
+    const connectWebSocket = () => {
+      if (!useWebSocketRef.current) return;
+      if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+      try {
+        const ws = new WebSocket("wss://ws-feed.exchange.coinbase.com");
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          console.log("Coinbase WebSocket connected");
+          ws.send(JSON.stringify({
+            type: "subscribe",
+            product_ids: ["ETH-USD", "BTC-USD"],
+            channels: ["ticker"]
+          }));
+        };
+
+        ws.onmessage = (event) => {
+          if (!mounted) return;
+          
+          try {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === "ticker" && data.price) {
+              const price = parseFloat(data.price);
+              const productId = data.product_id;
+              
+              setPrices(prev => {
+                const newPrices = { ...prev };
+                
+                if (productId === "ETH-USD") {
+                  newPrices.eth = price;
+                } else if (productId === "BTC-USD") {
+                  newPrices.btc = price;
+                }
+                
+                // Direction hesapla
+                setDirections(prevDir => ({
+                  ...prevDir,
+                  eth: productId === "ETH-USD" 
+                    ? (price > prevPricesRef.current.eth ? "up" : price < prevPricesRef.current.eth ? "down" : "neutral")
+                    : prevDir.eth,
+                  btc: productId === "BTC-USD"
+                    ? (price > prevPricesRef.current.btc ? "up" : price < prevPricesRef.current.btc ? "down" : "neutral")
+                    : prevDir.btc,
+                }));
+                
+                prevPricesRef.current = newPrices;
+                return newPrices;
+              });
+              
+              setLoading(false);
+            }
+          } catch (e) {}
+        };
+
+        ws.onerror = (error) => {
+          console.log("WebSocket error:", error);
+        };
+
+        ws.onclose = (event) => {
+          console.log("WebSocket closed, code:", event.code, "reason:", event.reason);
+          wsRef.current = null;
+          
+          // Reconnect sadece normal close değilse
+          if (mounted && useWebSocketRef.current && event.code !== 1000) {
+            reconnectTimeoutRef.current = setTimeout(connectWebSocket, 5000);
+          }
+        };
+      } catch (e) {
+        console.log("WebSocket creation failed:", e);
+        useWebSocketRef.current = false;
+      }
     };
 
     // Başlat
-    fetchTryRate();
+    fetchFromAPI();
     connectWebSocket();
     
-    // TRY kurunu periyodik güncelle (her 30 saniye)
-    const tryInterval = setInterval(fetchTryRate, 30000);
+    // API polling (WebSocket fallback + TRY güncellemesi)
+    const apiInterval = setInterval(fetchFromAPI, 3000);
 
     return () => {
       mounted = false;
+      useWebSocketRef.current = false;
       if (wsRef.current) {
-        wsRef.current.close();
+        wsRef.current.close(1000);
       }
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
-      clearInterval(tryInterval);
+      clearInterval(apiInterval);
     };
   }, []);
 
