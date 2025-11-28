@@ -1,53 +1,61 @@
 import { NextResponse } from "next/server";
 
-// Cache değişkenleri
+// Cache
 let cachedData: any = null;
 let lastFetchTime = 0;
-const CACHE_DURATION = 60000; // 60 saniye cache
-
-const FALLBACK_DATA = {
-  ethereum: { usd: 3500, try: 120000, usd_24h_change: 0 },
-  bitcoin: { usd: 95000, try: 3200000, usd_24h_change: 0 },
-  tether: { try: 34.5 }
-};
+const CACHE_DURATION = 30000; // 30 saniye
 
 export async function GET() {
   const now = Date.now();
   
-  // Cache geçerliyse cached data döndür
+  // Cache geçerliyse döndür
   if (cachedData && (now - lastFetchTime) < CACHE_DURATION) {
     return NextResponse.json(cachedData);
   }
 
   try {
-    const response = await fetch(
-      "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,tether&vs_currencies=usd,try&include_24hr_change=true",
-      { 
-        cache: "no-cache",
-        headers: { 'Accept': 'application/json' }
-      }
-    );
+    // Binance API - rate limit yok, daha güvenilir
+    const [ethRes, btcRes, tryRes] = await Promise.all([
+      fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT"),
+      fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT"),
+      fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=USDTTRY"),
+    ]);
 
-    if (!response.ok) {
-      // Rate limit veya hata - cache veya fallback kullan
-      if (cachedData) {
-        return NextResponse.json(cachedData);
-      }
-      return NextResponse.json(FALLBACK_DATA);
-    }
+    const [ethData, btcData, tryData] = await Promise.all([
+      ethRes.json(),
+      btcRes.json(),
+      tryRes.json(),
+    ]);
 
-    const data = await response.json();
-    
-    // Cache'i güncelle
-    cachedData = data;
+    const result = {
+      ethereum: {
+        usd: parseFloat(ethData.lastPrice),
+        usd_24h_change: parseFloat(ethData.priceChangePercent),
+      },
+      bitcoin: {
+        usd: parseFloat(btcData.lastPrice),
+        usd_24h_change: parseFloat(btcData.priceChangePercent),
+      },
+      tether: {
+        try: parseFloat(tryData.lastPrice),
+      },
+    };
+
+    // Cache güncelle
+    cachedData = result;
     lastFetchTime = now;
-    
-    return NextResponse.json(data);
+
+    return NextResponse.json(result);
   } catch (error) {
     // Hata durumunda cache veya fallback
     if (cachedData) {
       return NextResponse.json(cachedData);
     }
-    return NextResponse.json(FALLBACK_DATA);
+    
+    return NextResponse.json({
+      ethereum: { usd: 3500, usd_24h_change: 0 },
+      bitcoin: { usd: 95000, usd_24h_change: 0 },
+      tether: { try: 34.5 },
+    });
   }
 }
