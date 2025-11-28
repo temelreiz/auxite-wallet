@@ -83,51 +83,46 @@ export function useCryptoPrices() {
 
     const fetchPrices = async () => {
       try {
-        const res = await fetch("/api/crypto");
-        if (res.ok && mounted) {
-          const data = await res.json();
-          
-          const newPrices: CryptoPrices = {
-            eth: data.ethereum?.usd || 0,
-            btc: data.bitcoin?.usd || 0,
-            usdt: 1,
-            try: data.tether?.try || 34.50,
-          };
+        const res = await fetch("/api/crypto", { cache: 'no-store' });
+        if (!res.ok || !mounted) return;
+        
+        const data = await res.json();
+        
+        const newPrices: CryptoPrices = {
+          eth: data.ethereum?.usd || prevPricesRef.current.eth,
+          btc: data.bitcoin?.usd || prevPricesRef.current.btc,
+          usdt: 1,
+          try: data.tether?.try || 34.50,
+        };
 
-          // Direction hesapla
-          const newDirections: CryptoDirections = {
-            eth: newPrices.eth > prevPricesRef.current.eth ? "up" : 
-                 newPrices.eth < prevPricesRef.current.eth ? "down" : "neutral",
-            btc: newPrices.btc > prevPricesRef.current.btc ? "up" : 
-                 newPrices.btc < prevPricesRef.current.btc ? "down" : "neutral",
-            usdt: "neutral",
-            try: newPrices.try > prevPricesRef.current.try ? "up" : 
-                 newPrices.try < prevPricesRef.current.try ? "down" : "neutral",
-          };
+        // Direction hesapla
+        const newDirections: CryptoDirections = {
+          eth: newPrices.eth > prevPricesRef.current.eth ? "up" : 
+               newPrices.eth < prevPricesRef.current.eth ? "down" : directions.eth,
+          btc: newPrices.btc > prevPricesRef.current.btc ? "up" : 
+               newPrices.btc < prevPricesRef.current.btc ? "down" : directions.btc,
+          usdt: "neutral",
+          try: "neutral",
+        };
 
-          setPrices(newPrices);
-          setDirections(newDirections);
-          prevPricesRef.current = newPrices;
-          
-          // 24h change
-          setChanges({
-            eth: data.ethereum?.usd_24h_change || 0,
-            btc: data.bitcoin?.usd_24h_change || 0,
-            usdt: 0,
-            try: 0,
-          });
-          
-          setLoading(false);
-        }
+        setPrices(newPrices);
+        setDirections(newDirections);
+        prevPricesRef.current = newPrices;
+        
+        setChanges({
+          eth: data.ethereum?.usd_24h_change || 0,
+          btc: data.bitcoin?.usd_24h_change || 0,
+          usdt: 0,
+          try: 0,
+        });
+        
+        setLoading(false);
       } catch (e) {
         // Silent fail
       }
     };
 
-    // İlk fetch
     fetchPrices();
-    
-    // Her 2 saniyede güncelle
     const interval = setInterval(fetchPrices, 2000);
 
     return () => {
