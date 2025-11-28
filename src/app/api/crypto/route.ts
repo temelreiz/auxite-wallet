@@ -14,8 +14,18 @@ export async function GET() {
     if (res.ok) {
       const data = await res.json();
       if (!data.error || data.error.length === 0) {
-        const ethPrice = parseFloat(data.result?.XETHZUSD?.c?.[0] || data.result?.ETHUSD?.c?.[0] || "0");
-        const btcPrice = parseFloat(data.result?.XXBTZUSD?.c?.[0] || data.result?.XBTUSD?.c?.[0] || "0");
+        const ethResult = data.result?.XETHZUSD || data.result?.ETHUSD;
+        const btcResult = data.result?.XXBTZUSD || data.result?.XBTUSD;
+        
+        const ethPrice = parseFloat(ethResult?.c?.[0] || "0");
+        const btcPrice = parseFloat(btcResult?.c?.[0] || "0");
+        
+        // 24h değişim hesapla (open vs current)
+        const ethOpen = parseFloat(ethResult?.o || "0");
+        const btcOpen = parseFloat(btcResult?.o || "0");
+        
+        const ethChange = ethOpen > 0 ? ((ethPrice - ethOpen) / ethOpen) * 100 : 0;
+        const btcChange = btcOpen > 0 ? ((btcPrice - btcOpen) / btcOpen) * 100 : 0;
         
         // TRY için ayrı istek
         let tryRate = 34.5;
@@ -32,8 +42,14 @@ export async function GET() {
 
         if (ethPrice > 0 && btcPrice > 0) {
           return NextResponse.json({
-            ethereum: { usd: ethPrice, usd_24h_change: 0 },
-            bitcoin: { usd: btcPrice, usd_24h_change: 0 },
+            ethereum: { 
+              usd: ethPrice, 
+              usd_24h_change: Math.round(ethChange * 100) / 100 
+            },
+            bitcoin: { 
+              usd: btcPrice, 
+              usd_24h_change: Math.round(btcChange * 100) / 100 
+            },
             tether: { try: tryRate },
             source: "kraken",
             timestamp: Date.now(),
@@ -56,11 +72,11 @@ export async function GET() {
         return NextResponse.json({
           ethereum: {
             usd: data.ethereum?.usd || 0,
-            usd_24h_change: data.ethereum?.usd_24h_change || 0,
+            usd_24h_change: Math.round((data.ethereum?.usd_24h_change || 0) * 100) / 100,
           },
           bitcoin: {
             usd: data.bitcoin?.usd || 0,
-            usd_24h_change: data.bitcoin?.usd_24h_change || 0,
+            usd_24h_change: Math.round((data.bitcoin?.usd_24h_change || 0) * 100) / 100,
           },
           tether: { try: data.tether?.try || 34.5 },
           source: "coingecko",
