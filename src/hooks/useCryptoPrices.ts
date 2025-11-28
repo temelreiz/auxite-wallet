@@ -15,6 +15,30 @@ export interface CryptoChanges {
   try: number;
 }
 
+// Metal fiyatını farklı para birimlerine dönüştür
+export function convertMetalPrice(priceUSD: number, toCurrency: string, tryRate: number): number {
+  switch (toCurrency.toUpperCase()) {
+    case "TRY":
+      return priceUSD * tryRate;
+    case "EUR":
+      return priceUSD * 0.92; // Yaklaşık EUR/USD
+    case "USD":
+    default:
+      return priceUSD;
+  }
+}
+
+// Para birimini formatla
+export function formatCurrencyPrice(price: number, currency: string): string {
+  const symbols: Record<string, string> = {
+    USD: "$",
+    TRY: "₺",
+    EUR: "€",
+  };
+  const symbol = symbols[currency.toUpperCase()] || "$";
+  return `${symbol}${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export function useCryptoPrices() {
   const [prices, setPrices] = useState<CryptoPrices>({
     eth: 0,
