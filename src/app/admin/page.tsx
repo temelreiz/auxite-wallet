@@ -9,6 +9,8 @@ interface PriceSettings {
   AUXS: { askAdjust: number; bidAdjust: number };
   AUXPT: { askAdjust: number; bidAdjust: number };
   AUXPD: { askAdjust: number; bidAdjust: number };
+  ETH: { askAdjust: number; bidAdjust: number };
+  BTC: { askAdjust: number; bidAdjust: number };
 }
 
 interface LivePrices {
@@ -16,6 +18,8 @@ interface LivePrices {
   AUXS: number;
   AUXPT: number;
   AUXPD: number;
+  ETH: number;
+  BTC: number;
 }
 
 const DEFAULT_SETTINGS: PriceSettings = {
@@ -23,11 +27,13 @@ const DEFAULT_SETTINGS: PriceSettings = {
   AUXS: { askAdjust: 3, bidAdjust: -1.5 },
   AUXPT: { askAdjust: 2.5, bidAdjust: -1.25 },
   AUXPD: { askAdjust: 2.5, bidAdjust: -1.25 },
+  ETH: { askAdjust: 1, bidAdjust: -0.5 },
+  BTC: { askAdjust: 1, bidAdjust: -0.5 },
 };
 
 export default function AdminPage() {
   const [settings, setSettings] = useState<PriceSettings>(DEFAULT_SETTINGS);
-  const [basePrices, setBasePrices] = useState<LivePrices>({ AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 });
+  const [basePrices, setBasePrices] = useState<LivePrices>({ AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0, ETH: 0, BTC: 0 });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -45,7 +51,7 @@ export default function AdminPage() {
         if (res.ok) {
           const data = await res.json();
           if (data && data.AUXG) {
-            setSettings(data);
+            setSettings({ ...DEFAULT_SETTINGS, ...data });
           }
         }
       } catch (e) {
@@ -65,19 +71,25 @@ export default function AdminPage() {
 
     const fetchPrices = async () => {
       try {
-        const response = await fetch("/api/prices");
-        const data = await response.json();
+        // Metal fiyatları
+        const metalRes = await fetch("/api/prices");
+        const metalData = await metalRes.json();
         
-        if (data.basePrices) {
-          setBasePrices({
-            AUXG: data.basePrices.AUXG || 0,
-            AUXS: data.basePrices.AUXS || 0,
-            AUXPT: data.basePrices.AUXPT || 0,
-            AUXPD: data.basePrices.AUXPD || 0,
-          });
-        }
-        if (data.settings && data.settings.AUXG) {
-          setSettings(data.settings);
+        // Crypto fiyatları
+        const cryptoRes = await fetch("/api/crypto");
+        const cryptoData = await cryptoRes.json();
+        
+        setBasePrices({
+          AUXG: metalData.basePrices?.AUXG || 0,
+          AUXS: metalData.basePrices?.AUXS || 0,
+          AUXPT: metalData.basePrices?.AUXPT || 0,
+          AUXPD: metalData.basePrices?.AUXPD || 0,
+          ETH: cryptoData.ethereum?.usd || 0,
+          BTC: cryptoData.bitcoin?.usd || 0,
+        });
+        
+        if (metalData.settings && metalData.settings.AUXG) {
+          setSettings(prev => ({ ...prev, ...metalData.settings }));
         }
         setLastUpdated(new Date());
       } catch (e) {
@@ -88,7 +100,7 @@ export default function AdminPage() {
     };
 
     fetchPrices();
-    const interval = setInterval(fetchPrices, 10000);
+    const interval = setInterval(fetchPrices, 5000);
     return () => clearInterval(interval);
   }, [authenticated]);
 
@@ -128,7 +140,6 @@ export default function AdminPage() {
     }
   };
 
-  // Fiyat hesaplama: Baz × (1 + ayar/100)
   const calculatePrice = (basePrice: number, adjustment: number) => {
     if (!basePrice || isNaN(basePrice) || isNaN(adjustment)) return 0;
     return basePrice * (1 + adjustment / 100);
@@ -199,6 +210,11 @@ export default function AdminPage() {
     { key: "AUXPD" as const, name: "Paladyum (Palladium)", color: "text-purple-400", icon: "/palladium-favicon-32x32.png" },
   ];
 
+  const cryptos = [
+    { key: "ETH" as const, name: "Ethereum", color: "text-[#627EEA]", icon: "ETH" },
+    { key: "BTC" as const, name: "Bitcoin", color: "text-[#F7931A]", icon: "BTC" },
+  ];
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
@@ -267,109 +283,229 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Price Table */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-800/50">
-                  <th className="px-4 py-4 text-left text-sm font-medium text-slate-400">Metal</th>
-                  <th className="px-4 py-4 text-right text-sm font-medium text-slate-400">Baz Fiyat</th>
-                  <th className="px-4 py-4 text-center text-sm font-medium text-slate-400">
-                    <span className="text-emerald-400">Satış Ayarı %</span>
-                    <div className="text-xs text-slate-500 font-normal">Müşteri alırken</div>
-                  </th>
-                  <th className="px-4 py-4 text-center text-sm font-medium text-slate-400">
-                    <span className="text-red-400">Alış Ayarı %</span>
-                    <div className="text-xs text-slate-500 font-normal">Müşteri satarken</div>
-                  </th>
-                  <th className="px-4 py-4 text-right text-sm font-medium text-emerald-400">Satış Fiyatı</th>
-                  <th className="px-4 py-4 text-right text-sm font-medium text-red-400">Alış Fiyatı</th>
-                  <th className="px-4 py-4 text-right text-sm font-medium text-amber-400">Makas</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800">
-                {metals.map((metal) => {
-                  const basePrice = basePrices[metal.key] || 0;
-                  const setting = settings[metal.key] || { askAdjust: 2, bidAdjust: -1 };
-                  const askPrice = calculatePrice(basePrice, setting.askAdjust);
-                  const bidPrice = calculatePrice(basePrice, setting.bidAdjust);
-                  const makas = askPrice - bidPrice;
-                  const makasPercent = basePrice > 0 ? ((makas / basePrice) * 100) : 0;
+        {/* Metal Price Table */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-slate-200 mb-4">🥇 Metal Fiyatları</h2>
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-slate-800/50">
+                    <th className="px-4 py-4 text-left text-sm font-medium text-slate-400">Metal</th>
+                    <th className="px-4 py-4 text-right text-sm font-medium text-slate-400">Baz Fiyat</th>
+                    <th className="px-4 py-4 text-center text-sm font-medium text-slate-400">
+                      <span className="text-emerald-400">Satış Ayarı %</span>
+                      <div className="text-xs text-slate-500 font-normal">Müşteri alırken</div>
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-medium text-slate-400">
+                      <span className="text-red-400">Alış Ayarı %</span>
+                      <div className="text-xs text-slate-500 font-normal">Müşteri satarken</div>
+                    </th>
+                    <th className="px-4 py-4 text-right text-sm font-medium text-emerald-400">Satış Fiyatı</th>
+                    <th className="px-4 py-4 text-right text-sm font-medium text-red-400">Alış Fiyatı</th>
+                    <th className="px-4 py-4 text-right text-sm font-medium text-amber-400">Makas</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {metals.map((metal) => {
+                    const basePrice = basePrices[metal.key] || 0;
+                    const setting = settings[metal.key] || { askAdjust: 2, bidAdjust: -1 };
+                    const askPrice = calculatePrice(basePrice, setting.askAdjust);
+                    const bidPrice = calculatePrice(basePrice, setting.bidAdjust);
+                    const makas = askPrice - bidPrice;
+                    const makasPercent = basePrice > 0 ? ((makas / basePrice) * 100) : 0;
 
-                  return (
-                    <tr key={metal.key} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <img src={metal.icon} alt={metal.name} className="w-8 h-8" />
-                          <div>
-                            <div className={`font-semibold ${metal.color}`}>{metal.key}</div>
-                            <div className="text-xs text-slate-500">{metal.name}</div>
+                    return (
+                      <tr key={metal.key} className="hover:bg-slate-800/30 transition-colors">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <img src={metal.icon} alt={metal.name} className="w-8 h-8" />
+                            <div>
+                              <div className={`font-semibold ${metal.color}`}>{metal.key}</div>
+                              <div className="text-xs text-slate-500">{metal.name}</div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        {loading ? (
-                          <div className="animate-pulse h-6 w-16 bg-slate-700 rounded ml-auto"></div>
-                        ) : (
-                          <span className="font-mono text-slate-300">${basePrice.toFixed(2)}</span>
-                        )}
-                      </td>
-                      {/* Satış Ayarı */}
-                      <td className="px-4 py-4">
-                        <div className="flex items-center justify-center gap-1">
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={setting.askAdjust}
-                            onChange={(e) => updateSetting(metal.key, "askAdjust", e.target.value)}
-                            className="w-20 px-2 py-2 rounded-lg bg-slate-800 border border-emerald-500/30 text-center text-white focus:outline-none focus:border-emerald-500"
-                          />
-                          <span className="text-slate-500">%</span>
-                        </div>
-                      </td>
-                      {/* Alış Ayarı */}
-                      <td className="px-4 py-4">
-                        <div className="flex items-center justify-center gap-1">
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={setting.bidAdjust}
-                            onChange={(e) => updateSetting(metal.key, "bidAdjust", e.target.value)}
-                            className="w-20 px-2 py-2 rounded-lg bg-slate-800 border border-red-500/30 text-center text-white focus:outline-none focus:border-red-500"
-                          />
-                          <span className="text-slate-500">%</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        {loading ? (
-                          <div className="animate-pulse h-6 w-16 bg-slate-700 rounded ml-auto"></div>
-                        ) : (
-                          <span className="font-mono text-emerald-400 font-semibold">${askPrice.toFixed(2)}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        {loading ? (
-                          <div className="animate-pulse h-6 w-16 bg-slate-700 rounded ml-auto"></div>
-                        ) : (
-                          <span className="font-mono text-red-400 font-semibold">${bidPrice.toFixed(2)}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        {loading ? (
-                          <div className="animate-pulse h-6 w-16 bg-slate-700 rounded ml-auto"></div>
-                        ) : (
-                          <div>
-                            <span className="font-mono text-amber-400 font-semibold">${makas.toFixed(2)}</span>
-                            <div className="text-xs text-slate-500">{makasPercent.toFixed(2)}%</div>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          {loading ? (
+                            <div className="animate-pulse h-6 w-16 bg-slate-700 rounded ml-auto"></div>
+                          ) : (
+                            <span className="font-mono text-slate-300">${basePrice.toFixed(2)}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center justify-center gap-1">
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={setting.askAdjust}
+                              onChange={(e) => updateSetting(metal.key, "askAdjust", e.target.value)}
+                              className="w-20 px-2 py-2 rounded-lg bg-slate-800 border border-emerald-500/30 text-center text-white focus:outline-none focus:border-emerald-500"
+                            />
+                            <span className="text-slate-500">%</span>
                           </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center justify-center gap-1">
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={setting.bidAdjust}
+                              onChange={(e) => updateSetting(metal.key, "bidAdjust", e.target.value)}
+                              className="w-20 px-2 py-2 rounded-lg bg-slate-800 border border-red-500/30 text-center text-white focus:outline-none focus:border-red-500"
+                            />
+                            <span className="text-slate-500">%</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          {loading ? (
+                            <div className="animate-pulse h-6 w-16 bg-slate-700 rounded ml-auto"></div>
+                          ) : (
+                            <span className="font-mono text-emerald-400 font-semibold">${askPrice.toFixed(2)}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          {loading ? (
+                            <div className="animate-pulse h-6 w-16 bg-slate-700 rounded ml-auto"></div>
+                          ) : (
+                            <span className="font-mono text-red-400 font-semibold">${bidPrice.toFixed(2)}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          {loading ? (
+                            <div className="animate-pulse h-6 w-16 bg-slate-700 rounded ml-auto"></div>
+                          ) : (
+                            <div>
+                              <span className="font-mono text-amber-400 font-semibold">${makas.toFixed(2)}</span>
+                              <div className="text-xs text-slate-500">{makasPercent.toFixed(2)}%</div>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Crypto Price Table */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-slate-200 mb-4">💎 Kripto Fiyatları</h2>
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-slate-800/50">
+                    <th className="px-4 py-4 text-left text-sm font-medium text-slate-400">Kripto</th>
+                    <th className="px-4 py-4 text-right text-sm font-medium text-slate-400">Baz Fiyat</th>
+                    <th className="px-4 py-4 text-center text-sm font-medium text-slate-400">
+                      <span className="text-emerald-400">Satış Ayarı %</span>
+                      <div className="text-xs text-slate-500 font-normal">Müşteri alırken</div>
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-medium text-slate-400">
+                      <span className="text-red-400">Alış Ayarı %</span>
+                      <div className="text-xs text-slate-500 font-normal">Müşteri satarken</div>
+                    </th>
+                    <th className="px-4 py-4 text-right text-sm font-medium text-emerald-400">Satış Fiyatı</th>
+                    <th className="px-4 py-4 text-right text-sm font-medium text-red-400">Alış Fiyatı</th>
+                    <th className="px-4 py-4 text-right text-sm font-medium text-amber-400">Makas</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {cryptos.map((crypto) => {
+                    const basePrice = basePrices[crypto.key] || 0;
+                    const setting = settings[crypto.key] || { askAdjust: 1, bidAdjust: -0.5 };
+                    const askPrice = calculatePrice(basePrice, setting.askAdjust);
+                    const bidPrice = calculatePrice(basePrice, setting.bidAdjust);
+                    const makas = askPrice - bidPrice;
+                    const makasPercent = basePrice > 0 ? ((makas / basePrice) * 100) : 0;
+
+                    return (
+                      <tr key={crypto.key} className="hover:bg-slate-800/30 transition-colors">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${crypto.key === "ETH" ? "bg-[#627EEA]" : "bg-[#F7931A]"}`}>
+                              <span className="text-white text-sm font-bold">
+                                {crypto.key === "ETH" ? "Ξ" : "₿"}
+                              </span>
+                            </div>
+                            <div>
+                              <div className={`font-semibold ${crypto.color}`}>{crypto.key}</div>
+                              <div className="text-xs text-slate-500">{crypto.name}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          {loading ? (
+                            <div className="animate-pulse h-6 w-24 bg-slate-700 rounded ml-auto"></div>
+                          ) : (
+                            <span className="font-mono text-slate-300">
+                              ${basePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center justify-center gap-1">
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={setting.askAdjust}
+                              onChange={(e) => updateSetting(crypto.key, "askAdjust", e.target.value)}
+                              className="w-20 px-2 py-2 rounded-lg bg-slate-800 border border-emerald-500/30 text-center text-white focus:outline-none focus:border-emerald-500"
+                            />
+                            <span className="text-slate-500">%</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center justify-center gap-1">
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={setting.bidAdjust}
+                              onChange={(e) => updateSetting(crypto.key, "bidAdjust", e.target.value)}
+                              className="w-20 px-2 py-2 rounded-lg bg-slate-800 border border-red-500/30 text-center text-white focus:outline-none focus:border-red-500"
+                            />
+                            <span className="text-slate-500">%</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          {loading ? (
+                            <div className="animate-pulse h-6 w-24 bg-slate-700 rounded ml-auto"></div>
+                          ) : (
+                            <span className="font-mono text-emerald-400 font-semibold">
+                              ${askPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          {loading ? (
+                            <div className="animate-pulse h-6 w-24 bg-slate-700 rounded ml-auto"></div>
+                          ) : (
+                            <span className="font-mono text-red-400 font-semibold">
+                              ${bidPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          {loading ? (
+                            <div className="animate-pulse h-6 w-24 bg-slate-700 rounded ml-auto"></div>
+                          ) : (
+                            <div>
+                              <span className="font-mono text-amber-400 font-semibold">
+                                ${makas.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                              <div className="text-xs text-slate-500">{makasPercent.toFixed(2)}%</div>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -401,6 +537,8 @@ export default function AdminPage() {
                 AUXS: { askAdjust: 1.5, bidAdjust: -0.75 },
                 AUXPT: { askAdjust: 1.25, bidAdjust: -0.6 },
                 AUXPD: { askAdjust: 1.25, bidAdjust: -0.6 },
+                ETH: { askAdjust: 0.5, bidAdjust: -0.25 },
+                BTC: { askAdjust: 0.5, bidAdjust: -0.25 },
               })}
               className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm transition-colors"
             >
@@ -418,6 +556,8 @@ export default function AdminPage() {
                 AUXS: { askAdjust: 4, bidAdjust: -2 },
                 AUXPT: { askAdjust: 3.5, bidAdjust: -1.75 },
                 AUXPD: { askAdjust: 3.5, bidAdjust: -1.75 },
+                ETH: { askAdjust: 2, bidAdjust: -1 },
+                BTC: { askAdjust: 2, bidAdjust: -1 },
               })}
               className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm transition-colors"
             >

@@ -15,13 +15,23 @@ export interface CryptoChanges {
   try: number;
 }
 
+export interface CryptoDirections {
+  eth: "up" | "down" | "neutral";
+  btc: "up" | "down" | "neutral";
+  usdt: "up" | "down" | "neutral";
+  try: "up" | "down" | "neutral";
+}
+
 // Metal fiyatını farklı para birimlerine dönüştür
-export function convertMetalPrice(priceUSD: number, toCurrency: string, tryRate: number): number {
+export function convertMetalPrice(priceUSD: number, cryptoPrices: CryptoPrices, toCurrency: string): number {
   switch (toCurrency.toUpperCase()) {
     case "TRY":
-      return priceUSD * tryRate;
-    case "EUR":
-      return priceUSD * 0.92; // Yaklaşık EUR/USD
+      return priceUSD * cryptoPrices.try;
+    case "ETH":
+      return cryptoPrices.eth > 0 ? priceUSD / cryptoPrices.eth : 0;
+    case "BTC":
+      return cryptoPrices.btc > 0 ? priceUSD / cryptoPrices.btc : 0;
+    case "USDT":
     case "USD":
     default:
       return priceUSD;
@@ -32,10 +42,18 @@ export function convertMetalPrice(priceUSD: number, toCurrency: string, tryRate:
 export function formatCurrencyPrice(price: number, currency: string): string {
   const symbols: Record<string, string> = {
     USD: "$",
+    USDT: "$",
     TRY: "₺",
     EUR: "€",
+    ETH: "Ξ",
+    BTC: "₿",
   };
   const symbol = symbols[currency.toUpperCase()] || "$";
+  
+  if (currency === "ETH" || currency === "BTC") {
+    return `${symbol}${price.toFixed(6)}`;
+  }
+  
   return `${symbol}${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
@@ -52,9 +70,14 @@ export function useCryptoPrices() {
     usdt: 0,
     try: 0,
   });
+  const [directions, setDirections] = useState<CryptoDirections>({
+    eth: "neutral",
+    btc: "neutral",
+    usdt: "neutral",
+    try: "neutral",
+  });
   const [loading, setLoading] = useState(true);
   
-  // Önceki fiyatları sakla
   const prevPricesRef = useRef<CryptoPrices>({ eth: 0, btc: 0, usdt: 1, try: 34.50 });
 
   useEffect(() => {
@@ -72,7 +95,19 @@ export function useCryptoPrices() {
             try: data.tether?.try || prevPricesRef.current.try,
           };
           
+          // Direction hesapla
+          const newDirections: CryptoDirections = {
+            eth: newPrices.eth > prevPricesRef.current.eth ? "up" : 
+                 newPrices.eth < prevPricesRef.current.eth ? "down" : "neutral",
+            btc: newPrices.btc > prevPricesRef.current.btc ? "up" : 
+                 newPrices.btc < prevPricesRef.current.btc ? "down" : "neutral",
+            usdt: "neutral",
+            try: newPrices.try > prevPricesRef.current.try ? "up" : 
+                 newPrices.try < prevPricesRef.current.try ? "down" : "neutral",
+          };
+          
           setPrices(newPrices);
+          setDirections(newDirections);
           prevPricesRef.current = newPrices;
           
           setChanges({
@@ -83,17 +118,17 @@ export function useCryptoPrices() {
           });
         }
       } catch (error) {
-        console.error("Failed to fetch crypto prices:", error);
+        // Silent fail
       } finally {
         setLoading(false);
       }
     };
 
     fetchPrices();
-    const interval = setInterval(fetchPrices, 30000); // 30 saniye
+    const interval = setInterval(fetchPrices, 3000);
     
     return () => clearInterval(interval);
   }, []);
 
-  return { prices, changes, loading };
+  return { prices, changes, directions, loading };
 }

@@ -7,17 +7,24 @@ const DEFAULT_SETTINGS = {
   AUXPD: { askAdjust: 2.5, bidAdjust: -1.25 },
 };
 
+// Son başarılı veriyi cache'le
+let lastSuccessfulData: any = null;
+
 export async function GET() {
   try {
     const res = await fetch("https://api.auxite.io/api/prices?chain=84532", {
       cache: "no-cache",
     });
 
-    if (!res.ok) {
+    const json = await res.json();
+    
+    // API hata döndüyse cache'den dön
+    if (!json.ok || !json.data) {
+      if (lastSuccessfulData) {
+        return NextResponse.json(lastSuccessfulData);
+      }
       return NextResponse.json({ error: "API error" }, { status: 500 });
     }
-
-    const json = await res.json();
     
     const prices: Record<string, number> = {};
     const bidPrices: Record<string, number> = {};
@@ -38,12 +45,11 @@ export async function GET() {
       prices[symbol] = Math.round(askPrice * 100) / 100;
       bidPrices[symbol] = Math.round(bidPrice * 100) / 100;
       
-      // Değişim ve yön şimdilik sıfır - client-side'da hesaplanıyor
       changes[symbol] = 0;
       directions[symbol] = "neutral";
     }
 
-    return NextResponse.json({
+    const result = {
       prices,
       bidPrices,
       basePrices,
@@ -52,8 +58,17 @@ export async function GET() {
       timestamp: Date.now(),
       source: "auxite",
       settings: DEFAULT_SETTINGS,
-    });
+    };
+    
+    // Başarılı veriyi cache'le
+    lastSuccessfulData = result;
+
+    return NextResponse.json(result);
   } catch (error: any) {
+    // Hata durumunda cache'den dön
+    if (lastSuccessfulData) {
+      return NextResponse.json(lastSuccessfulData);
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

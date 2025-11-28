@@ -70,7 +70,7 @@ function getDirectionStyles(change: number): { badgeBg: string; badgeText: strin
 
 export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
   const { prices, bidPrices, directions, changes, loading } = useMetalsPrices();
-  const { prices: cryptoPrices, changes: cryptoChanges, loading: cryptoLoading } = useCryptoPrices();
+  const { prices: cryptoPrices, changes: cryptoChanges, directions: cryptoDirections, loading: cryptoLoading } = useCryptoPrices();
   const [showExchange, setShowExchange] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
@@ -179,7 +179,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Ethereum</div>
-          <div className="text-xl font-bold text-slate-100 font-mono mb-3">
+          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.eth === "up" ? "text-emerald-400" : cryptoDirections.eth === "down" ? "text-red-400" : "text-slate-100"}`}>
             ${cryptoPrices.eth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -209,7 +209,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Bitcoin</div>
-          <div className="text-xl font-bold text-slate-100 font-mono mb-3">
+          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.btc === "up" ? "text-emerald-400" : cryptoDirections.btc === "down" ? "text-red-400" : "text-slate-100"}`}>
             ${cryptoPrices.btc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="grid grid-cols-2 gap-2">

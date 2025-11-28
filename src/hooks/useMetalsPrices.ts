@@ -52,7 +52,7 @@ export function useMetalsPrices() {
       setLastUpdate(new Date());
       setError(null);
     } catch (err: any) {
-      console.error("Error fetching prices:", err);
+      // Silent fail - cached data will be used
       setError(err.message);
     } finally {
       setLoading(false);
@@ -61,7 +61,7 @@ export function useMetalsPrices() {
 
   useEffect(() => {
     fetchPrices();
-    const interval = setInterval(fetchPrices, 5000);
+    const interval = setInterval(fetchPrices, 3000);
     return () => clearInterval(interval);
   }, [fetchPrices]);
 
