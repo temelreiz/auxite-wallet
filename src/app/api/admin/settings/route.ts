@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Redis } from "@upstash/redis";
+
+export const dynamic = 'force-dynamic';
 
 const DEFAULT_SETTINGS = {
   AUXG: { askAdjust: 2, bidAdjust: -1 },
@@ -12,14 +13,18 @@ const DEFAULT_SETTINGS = {
 
 const SETTINGS_KEY = "auxite:price-settings";
 
-// Redis client - environment variables otomatik algılanır
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+// Lazy Redis client
+async function getRedis() {
+  const { Redis } = await import("@upstash/redis");
+  return new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  });
+}
 
 export async function GET() {
   try {
+    const redis = await getRedis();
     const settings = await redis.get(SETTINGS_KEY);
     if (settings && typeof settings === "object") {
       return NextResponse.json({ ...DEFAULT_SETTINGS, ...settings });
@@ -37,7 +42,6 @@ export async function POST(request: NextRequest) {
     
     const validSymbols = ["AUXG", "AUXS", "AUXPT", "AUXPD", "ETH", "BTC"];
     
-    // Validate settings format
     for (const symbol of validSymbols) {
       if (settings[symbol]) {
         if (typeof settings[symbol].askAdjust !== "number" || 
@@ -58,7 +62,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Save to Redis
+    const redis = await getRedis();
     const mergedSettings = { ...DEFAULT_SETTINGS, ...settings };
     await redis.set(SETTINGS_KEY, mergedSettings);
     
