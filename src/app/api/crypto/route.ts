@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 const FALLBACK = {
   ethereum: { usd: 3500, usd_24h_change: 0 },
@@ -9,13 +8,42 @@ const FALLBACK = {
   tether: { try: 34.5 },
 };
 
+// Memory cache
+let cachedResult: any = null;
+let cacheTime = 0;
+const CACHE_DURATION = 5000; // 5 saniye
+
+async function fetchWithTimeout(url: string, timeout = 3000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const res = await fetch(url, { 
+      cache: 'no-store',
+      signal: controller.signal 
+    });
+    clearTimeout(timeoutId);
+    return res;
+  } catch (e) {
+    clearTimeout(timeoutId);
+    throw e;
+  }
+}
+
 export async function GET() {
-  // Önce Binance dene
+  const now = Date.now();
+  
+  // Cache geçerliyse döndür
+  if (cachedResult && (now - cacheTime) < CACHE_DURATION) {
+    return NextResponse.json({ ...cachedResult, cached: true });
+  }
+
+  // 1. Önce Binance dene
   try {
     const [ethRes, btcRes, tryRes] = await Promise.all([
-      fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT", { cache: 'no-store' }),
-      fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT", { cache: 'no-store' }),
-      fetch("https://api.binance.com/api/v3/ticker/24hr?symbol=USDTTRY", { cache: 'no-store' }),
+      fetchWithTimeout("https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT"),
+      fetchWithTimeout("https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT"),
+      fetchWithTimeout("https://api.binance.com/api/v3/ticker/24hr?symbol=USDTTRY"),
     ]);
 
     if (ethRes.ok && btcRes.ok && tryRes.ok) {
@@ -25,7 +53,7 @@ export async function GET() {
         tryRes.json(),
       ]);
 
-      return NextResponse.json({
+      const result = {
         ethereum: {
           usd: parseFloat(ethData.lastPrice),
           usd_24h_change: parseFloat(ethData.priceChangePercent),
@@ -38,23 +66,26 @@ export async function GET() {
           try: parseFloat(tryData.lastPrice),
         },
         source: "binance",
-        timestamp: Date.now(),
-      });
+        timestamp: now,
+      };
+
+      cachedResult = result;
+      cacheTime = now;
+      return NextResponse.json(result);
     }
   } catch (e) {
-    console.log("Binance failed, trying CoinGecko...");
+    // Binance failed
   }
 
-  // Binance başarısızsa CoinGecko dene
+  // 2. CoinGecko dene
   try {
-    const res = await fetch(
-      "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,tether&vs_currencies=usd,try&include_24hr_change=true",
-      { cache: 'no-store' }
+    const res = await fetchWithTimeout(
+      "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,tether&vs_currencies=usd,try&include_24hr_change=true"
     );
 
     if (res.ok) {
       const data = await res.json();
-      return NextResponse.json({
+      const result = {
         ethereum: {
           usd: data.ethereum?.usd || FALLBACK.ethereum.usd,
           usd_24h_change: data.ethereum?.usd_24h_change || 0,
@@ -67,17 +98,26 @@ export async function GET() {
           try: data.tether?.try || FALLBACK.tether.try,
         },
         source: "coingecko",
-        timestamp: Date.now(),
-      });
+        timestamp: now,
+      };
+
+      cachedResult = result;
+      cacheTime = now;
+      return NextResponse.json(result);
     }
   } catch (e) {
-    console.log("CoinGecko also failed");
+    // CoinGecko failed
   }
 
-  // Her ikisi de başarısızsa fallback
+  // 3. Cache varsa döndür
+  if (cachedResult) {
+    return NextResponse.json({ ...cachedResult, cached: true, stale: true });
+  }
+
+  // 4. Fallback
   return NextResponse.json({
     ...FALLBACK,
     source: "fallback",
-    timestamp: Date.now(),
+    timestamp: now,
   });
 }
