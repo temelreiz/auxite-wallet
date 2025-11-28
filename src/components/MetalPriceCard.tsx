@@ -1,20 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { MetalId } from "@/lib/metals";
 import TradePanel from "./TradePanel";
 import TradingDetailPage from "./TradingDetailPage";
-
-// Direction-based styling helper
-function getDirectionStyles(direction: "up" | "down" | "neutral") {
-  if (direction === "up") {
-    return { badgeBg: "bg-emerald-500/20", badgeText: "text-emerald-400", arrow: "↑" };
-  } else if (direction === "down") {
-    return { badgeBg: "bg-red-500/20", badgeText: "text-red-400", arrow: "↓" };
-  } else {
-    return { badgeBg: "bg-slate-500/20", badgeText: "text-slate-300", arrow: "~" };
-  }
-}
 
 interface MetalPriceCardProps {
   metalId: MetalId;
@@ -45,7 +34,21 @@ export default function MetalPriceCard({
   const [showTradingDetail, setShowTradingDetail] = useState(false);
   const [tradeMode, setTradeMode] = useState<"buy" | "sell">("buy");
   
-  // Capture values at the moment when TradingDetailPage is FIRST opened
+  // Önceki fiyatı sakla ve karşılaştır
+  const prevPriceRef = useRef<number>(pricePerGram);
+  const [priceDirection, setPriceDirection] = useState<"up" | "down" | "neutral">("neutral");
+  
+  useEffect(() => {
+    if (pricePerGram > prevPriceRef.current) {
+      setPriceDirection("up");
+    } else if (pricePerGram < prevPriceRef.current) {
+      setPriceDirection("down");
+    } else {
+      setPriceDirection("neutral");
+    }
+    prevPriceRef.current = pricePerGram;
+  }, [pricePerGram]);
+  
   const [capturedValues, setCapturedValues] = useState({
     price: pricePerGram,
     change: change24h,
@@ -53,7 +56,6 @@ export default function MetalPriceCard({
     bid: bidPrice
   });
   
-  // Update captured values only when opening (not when updating)
   const handleCardClick = () => {
     setCapturedValues({
       price: pricePerGram,
@@ -76,24 +78,27 @@ export default function MetalPriceCard({
     setShowTradePanel(true);
   };
 
-  // Direction-based styling
+  // Direction-based styling - priceDirection kullan
   const getDirectionStyles = () => {
-    if (direction === "up") {
+    if (priceDirection === "up") {
       return {
         badgeBg: "bg-emerald-500/20",
         badgeText: "text-emerald-400",
+        priceColor: "text-emerald-400",
         arrow: "↑"
       };
-    } else if (direction === "down") {
+    } else if (priceDirection === "down") {
       return {
         badgeBg: "bg-red-500/20",
         badgeText: "text-red-400",
+        priceColor: "text-red-400",
         arrow: "↓"
       };
     } else {
       return {
         badgeBg: "bg-slate-500/20",
         badgeText: "text-slate-300",
+        priceColor: "text-slate-100",
         arrow: "~"
       };
     }
@@ -138,9 +143,9 @@ export default function MetalPriceCard({
           </div>
         </div>
 
-        {/* Price - Now with more space */}
+        {/* Price - Renge göre değişir */}
         <div className="mb-4">
-          <div className="text-3xl font-bold text-slate-100 font-mono tracking-tight">
+          <div className={`text-3xl font-bold font-mono tracking-tight transition-colors duration-300 ${directionStyles.priceColor}`}>
             {pricePerGram.toFixed(2)}
           </div>
         </div>
