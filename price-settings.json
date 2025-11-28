@@ -1,18 +1,26 @@
 {
   "AUXG": {
     "askAdjust": 2,
-    "bidAdjust": 1.4
+    "bidAdjust": -1
   },
   "AUXS": {
-    "askAdjust": 2.1,
-    "bidAdjust": 5.5
+    "askAdjust": 3,
+    "bidAdjust": -1.5
   },
   "AUXPT": {
-    "askAdjust": 1.7,
-    "bidAdjust": 3.15
+    "askAdjust": 2.5,
+    "bidAdjust": -1.25
   },
   "AUXPD": {
-    "askAdjust": 1.7,
-    "bidAdjust": 3.95
+    "askAdjust": 2.5,
+    "bidAdjust": -1.25
+  },
+  "ETH": {
+    "askAdjust": 2,
+    "bidAdjust": 0.1
+  },
+  "BTC": {
+    "askAdjust": 1,
+    "bidAdjust": -0.5
   }
 }
