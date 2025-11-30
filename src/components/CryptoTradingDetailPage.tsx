@@ -436,7 +436,12 @@ export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en"
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-slate-400">{lang === "tr" ? "Güncel Fiyat" : "Current Price"}</span>
-                <span className="text-lg font-bold text-white">${formatPrice(currentPrice)}</span>
+                <span className={`text-lg font-bold ${tradeMode === "buy" ? "text-emerald-400" : "text-red-400"}`}>
+                  ${formatPrice(tradeMode === "buy" ? askPrice : bidPrice)}
+                </span>
+              </div>
+              <div className="text-xs text-slate-500 text-right">
+                {tradeMode === "buy" ? (lang === "tr" ? "Alış Fiyatı" : "Ask Price") : (lang === "tr" ? "Satış Fiyatı" : "Bid Price")}
               </div>
             </div>
 
@@ -451,7 +456,7 @@ export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en"
               />
               {tradeAmount && parseFloat(tradeAmount) > 0 && (
                 <p className="text-xs text-slate-500 mt-2">
-                  ≈ ${formatPrice(parseFloat(tradeAmount) * currentPrice)} USD
+                  ≈ ${formatPrice(parseFloat(tradeAmount) * (tradeMode === "buy" ? askPrice : bidPrice))} USD
                 </p>
               )}
             </div>
