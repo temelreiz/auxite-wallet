@@ -74,12 +74,27 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
   const { prices: cryptoPrices, changes: cryptoChanges, directions: cryptoDirections, loading: cryptoLoading } = useCryptoPrices();
   const [showExchange, setShowExchange] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
+  const [showOnChainDeposit, setShowOnChainDeposit] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [showReceive, setShowReceive] = useState(false);
   const [showCryptoDetail, setShowCryptoDetail] = useState<"ETH" | "BTC" | null>(null);
+  const [depositSearchQuery, setDepositSearchQuery] = useState("");
 
   // Demo wallet address
   const walletAddress = "0xe6df...3ba3";
+  
+  // Deposit coins list
+  const depositCoins = [
+    { id: "BTC", name: "Bitcoin", icon: "₿", color: "#F7931A" },
+    { id: "ETH", name: "Ethereum", icon: "Ξ", color: "#627EEA" },
+    { id: "XRP", name: "Ripple", icon: "✕", color: "#23292F" },
+    { id: "SOL", name: "Solana", icon: "◎", color: "#9945FF" },
+  ];
+  
+  const filteredDepositCoins = depositCoins.filter(coin => 
+    coin.id.toLowerCase().includes(depositSearchQuery.toLowerCase()) ||
+    coin.name.toLowerCase().includes(depositSearchQuery.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -407,8 +422,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
               <button
                 onClick={() => {
                   setShowDeposit(false);
-                  // TODO: On-Chain Deposit modal açılacak
-                  alert(lang === "tr" ? "On-Chain Deposit yakında aktif olacak" : "On-Chain Deposit coming soon");
+                  setShowOnChainDeposit(true);
                 }}
                 className="w-full p-4 rounded-xl border border-slate-700 hover:border-slate-600 hover:bg-slate-800/50 transition-all text-left flex items-start gap-4"
               >
@@ -459,6 +473,87 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                 </svg>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* On-Chain Deposit - Select Coin Modal */}
+      {showOnChainDeposit && (
+        <div className="fixed inset-0 bg-black/90 flex flex-col z-50">
+          {/* Header */}
+          <div className="flex items-center gap-4 p-4 border-b border-slate-800">
+            <button
+              onClick={() => setShowOnChainDeposit(false)}
+              className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h2 className="text-xl font-bold text-white flex-1 text-center pr-10">
+              {lang === "tr" ? "Coin Seç" : "Select Coin"}
+            </h2>
+          </div>
+
+          {/* Search */}
+          <div className="p-4">
+            <div className="relative">
+              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder={lang === "tr" ? "Coin Ara" : "Search Coins"}
+                value={depositSearchQuery}
+                onChange={(e) => setDepositSearchQuery(e.target.value)}
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-12 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-slate-600"
+              />
+            </div>
+          </div>
+
+          {/* Trending Section */}
+          <div className="px-4 pb-2">
+            <h3 className="text-sm font-semibold text-slate-400 mb-3">
+              {lang === "tr" ? "Popüler" : "Trending"}
+            </h3>
+          </div>
+
+          {/* Coin List */}
+          <div className="flex-1 overflow-y-auto px-4">
+            <div className="space-y-1">
+              {filteredDepositCoins.map((coin) => (
+                <button
+                  key={coin.id}
+                  onClick={() => {
+                    setShowOnChainDeposit(false);
+                    // TODO: Seçilen coin için adres göster
+                    alert(`${coin.name} (${coin.id}) ${lang === "tr" ? "deposit adresi yakında" : "deposit address coming soon"}`);
+                  }}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-800/70 transition-all"
+                >
+                  <div 
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+                    style={{ backgroundColor: coin.color }}
+                  >
+                    {coin.icon}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="text-white font-semibold">{coin.id}</div>
+                    <div className="text-sm text-slate-400">{coin.name}</div>
+                  </div>
+                  <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Alphabet Index (right side) */}
+          <div className="fixed right-2 top-1/2 -translate-y-1/2 flex flex-col items-center text-xs text-slate-500 gap-0.5">
+            {['0', '1', '2', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X'].map((letter) => (
+              <span key={letter} className="hover:text-white cursor-pointer">{letter}</span>
+            ))}
           </div>
         </div>
       )}
