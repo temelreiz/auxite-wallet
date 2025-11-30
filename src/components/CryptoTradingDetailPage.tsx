@@ -116,14 +116,46 @@ export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en"
   const [panelIndicator, setPanelIndicator] = useState<PanelIndicator | null>(null);
   const [tradeMode, setTradeMode] = useState<"buy" | "sell" | null>(null);
   const [tradeAmount, setTradeAmount] = useState("");
+  
+  // Spread settings from admin
+  const [spreadSettings, setSpreadSettings] = useState<{ askAdjust: number; bidAdjust: number }>({ askAdjust: 1, bidAdjust: -0.5 });
 
   const cryptoInfo = CRYPTO_INFO[cryptoId];
-  const currentPrice = cryptoId === "ETH" ? prices.eth : prices.btc;
+  const basePrice = cryptoId === "ETH" ? prices.eth : prices.btc;
   const change24h = cryptoId === "ETH" ? changes.eth : changes.btc;
   const direction = cryptoId === "ETH" ? directions.eth : directions.btc;
   const tryRate = prices.try;
+  
+  // Apply spread to get ask/bid prices
+  const askPrice = basePrice * (1 + spreadSettings.askAdjust / 100);
+  const bidPrice = basePrice * (1 + spreadSettings.bidAdjust / 100);
+  // Use ask price as the display price (what user pays to buy)
+  const currentPrice = askPrice;
 
   const initialPriceRef = useRef(currentPrice);
+  
+  // Fetch spread settings from admin API
+  useEffect(() => {
+    const fetchSpreads = async () => {
+      try {
+        const res = await fetch("/api/admin/settings");
+        if (res.ok) {
+          const settings = await res.json();
+          if (settings[cryptoId]) {
+            setSpreadSettings({
+              askAdjust: settings[cryptoId].askAdjust ?? 1,
+              bidAdjust: settings[cryptoId].bidAdjust ?? -0.5,
+            });
+          }
+        }
+      } catch (err) {
+        console.log("Failed to fetch crypto spreads");
+      }
+    };
+    fetchSpreads();
+    const interval = setInterval(fetchSpreads, 30000);
+    return () => clearInterval(interval);
+  }, [cryptoId]);
   
   useEffect(() => {
     if (currentPrice > 0 && initialPriceRef.current === 0) {
@@ -363,9 +395,9 @@ export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en"
             <div className="px-4 py-4 space-y-4">
               <h3 className="text-sm font-semibold text-slate-300 mb-3">{lang === "tr" ? "Piyasa Verileri" : "Market Data"}</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700"><div className="text-xs text-slate-400 mb-1">{lang === "tr" ? "Alış Fiyatı" : "Bid Price"}</div><div className="text-lg font-bold text-emerald-400">${formatPrice(currentPrice * 0.9995)}</div></div>
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700"><div className="text-xs text-slate-400 mb-1">{lang === "tr" ? "Satış Fiyatı" : "Ask Price"}</div><div className="text-lg font-bold text-red-400">${formatPrice(currentPrice * 1.0005)}</div></div>
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700"><div className="text-xs text-slate-400 mb-1">Spread</div><div className="text-lg font-bold text-amber-400">0.10%</div></div>
+                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700"><div className="text-xs text-slate-400 mb-1">{lang === "tr" ? "Alış Fiyatı" : "Bid Price"}</div><div className="text-lg font-bold text-emerald-400">${formatPrice(bidPrice)}</div></div>
+                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700"><div className="text-xs text-slate-400 mb-1">{lang === "tr" ? "Satış Fiyatı" : "Ask Price"}</div><div className="text-lg font-bold text-red-400">${formatPrice(askPrice)}</div></div>
+                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700"><div className="text-xs text-slate-400 mb-1">Spread</div><div className="text-lg font-bold text-amber-400">{(spreadSettings.askAdjust - spreadSettings.bidAdjust).toFixed(2)}%</div></div>
                 <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700"><div className="text-xs text-slate-400 mb-1">{lang === "tr" ? "24s Hacim" : "24h Volume"}</div><div className="text-lg font-bold text-blue-400">{formatVolume(volume24h)}</div></div>
               </div>
             </div>
