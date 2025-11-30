@@ -46,6 +46,27 @@ const metals = [
   },
 ];
 
+// Deposit adresleri
+const DEPOSIT_ADDRESSES: Record<string, { address: string; network: string; memo?: string }> = {
+  BTC: { 
+    address: "1L4h8XzsLzzek6LoxGKdDsFcSaD7oxyume", 
+    network: "Bitcoin" 
+  },
+  ETH: { 
+    address: "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", 
+    network: "Ethereum / Base" 
+  },
+  XRP: { 
+    address: "r4pNH6DdDtVknt8NZAhhbcY8Wqr46QoGae", 
+    network: "XRP Ledger",
+    memo: "123456" // Destination Tag
+  },
+  SOL: { 
+    address: "6orrQ2dRuiFwH5w3wddQjQNbPT6w7vEN7eMW9wUNM1Qe", 
+    network: "Solana" 
+  },
+};
+
 // Helper function to get direction styles
 function getDirectionStyles(change: number): { badgeBg: string; badgeText: string; arrow: string } {
   if (change > 0.01) {
@@ -79,6 +100,10 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
   const [showReceive, setShowReceive] = useState(false);
   const [showCryptoDetail, setShowCryptoDetail] = useState<"ETH" | "BTC" | null>(null);
   const [depositSearchQuery, setDepositSearchQuery] = useState("");
+  
+  // Deposit Address Modal State
+  const [selectedDepositCoin, setSelectedDepositCoin] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Demo wallet address
   const walletAddress = "0xe6df...3ba3";
@@ -95,6 +120,17 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
     coin.id.toLowerCase().includes(depositSearchQuery.toLowerCase()) ||
     coin.name.toLowerCase().includes(depositSearchQuery.toLowerCase())
   );
+
+  // Copy address function
+  const copyAddress = async (address: string) => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
 
   if (loading) {
     return (
@@ -478,7 +514,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
       )}
 
       {/* On-Chain Deposit - Select Coin Modal */}
-      {showOnChainDeposit && (
+      {showOnChainDeposit && !selectedDepositCoin && (
         <div className="fixed inset-0 bg-black/90 flex flex-col z-50">
           {/* Header */}
           <div className="flex items-center gap-4 p-4 border-b border-slate-800">
@@ -525,9 +561,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                 <button
                   key={coin.id}
                   onClick={() => {
-                    setShowOnChainDeposit(false);
-                    // TODO: Seçilen coin için adres göster
-                    alert(`${coin.name} (${coin.id}) ${lang === "tr" ? "deposit adresi yakında" : "deposit address coming soon"}`);
+                    setSelectedDepositCoin(coin.id);
                   }}
                   className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-800/70 transition-all"
                 >
@@ -548,12 +582,184 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
               ))}
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Alphabet Index (right side) */}
-          <div className="fixed right-2 top-1/2 -translate-y-1/2 flex flex-col items-center text-xs text-slate-500 gap-0.5">
-            {['0', '1', '2', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X'].map((letter) => (
-              <span key={letter} className="hover:text-white cursor-pointer">{letter}</span>
-            ))}
+      {/* Deposit Address Modal */}
+      {selectedDepositCoin && (
+        <div className="fixed inset-0 bg-black/90 flex flex-col z-50">
+          {/* Header */}
+          <div className="flex items-center gap-4 p-4 border-b border-slate-800">
+            <button
+              onClick={() => setSelectedDepositCoin(null)}
+              className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h2 className="text-xl font-bold text-white flex-1 text-center pr-10">
+              {lang === "tr" ? `${selectedDepositCoin} Yatır` : `Deposit ${selectedDepositCoin}`}
+            </h2>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="max-w-md mx-auto">
+              {/* Coin Info */}
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <div 
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl"
+                  style={{ backgroundColor: depositCoins.find(c => c.id === selectedDepositCoin)?.color }}
+                >
+                  {depositCoins.find(c => c.id === selectedDepositCoin)?.icon}
+                </div>
+                <div>
+                  <div className="text-white font-bold text-lg">{selectedDepositCoin}</div>
+                  <div className="text-slate-400 text-sm">{depositCoins.find(c => c.id === selectedDepositCoin)?.name}</div>
+                </div>
+              </div>
+
+              {/* Network Info */}
+              <div className="bg-slate-800/50 rounded-xl p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-slate-400 text-sm">{lang === "tr" ? "Ağ" : "Network"}</span>
+                  <span className="text-white font-medium">{DEPOSIT_ADDRESSES[selectedDepositCoin]?.network}</span>
+                </div>
+                {selectedDepositCoin === "ETH" && (
+                  <div className="text-xs text-emerald-400 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {lang === "tr" ? "Base ağı da desteklenmektedir" : "Base network is also supported"}
+                  </div>
+                )}
+              </div>
+
+              {/* QR Code */}
+              <div className="bg-white p-6 rounded-2xl mb-4 flex items-center justify-center">
+                <div className="w-48 h-48 bg-slate-100 rounded-lg flex items-center justify-center relative">
+                  {/* Simple QR Code Placeholder - In real app use qrcode.react */}
+                  <svg className="w-40 h-40" viewBox="0 0 100 100" fill="none">
+                    <rect x="10" y="10" width="25" height="25" fill="#000"/>
+                    <rect x="65" y="10" width="25" height="25" fill="#000"/>
+                    <rect x="10" y="65" width="25" height="25" fill="#000"/>
+                    <rect x="15" y="15" width="15" height="15" fill="#fff"/>
+                    <rect x="70" y="15" width="15" height="15" fill="#fff"/>
+                    <rect x="15" y="70" width="15" height="15" fill="#fff"/>
+                    <rect x="20" y="20" width="5" height="5" fill="#000"/>
+                    <rect x="75" y="20" width="5" height="5" fill="#000"/>
+                    <rect x="20" y="75" width="5" height="5" fill="#000"/>
+                    <rect x="40" y="10" width="5" height="5" fill="#000"/>
+                    <rect x="50" y="10" width="5" height="5" fill="#000"/>
+                    <rect x="40" y="20" width="5" height="5" fill="#000"/>
+                    <rect x="55" y="20" width="5" height="5" fill="#000"/>
+                    <rect x="40" y="40" width="20" height="20" fill="#000"/>
+                    <rect x="45" y="45" width="10" height="10" fill="#fff"/>
+                    <rect x="10" y="45" width="5" height="5" fill="#000"/>
+                    <rect x="20" y="45" width="5" height="5" fill="#000"/>
+                    <rect x="45" y="65" width="5" height="5" fill="#000"/>
+                    <rect x="55" y="70" width="5" height="5" fill="#000"/>
+                    <rect x="65" y="45" width="5" height="5" fill="#000"/>
+                    <rect x="75" y="50" width="5" height="5" fill="#000"/>
+                    <rect x="85" y="45" width="5" height="5" fill="#000"/>
+                    <rect x="65" y="65" width="25" height="25" fill="#000"/>
+                    <rect x="70" y="70" width="15" height="15" fill="#fff"/>
+                    <rect x="75" y="75" width="5" height="5" fill="#000"/>
+                  </svg>
+                </div>
+              </div>
+
+              {/* Address */}
+              <div className="bg-slate-800 rounded-xl p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-slate-400 text-sm">{lang === "tr" ? "Yatırma Adresi" : "Deposit Address"}</span>
+                  <button
+                    onClick={() => copyAddress(DEPOSIT_ADDRESSES[selectedDepositCoin]?.address || "")}
+                    className="text-emerald-500 text-sm font-medium hover:text-emerald-400 transition-colors"
+                  >
+                    {copied ? (lang === "tr" ? "Kopyalandı!" : "Copied!") : (lang === "tr" ? "Kopyala" : "Copy")}
+                  </button>
+                </div>
+                <p className="text-white font-mono text-sm break-all select-all">
+                  {DEPOSIT_ADDRESSES[selectedDepositCoin]?.address}
+                </p>
+              </div>
+
+              {/* Memo/Tag (for XRP) */}
+              {DEPOSIT_ADDRESSES[selectedDepositCoin]?.memo && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span className="text-amber-500 font-semibold">
+                      {lang === "tr" ? "Destination Tag Gerekli!" : "Destination Tag Required!"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300 text-sm">Destination Tag:</span>
+                    <span className="text-white font-mono font-bold">{DEPOSIT_ADDRESSES[selectedDepositCoin]?.memo}</span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-2">
+                    {lang === "tr" 
+                      ? "Tag olmadan gönderilen XRP'ler kaybolabilir!" 
+                      : "XRP sent without tag may be lost!"}
+                  </p>
+                </div>
+              )}
+
+              {/* AUXM Info */}
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-emerald-400 font-semibold">
+                    {lang === "tr" ? "Otomatik AUXM Dönüşümü" : "Automatic AUXM Conversion"}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-300">
+                  {lang === "tr" 
+                    ? `Yatırdığınız ${selectedDepositCoin} otomatik olarak AUXM'e (1 AUXM = 1 USD) dönüştürülecektir. AUXM ile metal tokenları (AUXG, AUXS, AUXPT, AUXPD) alabilirsiniz.`
+                    : `Your deposited ${selectedDepositCoin} will be automatically converted to AUXM (1 AUXM = 1 USD). You can buy metal tokens (AUXG, AUXS, AUXPT, AUXPD) with AUXM.`}
+                </p>
+              </div>
+
+              {/* Warning */}
+              <div className="bg-slate-800/50 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div className="text-sm text-slate-400">
+                    <p className="mb-2">
+                      {lang === "tr" 
+                        ? `Sadece ${DEPOSIT_ADDRESSES[selectedDepositCoin]?.network} ağı üzerinden ${selectedDepositCoin} gönderin.`
+                        : `Only send ${selectedDepositCoin} via ${DEPOSIT_ADDRESSES[selectedDepositCoin]?.network} network.`}
+                    </p>
+                    <p>
+                      {lang === "tr"
+                        ? "Yanlış ağ üzerinden gönderilen varlıklar kaybolabilir."
+                        : "Assets sent via wrong network may be lost."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Button */}
+          <div className="p-4 border-t border-slate-800">
+            <button
+              onClick={() => {
+                setSelectedDepositCoin(null);
+                setShowOnChainDeposit(false);
+              }}
+              className="w-full py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
+            >
+              {lang === "tr" ? "Tamam" : "Done"}
+            </button>
           </div>
         </div>
       )}
