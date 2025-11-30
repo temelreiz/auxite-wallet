@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
@@ -10,6 +10,12 @@ import CryptoTradingDetailPage from "./CryptoTradingDetailPage";
 interface MetalPriceGridProps {
   lang?: "tr" | "en";
 }
+
+// Default crypto spreads
+const DEFAULT_CRYPTO_SPREADS = {
+  ETH: { askAdjust: 1, bidAdjust: -0.5 },
+  BTC: { askAdjust: 1, bidAdjust: -0.5 },
+};
 
 // Metal icon mapping
 const metalIcons: Record<string, string> = {
@@ -77,6 +83,52 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
   const [showTransfer, setShowTransfer] = useState(false);
   const [showReceive, setShowReceive] = useState(false);
   const [showCryptoDetail, setShowCryptoDetail] = useState<"ETH" | "BTC" | null>(null);
+  
+  // Crypto spread settings
+  const [cryptoSpreads, setCryptoSpreads] = useState(DEFAULT_CRYPTO_SPREADS);
+  
+  // Fetch spread settings from admin API
+  useEffect(() => {
+    const fetchSpreads = async () => {
+      try {
+        const res = await fetch("/api/admin/settings");
+        if (res.ok) {
+          const settings = await res.json();
+          setCryptoSpreads({
+            ETH: settings.ETH || DEFAULT_CRYPTO_SPREADS.ETH,
+            BTC: settings.BTC || DEFAULT_CRYPTO_SPREADS.BTC,
+          });
+        }
+      } catch (err) {
+        console.log("Failed to fetch crypto spreads, using defaults");
+      }
+    };
+    fetchSpreads();
+    // Her 30 saniyede bir yenile
+    const interval = setInterval(fetchSpreads, 30000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Calculate spread-adjusted crypto prices
+  const getAdjustedCryptoPrices = () => {
+    const ethBase = cryptoPrices.eth || 0;
+    const btcBase = cryptoPrices.btc || 0;
+    
+    return {
+      eth: {
+        ask: ethBase * (1 + (cryptoSpreads.ETH?.askAdjust || 1) / 100),
+        bid: ethBase * (1 + (cryptoSpreads.ETH?.bidAdjust || -0.5) / 100),
+        base: ethBase,
+      },
+      btc: {
+        ask: btcBase * (1 + (cryptoSpreads.BTC?.askAdjust || 1) / 100),
+        bid: btcBase * (1 + (cryptoSpreads.BTC?.bidAdjust || -0.5) / 100),
+        base: btcBase,
+      },
+    };
+  };
+  
+  const adjustedCrypto = getAdjustedCryptoPrices();
 
   // Demo wallet address
   const walletAddress = "0xe6df...3ba3";
@@ -180,8 +232,13 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Ethereum</div>
+          {/* Ask/Bid Prices */}
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+            <span>{lang === "tr" ? "Alış/Satış" : "Ask/Bid"}</span>
+            <span className="font-mono">${adjustedCrypto.eth.ask.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
           <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.eth === "up" ? "text-emerald-400" : cryptoDirections.eth === "down" ? "text-red-400" : "text-slate-100"}`}>
-            ${cryptoPrices.eth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${adjustedCrypto.eth.ask.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="grid grid-cols-2 gap-2">
             <button className="px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold transition-all">
@@ -210,8 +267,13 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Bitcoin</div>
+          {/* Ask/Bid Prices */}
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+            <span>{lang === "tr" ? "Alış/Satış" : "Ask/Bid"}</span>
+            <span className="font-mono">${adjustedCrypto.btc.ask.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
           <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.btc === "up" ? "text-emerald-400" : cryptoDirections.btc === "down" ? "text-red-400" : "text-slate-100"}`}>
-            ${cryptoPrices.btc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${adjustedCrypto.btc.ask.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="grid grid-cols-2 gap-2">
             <button className="px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold transition-all">
