@@ -141,15 +141,19 @@ export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en"
         const res = await fetch("/api/admin/settings");
         if (res.ok) {
           const settings = await res.json();
+          console.log("Fetched settings:", settings);
+          console.log("CryptoId:", cryptoId);
+          console.log("Settings for crypto:", settings[cryptoId]);
           if (settings[cryptoId]) {
             setSpreadSettings({
               askAdjust: settings[cryptoId].askAdjust ?? 1,
               bidAdjust: settings[cryptoId].bidAdjust ?? -0.5,
             });
+            console.log("Applied spread:", settings[cryptoId].askAdjust, settings[cryptoId].bidAdjust);
           }
         }
       } catch (err) {
-        console.log("Failed to fetch crypto spreads");
+        console.log("Failed to fetch crypto spreads", err);
       }
     };
     fetchSpreads();
