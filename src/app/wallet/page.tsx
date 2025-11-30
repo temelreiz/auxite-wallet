@@ -308,13 +308,13 @@ export default function WalletPage() {
         />
       )}
 
-      {/* Deposit Modal */}
+      {/* Deposit Modal - Select Method */}
       {showDeposit && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50">
+          <div className="bg-slate-900 rounded-t-2xl sm:rounded-2xl border-t sm:border border-slate-700 w-full sm:max-w-md p-6 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-white">
-                {lang === "tr" ? "Yatır" : "Add Funds"}
+                {lang === "tr" ? "Yatırma Yöntemi Seçin" : "Select Deposit Method"}
               </h3>
               <button
                 onClick={() => setShowDeposit(false)}
@@ -326,50 +326,63 @@ export default function WalletPage() {
               </button>
             </div>
             
-            <p className="text-sm text-slate-400 mb-4">
-              {lang === "tr" 
-                ? "Aşağıdaki adrese kripto para göndererek bakiye yükleyebilirsiniz." 
-                : "Send cryptocurrency to the address below to add funds."}
-            </p>
-
-            {/* QR Code */}
-            <div className="bg-white p-4 rounded-xl mb-4 flex items-center justify-center">
-              <div className="w-40 h-40 bg-slate-100 rounded-lg flex items-center justify-center">
-                <svg className="w-32 h-32" viewBox="0 0 100 100" fill="none">
-                  <rect x="10" y="10" width="25" height="25" fill="#000"/>
-                  <rect x="65" y="10" width="25" height="25" fill="#000"/>
-                  <rect x="10" y="65" width="25" height="25" fill="#000"/>
-                  <rect x="15" y="15" width="15" height="15" fill="#fff"/>
-                  <rect x="70" y="15" width="15" height="15" fill="#fff"/>
-                  <rect x="15" y="70" width="15" height="15" fill="#fff"/>
-                  <rect x="20" y="20" width="5" height="5" fill="#000"/>
-                  <rect x="75" y="20" width="5" height="5" fill="#000"/>
-                  <rect x="20" y="75" width="5" height="5" fill="#000"/>
-                  <rect x="45" y="45" width="10" height="10" fill="#000"/>
-                  <rect x="65" y="65" width="25" height="25" fill="#000"/>
-                  <rect x="70" y="70" width="15" height="15" fill="#fff"/>
-                  <rect x="75" y="75" width="5" height="5" fill="#000"/>
+            <div className="space-y-3">
+              {/* On-Chain Deposit */}
+              <button
+                onClick={() => {
+                  setShowDeposit(false);
+                  // TODO: On-Chain Deposit modal açılacak
+                  alert(lang === "tr" ? "On-Chain Deposit yakında aktif olacak" : "On-Chain Deposit coming soon");
+                }}
+                className="w-full p-4 rounded-xl border border-slate-700 hover:border-slate-600 hover:bg-slate-800/50 transition-all text-left flex items-start gap-4"
+              >
+                <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-white font-semibold mb-1">On-Chain Deposit</h4>
+                  <p className="text-sm text-slate-400">
+                    {lang === "tr" 
+                      ? "Diğer borsalardan/cüzdanlardan kripto yatırın" 
+                      : "Deposit crypto from other exchanges/wallets"}
+                  </p>
+                </div>
+                <svg className="w-5 h-5 text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </div>
-            </div>
+              </button>
 
-            {/* Address */}
-            <div className="bg-slate-800 rounded-xl p-4 mb-4">
-              <p className="text-xs text-slate-500 mb-1">{lang === "tr" ? "Cüzdan Adresi" : "Wallet Address"}</p>
-              <p className="text-sm text-slate-200 font-mono break-all">{currentAddress || "0xe6df1234567890abcdef1234567890abcdef3ba3"}</p>
+              {/* Deposit Fiat */}
+              <button
+                onClick={() => {
+                  setShowDeposit(false);
+                  // TODO: Deposit Fiat modal açılacak
+                  alert(lang === "tr" ? "Fiat Yatırma yakında aktif olacak" : "Deposit Fiat coming soon");
+                }}
+                className="w-full p-4 rounded-xl border border-slate-700 hover:border-slate-600 hover:bg-slate-800/50 transition-all text-left flex items-start gap-4"
+              >
+                <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-white font-semibold mb-1">
+                    {lang === "tr" ? "Fiat Yatır" : "Deposit Fiat"}
+                  </h4>
+                  <p className="text-sm text-slate-400">
+                    {lang === "tr" 
+                      ? "SWIFT, kart, Apple/Google Pay ile USD/TRY yatırın" 
+                      : "Deposit USD/TRY via SWIFT, card, Apple/Google Pay"}
+                  </p>
+                </div>
+                <svg className="w-5 h-5 text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
-
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(currentAddress || "0xe6df1234567890abcdef1234567890abcdef3ba3");
-              }}
-              className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold transition-colors flex items-center justify-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              {lang === "tr" ? "Adresi Kopyala" : "Copy Address"}
-            </button>
           </div>
         </div>
       )}
