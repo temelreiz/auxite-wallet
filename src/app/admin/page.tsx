@@ -30,6 +30,8 @@ interface NewsItem {
   id: string;
   title: string;
   description: string;
+  fullContent?: string;
+  url?: string;
   source: string;
   date: string;
   icon: string;
@@ -113,6 +115,8 @@ export default function AdminPage() {
   const [newNews, setNewNews] = useState({
     title: '',
     description: '',
+    fullContent: '',
+    url: '',
     source: 'Auxite',
     date: '',
     icon: 'gift',
@@ -308,6 +312,8 @@ export default function AdminPage() {
       id: Date.now().toString(),
       title: newNews.title,
       description: newNews.description,
+      fullContent: newNews.fullContent || undefined,
+      url: newNews.url || undefined,
       source: newNews.source || 'Auxite',
       date: newNews.date || new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
       icon: newNews.icon,
@@ -323,6 +329,8 @@ export default function AdminPage() {
     setNewNews({
       title: '',
       description: '',
+      fullContent: '',
+      url: '',
       source: 'Auxite',
       date: '',
       icon: 'gift',
@@ -881,7 +889,29 @@ export default function AdminPage() {
                       value={newNews.description}
                       onChange={(e) => setNewNews(prev => ({ ...prev, description: e.target.value }))}
                       className="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 min-h-[80px]"
-                      placeholder={newsLang === 'tr' ? 'Haber açıklaması...' : 'News description...'}
+                      placeholder={newsLang === 'tr' ? 'Kısa açıklama (liste görünümünde gösterilir)...' : 'Short description (shown in list view)...'}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">Tam İçerik (Opsiyonel)</label>
+                    <textarea
+                      value={newNews.fullContent}
+                      onChange={(e) => setNewNews(prev => ({ ...prev, fullContent: e.target.value }))}
+                      className="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 min-h-[120px]"
+                      placeholder={newsLang === 'tr' ? 'Haberin tam içeriği (detay sayfasında gösterilir)...' : 'Full news content (shown in detail page)...'}
+                    />
+                    <p className="text-xs text-slate-500 mt-1">Boş bırakılırsa kısa açıklama gösterilir</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">Kaynak URL (Opsiyonel)</label>
+                    <input
+                      type="text"
+                      value={newNews.url}
+                      onChange={(e) => setNewNews(prev => ({ ...prev, url: e.target.value }))}
+                      className="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-emerald-500"
+                      placeholder="https://..."
                     />
                   </div>
                   
