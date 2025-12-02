@@ -1,6 +1,5 @@
 // src/app/api/news/route.ts
-// Auxite Wallet - News API
-// Admin paneli ve mobile app için haber yönetimi
+// Auxite Wallet - News API with Vercel KV
 
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
@@ -95,12 +94,14 @@ export async function GET(request: NextRequest) {
     
     let newsData: NewsData | null = null;
     
+    // Vercel KV'den haberleri çek
     try {
       newsData = await kv.get<NewsData>(NEWS_KEY);
     } catch (kvError) {
-      console.log("KV not available, using defaults");
+      console.log("KV fetch error, using defaults:", kvError);
     }
     
+    // KV'de veri yoksa varsayılanları kullan
     if (!newsData) {
       newsData = DEFAULT_NEWS;
     }
@@ -111,6 +112,7 @@ export async function GET(request: NextRequest) {
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
     };
     
+    // Admin için tüm haberleri döndür
     if (all === "true") {
       return NextResponse.json({
         success: true,
@@ -122,9 +124,12 @@ export async function GET(request: NextRequest) {
       }, { headers });
     }
     
+    // Mobile app için sadece seçilen dildeki haberleri döndür
+    const news = lang === "en" ? newsData.en : newsData.tr;
+    
     return NextResponse.json({
       success: true,
-      news: newsData[lang as keyof Pick<NewsData, "tr" | "en">] || newsData.tr,
+      news: news,
       lastUpdated: newsData.lastUpdated,
     }, { headers });
     
@@ -162,17 +167,22 @@ export async function POST(request: NextRequest) {
       lastUpdated: new Date().toISOString(),
     };
     
+    // Vercel KV'ye kaydet
     try {
       await kv.set(NEWS_KEY, newsData);
-      console.log("News saved to KV");
+      console.log("News saved to KV successfully");
     } catch (kvError) {
       console.error("KV save error:", kvError);
+      return NextResponse.json({
+        success: false,
+        error: "Failed to save to KV",
+      }, { status: 500 });
     }
     
     return NextResponse.json({
       success: true,
       message: "News updated successfully",
-      newsData,
+      newsData: newsData,
     }, {
       headers: {
         "Access-Control-Allow-Origin": "*",
