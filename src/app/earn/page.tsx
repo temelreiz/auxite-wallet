@@ -88,9 +88,9 @@ export default function EarnPage() {
                 <Image
                   src="/auxite-earn-logo.png"
                   alt="Auxite Earn"
-                  width={220}
-                  height={60}
-                  className="h-14 w-auto"
+                  width={160}
+                  height={40}
+                  className="h-12 w-auto"
                 />
               </Link>
 
