@@ -192,7 +192,7 @@ export default function CryptoPriceCard({
             XRP: cryptoId === "XRP" ? price : 0, 
             SOL: cryptoId === "SOL" ? price : 0 
           }}
-          metalPrices={metalPrices}
+          metalBidPrices={metalPrices}
         />
       )}
     </>
