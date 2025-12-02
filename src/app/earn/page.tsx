@@ -86,7 +86,7 @@ export default function EarnPage() {
               {/* Logo - Auxite Earn */}
               <Link href="/earn">
                 <Image
-                  src="/auxite-earn.png"
+                  src="/auxite-earn-logo.png"
                   alt="Auxite Earn"
                   width={180}
                   height={50}
