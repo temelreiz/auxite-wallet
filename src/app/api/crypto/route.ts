@@ -1,85 +1,103 @@
 import { NextResponse } from "next/server";
 
-// Binance API - No API key required for public endpoints
-const BINANCE_API = "https://api.binance.com/api/v3/ticker/24hr";
+// CoinGecko API - Free, no API key required
+const COINGECKO_API = "https://api.coingecko.com/api/v3/simple/price";
 
-// Symbol mapping
-const SYMBOLS = ["BTCUSDT", "ETHUSDT", "XRPUSDT", "SOLUSDT"];
-
-// Price adjustments from settings (ask/bid spread)
-const DEFAULT_SETTINGS = {
-  BTC: { askAdjust: 1, bidAdjust: -0.5 },
-  ETH: { askAdjust: 1, bidAdjust: -0.5 },
-  XRP: { askAdjust: 1, bidAdjust: -0.5 },
-  SOL: { askAdjust: 1, bidAdjust: -0.5 },
-};
-
-// USDT/TRY rate (approximate)
-const USDT_TRY_RATE = 42.51;
+// Coin IDs for CoinGecko
+const COIN_IDS = "bitcoin,ethereum,ripple,solana";
 
 export async function GET() {
   try {
-    // Fetch all symbols in one request
-    const symbolsParam = JSON.stringify(SYMBOLS);
+    // CoinGecko API call
     const response = await fetch(
-      `${BINANCE_API}?symbols=${encodeURIComponent(symbolsParam)}`,
+      `${COINGECKO_API}?ids=${COIN_IDS}&vs_currencies=usd&include_24hr_change=true`,
       {
         headers: {
           "Accept": "application/json",
         },
-        next: { revalidate: 5 }, // Cache for 5 seconds
+        next: { revalidate: 10 }, // Cache for 10 seconds
       }
     );
 
     if (!response.ok) {
-      throw new Error(`Binance API error: ${response.status}`);
+      throw new Error(`CoinGecko API error: ${response.status}`);
     }
 
     const data = await response.json();
 
-    // Parse Binance response
-    const prices: Record<string, { usd: number; usd_24h_change: number }> = {};
-    
-    for (const ticker of data) {
-      const symbol = ticker.symbol;
-      const price = parseFloat(ticker.lastPrice);
-      const change24h = parseFloat(ticker.priceChangePercent);
-
-      if (symbol === "BTCUSDT") {
-        prices.bitcoin = { usd: price, usd_24h_change: change24h };
-      } else if (symbol === "ETHUSDT") {
-        prices.ethereum = { usd: price, usd_24h_change: change24h };
-      } else if (symbol === "XRPUSDT") {
-        prices.ripple = { usd: price, usd_24h_change: change24h };
-      } else if (symbol === "SOLUSDT") {
-        prices.solana = { usd: price, usd_24h_change: change24h };
-      }
-    }
-
-    // Add USDT/TRY rate
+    // Parse CoinGecko response
     const result = {
-      ...prices,
-      tether: { try: USDT_TRY_RATE },
-      source: "binance",
+      bitcoin: {
+        usd: data.bitcoin?.usd || 0,
+        usd_24h_change: data.bitcoin?.usd_24h_change || 0,
+      },
+      ethereum: {
+        usd: data.ethereum?.usd || 0,
+        usd_24h_change: data.ethereum?.usd_24h_change || 0,
+      },
+      ripple: {
+        usd: data.ripple?.usd || 0,
+        usd_24h_change: data.ripple?.usd_24h_change || 0,
+      },
+      solana: {
+        usd: data.solana?.usd || 0,
+        usd_24h_change: data.solana?.usd_24h_change || 0,
+      },
+      source: "coingecko",
       timestamp: Date.now(),
     };
 
     return NextResponse.json(result, {
       headers: {
-        "Cache-Control": "public, s-maxage=5, stale-while-revalidate=10",
+        "Cache-Control": "public, s-maxage=10, stale-while-revalidate=30",
       },
     });
   } catch (error) {
-    console.error("Binance API error:", error);
+    console.error("CoinGecko API error:", error);
 
-    // Fallback prices
+    // Try Binance as fallback
+    try {
+      const binanceResponse = await fetch(
+        "https://api.binance.com/api/v3/ticker/24hr?symbols=[\"BTCUSDT\",\"ETHUSDT\",\"XRPUSDT\",\"SOLUSDT\"]",
+        { next: { revalidate: 10 } }
+      );
+
+      if (binanceResponse.ok) {
+        const binanceData = await binanceResponse.json();
+        const prices: Record<string, { usd: number; usd_24h_change: number }> = {};
+
+        for (const ticker of binanceData) {
+          const price = parseFloat(ticker.lastPrice);
+          const change = parseFloat(ticker.priceChangePercent);
+
+          if (ticker.symbol === "BTCUSDT") {
+            prices.bitcoin = { usd: price, usd_24h_change: change };
+          } else if (ticker.symbol === "ETHUSDT") {
+            prices.ethereum = { usd: price, usd_24h_change: change };
+          } else if (ticker.symbol === "XRPUSDT") {
+            prices.ripple = { usd: price, usd_24h_change: change };
+          } else if (ticker.symbol === "SOLUSDT") {
+            prices.solana = { usd: price, usd_24h_change: change };
+          }
+        }
+
+        return NextResponse.json({
+          ...prices,
+          source: "binance",
+          timestamp: Date.now(),
+        });
+      }
+    } catch (binanceError) {
+      console.error("Binance fallback error:", binanceError);
+    }
+
+    // Final fallback - static prices
     return NextResponse.json(
       {
-        ethereum: { usd: 3650, usd_24h_change: 0 },
-        bitcoin: { usd: 97500, usd_24h_change: 0 },
-        ripple: { usd: 2.20, usd_24h_change: 0 },
-        solana: { usd: 235, usd_24h_change: 0 },
-        tether: { try: USDT_TRY_RATE },
+        ethereum: { usd: 3650, usd_24h_change: 1.5 },
+        bitcoin: { usd: 97500, usd_24h_change: 2.1 },
+        ripple: { usd: 2.20, usd_24h_change: -0.8 },
+        solana: { usd: 235, usd_24h_change: 3.2 },
         source: "fallback",
         error: error instanceof Error ? error.message : "Unknown error",
       },
