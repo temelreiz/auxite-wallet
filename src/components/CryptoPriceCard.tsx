@@ -180,8 +180,18 @@ export default function CryptoPriceCard({
           onClose={() => setShowConvertModal(false)}
           crypto={cryptoId}
           lang={lang}
-          cryptoBalance={balance}
-          cryptoPrice={price}
+          cryptoBalances={{ 
+            ETH: cryptoId === "ETH" ? balance : 0, 
+            BTC: cryptoId === "BTC" ? balance : 0, 
+            XRP: cryptoId === "XRP" ? balance : 0, 
+            SOL: cryptoId === "SOL" ? balance : 0 
+          }}
+          cryptoPrices={{ 
+            ETH: cryptoId === "ETH" ? price : 0, 
+            BTC: cryptoId === "BTC" ? price : 0, 
+            XRP: cryptoId === "XRP" ? price : 0, 
+            SOL: cryptoId === "SOL" ? price : 0 
+          }}
           metalPrices={metalPrices}
         />
       )}
