@@ -5,6 +5,7 @@ interface MetalPrices {
   AUXS: number;
   AUXPT: number;
   AUXPD: number;
+  [key: string]: number;
 }
 
 interface MetalDirections {
@@ -12,6 +13,7 @@ interface MetalDirections {
   AUXS: "up" | "down" | "neutral";
   AUXPT: "up" | "down" | "neutral";
   AUXPD: "up" | "down" | "neutral";
+  [key: string]: "up" | "down" | "neutral";
 }
 
 interface MetalChanges {
@@ -19,6 +21,7 @@ interface MetalChanges {
   AUXS: number;
   AUXPT: number;
   AUXPD: number;
+  [key: string]: number;
 }
 
 export function useMetalsPrices() {
