@@ -115,7 +115,7 @@ function EarningsCalculator({ amount, apy, days, metalSymbol, lang }: {
       
       <div className="space-y-2">
         <div className="flex justify-between items-center">
-          <span className="text-xs text-slate-500">{lang === "tr" ? "Tahsis Miktarı" : "Allocation Amount"}</span>
+          <span className="text-xs text-slate-500">{lang === "tr" ? "Kilitli Miktar" : "Locked Amount"}</span>
           <span className="text-sm font-medium text-slate-200">{amount.toFixed(2)}g</span>
         </div>
         <div className="flex justify-between items-center">
@@ -238,13 +238,13 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
               <img src={offer.icon} alt={offer.name} className="w-14 h-14" />
               <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
                 <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
             <div>
               <h3 className="text-xl font-bold text-white">
-                {lang === "tr" ? "Tahsis Et" : "Allocate"} - {offer.metal}
+                {lang === "tr" ? "Kilitle ve Kazan" : "Lock & Earn"} - {offer.metal}
               </h3>
               <p className="text-sm text-slate-400">{offer.name}</p>
             </div>
@@ -267,7 +267,7 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
               <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {lang === "tr" ? "Tahsis Süresi" : "Allocation Period"}
+              {lang === "tr" ? "Kilitleme Süresi" : "Lock Period"}
             </label>
             <APYVisual 
               periods={offer.periods}
@@ -343,7 +343,7 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
                 </div>
                 <div>
                   <div className="text-sm font-medium text-emerald-300">
-                    {lang === "tr" ? "Tahsis Başarılı!" : "Allocation Successful!"}
+                    {lang === "tr" ? "Kilitleme Başarılı!" : "Lock Successful!"}
                   </div>
                   <div className="text-xs text-emerald-400/70">
                     {lang === "tr" ? "Pozisyonunuz oluşturuldu." : "Your position has been created."}
@@ -367,7 +367,7 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
                     {lang === "tr" ? "Onay Tamamlandı!" : "Approval Complete!"}
                   </div>
                   <div className="text-xs text-blue-400/70">
-                    {lang === "tr" ? "Şimdi tahsis edebilirsiniz." : "You can now allocate."}
+                    {lang === "tr" ? "Şimdi kilitleyebilirsiniz." : "You can now lock."}
                   </div>
                 </div>
               </div>
@@ -428,7 +428,7 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  {lang === "tr" ? "Tahsis Ediliyor..." : "Allocating..."}
+                  {lang === "tr" ? "Kilitleniyor..." : "Locking..."}
                 </>
               ) : isDepositSuccess ? (
                 <>
@@ -440,9 +440,9 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
               ) : (
                 <>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  {lang === "tr" ? "Tahsis Et" : "Allocate"}
+                  {lang === "tr" ? "Kilitle ve Kazan" : "Lock & Earn"}
                 </>
               )}
             </button>
