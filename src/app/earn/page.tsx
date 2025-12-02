@@ -16,7 +16,7 @@ const STORAGE_KEYS = {
   LANGUAGE: "auxite_language",
 };
 
-export default function LeasingPage() {
+export default function EarnPage() {
   const [lang, setLang] = useState<"tr" | "en">("tr");
   
   // External wallet (wagmi)
@@ -83,18 +83,18 @@ export default function LeasingPage() {
           <div className="flex items-center justify-between">
             {/* Left Side - Logo + Navigation */}
             <div className="flex items-center gap-5">
-              {/* Logo - Auxite Lease */}
-              <Link href="/leasing">
+              {/* Logo - Auxite Earn */}
+              <Link href="/earn">
                 <Image
-                  src="/auxite-lease.png"
-                  alt="Auxite Lease"
+                  src="/auxite-earn.png"
+                  alt="Auxite Earn"
                   width={180}
                   height={50}
                   className="h-12 w-auto"
                 />
               </Link>
 
-              {/* Navigation - Sıra: Piyasalar, Leasing, Cüzdan */}
+              {/* Navigation - Sıra: Piyasalar, Earn, Cüzdan */}
               <div className="flex gap-2">
                 <Link
                   href="/"
@@ -103,10 +103,10 @@ export default function LeasingPage() {
                   {lang === "tr" ? "Piyasalar" : "Markets"}
                 </Link>
                 <Link
-                  href="/leasing"
+                  href="/earn"
                   className="px-4 py-1.5 rounded-lg bg-emerald-500 text-white font-medium text-sm"
                 >
-                  Leasing
+                  {lang === "tr" ? "Kazan" : "Earn"}
                 </Link>
                 <Link
                   href="/wallet"

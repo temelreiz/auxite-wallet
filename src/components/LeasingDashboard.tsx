@@ -169,7 +169,7 @@ function MetalOfferCard({
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
-        {lang === "tr" ? "Tahsis Et" : "Allocate"}
+        {lang === "tr" ? "Kilitle ve Kazan" : "Lock & Earn"}
       </button>
     </div>
   );
@@ -222,7 +222,7 @@ export function LeasingDashboard({
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">
-                  {lang === "tr" ? "Auxite Leasing" : "Auxite Leasing"}
+                  {lang === "tr" ? "Auxite Earn" : "Auxite Earn"}
                 </h2>
                 <p className="text-sm text-slate-400">
                   {lang === "tr" ? "Metal Getiri Platformu" : "Metal Yield Platform"}
@@ -231,8 +231,8 @@ export function LeasingDashboard({
             </div>
             <p className="text-slate-300 max-w-xl mb-6">
               {lang === "tr"
-                ? "Metal tokenlerinizi kurumsal ortaklara tahsis ederek yıllık %2-6 arasında metal cinsinden kazanç elde edin."
-                : "Allocate your metal tokens to institutional partners and earn 2-6% annual yield in metal."}
+                ? "Metal tokenlerinizi kilitleyin ve kurumsal ortaklardan yıllık %2-6 arasında metal cinsinden kazanç elde edin."
+                : "Lock your metal tokens and earn 2-6% annual yield in metal from institutional partners."}
             </p>
             <div className="flex gap-3">
               <div className="px-4 py-2 rounded-lg bg-slate-800/50 border border-slate-700">
@@ -265,8 +265,8 @@ export function LeasingDashboard({
             </h3>
             <p className="text-sm text-slate-400 mb-6 max-w-sm mx-auto">
               {lang === "tr"
-                ? "Leasing özelliklerini kullanmak için cüzdanınızı bağlayın"
-                : "Connect your wallet to access leasing features"}
+                ? "Earn özelliklerini kullanmak için cüzdanınızı bağlayın"
+                : "Connect your wallet to access Earn features"}
             </p>
           </div>
         </div>
@@ -284,12 +284,12 @@ export function LeasingDashboard({
               <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
-              {lang === "tr" ? "Metal Leasing" : "Metal Leasing"}
+              {lang === "tr" ? "Metal Earn" : "Metal Earn"}
             </h2>
             <p className="text-sm text-slate-400 mt-1">
               {lang === "tr"
-                ? "Metallerinizi tahsis edin ve getiri kazanın"
-                : "Allocate your metals and earn yield"}
+                ? "Metallerinizi kilitleyin ve getiri kazanın"
+                : "Lock your metals and earn yield"}
             </p>
           </div>
           {source && (
@@ -311,7 +311,7 @@ export function LeasingDashboard({
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatsCard
-            label={lang === "tr" ? "Toplam Tahsis" : "Total Allocated"}
+            label={lang === "tr" ? "Toplam Kilitli" : "Total Locked"}
             value={stats.totalLocked}
             suffix="USD"
             color="text-emerald-400"
@@ -376,7 +376,7 @@ export function LeasingDashboard({
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                {lang === "tr" ? "Tahsis Et" : "Allocate"}
+                {lang === "tr" ? "Kazan" : "Earn"}
               </span>
               {activeTab === "allocate" && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-400 rounded-full"></div>
@@ -417,8 +417,8 @@ export function LeasingDashboard({
               </h3>
               <p className="text-sm text-slate-400">
                 {lang === "tr"
-                  ? "Metal tokenlerinizi seçin ve tahsis edin"
-                  : "Select and allocate your metal tokens"}
+                  ? "Metal tokenlerinizi seçin ve kazanmaya başlayın"
+                  : "Select your metal tokens and start earning"}
               </p>
             </div>
 
@@ -498,7 +498,7 @@ export function LeasingDashboard({
             <div className="grid grid-cols-2 gap-2">
               {[
                 { icon: "🔒", text: lang === "tr" ? "Sigortalı" : "Insured" },
-                { icon: "📦", text: lang === "tr" ? "Tahsisli" : "Allocated" },
+                { icon: "📦", text: lang === "tr" ? "Fiziksel" : "Physical" },
                 { icon: "🏢", text: lang === "tr" ? "Kurumsal" : "Institutional" },
                 { icon: "💰", text: lang === "tr" ? "Metal Getiri" : "Metal Yield" },
                 { icon: "📊", text: lang === "tr" ? "Şeffaf" : "Transparent" },
