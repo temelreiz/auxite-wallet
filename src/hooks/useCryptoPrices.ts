@@ -78,7 +78,7 @@ export function useCryptoPrices() {
       setDirections(newDirections);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching crypto prices:", error);
+      // Sessizce fallback kullan
       // Fallback prices
       setPrices({
         eth: 3000,

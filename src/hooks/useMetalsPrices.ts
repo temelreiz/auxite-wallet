@@ -100,7 +100,7 @@ export function useMetalsPrices() {
       setDirections(newDirections);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching metal prices:", error);
+      // Sessizce fallback kullan
       // Fallback prices
       setPrices({
         AUXG: 139.31,
