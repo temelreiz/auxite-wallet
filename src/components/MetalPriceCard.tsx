@@ -105,6 +105,15 @@ export default function MetalPriceCard({
 
   const directionStyles = getDirectionStyles();
 
+  // metalId'yi AUXG formatına çevir
+  const metalIdToAux: Record<string, "AUXG" | "AUXS" | "AUXPT" | "AUXPD"> = {
+    gold: "AUXG",
+    silver: "AUXS",
+    platinum: "AUXPT",
+    palladium: "AUXPD",
+  };
+  const auxMetalId = metalIdToAux[metalId];
+
   return (
     <>
       <div 
@@ -176,7 +185,7 @@ export default function MetalPriceCard({
       {/* Trade Panel Modal */}
       {showTradePanel && (
         <TradePanel
-          metalId={metalId}
+          metalId={auxMetalId}
           metalSymbol={symbol}
           metalName={name}
           currentPrice={pricePerGram}
@@ -190,7 +199,7 @@ export default function MetalPriceCard({
       {/* Trading Detail Page */}
       {showTradingDetail && (
         <TradingDetailPage
-          metalId={metalId}
+          metalId={auxMetalId}
           symbol={symbol}
           name={name}
           currentPrice={capturedValues.price}
