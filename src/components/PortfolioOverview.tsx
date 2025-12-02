@@ -75,7 +75,7 @@ export function PortfolioOverview({
   const { address, isConnected } = useAccount();
   const { balances, isLoading: balancesLoading } = useTokenBalances();
   const { prices, loading: pricesLoading } = useMetalsPrices();
-  const { prices: cryptoPrices } = useCryptoPrices();
+  const { prices: cryptoPrices, changes: cryptoChanges } = useCryptoPrices();
 
   // Use provided walletAddress or connected address
   const displayAddress = walletAddress || address;
@@ -125,7 +125,7 @@ export function PortfolioOverview({
       balance: ethBalanceNum,
       price: cryptoPrices?.eth || 0,
       value: ethValue,
-      change: cryptoPrices?.ethChange || 0,
+      change: cryptoChanges?.eth || 0,
       type: "crypto" as const,
     },
     {
@@ -134,7 +134,7 @@ export function PortfolioOverview({
       balance: 0,
       price: cryptoPrices?.btc || 0,
       value: 0,
-      change: cryptoPrices?.btcChange || 0,
+      change: cryptoChanges?.btc || 0,
       type: "crypto" as const,
     },
     {
@@ -143,7 +143,7 @@ export function PortfolioOverview({
       balance: 0,
       price: cryptoPrices?.xrp || 0,
       value: 0,
-      change: cryptoPrices?.xrpChange || 0,
+      change: cryptoChanges?.xrp || 0,
       type: "crypto" as const,
     },
     {
@@ -152,7 +152,7 @@ export function PortfolioOverview({
       balance: 0,
       price: cryptoPrices?.sol || 0,
       value: 0,
-      change: cryptoPrices?.solChange || 0,
+      change: cryptoChanges?.sol || 0,
       type: "crypto" as const,
     },
   ];
