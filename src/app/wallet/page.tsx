@@ -12,7 +12,6 @@ import { BuyMetalModal } from "@/components/BuyMetalModal";
 import { CryptoConvertModal } from "@/components/CryptoConvertModal";
 import { MetalConvertModal } from "@/components/MetalConvertModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
-import { EarnModal } from "@/components/EarnModal";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 
@@ -46,7 +45,6 @@ export default function WalletPage() {
   const [showReceive, setShowReceive] = useState(false);
   const [showBuyMetal, setShowBuyMetal] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
-  const [showEarnModal, setShowEarnModal] = useState(false);
   const [depositSearchQuery, setDepositSearchQuery] = useState("");
   
   // New modal states for portfolio clicks
@@ -280,9 +278,9 @@ export default function WalletPage() {
                 </span>
               </button>
 
-              {/* Kazan / Earn - Opens Modal */}
-              <button
-                onClick={() => setShowEarnModal(true)}
+              {/* Kazan / Earn - Goes to Earn Page */}
+              <Link
+                href="/earn"
                 className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-amber-500 transition-all group"
               >
                 <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center group-hover:bg-amber-500/30 transition-colors">
@@ -293,7 +291,7 @@ export default function WalletPage() {
                 <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
                   {lang === "tr" ? "Kazan" : "Earn"}
                 </span>
-              </button>
+              </Link>
 
               {/* Çek / Withdraw */}
               <button
@@ -1162,13 +1160,6 @@ export default function WalletPage() {
           }}
         />
       )}
-
-      {/* Earn Modal */}
-      <EarnModal
-        isOpen={showEarnModal}
-        onClose={() => setShowEarnModal(false)}
-        lang={lang}
-      />
     </main>
   );
 }
