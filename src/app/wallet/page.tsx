@@ -328,7 +328,7 @@ export default function WalletPage() {
                 </div>
                 <div className="text-center">
                   <p className="text-xs text-slate-500 mb-1">
-                    {lang === "tr" ? "Tahsisli Varlıklar" : "Allocated Assets"}
+                    {lang === "tr" ? "Kilitli Varlıklar" : "Locked Assets"}
                   </p>
                   <p className="text-lg font-semibold text-amber-400">$13,000.00</p>
                 </div>
@@ -518,10 +518,10 @@ export default function WalletPage() {
               </p>
             </div>
 
-            {/* Tahsisli Varlıklar Section */}
+            {/* Kilitli Varlıklar Section */}
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">
-                {lang === "tr" ? "Tahsisli Varlıklar" : "Allocated Assets"}
+                {lang === "tr" ? "Kilitli Varlıklar" : "Locked Assets"}
               </h3>
               
               <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
@@ -529,11 +529,11 @@ export default function WalletPage() {
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
                       <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-400">{lang === "tr" ? "Toplam Tahsisli" : "Total Allocated"}</p>
+                      <p className="text-sm text-slate-400">{lang === "tr" ? "Toplam Kilitli" : "Total Locked"}</p>
                       <p className="text-xl font-bold text-white">100g AUXG</p>
                     </div>
                   </div>
@@ -544,7 +544,7 @@ export default function WalletPage() {
                   </div>
                 </div>
                 
-                {/* Allocated Items */}
+                {/* Locked Items */}
                 <div className="mt-4 pt-4 border-t border-amber-500/20 space-y-2">
                   <div className="flex items-center justify-between p-2 rounded-lg bg-slate-800/50">
                     <div className="flex items-center gap-2">
@@ -736,8 +736,8 @@ export default function WalletPage() {
                   </h4>
                   <p className="text-sm text-slate-400">
                     {lang === "tr" 
-                      ? "SWIFT, kart, Apple/Google Pay ile USD/TRY yatırın" 
-                      : "Deposit USD/TRY via SWIFT, card, Apple/Google Pay"}
+                      ? "Kredi kartı, Apple/Google Pay ile USD/TRY yatırın" 
+                      : "Deposit USD/TRY via card, Apple/Google Pay"}
                   </p>
                 </div>
                 <svg className="w-5 h-5 text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -775,50 +775,6 @@ export default function WalletPage() {
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4">
             <div className="max-w-md mx-auto space-y-4">
-              
-              {/* SWIFT Transfer */}
-              <button
-                onClick={() => {
-                  // TODO: SWIFT modal
-                  alert(lang === "tr" ? "SWIFT Transfer yakında aktif olacak" : "SWIFT Transfer coming soon");
-                }}
-                className="w-full p-4 rounded-xl border border-slate-700 hover:border-blue-500/50 hover:bg-slate-800/50 transition-all text-left flex items-start gap-4 group"
-              >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-white font-semibold">SWIFT Transfer</h4>
-                    <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                      {lang === "tr" ? "Banka" : "Bank"}
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-400 mb-2">
-                    {lang === "tr" 
-                      ? "Banka havalesi ile USD veya TRY yatırın" 
-                      : "Deposit USD or TRY via bank transfer"}
-                  </p>
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="text-slate-500">
-                      {lang === "tr" ? "Min: $100" : "Min: $100"}
-                    </span>
-                    <span className="text-slate-600">•</span>
-                    <span className="text-slate-500">
-                      {lang === "tr" ? "1-3 iş günü" : "1-3 business days"}
-                    </span>
-                    <span className="text-slate-600">•</span>
-                    <span className="text-emerald-500">
-                      {lang === "tr" ? "Ücretsiz" : "Free"}
-                    </span>
-                  </div>
-                </div>
-                <svg className="w-5 h-5 text-slate-500 group-hover:text-blue-400 flex-shrink-0 mt-3 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
 
               {/* MoonPay */}
               <button
