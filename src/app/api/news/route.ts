@@ -91,9 +91,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const lang = searchParams.get("lang") || "tr";
-    const all = searchParams.get("all"); // Admin için tüm haberleri getir
+    const all = searchParams.get("all");
     
-    // Vercel KV'den haberleri çek
     let newsData: NewsData | null = null;
     
     try {
@@ -102,20 +101,17 @@ export async function GET(request: NextRequest) {
       console.log("KV not available, using defaults");
     }
     
-    // KV yoksa veya boşsa varsayılanları kullan
     if (!newsData) {
       newsData = DEFAULT_NEWS;
     }
     
-    // CORS headers for mobile app
     const headers = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
     };
     
-    // Admin için tüm haberleri döndür
-    if (all === 'true') {
+    if (all === "true") {
       return NextResponse.json({
         success: true,
         allNews: {
@@ -126,10 +122,9 @@ export async function GET(request: NextRequest) {
       }, { headers });
     }
     
-    // Mobile app için sadece seçilen dildeki haberleri döndür
     return NextResponse.json({
       success: true,
-      news: newsData[lang as keyof Pick<NewsData, 'tr' | 'en'>] || newsData.tr,
+      news: newsData[lang as keyof Pick<NewsData, "tr" | "en">] || newsData.tr,
       lastUpdated: newsData.lastUpdated,
     }, { headers });
     
@@ -146,11 +141,11 @@ export async function GET(request: NextRequest) {
 // POST - Haberleri güncelle (Admin only)
 export async function POST(request: NextRequest) {
   try {
-    // Admin authentication
     const authHeader = request.headers.get("authorization");
     const adminPassword = process.env.ADMIN_PASSWORD || "auxite2024";
+    const expectedAuth = "Bearer " + adminPassword;
     
-    if (authHeader !== \`Bearer \${adminPassword}\`) {
+    if (authHeader !== expectedAuth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
@@ -167,10 +162,9 @@ export async function POST(request: NextRequest) {
       lastUpdated: new Date().toISOString(),
     };
     
-    // Vercel KV'ye kaydet
     try {
       await kv.set(NEWS_KEY, newsData);
-      console.log("✅ News saved to KV");
+      console.log("News saved to KV");
     } catch (kvError) {
       console.error("KV save error:", kvError);
     }
@@ -181,7 +175,7 @@ export async function POST(request: NextRequest) {
       newsData,
     }, {
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        "Access-Control-Allow-Origin": "*",
       },
     });
   } catch (error) {
@@ -197,9 +191,9 @@ export async function POST(request: NextRequest) {
 export async function OPTIONS() {
   return NextResponse.json({}, {
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
     },
   });
 }
