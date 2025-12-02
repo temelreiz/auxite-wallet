@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     }
 
     // XRP memo kontrolü
-    if (coin === "XRP" && coinConfig.requiresMemo && !memo) {
+    if (coin === "XRP" && "requiresMemo" in coinConfig && coinConfig.requiresMemo && !memo) {
       return NextResponse.json(
         { error: "Destination Tag (memo) is required for XRP withdrawals" },
         { status: 400 }
