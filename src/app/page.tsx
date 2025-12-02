@@ -17,6 +17,7 @@ const STORAGE_KEYS = {
   WALLET_ADDRESS: "auxite_wallet_address",
   WALLET_MODE: "auxite_wallet_mode",
   SESSION_UNLOCKED: "auxite_session_unlocked",
+  LANGUAGE: "auxite_language",
 };
 
 export default function Home() {
@@ -31,6 +32,20 @@ export default function Home() {
   // UI state
   const [lang, setLang] = useState<"tr" | "en">("tr");
   const [isLoading, setIsLoading] = useState(true);
+
+  // Load language preference on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem(STORAGE_KEYS.LANGUAGE) as "tr" | "en" | null;
+    if (savedLang) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Handle language change
+  const handleLanguageChange = (newLang: "tr" | "en") => {
+    setLang(newLang);
+    localStorage.setItem(STORAGE_KEYS.LANGUAGE, newLang);
+  };
 
   // Check wallet state on mount
   useEffect(() => {
@@ -136,7 +151,7 @@ export default function Home() {
           <div className="flex justify-center mb-8">
             <div className="flex gap-0.5 bg-slate-800 rounded-lg p-0.5">
               <button
-                onClick={() => setLang("tr")}
+                onClick={() => handleLanguageChange("tr")}
                 className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                   lang === "tr"
                     ? "bg-emerald-500 text-white"
@@ -146,7 +161,7 @@ export default function Home() {
                 TR
               </button>
               <button
-                onClick={() => setLang("en")}
+                onClick={() => handleLanguageChange("en")}
                 className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                   lang === "en"
                     ? "bg-emerald-500 text-white"
@@ -294,7 +309,7 @@ export default function Home() {
               {/* Language Toggle */}
               <div className="flex gap-0.5 bg-slate-800 rounded-lg p-0.5">
                 <button
-                  onClick={() => setLang("tr")}
+                  onClick={() => handleLanguageChange("tr")}
                   className={`px-2.5 py-1 rounded text-sm font-medium transition-colors ${
                     lang === "tr"
                       ? "bg-emerald-500 text-white"
@@ -304,7 +319,7 @@ export default function Home() {
                   TR
                 </button>
                 <button
-                  onClick={() => setLang("en")}
+                  onClick={() => handleLanguageChange("en")}
                   className={`px-2.5 py-1 rounded text-sm font-medium transition-colors ${
                     lang === "en"
                       ? "bg-emerald-500 text-white"

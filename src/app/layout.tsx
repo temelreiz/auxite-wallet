@@ -9,11 +9,8 @@ export const metadata: Metadata = {
   title: "Auxite Wallet",
   description: "Precious Metals Trading Platform",
   icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/gold-favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/gold-favicon-32x32.png", sizes: "32x32", type: "image/png" },
-    ],
+    icon: "/gold-favicon-32x32.png",
+    shortcut: "/favicon.ico",
     apple: "/gold-apple-touch-icon.png",
   },
 };

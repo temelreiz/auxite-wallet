@@ -5,7 +5,10 @@ import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import MetalPriceCard from "./MetalPriceCard";
 import { ExchangeModal } from "./ExchangeModal";
+import { BuyMetalModal } from "./BuyMetalModal";
 import CryptoTradingDetailPage from "./CryptoTradingDetailPage";
+import { CryptoConvertModal } from "./CryptoConvertModal";
+import { CampaignBanner } from "./CampaignBanner";
 
 interface MetalPriceGridProps {
   lang?: "tr" | "en";
@@ -96,9 +99,12 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
   const [showExchange, setShowExchange] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
   const [showOnChainDeposit, setShowOnChainDeposit] = useState(false);
+  const [showFiatDeposit, setShowFiatDeposit] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [showReceive, setShowReceive] = useState(false);
-  const [showCryptoDetail, setShowCryptoDetail] = useState<"ETH" | "BTC" | null>(null);
+  const [showBuyMetal, setShowBuyMetal] = useState(false);
+  const [showCryptoDetail, setShowCryptoDetail] = useState<"ETH" | "BTC" | "XRP" | "SOL" | null>(null);
+  const [showCryptoConvert, setShowCryptoConvert] = useState<"ETH" | "BTC" | "XRP" | "SOL" | null>(null);
   const [depositSearchQuery, setDepositSearchQuery] = useState("");
   
   // Deposit Address Modal State
@@ -150,11 +156,14 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
   // Get styles for each crypto
   const ethStyles = getDirectionStyles(cryptoChanges.eth);
   const btcStyles = getDirectionStyles(cryptoChanges.btc);
-  const usdtStyles = getDirectionStyles(0); // Always neutral
-  const tryStyles = getDirectionStyles(cryptoChanges.try || 0);
+  const xrpStyles = getDirectionStyles(cryptoChanges.xrp || 0);
+  const solStyles = getDirectionStyles(cryptoChanges.sol || 0);
 
   return (
     <div className="space-y-4">
+      {/* Campaign Banner */}
+      <CampaignBanner lang={lang} variant="full" />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -239,14 +248,15 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
           <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.eth === "up" ? "text-emerald-400" : cryptoDirections.eth === "down" ? "text-red-400" : "text-slate-100"}`}>
             ${cryptoPrices.eth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button className="px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold transition-all">
-              {lang === "tr" ? "Al" : "Buy"}
-            </button>
-            <button className="px-3 py-2 rounded-lg bg-red-500 hover:bg-red-400 text-white text-xs font-semibold transition-all">
-              {lang === "tr" ? "Sat" : "Sell"}
-            </button>
-          </div>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setShowCryptoConvert("ETH"); }}
+            className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            {lang === "tr" ? "Dönüştür" : "Exchange"}
+          </button>
         </div>
 
         {/* BTC */}
@@ -274,68 +284,89 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
           <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.btc === "up" ? "text-emerald-400" : cryptoDirections.btc === "down" ? "text-red-400" : "text-slate-100"}`}>
             ${cryptoPrices.btc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button className="px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold transition-all">
-              {lang === "tr" ? "Al" : "Buy"}
-            </button>
-            <button className="px-3 py-2 rounded-lg bg-red-500 hover:bg-red-400 text-white text-xs font-semibold transition-all">
-              {lang === "tr" ? "Sat" : "Sell"}
-            </button>
-          </div>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setShowCryptoConvert("BTC"); }}
+            className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            {lang === "tr" ? "Dönüştür" : "Exchange"}
+          </button>
         </div>
 
-        {/* USDT */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-4">
+        {/* XRP */}
+        <div 
+          className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 hover:border-slate-600 cursor-pointer transition-all"
+          onClick={() => setShowCryptoDetail("XRP")}
+        >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-[#26A17B] flex items-center justify-center">
-                <span className="text-white text-xs font-bold">$</span>
+              <div className="w-5 h-5 rounded-full bg-[#23292F] flex items-center justify-center">
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="white">
+                  <path d="M12 0L4 6l8 6 8-6-8-6zM4 18l8 6 8-6-8-6-8 6z"/>
+                </svg>
               </div>
-              <span className="text-sm font-medium text-slate-200">USDT</span>
+              <span className="text-sm font-medium text-slate-200">XRP</span>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded ${usdtStyles.badgeBg} ${usdtStyles.badgeText}`}>
-              {usdtStyles.arrow} 0.00%
+            <span className={`text-xs px-2 py-0.5 rounded ${xrpStyles.badgeBg} ${xrpStyles.badgeText}`}>
+              {xrpStyles.arrow} {Math.abs(cryptoChanges.xrp || 0).toFixed(2)}%
             </span>
           </div>
-          <div className="text-xs text-slate-500 mb-1">Tether</div>
-          <div className="text-xl font-bold text-slate-100 font-mono mb-3">
-            $1.00
+          <div className="text-xs text-slate-500 mb-1">Ripple</div>
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+            <span>{lang === "tr" ? "Alış/Satış" : "Ask/Bid"}</span>
+            <span className="font-mono">${(cryptoPrices.xrp || 2.20).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button className="px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold transition-all">
-              {lang === "tr" ? "Al" : "Buy"}
-            </button>
-            <button className="px-3 py-2 rounded-lg bg-red-500 hover:bg-red-400 text-white text-xs font-semibold transition-all">
-              {lang === "tr" ? "Sat" : "Sell"}
-            </button>
+          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.xrp === "up" ? "text-emerald-400" : cryptoDirections.xrp === "down" ? "text-red-400" : "text-slate-100"}`}>
+            ${(cryptoPrices.xrp || 2.20).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setShowCryptoConvert("XRP"); }}
+            className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            {lang === "tr" ? "Dönüştür" : "Exchange"}
+          </button>
         </div>
 
-        {/* TRY */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-4">
+        {/* SOL */}
+        <div 
+          className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 hover:border-slate-600 cursor-pointer transition-all"
+          onClick={() => setShowCryptoDetail("SOL")}
+        >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-[#E30A17] flex items-center justify-center">
-                <span className="text-white text-xs font-bold">₺</span>
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#9945FF] to-[#14F195] flex items-center justify-center">
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="white">
+                  <path d="M4 17.5l3.5-3.5H20l-3.5 3.5H4zM4 6.5l3.5 3.5H20l-3.5-3.5H4zM4 12h16"/>
+                </svg>
               </div>
-              <span className="text-sm font-medium text-slate-200">TRY</span>
+              <span className="text-sm font-medium text-slate-200">SOL</span>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded ${tryStyles.badgeBg} ${tryStyles.badgeText}`}>
-              {tryStyles.arrow} {Math.abs(cryptoChanges.try || 0).toFixed(2)}%
+            <span className={`text-xs px-2 py-0.5 rounded ${solStyles.badgeBg} ${solStyles.badgeText}`}>
+              {solStyles.arrow} {Math.abs(cryptoChanges.sol || 0).toFixed(2)}%
             </span>
           </div>
-          <div className="text-xs text-slate-500 mb-1">Turkish Lira</div>
-          <div className="text-xl font-bold text-slate-100 font-mono mb-3">
-            ₺{cryptoPrices.try.toFixed(2)}
+          <div className="text-xs text-slate-500 mb-1">Solana</div>
+          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+            <span>{lang === "tr" ? "Alış/Satış" : "Ask/Bid"}</span>
+            <span className="font-mono">${(cryptoPrices.sol || 235).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button className="px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold transition-all">
-              {lang === "tr" ? "Al" : "Buy"}
-            </button>
-            <button className="px-3 py-2 rounded-lg bg-red-500 hover:bg-red-400 text-white text-xs font-semibold transition-all">
-              {lang === "tr" ? "Sat" : "Sell"}
-            </button>
+          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.sol === "up" ? "text-emerald-400" : cryptoDirections.sol === "down" ? "text-red-400" : "text-slate-100"}`}>
+            ${(cryptoPrices.sol || 235).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setShowCryptoConvert("SOL"); }}
+            className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            {lang === "tr" ? "Dönüştür" : "Exchange"}
+          </button>
         </div>
       </div>
 
@@ -371,18 +402,18 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
           </span>
         </button>
 
-        {/* Al / Receive */}
+        {/* Hızlı Al / Quick Buy */}
         <button
-          onClick={() => setShowReceive(true)}
+          onClick={() => setShowBuyMetal(true)}
           className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-purple-500 transition-all group"
         >
           <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
             <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
           <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
-            {lang === "tr" ? "Al" : "Receive"}
+            {lang === "tr" ? "Hızlı Al" : "Quick Buy"}
           </span>
         </button>
 
@@ -435,6 +466,21 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
         />
       )}
 
+      {/* Buy Metal Modal (Hızlı Al) */}
+      {showBuyMetal && (
+        <BuyMetalModal
+          isOpen={showBuyMetal}
+          onClose={() => setShowBuyMetal(false)}
+          lang={lang}
+          metalPrices={{
+            AUXG: prices.AUXG || 139.31,
+            AUXS: prices.AUXS || 1.79,
+            AUXPT: prices.AUXPT || 54.14,
+            AUXPD: prices.AUXPD || 48.16,
+          }}
+        />
+      )}
+
       {/* Deposit Modal - Select Method */}
       {showDeposit && (
         <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50">
@@ -484,8 +530,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
               <button
                 onClick={() => {
                   setShowDeposit(false);
-                  // TODO: Deposit Fiat modal açılacak
-                  alert(lang === "tr" ? "Fiat Yatırma yakında aktif olacak" : "Deposit Fiat coming soon");
+                  setShowFiatDeposit(true);
                 }}
                 className="w-full p-4 rounded-xl border border-slate-700 hover:border-slate-600 hover:bg-slate-800/50 transition-all text-left flex items-start gap-4"
               >
@@ -513,27 +558,121 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
         </div>
       )}
 
+      {/* Fiat Deposit Modal */}
+      {showFiatDeposit && (
+        <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50">
+          <div className="bg-slate-900 rounded-t-2xl sm:rounded-2xl border-t sm:border border-slate-700 w-full sm:max-w-md p-6 max-h-[80vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-white">
+                  {lang === "tr" ? "Fiat Yatır" : "Deposit Fiat"}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {lang === "tr" ? "USD veya TRY yatırın" : "Deposit USD or TRY"}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowFiatDeposit(false)}
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-3">
+              {/* SWIFT Transfer */}
+              <button
+                onClick={() => {
+                  alert(lang === "tr" ? "SWIFT Transfer yakında aktif olacak" : "SWIFT Transfer coming soon");
+                }}
+                className="w-full p-4 rounded-xl border border-slate-700 hover:border-blue-500/50 hover:bg-slate-800/50 transition-all text-left flex items-start gap-4 group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="text-white font-semibold text-sm">SWIFT Transfer</h4>
+                    <span className="px-1.5 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                      {lang === "tr" ? "Banka" : "Bank"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span>Min: $100</span>
+                    <span>•</span>
+                    <span>1-3 {lang === "tr" ? "gün" : "days"}</span>
+                    <span>•</span>
+                    <span className="text-emerald-500">{lang === "tr" ? "Ücretsiz" : "Free"}</span>
+                  </div>
+                </div>
+                <svg className="w-5 h-5 text-slate-500 group-hover:text-blue-400 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* MoonPay */}
+              <button
+                onClick={() => {
+                  alert(lang === "tr" ? "MoonPay yakında aktif olacak" : "MoonPay coming soon");
+                }}
+                className="w-full p-4 rounded-xl border border-slate-700 hover:border-purple-500/50 hover:bg-slate-800/50 transition-all text-left flex items-start gap-4 group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="text-white font-semibold text-sm">MoonPay</h4>
+                    <span className="px-1.5 py-0.5 text-xs rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                      {lang === "tr" ? "Anında" : "Instant"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span>Min: $30</span>
+                    <span>•</span>
+                    <span>{lang === "tr" ? "Anında" : "Instant"}</span>
+                    <span>•</span>
+                    <span className="text-amber-500">3.5%</span>
+                  </div>
+                </div>
+                <svg className="w-5 h-5 text-slate-500 group-hover:text-purple-400 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* On-Chain Deposit - Select Coin Modal */}
       {showOnChainDeposit && !selectedDepositCoin && (
-        <div className="fixed inset-0 bg-black/90 flex flex-col z-50">
-          {/* Header */}
-          <div className="flex items-center gap-4 p-4 border-b border-slate-800">
-            <button
-              onClick={() => setShowOnChainDeposit(false)}
-              className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-            >
-              <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h2 className="text-xl font-bold text-white flex-1 text-center pr-10">
-              {lang === "tr" ? "Coin Seç" : "Select Coin"}
-            </h2>
-          </div>
+        <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50">
+          <div className="bg-slate-900 rounded-t-2xl sm:rounded-2xl border-t sm:border border-slate-700 w-full sm:max-w-md p-6 max-h-[80vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-white">
+                {lang === "tr" ? "Coin Seç" : "Select Coin"}
+              </h3>
+              <button
+                onClick={() => setShowOnChainDeposit(false)}
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-          {/* Search */}
-          <div className="p-4">
-            <div className="relative">
+            {/* Search */}
+            <div className="relative mb-4">
               <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -545,25 +684,16 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-12 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-slate-600"
               />
             </div>
-          </div>
 
-          {/* Trending Section */}
-          <div className="px-4 pb-2">
-            <h3 className="text-sm font-semibold text-slate-400 mb-3">
-              {lang === "tr" ? "Popüler" : "Trending"}
-            </h3>
-          </div>
-
-          {/* Coin List */}
-          <div className="flex-1 overflow-y-auto px-4">
-            <div className="space-y-1">
+            {/* Coin List */}
+            <div className="space-y-2">
               {filteredDepositCoins.map((coin) => (
                 <button
                   key={coin.id}
                   onClick={() => {
                     setSelectedDepositCoin(coin.id);
                   }}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-800/70 transition-all"
+                  className="w-full flex items-center gap-4 p-3 rounded-xl border border-slate-700 hover:border-slate-600 hover:bg-slate-800/50 transition-all"
                 >
                   <div 
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
@@ -617,25 +747,14 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
 
             {/* Content */}
             <div className="p-4">
-              {/* QR Code */}
+              {/* QR Code - Real */}
               <div className="bg-white p-4 rounded-xl mb-4 flex items-center justify-center">
                 <div className="w-40 h-40 flex items-center justify-center">
-                  <svg className="w-36 h-36" viewBox="0 0 100 100" fill="none">
-                    <rect x="10" y="10" width="25" height="25" fill="#000"/>
-                    <rect x="65" y="10" width="25" height="25" fill="#000"/>
-                    <rect x="10" y="65" width="25" height="25" fill="#000"/>
-                    <rect x="15" y="15" width="15" height="15" fill="#fff"/>
-                    <rect x="70" y="15" width="15" height="15" fill="#fff"/>
-                    <rect x="15" y="70" width="15" height="15" fill="#fff"/>
-                    <rect x="20" y="20" width="5" height="5" fill="#000"/>
-                    <rect x="75" y="20" width="5" height="5" fill="#000"/>
-                    <rect x="20" y="75" width="5" height="5" fill="#000"/>
-                    <rect x="40" y="40" width="20" height="20" fill="#000"/>
-                    <rect x="45" y="45" width="10" height="10" fill="#fff"/>
-                    <rect x="65" y="65" width="25" height="25" fill="#000"/>
-                    <rect x="70" y="70" width="15" height="15" fill="#fff"/>
-                    <rect x="75" y="75" width="5" height="5" fill="#000"/>
-                  </svg>
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(DEPOSIT_ADDRESSES[selectedDepositCoin]?.address || '')}`}
+                    alt="QR Code"
+                    className="w-40 h-40"
+                  />
                 </div>
               </div>
 
@@ -720,6 +839,8 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                 <option value="AUXPD">AUXPD - {lang === "tr" ? "Paladyum" : "Palladium"}</option>
                 <option value="ETH">ETH - Ethereum</option>
                 <option value="BTC">BTC - Bitcoin</option>
+                <option value="XRP">XRP - Ripple</option>
+                <option value="SOL">SOL - Solana</option>
                 <option value="USDT">USDT - Tether</option>
               </select>
             </div>
@@ -793,20 +914,12 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
 
             {/* QR Code */}
             <div className="bg-white p-4 rounded-xl mb-4 flex items-center justify-center">
-              <div className="w-40 h-40 bg-slate-100 rounded-lg flex items-center justify-center">
-                <svg className="w-32 h-32" viewBox="0 0 100 100" fill="none">
-                  <rect x="10" y="10" width="25" height="25" fill="#000"/>
-                  <rect x="65" y="10" width="25" height="25" fill="#000"/>
-                  <rect x="10" y="65" width="25" height="25" fill="#000"/>
-                  <rect x="15" y="15" width="15" height="15" fill="#fff"/>
-                  <rect x="70" y="15" width="15" height="15" fill="#fff"/>
-                  <rect x="15" y="70" width="15" height="15" fill="#fff"/>
-                  <rect x="20" y="20" width="5" height="5" fill="#000"/>
-                  <rect x="75" y="20" width="5" height="5" fill="#000"/>
-                  <rect x="20" y="75" width="5" height="5" fill="#000"/>
-                  <rect x="40" y="40" width="20" height="20" fill="#000"/>
-                  <rect x="45" y="45" width="10" height="10" fill="#fff"/>
-                </svg>
+              <div className="w-40 h-40 flex items-center justify-center">
+                <img 
+                  src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=0xe6df1234567890abcdef1234567890abcdef3ba3"
+                  alt="QR Code"
+                  className="w-40 h-40"
+                />
               </div>
             </div>
 
@@ -833,12 +946,52 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
         </div>
       )}
 
-      {/* Crypto Detail Modal (ETH/BTC) - New Component */}
+      {/* Crypto Detail Modal (ETH/BTC/XRP/SOL) */}
       {showCryptoDetail && (
         <CryptoTradingDetailPage
           cryptoId={showCryptoDetail}
           onClose={() => setShowCryptoDetail(null)}
           lang={lang}
+          cryptoBalances={{
+            ETH: 0,
+            BTC: 0,
+            XRP: 0,
+            SOL: 0,
+          }}
+          metalBidPrices={{
+            AUXG: bidPrices.AUXG || 134.69,
+            AUXS: bidPrices.AUXS || 1.82,
+            AUXPT: bidPrices.AUXPT || 52.92,
+            AUXPD: bidPrices.AUXPD || 45.57,
+          }}
+        />
+      )}
+
+      {/* Crypto Convert Modal (ETH/BTC/XRP/SOL → AUXM/Metal) */}
+      {showCryptoConvert && (
+        <CryptoConvertModal
+          isOpen={!!showCryptoConvert}
+          onClose={() => setShowCryptoConvert(null)}
+          crypto={showCryptoConvert}
+          lang={lang}
+          cryptoBalances={{
+            ETH: 0,
+            BTC: 0,
+            XRP: 0,
+            SOL: 0,
+          }}
+          cryptoPrices={{
+            ETH: cryptoPrices.eth,
+            BTC: cryptoPrices.btc,
+            XRP: cryptoPrices.xrp || 2.20,
+            SOL: cryptoPrices.sol || 235,
+          }}
+          metalBidPrices={{
+            AUXG: bidPrices.AUXG || 134.69,
+            AUXS: bidPrices.AUXS || 1.82,
+            AUXPT: bidPrices.AUXPT || 52.92,
+            AUXPD: bidPrices.AUXPD || 45.57,
+          }}
         />
       )}
     </div>

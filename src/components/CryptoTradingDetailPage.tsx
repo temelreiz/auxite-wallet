@@ -2,11 +2,24 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { CryptoConvertModal } from "./CryptoConvertModal";
 
 interface CryptoTradingDetailPageProps {
-  cryptoId: "ETH" | "BTC";
+  cryptoId: "ETH" | "BTC" | "XRP" | "SOL";
   onClose: () => void;
   lang?: "tr" | "en";
+  cryptoBalances?: {
+    ETH: number;
+    BTC: number;
+    XRP: number;
+    SOL: number;
+  };
+  metalBidPrices?: {
+    AUXG: number;
+    AUXS: number;
+    AUXPT: number;
+    AUXPD: number;
+  };
 }
 
 type TimeFrame = "15m" | "1h" | "4h" | "1D" | "1W";
@@ -33,6 +46,8 @@ const TIMEFRAME_SETTINGS: Record<TimeFrame, { candleCount: number; intervalMs: n
 const CRYPTO_INFO = {
   ETH: { name: "Ethereum", color: "#627EEA", icon: "Ξ" },
   BTC: { name: "Bitcoin", color: "#F7931A", icon: "₿" },
+  XRP: { name: "Ripple", color: "#23292F", icon: "✕" },
+  SOL: { name: "Solana", color: "#9945FF", icon: "◎" },
 };
 
 function calculateMA(data: CandleData[], period: number = 20): number[] {
@@ -106,7 +121,13 @@ function calculateMACD(data: CandleData[]): { macd: number[]; signal: number[]; 
   return { macd, signal, histogram };
 }
 
-export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en" }: CryptoTradingDetailPageProps) {
+export default function CryptoTradingDetailPage({ 
+  cryptoId, 
+  onClose, 
+  lang = "en",
+  cryptoBalances = { ETH: 0, BTC: 0, XRP: 0, SOL: 0 },
+  metalBidPrices = { AUXG: 134.69, AUXS: 1.82, AUXPT: 52.92, AUXPD: 45.57 },
+}: CryptoTradingDetailPageProps) {
   const { prices, changes, directions } = useCryptoPrices();
   const [timeFrame, setTimeFrame] = useState<TimeFrame>("4h");
   const [activeTab, setActiveTab] = useState<"price" | "info" | "data">("price");
@@ -114,17 +135,47 @@ export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en"
   const [zoom, setZoom] = useState(1);
   const [overlayIndicators, setOverlayIndicators] = useState<OverlayIndicator[]>(["MA"]);
   const [panelIndicator, setPanelIndicator] = useState<PanelIndicator | null>(null);
-  const [tradeMode, setTradeMode] = useState<"buy" | "sell" | null>(null);
-  const [tradeAmount, setTradeAmount] = useState("");
+  const [showConvertModal, setShowConvertModal] = useState(false);
   
   // Spread settings from admin
   const [spreadSettings, setSpreadSettings] = useState<{ askAdjust: number; bidAdjust: number }>({ askAdjust: 1, bidAdjust: -0.5 });
 
   const cryptoInfo = CRYPTO_INFO[cryptoId];
-  const basePrice = cryptoId === "ETH" ? prices.eth : prices.btc;
-  const change24h = cryptoId === "ETH" ? changes.eth : changes.btc;
-  const direction = cryptoId === "ETH" ? directions.eth : directions.btc;
-  const tryRate = prices.try;
+  
+  // Get price based on crypto type
+  const getBasePrice = () => {
+    switch (cryptoId) {
+      case "ETH": return prices.eth;
+      case "BTC": return prices.btc;
+      case "XRP": return prices.xrp;
+      case "SOL": return prices.sol;
+      default: return 0;
+    }
+  };
+  
+  const getChange24h = () => {
+    switch (cryptoId) {
+      case "ETH": return changes.eth;
+      case "BTC": return changes.btc;
+      case "XRP": return changes.xrp;
+      case "SOL": return changes.sol;
+      default: return 0;
+    }
+  };
+  
+  const getDirection = () => {
+    switch (cryptoId) {
+      case "ETH": return directions.eth;
+      case "BTC": return directions.btc;
+      case "XRP": return directions.xrp;
+      case "SOL": return directions.sol;
+      default: return "neutral";
+    }
+  };
+
+  const basePrice = getBasePrice();
+  const change24h = getChange24h();
+  const direction = getDirection();
   
   // Apply spread to get ask/bid prices
   const askPrice = basePrice * (1 + spreadSettings.askAdjust / 100);
@@ -141,15 +192,11 @@ export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en"
         const res = await fetch("/api/admin/settings");
         if (res.ok) {
           const settings = await res.json();
-          console.log("Fetched settings:", settings);
-          console.log("CryptoId:", cryptoId);
-          console.log("Settings for crypto:", settings[cryptoId]);
           if (settings[cryptoId]) {
             setSpreadSettings({
               askAdjust: settings[cryptoId].askAdjust ?? 1,
               bidAdjust: settings[cryptoId].bidAdjust ?? -0.5,
             });
-            console.log("Applied spread:", settings[cryptoId].askAdjust, settings[cryptoId].bidAdjust);
           }
         }
       } catch (err) {
@@ -179,13 +226,34 @@ export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en"
       const r3 = Math.sin(numericSeed + i * 0.5) * 10000;
       const random1 = r1 - Math.floor(r1), random2 = r2 - Math.floor(r2), random3 = r3 - Math.floor(r3);
       
-      const volatility = cryptoId === "BTC" ? 0.015 : 0.02;
+      // Volatility based on crypto type
+      const getVolatility = () => {
+        switch (cryptoId) {
+          case "BTC": return 0.015;
+          case "ETH": return 0.02;
+          case "XRP": return 0.025;
+          case "SOL": return 0.03;
+          default: return 0.02;
+        }
+      };
+      
+      const getVolumeBase = () => {
+        switch (cryptoId) {
+          case "BTC": return 5e9;
+          case "ETH": return 5e8;
+          case "XRP": return 2e8;
+          case "SOL": return 3e8;
+          default: return 1e8;
+        }
+      };
+      
+      const volatility = getVolatility();
       const trend = (i / candleCount) * 0.05;
       const change = (random1 - 0.45) * volatility * price + trend * price / candleCount;
       const open = price, close = price + change;
       const high = Math.max(open, close) * (1 + random2 * 0.008);
       const low = Math.min(open, close) * (1 - random3 * 0.008);
-      const volume = (random1 * (cryptoId === "BTC" ? 5e9 : 5e8)) + 1e8;
+      const volume = (random1 * getVolumeBase()) + 1e8;
       
       data.push({ time: Date.now() - (candleCount - i) * intervalMs, open, high, low, close, volume });
       price = close;
@@ -195,8 +263,19 @@ export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en"
     return data;
   }, [cryptoId]);
 
+  // Default prices for each crypto
+  const getDefaultPrice = () => {
+    switch (cryptoId) {
+      case "ETH": return 3000;
+      case "BTC": return 90000;
+      case "XRP": return 2.2;
+      case "SOL": return 150;
+      default: return 100;
+    }
+  };
+
   const candleData = useMemo(() => {
-    const base = initialPriceRef.current || currentPrice || (cryptoId === "ETH" ? 3000 : 90000);
+    const base = initialPriceRef.current || currentPrice || getDefaultPrice();
     return generateCandleData(base, timeFrame, cryptoId + timeFrame);
   }, [timeFrame, cryptoId, generateCandleData, currentPrice]);
 
@@ -216,7 +295,6 @@ export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en"
   const high24h = candleData.length > 0 ? Math.max(...candleData.slice(-24).map(c => c.high)) : currentPrice * 1.02;
   const low24h = candleData.length > 0 ? Math.min(...candleData.slice(-24).map(c => c.low)) : currentPrice * 0.98;
   const volume24h = candleData.length > 0 ? candleData.slice(-24).reduce((sum, c) => sum + c.volume, 0) : 0;
-  const lastCandle = candleData[candleData.length - 1];
 
   const visibleCandleCount = Math.floor(60 / zoom);
   const visibleData = candleData.slice(-visibleCandleCount);
@@ -246,138 +324,252 @@ export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en"
   const visibleMACD = { macd: macdData.macd.slice(-visibleCandleCount), signal: macdData.signal.slice(-visibleCandleCount), histogram: macdData.histogram.slice(-visibleCandleCount) };
 
   const isPositive = change24h >= 0;
-  const formatPrice = (p: number) => p.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  
+  // Format price with appropriate decimals
+  const formatPrice = (p: number) => {
+    if (cryptoId === "XRP") {
+      return p.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+    }
+    return p.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  
   const formatVolume = (v: number) => v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `$${(v / 1e6).toFixed(1)}M` : `$${(v / 1e3).toFixed(0)}K`;
 
-  const handleTrade = () => {
-    const amount = parseFloat(tradeAmount);
-    if (!amount || amount <= 0) return;
-    alert(`${tradeMode === "buy" ? (lang === "tr" ? "Alım" : "Buy") : (lang === "tr" ? "Satım" : "Sell")} ${amount} ${cryptoId} @ $${formatPrice(currentPrice)}\nToplam: $${formatPrice(amount * currentPrice)}`);
-    setTradeMode(null);
-    setTradeAmount("");
+  // Crypto info for info tab
+  const getCryptoDetails = () => {
+    switch (cryptoId) {
+      case "ETH":
+        return { type: "Smart Contract Platform", consensus: "Proof of Stake", network: "Ethereum Mainnet" };
+      case "BTC":
+        return { type: "Cryptocurrency", consensus: "Proof of Work", network: "Bitcoin Mainnet" };
+      case "XRP":
+        return { type: "Payment Protocol", consensus: "RPCA (Ripple Protocol)", network: "XRP Ledger" };
+      case "SOL":
+        return { type: "Smart Contract Platform", consensus: "Proof of History + PoS", network: "Solana Mainnet" };
+      default:
+        return { type: "Cryptocurrency", consensus: "Unknown", network: "Unknown" };
+    }
+  };
+
+  const cryptoDetails = getCryptoDetails();
+
+  // Crypto prices for modal
+  const cryptoPrices = {
+    ETH: prices.eth,
+    BTC: prices.btc,
+    XRP: prices.xrp,
+    SOL: prices.sol,
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+      <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-slate-700 bg-slate-900 overflow-hidden max-h-[90vh] overflow-y-auto">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/95 sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: cryptoInfo.color }}>
-              {cryptoId === "ETH" ? (
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white"><path d="M12 1.5l-6.5 11L12 17l6.5-4.5L12 1.5z"/><path d="M12 18.5l-6.5-4.5L12 22.5l6.5-8.5L12 18.5z" fillOpacity="0.6"/></svg>
-              ) : <span className="text-white font-bold">₿</span>}
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: cryptoInfo.color }}>
+              {cryptoInfo.icon}
             </div>
-            <span className="text-xl font-bold text-white">{cryptoId}/USDT</span>
-            <span className={`text-xs px-2 py-0.5 rounded ${isPositive ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}>
-              {isPositive ? "↑" : "↓"} {Math.abs(change24h).toFixed(2)}%
-            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-white">{cryptoId}/USDT</h2>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded ${isPositive ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}>
+                  {isPositive ? "↑" : "↓"} {Math.abs(change24h).toFixed(2)}%
+                </span>
+              </div>
+            </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-            <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-6 px-4 text-sm border-b border-slate-800">
-          {[
-            { id: "price", label: "Price" },
-            { id: "info", label: lang === "tr" ? "Bilgiler" : "Info" },
-            { id: "data", label: lang === "tr" ? "İşlem Verileri" : "Trading Data" },
-          ].map((tab) => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`py-2.5 border-b-2 transition-colors ${activeTab === tab.id ? "border-yellow-500 text-white" : "border-transparent text-slate-500 hover:text-slate-300"}`}>
-              {tab.label}
+        <div className="flex border-b border-slate-800">
+          {["price", "info", "data"].map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab as any)}
+              className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                activeTab === tab ? "text-white border-b-2 border-blue-500" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              {tab === "price" ? "Price" : tab === "info" ? (lang === "tr" ? "Bilgiler" : "Info") : (lang === "tr" ? "İşlem Verileri" : "Market Data")}
             </button>
           ))}
         </div>
 
-        <div className="overflow-y-auto max-h-[calc(90vh-200px)]">
+        {/* Content */}
+        <div className="bg-slate-900">
           {activeTab === "price" && (
             <>
-              {/* Price Header */}
-              <div className="px-4 py-3 border-b border-slate-800">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-baseline gap-2">
-                      <span className={`text-3xl font-bold font-mono transition-colors duration-300 ${direction === "up" ? "text-emerald-400" : direction === "down" ? "text-red-400" : "text-white"}`}>
-                        ${formatPrice(currentPrice)}
-                      </span>
-                      <span className="flex items-center gap-1 text-xs text-emerald-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />LIVE
-                      </span>
-                    </div>
-                    <div className="text-sm text-slate-500 mt-1">₺{formatPrice(currentPrice * tryRate)}</div>
-                  </div>
-                  <div className="text-right text-xs space-y-1">
-                    <div className="flex justify-between gap-4"><span className="text-slate-500">24h High</span><span className="text-emerald-400 font-mono">${formatPrice(high24h)}</span></div>
-                    <div className="flex justify-between gap-4"><span className="text-slate-500">24h Low</span><span className="text-red-400 font-mono">${formatPrice(low24h)}</span></div>
-                    <div className="flex justify-between gap-4"><span className="text-slate-500">24h Vol</span><span className="text-white font-mono">{formatVolume(volume24h)}</span></div>
-                  </div>
+              {/* Price Display */}
+              <div className="px-4 py-3">
+                <div className="flex items-baseline gap-3">
+                  <span className={`text-3xl font-bold font-mono ${direction === "up" ? "text-emerald-400" : direction === "down" ? "text-red-400" : "text-slate-100"}`}>
+                    ${formatPrice(currentPrice)}
+                  </span>
+                  <span className="text-sm text-slate-500">● LIVE</span>
                 </div>
               </div>
 
-              {/* Timeframe & Zoom */}
-              <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800/50">
-                <div className="flex items-center gap-1">
+              {/* 24h Stats */}
+              <div className="px-4 pb-2 flex justify-end gap-4 text-xs">
+                <div><span className="text-slate-500">24h High</span> <span className="text-emerald-400 font-medium">${formatPrice(high24h)}</span></div>
+                <div><span className="text-slate-500">24h Low</span> <span className="text-red-400 font-medium">${formatPrice(low24h)}</span></div>
+                <div><span className="text-slate-500">24h Vol</span> <span className="text-slate-300 font-medium">{formatVolume(volume24h)}</span></div>
+              </div>
+
+              {/* Timeframes */}
+              <div className="px-4 py-2 flex items-center justify-between border-t border-slate-800/50">
+                <div className="flex gap-1">
                   {timeFrames.map(tf => (
-                    <button key={tf} onClick={() => setTimeFrame(tf)} className={`px-3 py-1 text-xs rounded transition-colors ${timeFrame === tf ? "bg-slate-700 text-white" : "text-slate-500 hover:text-slate-300"}`}>{tf}</button>
+                    <button key={tf} onClick={() => setTimeFrame(tf)} className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${timeFrame === tf ? "bg-slate-700 text-white" : "text-slate-400 hover:text-white"}`}>
+                      {tf}
+                    </button>
                   ))}
                 </div>
-                <div className="flex items-center gap-1">
-                  <button onClick={() => setZoom(Math.max(0.5, zoom - 0.25))} className="p-1 hover:bg-slate-800 rounded text-slate-400">
+                <div className="flex gap-1">
+                  <button onClick={() => setZoom(Math.max(0.5, zoom - 0.25))} className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" /></svg>
                   </button>
-                  <span className="text-xs text-slate-500 w-8 text-center">{zoom.toFixed(1)}x</span>
-                  <button onClick={() => setZoom(Math.min(3, zoom + 0.25))} className="p-1 hover:bg-slate-800 rounded text-slate-400">
+                  <span className="text-xs text-slate-500 px-2 py-1">{zoom.toFixed(1)}x</span>
+                  <button onClick={() => setZoom(Math.min(3, zoom + 0.25))} className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" /></svg>
                   </button>
                 </div>
               </div>
 
               {/* Chart */}
-              <div className="px-2 py-2">
-                <svg width="100%" viewBox={`0 0 ${chartWidth} ${mainChartHeight}`} className="overflow-visible" onMouseLeave={() => setHoveredCandle(null)}>
-                  {[0.2, 0.4, 0.6, 0.8].map((ratio, i) => {
-                    const y = padding.top + ratio * (mainChartHeight - padding.top - padding.bottom);
-                    const price = priceMax - ratio * (priceMax - priceMin);
-                    return (<g key={i}><line x1={padding.left} y1={y} x2={chartWidth - padding.right} y2={y} stroke="#1e293b" strokeWidth="1" /><text x={chartWidth - padding.right + 5} y={y + 4} className="text-[10px] fill-slate-600">{formatPrice(price)}</text></g>);
-                  })}
-                  {overlayIndicators.includes("MA") && visibleMA.length > 0 && <polyline points={visibleMA.map((val, i) => `${scaleX(i)},${scaleY(val)}`).join(' ')} fill="none" stroke="#3b82f6" strokeWidth="2" />}
-                  {overlayIndicators.includes("EMA") && visibleEMA.length > 0 && <polyline points={visibleEMA.map((val, i) => `${scaleX(i)},${scaleY(val)}`).join(' ')} fill="none" stroke="#f59e0b" strokeWidth="2" />}
-                  {overlayIndicators.includes("BOLL") && visibleBOLL.upper.length > 0 && (<><polyline points={visibleBOLL.upper.map((val, i) => `${scaleX(i)},${scaleY(val)}`).join(' ')} fill="none" stroke="#ef4444" strokeWidth="1.5" opacity="0.6" /><polyline points={visibleBOLL.middle.map((val, i) => `${scaleX(i)},${scaleY(val)}`).join(' ')} fill="none" stroke="#3b82f6" strokeWidth="1.5" /><polyline points={visibleBOLL.lower.map((val, i) => `${scaleX(i)},${scaleY(val)}`).join(' ')} fill="none" stroke="#22c55e" strokeWidth="1.5" opacity="0.6" /></>)}
+              <div className="px-2">
+                <svg width="100%" viewBox={`0 0 ${chartWidth} ${mainChartHeight}`} className="overflow-visible">
+                  {/* Grid */}
+                  {[0.25, 0.5, 0.75].map(pct => (
+                    <line key={pct} x1={padding.left} y1={padding.top + (mainChartHeight - padding.top - padding.bottom) * pct} x2={chartWidth - padding.right} y2={padding.top + (mainChartHeight - padding.top - padding.bottom) * pct} stroke="#1e293b" strokeWidth="1" />
+                  ))}
+
+                  {/* Bollinger Bands */}
+                  {overlayIndicators.includes("BOLL") && visibleBOLL.upper.length > 0 && (
+                    <>
+                      <polyline points={visibleBOLL.upper.map((val, i) => `${scaleX(i)},${scaleY(val)}`).join(' ')} fill="none" stroke="#8b5cf6" strokeWidth="1" opacity="0.5" />
+                      <polyline points={visibleBOLL.lower.map((val, i) => `${scaleX(i)},${scaleY(val)}`).join(' ')} fill="none" stroke="#8b5cf6" strokeWidth="1" opacity="0.5" />
+                    </>
+                  )}
+
+                  {/* Candles */}
                   {visibleData.map((candle, i) => {
-                    const x = scaleX(i), isGreen = candle.close >= candle.open, color = isGreen ? "#22c55e" : "#ef4444";
-                    const bodyTop = scaleY(Math.max(candle.open, candle.close)), bodyBottom = scaleY(Math.min(candle.open, candle.close));
-                    return (<g key={i} onMouseEnter={() => setHoveredCandle(i)} className="cursor-crosshair"><line x1={x} y1={scaleY(candle.high)} x2={x} y2={scaleY(candle.low)} stroke={color} strokeWidth="1.5" /><rect x={x - candleWidth / 2} y={bodyTop} width={candleWidth} height={Math.max(bodyBottom - bodyTop, 1)} fill={color} /></g>);
+                    const x = scaleX(i);
+                    const isGreen = candle.close >= candle.open;
+                    const color = isGreen ? "#22c55e" : "#ef4444";
+                    return (
+                      <g key={i} onMouseEnter={() => setHoveredCandle(i)} onMouseLeave={() => setHoveredCandle(null)}>
+                        <line x1={x} y1={scaleY(candle.high)} x2={x} y2={scaleY(candle.low)} stroke={color} strokeWidth="1" />
+                        <rect x={x - candleWidth / 2} y={Math.min(scaleY(candle.open), scaleY(candle.close))} width={candleWidth} height={Math.max(1, Math.abs(scaleY(candle.open) - scaleY(candle.close)))} fill={color} />
+                      </g>
+                    );
                   })}
-                  {lastCandle && (<g><line x1={padding.left} y1={scaleY(currentPrice)} x2={chartWidth - padding.right} y2={scaleY(currentPrice)} stroke="#64748b" strokeDasharray="3,3" strokeWidth="1" /><rect x={chartWidth - padding.right} y={scaleY(currentPrice) - 10} width="55" height="20" fill={direction === "up" ? "#22c55e" : direction === "down" ? "#ef4444" : "#64748b"} rx="3" /><text x={chartWidth - padding.right + 3} y={scaleY(currentPrice) + 4} className="text-[9px] fill-white font-mono">{formatPrice(currentPrice)}</text></g>)}
-                  {hoveredCandle !== null && visibleData[hoveredCandle] && (<g><rect x={Math.min(scaleX(hoveredCandle) - 55, chartWidth - 120)} y={8} width="110" height="58" fill="#1e293b" stroke="#334155" rx="4" /><text x={Math.min(scaleX(hoveredCandle) - 50, chartWidth - 115)} y={22} className="text-[9px] fill-slate-400">O: <tspan className="fill-white font-mono">{formatPrice(visibleData[hoveredCandle].open)}</tspan></text><text x={Math.min(scaleX(hoveredCandle) - 50, chartWidth - 115)} y={34} className="text-[9px] fill-slate-400">H: <tspan className="fill-emerald-400 font-mono">{formatPrice(visibleData[hoveredCandle].high)}</tspan></text><text x={Math.min(scaleX(hoveredCandle) - 50, chartWidth - 115)} y={46} className="text-[9px] fill-slate-400">L: <tspan className="fill-red-400 font-mono">{formatPrice(visibleData[hoveredCandle].low)}</tspan></text><text x={Math.min(scaleX(hoveredCandle) - 50, chartWidth - 115)} y={58} className="text-[9px] fill-slate-400">C: <tspan className="fill-white font-mono">{formatPrice(visibleData[hoveredCandle].close)}</tspan></text></g>)}
+
+                  {/* MA */}
+                  {overlayIndicators.includes("MA") && visibleMA.length > 0 && (
+                    <polyline points={visibleMA.map((val, i) => `${scaleX(i)},${scaleY(val)}`).join(' ')} fill="none" stroke="#3b82f6" strokeWidth="2" />
+                  )}
+
+                  {/* EMA */}
+                  {overlayIndicators.includes("EMA") && visibleEMA.length > 0 && (
+                    <polyline points={visibleEMA.map((val, i) => `${scaleX(i)},${scaleY(val)}`).join(' ')} fill="none" stroke="#f59e0b" strokeWidth="2" />
+                  )}
+
+                  {/* Current Price Line */}
+                  <line x1={padding.left} y1={scaleY(currentPrice)} x2={chartWidth - padding.right} y2={scaleY(currentPrice)} stroke={isPositive ? "#22c55e" : "#ef4444"} strokeWidth="1" strokeDasharray="4,2" />
+                  <rect x={chartWidth - padding.right} y={scaleY(currentPrice) - 10} width={50} height={20} fill={isPositive ? "#22c55e" : "#ef4444"} rx="3" />
+                  <text x={chartWidth - padding.right + 25} y={scaleY(currentPrice) + 4} textAnchor="middle" className="text-[10px] fill-white font-medium">
+                    {formatPrice(currentPrice)}
+                  </text>
+
+                  {/* Y-axis labels */}
+                  {[priceMax, (priceMax + priceMin) / 2, priceMin].map((price, i) => (
+                    <text key={i} x={chartWidth - 5} y={scaleY(price)} textAnchor="end" className="text-[9px] fill-slate-500">
+                      {formatPrice(price)}
+                    </text>
+                  ))}
                 </svg>
               </div>
 
               {/* Indicators */}
               <div className="px-2 border-t border-slate-800/30">
                 <div className="py-1 space-y-1">
-                  <div className="flex gap-1 items-center"><span className="text-[9px] text-slate-500 px-1">Overlay:</span>{overlayList.map(ind => (<button key={ind} onClick={() => toggleOverlay(ind)} className={`px-2 py-1 text-[10px] rounded transition-colors ${overlayIndicators.includes(ind) ? "bg-blue-500 text-white" : "bg-slate-800 text-slate-400"}`}>{ind}</button>))}</div>
-                  <div className="flex gap-1 items-center"><span className="text-[9px] text-slate-500 px-1">Panel:</span>{panelList.map(ind => (<button key={ind} onClick={() => setPanelIndicator(panelIndicator === ind ? null : ind)} className={`px-2 py-1 text-[10px] rounded transition-colors ${panelIndicator === ind ? "bg-emerald-500 text-white" : "bg-slate-800 text-slate-400"}`}>{ind}</button>))}</div>
+                  <div className="flex gap-1 items-center">
+                    <span className="text-[9px] text-slate-500 px-1">Overlay:</span>
+                    {overlayList.map(ind => (
+                      <button key={ind} onClick={() => toggleOverlay(ind)} className={`px-2 py-1 text-[10px] rounded transition-colors ${overlayIndicators.includes(ind) ? "bg-blue-500 text-white" : "bg-slate-800 text-slate-400"}`}>
+                        {ind}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-1 items-center">
+                    <span className="text-[9px] text-slate-500 px-1">Panel:</span>
+                    {panelList.map(ind => (
+                      <button key={ind} onClick={() => setPanelIndicator(panelIndicator === ind ? null : ind)} className={`px-2 py-1 text-[10px] rounded transition-colors ${panelIndicator === ind ? "bg-emerald-500 text-white" : "bg-slate-800 text-slate-400"}`}>
+                        {ind}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
+              {/* Indicator Panel */}
               {panelIndicator && (
                 <div className="px-2 border-t border-slate-800/30">
                   <svg width="100%" viewBox={`0 0 ${chartWidth} ${indicatorHeight}`}>
-                    {panelIndicator === "RSI" && visibleRSI.length > 0 && (<><text x={10} y={12} className="text-[9px] fill-slate-400">RSI (14)</text><line x1={padding.left} y1={indicatorHeight * 0.3} x2={chartWidth - padding.right} y2={indicatorHeight * 0.3} stroke="#dc2626" strokeWidth="1" strokeDasharray="2,2" opacity="0.5" /><line x1={padding.left} y1={indicatorHeight * 0.7} x2={chartWidth - padding.right} y2={indicatorHeight * 0.7} stroke="#22c55e" strokeWidth="1" strokeDasharray="2,2" opacity="0.5" /><polyline points={visibleRSI.map((val, i) => `${scaleX(i)},${indicatorHeight - (val / 100) * (indicatorHeight - 10) - 5}`).join(' ')} fill="none" stroke="#8b5cf6" strokeWidth="2" /></>)}
-                    {panelIndicator === "MACD" && visibleMACD.histogram.length > 0 && (<><text x={10} y={12} className="text-[9px] fill-slate-400">MACD</text><line x1={padding.left} y1={indicatorHeight / 2} x2={chartWidth - padding.right} y2={indicatorHeight / 2} stroke="#334155" strokeWidth="1" />{visibleMACD.histogram.map((val, i) => { const x = scaleX(i), maxH = Math.max(...visibleMACD.histogram.map(Math.abs)) || 1, h = (Math.abs(val) / maxH) * (indicatorHeight / 2 - 10), y = val >= 0 ? indicatorHeight / 2 - h : indicatorHeight / 2; return <rect key={i} x={x - candleWidth / 2} y={y} width={candleWidth} height={h} fill={val >= 0 ? "#22c55e" : "#ef4444"} opacity="0.5" />; })}</>)}
-                    {panelIndicator === "VOL" && visibleData.length > 0 && (<><text x={10} y={12} className="text-[9px] fill-slate-400">Volume</text>{visibleData.map((c, i) => { const x = scaleX(i), h = (c.volume / volumeMax) * (indicatorHeight - 10); return <rect key={i} x={x - candleWidth / 2} y={indicatorHeight - h - 5} width={candleWidth} height={h} fill={c.close >= c.open ? "#22c55e" : "#ef4444"} opacity="0.6" />; })}</>)}
+                    {panelIndicator === "RSI" && visibleRSI.length > 0 && (
+                      <>
+                        <text x={10} y={12} className="text-[9px] fill-slate-400">RSI (14)</text>
+                        <line x1={padding.left} y1={indicatorHeight * 0.3} x2={chartWidth - padding.right} y2={indicatorHeight * 0.3} stroke="#dc2626" strokeWidth="1" strokeDasharray="2,2" opacity="0.5" />
+                        <line x1={padding.left} y1={indicatorHeight * 0.7} x2={chartWidth - padding.right} y2={indicatorHeight * 0.7} stroke="#22c55e" strokeWidth="1" strokeDasharray="2,2" opacity="0.5" />
+                        <polyline points={visibleRSI.map((val, i) => `${scaleX(i)},${indicatorHeight - (val / 100) * (indicatorHeight - 10) - 5}`).join(' ')} fill="none" stroke="#8b5cf6" strokeWidth="2" />
+                      </>
+                    )}
+                    {panelIndicator === "MACD" && visibleMACD.histogram.length > 0 && (
+                      <>
+                        <text x={10} y={12} className="text-[9px] fill-slate-400">MACD</text>
+                        <line x1={padding.left} y1={indicatorHeight / 2} x2={chartWidth - padding.right} y2={indicatorHeight / 2} stroke="#334155" strokeWidth="1" />
+                        {visibleMACD.histogram.map((val, i) => {
+                          const x = scaleX(i);
+                          const maxH = Math.max(...visibleMACD.histogram.map(Math.abs)) || 1;
+                          const h = (Math.abs(val) / maxH) * (indicatorHeight / 2 - 10);
+                          const y = val >= 0 ? indicatorHeight / 2 - h : indicatorHeight / 2;
+                          return <rect key={i} x={x - candleWidth / 2} y={y} width={candleWidth} height={h} fill={val >= 0 ? "#22c55e" : "#ef4444"} opacity="0.5" />;
+                        })}
+                      </>
+                    )}
+                    {panelIndicator === "VOL" && visibleData.length > 0 && (
+                      <>
+                        <text x={10} y={12} className="text-[9px] fill-slate-400">Volume</text>
+                        {visibleData.map((c, i) => {
+                          const x = scaleX(i);
+                          const h = (c.volume / volumeMax) * (indicatorHeight - 10);
+                          return <rect key={i} x={x - candleWidth / 2} y={indicatorHeight - h - 5} width={candleWidth} height={h} fill={c.close >= c.open ? "#22c55e" : "#ef4444"} opacity="0.6" />;
+                        })}
+                      </>
+                    )}
                   </svg>
                 </div>
               )}
 
               {/* Performance */}
               <div className="px-4 py-3 grid grid-cols-6 gap-2 border-t border-slate-800">
-                {performancePeriods.map(stat => (<div key={stat.label} className="text-center"><div className="text-[9px] text-slate-500">{stat.label}</div><div className={`text-xs font-medium ${stat.value >= 0 ? "text-emerald-400" : "text-red-400"}`}>{stat.value >= 0 ? "+" : ""}{stat.value.toFixed(2)}%</div></div>))}
+                {performancePeriods.map(stat => (
+                  <div key={stat.label} className="text-center">
+                    <div className="text-[9px] text-slate-500">{stat.label}</div>
+                    <div className={`text-xs font-medium ${stat.value >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                      {stat.value >= 0 ? "+" : ""}{stat.value.toFixed(2)}%
+                    </div>
+                  </div>
+                ))}
               </div>
             </>
           )}
@@ -386,11 +578,26 @@ export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en"
             <div className="px-4 py-4 space-y-4">
               <h3 className="text-sm font-semibold text-slate-300 mb-3">{lang === "tr" ? "Kripto Bilgileri" : "Crypto Information"}</h3>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between py-2 border-b border-slate-800"><span className="text-slate-400">{lang === "tr" ? "Sembol" : "Symbol"}</span><span className="text-slate-200 font-medium">{cryptoId}</span></div>
-                <div className="flex justify-between py-2 border-b border-slate-800"><span className="text-slate-400">{lang === "tr" ? "Ad" : "Name"}</span><span className="text-slate-200 font-medium">{cryptoInfo.name}</span></div>
-                <div className="flex justify-between py-2 border-b border-slate-800"><span className="text-slate-400">{lang === "tr" ? "Tür" : "Type"}</span><span className="text-slate-200 font-medium">{cryptoId === "ETH" ? "Smart Contract Platform" : "Cryptocurrency"}</span></div>
-                <div className="flex justify-between py-2 border-b border-slate-800"><span className="text-slate-400">{lang === "tr" ? "Konsensüs" : "Consensus"}</span><span className="text-slate-200 font-medium">{cryptoId === "ETH" ? "Proof of Stake" : "Proof of Work"}</span></div>
-                <div className="flex justify-between py-2"><span className="text-slate-400">{lang === "tr" ? "Ağ" : "Network"}</span><span className="text-slate-200 font-medium">{cryptoId === "ETH" ? "Ethereum Mainnet" : "Bitcoin Mainnet"}</span></div>
+                <div className="flex justify-between py-2 border-b border-slate-800">
+                  <span className="text-slate-400">{lang === "tr" ? "Sembol" : "Symbol"}</span>
+                  <span className="text-slate-200 font-medium">{cryptoId}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-800">
+                  <span className="text-slate-400">{lang === "tr" ? "Ad" : "Name"}</span>
+                  <span className="text-slate-200 font-medium">{cryptoInfo.name}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-800">
+                  <span className="text-slate-400">{lang === "tr" ? "Tür" : "Type"}</span>
+                  <span className="text-slate-200 font-medium">{cryptoDetails.type}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-800">
+                  <span className="text-slate-400">{lang === "tr" ? "Konsensüs" : "Consensus"}</span>
+                  <span className="text-slate-200 font-medium">{cryptoDetails.consensus}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-slate-400">{lang === "tr" ? "Ağ" : "Network"}</span>
+                  <span className="text-slate-200 font-medium">{cryptoDetails.network}</span>
+                </div>
               </div>
             </div>
           )}
@@ -399,93 +606,52 @@ export default function CryptoTradingDetailPage({ cryptoId, onClose, lang = "en"
             <div className="px-4 py-4 space-y-4">
               <h3 className="text-sm font-semibold text-slate-300 mb-3">{lang === "tr" ? "Piyasa Verileri" : "Market Data"}</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700"><div className="text-xs text-slate-400 mb-1">{lang === "tr" ? "Alış Fiyatı" : "Bid Price"}</div><div className="text-lg font-bold text-emerald-400">${formatPrice(bidPrice)}</div></div>
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700"><div className="text-xs text-slate-400 mb-1">{lang === "tr" ? "Satış Fiyatı" : "Ask Price"}</div><div className="text-lg font-bold text-red-400">${formatPrice(askPrice)}</div></div>
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700"><div className="text-xs text-slate-400 mb-1">Spread</div><div className="text-lg font-bold text-amber-400">{(spreadSettings.askAdjust - spreadSettings.bidAdjust).toFixed(2)}%</div></div>
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700"><div className="text-xs text-slate-400 mb-1">{lang === "tr" ? "24s Hacim" : "24h Volume"}</div><div className="text-lg font-bold text-blue-400">{formatVolume(volume24h)}</div></div>
+                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700">
+                  <div className="text-xs text-slate-400 mb-1">{lang === "tr" ? "Alış Fiyatı" : "Bid Price"}</div>
+                  <div className="text-lg font-bold text-emerald-400">${formatPrice(bidPrice)}</div>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700">
+                  <div className="text-xs text-slate-400 mb-1">{lang === "tr" ? "Satış Fiyatı" : "Ask Price"}</div>
+                  <div className="text-lg font-bold text-red-400">${formatPrice(askPrice)}</div>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700">
+                  <div className="text-xs text-slate-400 mb-1">Spread</div>
+                  <div className="text-lg font-bold text-amber-400">{(spreadSettings.askAdjust - spreadSettings.bidAdjust).toFixed(2)}%</div>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700">
+                  <div className="text-xs text-slate-400 mb-1">{lang === "tr" ? "24s Hacim" : "24h Volume"}</div>
+                  <div className="text-lg font-bold text-blue-400">{formatVolume(volume24h)}</div>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Bottom Buttons */}
-        <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-800 bg-slate-900/95">
-          <button onClick={() => setTradeMode("buy")} className="flex-1 px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors">
-            {lang === "tr" ? "Al" : "Buy"}
-          </button>
-          <button onClick={() => setTradeMode("sell")} className="flex-1 px-6 py-2.5 rounded-lg bg-red-500 hover:bg-red-400 text-white font-semibold transition-colors">
-            {lang === "tr" ? "Sat" : "Sell"}
+        {/* Bottom Button - Dönüştür */}
+        <div className="px-4 py-3 border-t border-slate-800 bg-slate-900/95">
+          <button 
+            onClick={() => setShowConvertModal(true)} 
+            className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            {lang === "tr" ? "Dönüştür" : "Convert"}
           </button>
         </div>
       </div>
 
-      {/* Trade Modal */}
-      {tradeMode && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70" onClick={() => setTradeMode(null)} />
-          <div className="relative z-10 w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">
-                {tradeMode === "buy" ? (lang === "tr" ? "Al" : "Buy") : (lang === "tr" ? "Sat" : "Sell")} {cryptoId}
-              </h3>
-              <button onClick={() => setTradeMode(null)} className="p-2 hover:bg-slate-800 rounded-lg">
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-slate-400">{lang === "tr" ? "Güncel Fiyat" : "Current Price"}</span>
-                <span className={`text-lg font-bold ${tradeMode === "buy" ? "text-emerald-400" : "text-red-400"}`}>
-                  ${formatPrice(tradeMode === "buy" ? askPrice : bidPrice)}
-                </span>
-              </div>
-              <div className="text-xs text-slate-500 text-right">
-                {tradeMode === "buy" ? (lang === "tr" ? "Alış Fiyatı" : "Ask Price") : (lang === "tr" ? "Satış Fiyatı" : "Bid Price")}
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="text-sm text-slate-400 mb-2 block">{lang === "tr" ? "Miktar" : "Amount"} ({cryptoId})</label>
-              <input
-                type="number"
-                value={tradeAmount}
-                onChange={(e) => setTradeAmount(e.target.value)}
-                placeholder="0.00"
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500"
-              />
-              {tradeAmount && parseFloat(tradeAmount) > 0 && (
-                <p className="text-xs text-slate-500 mt-2">
-                  ≈ ${formatPrice(parseFloat(tradeAmount) * (tradeMode === "buy" ? askPrice : bidPrice))} USD
-                </p>
-              )}
-            </div>
-
-            <div className="flex gap-2 mb-6">
-              {[0.25, 0.5, 0.75, 1].map((pct) => (
-                <button
-                  key={pct}
-                  onClick={() => setTradeAmount((1 * pct).toFixed(4))}
-                  className="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
-                >
-                  {pct * 100}%
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={handleTrade}
-              disabled={!tradeAmount || parseFloat(tradeAmount) <= 0}
-              className={`w-full py-3 rounded-xl font-semibold transition-colors ${
-                tradeMode === "buy"
-                  ? "bg-emerald-500 hover:bg-emerald-400 disabled:bg-emerald-500/50"
-                  : "bg-red-500 hover:bg-red-400 disabled:bg-red-500/50"
-              } text-white`}
-            >
-              {tradeMode === "buy" ? (lang === "tr" ? "Al" : "Buy") : (lang === "tr" ? "Sat" : "Sell")} {cryptoId}
-            </button>
-          </div>
-        </div>
+      {/* Convert Modal */}
+      {showConvertModal && (
+        <CryptoConvertModal
+          isOpen={showConvertModal}
+          onClose={() => setShowConvertModal(false)}
+          crypto={cryptoId}
+          lang={lang}
+          cryptoBalances={cryptoBalances}
+          cryptoPrices={cryptoPrices}
+          metalBidPrices={metalBidPrices}
+        />
       )}
     </div>
   );

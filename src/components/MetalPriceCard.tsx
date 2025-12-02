@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { MetalId } from "@/lib/metals";
 import TradePanel from "./TradePanel";
 import TradingDetailPage from "./TradingDetailPage";
 
 interface MetalPriceCardProps {
-  metalId: MetalId;
+  metalId: "gold" | "silver" | "platinum" | "palladium";
   symbol: string;
   name: string;
   pricePerGram: number;

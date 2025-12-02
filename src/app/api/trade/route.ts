@@ -1,251 +1,216 @@
-// app/api/trade/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
+// Trade API v2
+// Bonus AUXM'i önce kullanarak metal alımı
 
-// Redis bağlantısı
-async function getRedis() {
-  const { Redis } = await import("@upstash/redis");
-  return new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+// Metal fiyatları (gerçek zamanlı API'den alınacak)
+const METAL_PRICES = {
+  AUXG: 92.50,   // Gold $/gram
+  AUXS: 1.05,    // Silver $/gram
+  AUXPT: 32.00,  // Platinum $/gram
+  AUXPD: 35.00,  // Palladium $/gram
+};
+
+// Spread oranları
+const SPREAD_CONFIG = {
+  buy: 0.01,   // %1 buy spread
+  sell: 0.01,  // %1 sell spread
+};
+
+interface UserBalance {
+  auxm: number;
+  bonusAuxm: number;
+  totalAuxm: number;
+  auxg: number;
+  auxs: number;
+  auxpt: number;
+  auxpd: number;
+}
+
+// Mock balance (test için)
+const getMockBalance = (): UserBalance => ({
+  auxm: 1250.50,
+  bonusAuxm: 25.00,
+  totalAuxm: 1275.50,
+  auxg: 15.75,
+  auxs: 500.00,
+  auxpt: 2.50,
+  auxpd: 1.25,
+});
+
+export async function GET() {
+  // Metal fiyatlarını döndür
+  return NextResponse.json({
+    prices: METAL_PRICES,
+    spread: SPREAD_CONFIG,
+    lastUpdated: new Date().toISOString(),
   });
 }
 
-// Metal fiyatlarını çek
-async function getMetalPrices() {
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "https://wallet.auxite.io"}/api/prices`,
-      { next: { revalidate: 10 } }
-    );
-    return await response.json();
-  } catch (error) {
-    console.error("Price fetch error:", error);
-    return null;
-  }
-}
-
-/**
- * POST /api/trade
- * AUXM ile metal alım/satım
- */
 export async function POST(request: NextRequest) {
   try {
-    const { userId, action, metal, amount, walletAddress } = await request.json();
+    const body = await request.json();
+    const {
+      address,
+      action,     // "buy" | "sell"
+      metal,      // "AUXG" | "AUXS" | "AUXPT" | "AUXPD"
+      amount,     // gram miktarı
+    } = body;
 
-    // Validasyon
-    if (!action || !metal || !amount) {
+    if (!address || !action || !metal || !amount) {
       return NextResponse.json(
-        { error: "Missing required fields: action, metal, amount" },
+        { error: "Missing required fields: address, action, metal, amount" },
         { status: 400 }
       );
     }
 
     if (!["buy", "sell"].includes(action)) {
       return NextResponse.json(
-        { error: "Invalid action. Use: buy, sell" },
+        { error: "Invalid action. Must be 'buy' or 'sell'" },
         { status: 400 }
       );
     }
 
-    const validMetals = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
-    if (!validMetals.includes(metal)) {
+    if (!Object.keys(METAL_PRICES).includes(metal)) {
       return NextResponse.json(
-        { error: `Invalid metal. Valid: ${validMetals.join(", ")}` },
+        { error: `Invalid metal. Must be one of: ${Object.keys(METAL_PRICES).join(", ")}` },
         { status: 400 }
       );
     }
 
-    if (amount <= 0) {
-      return NextResponse.json(
-        { error: "Amount must be greater than 0" },
-        { status: 400 }
-      );
-    }
-
-    const redis = await getRedis();
-
-    // UserId bul
-    let resolvedUserId = userId;
-    if (!resolvedUserId && walletAddress) {
-      resolvedUserId = (await redis.get(
-        `user:address:${walletAddress.toLowerCase()}`
-      )) as string;
-    }
-
-    if (!resolvedUserId) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Fiyatları al
-    const prices = await getMetalPrices();
-    if (!prices || !prices.prices) {
-      return NextResponse.json(
-        { error: "Could not fetch prices" },
-        { status: 500 }
-      );
-    }
-
-    const askPrice = prices.prices[metal] || 0; // Alış fiyatı (kullanıcı alır)
-    const bidPrice = prices.bidPrices?.[metal] || askPrice; // Satış fiyatı (kullanıcı satar)
-
-    if (askPrice === 0) {
-      return NextResponse.json(
-        { error: `Price not available for ${metal}` },
-        { status: 500 }
-      );
-    }
-
-    // Bakiyeleri al
-    const auxmBalance =
-      ((await redis.get(`user:${resolvedUserId}:balance:AUXM`)) as number) || 0;
-    const metalBalance =
-      ((await redis.get(`user:${resolvedUserId}:balance:${metal}`)) as number) || 0;
-
-    let newAuxmBalance: number;
-    let newMetalBalance: number;
-    let auxmChange: number;
-    let metalChange: number;
-    let priceUsed: number;
+    const metalPrice = METAL_PRICES[metal as keyof typeof METAL_PRICES];
+    const balance = getMockBalance();
+    
+    // TODO: Redis'ten gerçek bakiye çek
+    // const balance = await redis.hgetall(`user:${address.toLowerCase()}`);
 
     if (action === "buy") {
-      // AUXM ile metal al
-      priceUsed = askPrice;
-      auxmChange = amount * askPrice; // Harcanan AUXM
+      // METAL ALIM
+      const grossCost = amount * metalPrice;
+      const spreadFee = grossCost * SPREAD_CONFIG.buy;
+      const totalCost = grossCost + spreadFee;
+      const totalAvailable = balance.auxm + balance.bonusAuxm;
 
-      if (auxmBalance < auxmChange) {
-        return NextResponse.json(
-          {
-            error: "Insufficient AUXM balance",
-            required: auxmChange,
-            available: auxmBalance,
-          },
-          { status: 400 }
-        );
+      if (totalCost > totalAvailable) {
+        return NextResponse.json({
+          error: "Insufficient balance",
+          required: totalCost,
+          available: totalAvailable,
+          auxm: balance.auxm,
+          bonusAuxm: balance.bonusAuxm,
+        }, { status: 400 });
       }
 
-      newAuxmBalance = auxmBalance - auxmChange;
-      newMetalBalance = metalBalance + amount;
-      metalChange = amount;
+      // Önce bonus AUXM kullan, sonra normal AUXM
+      let usedBonusAuxm = 0;
+      let usedAuxm = 0;
+
+      if (balance.bonusAuxm >= totalCost) {
+        // Tamamı bonus'tan karşılanabilir
+        usedBonusAuxm = totalCost;
+        usedAuxm = 0;
+      } else {
+        // Önce tüm bonus'u kullan, kalanı normal AUXM'den
+        usedBonusAuxm = balance.bonusAuxm;
+        usedAuxm = totalCost - usedBonusAuxm;
+      }
+
+      const newBalance = {
+        auxm: balance.auxm - usedAuxm,
+        bonusAuxm: balance.bonusAuxm - usedBonusAuxm,
+        [metal.toLowerCase()]: (balance[metal.toLowerCase() as keyof UserBalance] as number) + amount,
+      };
+
+      // TODO: Redis'te güncelle
+      // await redis.hset(`user:${address.toLowerCase()}`, newBalance);
+
+      const txId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      return NextResponse.json({
+        success: true,
+        txId,
+        action: "buy",
+        metal,
+        amount,
+        pricePerGram: metalPrice,
+        grossCost,
+        spreadFee,
+        spreadPercent: SPREAD_CONFIG.buy * 100,
+        totalCost,
+        payment: {
+          usedAuxm,
+          usedBonusAuxm,
+          totalUsed: totalCost,
+          bonusSavings: usedBonusAuxm > 0 ? usedBonusAuxm : 0,
+        },
+        newBalances: {
+          auxm: newBalance.auxm,
+          bonusAuxm: newBalance.bonusAuxm,
+          totalAuxm: newBalance.auxm + newBalance.bonusAuxm,
+          [metal.toLowerCase()]: newBalance[metal.toLowerCase() as keyof typeof newBalance],
+        },
+        message: usedBonusAuxm > 0 
+          ? `Purchased ${amount}g ${metal}. Used ${usedBonusAuxm.toFixed(2)} Bonus AUXM + ${usedAuxm.toFixed(2)} AUXM.`
+          : `Purchased ${amount}g ${metal} for ${totalCost.toFixed(2)} AUXM.`,
+      });
+
     } else {
-      // Metal sat, AUXM al
-      priceUsed = bidPrice;
+      // METAL SATIM
+      const metalKey = metal.toLowerCase() as keyof UserBalance;
+      const currentMetalBalance = balance[metalKey] as number;
 
-      if (metalBalance < amount) {
-        return NextResponse.json(
-          {
-            error: `Insufficient ${metal} balance`,
-            required: amount,
-            available: metalBalance,
-          },
-          { status: 400 }
-        );
+      if (amount > currentMetalBalance) {
+        return NextResponse.json({
+          error: "Insufficient metal balance",
+          required: amount,
+          available: currentMetalBalance,
+        }, { status: 400 });
       }
 
-      auxmChange = amount * bidPrice; // Kazanılan AUXM
-      newAuxmBalance = auxmBalance + auxmChange;
-      newMetalBalance = metalBalance - amount;
-      metalChange = -amount;
+      const grossValue = amount * metalPrice;
+      const spreadFee = grossValue * SPREAD_CONFIG.sell;
+      const netValue = grossValue - spreadFee;
+
+      // Metal satışında normal AUXM alınır (bonus değil)
+      const newBalance = {
+        auxm: balance.auxm + netValue,
+        [metalKey]: currentMetalBalance - amount,
+      };
+
+      // TODO: Redis'te güncelle
+      // await redis.hset(`user:${address.toLowerCase()}`, newBalance);
+
+      const txId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      return NextResponse.json({
+        success: true,
+        txId,
+        action: "sell",
+        metal,
+        amount,
+        pricePerGram: metalPrice,
+        grossValue,
+        spreadFee,
+        spreadPercent: SPREAD_CONFIG.sell * 100,
+        netValue,
+        received: {
+          auxm: netValue,
+          note: "Metal sales credit regular AUXM (not bonus)"
+        },
+        newBalances: {
+          auxm: newBalance.auxm,
+          bonusAuxm: balance.bonusAuxm,
+          totalAuxm: newBalance.auxm + balance.bonusAuxm,
+          [metalKey]: newBalance[metalKey],
+        },
+        message: `Sold ${amount}g ${metal} for ${netValue.toFixed(2)} AUXM.`,
+      });
     }
 
-    // Bakiyeleri güncelle
-    await redis.set(`user:${resolvedUserId}:balance:AUXM`, newAuxmBalance);
-    await redis.set(`user:${resolvedUserId}:balance:${metal}`, newMetalBalance);
-
-    // Trade kaydı
-    const tradeRecord = {
-      id: `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      userId: resolvedUserId,
-      action,
-      metal,
-      amount,
-      price: priceUsed,
-      auxmAmount: auxmChange,
-      previousAuxmBalance: auxmBalance,
-      newAuxmBalance,
-      previousMetalBalance: metalBalance,
-      newMetalBalance,
-      timestamp: new Date().toISOString(),
-    };
-
-    await redis.lpush(`user:${resolvedUserId}:trades`, JSON.stringify(tradeRecord));
-    await redis.lpush("trades:all", JSON.stringify(tradeRecord));
-
-    console.log(
-      `✅ Trade: ${action} ${amount}g ${metal} @ $${priceUsed} = ${auxmChange.toFixed(2)} AUXM`
-    );
-
-    return NextResponse.json({
-      success: true,
-      trade: tradeRecord,
-      balances: {
-        AUXM: newAuxmBalance,
-        [metal]: newMetalBalance,
-      },
-    });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Trade error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * GET /api/trade?userId=xxx
- * Trade geçmişini getir
- */
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
-    const address = searchParams.get("address");
-    const limit = parseInt(searchParams.get("limit") || "20");
-
-    if (!userId && !address) {
-      return NextResponse.json(
-        { error: "userId or address required" },
-        { status: 400 }
-      );
-    }
-
-    const redis = await getRedis();
-
-    let resolvedUserId = userId;
-    if (!resolvedUserId && address) {
-      resolvedUserId = (await redis.get(
-        `user:address:${address.toLowerCase()}`
-      )) as string;
-    }
-
-    if (!resolvedUserId) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const tradesRaw = await redis.lrange(
-      `user:${resolvedUserId}:trades`,
-      0,
-      limit - 1
-    );
-
-    const trades = tradesRaw.map((t) => {
-      if (typeof t === "string") {
-        return JSON.parse(t);
-      }
-      return t;
-    });
-
-    return NextResponse.json({
-      userId: resolvedUserId,
-      trades,
-      count: trades.length,
-    });
-  } catch (error: any) {
-    console.error("Trade history error:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: "Trade failed" },
       { status: 500 }
     );
   }

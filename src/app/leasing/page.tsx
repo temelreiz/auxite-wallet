@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   WALLET_ADDRESS: "auxite_wallet_address",
   WALLET_MODE: "auxite_wallet_mode",
   SESSION_UNLOCKED: "auxite_session_unlocked",
+  LANGUAGE: "auxite_language",
 };
 
 export default function LeasingPage() {
@@ -33,6 +34,11 @@ export default function LeasingPage() {
     const hasLocalWallet = localStorage.getItem(STORAGE_KEYS.HAS_WALLET);
     const localAddress = localStorage.getItem(STORAGE_KEYS.WALLET_ADDRESS);
     const sessionUnlocked = sessionStorage.getItem(STORAGE_KEYS.SESSION_UNLOCKED);
+    const savedLang = localStorage.getItem(STORAGE_KEYS.LANGUAGE) as "tr" | "en" | null;
+
+    if (savedLang) {
+      setLang(savedLang);
+    }
 
     setWalletMode(savedMode);
     
@@ -46,6 +52,12 @@ export default function LeasingPage() {
     
     setIsLoading(false);
   }, []);
+
+  // Handle language change
+  const handleLanguageChange = (newLang: "tr" | "en") => {
+    setLang(newLang);
+    localStorage.setItem(STORAGE_KEYS.LANGUAGE, newLang);
+  };
 
   // Determine if wallet is connected
   const isWalletConnected = 
@@ -110,7 +122,7 @@ export default function LeasingPage() {
               {/* Language Toggle */}
               <div className="flex gap-0.5 bg-slate-800 rounded-lg p-0.5">
                 <button
-                  onClick={() => setLang("tr")}
+                  onClick={() => handleLanguageChange("tr")}
                   className={`px-2.5 py-1 rounded text-sm font-medium transition-colors ${
                     lang === "tr"
                       ? "bg-emerald-500 text-white"
@@ -120,7 +132,7 @@ export default function LeasingPage() {
                   TR
                 </button>
                 <button
-                  onClick={() => setLang("en")}
+                  onClick={() => handleLanguageChange("en")}
                   className={`px-2.5 py-1 rounded text-sm font-medium transition-colors ${
                     lang === "en"
                       ? "bg-emerald-500 text-white"
@@ -151,7 +163,7 @@ export default function LeasingPage() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <LeasingDashboard 
           lang={lang} 
-          onLanguageChange={setLang}
+          onLanguageChange={handleLanguageChange}
           walletAddress={currentAddress || undefined}
           isWalletConnected={isWalletConnected}
         />

@@ -1,158 +1,148 @@
-// app/api/user/balance/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
+// User Balance API
+// Normal AUXM + Bonus AUXM (metal-only) desteği
 
-// Redis bağlantısı
-async function getRedis() {
-  const { Redis } = await import("@upstash/redis");
-  return new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-  });
+interface UserBalance {
+  // Normal AUXM - her yerde kullanılabilir
+  auxm: number;
+  // Bonus AUXM - sadece metal alımında kullanılabilir
+  bonusAuxm: number;
+  // Toplam görünen bakiye
+  totalAuxm: number;
+  // Bonus son kullanma tarihi
+  bonusExpiresAt: string | null;
+  // Metal bakiyeleri
+  auxg: number;
+  auxs: number;
+  auxpt: number;
+  auxpd: number;
+  // Crypto bakiyeleri (native)
+  eth: number;
+  btc: number;
+  xrp: number;
+  sol: number;
 }
 
-// Desteklenen varlıklar
-const SUPPORTED_ASSETS = ["AUXM", "AUXG", "AUXS", "AUXPT", "AUXPD"];
+// Mock bakiyeler (test için)
+const MOCK_BALANCES: Record<string, UserBalance> = {
+  "default": {
+    auxm: 1250.50,
+    bonusAuxm: 25.00,
+    totalAuxm: 1275.50,
+    bonusExpiresAt: "2025-03-01T00:00:00Z",
+    auxg: 15.75,
+    auxs: 500.00,
+    auxpt: 2.50,
+    auxpd: 1.25,
+    eth: 0.5,
+    btc: 0.01,
+    xrp: 100,
+    sol: 2.5,
+  }
+};
 
-/**
- * GET /api/user/balance?userId=xxx
- * Kullanıcının tüm bakiyelerini getirir
- */
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const address = searchParams.get("address");
+
+  if (!address) {
+    return NextResponse.json(
+      { error: "Address parameter is required" },
+      { status: 400 }
+    );
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
-    const walletAddress = searchParams.get("address");
+    // TODO: Redis'ten gerçek bakiye çek
+    // const balance = await redis.hgetall(`user:${address.toLowerCase()}`);
+    
+    const balance = MOCK_BALANCES["default"];
 
-    if (!userId && !walletAddress) {
-      return NextResponse.json(
-        { error: "userId or address required" },
-        { status: 400 }
-      );
-    }
-
-    const redis = await getRedis();
-
-    // Adres ile userId bul
-    let resolvedUserId = userId;
-    if (!resolvedUserId && walletAddress) {
-      resolvedUserId = (await redis.get(
-        `user:address:${walletAddress.toLowerCase()}`
-      )) as string;
-    }
-
-    if (!resolvedUserId) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Tüm bakiyeleri çek
-    const balances: { [key: string]: number } = {};
-
-    for (const asset of SUPPORTED_ASSETS) {
-      const balance = (await redis.get(
-        `user:${resolvedUserId}:balance:${asset}`
-      )) as number;
-      balances[asset] = balance || 0;
-    }
+    // Çekilebilir bakiye hesapla
+    const withdrawableAuxm = balance.auxm;
+    const lockedBonusAuxm = balance.bonusAuxm;
 
     return NextResponse.json({
-      userId: resolvedUserId,
-      balances,
-      timestamp: new Date().toISOString(),
+      address: address.toLowerCase(),
+      balances: balance,
+      summary: {
+        // Toplam bakiye (görünen)
+        totalAuxm: balance.totalAuxm,
+        // Çekilebilir AUXM (sadece normal)
+        withdrawableAuxm,
+        // Kilitli bonus AUXM
+        lockedBonusAuxm,
+        // Bonus durumu
+        bonusStatus: balance.bonusAuxm > 0 ? {
+          amount: balance.bonusAuxm,
+          expiresAt: balance.bonusExpiresAt,
+          usableFor: ["AUXG", "AUXS", "AUXPT", "AUXPD"],
+          note: "Bonus AUXM can only be used for metal purchases"
+        } : null,
+        // USD değerleri
+        totalValueUsd: balance.totalAuxm, // 1 AUXM = 1 USD
+      }
     });
-  } catch (error: any) {
+
+  } catch (error) {
     console.error("Balance fetch error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: "Failed to fetch balance" },
       { status: 500 }
     );
   }
 }
 
-/**
- * POST /api/user/balance
- * Bakiye güncelleme (internal kullanım)
- */
+// Bakiye güncelleme (internal use)
 export async function POST(request: NextRequest) {
   try {
-    // API Key kontrolü (internal endpoints için)
-    const apiKey = request.headers.get("X-API-Key");
+    const apiKey = request.headers.get("x-api-key");
     if (apiKey !== process.env.INTERNAL_API_KEY) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    const { userId, asset, amount, operation } = await request.json();
+    const body = await request.json();
+    const { address, updates, operation = "increment" } = body;
 
-    if (!userId || !asset || amount === undefined) {
+    if (!address || !updates) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields: address, updates" },
         { status: 400 }
       );
     }
 
-    if (!SUPPORTED_ASSETS.includes(asset)) {
-      return NextResponse.json(
-        { error: `Unsupported asset: ${asset}` },
-        { status: 400 }
-      );
-    }
+    // updates = { auxm: 100, bonusAuxm: 10, auxg: 5 }
+    // operation = "set" | "increment"
 
-    const redis = await getRedis();
-    const balanceKey = `user:${userId}:balance:${asset}`;
-    const currentBalance = ((await redis.get(balanceKey)) as number) || 0;
+    // TODO: Redis'te güncelle
+    // if (operation === "increment") {
+    //   for (const [key, value] of Object.entries(updates)) {
+    //     await redis.hincrbyfloat(`user:${address.toLowerCase()}`, key, value);
+    //   }
+    // } else {
+    //   await redis.hset(`user:${address.toLowerCase()}`, updates);
+    // }
 
-    let newBalance: number;
-
-    switch (operation) {
-      case "add":
-        newBalance = currentBalance + amount;
-        break;
-      case "subtract":
-        if (currentBalance < amount) {
-          return NextResponse.json(
-            { error: "Insufficient balance" },
-            { status: 400 }
-          );
-        }
-        newBalance = currentBalance - amount;
-        break;
-      case "set":
-        newBalance = amount;
-        break;
-      default:
-        return NextResponse.json(
-          { error: "Invalid operation. Use: add, subtract, set" },
-          { status: 400 }
-        );
-    }
-
-    await redis.set(balanceKey, newBalance);
-
-    // Transaction log
-    await redis.lpush(
-      `user:${userId}:transactions`,
-      JSON.stringify({
-        asset,
-        operation,
-        amount,
-        previousBalance: currentBalance,
-        newBalance,
-        timestamp: new Date().toISOString(),
-      })
-    );
+    console.log(`Balance update for ${address}:`, { operation, updates });
 
     return NextResponse.json({
       success: true,
-      userId,
-      asset,
-      previousBalance: currentBalance,
-      newBalance,
+      address: address.toLowerCase(),
+      operation,
+      updates,
+      message: operation === "increment" 
+        ? "Balance incremented successfully"
+        : "Balance set successfully"
     });
-  } catch (error: any) {
+
+  } catch (error) {
     console.error("Balance update error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: "Failed to update balance" },
       { status: 500 }
     );
   }

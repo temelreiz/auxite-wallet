@@ -12,6 +12,8 @@ interface PortfolioOverviewProps {
   onExchangeClick?: () => void;
   walletAddress?: string;
   showActionButtons?: boolean;
+  onMetalClick?: (metal: "AUXG" | "AUXS" | "AUXPT" | "AUXPD") => void;
+  onCryptoClick?: (crypto: "ETH" | "BTC" | "XRP" | "SOL") => void;
 }
 
 const metalIcons: Record<string, string> = {
@@ -40,17 +42,22 @@ const CryptoIcons: Record<string, React.ReactNode> = {
       <path d="M22.5 14.1c.3-2-1.2-3.1-3.3-3.8l.7-2.7-1.7-.4-.7 2.6c-.4-.1-.9-.2-1.4-.3l.7-2.7-1.7-.4-.7 2.7c-.4-.1-.7-.2-1-.2v-.1l-2.3-.6-.4 1.8s1.2.3 1.2.3c.7.2.8.6.8 1l-.8 3.2c0 0 .1 0 .2.1h-.2l-1.1 4.5c-.1.2-.3.5-.8.4 0 0-1.2-.3-1.2-.3l-.8 1.9 2.2.5c.4.1.8.2 1.2.3l-.7 2.8 1.7.4.7-2.7c.5.1.9.2 1.4.3l-.7 2.7 1.7.4.7-2.8c2.9.5 5.1.3 6-2.3.7-2.1 0-3.3-1.5-4.1 1.1-.3 1.9-1 2.1-2.5zm-3.8 5.3c-.5 2.1-4 1-5.1.7l.9-3.7c1.1.3 4.7.8 4.2 3zm.5-5.4c-.5 1.9-3.4.9-4.3.7l.8-3.4c.9.2 4 .6 3.5 2.7z" fill="#fff"/>
     </svg>
   ),
-  USDT: (
+  XRP: (
     <svg className="w-5 h-5" viewBox="0 0 32 32" fill="none">
-      <circle cx="16" cy="16" r="16" fill="#26A17B"/>
-      <path d="M17.9 17.9v-.1c-.1 0-.7 0-2 0-1 0-1.7 0-1.9.1v.1c-3.7.2-6.5.8-6.5 1.5 0 .8 3.5 1.5 7.8 1.5s7.8-.7 7.8-1.5c.1-.8-2.5-1.4-5.2-1.6zm-2-1.3c1.4 0 2.5 0 3-.1v-2.3h4.5V11H8.6v3.2h4.5v2.3c.6.1 1.7.1 2.8.1z" fill="#fff"/>
+      <circle cx="16" cy="16" r="16" fill="#23292F"/>
+      <path d="M23.07 8h2.89l-6.01 5.87a5.52 5.52 0 01-7.9 0L6.04 8h2.89l4.54 4.44a3.28 3.28 0 004.06 0L23.07 8zM8.93 24H6.04l6.01-5.87a5.52 5.52 0 017.9 0L25.96 24h-2.89l-4.54-4.44a3.28 3.28 0 00-4.06 0L8.93 24z" fill="#fff"/>
     </svg>
   ),
-  TRY: (
+  SOL: (
     <svg className="w-5 h-5" viewBox="0 0 32 32" fill="none">
-      <circle cx="16" cy="16" r="16" fill="#E30A17"/>
-      <path d="M16 8c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 14c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z" fill="#fff"/>
-      <text x="16" y="20" textAnchor="middle" fill="#fff" fontSize="10" fontWeight="bold">₺</text>
+      <circle cx="16" cy="16" r="16" fill="url(#sol-gradient)"/>
+      <defs>
+        <linearGradient id="sol-gradient" x1="0" y1="0" x2="32" y2="32">
+          <stop offset="0%" stopColor="#9945FF"/>
+          <stop offset="100%" stopColor="#14F195"/>
+        </linearGradient>
+      </defs>
+      <path d="M9.5 19.7a.65.65 0 01.46-.19h13.82c.29 0 .43.35.23.55l-2.47 2.47a.65.65 0 01-.46.19H7.26a.33.33 0 01-.23-.55l2.47-2.47zM9.5 9.19a.67.67 0 01.46-.19h13.82c.29 0 .43.35.23.55l-2.47 2.47a.65.65 0 01-.46.19H7.26a.33.33 0 01-.23-.55l2.47-2.47zM22.5 14.4a.65.65 0 00-.46-.19H8.22a.33.33 0 00-.23.55l2.47 2.47c.12.12.29.19.46.19h13.82c.29 0 .43-.35.23-.55l-2.47-2.47z" fill="#fff"/>
     </svg>
   ),
 };
@@ -59,7 +66,9 @@ export function PortfolioOverview({
   lang = "en", 
   onExchangeClick, 
   walletAddress,
-  showActionButtons = true 
+  showActionButtons = true,
+  onMetalClick,
+  onCryptoClick,
 }: PortfolioOverviewProps) {
   const [mounted, setMounted] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -116,7 +125,7 @@ export function PortfolioOverview({
       balance: ethBalanceNum,
       price: cryptoPrices?.eth || 0,
       value: ethValue,
-      change: 0,
+      change: cryptoPrices?.ethChange || 0,
       type: "crypto" as const,
     },
     {
@@ -125,26 +134,26 @@ export function PortfolioOverview({
       balance: 0,
       price: cryptoPrices?.btc || 0,
       value: 0,
-      change: 0,
+      change: cryptoPrices?.btcChange || 0,
       type: "crypto" as const,
     },
     {
-      symbol: "USDT",
-      name: "Tether",
+      symbol: "XRP",
+      name: "Ripple",
       balance: 0,
-      price: 1,
+      price: cryptoPrices?.xrp || 0,
       value: 0,
-      change: 0,
+      change: cryptoPrices?.xrpChange || 0,
       type: "crypto" as const,
     },
     {
-      symbol: "TRY",
-      name: "Turkish Lira",
+      symbol: "SOL",
+      name: "Solana",
       balance: 0,
-      price: 1 / (cryptoPrices?.try || 34.5),
+      price: cryptoPrices?.sol || 0,
       value: 0,
-      change: 0,
-      type: "fiat" as const,
+      change: cryptoPrices?.solChange || 0,
+      type: "crypto" as const,
     },
   ];
 
@@ -186,40 +195,44 @@ export function PortfolioOverview({
 
   return (
     <div className="space-y-4">
-      {/* Total Value Header with Wallet Address and Details Button */}
+      {/* Total Value Header */}
       <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="text-sm text-slate-400 mb-1">
-              {lang === "tr" ? "Toplam Portföy Değeri" : "Total Portfolio Value"}
+        <div className="text-sm text-slate-400 mb-1">
+          {lang === "tr" ? "Toplam Portföy Değeri" : "Total Portfolio Value"}{" "}
+          <span className="text-slate-500">({lang === "tr" ? "yaklaşık" : "approx."})</span>
+        </div>
+        <div className="text-3xl font-bold text-slate-100">
+          ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <span className="text-sm text-slate-400 ml-2 font-normal">USDT</span>
+        </div>
+      </div>
+
+      {/* AUXM Balance - Platform Currency */}
+      <div className="rounded-xl border border-purple-500/30 bg-gradient-to-r from-purple-500/10 to-pink-500/10 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-purple-500/30">
+              ◈
             </div>
-            <div className="text-3xl font-bold text-slate-100">
-              ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              <span className="text-sm text-slate-400 ml-2 font-normal">USDT</span>
+            <div>
+              <div className="text-xs text-purple-300">AUXM {lang === "tr" ? "Bakiyeniz" : "Balance"}</div>
+              <div className="font-bold text-white text-lg">5,000.00 AUXM</div>
+              <div className="text-xs text-slate-500">{lang === "tr" ? "Platform Para Birimi" : "Platform Currency"}</div>
             </div>
           </div>
-          
-          {/* Right side: Wallet Address + Details Button */}
-          <div className="flex flex-col items-end gap-2">
-            {/* Wallet Address */}
-            {displayAddress && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 rounded-lg border border-slate-700">
-                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                <span className="text-sm text-slate-300 font-mono">
-                  {displayAddress.slice(0, 6)}...{displayAddress.slice(-4)}
-                </span>
-              </div>
-            )}
-            
-            {/* Details Button */}
-            <button
-              onClick={() => setShowDetails(!showDetails)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors border border-slate-700"
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <div className="text-sm text-slate-300">≈ $5,000</div>
+              <div className="text-xs text-emerald-400">1 AUXM = 1 USD</div>
+            </div>
+            <button 
+              onClick={onExchangeClick}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-sm font-medium transition-all shadow-lg shadow-orange-500/20"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
               </svg>
-              {lang === "tr" ? "Detaylar" : "Details"}
+              {lang === "tr" ? "Dönüştür" : "Exchange"}
             </button>
           </div>
         </div>
@@ -230,7 +243,8 @@ export function PortfolioOverview({
         {metalHoldings.map((holding) => (
           <div
             key={holding.symbol}
-            className="rounded-xl border border-slate-800 bg-slate-900/50 p-4"
+            onClick={() => onMetalClick?.(holding.symbol as "AUXG" | "AUXS" | "AUXPT" | "AUXPD")}
+            className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 cursor-pointer hover:border-slate-600 hover:bg-slate-800/50 transition-all"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -267,7 +281,8 @@ export function PortfolioOverview({
         {cryptoHoldings.map((holding) => (
           <div
             key={holding.symbol}
-            className="rounded-xl border border-slate-800 bg-slate-900/50 p-4"
+            onClick={() => onCryptoClick?.(holding.symbol as "ETH" | "BTC" | "XRP" | "SOL")}
+            className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 cursor-pointer hover:border-slate-600 hover:bg-slate-800/50 transition-all"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
