@@ -281,7 +281,7 @@ export default function Home() {
                 />
               </Link>
 
-              {/* Navigation - Sıra: Piyasalar, Leasing, Cüzdan */}
+              {/* Navigation - Sıra: Piyasalar, Earn, Cüzdan */}
               <div className="flex gap-2">
                 <Link
                   href="/"
@@ -290,10 +290,10 @@ export default function Home() {
                   {lang === "tr" ? "Piyasalar" : "Markets"}
                 </Link>
                 <Link
-                  href="/leasing"
+                  href="/earn"
                   className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-sm transition-colors"
                 >
-                  Leasing
+                  {lang === "tr" ? "Kazan" : "Earn"}
                 </Link>
                 <Link
                   href="/wallet"

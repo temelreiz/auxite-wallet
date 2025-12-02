@@ -3,8 +3,8 @@ import { useWallet } from "./WalletContext";
 type Props = {
   lang: "tr" | "en";
   onLangChange: (lang: "tr" | "en") => void;
-  activeTab: "markets" | "leasing";
-  onTabChange: (tab: "markets" | "leasing") => void;
+  activeTab: "markets" | "earn";
+  onTabChange: (tab: "markets" | "earn") => void;
   onOpenWalletModal: () => void;
 };
 export default function TopNav({
@@ -15,7 +15,7 @@ export default function TopNav({
   onOpenWalletModal,
 }: Props) {
   const { isConnected, address, disconnectWallet } = useWallet();
-  const tabCls = (tab: "markets" | "leasing") =>
+  const tabCls = (tab: "markets" | "earn") =>
     "rounded-full px-4 py-1.5 text-sm font-medium transition " +
     (activeTab === tab
       ? "bg-emerald-500 text-white"
@@ -40,10 +40,10 @@ export default function TopNav({
             {lang === "tr" ? "Piyasalar" : "Markets"}
           </button>
           <button
-            className={tabCls("leasing")}
-            onClick={() => onTabChange("leasing")}
+            className={tabCls("earn")}
+            onClick={() => onTabChange("earn")}
           >
-            Leasing
+            {lang === "tr" ? "Kazan" : "Earn"}
           </button>
         </nav>
       </div>
