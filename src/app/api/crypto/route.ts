@@ -15,7 +15,7 @@ export async function GET() {
         headers: {
           "Accept": "application/json",
         },
-        next: { revalidate: 10 }, // Cache for 10 seconds
+        next: { revalidate: 5 }, // Cache for 5 seconds
       }
     );
 
@@ -49,7 +49,7 @@ export async function GET() {
 
     return NextResponse.json(result, {
       headers: {
-        "Cache-Control": "public, s-maxage=10, stale-while-revalidate=30",
+        "Cache-Control": "public, s-maxage=5, stale-while-revalidate=10",
       },
     });
   } catch (error) {
@@ -59,7 +59,7 @@ export async function GET() {
     try {
       const binanceResponse = await fetch(
         "https://api.binance.com/api/v3/ticker/24hr?symbols=[\"BTCUSDT\",\"ETHUSDT\",\"XRPUSDT\",\"SOLUSDT\"]",
-        { next: { revalidate: 10 } }
+        { next: { revalidate: 5 } }
       );
 
       if (binanceResponse.ok) {
