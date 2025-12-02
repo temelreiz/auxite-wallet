@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   description: "Precious Metals Trading Platform",
   icons: {
     icon: "/gold-favicon-32x32.png",
-    shortcut: "/favicon.ico",
     apple: "/gold-apple-touch-icon.png",
   },
 };

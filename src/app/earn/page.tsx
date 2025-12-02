@@ -83,14 +83,15 @@ export default function EarnPage() {
           <div className="flex items-center justify-between">
             {/* Left Side - Logo + Navigation */}
             <div className="flex items-center gap-5">
-              {/* Logo - Auxite Earn */}
-              <Link href="/earn">
+              {/* Logo - Auxite */}
+              <Link href="/">
                 <Image
-                  src="/auxite-earn-logo.png"
-                  alt="Auxite Earn"
+                  src="/auxite-wallet-logo.png"
+                  alt="Auxite"
                   width={160}
                   height={40}
                   className="h-12 w-auto"
+                  priority
                 />
               </Link>
 
