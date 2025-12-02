@@ -1,72 +1,205 @@
-import { NextResponse } from "next/server";
+// src/app/api/news/route.ts
+// Auxite Wallet - News API
+// Admin paneli ve mobile app için haber yönetimi
 
-export const dynamic = 'force-dynamic';
+import { NextRequest, NextResponse } from "next/server";
+import { kv } from "@vercel/kv";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const lang = searchParams.get('lang') || 'tr';
-  
-  const now = new Date();
-  
-  const articles = lang === 'tr' ? [
+interface NewsItem {
+  id: string;
+  title: string;
+  description: string;
+  source: string;
+  date: string;
+  icon: string;
+  color: string;
+}
+
+interface NewsData {
+  tr: NewsItem[];
+  en: NewsItem[];
+  lastUpdated: string;
+}
+
+const NEWS_KEY = "auxite:news";
+
+// Varsayılan haberler
+const DEFAULT_NEWS: NewsData = {
+  tr: [
     {
-      title: "Altin fiyatlari yukseliste - Merkez Bankasi kararlari bekleniyor",
-      description: "Kuresel piyasalarda altin ons fiyati yeni rekor seviyelere yaklasiyor.",
-      source: "Bloomberg HT",
-      publishedAt: new Date(now.getTime() - 1 * 3600000).toISOString(),
-      url: "https://www.bloomberght.com"
+      id: "1",
+      title: "Auxite Wallet Lansmanı Gerçekleşti!",
+      description: "Değerli metal yatırımlarınızı dijitalleştirin. %2 AUXM bonus kampanyamız devam ediyor.",
+      source: "Auxite",
+      date: "2 Aralık 2024",
+      icon: "gift",
+      color: "#8B5CF6",
     },
     {
-      title: "Gumus piyasasinda hareketlilik - Endustriyel talep artiyor",
-      description: "Yesil enerji yatirimlari gumus talebini destekliyor.",
-      source: "Dunya",
-      publishedAt: new Date(now.getTime() - 3 * 3600000).toISOString(),
-      url: "https://www.dunya.com"
+      id: "2",
+      title: "Altın Fiyatları Rekor Seviyede",
+      description: "Ons altın 2.700$ üzerinde işlem görüyor. Uzmanlar yükselişin devam edeceğini öngörüyor.",
+      source: "Piyasa",
+      date: "2 Aralık 2024",
+      icon: "trending-up",
+      color: "#FFD700",
     },
     {
-      title: "Bitcoin 100.000 dolar sinirinda",
-      description: "Kripto para piyasasinda yogun islem hacmi gozlemleniyor.",
-      source: "Ekonomi",
-      publishedAt: new Date(now.getTime() - 5 * 3600000).toISOString(),
-      url: "https://www.ekonomi.com"
+      id: "3",
+      title: "Yeni Özellik: Fiziksel Teslimat",
+      description: "Artık tokenlerinizi fiziksel altın ve gümüş olarak teslim alabilirsiniz.",
+      source: "Auxite",
+      date: "1 Aralık 2024",
+      icon: "package",
+      color: "#10B981",
+    },
+  ],
+  en: [
+    {
+      id: "1",
+      title: "Auxite Wallet Launch!",
+      description: "Digitize your precious metal investments. Our 2% AUXM bonus campaign continues.",
+      source: "Auxite",
+      date: "Dec 2, 2024",
+      icon: "gift",
+      color: "#8B5CF6",
     },
     {
-      title: "Platin ve paladyum otomotiv sektoruyle yukseliyor",
-      description: "Elektrikli arac uretimindeki artis degerli metal talebini etkiliyor.",
-      source: "Reuters TR",
-      publishedAt: new Date(now.getTime() - 8 * 3600000).toISOString(),
-      url: "https://www.reuters.com"
+      id: "2",
+      title: "Gold Prices at Record High",
+      description: "Gold trading above $2,700 per ounce. Experts predict continued rise.",
+      source: "Market",
+      date: "Dec 2, 2024",
+      icon: "trending-up",
+      color: "#FFD700",
+    },
+    {
+      id: "3",
+      title: "New Feature: Physical Delivery",
+      description: "You can now receive your tokens as physical gold and silver.",
+      source: "Auxite",
+      date: "Dec 1, 2024",
+      icon: "package",
+      color: "#10B981",
+    },
+  ],
+  lastUpdated: new Date().toISOString(),
+};
+
+// GET - Haberleri getir
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const lang = searchParams.get("lang") || "tr";
+    const all = searchParams.get("all"); // Admin için tüm haberleri getir
+    
+    // Vercel KV'den haberleri çek
+    let newsData: NewsData | null = null;
+    
+    try {
+      newsData = await kv.get<NewsData>(NEWS_KEY);
+    } catch (kvError) {
+      console.log("KV not available, using defaults");
     }
-  ] : [
-    {
-      title: "Gold Prices Hit New Highs Amid Central Bank Buying",
-      description: "Global gold prices surge as central banks continue accumulating reserves.",
-      source: "Reuters",
-      publishedAt: new Date(now.getTime() - 1 * 3600000).toISOString(),
-      url: "https://www.reuters.com"
-    },
-    {
-      title: "Silver Demand Boosted by Green Energy Investments",
-      description: "Industrial demand for silver rises with solar panel production growth.",
-      source: "Bloomberg",
-      publishedAt: new Date(now.getTime() - 3 * 3600000).toISOString(),
-      url: "https://www.bloomberg.com"
-    },
-    {
-      title: "Bitcoin Approaches 100K Milestone",
-      description: "Cryptocurrency markets see increased institutional interest.",
-      source: "CoinDesk",
-      publishedAt: new Date(now.getTime() - 5 * 3600000).toISOString(),
-      url: "https://www.coindesk.com"
-    },
-    {
-      title: "Platinum Group Metals Rally on Auto Sector Recovery",
-      description: "PGM prices benefit from automotive industry rebound.",
-      source: "FT",
-      publishedAt: new Date(now.getTime() - 8 * 3600000).toISOString(),
-      url: "https://www.ft.com"
+    
+    // KV yoksa veya boşsa varsayılanları kullan
+    if (!newsData) {
+      newsData = DEFAULT_NEWS;
     }
-  ];
-  
-  return NextResponse.json({ articles });
+    
+    // CORS headers for mobile app
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    };
+    
+    // Admin için tüm haberleri döndür
+    if (all === 'true') {
+      return NextResponse.json({
+        success: true,
+        allNews: {
+          tr: newsData.tr || [],
+          en: newsData.en || [],
+        },
+        lastUpdated: newsData.lastUpdated,
+      }, { headers });
+    }
+    
+    // Mobile app için sadece seçilen dildeki haberleri döndür
+    return NextResponse.json({
+      success: true,
+      news: newsData[lang as keyof Pick<NewsData, 'tr' | 'en'>] || newsData.tr,
+      lastUpdated: newsData.lastUpdated,
+    }, { headers });
+    
+  } catch (error) {
+    console.error("News GET error:", error);
+    return NextResponse.json({
+      success: false,
+      news: DEFAULT_NEWS.tr,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+}
+
+// POST - Haberleri güncelle (Admin only)
+export async function POST(request: NextRequest) {
+  try {
+    // Admin authentication
+    const authHeader = request.headers.get("authorization");
+    const adminPassword = process.env.ADMIN_PASSWORD || "auxite2024";
+    
+    if (authHeader !== \`Bearer \${adminPassword}\`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    const body = await request.json();
+    const { tr, en } = body;
+    
+    if (!tr || !en) {
+      return NextResponse.json({ error: "Missing tr or en news arrays" }, { status: 400 });
+    }
+    
+    const newsData: NewsData = {
+      tr,
+      en,
+      lastUpdated: new Date().toISOString(),
+    };
+    
+    // Vercel KV'ye kaydet
+    try {
+      await kv.set(NEWS_KEY, newsData);
+      console.log("✅ News saved to KV");
+    } catch (kvError) {
+      console.error("KV save error:", kvError);
+    }
+    
+    return NextResponse.json({
+      success: true,
+      message: "News updated successfully",
+      newsData,
+    }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  } catch (error) {
+    console.error("News POST error:", error);
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    }, { status: 500 });
+  }
+}
+
+// OPTIONS - CORS preflight
+export async function OPTIONS() {
+  return NextResponse.json({}, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }
