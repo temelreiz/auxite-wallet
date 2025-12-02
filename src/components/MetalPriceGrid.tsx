@@ -203,12 +203,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
           return (
             <MetalPriceCard
               key={metal.id}
-              metalId={(() => {
-                const auxToMetal: Record<string, "gold" | "silver" | "platinum" | "palladium"> = {
-                  AUXG: "gold", AUXS: "silver", AUXPT: "platinum", AUXPD: "palladium"
-                };
-                return auxToMetal[metal.symbol] || "gold";
-              })()}
+              metalId={metal.symbol as "AUXG" | "AUXS" | "AUXPT" | "AUXPD"}
               symbol={metal.symbol}
               name={metalName}
               pricePerGram={priceData}
@@ -550,8 +545,8 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                   </h4>
                   <p className="text-sm text-slate-400">
                     {lang === "tr" 
-                      ? "SWIFT, kart, Apple/Google Pay ile USD/TRY yatırın" 
-                      : "Deposit USD/TRY via SWIFT, card, Apple/Google Pay"}
+                      ? "Kredi kartı, Apple/Google Pay ile USD/TRY yatırın" 
+                      : "Deposit USD/TRY via card, Apple/Google Pay"}
                   </p>
                 </div>
                 <svg className="w-5 h-5 text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -589,38 +584,6 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
 
             {/* Content */}
             <div className="space-y-3">
-              {/* SWIFT Transfer */}
-              <button
-                onClick={() => {
-                  alert(lang === "tr" ? "SWIFT Transfer yakında aktif olacak" : "SWIFT Transfer coming soon");
-                }}
-                className="w-full p-4 rounded-xl border border-slate-700 hover:border-blue-500/50 hover:bg-slate-800/50 transition-all text-left flex items-start gap-4 group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-white font-semibold text-sm">SWIFT Transfer</h4>
-                    <span className="px-1.5 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                      {lang === "tr" ? "Banka" : "Bank"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <span>Min: $100</span>
-                    <span>•</span>
-                    <span>1-3 {lang === "tr" ? "gün" : "days"}</span>
-                    <span>•</span>
-                    <span className="text-emerald-500">{lang === "tr" ? "Ücretsiz" : "Free"}</span>
-                  </div>
-                </div>
-                <svg className="w-5 h-5 text-slate-500 group-hover:text-blue-400 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-
               {/* MoonPay */}
               <button
                 onClick={() => {
@@ -844,8 +807,6 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                 <option value="AUXPD">AUXPD - {lang === "tr" ? "Paladyum" : "Palladium"}</option>
                 <option value="ETH">ETH - Ethereum</option>
                 <option value="BTC">BTC - Bitcoin</option>
-                <option value="XRP">XRP - Ripple</option>
-                <option value="SOL">SOL - Solana</option>
                 <option value="USDT">USDT - Tether</option>
               </select>
             </div>
