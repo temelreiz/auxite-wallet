@@ -66,10 +66,10 @@ export function useCryptoPrices() {
 
       // Calculate directions based on price changes
       const newDirections: CryptoDirections = {
-        eth: newPrices.eth > prevPrices.current.eth ? "up" : newPrices.eth < prevPrices.current.eth ? "down" : "neutral",
-        btc: newPrices.btc > prevPrices.current.btc ? "up" : newPrices.btc < prevPrices.current.btc ? "down" : "neutral",
-        xrp: newPrices.xrp > prevPrices.current.xrp ? "up" : newPrices.xrp < prevPrices.current.xrp ? "down" : "neutral",
-        sol: newPrices.sol > prevPrices.current.sol ? "up" : newPrices.sol < prevPrices.current.sol ? "down" : "neutral",
+        eth: newChanges.eth > 0 ? "up" : newChanges.eth < 0 ? "down" : "neutral",
+        btc: newChanges.btc > 0 ? "up" : newChanges.btc < 0 ? "down" : "neutral",
+        xrp: newChanges.xrp > 0 ? "up" : newChanges.xrp < 0 ? "down" : "neutral",
+        sol: newChanges.sol > 0 ? "up" : newChanges.sol < 0 ? "down" : "neutral",
       };
 
       prevPrices.current = newPrices;
