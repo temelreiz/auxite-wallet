@@ -193,7 +193,7 @@ export async function withdrawXRP(
         return {
           success: true,
           txHash: result.result.hash,
-          fee: parseFloat(xrpl.dropsToXrp(prepared.Fee?.toString() || '12')),
+          fee: parseFloat(xrpl.dropsToXrp(`${prepared.Fee || 12}`)),
         };
       } else {
         return { success: false, error: `XRP transaction failed: ${txResult}` };
