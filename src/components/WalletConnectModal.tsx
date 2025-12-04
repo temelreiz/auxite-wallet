@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useWallet, WalletType } from "./WalletContext";
+import { useConnect } from "wagmi";
 
 interface WalletConnectModalProps {
   isOpen: boolean;
@@ -51,7 +52,7 @@ export function WalletConnectModal({ isOpen, onClose, lang = "en" }: WalletConne
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedWallet, setSelectedWallet] = useState<WalletType>(null);
-  const { connectWallet } = useWallet();
+  const { connect, connectors } = useConnect();
 
   const handleConnect = async (walletType: WalletType) => {
     setConnecting(true);
@@ -59,7 +60,7 @@ export function WalletConnectModal({ isOpen, onClose, lang = "en" }: WalletConne
     setSelectedWallet(walletType);
 
     try {
-      await connectWallet(walletType);
+      const connector = connectors.find(c => c.id.toLowerCase().includes(walletType?.toLowerCase() || "")); if (connector) { connect({ connector }); } else { throw new Error("Connector not found"); }
       onClose();
     } catch (err: any) {
       console.error("Connection error:", err);
