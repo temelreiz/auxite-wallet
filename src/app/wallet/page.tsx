@@ -722,8 +722,7 @@ export default function WalletPage() {
 
               {/* Deposit Fiat */}
               <button
-                className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-800/70 transition-all"
-                  onClick={() => {
+                onClick={() => {
                   setShowDeposit(false);
                   setShowFiatDeposit(true);
                 }}
