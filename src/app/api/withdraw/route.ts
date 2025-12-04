@@ -174,8 +174,8 @@ export async function POST(request: NextRequest) {
           explorerUrl: getExplorerUrl(coin, withdrawResult.txHash!),
         },
         balances: {
-          auxm: parseFloat(updatedBalance.auxm as string || "0"),
-          bonusAuxm: parseFloat(updatedBalance.bonusauxm as string || "0"),
+          auxm: parseFloat(updatedBalance?.auxm as string || "0"),
+          bonusAuxm: parseFloat(updatedBalance?.bonusauxm as string || "0"),
         },
       });
 
