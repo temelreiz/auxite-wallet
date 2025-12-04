@@ -1119,14 +1119,6 @@ export default function WalletPage() {
           isOpen={showWithdraw}
           onClose={() => setShowWithdraw(false)}
           lang={lang}
-          auxmBalance={{ auxm: auxmBalance, bonusAuxm: bonusAuxm }}
-          cryptoPrices={{
-            BTC: cryptoPrices?.btc || 97500,
-            ETH: cryptoPrices?.eth || 3650,
-            XRP: cryptoPrices?.xrp || 2.45,
-            SOL: cryptoPrices?.sol || 235,
-            USDT: 1,
-          }}
         />
       )}
     </main>
