@@ -196,9 +196,9 @@ export async function POST(request: NextRequest) {
         status: "completed",
       },
       balances: {
-        auxm: parseFloat(updatedBalance.auxm as string || "0"),
-        bonusAuxm: parseFloat(updatedBalance.bonusauxm as string || "0"),
-        [toTokenLower]: parseFloat(updatedBalance[toTokenLower] as string || "0"),
+        auxm: parseFloat(updatedBalance?.auxm as string || "0"),
+        bonusAuxm: parseFloat(updatedBalance?.bonusauxm as string || "0"),
+        [toTokenLower]: parseFloat(updatedBalance?.[toTokenLower] as string || "0"),
       },
     });
 
