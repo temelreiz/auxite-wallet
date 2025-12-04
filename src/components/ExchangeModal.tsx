@@ -1,82 +1,93 @@
 "use client";
 
 import { useState, useEffect, useRef, memo } from "react";
-import { isLaunchCampaignActive } from "@/lib/auxm-bonus-service";
+import { useWallet } from "@/components/WalletContext";
+import { useMetalsPrices } from "@/hooks/useMetalsPrices";
+import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 
-type AssetCategory = "metal" | "platform" | "crypto" | "fiat";
+type AssetCategory = "metal" | "platform" | "crypto";
 
 type AssetType = 
   | "AUXG" | "AUXS" | "AUXPT" | "AUXPD"
   | "AUXM"
-  | "ETH" | "BTC" | "XRP" | "SOL" | "USDT"
-  | "USD" | "EUR" | "TRY";
+  | "ETH" | "BTC" | "XRP" | "SOL" | "USDT";
 
 interface AssetInfo {
   name: string;
   nameTr: string;
   icon: string;
+  iconType: "image" | "symbol";
   category: AssetCategory;
   color: string;
   unit: string;
 }
 
 const ASSETS: Record<AssetType, AssetInfo> = {
-  AUXG: { name: "Gold", nameTr: "Altın", icon: "🥇", category: "metal", color: "#F59E0B", unit: "gram" },
-  AUXS: { name: "Silver", nameTr: "Gümüş", icon: "🥈", category: "metal", color: "#94A3B8", unit: "gram" },
-  AUXPT: { name: "Platinum", nameTr: "Platin", icon: "⚪", category: "metal", color: "#CBD5E1", unit: "gram" },
-  AUXPD: { name: "Palladium", nameTr: "Paladyum", icon: "🔘", category: "metal", color: "#64748B", unit: "gram" },
-  AUXM: { name: "Auxite Money", nameTr: "Auxite Para", icon: "◈", category: "platform", color: "#A855F7", unit: "AUXM" },
-  ETH: { name: "Ethereum", nameTr: "Ethereum", icon: "Ξ", category: "crypto", color: "#627EEA", unit: "ETH" },
-  BTC: { name: "Bitcoin", nameTr: "Bitcoin", icon: "₿", category: "crypto", color: "#F7931A", unit: "BTC" },
-  XRP: { name: "Ripple", nameTr: "Ripple", icon: "✕", category: "crypto", color: "#23292F", unit: "XRP" },
-  SOL: { name: "Solana", nameTr: "Solana", icon: "◎", category: "crypto", color: "#9945FF", unit: "SOL" },
-  USDT: { name: "Tether", nameTr: "Tether", icon: "₮", category: "crypto", color: "#26A17B", unit: "USDT" },
-  USD: { name: "US Dollar", nameTr: "ABD Doları", icon: "$", category: "fiat", color: "#22C55E", unit: "USD" },
-  EUR: { name: "Euro", nameTr: "Euro", icon: "€", category: "fiat", color: "#3B82F6", unit: "EUR" },
-  TRY: { name: "Turkish Lira", nameTr: "Türk Lirası", icon: "₺", category: "fiat", color: "#EF4444", unit: "TRY" },
+  // Metals - use image icons
+  AUXG: { name: "Gold", nameTr: "Altın", icon: "/gold-favicon-32x32.png", iconType: "image", category: "metal", color: "#F59E0B", unit: "gram" },
+  AUXS: { name: "Silver", nameTr: "Gümüş", icon: "/silver-favicon-32x32.png", iconType: "image", category: "metal", color: "#94A3B8", unit: "gram" },
+  AUXPT: { name: "Platinum", nameTr: "Platin", icon: "/platinum-favicon-32x32.png", iconType: "image", category: "metal", color: "#CBD5E1", unit: "gram" },
+  AUXPD: { name: "Palladium", nameTr: "Paladyum", icon: "/palladium-favicon-32x32.png", iconType: "image", category: "metal", color: "#64748B", unit: "gram" },
+  // Platform
+  AUXM: { name: "Auxite Money", nameTr: "Auxite Para", icon: "◈", iconType: "symbol", category: "platform", color: "#A855F7", unit: "AUXM" },
+  // Crypto - use symbols
+  ETH: { name: "Ethereum", nameTr: "Ethereum", icon: "Ξ", iconType: "symbol", category: "crypto", color: "#627EEA", unit: "ETH" },
+  BTC: { name: "Bitcoin", nameTr: "Bitcoin", icon: "₿", iconType: "symbol", category: "crypto", color: "#F7931A", unit: "BTC" },
+  XRP: { name: "Ripple", nameTr: "Ripple", icon: "✕", iconType: "symbol", category: "crypto", color: "#23292F", unit: "XRP" },
+  SOL: { name: "Solana", nameTr: "Solana", icon: "◎", iconType: "symbol", category: "crypto", color: "#9945FF", unit: "SOL" },
+  USDT: { name: "Tether", nameTr: "Tether", icon: "₮", iconType: "symbol", category: "crypto", color: "#26A17B", unit: "USDT" },
 };
 
-const ALL_ASSETS: AssetType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD", "AUXM", "ETH", "BTC", "XRP", "SOL", "USDT", "USD", "EUR", "TRY"];
+// İş kuralları: Hangi dönüşümler izinli?
+function isConversionAllowed(from: AssetType, to: AssetType): boolean {
+  const fromInfo = ASSETS[from];
+  const toInfo = ASSETS[to];
+  
+  if (from === to) return false;
+  
+  // Crypto → Crypto YASAK
+  if (fromInfo.category === "crypto" && toInfo.category === "crypto") {
+    return false;
+  }
+  
+  // AUXM → Crypto YASAK (withdraw kullanılmalı)
+  if (from === "AUXM" && toInfo.category === "crypto") {
+    return false;
+  }
+  
+  // Diğer tüm kombinasyonlar izinli
+  return true;
+}
 
-const DEFAULT_BALANCES = {
-  AUXG: 15.75, AUXS: 250.00, AUXPT: 5.25, AUXPD: 3.50,
-  AUXM: 5000,
-  ETH: 1.5, BTC: 0.025, XRP: 500, SOL: 10, USDT: 1000,
-  USD: 2500, EUR: 1500, TRY: 50000,
-};
+// Dropdown için izinli hedefleri getir
+function getAllowedTargets(from: AssetType): AssetType[] {
+  const all: AssetType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD", "AUXM", "ETH", "BTC", "XRP", "SOL", "USDT"];
+  return all.filter(t => isConversionAllowed(from, t));
+}
 
-const DEFAULT_PRICES = {
-  AUXG: 139.31, AUXS: 1.79, AUXPT: 54.14, AUXPD: 48.16,
-  ETH: 3650, BTC: 97500, XRP: 2.20, SOL: 235, USDT: 1,
-  USD: 1, EUR: 1.08, TRY: 0.029,
-};
-
-// Ayrı dropdown component - memoized
 interface DropdownProps {
   isOpen: boolean;
   onSelect: (asset: AssetType) => void;
-  exclude: AssetType;
+  allowedAssets: AssetType[];
   currentAsset: AssetType;
   position: "top" | "bottom";
   lang: "tr" | "en";
-  balances: typeof DEFAULT_BALANCES;
+  getBalance: (asset: AssetType) => number;
 }
 
 const AssetDropdown = memo(function AssetDropdown({ 
   isOpen, 
   onSelect, 
-  exclude, 
+  allowedAssets,
   currentAsset, 
   position, 
   lang,
-  balances 
+  getBalance 
 }: DropdownProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  
   if (!isOpen) return null;
 
   const formatBal = (asset: AssetType): string => {
-    const bal = balances[asset] || 0;
+    const bal = getBalance(asset);
     const info = ASSETS[asset];
     if (info.category === "metal") return bal.toFixed(4);
     if (info.category === "crypto" && asset !== "USDT") return bal.toFixed(6);
@@ -84,35 +95,49 @@ const AssetDropdown = memo(function AssetDropdown({
   };
 
   const posClass = position === "top" 
-    ? "absolute bottom-full left-0 right-0 mb-2" 
-    : "absolute top-full left-0 right-0 mt-2";
+    ? "absolute bottom-full left-0 right-0 mb-1" 
+    : "absolute left-0 right-0 mt-1";
 
   const categories: { key: AssetCategory; assets: AssetType[]; label: string; color: string }[] = [
     { key: "metal", assets: ["AUXG", "AUXS", "AUXPT", "AUXPD"], label: lang === "tr" ? "Metaller" : "Metals", color: "text-yellow-400" },
     { key: "platform", assets: ["AUXM"], label: "Platform", color: "text-purple-400" },
     { key: "crypto", assets: ["ETH", "BTC", "XRP", "SOL", "USDT"], label: lang === "tr" ? "Kripto" : "Crypto", color: "text-blue-400" },
-    { key: "fiat", assets: ["USD", "EUR", "TRY"], label: "Fiat", color: "text-green-400" },
   ];
+
+  const renderIcon = (asset: AssetType, size: "sm" | "md" = "sm") => {
+    const info = ASSETS[asset];
+    const sizeClass = size === "sm" ? "w-5 h-5" : "w-8 h-8";
+    const textSize = size === "sm" ? "text-[10px]" : "text-sm";
+    
+    if (info.iconType === "image") {
+      return <img src={info.icon} alt={asset} className={sizeClass} />;
+    }
+    return (
+      <div 
+        className={`${sizeClass} rounded-full flex items-center justify-center text-white font-bold ${textSize}`}
+        style={{ backgroundColor: info.color }}
+      >
+        {info.icon}
+      </div>
+    );
+  };
 
   return (
     <div 
-      ref={scrollRef}
       className={`${posClass} bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 max-h-52 overflow-y-auto`}
       style={{ overscrollBehavior: 'contain' }}
     >
       {categories.map(cat => {
-        const filteredAssets = cat.assets.filter(a => a !== exclude);
+        const filteredAssets = cat.assets.filter(a => allowedAssets.includes(a));
         if (filteredAssets.length === 0) return null;
         
         return (
           <div key={cat.key}>
-            <div className={`px-3 py-1 text-[10px] font-semibold ${cat.color} bg-slate-900`}>
+            <div className={`px-3 py-1 text-[10px] font-semibold ${cat.color} bg-slate-900 sticky top-0`}>
               {cat.label}
             </div>
             {filteredAssets.map(asset => {
               const info = ASSETS[asset];
-              const isSpecial = ["Ξ", "₿", "✕", "◎", "₮", "◈"].includes(info.icon);
-              
               return (
                 <button
                   key={asset}
@@ -122,21 +147,17 @@ const AssetDropdown = memo(function AssetDropdown({
                     e.stopPropagation();
                     onSelect(asset);
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 hover:bg-slate-700 transition-colors ${
+                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 transition-colors ${
                     currentAsset === asset ? "bg-slate-700" : ""
                   }`}
                 >
-                  {isSpecial ? (
-                    <div 
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-white font-bold text-[10px]"
-                      style={{ backgroundColor: info.color }}
-                    >
-                      {info.icon}
-                    </div>
-                  ) : (
-                    <span className="text-sm w-5 text-center">{info.icon}</span>
-                  )}
-                  <span className="font-medium text-white text-sm flex-1 text-left">{asset}</span>
+                  {renderIcon(asset, "sm")}
+                  <div className="flex-1 text-left">
+                    <span className="font-medium text-white text-sm">{asset}</span>
+                    <span className="text-xs text-slate-400 ml-1">
+                      {lang === "tr" ? info.nameTr : info.name}
+                    </span>
+                  </div>
                   <span className="text-xs text-slate-400">{formatBal(asset)}</span>
                 </button>
               );
@@ -154,8 +175,6 @@ interface ExchangeModalProps {
   lang?: "tr" | "en";
   defaultFrom?: AssetType;
   defaultTo?: AssetType;
-  balances?: typeof DEFAULT_BALANCES;
-  prices?: typeof DEFAULT_PRICES;
 }
 
 export function ExchangeModal({
@@ -164,9 +183,11 @@ export function ExchangeModal({
   lang = "tr",
   defaultFrom = "AUXG",
   defaultTo = "AUXS",
-  balances = DEFAULT_BALANCES,
-  prices = DEFAULT_PRICES,
 }: ExchangeModalProps) {
+  const { balances, refreshBalances, address: walletAddress } = useWallet();
+  const { prices: metalPrices } = useMetalsPrices();
+  const { prices: cryptoPrices } = useCryptoPrices();
+  
   const [fromAsset, setFromAsset] = useState<AssetType>(defaultFrom);
   const [toAsset, setToAsset] = useState<AssetType>(defaultTo);
   const [fromAmount, setFromAmount] = useState<string>("");
@@ -175,61 +196,97 @@ export function ExchangeModal({
   const [showFromSelect, setShowFromSelect] = useState(false);
   const [showToSelect, setShowToSelect] = useState(false);
 
-  const isCampaignActive = isLaunchCampaignActive();
-
   useEffect(() => {
     if (isOpen) {
       setFromAmount("");
       setResult(null);
       setFromAsset(defaultFrom);
-      setToAsset(defaultTo);
-      setShowFromSelect(false);
-      setShowToSelect(false);
+      // İlk izinli hedefi bul
+      const allowed = getAllowedTargets(defaultFrom);
+      setToAsset(allowed.includes(defaultTo) ? defaultTo : allowed[0] || "AUXM");
     }
   }, [isOpen, defaultFrom, defaultTo]);
 
-  // Close dropdowns on outside click
-  useEffect(() => {
-    const handleClick = () => {
-      setShowFromSelect(false);
-      setShowToSelect(false);
-    };
-    if (showFromSelect || showToSelect) {
-      document.addEventListener('mousedown', handleClick);
-      return () => document.removeEventListener('mousedown', handleClick);
-    }
-  }, [showFromSelect, showToSelect]);
-
   if (!isOpen) return null;
 
-  const getUSDPrice = (asset: AssetType): number => {
-    if (asset === "AUXM") return 1;
-    return prices[asset] || 1;
+  // Bakiye getir
+  const getBalance = (asset: AssetType): number => {
+    if (!balances) return 0;
+    const map: Record<AssetType, number> = {
+      AUXG: balances.auxg || 0,
+      AUXS: balances.auxs || 0,
+      AUXPT: balances.auxpt || 0,
+      AUXPD: balances.auxpd || 0,
+      AUXM: (balances.auxm || 0) + (balances.bonusAuxm || 0),
+      ETH: balances.eth || 0,
+      BTC: balances.btc || 0,
+      XRP: balances.xrp || 0,
+      SOL: balances.sol || 0,
+      USDT: 0, // USDT bakiyesi henüz yok
+    };
+    return map[asset];
   };
 
-  const fromPrice = getUSDPrice(fromAsset);
-  const toPrice = getUSDPrice(toAsset);
+  // Fiyat getir (USD cinsinden)
+  const getPrice = (asset: AssetType): number => {
+    const metalMap: Record<string, number> = {
+      AUXG: metalPrices?.gold || 90,
+      AUXS: metalPrices?.silver || 1.05,
+      AUXPT: metalPrices?.platinum || 32,
+      AUXPD: metalPrices?.palladium || 33,
+    };
+    const cryptoMap: Record<string, number> = {
+      ETH: cryptoPrices?.eth || 3500,
+      BTC: cryptoPrices?.btc || 95000,
+      XRP: cryptoPrices?.xrp || 2.2,
+      SOL: cryptoPrices?.sol || 200,
+      USDT: 1,
+    };
+    if (asset === "AUXM") return 1;
+    if (metalMap[asset]) return metalMap[asset];
+    if (cryptoMap[asset]) return cryptoMap[asset];
+    return 1;
+  };
+
+  const fromPrice = getPrice(fromAsset);
+  const toPrice = getPrice(toAsset);
   const fromAmountNum = parseFloat(fromAmount) || 0;
   const fromValueUSD = fromAmountNum * fromPrice;
+  
+  // Spread: %0.5
+  const spreadPercent = 0.5;
+  const spreadMultiplier = 1 - (spreadPercent / 100);
+  const toAmount = (fromValueUSD * spreadMultiplier) / toPrice;
+  
+  const fromBalance = getBalance(fromAsset);
+  const canAfford = fromAmountNum <= fromBalance && fromAmountNum > 0;
 
-  const fromCategory = ASSETS[fromAsset].category;
-  const toCategory = ASSETS[toAsset].category;
-  const bonusApplies = isCampaignActive && fromCategory === "crypto" && (toAsset === "AUXM" || toCategory === "metal");
-  const bonusPercent = bonusApplies ? 2 : 0;
-  const bonusUSD = fromValueUSD * (bonusPercent / 100);
-  const totalValueUSD = fromValueUSD + bonusUSD;
+  const handleFromSelect = (asset: AssetType) => {
+    setFromAsset(asset);
+    setShowFromSelect(false);
+    // Eğer aynı varlık seçildiyse veya izinli değilse hedefi güncelle
+    const allowed = getAllowedTargets(asset);
+    if (asset === toAsset || !allowed.includes(toAsset)) {
+      // Farklı bir varlık seç
+      const newTo = allowed.find(a => a !== asset) || "AUXM";
+      setToAsset(newTo);
+    }
+  };
 
-  const spreadPercent = fromCategory === toCategory ? 0.5 : 1;
-  const netValueUSD = totalValueUSD * (1 - spreadPercent / 100);
-  const toAmount = netValueUSD / toPrice;
-
-  const fromBalance = balances[fromAsset] || 0;
-  const canAfford = fromAmountNum <= fromBalance && fromAmountNum > 0 && fromAsset !== toAsset;
+  const handleToSelect = (asset: AssetType) => {
+    // Aynı varlık seçilemez
+    if (asset === fromAsset) return;
+    setToAsset(asset);
+    setShowToSelect(false);
+  };
 
   const handleSwap = () => {
-    setFromAsset(toAsset);
-    setToAsset(fromAsset);
-    setFromAmount("");
+    if (isConversionAllowed(toAsset, fromAsset)) {
+      const temp = fromAsset;
+      setFromAsset(toAsset);
+      setToAsset(temp);
+      setFromAmount("");
+    }
   };
 
   const handleMaxClick = () => {
@@ -237,13 +294,40 @@ export function ExchangeModal({
   };
 
   const handleExchange = async () => {
-    if (!canAfford) return;
+    if (!canAfford || isProcessing) return;
+    
     setIsProcessing(true);
+    
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Trade API çağrısı
+      const response = await fetch("/api/trade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: walletAddress,
+          type: "swap",
+          fromToken: fromAsset,
+          toToken: toAsset,
+          fromAmount: fromAmountNum,
+          price: fromPrice,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Exchange failed");
+      }
+
       setResult("success");
-      setTimeout(() => onClose(), 2500);
-    } catch {
+      await refreshBalances();
+      
+      setTimeout(() => {
+        onClose();
+      }, 2000);
+
+    } catch (err) {
+      console.error("Exchange error:", err);
       setResult("error");
     } finally {
       setIsProcessing(false);
@@ -258,161 +342,141 @@ export function ExchangeModal({
   };
 
   const formatBalance = (asset: AssetType): string => {
-    return formatAmount(balances[asset] || 0, asset);
+    return formatAmount(getBalance(asset), asset);
   };
 
   const getAssetUnit = (asset: AssetType): string => {
-    return ASSETS[asset].category === "metal" ? "gram" : asset;
+    return ASSETS[asset].unit;
   };
 
-  const handleFromSelect = (asset: AssetType) => {
-    setFromAsset(asset);
-    setShowFromSelect(false);
-  };
-
-  const handleToSelect = (asset: AssetType) => {
-    setToAsset(asset);
-    setShowToSelect(false);
-  };
-
-  const renderAssetButton = (asset: AssetType, onClick: () => void, label: string) => {
+  const renderIcon = (asset: AssetType) => {
     const info = ASSETS[asset];
-    const isSpecial = ["Ξ", "₿", "✕", "◎", "₮", "◈"].includes(info.icon);
-    
+    if (info.iconType === "image") {
+      return <img src={info.icon} alt={asset} className="w-8 h-8" />;
+    }
     return (
-      <div className="relative">
-        <div className="text-xs text-slate-500 mb-1">{label}</div>
-        <button
-          type="button"
-          onClick={onClick}
-          className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-800/80 border border-slate-700 hover:border-slate-600 transition-all w-full"
-        >
-          {isSpecial ? (
-            <div 
-              className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-sm"
-              style={{ backgroundColor: info.color }}
-            >
-              {info.icon}
-            </div>
-          ) : (
-            <span className="text-xl">{info.icon}</span>
-          )}
-          <div className="flex-1 text-left">
-            <div className="font-semibold text-white text-sm">{asset}</div>
-            <div className="text-xs text-slate-400">
-              {lang === "tr" ? info.nameTr : info.name}
-            </div>
-          </div>
-          <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+      <div 
+        className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm"
+        style={{ backgroundColor: info.color }}
+      >
+        {info.icon}
       </div>
     );
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+  const renderAssetButton = (
+    asset: AssetType,
+    onClick: () => void,
+    label: string
+  ) => {
+    const info = ASSETS[asset];
+    return (
+      <>
+        <span className="text-xs text-slate-500 mb-1 block">{label}</span>
+        <button
+          type="button"
+          onClick={onClick}
+          className="w-full flex items-center gap-3 p-2 rounded-lg bg-slate-800 border border-slate-600 hover:border-slate-500 transition-colors"
+        >
+          {renderIcon(asset)}
+          <div className="flex-1 text-left">
+            <div className="font-semibold text-white">{asset}</div>
+            <div className="text-xs text-slate-400">
+              {lang === "tr" ? info.nameTr : info.name}
+            </div>
+          </div>
+          <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </>
+    );
+  };
 
-      <div className="relative z-10 w-full max-w-md bg-slate-900 rounded-2xl border border-slate-700">
+  // İzinli hedefler - tüm varlıkları göster
+  const allAssets: AssetType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD", "AUXM", "ETH", "BTC", "XRP", "SOL", "USDT"];
+  const allowedToTargets = getAllowedTargets(fromAsset);
+
+  // Crypto-to-crypto uyarısı
+  const isCryptoToCrypto = ASSETS[fromAsset].category === "crypto" && ASSETS[toAsset].category === "crypto";
+  
+  // AUXM → Crypto uyarısı
+  const isAuxmToCrypto = fromAsset === "AUXM" && ASSETS[toAsset].category === "crypto";
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-900 rounded-2xl border border-slate-700 w-full max-w-sm max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+        <div className="flex items-center justify-between p-4 border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
           <div>
-            <h2 className="text-base font-bold text-white">
+            <h2 className="text-lg font-bold text-white">
               {lang === "tr" ? "Dönüştür" : "Exchange"}
             </h2>
             <p className="text-xs text-slate-400">
-              {lang === "tr" ? "Varlıklarınızı anında dönüştürün" : "Instantly convert your assets"}
+              {lang === "tr" ? "Varlıklarınızı anında dönüştürün" : "Convert your assets instantly"}
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-slate-800 rounded-lg">
-            <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+          <button 
+            onClick={onClose} 
+            className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 text-xl"
+          >
+            ✕
           </button>
         </div>
 
         {/* Content */}
         <div className="p-4 space-y-3">
-          {/* Campaign Banner with Calculation */}
-          {bonusApplies && fromAmountNum > 0 && (
-            <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">🎁</span>
-                <span className="text-sm font-semibold text-purple-300">
-                  {lang === "tr" ? "Lansman Kampanyası Bonusu" : "Launch Campaign Bonus"}
-                </span>
-                <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/30 text-purple-300">
-                  +%{bonusPercent}
-                </span>
-              </div>
-              <div className="space-y-1 text-xs">
-                <div className="flex justify-between text-slate-400">
-                  <span>{lang === "tr" ? "İşlem Değeri:" : "Trade Value:"}</span>
-                  <span>${fromValueUSD.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-purple-400 font-medium">
-                  <span>{lang === "tr" ? "Bonus Kazanç:" : "Bonus Earned:"}</span>
-                  <span>+${bonusUSD.toFixed(2)} AUXM</span>
-                </div>
-                <div className="flex justify-between text-emerald-400 font-semibold pt-1 border-t border-slate-700/50">
-                  <span>{lang === "tr" ? "Toplam Değer:" : "Total Value:"}</span>
-                  <span>${totalValueUSD.toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Campaign Banner (no amount or not applicable) */}
-          {isCampaignActive && fromCategory === "crypto" && (fromAmountNum === 0 || !bonusApplies) && (
-            <div className="px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center gap-2">
-              <span>🎁</span>
-              <span className="text-xs text-purple-300">
-                {lang === "tr" ? "Kripto → AUXM/Metal: +%2 Bonus!" : "Crypto → AUXM/Metal: +2% Bonus!"}
-              </span>
-            </div>
-          )}
+          {/* Info Banner */}
+          <div className="px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/30 text-xs text-blue-300">
+            <p className="font-medium mb-1">
+              {lang === "tr" ? "ℹ️ Dönüşüm Kuralları" : "ℹ️ Conversion Rules"}
+            </p>
+            <ul className="space-y-0.5 text-blue-400/80">
+              <li>• {lang === "tr" ? "Auxite Token ↔ Auxite Token, Auxite Token ↔ AUXM dönüşümü yapılabilir" : "Auxite Token ↔ Auxite Token, Auxite Token ↔ AUXM conversions allowed"}</li>
+              <li>• {lang === "tr" ? "Kripto → AUXM veya Auxite Token dönüşümü yapılabilir" : "Crypto → AUXM or Auxite Token conversions allowed"}</li>
+              <li>• {lang === "tr" ? "AUXM → Kripto için Çekim bölümünü kullanın" : "Use Withdraw for AUXM → Crypto"}</li>
+              <li>• {lang === "tr" ? "Kripto ↔ Kripto dönüşümü desteklenmiyor" : "Crypto ↔ Crypto not supported"}</li>
+            </ul>
+          </div>
 
           {/* Success State */}
           {result === "success" ? (
             <div className="text-center py-8">
-              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-emerald-400 mb-2">
+              <h3 className="text-xl font-bold text-emerald-400 mb-2">
                 {lang === "tr" ? "Dönüşüm Başarılı!" : "Exchange Successful!"}
               </h3>
               <p className="text-slate-400 text-sm">
                 {formatAmount(fromAmountNum, fromAsset)} {getAssetUnit(fromAsset)} → {formatAmount(toAmount, toAsset)} {getAssetUnit(toAsset)}
               </p>
-              {bonusUSD > 0 && (
-                <p className="text-purple-400 text-xs mt-2">🎁 +${bonusUSD.toFixed(2)} Bonus!</p>
-              )}
             </div>
           ) : (
             <>
               {/* From Section */}
-              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700 relative">
-                {renderAssetButton(
-                  fromAsset, 
-                  () => { setShowFromSelect(!showFromSelect); setShowToSelect(false); },
-                  lang === "tr" ? "Gönder" : "From"
-                )}
+              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700">
+                <div className="relative">
+                  {renderAssetButton(
+                    fromAsset, 
+                    () => { setShowFromSelect(!showFromSelect); setShowToSelect(false); },
+                    lang === "tr" ? "Gönder" : "From"
+                  )}
+                  
+                  <AssetDropdown
+                    isOpen={showFromSelect}
+                    onSelect={handleFromSelect}
+                    allowedAssets={allAssets.filter(a => a !== fromAsset)}
+                    currentAsset={fromAsset}
+                    position="bottom"
+                    lang={lang}
+                    getBalance={getBalance}
+                  />
+                </div>
                 
-                <AssetDropdown
-                  isOpen={showFromSelect}
-                  onSelect={handleFromSelect}
-                  exclude={toAsset}
-                  currentAsset={fromAsset}
-                  position="bottom"
-                  lang={lang}
-                  balances={balances}
-                />
-                
-                <div className="flex items-center justify-between mt-2 mb-1">
+                <div className="flex items-center justify-between mt-3 mb-1">
                   <span className="text-xs text-slate-500">
                     {lang === "tr" ? "Bakiye" : "Balance"}: {formatBalance(fromAsset)} {getAssetUnit(fromAsset)}
                   </span>
@@ -428,11 +492,11 @@ export function ExchangeModal({
                     onChange={(e) => setFromAmount(e.target.value)}
                     placeholder="0.00"
                     disabled={isProcessing}
-                    className="w-full bg-slate-900 rounded-lg px-3 py-2.5 text-lg font-mono text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                    className="w-full bg-slate-900 rounded-lg px-3 py-3 pr-16 text-lg font-mono text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
                     {getAssetUnit(fromAsset)}
-                  </div>
+                  </span>
                 </div>
                 
                 <div className="text-right text-xs text-slate-500 mt-1">
@@ -444,8 +508,8 @@ export function ExchangeModal({
               <div className="flex justify-center -my-1 relative z-10">
                 <button
                   onClick={handleSwap}
-                  disabled={isProcessing}
-                  className="w-10 h-10 rounded-full bg-orange-500 hover:bg-orange-600 border-4 border-slate-900 flex items-center justify-center transition-colors shadow-lg"
+                  disabled={isProcessing || !isConversionAllowed(toAsset, fromAsset)}
+                  className="w-10 h-10 rounded-full bg-orange-500 hover:bg-orange-600 disabled:bg-slate-600 disabled:cursor-not-allowed border-4 border-slate-900 flex items-center justify-center transition-colors shadow-lg"
                 >
                   <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
@@ -464,24 +528,24 @@ export function ExchangeModal({
                 <AssetDropdown
                   isOpen={showToSelect}
                   onSelect={handleToSelect}
-                  exclude={fromAsset}
+                  allowedAssets={allowedToTargets.filter(a => a !== toAsset)}
                   currentAsset={toAsset}
                   position="top"
                   lang={lang}
-                  balances={balances}
+                  getBalance={getBalance}
                 />
                 
-                <div className="text-xs text-slate-500 mt-2 mb-1">
+                <div className="text-xs text-slate-500 mt-3 mb-1">
                   {lang === "tr" ? "Alacağınız" : "You will receive"}
                 </div>
                 
-                <div className="bg-slate-900 rounded-lg px-3 py-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-mono text-white">
-                      {fromAmountNum > 0 ? formatAmount(toAmount, toAsset) : "0.00"}
-                    </span>
-                    <span className="text-xs text-slate-400">{getAssetUnit(toAsset)}</span>
-                  </div>
+                <div className="bg-slate-900 rounded-lg px-3 py-3 relative">
+                  <span className="text-lg font-mono text-white">
+                    {fromAmountNum > 0 ? formatAmount(toAmount, toAsset) : "0.00"}
+                  </span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+                    {getAssetUnit(toAsset)}
+                  </span>
                 </div>
                 
                 <div className="text-right text-xs text-slate-500 mt-1">
@@ -501,22 +565,22 @@ export function ExchangeModal({
                   <span className="text-slate-400">Spread</span>
                   <span className="text-slate-300">{spreadPercent}%</span>
                 </div>
-                {bonusApplies && fromAmountNum > 0 && (
-                  <div className="flex justify-between text-purple-400">
-                    <span>🎁 Bonus</span>
-                    <span>+${bonusUSD.toFixed(2)}</span>
-                  </div>
-                )}
               </div>
 
               {/* Warnings */}
-              {fromAsset === toAsset && (
-                <div className="px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-xs text-yellow-400">
-                  ⚠️ {lang === "tr" ? "Aynı varlığı seçemezsiniz" : "Cannot select same asset"}
+              {isCryptoToCrypto && (
+                <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400">
+                  ⚠️ {lang === "tr" ? "Kripto-kripto dönüşümü desteklenmiyor" : "Crypto-to-crypto conversion not supported"}
                 </div>
               )}
               
-              {!canAfford && fromAmountNum > 0 && fromAsset !== toAsset && (
+              {isAuxmToCrypto && (
+                <div className="px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-400">
+                  ⚠️ {lang === "tr" ? "AUXM → Kripto için Çekim bölümünü kullanın" : "Use Withdraw section for AUXM → Crypto"}
+                </div>
+              )}
+              
+              {!canAfford && fromAmountNum > 0 && !isCryptoToCrypto && !isAuxmToCrypto && (
                 <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400">
                   ⚠️ {lang === "tr" ? "Yetersiz bakiye" : "Insufficient balance"}
                 </div>
@@ -525,8 +589,8 @@ export function ExchangeModal({
               {/* Exchange Button */}
               <button
                 onClick={handleExchange}
-                disabled={isProcessing || !canAfford}
-                className="w-full py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                disabled={isProcessing || !canAfford || isCryptoToCrypto || isAuxmToCrypto}
+                className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
               >
                 {isProcessing ? (
                   <>

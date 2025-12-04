@@ -102,7 +102,7 @@ export default function AdminPage() {
   const settingsLoadedRef = useRef(false);
   
   // Tab state
-  const [activeTab, setActiveTab] = useState<'prices' | 'news'>('prices');
+  const [activeTab, setActiveTab] = useState<'prices' | 'news' | 'wallet' | 'wallet'>('prices');
   
   // News state
   const [newsData, setNewsData] = useState<NewsData>(DEFAULT_NEWS);
@@ -110,6 +110,10 @@ export default function AdminPage() {
   const [newsLoading, setNewsLoading] = useState(false);
   const [newsSaving, setNewsSaving] = useState(false);
   const [newsMessage, setNewsMessage] = useState("");
+
+  // Hot Wallet state
+  const [hotWalletData, setHotWalletData] = useState<any>(null);
+  const [hotWalletLoading, setHotWalletLoading] = useState(false);
   
   // New news form
   const [newNews, setNewNews] = useState({
@@ -479,8 +483,18 @@ export default function AdminPage() {
             >
               📰 Haber Yönetimi
             </button>
-          </div>
+            <button
+              onClick={() => setActiveTab('wallet')}
+              className={`px-6 py-4 font-medium transition-colors ${
+                activeTab === 'wallet'
+                  ? 'text-emerald-400 border-b-2 border-emerald-400'
+                  : 'text-slate-400 hover:text-slate-300'
+              }`}
+            >
+              🔐 Hot Wallet
+            </button>
         </div>
+          </div>
       </div>
 
       {/* Content */}
@@ -1070,6 +1084,94 @@ export default function AdminPage() {
               </div>
             </div>
           </>
+        )}
+
+        {/* Hot Wallet Tab */}
+        {activeTab === 'wallet' && (
+          <div className="space-y-6">
+            <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-slate-200">🔐 Hot Wallet Bakiyeleri</h3>
+                <button
+                  onClick={async () => {
+                    setHotWalletLoading(true);
+                    try {
+                      const res = await fetch('/api/admin/hot-wallet-balances');
+                      const data = await res.json();
+                      setHotWalletData(data);
+                    } catch (e) { console.error(e); }
+                    setHotWalletLoading(false);
+                  }}
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-sm font-medium transition-colors"
+                >
+                  🔄 Yenile
+                </button>
+              </div>
+              
+              {hotWalletLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                </div>
+              ) : hotWalletData?.success ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
+                    <div>
+                      <p className="font-medium">ETH</p>
+                      <p className="text-xs text-slate-400 font-mono">{hotWalletData.addresses?.ETH}</p>
+                    </div>
+                    <p className="text-xl font-bold text-[#627EEA]">{hotWalletData.balances?.ETH?.toFixed(6) || 0} ETH</p>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
+                    <div>
+                      <p className="font-medium">USDT (ERC20)</p>
+                      <p className="text-xs text-slate-400">Aynı ETH adresi</p>
+                    </div>
+                    <p className="text-xl font-bold text-[#26A17B]">{hotWalletData.balances?.USDT?.toFixed(2) || 0} USDT</p>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
+                    <div>
+                      <p className="font-medium">XRP</p>
+                      <p className="text-xs text-slate-400 font-mono">{hotWalletData.addresses?.XRP}</p>
+                    </div>
+                    <p className="text-xl font-bold text-slate-300">{hotWalletData.balances?.XRP?.toFixed(2) || 0} XRP</p>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
+                    <div>
+                      <p className="font-medium">SOL</p>
+                      <p className="text-xs text-slate-400 font-mono">{hotWalletData.addresses?.SOL}</p>
+                    </div>
+                    <p className="text-xl font-bold text-[#9945FF]">{hotWalletData.balances?.SOL?.toFixed(6) || 0} SOL</p>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
+                    <div>
+                      <p className="font-medium">BTC (NOWPayments)</p>
+                      <p className="text-xs text-slate-400">Payout Service</p>
+                    </div>
+                    <p className="text-xl font-bold text-[#F7931A]">{hotWalletData.balances?.BTC?.toFixed(8) || 0} BTC</p>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-4">
+                    Son güncelleme: {hotWalletData.timestamp ? new Date(hotWalletData.timestamp).toLocaleString('tr-TR') : '-'}
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-slate-400 mb-4">Bakiyeleri görmek için Yenile butonuna tıklayın</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">⚠️</span>
+                <div className="text-sm text-amber-200">
+                  <p><strong>Önemli:</strong> Hot wallet'lara yeterli bakiye yükleyin.</p>
+                  <p className="mt-1">• ETH: Gas fee için ETH + Çekim için USDT</p>
+                  <p>• XRP: Min 10 XRP reserve + işlem için</p>
+                  <p>• SOL: İşlem ücreti için</p>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Navigation */}

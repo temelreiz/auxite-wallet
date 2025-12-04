@@ -9,12 +9,14 @@ import { AllocationFinder } from "@/components/AllocationFinder";
 import { TransactionHistory } from "@/components/TransactionHistory";
 import { ExchangeModal } from "@/components/ExchangeModal";
 import { BuyMetalModal } from "@/components/BuyMetalModal";
+import { DepositAddressModal } from "@/components/DepositAddressModal";
 import { CryptoConvertModal } from "@/components/CryptoConvertModal";
 import { MetalConvertModal } from "@/components/MetalConvertModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 
+import { useWallet } from "@/components/WalletContext";
 // Storage keys
 const STORAGE_KEYS = {
   HAS_WALLET: "auxite_has_wallet",
@@ -30,6 +32,19 @@ export default function WalletPage() {
   // External wallet (wagmi)
   const { isConnected: isExternalConnected, address: externalAddress } = useAccount();
   
+
+  // Bakiyeler - useWallet hook
+  const { balances } = useWallet();
+  const auxmBalance = balances?.auxm ?? 0;
+  const bonusAuxm = balances?.bonusAuxm ?? 0;
+  const auxgBalance = balances?.auxg ?? 0;
+  const auxsBalance = balances?.auxs ?? 0;
+  const auxptBalance = balances?.auxpt ?? 0;
+  const auxpdBalance = balances?.auxpd ?? 0;
+  const ethBalance = balances?.eth ?? 0;
+  const btcBalance = balances?.btc ?? 0;
+  const xrpBalance = balances?.xrp ?? 0;
+  const solBalance = balances?.sol ?? 0;
   // Local wallet state
   const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
   const [walletMode, setWalletMode] = useState<string | null>(null);
@@ -49,11 +64,24 @@ export default function WalletPage() {
   
   // New modal states for portfolio clicks
   const [selectedMetal, setSelectedMetal] = useState<"AUXG" | "AUXS" | "AUXPT" | "AUXPD" | null>(null);
+  const [selectedDepositCoin, setSelectedDepositCoin] = useState<string | null>(null);
   const [selectedCrypto, setSelectedCrypto] = useState<"ETH" | "BTC" | "XRP" | "SOL" | null>(null);
   
   // Get prices for modals
   const { prices: cryptoPrices } = useCryptoPrices();
   const { prices: metalAskPrices, bidPrices } = useMetalsPrices();
+
+  // Toplam varlık değeri hesapla
+  const totalEstimatedValue = 
+    (auxgBalance * (metalAskPrices?.AUXG || 0)) +
+    (auxsBalance * (metalAskPrices?.AUXS || 0)) +
+    (auxptBalance * (metalAskPrices?.AUXPT || 0)) +
+    (auxpdBalance * (metalAskPrices?.AUXPD || 0)) +
+    (ethBalance * (cryptoPrices?.eth || 0)) +
+    (btcBalance * (cryptoPrices?.btc || 0)) +
+    (xrpBalance * (cryptoPrices?.xrp || 0)) +
+    (solBalance * (cryptoPrices?.sol || 0)) +
+    (balances?.usdt || 0);
   
   // Deposit coins list
   const depositCoins = [
@@ -335,25 +363,44 @@ export default function WalletPage() {
               </div>
             </div>
 
-            {/* AUXM Balance Card */}
-            <div className="rounded-xl border border-purple-500/30 bg-gradient-to-r from-purple-500/10 to-pink-500/10 p-4">
-              <div className="flex items-center justify-between">
+            {/* USDT & AUXM Balance Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* USDT Balance Card */}
+              <div className="rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center">
-                    <span className="text-white text-xl font-bold">◈</span>
+                  <div className="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <span className="text-white text-xl font-bold">₮</span>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-400">AUXM Balance</p>
-                    <p className="text-2xl font-bold text-white">1,250.50 <span className="text-purple-400 text-lg">AUXM</span></p>
+                    <p className="text-sm text-slate-400">Estimated Total Value</p>
+                    <p className="text-2xl font-bold text-white">
+                      {totalEstimatedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} 
+                      <span className="text-emerald-400 text-lg ml-1">USDT</span>
+                    </p>
+                    <p className="text-xs text-slate-500">≈ ${totalEstimatedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-purple-400">🎁 Bonus AUXM</p>
-                  <p className="text-lg font-semibold text-purple-400">+25.00 AUXM</p>
+              </div>
+
+              {/* AUXM Balance Card */}
+              <div className="rounded-xl border border-purple-500/30 bg-gradient-to-r from-purple-500/10 to-pink-500/10 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center">
+                      <span className="text-white text-xl font-bold">◈</span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-400">AUXM Balance</p>
+                      <p className="text-2xl font-bold text-white">{auxmBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span className="text-purple-400 text-lg">AUXM</span></p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-purple-400">🎁 Bonus</p>
+                    <p className="text-lg font-semibold text-purple-400">+{bonusAuxm.toFixed(2)}</p>
+                  </div>
                 </div>
               </div>
             </div>
-
             {/* Auxite ve Crypto Varlıklarım Section */}
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">
@@ -374,7 +421,7 @@ export default function WalletPage() {
                       <p className="text-xs text-slate-400">{lang === "tr" ? "Altın" : "Gold"}</p>
                     </div>
                   </div>
-                  <p className="text-lg font-bold text-yellow-500">10.5g</p>
+                  <p className="text-lg font-bold text-yellow-500">{auxgBalance.toFixed(2)}g</p>
                   <p className="text-xs text-slate-400">≈ $1,458.45</p>
                 </button>
 
@@ -392,7 +439,7 @@ export default function WalletPage() {
                       <p className="text-xs text-slate-400">{lang === "tr" ? "Gümüş" : "Silver"}</p>
                     </div>
                   </div>
-                  <p className="text-lg font-bold text-gray-300">250g</p>
+                  <p className="text-lg font-bold text-gray-300">{auxsBalance.toFixed(2)}g</p>
                   <p className="text-xs text-slate-400">≈ $482.50</p>
                 </button>
 
@@ -410,7 +457,7 @@ export default function WalletPage() {
                       <p className="text-xs text-slate-400">{lang === "tr" ? "Platin" : "Platinum"}</p>
                     </div>
                   </div>
-                  <p className="text-lg font-bold text-cyan-300">5g</p>
+                  <p className="text-lg font-bold text-cyan-300">{auxptBalance.toFixed(2)}g</p>
                   <p className="text-xs text-slate-400">≈ $274.25</p>
                 </button>
 
@@ -428,7 +475,7 @@ export default function WalletPage() {
                       <p className="text-xs text-slate-400">{lang === "tr" ? "Paladyum" : "Palladium"}</p>
                     </div>
                   </div>
-                  <p className="text-lg font-bold text-orange-400">2g</p>
+                  <p className="text-lg font-bold text-orange-400">{auxpdBalance.toFixed(2)}g</p>
                   <p className="text-xs text-slate-400">≈ $94.18</p>
                 </button>
               </div>
@@ -449,8 +496,8 @@ export default function WalletPage() {
                       <p className="text-xs text-slate-400">Ethereum</p>
                     </div>
                   </div>
-                  <p className="text-lg font-bold text-[#627EEA]">0.5 ETH</p>
-                  <p className="text-xs text-slate-400">≈ $1,825.00</p>
+                  <p className="text-lg font-bold text-[#627EEA]">{ethBalance.toFixed(4)} ETH</p>
+                  <p className="text-xs text-slate-400">≈ ${(ethBalance * (cryptoPrices?.eth || 3500)).toFixed(2)}</p>
                 </button>
 
                 {/* BTC */}
@@ -467,8 +514,8 @@ export default function WalletPage() {
                       <p className="text-xs text-slate-400">Bitcoin</p>
                     </div>
                   </div>
-                  <p className="text-lg font-bold text-[#F7931A]">0.001 BTC</p>
-                  <p className="text-xs text-slate-400">≈ $97.50</p>
+                  <p className="text-lg font-bold text-[#F7931A]">{btcBalance.toFixed(6)} BTC</p>
+                  <p className="text-xs text-slate-400">≈ ${(btcBalance * (cryptoPrices?.btc || 95000)).toFixed(2)}</p>
                 </button>
 
                 {/* XRP */}
@@ -485,8 +532,8 @@ export default function WalletPage() {
                       <p className="text-xs text-slate-400">Ripple</p>
                     </div>
                   </div>
-                  <p className="text-lg font-bold text-slate-300">1,000 XRP</p>
-                  <p className="text-xs text-slate-400">≈ $2,450.00</p>
+                  <p className="text-lg font-bold text-slate-300">{xrpBalance.toFixed(2)} XRP</p>
+                  <p className="text-xs text-slate-400">≈ ${(xrpBalance * (cryptoPrices?.xrp || 2.2)).toFixed(2)}</p>
                 </button>
 
                 {/* SOL */}
@@ -503,8 +550,8 @@ export default function WalletPage() {
                       <p className="text-xs text-slate-400">Solana</p>
                     </div>
                   </div>
-                  <p className="text-lg font-bold text-[#9945FF]">10 SOL</p>
-                  <p className="text-xs text-slate-400">≈ $2,350.00</p>
+                  <p className="text-lg font-bold text-[#9945FF]">{solBalance.toFixed(3)} SOL</p>
+                  <p className="text-xs text-slate-400">≈ ${(solBalance * (cryptoPrices?.sol || 200)).toFixed(2)}</p>
                 </button>
               </div>
             </div>
@@ -613,62 +660,24 @@ export default function WalletPage() {
       {/* Buy Metal Modal (Hızlı Al) */}
       {showBuyMetal && (
         <BuyMetalModal
+          metal={{
+            symbol: "AUXG",
+            name: "Altın",
+            price: metalAskPrices?.AUXG || 85,
+            icon: "🥇"
+          }}
           isOpen={showBuyMetal}
           onClose={() => setShowBuyMetal(false)}
           lang={lang}
         />
       )}
 
-      {/* Metal Dönüştür Modal (from Portfolio click) */}
       {selectedMetal && (
-        <MetalConvertModal 
+        <MetalConvertModal
           isOpen={!!selectedMetal}
           onClose={() => setSelectedMetal(null)}
           metal={selectedMetal}
           lang={lang}
-          metalBalances={{ 
-            AUXG: 0, 
-            AUXS: 0, 
-            AUXPT: 0, 
-            AUXPD: 0 
-          }}
-          cryptoBalances={{ ETH: 0, BTC: 0, XRP: 0, SOL: 0 }}
-          auxmBalance={5000}
-          metalPrices={{
-            AUXG: { ask: metalAskPrices?.AUXG || 139.04, bid: bidPrices?.AUXG || 134.69 },
-            AUXS: { ask: metalAskPrices?.AUXS || 1.93, bid: bidPrices?.AUXS || 1.82 },
-            AUXPT: { ask: metalAskPrices?.AUXPT || 54.85, bid: bidPrices?.AUXPT || 52.92 },
-            AUXPD: { ask: metalAskPrices?.AUXPD || 47.09, bid: bidPrices?.AUXPD || 45.57 },
-          }}
-          cryptoPrices={{
-            ETH: cryptoPrices?.eth || 3650,
-            BTC: cryptoPrices?.btc || 97500,
-            XRP: cryptoPrices?.xrp || 2.20,
-            SOL: cryptoPrices?.sol || 235,
-          }}
-        />
-      )}
-
-      {/* Crypto Dönüştür Modal (from Portfolio click) */}
-      {selectedCrypto && (
-        <CryptoConvertModal
-          isOpen={!!selectedCrypto}
-          onClose={() => setSelectedCrypto(null)}
-          crypto={selectedCrypto}
-          lang={lang}
-          cryptoBalances={{ ETH: 0, BTC: 0, XRP: 0, SOL: 0 }}
-          cryptoPrices={{
-            ETH: cryptoPrices?.eth || 3650,
-            BTC: cryptoPrices?.btc || 97500,
-            XRP: cryptoPrices?.xrp || 2.20,
-            SOL: cryptoPrices?.sol || 235,
-          }}
-          metalBidPrices={{
-            AUXG: bidPrices?.AUXG || 134.69,
-            AUXS: bidPrices?.AUXS || 1.82,
-            AUXPT: bidPrices?.AUXPT || 52.92,
-            AUXPD: bidPrices?.AUXPD || 45.57,
-          }}
         />
       )}
 
@@ -693,7 +702,8 @@ export default function WalletPage() {
             <div className="space-y-3">
               {/* On-Chain Deposit */}
               <button
-                onClick={() => {
+                className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-800/70 transition-all"
+                  onClick={() => {
                   setShowDeposit(false);
                   setShowOnChainDeposit(true);
                 }}
@@ -719,7 +729,8 @@ export default function WalletPage() {
 
               {/* Deposit Fiat */}
               <button
-                onClick={() => {
+                className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-800/70 transition-all"
+                  onClick={() => {
                   setShowDeposit(false);
                   setShowFiatDeposit(true);
                 }}
@@ -778,7 +789,8 @@ export default function WalletPage() {
 
               {/* MoonPay */}
               <button
-                onClick={() => {
+                className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-800/70 transition-all"
+                  onClick={() => {
                   // TODO: MoonPay entegrasyonu
                   alert(lang === "tr" ? "MoonPay yakında aktif olacak" : "MoonPay coming soon");
                 }}
@@ -865,83 +877,41 @@ export default function WalletPage() {
         </div>
       )}
 
+
       {/* On-Chain Deposit - Select Coin Modal */}
       {showOnChainDeposit && (
-        <div className="fixed inset-0 bg-black/90 flex flex-col z-50">
-          {/* Header */}
-          <div className="flex items-center gap-4 p-4 border-b border-slate-800">
-            <button
-              onClick={() => setShowOnChainDeposit(false)}
-              className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-            >
-              <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h2 className="text-xl font-bold text-white flex-1 text-center pr-10">
-              {lang === "tr" ? "Coin Seç" : "Select Coin"}
-            </h2>
-          </div>
-
-          {/* Search */}
-          <div className="p-4">
-            <div className="relative">
-              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder={lang === "tr" ? "Coin Ara" : "Search Coins"}
-                value={depositSearchQuery}
-                onChange={(e) => setDepositSearchQuery(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-12 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-slate-600"
-              />
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 rounded-2xl border border-slate-700 w-full max-w-sm">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-800">
+              <h2 className="text-lg font-bold text-white">
+                {lang === "tr" ? "Yatırılacak Coin Seç" : "Select Coin to Deposit"}
+              </h2>
+              <button onClick={() => setShowOnChainDeposit(false)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 text-xl">✕</button>
             </div>
-          </div>
-
-          {/* Trending Section */}
-          <div className="px-4 pb-2">
-            <h3 className="text-sm font-semibold text-slate-400 mb-3">
-              {lang === "tr" ? "Popüler" : "Trending"}
-            </h3>
-          </div>
-
-          {/* Coin List */}
-          <div className="flex-1 overflow-y-auto px-4">
-            <div className="space-y-1">
-              {filteredDepositCoins.map((coin) => (
+            {/* Coin List */}
+            <div className="p-4 space-y-2">
+              {[{ id: "BTC", name: "Bitcoin", icon: "₿", color: "#F7931A" },
+                { id: "ETH", name: "Ethereum", icon: "Ξ", color: "#627EEA" },
+                { id: "XRP", name: "Ripple", icon: "✕", color: "#23292F" },
+                { id: "SOL", name: "Solana", icon: "◎", color: "#9945FF" },
+                { id: "USDT", name: "Tether", icon: "₮", color: "#26A17B" }].map((coin) => (
                 <button
                   key={coin.id}
-                  onClick={() => {
-                    setShowOnChainDeposit(false);
-                    // TODO: Seçilen coin için adres göster
-                    alert(`${coin.name} (${coin.id}) ${lang === "tr" ? "deposit adresi yakında" : "deposit address coming soon"}`);
-                  }}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-800/70 transition-all"
+                  onClick={() => { setShowOnChainDeposit(false); setSelectedDepositCoin(coin.id); }}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-slate-500 transition-all"
                 >
-                  <div 
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                    style={{ backgroundColor: coin.color }}
-                  >
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: coin.color }}>
                     {coin.icon}
                   </div>
                   <div className="flex-1 text-left">
                     <div className="text-white font-semibold">{coin.id}</div>
                     <div className="text-sm text-slate-400">{coin.name}</div>
                   </div>
-                  <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <span className="text-slate-500">→</span>
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Alphabet Index (right side) */}
-          <div className="fixed right-2 top-1/2 -translate-y-1/2 flex flex-col items-center text-xs text-slate-500 gap-0.5">
-            {['0', '1', '2', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X'].map((letter) => (
-              <span key={letter} className="hover:text-white cursor-pointer">{letter}</span>
-            ))}
           </div>
         </div>
       )}
@@ -1123,9 +1093,7 @@ export default function WalletPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(currentAddress || "0xe6df1234567890abcdef1234567890abcdef3ba3");
-                }}
+                onClick={() => navigator.clipboard.writeText(currentAddress || "0xe6df1234567890abcdef1234567890abcdef3ba3")}
                 className="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1144,13 +1112,23 @@ export default function WalletPage() {
         </div>
       )}
 
+      {/* Deposit Address Modal */}
+      {selectedDepositCoin && (
+        <DepositAddressModal
+          isOpen={!!selectedDepositCoin}
+          onClose={() => setSelectedDepositCoin(null)}
+          coin={selectedDepositCoin}
+          lang={lang}
+        />
+      )}
+
       {/* Withdraw Modal */}
       {showWithdraw && (
         <WithdrawModal
           isOpen={showWithdraw}
           onClose={() => setShowWithdraw(false)}
           lang={lang}
-          auxmBalance={{ auxm: 1250.50, bonusAuxm: 25.00 }}
+          auxmBalance={{ auxm: auxmBalance, bonusAuxm: bonusAuxm }}
           cryptoPrices={{
             BTC: cryptoPrices?.btc || 97500,
             ETH: cryptoPrices?.eth || 3650,

@@ -1,110 +1,102 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAccount, usePublicClient } from "wagmi";
-import { CONTRACTS, EXCHANGE_ABI } from "@/lib/web3Config";
-import { formatUnits } from "viem";
+import { useState, useEffect, useCallback } from "react";
+import { useAccount } from "wagmi";
 
-export interface SwapTransaction {
-  hash: string;
+export interface Transaction {
+  id: string;
+  type: "deposit" | "withdraw" | "swap" | "transfer" | "bonus" | "buy" | "sell";
+  hash?: string;
   timestamp: number;
-  fromToken: string;
-  toToken: string;
-  fromAmount: string;
-  toAmount: string;
-  spread: string;
-  fee: string;
-  user: string;
+  fromToken?: string;
+  toToken?: string;
+  fromAmount?: string;
+  toAmount?: string;
+  token?: string;
+  amount?: string;
+  fee?: string;
+  status: "pending" | "completed" | "failed";
+  description?: string;
 }
 
-export function useTransactionHistory() {
+export function useTransactionHistory(limit: number = 20) {
   const { address } = useAccount();
-  const publicClient = usePublicClient();
-  const [transactions, setTransactions] = useState<SwapTransaction[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [offset, setOffset] = useState(0);
 
+  const fetchTransactions = useCallback(async (walletAddress: string, currentOffset: number = 0) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(
+        `/api/user/transactions?address=${walletAddress}&limit=${limit}&offset=${currentOffset}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (currentOffset === 0) {
+        setTransactions(data.transactions || []);
+      } else {
+        setTransactions(prev => [...prev, ...(data.transactions || [])]);
+      }
+
+      setHasMore(data.hasMore || false);
+      setOffset(currentOffset + (data.transactions?.length || 0));
+    } catch (err) {
+      console.error("Failed to fetch transactions:", err);
+      setError(err instanceof Error ? err.message : "Failed to load transactions");
+      if (currentOffset === 0) {
+        setTransactions([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [limit]);
+
+  // Initial fetch
   useEffect(() => {
-    if (!address || !publicClient) {
+    if (!address) {
+      setTransactions([]);
       setLoading(false);
       return;
     }
 
-    const fetchTransactions = async () => {
-      try {
-        setLoading(true);
+    fetchTransactions(address, 0);
+  }, [address, fetchTransactions]);
 
-        // Get TokensSwapped events from the last 1000 blocks (RPC limit)
-        const currentBlock = await publicClient.getBlockNumber();
-        const fromBlock = currentBlock - 1000n; // Reduced from 10000 to 1000
+  // Load more function
+  const loadMore = useCallback(() => {
+    if (address && hasMore && !loading) {
+      fetchTransactions(address, offset);
+    }
+  }, [address, hasMore, loading, offset, fetchTransactions]);
 
-        const logs = await publicClient.getLogs({
-          address: CONTRACTS.EXCHANGE,
-          event: {
-            type: "event",
-            name: "TokensSwapped",
-            inputs: [
-              { indexed: true, name: "user", type: "address" },
-              { indexed: true, name: "fromToken", type: "address" },
-              { indexed: true, name: "toToken", type: "address" },
-              { indexed: false, name: "fromAmount", type: "uint256" },
-              { indexed: false, name: "toAmount", type: "uint256" },
-              { indexed: false, name: "spread", type: "uint256" },
-              { indexed: false, name: "fee", type: "uint256" },
-            ],
-          },
-          fromBlock,
-          toBlock: "latest",
-        });
-
-        // Parse logs
-        const parsedTransactions = await Promise.all(
-          logs
-            .filter((log: any) => log.args.user.toLowerCase() === address.toLowerCase())
-            .map(async (log: any) => {
-              const block = await publicClient.getBlock({
-                blockNumber: log.blockNumber,
-              });
-
-              return {
-                hash: log.transactionHash,
-                timestamp: Number(block.timestamp),
-                fromToken: getTokenSymbol(log.args.fromToken),
-                toToken: getTokenSymbol(log.args.toToken),
-                fromAmount: formatUnits(log.args.fromAmount, 18),
-                toAmount: formatUnits(log.args.toAmount, 18),
-                spread: formatUnits(log.args.spread, 18),
-                fee: formatUnits(log.args.fee, 18),
-                user: log.args.user,
-              };
-            })
-        );
-
-        // Sort by timestamp (newest first)
-        parsedTransactions.sort((a, b) => b.timestamp - a.timestamp);
-
-        setTransactions(parsedTransactions);
-      } catch (error) {
-        console.error("Failed to fetch transaction history:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTransactions();
-  }, [address, publicClient]);
+  // Refresh function
+  const refresh = useCallback(() => {
+    if (address) {
+      setOffset(0);
+      fetchTransactions(address, 0);
+    }
+  }, [address, fetchTransactions]);
 
   return {
     transactions,
     loading,
+    error,
+    hasMore,
+    loadMore,
+    refresh,
   };
-}
-
-// Helper to get token symbol from address
-function getTokenSymbol(address: string): string {
-  const addressLower = address.toLowerCase();
-  if (addressLower === CONTRACTS.AUXG.toLowerCase()) return "AUXG";
-  if (addressLower === CONTRACTS.AUXS.toLowerCase()) return "AUXS";
-  if (addressLower === CONTRACTS.AUXPT.toLowerCase()) return "AUXPT";
-  if (addressLower === CONTRACTS.AUXPD.toLowerCase()) return "AUXPD";
-  return "UNKNOWN";
 }

@@ -1,4 +1,5 @@
 "use client";
+import { DepositAddressModal } from "@/components/DepositAddressModal";
 import { useState } from "react";
 import Link from "next/link";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
@@ -120,6 +121,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
     { id: "ETH", name: "Ethereum", icon: "Ξ", color: "#627EEA" },
     { id: "XRP", name: "Ripple", icon: "✕", color: "#23292F" },
     { id: "SOL", name: "Solana", icon: "◎", color: "#9945FF" },
+    { id: "USDT", name: "Tether", icon: "₮", color: "#26A17B" },
   ];
   
   const filteredDepositCoins = depositCoins.filter(coin => 
@@ -683,102 +685,19 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
         </div>
       )}
 
-      {/* Deposit Address Modal - Minimal */}
+
+      {/* Deposit Address Modal */}
       {selectedDepositCoin && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 rounded-2xl border border-slate-700 w-full max-w-sm">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-800">
-              <button
-                onClick={() => setSelectedDepositCoin(null)}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <h2 className="text-lg font-bold text-white">
-                {lang === "tr" ? `${selectedDepositCoin} Yatır` : `Deposit ${selectedDepositCoin}`}
-              </h2>
-              <button
-                onClick={() => {
-                  setSelectedDepositCoin(null);
-                  setShowOnChainDeposit(false);
-                }}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-4">
-              {/* QR Code - Real */}
-              <div className="bg-white p-4 rounded-xl mb-4 flex items-center justify-center">
-                <div className="w-40 h-40 flex items-center justify-center">
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(DEPOSIT_ADDRESSES[selectedDepositCoin]?.address || '')}`}
-                    alt="QR Code"
-                    className="w-40 h-40"
-                  />
-                </div>
-              </div>
-
-              {/* Address */}
-              <div className="bg-slate-800 rounded-xl p-3 mb-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-slate-400 text-xs">{lang === "tr" ? "Adres" : "Address"}</span>
-                  <button
-                    onClick={() => copyAddress(DEPOSIT_ADDRESSES[selectedDepositCoin]?.address || "")}
-                    className="text-emerald-500 text-xs font-medium hover:text-emerald-400 transition-colors"
-                  >
-                    {copied ? "✓" : (lang === "tr" ? "Kopyala" : "Copy")}
-                  </button>
-                </div>
-                <p className="text-white font-mono text-xs break-all select-all">
-                  {DEPOSIT_ADDRESSES[selectedDepositCoin]?.address}
-                </p>
-              </div>
-
-              {/* Memo/Tag (for XRP only) */}
-              {DEPOSIT_ADDRESSES[selectedDepositCoin]?.memo && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 mb-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-amber-500 text-sm font-medium">Destination Tag</span>
-                    <span className="text-white font-mono font-bold">{DEPOSIT_ADDRESSES[selectedDepositCoin]?.memo}</span>
-                  </div>
-                  <p className="text-xs text-amber-400/70 mt-1">
-                    {lang === "tr" ? "Tag olmadan gönderim yapmayın!" : "Required for deposit!"}
-                  </p>
-                </div>
-              )}
-
-              {/* AUXM Info - Compact */}
-              <div className="bg-emerald-500/10 rounded-xl p-3 mb-4">
-                <p className="text-xs text-emerald-400">
-                  {lang === "tr" 
-                    ? `${selectedDepositCoin} → AUXM (1 AUXM = 1 USD) otomatik dönüşüm`
-                    : `${selectedDepositCoin} → AUXM (1 AUXM = 1 USD) auto conversion`}
-                </p>
-              </div>
-
-              {/* Done Button */}
-              <button
-                onClick={() => {
-                  setSelectedDepositCoin(null);
-                  setShowOnChainDeposit(false);
-                }}
-                className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
-              >
-                {lang === "tr" ? "Tamam" : "Done"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <DepositAddressModal
+          isOpen={!!selectedDepositCoin}
+          onClose={() => {
+            setSelectedDepositCoin(null);
+            setShowOnChainDeposit(false);
+          }}
+          coin={selectedDepositCoin}
+          lang={lang}
+        />
       )}
-
       {/* Transfer Modal */}
       {showTransfer && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
@@ -800,15 +719,27 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
             {/* Token Selection */}
             <div className="mb-4">
               <label className="text-sm text-slate-400 mb-2 block">{lang === "tr" ? "Token" : "Token"}</label>
-              <select className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white">
-                <option value="AUXG">AUXG - {lang === "tr" ? "Altın" : "Gold"}</option>
-                <option value="AUXS">AUXS - {lang === "tr" ? "Gümüş" : "Silver"}</option>
-                <option value="AUXPT">AUXPT - {lang === "tr" ? "Platin" : "Platinum"}</option>
-                <option value="AUXPD">AUXPD - {lang === "tr" ? "Paladyum" : "Palladium"}</option>
-                <option value="ETH">ETH - Ethereum</option>
-                <option value="BTC">BTC - Bitcoin</option>
-                <option value="USDT">USDT - Tether</option>
-              </select>
+              <div className="relative">
+                <select className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white appearance-none pl-12">
+                  <option value="AUXG">AUXG - {lang === "tr" ? "Altın" : "Gold"}</option>
+                  <option value="AUXS">AUXS - {lang === "tr" ? "Gümüş" : "Silver"}</option>
+                  <option value="AUXPT">AUXPT - {lang === "tr" ? "Platin" : "Platinum"}</option>
+                  <option value="AUXPD">AUXPD - {lang === "tr" ? "Paladyum" : "Palladium"}</option>
+                  <option value="ETH">ETH - Ethereum</option>
+                  <option value="BTC">BTC - Bitcoin</option>
+                  <option value="XRP">XRP - Ripple</option>
+                  <option value="SOL">SOL - Solana</option>
+                  <option value="USDT">USDT - Tether</option>
+                </select>
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  <img src="/gold-favicon-32x32.png" alt="" className="w-6 h-6" />
+                </div>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             {/* Recipient Address */}

@@ -1,217 +1,209 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Redis } from "@upstash/redis";
 
-// Trade API v2
-// Bonus AUXM'i önce kullanarak metal alımı
-
-// Metal fiyatları (gerçek zamanlı API'den alınacak)
-const METAL_PRICES = {
-  AUXG: 92.50,   // Gold $/gram
-  AUXS: 1.05,    // Silver $/gram
-  AUXPT: 32.00,  // Platinum $/gram
-  AUXPD: 35.00,  // Palladium $/gram
-};
-
-// Spread oranları
-const SPREAD_CONFIG = {
-  buy: 0.01,   // %1 buy spread
-  sell: 0.01,  // %1 sell spread
-};
-
-interface UserBalance {
-  auxm: number;
-  bonusAuxm: number;
-  totalAuxm: number;
-  auxg: number;
-  auxs: number;
-  auxpt: number;
-  auxpd: number;
-}
-
-// Mock balance (test için)
-const getMockBalance = (): UserBalance => ({
-  auxm: 1250.50,
-  bonusAuxm: 25.00,
-  totalAuxm: 1275.50,
-  auxg: 15.75,
-  auxs: 500.00,
-  auxpt: 2.50,
-  auxpd: 1.25,
+// Redis client
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-export async function GET() {
-  // Metal fiyatlarını döndür
+// Metal sembolleri
+const METALS = ["auxg", "auxs", "auxpt", "auxpd"];
+const CRYPTOS = ["eth", "btc", "xrp", "sol"];
+
+interface TradeRequest {
+  address: string;
+  type: "buy" | "sell" | "swap";
+  fromToken: string;
+  toToken: string;
+  fromAmount: number;
+  price: number; // gram başına fiyat
+}
+
+// GET - Fiyat hesapla (preview)
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get("type");
+  const fromToken = searchParams.get("fromToken");
+  const toToken = searchParams.get("toToken");
+  const amount = parseFloat(searchParams.get("amount") || "0");
+  const price = parseFloat(searchParams.get("price") || "0");
+
+  if (!type || !fromToken || !toToken || amount <= 0 || price <= 0) {
+    return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
+  }
+
+  // Spread hesapla (0.5%)
+  const spreadRate = 0.005;
+  const spread = amount * spreadRate;
+  
+  let toAmount: number;
+  let fee: number;
+
+  if (type === "buy") {
+    // AUXM -> Metal
+    fee = amount * 0.001; // 0.1% fee
+    const netAmount = amount - fee;
+    toAmount = netAmount / price; // gram cinsinden
+  } else if (type === "sell") {
+    // Metal -> AUXM
+    fee = amount * price * 0.001;
+    toAmount = (amount * price) - fee;
+  } else {
+    // Swap
+    fee = amount * 0.002; // 0.2% fee
+    toAmount = (amount - fee) * price;
+  }
+
   return NextResponse.json({
-    prices: METAL_PRICES,
-    spread: SPREAD_CONFIG,
-    lastUpdated: new Date().toISOString(),
+    success: true,
+    preview: {
+      fromToken,
+      toToken,
+      fromAmount: amount,
+      toAmount: toAmount.toFixed(type === "buy" ? 6 : 2),
+      price,
+      spread: spread.toFixed(4),
+      fee: fee.toFixed(4),
+      total: amount.toFixed(2),
+    },
   });
 }
 
+// POST - Trade işlemi gerçekleştir
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const {
-      address,
-      action,     // "buy" | "sell"
-      metal,      // "AUXG" | "AUXS" | "AUXPT" | "AUXPD"
-      amount,     // gram miktarı
-    } = body;
+    const body: TradeRequest = await request.json();
+    const { address, type, fromToken, toToken, fromAmount, price } = body;
 
-    if (!address || !action || !metal || !amount) {
-      return NextResponse.json(
-        { error: "Missing required fields: address, action, metal, amount" },
-        { status: 400 }
-      );
+    if (!address || !type || !fromToken || !toToken || !fromAmount || !price) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    if (!["buy", "sell"].includes(action)) {
-      return NextResponse.json(
-        { error: "Invalid action. Must be 'buy' or 'sell'" },
-        { status: 400 }
-      );
+    const normalizedAddress = address.toLowerCase();
+    const fromTokenLower = fromToken.toLowerCase();
+    const toTokenLower = toToken.toLowerCase();
+
+    // Mevcut bakiyeleri al
+    const balanceKey = `user:${normalizedAddress}:balance`;
+    const currentBalance = await redis.hgetall(balanceKey);
+
+    if (!currentBalance || Object.keys(currentBalance).length === 0) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (!Object.keys(METAL_PRICES).includes(metal)) {
-      return NextResponse.json(
-        { error: `Invalid metal. Must be one of: ${Object.keys(METAL_PRICES).join(", ")}` },
-        { status: 400 }
-      );
-    }
+    // Bakiye kontrolü
+    const fromBalance = parseFloat(currentBalance[fromTokenLower] as string || "0");
+    const bonusAuxm = parseFloat(currentBalance.bonusauxm as string || "0");
 
-    const metalPrice = METAL_PRICES[metal as keyof typeof METAL_PRICES];
-    const balance = getMockBalance();
-    
-    // TODO: Redis'ten gerçek bakiye çek
-    // const balance = await redis.hgetall(`user:${address.toLowerCase()}`);
+    let availableBalance = fromBalance;
+    let usedBonus = 0;
+    let usedRegular = fromAmount;
 
-    if (action === "buy") {
-      // METAL ALIM
-      const grossCost = amount * metalPrice;
-      const spreadFee = grossCost * SPREAD_CONFIG.buy;
-      const totalCost = grossCost + spreadFee;
-      const totalAvailable = balance.auxm + balance.bonusAuxm;
-
-      if (totalCost > totalAvailable) {
-        return NextResponse.json({
-          error: "Insufficient balance",
-          required: totalCost,
-          available: totalAvailable,
-          auxm: balance.auxm,
-          bonusAuxm: balance.bonusAuxm,
-        }, { status: 400 });
-      }
-
-      // Önce bonus AUXM kullan, sonra normal AUXM
-      let usedBonusAuxm = 0;
-      let usedAuxm = 0;
-
-      if (balance.bonusAuxm >= totalCost) {
-        // Tamamı bonus'tan karşılanabilir
-        usedBonusAuxm = totalCost;
-        usedAuxm = 0;
+    // AUXM ile alım yapıyorsa bonus kullanılabilir
+    if (type === "buy" && fromTokenLower === "auxm" && METALS.includes(toTokenLower)) {
+      availableBalance = fromBalance + bonusAuxm;
+      
+      // Önce bonus kullan
+      if (bonusAuxm >= fromAmount) {
+        usedBonus = fromAmount;
+        usedRegular = 0;
       } else {
-        // Önce tüm bonus'u kullan, kalanı normal AUXM'den
-        usedBonusAuxm = balance.bonusAuxm;
-        usedAuxm = totalCost - usedBonusAuxm;
+        usedBonus = bonusAuxm;
+        usedRegular = fromAmount - bonusAuxm;
       }
-
-      const newBalance = {
-        auxm: balance.auxm - usedAuxm,
-        bonusAuxm: balance.bonusAuxm - usedBonusAuxm,
-        [metal.toLowerCase()]: (balance[metal.toLowerCase() as keyof UserBalance] as number) + amount,
-      };
-
-      // TODO: Redis'te güncelle
-      // await redis.hset(`user:${address.toLowerCase()}`, newBalance);
-
-      const txId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      return NextResponse.json({
-        success: true,
-        txId,
-        action: "buy",
-        metal,
-        amount,
-        pricePerGram: metalPrice,
-        grossCost,
-        spreadFee,
-        spreadPercent: SPREAD_CONFIG.buy * 100,
-        totalCost,
-        payment: {
-          usedAuxm,
-          usedBonusAuxm,
-          totalUsed: totalCost,
-          bonusSavings: usedBonusAuxm > 0 ? usedBonusAuxm : 0,
-        },
-        newBalances: {
-          auxm: newBalance.auxm,
-          bonusAuxm: newBalance.bonusAuxm,
-          totalAuxm: newBalance.auxm + newBalance.bonusAuxm,
-          [metal.toLowerCase()]: newBalance[metal.toLowerCase() as keyof typeof newBalance],
-        },
-        message: usedBonusAuxm > 0 
-          ? `Purchased ${amount}g ${metal}. Used ${usedBonusAuxm.toFixed(2)} Bonus AUXM + ${usedAuxm.toFixed(2)} AUXM.`
-          : `Purchased ${amount}g ${metal} for ${totalCost.toFixed(2)} AUXM.`,
-      });
-
-    } else {
-      // METAL SATIM
-      const metalKey = metal.toLowerCase() as keyof UserBalance;
-      const currentMetalBalance = balance[metalKey] as number;
-
-      if (amount > currentMetalBalance) {
-        return NextResponse.json({
-          error: "Insufficient metal balance",
-          required: amount,
-          available: currentMetalBalance,
-        }, { status: 400 });
-      }
-
-      const grossValue = amount * metalPrice;
-      const spreadFee = grossValue * SPREAD_CONFIG.sell;
-      const netValue = grossValue - spreadFee;
-
-      // Metal satışında normal AUXM alınır (bonus değil)
-      const newBalance = {
-        auxm: balance.auxm + netValue,
-        [metalKey]: currentMetalBalance - amount,
-      };
-
-      // TODO: Redis'te güncelle
-      // await redis.hset(`user:${address.toLowerCase()}`, newBalance);
-
-      const txId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      return NextResponse.json({
-        success: true,
-        txId,
-        action: "sell",
-        metal,
-        amount,
-        pricePerGram: metalPrice,
-        grossValue,
-        spreadFee,
-        spreadPercent: SPREAD_CONFIG.sell * 100,
-        netValue,
-        received: {
-          auxm: netValue,
-          note: "Metal sales credit regular AUXM (not bonus)"
-        },
-        newBalances: {
-          auxm: newBalance.auxm,
-          bonusAuxm: balance.bonusAuxm,
-          totalAuxm: newBalance.auxm + balance.bonusAuxm,
-          [metalKey]: newBalance[metalKey],
-        },
-        message: `Sold ${amount}g ${metal} for ${netValue.toFixed(2)} AUXM.`,
-      });
     }
+
+    if (fromAmount > availableBalance) {
+      return NextResponse.json({ 
+        error: "Insufficient balance",
+        required: fromAmount,
+        available: availableBalance,
+      }, { status: 400 });
+    }
+
+    // Fee ve miktar hesapla
+    let fee: number;
+    let toAmount: number;
+
+    if (type === "buy") {
+      fee = fromAmount * 0.001; // 0.1%
+      const netAmount = fromAmount - fee;
+      toAmount = netAmount / price;
+    } else if (type === "sell") {
+      fee = fromAmount * price * 0.001; // 0.1%
+      toAmount = (fromAmount * price) - fee;
+    } else {
+      fee = fromAmount * 0.002; // 0.2%
+      toAmount = (fromAmount - fee) * price;
+    }
+
+    // Bakiyeleri güncelle (atomik işlem)
+    const multi = redis.multi();
+
+    // From token'ı düş
+    if (type === "buy" && fromTokenLower === "auxm" && usedBonus > 0) {
+      // Bonus ve normal AUXM ayrı düşülür
+      if (usedBonus > 0) {
+        multi.hincrbyfloat(balanceKey, "bonusauxm", -usedBonus);
+      }
+      if (usedRegular > 0) {
+        multi.hincrbyfloat(balanceKey, "auxm", -usedRegular);
+      }
+    } else {
+      multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
+    }
+
+    // To token'ı ekle
+    multi.hincrbyfloat(balanceKey, toTokenLower, toAmount);
+
+    // Transaction ekle
+    const txId = `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const transaction = {
+      id: txId,
+      type,
+      fromToken: fromToken.toUpperCase(),
+      toToken: toToken.toUpperCase(),
+      fromAmount: fromAmount.toString(),
+      toAmount: toAmount.toFixed(6),
+      fee: fee.toFixed(4),
+      price: price.toString(),
+      usedBonus: usedBonus.toString(),
+      status: "completed",
+      timestamp: Date.now(),
+    };
+
+    const txKey = `user:${normalizedAddress}:transactions`;
+    multi.lpush(txKey, JSON.stringify(transaction));
+
+    // Execute
+    await multi.exec();
+
+    // Güncel bakiyeleri al
+    const updatedBalance = await redis.hgetall(balanceKey);
+
+    return NextResponse.json({
+      success: true,
+      transaction: {
+        id: txId,
+        type,
+        fromToken: fromToken.toUpperCase(),
+        toToken: toToken.toUpperCase(),
+        fromAmount,
+        toAmount: parseFloat(toAmount.toFixed(6)),
+        fee: parseFloat(fee.toFixed(4)),
+        usedBonus,
+        status: "completed",
+      },
+      balances: {
+        auxm: parseFloat(updatedBalance.auxm as string || "0"),
+        bonusAuxm: parseFloat(updatedBalance.bonusauxm as string || "0"),
+        [toTokenLower]: parseFloat(updatedBalance[toTokenLower] as string || "0"),
+      },
+    });
 
   } catch (error) {
     console.error("Trade error:", error);
-    return NextResponse.json(
-      { error: "Trade failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Trade failed" }, { status: 500 });
   }
 }

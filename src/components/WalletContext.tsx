@@ -1,285 +1,158 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { useAccount } from "wagmi";
 
 export type WalletType = "metamask" | "walletconnect" | "coinbase" | "ledger" | "trezor" | null;
+
+interface UserBalances {
+  auxm: number;
+  bonusAuxm: number;
+  totalAuxm: number;
+  bonusExpiresAt: string | null;
+  auxg: number;
+  auxs: number;
+  auxpt: number;
+  auxpd: number;
+  eth: number;
+  btc: number;
+  xrp: number;
+  sol: number;
+  usdt: number;
+}
+
+interface BalanceSummary {
+  totalAuxm: number;
+  withdrawableAuxm: number;
+  lockedBonusAuxm: number;
+  bonusStatus: {
+    amount: number;
+    expiresAt: string | null;
+    usableFor: string[];
+    note: string;
+  } | null;
+  totalValueUsd: number;
+}
 
 interface WalletContextType {
   isConnected: boolean;
   address: string | null;
-  chainId: string | null;
-  walletType: WalletType;
-  connectWallet: (type: WalletType) => Promise<void>;
-  disconnectWallet: () => void;
+  chainId: number | null;
+  balances: UserBalances | null;
+  summary: BalanceSummary | null;
+  balancesLoading: boolean;
+  balancesError: string | null;
+  refreshBalances: () => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
-export function WalletProvider({ children }: { children: ReactNode }) {
-  const [isConnected, setIsConnected] = useState(false);
-  const [address, setAddress] = useState<string | null>(null);
-  const [chainId, setChainId] = useState<string | null>(null);
-  const [walletType, setWalletType] = useState<WalletType>(null);
+const DEFAULT_BALANCES: UserBalances = {
+  auxm: 0,
+  bonusAuxm: 0,
+  totalAuxm: 0,
+  bonusExpiresAt: null,
+  auxg: 0,
+  auxs: 0,
+  auxpt: 0,
+  auxpd: 0,
+  eth: 0,
+  btc: 0,
+  xrp: 0,
+  sol: 0,
+  usdt: 0,
+};
 
-  // Check if already connected on mount
-  useEffect(() => {
-    const savedWalletType = localStorage.getItem("walletType") as WalletType;
-    if (savedWalletType) {
-      checkConnection(savedWalletType);
+export function WalletProvider({ children }: { children: ReactNode }) {
+  // Wagmi'den bağlantı bilgilerini al
+  const { address: wagmiAddress, isConnected: wagmiConnected, chainId: wagmiChainId } = useAccount();
+  
+  const [balances, setBalances] = useState<UserBalances | null>(null);
+  const [summary, setSummary] = useState<BalanceSummary | null>(null);
+  const [balancesLoading, setBalancesLoading] = useState(false);
+  const [balancesError, setBalancesError] = useState<string | null>(null);
+
+  // Bakiye çekme fonksiyonu
+  const fetchBalances = useCallback(async (walletAddress: string) => {
+    console.log("🔄 fetchBalances called:", walletAddress);
+    
+    if (!walletAddress) {
+      console.log("❌ No wallet address");
+      return;
+    }
+
+    setBalancesLoading(true);
+    setBalancesError(null);
+
+    try {
+      const url = `/api/user/balance?address=${walletAddress}`;
+      console.log("📡 Fetching:", url);
+      
+      const response = await fetch(url);
+      console.log("📥 Response status:", response.status);
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("✅ Balance data:", data);
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setBalances(data.balances);
+      setSummary(data.summary);
+    } catch (error) {
+      console.error("❌ Balance fetch error:", error);
+      setBalancesError(error instanceof Error ? error.message : "Bakiye alınamadı");
+      setBalances(DEFAULT_BALANCES);
+    } finally {
+      setBalancesLoading(false);
     }
   }, []);
 
-  // Setup event listeners for MetaMask
+  // Manuel bakiye yenileme
+  const refreshBalances = useCallback(async () => {
+    if (wagmiAddress) {
+      await fetchBalances(wagmiAddress);
+    }
+  }, [wagmiAddress, fetchBalances]);
+
+  // Wagmi bağlantı durumu değiştiğinde bakiyeleri çek
   useEffect(() => {
-    if (typeof window !== "undefined" && (window as any).ethereum && walletType === "metamask") {
-      const ethereum = (window as any).ethereum;
-
-      const handleAccountsChanged = (accounts: string[]) => {
-        if (accounts.length === 0) {
-          disconnectWallet();
-        } else {
-          setAddress((accounts as string[])[0]);
-          setIsConnected(true);
-        }
-      };
-
-      const handleChainChanged = (newChainId: string) => {
-        setChainId(newChainId);
-        window.location.reload();
-      };
-
-      ethereum.on("accountsChanged", handleAccountsChanged);
-      ethereum.on("chainChanged", handleChainChanged);
-
-      return () => {
-        ethereum.removeListener("accountsChanged", handleAccountsChanged);
-        ethereum.removeListener("chainChanged", handleChainChanged);
-      };
-    }
-  }, [walletType]);
-
-  const checkConnection = async (type: WalletType) => {
-    if (typeof window === "undefined") return;
-
-    try {
-      if (type === "metamask" && (window as any).ethereum) {
-        const ethereum = (window as any).ethereum;
-        const accounts = await ethereum.request({ method: "eth_accounts" });
-        if (accounts.length > 0) {
-          setAddress((accounts as string[])[0]);
-          setIsConnected(true);
-          setWalletType(type);
-          const currentChainId = await ethereum.request({ method: "eth_chainId" });
-          setChainId(currentChainId);
-        }
-      }
-      // Add WalletConnect check here
-      // Add Coinbase check here
-    } catch (error) {
-      console.error("Check connection error:", error);
-    }
-  };
-
-  const switchToSepolia = async (provider: any) => {
-    const sepoliaChainId = "0xaa36a7";
+    console.log("📍 Wagmi state:", { isConnected: wagmiConnected, address: wagmiAddress, chainId: wagmiChainId });
     
-    try {
-      await provider.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: sepoliaChainId }],
-      });
-      setChainId(sepoliaChainId);
-    } catch (switchError: any) {
-      if (switchError.code === 4902) {
-        await provider.request({
-          method: "wallet_addEthereumChain",
-          params: [
-            {
-              chainId: sepoliaChainId,
-              chainName: "Sepolia Test Network",
-              nativeCurrency: {
-                name: "Sepolia ETH",
-                symbol: "SepoliaETH",
-                decimals: 18,
-              },
-              rpcUrls: ["https://rpc.sepolia.org"],
-              blockExplorerUrls: ["https://sepolia.etherscan.io"],
-            },
-          ],
-        });
-        setChainId(sepoliaChainId);
-      } else {
-        throw switchError;
-      }
+    if (wagmiConnected && wagmiAddress) {
+      console.log("✅ Wagmi connected! Fetching balances...");
+      fetchBalances(wagmiAddress);
+
+      // Her 30 saniyede bakiyeleri yenile
+      const interval = setInterval(() => {
+        console.log("⏰ Auto-refresh balances");
+        fetchBalances(wagmiAddress);
+      }, 30000);
+
+      return () => clearInterval(interval);
+    } else {
+      console.log("❌ Wagmi not connected, clearing balances");
+      setBalances(null);
+      setSummary(null);
     }
-  };
-
-  const connectMetaMask = async () => {
-    if (typeof window === "undefined" || !(window as any).ethereum) {
-      throw new Error("MetaMask is not installed");
-    }
-
-    const ethereum = (window as any).ethereum;
-
-    const accounts = await ethereum.request({
-      method: "eth_requestAccounts",
-    });
-
-    if (!accounts || accounts.length === 0) {
-      throw new Error("No accounts found");
-    }
-
-    setAddress((accounts as string[])[0]);
-
-    const currentChainId = await ethereum.request({ method: "eth_chainId" });
-    setChainId(currentChainId);
-
-    await switchToSepolia(ethereum);
-
-    setIsConnected(true);
-    setWalletType("metamask");
-    localStorage.setItem("walletType", "metamask");
-  };
-
-  const connectWalletConnect = async () => {
-    try {
-      // WalletConnect v2 implementation
-      const { EthereumProvider } = await import("@walletconnect/ethereum-provider");
-      
-      const provider = await EthereumProvider.init({
-        projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "YOUR_PROJECT_ID",
-        chains: [11155111], // Sepolia
-        showQrModal: true,
-        metadata: {
-          name: "Auxite Wallet",
-          description: "Physical metal-backed tokens",
-          url: "https://auxite.io",
-          icons: ["https://auxite.io/icon.png"],
-        },
-      });
-
-      await provider.connect();
-
-      const accounts = provider.accounts;
-      if (accounts && (accounts as string[]).length > 0) {
-        setAddress((accounts as string[])[0]);
-        setChainId("0xaa36a7"); // Sepolia
-        setIsConnected(true);
-        setWalletType("walletconnect");
-        localStorage.setItem("walletType", "walletconnect");
-      }
-
-      // Listen for events
-      provider.on("accountsChanged", (accounts: string[]) => {
-        if (accounts.length > 0) {
-          setAddress((accounts as string[])[0]);
-        } else {
-          disconnectWallet();
-        }
-      });
-
-      provider.on("disconnect", () => {
-        disconnectWallet();
-      });
-    } catch (error) {
-      console.error("WalletConnect error:", error);
-      throw new Error("WalletConnect connection failed");
-    }
-  };
-
-  const connectCoinbase = async () => {
-    try {
-      const CoinbaseWalletSDK = (await import("@coinbase/wallet-sdk")).default;
-      
-      const coinbaseWallet = new CoinbaseWalletSDK({
-        appName: "Auxite Wallet",
-        appLogoUrl: "https://auxite.io/icon.png",
-      });
-
-      const ethereum = coinbaseWallet.makeWeb3Provider({
-        options: "all",
-        }
-      );
-
-      const accounts = await ethereum.request({
-        method: "eth_requestAccounts",
-      });
-
-      if (accounts && (accounts as string[]).length > 0) {
-        setAddress((accounts as string[])[0]);
-        setChainId("0xaa36a7");
-        setIsConnected(true);
-        setWalletType("coinbase");
-        localStorage.setItem("walletType", "coinbase");
-      }
-    } catch (error) {
-      console.error("Coinbase Wallet error:", error);
-      throw new Error("Coinbase Wallet connection failed");
-    }
-  };
-
-  const connectLedger = async () => {
-    try {
-      // Ledger connection via Web3Modal or direct
-      throw new Error("Ledger: Please connect via MetaMask with your Ledger device");
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const connectTrezor = async () => {
-    try {
-      // Trezor connection via Web3Modal or direct
-      throw new Error("Trezor: Please connect via MetaMask with your Trezor device");
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const connectWallet = async (type: WalletType) => {
-    try {
-      switch (type) {
-        case "metamask":
-          await connectMetaMask();
-          break;
-        case "walletconnect":
-          await connectWalletConnect();
-          break;
-        case "coinbase":
-          await connectCoinbase();
-          break;
-        case "ledger":
-          await connectLedger();
-          break;
-        case "trezor":
-          await connectTrezor();
-          break;
-        default:
-          throw new Error("Unknown wallet type");
-      }
-    } catch (error) {
-      console.error("Connect wallet error:", error);
-      throw error;
-    }
-  };
-
-  const disconnectWallet = () => {
-    setIsConnected(false);
-    setAddress(null);
-    setChainId(null);
-    setWalletType(null);
-    localStorage.removeItem("walletType");
-  };
+  }, [wagmiConnected, wagmiAddress, wagmiChainId, fetchBalances]);
 
   return (
     <WalletContext.Provider
       value={{
-        isConnected,
-        address,
-        chainId,
-        walletType,
-        connectWallet,
-        disconnectWallet,
+        isConnected: wagmiConnected,
+        address: wagmiAddress || null,
+        chainId: wagmiChainId || null,
+        balances,
+        summary,
+        balancesLoading,
+        balancesError,
+        refreshBalances,
       }}
     >
       {children}
@@ -293,4 +166,29 @@ export function useWallet() {
     throw new Error("useWallet must be used within a WalletProvider");
   }
   return context;
+}
+
+export function useBalance(token: keyof UserBalances) {
+  const { balances } = useWallet();
+  return balances?.[token] ?? 0;
+}
+
+export function useMetalBalances() {
+  const { balances } = useWallet();
+  return {
+    auxg: balances?.auxg ?? 0,
+    auxs: balances?.auxs ?? 0,
+    auxpt: balances?.auxpt ?? 0,
+    auxpd: balances?.auxpd ?? 0,
+  };
+}
+
+export function useAuxmBalance() {
+  const { balances, summary } = useWallet();
+  return {
+    total: balances?.totalAuxm ?? 0,
+    available: summary?.withdrawableAuxm ?? 0,
+    bonus: balances?.bonusAuxm ?? 0,
+    bonusExpiresAt: balances?.bonusExpiresAt ?? null,
+  };
 }

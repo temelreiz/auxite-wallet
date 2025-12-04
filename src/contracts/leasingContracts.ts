@@ -1,7 +1,20 @@
-// Auto-generated leasing contract addresses
+// Auto-generated contract addresses
 // Network: Sepolia
-// Deployed: 2025-11-24
+// Version: V5
+// Updated: 2024-12-04
 
+// V5 Metal Token Contracts (Audited)
+export const METAL_TOKENS = {
+  AUXG: "0x2e7fff4061134a420faB630CA04Be04f5b2C7B59" as const,
+  AUXS: "0x48016261ba15ad3603621A4F6A8985776a37bb8a" as const,
+  AUXPT: "0x2443Ef1F9a4C6f3561A2750048C68d7Bfc02363B" as const,
+  AUXPD: "0xD978F69Ab9DF519bD7f08a823c82536471CA95b3" as const,
+} as const;
+
+// V5 Oracle
+export const ORACLE_ADDRESS = "0x04aC1D2Cf47D244DD01D36bFB9736a301C1FA917" as const;
+
+// Leasing Contracts (unchanged - these are separate)
 export const LEASING_CONTRACTS = {
   AUXG: {
     "90": "0xe63050b6d0497a970d3fB44EBF428742631d1006" as const,
@@ -27,7 +40,8 @@ export const LEASING_CONTRACTS = {
 
 export const LEASING_REGISTRY = "0xcD144f079faB6743365606Db5FCcD8051315834D" as const;
 
-export const METAL_TOKENS = {
+// Legacy V4 Addresses (deprecated - for reference only)
+export const V4_METAL_TOKENS = {
   AUXG: "0xE425A9923250E94Fe2F4cB99cbc0896Aea24933a" as const,
   AUXS: "0xaE583c98c833a0B4b1B23e58209E697d95F05D23" as const,
   AUXPT: "0xeCfD88bE4f93C9379644B303444943e636A35F66" as const,
