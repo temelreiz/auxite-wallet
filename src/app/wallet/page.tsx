@@ -696,8 +696,7 @@ export default function WalletPage() {
             <div className="space-y-3">
               {/* On-Chain Deposit */}
               <button
-                className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-800/70 transition-all"
-                  onClick={() => {
+                onClick={() => {
                   setShowDeposit(false);
                   setShowOnChainDeposit(true);
                 }}
