@@ -2,7 +2,6 @@
 
 import { useWallet } from "@/components/WalletContext";
 
-
 interface AuxmBalanceDisplayProps {
   showRefresh?: boolean;
   compact?: boolean;
@@ -12,51 +11,34 @@ interface AuxmBalanceDisplayProps {
 export function AuxmBalanceDisplay({ 
   showRefresh = false, 
   compact = false,
-  lang = "en" 
+  lang = "en"
 }: AuxmBalanceDisplayProps) {
-  const { balances, balancesLoading, refreshBalances, isConnected } = useWallet();
+  const { balances, refreshBalances, balancesLoading } = useWallet();
   
-  const auxmBalance = balances?.auxm ?? 0;
+  const auxm = balances?.auxm ?? 0;
   const bonusAuxm = balances?.bonusAuxm ?? 0;
-  const totalAuxm = auxmBalance + bonusAuxm;
-  const bonusExpiresAt = balances?.bonusExpiresAt;
+  const totalAuxm = auxm + bonusAuxm;
 
   const t = {
     balance: lang === "tr" ? "Bakiye" : "Balance",
+    available: lang === "tr" ? "Kullanılabilir" : "Available",
     bonus: lang === "tr" ? "Bonus" : "Bonus",
     total: lang === "tr" ? "Toplam" : "Total",
-    available: lang === "tr" ? "Kullanılabilir" : "Available",
-    expires: lang === "tr" ? "Son kullanma" : "Expires",
-    notConnected: lang === "tr" ? "Cüzdan bağlı değil" : "Wallet not connected",
-    loading: lang === "tr" ? "Yükleniyor..." : "Loading...",
   };
 
-  if (!isConnected) {
-    return (
-      <div className="text-slate-500 text-sm">
-        {t.notConnected}
-      </div>
-    );
-  }
-
-  if (balancesLoading && !balances) {
-    return (
-      <div className="flex items-center gap-2 text-slate-400">
-        🔄
-        <span className="text-sm">{t.loading}</span>
-      </div>
-    );
-  }
-
-  // Compact version
   if (compact) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-white font-mono font-medium">{totalAuxm.toFixed(2)}</span>
-        <span className="text-slate-400">AUXM</span>
+        <div className="flex items-center gap-1.5">
+          <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center">
+            <span className="text-purple-400 text-xs font-bold">A</span>
+          </div>
+          <span className="text-white font-semibold">{totalAuxm.toFixed(2)}</span>
+          <span className="text-slate-400 text-sm">AUXM</span>
+        </div>
         {bonusAuxm > 0 && (
-          <span className="text-purple-400 text-xs">
-            (+{bonusAuxm.toFixed(2)} bonus)
+          <span className="text-xs text-emerald-400 bg-emerald-500/20 px-1.5 py-0.5 rounded">
+            +{bonusAuxm.toFixed(2)} bonus
           </span>
         )}
         {showRefresh && (
@@ -65,7 +47,9 @@ export function AuxmBalanceDisplay({
             className="p-1 hover:bg-slate-800 rounded"
             disabled={balancesLoading}
           >
-            <RefreshCw className={`w-3 h-3 text-slate-500 ${balancesLoading ? 'animate-spin' : ''}`} />
+            <svg className={`w-3 h-3 text-slate-500 ${balancesLoading ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
           </button>
         )}
       </div>
@@ -83,7 +67,9 @@ export function AuxmBalanceDisplay({
             className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
             disabled={balancesLoading}
           >
-            <RefreshCw className={`w-4 h-4 text-slate-400 ${balancesLoading ? 'animate-spin' : ''}`} />
+            <svg className={`w-4 h-4 text-slate-400 ${balancesLoading ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
           </button>
         )}
       </div>
@@ -94,37 +80,19 @@ export function AuxmBalanceDisplay({
           {totalAuxm.toFixed(2)}
           <span className="text-lg text-slate-400 ml-2">AUXM</span>
         </div>
-        <div className="text-sm text-slate-500">
-          ≈ ${totalAuxm.toFixed(2)} USD
-        </div>
       </div>
 
       {/* Breakdown */}
       <div className="space-y-2 pt-3 border-t border-slate-700">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-400">{t.available}:</span>
-          <span className="text-white font-mono">{auxmBalance.toFixed(2)} AUXM</span>
+        <div className="flex justify-between text-sm">
+          <span className="text-slate-400">{t.available}</span>
+          <span className="text-white font-mono">{auxm.toFixed(2)}</span>
         </div>
-        
         {bonusAuxm > 0 && (
-          <>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-purple-400">💜 {t.bonus}:</span>
-              <span className="text-purple-300 font-mono">{bonusAuxm.toFixed(2)} AUXM</span>
-            </div>
-            {bonusExpiresAt && (
-              <div className="text-xs text-slate-500">
-                {t.expires}: {new Date(bonusExpiresAt).toLocaleDateString()}
-              </div>
-            )}
-            <div className="mt-2 p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
-              <p className="text-xs text-purple-300">
-                {lang === "tr" 
-                  ? "💡 Bonus AUXM sadece metal alımlarında kullanılabilir"
-                  : "💡 Bonus AUXM can only be used for metal purchases"}
-              </p>
-            </div>
-          </>
+          <div className="flex justify-between text-sm">
+            <span className="text-emerald-400">{t.bonus}</span>
+            <span className="text-emerald-400 font-mono">+{bonusAuxm.toFixed(2)}</span>
+          </div>
         )}
       </div>
     </div>
