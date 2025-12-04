@@ -337,7 +337,7 @@ export async function ensureUser(address: string): Promise<void> {
     const exists = await redis.exists(key);
     
     if (!exists) {
-      await redis.hset(key, DEFAULT_BALANCE as Record<string, unknown>);
+      await redis.hset(key, { ...DEFAULT_BALANCE });
     }
   } catch (error) {
     console.error("Redis ensureUser error:", error);
