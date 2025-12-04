@@ -64,7 +64,7 @@ export default function TopNav({
               {address.slice(0, 6)}...{address.slice(-4)}
             </div>
             <button
-              onClick={disconnectWallet}
+              onClick={() => disconnectWallet()}
               className="rounded-full bg-red-500/10 border border-red-500/30 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-500/20"
             >
               {lang === "tr" ? "Bağlantıyı Kes" : "Disconnect"}
