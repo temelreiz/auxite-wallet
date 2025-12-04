@@ -6,7 +6,7 @@ const SYMBOLS = ["BTCUSDT", "ETHUSDT", "XRPUSDT", "SOLUSDT"];
 
 let cachedData: any = null;
 let lastFetchTime: number = 0;
-const CACHE_DURATION = 10000; // 10 saniye
+const CACHE_DURATION = 5000; // 10 saniye
 
 const FALLBACK_PRICES = {
   bitcoin: { usd: 92000, usd_24h_change: 0 },

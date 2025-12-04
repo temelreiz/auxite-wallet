@@ -92,7 +92,7 @@ export function useCryptoPrices() {
 
   useEffect(() => {
     fetchPrices();
-    const interval = setInterval(fetchPrices, 3000); // Her 3 saniyede güncelle
+    const interval = setInterval(fetchPrices, 5000); // Her 3 saniyede güncelle
     return () => clearInterval(interval);
   }, []);
 
