@@ -474,12 +474,6 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
           isOpen={showBuyMetal}
           onClose={() => setShowBuyMetal(false)}
           lang={lang}
-          metalPrices={{
-            AUXG: prices.AUXG || 139.31,
-            AUXS: prices.AUXS || 1.79,
-            AUXPT: prices.AUXPT || 54.14,
-            AUXPD: prices.AUXPD || 48.16,
-          }}
         />
       )}
 
