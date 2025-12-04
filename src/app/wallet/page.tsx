@@ -660,12 +660,6 @@ export default function WalletPage() {
       {/* Buy Metal Modal (Hızlı Al) */}
       {showBuyMetal && (
         <BuyMetalModal
-          metal={{
-            symbol: "AUXG",
-            name: "Altın",
-            price: metalAskPrices?.AUXG || 85,
-            icon: "🥇"
-          }}
           isOpen={showBuyMetal}
           onClose={() => setShowBuyMetal(false)}
           lang={lang}
