@@ -781,8 +781,7 @@ export default function WalletPage() {
 
               {/* MoonPay */}
               <button
-                className="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-slate-800/70 transition-all"
-                  onClick={() => {
+                onClick={() => {
                   // TODO: MoonPay entegrasyonu
                   alert(lang === "tr" ? "MoonPay yakında aktif olacak" : "MoonPay coming soon");
                 }}
