@@ -1,5 +1,6 @@
 "use client";
 import { useWallet } from "./WalletContext";
+import { useDisconnect } from "wagmi";
 type Props = {
   lang: "tr" | "en";
   onLangChange: (lang: "tr" | "en") => void;
@@ -14,7 +15,8 @@ export default function TopNav({
   onTabChange,
   onOpenWalletModal,
 }: Props) {
-  const { isConnected, address, disconnectWallet } = useWallet();
+  const { isConnected, address } = useWallet();
+  const { disconnect: disconnectWallet } = useDisconnect();
   const tabCls = (tab: "markets" | "earn") =>
     "rounded-full px-4 py-1.5 text-sm font-medium transition " +
     (activeTab === tab
