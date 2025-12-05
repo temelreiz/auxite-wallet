@@ -77,30 +77,42 @@ export default function MetalPriceCard({
     setShowTradePanel(true);
   };
 
-  // Direction-based styling - priceDirection kullan
+  // Direction-based styling - badge için change24h, fiyat için priceDirection
   const getDirectionStyles = () => {
-    if (priceDirection === "up") {
-      return {
-        badgeBg: "bg-emerald-500/20",
-        badgeText: "text-emerald-400",
-        priceColor: "text-emerald-400",
-        arrow: "↑"
-      };
-    } else if (priceDirection === "down") {
-      return {
-        badgeBg: "bg-red-500/20",
-        badgeText: "text-red-400",
-        priceColor: "text-red-400",
-        arrow: "↓"
-      };
+    // Badge rengi: 24 saatlik değişime göre
+    let badgeBg, badgeText, arrow;
+    if (change24h > 0.01) {
+      badgeBg = "bg-emerald-500/20";
+      badgeText = "text-emerald-400";
+      arrow = "↑";
+    } else if (change24h < -0.01) {
+      badgeBg = "bg-red-500/20";
+      badgeText = "text-red-400";
+      arrow = "↓";
     } else {
-      return {
-        badgeBg: "bg-slate-500/20",
-        badgeText: "text-slate-300",
-        priceColor: "text-slate-100",
-        arrow: "~"
-      };
+      badgeBg = "bg-slate-500/20";
+      badgeText = "text-slate-300";
+      arrow = "~";
     }
+    
+    // Fiyat rengi: anlık değişime göre
+    let priceColor;
+    if (priceDirection === "up") {
+      priceColor = "text-emerald-400";
+    } else if (priceDirection === "down") {
+      priceColor = "text-red-400";
+    } else {
+      // Neutral durumda change24h'a bak
+      if (change24h > 0.01) {
+        priceColor = "text-emerald-400";
+      } else if (change24h < -0.01) {
+        priceColor = "text-red-400";
+      } else {
+        priceColor = "text-slate-100";
+      }
+    }
+    
+    return { badgeBg, badgeText, priceColor, arrow };
   };
 
   const directionStyles = getDirectionStyles();
@@ -120,41 +132,33 @@ export default function MetalPriceCard({
         className="relative rounded-xl border border-slate-800 bg-slate-900/80 p-4 hover:border-slate-600 hover:bg-slate-900 transition-all cursor-pointer group"
         onClick={handleCardClick}
       >
-        {/* Header */}
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <div className="flex items-center gap-2">
-              {icon && (
-                <img 
-                  src={icon} 
-                  alt={name}
-                  className="w-5 h-5"
-                />
-              )}
-              <h3 className="text-sm font-semibold text-slate-200">{symbol}</h3>
-              <span
-                className={`text-xs font-medium px-2 py-0.5 rounded ${directionStyles.badgeBg} ${directionStyles.badgeText}`}
-              >
-                {directionStyles.arrow} {Math.abs(change24h).toFixed(2)}%
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">{name}</p>
+        {/* Header - Crypto tarzı: sol icon+isim, sağ yüzde */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            {icon && (
+              <img 
+                src={icon} 
+                alt={name}
+                className="w-5 h-5"
+              />
+            )}
+            <h3 className="text-sm font-semibold text-slate-200">{symbol}</h3>
           </div>
-          
-          <div className="text-right">
-            <div className="text-xs text-slate-500">
-              {lang === "tr" ? "Alış/Satış" : "Ask/Bid"}
-            </div>
-            <div className="text-sm text-slate-300 font-mono font-medium">
-              ${pricePerGram.toFixed(2)}
-            </div>
-          </div>
+          {/* Sağ üst - Yüzde değişim badge */}
+          <span
+            className={`text-xs font-medium px-2 py-0.5 rounded ${directionStyles.badgeBg} ${directionStyles.badgeText}`}
+          >
+            {directionStyles.arrow} {Math.abs(change24h).toFixed(2)}%
+          </span>
         </div>
+        
+        {/* Alt başlık */}
+        <p className="text-xs text-slate-500 mb-1">{name}</p>
 
-        {/* Price - Renge göre değişir */}
-        <div className="mb-4">
-          <div className={`text-3xl font-bold font-mono tracking-tight transition-colors duration-300 ${directionStyles.priceColor}`}>
-            {pricePerGram.toFixed(2)}
+        {/* Price - Base fiyat (spread'siz) */}
+        <div className="mb-3">
+          <div className={`text-xl font-bold font-mono tracking-tight transition-colors duration-300 ${directionStyles.priceColor}`}>
+            ${pricePerGram.toFixed(2)}
           </div>
         </div>
 
@@ -162,13 +166,13 @@ export default function MetalPriceCard({
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={handleBuy}
-            className="px-4 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white text-sm font-semibold transition-all duration-150 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
+            className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white text-sm font-semibold transition-all duration-150 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
           >
             {lang === "tr" ? "Al" : "Buy"}
           </button>
           <button
             onClick={handleSell}
-            className="px-4 py-2.5 rounded-lg bg-red-500 hover:bg-red-400 active:bg-red-600 text-white text-sm font-semibold transition-all duration-150 shadow-lg shadow-red-500/20 hover:shadow-red-500/30"
+            className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-400 active:bg-red-600 text-white text-sm font-semibold transition-all duration-150 shadow-lg shadow-red-500/20 hover:shadow-red-500/30"
           >
             {lang === "tr" ? "Sat" : "Sell"}
           </button>

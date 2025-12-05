@@ -63,7 +63,7 @@ const DEPOSIT_ADDRESSES: Record<string, { address: string; network: string; memo
   XRP: { 
     address: "r4pNH6DdDtVknt8NZAhhbcY8Wqr46QoGae", 
     network: "XRP Ledger",
-    memo: "123456" // Destination Tag
+    memo: "123456"
   },
   SOL: { 
     address: "6orrQ2dRuiFwH5w3wddQjQNbPT6w7vEN7eMW9wUNM1Qe", 
@@ -242,19 +242,14 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Ethereum</div>
-          {/* Ask/Bid Prices - Base fiyat göster */}
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-            <span>{lang === "tr" ? "Alış/Satış" : "Ask/Bid"}</span>
-            <span className="font-mono">${cryptoPrices.eth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          </div>
           <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.eth === "up" ? "text-emerald-400" : cryptoDirections.eth === "down" ? "text-red-400" : "text-slate-100"}`}>
             ${cryptoPrices.eth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
             onClick={(e) => { e.stopPropagation(); setShowCryptoConvert("ETH"); }}
-            className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+            className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-sm font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
           >
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
             {lang === "tr" ? "Dönüştür" : "Exchange"}
@@ -278,19 +273,14 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Bitcoin</div>
-          {/* Ask/Bid Prices - Base fiyat göster */}
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-            <span>{lang === "tr" ? "Alış/Satış" : "Ask/Bid"}</span>
-            <span className="font-mono">${cryptoPrices.btc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          </div>
           <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.btc === "up" ? "text-emerald-400" : cryptoDirections.btc === "down" ? "text-red-400" : "text-slate-100"}`}>
             ${cryptoPrices.btc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
             onClick={(e) => { e.stopPropagation(); setShowCryptoConvert("BTC"); }}
-            className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+            className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-sm font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
           >
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
             {lang === "tr" ? "Dönüştür" : "Exchange"}
@@ -316,18 +306,14 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Ripple</div>
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-            <span>{lang === "tr" ? "Alış/Satış" : "Ask/Bid"}</span>
-            <span className="font-mono">${(cryptoPrices.xrp || 2.20).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          </div>
           <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.xrp === "up" ? "text-emerald-400" : cryptoDirections.xrp === "down" ? "text-red-400" : "text-slate-100"}`}>
             ${(cryptoPrices.xrp || 2.20).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
             onClick={(e) => { e.stopPropagation(); setShowCryptoConvert("XRP"); }}
-            className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+            className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-sm font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
           >
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
             {lang === "tr" ? "Dönüştür" : "Exchange"}
@@ -353,18 +339,14 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Solana</div>
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-            <span>{lang === "tr" ? "Alış/Satış" : "Ask/Bid"}</span>
-            <span className="font-mono">${(cryptoPrices.sol || 235).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          </div>
           <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.sol === "up" ? "text-emerald-400" : cryptoDirections.sol === "down" ? "text-red-400" : "text-slate-100"}`}>
             ${(cryptoPrices.sol || 235).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
             onClick={(e) => { e.stopPropagation(); setShowCryptoConvert("SOL"); }}
-            className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+            className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-sm font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
           >
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
             {lang === "tr" ? "Dönüştür" : "Exchange"}
