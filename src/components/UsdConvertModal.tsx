@@ -9,6 +9,7 @@ interface UsdConvertModalProps {
   onClose: () => void;
   lang: "tr" | "en";
   walletAddress: string;
+  initialDirection?: "usd-to-usdt" | "usdt-to-usd";
 }
 
 export function UsdConvertModal({
@@ -16,55 +17,112 @@ export function UsdConvertModal({
   onClose,
   lang,
   walletAddress,
+  initialDirection = "usd-to-usdt",
 }: UsdConvertModalProps) {
   const { balances, refreshBalances } = useWallet();
+  const [direction, setDirection] = useState<"usd-to-usdt" | "usdt-to-usd">(initialDirection);
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Piyasa fiyatları (gerçek API'den çekilecek)
+  // USDT genelde $0.9995 - $1.0005 arası
+  const [usdtPrice, setUsdtPrice] = useState(0.9998);
+
   const usdBalance = balances?.usd ?? 0;
+  const usdtBalance = balances?.usdt ?? 0;
   const parsedAmount = parseFloat(amount) || 0;
-  const outputAmount = parsedAmount;
+
+  // Dönüşüm hesaplama
+  const isUsdToUsdt = direction === "usd-to-usdt";
+  const fromBalance = isUsdToUsdt ? usdBalance : usdtBalance;
+  const fromSymbol = isUsdToUsdt ? "USD" : "USDT";
+  const toSymbol = isUsdToUsdt ? "USDT" : "USD";
+
+  // USD → USDT: amount / usdtPrice (daha fazla USDT alırsın)
+  // USDT → USD: amount * usdtPrice (biraz az USD alırsın)
+  const outputAmount = isUsdToUsdt 
+    ? parsedAmount / usdtPrice 
+    : parsedAmount * usdtPrice;
+
+  const fee = parsedAmount * 0.001; // %0.1 işlem ücreti
+  const finalOutput = outputAmount - (outputAmount * 0.001);
 
   const texts = {
     tr: {
-      title: "USD → USDT Dönüştür",
+      title: "USD ↔ USDT Dönüştür",
       from: "Gönder",
       to: "Al",
       available: "Kullanılabilir",
-      rate: "Dönüşüm Oranı",
+      rate: "Piyasa Kuru",
       fee: "İşlem Ücreti",
       convert: "Dönüştür",
       processing: "İşleniyor...",
       success: "Dönüşüm başarılı!",
       insufficientBalance: "Yetersiz bakiye",
       minAmount: "Minimum: $1",
+      swap: "Yönü Değiştir",
     },
     en: {
-      title: "Convert USD → USDT",
+      title: "Convert USD ↔ USDT",
       from: "From",
       to: "To",
       available: "Available",
-      rate: "Exchange Rate",
+      rate: "Market Rate",
       fee: "Fee",
       convert: "Convert",
       processing: "Processing...",
       success: "Conversion successful!",
       insufficientBalance: "Insufficient balance",
       minAmount: "Minimum: $1",
+      swap: "Swap Direction",
     },
   };
 
   const t = texts[lang];
+
+  // USDT fiyatını çek (gerçek API)
+  useEffect(() => {
+    const fetchUsdtPrice = async () => {
+      try {
+        // CoinGecko veya başka API'den USDT fiyatı
+        const response = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=usd"
+        );
+        const data = await response.json();
+        if (data.tether?.usd) {
+          setUsdtPrice(data.tether.usd);
+        }
+      } catch (err) {
+        console.error("USDT price fetch error:", err);
+        // Fallback fiyat
+        setUsdtPrice(0.9998);
+      }
+    };
+
+    if (isOpen) {
+      fetchUsdtPrice();
+      // Her 30 saniyede güncelle
+      const interval = setInterval(fetchUsdtPrice, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
       setAmount("");
       setError(null);
       setSuccess(null);
+      setDirection(initialDirection);
     }
-  }, [isOpen]);
+  }, [isOpen, initialDirection]);
+
+  const handleSwapDirection = () => {
+    setDirection(direction === "usd-to-usdt" ? "usdt-to-usd" : "usd-to-usdt");
+    setAmount("");
+    setError(null);
+  };
 
   const handleConvert = async () => {
     if (parsedAmount < 1) {
@@ -72,7 +130,7 @@ export function UsdConvertModal({
       return;
     }
 
-    if (parsedAmount > usdBalance) {
+    if (parsedAmount > fromBalance) {
       setError(t.insufficientBalance);
       return;
     }
@@ -81,15 +139,16 @@ export function UsdConvertModal({
     setError(null);
 
     try {
-      const response = await fetch("/api/user/buy-with-usd", {
+      const response = await fetch("/api/user/convert-usd-usdt", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-wallet-address": walletAddress,
         },
         body: JSON.stringify({
-          targetToken: "usdt",
-          usdAmount: parsedAmount,
+          direction,
+          amount: parsedAmount,
+          usdtPrice,
         }),
       });
 
@@ -130,12 +189,12 @@ export function UsdConvertModal({
           </button>
         </div>
 
-        {/* From (USD) */}
-        <div className="mb-4">
+        {/* From Input */}
+        <div className="mb-3">
           <div className="flex items-center justify-between mb-2">
             <label className="text-sm text-slate-400">{t.from}</label>
             <span className="text-xs text-slate-500">
-              {t.available}: ${usdBalance.toFixed(2)}
+              {t.available}: {fromBalance.toFixed(2)} {fromSymbol}
             </span>
           </div>
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
@@ -148,43 +207,47 @@ export function UsdConvertModal({
                 className="bg-transparent text-xl text-white outline-none w-full"
               />
               <div className="flex items-center gap-2 bg-slate-700 px-3 py-1.5 rounded-lg">
-                <div className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">$</span>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isUsdToUsdt ? 'bg-green-600' : 'bg-[#26A17B]'}`}>
+                  <span className="text-white text-xs font-bold">{isUsdToUsdt ? '$' : '₮'}</span>
                 </div>
-                <span className="text-white font-medium">USD</span>
+                <span className="text-white font-medium">{fromSymbol}</span>
               </div>
             </div>
           </div>
           <button
-            onClick={() => setAmount(usdBalance.toString())}
+            onClick={() => setAmount(fromBalance.toString())}
             className="text-xs text-emerald-500 hover:text-emerald-400 mt-2"
           >
             MAX
           </button>
         </div>
 
-        {/* Arrow */}
-        <div className="flex justify-center my-3">
-          <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+        {/* Swap Button */}
+        <div className="flex justify-center my-2">
+          <button
+            onClick={handleSwapDirection}
+            className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center hover:bg-slate-700 transition-colors"
+            title={t.swap}
+          >
             <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
             </svg>
-          </div>
+          </button>
         </div>
 
-        {/* To (USDT) */}
+        {/* To Output */}
         <div className="mb-5">
           <label className="text-sm text-slate-400 mb-2 block">{t.to}</label>
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
             <div className="flex items-center justify-between">
               <span className="text-xl text-white">
-                {outputAmount.toFixed(2)}
+                {finalOutput > 0 ? finalOutput.toFixed(4) : '0.00'}
               </span>
               <div className="flex items-center gap-2 bg-slate-700 px-3 py-1.5 rounded-lg">
-                <div className="w-6 h-6 rounded-full bg-[#26A17B] flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">₮</span>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isUsdToUsdt ? 'bg-[#26A17B]' : 'bg-green-600'}`}>
+                  <span className="text-white text-xs font-bold">{isUsdToUsdt ? '₮' : '$'}</span>
                 </div>
-                <span className="text-white font-medium">USDT</span>
+                <span className="text-white font-medium">{toSymbol}</span>
               </div>
             </div>
           </div>
@@ -194,11 +257,11 @@ export function UsdConvertModal({
         <div className="bg-slate-800/50 rounded-xl p-3 mb-5 space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-slate-400">{t.rate}</span>
-            <span className="text-slate-300">1 USD = 1 USDT</span>
+            <span className="text-slate-300">1 USDT = ${usdtPrice.toFixed(4)} USD</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-slate-400">{t.fee}</span>
-            <span className="text-green-400">0%</span>
+            <span className="text-yellow-400">0.1%</span>
           </div>
         </div>
 
@@ -217,9 +280,9 @@ export function UsdConvertModal({
         {/* Convert Button */}
         <button
           onClick={handleConvert}
-          disabled={isLoading || !parsedAmount || parsedAmount > usdBalance}
+          disabled={isLoading || !parsedAmount || parsedAmount > fromBalance}
           className={`w-full py-3 rounded-xl font-semibold transition-colors ${
-            isLoading || !parsedAmount || parsedAmount > usdBalance
+            isLoading || !parsedAmount || parsedAmount > fromBalance
               ? "bg-slate-700 text-slate-400 cursor-not-allowed"
               : "bg-emerald-500 hover:bg-emerald-600 text-white"
           }`}

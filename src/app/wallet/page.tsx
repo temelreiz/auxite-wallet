@@ -13,6 +13,9 @@ import { DepositAddressModal } from "@/components/DepositAddressModal";
 import { CryptoConvertModal } from "@/components/CryptoConvertModal";
 import { MetalConvertModal } from "@/components/MetalConvertModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
+import { UsdDepositModal } from "@/components/UsdDepositModal";
+import { BuyWithUsdModal } from "@/components/BuyWithUsdModal";
+import { UsdConvertModal } from "@/components/UsdConvertModal";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 
@@ -45,6 +48,9 @@ export default function WalletPage() {
   const btcBalance = balances?.btc ?? 0;
   const xrpBalance = balances?.xrp ?? 0;
   const solBalance = balances?.sol ?? 0;
+  const usdBalance = balances?.usd ?? 0;
+  const usdtBalance = balances?.usdt ?? 0;
+
   // Local wallet state
   const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
   const [walletMode, setWalletMode] = useState<string | null>(null);
@@ -61,6 +67,9 @@ export default function WalletPage() {
   const [showBuyMetal, setShowBuyMetal] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [depositSearchQuery, setDepositSearchQuery] = useState("");
+  const [showUsdDeposit, setShowUsdDeposit] = useState(false);
+  const [showBuyWithUsd, setShowBuyWithUsd] = useState(false);
+  const [showUsdConvert, setShowUsdConvert] = useState(false);
   
   // New modal states for portfolio clicks
   const [selectedMetal, setSelectedMetal] = useState<"AUXG" | "AUXS" | "AUXPT" | "AUXPD" | null>(null);
@@ -81,7 +90,8 @@ export default function WalletPage() {
     (btcBalance * (cryptoPrices?.btc || 0)) +
     (xrpBalance * (cryptoPrices?.xrp || 0)) +
     (solBalance * (cryptoPrices?.sol || 0)) +
-    (balances?.usdt || 0);
+    (balances?.usdt || 0) +
+    (balances?.usd || 0);
   
   // Deposit coins list
   const depositCoins = [
@@ -344,7 +354,7 @@ export default function WalletPage() {
                   {lang === "tr" ? "Toplam Varlık Değeri (tahmini)" : "Total Asset Value (est.)"}
                 </p>
                 <h2 className="text-4xl font-bold text-white">
-                  $138,456.78
+                  ${totalEstimatedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                 </h2>
               </div>
               <div className="flex justify-center gap-8 pt-4 border-t border-slate-700">
@@ -365,19 +375,47 @@ export default function WalletPage() {
 
             {/* USDT & AUXM Balance Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* USDT Balance Card */}
+              {/* USDT & USD Balance Card */}
               <div className="rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center">
-                    <span className="text-white text-xl font-bold">₮</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center">
+                      <span className="text-white text-xl font-bold">₮</span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-400">Estimated Total Value</p>
+                      <p className="text-2xl font-bold text-white">
+                        {totalEstimatedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} 
+                        <span className="text-emerald-400 text-lg ml-1">USDT</span>
+                      </p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <p className="text-xs text-slate-500">
+                          USDT: {usdtBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </p>
+                        {usdBalance > 0 && (
+                          <p className="text-xs text-green-400">
+                            💵 USD: ${usdBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-slate-400">Estimated Total Value</p>
-                    <p className="text-2xl font-bold text-white">
-                      {totalEstimatedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} 
-                      <span className="text-emerald-400 text-lg ml-1">USDT</span>
-                    </p>
-                    <p className="text-xs text-slate-500">≈ ${totalEstimatedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD</p>
+                  {/* USD Actions */}
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => setShowUsdDeposit(true)}
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
+                    >
+                      {lang === "tr" ? "+ USD Yatır" : "+ Deposit USD"}
+                    </button>
+                    {usdBalance > 0 && (
+                      <button
+                        onClick={() => setShowBuyWithUsd(true)}
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors"
+                      >
+                        {lang === "tr" ? "USD ile Al" : "Buy with USD"}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -422,7 +460,7 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <p className="text-lg font-bold text-yellow-500">{auxgBalance.toFixed(2)}g</p>
-                  <p className="text-xs text-slate-400">≈ $1,458.45</p>
+                  <p className="text-xs text-slate-400">≈ ${(auxgBalance * (metalAskPrices?.AUXG || 0)).toFixed(2)}</p>
                 </button>
 
                 {/* AUXS */}
@@ -440,7 +478,7 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <p className="text-lg font-bold text-gray-300">{auxsBalance.toFixed(2)}g</p>
-                  <p className="text-xs text-slate-400">≈ $482.50</p>
+                  <p className="text-xs text-slate-400">≈ ${(auxsBalance * (metalAskPrices?.AUXS || 0)).toFixed(2)}</p>
                 </button>
 
                 {/* AUXPT */}
@@ -458,7 +496,7 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <p className="text-lg font-bold text-cyan-300">{auxptBalance.toFixed(2)}g</p>
-                  <p className="text-xs text-slate-400">≈ $274.25</p>
+                  <p className="text-xs text-slate-400">≈ ${(auxptBalance * (metalAskPrices?.AUXPT || 0)).toFixed(2)}</p>
                 </button>
 
                 {/* AUXPD */}
@@ -476,7 +514,7 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <p className="text-lg font-bold text-orange-400">{auxpdBalance.toFixed(2)}g</p>
-                  <p className="text-xs text-slate-400">≈ $94.18</p>
+                  <p className="text-xs text-slate-400">≈ ${(auxpdBalance * (metalAskPrices?.AUXPD || 0)).toFixed(2)}</p>
                 </button>
               </div>
 
@@ -675,6 +713,33 @@ export default function WalletPage() {
         />
       )}
 
+      {selectedCrypto && (
+        <CryptoConvertModal
+          isOpen={!!selectedCrypto}
+          onClose={() => setSelectedCrypto(null)}
+          crypto={selectedCrypto}
+          lang={lang}
+          cryptoBalances={{
+            ETH: ethBalance,
+            BTC: btcBalance,
+            XRP: xrpBalance,
+            SOL: solBalance,
+          }}
+          cryptoPrices={{
+            ETH: cryptoPrices?.eth || 3500,
+            BTC: cryptoPrices?.btc || 95000,
+            XRP: cryptoPrices?.xrp || 2.2,
+            SOL: cryptoPrices?.sol || 200,
+          }}
+          metalBidPrices={{
+            AUXG: bidPrices?.AUXG || 90,
+            AUXS: bidPrices?.AUXS || 1,
+            AUXPT: bidPrices?.AUXPT || 30,
+            AUXPD: bidPrices?.AUXPD || 30,
+          }}
+        />
+      )}
+
       {/* Deposit Modal - Select Method */}
       {showDeposit && (
         <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50">
@@ -720,27 +785,25 @@ export default function WalletPage() {
                 </svg>
               </button>
 
-              {/* Deposit Fiat */}
+              {/* Deposit Fiat - USD */}
               <button
                 onClick={() => {
                   setShowDeposit(false);
-                  setShowFiatDeposit(true);
+                  setShowUsdDeposit(true);
                 }}
-                className="w-full p-4 rounded-xl border border-slate-700 hover:border-slate-600 hover:bg-slate-800/50 transition-all text-left flex items-start gap-4"
+                className="w-full p-4 rounded-xl border border-green-500/30 hover:border-green-500/50 hover:bg-green-500/5 transition-all text-left flex items-start gap-4"
               >
-                <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
+                <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-green-400 font-bold text-lg">$</span>
                 </div>
                 <div className="flex-1">
                   <h4 className="text-white font-semibold mb-1">
-                    {lang === "tr" ? "Fiat Yatır" : "Deposit Fiat"}
+                    {lang === "tr" ? "USD Yatır" : "Deposit USD"}
                   </h4>
                   <p className="text-sm text-slate-400">
                     {lang === "tr" 
-                      ? "Kredi kartı, Apple/Google Pay ile USD/TRY yatırın" 
-                      : "Deposit USD/TRY via card, Apple/Google Pay"}
+                      ? "Kredi kartı ile USD yatırın (MoonPay)" 
+                      : "Deposit USD via credit card (MoonPay)"}
                   </p>
                 </div>
                 <svg className="w-5 h-5 text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -751,123 +814,6 @@ export default function WalletPage() {
           </div>
         </div>
       )}
-
-      {/* Fiat Deposit Modal */}
-      {showFiatDeposit && (
-        <div className="fixed inset-0 bg-black/90 flex flex-col z-50">
-          {/* Header */}
-          <div className="flex items-center gap-4 p-4 border-b border-slate-800">
-            <button
-              onClick={() => setShowFiatDeposit(false)}
-              className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-            >
-              <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div>
-              <h2 className="text-lg font-semibold text-white">
-                {lang === "tr" ? "Fiat Yatır" : "Deposit Fiat"}
-              </h2>
-              <p className="text-xs text-slate-400">
-                {lang === "tr" ? "USD veya TRY yatırın" : "Deposit USD or TRY"}
-              </p>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="max-w-md mx-auto space-y-4">
-
-              {/* MoonPay */}
-              <button
-                onClick={() => {
-                  // TODO: MoonPay entegrasyonu
-                  alert(lang === "tr" ? "MoonPay yakında aktif olacak" : "MoonPay coming soon");
-                }}
-                className="w-full p-4 rounded-xl border border-slate-700 hover:border-purple-500/50 hover:bg-slate-800/50 transition-all text-left flex items-start gap-4 group"
-              >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-white font-semibold">MoonPay</h4>
-                    <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                      {lang === "tr" ? "Anında" : "Instant"}
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-400 mb-2">
-                    {lang === "tr" 
-                      ? "Kart, Apple Pay veya Google Pay ile anında yatırın" 
-                      : "Instant deposit via Card, Apple Pay or Google Pay"}
-                  </p>
-                  <div className="flex items-center gap-2 mb-2">
-                    {/* Payment method icons */}
-                    <div className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800/50 border border-slate-700">
-                      <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
-                      </svg>
-                      <span className="text-xs text-slate-400">{lang === "tr" ? "Kart" : "Card"}</span>
-                    </div>
-                    <div className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800/50 border border-slate-700">
-                      <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M17.05 11.97c-.03-2.76 2.25-4.08 2.35-4.15-1.28-1.87-3.27-2.13-3.98-2.16-1.69-.17-3.31 1-4.17 1-.86 0-2.18-.98-3.59-.95-1.84.03-3.55 1.08-4.5 2.73-1.93 3.34-.49 8.28 1.38 10.99.92 1.33 2.01 2.82 3.44 2.77 1.38-.05 1.91-.9 3.58-.9 1.67 0 2.15.9 3.61.87 1.49-.03 2.43-1.35 3.34-2.69 1.05-1.54 1.48-3.04 1.51-3.12-.03-.02-2.89-1.11-2.92-4.39h-.05z"/>
-                      </svg>
-                      <span className="text-xs text-slate-400">Apple Pay</span>
-                    </div>
-                    <div className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800/50 border border-slate-700">
-                      <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                      </svg>
-                      <span className="text-xs text-slate-400">Google Pay</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="text-slate-500">
-                      {lang === "tr" ? "Min: $30" : "Min: $30"}
-                    </span>
-                    <span className="text-slate-600">•</span>
-                    <span className="text-slate-500">
-                      {lang === "tr" ? "Anında" : "Instant"}
-                    </span>
-                    <span className="text-slate-600">•</span>
-                    <span className="text-amber-500">
-                      {lang === "tr" ? "%3.5 komisyon" : "3.5% fee"}
-                    </span>
-                  </div>
-                </div>
-                <svg className="w-5 h-5 text-slate-500 group-hover:text-purple-400 flex-shrink-0 mt-3 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-
-              {/* Info Notice */}
-              <div className="p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
-                <div className="flex gap-3">
-                  <svg className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <h5 className="text-sm font-medium text-slate-300 mb-1">
-                      {lang === "tr" ? "Güvenli Yatırım" : "Secure Deposit"}
-                    </h5>
-                    <p className="text-xs text-slate-500">
-                      {lang === "tr" 
-                        ? "Tüm işlemler SSL ile şifrelenir ve düzenleyici standartlara uygundur." 
-                        : "All transactions are SSL encrypted and comply with regulatory standards."}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
-
 
       {/* On-Chain Deposit - Select Coin Modal */}
       {showOnChainDeposit && (
@@ -965,7 +911,7 @@ export default function WalletPage() {
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm text-slate-400">{lang === "tr" ? "Miktar" : "Amount"}</label>
-                <span className="text-xs text-slate-500">{lang === "tr" ? "Bakiye" : "Balance"}: 998,953.91 AUXG</span>
+                <span className="text-xs text-slate-500">{lang === "tr" ? "Bakiye" : "Balance"}: {auxgBalance.toFixed(2)} AUXG</span>
               </div>
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -1119,6 +1065,36 @@ export default function WalletPage() {
           isOpen={showWithdraw}
           onClose={() => setShowWithdraw(false)}
           lang={lang}
+        />
+      )}
+
+      {/* USD Deposit Modal */}
+      {showUsdDeposit && (
+        <UsdDepositModal
+          isOpen={showUsdDeposit}
+          onClose={() => setShowUsdDeposit(false)}
+          lang={lang}
+          walletAddress={currentAddress || ""}
+        />
+      )}
+
+      {/* Buy with USD Modal */}
+      {showBuyWithUsd && (
+        <BuyWithUsdModal
+          isOpen={showBuyWithUsd}
+          onClose={() => setShowBuyWithUsd(false)}
+          lang={lang}
+          walletAddress={currentAddress || ""}
+        />
+      )}
+
+      {/* USD Convert Modal */}
+      {showUsdConvert && (
+        <UsdConvertModal
+          isOpen={showUsdConvert}
+          onClose={() => setShowUsdConvert(false)}
+          lang={lang}
+          walletAddress={currentAddress || ""}
         />
       )}
     </main>
