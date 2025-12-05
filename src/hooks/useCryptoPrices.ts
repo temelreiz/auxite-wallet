@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 interface CryptoPrices {
   eth: number;
@@ -21,52 +21,32 @@ interface CryptoDirections {
   sol: "up" | "down" | "neutral";
 }
 
-const COINCAP_API = "https://api.coincap.io/v2/assets";
-
 export function useCryptoPrices() {
-  const [prices, setPrices] = useState<CryptoPrices>({
-    eth: 0,
-    btc: 0,
-    xrp: 0,
-    sol: 0,
-  });
-  const [changes, setChanges] = useState<CryptoChanges>({
-    eth: 0,
-    btc: 0,
-    xrp: 0,
-    sol: 0,
-  });
+  const [prices, setPrices] = useState<CryptoPrices>({ eth: 0, btc: 0, xrp: 0, sol: 0 });
+  const [changes, setChanges] = useState<CryptoChanges>({ eth: 0, btc: 0, xrp: 0, sol: 0 });
   const [directions, setDirections] = useState<CryptoDirections>({
-    eth: "neutral",
-    btc: "neutral",
-    xrp: "neutral",
-    sol: "neutral",
+    eth: "neutral", btc: "neutral", xrp: "neutral", sol: "neutral",
   });
   const [loading, setLoading] = useState(true);
 
   const fetchPrices = async () => {
     try {
-      // Direkt CoinCap API'ye istek at (client-side)
-      const response = await fetch(
-        `${COINCAP_API}?ids=bitcoin,ethereum,xrp,solana`
-      );
-      
-      if (!response.ok) throw new Error("API error");
-      
-      const { data } = await response.json();
+      const response = await fetch("/api/crypto");
+      const data = await response.json();
 
-      const newPrices: CryptoPrices = { eth: 0, btc: 0, xrp: 0, sol: 0 };
-      const newChanges: CryptoChanges = { eth: 0, btc: 0, xrp: 0, sol: 0 };
+      const newPrices: CryptoPrices = {
+        eth: data.ethereum?.usd || 0,
+        btc: data.bitcoin?.usd || 0,
+        xrp: data.ripple?.usd || 0,
+        sol: data.solana?.usd || 0,
+      };
 
-      for (const coin of data) {
-        const usd = parseFloat(coin.priceUsd) || 0;
-        const change = parseFloat(coin.changePercent24Hr) || 0;
-        
-        if (coin.id === "bitcoin") { newPrices.btc = usd; newChanges.btc = change; }
-        if (coin.id === "ethereum") { newPrices.eth = usd; newChanges.eth = change; }
-        if (coin.id === "xrp") { newPrices.xrp = usd; newChanges.xrp = change; }
-        if (coin.id === "solana") { newPrices.sol = usd; newChanges.sol = change; }
-      }
+      const newChanges: CryptoChanges = {
+        eth: data.ethereum?.usd_24h_change || 0,
+        btc: data.bitcoin?.usd_24h_change || 0,
+        xrp: data.ripple?.usd_24h_change || 0,
+        sol: data.solana?.usd_24h_change || 0,
+      };
 
       const newDirections: CryptoDirections = {
         eth: newChanges.eth > 0 ? "up" : newChanges.eth < 0 ? "down" : "neutral",
@@ -80,8 +60,6 @@ export function useCryptoPrices() {
       setDirections(newDirections);
       setLoading(false);
     } catch (error) {
-      console.error("CoinCap error:", error);
-      // Fallback
       setPrices({ eth: 3100, btc: 92000, xrp: 2.10, sol: 140 });
       setLoading(false);
     }
@@ -89,7 +67,7 @@ export function useCryptoPrices() {
 
   useEffect(() => {
     fetchPrices();
-    const interval = setInterval(fetchPrices, 5000); // 5 saniye
+    const interval = setInterval(fetchPrices, 5000);
     return () => clearInterval(interval);
   }, []);
 

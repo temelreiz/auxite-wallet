@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 
-const COINCAP_API = "https://api.coincap.io/v2/assets";
+export const runtime = 'edge';
 
-let cachedData: any = null;
-let lastFetchTime: number = 0;
-const CACHE_DURATION = 3000; // 3 saniye
+const COINCAP_API = "https://api.coincap.io/v2/assets";
 
 const FALLBACK_PRICES = {
   bitcoin: { usd: 92000, usd_24h_change: 0 },
@@ -15,18 +13,11 @@ const FALLBACK_PRICES = {
 };
 
 export async function GET() {
-  const now = Date.now();
-
-  if (cachedData && now - lastFetchTime < CACHE_DURATION) {
-    return NextResponse.json(cachedData);
-  }
-
   try {
     const response = await fetch(
       `${COINCAP_API}?ids=bitcoin,ethereum,xrp,solana`,
       { 
-        cache: "no-store",
-        headers: { 'Accept': 'application/json' }
+        headers: { 'Accept': 'application/json' },
       }
     );
 
@@ -48,14 +39,9 @@ export async function GET() {
       if (coin.id === "solana") prices.solana = { usd, usd_24h_change: change };
     }
 
-    const result = { ...prices, source: "coincap", timestamp: now };
-    cachedData = result;
-    lastFetchTime = now;
-    return NextResponse.json(result);
+    return NextResponse.json({ ...prices, source: "coincap", timestamp: Date.now() });
   } catch (error) {
     console.error("CoinCap error:", error);
-    
-    if (cachedData) return NextResponse.json({ ...cachedData, cached: true });
     return NextResponse.json({ ...FALLBACK_PRICES, source: "fallback" });
   }
 }
