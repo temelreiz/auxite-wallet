@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Cihazları al
     const devicesData = await redis.get(`user:devices:${walletAddress}`);
-    const devices: DeviceInfo[] = devicesData ? JSON.parse(devicesData) : [];
+    const devices: DeviceInfo[] = devicesData ? typeof devicesData === 'string' ? JSON.parse(devicesData) : devicesData as any : [];
 
     // Cihazı bul
     const device = devices.find(d => d.id === deviceId);

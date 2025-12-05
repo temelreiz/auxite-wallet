@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const pending = JSON.parse(pendingData);
+    const pending = typeof pendingData === 'string' ? JSON.parse(pendingData) : pendingData as any;
 
     // TOTP kodunu doğrula
     const isValid = verifyToken(code, pending.secret);

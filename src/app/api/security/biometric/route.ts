@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     // Authenticator'ları al
     const authData = await redis.get(`user:passkeys:${walletAddress}`);
-    const authenticators: StoredAuthenticator[] = authData ? JSON.parse(authData) : [];
+    const authenticators: StoredAuthenticator[] = authData ? typeof authData === 'string' ? JSON.parse(authData) : authData as any : [];
 
     return NextResponse.json({
       enabled: authenticators.length > 0,
@@ -115,7 +115,7 @@ export async function DELETE(request: NextRequest) {
 
     // Authenticator'ları al
     const authData = await redis.get(`user:passkeys:${walletAddress}`);
-    const authenticators: StoredAuthenticator[] = authData ? JSON.parse(authData) : [];
+    const authenticators: StoredAuthenticator[] = authData ? typeof authData === 'string' ? JSON.parse(authData) : authData as any : [];
 
     // Passkey'i bul ve sil
     const index = authenticators.findIndex(a => a.id === passkeyId);
@@ -151,7 +151,7 @@ export async function DELETE(request: NextRequest) {
 
 async function handleRegisterOptions(walletAddress: string, body: { userName?: string }) {
   const authData = await redis.get(`user:passkeys:${walletAddress}`);
-  const authenticators: StoredAuthenticator[] = authData ? JSON.parse(authData) : [];
+  const authenticators: StoredAuthenticator[] = authData ? typeof authData === 'string' ? JSON.parse(authData) : authData as any : [];
 
   const options = await createRegistrationOptions(
     walletAddress,
@@ -202,7 +202,7 @@ async function handleRegisterVerify(walletAddress: string, body: { response: unk
 
   // Kaydet
   const authData = await redis.get(`user:passkeys:${walletAddress}`);
-  const authenticators: StoredAuthenticator[] = authData ? JSON.parse(authData) : [];
+  const authenticators: StoredAuthenticator[] = authData ? typeof authData === 'string' ? JSON.parse(authData) : authData as any : [];
   authenticators.push(result.authenticator);
   
   await redis.set(`user:passkeys:${walletAddress}`, JSON.stringify(authenticators));
@@ -225,7 +225,7 @@ async function handleRegisterVerify(walletAddress: string, body: { response: unk
 
 async function handleAuthOptions(walletAddress: string) {
   const authData = await redis.get(`user:passkeys:${walletAddress}`);
-  const authenticators: StoredAuthenticator[] = authData ? JSON.parse(authData) : [];
+  const authenticators: StoredAuthenticator[] = authData ? typeof authData === 'string' ? JSON.parse(authData) : authData as any : [];
 
   if (authenticators.length === 0) {
     return NextResponse.json(
@@ -260,7 +260,7 @@ async function handleAuthVerify(walletAddress: string, body: { response: unknown
   }
 
   const authData = await redis.get(`user:passkeys:${walletAddress}`);
-  const authenticators: StoredAuthenticator[] = authData ? JSON.parse(authData) : [];
+  const authenticators: StoredAuthenticator[] = authData ? typeof authData === 'string' ? JSON.parse(authData) : authData as any : [];
 
   const result = await verifyAuthentication(
     walletAddress,
@@ -316,7 +316,7 @@ async function handleRename(walletAddress: string, body: { passkeyId: string; ne
   }
 
   const authData = await redis.get(`user:passkeys:${walletAddress}`);
-  const authenticators: StoredAuthenticator[] = authData ? JSON.parse(authData) : [];
+  const authenticators: StoredAuthenticator[] = authData ? typeof authData === 'string' ? JSON.parse(authData) : authData as any : [];
 
   const auth = authenticators.find(a => a.id === passkeyId);
   if (!auth) {

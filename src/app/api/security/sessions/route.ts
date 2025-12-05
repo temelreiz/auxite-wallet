@@ -29,11 +29,11 @@ export async function GET(request: NextRequest) {
 
     // Session'ları al
     const sessionsData = await redis.get(`user:sessions:${walletAddress}`);
-    const sessions: SessionInfo[] = sessionsData ? JSON.parse(sessionsData) : [];
+    const sessions: SessionInfo[] = sessionsData ? typeof sessionsData === 'string' ? JSON.parse(sessionsData) : sessionsData as any : [];
 
     // Cihaz bilgilerini al
     const devicesData = await redis.get(`user:devices:${walletAddress}`);
-    const devices: DeviceInfo[] = devicesData ? JSON.parse(devicesData) : [];
+    const devices: DeviceInfo[] = devicesData ? typeof devicesData === 'string' ? JSON.parse(devicesData) : devicesData as any : [];
 
     // Mevcut session'ı bul
     const userAgent = request.headers.get('user-agent') || '';
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     // Cihazları al ve mevcut cihazı bul
     const devicesData = await redis.get(`user:devices:${walletAddress}`);
-    const devices: DeviceInfo[] = devicesData ? JSON.parse(devicesData) : [];
+    const devices: DeviceInfo[] = devicesData ? typeof devicesData === 'string' ? JSON.parse(devicesData) : devicesData as any : [];
     
     const currentFingerprint = generateDeviceFingerprint(userAgent, ip);
     let currentDevice = devices.find(d => d.fingerprint === currentFingerprint);
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 
     // Mevcut session'ları al
     const sessionsData = await redis.get(`user:sessions:${walletAddress}`);
-    const sessions: SessionInfo[] = sessionsData ? JSON.parse(sessionsData) : [];
+    const sessions: SessionInfo[] = sessionsData ? typeof sessionsData === 'string' ? JSON.parse(sessionsData) : sessionsData as any : [];
 
     // Bu cihaz için aktif session var mı?
     const existingSession = sessions.find(
@@ -194,7 +194,7 @@ export async function DELETE(request: NextRequest) {
 
     // Session'ları al
     const sessionsData = await redis.get(`user:sessions:${walletAddress}`);
-    const sessions: SessionInfo[] = sessionsData ? JSON.parse(sessionsData) : [];
+    const sessions: SessionInfo[] = sessionsData ? typeof sessionsData === 'string' ? JSON.parse(sessionsData) : sessionsData as any : [];
 
     if (revokeAll) {
       // Tüm session'ları sonlandır
@@ -203,7 +203,7 @@ export async function DELETE(request: NextRequest) {
       const currentFingerprint = generateDeviceFingerprint(userAgent, ip);
       
       const devicesData = await redis.get(`user:devices:${walletAddress}`);
-      const devices: DeviceInfo[] = devicesData ? JSON.parse(devicesData) : [];
+      const devices: DeviceInfo[] = devicesData ? typeof devicesData === 'string' ? JSON.parse(devicesData) : devicesData as any : [];
       const currentDevice = devices.find(d => d.fingerprint === currentFingerprint);
 
       // Mevcut cihaz hariç hepsini kapat

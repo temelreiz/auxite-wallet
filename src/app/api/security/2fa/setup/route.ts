@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Mevcut 2FA durumunu kontrol et
     const existing2FA = await redis.get(`user:2fa:${walletAddress}`);
     if (existing2FA) {
-      const data = JSON.parse(existing2FA);
+      const data = typeof existing2FA === 'string' ? JSON.parse(existing2FA) : existing2FA as any;
       if (data.enabled) {
         return NextResponse.json(
           { error: '2FA zaten aktif' },

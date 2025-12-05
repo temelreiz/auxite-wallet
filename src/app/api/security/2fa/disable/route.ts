@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = JSON.parse(twoFAData);
+    const data = typeof twoFAData === 'string' ? JSON.parse(twoFAData) : twoFAData;
 
     if (!data.enabled) {
       return NextResponse.json(

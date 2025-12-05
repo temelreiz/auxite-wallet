@@ -62,7 +62,9 @@ export async function GET(request: NextRequest) {
       offset + limit - 1
     );
 
-    const logs: SecurityLog[] = logsData.map(log => JSON.parse(log));
+    const logs: SecurityLog[] = logsData.map(log => 
+      typeof log === 'string' ? JSON.parse(log) : log as SecurityLog
+    );
 
     // Logları zenginleştir
     const enrichedLogs = logs

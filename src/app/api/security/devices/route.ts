@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     // Cihazları al
     const devicesData = await redis.get(`user:devices:${walletAddress}`);
-    const devices: DeviceInfo[] = devicesData ? JSON.parse(devicesData) : [];
+    const devices: DeviceInfo[] = devicesData ? typeof devicesData === 'string' ? JSON.parse(devicesData) : devicesData as any : [];
 
     // Mevcut cihaz fingerprint'i
     const userAgent = request.headers.get('user-agent') || '';
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     // Mevcut cihazları al
     const devicesData = await redis.get(`user:devices:${walletAddress}`);
-    const devices: DeviceInfo[] = devicesData ? JSON.parse(devicesData) : [];
+    const devices: DeviceInfo[] = devicesData ? typeof devicesData === 'string' ? JSON.parse(devicesData) : devicesData as any : [];
 
     // Bu cihaz zaten kayıtlı mı?
     const currentFingerprint = generateDeviceFingerprint(userAgent, ip);
@@ -176,7 +176,7 @@ export async function DELETE(request: NextRequest) {
 
     // Cihazları al
     const devicesData = await redis.get(`user:devices:${walletAddress}`);
-    const devices: DeviceInfo[] = devicesData ? JSON.parse(devicesData) : [];
+    const devices: DeviceInfo[] = devicesData ? typeof devicesData === 'string' ? JSON.parse(devicesData) : devicesData as any : [];
 
     // Cihazı bul ve sil
     const deviceIndex = devices.findIndex(d => d.id === deviceId);
