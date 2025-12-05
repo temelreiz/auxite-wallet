@@ -45,6 +45,7 @@ const t = {
     active: "Aktif",
     triggered: "Tetiklendi",
     expired: "Süresi Doldu",
+    cancelled: "İptal Edildi",
     currentPrice: "Güncel Fiyat",
     difference: "Fark",
     suggestedPrices: "Önerilen Hedefler",
@@ -69,6 +70,7 @@ const t = {
     active: "Active",
     triggered: "Triggered",
     expired: "Expired",
+    cancelled: "Cancelled",
     currentPrice: "Current Price",
     difference: "Difference",
     suggestedPrices: "Suggested Targets",
@@ -455,7 +457,10 @@ function AlertRow({
 
       <div className="flex items-center gap-2">
         <span className={`px-2 py-1 rounded text-xs ${statusColors[alert.status]}`}>
-          {labels[alert.status] || alert.status}
+          {alert.status === "active" ? labels.active : 
+           alert.status === "triggered" ? labels.triggered :
+           alert.status === "expired" ? labels.expired :
+           alert.status === "cancelled" ? labels.cancelled : alert.status}
         </span>
         {alert.status !== "active" && onReactivate && (
           <button
