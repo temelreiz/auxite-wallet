@@ -1,24 +1,16 @@
 // src/app/api/user/buy-with-usd/route.ts
-// USD ile token satın alma endpoint'i
-
 import { NextRequest, NextResponse } from "next/server";
 import { buyWithUsd, getUserBalance } from "@/lib/redis";
 
-// Token fiyatları (gerçek uygulamada API'den çekilmeli)
+// Sadece AUXM ve Metaller (Crypto YOK)
 const TOKEN_PRICES: Record<string, number> = {
-  usdt: 1.0,      // 1 USD = 1 USDT
-  auxm: 0.10,     // 1 AUXM = $0.10 → 1 USD = 10 AUXM
-  auxg: 2800,     // 1 AUXG = $2800 (gold price per gram)
-  auxs: 32,       // 1 AUXS = $32 (silver price per gram)
-  auxpt: 35,      // 1 AUXPT = $35 (platinum price per gram)
-  auxpd: 45,      // 1 AUXPD = $45 (palladium price per gram)
+  auxm: 0.10,
+  auxg: 90,
+  auxs: 1.1,
+  auxpt: 35,
+  auxpd: 32,
 };
 
-/**
- * POST /api/user/buy-with-usd
- * Body: { targetToken: string, usdAmount: number }
- * Headers: x-wallet-address: kullanıcı wallet adresi
- */
 export async function POST(request: NextRequest) {
   try {
     const address = request.headers.get("x-wallet-address");
@@ -30,7 +22,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ethereum address formatı kontrolü
     if (!/^0x[a-fA-F0-9]{40}$/i.test(address)) {
       return NextResponse.json(
         { success: false, error: "Invalid wallet address format" },
@@ -41,10 +32,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { targetToken, usdAmount } = body;
 
-    // Validasyonlar
     if (!targetToken || !TOKEN_PRICES[targetToken]) {
       return NextResponse.json(
-        { success: false, error: "Invalid target token" },
+        { success: false, error: "Invalid target token. Only AUXM and metals are allowed." },
         { status: 400 }
       );
     }
@@ -56,7 +46,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Minimum ve maksimum limitler
     if (usdAmount < 1) {
       return NextResponse.json(
         { success: false, error: "Minimum purchase amount is $1" },
@@ -71,7 +60,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mevcut bakiyeyi kontrol et
     const balance = await getUserBalance(address);
     
     if (balance.usd < usdAmount) {
@@ -86,14 +74,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Token miktarını hesapla
     const tokenPrice = TOKEN_PRICES[targetToken];
     const tokenAmount = usdAmount / tokenPrice;
 
-    // Satın alma işlemi
     const result = await buyWithUsd(
       address,
-      targetToken as "usdt" | "auxm" | "auxg" | "auxs" | "auxpt" | "auxpd",
+      targetToken as "auxm" | "auxg" | "auxs" | "auxpt" | "auxpd",
       usdAmount,
       tokenAmount
     );
@@ -105,7 +91,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Güncel bakiyeyi al
     const updatedBalance = await getUserBalance(address);
 
     return NextResponse.json({
@@ -137,10 +122,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * GET /api/user/buy-with-usd
- * Token fiyatlarını ve kullanıcı USD bakiyesini getir
- */
 export async function GET(request: NextRequest) {
   try {
     const address = request.headers.get("x-wallet-address");

@@ -1,6 +1,4 @@
 // src/components/BuyWithUsdModal.tsx
-// USD ile token satın alma modal'ı
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,19 +11,11 @@ interface BuyWithUsdModalProps {
   walletAddress: string;
 }
 
-// Token bilgileri
+// Sadece AUXM ve Metaller (Crypto YOK)
 const TOKENS = [
   {
-    id: "usdt",
-    name: "Tether",
-    symbol: "USDT",
-    price: 1.0,
-    icon: "₮",
-    color: "#26A17B",
-  },
-  {
     id: "auxm",
-    name: "Auxite Metal",
+    name: "Auxite Token",
     symbol: "AUXM",
     price: 0.1,
     icon: "◆",
@@ -33,7 +23,7 @@ const TOKENS = [
   },
   {
     id: "auxg",
-    name: "Auxite Gold",
+    name: "Dijital Altın",
     symbol: "AUXG",
     price: 90,
     icon: "🥇",
@@ -41,7 +31,7 @@ const TOKENS = [
   },
   {
     id: "auxs",
-    name: "Auxite Silver",
+    name: "Dijital Gümüş",
     symbol: "AUXS",
     price: 1.1,
     icon: "🥈",
@@ -49,7 +39,7 @@ const TOKENS = [
   },
   {
     id: "auxpt",
-    name: "Auxite Platinum",
+    name: "Dijital Platin",
     symbol: "AUXPT",
     price: 35,
     icon: "⬡",
@@ -57,7 +47,7 @@ const TOKENS = [
   },
   {
     id: "auxpd",
-    name: "Auxite Palladium",
+    name: "Dijital Paladyum",
     symbol: "AUXPD",
     price: 32,
     icon: "⬢",
@@ -98,6 +88,7 @@ export function BuyWithUsdModal({
       maxAmount: "Maksimum: $100,000",
       success: "Başarılı! Token bakiyenize eklendi.",
       error: "İşlem başarısız oldu",
+      depositFirst: "USD Yatır",
     },
     en: {
       title: "Buy with USD",
@@ -113,6 +104,7 @@ export function BuyWithUsdModal({
       maxAmount: "Maximum: $100,000",
       success: "Success! Tokens added to your balance.",
       error: "Transaction failed",
+      depositFirst: "Deposit USD",
     },
   };
 
