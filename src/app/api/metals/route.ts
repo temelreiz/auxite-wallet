@@ -3,7 +3,7 @@ import { METALS } from "@/lib/metals";
 
 const API_BASE = "https://api.auxite.io/api/prices";
 const GOLDAPI_BASE = "https://www.goldapi.io/api";
-const GOLDAPI_KEY = process.env.NEXT_PUBLIC_GOLDAPI_KEY || "";
+const GOLDAPI_KEY = process.env.GOLDAPI_KEY || process.env.NEXT_PUBLIC_GOLDAPI_KEY || "";
 
 const METAL_SYMBOLS: Record<string, string> = {
   AUXG: "XAU",
