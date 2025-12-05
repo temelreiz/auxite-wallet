@@ -18,12 +18,11 @@ import { BuyWithUsdModal } from "@/components/BuyWithUsdModal";
 import { UsdConvertModal } from "@/components/UsdConvertModal";
 import { SecuritySettings } from "@/components/Security/SecuritySettings";
 import { AdvancedSecurityModal } from "@/components/Security/AdvancedSecurityModal";
-import { AdvancedSecurityModal } from "@/components/Security/AdvancedSecurityModal";
 import { PriceAlertManager } from "@/components/PriceAlertManager";
 import { RecurringBuyManager } from "@/components/RecurringBuyManager";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
-import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
+
 import { useWallet } from "@/components/WalletContext";
 // Storage keys
 const STORAGE_KEYS = {
@@ -74,12 +73,11 @@ export default function WalletPage() {
   const [depositSearchQuery, setDepositSearchQuery] = useState("");
   const [showUsdDeposit, setShowUsdDeposit] = useState(false);
   const [showBuyWithUsd, setShowBuyWithUsd] = useState(false);
-  const [showAdvancedSecurity, setShowAdvancedSecurity] = useState(false);
-  const [showPriceAlerts, setShowPriceAlerts] = useState(false);
-  const [showRecurringBuy, setShowRecurringBuy] = useState(false);
   const [showUsdConvert, setShowUsdConvert] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
   const [showAdvancedSecurity, setShowAdvancedSecurity] = useState(false);
+  const [showPriceAlerts, setShowPriceAlerts] = useState(false);
+  const [showRecurringBuy, setShowRecurringBuy] = useState(false);
   
   // New modal states for portfolio clicks
   const [selectedMetal, setSelectedMetal] = useState<"AUXG" | "AUXS" | "AUXPT" | "AUXPD" | null>(null);
@@ -192,6 +190,10 @@ export default function WalletPage() {
   };
 
   // Determine if wallet is connected
+  const isWalletConnected = 
+    (walletMode === "local" && !!localWalletAddress && isSessionUnlocked) || 
+    (walletMode === "external" && isExternalConnected);
+
   const currentAddress = 
     walletMode === "local" ? localWalletAddress : externalAddress;
 
@@ -206,14 +208,8 @@ export default function WalletPage() {
     AUXPT: metalAskPrices?.AUXPT || 0,
     AUXPD: metalAskPrices?.AUXPD || 0,
   };
-  const isWalletConnected = 
-    (walletMode === "local" && !!localWalletAddress && isSessionUnlocked) || 
-    (walletMode === "external" && isExternalConnected);
 
-  const currentAddress = 
-    walletMode === "local" ? localWalletAddress : externalAddress;
-
-  // Current prices for alerts
+  if (isLoading) {
     return (
       <main className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full"></div>
@@ -290,6 +286,25 @@ export default function WalletPage() {
               </div>
 
               {/* Security Button */}
+              <button
+                onClick={() => setShowSecurity(true)}
+                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-emerald-500 transition-all group"
+                title={lang === "tr" ? "Güvenlik Ayarları" : "Security Settings"}
+              >
+                <svg className="w-5 h-5 text-slate-400 group-hover:text-emerald-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </button>
+
+              {/* Advanced Security Button */}
+              <button
+                onClick={() => setShowAdvancedSecurity(true)}
+                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-amber-500 transition-all group"
+                title={lang === "tr" ? "Gelişmiş Güvenlik" : "Advanced Security"}
+              >
+                <svg className="w-5 h-5 text-slate-400 group-hover:text-amber-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
               </button>
 
               {/* Price Alert Button */}
@@ -311,28 +326,6 @@ export default function WalletPage() {
               >
                 <svg className="w-5 h-5 text-slate-400 group-hover:text-purple-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
-
-              {/* Wallet Display */}
-              <button
-                onClick={() => setShowSecurity(true)}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-emerald-500 transition-all group"
-                title={lang === "tr" ? "Güvenlik Ayarları" : "Security Settings"}
-              >
-                <svg className="w-5 h-5 text-slate-400 group-hover:text-emerald-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </button>
-
-              {/* Advanced Security Button */}
-              <button
-                onClick={() => setShowAdvancedSecurity(true)}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-amber-500 transition-all group"
-                title={lang === "tr" ? "Gelişmiş Güvenlik" : "Advanced Security"}
-              >
-                <svg className="w-5 h-5 text-slate-400 group-hover:text-amber-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </button>
 
@@ -1176,48 +1169,7 @@ export default function WalletPage() {
           lang={lang}
         />
       )}
-      {/* Price Alerts Modal */}
-      {showPriceAlerts && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-2xl w-full max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-slate-700">
-              <h3 className="text-lg font-semibold text-white">
-                {lang === "tr" ? "Fiyat Uyarıları" : "Price Alerts"}
-              </h3>
-              <button onClick={() => setShowPriceAlerts(false)} className="p-2 hover:bg-slate-800 rounded-lg">
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
-              <PriceAlertManager walletAddress={currentAddress || ""} lang={lang} currentPrices={currentPrices} />
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Recurring Buy Modal */}
-      {showRecurringBuy && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-2xl w-full max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-slate-700">
-              <h3 className="text-lg font-semibold text-white">
-                {lang === "tr" ? "Otomatik Alım (DCA)" : "Auto Buy (DCA)"}
-              </h3>
-              <button onClick={() => setShowRecurringBuy(false)} className="p-2 hover:bg-slate-800 rounded-lg">
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
-              <RecurringBuyManager walletAddress={currentAddress || ""} lang={lang} usdBalance={usdBalance} usdtBalance={usdtBalance} />
-            </div>
-          </div>
-        </div>
-      )}
-    </main>
       {/* USD Deposit Modal */}
       {showUsdDeposit && (
         <UsdDepositModal
@@ -1264,6 +1216,48 @@ export default function WalletPage() {
           lang={lang}
           onClose={() => setShowAdvancedSecurity(false)}
         />
+      )}
+
+      {/* Price Alerts Modal */}
+      {showPriceAlerts && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-2xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-slate-700">
+              <h3 className="text-lg font-semibold text-white">
+                {lang === "tr" ? "Fiyat Uyarıları" : "Price Alerts"}
+              </h3>
+              <button onClick={() => setShowPriceAlerts(false)} className="p-2 hover:bg-slate-800 rounded-lg">
+                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <PriceAlertManager walletAddress={currentAddress || ""} lang={lang} currentPrices={currentPrices} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recurring Buy Modal */}
+      {showRecurringBuy && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-2xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-slate-700">
+              <h3 className="text-lg font-semibold text-white">
+                {lang === "tr" ? "Otomatik Alım (DCA)" : "Auto Buy (DCA)"}
+              </h3>
+              <button onClick={() => setShowRecurringBuy(false)} className="p-2 hover:bg-slate-800 rounded-lg">
+                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <RecurringBuyManager walletAddress={currentAddress || ""} lang={lang} usdBalance={usdBalance} usdtBalance={usdtBalance} />
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
