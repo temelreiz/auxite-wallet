@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export const runtime = 'edge';
 
-const COINCAP_API = "https://api.coincap.io/v2/assets";
+const CRYPTOCOMPARE_API = "https://min-api.cryptocompare.com/data/pricemultifull";
 
 const FALLBACK_PRICES = {
   bitcoin: { usd: 92000, usd_24h_change: 0 },
@@ -15,33 +15,42 @@ const FALLBACK_PRICES = {
 export async function GET() {
   try {
     const response = await fetch(
-      `${COINCAP_API}?ids=bitcoin,ethereum,xrp,solana`,
+      `${CRYPTOCOMPARE_API}?fsyms=BTC,ETH,XRP,SOL&tsyms=USD`,
       { 
         headers: { 'Accept': 'application/json' },
       }
     );
 
-    if (!response.ok) throw new Error("CoinCap API error");
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
 
-    const { data } = await response.json();
+    const data = await response.json();
+    const raw = data.RAW;
     
-    const prices: Record<string, { usd: number; usd_24h_change: number }> = {
+    if (!raw) throw new Error("No data");
+
+    const prices = {
+      bitcoin: { 
+        usd: raw.BTC?.USD?.PRICE || 0, 
+        usd_24h_change: raw.BTC?.USD?.CHANGEPCT24HOUR || 0 
+      },
+      ethereum: { 
+        usd: raw.ETH?.USD?.PRICE || 0, 
+        usd_24h_change: raw.ETH?.USD?.CHANGEPCT24HOUR || 0 
+      },
+      ripple: { 
+        usd: raw.XRP?.USD?.PRICE || 0, 
+        usd_24h_change: raw.XRP?.USD?.CHANGEPCT24HOUR || 0 
+      },
+      solana: { 
+        usd: raw.SOL?.USD?.PRICE || 0, 
+        usd_24h_change: raw.SOL?.USD?.CHANGEPCT24HOUR || 0 
+      },
       tether: { usd: 1, usd_24h_change: 0 },
     };
 
-    for (const coin of data) {
-      const usd = parseFloat(coin.priceUsd) || 0;
-      const change = parseFloat(coin.changePercent24Hr) || 0;
-      
-      if (coin.id === "bitcoin") prices.bitcoin = { usd, usd_24h_change: change };
-      if (coin.id === "ethereum") prices.ethereum = { usd, usd_24h_change: change };
-      if (coin.id === "xrp") prices.ripple = { usd, usd_24h_change: change };
-      if (coin.id === "solana") prices.solana = { usd, usd_24h_change: change };
-    }
-
-    return NextResponse.json({ ...prices, source: "coincap", timestamp: Date.now() });
-  } catch (error) {
-    console.error("CoinCap error:", error);
-    return NextResponse.json({ ...FALLBACK_PRICES, source: "fallback" });
+    return NextResponse.json({ ...prices, source: "cryptocompare", timestamp: Date.now() });
+  } catch (error: any) {
+    console.error("CryptoCompare error:", error.message);
+    return NextResponse.json({ ...FALLBACK_PRICES, source: "fallback", error: error.message });
   }
 }
