@@ -206,18 +206,6 @@ export default function WalletPage() {
     AUXPT: metalAskPrices?.AUXPT || 0,
     AUXPD: metalAskPrices?.AUXPD || 0,
   };
-
-  // Current prices for alerts
-  const currentPrices: Record<string, number> = {
-    BTC: cryptoPrices?.btc || 0,
-    ETH: cryptoPrices?.eth || 0,
-    XRP: cryptoPrices?.xrp || 0,
-    SOL: cryptoPrices?.sol || 0,
-    AUXG: metalAskPrices?.AUXG || 0,
-    AUXS: metalAskPrices?.AUXS || 0,
-    AUXPT: metalAskPrices?.AUXPT || 0,
-    AUXPD: metalAskPrices?.AUXPD || 0,
-  };
   const isWalletConnected = 
     (walletMode === "local" && !!localWalletAddress && isSessionUnlocked) || 
     (walletMode === "external" && isExternalConnected);
@@ -226,18 +214,6 @@ export default function WalletPage() {
     walletMode === "local" ? localWalletAddress : externalAddress;
 
   // Current prices for alerts
-  const currentPrices: Record<string, number> = {
-    BTC: cryptoPrices?.btc || 0,
-    ETH: cryptoPrices?.eth || 0,
-    XRP: cryptoPrices?.xrp || 0,
-    SOL: cryptoPrices?.sol || 0,
-    AUXG: metalAskPrices?.AUXG || 0,
-    AUXS: metalAskPrices?.AUXS || 0,
-    AUXPT: metalAskPrices?.AUXPT || 0,
-    AUXPD: metalAskPrices?.AUXPD || 0,
-  };
-
-  if (isLoading) {
     return (
       <main className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full"></div>
