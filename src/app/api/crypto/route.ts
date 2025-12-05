@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 
-const COINGECKO_API = "https://api.coingecko.com/api/v3/simple/price";
+const COINCAP_API = "https://api.coincap.io/v2/assets";
 
 let cachedData: any = null;
 let lastFetchTime: number = 0;
-const CACHE_DURATION = 5000; // 5 saniye
+const CACHE_DURATION = 3000; // 3 saniye
 
 const FALLBACK_PRICES = {
   bitcoin: { usd: 92000, usd_24h_change: 0 },
@@ -23,49 +23,39 @@ export async function GET() {
 
   try {
     const response = await fetch(
-      `${COINGECKO_API}?ids=bitcoin,ethereum,ripple,solana&vs_currencies=usd&include_24hr_change=true`,
+      `${COINCAP_API}?ids=bitcoin,ethereum,xrp,solana`,
       { 
         cache: "no-store",
-        headers: {
-          'Accept': 'application/json',
-        }
+        headers: { 'Accept': 'application/json' }
       }
     );
 
-    if (!response.ok) throw new Error("CoinGecko API error");
+    if (!response.ok) throw new Error("CoinCap API error");
 
-    const data = await response.json();
+    const { data } = await response.json();
     
-    const prices = {
-      bitcoin: { 
-        usd: data.bitcoin?.usd || 0, 
-        usd_24h_change: data.bitcoin?.usd_24h_change || 0 
-      },
-      ethereum: { 
-        usd: data.ethereum?.usd || 0, 
-        usd_24h_change: data.ethereum?.usd_24h_change || 0 
-      },
-      ripple: { 
-        usd: data.ripple?.usd || 0, 
-        usd_24h_change: data.ripple?.usd_24h_change || 0 
-      },
-      solana: { 
-        usd: data.solana?.usd || 0, 
-        usd_24h_change: data.solana?.usd_24h_change || 0 
-      },
+    const prices: Record<string, { usd: number; usd_24h_change: number }> = {
       tether: { usd: 1, usd_24h_change: 0 },
     };
 
-    const result = { ...prices, source: "coingecko", timestamp: now };
+    for (const coin of data) {
+      const usd = parseFloat(coin.priceUsd) || 0;
+      const change = parseFloat(coin.changePercent24Hr) || 0;
+      
+      if (coin.id === "bitcoin") prices.bitcoin = { usd, usd_24h_change: change };
+      if (coin.id === "ethereum") prices.ethereum = { usd, usd_24h_change: change };
+      if (coin.id === "xrp") prices.ripple = { usd, usd_24h_change: change };
+      if (coin.id === "solana") prices.solana = { usd, usd_24h_change: change };
+    }
+
+    const result = { ...prices, source: "coincap", timestamp: now };
     cachedData = result;
     lastFetchTime = now;
     return NextResponse.json(result);
   } catch (error) {
-    console.error("CoinGecko error:", error);
+    console.error("CoinCap error:", error);
     
-    if (cachedData) {
-      return NextResponse.json({ ...cachedData, cached: true });
-    }
+    if (cachedData) return NextResponse.json({ ...cachedData, cached: true });
     return NextResponse.json({ ...FALLBACK_PRICES, source: "fallback" });
   }
 }
