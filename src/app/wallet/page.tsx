@@ -390,8 +390,13 @@ export default function WalletPage() {
                       </p>
                       <div className="flex items-center gap-3 mt-1">
                         <p className="text-xs text-slate-500">
-                          USDT: {usdtBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            💵 USD: ${usdBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                         </p>
+                        {usdtBalance > 0 && (
+                        <p className="text-xs text-slate-400">
+                         USDT: {usdtBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </p>
+                        )}
                         {usdBalance > 0 && (
                           <p className="text-xs text-green-400">
                             💵 USD: ${usdBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}

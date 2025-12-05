@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef, memo } from "react";
+import { useState, useEffect, memo } from "react";
 import { useWallet } from "@/components/WalletContext";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 
-type AssetCategory = "metal" | "platform" | "crypto";
+type AssetCategory = "metal" | "platform" | "crypto" | "fiat";
 
 type AssetType = 
   | "AUXG" | "AUXS" | "AUXPT" | "AUXPD"
   | "AUXM"
-  | "ETH" | "BTC" | "XRP" | "SOL" | "USDT";
+  | "ETH" | "BTC" | "XRP" | "SOL" | "USDT"
+  | "USD";
 
 interface AssetInfo {
   name: string;
@@ -23,6 +24,8 @@ interface AssetInfo {
 }
 
 const ASSETS: Record<AssetType, AssetInfo> = {
+  // Fiat
+  USD: { name: "US Dollar", nameTr: "Amerikan Doları", icon: "$", iconType: "symbol", category: "fiat", color: "#22C55E", unit: "USD" },
   // Metals - use image icons
   AUXG: { name: "Gold", nameTr: "Altın", icon: "/gold-favicon-32x32.png", iconType: "image", category: "metal", color: "#F59E0B", unit: "gram" },
   AUXS: { name: "Silver", nameTr: "Gümüş", icon: "/silver-favicon-32x32.png", iconType: "image", category: "metal", color: "#94A3B8", unit: "gram" },
@@ -45,7 +48,17 @@ function isConversionAllowed(from: AssetType, to: AssetType): boolean {
   
   if (from === to) return false;
   
-  // Crypto → Crypto YASAK
+  // USD → Crypto YASAK (sadece USDT hariç)
+  if (from === "USD" && toInfo.category === "crypto" && to !== "USDT") {
+    return false;
+  }
+  
+  // Crypto → USD YASAK (sadece USDT hariç)
+  if (fromInfo.category === "crypto" && to === "USD" && from !== "USDT") {
+    return false;
+  }
+  
+  // Crypto → Crypto YASAK (USDT ↔ USD hariç)
   if (fromInfo.category === "crypto" && toInfo.category === "crypto") {
     return false;
   }
@@ -61,7 +74,7 @@ function isConversionAllowed(from: AssetType, to: AssetType): boolean {
 
 // Dropdown için izinli hedefleri getir
 function getAllowedTargets(from: AssetType): AssetType[] {
-  const all: AssetType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD", "AUXM", "ETH", "BTC", "XRP", "SOL", "USDT"];
+  const all: AssetType[] = ["USD", "AUXG", "AUXS", "AUXPT", "AUXPD", "AUXM", "ETH", "BTC", "XRP", "SOL", "USDT"];
   return all.filter(t => isConversionAllowed(from, t));
 }
 
@@ -99,6 +112,7 @@ const AssetDropdown = memo(function AssetDropdown({
     : "absolute left-0 right-0 mt-1";
 
   const categories: { key: AssetCategory; assets: AssetType[]; label: string; color: string }[] = [
+    { key: "fiat", assets: ["USD"], label: "Fiat", color: "text-green-400" },
     { key: "metal", assets: ["AUXG", "AUXS", "AUXPT", "AUXPD"], label: lang === "tr" ? "Metaller" : "Metals", color: "text-yellow-400" },
     { key: "platform", assets: ["AUXM"], label: "Platform", color: "text-purple-400" },
     { key: "crypto", assets: ["ETH", "BTC", "XRP", "SOL", "USDT"], label: lang === "tr" ? "Kripto" : "Crypto", color: "text-blue-400" },
@@ -158,7 +172,7 @@ const AssetDropdown = memo(function AssetDropdown({
                       {lang === "tr" ? info.nameTr : info.name}
                     </span>
                   </div>
-                  <span className="text-xs text-slate-400">{formatBal(asset)}</span>
+                  <span className="text-xs text-slate-400">{asset === "USD" ? "$" : ""}{formatBal(asset)}</span>
                 </button>
               );
             })}
@@ -181,8 +195,8 @@ export function ExchangeModal({
   isOpen,
   onClose,
   lang = "tr",
-  defaultFrom = "AUXG",
-  defaultTo = "AUXS",
+  defaultFrom = "USD",
+  defaultTo = "AUXG",
 }: ExchangeModalProps) {
   const { balances, refreshBalances, address: walletAddress } = useWallet();
   const { prices: metalPrices } = useMetalsPrices();
@@ -213,6 +227,7 @@ export function ExchangeModal({
   const getBalance = (asset: AssetType): number => {
     if (!balances) return 0;
     const map: Record<AssetType, number> = {
+      USD: balances.usd || 0,
       AUXG: balances.auxg || 0,
       AUXS: balances.auxs || 0,
       AUXPT: balances.auxpt || 0,
@@ -222,7 +237,7 @@ export function ExchangeModal({
       BTC: balances.btc || 0,
       XRP: balances.xrp || 0,
       SOL: balances.sol || 0,
-      USDT: 0, // USDT bakiyesi henüz yok
+      USDT: balances.usdt || 0,
     };
     return map[asset];
   };
@@ -242,6 +257,7 @@ export function ExchangeModal({
       SOL: cryptoPrices?.sol || 200,
       USDT: 1,
     };
+    if (asset === "USD") return 1;
     if (asset === "AUXM") return 1;
     if (metalMap[asset]) return metalMap[asset];
     if (cryptoMap[asset]) return cryptoMap[asset];
@@ -299,24 +315,45 @@ export function ExchangeModal({
     setIsProcessing(true);
     
     try {
-      // Trade API çağrısı
-      const response = await fetch("/api/trade", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          address: walletAddress,
-          type: "swap",
-          fromToken: fromAsset,
-          toToken: toAsset,
-          fromAmount: fromAmountNum,
-          price: fromPrice,
-        }),
-      });
+      // USD için özel endpoint
+      if (fromAsset === "USD") {
+        const response = await fetch("/api/user/buy-with-usd", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "x-wallet-address": walletAddress || "",
+          },
+          body: JSON.stringify({
+            targetToken: toAsset.toLowerCase(),
+            usdAmount: fromAmountNum,
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Exchange failed");
+        if (!data.success) {
+          throw new Error(data.error || "Exchange failed");
+        }
+      } else {
+        // Diğer dönüşümler için mevcut trade API
+        const response = await fetch("/api/trade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            address: walletAddress,
+            type: "swap",
+            fromToken: fromAsset,
+            toToken: toAsset,
+            fromAmount: fromAmountNum,
+            price: fromPrice,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Exchange failed");
+        }
       }
 
       setResult("success");
@@ -394,7 +431,7 @@ export function ExchangeModal({
   };
 
   // İzinli hedefler - tüm varlıkları göster
-  const allAssets: AssetType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD", "AUXM", "ETH", "BTC", "XRP", "SOL", "USDT"];
+  const allAssets: AssetType[] = ["USD", "AUXG", "AUXS", "AUXPT", "AUXPD", "AUXM", "ETH", "BTC", "XRP", "SOL", "USDT"];
   const allowedToTargets = getAllowedTargets(fromAsset);
 
   // Crypto-to-crypto uyarısı
@@ -402,6 +439,9 @@ export function ExchangeModal({
   
   // AUXM → Crypto uyarısı
   const isAuxmToCrypto = fromAsset === "AUXM" && ASSETS[toAsset].category === "crypto";
+  
+  // USD → Crypto uyarısı (USDT hariç)
+  const isUsdToCrypto = fromAsset === "USD" && ASSETS[toAsset].category === "crypto" && toAsset !== "USDT";
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -432,9 +472,9 @@ export function ExchangeModal({
               {lang === "tr" ? "ℹ️ Dönüşüm Kuralları" : "ℹ️ Conversion Rules"}
             </p>
             <ul className="space-y-0.5 text-blue-400/80">
-              <li>• {lang === "tr" ? "Auxite Token ↔ Auxite Token, Auxite Token ↔ AUXM dönüşümü yapılabilir" : "Auxite Token ↔ Auxite Token, Auxite Token ↔ AUXM conversions allowed"}</li>
-              <li>• {lang === "tr" ? "Kripto → AUXM veya Auxite Token dönüşümü yapılabilir" : "Crypto → AUXM or Auxite Token conversions allowed"}</li>
-              <li>• {lang === "tr" ? "AUXM → Kripto için Çekim bölümünü kullanın" : "Use Withdraw for AUXM → Crypto"}</li>
+              <li>• {lang === "tr" ? "USD → AUXM, Metaller, USDT dönüşümü yapılabilir" : "USD → AUXM, Metals, USDT conversions allowed"}</li>
+              <li>• {lang === "tr" ? "USD → Crypto (BTC, ETH vb.) YAPILAMAZ" : "USD → Crypto (BTC, ETH etc.) NOT allowed"}</li>
+              <li>• {lang === "tr" ? "Kripto → AUXM veya Metal dönüşümü yapılabilir" : "Crypto → AUXM or Metal conversions allowed"}</li>
               <li>• {lang === "tr" ? "Kripto ↔ Kripto dönüşümü desteklenmiyor" : "Crypto ↔ Crypto not supported"}</li>
             </ul>
           </div>
@@ -451,7 +491,7 @@ export function ExchangeModal({
                 {lang === "tr" ? "Dönüşüm Başarılı!" : "Exchange Successful!"}
               </h3>
               <p className="text-slate-400 text-sm">
-                {formatAmount(fromAmountNum, fromAsset)} {getAssetUnit(fromAsset)} → {formatAmount(toAmount, toAsset)} {getAssetUnit(toAsset)}
+                {fromAsset === "USD" ? "$" : ""}{formatAmount(fromAmountNum, fromAsset)} {getAssetUnit(fromAsset)} → {formatAmount(toAmount, toAsset)} {getAssetUnit(toAsset)}
               </p>
             </div>
           ) : (
@@ -478,7 +518,7 @@ export function ExchangeModal({
                 
                 <div className="flex items-center justify-between mt-3 mb-1">
                   <span className="text-xs text-slate-500">
-                    {lang === "tr" ? "Bakiye" : "Balance"}: {formatBalance(fromAsset)} {getAssetUnit(fromAsset)}
+                    {lang === "tr" ? "Bakiye" : "Balance"}: {fromAsset === "USD" ? "$" : ""}{formatBalance(fromAsset)} {fromAsset !== "USD" ? getAssetUnit(fromAsset) : ""}
                   </span>
                   <button onClick={handleMaxClick} className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold">
                     MAX
@@ -580,7 +620,13 @@ export function ExchangeModal({
                 </div>
               )}
               
-              {!canAfford && fromAmountNum > 0 && !isCryptoToCrypto && !isAuxmToCrypto && (
+              {isUsdToCrypto && (
+                <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400">
+                  ⚠️ {lang === "tr" ? "USD ile kripto alınamaz" : "Cannot buy crypto with USD"}
+                </div>
+              )}
+              
+              {!canAfford && fromAmountNum > 0 && !isCryptoToCrypto && !isAuxmToCrypto && !isUsdToCrypto && (
                 <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400">
                   ⚠️ {lang === "tr" ? "Yetersiz bakiye" : "Insufficient balance"}
                 </div>
@@ -589,7 +635,7 @@ export function ExchangeModal({
               {/* Exchange Button */}
               <button
                 onClick={handleExchange}
-                disabled={isProcessing || !canAfford || isCryptoToCrypto || isAuxmToCrypto}
+                disabled={isProcessing || !canAfford || isCryptoToCrypto || isAuxmToCrypto || isUsdToCrypto}
                 className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
               >
                 {isProcessing ? (
