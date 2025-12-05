@@ -394,3 +394,129 @@ export async function deleteUser(address: string): Promise<boolean> {
     return false;
   }
 }
+
+// ============================================
+// USD PURCHASE FUNCTIONS
+// ============================================
+
+/**
+ * USD ile token satın al
+ */
+export async function buyWithUsd(
+  address: string,
+  token: keyof UserBalance,
+  usdAmount: number,
+  tokenAmount: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const r = getRedis();
+    const key = KEYS.userBalance(address);
+
+    // Mevcut bakiyeyi al
+    const balance = await getUserBalance(address);
+
+    // USD bakiyesi yeterli mi?
+    if (balance.usd < usdAmount) {
+      return { success: false, error: "Insufficient USD balance" };
+    }
+
+    // Atomik işlem: USD azalt, token artır
+    const pipeline = r.pipeline();
+    pipeline.hincrbyfloat(key, "usd", -usdAmount);
+    pipeline.hincrbyfloat(key, token, tokenAmount);
+    await pipeline.exec();
+
+    // Transaction kaydı
+    await addTransaction(address, {
+      type: "swap",
+      fromToken: "USD",
+      toToken: token.toUpperCase(),
+      fromAmount: usdAmount,
+      toAmount: tokenAmount,
+      status: "completed",
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Redis buyWithUsd error:", error);
+    return { success: false, error: "Purchase failed" };
+  }
+}
+
+/**
+ * USD'yi USDT'ye dönüştür
+ */
+export async function convertUsdToUsdt(
+  address: string,
+  usdAmount: number,
+  usdtAmount: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const r = getRedis();
+    const key = KEYS.userBalance(address);
+
+    const balance = await getUserBalance(address);
+
+    if (balance.usd < usdAmount) {
+      return { success: false, error: "Insufficient USD balance" };
+    }
+
+    const pipeline = r.pipeline();
+    pipeline.hincrbyfloat(key, "usd", -usdAmount);
+    pipeline.hincrbyfloat(key, "usdt", usdtAmount);
+    await pipeline.exec();
+
+    await addTransaction(address, {
+      type: "swap",
+      fromToken: "USD",
+      toToken: "USDT",
+      fromAmount: usdAmount,
+      toAmount: usdtAmount,
+      status: "completed",
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Redis convertUsdToUsdt error:", error);
+    return { success: false, error: "Conversion failed" };
+  }
+}
+
+/**
+ * USDT'yi USD'ye dönüştür
+ */
+export async function convertUsdtToUsd(
+  address: string,
+  usdtAmount: number,
+  usdAmount: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const r = getRedis();
+    const key = KEYS.userBalance(address);
+
+    const balance = await getUserBalance(address);
+
+    if (balance.usdt < usdtAmount) {
+      return { success: false, error: "Insufficient USDT balance" };
+    }
+
+    const pipeline = r.pipeline();
+    pipeline.hincrbyfloat(key, "usdt", -usdtAmount);
+    pipeline.hincrbyfloat(key, "usd", usdAmount);
+    await pipeline.exec();
+
+    await addTransaction(address, {
+      type: "swap",
+      fromToken: "USDT",
+      toToken: "USD",
+      fromAmount: usdtAmount,
+      toAmount: usdAmount,
+      status: "completed",
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Redis convertUsdtToUsd error:", error);
+    return { success: false, error: "Conversion failed" };
+  }
+}
