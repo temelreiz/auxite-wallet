@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 const AUXITE_API = "https://api.auxite.io/api/prices?chain=84532";
 const GOLDAPI_URL = "https://www.goldapi.io/api";
-const GOLDAPI_KEY = process.env.NEXT_PUBLIC_GOLDAPI_KEY || "";
+const GOLDAPI_KEY = process.env.GOLDAPI_KEY || process.env.NEXT_PUBLIC_GOLDAPI_KEY || "";
 
 const TROY_OZ_TO_GRAM = 31.1035;
 const SETTINGS_KEY = "auxite:price-settings";
