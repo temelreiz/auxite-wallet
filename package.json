@@ -54,6 +54,7 @@
     "uuid": "^13.0.0",
     "viem": "^2.39.3",
     "wagmi": "^2.19.5",
+    "web-push": "^3.6.7",
     "xrpl": "^4.4.3"
   },
   "devDependencies": {
