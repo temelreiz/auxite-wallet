@@ -1,3 +1,4 @@
+// src/components/WalletContext.tsx
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
@@ -19,6 +20,7 @@ interface UserBalances {
   xrp: number;
   sol: number;
   usdt: number;
+  usd: number;
 }
 
 interface BalanceSummary {
@@ -61,10 +63,10 @@ const DEFAULT_BALANCES: UserBalances = {
   xrp: 0,
   sol: 0,
   usdt: 0,
+  usd: 0,
 };
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  // Wagmi'den bağlantı bilgilerini al
   const { address: wagmiAddress, isConnected: wagmiConnected, chainId: wagmiChainId } = useAccount();
   
   const [balances, setBalances] = useState<UserBalances | null>(null);
@@ -72,7 +74,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [balancesLoading, setBalancesLoading] = useState(false);
   const [balancesError, setBalancesError] = useState<string | null>(null);
 
-  // Bakiye çekme fonksiyonu
   const fetchBalances = useCallback(async (walletAddress: string) => {
     console.log("🔄 fetchBalances called:", walletAddress);
     
@@ -113,14 +114,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Manuel bakiye yenileme
   const refreshBalances = useCallback(async () => {
     if (wagmiAddress) {
       await fetchBalances(wagmiAddress);
     }
   }, [wagmiAddress, fetchBalances]);
 
-  // Wagmi bağlantı durumu değiştiğinde bakiyeleri çek
   useEffect(() => {
     console.log("📍 Wagmi state:", { isConnected: wagmiConnected, address: wagmiAddress, chainId: wagmiChainId });
     
@@ -128,7 +127,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       console.log("✅ Wagmi connected! Fetching balances...");
       fetchBalances(wagmiAddress);
 
-      // Her 30 saniyede bakiyeleri yenile
       const interval = setInterval(() => {
         console.log("⏰ Auto-refresh balances");
         fetchBalances(wagmiAddress);
