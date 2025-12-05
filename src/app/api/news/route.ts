@@ -106,11 +106,6 @@ export async function GET(request: NextRequest) {
       newsData = DEFAULT_NEWS;
     }
     
-    const headers = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    };
     
     // Admin için tüm haberleri döndür
     if (all === "true") {
@@ -121,7 +116,7 @@ export async function GET(request: NextRequest) {
           en: newsData.en || [],
         },
         lastUpdated: newsData.lastUpdated,
-      }, { headers });
+      });
     }
     
     // Mobile app için sadece seçilen dildeki haberleri döndür
@@ -131,7 +126,7 @@ export async function GET(request: NextRequest) {
       success: true,
       news: news,
       lastUpdated: newsData.lastUpdated,
-    }, { headers });
+    });
     
   } catch (error) {
     console.error("News GET error:", error);
@@ -183,10 +178,6 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "News updated successfully",
       newsData: newsData,
-    }, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-      },
     });
   } catch (error) {
     console.error("News POST error:", error);
@@ -197,13 +188,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// OPTIONS - CORS preflight
+
+// OPTIONS - CORS preflight (handled by middleware)
 export async function OPTIONS() {
-  return NextResponse.json({}, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
-  });
+  return NextResponse.json({});
 }
