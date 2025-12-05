@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface CryptoPrices {
   eth: number;
@@ -28,6 +28,7 @@ export function useCryptoPrices() {
     eth: "neutral", btc: "neutral", xrp: "neutral", sol: "neutral",
   });
   const [loading, setLoading] = useState(true);
+  const prevPrices = useRef<CryptoPrices>({ eth: 0, btc: 0, xrp: 0, sol: 0 });
 
   const fetchPrices = async () => {
     try {
@@ -48,13 +49,23 @@ export function useCryptoPrices() {
         sol: data.solana?.usd_24h_change || 0,
       };
 
-      const newDirections: CryptoDirections = {
-        eth: newChanges.eth > 0 ? "up" : newChanges.eth < 0 ? "down" : "neutral",
-        btc: newChanges.btc > 0 ? "up" : newChanges.btc < 0 ? "down" : "neutral",
-        xrp: newChanges.xrp > 0 ? "up" : newChanges.xrp < 0 ? "down" : "neutral",
-        sol: newChanges.sol > 0 ? "up" : newChanges.sol < 0 ? "down" : "neutral",
+      // Anlık fiyat değişimine göre direction belirle
+      const getDirection = (current: number, prev: number): "up" | "down" | "neutral" => {
+        if (prev === 0) return "neutral"; // İlk yüklemede neutral
+        const diff = current - prev;
+        if (diff > 0.01) return "up";
+        if (diff < -0.01) return "down";
+        return "neutral";
       };
 
+      const newDirections: CryptoDirections = {
+        eth: getDirection(newPrices.eth, prevPrices.current.eth),
+        btc: getDirection(newPrices.btc, prevPrices.current.btc),
+        xrp: getDirection(newPrices.xrp, prevPrices.current.xrp),
+        sol: getDirection(newPrices.sol, prevPrices.current.sol),
+      };
+
+      prevPrices.current = newPrices;
       setPrices(newPrices);
       setChanges(newChanges);
       setDirections(newDirections);
@@ -67,7 +78,7 @@ export function useCryptoPrices() {
 
   useEffect(() => {
     fetchPrices();
-    const interval = setInterval(fetchPrices, 5000);
+    const interval = setInterval(fetchPrices, 3000); // 3 saniye
     return () => clearInterval(interval);
   }, []);
 
