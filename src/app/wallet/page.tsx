@@ -79,8 +79,50 @@ export default function WalletPage() {
   // Get prices for modals
   const { prices: cryptoPrices } = useCryptoPrices();
   const { prices: metalAskPrices, bidPrices } = useMetalsPrices();
+  
+  // USDT/USD fiyatı
+  const [usdtPrice, setUsdtPrice] = useState<number>(1);
+  
+  // USDT/USD fiyatını çek (Binance API - daha güvenilir)
+  useEffect(() => {
+    const fetchUsdtPrice = async () => {
+      try {
+        // Binance USDT/USDC pair - USDC is 1:1 with USD
+        const res = await fetch(
+          "https://api.binance.com/api/v3/ticker/price?symbol=USDCUSDT"
+        );
+        const data = await res.json();
+        if (data?.price) {
+          // USDC/USDT fiyatı = 1 USDC kaç USDT
+          // USDT/USD için tersini al: 1 / price
+          const usdtUsdPrice = 1 / parseFloat(data.price);
+          setUsdtPrice(usdtUsdPrice);
+          console.log("USDT/USD fiyatı:", usdtUsdPrice);
+        }
+      } catch (err) {
+        console.error("USDT price fetch error:", err);
+        // Fallback: CoinGecko dene
+        try {
+          const res2 = await fetch(
+            "https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=usd"
+          );
+          const data2 = await res2.json();
+          if (data2?.tether?.usd) {
+            setUsdtPrice(data2.tether.usd);
+            console.log("USDT/USD (CoinGecko):", data2.tether.usd);
+          }
+        } catch {
+          setUsdtPrice(1);
+        }
+      }
+    };
+    
+    fetchUsdtPrice();
+    const interval = setInterval(fetchUsdtPrice, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // Toplam varlık değeri hesapla
+  // Toplam varlık değeri hesapla (USDT cinsinden)
   const totalEstimatedValue = 
     (auxgBalance * (metalAskPrices?.AUXG || 0)) +
     (auxsBalance * (metalAskPrices?.AUXS || 0)) +
@@ -92,6 +134,9 @@ export default function WalletPage() {
     (solBalance * (cryptoPrices?.sol || 0)) +
     (balances?.usdt || 0) +
     (balances?.usd || 0);
+  
+  // USD cinsinden toplam değer (USDT * USDT/USD kuru)
+  const totalEstimatedUsd = totalEstimatedValue * usdtPrice;
   
   // Deposit coins list
   const depositCoins = [
@@ -388,21 +433,9 @@ export default function WalletPage() {
                         {totalEstimatedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} 
                         <span className="text-emerald-400 text-lg ml-1">USDT</span>
                       </p>
-                      <div className="flex items-center gap-3 mt-1">
-                        <p className="text-xs text-slate-500">
-                            💵 USD: ${usdBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </p>
-                        {usdtBalance > 0 && (
-                        <p className="text-xs text-slate-400">
-                         USDT: {usdtBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                        </p>
-                        )}
-                        {usdBalance > 0 && (
-                          <p className="text-xs text-green-400">
-                            💵 USD: ${usdBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                          </p>
-                        )}
-                      </div>
+                      <p className="text-sm text-green-400 mt-0.5">
+                        ≈ ${totalEstimatedUsd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD
+                      </p>
                     </div>
                   </div>
                   {/* USD Actions */}
