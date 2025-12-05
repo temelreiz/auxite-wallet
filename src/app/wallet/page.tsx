@@ -256,6 +256,12 @@ export default function WalletPage() {
                 >
                   {lang === "tr" ? "Cüzdan" : "Wallet"}
                 </Link>
+                <Link
+                  href="/profile"
+                  className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-sm transition-colors"
+                >
+                  {lang === "tr" ? "Profil" : "Profile"}
+                </Link>
               </div>
             </div>
 
