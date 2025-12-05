@@ -20,12 +20,16 @@ export function AdminUsdDeposit({ adminAddress, lang = "tr" }: AdminUsdDepositPr
     message: string;
   } | null>(null);
 
-  // Son işlemler
   const [recentDeposits, setRecentDeposits] = useState<Array<{
     address: string;
     amount: number;
     timestamp: string;
   }>>([]);
+
+  const [checkedBalance, setCheckedBalance] = useState<{
+    usd: number;
+    usdt: number;
+  } | null>(null);
 
   const texts = {
     tr: {
@@ -62,12 +66,6 @@ export function AdminUsdDeposit({ adminAddress, lang = "tr" }: AdminUsdDepositPr
 
   const t = texts[lang];
 
-  // Bakiye sorgulama
-  const [checkedBalance, setCheckedBalance] = useState<{
-    usd: number;
-    usdt: number;
-  } | null>(null);
-
   const handleCheckBalance = async () => {
     if (!targetAddress) return;
 
@@ -94,7 +92,6 @@ export function AdminUsdDeposit({ adminAddress, lang = "tr" }: AdminUsdDepositPr
   };
 
   const handleDeposit = async () => {
-    // Validasyon
     if (!targetAddress || !/^0x[a-fA-F0-9]{40}$/.test(targetAddress)) {
       setResult({ success: false, message: "Invalid wallet address" });
       return;
@@ -131,7 +128,6 @@ export function AdminUsdDeposit({ adminAddress, lang = "tr" }: AdminUsdDepositPr
           message: `$${parsedAmount.toFixed(2)} ${t.success}`,
         });
 
-        // Son işlemlere ekle
         setRecentDeposits((prev) => [
           {
             address: targetAddress,
@@ -141,7 +137,6 @@ export function AdminUsdDeposit({ adminAddress, lang = "tr" }: AdminUsdDepositPr
           ...prev.slice(0, 4),
         ]);
 
-        // Formu temizle
         setAmount("");
         setNote("");
         setCheckedBalance(null);
@@ -159,4 +154,157 @@ export function AdminUsdDeposit({ adminAddress, lang = "tr" }: AdminUsdDepositPr
   return (
     <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6">
       <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-f
+        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+          <svg
+            className="w-4 h-4 text-green-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </div>
+        {t.title}
+      </h2>
+
+      {/* Target Address */}
+      <div className="mb-4">
+        <label className="text-sm text-slate-400 mb-2 block">
+          {t.targetAddress}
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={targetAddress}
+            onChange={(e) => {
+              setTargetAddress(e.target.value);
+              setCheckedBalance(null);
+            }}
+            placeholder={t.addressPlaceholder}
+            className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 font-mono text-sm"
+          />
+          <button
+            onClick={handleCheckBalance}
+            className="px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl text-slate-300 text-sm transition-colors"
+          >
+            {t.checkBalance}
+          </button>
+        </div>
+      </div>
+
+      {/* Current Balance Display */}
+      {checkedBalance && (
+        <div className="mb-4 bg-slate-800/50 rounded-xl p-3">
+          <p className="text-xs text-slate-400 mb-2">{t.currentBalance}</p>
+          <div className="flex gap-4">
+            <div>
+              <span className="text-sm text-slate-300">USD: </span>
+              <span className="text-sm font-medium text-green-400">
+                ${checkedBalance.usd.toFixed(2)}
+              </span>
+            </div>
+            <div>
+              <span className="text-sm text-slate-300">USDT: </span>
+              <span className="text-sm font-medium text-[#26A17B]">
+                ${checkedBalance.usdt.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Amount */}
+      <div className="mb-4">
+        <label className="text-sm text-slate-400 mb-2 block">{t.amount}</label>
+        <div className="relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+            $
+          </span>
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+            min="0"
+            step="0.01"
+            className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-8 pr-4 py-3 text-white placeholder-slate-500"
+          />
+        </div>
+      </div>
+
+      {/* Note */}
+      <div className="mb-6">
+        <label className="text-sm text-slate-400 mb-2 block">{t.note}</label>
+        <input
+          type="text"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder={t.notePlaceholder}
+          className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500"
+        />
+      </div>
+
+      {/* Result Message */}
+      {result && (
+        <div
+          className={`mb-4 p-3 rounded-xl ${
+            result.success
+              ? "bg-green-500/10 border border-green-500/30"
+              : "bg-red-500/10 border border-red-500/30"
+          }`}
+        >
+          <p
+            className={`text-sm ${
+              result.success ? "text-green-400" : "text-red-400"
+            }`}
+          >
+            {result.message}
+          </p>
+        </div>
+      )}
+
+      {/* Deposit Button */}
+      <button
+        onClick={handleDeposit}
+        disabled={isLoading || !targetAddress || !amount}
+        className={`w-full py-3 rounded-xl font-semibold transition-colors ${
+          isLoading || !targetAddress || !amount
+            ? "bg-slate-700 text-slate-400 cursor-not-allowed"
+            : "bg-green-500 hover:bg-green-600 text-white"
+        }`}
+      >
+        {isLoading ? t.processing : t.deposit}
+      </button>
+
+      {/* Recent Deposits */}
+      {recentDeposits.length > 0 && (
+        <div className="mt-6 pt-6 border-t border-slate-700">
+          <h3 className="text-sm font-medium text-slate-400 mb-3">
+            {t.recentDeposits}
+          </h3>
+          <div className="space-y-2">
+            {recentDeposits.map((deposit, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between text-sm bg-slate-800/50 rounded-lg p-2"
+              >
+                <span className="text-slate-400 font-mono text-xs">
+                  {deposit.address.slice(0, 6)}...{deposit.address.slice(-4)}
+                </span>
+                <span className="text-green-400 font-medium">
+                  +${deposit.amount.toFixed(2)}
+                </span>
+                <span className="text-slate-500 text-xs">{deposit.timestamp}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
