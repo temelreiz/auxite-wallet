@@ -206,12 +206,36 @@ export default function WalletPage() {
     AUXPT: metalAskPrices?.AUXPT || 0,
     AUXPD: metalAskPrices?.AUXPD || 0,
   };
+
+  // Current prices for alerts
+  const currentPrices: Record<string, number> = {
+    BTC: cryptoPrices?.btc || 0,
+    ETH: cryptoPrices?.eth || 0,
+    XRP: cryptoPrices?.xrp || 0,
+    SOL: cryptoPrices?.sol || 0,
+    AUXG: metalAskPrices?.AUXG || 0,
+    AUXS: metalAskPrices?.AUXS || 0,
+    AUXPT: metalAskPrices?.AUXPT || 0,
+    AUXPD: metalAskPrices?.AUXPD || 0,
+  };
   const isWalletConnected = 
     (walletMode === "local" && !!localWalletAddress && isSessionUnlocked) || 
     (walletMode === "external" && isExternalConnected);
 
   const currentAddress = 
     walletMode === "local" ? localWalletAddress : externalAddress;
+
+  // Current prices for alerts
+  const currentPrices: Record<string, number> = {
+    BTC: cryptoPrices?.btc || 0,
+    ETH: cryptoPrices?.eth || 0,
+    XRP: cryptoPrices?.xrp || 0,
+    SOL: cryptoPrices?.sol || 0,
+    AUXG: metalAskPrices?.AUXG || 0,
+    AUXS: metalAskPrices?.AUXS || 0,
+    AUXPT: metalAskPrices?.AUXPT || 0,
+    AUXPD: metalAskPrices?.AUXPD || 0,
+  };
 
   if (isLoading) {
     return (
