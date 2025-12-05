@@ -4,10 +4,10 @@
 import { Redis } from "@upstash/redis";
 
 // Redis client singleton
-let redis: Redis | null = null;
+let redisClient: Redis | null = null;
 
 export function getRedis(): Redis {
-  if (!redis) {
+  if (!redisClient) {
     const url = process.env.UPSTASH_REDIS_REST_URL;
     const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
@@ -15,14 +15,41 @@ export function getRedis(): Redis {
       throw new Error("Redis credentials not configured. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN");
     }
 
-    redis = new Redis({
+    redisClient = new Redis({
       url,
       token,
     });
   }
 
-  return redis;
+  return redisClient;
 }
+
+// Direct redis export for convenience
+export const redis = {
+  get: async (key: string) => getRedis().get(key),
+  set: async (key: string, value: string, options?: { ex?: number } | string, exValue?: number) => {
+    if (options === 'EX' && exValue) {
+      return getRedis().set(key, value, { ex: exValue });
+    }
+    if (typeof options === 'object' && options.ex) {
+      return getRedis().set(key, value, { ex: options.ex });
+    }
+    return getRedis().set(key, value);
+  },
+  del: async (...keys: string[]) => getRedis().del(...keys),
+  exists: async (key: string) => getRedis().exists(key),
+  expire: async (key: string, seconds: number) => getRedis().expire(key, seconds),
+  incr: async (key: string) => getRedis().incr(key),
+  lpush: async (key: string, ...values: string[]) => getRedis().lpush(key, ...values),
+  lrange: async (key: string, start: number, stop: number) => getRedis().lrange(key, start, stop),
+  ltrim: async (key: string, start: number, stop: number) => getRedis().ltrim(key, start, stop),
+  llen: async (key: string) => getRedis().llen(key),
+  hset: async (key: string, data: Record<string, unknown>) => getRedis().hset(key, data),
+  hget: async (key: string, field: string) => getRedis().hget(key, field),
+  hgetall: async (key: string) => getRedis().hgetall(key),
+  hincrbyfloat: async (key: string, field: string, value: number) => getRedis().hincrbyfloat(key, field, value),
+  pipeline: () => getRedis().pipeline(),
+};
 
 // ============================================
 // USER BALANCE FUNCTIONS
@@ -42,7 +69,7 @@ export interface UserBalance {
   xrp: number;
   sol: number;
   usdt: number;
-  usd: number;  // Fiat USD bakiyesi (USDT'den ayrı)
+  usd: number;
 }
 
 const DEFAULT_BALANCE: UserBalance = {
@@ -75,19 +102,20 @@ const KEYS = {
  */
 export async function getUserBalance(address: string): Promise<UserBalance> {
   try {
-    const redis = getRedis();
+    const r = getRedis();
     const key = KEYS.userBalance(address);
     
-    const data = await redis.hgetall(key);
+    const data = await r.hgetall(key);
     
     if (!data || Object.keys(data).length === 0) {
       return DEFAULT_BALANCE;
     }
 
+    // Redis'ten gelen değerleri parse et
     const balance: UserBalance = {
       auxm: parseFloat(String(data.auxm || 0)),
       bonusAuxm: parseFloat(String(data.bonusAuxm || 0)),
-      totalAuxm: 0,
+      totalAuxm: 0, // Hesaplanacak
       bonusExpiresAt: data.bonusExpiresAt ? String(data.bonusExpiresAt) : null,
       auxg: parseFloat(String(data.auxg || 0)),
       auxs: parseFloat(String(data.auxs || 0)),
@@ -101,12 +129,15 @@ export async function getUserBalance(address: string): Promise<UserBalance> {
       usd: parseFloat(String(data.usd || 0)),
     };
 
+    // Toplam AUXM hesapla
     balance.totalAuxm = balance.auxm + balance.bonusAuxm;
 
+    // Bonus süresi dolmuş mu kontrol et
     if (balance.bonusExpiresAt) {
       const expiryDate = new Date(balance.bonusExpiresAt);
       if (expiryDate < new Date()) {
-        await redis.hset(key, { bonusAuxm: 0, bonusExpiresAt: "" });
+        // Bonus süresi dolmuş, sıfırla
+        await r.hset(key, { bonusAuxm: 0, bonusExpiresAt: "" });
         balance.bonusAuxm = 0;
         balance.bonusExpiresAt = null;
         balance.totalAuxm = balance.auxm;
@@ -128,10 +159,11 @@ export async function incrementBalance(
   updates: Partial<Record<keyof UserBalance, number>>
 ): Promise<boolean> {
   try {
-    const redis = getRedis();
+    const r = getRedis();
     const key = KEYS.userBalance(address);
 
-    const pipeline = redis.pipeline();
+    // Her field için increment yap
+    const pipeline = r.pipeline();
     
     for (const [field, value] of Object.entries(updates)) {
       if (typeof value === "number" && field !== "totalAuxm") {
@@ -141,8 +173,9 @@ export async function incrementBalance(
 
     await pipeline.exec();
 
+    // totalAuxm'i güncelle
     const balance = await getUserBalance(address);
-    await redis.hset(key, { totalAuxm: balance.auxm + balance.bonusAuxm });
+    await r.hset(key, { totalAuxm: balance.auxm + balance.bonusAuxm });
 
     return true;
   } catch (error) {
@@ -159,14 +192,18 @@ export async function setBalance(
   updates: Partial<UserBalance>
 ): Promise<boolean> {
   try {
-    const redis = getRedis();
+    const r = getRedis();
     const key = KEYS.userBalance(address);
 
+    // Mevcut bakiyeyi al
     const currentBalance = await getUserBalance(address);
+
+    // Güncellemeleri birleştir
     const newBalance = { ...currentBalance, ...updates };
     newBalance.totalAuxm = newBalance.auxm + newBalance.bonusAuxm;
 
-    await redis.hset(key, newBalance as Record<string, unknown>);
+    // Redis'e kaydet
+    await r.hset(key, newBalance as Record<string, unknown>);
 
     return true;
   } catch (error) {
@@ -184,14 +221,15 @@ export async function addBonusAuxm(
   expiresAt: Date
 ): Promise<boolean> {
   try {
-    const redis = getRedis();
+    const r = getRedis();
     const key = KEYS.userBalance(address);
 
-    await redis.hincrbyfloat(key, "bonusAuxm", amount);
-    await redis.hset(key, { bonusExpiresAt: expiresAt.toISOString() });
+    await r.hincrbyfloat(key, "bonusAuxm", amount);
+    await r.hset(key, { bonusExpiresAt: expiresAt.toISOString() });
 
+    // totalAuxm'i güncelle
     const balance = await getUserBalance(address);
-    await redis.hset(key, { totalAuxm: balance.auxm + balance.bonusAuxm });
+    await r.hset(key, { totalAuxm: balance.auxm + balance.bonusAuxm });
 
     return true;
   } catch (error) {
@@ -210,8 +248,9 @@ export async function transfer(
   amount: number
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const redis = getRedis();
+    const r = getRedis();
 
+    // Gönderen bakiyesini kontrol et
     const fromBalance = await getUserBalance(fromAddress);
     const availableBalance = fromBalance[token];
 
@@ -223,7 +262,8 @@ export async function transfer(
       return { success: false, error: "Insufficient balance" };
     }
 
-    const pipeline = redis.pipeline();
+    // Atomik transfer (pipeline)
+    const pipeline = r.pipeline();
     
     pipeline.hincrbyfloat(KEYS.userBalance(fromAddress), token, -amount);
     pipeline.hincrbyfloat(KEYS.userBalance(toAddress), token, amount);
@@ -234,87 +274,6 @@ export async function transfer(
   } catch (error) {
     console.error("Redis transfer error:", error);
     return { success: false, error: "Transfer failed" };
-  }
-}
-
-// ============================================
-// USD SPECIFIC FUNCTIONS
-// ============================================
-
-/**
- * USD bakiyesi ekle (Admin için)
- */
-export async function addUsdBalance(
-  address: string,
-  amount: number,
-  note?: string
-): Promise<{ success: boolean; newBalance?: number; error?: string }> {
-  try {
-    const redis = getRedis();
-    const key = KEYS.userBalance(address);
-
-    await ensureUser(address);
-
-    const newBalance = await redis.hincrbyfloat(key, "usd", amount);
-
-    await addTransaction(address, {
-      type: "deposit",
-      token: "usd",
-      amount: amount,
-      status: "completed",
-      metadata: {
-        method: "admin_deposit",
-        note: note || "Admin USD deposit",
-      },
-    });
-
-    return { success: true, newBalance: parseFloat(String(newBalance)) };
-  } catch (error) {
-    console.error("Redis addUsdBalance error:", error);
-    return { success: false, error: "Failed to add USD balance" };
-  }
-}
-
-/**
- * USD ile satın alma (USD -> Token dönüşümü)
- */
-export async function buyWithUsd(
-  address: string,
-  targetToken: "usdt" | "auxm" | "auxg" | "auxs" | "auxpt" | "auxpd",
-  usdAmount: number,
-  tokenAmount: number
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const redis = getRedis();
-    const key = KEYS.userBalance(address);
-
-    const balance = await getUserBalance(address);
-    
-    if (balance.usd < usdAmount) {
-      return { success: false, error: "Insufficient USD balance" };
-    }
-
-    const pipeline = redis.pipeline();
-    pipeline.hincrbyfloat(key, "usd", -usdAmount);
-    pipeline.hincrbyfloat(key, targetToken, tokenAmount);
-    await pipeline.exec();
-
-    await addTransaction(address, {
-      type: "swap",
-      fromToken: "usd",
-      toToken: targetToken,
-      fromAmount: usdAmount,
-      toAmount: tokenAmount,
-      status: "completed",
-      metadata: {
-        method: "usd_purchase",
-      },
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error("Redis buyWithUsd error:", error);
-    return { success: false, error: "Purchase failed" };
   }
 }
 
@@ -345,7 +304,7 @@ export async function addTransaction(
   transaction: Omit<Transaction, "id" | "timestamp">
 ): Promise<string> {
   try {
-    const redis = getRedis();
+    const r = getRedis();
     const key = KEYS.userTransactions(address);
 
     const tx: Transaction = {
@@ -354,8 +313,11 @@ export async function addTransaction(
       timestamp: Date.now(),
     };
 
-    await redis.lpush(key, JSON.stringify(tx));
-    await redis.ltrim(key, 0, 99);
+    // Liste başına ekle (en yeni en üstte)
+    await r.lpush(key, JSON.stringify(tx));
+
+    // Maksimum 100 transaction tut
+    await r.ltrim(key, 0, 99);
 
     return tx.id;
   } catch (error) {
@@ -373,10 +335,10 @@ export async function getTransactions(
   offset: number = 0
 ): Promise<Transaction[]> {
   try {
-    const redis = getRedis();
+    const r = getRedis();
     const key = KEYS.userTransactions(address);
 
-    const data = await redis.lrange(key, offset, offset + limit - 1);
+    const data = await r.lrange(key, offset, offset + limit - 1);
 
     return data.map((item) => {
       if (typeof item === "string") {
@@ -399,13 +361,13 @@ export async function getTransactions(
  */
 export async function ensureUser(address: string): Promise<void> {
   try {
-    const redis = getRedis();
+    const r = getRedis();
     const key = KEYS.userBalance(address);
 
-    const exists = await redis.exists(key);
+    const exists = await r.exists(key);
     
     if (!exists) {
-      await redis.hset(key, { ...DEFAULT_BALANCE });
+      await r.hset(key, { ...DEFAULT_BALANCE });
     }
   } catch (error) {
     console.error("Redis ensureUser error:", error);
@@ -417,9 +379,9 @@ export async function ensureUser(address: string): Promise<void> {
  */
 export async function deleteUser(address: string): Promise<boolean> {
   try {
-    const redis = getRedis();
+    const r = getRedis();
 
-    await redis.del(
+    await r.del(
       KEYS.userBalance(address),
       KEYS.userMeta(address),
       KEYS.userTransactions(address),
