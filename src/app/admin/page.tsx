@@ -127,7 +127,6 @@ export default function AdminPage() {
     color: '#8B5CF6',
   });
 
-  const ADMIN_PASSWORD = "auxite2024";
 
   // İlk yükleme - settings'i sadece bir kez yükle
   useEffect(() => {
@@ -221,17 +220,30 @@ export default function AdminPage() {
     loadNews();
   }, [authenticated, activeTab]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      setAuthenticated(true);
-      sessionStorage.setItem("auxite_admin_auth", "true");
-      setError("");
-    } else {
-      setError("Yanlış şifre!");
+    setError("");
+    
+    try {
+      const res = await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.success && data.token) {
+        setAuthenticated(true);
+        sessionStorage.setItem("auxite_admin_token", data.token);
+        setError("");
+      } else {
+        setError(data.error || "Yanlış şifre!");
+      }
+    } catch (err) {
+      setError("Bağlantı hatası!");
     }
   };
-
   const handleSave = async () => {
     setSaving(true);
     setSaveMessage("");
@@ -287,7 +299,7 @@ export default function AdminPage() {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${ADMIN_PASSWORD}`,
+          "Authorization": `Bearer ${sessionStorage.getItem("auxite_admin_token") || ""}`,
         },
         body: JSON.stringify(newsData),
       });

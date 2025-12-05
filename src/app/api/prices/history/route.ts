@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const GOLD_API_KEY = "goldapi-58n6619mh0smwpz-io";
+const GOLD_API_KEY = process.env.GOLDAPI_KEY || "";
 const GOLD_API_BASE = "https://www.goldapi.io/api";
 
 // Get date string in YYYYMMDD format

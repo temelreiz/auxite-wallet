@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 // API Key doğrulama
-const WATCHER_API_KEY = process.env.WATCHER_API_KEY || "your-secret-api-key";
+const WATCHER_API_KEY = process.env.WATCHER_API_KEY || "";
 
 // Redis bağlantısı
 async function getRedis() {
