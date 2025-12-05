@@ -8,19 +8,68 @@ import {
   verifyRegistrationResponse,
   generateAuthenticationOptions,
   verifyAuthenticationResponse,
+} from '@simplewebauthn/server';
+
+import type {
   VerifiedRegistrationResponse,
   VerifiedAuthenticationResponse,
 } from '@simplewebauthn/server';
 
-import type {
-  RegistrationResponseJSON,
-  AuthenticationResponseJSON,
-  AuthenticatorDevice,
-  PublicKeyCredentialCreationOptionsJSON,
-  PublicKeyCredentialRequestOptionsJSON,
-} from '@simplewebauthn/types';
-
 import crypto from 'crypto';
+
+// Type definitions (inline to avoid @simplewebauthn/types dependency)
+type AuthenticatorTransport = 'usb' | 'ble' | 'nfc' | 'internal' | 'hybrid';
+
+interface RegistrationResponseJSON {
+  id: string;
+  rawId: string;
+  response: {
+    clientDataJSON: string;
+    attestationObject: string;
+    transports?: AuthenticatorTransport[];
+  };
+  authenticatorAttachment?: string;
+  clientExtensionResults: Record<string, unknown>;
+  type: string;
+}
+
+interface AuthenticationResponseJSON {
+  id: string;
+  rawId: string;
+  response: {
+    clientDataJSON: string;
+    authenticatorData: string;
+    signature: string;
+    userHandle?: string;
+  };
+  authenticatorAttachment?: string;
+  clientExtensionResults: Record<string, unknown>;
+  type: string;
+}
+
+interface PublicKeyCredentialCreationOptionsJSON {
+  challenge: string;
+  rp: { name: string; id?: string };
+  user: { id: string; name: string; displayName: string };
+  pubKeyCredParams: Array<{ alg: number; type: string }>;
+  timeout?: number;
+  excludeCredentials?: Array<{ id: string; type: string; transports?: AuthenticatorTransport[] }>;
+  authenticatorSelection?: {
+    authenticatorAttachment?: string;
+    requireResidentKey?: boolean;
+    residentKey?: string;
+    userVerification?: string;
+  };
+  attestation?: string;
+}
+
+interface PublicKeyCredentialRequestOptionsJSON {
+  challenge: string;
+  timeout?: number;
+  rpId?: string;
+  allowCredentials?: Array<{ id: string; type: string; transports?: AuthenticatorTransport[] }>;
+  userVerification?: string;
+}
 
 // Config
 const RP_NAME = 'Auxite Wallet';
