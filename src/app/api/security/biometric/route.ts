@@ -175,7 +175,8 @@ async function handleRegisterOptions(walletAddress: string, body: { userName?: s
 
 async function handleRegisterVerify(walletAddress: string, body: { response: unknown; name?: string }) {
   // Challenge'ı al
-  const challenge = await redis.get(`user:passkey:challenge:${walletAddress}`);
+  const challengeData = await redis.get(`user:passkey:challenge:${walletAddress}`);
+  const challenge = typeof challengeData === 'string' ? challengeData : String(challengeData || '');
   
   if (!challenge) {
     return NextResponse.json(
@@ -250,7 +251,8 @@ async function handleAuthOptions(walletAddress: string) {
 }
 
 async function handleAuthVerify(walletAddress: string, body: { response: unknown }) {
-  const challenge = await redis.get(`user:passkey:challenge:${walletAddress}`);
+  const challengeData = await redis.get(`user:passkey:challenge:${walletAddress}`);
+  const challenge = typeof challengeData === 'string' ? challengeData : String(challengeData || '');
   
   if (!challenge) {
     return NextResponse.json(
