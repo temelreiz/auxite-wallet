@@ -125,17 +125,17 @@ export async function verifyRegistration(
       return { verified: false, error: 'Doğrulama başarısız' };
     }
 
-    const { credentialID, credentialPublicKey, counter, credentialDeviceType, credentialBackedUp } = 
+    const { credential, credentialDeviceType, credentialBackedUp } = 
       verification.registrationInfo;
 
     const authenticator: StoredAuthenticator = {
       id: `auth_${crypto.randomBytes(8).toString('hex')}`,
-      credentialId: Buffer.from(credentialID).toString('base64url'),
-      credentialPublicKey: Buffer.from(credentialPublicKey).toString('base64'),
-      counter,
+      credentialId: Buffer.from(credential.id).toString('base64url'),
+      credentialPublicKey: Buffer.from(credential.publicKey).toString('base64'),
+      counter: credential.counter,
       credentialDeviceType,
       credentialBackedUp,
-      transports: response.response.transports,
+      transports: response.response?.transports || [],
       name: 'Passkey', // Kullanıcı sonra değiştirebilir
       createdAt: new Date().toISOString(),
     };
@@ -208,9 +208,9 @@ export async function verifyAuthentication(
       expectedChallenge: challenge,
       expectedOrigin: ORIGIN,
       expectedRPID: RP_ID,
-      authenticator: {
-        credentialID: Buffer.from(authenticator.credentialId, 'base64url'),
-        credentialPublicKey: Buffer.from(authenticator.credentialPublicKey, 'base64'),
+      credential: {
+        id: authenticator.credentialId,
+        publicKey: Buffer.from(authenticator.credentialPublicKey, 'base64'),
         counter: authenticator.counter,
         transports: authenticator.transports as any,
       },
