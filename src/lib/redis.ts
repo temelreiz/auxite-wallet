@@ -520,3 +520,69 @@ export async function convertUsdtToUsd(
     return { success: false, error: "Conversion failed" };
   }
 }
+
+/**
+ * USD bakiyesi ekle (deposit)
+ */
+export async function addUsdBalance(
+  address: string,
+  amount: number,
+  metadata?: Record<string, any>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const r = getRedis();
+    const key = KEYS.userBalance(address);
+
+    // USD bakiyesini artır
+    await r.hincrbyfloat(key, "usd", amount);
+
+    // Transaction kaydı
+    await addTransaction(address, {
+      type: "deposit",
+      token: "USD",
+      amount: amount,
+      status: "completed",
+      metadata,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Redis addUsdBalance error:", error);
+    return { success: false, error: "Deposit failed" };
+  }
+}
+
+/**
+ * USD bakiyesi çıkar (withdraw)
+ */
+export async function withdrawUsdBalance(
+  address: string,
+  amount: number,
+  metadata?: Record<string, any>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const r = getRedis();
+    const key = KEYS.userBalance(address);
+
+    const balance = await getUserBalance(address);
+
+    if (balance.usd < amount) {
+      return { success: false, error: "Insufficient USD balance" };
+    }
+
+    await r.hincrbyfloat(key, "usd", -amount);
+
+    await addTransaction(address, {
+      type: "withdraw",
+      token: "USD",
+      amount: amount,
+      status: "completed",
+      metadata,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Redis withdrawUsdBalance error:", error);
+    return { success: false, error: "Withdrawal failed" };
+  }
+}
