@@ -16,7 +16,7 @@ export function middleware(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.auxite.io https://api.binance.com https://api.coingecko.com https://www.goldapi.io https://*.upstash.io wss://*;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.auxite.io https://*.thirdweb.com https://*.merkle.io https://*.walletconnect.com https://*.walletconnect.org https://api.binance.com https://api.coingecko.com https://www.goldapi.io https://*.upstash.io wss://*;"
   );
   response.headers.set(
     'Permissions-Policy',
