@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 export const runtime = 'edge';
+export const revalidate = 0;
 
 const CRYPTOCOMPARE_API = "https://min-api.cryptocompare.com/data/pricemultifull";
 
@@ -15,9 +16,10 @@ const FALLBACK_PRICES = {
 export async function GET() {
   try {
     const response = await fetch(
-      `${CRYPTOCOMPARE_API}?fsyms=BTC,ETH,XRP,SOL&tsyms=USD`,
+      `${CRYPTOCOMPARE_API}?fsyms=BTC,ETH,XRP,SOL&tsyms=USD&ts=${Date.now()}`,
       { 
         headers: { 'Accept': 'application/json' },
+        cache: 'no-store',
       }
     );
 
@@ -48,7 +50,12 @@ export async function GET() {
       tether: { usd: 1, usd_24h_change: 0 },
     };
 
-    return NextResponse.json({ ...prices, source: "cryptocompare", timestamp: Date.now() });
+    return new NextResponse(JSON.stringify({ ...prices, source: "cryptocompare", timestamp: Date.now() }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
   } catch (error: any) {
     console.error("CryptoCompare error:", error.message);
     return NextResponse.json({ ...FALLBACK_PRICES, source: "fallback", error: error.message });
