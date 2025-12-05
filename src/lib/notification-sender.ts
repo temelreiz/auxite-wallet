@@ -64,7 +64,7 @@ export async function sendNotification(
       price_alert: 'priceAlerts',
       security: 'security',
       login: 'security',
-      system: 'enabled', // Her zaman gönder
+      system: 'enabled',
     };
 
     const prefKey = typePreferenceMap[type];
@@ -72,10 +72,14 @@ export async function sendNotification(
       return { success: false, sent: 0, failed: 0 };
     }
 
-    // Kullanıcının subscription'larını al
-    const endpoints = await redis.smembers(`push:user:${walletAddress}`);
-    
-    if (endpoints.length === 0) {
+    // Kullanıcının subscription'larını al (JSON array olarak saklıyoruz)
+    const subscriptionsData = await redis.get(`push:subscriptions:${walletAddress}`);
+    const subscriptions: Array<{ endpoint: string; keys: { p256dh: string; auth: string } }> = 
+      subscriptionsData 
+        ? (typeof subscriptionsData === 'string' ? JSON.parse(subscriptionsData) : subscriptionsData)
+        : [];
+
+    if (subscriptions.length === 0) {
       return { success: false, sent: 0, failed: 0 };
     }
 
@@ -83,14 +87,7 @@ export async function sendNotification(
     let failed = 0;
 
     // Her subscription'a gönder
-    for (const endpoint of endpoints) {
-      const subKey = `push:subscription:${walletAddress}:${Buffer.from(endpoint).toString('base64').slice(0, 32)}`;
-      const subData = await redis.get(subKey);
-      
-      if (!subData) continue;
-
-      const subscription = typeof subData === 'string' ? JSON.parse(subData) : subData;
-
+    for (const subscription of subscriptions) {
       try {
         await webpush.sendNotification(
           {
@@ -110,8 +107,8 @@ export async function sendNotification(
 
         // Subscription geçersizse sil (410 Gone)
         if (error.statusCode === 410) {
-          await redis.del(subKey);
-          await redis.srem(`push:user:${walletAddress}`, endpoint);
+          const updatedSubs = subscriptions.filter(s => s.endpoint !== subscription.endpoint);
+          await redis.set(`push:subscriptions:${walletAddress}`, JSON.stringify(updatedSubs));
         }
       }
     }
@@ -146,8 +143,16 @@ async function logNotification(
     timestamp: new Date().toISOString(),
   };
 
-  await redis.lpush(`push:logs:${walletAddress}`, JSON.stringify(log));
-  await redis.ltrim(`push:logs:${walletAddress}`, 0, 99); // Son 100 log
+  // Son 100 log sakla
+  const logsData = await redis.get(`push:logs:${walletAddress}`);
+  const logs: Array<typeof log> = logsData 
+    ? (typeof logsData === 'string' ? JSON.parse(logsData) : logsData)
+    : [];
+  
+  logs.unshift(log);
+  if (logs.length > 100) logs.pop();
+  
+  await redis.set(`push:logs:${walletAddress}`, JSON.stringify(logs));
 }
 
 /**
@@ -172,7 +177,7 @@ export async function notifyTransaction(
   await sendNotification(walletAddress, 'transaction', {
     title: titles[data.type] || 'İşlem Bildirimi',
     body: `${data.amount} ${data.token} işlemi tamamlandı`,
-    icon: '/icons/transaction.png',
+    icon: '/icons/icon-192x192.png',
     tag: `tx-${data.txHash || Date.now()}`,
     data: {
       type: 'transaction',
@@ -204,7 +209,7 @@ export async function notifyPriceAlert(
   await sendNotification(walletAddress, 'price_alert', {
     title: `🔔 ${data.token} Fiyat Uyarısı`,
     body: `${data.token} $${data.targetPrice} ${direction} ${data.direction === 'above' ? 'çıktı' : 'düştü'}! Şu an: $${data.price}`,
-    icon: '/icons/price-alert.png',
+    icon: '/icons/icon-192x192.png',
     tag: `alert-${data.alertId}`,
     data: {
       type: 'price_alert',
@@ -250,7 +255,7 @@ export async function notifySecurityEvent(
   await sendNotification(walletAddress, 'security', {
     title: titles[data.event],
     body: bodies[data.event],
-    icon: '/icons/security.png',
+    icon: '/icons/icon-192x192.png',
     tag: `security-${data.event}-${Date.now()}`,
     data: {
       type: 'security',
