@@ -10,70 +10,11 @@ import {
   verifyAuthenticationResponse,
 } from '@simplewebauthn/server';
 
-import type {
-  VerifiedRegistrationResponse,
-  VerifiedAuthenticationResponse,
-} from '@simplewebauthn/server';
-
 import crypto from 'crypto';
-
-// Type definitions (inline to avoid @simplewebauthn/types dependency)
-type AuthenticatorTransport = 'usb' | 'ble' | 'nfc' | 'internal' | 'hybrid';
-
-interface RegistrationResponseJSON {
-  id: string;
-  rawId: string;
-  response: {
-    clientDataJSON: string;
-    attestationObject: string;
-    transports?: AuthenticatorTransport[];
-  };
-  authenticatorAttachment?: string;
-  clientExtensionResults: Record<string, unknown>;
-  type: string;
-}
-
-interface AuthenticationResponseJSON {
-  id: string;
-  rawId: string;
-  response: {
-    clientDataJSON: string;
-    authenticatorData: string;
-    signature: string;
-    userHandle?: string;
-  };
-  authenticatorAttachment?: string;
-  clientExtensionResults: Record<string, unknown>;
-  type: string;
-}
-
-interface PublicKeyCredentialCreationOptionsJSON {
-  challenge: string;
-  rp: { name: string; id?: string };
-  user: { id: string; name: string; displayName: string };
-  pubKeyCredParams: Array<{ alg: number; type: string }>;
-  timeout?: number;
-  excludeCredentials?: Array<{ id: string; type: string; transports?: AuthenticatorTransport[] }>;
-  authenticatorSelection?: {
-    authenticatorAttachment?: string;
-    requireResidentKey?: boolean;
-    residentKey?: string;
-    userVerification?: string;
-  };
-  attestation?: string;
-}
-
-interface PublicKeyCredentialRequestOptionsJSON {
-  challenge: string;
-  timeout?: number;
-  rpId?: string;
-  allowCredentials?: Array<{ id: string; type: string; transports?: AuthenticatorTransport[] }>;
-  userVerification?: string;
-}
 
 // Config
 const RP_NAME = 'Auxite Wallet';
-const RP_ID = process.env.WEBAUTHN_RP_ID || 'localhost'; // Production: 'auxitewallet.com'
+const RP_ID = process.env.WEBAUTHN_RP_ID || 'localhost';
 const ORIGIN = process.env.WEBAUTHN_ORIGIN || 'http://localhost:3000';
 
 /**
@@ -124,12 +65,12 @@ export async function createRegistrationOptions(
   walletAddress: string,
   userName: string,
   existingAuthenticators: StoredAuthenticator[] = []
-): Promise<PublicKeyCredentialCreationOptionsJSON> {
+) {
   // Mevcut authenticator'ları exclude et
   const excludeCredentials = existingAuthenticators.map(auth => ({
     id: auth.credentialId,
     type: 'public-key' as const,
-    transports: auth.transports as AuthenticatorTransport[] | undefined,
+    transports: auth.transports as any,
   }));
 
   const options = await generateRegistrationOptions({
@@ -159,7 +100,7 @@ export async function createRegistrationOptions(
  */
 export async function verifyRegistration(
   walletAddress: string,
-  response: RegistrationResponseJSON,
+  response: any,
   expectedChallenge?: string
 ): Promise<{
   verified: boolean;
@@ -212,11 +153,11 @@ export async function verifyRegistration(
 export async function createAuthenticationOptions(
   walletAddress: string,
   authenticators: StoredAuthenticator[]
-): Promise<PublicKeyCredentialRequestOptionsJSON> {
+) {
   const allowCredentials = authenticators.map(auth => ({
     id: auth.credentialId,
     type: 'public-key' as const,
-    transports: auth.transports as AuthenticatorTransport[] | undefined,
+    transports: auth.transports as any,
   }));
 
   const options = await generateAuthenticationOptions({
@@ -236,7 +177,7 @@ export async function createAuthenticationOptions(
  */
 export async function verifyAuthentication(
   walletAddress: string,
-  response: AuthenticationResponseJSON,
+  response: any,
   authenticators: StoredAuthenticator[],
   expectedChallenge?: string
 ): Promise<{
@@ -271,7 +212,7 @@ export async function verifyAuthentication(
         credentialID: Buffer.from(authenticator.credentialId, 'base64url'),
         credentialPublicKey: Buffer.from(authenticator.credentialPublicKey, 'base64'),
         counter: authenticator.counter,
-        transports: authenticator.transports as AuthenticatorTransport[] | undefined,
+        transports: authenticator.transports as any,
       },
     });
 
