@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
         const balanceKey = plan.paymentSource.replace('_balance', '');
         const balances = await redis.hgetall('balances:' + walletAddress);
-        const sourceBalance = parseFloat(balances?.[balanceKey] || '0');
+        const sourceBalance = parseFloat((balances as Record<string, string>)?.[balanceKey] || '0');
 
         if (sourceBalance < plan.amount) {
           await sendNotification(walletAddress, {
