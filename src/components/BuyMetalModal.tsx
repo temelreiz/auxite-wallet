@@ -1,330 +1,354 @@
 "use client";
-
 import { useState, useEffect } from "react";
-import { useWallet } from "@/components/WalletContext";
-import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 
 interface BuyMetalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  lang?: "tr" | "en";
-  initialMetal?: string;
+  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
-const metals = [
-  { symbol: "AUXG", name: { tr: "Altın", en: "Gold" }, icon: "🥇", color: "yellow" },
-  { symbol: "AUXS", name: { tr: "Gümüş", en: "Silver" }, icon: "🥈", color: "gray" },
-  { symbol: "AUXPT", name: { tr: "Platin", en: "Platinum" }, icon: "💎", color: "cyan" },
-  { symbol: "AUXPD", name: { tr: "Paladyum", en: "Palladium" }, icon: "🔷", color: "orange" },
+// 6-Language Translations
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    buyMetal: "Metal Satın Al",
+    selectMetal: "Metal Seçin",
+    youPay: "Ödeme",
+    youReceive: "Alacağınız",
+    balance: "Bakiye",
+    total: "Toplam",
+    transactionFee: "İşlem Ücreti",
+    getQuote: "Fiyat Al",
+    confirm: "Onayla",
+    processing: "İşleniyor...",
+    success: "Başarılı!",
+    insufficientBalance: "Yetersiz bakiye",
+    minAmount: "Minimum miktar",
+    maxAmount: "Maksimum miktar",
+    enterAmount: "Miktar girin",
+    gold: "Altın",
+    silver: "Gümüş",
+    platinum: "Platin",
+    palladium: "Paladyum",
+  },
+  en: {
+    buyMetal: "Buy Metal",
+    selectMetal: "Select Metal",
+    youPay: "You Pay",
+    youReceive: "You Receive",
+    balance: "Balance",
+    total: "Total",
+    transactionFee: "Transaction fee",
+    getQuote: "Get Quote",
+    confirm: "Confirm",
+    processing: "Processing...",
+    success: "Success!",
+    insufficientBalance: "Insufficient balance",
+    minAmount: "Minimum amount",
+    maxAmount: "Maximum amount",
+    enterAmount: "Enter amount",
+    gold: "Gold",
+    silver: "Silver",
+    platinum: "Platinum",
+    palladium: "Palladium",
+  },
+  de: {
+    buyMetal: "Metall kaufen",
+    selectMetal: "Metall auswählen",
+    youPay: "Sie zahlen",
+    youReceive: "Sie erhalten",
+    balance: "Guthaben",
+    total: "Gesamt",
+    transactionFee: "Transaktionsgebühr",
+    getQuote: "Angebot anfordern",
+    confirm: "Bestätigen",
+    processing: "Verarbeitung...",
+    success: "Erfolgreich!",
+    insufficientBalance: "Unzureichendes Guthaben",
+    minAmount: "Mindestbetrag",
+    maxAmount: "Höchstbetrag",
+    enterAmount: "Betrag eingeben",
+    gold: "Gold",
+    silver: "Silber",
+    platinum: "Platin",
+    palladium: "Palladium",
+  },
+  fr: {
+    buyMetal: "Acheter du Métal",
+    selectMetal: "Sélectionner le métal",
+    youPay: "Vous payez",
+    youReceive: "Vous recevez",
+    balance: "Solde",
+    total: "Total",
+    transactionFee: "Frais de transaction",
+    getQuote: "Obtenir un devis",
+    confirm: "Confirmer",
+    processing: "Traitement...",
+    success: "Succès !",
+    insufficientBalance: "Solde insuffisant",
+    minAmount: "Montant minimum",
+    maxAmount: "Montant maximum",
+    enterAmount: "Entrez le montant",
+    gold: "Or",
+    silver: "Argent",
+    platinum: "Platine",
+    palladium: "Palladium",
+  },
+  ar: {
+    buyMetal: "شراء المعدن",
+    selectMetal: "اختر المعدن",
+    youPay: "تدفع",
+    youReceive: "تستلم",
+    balance: "الرصيد",
+    total: "المجموع",
+    transactionFee: "رسوم المعاملة",
+    getQuote: "احصل على عرض",
+    confirm: "تأكيد",
+    processing: "جاري المعالجة...",
+    success: "نجاح!",
+    insufficientBalance: "رصيد غير كافٍ",
+    minAmount: "الحد الأدنى للمبلغ",
+    maxAmount: "الحد الأقصى للمبلغ",
+    enterAmount: "أدخل المبلغ",
+    gold: "ذهب",
+    silver: "فضة",
+    platinum: "بلاتين",
+    palladium: "بالاديوم",
+  },
+  ru: {
+    buyMetal: "Купить металл",
+    selectMetal: "Выберите металл",
+    youPay: "Вы платите",
+    youReceive: "Вы получите",
+    balance: "Баланс",
+    total: "Итого",
+    transactionFee: "Комиссия",
+    getQuote: "Получить котировку",
+    confirm: "Подтвердить",
+    processing: "Обработка...",
+    success: "Успешно!",
+    insufficientBalance: "Недостаточно средств",
+    minAmount: "Минимальная сумма",
+    maxAmount: "Максимальная сумма",
+    enterAmount: "Введите сумму",
+    gold: "Золото",
+    silver: "Серебро",
+    platinum: "Платина",
+    palladium: "Палладий",
+  },
+};
+
+const METALS = [
+  { symbol: "AUXG", name: "gold", icon: "/gold-favicon-32x32.png", price: 140 },
+  { symbol: "AUXS", name: "silver", icon: "/silver-favicon-32x32.png", price: 2 },
+  { symbol: "AUXPT", name: "platinum", icon: "/platinum-favicon-32x32.png", price: 58 },
+  { symbol: "AUXPD", name: "palladium", icon: "/palladium-favicon-32x32.png", price: 50 },
 ];
 
-const paymentMethods = [
-  { id: "AUXM", name: "AUXM", icon: "💵" },
-  { id: "ETH", name: "ETH", icon: "Ξ" },
-  { id: "BTC", name: "BTC", icon: "₿" },
+const PAYMENT_METHODS = [
+  { symbol: "AUXM", icon: "💵", name: "AUXM" },
+  { symbol: "ETH", icon: "Ξ", name: "ETH" },
+  { symbol: "BTC", icon: "₿", name: "BTC" },
 ];
 
-export function BuyMetalModal({ isOpen, onClose, lang = "en", initialMetal }: BuyMetalModalProps) {
-  const { balances, isConnected, refreshBalances, address } = useWallet();
-  const { prices: metalPrices } = useMetalsPrices();
+export function BuyMetalModal({ isOpen, onClose, lang = "en" }: BuyMetalModalProps) {
+  const t = translations[lang] || translations.en;
   
-  const auxmBalance = balances?.auxm ?? 0;
-  const bonusAuxm = balances?.bonusAuxm ?? 0;
-  const ethBalance = balances?.eth ?? 0;
-  const btcBalance = balances?.btc ?? 0;
-  
-  const [selectedMetal, setSelectedMetal] = useState(initialMetal || "AUXG");
+  const [selectedMetal, setSelectedMetal] = useState(METALS[0]);
+  const [selectedPayment, setSelectedPayment] = useState(PAYMENT_METHODS[0]);
   const [amount, setAmount] = useState("");
-  const [selectedPayment, setSelectedPayment] = useState("AUXM");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<{toAmount: number; toToken: string} | null>(null);
+  
+  // Mock balances
+  const balances: Record<string, number> = {
+    AUXM: 375.01,
+    ETH: 0.658,
+    BTC: 0.000001,
+  };
 
-  useEffect(() => {
-    if (isOpen) {
-      setAmount("");
-      setSelectedPayment("AUXM");
-      setError(null);
-      setSuccess(null);
-      if (initialMetal) setSelectedMetal(initialMetal);
-    }
-  }, [isOpen, initialMetal]);
+  const balance = balances[selectedPayment.symbol] || 0;
+  const amountNum = parseFloat(amount) || 0;
+  const receiveAmount = selectedPayment.symbol === "AUXM" 
+    ? amountNum / selectedMetal.price 
+    : amountNum * (selectedPayment.symbol === "ETH" ? 3100 : 95000) / selectedMetal.price;
 
   if (!isOpen) return null;
 
-  const currentMetal = metals.find(m => m.symbol === selectedMetal) || metals[0];
-  const metalPrice = metalPrices?.[selectedMetal as keyof typeof metalPrices] || 100;
-  
-  const amountNum = parseFloat(amount) || 0;
-  
-  const getAvailableBalance = (pm: string) => {
-    switch (pm) {
-      case "AUXM": return auxmBalance + bonusAuxm;
-      case "ETH": return ethBalance;
-      case "BTC": return btcBalance;
-      default: return 0;
-    }
-  };
-
-  const availableBalance = getAvailableBalance(selectedPayment);
-  const metalAmount = amountNum / metalPrice;
-  const hasInsufficientBalance = amountNum > availableBalance;
-
-  const calculateBonusUsage = () => {
-    if (selectedPayment !== "AUXM" || amountNum <= 0) {
-      return { usedBonus: 0, usedRegular: amountNum };
-    }
-    if (bonusAuxm >= amountNum) {
-      return { usedBonus: amountNum, usedRegular: 0 };
-    }
-    return { usedBonus: bonusAuxm, usedRegular: amountNum - bonusAuxm };
-  };
-
-  const bonusUsage = calculateBonusUsage();
-
-  const handleBuy = async () => {
-    if (!isConnected || !address || amountNum <= 0 || hasInsufficientBalance) return;
-    
+  const handleGetQuote = () => {
+    if (amountNum <= 0 || amountNum > balance) return;
     setIsProcessing(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const response = await fetch("/api/trade", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          address,
-          type: "buy",
-          fromToken: selectedPayment,
-          toToken: selectedMetal,
-          fromAmount: amountNum,
-          price: metalPrice,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Trade failed");
-      }
-
-      setSuccess({
-        toAmount: data.transaction.toAmount,
-        toToken: data.transaction.toToken,
-      });
-
-      await refreshBalances();
-
-      setTimeout(() => {
-        onClose();
-      }, 2000);
-
-    } catch (err) {
-      console.error("Buy error:", err);
-      setError(err instanceof Error ? err.message : "Transaction failed");
-    } finally {
+    setTimeout(() => {
       setIsProcessing(false);
-    }
-  };
-
-  const t = {
-    title: lang === "tr" ? "Metal Satın Al" : "Buy Metal",
-    selectMetal: lang === "tr" ? "Metal Seç" : "Select Metal",
-    youPay: lang === "tr" ? "Ödeyeceğiniz" : "You Pay",
-    youReceive: lang === "tr" ? "Alacağınız" : "You Receive",
-    balance: lang === "tr" ? "Bakiye" : "Balance",
-    bonus: lang === "tr" ? "Bonus" : "Bonus",
-    total: lang === "tr" ? "Toplam" : "Total",
-    insufficientBalance: lang === "tr" ? "Yetersiz bakiye" : "Insufficient balance",
-    buy: lang === "tr" ? "Satın Al" : "Buy",
-    processing: lang === "tr" ? "İşleniyor..." : "Processing...",
-    connectWallet: lang === "tr" ? "Cüzdan Bağlayın" : "Connect Wallet",
-    success: lang === "tr" ? "Başarılı!" : "Success!",
-    received: lang === "tr" ? "aldınız" : "received",
-    fee: lang === "tr" ? "İşlem ücreti" : "Transaction fee",
+      // Quote logic here
+    }, 1500);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-slate-900 rounded-2xl border border-slate-800 shadow-xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/80 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 w-full max-w-md shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-800 sticky top-0 bg-slate-900">
-          <h2 className="text-lg font-semibold text-white">{t.title}</h2>
-          <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg text-xl text-slate-400">
-            ✕
+        <div className="flex items-center justify-between p-5 border-b border-stone-200 dark:border-slate-800">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t.buyMetal}</h3>
+          <button 
+            onClick={onClose} 
+            className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
+          >
+            <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
-          {/* Success Message */}
-          {success && (
-            <div className="p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-center">
-              <div className="text-3xl mb-2">✅</div>
-              <p className="text-emerald-400 font-semibold">{t.success}</p>
-              <p className="text-white">
-                {success.toAmount.toFixed(4)}g {success.toToken} {t.received}
-              </p>
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
-              <p className="text-red-400 text-sm">{error}</p>
-            </div>
-          )}
-
-          {!success && (
-            <>
-              {/* Metal Selection */}
-              <div>
-                <label className="text-sm text-slate-400 mb-2 block">{t.selectMetal}</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {metals.map((metal) => (
-                    <button
-                      key={metal.symbol}
-                      onClick={() => setSelectedMetal(metal.symbol)}
-                      className={`p-3 rounded-xl text-center transition-all ${
-                        selectedMetal === metal.symbol
-                          ? "bg-emerald-500/20 border-2 border-emerald-500"
-                          : "bg-slate-800 border-2 border-slate-700 hover:border-slate-600"
-                      }`}
-                    >
-                      <div className="text-2xl mb-1">{metal.icon}</div>
-                      <div className="text-xs font-medium text-slate-300">{metal.symbol}</div>
-                      <div className="text-xs text-slate-500">${metalPrices?.[metal.symbol as keyof typeof metalPrices]?.toFixed(0) || "..."}/g</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Payment Method */}
-              <div>
-                <label className="text-sm text-slate-400 mb-2 block">{t.youPay}</label>
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  {paymentMethods.map((pm) => (
-                    <button
-                      key={pm.id}
-                      onClick={() => setSelectedPayment(pm.id)}
-                      className={`p-3 rounded-xl text-center transition-all ${
-                        selectedPayment === pm.id
-                          ? "bg-purple-500/20 border-2 border-purple-500"
-                          : "bg-slate-800 border-2 border-slate-700"
-                      }`}
-                    >
-                      <div className="text-xl mb-1">{pm.icon}</div>
-                      <div className="text-xs font-medium text-slate-300">{pm.name}</div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Balance Info */}
-                <div className="flex items-center justify-between text-xs mb-2 px-1">
-                  <span className="text-slate-500">{t.balance}:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white font-mono">
-                      {selectedPayment === "AUXM" ? auxmBalance.toFixed(2) : availableBalance.toFixed(6)} {selectedPayment}
-                    </span>
-                    {selectedPayment === "AUXM" && bonusAuxm > 0 && (
-                      <span className="text-purple-400 font-mono">+{bonusAuxm.toFixed(2)} {t.bonus}</span>
-                    )}
-                  </div>
-                </div>
-
-                {selectedPayment === "AUXM" && (
-                  <div className="flex items-center justify-between text-xs mb-2 px-1">
-                    <span className="text-slate-500">{t.total}:</span>
-                    <span className="text-white font-mono font-medium">{(auxmBalance + bonusAuxm).toFixed(2)} AUXM</span>
-                  </div>
-                )}
-
-                {/* Amount Input */}
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    className={`w-full px-4 py-4 bg-slate-800 border rounded-xl text-white text-xl font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
-                      hasInsufficientBalance ? "border-red-500" : "border-slate-700"
-                    }`}
-                  />
-                  <button
-                    onClick={() => setAmount(availableBalance.toFixed(2))}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
-                  >
-                    MAX
-                  </button>
-                </div>
-                {hasInsufficientBalance && (
-                  <p className="text-red-400 text-xs mt-1">{t.insufficientBalance}</p>
-                )}
-              </div>
-
-              {/* Arrow */}
-              <div className="flex justify-center">
-                <div className="p-2 bg-slate-800 rounded-full text-emerald-400 text-xl">↓</div>
-              </div>
-
-              {/* Metal Amount */}
-              <div>
-                <label className="text-sm text-slate-400 mb-2 block">{t.youReceive}</label>
-                <div className="flex items-center gap-3 p-4 bg-slate-800/50 border border-slate-700 rounded-xl">
-                  <span className="text-3xl">{currentMetal.icon}</span>
-                  <div className="flex-1">
-                    <div className="text-white text-xl font-mono">
-                      {metalAmount.toFixed(4)}g {currentMetal.symbol}
-                    </div>
-                    <div className="text-slate-400 text-sm">
-                      @ ${metalPrice.toFixed(2)}/gram
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bonus Usage */}
-              {selectedPayment === "AUXM" && bonusAuxm > 0 && amountNum > 0 && (
-                <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-xl">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-purple-300">💜 {t.bonus} kullanımı:</span>
-                    <span className="text-purple-400 font-mono">{bonusUsage.usedBonus.toFixed(2)} AUXM</span>
-                  </div>
-                  {bonusUsage.usedRegular > 0 && (
-                    <div className="flex items-center justify-between text-sm mt-1">
-                      <span className="text-slate-400">Normal:</span>
-                      <span className="text-white font-mono">{bonusUsage.usedRegular.toFixed(2)} AUXM</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Fee Info */}
-              <div className="p-3 bg-slate-800/50 rounded-xl text-xs text-slate-400">
-                <div className="flex justify-between">
-                  <span>{t.fee}:</span>
-                  <span>0.1%</span>
-                </div>
-              </div>
-
-              {/* Buy Button */}
-              <button
-                onClick={handleBuy}
-                disabled={!isConnected || amountNum <= 0 || hasInsufficientBalance || isProcessing}
-                className={`w-full py-4 rounded-xl font-semibold text-white text-lg transition-all ${
-                  !isConnected || amountNum <= 0 || hasInsufficientBalance || isProcessing
-                    ? "bg-slate-700 cursor-not-allowed"
-                    : "bg-emerald-500 hover:bg-emerald-600"
-                }`}
-              >
-                {isProcessing ? (
-                  <span className="flex items-center justify-center gap-2">
-                    ⏳ {t.processing}
+        {/* Content */}
+        <div className="p-5 space-y-5">
+          {/* Select Metal */}
+          <div>
+            <label className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2 block">
+              {t.selectMetal}
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {METALS.map((metal) => (
+                <button
+                  key={metal.symbol}
+                  onClick={() => setSelectedMetal(metal)}
+                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${
+                    selectedMetal.symbol === metal.symbol
+                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/20"
+                      : "border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50 hover:border-stone-300 dark:hover:border-slate-600"
+                  }`}
+                >
+                  <img src={metal.icon} alt={metal.symbol} className="w-8 h-8" />
+                  <span className={`text-xs font-semibold ${
+                    selectedMetal.symbol === metal.symbol 
+                      ? "text-emerald-600 dark:text-emerald-400" 
+                      : "text-slate-700 dark:text-slate-300"
+                  }`}>
+                    {metal.symbol}
                   </span>
-                ) : !isConnected ? t.connectWallet : `${t.buy} ${currentMetal.symbol}`}
+                  <span className="text-[10px] text-slate-500 dark:text-slate-500">
+                    ${metal.price}/g
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* You Pay */}
+          <div>
+            <label className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2 block">
+              {t.youPay}
+            </label>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {PAYMENT_METHODS.map((method) => (
+                <button
+                  key={method.symbol}
+                  onClick={() => setSelectedPayment(method)}
+                  className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${
+                    selectedPayment.symbol === method.symbol
+                      ? "border-purple-500 bg-purple-50 dark:bg-purple-500/20"
+                      : "border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50 hover:border-stone-300 dark:hover:border-slate-600"
+                  }`}
+                >
+                  <span className="text-xl">{method.icon}</span>
+                  <span className={`text-xs font-semibold ${
+                    selectedPayment.symbol === method.symbol 
+                      ? "text-purple-600 dark:text-purple-400" 
+                      : "text-slate-700 dark:text-slate-300"
+                  }`}>
+                    {method.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Balance & Total */}
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-slate-500 dark:text-slate-500">{t.balance}:</span>
+              <span className="text-slate-700 dark:text-slate-300 font-medium">{balance.toFixed(2)} {selectedPayment.symbol}</span>
+            </div>
+            <div className="flex justify-between text-sm mb-3">
+              <span className="text-slate-500 dark:text-slate-500">{t.total}:</span>
+              <span className="text-slate-700 dark:text-slate-300 font-medium">{balance.toFixed(2)} {selectedPayment.symbol}</span>
+            </div>
+
+            {/* Amount Input */}
+            <div className="relative">
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                className="w-full px-4 py-4 pr-20 rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 text-lg font-medium"
+              />
+              <button
+                onClick={() => setAmount(balance.toString())}
+                className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-stone-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-stone-300 dark:hover:bg-slate-600 text-sm font-medium transition-colors"
+              >
+                MAX
               </button>
-            </>
-          )}
+            </div>
+          </div>
+
+          {/* Arrow */}
+          <div className="flex justify-center">
+            <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 flex items-center justify-center">
+              <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </div>
+          </div>
+
+          {/* You Receive */}
+          <div>
+            <label className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2 block">
+              {t.youReceive}
+            </label>
+            <div className="p-4 rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700">
+              <div className="flex items-center gap-3">
+                <img src={selectedMetal.icon} alt={selectedMetal.symbol} className="w-10 h-10" />
+                <div>
+                  <span className="text-xl font-bold text-slate-800 dark:text-white">
+                    {receiveAmount.toFixed(4)}g
+                  </span>
+                  <span className="text-lg text-slate-600 dark:text-slate-400 ml-2">
+                    {selectedMetal.symbol}
+                  </span>
+                  <p className="text-xs text-slate-500 dark:text-slate-500">
+                    @ ${selectedMetal.price.toFixed(2)}/gram
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Transaction Fee */}
+          <div className="flex justify-between text-sm p-3 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
+            <span className="text-slate-500 dark:text-slate-500">{t.transactionFee}:</span>
+            <span className="text-slate-700 dark:text-slate-300 font-medium">0.1%</span>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-5 border-t border-stone-200 dark:border-slate-800">
+          <button
+            onClick={handleGetQuote}
+            disabled={amountNum <= 0 || amountNum > balance || isProcessing}
+            className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-700 dark:disabled:to-slate-700 text-white disabled:text-slate-500 font-semibold transition-all flex items-center justify-center gap-2"
+          >
+            {isProcessing ? (
+              <>
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                {t.processing}
+              </>
+            ) : (
+              <>
+                <span>🔒</span>
+                {t.getQuote}
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

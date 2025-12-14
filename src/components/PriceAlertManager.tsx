@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 /**
  * Price Alert Component
@@ -20,11 +21,10 @@ interface PriceAlert {
 
 interface Props {
   walletAddress: string;
-  lang: "tr" | "en";
   currentPrices?: Record<string, number>;
 }
 
-const t = {
+const localTranslations = {
   tr: {
     title: "Fiyat Uyarıları",
     subtitle: "Hedef fiyatlara ulaşıldığında bildirim alın",
@@ -86,8 +86,9 @@ const TOKENS = [
   { symbol: "AUXS", name: "Silver", icon: "🥈" },
 ];
 
-export function PriceAlertManager({ walletAddress, lang, currentPrices = {} }: Props) {
-  const labels = t[lang];
+export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) {
+  const { lang } = useLanguage();
+  const labels = localTranslations[lang as "tr" | "en"] || localTranslations.en;
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);

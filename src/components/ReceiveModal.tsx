@@ -2,21 +2,91 @@
 
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface ReceiveModalProps {
   isOpen: boolean;
   onClose: () => void;
-  lang?: "tr" | "en";
+  lang?: string;
   walletAddress?: string;
 }
 
-export function ReceiveModal({ isOpen, onClose, lang = "en", walletAddress }: ReceiveModalProps) {
+// ============================================
+// LOCAL TRANSLATIONS - 6 Language Support
+// ============================================
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    title: "Token Al",
+    shareInfo: "Bu adresi paylaşarak AUXG, AUXS, AUXPT, AUXPD veya ETH alabilirsiniz.",
+    walletAddress: "Cüzdan Adresi",
+    copy: "Kopyala",
+    copied: "Kopyalandı!",
+    share: "Paylaş",
+    supportedTokens: "Desteklenen Tokenlar",
+    warning: "Sadece desteklenen tokenları bu adrese gönderin. Diğer tokenları göndermek kayba neden olabilir.",
+  },
+  en: {
+    title: "Receive Tokens",
+    shareInfo: "Share this address to receive AUXG, AUXS, AUXPT, AUXPD or ETH.",
+    walletAddress: "Wallet Address",
+    copy: "Copy",
+    copied: "Copied!",
+    share: "Share",
+    supportedTokens: "Supported Tokens",
+    warning: "Only send supported tokens to this address. Sending other tokens may result in loss.",
+  },
+  de: {
+    title: "Token Empfangen",
+    shareInfo: "Teilen Sie diese Adresse, um AUXG, AUXS, AUXPT, AUXPD oder ETH zu empfangen.",
+    walletAddress: "Wallet-Adresse",
+    copy: "Kopieren",
+    copied: "Kopiert!",
+    share: "Teilen",
+    supportedTokens: "Unterstützte Token",
+    warning: "Senden Sie nur unterstützte Token an diese Adresse. Das Senden anderer Token kann zu Verlust führen.",
+  },
+  fr: {
+    title: "Recevoir des Tokens",
+    shareInfo: "Partagez cette adresse pour recevoir AUXG, AUXS, AUXPT, AUXPD ou ETH.",
+    walletAddress: "Adresse du Portefeuille",
+    copy: "Copier",
+    copied: "Copié!",
+    share: "Partager",
+    supportedTokens: "Tokens Supportés",
+    warning: "N'envoyez que des tokens supportés à cette adresse. L'envoi d'autres tokens peut entraîner une perte.",
+  },
+  ar: {
+    title: "استلام التوكنات",
+    shareInfo: "شارك هذا العنوان لاستلام AUXG، AUXS، AUXPT، AUXPD أو ETH.",
+    walletAddress: "عنوان المحفظة",
+    copy: "نسخ",
+    copied: "تم النسخ!",
+    share: "مشاركة",
+    supportedTokens: "التوكنات المدعومة",
+    warning: "أرسل فقط التوكنات المدعومة إلى هذا العنوان. إرسال توكنات أخرى قد يؤدي إلى خسارة.",
+  },
+  ru: {
+    title: "Получить Токены",
+    shareInfo: "Поделитесь этим адресом для получения AUXG, AUXS, AUXPT, AUXPD или ETH.",
+    walletAddress: "Адрес Кошелька",
+    copy: "Копировать",
+    copied: "Скопировано!",
+    share: "Поделиться",
+    supportedTokens: "Поддерживаемые Токены",
+    warning: "Отправляйте только поддерживаемые токены на этот адрес. Отправка других токенов может привести к потере.",
+  },
+};
+
+export function ReceiveModal({ isOpen, onClose, lang: propLang, walletAddress }: ReceiveModalProps) {
+  const { lang: contextLang } = useLanguage();
+  const lang = propLang || contextLang || "en";
+  const t = translations[lang] || translations.en;
+  
   const [copied, setCopied] = useState(false);
   const [selectedNetwork, setSelectedNetwork] = useState<"ETH" | "BASE">("ETH");
 
   if (!isOpen) return null;
 
-  // Demo address if not provided
   const address = walletAddress || "0xe6df1234567890abcdef1234567890abcdef3ba3";
 
   const copyToClipboard = async () => {
@@ -44,7 +114,6 @@ export function ReceiveModal({ isOpen, onClose, lang = "en", walletAddress }: Re
     }
   };
 
-  // QR kod için URI
   const getQRValue = () => {
     return `ethereum:${address}`;
   };
@@ -59,13 +128,8 @@ export function ReceiveModal({ isOpen, onClose, lang = "en", walletAddress }: Re
       <div className="bg-slate-900 rounded-2xl border border-slate-700 w-full max-w-sm">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-800">
-          <h2 className="text-lg font-bold text-white">
-            {lang === "tr" ? "Token Al" : "Receive Tokens"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-          >
+          <h2 className="text-lg font-bold text-white">{t.title}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
             <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -74,12 +138,7 @@ export function ReceiveModal({ isOpen, onClose, lang = "en", walletAddress }: Re
 
         {/* Content */}
         <div className="p-4">
-          {/* Info Text */}
-          <p className="text-sm text-slate-400 mb-4 text-center">
-            {lang === "tr" 
-              ? "Bu adresi paylaşarak AUXG, AUXS, AUXPT, AUXPD veya ETH alabilirsiniz." 
-              : "Share this address to receive AUXG, AUXS, AUXPT, AUXPD or ETH."}
-          </p>
+          <p className="text-sm text-slate-400 mb-4 text-center">{t.shareInfo}</p>
 
           {/* Network Selection */}
           <div className="flex gap-2 mb-4">
@@ -94,10 +153,7 @@ export function ReceiveModal({ isOpen, onClose, lang = "en", walletAddress }: Re
                 }`}
               >
                 <div className="flex items-center justify-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: network.color }}
-                  />
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: network.color }} />
                   {network.name}
                 </div>
               </button>
@@ -124,9 +180,9 @@ export function ReceiveModal({ isOpen, onClose, lang = "en", walletAddress }: Re
 
           {/* Network Badge */}
           <div className="flex justify-center mb-4">
-            <span 
+            <span
               className="px-3 py-1 rounded-full text-xs font-medium text-white"
-              style={{ backgroundColor: networks.find(n => n.id === selectedNetwork)?.color }}
+              style={{ backgroundColor: networks.find((n) => n.id === selectedNetwork)?.color }}
             >
               {selectedNetwork === "ETH" ? "Ethereum Mainnet" : "Base Network"}
             </span>
@@ -135,9 +191,7 @@ export function ReceiveModal({ isOpen, onClose, lang = "en", walletAddress }: Re
           {/* Address */}
           <div className="bg-slate-800 rounded-xl p-3 mb-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-slate-400 text-xs font-medium">
-                {lang === "tr" ? "Cüzdan Adresi" : "Wallet Address"}
-              </span>
+              <span className="text-slate-400 text-xs font-medium">{t.walletAddress}</span>
               <button
                 onClick={copyToClipboard}
                 className={`text-xs font-medium transition-colors flex items-center gap-1 ${
@@ -149,34 +203,27 @@ export function ReceiveModal({ isOpen, onClose, lang = "en", walletAddress }: Re
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    {lang === "tr" ? "Kopyalandı!" : "Copied!"}
+                    {t.copied}
                   </>
                 ) : (
                   <>
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
-                    {lang === "tr" ? "Kopyala" : "Copy"}
+                    {t.copy}
                   </>
                 )}
               </button>
             </div>
-            <p className="text-white font-mono text-xs break-all select-all leading-relaxed">
-              {address}
-            </p>
+            <p className="text-white font-mono text-xs break-all select-all leading-relaxed">{address}</p>
           </div>
 
           {/* Supported Tokens */}
           <div className="bg-slate-800/50 rounded-xl p-3 mb-4">
-            <p className="text-xs text-slate-400 mb-2">
-              {lang === "tr" ? "Desteklenen Tokenlar" : "Supported Tokens"}
-            </p>
+            <p className="text-xs text-slate-400 mb-2">{t.supportedTokens}</p>
             <div className="flex flex-wrap gap-2">
               {["AUXG", "AUXS", "AUXPT", "AUXPD", "ETH"].map((token) => (
-                <span 
-                  key={token}
-                  className="px-2 py-1 rounded-md bg-slate-700 text-slate-300 text-xs font-medium"
-                >
+                <span key={token} className="px-2 py-1 rounded-md bg-slate-700 text-slate-300 text-xs font-medium">
                   {token}
                 </span>
               ))}
@@ -189,11 +236,7 @@ export function ReceiveModal({ isOpen, onClose, lang = "en", walletAddress }: Re
               <svg className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              <p className="text-xs text-amber-400/80">
-                {lang === "tr" 
-                  ? "Sadece desteklenen tokenları bu adrese gönderin. Diğer tokenları göndermek kayba neden olabilir." 
-                  : "Only send supported tokens to this address. Sending other tokens may result in loss."}
-              </p>
+              <p className="text-xs text-amber-400/80">{t.warning}</p>
             </div>
           </div>
 
@@ -202,9 +245,7 @@ export function ReceiveModal({ isOpen, onClose, lang = "en", walletAddress }: Re
             <button
               onClick={copyToClipboard}
               className={`py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
-                copied 
-                  ? "bg-emerald-500 text-white" 
-                  : "bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white"
+                copied ? "bg-emerald-500 text-white" : "bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white"
               }`}
             >
               {copied ? (
@@ -212,25 +253,25 @@ export function ReceiveModal({ isOpen, onClose, lang = "en", walletAddress }: Re
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  {lang === "tr" ? "Kopyalandı" : "Copied"}
+                  {t.copied.replace("!", "")}
                 </>
               ) : (
                 <>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
-                  {lang === "tr" ? "Kopyala" : "Copy"}
+                  {t.copy}
                 </>
               )}
             </button>
-            <button 
+            <button
               onClick={shareAddress}
               className="py-3 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-semibold transition-colors flex items-center justify-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
-              {lang === "tr" ? "Paylaş" : "Share"}
+              {t.share}
             </button>
           </div>
         </div>

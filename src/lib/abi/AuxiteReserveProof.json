@@ -1,0 +1,43 @@
+[
+  {
+    "inputs": [{ "internalType": "bytes32", "name": "metalId", "type": "bytes32" }],
+    "name": "getMetalReserve",
+    "outputs": [
+      { "internalType": "uint256", "name": "grams", "type": "uint256" },
+      { "internalType": "uint256", "name": "lastUpdate", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "isProofValid",
+    "outputs": [
+      { "internalType": "bool", "name": "isValid", "type": "bool" },
+      { "internalType": "uint256", "name": "age", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getLatestSnapshot",
+    "outputs": [
+      { "internalType": "bytes32", "name": "reportHash", "type": "bytes32" },
+      { "internalType": "uint256", "name": "reportTimestamp", "type": "uint256" },
+      { "internalType": "uint256", "name": "blockTime", "type": "uint256" },
+      { "internalType": "address", "name": "submittedBy", "type": "address" },
+      { "internalType": "string", "name": "auditorName", "type": "string" },
+      { "internalType": "string", "name": "reportUri", "type": "string" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "snapshotCount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

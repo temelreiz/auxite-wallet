@@ -154,6 +154,16 @@ export async function POST(request: NextRequest) {
         };
         break;
 
+      case 'selfie':
+        // Selfie fotoğrafı
+        if (!data.selfieImageId) {
+          return NextResponse.json({ error: 'Selfie fotoğrafı gerekli' }, { status: 400 });
+        }
+        if (kyc.documents) {
+          kyc.documents.selfieImageId = data.selfieImageId;
+        }
+        break;
+
       case 'submit':
         // Doğrulama için gönder
         if (kyc.status === 'pending' || kyc.status === 'under_review') {

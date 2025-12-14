@@ -67,7 +67,44 @@ const DEFAULT_BALANCES: UserBalances = {
 };
 
 export function WalletProvider({ children }: { children: ReactNode }) {
+
   const { address: wagmiAddress, isConnected: wagmiConnected, chainId: wagmiChainId } = useAccount();
+  // Storage keys
+  const STORAGE_KEYS = {
+    HAS_WALLET: "auxite_has_wallet",
+    WALLET_ADDRESS: "auxite_wallet_address",
+    WALLET_MODE: "auxite_wallet_mode",
+    SESSION_UNLOCKED: "auxite_session_unlocked",
+  };
+
+  // Local wallet state
+  const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
+  const [walletMode, setWalletMode] = useState<string | null>(null);
+  const [isSessionUnlocked, setIsSessionUnlocked] = useState(false);
+
+  // Load local wallet on mount
+  useEffect(() => {
+    const savedMode = localStorage.getItem(STORAGE_KEYS.WALLET_MODE);
+    const hasLocalWallet = localStorage.getItem(STORAGE_KEYS.HAS_WALLET);
+    const localAddress = localStorage.getItem(STORAGE_KEYS.WALLET_ADDRESS);
+    const sessionUnlocked = sessionStorage.getItem(STORAGE_KEYS.SESSION_UNLOCKED);
+    
+    setWalletMode(savedMode);
+    if (savedMode === "local" && hasLocalWallet === "true" && localAddress) {
+      setLocalWalletAddress(localAddress);
+      if (sessionUnlocked === "true") {
+        setIsSessionUnlocked(true);
+      }
+    }
+  }, []);
+
+  // Determine effective address and connection status
+  const isConnected = 
+    (walletMode === "local" && !!localWalletAddress && isSessionUnlocked) ||
+    ((walletMode === "external" || !walletMode) && wagmiConnected);
+  
+  const address = walletMode === "local" ? localWalletAddress : wagmiAddress || null;
+
   
   const [balances, setBalances] = useState<UserBalances | null>(null);
   const [summary, setSummary] = useState<BalanceSummary | null>(null);
@@ -115,21 +152,21 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshBalances = useCallback(async () => {
-    if (wagmiAddress) {
-      await fetchBalances(wagmiAddress);
+    if (address) {
+      await fetchBalances(address);
     }
-  }, [wagmiAddress, fetchBalances]);
+  }, [address, fetchBalances]);
 
   useEffect(() => {
-    console.log("📍 Wagmi state:", { isConnected: wagmiConnected, address: wagmiAddress, chainId: wagmiChainId });
+    console.log("📍 Wagmi state:", { isConnected, address: address, chainId: wagmiChainId });
     
-    if (wagmiConnected && wagmiAddress) {
+    if (isConnected && address) {
       console.log("✅ Wagmi connected! Fetching balances...");
-      fetchBalances(wagmiAddress);
+      fetchBalances(address);
 
       const interval = setInterval(() => {
         console.log("⏰ Auto-refresh balances");
-        fetchBalances(wagmiAddress);
+        fetchBalances(address);
       }, 30000);
 
       return () => clearInterval(interval);
@@ -138,13 +175,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setBalances(null);
       setSummary(null);
     }
-  }, [wagmiConnected, wagmiAddress, wagmiChainId, fetchBalances]);
+  }, [isConnected, address, wagmiChainId, fetchBalances]);
 
   return (
     <WalletContext.Provider
       value={{
-        isConnected: wagmiConnected,
-        address: wagmiAddress || null,
+        isConnected,
+        address,
         chainId: wagmiChainId || null,
         balances,
         summary,

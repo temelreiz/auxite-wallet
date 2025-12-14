@@ -1,111 +1,69 @@
-import { useMemo } from "react";
-import { useAccount, useReadContracts } from "wagmi";
-import { formatUnits } from "viem";
-import { LEASING_CONTRACTS } from "@/contracts/leasingContracts";
-import LeasingOfferABI from "@/contracts/AuxiteLeasingOffer.json";
+// hooks/useDashboardStats.ts
+// Dashboard stats from staking contract
 
-// Approximate metal prices in USD per gram
-const METAL_PRICES_USD: Record<string, number> = {
-  AUXG: 75,    // Gold ~$75/gram
-  AUXS: 0.85,  // Silver ~$0.85/gram
+import { useStaking } from './useStaking';
+import { useMemo } from 'react';
+
+interface DashboardStats {
+  totalLocked: number;
+  activePositions: number;
+  annualEarnings: number;
+  avgAPY: number;
+}
+
+// Metal prices (USD per gram) - in production, fetch from oracle
+const METAL_PRICES: Record<string, number> = {
+  AUXG: 85,    // Gold ~$85/gram
+  AUXS: 1.05,  // Silver ~$1.05/gram
   AUXPT: 32,   // Platinum ~$32/gram
   AUXPD: 35,   // Palladium ~$35/gram
 };
 
-// APY rates per period
-const APY_RATES: Record<string, number> = {
-  AUXG: 7.5,
-  AUXS: 6.2,
-  AUXPT: 8.1,
-  AUXPD: 7.8,
-};
+export function useDashboardStats(address?: string) {
+  const { activeStakes, loading, isConnected } = useStaking();
 
-export function useDashboardStats() {
-  const { address } = useAccount();
-
-  // Read positions from all contracts - using getAllPositions (correct function name)
-  const { data: positionsData } = useReadContracts({
-    contracts: address ? [
-      {
-        address: LEASING_CONTRACTS.AUXG["90"] as `0x${string}`,
-        abi: LeasingOfferABI.abi as any,
-        functionName: "getAllPositions",
-        args: [address],
-      },
-      {
-        address: LEASING_CONTRACTS.AUXS["90"] as `0x${string}`,
-        abi: LeasingOfferABI.abi as any,
-        functionName: "getAllPositions",
-        args: [address],
-      },
-      {
-        address: LEASING_CONTRACTS.AUXPT["90"] as `0x${string}`,
-        abi: LeasingOfferABI.abi as any,
-        functionName: "getAllPositions",
-        args: [address],
-      },
-      {
-        address: LEASING_CONTRACTS.AUXPD["90"] as `0x${string}`,
-        abi: LeasingOfferABI.abi as any,
-        functionName: "getAllPositions",
-        args: [address],
-      },
-    ] : [],
-  });
-
-  // Calculate stats
-  const stats = useMemo(() => {
-    if (!positionsData || !address) {
+  const stats = useMemo<DashboardStats>(() => {
+    if (!activeStakes || activeStakes.length === 0) {
       return {
         totalLocked: 0,
         activePositions: 0,
-        totalEarnings: 0,
+        annualEarnings: 0,
         avgAPY: 0,
       };
     }
 
-    const metals = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
     let totalLockedUSD = 0;
-    let totalPositions = 0;
-    let weightedAPYSum = 0;
+    let totalExpectedRewardUSD = 0;
+    let totalAPY = 0;
 
-    positionsData.forEach((result, index) => {
-      if (result.status !== "success" || !result.result) return;
+    activeStakes.forEach((stake) => {
+      const price = METAL_PRICES[stake.metalSymbol] || 85;
       
-      // Result format: [amounts[], startTimes[], closeds[], rewardClaimeds[]]
-      const [amounts, startTimes, closeds, rewardClaimeds] = result.result as [
-        bigint[],
-        bigint[],
-        boolean[],
-        boolean[]
-      ];
+      // Total locked value in USD
+      totalLockedUSD += stake.amountGrams * price;
       
-      const metal = metals[index];
-      const price = METAL_PRICES_USD[metal];
-      const apy = APY_RATES[metal];
-
-      amounts.forEach((amount, posIndex) => {
-        // Only count non-closed positions
-        if (!closeds[posIndex]) {
-          const grams = parseFloat(formatUnits(amount, 18));
-          const valueUSD = grams * price;
-          totalLockedUSD += valueUSD;
-          totalPositions++;
-          weightedAPYSum += valueUSD * apy;
-        }
-      });
+      // Expected annual reward in USD
+      totalExpectedRewardUSD += stake.expectedRewardGrams * price;
+      
+      // Sum APY for average calculation
+      totalAPY += stake.apyPercent;
     });
 
-    const avgAPY = totalLockedUSD > 0 ? weightedAPYSum / totalLockedUSD : 0;
-    const totalEarnings = totalLockedUSD * (avgAPY / 100);
+    const avgAPY = activeStakes.length > 0 ? totalAPY / activeStakes.length : 0;
 
     return {
       totalLocked: Math.round(totalLockedUSD),
-      activePositions: totalPositions,
-      totalEarnings: Math.round(totalEarnings),
-      avgAPY: parseFloat(avgAPY.toFixed(1)),
+      activePositions: activeStakes.length,
+      annualEarnings: Math.round(totalExpectedRewardUSD),
+      avgAPY: parseFloat(avgAPY.toFixed(2)),
     };
-  }, [positionsData, address]);
+  }, [activeStakes]);
 
-  return stats;
+  return {
+    stats,
+    loading,
+    isConnected,
+  };
 }
+
+export default useDashboardStats;

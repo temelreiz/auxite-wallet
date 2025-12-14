@@ -25,12 +25,21 @@ interface MetalChanges {
 }
 
 export function useMetalsPrices() {
+  // Base prices (spread'siz ham fiyat - kartlarda gösterilecek)
+  const [basePrices, setBasePrices] = useState<MetalPrices>({
+    AUXG: 0,
+    AUXS: 0,
+    AUXPT: 0,
+    AUXPD: 0,
+  });
+  // Ask prices (spread'li satış fiyatı - kullanıcıya satış)
   const [prices, setPrices] = useState<MetalPrices>({
     AUXG: 0,
     AUXS: 0,
     AUXPT: 0,
     AUXPD: 0,
   });
+  // Bid prices (spread'li alış fiyatı - kullanıcıdan alış)
   const [bidPrices, setBidPrices] = useState<MetalPrices>({
     AUXG: 0,
     AUXS: 0,
@@ -64,6 +73,15 @@ export function useMetalsPrices() {
       
       const data = await response.json();
 
+      // Base prices (spread'siz)
+      const newBasePrices: MetalPrices = {
+        AUXG: data.basePrices?.AUXG || 0,
+        AUXS: data.basePrices?.AUXS || 0,
+        AUXPT: data.basePrices?.AUXPT || 0,
+        AUXPD: data.basePrices?.AUXPD || 0,
+      };
+
+      // Ask prices (spread'li satış)
       const newPrices: MetalPrices = {
         AUXG: data.prices?.AUXG || 0,
         AUXS: data.prices?.AUXS || 0,
@@ -71,6 +89,7 @@ export function useMetalsPrices() {
         AUXPD: data.prices?.AUXPD || 0,
       };
 
+      // Bid prices (spread'li alış)
       const newBidPrices: MetalPrices = {
         AUXG: data.bidPrices?.AUXG || newPrices.AUXG,
         AUXS: data.bidPrices?.AUXS || newPrices.AUXS,
@@ -85,34 +104,41 @@ export function useMetalsPrices() {
         AUXPD: data.changes?.AUXPD || 0,
       };
 
-      // Calculate directions based on price changes
+      // Calculate directions based on base price changes
       const newDirections: MetalDirections = {
-        AUXG: newPrices.AUXG > prevPrices.current.AUXG ? "up" : newPrices.AUXG < prevPrices.current.AUXG ? "down" : "neutral",
-        AUXS: newPrices.AUXS > prevPrices.current.AUXS ? "up" : newPrices.AUXS < prevPrices.current.AUXS ? "down" : "neutral",
-        AUXPT: newPrices.AUXPT > prevPrices.current.AUXPT ? "up" : newPrices.AUXPT < prevPrices.current.AUXPT ? "down" : "neutral",
-        AUXPD: newPrices.AUXPD > prevPrices.current.AUXPD ? "up" : newPrices.AUXPD < prevPrices.current.AUXPD ? "down" : "neutral",
+        AUXG: newBasePrices.AUXG > prevPrices.current.AUXG ? "up" : newBasePrices.AUXG < prevPrices.current.AUXG ? "down" : "neutral",
+        AUXS: newBasePrices.AUXS > prevPrices.current.AUXS ? "up" : newBasePrices.AUXS < prevPrices.current.AUXS ? "down" : "neutral",
+        AUXPT: newBasePrices.AUXPT > prevPrices.current.AUXPT ? "up" : newBasePrices.AUXPT < prevPrices.current.AUXPT ? "down" : "neutral",
+        AUXPD: newBasePrices.AUXPD > prevPrices.current.AUXPD ? "up" : newBasePrices.AUXPD < prevPrices.current.AUXPD ? "down" : "neutral",
       };
 
-      prevPrices.current = newPrices;
+      prevPrices.current = newBasePrices;
+      setBasePrices(newBasePrices);
       setPrices(newPrices);
       setBidPrices(newBidPrices);
       setChanges(newChanges);
       setDirections(newDirections);
       setLoading(false);
     } catch (error) {
-      // Sessizce fallback kullan
       // Fallback prices
+      const fallbackBase = {
+        AUXG: 136.26,
+        AUXS: 1.74,
+        AUXPT: 52.80,
+        AUXPD: 46.90,
+      };
+      setBasePrices(fallbackBase);
       setPrices({
-        AUXG: 139.31,
+        AUXG: 138.99,
         AUXS: 1.79,
-        AUXPT: 54.14,
-        AUXPD: 48.16,
+        AUXPT: 54.12,
+        AUXPD: 48.07,
       });
       setBidPrices({
-        AUXG: 138.50,
-        AUXS: 1.75,
-        AUXPT: 53.50,
-        AUXPD: 47.50,
+        AUXG: 134.90,
+        AUXS: 1.71,
+        AUXPT: 52.14,
+        AUXPD: 46.31,
       });
       setLoading(false);
     }
@@ -120,9 +146,9 @@ export function useMetalsPrices() {
 
   useEffect(() => {
     fetchPrices();
-    const interval = setInterval(fetchPrices, 3000); // Her 3 saniyede güncelle
+    const interval = setInterval(fetchPrices, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  return { prices, bidPrices, changes, directions, loading };
+  return { basePrices, prices, bidPrices, changes, directions, loading };
 }

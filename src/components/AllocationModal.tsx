@@ -1,8 +1,187 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount } from "wagmi";
-import { useLeasing } from "@/hooks/useLeasing";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { parseUnits, erc20Abi } from "viem";
+import { useStaking, METAL_IDS } from "@/hooks/useStaking";
+
+// 6-language translations
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    lockEarn: "Biriktir & Kazan",
+    lockPeriod: "Biriktirme Süresi",
+    month: "Ay",
+    days: "gün",
+    amount: "Miktar",
+    balance: "Bakiye",
+    lockSuccess: "Biriktirme Başarılı!",
+    positionCreated: "Pozisyonunuz oluşturuldu.",
+    approved: "Onaylandı",
+    canLockNow: "Şimdi biriktirebilirsiniz.",
+    infoNotice: "gün boyunca tokenleriniz biriktirilecektir. Süre sonunda anaparanız ve kazancınız otomatik olarak iade edilecektir.",
+    approving: "Onaylanıyor...",
+    approveToken: "Token Onayla",
+    locking: "Biriktiriliyor...",
+    cancel: "İptal",
+    estimatedEarnings: "Tahmini Kazanç",
+    afterPeriod: "Süre sonunda",
+    apy: "APY",
+    stakeCode: "Stake Kodu",
+    copyCode: "Kopyala",
+    copied: "Kopyalandı!",
+    viewOnChain: "Blockchain'de Görüntüle",
+    compounding: "Bileşik Faiz",
+    compoundingDesc: "Kazançlar otomatik olarak anaparaya eklenir",
+    txPending: "İşlem Onay Bekliyor...",
+    txConfirming: "Blockchain'de Doğrulanıyor...",
+    done: "Tamam",
+  },
+  en: {
+    lockEarn: "Stake & Earn",
+    lockPeriod: "Stake Period",
+    month: "Mo",
+    days: "days",
+    amount: "Amount",
+    balance: "Balance",
+    lockSuccess: "Stake Successful!",
+    positionCreated: "Your position has been created.",
+    approved: "Approved",
+    canLockNow: "You can now stake.",
+    infoNotice: "days your tokens will be staked. Principal and earnings will be automatically returned after the period ends.",
+    approving: "Approving...",
+    approveToken: "Approve Token",
+    locking: "Staking...",
+    cancel: "Cancel",
+    estimatedEarnings: "Estimated Earnings",
+    afterPeriod: "After period",
+    apy: "APY",
+    stakeCode: "Stake Code",
+    copyCode: "Copy",
+    copied: "Copied!",
+    viewOnChain: "View on Blockchain",
+    compounding: "Auto-Compound",
+    compoundingDesc: "Earnings automatically added to principal",
+    txPending: "Transaction Pending...",
+    txConfirming: "Confirming on Blockchain...",
+    done: "Done",
+  },
+  de: {
+    lockEarn: "Stake & Verdienen",
+    lockPeriod: "Stake-Zeitraum",
+    month: "Mo",
+    days: "Tage",
+    amount: "Betrag",
+    balance: "Guthaben",
+    lockSuccess: "Stake Erfolgreich!",
+    positionCreated: "Ihre Position wurde erstellt.",
+    approved: "Genehmigt",
+    canLockNow: "Sie können jetzt staken.",
+    infoNotice: "Tage werden Ihre Token gestaked. Kapital und Erträge werden nach Ablauf automatisch zurückgegeben.",
+    approving: "Genehmigung...",
+    approveToken: "Token Genehmigen",
+    locking: "Staking...",
+    cancel: "Abbrechen",
+    estimatedEarnings: "Geschätzte Erträge",
+    afterPeriod: "Nach der Periode",
+    apy: "APY",
+    stakeCode: "Stake-Code",
+    copyCode: "Kopieren",
+    copied: "Kopiert!",
+    viewOnChain: "Auf Blockchain anzeigen",
+    compounding: "Auto-Zinseszins",
+    compoundingDesc: "Erträge werden automatisch zum Kapital hinzugefügt",
+    txPending: "Transaktion ausstehend...",
+    txConfirming: "Wird auf Blockchain bestätigt...",
+    done: "Fertig",
+  },
+  fr: {
+    lockEarn: "Stake & Gagner",
+    lockPeriod: "Période de Stake",
+    month: "Mois",
+    days: "jours",
+    amount: "Montant",
+    balance: "Solde",
+    lockSuccess: "Stake Réussi!",
+    positionCreated: "Votre position a été créée.",
+    approved: "Approuvé",
+    canLockNow: "Vous pouvez maintenant staker.",
+    infoNotice: "jours vos tokens seront stakés. Le capital et les gains seront automatiquement retournés après la période.",
+    approving: "Approbation...",
+    approveToken: "Approuver Token",
+    locking: "Staking...",
+    cancel: "Annuler",
+    estimatedEarnings: "Gains Estimés",
+    afterPeriod: "Après la période",
+    apy: "APY",
+    stakeCode: "Code de Stake",
+    copyCode: "Copier",
+    copied: "Copié!",
+    viewOnChain: "Voir sur Blockchain",
+    compounding: "Auto-Composition",
+    compoundingDesc: "Les gains sont automatiquement ajoutés au capital",
+    txPending: "Transaction en attente...",
+    txConfirming: "Confirmation sur Blockchain...",
+    done: "Terminé",
+  },
+  ar: {
+    lockEarn: "تخزين واربح",
+    lockPeriod: "فترة التخزين",
+    month: "شهر",
+    days: "يوم",
+    amount: "المبلغ",
+    balance: "الرصيد",
+    lockSuccess: "تم التخزين بنجاح!",
+    positionCreated: "تم إنشاء موقعك.",
+    approved: "تمت الموافقة",
+    canLockNow: "يمكنك الآن التخزين.",
+    infoNotice: "يوم سيتم تخزين رموزك. سيتم إرجاع رأس المال والأرباح تلقائياً بعد انتهاء الفترة.",
+    approving: "جاري الموافقة...",
+    approveToken: "الموافقة على الرمز",
+    locking: "جاري التخزين...",
+    cancel: "إلغاء",
+    estimatedEarnings: "الأرباح المتوقعة",
+    afterPeriod: "بعد الفترة",
+    apy: "العائد السنوي",
+    stakeCode: "رمز التخزين",
+    copyCode: "نسخ",
+    copied: "تم النسخ!",
+    viewOnChain: "عرض على البلوكتشين",
+    compounding: "فائدة مركبة تلقائية",
+    compoundingDesc: "تضاف الأرباح تلقائياً إلى رأس المال",
+    txPending: "المعاملة معلقة...",
+    txConfirming: "جاري التأكيد على البلوكتشين...",
+    done: "تم",
+  },
+  ru: {
+    lockEarn: "Стейкинг и Заработок",
+    lockPeriod: "Период Стейкинга",
+    month: "Мес",
+    days: "дней",
+    amount: "Сумма",
+    balance: "Баланс",
+    lockSuccess: "Стейкинг Успешен!",
+    positionCreated: "Ваша позиция создана.",
+    approved: "Одобрено",
+    canLockNow: "Теперь вы можете сделать стейкинг.",
+    infoNotice: "дней ваши токены будут в стейкинге. Основная сумма и заработок будут автоматически возвращены после окончания периода.",
+    approving: "Одобрение...",
+    approveToken: "Одобрить Токен",
+    locking: "Стейкинг...",
+    cancel: "Отмена",
+    estimatedEarnings: "Расчетный Заработок",
+    afterPeriod: "После периода",
+    apy: "APY",
+    stakeCode: "Код Стейкинга",
+    copyCode: "Копировать",
+    copied: "Скопировано!",
+    viewOnChain: "Посмотреть в Блокчейне",
+    compounding: "Автокомпаундинг",
+    compoundingDesc: "Заработок автоматически добавляется к основной сумме",
+    txPending: "Транзакция ожидает...",
+    txConfirming: "Подтверждение в блокчейне...",
+    done: "Готово",
+  },
+};
 
 interface AllocationModalProps {
   isOpen: boolean;
@@ -18,7 +197,7 @@ interface AllocationModalProps {
     tvl: number;
     contractAddress: string;
   } | null;
-  lang: "tr" | "en";
+  lang: string;
 }
 
 // APY Visual Comparison
@@ -26,56 +205,54 @@ function APYVisual({ periods, selectedPeriod, onSelect, lang }: {
   periods: Array<{ months: number; days: number; apy: number }>;
   selectedPeriod: number;
   onSelect: (months: number) => void;
-  lang: "tr" | "en";
+  lang: string;
 }) {
+  const t = translations[lang] || translations.en;
   const maxAPY = Math.max(...periods.map(p => p.apy));
+  
+  const getDays = (months: number, days?: number) => days || (months === 12 ? 365 : months * 30);
   
   return (
     <div className="grid grid-cols-3 gap-3">
       {periods.map((period) => {
         const isSelected = selectedPeriod === period.months;
         const barHeight = (period.apy / maxAPY) * 100;
+        const periodDays = getDays(period.months, period.days);
         
         return (
           <button
             key={period.months}
             onClick={() => onSelect(period.months)}
-            className={`relative p-4 rounded-xl transition-all duration-300 ${
+            className={`relative p-4 rounded-xl border-2 transition-all ${
               isSelected 
-                ? "bg-emerald-500/20 border-2 border-emerald-500" 
-                : "bg-slate-800/50 border-2 border-slate-700 hover:border-slate-600"
+                ? "border-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/20" 
+                : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/50"
             }`}
           >
-            {/* APY Bar */}
             <div className="h-16 flex items-end justify-center mb-3">
               <div 
-                className={`w-8 rounded-t-lg transition-all duration-500 ${
+                className={`w-8 rounded-t-lg transition-all ${
                   isSelected 
-                    ? "bg-gradient-to-t from-emerald-600 to-emerald-400" 
-                    : "bg-gradient-to-t from-slate-700 to-slate-600"
+                    ? "bg-gradient-to-t from-emerald-500 to-emerald-400" 
+                    : "bg-gradient-to-t from-slate-300 to-slate-200 dark:from-slate-600 dark:to-slate-500"
                 }`}
                 style={{ height: `${barHeight}%` }}
               />
             </div>
             
-            {/* Period Label */}
-            <div className={`text-sm font-bold ${isSelected ? "text-white" : "text-slate-300"}`}>
-              {period.months} {lang === "tr" ? "Ay" : "Mo"}
+            <div className={`text-lg font-bold ${isSelected ? "text-emerald-500 dark:text-emerald-400" : "text-slate-700 dark:text-slate-300"}`}>
+              {period.months} {t.month}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {periodDays} {t.days}
             </div>
             
-            {/* APY Value */}
-            <div className={`text-lg font-bold ${isSelected ? "text-emerald-400" : "text-slate-400"}`}>
-              {period.apy}%
+            <div className={`mt-2 text-sm font-semibold ${isSelected ? "text-emerald-600 dark:text-emerald-400" : "text-slate-600 dark:text-slate-400"}`}>
+              {period.apy.toFixed(2)}% {t.apy}
             </div>
-            
-            {/* Days */}
-            <div className="text-xs text-slate-500">
-              {period.days} {lang === "tr" ? "gün" : "days"}
-            </div>
-            
-            {/* Selected indicator */}
+
             {isSelected && (
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+              <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
                 <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
@@ -94,182 +271,289 @@ function EarningsCalculator({ amount, apy, days, metalSymbol, lang }: {
   apy: number;
   days: number;
   metalSymbol: string;
-  lang: "tr" | "en";
+  lang: string;
 }) {
-  const yearlyEarnings = amount * (apy / 100);
-  const periodEarnings = yearlyEarnings * (days / 365);
-  const totalReturn = amount + periodEarnings;
+  const t = translations[lang] || translations.en;
+  const earnings = (amount * apy * days) / (100 * 365);
+  const total = amount + earnings;
   
   if (amount <= 0) return null;
   
   return (
-    <div className="rounded-xl bg-gradient-to-br from-emerald-500/10 to-slate-900/50 border border-emerald-500/20 p-4">
+    <div className="rounded-xl bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 dark:from-emerald-500/20 dark:to-cyan-500/20 border border-emerald-500/20 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
-        <span className="text-sm font-medium text-emerald-300">
-          {lang === "tr" ? "Kazanç Hesaplayıcı" : "Earnings Calculator"}
+        <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+          {t.estimatedEarnings}
         </span>
       </div>
       
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-slate-500">{lang === "tr" ? "Kilitli Miktar" : "Locked Amount"}</span>
-          <span className="text-sm font-medium text-slate-200">{amount.toFixed(2)}g</span>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">{t.afterPeriod}</div>
+          <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+            +{earnings.toFixed(4)}g
+          </div>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-slate-500">{lang === "tr" ? "Dönem Kazancı" : "Period Earnings"}</span>
-          <span className="text-sm font-bold text-emerald-400">+{periodEarnings.toFixed(4)}g</span>
+        <div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">Total</div>
+          <div className="text-lg font-bold text-slate-800 dark:text-white">
+            {total.toFixed(4)}g
+          </div>
         </div>
-        <div className="h-px bg-slate-700 my-2"></div>
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-slate-500">{lang === "tr" ? "Toplam Dönüş" : "Total Return"}</span>
-          <span className="text-sm font-bold text-white">{totalReturn.toFixed(4)}g</span>
-        </div>
-      </div>
-      
-      {/* Visual indicator */}
-      <div className="mt-3 flex items-center gap-2">
-        <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full"
-            style={{ width: `${(periodEarnings / amount) * 100 * 10}%` }}
-          />
-        </div>
-        <span className="text-xs text-emerald-400">+{((periodEarnings / amount) * 100).toFixed(2)}%</span>
       </div>
     </div>
   );
 }
 
-export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps) {
-  const { address } = useAccount();
-  const [selectedPeriod, setSelectedPeriod] = useState(6);
-  const [amount, setAmount] = useState("");
-  const [isApproved, setIsApproved] = useState(false);
+// Stake Code Display Component
+function StakeCodeDisplay({ stakeCode, shortCode, txHash, lang }: {
+  stakeCode: string;
+  shortCode: string;
+  txHash?: string;
+  lang: string;
+}) {
+  const t = translations[lang] || translations.en;
+  const [copied, setCopied] = useState(false);
 
-  // Get leasing contract hook
-  const {
-    balance,
-    allowance,
-    isApproving,
-    isDepositing,
-    isApproveSuccess,
-    isDepositSuccess,
-    approve,
-    deposit,
-    hasEnoughAllowance,
-    refetchAllowance,
-  } = useLeasing({
-    offerAddress: (offer?.contractAddress as `0x${string}`) || "0x",
-    metalTokenAddress: (offer?.metalTokenAddress as `0x${string}`) || "0x",
-    metalSymbol: offer?.metal || "",
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(shortCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const explorerUrl = txHash 
+    ? `https://etherscan.io/tx/${txHash}` 
+    : `https://etherscan.io/address/${process.env.NEXT_PUBLIC_STAKING_CONTRACT}`;
+
+  return (
+    <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 p-4 space-y-3">
+      <div>
+        <div className="text-xs text-emerald-600 dark:text-emerald-400 mb-1 font-medium">
+          {t.stakeCode}
+        </div>
+        <div className="flex items-center gap-2">
+          <code className="flex-1 px-3 py-2 rounded-lg bg-slate-900/50 text-emerald-400 font-mono text-sm truncate">
+            {shortCode}
+          </code>
+          <button
+            onClick={handleCopy}
+            className="px-3 py-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-sm font-medium transition-colors flex items-center gap-1"
+          >
+            {copied ? (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                {t.copied}
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                {t.copyCode}
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {txHash && (
+        <a
+          href={explorerUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 text-sm font-medium transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+          {t.viewOnChain}
+        </a>
+      )}
+    </div>
+  );
+}
+
+function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps) {
+  const t = translations[lang] || translations.en;
+  const { address, isConnected } = useAccount();
+  
+  // Staking hook
+  const { 
+    stake, 
+    isStaking, 
+    isStakeSuccess, 
+    stakeHash,
+    previewReward 
+  } = useStaking();
+
+  // Local state
+  const [selectedPeriod, setSelectedPeriod] = useState(3);
+  const [amount, setAmount] = useState("");
+  const [compounding, setCompounding] = useState(false);
+  const [resultStakeCode, setResultStakeCode] = useState<string | null>(null);
+  const [resultShortCode, setResultShortCode] = useState<string | null>(null);
+
+  const stakingContractAddress = process.env.NEXT_PUBLIC_STAKING_CONTRACT as `0x${string}`;
+  const tokenAddress = offer?.metalTokenAddress as `0x${string}`;
+
+  // Debug logs
+  console.log("AllocationModal Debug:", {
+    tokenAddress,
+    stakingContractAddress,
+    address,
+    isOpen,
+    offerMetal: offer?.metal, fullOffer: offer,
   });
 
-  // Reset state when modal opens
+  // Read token balance
+  const { data: balanceData } = useReadContract({
+    address: tokenAddress,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && !!tokenAddress && isOpen },
+  });
+
+  // Read current allowance
+  const { data: allowanceData, refetch: refetchAllowance } = useReadContract({
+    address: tokenAddress,
+    abi: erc20Abi,
+    functionName: 'allowance',
+    args: address && stakingContractAddress ? [address, stakingContractAddress] : undefined,
+    query: { enabled: !!address && !!stakingContractAddress && !!tokenAddress && isOpen },
+  });
+
+  // Debug balance & allowance
+  console.log("Balance/Allowance Debug:", {
+    balanceData: balanceData?.toString(),
+    balanceNum: balanceData ? Number(balanceData) / 1000 : 0,
+    allowanceData: allowanceData?.toString(),
+  });
+
+  // Approve write contract
+  const { 
+    writeContract: writeApprove, 
+    data: approveHash,
+    isPending: isApprovePending,
+    reset: resetApprove
+  } = useWriteContract();
+
+  // Wait for approve transaction
+  const { isLoading: isApproveConfirming, isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({
+    hash: approveHash,
+  });
+
+  // Refetch allowance after approve success
   useEffect(() => {
-    if (isOpen && offer) {
+    if (isApproveSuccess) {
+      refetchAllowance();
+    }
+  }, [isApproveSuccess, refetchAllowance]);
+
+  // Reset state when modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedPeriod(3);
       setAmount("");
-      setSelectedPeriod(6);
-      setIsApproved(false);
+      setCompounding(false);
+      setResultStakeCode(null);
+      setResultShortCode(null);
+      resetApprove();
     }
-  }, [isOpen, offer]);
-
-  // Close modal on successful deposit
-  useEffect(() => {
-    if (isDepositSuccess) {
-      setTimeout(() => {
-        onClose();
-      }, 2000);
-    }
-  }, [isDepositSuccess, onClose]);
-
-  // Check allowance when amount changes
-  useEffect(() => {
-    if (amount && hasEnoughAllowance(amount)) {
-      setIsApproved(true);
-    }
-  }, [amount, allowance, hasEnoughAllowance]);
+  }, [isOpen]);
 
   if (!isOpen || !offer) return null;
 
-  const currentPeriod = offer.periods.find(p => p.months === selectedPeriod) || offer.periods[1];
-  const needsApproval = amount && !isApproved && !hasEnoughAllowance(amount);
+  // Calculate values
   const amountNum = parseFloat(amount) || 0;
-  const balanceNum = parseFloat(balance) || 0;
+  const amountInTokenUnits = BigInt(Math.floor(amountNum * 1000)); // 3 decimals
+  const balanceNum = balanceData ? Number(balanceData) / 1000 : 0; // Convert from 3 decimals
+  const currentAllowance = allowanceData ? Number(allowanceData) / 1000 : 0;
+  const currentPeriod = offer.periods.find(p => p.months === selectedPeriod) || offer.periods[0];
+  const periodDays = currentPeriod.days || (selectedPeriod === 12 ? 365 : selectedPeriod * 30);
+  
+  // Check if needs approval
+  const needsApproval = amountNum > 0 && currentAllowance < amountNum;
+  const isApproving = isApprovePending || isApproveConfirming;
 
-  const handleApprove = async () => {
-    if (!amount) return;
-    
-    try {
-      await approve(amount);
-      setIsApproved(true);
-      await refetchAllowance();
-    } catch (error) {
-      console.error("Approval failed:", error);
-    }
+  // Handle approve
+  const handleApprove = () => {
+    if (!address || !tokenAddress || !stakingContractAddress) return;
+
+    writeApprove({
+      address: tokenAddress,
+      abi: erc20Abi,
+      functionName: 'approve',
+      args: [stakingContractAddress, amountInTokenUnits],
+    });
   };
 
-  const handleAllocate = async () => {
-    if (!amount) return;
-    
-    try {
-      await deposit(amount);
-    } catch (error) {
-      console.error("Allocation failed:", error);
-    }
-  };
+  // Handle stake
+  const handleStake = async () => {
+    if (!address || !offer) return;
 
-  const metalGradients: Record<string, string> = {
-    AUXG: "from-amber-500/20 via-slate-900 to-slate-900",
-    AUXS: "from-slate-400/20 via-slate-900 to-slate-900",
-    AUXPT: "from-cyan-400/20 via-slate-900 to-slate-900",
-    AUXPD: "from-rose-400/20 via-slate-900 to-slate-900",
+    try {
+      const metalSymbol = offer.metal as 'AUXG' | 'AUXS' | 'AUXPT' | 'AUXPD';
+      const durationMonths = selectedPeriod as 3 | 6 | 12;
+
+      await stake(metalSymbol, amountNum, durationMonths, compounding, 0);
+
+      // Generate display stake code
+      const timestamp = Date.now().toString(16).toUpperCase();
+      const shortCode = `STK-${timestamp.slice(-8)}`;
+      setResultShortCode(shortCode);
+      setResultStakeCode(`0x${timestamp}${Math.random().toString(16).slice(2, 10)}`);
+
+    } catch (err) {
+      console.error("Stake failed:", err);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className={`bg-gradient-to-br ${metalGradients[offer.metal]} rounded-2xl border border-slate-700 w-full max-w-lg shadow-2xl`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div 
+        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-800">
+        <div className="relative p-6 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <img src={offer.icon} alt={offer.name} className="w-14 h-14" />
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
+            <img src={offer.icon} alt={offer.metal} className="w-12 h-12" />
             <div>
-              <h3 className="text-xl font-bold text-white">
-                {lang === "tr" ? "Kilitle ve Kazan" : "Lock & Earn"} - {offer.metal}
-              </h3>
-              <p className="text-sm text-slate-400">{offer.name}</p>
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+                {offer.name}
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {t.lockEarn}
+              </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors"
+            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors"
           >
-            <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-          {/* Period Selection with APY Visual */}
+        <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+          {/* Period Selection */}
           <div>
-            <label className="text-sm font-medium text-slate-300 mb-3 block flex items-center gap-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 block flex items-center gap-2">
               <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              {lang === "tr" ? "Kilitleme Süresi" : "Lock Period"}
+              {t.lockPeriod}
             </label>
-            <APYVisual 
+            <APYVisual
               periods={offer.periods}
               selectedPeriod={selectedPeriod}
               onSelect={setSelectedPeriod}
@@ -279,31 +563,27 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
 
           {/* Amount Input */}
           <div>
-            <label className="text-sm font-medium text-slate-300 mb-2 block flex items-center gap-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block flex items-center gap-2">
               <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
               </svg>
-              {lang === "tr" ? "Miktar" : "Amount"} (gram)
+              {t.amount} (gram)
             </label>
             <div className="relative">
               <input
                 type="number"
                 value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  setIsApproved(false);
-                }}
+                onChange={(e) => setAmount(e.target.value)}
                 placeholder={`Min. ${offer.minAmount}g`}
-                disabled={isApproving || isDepositing}
-                className="w-full px-4 py-4 pr-20 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50 text-lg font-medium"
+                disabled={isApproving || isStaking}
+                className="w-full px-4 py-4 pr-20 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50 text-lg font-medium"
               />
               <button
                 onClick={() => {
-                  setAmount(balance);
-                  setIsApproved(false);
+                  setAmount(balanceNum.toString());
                 }}
-                disabled={isApproving || isDepositing}
-                className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-sm font-medium transition-colors disabled:opacity-50"
+                disabled={isApproving || isStaking}
+                className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30 text-sm font-medium transition-colors disabled:opacity-50"
               >
                 MAX
               </button>
@@ -313,7 +593,7 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
-                {lang === "tr" ? "Bakiye" : "Balance"}: {balanceNum.toFixed(4)}g
+                {t.balance}: {balanceNum.toFixed(4)}g
               </span>
               {amountNum > 0 && amountNum < offer.minAmount && (
                 <span className="text-xs text-red-400">
@@ -323,30 +603,86 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
             </div>
           </div>
 
+          {/* Compounding Toggle */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                <svg className="w-4 h-4 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.compounding}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">{t.compoundingDesc}</div>
+              </div>
+            </div>
+            <button
+              onClick={() => setCompounding(!compounding)}
+              className={`w-12 h-6 rounded-full transition-colors ${
+                compounding ? "bg-purple-500" : "bg-slate-300 dark:bg-slate-600"
+              }`}
+            >
+              <div className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
+                compounding ? "translate-x-6" : "translate-x-0.5"
+              }`} />
+            </button>
+          </div>
+
           {/* Earnings Calculator */}
           <EarningsCalculator
             amount={amountNum}
             apy={currentPeriod.apy}
-            days={currentPeriod.days}
+            days={periodDays}
             metalSymbol={offer.metal}
             lang={lang}
           />
 
-          {/* Success Message */}
-          {isDepositSuccess && (
-            <div className="rounded-xl bg-emerald-500/20 border border-emerald-500/30 p-4">
+          {/* Success Message with Stake Code */}
+          {isStakeSuccess && resultShortCode && (
+            <div className="space-y-4">
+              <div className="rounded-xl bg-emerald-500/20 border border-emerald-500/30 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/30 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-emerald-600 dark:text-emerald-300">
+                      {t.lockSuccess}
+                    </div>
+                    <div className="text-xs text-emerald-500 dark:text-emerald-400/70">
+                      {t.positionCreated}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <StakeCodeDisplay
+                stakeCode={resultStakeCode || ""}
+                shortCode={resultShortCode}
+                txHash={stakeHash}
+                lang={lang}
+              />
+            </div>
+          )}
+
+          {/* Transaction Pending */}
+          {isStaking && !isStakeSuccess && (
+            <div className="rounded-xl bg-blue-500/20 border border-blue-500/30 p-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/30 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <div className="w-10 h-10 rounded-xl bg-blue-500/30 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-blue-400 animate-spin" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-emerald-300">
-                    {lang === "tr" ? "Kilitleme Başarılı!" : "Lock Successful!"}
+                  <div className="text-sm font-medium text-blue-600 dark:text-blue-300">
+                    {t.txConfirming}
                   </div>
-                  <div className="text-xs text-emerald-400/70">
-                    {lang === "tr" ? "Pozisyonunuz oluşturuldu." : "Your position has been created."}
+                  <div className="text-xs text-blue-500 dark:text-blue-400/70">
+                    {t.txPending}
                   </div>
                 </div>
               </div>
@@ -354,7 +690,7 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
           )}
 
           {/* Approval Success Message */}
-          {isApproved && !isDepositSuccess && (
+          {isApproveSuccess && !needsApproval && !isStakeSuccess && !isStaking && (
             <div className="rounded-xl bg-blue-500/20 border border-blue-500/30 p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/30 flex items-center justify-center">
@@ -363,11 +699,11 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
                   </svg>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-blue-300">
-                    {lang === "tr" ? "Onay Tamamlandı!" : "Approval Complete!"}
+                  <div className="text-sm font-medium text-blue-600 dark:text-blue-300">
+                    {t.approved}
                   </div>
-                  <div className="text-xs text-blue-400/70">
-                    {lang === "tr" ? "Şimdi kilitleyebilirsiniz." : "You can now lock."}
+                  <div className="text-xs text-blue-500 dark:text-blue-400/70">
+                    {t.canLockNow}
                   </div>
                 </div>
               </div>
@@ -375,16 +711,14 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
           )}
 
           {/* Info Notice */}
-          {!isDepositSuccess && !isApproved && (
-            <div className="rounded-xl bg-slate-800/50 border border-slate-700 p-4">
+          {!isStakeSuccess && !isApproveSuccess && !isStaking && !isApproving && (
+            <div className="rounded-xl bg-stone-100 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 p-4">
               <div className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-slate-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="text-xs text-slate-400">
-                  {lang === "tr"
-                    ? `${currentPeriod.days} gün boyunca tokenleriniz kilitlenecektir. Süre sonunda anaparanız ve kazancınız otomatik olarak iade edilecektir.`
-                    : `Your tokens will be locked for ${currentPeriod.days} days. Principal and earnings will be automatically returned after the period ends.`}
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  {periodDays} {t.infoNotice}
                 </p>
               </div>
             </div>
@@ -392,11 +726,11 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
         </div>
 
         {/* Footer Actions */}
-        <div className="p-6 border-t border-slate-800 space-y-3">
-          {needsApproval ? (
+        <div className="p-6 border-t border-stone-200 dark:border-slate-800 space-y-3">
+          {needsApproval && !isStakeSuccess ? (
             <button
               onClick={handleApprove}
-              disabled={!amount || amountNum < offer.minAmount || isApproving || isDepositing}
+              disabled={!amount || amountNum < offer.minAmount || isApproving || isStaking}
               className="w-full px-4 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
             >
               {isApproving ? (
@@ -405,56 +739,58 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  {lang === "tr" ? "Onaylanıyor..." : "Approving..."}
+                  {t.approving}
                 </>
               ) : (
                 <>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
-                  {lang === "tr" ? "Token Onayla" : "Approve Token"}
+                  {t.approveToken}
                 </>
               )}
             </button>
-          ) : (
+          ) : !isStakeSuccess ? (
             <button
-              onClick={handleAllocate}
-              disabled={!amount || amountNum < offer.minAmount || isApproving || isDepositing || isDepositSuccess}
+              onClick={handleStake}
+              disabled={!amount || amountNum < offer.minAmount || isApproving || isStaking || needsApproval}
               className="w-full px-4 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
             >
-              {isDepositing ? (
+              {isStaking ? (
                 <>
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  {lang === "tr" ? "Kilitleniyor..." : "Locking..."}
-                </>
-              ) : isDepositSuccess ? (
-                <>
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {lang === "tr" ? "Tamamlandı" : "Completed"}
+                  {t.locking}
                 </>
               ) : (
                 <>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  {lang === "tr" ? "Kilitle ve Kazan" : "Lock & Earn"}
+                  {t.lockEarn}
                 </>
               )}
             </button>
-          )}
+          ) : null}
 
-          {!isDepositSuccess && (
+          {!isStakeSuccess && (
             <button
               onClick={onClose}
-              disabled={isApproving || isDepositing}
-              className="w-full px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-colors disabled:opacity-50"
+              disabled={isApproving || isStaking}
+              className="w-full px-4 py-3 rounded-xl bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium transition-colors disabled:opacity-50"
             >
-              {lang === "tr" ? "İptal" : "Cancel"}
+              {t.cancel}
+            </button>
+          )}
+
+          {isStakeSuccess && (
+            <button
+              onClick={onClose}
+              className="w-full px-4 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-colors"
+            >
+              {t.done}
             </button>
           )}
         </div>
@@ -463,4 +799,5 @@ export function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModa
   );
 }
 
+export { AllocationModal };
 export default AllocationModal;

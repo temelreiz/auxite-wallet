@@ -6,7 +6,7 @@ interface MetalExchangeModalProps {
   isOpen: boolean;
   onClose: () => void;
   metal: "AUXG" | "AUXS" | "AUXPT" | "AUXPD";
-  lang?: "tr" | "en";
+  lang?: string;
   metalBalances?: {
     AUXG: number;
     AUXS: number;
@@ -152,13 +152,13 @@ export function MetalExchangeModal({
       ></div>
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 overflow-hidden">
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-stone-300 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-800">
+        <div className="flex items-center justify-between p-4 border-b border-stone-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <img src={metalInfo.icon} alt={metal} className="w-8 h-8" />
             <div>
-              <h2 className="text-lg font-bold text-white">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                 {metal} {lang === "tr" ? "Dönüştür" : "Exchange"}
               </h2>
               <p className="text-xs text-slate-400">
@@ -168,7 +168,7 @@ export function MetalExchangeModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
           >
             <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -177,14 +177,14 @@ export function MetalExchangeModal({
         </div>
 
         {/* Mode Toggle */}
-        <div className="p-4 border-b border-slate-800">
-          <div className="flex gap-2 p-1 bg-slate-800 rounded-xl">
+        <div className="p-4 border-b border-stone-200 dark:border-slate-800">
+          <div className="flex gap-2 p-1 bg-stone-100 dark:bg-slate-800 rounded-xl">
             <button
               onClick={() => { setMode("buy"); setAmount(""); }}
               className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 mode === "buy"
                   ? "bg-emerald-500 text-white shadow-lg"
-                  : "text-slate-400 hover:text-white"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               {lang === "tr" ? `${metal} Al` : `Buy ${metal}`}
@@ -194,7 +194,7 @@ export function MetalExchangeModal({
               className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 mode === "sell"
                   ? "bg-red-500 text-white shadow-lg"
-                  : "text-slate-400 hover:text-white"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               {lang === "tr" ? `${metal} Sat` : `Sell ${metal}`}
@@ -205,14 +205,14 @@ export function MetalExchangeModal({
         {/* Content */}
         <div className="p-4 space-y-4">
           {/* Price Info */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/50">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50 dark:bg-slate-800/50">
             <div>
               <div className="text-xs text-slate-500">
                 {mode === "buy" 
                   ? (lang === "tr" ? "Alış Fiyatı" : "Buy Price")
                   : (lang === "tr" ? "Satış Fiyatı" : "Sell Price")}
               </div>
-              <div className="text-lg font-bold text-white">
+              <div className="text-lg font-bold text-slate-900 dark:text-white">
                 ${mode === "buy" ? askPrice.toFixed(2) : bidPrice.toFixed(2)}
                 <span className="text-xs text-slate-400 ml-1">/g</span>
               </div>
@@ -245,12 +245,12 @@ export function MetalExchangeModal({
                   <img src={metalInfo.icon} alt={metal} className="w-10 h-10" />
                 )}
                 <div className="flex-1">
-                  <div className="text-white font-semibold">{fromSymbol}</div>
+                  <div className="text-slate-900 dark:text-white font-semibold">{fromSymbol}</div>
                   <div className="text-xs text-slate-400">
                     {mode === "buy" ? "Auxite Para" : metalInfo.nameTr}
                   </div>
                 </div>
-                <div className="px-2 py-1 rounded bg-slate-700/50 text-xs text-slate-400">
+                <div className="px-2 py-1 rounded bg-stone-200 dark:bg-slate-700/50 text-xs text-slate-600 dark:text-slate-400">
                   {lang === "tr" ? "Sabit" : "Fixed"}
                 </div>
               </div>
@@ -265,7 +265,7 @@ export function MetalExchangeModal({
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.0000"
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-lg font-mono placeholder-slate-600 focus:outline-none focus:border-slate-600"
+                    className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white text-lg font-mono placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-slate-600"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
                     {fromSymbol}
@@ -273,7 +273,7 @@ export function MetalExchangeModal({
                 </div>
                 <button
                   onClick={() => setAmount(fromBalance.toString())}
-                  className="px-3 py-3 bg-slate-800 border border-slate-700 rounded-xl text-emerald-500 text-sm font-medium hover:bg-slate-700"
+                  className="px-3 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl text-emerald-500 text-sm font-medium hover:bg-stone-200 dark:hover:bg-slate-700"
                 >
                   MAX
                 </button>
@@ -291,7 +291,7 @@ export function MetalExchangeModal({
 
           {/* Arrow */}
           <div className="flex justify-center">
-            <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 flex items-center justify-center">
               <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
@@ -320,7 +320,7 @@ export function MetalExchangeModal({
                   <img src={metalInfo.icon} alt={metal} className="w-10 h-10" />
                 )}
                 <div className="flex-1">
-                  <div className="text-white font-semibold">{toSymbol}</div>
+                  <div className="text-slate-900 dark:text-white font-semibold">{toSymbol}</div>
                   <div className="text-xs text-slate-400">
                     {mode === "sell" ? "Auxite Para" : metalInfo.nameTr}
                   </div>
@@ -329,13 +329,13 @@ export function MetalExchangeModal({
             </div>
 
             {/* Alınacak Miktar */}
-            <div className="mt-3 p-3 bg-slate-800/50 rounded-xl">
+            <div className="mt-3 p-3 bg-stone-50 dark:bg-slate-800/50 rounded-xl">
               <div className="flex items-center justify-between">
                 <span className="text-slate-400 text-sm">
                   {lang === "tr" ? "Alacağınız" : "You'll receive"}
                 </span>
                 <div className="text-right">
-                  <span className="text-xl font-bold text-white">
+                  <span className="text-xl font-bold text-slate-900 dark:text-white">
                     {toValue.toLocaleString(undefined, { minimumFractionDigits: mode === "buy" ? 4 : 2, maximumFractionDigits: mode === "buy" ? 4 : 2 })}
                   </span>
                   <span className="text-slate-400 ml-2">{toSymbol}</span>
@@ -349,7 +349,7 @@ export function MetalExchangeModal({
 
           {/* Exchange Summary */}
           {amountNum > 0 && (
-            <div className="p-3 rounded-xl bg-slate-800/30 border border-slate-700/50">
+            <div className="p-3 rounded-xl bg-stone-50 dark:bg-slate-800/30 border border-stone-200 dark:border-slate-700/50">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-400">{lang === "tr" ? "Kur" : "Rate"}</span>
                 <span className="text-slate-200">
@@ -371,11 +371,11 @@ export function MetalExchangeModal({
             disabled={amountNum <= 0 || insufficientBalance || isProcessing}
             className={`w-full py-4 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 ${
               isProcessing
-                ? "bg-slate-700 cursor-wait"
+                ? "bg-stone-300 dark:bg-slate-700 cursor-wait"
                 : result === "success"
                 ? "bg-emerald-500"
                 : amountNum <= 0 || insufficientBalance
-                ? "bg-slate-700 cursor-not-allowed opacity-50"
+                ? "bg-stone-300 dark:bg-slate-700 cursor-not-allowed opacity-50"
                 : mode === "buy"
                 ? "bg-emerald-500 hover:bg-emerald-400"
                 : "bg-red-500 hover:bg-red-400"

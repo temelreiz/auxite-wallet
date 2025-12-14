@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 
 // Geliştirme modunda bypass için secret key
 const ADMIN_SECRET = process.env.ADMIN_SECRET || "auxite2024secret";
+const CRON_SECRET = process.env.CRON_SECRET;
 
 // İzin verilen path'ler (API'ler çalışmaya devam etmeli)
 const ALLOWED_PATHS = [
@@ -20,10 +21,46 @@ const ALLOWED_PATHS = [
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const response = NextResponse.next();
 
+  // ============================================
+  // SECURITY HEADERS - YENİ
+  // ============================================
+  response.headers.set("X-DNS-Prefetch-Control", "on");
+  response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+  );
+
+  // ============================================
+  // CRON ENDPOINT PROTECTION - YENİ
+  // ============================================
+  if (pathname.startsWith("/api/cron/")) {
+    const authHeader = request.headers.get("authorization");
+    const isVercelCron = request.headers.get("x-vercel-cron") === "true";
+    const hasValidAuth = authHeader === `Bearer ${CRON_SECRET}`;
+
+    if (!isVercelCron && !hasValidAuth && CRON_SECRET) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    return response;
+  }
+
+  // ============================================
+  // MEVCUT UNDER CONSTRUCTION LOGIC
+  // ============================================
+  
   // API ve static dosyalara izin ver
   if (ALLOWED_PATHS.some((path) => pathname.startsWith(path))) {
-    return NextResponse.next();
+    return response;
   }
 
   // Admin secret ile bypass (URL'de ?secret=xxx veya cookie)
@@ -33,7 +70,6 @@ export function middleware(request: NextRequest) {
 
   if (secretParam === ADMIN_SECRET) {
     // Cookie ayarla ve devam et
-    const response = NextResponse.next();
     response.cookies.set("admin_secret", ADMIN_SECRET, {
       httpOnly: true,
       secure: true,
@@ -44,7 +80,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (secretCookie === ADMIN_SECRET) {
-    return NextResponse.next();
+    return response;
   }
 
   // Under construction sayfasına yönlendir
@@ -57,7 +93,6 @@ export const config = {
      * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
      */
     "/((?!_next/static|_next/image).*)",
   ],

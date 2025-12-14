@@ -1,0 +1,180 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link "Auxite" [ref=e7] [cursor=pointer]:
+          - /url: /
+          - img "Auxite" [ref=e8]
+        - navigation [ref=e9]:
+          - link "Piyasalar" [ref=e10] [cursor=pointer]:
+            - /url: /
+          - link "Biriktir" [ref=e11] [cursor=pointer]:
+            - /url: /stake
+          - link "Cüzdan" [ref=e12] [cursor=pointer]:
+            - /url: /wallet
+          - link "Profil" [ref=e13] [cursor=pointer]:
+            - /url: /profile
+      - generic [ref=e14]:
+        - button "Light Mode" [ref=e15] [cursor=pointer]:
+          - img [ref=e16]
+        - button "🇹🇷 Türkçe" [ref=e19] [cursor=pointer]:
+          - generic [ref=e20]: 🇹🇷
+          - generic [ref=e21]: Türkçe
+          - img [ref=e22]
+        - button "Connect Wallet" [ref=e25] [cursor=pointer]:
+          - generic [ref=e28]: Connect Wallet
+    - generic [ref=e30]:
+      - heading "Auxite Piyasalar" [level=2] [ref=e31]
+      - paragraph [ref=e32]: Fiziksel metallerle desteklenen dijital tokenleri alın ve satın. Gerçek zamanlı fiyatlar ve anlık işlemler.
+    - generic [ref=e34]:
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - generic [ref=e42]: 🚀
+            - generic [ref=e43]:
+              - heading "Lansman Kampanyası!" [level=3] [ref=e44]
+              - paragraph [ref=e45]: 2% Tüm yatırımlarda AUXM bonus kazanın!
+          - generic [ref=e46]:
+            - generic [ref=e47]: "Kalan süre:"
+            - generic [ref=e48]:
+              - generic [ref=e49]:
+                - generic [ref=e50]: "17"
+                - generic [ref=e51]: GÜN
+              - generic [ref=e52]: ":"
+              - generic [ref=e53]:
+                - generic [ref=e54]: "10"
+                - generic [ref=e55]: SAAT
+              - generic [ref=e56]: ":"
+              - generic [ref=e57]:
+                - generic [ref=e58]: "25"
+                - generic [ref=e59]: DK
+        - generic [ref=e61]:
+          - img [ref=e62]
+          - generic [ref=e64]: Bonus AUXM sadece metal alımında (Altın, Gümüş, Platin, Paladyum) kullanılabilir.
+      - generic [ref=e65]:
+        - generic [ref=e66]:
+          - heading "Fiyatlar" [level=2] [ref=e67]
+          - paragraph [ref=e68]: Canlı metal ve kripto fiyatları
+        - generic [ref=e72]: Canlı
+      - generic [ref=e73]:
+        - generic [ref=e74] [cursor=pointer]:
+          - generic [ref=e75]:
+            - generic [ref=e76]:
+              - img "Auxite Altın" [ref=e77]
+              - heading "AUXG" [level=3] [ref=e78]
+            - generic [ref=e79]: ↑ 0.44%
+          - paragraph [ref=e80]: Auxite Altın
+          - generic [ref=e82]: $138.23
+          - generic [ref=e83]:
+            - button "Al" [ref=e84]
+            - button "Sat" [ref=e85]
+          - img [ref=e87]
+        - generic [ref=e89] [cursor=pointer]:
+          - generic [ref=e90]:
+            - generic [ref=e91]:
+              - img "Auxite Gümüş" [ref=e92]
+              - heading "AUXS" [level=3] [ref=e93]
+            - generic [ref=e94]: ↓ 2.56%
+          - paragraph [ref=e95]: Auxite Gümüş
+          - generic [ref=e97]: $1.99
+          - generic [ref=e98]:
+            - button "Al" [ref=e99]
+            - button "Sat" [ref=e100]
+          - img [ref=e102]
+        - generic [ref=e104] [cursor=pointer]:
+          - generic [ref=e105]:
+            - generic [ref=e106]:
+              - img "Auxite Platin" [ref=e107]
+              - heading "AUXPT" [level=3] [ref=e108]
+            - generic [ref=e109]: ~ 0.00%
+          - paragraph [ref=e110]: Auxite Platin
+          - generic [ref=e112]: $56.18
+          - generic [ref=e113]:
+            - button "Al" [ref=e114]
+            - button "Sat" [ref=e115]
+          - img [ref=e117]
+        - generic [ref=e119] [cursor=pointer]:
+          - generic [ref=e120]:
+            - generic [ref=e121]:
+              - img "Auxite Paladyum" [ref=e122]
+              - heading "AUXPD" [level=3] [ref=e123]
+            - generic [ref=e124]: ↓ 0.11%
+          - paragraph [ref=e125]: Auxite Paladyum
+          - generic [ref=e127]: $47.92
+          - generic [ref=e128]:
+            - button "Al" [ref=e129]
+            - button "Sat" [ref=e130]
+          - img [ref=e132]
+      - generic [ref=e134]:
+        - generic [ref=e135] [cursor=pointer]:
+          - generic [ref=e136]:
+            - generic [ref=e137]:
+              - img [ref=e139]
+              - generic [ref=e142]: ETH
+            - generic [ref=e143]: ↓ 0.45%
+          - generic [ref=e144]: Ethereum
+          - generic [ref=e145]: $3,090.01
+          - button "Dönüştür" [ref=e146]:
+            - img [ref=e147]
+            - text: Dönüştür
+        - generic [ref=e149] [cursor=pointer]:
+          - generic [ref=e150]:
+            - generic [ref=e151]:
+              - generic [ref=e153]: ₿
+              - generic [ref=e154]: BTC
+            - generic [ref=e155]: ↓ 1.02%
+          - generic [ref=e156]: Bitcoin
+          - generic [ref=e157]: $89,325.96
+          - button "Dönüştür" [ref=e158]:
+            - img [ref=e159]
+            - text: Dönüştür
+        - generic [ref=e161] [cursor=pointer]:
+          - generic [ref=e162]:
+            - generic [ref=e163]:
+              - img [ref=e165]
+              - generic [ref=e167]: XRP
+            - generic [ref=e168]: ↓ 1.67%
+          - generic [ref=e169]: Ripple
+          - generic [ref=e170]: $2.00
+          - button "Dönüştür" [ref=e171]:
+            - img [ref=e172]
+            - text: Dönüştür
+        - generic [ref=e174] [cursor=pointer]:
+          - generic [ref=e175]:
+            - generic [ref=e176]:
+              - img [ref=e178]
+              - generic [ref=e180]: SOL
+            - generic [ref=e181]: ↓ 1.35%
+          - generic [ref=e182]: Solana
+          - generic [ref=e183]: $131.22
+          - button "Dönüştür" [ref=e184]:
+            - img [ref=e185]
+            - text: Dönüştür
+      - generic [ref=e187]:
+        - button "Yatır" [ref=e188] [cursor=pointer]:
+          - img [ref=e190]
+          - generic [ref=e192]: Yatır
+        - button "Gönder" [ref=e193] [cursor=pointer]:
+          - img [ref=e195]
+          - generic [ref=e197]: Gönder
+        - button "Hızlı Al" [ref=e198] [cursor=pointer]:
+          - img [ref=e200]
+          - generic [ref=e202]: Hızlı Al
+        - button "Dönüştür" [ref=e203] [cursor=pointer]:
+          - img [ref=e205]
+          - generic [ref=e207]: Dönüştür
+        - link "Biriktir" [ref=e208] [cursor=pointer]:
+          - /url: /stake
+          - img [ref=e210]
+          - generic [ref=e212]: Biriktir
+      - paragraph [ref=e214]: Auxite ekosistemindeki tüm tokenlar, temsil ettikleri metal türüne karşılık gelen fiziksel değer üzerine yapılandırılmıştır; ilgili varlıklar, dünya genelindeki yetkili ve denetimli depolama tesisleri üzerinden muhafaza edilir.
+  - alert [ref=e215]
+  - generic [ref=e218] [cursor=pointer]:
+    - img [ref=e219]
+    - generic [ref=e221]: 1 error
+    - button "Hide Errors" [ref=e222]:
+      - img [ref=e223]
+```

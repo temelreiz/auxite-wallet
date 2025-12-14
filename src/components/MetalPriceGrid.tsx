@@ -10,10 +10,7 @@ import { BuyMetalModal } from "./BuyMetalModal";
 import CryptoTradingDetailPage from "./CryptoTradingDetailPage";
 import { CryptoConvertModal } from "./CryptoConvertModal";
 import { CampaignBanner } from "./CampaignBanner";
-
-interface MetalPriceGridProps {
-  lang?: "tr" | "en";
-}
+import { useLanguage } from "@/components/LanguageContext";
 
 // Metal icon mapping
 const metalIcons: Record<string, string> = {
@@ -94,8 +91,10 @@ function getDirectionStyles(change: number): { badgeBg: string; badgeText: strin
   }
 }
 
-export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
-  const { prices, bidPrices, directions, changes, loading } = useMetalsPrices();
+// Props artık gerekli değil - useLanguage hook'u kullanılıyor
+export default function MetalPriceGrid() {
+  const { t, lang } = useLanguage();
+  const { basePrices, prices, bidPrices, directions, changes, loading } = useMetalsPrices();
   const { prices: cryptoPrices, changes: cryptoChanges, directions: cryptoDirections, loading: cryptoLoading } = useCryptoPrices();
   const [showExchange, setShowExchange] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
@@ -146,7 +145,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 animate-pulse"
+            className="rounded-xl border border-stone-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-4 animate-pulse"
           >
             <div className="h-32"></div>
           </div>
@@ -169,17 +168,17 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-200">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
             {lang === "tr" ? "Fiyatlar" : "Prices"}
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             {lang === "tr"
               ? "Canlı metal ve kripto fiyatları"
               : "Live metal and crypto prices"}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 text-xs text-slate-400">
+          <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
             <span>{lang === "tr" ? "Canlı" : "Live"}</span>
           </div>
@@ -189,12 +188,13 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
       {/* Metal Price Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metals.map((metal) => {
-          const priceData = prices[metal.priceKey];
+          const basePrice = basePrices[metal.priceKey];
+          const askPrice = prices[metal.priceKey];
           const bidPrice = bidPrices[metal.priceKey];
           const direction = directions[metal.priceKey];
           const change = changes[metal.priceKey];
 
-          if (!priceData || typeof priceData !== "number") {
+          if (!basePrice || typeof basePrice !== "number") {
             return null;
           }
 
@@ -208,10 +208,10 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
               metalId={metal.id}
               symbol={metal.symbol}
               name={metalName}
-              pricePerGram={priceData}
-              pricePerKg={priceData * 1000}
-              change24h={change || 0}
+              basePrice={basePrice}
+              askPrice={askPrice}
               bidPrice={bidPrice}
+              change24h={change || 0}
               direction={direction || "neutral"}
               icon={metal.icon}
               lang={lang}
@@ -224,7 +224,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* ETH */}
         <div 
-          className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 hover:border-slate-600 cursor-pointer transition-all"
+          className="rounded-xl border border-stone-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-4 hover:border-stone-400 dark:hover:border-slate-600 cursor-pointer transition-all"
           onClick={() => setShowCryptoDetail("ETH")}
         >
           <div className="flex items-center justify-between mb-2">
@@ -235,14 +235,14 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                   <path d="M12 18.5l-6.5-4.5L12 22.5l6.5-8.5L12 18.5z" fillOpacity="0.6"/>
                 </svg>
               </div>
-              <span className="text-sm font-medium text-slate-200">ETH</span>
+              <span className="text-sm font-medium text-slate-800 dark:text-slate-200">ETH</span>
             </div>
             <span className={`text-xs px-2 py-0.5 rounded ${ethStyles.badgeBg} ${ethStyles.badgeText}`}>
               {ethStyles.arrow} {Math.abs(cryptoChanges.eth).toFixed(2)}%
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Ethereum</div>
-          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.eth === "up" ? "text-emerald-400" : cryptoDirections.eth === "down" ? "text-red-400" : "text-slate-100"}`}>
+          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.eth === "up" ? "text-emerald-400" : cryptoDirections.eth === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
             ${cryptoPrices.eth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
@@ -258,7 +258,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
 
         {/* BTC */}
         <div 
-          className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 hover:border-slate-600 cursor-pointer transition-all"
+          className="rounded-xl border border-stone-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-4 hover:border-stone-400 dark:hover:border-slate-600 cursor-pointer transition-all"
           onClick={() => setShowCryptoDetail("BTC")}
         >
           <div className="flex items-center justify-between mb-2">
@@ -266,14 +266,14 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
               <div className="w-5 h-5 rounded-full bg-[#F7931A] flex items-center justify-center">
                 <span className="text-white text-xs font-bold">₿</span>
               </div>
-              <span className="text-sm font-medium text-slate-200">BTC</span>
+              <span className="text-sm font-medium text-slate-800 dark:text-slate-200">BTC</span>
             </div>
             <span className={`text-xs px-2 py-0.5 rounded ${btcStyles.badgeBg} ${btcStyles.badgeText}`}>
               {btcStyles.arrow} {Math.abs(cryptoChanges.btc).toFixed(2)}%
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Bitcoin</div>
-          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.btc === "up" ? "text-emerald-400" : cryptoDirections.btc === "down" ? "text-red-400" : "text-slate-100"}`}>
+          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.btc === "up" ? "text-emerald-400" : cryptoDirections.btc === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
             ${cryptoPrices.btc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
@@ -289,7 +289,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
 
         {/* XRP */}
         <div 
-          className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 hover:border-slate-600 cursor-pointer transition-all"
+          className="rounded-xl border border-stone-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-4 hover:border-stone-400 dark:hover:border-slate-600 cursor-pointer transition-all"
           onClick={() => setShowCryptoDetail("XRP")}
         >
           <div className="flex items-center justify-between mb-2">
@@ -299,14 +299,14 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                   <path d="M12 0L4 6l8 6 8-6-8-6zM4 18l8 6 8-6-8-6-8 6z"/>
                 </svg>
               </div>
-              <span className="text-sm font-medium text-slate-200">XRP</span>
+              <span className="text-sm font-medium text-slate-800 dark:text-slate-200">XRP</span>
             </div>
             <span className={`text-xs px-2 py-0.5 rounded ${xrpStyles.badgeBg} ${xrpStyles.badgeText}`}>
               {xrpStyles.arrow} {Math.abs(cryptoChanges.xrp || 0).toFixed(2)}%
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Ripple</div>
-          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.xrp === "up" ? "text-emerald-400" : cryptoDirections.xrp === "down" ? "text-red-400" : "text-slate-100"}`}>
+          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.xrp === "up" ? "text-emerald-400" : cryptoDirections.xrp === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
             ${(cryptoPrices.xrp || 2.20).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
@@ -322,7 +322,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
 
         {/* SOL */}
         <div 
-          className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 hover:border-slate-600 cursor-pointer transition-all"
+          className="rounded-xl border border-stone-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-4 hover:border-stone-400 dark:hover:border-slate-600 cursor-pointer transition-all"
           onClick={() => setShowCryptoDetail("SOL")}
         >
           <div className="flex items-center justify-between mb-2">
@@ -332,14 +332,14 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                   <path d="M4 17.5l3.5-3.5H20l-3.5 3.5H4zM4 6.5l3.5 3.5H20l-3.5-3.5H4zM4 12h16"/>
                 </svg>
               </div>
-              <span className="text-sm font-medium text-slate-200">SOL</span>
+              <span className="text-sm font-medium text-slate-800 dark:text-slate-200">SOL</span>
             </div>
             <span className={`text-xs px-2 py-0.5 rounded ${solStyles.badgeBg} ${solStyles.badgeText}`}>
               {solStyles.arrow} {Math.abs(cryptoChanges.sol || 0).toFixed(2)}%
             </span>
           </div>
           <div className="text-xs text-slate-500 mb-1">Solana</div>
-          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.sol === "up" ? "text-emerald-400" : cryptoDirections.sol === "down" ? "text-red-400" : "text-slate-100"}`}>
+          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.sol === "up" ? "text-emerald-400" : cryptoDirections.sol === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
             ${(cryptoPrices.sol || 235).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
@@ -359,82 +359,82 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
         {/* Yatır / Add Funds */}
         <button
           onClick={() => setShowDeposit(true)}
-          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-emerald-500 transition-all group"
+          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-emerald-500 transition-all group"
         >
           <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
             <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </div>
-          <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
-            {lang === "tr" ? "Yatır" : "Add Funds"}
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+            {{ tr: "Yatır", en: "Add Funds", de: "Einzahlen", fr: "Déposer", ar: "إيداع", ru: "Пополнить" }[lang] || "Add Funds"}
           </span>
         </button>
 
         {/* Gönder / Transfer */}
         <button
           onClick={() => setShowTransfer(true)}
-          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-blue-500 transition-all group"
+          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-blue-500 transition-all group"
         >
           <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
             <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
           </div>
-          <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
-            {lang === "tr" ? "Gönder" : "Transfer"}
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+            {{ tr: "Gönder", en: "Transfer", de: "Senden", fr: "Envoyer", ar: "تحويل", ru: "Перевод" }[lang] || "Transfer"}
           </span>
         </button>
 
         {/* Hızlı Al / Quick Buy */}
         <button
           onClick={() => setShowBuyMetal(true)}
-          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-purple-500 transition-all group"
+          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-purple-500 transition-all group"
         >
           <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
             <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
-          <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
-            {lang === "tr" ? "Hızlı Al" : "Quick Buy"}
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+            {{ tr: "Hızlı Al", en: "Quick Buy", de: "Schnellkauf", fr: "Achat Rapide", ar: "شراء سريع", ru: "Быстрая покупка" }[lang] || "Quick Buy"}
           </span>
         </button>
 
         {/* Dönüştür / Exchange */}
         <button
           onClick={() => setShowExchange(true)}
-          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-orange-500 transition-all group"
+          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-orange-500 transition-all group"
         >
           <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center group-hover:bg-orange-500/30 transition-colors">
             <svg className="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
           </div>
-          <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
-            {lang === "tr" ? "Dönüştür" : "Exchange"}
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+            {{ tr: "Dönüştür", en: "Exchange", de: "Umtauschen", fr: "Échanger", ar: "تبادل", ru: "Обмен" }[lang] || "Exchange"}
           </span>
         </button>
 
         {/* Kazan / Earn */}
         <Link
-          href="/earn"
-          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-amber-500 transition-all group"
+          href="/stake"
+          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-amber-500 transition-all group"
         >
           <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center group-hover:bg-amber-500/30 transition-colors">
             <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
-            {lang === "tr" ? "Kazan" : "Earn"}
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+            {{ tr: "Biriktir", en: "Stake", de: "Staken", fr: "Staker", ar: "ستيك", ru: "Стейкинг" }[lang] || "Stake"}
           </span>
         </Link>
       </div>
 
       {/* Ecosystem Description */}
-      <div className="p-4 rounded-xl bg-slate-800/30 border border-slate-700">
-        <p className="text-sm text-slate-300 leading-relaxed">
+      <div className="p-4 rounded-xl bg-stone-100 dark:bg-slate-800/30 border border-stone-200 dark:border-slate-700">
+        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
           {lang === "tr"
             ? "Auxite ekosistemindeki tüm tokenlar, temsil ettikleri metal türüne karşılık gelen fiziksel değer üzerine yapılandırılmıştır; ilgili varlıklar, dünya genelindeki yetkili ve denetimli depolama tesisleri üzerinden muhafaza edilir."
             : "All tokens in the Auxite ecosystem are structured on physical value corresponding to the metal type they represent; related assets are stored through authorized and audited storage facilities worldwide."}
@@ -461,17 +461,17 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
 
       {/* Deposit Modal - Select Method */}
       {showDeposit && (
-        <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50">
-          <div className="bg-slate-900 rounded-t-2xl sm:rounded-2xl border-t sm:border border-slate-700 w-full sm:max-w-md p-6 max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-end sm:items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl border-t sm:border border-stone-300 dark:border-slate-700 w-full sm:max-w-md p-6 max-h-[80vh] overflow-y-auto shadow-xl">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">
                 {lang === "tr" ? "Yatırma Yöntemi Seçin" : "Select Deposit Method"}
               </h3>
               <button
                 onClick={() => setShowDeposit(false)}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-stone-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -484,22 +484,22 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                   setShowDeposit(false);
                   setShowOnChainDeposit(true);
                 }}
-                className="w-full p-4 rounded-xl border border-slate-700 hover:border-slate-600 hover:bg-slate-800/50 transition-all text-left flex items-start gap-4"
+                className="w-full p-4 rounded-xl border border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600 bg-stone-50 dark:bg-transparent hover:bg-stone-100 dark:hover:bg-slate-800/50 transition-all text-left flex items-start gap-4"
               >
-                <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-10 h-10 rounded-lg bg-stone-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-white font-semibold mb-1">On-Chain Deposit</h4>
-                  <p className="text-sm text-slate-400">
+                  <h4 className="text-slate-800 dark:text-white font-semibold mb-1">On-Chain Deposit</h4>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     {lang === "tr" 
                       ? "Diğer borsalardan/cüzdanlardan kripto yatırın" 
                       : "Deposit crypto from other exchanges/wallets"}
                   </p>
                 </div>
-                <svg className="w-5 h-5 text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -510,24 +510,24 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                   setShowDeposit(false);
                   setShowFiatDeposit(true);
                 }}
-                className="w-full p-4 rounded-xl border border-slate-700 hover:border-slate-600 hover:bg-slate-800/50 transition-all text-left flex items-start gap-4"
+                className="w-full p-4 rounded-xl border border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600 bg-stone-50 dark:bg-transparent hover:bg-stone-100 dark:hover:bg-slate-800/50 transition-all text-left flex items-start gap-4"
               >
-                <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-10 h-10 rounded-lg bg-stone-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-white font-semibold mb-1">
+                  <h4 className="text-slate-800 dark:text-white font-semibold mb-1">
                     {lang === "tr" ? "Fiat Yatır" : "Deposit Fiat"}
                   </h4>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     {lang === "tr" 
                       ? "Kredi kartı, Apple/Google Pay ile USD/TRY yatırın" 
                       : "Deposit USD/TRY via card, Apple/Google Pay"}
                   </p>
                 </div>
-                <svg className="w-5 h-5 text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -538,23 +538,23 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
 
       {/* Fiat Deposit Modal */}
       {showFiatDeposit && (
-        <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50">
-          <div className="bg-slate-900 rounded-t-2xl sm:rounded-2xl border-t sm:border border-slate-700 w-full sm:max-w-md p-6 max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-end sm:items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl border-t sm:border border-stone-300 dark:border-slate-700 w-full sm:max-w-md p-6 max-h-[80vh] overflow-y-auto shadow-xl">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-xl font-bold text-white">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white">
                   {lang === "tr" ? "Fiat Yatır" : "Deposit Fiat"}
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {lang === "tr" ? "USD veya TRY yatırın" : "Deposit USD or TRY"}
                 </p>
               </div>
               <button
                 onClick={() => setShowFiatDeposit(false)}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-stone-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -567,29 +567,29 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                 onClick={() => {
                   alert(lang === "tr" ? "MoonPay yakında aktif olacak" : "MoonPay coming soon");
                 }}
-                className="w-full p-4 rounded-xl border border-slate-700 hover:border-purple-500/50 hover:bg-slate-800/50 transition-all text-left flex items-start gap-4 group"
+                className="w-full p-4 rounded-xl border border-stone-300 dark:border-slate-700 hover:border-purple-500/50 bg-stone-50 dark:bg-transparent hover:bg-purple-50 dark:hover:bg-slate-800/50 transition-all text-left flex items-start gap-4 group"
               >
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 text-purple-500 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                   </svg>
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="text-white font-semibold text-sm">MoonPay</h4>
-                    <span className="px-1.5 py-0.5 text-xs rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                    <h4 className="text-slate-800 dark:text-white font-semibold text-sm">MoonPay</h4>
+                    <span className="px-1.5 py-0.5 text-xs rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30">
                       {lang === "tr" ? "Anında" : "Instant"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-500">
                     <span>Min: $30</span>
                     <span>•</span>
                     <span>{lang === "tr" ? "Anında" : "Instant"}</span>
                     <span>•</span>
-                    <span className="text-amber-500">3.5%</span>
+                    <span className="text-amber-600 dark:text-amber-500">3.5%</span>
                   </div>
                 </div>
-                <svg className="w-5 h-5 text-slate-500 group-hover:text-purple-400 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 group-hover:text-purple-500 dark:group-hover:text-purple-400 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -600,18 +600,18 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
 
       {/* On-Chain Deposit - Select Coin Modal */}
       {showOnChainDeposit && !selectedDepositCoin && (
-        <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50">
-          <div className="bg-slate-900 rounded-t-2xl sm:rounded-2xl border-t sm:border border-slate-700 w-full sm:max-w-md p-6 max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-end sm:items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl border-t sm:border border-stone-300 dark:border-slate-700 w-full sm:max-w-md p-6 max-h-[80vh] overflow-y-auto shadow-xl">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-white">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">
                 {lang === "tr" ? "Coin Seç" : "Select Coin"}
               </h3>
               <button
                 onClick={() => setShowOnChainDeposit(false)}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-stone-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -619,7 +619,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
 
             {/* Search */}
             <div className="relative mb-4">
-              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
@@ -627,7 +627,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                 placeholder={lang === "tr" ? "Coin Ara" : "Search Coins"}
                 value={depositSearchQuery}
                 onChange={(e) => setDepositSearchQuery(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-12 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-slate-600"
+                className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl pl-12 pr-4 py-3 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-stone-400 dark:focus:border-slate-600"
               />
             </div>
 
@@ -639,7 +639,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                   onClick={() => {
                     setSelectedDepositCoin(coin.id);
                   }}
-                  className="w-full flex items-center gap-4 p-3 rounded-xl border border-slate-700 hover:border-slate-600 hover:bg-slate-800/50 transition-all"
+                  className="w-full flex items-center gap-4 p-3 rounded-xl border border-stone-200 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600 hover:bg-stone-50 dark:hover:bg-slate-800/50 transition-all"
                 >
                   <div 
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
@@ -648,10 +648,10 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                     {coin.icon}
                   </div>
                   <div className="flex-1 text-left">
-                    <div className="text-white font-semibold">{coin.id}</div>
-                    <div className="text-sm text-slate-400">{coin.name}</div>
+                    <div className="text-slate-800 dark:text-white font-semibold">{coin.id}</div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">{coin.name}</div>
                   </div>
-                  <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
@@ -676,17 +676,17 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
       )}
       {/* Transfer Modal */}
       {showTransfer && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 max-w-md w-full p-6 shadow-xl">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">
                 {lang === "tr" ? "Gönder" : "Transfer"}
               </h3>
               <button
                 onClick={() => setShowTransfer(false)}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-stone-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -694,9 +694,9 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
 
             {/* Token Selection */}
             <div className="mb-4">
-              <label className="text-sm text-slate-400 mb-2 block">{lang === "tr" ? "Token" : "Token"}</label>
+              <label className="text-sm text-slate-500 dark:text-slate-400 mb-2 block">{lang === "tr" ? "Token" : "Token"}</label>
               <div className="relative">
-                <select className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white appearance-none pl-12">
+                <select className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white appearance-none pl-12">
                   <option value="AUXG">AUXG - {lang === "tr" ? "Altın" : "Gold"}</option>
                   <option value="AUXS">AUXS - {lang === "tr" ? "Gümüş" : "Silver"}</option>
                   <option value="AUXPT">AUXPT - {lang === "tr" ? "Platin" : "Platinum"}</option>
@@ -711,7 +711,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                   <img src="/gold-favicon-32x32.png" alt="" className="w-6 h-6" />
                 </div>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 text-slate-400 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
@@ -720,37 +720,37 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
 
             {/* Recipient Address */}
             <div className="mb-4">
-              <label className="text-sm text-slate-400 mb-2 block">{lang === "tr" ? "Alıcı Adresi" : "Recipient Address"}</label>
+              <label className="text-sm text-slate-500 dark:text-slate-400 mb-2 block">{lang === "tr" ? "Alıcı Adresi" : "Recipient Address"}</label>
               <input
                 type="text"
                 placeholder="0x..."
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500"
+                className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
               />
             </div>
 
             {/* Amount */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm text-slate-400">{lang === "tr" ? "Miktar" : "Amount"}</label>
-                <span className="text-xs text-slate-500">{lang === "tr" ? "Bakiye" : "Balance"}: 998,953.91 AUXG</span>
+                <label className="text-sm text-slate-500 dark:text-slate-400">{lang === "tr" ? "Miktar" : "Amount"}</label>
+                <span className="text-xs text-slate-500 dark:text-slate-500">{lang === "tr" ? "Bakiye" : "Balance"}: 998,953.91 AUXG</span>
               </div>
               <div className="flex gap-2">
                 <input
                   type="number"
                   placeholder="0.00"
-                  className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500"
+                  className="flex-1 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
                 />
-                <button className="px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-emerald-500 font-medium hover:bg-slate-700 transition-colors">
+                <button className="px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl text-emerald-600 dark:text-emerald-500 font-medium hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors">
                   MAX
                 </button>
               </div>
             </div>
 
             {/* Fee Info */}
-            <div className="bg-slate-800/50 rounded-xl p-3 mb-6">
+            <div className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-3 mb-6">
               <div className="flex justify-between text-sm">
-                <span className="text-slate-400">{lang === "tr" ? "Ağ Ücreti" : "Network Fee"}</span>
-                <span className="text-slate-300">~$0.50</span>
+                <span className="text-slate-500 dark:text-slate-400">{lang === "tr" ? "Ağ Ücreti" : "Network Fee"}</span>
+                <span className="text-slate-700 dark:text-slate-300">~$0.50</span>
               </div>
             </div>
 
@@ -763,30 +763,30 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
 
       {/* Receive Modal */}
       {showReceive && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 max-w-md w-full p-6 shadow-xl">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">
                 {lang === "tr" ? "Al" : "Receive"}
               </h3>
               <button
                 onClick={() => setShowReceive(false)}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-stone-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            <p className="text-sm text-slate-400 mb-4">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
               {lang === "tr" 
                 ? "Bu adresi paylaşarak token alabilirsiniz." 
                 : "Share this address to receive tokens."}
             </p>
 
             {/* QR Code */}
-            <div className="bg-white p-4 rounded-xl mb-4 flex items-center justify-center">
+            <div className="bg-white p-4 rounded-xl mb-4 flex items-center justify-center border border-stone-200 dark:border-transparent">
               <div className="w-40 h-40 flex items-center justify-center">
                 <img 
                   src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=0xe6df1234567890abcdef1234567890abcdef3ba3"
@@ -797,9 +797,9 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
             </div>
 
             {/* Address */}
-            <div className="bg-slate-800 rounded-xl p-4 mb-4">
-              <p className="text-xs text-slate-500 mb-1">{lang === "tr" ? "Cüzdan Adresi" : "Wallet Address"}</p>
-              <p className="text-sm text-slate-200 font-mono break-all">0xe6df1234567890abcdef1234567890abcdef3ba3</p>
+            <div className="bg-stone-100 dark:bg-slate-800 rounded-xl p-4 mb-4">
+              <p className="text-xs text-slate-500 dark:text-slate-500 mb-1">{lang === "tr" ? "Cüzdan Adresi" : "Wallet Address"}</p>
+              <p className="text-sm text-slate-800 dark:text-slate-200 font-mono break-all">0xe6df1234567890abcdef1234567890abcdef3ba3</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -807,7 +807,7 @@ export default function MetalPriceGrid({ lang = "en" }: MetalPriceGridProps) {
                 onClick={() => {
                   navigator.clipboard.writeText("0xe6df1234567890abcdef1234567890abcdef3ba3");
                 }}
-                className="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium transition-colors"
+                className="py-3 rounded-xl bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-white font-medium transition-colors"
               >
                 {lang === "tr" ? "Kopyala" : "Copy"}
               </button>

@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useToast } from "@/components/ui/Toast";
+import { useWallet } from "@/components/WalletContext";
 import { useAccount } from "wagmi";
 import type { MetalId } from "@/lib/metals";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useTrade } from "@/hooks/useTrade";
 import { isLaunchCampaignActive, calculateAuxmBonus } from "@/lib/auxm-bonus-service";
+import { LimitOrdersList } from "./LimitOrdersList";
 
 interface TradePanelProps {
   metalId: MetalId;
@@ -14,11 +17,12 @@ interface TradePanelProps {
   currentPrice: number;
   bidPrice?: number;
   onClose: () => void;
-  lang?: "tr" | "en";
+  lang?: string;
   initialMode?: "buy" | "sell";
 }
 
 type Currency = "AUXM" | "USDT" | "BTC" | "ETH" | "XRP" | "SOL";
+type OrderType = "market" | "limit";
 
 // Currency conversion helper
 function convertToCurrency(
@@ -54,10 +58,19 @@ export default function TradePanel({
   lang = "en",
   initialMode = "buy",
 }: TradePanelProps) {
-  const { isConnected } = useAccount();
+  const { address, refreshBalances, balances, isConnected } = useWallet();
+  const toast = useToast();
+  const [quote, setQuote] = useState<{ id: string; pricePerGram: number; spreadPercent: number; expiresAt: number } | null>(null);
+  const [countdown, setCountdown] = useState(0);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [tradeSuccess, setTradeSuccess] = useState(false);
   const [mode, setMode] = useState<"buy" | "sell">(initialMode);
+  const [orderType, setOrderType] = useState<OrderType>("market");
   const [amount, setAmount] = useState<string>("1");
+  const [limitPrice, setLimitPrice] = useState<string>("");
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("AUXM");
+  const [limitOrderSuccess, setLimitOrderSuccess] = useState(false);
+  const [isPlacingLimitOrder, setIsPlacingLimitOrder] = useState(false);
   const { prices: cryptoPrices, loading: pricesLoading } = useCryptoPrices();
   
   const {
@@ -77,7 +90,19 @@ export default function TradePanel({
   const [auxmBalance] = useState({ auxm: 1250.50, bonusAuxm: 25.00 });
   const totalAuxm = auxmBalance.auxm + auxmBalance.bonusAuxm;
 
-  const effectivePrice = mode === "sell" ? (bidPrice || currentPrice * 0.99) : currentPrice;
+  // WalletContext balance
+  const getMetalBalance = () => {
+    if (!balances) return 0;
+    const key = metalId.toLowerCase() as keyof typeof balances;
+    return balances[key] as number || 0;
+  };
+  const walletMetalBalance = getMetalBalance();
+  
+  // Price calculations
+  const marketPrice = mode === "sell" ? (bidPrice || currentPrice * 0.99) : currentPrice;
+  const limitPriceNum = parseFloat(limitPrice) || 0;
+  const effectivePrice = orderType === "limit" ? limitPriceNum : marketPrice;
+  
   const amountNum = parseFloat(amount) || 0;
   const totalUSD = effectivePrice * amountNum;
   
@@ -102,7 +127,6 @@ export default function TradePanel({
 
   const bonusUsage = calculateBonusUsage();
   const canAffordAuxm = mode === "buy" && selectedCurrency === "AUXM" ? totalUSD <= totalAuxm : true;
-
   const totalInCurrency = convertToCurrency(totalUSD, cryptoPrices, selectedCurrency);
 
   const currencies: Currency[] = ["AUXM", "USDT", "BTC", "ETH", "XRP", "SOL"];
@@ -131,6 +155,373 @@ export default function TradePanel({
     return colors[curr];
   };
 
+  // Multi-language translations
+  const translations: Record<string, Record<string, string>> = {
+    tr: {
+      market: "Piyasa",
+      limit: "Limit",
+      orderType: "Emir Tipi",
+      marketDesc: "Anlık piyasa fiyatından",
+      limitDesc: "Belirlediğin fiyattan",
+      limitPrice: "Limit Fiyat",
+      currentPrice: "Güncel Fiyat",
+      placeOrder: "Emir Ver",
+      orderPlaced: "Limit Emir Verildi!",
+      limitOrderInfo: "Limit emriniz piyasa fiyatı belirlediğiniz seviyeye ulaştığında otomatik gerçekleşecektir.",
+      buy: "Satın Al",
+      sell: "Sat",
+      buyNow: "Satın Al",
+      sellNow: "Şimdi Sat",
+      cancel: "İptal",
+      confirm: "Onayla",
+      approving: "Onaylanıyor...",
+      processing: "İşleniyor...",
+      placingOrder: "Emir Veriliyor...",
+      tradeSuccess: "İşlem Başarılı!",
+      viewTransaction: "İşlemi Görüntüle",
+      priceLocked: "Fiyat Kilitlendi",
+      priceExpired: "Fiyat süresi doldu",
+      getNewPrice: "Yeni fiyat alın",
+      totalPayment: "Toplam Ödeme",
+      totalReceive: "Toplam Alacak",
+      amount: "Miktar",
+      gram: "gram",
+      balance: "Bakiye",
+      availableBalance: "Kullanılabilir Bakiye",
+      insufficientBalance: "Yetersiz bakiye",
+      insufficientAuxm: "Yetersiz AUXM bakiyesi",
+      connectWallet: "Lütfen cüzdanınızı bağlayın",
+      enterValidAmount: "Geçerli bir miktar girin",
+      enterValidPrice: "Geçerli miktar ve fiyat girin",
+      tokenApproval: "Token onayı bekleniyor...",
+      waitingTransaction: "İşlem onayı bekleniyor...",
+      bonusUsage: "Bonus Kullanımı",
+      regularAuxm: "Normal AUXM",
+      priceFailed: "Fiyat alınamadı",
+      tradeFailed: "İşlem başarısız",
+      orderFailed: "Emir verilemedi",
+      orderCreated: "Limit emriniz başarıyla oluşturuldu",
+      seconds: "saniye",
+      close: "Kapat",
+      tryAgain: "Tekrar Dene",
+      campaignActive: "Lansman Kampanyası Aktif!",
+      campaignDesc: "Metal satın al, bonus AUXM kazan!",
+      askPrice: "Satış Fiyatı",
+      bidPrice: "Alış Fiyatı",
+      amountGrams: "Miktar (gram)",
+      paymentMethod: "Ödeme Yöntemi",
+      receiveAs: "Alınacak Para Birimi",
+      pleaseWait: "Lütfen bekleyin",
+      sec: "sn",
+      total: "Toplam",
+      bonus: "Bonus",
+    },
+    en: {
+      market: "Market",
+      limit: "Limit",
+      orderType: "Order Type",
+      marketDesc: "At current market price",
+      limitDesc: "At your specified price",
+      limitPrice: "Limit Price",
+      currentPrice: "Current Price",
+      placeOrder: "Place Order",
+      orderPlaced: "Limit Order Placed!",
+      limitOrderInfo: "Your limit order will automatically execute when market price reaches your specified level.",
+      buy: "Buy",
+      sell: "Sell",
+      buyNow: "Buy Now",
+      sellNow: "Sell Now",
+      cancel: "Cancel",
+      confirm: "Confirm",
+      approving: "Approving...",
+      processing: "Processing...",
+      placingOrder: "Placing Order...",
+      tradeSuccess: "Trade Successful!",
+      viewTransaction: "View Transaction",
+      priceLocked: "Price Locked",
+      priceExpired: "Price expired",
+      getNewPrice: "Get new price",
+      totalPayment: "Total Payment",
+      totalReceive: "Total Receive",
+      amount: "Amount",
+      gram: "gram",
+      balance: "Balance",
+      availableBalance: "Available Balance",
+      insufficientBalance: "Insufficient balance",
+      insufficientAuxm: "Insufficient AUXM balance",
+      connectWallet: "Please connect your wallet",
+      enterValidAmount: "Enter a valid amount",
+      enterValidPrice: "Enter valid amount and price",
+      tokenApproval: "Waiting for token approval...",
+      waitingTransaction: "Waiting for transaction...",
+      bonusUsage: "Bonus Usage",
+      regularAuxm: "Regular AUXM",
+      priceFailed: "Failed to get price",
+      tradeFailed: "Trade failed",
+      orderFailed: "Order failed",
+      orderCreated: "Your limit order has been created",
+      seconds: "seconds",
+      close: "Close",
+      tryAgain: "Try Again",
+      campaignActive: "Launch Campaign Active!",
+      campaignDesc: "Buy metals and earn bonus AUXM!",
+      askPrice: "Ask Price",
+      bidPrice: "Bid Price",
+      amountGrams: "Amount (grams)",
+      paymentMethod: "Payment Method",
+      receiveAs: "Receive As",
+      pleaseWait: "Please wait",
+      sec: "s",
+      total: "Total",
+      bonus: "Bonus",
+    },
+    de: {
+      market: "Markt",
+      limit: "Limit",
+      orderType: "Auftragstyp",
+      marketDesc: "Zum aktuellen Marktpreis",
+      limitDesc: "Zu Ihrem angegebenen Preis",
+      limitPrice: "Limitpreis",
+      currentPrice: "Aktueller Preis",
+      placeOrder: "Auftrag erteilen",
+      orderPlaced: "Limitauftrag erteilt!",
+      limitOrderInfo: "Ihr Limitauftrag wird automatisch ausgeführt, wenn der Marktpreis Ihr angegebenes Niveau erreicht.",
+      buy: "Kaufen",
+      sell: "Verkaufen",
+      buyNow: "Jetzt kaufen",
+      sellNow: "Jetzt verkaufen",
+      cancel: "Abbrechen",
+      confirm: "Bestätigen",
+      approving: "Genehmigung...",
+      processing: "Verarbeitung...",
+      placingOrder: "Auftrag wird erteilt...",
+      tradeSuccess: "Handel erfolgreich!",
+      viewTransaction: "Transaktion anzeigen",
+      priceLocked: "Preis gesperrt",
+      priceExpired: "Preis abgelaufen",
+      getNewPrice: "Neuen Preis abrufen",
+      totalPayment: "Gesamtzahlung",
+      totalReceive: "Gesamterhalt",
+      amount: "Menge",
+      gram: "Gramm",
+      balance: "Guthaben",
+      availableBalance: "Verfügbares Guthaben",
+      insufficientBalance: "Unzureichendes Guthaben",
+      insufficientAuxm: "Unzureichendes AUXM-Guthaben",
+      connectWallet: "Bitte verbinden Sie Ihre Wallet",
+      enterValidAmount: "Geben Sie einen gültigen Betrag ein",
+      enterValidPrice: "Geben Sie gültigen Betrag und Preis ein",
+      tokenApproval: "Warten auf Token-Genehmigung...",
+      waitingTransaction: "Warten auf Transaktion...",
+      bonusUsage: "Bonusnutzung",
+      regularAuxm: "Reguläres AUXM",
+      priceFailed: "Preis konnte nicht abgerufen werden",
+      tradeFailed: "Handel fehlgeschlagen",
+      orderFailed: "Auftrag fehlgeschlagen",
+      orderCreated: "Ihr Limitauftrag wurde erstellt",
+      seconds: "Sekunden",
+      close: "Schließen",
+      tryAgain: "Erneut versuchen",
+      campaignActive: "Startkampagne aktiv!",
+      campaignDesc: "Metalle kaufen und Bonus-AUXM verdienen!",
+      askPrice: "Verkaufspreis",
+      bidPrice: "Kaufpreis",
+      amountGrams: "Menge (Gramm)",
+      paymentMethod: "Zahlungsmethode",
+      receiveAs: "Erhalten als",
+      pleaseWait: "Bitte warten",
+      sec: "s",
+      total: "Gesamt",
+      bonus: "Bonus",
+    },
+    fr: {
+      market: "Marché",
+      limit: "Limite",
+      orderType: "Type d'ordre",
+      marketDesc: "Au prix actuel du marché",
+      limitDesc: "À votre prix spécifié",
+      limitPrice: "Prix limite",
+      currentPrice: "Prix actuel",
+      placeOrder: "Passer l'ordre",
+      orderPlaced: "Ordre limite passé!",
+      limitOrderInfo: "Votre ordre limite sera exécuté automatiquement lorsque le prix du marché atteindra votre niveau spécifié.",
+      buy: "Acheter",
+      sell: "Vendre",
+      buyNow: "Acheter maintenant",
+      sellNow: "Vendre maintenant",
+      cancel: "Annuler",
+      confirm: "Confirmer",
+      approving: "Approbation...",
+      processing: "Traitement...",
+      placingOrder: "Passage de l'ordre...",
+      tradeSuccess: "Transaction réussie!",
+      viewTransaction: "Voir la transaction",
+      priceLocked: "Prix verrouillé",
+      priceExpired: "Prix expiré",
+      getNewPrice: "Obtenir un nouveau prix",
+      totalPayment: "Paiement total",
+      totalReceive: "Réception totale",
+      amount: "Montant",
+      gram: "gramme",
+      balance: "Solde",
+      availableBalance: "Solde disponible",
+      insufficientBalance: "Solde insuffisant",
+      insufficientAuxm: "Solde AUXM insuffisant",
+      connectWallet: "Veuillez connecter votre portefeuille",
+      enterValidAmount: "Entrez un montant valide",
+      enterValidPrice: "Entrez un montant et un prix valides",
+      tokenApproval: "En attente d'approbation du token...",
+      waitingTransaction: "En attente de la transaction...",
+      bonusUsage: "Utilisation du bonus",
+      regularAuxm: "AUXM régulier",
+      priceFailed: "Échec de l'obtention du prix",
+      tradeFailed: "Transaction échouée",
+      orderFailed: "Ordre échoué",
+      orderCreated: "Votre ordre limite a été créé",
+      seconds: "secondes",
+      close: "Fermer",
+      tryAgain: "Réessayer",
+      campaignActive: "Campagne de lancement active!",
+      campaignDesc: "Achetez des métaux et gagnez des AUXM bonus!",
+      askPrice: "Prix de vente",
+      bidPrice: "Prix d'achat",
+      amountGrams: "Montant (grammes)",
+      paymentMethod: "Méthode de paiement",
+      receiveAs: "Recevoir en",
+      pleaseWait: "Veuillez patienter",
+      sec: "s",
+      total: "Total",
+      bonus: "Bonus",
+    },
+    ar: {
+      market: "السوق",
+      limit: "محدد",
+      orderType: "نوع الأمر",
+      marketDesc: "بسعر السوق الحالي",
+      limitDesc: "بالسعر المحدد",
+      limitPrice: "السعر المحدد",
+      currentPrice: "السعر الحالي",
+      placeOrder: "تقديم الأمر",
+      orderPlaced: "تم تقديم الأمر المحدد!",
+      limitOrderInfo: "سيتم تنفيذ أمرك المحدد تلقائياً عندما يصل سعر السوق إلى المستوى المحدد.",
+      buy: "شراء",
+      sell: "بيع",
+      buyNow: "اشترِ الآن",
+      sellNow: "بع الآن",
+      cancel: "إلغاء",
+      confirm: "تأكيد",
+      approving: "جاري الموافقة...",
+      processing: "جاري المعالجة...",
+      placingOrder: "جاري تقديم الأمر...",
+      tradeSuccess: "نجحت الصفقة!",
+      viewTransaction: "عرض المعاملة",
+      priceLocked: "السعر مقفل",
+      priceExpired: "انتهت صلاحية السعر",
+      getNewPrice: "احصل على سعر جديد",
+      totalPayment: "إجمالي الدفع",
+      totalReceive: "إجمالي الاستلام",
+      amount: "المبلغ",
+      gram: "غرام",
+      balance: "الرصيد",
+      availableBalance: "الرصيد المتاح",
+      insufficientBalance: "رصيد غير كافٍ",
+      insufficientAuxm: "رصيد AUXM غير كافٍ",
+      connectWallet: "يرجى توصيل محفظتك",
+      enterValidAmount: "أدخل مبلغاً صالحاً",
+      enterValidPrice: "أدخل مبلغاً وسعراً صالحين",
+      tokenApproval: "في انتظار موافقة الرمز...",
+      waitingTransaction: "في انتظار المعاملة...",
+      bonusUsage: "استخدام المكافأة",
+      regularAuxm: "AUXM العادي",
+      priceFailed: "فشل الحصول على السعر",
+      tradeFailed: "فشلت الصفقة",
+      orderFailed: "فشل الأمر",
+      orderCreated: "تم إنشاء أمرك المحدد",
+      seconds: "ثواني",
+      close: "إغلاق",
+      tryAgain: "حاول مرة أخرى",
+      campaignActive: "حملة الإطلاق نشطة!",
+      campaignDesc: "اشترِ المعادن واكسب مكافأة AUXM!",
+      askPrice: "سعر البيع",
+      bidPrice: "سعر الشراء",
+      amountGrams: "الكمية (غرام)",
+      paymentMethod: "طريقة الدفع",
+      receiveAs: "استلام كـ",
+      pleaseWait: "يرجى الانتظار",
+      sec: "ث",
+      total: "المجموع",
+      bonus: "مكافأة",
+    },
+    ru: {
+      market: "Рынок",
+      limit: "Лимит",
+      orderType: "Тип ордера",
+      marketDesc: "По текущей рыночной цене",
+      limitDesc: "По указанной вами цене",
+      limitPrice: "Лимитная цена",
+      currentPrice: "Текущая цена",
+      placeOrder: "Разместить ордер",
+      orderPlaced: "Лимитный ордер размещён!",
+      limitOrderInfo: "Ваш лимитный ордер будет автоматически исполнен, когда рыночная цена достигнет указанного уровня.",
+      buy: "Купить",
+      sell: "Продать",
+      buyNow: "Купить сейчас",
+      sellNow: "Продать сейчас",
+      cancel: "Отмена",
+      confirm: "Подтвердить",
+      approving: "Одобрение...",
+      processing: "Обработка...",
+      placingOrder: "Размещение ордера...",
+      tradeSuccess: "Сделка успешна!",
+      viewTransaction: "Просмотр транзакции",
+      priceLocked: "Цена зафиксирована",
+      priceExpired: "Срок цены истёк",
+      getNewPrice: "Получить новую цену",
+      totalPayment: "Общая оплата",
+      totalReceive: "Общее получение",
+      amount: "Сумма",
+      gram: "грамм",
+      balance: "Баланс",
+      availableBalance: "Доступный баланс",
+      insufficientBalance: "Недостаточный баланс",
+      insufficientAuxm: "Недостаточный баланс AUXM",
+      connectWallet: "Пожалуйста, подключите кошелёк",
+      enterValidAmount: "Введите корректную сумму",
+      enterValidPrice: "Введите корректную сумму и цену",
+      tokenApproval: "Ожидание одобрения токена...",
+      waitingTransaction: "Ожидание транзакции...",
+      bonusUsage: "Использование бонуса",
+      regularAuxm: "Обычный AUXM",
+      priceFailed: "Не удалось получить цену",
+      tradeFailed: "Сделка не удалась",
+      orderFailed: "Ордер не удался",
+      orderCreated: "Ваш лимитный ордер создан",
+      seconds: "секунд",
+      close: "Закрыть",
+      tryAgain: "Повторить",
+      campaignActive: "Стартовая кампания активна!",
+      campaignDesc: "Покупайте металлы и зарабатывайте бонус AUXM!",
+      askPrice: "Цена продажи",
+      bidPrice: "Цена покупки",
+      amountGrams: "Количество (грамм)",
+      paymentMethod: "Способ оплаты",
+      receiveAs: "Получить как",
+      pleaseWait: "Пожалуйста, подождите",
+      sec: "с",
+      total: "Всего",
+      bonus: "Бонус",
+    },
+  };
+
+  const t = translations[lang] || translations.en;
+
+  // Set default limit price when switching to limit mode
+  useEffect(() => {
+    if (orderType === "limit" && !limitPrice && marketPrice > 0) {
+      setLimitPrice(marketPrice.toFixed(2));
+    }
+  }, [orderType, marketPrice, limitPrice]);
+
   // Auto close on success after 2 seconds
   useEffect(() => {
     if (isSuccess) {
@@ -141,408 +532,646 @@ export default function TradePanel({
     }
   }, [isSuccess, onClose]);
 
-  const handleTrade = async () => {
-    if (!isConnected) {
-      alert(lang === "tr" ? "Lütfen cüzdanınızı bağlayın" : "Please connect your wallet");
+  // Countdown timer
+  // Countdown timer - simple local countdown
+  useEffect(() => {
+    if (!quote || countdown <= 0) return;
+    
+    const timer = setInterval(() => {
+      setCountdown(prev => Math.max(0, prev - 1));
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [quote?.id]); // Only restart timer when new quote arrives
+
+  // Handle countdown expiry
+  useEffect(() => {
+    if (quote && countdown === 0) {
+      toast.error(t.priceExpired, t.getNewPrice);
+      setQuote(null);
+      setShowConfirmation(false);
+    }
+  }, [countdown, quote, t.priceExpired, t.getNewPrice]);
+
+  // Handle Market Trade
+  const handleMarketTrade = async () => {
+    if (!isConnected || !address) {
+      alert(t.connectWallet);
       return;
     }
-
     if (amountNum <= 0) {
-      alert(lang === "tr" ? "Geçerli bir miktar girin" : "Enter a valid amount");
+      alert(t.enterValidAmount);
       return;
     }
-
     if (mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm) {
-      alert(lang === "tr" ? "Yetersiz AUXM bakiyesi" : "Insufficient AUXM balance");
+      alert(t.insufficientAuxm);
+      return;
+    }
+    if (mode === "sell" && walletMetalBalance < amountNum) {
+      alert(t.insufficientBalance);
       return;
     }
 
-    if (mode === "buy") {
-      await buy(amountNum, effectivePrice);
-    } else {
-      if (parseFloat(metalBalance) < amountNum) {
-        alert(lang === "tr" ? "Yetersiz bakiye" : "Insufficient balance");
+    // Eğer quote yoksa veya süresi dolduysa, yeni quote al
+    if (!quote || countdown <= 0) {
+      try {
+        const quoteRes = await fetch("/api/quote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: mode,
+            metal: metalSymbol,
+            grams: amountNum,
+            address,
+          }),
+        });
+        const quoteData = await quoteRes.json();
+        if (!quoteRes.ok) throw new Error(quoteData.error || "Quote failed");
+        
+        // API returns { success, quote: {...}, message }
+        const quoteObj = quoteData.quote || quoteData;
+        setQuote(quoteObj);
+        setCountdown(quoteObj.timeRemaining || 30);
+        setShowConfirmation(true);
+        return;
+      } catch (error: any) {
+        toast.error(t.priceFailed, error.message);
         return;
       }
-      await sell(amountNum);
+    }
+
+    // Quote varsa ve onay modundaysa, işlemi gerçekleştir
+    if (showConfirmation && quote) {
+      try {
+        if (mode === "buy") {
+          await buy(amountNum, quote.pricePerGram);
+        } else {
+          await sell(amountNum);
+        }
+        await refreshBalances();
+      } catch (error: any) {
+        toast.error(t.tradeFailed, error.message);
+      }
     }
   };
 
-  const isProcessing = isApproving || isTrading;
-  const isCampaignActive = isLaunchCampaignActive();
+  // Handle Limit Order
+  const handleLimitOrder = async () => {
+    if (!isConnected || !address) {
+      alert(t.connectWallet);
+      return;
+    }
+    if (amountNum <= 0 || limitPriceNum <= 0) {
+      alert(t.enterValidPrice);
+      return;
+    }
+    if (mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm) {
+      alert(t.insufficientAuxm);
+      return;
+    }
+    if (mode === "sell" && walletMetalBalance < amountNum) {
+      alert(t.insufficientBalance);
+      return;
+    }
+
+    setIsPlacingLimitOrder(true);
+
+    try {
+      const response = await fetch("/api/orders/limit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: mode,
+          metal: metalSymbol,
+          grams: amountNum,
+          limitPrice: limitPriceNum,
+          paymentMethod: selectedCurrency,
+          address,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to place order");
+      }
+
+      setLimitOrderSuccess(true);
+      toast.success(t.orderPlaced, t.orderCreated);
+      
+    } catch (error: any) {
+      toast.error(t.orderFailed, error.message);
+    } finally {
+      setIsPlacingLimitOrder(false);
+    }
+  };
+
+  // Handle Trade Click
+  const handleTrade = () => {
+    if (orderType === "market") {
+      handleMarketTrade();
+    } else {
+      handleLimitOrder();
+    }
+  };
+
+  const isProcessing = isApproving || isTrading || isPlacingLimitOrder;
 
   const getStepText = () => {
-    if (step === "approving") {
-      return lang === "tr" ? "Onay bekleniyor..." : "Waiting for approval...";
-    }
-    if (step === "trading") {
-      return lang === "tr" ? "İşlem yapılıyor..." : "Processing trade...";
-    }
-    if (step === "success") {
-      return lang === "tr" ? "İşlem başarılı!" : "Trade successful!";
-    }
-    if (step === "error") {
-      return errorMessage || (lang === "tr" ? "İşlem başarısız" : "Trade failed");
-    }
+    if (isApproving) return t.tokenApproval;
+    if (isTrading) return t.waitingTransaction;
+    if (isPlacingLimitOrder) return t.placingOrder;
     return "";
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={!isProcessing ? onClose : undefined}
-      ></div>
-
-      {/* Modal */}
-      <div className="relative z-10 w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="absolute inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      
+      <div className="relative z-10 w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-800 shadow-2xl max-h-[80vh] overflow-y-auto">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center justify-between p-3 border-b border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
           <div>
-            <h2 className="text-xl font-bold text-slate-100">
-              {mode === "buy" 
-                ? (lang === "tr" ? "Al" : "Buy")
-                : (lang === "tr" ? "Sat" : "Sell")
-              } {metalSymbol}
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+              {mode === "buy" ? t.buy : t.sell} {metalSymbol}
             </h2>
-            <p className="text-sm text-slate-400 mt-1">{metalName}</p>
+            <p className="text-xs text-slate-400">{metalName}</p>
           </div>
           <button
             onClick={onClose}
-            disabled={isProcessing}
-            className="text-slate-400 hover:text-slate-300 disabled:opacity-50"
+            className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        {/* Campaign Banner (Buy mode + AUXM) */}
-        {mode === "buy" && selectedCurrency === "AUXM" && isCampaignActive && (
-          <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🚀</span>
-              <div>
-                <p className="text-sm font-semibold text-white">
-                  {lang === "tr" ? "Lansman Kampanyası Aktif!" : "Launch Campaign Active!"}
-                </p>
-                <p className="text-xs text-purple-300">
-                  {lang === "tr" 
-                    ? "Bonus AUXM sadece metal alımlarında kullanılabilir" 
-                    : "Bonus AUXM can only be used for metal purchases"}
-                </p>
+        <div className="p-3">
+          {/* Success State - Market */}
+          {isSuccess && orderType === "market" && (
+            <div className="text-center py-6">
+              <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <svg className="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
               </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                {t.tradeSuccess}
+              </h3>
+              {tradeHash && (
+                <a
+                  href={`https://sepolia.etherscan.io/tx/${tradeHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-emerald-400 hover:underline"
+                >
+                  {t.viewTransaction} ↗
+                </a>
+              )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Success State */}
-        {isSuccess ? (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-emerald-400 mb-2">
-              {lang === "tr" ? "İşlem Başarılı!" : "Trade Successful!"}
-            </h3>
-            <p className="text-slate-400">
-              {mode === "buy"
-                ? `${amountNum.toFixed(4)}g ${metalSymbol} ${lang === "tr" ? "satın alındı" : "purchased"}`
-                : `${amountNum.toFixed(4)}g ${metalSymbol} ${lang === "tr" ? "satıldı" : "sold"}`}
-            </p>
-            {tradeHash && (
-              <a
-                href={`https://sepolia.basescan.org/tx/${tradeHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-blue-400 hover:underline mt-2 inline-block"
-              >
-                {lang === "tr" ? "İşlemi görüntüle" : "View transaction"} ↗
-              </a>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Mode Toggle */}
-            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-800 rounded-lg mb-6">
+          {/* Success State - Limit Order */}
+          {limitOrderSuccess && orderType === "limit" && (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t.orderPlaced}</h3>
+              <p className="text-sm text-slate-400 mb-4 px-4">{t.limitOrderInfo}</p>
+              <div className="p-3 bg-stone-50 dark:bg-slate-800 rounded-xl mx-4 text-sm">
+                <div className="flex justify-between mb-1">
+                  <span className="text-slate-400">{mode === "buy" ? "Buy" : "Sell"}</span>
+                  <span className="text-slate-900 dark:text-white font-mono">{amountNum}g {metalSymbol}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">@ {t.limitPrice}</span>
+                  <span className="text-blue-400 font-mono">${limitPriceNum.toFixed(2)}/g</span>
+                </div>
+              </div>
               <button
-                onClick={() => !isProcessing && setMode("buy")}
-                disabled={isProcessing}
-                className={`py-2.5 rounded-md text-sm font-semibold transition-all ${
-                  mode === "buy"
-                    ? "bg-emerald-500 text-white shadow-lg"
-                    : "text-slate-400 hover:text-white"
-                }`}
+                onClick={onClose}
+                className="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-xl text-white font-medium"
               >
-                {lang === "tr" ? "Al" : "Buy"}
-              </button>
-              <button
-                onClick={() => !isProcessing && setMode("sell")}
-                disabled={isProcessing}
-                className={`py-2.5 rounded-md text-sm font-semibold transition-all ${
-                  mode === "sell"
-                    ? "bg-red-500 text-white shadow-lg"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                {lang === "tr" ? "Sat" : "Sell"}
+                {t.close}
               </button>
             </div>
+          )}
 
-            {/* Balance Display */}
-            <div className="mb-4">
-              {mode === "buy" ? (
-                selectedCurrency === "AUXM" ? (
-                  <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-slate-400">{lang === "tr" ? "AUXM Bakiye" : "AUXM Balance"}</span>
-                      <span className="text-white font-mono">{auxmBalance.auxm.toFixed(2)} AUXM</span>
+          {/* Error State */}
+          {errorMessage && !isSuccess && !limitOrderSuccess && (
+            <div className="mb-4 p-4 rounded-xl bg-red-500/10 border border-red-500/30">
+              <p className="text-sm text-red-400">{errorMessage}</p>
+              <button onClick={reset} className="mt-2 text-sm text-red-400 hover:text-red-300 underline">
+                {t.tryAgain}
+              </button>
+            </div>
+          )}
+
+          {/* Normal State */}
+          {!isSuccess && !limitOrderSuccess && (
+            <>
+              {/* Launch Campaign Banner */}
+              {isLaunchCampaignActive() && mode === "buy" && (
+                <div className="mb-2 p-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🚀</span>
+                    <div>
+                      <div className="text-sm font-semibold text-purple-700 dark:text-purple-200">{t.campaignActive}</div>
+                      <div className="text-[10px] text-purple-600 dark:text-purple-300">{t.campaignDesc}</div>
                     </div>
-                    {auxmBalance.bonusAuxm > 0 && (
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-purple-400">🎁 Bonus AUXM</span>
-                        <span className="text-purple-400 font-mono">+{auxmBalance.bonusAuxm.toFixed(2)} AUXM</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm pt-1 border-t border-purple-500/30">
-                      <span className="text-slate-300 font-medium">{lang === "tr" ? "Toplam" : "Total"}</span>
-                      <span className="text-white font-mono font-medium">{totalAuxm.toFixed(2)} AUXM</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">{selectedCurrency} {lang === "tr" ? "Bakiye" : "Balance"}</span>
-                      <span className="text-white font-mono">0.00 {selectedCurrency}</span>
-                    </div>
-                  </div>
-                )
-              ) : (
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">{metalSymbol} {lang === "tr" ? "Bakiye" : "Balance"}</span>
-                    <span className="text-white font-mono">{metalBalance || "0.0000"}g</span>
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Price Info */}
-            <div className="mb-4">
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-400">
-                    {mode === "buy" 
-                      ? (lang === "tr" ? "Alış Fiyatı" : "Ask Price")
-                      : (lang === "tr" ? "Satış Fiyatı" : "Bid Price")}
-                  </span>
-                  <div className="text-2xl font-bold text-slate-100">
-                    ${effectivePrice.toFixed(2)}
-                    <span className="text-sm text-slate-400 ml-2">
-                      {lang === "tr" ? "/ gram" : "per gram"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Amount Input */}
-            <div className="mb-6">
-              <label className="block text-sm text-slate-400 mb-2">
-                {lang === "tr" ? "Miktar (gram)" : "Amount (grams)"}
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  min="0.01"
-                  step="0.01"
-                  disabled={isProcessing}
-                  className="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 focus:outline-none focus:border-emerald-500 disabled:opacity-50"
-                  placeholder="1.00"
-                />
+              {/* Buy/Sell Toggle */}
+              <div className="grid grid-cols-2 gap-2 p-1 bg-stone-100 dark:bg-slate-800 rounded-lg mb-2">
                 <button
-                  onClick={() => {
-                    if (mode === "sell") {
-                      setAmount(metalBalance);
-                    } else if (selectedCurrency === "AUXM") {
-                      const maxGrams = totalAuxm / effectivePrice;
-                      setAmount(maxGrams.toFixed(4));
-                    }
-                  }}
+                  onClick={() => { setMode("buy"); setQuote(null); setShowConfirmation(false); setLimitPrice(""); }}
                   disabled={isProcessing}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-xs bg-slate-700 hover:bg-slate-600 rounded text-emerald-400 font-semibold"
+                  className={`py-2 rounded-md font-semibold text-sm transition-all ${
+                    mode === "buy"
+                      ? "bg-emerald-500 text-white shadow-lg"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
                 >
-                  MAX
+                  {t.buy}
+                </button>
+                <button
+                  onClick={() => { setMode("sell"); setQuote(null); setShowConfirmation(false); setLimitPrice(""); }}
+                  disabled={isProcessing}
+                  className={`py-2 rounded-md font-semibold text-sm transition-all ${
+                    mode === "sell"
+                      ? "bg-red-500 text-white shadow-lg"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  {t.sell}
                 </button>
               </div>
-            </div>
 
-            {/* Currency Selection - Both Buy and Sell */}
-            <div className="mb-6">
-              <label className="block text-sm text-slate-400 mb-2">
-                {mode === "buy" 
-                  ? (lang === "tr" ? "Ödeme Yöntemi" : "Payment Method")
-                  : (lang === "tr" ? "Alınacak Para Birimi" : "Receive As")}
-              </label>
-              <div className="grid grid-cols-6 gap-2">
-                {currencies.map((curr) => (
+              {/* Order Type Toggle */}
+              <div className="mb-2">
+                <label className="text-xs text-slate-400 mb-1 block">{t.orderType}</label>
+                <div className="grid grid-cols-2 gap-2">
                   <button
-                    key={curr}
-                    onClick={() => !isProcessing && setSelectedCurrency(curr)}
+                    onClick={() => { setOrderType("market"); setQuote(null); setShowConfirmation(false); }}
                     disabled={isProcessing}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${
-                      selectedCurrency === curr
-                        ? mode === "buy" 
-                          ? "bg-purple-500/20 border-purple-500"
-                          : "bg-red-500/20 border-red-500"
-                        : "bg-slate-800 border-slate-700 hover:border-slate-600"
+                    className={`p-2 rounded-lg border transition-all ${
+                      orderType === "market"
+                        ? "border-amber-500 bg-amber-500/10"
+                        : "border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50 hover:border-stone-300 dark:hover:border-slate-600"
                     }`}
                   >
-                    <div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                      style={{ backgroundColor: getCurrencyColor(curr) }}
-                    >
-                      {getCurrencySymbol(curr)}
+                    <div className={`text-sm font-semibold ${orderType === "market" ? "text-amber-500 dark:text-amber-400" : "text-slate-600 dark:text-slate-300"}`}>
+                      {t.market}
                     </div>
-                    <span className="text-xs text-slate-300">{curr}</span>
+                    <div className="text-[10px] text-slate-600 dark:text-slate-500">{t.marketDesc}</div>
                   </button>
-                ))}
+                  <button
+                    onClick={() => { setOrderType("limit"); setQuote(null); setShowConfirmation(false); }}
+                    disabled={isProcessing}
+                    className={`p-2 rounded-lg border transition-all ${
+                      orderType === "limit"
+                        ? "border-blue-500 bg-blue-500/10"
+                        : "border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50 hover:border-stone-300 dark:hover:border-slate-600"
+                    }`}
+                  >
+                    <div className={`text-sm font-semibold ${orderType === "limit" ? "text-blue-500 dark:text-blue-400" : "text-slate-600 dark:text-slate-300"}`}>
+                      {t.limit}
+                    </div>
+                    <div className="text-[10px] text-slate-600 dark:text-slate-500">{t.limitDesc}</div>
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Total */}
-            <div className={`mb-4 p-4 rounded-lg border ${
-              mode === "buy" 
-                ? selectedCurrency === "AUXM" 
-                  ? "bg-purple-500/10 border-purple-500/30"
-                  : "bg-emerald-500/10 border-emerald-500/30" 
-                : "bg-red-500/10 border-red-500/30"
-            }`}>
-              <div className={`text-sm mb-1 ${
-                mode === "buy" 
-                  ? selectedCurrency === "AUXM" ? "text-purple-300" : "text-emerald-300" 
-                  : "text-red-300"
-              }`}>
-                {mode === "buy"
-                  ? (lang === "tr" ? "Toplam Ödeme" : "Total Payment")
-                  : (lang === "tr" ? "Toplam Alacak" : "Total Receive")
-                }
-              </div>
-              <div className={`text-3xl font-bold ${
-                mode === "buy" 
-                  ? selectedCurrency === "AUXM" ? "text-purple-400" : "text-emerald-400" 
-                  : "text-red-400"
-              }`}>
-                {pricesLoading && selectedCurrency !== "AUXM" ? (
-                  <span className="text-slate-400">...</span>
-                ) : (
+              {/* Balance Display */}
+              <div className="mb-2 p-2 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-slate-400">AUXM {t.balance}</span>
+                  <span className="text-slate-900 dark:text-white font-mono">{auxmBalance.auxm.toFixed(2)} AUXM</span>
+                </div>
+                {auxmBalance.bonusAuxm > 0 && (
                   <>
-                    {getCurrencySymbol(selectedCurrency)}{" "}
-                    {selectedCurrency === "AUXM" || selectedCurrency === "USDT"
-                      ? totalUSD.toFixed(2)
-                      : totalInCurrency.toFixed(selectedCurrency === "BTC" || selectedCurrency === "ETH" ? 6 : 4)
-                    }
+                    <div className="flex justify-between text-xs">
+                      <span className="text-purple-400">🎁 {t.bonus} AUXM</span>
+                      <span className="text-purple-400 font-mono">+{auxmBalance.bonusAuxm.toFixed(2)} AUXM</span>
+                    </div>
+                    <div className="flex justify-between text-xs border-t border-stone-200 dark:border-slate-700 pt-1 mt-1">
+                      <span className="text-slate-400">{t.total}</span>
+                      <span className="text-slate-900 dark:text-white font-mono font-medium">{totalAuxm.toFixed(2)} AUXM</span>
+                    </div>
                   </>
                 )}
               </div>
-              <div className={`text-xs mt-1 ${
-                mode === "buy" 
-                  ? selectedCurrency === "AUXM" ? "text-purple-300" : "text-emerald-300" 
-                  : "text-red-300"
-              }`}>
-                ≈ ${totalUSD.toFixed(2)} USD
-              </div>
-            </div>
 
-            {/* Bonus Usage Info (buy + AUXM) */}
-            {mode === "buy" && selectedCurrency === "AUXM" && auxmBalance.bonusAuxm > 0 && amountNum > 0 && (
-              <div className="mb-4 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
-                <div className="text-sm text-purple-300">
-                  <div className="flex justify-between mb-1">
-                    <span>🎁 {lang === "tr" ? "Bonus Kullanımı" : "Bonus Usage"}:</span>
-                    <span className="font-mono">{bonusUsage.usedBonus.toFixed(2)} AUXM</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{lang === "tr" ? "Normal AUXM" : "Regular AUXM"}:</span>
-                    <span className="font-mono">{bonusUsage.usedRegular.toFixed(2)} AUXM</span>
-                  </div>
+              {/* Current Price Display */}
+              <div className="mb-2 p-2 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-400">
+                    {orderType === "market" 
+                      ? (mode === "buy" ? t.askPrice : t.bidPrice)
+                      : t.currentPrice
+                    }
+                  </span>
+                  <span className="text-lg font-bold text-slate-900 dark:text-white">
+                    ${marketPrice.toFixed(2)} <span className="text-xs text-slate-400">/g</span>
+                  </span>
                 </div>
               </div>
-            )}
 
-            {/* Insufficient Balance Warning */}
-            {mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm && amountNum > 0 && (
-              <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                <p className="text-sm text-amber-400">
-                  ⚠️ {lang === "tr" ? "Yetersiz AUXM bakiyesi" : "Insufficient AUXM balance"}
-                </p>
-              </div>
-            )}
-
-            {/* Processing Status */}
-            {isProcessing && (
-              <div className="mb-6 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
-                <div className="flex items-center gap-3">
-                  <svg className="animate-spin h-5 w-5 text-blue-400" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  <div>
-                    <div className="font-medium text-blue-300">{getStepText()}</div>
-                    <div className="text-xs text-blue-200">
-                      {lang === "tr" ? "Cüzdanınızı kontrol edin" : "Check your wallet"}
+              {/* Quote Timer (Market Orders Only) */}
+              {orderType === "market" && quote && countdown > 0 && (
+                <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg mb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400">🔒</span>
+                      <span className="text-emerald-300 text-xs font-medium">{t.priceLocked}</span>
+                    </div>
+                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded ${countdown <= 5 ? "bg-red-500/20 text-red-400 animate-pulse" : "bg-emerald-500/20 text-emerald-400"}`}>
+                      <span className="text-lg font-bold font-mono">{countdown}</span>
+                      <span className="text-[10px]">{t.sec}</span>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={onClose}
-                disabled={isProcessing}
-                className="px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors disabled:opacity-50"
-              >
-                {lang === "tr" ? "İptal" : "Cancel"}
-              </button>
-              <button
-                onClick={handleTrade}
-                disabled={isProcessing || amountNum <= 0 || (mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm)}
-                className={`px-4 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 ${
-                  mode === "buy"
-                    ? selectedCurrency === "AUXM"
-                      ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
-                      : "bg-emerald-500 text-white hover:bg-emerald-600"
-                    : "bg-red-500 text-white hover:bg-red-600"
-                }`}
-              >
-                {isProcessing ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+              {/* Amount Input */}
+              <div className="mb-2">
+                <label className="block text-xs text-slate-400 mb-1">{t.amountGrams}</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => { setAmount(e.target.value); setQuote(null); setShowConfirmation(false); }}
+                    placeholder="1"
+                    min="0"
+                    step="0.01"
+                    disabled={isProcessing}
+                    className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+                  />
+                  <button
+                    onClick={() => {
+                      const maxBalance = mode === "sell" ? walletMetalBalance : (totalAuxm / effectivePrice);
+                      setAmount(maxBalance.toFixed(4));
+                      setQuote(null);
+                      setShowConfirmation(false);
+                    }}
+                    disabled={isProcessing}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 text-[10px] bg-stone-200 dark:bg-slate-700 hover:bg-stone-300 dark:hover:bg-slate-600 rounded text-emerald-600 dark:text-emerald-400 font-semibold"
+                  >
+                    MAX
+                  </button>
+                </div>
+              </div>
+
+              {/* Limit Price Input (Limit Orders Only) */}
+              {orderType === "limit" && (
+                <div className="mb-2">
+                  <label className="block text-xs text-slate-400 mb-1">{t.limitPrice}</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                    <input
+                      type="number"
+                      value={limitPrice}
+                      onChange={(e) => setLimitPrice(e.target.value)}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      disabled={isProcessing}
+                      className="w-full pl-7 pr-12 py-2 rounded-lg bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">/g</span>
+                  </div>
+                  
+                  {/* Quick price adjustment buttons */}
+                  <div className="flex gap-1 mt-1">
+                    {[-5, -2, -1, 0, 1, 2, 5].map((percent) => {
+                      const adjustedPrice = marketPrice * (1 + percent / 100);
+                      return (
+                        <button
+                          key={percent}
+                          onClick={() => setLimitPrice(adjustedPrice.toFixed(2))}
+                          disabled={isProcessing || marketPrice === 0}
+                          className={`flex-1 py-1 text-[10px] rounded transition-colors disabled:opacity-50 ${
+                            percent === 0 
+                              ? "bg-stone-200 dark:bg-slate-700 text-slate-900 dark:text-white" 
+                              : percent < 0 
+                                ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                                : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                          }`}
+                        >
+                          {percent > 0 ? "+" : ""}{percent}%
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Currency Selection - Both Buy and Sell */}
+              <div className="mb-2">
+                <label className="block text-xs text-slate-400 mb-1">
+                  {mode === "buy" ? t.paymentMethod : t.receiveAs}
+                </label>
+                <div className="grid grid-cols-6 gap-1">
+                  {currencies.map((curr) => (
+                    <button
+                      key={curr}
+                      onClick={() => !isProcessing && setSelectedCurrency(curr)}
+                      disabled={isProcessing}
+                      className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg border transition-all ${
+                        selectedCurrency === curr
+                          ? orderType === "limit"
+                            ? "bg-blue-500/20 border-blue-500"
+                            : mode === "buy" 
+                              ? "bg-purple-500/20 border-purple-500"
+                              : "bg-red-500/20 border-red-500"
+                          : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700 hover:border-stone-300 dark:hover:border-slate-600"
+                      }`}
+                    >
+                      <div 
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-xs"
+                        style={{ backgroundColor: getCurrencyColor(curr) }}
+                      >
+                        {getCurrencySymbol(curr)}
+                      </div>
+                      <span className="text-[10px] text-slate-600 dark:text-slate-300">{curr}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Total */}
+              <div className={`mb-2 p-2 rounded-lg border ${
+                orderType === "limit"
+                  ? "bg-blue-500/10 border-blue-500/30"
+                  : mode === "buy" 
+                    ? selectedCurrency === "AUXM" 
+                      ? "bg-purple-500/10 border-purple-500/30"
+                      : "bg-emerald-500/10 border-emerald-500/30" 
+                    : "bg-red-500/10 border-red-500/30"
+              }`}>
+                <div className={`text-xs ${
+                  orderType === "limit"
+                    ? "text-blue-600 dark:text-blue-300"
+                    : mode === "buy" 
+                      ? selectedCurrency === "AUXM" ? "text-purple-600 dark:text-purple-300" : "text-emerald-600 dark:text-emerald-300" 
+                      : "text-red-600 dark:text-red-300"
+                }`}>
+                  {mode === "buy" ? t.totalPayment : t.totalReceive}
+                </div>
+                <div className={`text-2xl font-bold ${
+                  orderType === "limit"
+                    ? "text-blue-400"
+                    : mode === "buy" 
+                      ? selectedCurrency === "AUXM" ? "text-purple-400" : "text-emerald-400" 
+                      : "text-red-400"
+                }`}>
+                  {pricesLoading && selectedCurrency !== "AUXM" ? (
+                    <span className="text-slate-400">...</span>
+                  ) : (
+                    <>
+                      {getCurrencySymbol(selectedCurrency)}{" "}
+                      {selectedCurrency === "AUXM" || selectedCurrency === "USDT"
+                        ? totalUSD.toFixed(2)
+                        : totalInCurrency.toFixed(selectedCurrency === "BTC" || selectedCurrency === "ETH" ? 6 : 4)
+                      }
+                    </>
+                  )}
+                </div>
+                <div className={`text-[10px] ${
+                  orderType === "limit"
+                    ? "text-blue-600 dark:text-blue-300"
+                    : mode === "buy" 
+                      ? selectedCurrency === "AUXM" ? "text-purple-600 dark:text-purple-300" : "text-emerald-600 dark:text-emerald-300" 
+                      : "text-red-600 dark:text-red-300"
+                }`}>
+                  ≈ ${totalUSD.toFixed(2)} USD
+                  {orderType === "limit" && limitPriceNum > 0 && (
+                    <span className="ml-2">@ ${limitPriceNum.toFixed(2)}/g</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Bonus Usage Info (buy + AUXM) */}
+              {mode === "buy" && selectedCurrency === "AUXM" && auxmBalance.bonusAuxm > 0 && amountNum > 0 && (
+                <div className="mb-2 p-2 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                  <div className="text-xs text-purple-600 dark:text-purple-300">
+                    <div className="flex justify-between">
+                      <span>🎁 {t.bonusUsage}:</span>
+                      <span className="font-mono">{bonusUsage.usedBonus.toFixed(2)} AUXM</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t.regularAuxm}:</span>
+                      <span className="font-mono">{bonusUsage.usedRegular.toFixed(2)} AUXM</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Insufficient Balance Warning */}
+              {mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm && amountNum > 0 && (
+                <div className="mb-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                  <p className="text-xs text-amber-400">⚠️ {t.insufficientAuxm}</p>
+                </div>
+              )}
+
+              {/* Processing Status */}
+              {isProcessing && (
+                <div className="mb-2 p-2 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                  <div className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4 text-blue-400" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    {step === "approving" 
-                      ? (lang === "tr" ? "Onaylanıyor..." : "Approving...")
-                      : (lang === "tr" ? "İşleniyor..." : "Processing...")
-                    }
-                  </span>
-                ) : mode === "buy" ? (
-                  lang === "tr" ? "Satın Al" : "Buy Now"
+                    <div>
+                      <div className="text-sm font-medium text-blue-300">{getStepText()}</div>
+                      <div className="text-[10px] text-blue-200">{t.pleaseWait}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Pending Limit Orders - Mini List */}
+              {orderType === "limit" && address && (
+                <div className="mb-2 p-2 bg-stone-50 dark:bg-slate-800/50 rounded-lg border border-stone-200 dark:border-slate-700">
+                  <LimitOrdersList
+                    address={address}
+                    metal={metalSymbol}
+                    compact={true}
+                    lang={lang}
+                    onOrderCancelled={refreshBalances}
+                  />
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  onClick={onClose}
+                  disabled={isProcessing}
+                  className="px-3 py-2 rounded-lg bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm hover:bg-slate-700 transition-colors disabled:opacity-50"
+                >
+                  {t.cancel}
+                </button>
+                
+                {orderType === "market" ? (
+                  // Market Order Button
+                  <button
+                    onClick={handleTrade}
+                    disabled={isProcessing || amountNum <= 0 || (mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm)}
+                    className={`px-3 py-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 ${
+                      mode === "buy"
+                        ? selectedCurrency === "AUXM"
+                          ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
+                          : "bg-emerald-500 text-white hover:bg-emerald-600"
+                        : "bg-red-500 text-white hover:bg-red-600"
+                    }`}
+                  >
+                    {isProcessing ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        {step === "approving" ? t.approving : t.processing}
+                      </span>
+                    ) : showConfirmation && quote && countdown > 0 ? (
+                      `✓ ${t.confirm} (${countdown}s)`
+                    ) : mode === "buy" ? (
+                      t.buyNow
+                    ) : (
+                      t.sellNow
+                    )}
+                  </button>
                 ) : (
-                  lang === "tr" ? "Şimdi Sat" : "Sell Now"
+                  // Limit Order Button
+                  <button
+                    onClick={handleTrade}
+                    disabled={isProcessing || amountNum <= 0 || limitPriceNum <= 0 || (mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm)}
+                    className="px-3 py-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 bg-blue-500 text-white hover:bg-blue-600"
+                  >
+                    {isProcessing ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        {t.placingOrder}
+                      </span>
+                    ) : (
+                      t.placeOrder
+                    )}
+                  </button>
                 )}
-              </button>
-            </div>
-          </>
-        )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

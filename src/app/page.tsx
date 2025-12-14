@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
-import { ConnectKitButton } from "connectkit";
-import Link from "next/link";
 import Image from "next/image";
 import MetalPriceGrid from "@/components/MetalPriceGrid";
 import { RiskCorrelation } from "@/components/RiskCorrelation";
 import WalletOnboarding from "@/components/WalletOnboarding";
+import TopNav from "@/components/TopNav";
+import { useLanguage } from "@/components/LanguageContext";
 
 // ============================================
 // STORAGE KEYS
@@ -17,12 +17,13 @@ const STORAGE_KEYS = {
   WALLET_ADDRESS: "auxite_wallet_address",
   WALLET_MODE: "auxite_wallet_mode",
   SESSION_UNLOCKED: "auxite_session_unlocked",
-  LANGUAGE: "auxite_language",
 };
 
 export default function Home() {
+  const { t, lang } = useLanguage();
+  
   // External wallet (MetaMask, etc.)
-  const { isConnected: isExternalConnected, address: externalAddress } = useAccount();
+  const { isConnected: isExternalConnected } = useAccount();
   
   // Local wallet state
   const [walletMode, setWalletMode] = useState<"choosing" | "local" | "external" | null>(null);
@@ -30,22 +31,7 @@ export default function Home() {
   const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
   
   // UI state
-  const [lang, setLang] = useState<"tr" | "en">("tr");
   const [isLoading, setIsLoading] = useState(true);
-
-  // Load language preference on mount
-  useEffect(() => {
-    const savedLang = localStorage.getItem(STORAGE_KEYS.LANGUAGE) as "tr" | "en" | null;
-    if (savedLang) {
-      setLang(savedLang);
-    }
-  }, []);
-
-  // Handle language change
-  const handleLanguageChange = (newLang: "tr" | "en") => {
-    setLang(newLang);
-    localStorage.setItem(STORAGE_KEYS.LANGUAGE, newLang);
-  };
 
   // Check wallet state on mount
   useEffect(() => {
@@ -110,14 +96,14 @@ export default function Home() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
             <svg className="w-8 h-8 text-emerald-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
             </svg>
           </div>
-          <div className="animate-spin w-6 h-6 border-2 border-slate-600 border-t-emerald-500 rounded-full mx-auto"></div>
+          <div className="animate-spin w-6 h-6 border-2 border-stone-300 dark:border-zinc-600 border-t-emerald-500 rounded-full mx-auto"></div>
         </div>
       </div>
     );
@@ -126,7 +112,7 @@ export default function Home() {
   // Wallet choice screen
   if (walletMode === "choosing") {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center p-6">
         <div className="max-w-md w-full">
           {/* Logo */}
           <div className="text-center mb-8">
@@ -137,40 +123,12 @@ export default function Home() {
               height={50}
               className="h-14 w-auto mx-auto mb-6"
             />
-            <h1 className="text-2xl font-bold text-white mb-2">
-              {lang === "tr" ? "Cüzdan Seçin" : "Choose Wallet"}
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
+              {t("chooseWallet")}
             </h1>
-            <p className="text-slate-400">
-              {lang === "tr" 
-                ? "Nasıl bağlanmak istediğinizi seçin" 
-                : "Choose how you want to connect"}
+            <p className="text-slate-500 dark:text-zinc-400">
+              {t("chooseHowConnect")}
             </p>
-          </div>
-
-          {/* Language Toggle */}
-          <div className="flex justify-center mb-8">
-            <div className="flex gap-0.5 bg-slate-800 rounded-lg p-0.5">
-              <button
-                onClick={() => handleLanguageChange("tr")}
-                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                  lang === "tr"
-                    ? "bg-emerald-500 text-white"
-                    : "text-slate-400 hover:text-slate-300"
-                }`}
-              >
-                TR
-              </button>
-              <button
-                onClick={() => handleLanguageChange("en")}
-                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                  lang === "en"
-                    ? "bg-emerald-500 text-white"
-                    : "text-slate-400 hover:text-slate-300"
-                }`}
-              >
-                EN
-              </button>
-            </div>
           </div>
 
           {/* Wallet Options */}
@@ -178,7 +136,7 @@ export default function Home() {
             {/* Local Wallet Option */}
             <button
               onClick={handleChooseLocal}
-              className="w-full p-5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-emerald-500 rounded-xl transition-all group"
+              className="w-full p-5 bg-white dark:bg-zinc-800 hover:bg-stone-50 dark:hover:bg-zinc-700 border border-stone-200 dark:border-zinc-700 hover:border-emerald-500 dark:hover:border-emerald-500 rounded-xl transition-all group shadow-sm dark:shadow-none"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
@@ -187,23 +145,15 @@ export default function Home() {
                   </svg>
                 </div>
                 <div className="text-left flex-1">
-                  <h3 className="font-semibold text-white mb-1">
-                    {lang === "tr" ? "Auxite Cüzdan" : "Auxite Wallet"}
+                  <h3 className="font-semibold text-slate-800 dark:text-white mb-1">
+                    {t("auxiteWallet")}
                   </h3>
-                  <p className="text-sm text-slate-400">
-                    {lang === "tr" 
-                      ? "Yeni cüzdan oluştur veya içe aktar" 
-                      : "Create new or import existing"}
+                  <p className="text-sm text-slate-500 dark:text-zinc-400">
+                    {t("createOrImport")}
                   </p>
                 </div>
-                <svg className="w-5 h-5 text-slate-500 group-hover:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-              <div className="mt-3 flex gap-2">
-                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs rounded">Non-custodial</span>
-                <span className="px-2 py-0.5 bg-slate-700 text-slate-400 text-xs rounded">
-                  {lang === "tr" ? "Tarayıcıda" : "In Browser"}
+                <span className="text-xs bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-2 py-1 rounded-full">
+                  {t("recommended")}
                 </span>
               </div>
             </button>
@@ -211,40 +161,29 @@ export default function Home() {
             {/* External Wallet Option */}
             <button
               onClick={handleChooseExternal}
-              className="w-full p-5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-orange-500 rounded-xl transition-all group"
+              className="w-full p-5 bg-white dark:bg-zinc-800 hover:bg-stone-50 dark:hover:bg-zinc-700 border border-stone-200 dark:border-zinc-700 hover:border-blue-500 dark:hover:border-blue-500 rounded-xl transition-all group shadow-sm dark:shadow-none"
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center group-hover:bg-orange-500/30 transition-colors">
-                  <svg className="w-6 h-6 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M21.8 12c0-1.1-.9-2-2-2h-2v-2c0-1.1-.9-2-2-2H5.2c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h10.6c1.1 0 2-.9 2-2v-2h2c1.1 0 2-.9 2-2zm-4 4H5.2V8h10.6v8zm2-4h-2v-2h2v2z"/>
+                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                  <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                   </svg>
                 </div>
                 <div className="text-left flex-1">
-                  <h3 className="font-semibold text-white mb-1">
-                    {lang === "tr" ? "Harici Cüzdan" : "External Wallet"}
+                  <h3 className="font-semibold text-slate-800 dark:text-white mb-1">
+                    {t("externalWallet")}
                   </h3>
-                  <p className="text-sm text-slate-400">
-                    MetaMask, WalletConnect, Coinbase...
+                  <p className="text-sm text-slate-500 dark:text-zinc-400">
+                    {t("connectMetamask")}
                   </p>
                 </div>
-                <svg className="w-5 h-5 text-slate-500 group-hover:text-orange-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-              <div className="mt-3 flex gap-2">
-                <span className="px-2 py-0.5 bg-orange-500/10 text-orange-400 text-xs rounded">WalletConnect</span>
-                <span className="px-2 py-0.5 bg-slate-700 text-slate-400 text-xs rounded">
-                  {lang === "tr" ? "Mevcut cüzdan" : "Existing wallet"}
-                </span>
               </div>
             </button>
           </div>
 
           {/* Info */}
-          <p className="text-xs text-slate-500 text-center mt-6">
-            {lang === "tr" 
-              ? "Anahtarlarınız her zaman sizde kalır. Non-custodial." 
-              : "Your keys always stay with you. Non-custodial."}
+          <p className="text-xs text-slate-400 dark:text-zinc-500 text-center mt-6">
+            {t("keysStayWithYou")}
           </p>
         </div>
       </div>
@@ -263,139 +202,28 @@ export default function Home() {
 
   // Main Dashboard - Piyasalar
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      {/* Top Navigation */}
-      <div className="border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            {/* Left Side - Logo + Navigation */}
-            <div className="flex items-center gap-5">
-              {/* Logo */}
-              <Link href="/">
-                <Image
-                  src="/auxite-wallet-logo.png"
-                  alt="Auxite"
-                  width={160}
-                  height={40}
-                  className="h-12 w-auto"
-                />
-              </Link>
-
-              {/* Navigation - Sıra: Piyasalar, Earn, Cüzdan */}
-              <div className="flex gap-2">
-                <Link
-                  href="/"
-                  className="px-4 py-1.5 rounded-lg bg-emerald-500 text-white font-medium text-sm"
-                >
-                  {lang === "tr" ? "Piyasalar" : "Markets"}
-                </Link>
-                <Link
-                  href="/earn"
-                  className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-sm transition-colors"
-                >
-                  {lang === "tr" ? "Kazan" : "Earn"}
-                </Link>
-                <Link
-                  href="/wallet"
-                  className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-sm transition-colors"
-                >
-                  {lang === "tr" ? "Cüzdan" : "Wallet"}
-                </Link>
-                <Link
-                  href="/profile"
-                  className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-sm transition-colors"
-                >
-                  {lang === "tr" ? "Profil" : "Profile"}
-                </Link>
-              </div>
-            </div>
-
-            {/* Right Side - Language + Wallet */}
-            <div className="flex items-center gap-3">
-              {/* Language Toggle */}
-              <div className="flex gap-0.5 bg-slate-800 rounded-lg p-0.5">
-                <button
-                  onClick={() => handleLanguageChange("tr")}
-                  className={`px-2.5 py-1 rounded text-sm font-medium transition-colors ${
-                    lang === "tr"
-                      ? "bg-emerald-500 text-white"
-                      : "text-slate-400 hover:text-slate-300"
-                  }`}
-                >
-                  TR
-                </button>
-                <button
-                  onClick={() => handleLanguageChange("en")}
-                  className={`px-2.5 py-1 rounded text-sm font-medium transition-colors ${
-                    lang === "en"
-                      ? "bg-emerald-500 text-white"
-                      : "text-slate-400 hover:text-slate-300"
-                  }`}
-                >
-                  EN
-                </button>
-              </div>
-
-              {/* Wallet Display */}
-              {walletMode === "local" ? (
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg border border-slate-700">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                    <span className="text-sm text-slate-300 font-mono">
-                      {localWalletAddress?.slice(0, 6)}...{localWalletAddress?.slice(-4)}
-                    </span>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-                    title={lang === "tr" ? "Çıkış Yap" : "Log Out"}
-                  >
-                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <ConnectKitButton />
-                  {isExternalConnected && (
-                    <button
-                      onClick={handleLogout}
-                      className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-                      title={lang === "tr" ? "Cüzdan Değiştir" : "Switch Wallet"}
-                    >
-                      <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+    <main className="min-h-screen bg-stone-100 dark:bg-zinc-950 text-slate-900 dark:text-white">
+      {/* TopNav */}
+      <TopNav />
 
       {/* Markets Description */}
-      <div className="border-b border-slate-800 bg-slate-900/30">
+      <div className="border-b border-stone-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/30">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h2 className="text-lg font-semibold text-slate-100 mb-1">
-            {lang === "tr" ? "Auxite Piyasalar" : "Auxite Markets"}
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-zinc-100 mb-1">
+            {t("auxiteMarkets")}
           </h2>
-          <p className="text-sm text-slate-400">
-            {lang === "tr"
-              ? "Fiziksel metallerle desteklenen dijital tokenleri alın ve satın. Gerçek zamanlı fiyatlar ve anlık işlemler."
-              : "Trade digital tokens backed by physical metals. Real-time prices and instant transactions."}
+          <p className="text-sm text-slate-500 dark:text-zinc-400">
+            {t("marketsDesc")}
           </p>
         </div>
       </div>
 
-      {/* Main Content - Sadece MetalPriceGrid ve RiskCorrelation */}
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        {/* Metal Prices Grid (içinde crypto, dönüştür butonu ve açıklama var) */}
-        <MetalPriceGrid lang={lang} />
+        {/* Metal Prices Grid */}
+        <MetalPriceGrid />
 
-        {/* Risk & Correlation - Cüzdan bağlıysa göster */}
+        {/* Risk & Correlation - Show if wallet connected */}
         {isWalletConnected && <RiskCorrelation lang={lang} />}
       </div>
     </main>

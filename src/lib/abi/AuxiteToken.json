@@ -1,28 +1,73 @@
 [
   {
     "inputs": [
-      { "internalType": "address", "name": "oracleAddr", "type": "address" }
+      { "internalType": "address", "name": "oracleAddr", "type": "address" },
+      { "internalType": "address", "name": "reserveProofAddr", "type": "address" }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
   {
     "inputs": [],
-    "name": "askAddPerKgE6",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "name",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "bidSubPerKgE6",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "symbol",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "basePerKgE6",
+    "name": "decimals",
+    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupply",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
+    "name": "balanceOf",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "to", "type": "address" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "transfer",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "spender", "type": "address" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "approve",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "owner", "type": "address" },
+      { "internalType": "address", "name": "spender", "type": "address" }
+    ],
+    "name": "allowance",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
@@ -42,27 +87,145 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "pricePerGramAskE6",
+    "inputs": [{ "internalType": "uint256", "name": "grams", "type": "uint256" }],
+    "name": "calculateBuyCost",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "pricePerGramBidE6",
+    "inputs": [{ "internalType": "uint256", "name": "grams", "type": "uint256" }],
+    "name": "calculateSellPayout",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "grams", "type": "uint256" }],
+    "name": "buy",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "newAskAddPerKgE6", "type": "uint256" },
-      { "internalType": "uint256", "name": "newBidSubPerKgE6", "type": "uint256" }
+      { "internalType": "uint256", "name": "grams", "type": "uint256" },
+      { "internalType": "uint256", "name": "maxCostInWei", "type": "uint256" }
     ],
-    "name": "setSpreadPerKgE6",
+    "name": "buyWithSlippage",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "grams", "type": "uint256" }],
+    "name": "sell",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "grams", "type": "uint256" },
+      { "internalType": "uint256", "name": "minPayoutInWei", "type": "uint256" }
+    ],
+    "name": "sellWithSlippage",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "user", "type": "address" }],
+    "name": "pendingRefunds",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawRefund",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "grams", "type": "uint256" }],
+    "name": "requestPhysicalDelivery",
+    "outputs": [{ "internalType": "uint256", "name": "requestId", "type": "uint256" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "requestId", "type": "uint256" }],
+    "name": "cancelDeliveryRequest",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "gramsToMint", "type": "uint256" }],
+    "name": "checkReserveLimit",
+    "outputs": [
+      { "internalType": "bool", "name": "allowed", "type": "bool" },
+      { "internalType": "uint256", "name": "maxMintable", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getCollateralizationRatio",
+    "outputs": [
+      { "internalType": "uint256", "name": "ratioE6", "type": "uint256" },
+      { "internalType": "uint256", "name": "supplyGrams", "type": "uint256" },
+      { "internalType": "uint256", "name": "reserveGrams", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "user", "type": "address" }],
+    "name": "getActiveAllocations",
+    "outputs": [{ "internalType": "uint256[]", "name": "", "type": "uint256[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "paused",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "from", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "to", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }
+    ],
+    "name": "Transfer",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "buyer", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "grams", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "cost", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "allocId", "type": "uint256" }
+    ],
+    "name": "MetalPurchased",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "seller", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "grams", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "payout", "type": "uint256" }
+    ],
+    "name": "MetalSold",
+    "type": "event"
   }
 ]

@@ -1,228 +1,356 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useAccount } from "wagmi";
+import { ConnectKitButton } from "connectkit";
 
-interface PriceSettings {
-  AUXG: { askAdjust: number; bidAdjust: number };
-  AUXS: { askAdjust: number; bidAdjust: number };
-  AUXPT: { askAdjust: number; bidAdjust: number };
-  AUXPD: { askAdjust: number; bidAdjust: number };
-  ETH: { askAdjust: number; bidAdjust: number };
-  BTC: { askAdjust: number; bidAdjust: number };
-  XRP: { askAdjust: number; bidAdjust: number };
-  SOL: { askAdjust: number; bidAdjust: number };
+// ═══════════════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface MetalSpreadSettings {
+  gold: { buy: number; sell: number };
+  silver: { buy: number; sell: number };
+  platinum: { buy: number; sell: number };
+  palladium: { buy: number; sell: number };
 }
 
-interface LivePrices {
+interface CryptoSpreadSettings {
+  btc: { buy: number; sell: number };
+  eth: { buy: number; sell: number };
+  xrp: { buy: number; sell: number };
+  sol: { buy: number; sell: number };
+  usdt: { buy: number; sell: number };
+}
+
+interface SpreadConfig {
+  metals: MetalSpreadSettings;
+  crypto: CryptoSpreadSettings;
+}
+
+interface OraclePrices {
   AUXG: number;
   AUXS: number;
   AUXPT: number;
   AUXPD: number;
   ETH: number;
-  BTC: number;
-  XRP: number;
-  SOL: number;
+}
+
+interface HotWallet {
+  address: string;
+  balanceETH: string;
+  balanceUSDT: string;
+  pendingWithdraws: number;
+  network?: string;
+  stats?: {
+    totalDeposits: number;
+    totalWithdraws: number;
+    lastActivity: string | null;
+  };
 }
 
 interface NewsItem {
   id: string;
   title: string;
-  description: string;
-  fullContent?: string;
-  url?: string;
-  source: string;
-  date: string;
-  icon: string;
-  color: string;
+  content: string;
+  category: "update" | "alert" | "promo";
+  active: boolean;
+  createdAt: string;
 }
 
-interface NewsData {
-  tr: NewsItem[];
-  en: NewsItem[];
+interface UserInfo {
+  id: string;
+  address: string;
+  email?: string;
+  kycStatus: "none" | "pending" | "verified";
+  totalTrades: number;
+  createdAt: string;
 }
 
-const DEFAULT_SETTINGS: PriceSettings = {
-  AUXG: { askAdjust: 2, bidAdjust: -1 },
-  AUXS: { askAdjust: 3, bidAdjust: -1.5 },
-  AUXPT: { askAdjust: 2.5, bidAdjust: -1.25 },
-  AUXPD: { askAdjust: 2.5, bidAdjust: -1.25 },
-  ETH: { askAdjust: 1, bidAdjust: -0.5 },
-  BTC: { askAdjust: 1, bidAdjust: -0.5 },
-  XRP: { askAdjust: 1.5, bidAdjust: -0.75 },
-  SOL: { askAdjust: 1.5, bidAdjust: -0.75 },
+interface PendingWithdraw {
+  id: string;
+  oderId: string;
+  address: string;
+  amount: string;
+  token: string;
+  status: "pending" | "processing" | "completed" | "failed";
+  createdAt: string;
+}
+
+interface MobileAppConfig {
+  ios: {
+    minVersion: string;
+    currentVersion: string;
+    forceUpdate: boolean;
+    storeUrl: string;
+  };
+  android: {
+    minVersion: string;
+    currentVersion: string;
+    forceUpdate: boolean;
+    storeUrl: string;
+  };
+}
+
+interface MaintenanceConfig {
+  enabled: boolean;
+  message: { tr: string; en: string };
+  estimatedEnd: string | null;
+  allowedVersions: string[];
+}
+
+interface FeatureFlags {
+  cryptoTrading: boolean;
+  metalTrading: boolean;
+  leasing: boolean;
+  staking: boolean;
+  p2pTransfer: boolean;
+  fiatDeposit: boolean;
+  fiatWithdraw: boolean;
+  cryptoDeposit: boolean;
+  cryptoWithdraw: boolean;
+  biometricAuth: boolean;
+  darkMode: boolean;
+  priceAlerts: boolean;
+  referralProgram: boolean;
+  nftSupport: boolean;
+}
+
+interface PushNotification {
+  id: string;
+  title: string;
+  body: string;
+  target: string;
+  sentAt: string;
+  status: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONTRACT ADDRESSES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const V7_CONTRACTS = {
+  AUXG: "0xBF74Fc9f0dD50A79f9FaC2e9Aa05a268E3dcE6b6",
+  AUXS: "0x705D9B193e5E349847C2Efb18E68fe989eC2C0e9",
+  AUXPT: "0x1819447f624D8e22C1A4F3B14e96693625B6d74F",
+  AUXPD: "0xb23545dE86bE9F65093D3a51a6ce52Ace0d8935E",
 };
 
-const DEFAULT_NEWS: NewsData = {
-  tr: [],
-  en: [],
+const ORACLE_ADDRESS = "0x7253c38967eFAcb0f929D700cf5815D8E717fDb6";
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ADMIN ALLOWED ADDRESSES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const ADMIN_ADDRESSES = [
+  "0xD24B2bca1E0b58a2EAE5b1184871219f9a8EE944",
+].map(a => a.toLowerCase());
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// METAL & CRYPTO INFO
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const METALS = [
+  { key: "gold", symbol: "AUXG", name: "Altın", icon: "🥇", color: "text-amber-500" },
+  { key: "silver", symbol: "AUXS", name: "Gümüş", icon: "🥈", color: "text-slate-400" },
+  { key: "platinum", symbol: "AUXPT", name: "Platin", icon: "💎", color: "text-cyan-400" },
+  { key: "palladium", symbol: "AUXPD", name: "Paladyum", icon: "💜", color: "text-purple-400" },
+];
+
+const CRYPTOS = [
+  { key: "btc", symbol: "BTC", name: "Bitcoin", icon: "₿", color: "text-orange-500" },
+  { key: "eth", symbol: "ETH", name: "Ethereum", icon: "Ξ", color: "text-blue-400" },
+  { key: "xrp", symbol: "XRP", name: "Ripple", icon: "✕", color: "text-slate-300" },
+  { key: "sol", symbol: "SOL", name: "Solana", icon: "◎", color: "text-purple-500" },
+  { key: "usdt", symbol: "USDT", name: "Tether", icon: "₮", color: "text-emerald-400" },
+];
+
+const FEATURE_LABELS: Record<string, { tr: string; en: string; icon: string }> = {
+  cryptoTrading: { tr: "Kripto Trading", en: "Crypto Trading", icon: "₿" },
+  metalTrading: { tr: "Metal Trading", en: "Metal Trading", icon: "🥇" },
+  leasing: { tr: "Leasing", en: "Leasing", icon: "📈" },
+  staking: { tr: "Staking", en: "Staking", icon: "🔒" },
+  p2pTransfer: { tr: "P2P Transfer", en: "P2P Transfer", icon: "🔄" },
+  fiatDeposit: { tr: "Fiat Yatırma", en: "Fiat Deposit", icon: "💵" },
+  fiatWithdraw: { tr: "Fiat Çekme", en: "Fiat Withdraw", icon: "💸" },
+  cryptoDeposit: { tr: "Kripto Yatırma", en: "Crypto Deposit", icon: "📥" },
+  cryptoWithdraw: { tr: "Kripto Çekme", en: "Crypto Withdraw", icon: "📤" },
+  biometricAuth: { tr: "Biyometrik Giriş", en: "Biometric Auth", icon: "👆" },
+  darkMode: { tr: "Karanlık Mod", en: "Dark Mode", icon: "🌙" },
+  priceAlerts: { tr: "Fiyat Uyarıları", en: "Price Alerts", icon: "🔔" },
+  referralProgram: { tr: "Referans Programı", en: "Referral Program", icon: "👥" },
+  nftSupport: { tr: "NFT Desteği", en: "NFT Support", icon: "🖼️" },
 };
 
-const ICON_OPTIONS = [
-  { value: 'gift', label: '🎁', name: 'Hediye' },
-  { value: 'trending-up', label: '📈', name: 'Yükseliş' },
-  { value: 'trending-down', label: '📉', name: 'Düşüş' },
-  { value: 'package', label: '📦', name: 'Paket' },
-  { value: 'award', label: '🏆', name: 'Ödül' },
-  { value: 'zap', label: '⚡', name: 'Hızlı' },
-  { value: 'globe', label: '🌍', name: 'Dünya' },
-  { value: 'shield', label: '🛡️', name: 'Güvenlik' },
-  { value: 'star', label: '⭐', name: 'Yıldız' },
-  { value: 'bell', label: '🔔', name: 'Bildirim' },
-  { value: 'info', label: 'ℹ️', name: 'Bilgi' },
-  { value: 'alert-circle', label: '⚠️', name: 'Uyarı' },
-];
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
 
-const COLOR_OPTIONS = [
-  { value: '#8B5CF6', name: 'Mor' },
-  { value: '#FFD700', name: 'Altın' },
-  { value: '#10B981', name: 'Yeşil' },
-  { value: '#F7931A', name: 'Turuncu' },
-  { value: '#627EEA', name: 'Mavi' },
-  { value: '#EF4444', name: 'Kırmızı' },
-];
-
-export default function AdminPage() {
-  const [settings, setSettings] = useState<PriceSettings>(DEFAULT_SETTINGS);
-  const [basePrices, setBasePrices] = useState<LivePrices>({ 
-    AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0, 
-    ETH: 0, BTC: 0, XRP: 0, SOL: 0 
-  });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [authenticated, setAuthenticated] = useState(false);
+export default function AdminDashboard() {
+  const { isConnected, address } = useAccount();
+  
+  // Auth
+  const [isAdmin, setIsAdmin] = useState(false);
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [saveMessage, setSaveMessage] = useState("");
-  
-  // ✅ BUG FIX: Input düzenleme sırasında settings'in üzerine yazılmasını engelle
-  const [isEditing, setIsEditing] = useState(false);
-  const settingsLoadedRef = useRef(false);
-  
-  // Tab state
-  const [activeTab, setActiveTab] = useState<'prices' | 'news' | 'wallet' | 'wallet'>('prices');
-  
-  // News state
-  const [newsData, setNewsData] = useState<NewsData>(DEFAULT_NEWS);
-  const [newsLang, setNewsLang] = useState<'tr' | 'en'>('tr');
-  const [newsLoading, setNewsLoading] = useState(false);
-  const [newsSaving, setNewsSaving] = useState(false);
-  const [newsMessage, setNewsMessage] = useState("");
+  const [authenticated, setAuthenticated] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
 
-  // Hot Wallet state
-  const [hotWalletData, setHotWalletData] = useState<any>(null);
-  const [hotWalletLoading, setHotWalletLoading] = useState(false);
-  
-  // New news form
-  const [newNews, setNewNews] = useState({
-    title: '',
-    description: '',
-    fullContent: '',
-    url: '',
-    source: 'Auxite',
-    date: '',
-    icon: 'gift',
-    color: '#8B5CF6',
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"dashboard" | "spreads" | "oracle" | "wallet" | "news" | "users" | "withdraws" | "mint" | "mobile">("dashboard");
+
+  // Dashboard stats
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalTrades: 0,
+    totalVolume: "$0",
+    pendingWithdraws: 0,
+    pendingKYC: 0,
+    activeAlerts: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  // Spread settings
+  const [spreadConfig, setSpreadConfigState] = useState<SpreadConfig>({
+    metals: {
+      gold: { buy: 1.5, sell: 1.5 },
+      silver: { buy: 2.0, sell: 2.0 },
+      platinum: { buy: 2.0, sell: 2.0 },
+      palladium: { buy: 2.5, sell: 2.5 },
+    },
+    crypto: {
+      btc: { buy: 1.0, sell: 1.0 },
+      eth: { buy: 1.0, sell: 1.0 },
+      xrp: { buy: 1.5, sell: 1.5 },
+      sol: { buy: 1.5, sell: 1.5 },
+      usdt: { buy: 0.1, sell: 0.1 },
+    },
+  });
+  const [spreadLoading, setSpreadLoading] = useState(false);
+  const [spreadSaving, setSpreadSaving] = useState<string | null>(null);
+
+  // Oracle prices
+  const [oraclePrices, setOraclePrices] = useState<OraclePrices>({
+    AUXG: 65000,
+    AUXS: 800,
+    AUXPT: 30000,
+    AUXPD: 35000,
+    ETH: 3500,
+  });
+  const [oracleLoading, setOracleLoading] = useState(false);
+
+  // Hot Wallet - Multi-Chain
+  const [walletBalances, setWalletBalances] = useState<any>(null);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [walletProcessing, setWalletProcessing] = useState<string | null>(null);
+  const [pendingUserWithdraws, setPendingUserWithdraws] = useState<any[]>([]);
+  const [walletHistory, setWalletHistory] = useState<any[]>([]);
+  // Send form
+  const [sendToken, setSendToken] = useState("ETH");
+  const [sendAddress, setSendAddress] = useState("");
+  const [sendAmount, setSendAmount] = useState("");
+  const [sendMemo, setSendMemo] = useState("");
+
+  // News Feed
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+  const [newNews, setNewNews] = useState({ title: "", content: "", category: "update" as const });
+
+  // Users
+  const [users, setUsers] = useState<UserInfo[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+
+  // Pending Withdraws
+  const [pendingWithdraws, setPendingWithdraws] = useState<PendingWithdraw[]>([]);
+
+  // Mint
+  const [mintData, setMintData] = useState({
+    address: "",
+    amount: "",
+    metal: "AUXG" as keyof typeof V7_CONTRACTS,
+    custodian: "Zurich Vault",
   });
 
+  // Mobile Management
+  const [mobileAppConfig, setMobileAppConfig] = useState<MobileAppConfig>({
+    ios: { minVersion: "1.0.0", currentVersion: "1.0.0", forceUpdate: false, storeUrl: "" },
+    android: { minVersion: "1.0.0", currentVersion: "1.0.0", forceUpdate: false, storeUrl: "" },
+  });
+  const [maintenanceConfig, setMaintenanceConfig] = useState<MaintenanceConfig>({
+    enabled: false,
+    message: { tr: "Bakım çalışması yapılmaktadır.", en: "Maintenance in progress." },
+    estimatedEnd: null,
+    allowedVersions: [],
+  });
+  const [featureFlags, setFeatureFlags] = useState<FeatureFlags>({
+    cryptoTrading: true,
+    metalTrading: true,
+    leasing: true,
+    staking: false,
+    p2pTransfer: true,
+    fiatDeposit: true,
+    fiatWithdraw: true,
+    cryptoDeposit: true,
+    cryptoWithdraw: true,
+    biometricAuth: true,
+    darkMode: true,
+    priceAlerts: true,
+    referralProgram: false,
+    nftSupport: false,
+  });
+  const [pushHistory, setPushHistory] = useState<PushNotification[]>([]);
+  const [newPush, setNewPush] = useState({ title: "", body: "", target: "all" });
+  const [mobileLoading, setMobileLoading] = useState(false);
+  const [mobileSaving, setMobileSaving] = useState<string | null>(null);
 
-  // İlk yükleme - settings'i sadece bir kez yükle
+  // Messages
+  const [message, setMessage] = useState({ type: "", text: "" });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // AUTH
+  // ═══════════════════════════════════════════════════════════════════════════════
+
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const res = await fetch("/api/admin/settings");
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.AUXG) {
-            setSettings({ ...DEFAULT_SETTINGS, ...data });
-            settingsLoadedRef.current = true;
-          }
+    if (address) {
+      const isAdminWallet = ADMIN_ADDRESSES.includes(address.toLowerCase());
+      setIsAdmin(isAdminWallet);
+      if (isAdminWallet) {
+        const token = sessionStorage.getItem("auxite_admin_token");
+        if (token) {
+          setAuthenticated(true);
+          loadAllData();
         }
-      } catch (e) {
-        console.error("Failed to load settings:", e);
       }
-    };
-
-    const auth = sessionStorage.getItem("auxite_admin_auth");
-    if (auth === "true") {
-      setAuthenticated(true);
-      loadSettings();
     }
-  }, []);
+  }, [address]);
 
-  // Fiyatları periyodik güncelle - ✅ BUG FIX: Settings'i sadece ilk yüklemede al
+  // Hot Wallet otomatik yenileme (5 dakikada bir)
   useEffect(() => {
-    if (!authenticated) return;
-
-    const fetchPrices = async () => {
-      try {
-        // Metal fiyatları
-        const metalRes = await fetch("/api/prices");
-        const metalData = await metalRes.json();
-        
-        // Crypto fiyatları
-        const cryptoRes = await fetch("/api/crypto");
-        const cryptoData = await cryptoRes.json();
-        
-        setBasePrices({
-          AUXG: metalData.basePrices?.AUXG || 0,
-          AUXS: metalData.basePrices?.AUXS || 0,
-          AUXPT: metalData.basePrices?.AUXPT || 0,
-          AUXPD: metalData.basePrices?.AUXPD || 0,
-          ETH: cryptoData.ethereum?.usd || 0,
-          BTC: cryptoData.bitcoin?.usd || 0,
-          XRP: cryptoData.ripple?.usd || 0,
-          SOL: cryptoData.solana?.usd || 0,
-        });
-        
-        // ✅ BUG FIX: Settings'i sadece ilk yüklemede ve düzenleme yapılmıyorken güncelle
-        if (!settingsLoadedRef.current && !isEditing && metalData.settings && metalData.settings.AUXG) {
-          setSettings(prev => ({ ...DEFAULT_SETTINGS, ...prev, ...metalData.settings }));
-          settingsLoadedRef.current = true;
-        }
-        
-        setLastUpdated(new Date());
-      } catch (e) {
-        console.error("Failed to fetch prices:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 5000);
+    if (!authenticated || activeTab !== "wallet") return;
+    
+    const interval = setInterval(() => {
+      loadHotWallet(false); // Cache'den al, force refresh değil
+    }, 300000); // 5 dakika (300 saniye)
+    
     return () => clearInterval(interval);
-  }, [authenticated, isEditing]);
+  }, [authenticated, activeTab]);
 
-  // Haberleri yükle
+  // Dashboard stats otomatik yenileme (60 saniyede bir)
   useEffect(() => {
-    if (!authenticated || activeTab !== 'news') return;
+    if (!authenticated || activeTab !== "dashboard") return;
     
-    const loadNews = async () => {
-      setNewsLoading(true);
-      try {
-        const res = await fetch("/api/news?all=true");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.allNews) {
-            setNewsData(data.allNews);
-          }
-        }
-      } catch (e) {
-        console.error("Failed to load news:", e);
-      } finally {
-        setNewsLoading(false);
-      }
-    };
+    const interval = setInterval(() => {
+      loadStats();
+    }, 60000); // 60 saniye
     
-    loadNews();
+    return () => clearInterval(interval);
   }, [authenticated, activeTab]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setAuthError("");
+    setAuthLoading(true);
     
     try {
       const res = await fetch("/api/admin/auth", {
@@ -231,177 +359,512 @@ export default function AdminPage() {
         body: JSON.stringify({ password }),
       });
       
-      const data = await res.json();
-      
-      if (data.success && data.token) {
-        setAuthenticated(true);
+      if (res.ok) {
+        const data = await res.json();
         sessionStorage.setItem("auxite_admin_token", data.token);
-        setError("");
+        setAuthenticated(true);
+        loadAllData();
       } else {
-        setError(data.error || "Yanlış şifre!");
+        setAuthError("Yanlış şifre");
       }
-    } catch (err) {
-      setError("Bağlantı hatası!");
+    } catch {
+      setAuthError("Bağlantı hatası");
+    } finally {
+      setAuthLoading(false);
     }
   };
-  const handleSave = async () => {
-    setSaving(true);
-    setSaveMessage("");
-    setIsEditing(false); // Kaydetme sonrası editing'i kapat
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("auxite_admin_token");
+    setAuthenticated(false);
+    setPassword("");
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // DATA LOADING
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  const getAuthHeaders = () => ({
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${sessionStorage.getItem("auxite_admin_token")}`,
+  });
+
+  const loadAllData = () => {
+    loadStats();
+    loadSpreadConfig();
+    loadHotWallet();
+    loadNews();
+    loadMobileConfig();
+  };
+
+  const loadStats = async () => {
+    setStatsLoading(true);
+    try {
+      const res = await fetch("/api/admin/stats", { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+      }
+    } catch (e) {
+      console.error("Failed to load stats:", e);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const loadSpreadConfig = async () => {
+    setSpreadLoading(true);
+    try {
+      const res = await fetch("/api/admin/spread");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.config) {
+          setSpreadConfigState(data.config);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load spread config:", e);
+    } finally {
+      setSpreadLoading(false);
+    }
+  };
+
+  const loadHotWallet = async (forceRefresh = false) => {
+    setWalletLoading(true);
+    try {
+      // Get balances
+      const res = await fetch(`/api/admin/hot-wallet?type=balances${forceRefresh ? '&refresh=true' : ''}`, { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setWalletBalances(data.balances);
+      }
+      
+      // Get pending withdraws
+      const pendingRes = await fetch("/api/admin/hot-wallet?type=pending-withdraws", { headers: getAuthHeaders() });
+      if (pendingRes.ok) {
+        const pendingData = await pendingRes.json();
+        setPendingUserWithdraws(pendingData.withdraws || []);
+      }
+      
+      // Get history
+      const historyRes = await fetch("/api/admin/hot-wallet?type=history", { headers: getAuthHeaders() });
+      if (historyRes.ok) {
+        const historyData = await historyRes.json();
+        setWalletHistory([...(historyData.withdraws || []), ...(historyData.deposits || [])].slice(0, 30));
+      }
+    } catch (e) {
+      console.error("Failed to load hot wallet:", e);
+    } finally {
+      setWalletLoading(false);
+    }
+  };
+
+  const handleSendCrypto = async () => {
+    if (!sendAddress || !sendAmount) return;
+    
+    setWalletProcessing('send');
+    setMessage({ type: "", text: "" });
     
     try {
-      const res = await fetch("/api/admin/settings", {
+      const res = await fetch("/api/admin/hot-wallet", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          action: 'send',
+          token: sendToken,
+          toAddress: sendAddress,
+          amount: sendAmount,
+          memo: sendMemo || undefined,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        setMessage({ type: "success", text: `${sendAmount} ${sendToken} gönderildi! TX: ${data.txHash?.slice(0, 10)}...` });
+        setSendAddress("");
+        setSendAmount("");
+        setSendMemo("");
+        loadHotWallet(true);
+      } else {
+        setMessage({ type: "error", text: data.error || "Gönderim başarısız" });
+      }
+    } catch (e: any) {
+      setMessage({ type: "error", text: e.message || "Bağlantı hatası" });
+    } finally {
+      setWalletProcessing(null);
+    }
+  };
+
+  const handleApproveWithdraw = async (withdrawId: string) => {
+    setWalletProcessing(withdrawId);
+    setMessage({ type: "", text: "" });
+    
+    try {
+      const res = await fetch("/api/admin/hot-wallet", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ action: 'approve-withdraw', withdrawId }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        setMessage({ type: "success", text: `Çekim onaylandı! TX: ${data.txHash?.slice(0, 10)}...` });
+        loadHotWallet(true);
+      } else {
+        setMessage({ type: "error", text: data.error || "Onay başarısız" });
+      }
+    } catch (e: any) {
+      setMessage({ type: "error", text: e.message || "Bağlantı hatası" });
+    } finally {
+      setWalletProcessing(null);
+    }
+  };
+
+  const handleCancelWithdraw = async (withdrawId: string) => {
+    try {
+      const res = await fetch("/api/admin/hot-wallet", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ action: 'cancel-withdraw', withdrawId }),
       });
       
       if (res.ok) {
-        setSaveMessage("✅ Ayarlar kaydedildi!");
-        settingsLoadedRef.current = true; // Kaydedilen ayarları koru
-      } else {
-        const errorData = await res.json();
-        setSaveMessage(`❌ Hata: ${errorData.error || "Kaydetme hatası"}`);
+        loadHotWallet();
       }
     } catch (e) {
-      setSaveMessage("❌ Bağlantı hatası!");
-    } finally {
-      setSaving(false);
-      setTimeout(() => setSaveMessage(""), 3000);
+      console.error("Cancel failed:", e);
     }
   };
 
-  const calculatePrice = (basePrice: number, adjustment: number) => {
-    if (!basePrice || isNaN(basePrice) || isNaN(adjustment)) return 0;
-    return basePrice * (1 + adjustment / 100);
+  const loadNews = async () => {
+    try {
+      const res = await fetch("/api/news");
+      if (res.ok) {
+        const data = await res.json();
+        setNewsItems(data.items || []);
+      }
+    } catch (e) {
+      console.error("Failed to load news:", e);
+    }
   };
 
-  const updateSetting = (
-    asset: keyof PriceSettings,
-    field: "askAdjust" | "bidAdjust",
-    value: string
-  ) => {
-    setIsEditing(true); // ✅ Düzenleme başladı
-    const numValue = parseFloat(value) || 0;
-    setSettings((prev) => ({
-      ...prev,
-      [asset]: { ...prev[asset], [field]: numValue },
-    }));
+  const loadMobileConfig = async () => {
+    setMobileLoading(true);
+    try {
+      const res = await fetch("/api/admin/mobile?type=all", { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.appConfig) setMobileAppConfig(data.appConfig);
+        if (data.maintenance) setMaintenanceConfig(data.maintenance);
+        if (data.features) setFeatureFlags(data.features);
+      }
+      
+      // Push history
+      const pushRes = await fetch("/api/admin/mobile?type=push-history", { headers: getAuthHeaders() });
+      if (pushRes.ok) {
+        const pushData = await pushRes.json();
+        setPushHistory(pushData.history || []);
+      }
+    } catch (e) {
+      console.error("Failed to load mobile config:", e);
+    } finally {
+      setMobileLoading(false);
+    }
   };
 
-  // Haber kaydet
-  const handleSaveNews = async () => {
-    setNewsSaving(true);
-    setNewsMessage("");
-    
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // HANDLERS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  const handleSpreadUpdate = async (type: 'metal' | 'crypto', key: string) => {
+    setSpreadSaving(`${type}-${key}`);
+    setMessage({ type: "", text: "" });
+
+    const values = type === 'metal' 
+      ? spreadConfig.metals[key as keyof MetalSpreadSettings]
+      : spreadConfig.crypto[key as keyof CryptoSpreadSettings];
+
+    try {
+      const res = await fetch("/api/admin/spread", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          type,
+          asset: key,
+          buy: values.buy,
+          sell: values.sell,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setMessage({ type: "success", text: `${key.toUpperCase()} spread güncellendi` });
+        if (data.config) {
+          setSpreadConfigState(data.config);
+        }
+      } else {
+        const data = await res.json();
+        setMessage({ type: "error", text: data.error || "Güncelleme başarısız" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Bağlantı hatası" });
+    } finally {
+      setSpreadSaving(null);
+    }
+  };
+
+  const handleOracleUpdate = async () => {
+    setOracleLoading(true);
+    setMessage({ type: "", text: "" });
+
+    try {
+      const res = await fetch("/api/admin/update-oracle", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(oraclePrices),
+      });
+
+      if (res.ok) {
+        setMessage({ type: "success", text: "Oracle fiyatları güncellendi" });
+      } else {
+        setMessage({ type: "error", text: "Güncelleme başarısız" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Bağlantı hatası" });
+    } finally {
+      setOracleLoading(false);
+    }
+  };
+
+  const handleAddNews = async () => {
+    if (!newNews.title || !newNews.content) return;
+
     try {
       const res = await fetch("/api/news", {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${sessionStorage.getItem("auxite_admin_token") || ""}`,
-        },
-        body: JSON.stringify(newsData),
+        headers: getAuthHeaders(),
+        body: JSON.stringify(newNews),
       });
-      
+
       if (res.ok) {
-        setNewsMessage("✅ Haberler kaydedildi!");
-      } else {
-        setNewsMessage("❌ Kaydetme hatası!");
+        setNewNews({ title: "", content: "", category: "update" });
+        loadNews();
+        setMessage({ type: "success", text: "Haber eklendi" });
       }
+    } catch {
+      setMessage({ type: "error", text: "Haber eklenemedi" });
+    }
+  };
+
+  const handleDeleteNews = async (id: string) => {
+    try {
+      await fetch(`/api/news?id=${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      loadNews();
     } catch (e) {
-      setNewsMessage("❌ Bağlantı hatası!");
+      console.error("Delete failed:", e);
+    }
+  };
+
+  const handleMint = async () => {
+    if (!mintData.address || !mintData.amount) return;
+
+    setMessage({ type: "", text: "" });
+
+    try {
+      const res = await fetch("/api/admin/mint", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(mintData),
+      });
+
+      if (res.ok) {
+        setMessage({ type: "success", text: `${mintData.amount}g ${mintData.metal} mint edildi` });
+        setMintData({ ...mintData, address: "", amount: "" });
+      } else {
+        const data = await res.json();
+        setMessage({ type: "error", text: data.error || "Mint başarısız" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Bağlantı hatası" });
+    }
+  };
+
+  // Mobile Handlers
+  const handleAppConfigUpdate = async () => {
+    setMobileSaving("app-config");
+    try {
+      const res = await fetch("/api/admin/mobile", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          action: "update-app-config",
+          ios: mobileAppConfig.ios,
+          android: mobileAppConfig.android,
+        }),
+      });
+      if (res.ok) {
+        setMessage({ type: "success", text: "Uygulama ayarları güncellendi" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Güncelleme başarısız" });
     } finally {
-      setNewsSaving(false);
-      setTimeout(() => setNewsMessage(""), 3000);
+      setMobileSaving(null);
     }
   };
 
-  // Haber ekle
-  const addNews = () => {
-    if (!newNews.title || !newNews.description) {
-      alert('Başlık ve açıklama gerekli!');
-      return;
+  const handleMaintenanceUpdate = async () => {
+    setMobileSaving("maintenance");
+    try {
+      const res = await fetch("/api/admin/mobile", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          action: "set-maintenance",
+          ...maintenanceConfig,
+        }),
+      });
+      if (res.ok) {
+        setMessage({ type: "success", text: `Bakım modu ${maintenanceConfig.enabled ? "açıldı" : "kapatıldı"}` });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Güncelleme başarısız" });
+    } finally {
+      setMobileSaving(null);
     }
-    
-    const news: NewsItem = {
-      id: Date.now().toString(),
-      title: newNews.title,
-      description: newNews.description,
-      fullContent: newNews.fullContent || undefined,
-      url: newNews.url || undefined,
-      source: newNews.source || 'Auxite',
-      date: newNews.date || new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
-      icon: newNews.icon,
-      color: newNews.color,
-    };
-    
-    setNewsData(prev => ({
-      ...prev,
-      [newsLang]: [news, ...prev[newsLang]],
-    }));
-    
-    // Form'u temizle
-    setNewNews({
-      title: '',
-      description: '',
-      fullContent: '',
-      url: '',
-      source: 'Auxite',
-      date: '',
-      icon: 'gift',
-      color: '#8B5CF6',
-    });
   };
 
-  // Haber sil
-  const deleteNews = (id: string) => {
-    if (confirm('Bu haberi silmek istediğinize emin misiniz?')) {
-      setNewsData(prev => ({
-        ...prev,
-        [newsLang]: prev[newsLang].filter(n => n.id !== id),
-      }));
+  const handleFeatureToggle = async (feature: keyof FeatureFlags) => {
+    const newValue = !featureFlags[feature];
+    setFeatureFlags({ ...featureFlags, [feature]: newValue });
+    
+    try {
+      await fetch("/api/admin/mobile", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          action: "update-features",
+          features: { [feature]: newValue },
+        }),
+      });
+    } catch (e) {
+      console.error("Feature toggle failed:", e);
+      setFeatureFlags({ ...featureFlags, [feature]: !newValue }); // Rollback
     }
   };
+
+  const handleSendPush = async () => {
+    if (!newPush.title || !newPush.body) return;
+    
+    setMobileSaving("push");
+    try {
+      const res = await fetch("/api/admin/mobile", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          action: "send-push",
+          ...newPush,
+        }),
+      });
+      if (res.ok) {
+        setMessage({ type: "success", text: "Push notification gönderildi" });
+        setNewPush({ title: "", body: "", target: "all" });
+        loadMobileConfig(); // Reload push history
+      }
+    } catch {
+      setMessage({ type: "error", text: "Gönderim başarısız" });
+    } finally {
+      setMobileSaving(null);
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleString("tr-TR");
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // RENDER - NOT CONNECTED
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  if (!isConnected) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-800 flex items-center justify-center">
+            <span className="text-4xl">🔐</span>
+          </div>
+          <h1 className="text-2xl font-bold mb-4">Admin Paneli</h1>
+          <p className="text-slate-400 mb-6">Admin cüzdanınızı bağlayın</p>
+          <ConnectKitButton />
+        </div>
+      </main>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // RENDER - NOT ADMIN
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  if (!isAdmin) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
+            <span className="text-4xl">🚫</span>
+          </div>
+          <h1 className="text-2xl font-bold mb-4">Yetkisiz Erişim</h1>
+          <p className="text-slate-400 mb-6">Bu cüzdan admin yetkisine sahip değil</p>
+          <p className="text-xs text-slate-500 font-mono mb-4">{address}</p>
+          <Link href="/" className="text-amber-400 hover:underline">
+            ← Ana Sayfaya Dön
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // RENDER - LOGIN REQUIRED
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   if (!authenticated) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="w-full max-w-md p-8">
+        <div className="max-w-md w-full p-8">
           <div className="text-center mb-8">
-            <Image
-              src="/auxite-wallet-logo.png"
-              alt="Auxite"
-              width={160}
-              height={40}
-              className="h-12 w-auto mx-auto mb-4"
-            />
-            <h1 className="text-2xl font-bold text-slate-100">Admin Girişi</h1>
-            <p className="text-slate-400 mt-2">Fiyat ve haber ayarlarını yönetmek için giriş yapın</p>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-500/20 flex items-center justify-center">
+              <span className="text-3xl">🔑</span>
+            </div>
+            <h1 className="text-xl font-bold">Admin Girişi</h1>
+            <p className="text-slate-400 text-sm mt-2">Şifrenizi girin</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm text-slate-400 mb-2">Şifre</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-emerald-500"
-                placeholder="Admin şifresi"
-              />
-            </div>
-            {error && <p className="text-red-400 text-sm">{error}</p>}
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Admin şifresi"
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white"
+            />
+            {authError && (
+              <p className="text-red-400 text-sm">{authError}</p>
+            )}
             <button
               type="submit"
-              className="w-full px-4 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-semibold transition-colors"
+              disabled={authLoading}
+              className="w-full py-3 bg-amber-500 hover:bg-amber-600 rounded-xl font-semibold text-black disabled:opacity-50"
             >
-              Giriş Yap
+              {authLoading ? "Giriş yapılıyor..." : "Giriş Yap"}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <Link href="/" className="text-sm text-slate-400 hover:text-emerald-400">
+            <Link href="/" className="text-slate-400 hover:text-white text-sm">
               ← Ana Sayfaya Dön
             </Link>
           </div>
@@ -410,18 +873,20 @@ export default function AdminPage() {
     );
   }
 
-  const metals = [
-    { key: "AUXG" as const, name: "Altın (Gold)", color: "text-amber-400", icon: "/gold-favicon-32x32.png" },
-    { key: "AUXS" as const, name: "Gümüş (Silver)", color: "text-slate-300", icon: "/silver-favicon-32x32.png" },
-    { key: "AUXPT" as const, name: "Platin (Platinum)", color: "text-blue-400", icon: "/platinum-favicon-32x32.png" },
-    { key: "AUXPD" as const, name: "Paladyum (Palladium)", color: "text-purple-400", icon: "/palladium-favicon-32x32.png" },
-  ];
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // RENDER - ADMIN DASHBOARD
+  // ═══════════════════════════════════════════════════════════════════════════════
 
-  const cryptos = [
-    { key: "BTC" as const, name: "Bitcoin", color: "text-[#F7931A]", bgColor: "bg-[#F7931A]", icon: "₿" },
-    { key: "ETH" as const, name: "Ethereum", color: "text-[#627EEA]", bgColor: "bg-[#627EEA]", icon: "Ξ" },
-    { key: "XRP" as const, name: "Ripple", color: "text-[#23292F]", bgColor: "bg-[#23292F]", icon: "✕" },
-    { key: "SOL" as const, name: "Solana", color: "text-[#9945FF]", bgColor: "bg-[#9945FF]", icon: "◎" },
+  const tabs = [
+    { id: "dashboard", label: "Dashboard", icon: "📊" },
+    { id: "spreads", label: "Spread Ayarları", icon: "📈" },
+    { id: "oracle", label: "Oracle", icon: "🔮" },
+    { id: "wallet", label: "Hot Wallet", icon: "💰" },
+    { id: "news", label: "Haber Feed", icon: "📰" },
+    { id: "users", label: "Kullanıcılar", icon: "👥" },
+    { id: "withdraws", label: "Çekimler", icon: "💸" },
+    { id: "mint", label: "Manuel Mint", icon: "🏭" },
+    { id: "mobile", label: "Mobil Yönetim", icon: "📱" },
   ];
 
   return (
@@ -432,766 +897,1140 @@ export default function AdminPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/">
-                <Image
-                  src="/auxite-wallet-logo.png"
-                  alt="Auxite"
-                  width={160}
-                  height={40}
-                  className="h-10 w-auto"
-                />
+                <Image src="/gold-favicon-32x32.png" alt="Auxite" width={32} height={32} />
               </Link>
-              <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-sm font-medium">
-                Admin Panel
-              </span>
+              <h1 className="text-xl font-bold">Admin Panel</h1>
+              <span className="px-2 py-1 text-xs rounded bg-amber-500/20 text-amber-400">V7</span>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm text-slate-400">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span>Canlı</span>
-              </div>
-              {isEditing && (
-                <span className="px-2 py-1 rounded bg-amber-500/20 text-amber-400 text-xs">
-                  Düzenleniyor...
-                </span>
-              )}
-              <span className="text-sm text-slate-500">
-                {lastUpdated?.toLocaleTimeString("tr-TR") || "-"}
-              </span>
+              <Link
+                href="/admin/vault-assignment"
+                className="px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/30 text-sm"
+              >
+                🏦 Vault Assignment
+              </Link>
+              <Link
+                href="/admin/settings"
+                className="px-4 py-2 bg-slate-800 rounded-lg hover:bg-slate-700 text-sm"
+              >
+                ⚙️ Ayarlar
+              </Link>
               <button
-                onClick={() => {
-                  sessionStorage.removeItem("auxite_admin_auth");
-                  setAuthenticated(false);
-                }}
-                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm transition-colors"
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 text-sm"
               >
                 Çıkış
               </button>
+              <ConnectKitButton />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex gap-1">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Tabs */}
+        <div className="flex flex-wrap gap-2 mb-6 pb-4 border-b border-slate-800">
+          {tabs.map((tab) => (
             <button
-              onClick={() => setActiveTab('prices')}
-              className={`px-6 py-4 font-medium transition-colors ${
-                activeTab === 'prices'
-                  ? 'text-emerald-400 border-b-2 border-emerald-400'
-                  : 'text-slate-400 hover:text-slate-300'
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === tab.id
+                  ? "bg-amber-500 text-black"
+                  : "bg-slate-800 text-slate-300 hover:bg-slate-700"
               }`}
             >
-              💰 Fiyat Ayarları
+              {tab.icon} {tab.label}
             </button>
-            <button
-              onClick={() => setActiveTab('news')}
-              className={`px-6 py-4 font-medium transition-colors ${
-                activeTab === 'news'
-                  ? 'text-emerald-400 border-b-2 border-emerald-400'
-                  : 'text-slate-400 hover:text-slate-300'
-              }`}
-            >
-              📰 Haber Yönetimi
-            </button>
-            <button
-              onClick={() => setActiveTab('wallet')}
-              className={`px-6 py-4 font-medium transition-colors ${
-                activeTab === 'wallet'
-                  ? 'text-emerald-400 border-b-2 border-emerald-400'
-                  : 'text-slate-400 hover:text-slate-300'
-              }`}
-            >
-              🔐 Hot Wallet
-            </button>
+          ))}
         </div>
+
+        {/* Messages */}
+        {message.text && (
+          <div className={`mb-6 p-4 rounded-xl flex items-center justify-between ${
+            message.type === "success" 
+              ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-400"
+              : "bg-red-500/20 border border-red-500/50 text-red-400"
+          }`}>
+            <span>{message.text}</span>
+            <button onClick={() => setMessage({ type: "", text: "" })} className="ml-4 hover:opacity-70">✕</button>
           </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        
-        {/* ==================== FİYAT AYARLARI TAB ==================== */}
-        {activeTab === 'prices' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-slate-100 mb-2">💰 Fiyat Ayarları</h1>
-              <p className="text-slate-400">
-                Satış ve alış fiyatlarını baz fiyata göre ayarlayın.
-              </p>
-            </div>
-
-            {/* Info Banner */}
-            <div className="mb-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/30">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">💡</span>
-                <div>
-                  <h3 className="font-medium text-blue-300 mb-2">Nasıl Çalışır?</h3>
-                  <div className="text-sm text-blue-200 space-y-1">
-                    <p><span className="text-emerald-400 font-semibold">Satış Fiyatı</span> = Baz × (1 + Ayar%) → <span className="text-emerald-400">+2</span> yazarsan fiyat %2 artar</p>
-                    <p><span className="text-red-400 font-semibold">Alış Fiyatı</span> = Baz × (1 + Ayar%) → <span className="text-red-400">-1</span> yazarsan fiyat %1 düşer</p>
-                    <p className="text-blue-200/60 mt-2 pt-2 border-t border-blue-500/20">
-                      <strong>Örnek:</strong> Baz $100 | Satış +2 = $102 | Alış -1 = $99 | Makas = $3
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Metal Price Table */}
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-slate-200 mb-4">🥇 Metal Fiyatları</h2>
-              <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-slate-800/50">
-                        <th className="px-4 py-4 text-left text-sm font-medium text-slate-400">Metal</th>
-                        <th className="px-4 py-4 text-right text-sm font-medium text-slate-400">Baz Fiyat</th>
-                        <th className="px-4 py-4 text-center text-sm font-medium text-slate-400">
-                          <span className="text-emerald-400">Satış Ayarı %</span>
-                          <div className="text-xs text-slate-500 font-normal">Müşteri alırken</div>
-                        </th>
-                        <th className="px-4 py-4 text-center text-sm font-medium text-slate-400">
-                          <span className="text-red-400">Alış Ayarı %</span>
-                          <div className="text-xs text-slate-500 font-normal">Müşteri satarken</div>
-                        </th>
-                        <th className="px-4 py-4 text-right text-sm font-medium text-emerald-400">Satış Fiyatı</th>
-                        <th className="px-4 py-4 text-right text-sm font-medium text-red-400">Alış Fiyatı</th>
-                        <th className="px-4 py-4 text-right text-sm font-medium text-amber-400">Makas</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      {metals.map((metal) => {
-                        const basePrice = basePrices[metal.key] || 0;
-                        const setting = settings[metal.key] || { askAdjust: 2, bidAdjust: -1 };
-                        const askPrice = calculatePrice(basePrice, setting.askAdjust);
-                        const bidPrice = calculatePrice(basePrice, setting.bidAdjust);
-                        const makas = askPrice - bidPrice;
-                        const makasPercent = basePrice > 0 ? ((makas / basePrice) * 100) : 0;
-
-                        return (
-                          <tr key={metal.key} className="hover:bg-slate-800/30 transition-colors">
-                            <td className="px-4 py-4">
-                              <div className="flex items-center gap-3">
-                                <Image
-                                  src={metal.icon}
-                                  alt={metal.name}
-                                  width={32}
-                                  height={32}
-                                  className="w-8 h-8"
-                                />
-                                <div>
-                                  <div className={`font-semibold ${metal.color}`}>{metal.key}</div>
-                                  <div className="text-xs text-slate-500">{metal.name}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 text-right">
-                              {loading ? (
-                                <div className="animate-pulse h-6 w-24 bg-slate-700 rounded ml-auto"></div>
-                              ) : (
-                                <span className="font-mono text-slate-300">
-                                  ${basePrice.toFixed(2)}
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-4 py-4">
-                              <div className="flex items-center justify-center gap-1">
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={setting.askAdjust}
-                                  onChange={(e) => updateSetting(metal.key, "askAdjust", e.target.value)}
-                                  onFocus={() => setIsEditing(true)}
-                                  className="w-20 px-2 py-2 rounded-lg bg-slate-800 border border-emerald-500/30 text-center text-white focus:outline-none focus:border-emerald-500"
-                                />
-                                <span className="text-slate-500">%</span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4">
-                              <div className="flex items-center justify-center gap-1">
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={setting.bidAdjust}
-                                  onChange={(e) => updateSetting(metal.key, "bidAdjust", e.target.value)}
-                                  onFocus={() => setIsEditing(true)}
-                                  className="w-20 px-2 py-2 rounded-lg bg-slate-800 border border-red-500/30 text-center text-white focus:outline-none focus:border-red-500"
-                                />
-                                <span className="text-slate-500">%</span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 text-right">
-                              {loading ? (
-                                <div className="animate-pulse h-6 w-24 bg-slate-700 rounded ml-auto"></div>
-                              ) : (
-                                <span className="font-mono text-emerald-400 font-semibold">
-                                  ${askPrice.toFixed(2)}
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-4 py-4 text-right">
-                              {loading ? (
-                                <div className="animate-pulse h-6 w-24 bg-slate-700 rounded ml-auto"></div>
-                              ) : (
-                                <span className="font-mono text-red-400 font-semibold">
-                                  ${bidPrice.toFixed(2)}
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-4 py-4 text-right">
-                              {loading ? (
-                                <div className="animate-pulse h-6 w-24 bg-slate-700 rounded ml-auto"></div>
-                              ) : (
-                                <div>
-                                  <span className="font-mono text-amber-400 font-semibold">
-                                    ${makas.toFixed(2)}
-                                  </span>
-                                  <div className="text-xs text-slate-500">{makasPercent.toFixed(2)}%</div>
-                                </div>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-            {/* Crypto Price Table */}
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-slate-200 mb-4">💎 Kripto Fiyatları</h2>
-              <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-slate-800/50">
-                        <th className="px-4 py-4 text-left text-sm font-medium text-slate-400">Kripto</th>
-                        <th className="px-4 py-4 text-right text-sm font-medium text-slate-400">Baz Fiyat</th>
-                        <th className="px-4 py-4 text-center text-sm font-medium text-slate-400">
-                          <span className="text-emerald-400">Satış Ayarı %</span>
-                          <div className="text-xs text-slate-500 font-normal">Müşteri alırken</div>
-                        </th>
-                        <th className="px-4 py-4 text-center text-sm font-medium text-slate-400">
-                          <span className="text-red-400">Alış Ayarı %</span>
-                          <div className="text-xs text-slate-500 font-normal">Müşteri satarken</div>
-                        </th>
-                        <th className="px-4 py-4 text-right text-sm font-medium text-emerald-400">Satış Fiyatı</th>
-                        <th className="px-4 py-4 text-right text-sm font-medium text-red-400">Alış Fiyatı</th>
-                        <th className="px-4 py-4 text-right text-sm font-medium text-amber-400">Makas</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      {cryptos.map((crypto) => {
-                        const basePrice = basePrices[crypto.key] || 0;
-                        const setting = settings[crypto.key] || { askAdjust: 1, bidAdjust: -0.5 };
-                        const askPrice = calculatePrice(basePrice, setting.askAdjust);
-                        const bidPrice = calculatePrice(basePrice, setting.bidAdjust);
-                        const makas = askPrice - bidPrice;
-                        const makasPercent = basePrice > 0 ? ((makas / basePrice) * 100) : 0;
-
-                        return (
-                          <tr key={crypto.key} className="hover:bg-slate-800/30 transition-colors">
-                            <td className="px-4 py-4">
-                              <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${crypto.bgColor}`}>
-                                  <span className="text-white text-sm font-bold">{crypto.icon}</span>
-                                </div>
-                                <div>
-                                  <div className={`font-semibold ${crypto.color}`}>{crypto.key}</div>
-                                  <div className="text-xs text-slate-500">{crypto.name}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 text-right">
-                              {loading ? (
-                                <div className="animate-pulse h-6 w-24 bg-slate-700 rounded ml-auto"></div>
-                              ) : (
-                                <span className="font-mono text-slate-300">
-                                  ${basePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-4 py-4">
-                              <div className="flex items-center justify-center gap-1">
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={setting.askAdjust}
-                                  onChange={(e) => updateSetting(crypto.key, "askAdjust", e.target.value)}
-                                  onFocus={() => setIsEditing(true)}
-                                  className="w-20 px-2 py-2 rounded-lg bg-slate-800 border border-emerald-500/30 text-center text-white focus:outline-none focus:border-emerald-500"
-                                />
-                                <span className="text-slate-500">%</span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4">
-                              <div className="flex items-center justify-center gap-1">
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={setting.bidAdjust}
-                                  onChange={(e) => updateSetting(crypto.key, "bidAdjust", e.target.value)}
-                                  onFocus={() => setIsEditing(true)}
-                                  className="w-20 px-2 py-2 rounded-lg bg-slate-800 border border-red-500/30 text-center text-white focus:outline-none focus:border-red-500"
-                                />
-                                <span className="text-slate-500">%</span>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 text-right">
-                              {loading ? (
-                                <div className="animate-pulse h-6 w-24 bg-slate-700 rounded ml-auto"></div>
-                              ) : (
-                                <span className="font-mono text-emerald-400 font-semibold">
-                                  ${askPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-4 py-4 text-right">
-                              {loading ? (
-                                <div className="animate-pulse h-6 w-24 bg-slate-700 rounded ml-auto"></div>
-                              ) : (
-                                <span className="font-mono text-red-400 font-semibold">
-                                  ${bidPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-4 py-4 text-right">
-                              {loading ? (
-                                <div className="animate-pulse h-6 w-24 bg-slate-700 rounded ml-auto"></div>
-                              ) : (
-                                <div>
-                                  <span className="font-mono text-amber-400 font-semibold">
-                                    ${makas.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                  </span>
-                                  <div className="text-xs text-slate-500">{makasPercent.toFixed(2)}%</div>
-                                </div>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <div className="mt-6 flex items-center justify-between">
-              <div className="text-sm flex items-center gap-4">
-                {saveMessage && (
-                  <span className={saveMessage.includes("✅") ? "text-emerald-400" : "text-red-400"}>
-                    {saveMessage}
-                  </span>
-                )}
-                {isEditing && (
-                  <span className="text-amber-400">
-                    ⚠️ Kaydedilmemiş değişiklikler var
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-8 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50 text-white font-semibold transition-colors flex items-center gap-2"
-              >
-                {saving ? "Kaydediliyor..." : "💾 Ayarları Kaydet"}
-              </button>
-            </div>
-
-            {/* Quick Presets */}
-            <div className="mt-8 p-6 rounded-xl border border-slate-800 bg-slate-900/50">
-              <h3 className="text-lg font-semibold text-slate-200 mb-4">⚡ Hızlı Ayarlar</h3>
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={() => {
-                    setIsEditing(true);
-                    setSettings({
-                      AUXG: { askAdjust: 1, bidAdjust: -0.5 },
-                      AUXS: { askAdjust: 1.5, bidAdjust: -0.75 },
-                      AUXPT: { askAdjust: 1.25, bidAdjust: -0.6 },
-                      AUXPD: { askAdjust: 1.25, bidAdjust: -0.6 },
-                      ETH: { askAdjust: 0.5, bidAdjust: -0.25 },
-                      BTC: { askAdjust: 0.5, bidAdjust: -0.25 },
-                      XRP: { askAdjust: 0.75, bidAdjust: -0.35 },
-                      SOL: { askAdjust: 0.75, bidAdjust: -0.35 },
-                    });
-                  }}
-                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm transition-colors"
-                >
-                  🏷️ Düşük Makas
-                </button>
-                <button
-                  onClick={() => {
-                    setIsEditing(true);
-                    setSettings(DEFAULT_SETTINGS);
-                  }}
-                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm transition-colors"
-                >
-                  ⚖️ Varsayılan
-                </button>
-                <button
-                  onClick={() => {
-                    setIsEditing(true);
-                    setSettings({
-                      AUXG: { askAdjust: 3, bidAdjust: -1.5 },
-                      AUXS: { askAdjust: 4, bidAdjust: -2 },
-                      AUXPT: { askAdjust: 3.5, bidAdjust: -1.75 },
-                      AUXPD: { askAdjust: 3.5, bidAdjust: -1.75 },
-                      ETH: { askAdjust: 2, bidAdjust: -1 },
-                      BTC: { askAdjust: 2, bidAdjust: -1 },
-                      XRP: { askAdjust: 2.5, bidAdjust: -1.25 },
-                      SOL: { askAdjust: 2.5, bidAdjust: -1.25 },
-                    });
-                  }}
-                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm transition-colors"
-                >
-                  💰 Yüksek Makas
-                </button>
-              </div>
-            </div>
-          </>
         )}
 
-        {/* ==================== HABER YÖNETİMİ TAB ==================== */}
-        {activeTab === 'news' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-slate-100 mb-2">📰 Haber Yönetimi</h1>
-              <p className="text-slate-400">
-                Mobil uygulama için haberleri yönetin. Her gün 2-3 haber ekleyebilirsiniz.
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* DASHBOARD TAB */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {activeTab === "dashboard" && (
+          <div className="space-y-6">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[
+                { label: "Toplam Kullanıcı", value: stats.totalUsers, color: "text-blue-400" },
+                { label: "Toplam İşlem", value: stats.totalTrades, color: "text-emerald-400" },
+                { label: "Toplam Hacim", value: stats.totalVolume, color: "text-amber-400" },
+                { label: "Bekleyen Çekim", value: stats.pendingWithdraws, color: "text-red-400" },
+                { label: "Bekleyen KYC", value: stats.pendingKYC, color: "text-purple-400" },
+                { label: "Aktif Uyarı", value: stats.activeAlerts, color: "text-orange-400" },
+              ].map((stat) => (
+                <div key={stat.label} className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+                  <p className="text-xs text-slate-400 mb-1">{stat.label}</p>
+                  <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4">Hızlı İşlemler</h3>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <button
+                  onClick={() => setActiveTab("mint")}
+                  className="p-4 bg-slate-800 hover:bg-slate-700 rounded-xl text-center transition-colors"
+                >
+                  <span className="text-2xl block mb-2">🏭</span>
+                  <span className="text-sm">Manuel Mint</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("withdraws")}
+                  className="p-4 bg-slate-800 hover:bg-slate-700 rounded-xl text-center transition-colors"
+                >
+                  <span className="text-2xl block mb-2">💸</span>
+                  <span className="text-sm">Çekimleri Onayla</span>
+                </button>
+                <Link
+                  href="/admin/vault-assignment"
+                  className="p-4 bg-slate-800 hover:bg-slate-700 rounded-xl text-center transition-colors"
+                >
+                  <span className="text-2xl block mb-2">🏦</span>
+                  <span className="text-sm">Vault Ata</span>
+                </Link>
+                <button
+                  onClick={() => setActiveTab("spreads")}
+                  className="p-4 bg-slate-800 hover:bg-slate-700 rounded-xl text-center transition-colors"
+                >
+                  <span className="text-2xl block mb-2">📈</span>
+                  <span className="text-sm">Spread Ayarla</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("mobile")}
+                  className="p-4 bg-slate-800 hover:bg-slate-700 rounded-xl text-center transition-colors"
+                >
+                  <span className="text-2xl block mb-2">📱</span>
+                  <span className="text-sm">Mobil Yönetim</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Contract Addresses */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4">V7 Contract Adresleri</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(V7_CONTRACTS).map(([metal, addr]) => (
+                  <div key={metal} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                    <span className="font-semibold">{metal}</span>
+                    <a
+                      href={`https://sepolia.etherscan.io/address/${addr}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-xs text-amber-400 hover:underline"
+                    >
+                      {addr.slice(0, 10)}...{addr.slice(-8)}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* SPREADS TAB */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {activeTab === "spreads" && (
+          <div className="space-y-6">
+            {/* Metal Spreads */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-2">🥇 Metal Spreadleri</h3>
+              <p className="text-sm text-slate-400 mb-6">
+                Alış/Satış fiyatına uygulanacak yüzde oranları
               </p>
-            </div>
 
-            {/* Language Toggle */}
-            <div className="mb-6 flex gap-2">
-              <button
-                onClick={() => setNewsLang('tr')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  newsLang === 'tr'
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                }`}
-              >
-                🇹🇷 Türkçe
-              </button>
-              <button
-                onClick={() => setNewsLang('en')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  newsLang === 'en'
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                }`}
-              >
-                🇬🇧 English
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Yeni Haber Formu */}
-              <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
-                <h3 className="text-lg font-semibold text-slate-200 mb-4">➕ Yeni Haber Ekle</h3>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm text-slate-400 mb-2">Başlık *</label>
-                    <input
-                      type="text"
-                      value={newNews.title}
-                      onChange={(e) => setNewNews(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-emerald-500"
-                      placeholder={newsLang === 'tr' ? 'Haber başlığı...' : 'News title...'}
-                    />
-                  </div>
+              <div className="space-y-4">
+                {METALS.map((metal) => {
+                  const config = spreadConfig.metals[metal.key as keyof MetalSpreadSettings];
+                  const isSaving = spreadSaving === `metal-${metal.key}`;
                   
-                  <div>
-                    <label className="block text-sm text-slate-400 mb-2">Açıklama *</label>
-                    <textarea
-                      value={newNews.description}
-                      onChange={(e) => setNewNews(prev => ({ ...prev, description: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 min-h-[80px]"
-                      placeholder={newsLang === 'tr' ? 'Kısa açıklama (liste görünümünde gösterilir)...' : 'Short description (shown in list view)...'}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm text-slate-400 mb-2">Tam İçerik (Opsiyonel)</label>
-                    <textarea
-                      value={newNews.fullContent}
-                      onChange={(e) => setNewNews(prev => ({ ...prev, fullContent: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 min-h-[120px]"
-                      placeholder={newsLang === 'tr' ? 'Haberin tam içeriği (detay sayfasında gösterilir)...' : 'Full news content (shown in detail page)...'}
-                    />
-                    <p className="text-xs text-slate-500 mt-1">Boş bırakılırsa kısa açıklama gösterilir</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm text-slate-400 mb-2">Kaynak URL (Opsiyonel)</label>
-                    <input
-                      type="text"
-                      value={newNews.url}
-                      onChange={(e) => setNewNews(prev => ({ ...prev, url: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-emerald-500"
-                      placeholder="https://..."
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm text-slate-400 mb-2">Kaynak</label>
-                      <input
-                        type="text"
-                        value={newNews.source}
-                        onChange={(e) => setNewNews(prev => ({ ...prev, source: e.target.value }))}
-                        className="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-emerald-500"
-                        placeholder="Auxite, Bloomberg..."
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-slate-400 mb-2">Tarih</label>
-                      <input
-                        type="text"
-                        value={newNews.date}
-                        onChange={(e) => setNewNews(prev => ({ ...prev, date: e.target.value }))}
-                        className="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-emerald-500"
-                        placeholder={newsLang === 'tr' ? '2 Aralık 2024' : 'Dec 2, 2024'}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm text-slate-400 mb-2">İkon Seçin</label>
-                    <div className="grid grid-cols-6 gap-2">
-                      {ICON_OPTIONS.map((icon) => (
+                  return (
+                    <div key={metal.key} className="p-4 bg-slate-800/50 rounded-xl">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{metal.icon}</span>
+                          <div>
+                            <span className={`font-semibold ${metal.color}`}>{metal.symbol}</span>
+                            <span className="text-slate-400 text-sm ml-2">{metal.name}</span>
+                          </div>
+                        </div>
                         <button
-                          key={icon.value}
-                          onClick={() => setNewNews(prev => ({ ...prev, icon: icon.value }))}
-                          className={`p-3 rounded-lg text-xl transition-all ${
-                            newNews.icon === icon.value
-                              ? 'bg-emerald-500/20 border-2 border-emerald-500'
-                              : 'bg-slate-800 border-2 border-transparent hover:border-slate-600'
-                          }`}
-                          title={icon.name}
+                          onClick={() => handleSpreadUpdate('metal', metal.key)}
+                          disabled={isSaving}
+                          className="px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-black text-sm font-medium disabled:opacity-50"
                         >
-                          {icon.label}
+                          {isSaving ? "Kaydediliyor..." : "Kaydet"}
                         </button>
-                      ))}
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-slate-400 mb-1">Alış Spread (%)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="10"
+                            value={config?.buy || 0}
+                            onChange={(e) => setSpreadConfigState({
+                              ...spreadConfig,
+                              metals: {
+                                ...spreadConfig.metals,
+                                [metal.key]: { ...config, buy: parseFloat(e.target.value) || 0 }
+                              }
+                            })}
+                            className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-slate-400 mb-1">Satış Spread (%)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="10"
+                            value={config?.sell || 0}
+                            onChange={(e) => setSpreadConfigState({
+                              ...spreadConfig,
+                              metals: {
+                                ...spreadConfig.metals,
+                                [metal.key]: { ...config, sell: parseFloat(e.target.value) || 0 }
+                              }
+                            })}
+                            className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Crypto Spreads */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-2">₿ Kripto Spreadleri</h3>
+              <p className="text-sm text-slate-400 mb-6">
+                Kripto alım/satım işlemlerinde uygulanacak yüzde oranları
+              </p>
+
+              <div className="space-y-4">
+                {CRYPTOS.map((crypto) => {
+                  const config = spreadConfig.crypto[crypto.key as keyof CryptoSpreadSettings];
+                  const isSaving = spreadSaving === `crypto-${crypto.key}`;
                   
-                  <div>
-                    <label className="block text-sm text-slate-400 mb-2">Renk Seçin</label>
-                    <div className="grid grid-cols-6 gap-2">
-                      {COLOR_OPTIONS.map((color) => (
+                  return (
+                    <div key={crypto.key} className="p-4 bg-slate-800/50 rounded-xl">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <span className={`text-2xl ${crypto.color}`}>{crypto.icon}</span>
+                          <div>
+                            <span className={`font-semibold ${crypto.color}`}>{crypto.symbol}</span>
+                            <span className="text-slate-400 text-sm ml-2">{crypto.name}</span>
+                          </div>
+                        </div>
                         <button
-                          key={color.value}
-                          onClick={() => setNewNews(prev => ({ ...prev, color: color.value }))}
-                          className={`h-10 rounded-lg transition-all ${
-                            newNews.color === color.value
-                              ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900'
-                              : ''
-                          }`}
-                          style={{ backgroundColor: color.value }}
-                          title={color.name}
-                        />
-                      ))}
+                          onClick={() => handleSpreadUpdate('crypto', crypto.key)}
+                          disabled={isSaving}
+                          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white text-sm font-medium disabled:opacity-50"
+                        >
+                          {isSaving ? "Kaydediliyor..." : "Kaydet"}
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-slate-400 mb-1">Alış Spread (%)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="10"
+                            value={config?.buy || 0}
+                            onChange={(e) => setSpreadConfigState({
+                              ...spreadConfig,
+                              crypto: {
+                                ...spreadConfig.crypto,
+                                [crypto.key]: { ...config, buy: parseFloat(e.target.value) || 0 }
+                              }
+                            })}
+                            className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-slate-400 mb-1">Satış Spread (%)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="10"
+                            value={config?.sell || 0}
+                            onChange={(e) => setSpreadConfigState({
+                              ...spreadConfig,
+                              crypto: {
+                                ...spreadConfig.crypto,
+                                [crypto.key]: { ...config, sell: parseFloat(e.target.value) || 0 }
+                              }
+                            })}
+                            className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* ORACLE TAB */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {activeTab === "oracle" && (
+          <div className="space-y-6">
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Oracle Fiyatları (USD/kg)</h3>
+                <span className="text-xs text-slate-400 font-mono">{ORACLE_ADDRESS.slice(0, 10)}...</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {(Object.keys(oraclePrices) as Array<keyof OraclePrices>).map((key) => (
+                  <div key={key} className="p-4 bg-slate-800/50 rounded-xl">
+                    <label className="block text-sm text-slate-400 mb-2">{key}</label>
+                    <input
+                      type="number"
+                      value={oraclePrices[key]}
+                      onChange={(e) => setOraclePrices({
+                        ...oraclePrices,
+                        [key]: Number(e.target.value)
+                      })}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white"
+                    />
                   </div>
-                  
+                ))}
+              </div>
+
+              <button
+                onClick={handleOracleUpdate}
+                disabled={oracleLoading}
+                className="px-6 py-3 bg-amber-500 hover:bg-amber-600 rounded-xl text-black font-semibold disabled:opacity-50"
+              >
+                {oracleLoading ? "Güncelleniyor..." : "Tüm Fiyatları Güncelle"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* HOT WALLET TAB */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {activeTab === "wallet" && (
+          <div className="space-y-6">
+            {/* Wallet Overview */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">💰 Multi-Chain Hot Wallet</h3>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span>Otomatik (5dk)</span>
+                  </div>
+                  <span className="text-xs text-slate-500">
+                    {walletBalances?.lastUpdated ? new Date(walletBalances.lastUpdated).toLocaleTimeString('tr-TR') : ''}
+                  </span>
                   <button
-                    onClick={addNews}
-                    className="w-full px-4 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-semibold transition-colors"
+                    onClick={() => loadHotWallet(true)}
+                    disabled={walletLoading}
+                    className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                    title="Şimdi Yenile"
                   >
-                    ➕ Haber Ekle
+                    <svg className={`w-4 h-4 text-slate-400 ${walletLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
                   </button>
                 </div>
               </div>
 
-              {/* Mevcut Haberler */}
-              <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-slate-200">
-                    📋 Mevcut Haberler ({newsLang === 'tr' ? 'Türkçe' : 'English'})
-                  </h3>
-                  <span className="px-2 py-1 rounded bg-slate-700 text-slate-300 text-sm">
-                    {newsData[newsLang]?.length || 0} haber
-                  </span>
+              {/* Multi-Chain Balances Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                {/* ETH */}
+                <div className="p-4 bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">Ξ</span>
+                      <span className="text-xs text-slate-400">ETH</span>
+                    </div>
+                    <a
+                      href={walletBalances?.ETH?.explorer}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-400 hover:underline"
+                    >
+                      ↗
+                    </a>
+                  </div>
+                  <p className="text-xl font-bold text-white">{parseFloat(walletBalances?.ETH?.balance || '0').toFixed(4)}</p>
+                  <p className="text-xs text-slate-500 font-mono truncate mt-1">{walletBalances?.ETH?.address?.slice(0, 8)}...</p>
                 </div>
-                
-                {newsLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+
+                {/* USDT */}
+                <div className="p-4 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">₮</span>
+                      <span className="text-xs text-slate-400">USDT</span>
+                    </div>
+                    <span className="text-[10px] text-emerald-400/60">ERC-20</span>
                   </div>
-                ) : newsData[newsLang]?.length === 0 ? (
-                  <div className="text-center py-12 text-slate-500">
-                    Henüz haber eklenmedi
+                  <p className="text-xl font-bold text-emerald-400">${parseFloat(walletBalances?.USDT?.balance || '0').toLocaleString()}</p>
+                  <p className="text-xs text-slate-500 font-mono truncate mt-1">{walletBalances?.USDT?.address?.slice(0, 8)}...</p>
+                </div>
+
+                {/* BTC */}
+                <div className="p-4 bg-gradient-to-br from-orange-500/20 to-orange-600/10 border border-orange-500/30 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">₿</span>
+                      <span className="text-xs text-slate-400">BTC</span>
+                    </div>
+                    <a
+                      href={walletBalances?.BTC?.explorer}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-orange-400 hover:underline"
+                    >
+                      ↗
+                    </a>
                   </div>
-                ) : (
-                  <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                    {newsData[newsLang]?.map((news) => {
-                      const iconData = ICON_OPTIONS.find(i => i.value === news.icon);
-                      return (
-                        <div
-                          key={news.id}
-                          className="p-4 rounded-lg bg-slate-800/50 border-l-4 relative group"
-                          style={{ borderLeftColor: news.color }}
-                        >
-                          <button
-                            onClick={() => deleteNews(news.id)}
-                            className="absolute top-2 right-2 p-1 rounded bg-red-500/20 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/40"
-                          >
-                            🗑️
-                          </button>
-                          <div className="flex items-start gap-3 pr-8">
-                            <span className="text-2xl">{iconData?.label || '📰'}</span>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-slate-200 truncate">{news.title}</h4>
-                              <p className="text-sm text-slate-400 line-clamp-2 mt-1">{news.description}</p>
-                              <div className="flex gap-3 mt-2 text-xs text-slate-500">
-                                <span>{news.source}</span>
-                                <span>•</span>
-                                <span>{news.date}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <p className="text-xl font-bold text-orange-400">{parseFloat(walletBalances?.BTC?.balance || '0').toFixed(6)}</p>
+                  <p className="text-xs text-slate-500 font-mono truncate mt-1">{walletBalances?.BTC?.address?.slice(0, 8)}...</p>
+                </div>
+
+                {/* XRP */}
+                <div className="p-4 bg-gradient-to-br from-slate-400/20 to-slate-500/10 border border-slate-400/30 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">✕</span>
+                      <span className="text-xs text-slate-400">XRP</span>
+                    </div>
+                    <a
+                      href={walletBalances?.XRP?.explorer}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-slate-300 hover:underline"
+                    >
+                      ↗
+                    </a>
+                  </div>
+                  <p className="text-xl font-bold text-white">{parseFloat(walletBalances?.XRP?.balance || '0').toFixed(2)}</p>
+                  <p className="text-xs text-slate-500 font-mono truncate mt-1">{walletBalances?.XRP?.address?.slice(0, 8)}...</p>
+                  {walletBalances?.XRP?.memo && (
+                    <p className="text-[10px] text-slate-500 mt-1">Memo: {walletBalances.XRP.memo}</p>
+                  )}
+                </div>
+
+                {/* SOL */}
+                <div className="p-4 bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/30 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">◎</span>
+                      <span className="text-xs text-slate-400">SOL</span>
+                    </div>
+                    <a
+                      href={walletBalances?.SOL?.explorer}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-purple-400 hover:underline"
+                    >
+                      ↗
+                    </a>
+                  </div>
+                  <p className="text-xl font-bold text-purple-400">{parseFloat(walletBalances?.SOL?.balance || '0').toFixed(4)}</p>
+                  <p className="text-xs text-slate-500 font-mono truncate mt-1">{walletBalances?.SOL?.address?.slice(0, 8)}...</p>
+                </div>
+              </div>
+
+              {/* Send Crypto Form */}
+              <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                <h4 className="font-medium mb-4">📤 Kripto Gönder</h4>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Token</label>
+                    <select
+                      value={sendToken}
+                      onChange={(e) => setSendToken(e.target.value)}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white"
+                    >
+                      <option value="ETH">ETH - Ethereum</option>
+                      <option value="USDT">USDT - Tether</option>
+                      <option value="BTC">BTC - Bitcoin</option>
+                      <option value="XRP">XRP - Ripple</option>
+                      <option value="SOL">SOL - Solana</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs text-slate-400 mb-1">Alıcı Adresi</label>
+                    <input
+                      type="text"
+                      value={sendAddress}
+                      onChange={(e) => setSendAddress(e.target.value)}
+                      placeholder={sendToken === 'BTC' ? '1xxx... veya bc1xxx...' : '0x...'}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white text-sm font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Miktar</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={sendAmount}
+                      onChange={(e) => setSendAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white"
+                    />
+                  </div>
+                </div>
+                {sendToken === 'XRP' && (
+                  <div className="mt-3">
+                    <label className="block text-xs text-slate-400 mb-1">Destination Tag (opsiyonel)</label>
+                    <input
+                      type="number"
+                      value={sendMemo}
+                      onChange={(e) => setSendMemo(e.target.value)}
+                      placeholder="123456"
+                      className="w-full md:w-48 bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white"
+                    />
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Save News Button */}
-            <div className="mt-6 flex items-center justify-between">
-              <div className="text-sm">
-                {newsMessage && (
-                  <span className={newsMessage.includes("✅") ? "text-emerald-400" : "text-red-400"}>
-                    {newsMessage}
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={handleSaveNews}
-                disabled={newsSaving}
-                className="px-8 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50 text-white font-semibold transition-colors flex items-center gap-2"
-              >
-                {newsSaving ? "Kaydediliyor..." : "💾 Haberleri Kaydet"}
-              </button>
-            </div>
-
-            {/* Info */}
-            <div className="mt-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/30">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">💡</span>
-                <div className="text-sm text-blue-200">
-                  <p><strong>İpucu:</strong> Haberler mobil uygulamada otomatik olarak görüntülenir.</p>
-                  <p className="mt-1">Her iki dilde (Türkçe/İngilizce) haber eklemeyi unutmayın.</p>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Hot Wallet Tab */}
-        {activeTab === 'wallet' && (
-          <div className="space-y-6">
-            <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-slate-200">🔐 Hot Wallet Bakiyeleri</h3>
-                <button
-                  onClick={async () => {
-                    setHotWalletLoading(true);
-                    try {
-                      const res = await fetch('/api/admin/hot-wallet-balances');
-                      const data = await res.json();
-                      setHotWalletData(data);
-                    } catch (e) { console.error(e); }
-                    setHotWalletLoading(false);
-                  }}
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-sm font-medium transition-colors"
-                >
-                  🔄 Yenile
-                </button>
-              </div>
-              
-              {hotWalletLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                </div>
-              ) : hotWalletData?.success ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
-                    <div>
-                      <p className="font-medium">ETH</p>
-                      <p className="text-xs text-slate-400 font-mono">{hotWalletData.addresses?.ETH}</p>
-                    </div>
-                    <p className="text-xl font-bold text-[#627EEA]">{hotWalletData.balances?.ETH?.toFixed(6) || 0} ETH</p>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
-                    <div>
-                      <p className="font-medium">USDT (ERC20)</p>
-                      <p className="text-xs text-slate-400">Aynı ETH adresi</p>
-                    </div>
-                    <p className="text-xl font-bold text-[#26A17B]">{hotWalletData.balances?.USDT?.toFixed(2) || 0} USDT</p>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
-                    <div>
-                      <p className="font-medium">XRP</p>
-                      <p className="text-xs text-slate-400 font-mono">{hotWalletData.addresses?.XRP}</p>
-                    </div>
-                    <p className="text-xl font-bold text-slate-300">{hotWalletData.balances?.XRP?.toFixed(2) || 0} XRP</p>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
-                    <div>
-                      <p className="font-medium">SOL</p>
-                      <p className="text-xs text-slate-400 font-mono">{hotWalletData.addresses?.SOL}</p>
-                    </div>
-                    <p className="text-xl font-bold text-[#9945FF]">{hotWalletData.balances?.SOL?.toFixed(6) || 0} SOL</p>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
-                    <div>
-                      <p className="font-medium">BTC (NOWPayments)</p>
-                      <p className="text-xs text-slate-400">Payout Service</p>
-                    </div>
-                    <p className="text-xl font-bold text-[#F7931A]">{hotWalletData.balances?.BTC?.toFixed(8) || 0} BTC</p>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-4">
-                    Son güncelleme: {hotWalletData.timestamp ? new Date(hotWalletData.timestamp).toLocaleString('tr-TR') : '-'}
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-xs text-slate-500">
+                    Bakiye: {parseFloat(walletBalances?.[sendToken]?.balance || '0').toFixed(6)} {sendToken}
                   </p>
+                  <button
+                    onClick={handleSendCrypto}
+                    disabled={walletProcessing || !sendAddress || !sendAmount}
+                    className="px-6 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-black font-medium transition-colors"
+                  >
+                    {walletProcessing === 'send' ? 'Gönderiliyor...' : `${sendToken} Gönder`}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Pending Withdraws */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">⏳ Bekleyen Kullanıcı Çekimleri</h3>
+                <span className="px-2 py-1 bg-orange-500/20 text-orange-400 rounded text-sm">
+                  {pendingUserWithdraws.length} bekliyor
+                </span>
+              </div>
+
+              {pendingUserWithdraws.length === 0 ? (
+                <div className="text-center py-8 text-slate-400">
+                  <span className="text-3xl block mb-2">✓</span>
+                  <p>Bekleyen çekim yok</p>
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <p className="text-slate-400 mb-4">Bakiyeleri görmek için Yenile butonuna tıklayın</p>
+                <div className="space-y-3">
+                  {pendingUserWithdraws.map((withdraw: any, idx: number) => {
+                    const tokenColors: Record<string, string> = {
+                      ETH: 'bg-blue-500/20 text-blue-400',
+                      USDT: 'bg-emerald-500/20 text-emerald-400',
+                      BTC: 'bg-orange-500/20 text-orange-400',
+                      XRP: 'bg-slate-400/20 text-slate-300',
+                      SOL: 'bg-purple-500/20 text-purple-400',
+                    };
+                    const tokenIcons: Record<string, string> = {
+                      ETH: 'Ξ', USDT: '₮', BTC: '₿', XRP: '✕', SOL: '◎'
+                    };
+                    
+                    return (
+                      <div key={idx} className="p-4 bg-slate-800/50 rounded-xl flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${tokenColors[withdraw.token] || 'bg-slate-500/20'}`}>
+                            {tokenIcons[withdraw.token] || '?'}
+                          </div>
+                          <div>
+                            <p className="font-medium">{withdraw.amount} {withdraw.token}</p>
+                            <p className="text-xs text-slate-400 font-mono">{withdraw.address?.slice(0, 12)}...{withdraw.address?.slice(-8)}</p>
+                            {withdraw.memo && <p className="text-xs text-slate-500">Memo: {withdraw.memo}</p>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-slate-500">{formatDate(withdraw.createdAt)}</span>
+                          <button
+                            onClick={() => handleApproveWithdraw(withdraw.id)}
+                            disabled={walletProcessing === withdraw.id}
+                            className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg text-sm transition-colors"
+                          >
+                            {walletProcessing === withdraw.id ? '...' : '✓ Onayla'}
+                          </button>
+                          <button
+                            onClick={() => handleCancelWithdraw(withdraw.id)}
+                            className="p-1.5 hover:bg-red-500/20 rounded-lg text-red-400 transition-colors"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
-            
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">⚠️</span>
-                <div className="text-sm text-amber-200">
-                  <p><strong>Önemli:</strong> Hot wallet'lara yeterli bakiye yükleyin.</p>
-                  <p className="mt-1">• ETH: Gas fee için ETH + Çekim için USDT</p>
-                  <p>• XRP: Min 10 XRP reserve + işlem için</p>
-                  <p>• SOL: İşlem ücreti için</p>
+
+            {/* Transaction History */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4">📜 İşlem Geçmişi</h3>
+              
+              {walletHistory.length === 0 ? (
+                <div className="text-center py-8 text-slate-400">
+                  <p>Henüz işlem yok</p>
                 </div>
+              ) : (
+                <div className="space-y-2 max-h-72 overflow-y-auto">
+                  {walletHistory.map((tx: any, idx: number) => {
+                    const tokenIcons: Record<string, string> = {
+                      ETH: 'Ξ', USDT: '₮', BTC: '₿', XRP: '✕', SOL: '◎'
+                    };
+                    const explorerUrls: Record<string, string> = {
+                      ETH: 'https://etherscan.io/tx/',
+                      USDT: 'https://etherscan.io/tx/',
+                      BTC: 'https://www.blockchain.com/btc/tx/',
+                      XRP: 'https://xrpscan.com/tx/',
+                      SOL: 'https://solscan.io/tx/',
+                    };
+                    
+                    return (
+                      <div key={idx} className="p-3 bg-slate-800/50 rounded-lg flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className={`w-2 h-2 rounded-full ${tx.status === 'completed' ? 'bg-emerald-400' : 'bg-yellow-400'}`} />
+                          <span className="text-lg">{tokenIcons[tx.token] || '?'}</span>
+                          <div>
+                            <p className="text-sm font-medium">{tx.amount} {tx.token}</p>
+                            <p className="text-xs text-slate-500">→ {tx.to?.slice(0, 10)}...{tx.to?.slice(-6)}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {tx.txHash && (
+                            <a
+                              href={`${explorerUrls[tx.token] || ''}${tx.txHash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-amber-400 hover:underline"
+                            >
+                              {tx.txHash?.slice(0, 10)}...
+                            </a>
+                          )}
+                          <p className="text-xs text-slate-500">{formatDate(tx.timestamp)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* NEWS FEED TAB */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {activeTab === "news" && (
+          <div className="space-y-6">
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4">Yeni Haber/Duyuru Ekle</h3>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  value={newNews.title}
+                  onChange={(e) => setNewNews({ ...newNews, title: e.target.value })}
+                  placeholder="Başlık"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white"
+                />
+                <textarea
+                  value={newNews.content}
+                  onChange={(e) => setNewNews({ ...newNews, content: e.target.value })}
+                  placeholder="İçerik"
+                  rows={3}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white"
+                />
+                <div className="flex items-center gap-4">
+                  <select
+                    value={newNews.category}
+                    onChange={(e) => setNewNews({ ...newNews, category: e.target.value as any })}
+                    className="bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white"
+                  >
+                    <option value="update">Güncelleme</option>
+                    <option value="alert">Uyarı</option>
+                    <option value="promo">Promosyon</option>
+                  </select>
+                  <button
+                    onClick={handleAddNews}
+                    className="px-6 py-3 bg-amber-500 hover:bg-amber-600 rounded-xl text-black font-semibold"
+                  >
+                    Ekle
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4">Mevcut Haberler</h3>
+              <div className="space-y-4">
+                {newsItems.length === 0 ? (
+                  <p className="text-slate-400 text-center py-8">Henüz haber yok</p>
+                ) : (
+                  newsItems.map((news) => (
+                    <div key={news.id} className="p-4 bg-slate-800/50 rounded-xl flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`px-2 py-0.5 rounded text-xs ${
+                            news.category === "alert" ? "bg-red-500/20 text-red-400" :
+                            news.category === "promo" ? "bg-purple-500/20 text-purple-400" :
+                            "bg-blue-500/20 text-blue-400"
+                          }`}>
+                            {news.category}
+                          </span>
+                          <span className="text-xs text-slate-500">{formatDate(news.createdAt)}</span>
+                        </div>
+                        <h4 className="font-medium">{news.title}</h4>
+                        <p className="text-sm text-slate-400 mt-1">{news.content}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteNews(news.id)}
+                        className="text-red-400 hover:text-red-300 p-2 ml-4"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* Navigation */}
-        <div className="mt-8 pt-6 border-t border-slate-800">
-          <Link href="/" className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm transition-colors">
-            ← Markets
-          </Link>
-        </div>
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* USERS TAB */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {activeTab === "users" && (
+          <div className="space-y-6">
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Kullanıcılar</h3>
+                <input
+                  type="text"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  placeholder="Adres veya email ara..."
+                  className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-4 text-white text-sm w-64"
+                />
+              </div>
+
+              <div className="text-center py-12 text-slate-400">
+                <span className="text-4xl block mb-4">👥</span>
+                Kullanıcı listesi API'si entegre edilecek
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* WITHDRAWS TAB */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {activeTab === "withdraws" && (
+          <div className="space-y-6">
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4">Bekleyen Çekimler</h3>
+
+              <div className="text-center py-12 text-slate-400">
+                <span className="text-4xl block mb-4">💸</span>
+                Çekim listesi API'si entegre edilecek
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* MINT TAB */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {activeTab === "mint" && (
+          <div className="space-y-6">
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4">Manuel Token Mint</h3>
+              <p className="text-sm text-slate-400 mb-6">
+                Off-chain satışlar veya özel durumlar için manuel token mint işlemi
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Alıcı Adresi</label>
+                  <input
+                    type="text"
+                    value={mintData.address}
+                    onChange={(e) => setMintData({ ...mintData, address: e.target.value })}
+                    placeholder="0x..."
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Miktar (gram)</label>
+                  <input
+                    type="number"
+                    value={mintData.amount}
+                    onChange={(e) => setMintData({ ...mintData, amount: e.target.value })}
+                    placeholder="100"
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Metal</label>
+                  <select
+                    value={mintData.metal}
+                    onChange={(e) => setMintData({ ...mintData, metal: e.target.value as any })}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white"
+                  >
+                    <option value="AUXG">AUXG (Altın)</option>
+                    <option value="AUXS">AUXS (Gümüş)</option>
+                    <option value="AUXPT">AUXPT (Platin)</option>
+                    <option value="AUXPD">AUXPD (Paladyum)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Custodian/Vault</label>
+                  <select
+                    value={mintData.custodian}
+                    onChange={(e) => setMintData({ ...mintData, custodian: e.target.value })}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white"
+                  >
+                    <option value="Zurich Vault">Zurich Vault</option>
+                    <option value="Singapore Vault">Singapore Vault</option>
+                    <option value="London Vault">London Vault</option>
+                    <option value="Dubai Vault">Dubai Vault</option>
+                    <option value="Pending">Pending (Sonra atanacak)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                <p className="text-sm text-amber-400">
+                  ⚠️ Bu işlem blockchain'e yazılacak ve geri alınamaz. Mint edilen tokenlar belirtilen adrese gönderilecek ve allocation kaydı oluşturulacak.
+                </p>
+              </div>
+
+              <button
+                onClick={handleMint}
+                disabled={!mintData.address || !mintData.amount}
+                className="mt-6 px-8 py-3 bg-amber-500 hover:bg-amber-600 rounded-xl text-black font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                🏭 Mint Et
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {/* MOBILE MANAGEMENT TAB */}
+        {/* ═══════════════════════════════════════════════════════════════════ */}
+        {activeTab === "mobile" && (
+          <div className="space-y-6">
+            {/* Push Notification */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4">📲 Push Notification Gönder</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Başlık</label>
+                  <input
+                    type="text"
+                    value={newPush.title}
+                    onChange={(e) => setNewPush({ ...newPush, title: e.target.value })}
+                    placeholder="Bildirim başlığı"
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Hedef</label>
+                  <select
+                    value={newPush.target}
+                    onChange={(e) => setNewPush({ ...newPush, target: e.target.value })}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white"
+                  >
+                    <option value="all">Tüm Kullanıcılar</option>
+                    <option value="ios">Sadece iOS</option>
+                    <option value="android">Sadece Android</option>
+                    <option value="premium">Premium Kullanıcılar</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm text-slate-400 mb-2">Mesaj</label>
+                <textarea
+                  value={newPush.body}
+                  onChange={(e) => setNewPush({ ...newPush, body: e.target.value })}
+                  placeholder="Bildirim içeriği"
+                  rows={2}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white"
+                />
+              </div>
+              <button
+                onClick={handleSendPush}
+                disabled={!newPush.title || !newPush.body || mobileSaving === "push"}
+                className="px-6 py-3 bg-purple-500 hover:bg-purple-600 rounded-xl text-white font-semibold disabled:opacity-50"
+              >
+                {mobileSaving === "push" ? "Gönderiliyor..." : "📤 Gönder"}
+              </button>
+
+              {/* Push History */}
+              {pushHistory.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-slate-800">
+                  <h4 className="text-sm font-medium text-slate-400 mb-3">Son Gönderilen Bildirimler</h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {pushHistory.slice(0, 5).map((push: any, idx) => (
+                      <div key={idx} className="p-3 bg-slate-800/50 rounded-lg flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{push.title}</p>
+                          <p className="text-xs text-slate-400">{push.body?.slice(0, 50)}...</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs text-slate-500">{formatDate(push.sentAt)}</span>
+                          <span className="block text-xs text-emerald-400">{push.target}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* App Version Control */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4">📦 Uygulama Versiyonu</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* iOS */}
+                <div className="p-4 bg-slate-800/50 rounded-xl">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-2xl">🍎</span>
+                    <span className="font-semibold">iOS</span>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Minimum Versiyon</label>
+                      <input
+                        type="text"
+                        value={mobileAppConfig.ios.minVersion}
+                        onChange={(e) => setMobileAppConfig({
+                          ...mobileAppConfig,
+                          ios: { ...mobileAppConfig.ios, minVersion: e.target.value }
+                        })}
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Güncel Versiyon</label>
+                      <input
+                        type="text"
+                        value={mobileAppConfig.ios.currentVersion}
+                        onChange={(e) => setMobileAppConfig({
+                          ...mobileAppConfig,
+                          ios: { ...mobileAppConfig.ios, currentVersion: e.target.value }
+                        })}
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white text-sm"
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={mobileAppConfig.ios.forceUpdate}
+                        onChange={(e) => setMobileAppConfig({
+                          ...mobileAppConfig,
+                          ios: { ...mobileAppConfig.ios, forceUpdate: e.target.checked }
+                        })}
+                        className="w-4 h-4 rounded"
+                      />
+                      <span className="text-sm">Zorunlu Güncelleme</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Android */}
+                <div className="p-4 bg-slate-800/50 rounded-xl">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-2xl">🤖</span>
+                    <span className="font-semibold">Android</span>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Minimum Versiyon</label>
+                      <input
+                        type="text"
+                        value={mobileAppConfig.android.minVersion}
+                        onChange={(e) => setMobileAppConfig({
+                          ...mobileAppConfig,
+                          android: { ...mobileAppConfig.android, minVersion: e.target.value }
+                        })}
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Güncel Versiyon</label>
+                      <input
+                        type="text"
+                        value={mobileAppConfig.android.currentVersion}
+                        onChange={(e) => setMobileAppConfig({
+                          ...mobileAppConfig,
+                          android: { ...mobileAppConfig.android, currentVersion: e.target.value }
+                        })}
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white text-sm"
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={mobileAppConfig.android.forceUpdate}
+                        onChange={(e) => setMobileAppConfig({
+                          ...mobileAppConfig,
+                          android: { ...mobileAppConfig.android, forceUpdate: e.target.checked }
+                        })}
+                        className="w-4 h-4 rounded"
+                      />
+                      <span className="text-sm">Zorunlu Güncelleme</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleAppConfigUpdate}
+                disabled={mobileSaving === "app-config"}
+                className="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white font-medium disabled:opacity-50"
+              >
+                {mobileSaving === "app-config" ? "Kaydediliyor..." : "Kaydet"}
+              </button>
+            </div>
+
+            {/* Maintenance Mode */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">🚧 Bakım Modu</h3>
+                <button
+                  onClick={() => {
+                    setMaintenanceConfig({ ...maintenanceConfig, enabled: !maintenanceConfig.enabled });
+                  }}
+                  className={`relative w-14 h-7 rounded-full transition-colors ${
+                    maintenanceConfig.enabled ? "bg-red-500" : "bg-slate-600"
+                  }`}
+                >
+                  <span className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-transform ${
+                    maintenanceConfig.enabled ? "left-8" : "left-1"
+                  }`} />
+                </button>
+              </div>
+              
+              {maintenanceConfig.enabled && (
+                <div className="space-y-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Türkçe Mesaj</label>
+                      <input
+                        type="text"
+                        value={maintenanceConfig.message.tr}
+                        onChange={(e) => setMaintenanceConfig({
+                          ...maintenanceConfig,
+                          message: { ...maintenanceConfig.message, tr: e.target.value }
+                        })}
+                        className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">İngilizce Mesaj</label>
+                      <input
+                        type="text"
+                        value={maintenanceConfig.message.en}
+                        onChange={(e) => setMaintenanceConfig({
+                          ...maintenanceConfig,
+                          message: { ...maintenanceConfig.message, en: e.target.value }
+                        })}
+                        className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Tahmini Bitiş (opsiyonel)</label>
+                    <input
+                      type="datetime-local"
+                      value={maintenanceConfig.estimatedEnd || ""}
+                      onChange={(e) => setMaintenanceConfig({
+                        ...maintenanceConfig,
+                        estimatedEnd: e.target.value || null
+                      })}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+              
+              <button
+                onClick={handleMaintenanceUpdate}
+                disabled={mobileSaving === "maintenance"}
+                className={`mt-4 px-6 py-2 rounded-lg font-medium disabled:opacity-50 ${
+                  maintenanceConfig.enabled
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-slate-700 hover:bg-slate-600 text-white"
+                }`}
+              >
+                {mobileSaving === "maintenance" ? "Kaydediliyor..." : "Kaydet"}
+              </button>
+            </div>
+
+            {/* Feature Flags */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4">🎛️ Özellik Ayarları</h3>
+              <p className="text-sm text-slate-400 mb-6">
+                Mobil uygulamada hangi özelliklerin aktif olacağını kontrol edin
+              </p>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {Object.entries(featureFlags).map(([key, value]) => {
+                  const label = FEATURE_LABELS[key] || { tr: key, icon: "⚙️" };
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleFeatureToggle(key as keyof FeatureFlags)}
+                      className={`p-3 rounded-xl border transition-all text-left ${
+                        value
+                          ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
+                          : "bg-slate-800/50 border-slate-700 text-slate-400"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg">{label.icon}</span>
+                        <span className={`w-2 h-2 rounded-full ${value ? "bg-emerald-400" : "bg-slate-600"}`} />
+                      </div>
+                      <p className="text-sm font-medium mt-2">{label.tr}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

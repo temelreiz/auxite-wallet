@@ -1,6 +1,5 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 interface MetalTradeModalProps {
   isOpen: boolean;
@@ -29,9 +28,26 @@ interface MetalTradeModalProps {
     XRP: number;
     SOL: number;
   };
+  walletAddress?: string;
+  onTradeComplete?: () => void;
+}
+
+interface Quote {
+  id: string;
+  type: "buy" | "sell";
+  metal: string;
+  grams: number;
+  basePrice: number;
+  pricePerGram: number;
+  spreadPercent: number;
+  totalUSD: number;
+  totalAUXM: number;
+  expiresAt: number;
+  timeRemaining: number;
 }
 
 type PaymentMethod = "AUXM" | "USDT" | "BTC" | "ETH" | "XRP" | "SOL";
+type OrderType = "market" | "limit";
 
 const METAL_INFO = {
   AUXG: { name: "Gold", nameTr: "Altın", icon: "🥇", color: "#FFD700" },
@@ -49,12 +65,6 @@ const PAYMENT_METHODS: { id: PaymentMethod; name: string; icon: string; color: s
   { id: "SOL", name: "SOL", icon: "◎", color: "#9945FF" },
 ];
 
-// Spread oranları
-const SPREAD = {
-  buy: 0.01,  // %1
-  sell: 0.01, // %1
-};
-
 export function MetalTradeModal({
   isOpen,
   onClose,
@@ -71,428 +81,698 @@ export function MetalTradeModal({
     crypto: { USDT: 500, BTC: 0.001, ETH: 0.5, XRP: 1000, SOL: 10 }
   },
   cryptoPrices = { BTC: 97500, ETH: 3650, XRP: 2.20, SOL: 235 },
+  walletAddress,
+  onTradeComplete,
 }: MetalTradeModalProps) {
   const [mode, setMode] = useState<"buy" | "sell">(initialMode);
+  const [orderType, setOrderType] = useState<OrderType>("market");
   const [amount, setAmount] = useState<string>("1");
+  const [limitPrice, setLimitPrice] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("AUXM");
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<"success" | "error" | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  
+  // Quote state
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [countdown, setCountdown] = useState(0);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
-  // Reset on open
+  const metalInfo = METAL_INFO[metal];
+
+  // Translations
+  const t = lang === "tr" ? {
+    buy: "Al",
+    sell: "Sat",
+    market: "Piyasa",
+    limit: "Limit",
+    orderType: "Emir Tipi",
+    marketDesc: "Anlık piyasa fiyatından işlem",
+    limitDesc: "Belirlediğin fiyattan işlem",
+    amount: "Miktar (gram)",
+    limitPrice: "Limit Fiyat",
+    currentMarketPrice: "Güncel Piyasa Fiyatı",
+    askPrice: "Satış Fiyatı (Ask)",
+    bidPrice: "Alış Fiyatı (Bid)",
+    balance: "Bakiye",
+    bonus: "Bonus",
+    total: "Toplam",
+    totalPayment: "Toplam Ödeme",
+    youReceive: "Alacağınız",
+    paymentMethod: "Ödeme Yöntemi",
+    processing: "İşleniyor...",
+    cancel: "İptal",
+    confirm: "Onayla",
+    priceLocked: "Fiyat Sabitlendi",
+    seconds: "sn",
+    spread: "Spread",
+    insufficientBalance: "Yetersiz bakiye",
+    bonusUsage: "Bonus Kullanımı",
+    normalAuxm: "Normal AUXM",
+    newPrice: "Fiyat Güncellendi",
+    success: "İşlem Başarılı!",
+    orderPlaced: "Emir Verildi!",
+    limitOrderInfo: "Limit emriniz piyasa fiyatı belirlediğiniz fiyata ulaştığında gerçekleşecektir.",
+    pendingOrders: "Bekleyen Emirler",
+    noOrders: "Bekleyen emir yok",
+    close: "Kapat",
+    placeOrder: "Emir Ver",
+  } : {
+    buy: "Buy",
+    sell: "Sell",
+    market: "Market",
+    limit: "Limit",
+    orderType: "Order Type",
+    marketDesc: "Trade at current market price",
+    limitDesc: "Trade at your specified price",
+    amount: "Amount (grams)",
+    limitPrice: "Limit Price",
+    currentMarketPrice: "Current Market Price",
+    askPrice: "Ask Price",
+    bidPrice: "Bid Price",
+    balance: "Balance",
+    bonus: "Bonus",
+    total: "Total",
+    totalPayment: "Total Payment",
+    youReceive: "You Receive",
+    paymentMethod: "Payment Method",
+    processing: "Processing...",
+    cancel: "Cancel",
+    confirm: "Confirm",
+    priceLocked: "Price Locked",
+    seconds: "sec",
+    spread: "Spread",
+    insufficientBalance: "Insufficient balance",
+    bonusUsage: "Bonus Usage",
+    normalAuxm: "Regular AUXM",
+    newPrice: "Price Updated",
+    success: "Trade Successful!",
+    orderPlaced: "Order Placed!",
+    limitOrderInfo: "Your limit order will execute when market price reaches your specified price.",
+    pendingOrders: "Pending Orders",
+    noOrders: "No pending orders",
+    close: "Close",
+    placeOrder: "Place Order",
+  };
+
+  // Reset on close/open
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
+      setOrderType("market");
       setAmount("1");
+      setLimitPrice("");
       setPaymentMethod("AUXM");
       setResult(null);
       setErrorMessage("");
+      setQuote(null);
+      setCountdown(0);
+      setShowConfirmation(false);
     }
   }, [isOpen, initialMode]);
 
-  if (!isOpen) return null;
-
-  const metalInfo = METAL_INFO[metal];
-  const amountNum = parseFloat(amount) || 0;
-  
-  // Fiyat hesaplama
-  const askPrice = currentPrice; // Alış fiyatı (kullanıcı alırken öder)
-  const sellPrice = bidPrice || currentPrice * (1 - SPREAD.sell); // Satış fiyatı (kullanıcı satarken alır)
-  const effectivePrice = mode === "buy" ? askPrice : sellPrice;
-  
-  // Payment method için fiyat (USD cinsinden)
-  const getPaymentMethodPrice = (pm: PaymentMethod): number => {
-    if (pm === "AUXM" || pm === "USDT") return 1;
-    return cryptoPrices[pm as keyof typeof cryptoPrices] || 1;
-  };
-  
-  const paymentMethodPrice = getPaymentMethodPrice(paymentMethod);
-  
-  // Payment method bakiyesi
-  const getPaymentBalance = (pm: PaymentMethod): number => {
-    if (pm === "AUXM") return userBalance.auxm + userBalance.bonusAuxm;
-    if (pm === "USDT") return userBalance.crypto?.USDT || 0;
-    return userBalance.crypto?.[pm as keyof typeof userBalance.crypto] || 0;
-  };
-  
-  const paymentBalance = getPaymentBalance(paymentMethod);
-  
-  // Maliyet/Gelir hesaplama
-  const grossValue = amountNum * effectivePrice;
-  const spreadFee = grossValue * SPREAD[mode];
-  const totalCostUSD = mode === "buy" ? grossValue + spreadFee : 0;
-  const totalReceiveUSD = mode === "sell" ? grossValue - spreadFee : 0;
-  
-  // Payment method cinsinden maliyet
-  const totalCostInPayment = totalCostUSD / paymentMethodPrice;
-  const totalReceiveInPayment = totalReceiveUSD / paymentMethodPrice;
-
-  // Bakiye kontrolü
-  const totalAuxm = userBalance.auxm + userBalance.bonusAuxm;
-  const metalBalance = userBalance.metals[metal] || 0;
-  const canAfford = mode === "buy" ? totalCostInPayment <= paymentBalance : amountNum <= metalBalance;
-
-  // Bonus kullanımı hesaplama (buy mode, sadece AUXM için)
-  const calculateBonusUsage = () => {
-    if (mode !== "buy" || paymentMethod !== "AUXM") return { usedBonus: 0, usedRegular: 0 };
-    
-    if (userBalance.bonusAuxm >= totalCostInPayment) {
-      return { usedBonus: totalCostInPayment, usedRegular: 0 };
-    } else {
-      return { 
-        usedBonus: userBalance.bonusAuxm, 
-        usedRegular: totalCostInPayment - userBalance.bonusAuxm 
-      };
+  // Set default limit price when switching to limit mode
+  useEffect(() => {
+    if (orderType === "limit" && !limitPrice) {
+      const defaultPrice = mode === "buy" ? currentPrice : (bidPrice || currentPrice * 0.98);
+      setLimitPrice(defaultPrice.toFixed(2));
     }
+  }, [orderType, mode, currentPrice, bidPrice, limitPrice]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!quote || countdown <= 0) return;
+    
+    const timer = setInterval(() => {
+      const remaining = Math.max(0, Math.floor((quote.expiresAt - Date.now()) / 1000));
+      setCountdown(remaining);
+      
+      if (remaining <= 0) {
+        setQuote(null);
+        setShowConfirmation(false);
+      }
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [quote]);
+
+  // Calculate values
+  const amountNum = parseFloat(amount) || 0;
+  const limitPriceNum = parseFloat(limitPrice) || 0;
+  
+  // For market orders, use quote price or current market price
+  // For limit orders, use the user-specified limit price
+  const getDisplayPrice = () => {
+    if (orderType === "limit") {
+      return limitPriceNum;
+    }
+    return quote?.pricePerGram || (mode === "buy" ? currentPrice : (bidPrice || currentPrice * 0.98));
+  };
+  
+  const displayPrice = getDisplayPrice();
+  
+  // Get available balance based on payment method
+  const getAvailableBalance = (pm: PaymentMethod): number => {
+    if (pm === "AUXM") {
+      return (userBalance?.auxm || 0) + (userBalance?.bonusAuxm || 0);
+    }
+    return userBalance?.crypto?.[pm] || 0;
+  };
+
+  // Calculate total cost/payout
+  const calculateTotal = () => {
+    if (mode === "buy") {
+      const totalUSD = amountNum * displayPrice;
+      if (paymentMethod === "AUXM" || paymentMethod === "USDT") {
+        return totalUSD;
+      }
+      const cryptoPrice = cryptoPrices[paymentMethod as keyof typeof cryptoPrices];
+      return totalUSD / cryptoPrice;
+    } else {
+      return amountNum * displayPrice;
+    }
+  };
+
+  const total = calculateTotal();
+  const availableBalance = getAvailableBalance(paymentMethod);
+  
+  // For buy: check if enough payment balance
+  // For sell: check if enough metal balance
+  const hasInsufficientBalance = mode === "buy" 
+    ? total > availableBalance 
+    : amountNum > (userBalance?.metals?.[metal] || 0);
+
+  // Bonus usage calculation
+  const calculateBonusUsage = () => {
+    if (mode !== "buy" || paymentMethod !== "AUXM") {
+      return { usedBonus: 0, usedRegular: total };
+    }
+    const bonus = userBalance?.bonusAuxm || 0;
+    if (bonus >= total) {
+      return { usedBonus: total, usedRegular: 0 };
+    }
+    return { usedBonus: bonus, usedRegular: total - bonus };
   };
 
   const bonusUsage = calculateBonusUsage();
 
-  const handleTrade = async () => {
-    if (!canAfford) {
-      setErrorMessage(lang === "tr" ? "Yetersiz bakiye" : "Insufficient balance");
-      return;
-    }
-
-    if (amountNum <= 0) {
-      setErrorMessage(lang === "tr" ? "Geçerli bir miktar girin" : "Enter a valid amount");
-      return;
-    }
-
+  // Handle Market Order
+  const handleMarketOrder = async () => {
+    if (!walletAddress || amountNum <= 0 || hasInsufficientBalance) return;
+    
     setIsProcessing(true);
     setErrorMessage("");
-
+    
     try {
-      // API call
-      const response = await fetch("/api/trade", {
+      // Get quote
+      const quoteRes = await fetch("/api/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          address: "0x123", // TODO: gerçek adres
-          action: mode,
-          metal,
-          amount: amountNum,
-          paymentMethod: mode === "buy" ? paymentMethod : "AUXM",
-          paymentAmount: mode === "buy" ? totalCostInPayment : 0,
+          type: mode,
+          metal: metal,
+          grams: amountNum,
+          address: walletAddress,
         }),
       });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setResult("success");
-        // 2 saniye sonra kapat
-        setTimeout(() => {
-          onClose();
-        }, 2000);
-      } else {
-        setResult("error");
-        setErrorMessage(data.error || (lang === "tr" ? "İşlem başarısız" : "Trade failed"));
+      
+      const quoteData = await quoteRes.json();
+      
+      if (!quoteRes.ok) {
+        throw new Error(quoteData.error || "Quote failed");
       }
-    } catch (error) {
-      setResult("error");
-      setErrorMessage(lang === "tr" ? "Bağlantı hatası" : "Connection error");
+      
+      setQuote(quoteData);
+      setCountdown(quoteData.timeRemaining || 15);
+      setShowConfirmation(true);
+      
+    } catch (error: any) {
+      setErrorMessage(error.message || "Failed to get quote");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleMaxClick = () => {
-    if (mode === "buy") {
-      // Max alınabilecek miktar (payment method cinsinden)
-      const maxUSD = paymentBalance * paymentMethodPrice;
-      const maxGrams = maxUSD / (effectivePrice * (1 + SPREAD.buy));
-      setAmount(maxGrams.toFixed(4));
-    } else {
-      // Max satılabilecek miktar
-      setAmount(metalBalance.toFixed(4));
+  // Handle Limit Order
+  const handleLimitOrder = async () => {
+    if (!walletAddress || amountNum <= 0 || limitPriceNum <= 0 || hasInsufficientBalance) return;
+    
+    setIsProcessing(true);
+    setErrorMessage("");
+    
+    try {
+      // Place limit order
+      const orderRes = await fetch("/api/orders/limit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: mode,
+          metal: metal,
+          grams: amountNum,
+          limitPrice: limitPriceNum,
+          paymentMethod: paymentMethod,
+          address: walletAddress,
+        }),
+      });
+      
+      const orderData = await orderRes.json();
+      
+      if (!orderRes.ok) {
+        throw new Error(orderData.error || "Order failed");
+      }
+      
+      setResult("success");
+      onTradeComplete?.();
+      
+    } catch (error: any) {
+      setErrorMessage(error.message || "Failed to place order");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={!isProcessing ? onClose : undefined}
-      />
+  // Handle Trade Click
+  const handleTradeClick = () => {
+    if (orderType === "market") {
+      handleMarketOrder();
+    } else {
+      handleLimitOrder();
+    }
+  };
 
-      {/* Modal */}
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 overflow-hidden">
+  // Handle Confirm Market Trade
+  const handleConfirmTrade = async () => {
+    if (!quote || !walletAddress || countdown <= 0) return;
+    
+    setIsProcessing(true);
+    setErrorMessage("");
+    
+    try {
+      const tradeRes = await fetch("/api/trade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quoteId: quote.id,
+          paymentMethod: mode === "buy" ? paymentMethod : "AUXM",
+          address: walletAddress,
+        }),
+      });
+      
+      const tradeData = await tradeRes.json();
+      
+      if (!tradeRes.ok) {
+        throw new Error(tradeData.error || "Trade failed");
+      }
+      
+      setResult("success");
+      onTradeComplete?.();
+      
+    } catch (error: any) {
+      setErrorMessage(error.message || "Trade failed");
+      setResult("error");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-900 rounded-2xl border border-slate-700 w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-800">
           <div className="flex items-center gap-3">
             <span className="text-2xl">{metalInfo.icon}</span>
             <div>
-              <h2 className="text-lg font-bold text-white">
-                {mode === "buy" ? (lang === "tr" ? "Al" : "Buy") : (lang === "tr" ? "Sat" : "Sell")} {metal}
-              </h2>
-              <p className="text-sm text-slate-400">{metalName}</p>
+              <h2 className="text-lg font-bold text-white">{metalName}</h2>
+              <p className="text-xs text-slate-400">{metal}</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            disabled={isProcessing}
-            className="p-2 hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
             <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        {/* Success State */}
-        {result === "success" && (
-          <div className="p-8 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-emerald-400 mb-2">
-              {lang === "tr" ? "İşlem Başarılı!" : "Trade Successful!"}
-            </h3>
-            <p className="text-slate-400">
-              {mode === "buy"
-                ? `${amountNum.toFixed(4)}g ${metal} ${lang === "tr" ? "satın alındı" : "purchased"}`
-                : `${amountNum.toFixed(4)}g ${metal} ${lang === "tr" ? "satıldı" : "sold"}`}
-            </p>
-            {mode === "buy" && bonusUsage.usedBonus > 0 && (
-              <p className="text-purple-400 text-sm mt-2">
-                🎁 {bonusUsage.usedBonus.toFixed(2)} Bonus AUXM {lang === "tr" ? "kullanıldı" : "used"}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Normal State */}
-        {result !== "success" && (
-          <div className="p-4 space-y-4">
-            {/* Buy/Sell Toggle */}
-            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-800 rounded-lg">
+        <div className="p-4 space-y-4">
+          {result === "success" ? (
+            // Success State
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                {orderType === "limit" ? t.orderPlaced : t.success}
+              </h3>
+              {orderType === "limit" && (
+                <p className="text-sm text-slate-400 mb-4">{t.limitOrderInfo}</p>
+              )}
               <button
-                onClick={() => !isProcessing && setMode("buy")}
-                disabled={isProcessing}
-                className={`py-2.5 rounded-lg font-semibold transition-all ${
-                  mode === "buy"
-                    ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25"
-                    : "text-slate-400 hover:text-white"
-                }`}
+                onClick={onClose}
+                className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-white font-medium"
               >
-                {lang === "tr" ? "Al" : "Buy"}
-              </button>
-              <button
-                onClick={() => !isProcessing && setMode("sell")}
-                disabled={isProcessing}
-                className={`py-2.5 rounded-lg font-semibold transition-all ${
-                  mode === "sell"
-                    ? "bg-red-500 text-white shadow-lg shadow-red-500/25"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                {lang === "tr" ? "Sat" : "Sell"}
+                {t.close}
               </button>
             </div>
+          ) : (
+            <>
+              {/* Buy/Sell Toggle */}
+              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-800 rounded-xl">
+                <button
+                  onClick={() => { setMode("buy"); setQuote(null); setShowConfirmation(false); }}
+                  className={`py-2.5 rounded-lg font-semibold transition-all ${
+                    mode === "buy"
+                      ? "bg-emerald-500 text-white shadow-lg"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  {t.buy}
+                </button>
+                <button
+                  onClick={() => { setMode("sell"); setQuote(null); setShowConfirmation(false); }}
+                  className={`py-2.5 rounded-lg font-semibold transition-all ${
+                    mode === "sell"
+                      ? "bg-red-500 text-white shadow-lg"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  {t.sell}
+                </button>
+              </div>
 
-            {/* Balance Info */}
-            <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700">
-              {mode === "buy" ? (
-                <div className="space-y-1">
-                  {paymentMethod === "AUXM" ? (
-                    <>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">{lang === "tr" ? "AUXM Bakiye" : "AUXM Balance"}</span>
-                        <span className="text-white font-mono">{userBalance.auxm.toFixed(2)}</span>
-                      </div>
-                      {userBalance.bonusAuxm > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-purple-400">🎁 Bonus AUXM</span>
-                          <span className="text-purple-400 font-mono">+{userBalance.bonusAuxm.toFixed(2)}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between text-sm pt-1 border-t border-slate-700">
-                        <span className="text-slate-300 font-medium">{lang === "tr" ? "Toplam" : "Total"}</span>
-                        <span className="text-white font-mono font-medium">{totalAuxm.toFixed(2)} AUXM</span>
-                      </div>
-                    </>
-                  ) : (
+              {/* Order Type Toggle */}
+              <div>
+                <label className="text-sm text-slate-400 mb-2 block">{t.orderType}</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => { setOrderType("market"); setQuote(null); setShowConfirmation(false); }}
+                    className={`p-3 rounded-xl border-2 transition-all ${
+                      orderType === "market"
+                        ? "border-amber-500 bg-amber-500/10"
+                        : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                    }`}
+                  >
+                    <div className={`font-semibold ${orderType === "market" ? "text-amber-400" : "text-slate-300"}`}>
+                      {t.market}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">{t.marketDesc}</div>
+                  </button>
+                  <button
+                    onClick={() => { setOrderType("limit"); setQuote(null); setShowConfirmation(false); }}
+                    className={`p-3 rounded-xl border-2 transition-all ${
+                      orderType === "limit"
+                        ? "border-blue-500 bg-blue-500/10"
+                        : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                    }`}
+                  >
+                    <div className={`font-semibold ${orderType === "limit" ? "text-blue-400" : "text-slate-300"}`}>
+                      {t.limit}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">{t.limitDesc}</div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Balance Display */}
+              <div className="p-3 bg-slate-800/50 rounded-xl space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">
+                    {mode === "buy" ? `${t.balance} (${paymentMethod})` : `${t.balance} (${metal})`}
+                  </span>
+                  <span className="text-white font-mono">
+                    {mode === "buy" 
+                      ? `${availableBalance.toFixed(paymentMethod === "BTC" ? 6 : 2)} ${paymentMethod}`
+                      : `${userBalance?.metals?.[metal]?.toFixed(4) || "0.0000"}g`
+                    }
+                  </span>
+                </div>
+                {mode === "buy" && paymentMethod === "AUXM" && userBalance?.bonusAuxm && userBalance.bonusAuxm > 0 && (
+                  <>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">{paymentMethod} {lang === "tr" ? "Bakiye" : "Balance"}</span>
-                      <span className="text-white font-mono">{paymentBalance.toFixed(paymentMethod === "USDT" ? 2 : 6)} {paymentMethod}</span>
+                      <span className="text-purple-400">🎁 {t.bonus} AUXM</span>
+                      <span className="text-purple-400 font-mono">+{userBalance.bonusAuxm.toFixed(2)} AUXM</span>
+                    </div>
+                    <div className="flex justify-between text-sm border-t border-slate-700 pt-1">
+                      <span className="text-slate-400">{t.total}</span>
+                      <span className="text-white font-mono font-medium">
+                        {((userBalance?.auxm || 0) + (userBalance?.bonusAuxm || 0)).toFixed(2)} AUXM
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Current Market Price Display */}
+              <div className="p-3 bg-slate-800/50 rounded-xl flex justify-between items-center">
+                <span className="text-slate-400 text-sm">
+                  {orderType === "market" 
+                    ? (mode === "buy" ? t.askPrice : t.bidPrice)
+                    : t.currentMarketPrice
+                  }
+                </span>
+                <div className="text-right">
+                  <span className="text-xl font-bold text-white">
+                    ${(mode === "buy" ? currentPrice : (bidPrice || currentPrice * 0.98)).toFixed(2)}
+                  </span>
+                  <span className="text-slate-400 text-sm"> / gram</span>
+                </div>
+              </div>
+
+              {/* Quote Timer (Market Orders Only) */}
+              {orderType === "market" && quote && countdown > 0 && (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400">🔒</span>
+                      <span className="text-emerald-300 text-sm font-medium">{t.priceLocked}</span>
+                    </div>
+                    <div className={`flex items-center gap-1 px-3 py-1 rounded-lg ${
+                      countdown <= 5 ? 'bg-red-500/20 text-red-400 animate-pulse' : 'bg-emerald-500/20 text-emerald-400'
+                    }`}>
+                      <span className="text-xl font-bold font-mono">{countdown}</span>
+                      <span className="text-xs">{t.seconds}</span>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex justify-between text-xs">
+                    <span className="text-slate-400">{t.spread}:</span>
+                    <span className="text-emerald-400">{quote.spreadPercent}%</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Amount Input */}
+              <div>
+                <label className="text-sm text-slate-400 mb-2 block">{t.amount}</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => { setAmount(e.target.value); setQuote(null); setShowConfirmation(false); }}
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-lg font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <span className="text-slate-500 text-sm">gram</span>
+                    <button
+                      onClick={() => {
+                        const maxPrice = orderType === "limit" ? limitPriceNum : displayPrice;
+                        const max = mode === "buy" 
+                          ? maxPrice > 0 ? (availableBalance / maxPrice).toFixed(4) : "0"
+                          : (userBalance?.metals?.[metal] || 0).toString();
+                        setAmount(max);
+                        setQuote(null);
+                        setShowConfirmation(false);
+                      }}
+                      className="px-2 py-1 text-xs bg-emerald-500/20 text-emerald-400 rounded hover:bg-emerald-500/30"
+                    >
+                      MAX
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Limit Price Input (Limit Orders Only) */}
+              {orderType === "limit" && (
+                <div>
+                  <label className="text-sm text-slate-400 mb-2 block">{t.limitPrice}</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                    <input
+                      type="number"
+                      value={limitPrice}
+                      onChange={(e) => setLimitPrice(e.target.value)}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      className="w-full pl-8 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-lg font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">/ gram</span>
+                  </div>
+                  {/* Quick price buttons */}
+                  <div className="flex gap-2 mt-2">
+                    {[-5, -2, -1, 0, 1, 2, 5].map((percent) => {
+                      const basePrice = mode === "buy" ? currentPrice : (bidPrice || currentPrice * 0.98);
+                      const adjustedPrice = basePrice * (1 + percent / 100);
+                      return (
+                        <button
+                          key={percent}
+                          onClick={() => setLimitPrice(adjustedPrice.toFixed(2))}
+                          className={`flex-1 py-1.5 text-xs rounded-lg transition-colors ${
+                            percent === 0 
+                              ? "bg-slate-700 text-white" 
+                              : percent < 0 
+                                ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                                : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                          }`}
+                        >
+                          {percent > 0 ? "+" : ""}{percent}%
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Method (Buy only) */}
+              {mode === "buy" && (
+                <div>
+                  <label className="text-sm text-slate-400 mb-2 block">{t.paymentMethod}</label>
+                  <div className="grid grid-cols-6 gap-2">
+                    {PAYMENT_METHODS.map((pm) => (
+                      <button
+                        key={pm.id}
+                        onClick={() => { setPaymentMethod(pm.id); setQuote(null); setShowConfirmation(false); }}
+                        className={`p-2 rounded-xl text-center transition-all ${
+                          paymentMethod === pm.id
+                            ? "bg-purple-500/30 border-2 border-purple-500"
+                            : "bg-slate-800 border-2 border-slate-700"
+                        }`}
+                      >
+                        <div className="text-lg" style={{ color: pm.color }}>{pm.icon}</div>
+                        <div className="text-xs text-slate-400 mt-1">{pm.name}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Total */}
+              <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
+                <div className="text-sm text-slate-400 mb-1">
+                  {mode === "buy" ? t.totalPayment : t.youReceive}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl" style={{ color: PAYMENT_METHODS.find(p => p.id === (mode === "buy" ? paymentMethod : "AUXM"))?.color }}>
+                    {PAYMENT_METHODS.find(p => p.id === (mode === "buy" ? paymentMethod : "AUXM"))?.icon}
+                  </span>
+                  <span className="text-2xl font-bold text-white">
+                    {total.toFixed(paymentMethod === "BTC" ? 6 : 2)}
+                  </span>
+                  <span className="text-slate-400">{mode === "buy" ? paymentMethod : "AUXM"}</span>
+                </div>
+                {mode === "buy" && paymentMethod !== "AUXM" && (
+                  <div className="text-sm text-slate-400 mt-1">
+                    ≈ ${(amountNum * displayPrice).toFixed(2)} USD
+                  </div>
+                )}
+                {orderType === "limit" && (
+                  <div className="text-xs text-blue-400 mt-2">
+                    @ ${limitPriceNum.toFixed(2)} / gram
+                  </div>
+                )}
+              </div>
+
+              {/* Bonus Usage */}
+              {mode === "buy" && paymentMethod === "AUXM" && bonusUsage.usedBonus > 0 && (
+                <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-xl text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-purple-300">🎁 {t.bonusUsage}:</span>
+                    <span className="text-purple-400 font-mono">{bonusUsage.usedBonus.toFixed(2)} AUXM</span>
+                  </div>
+                  {bonusUsage.usedRegular > 0 && (
+                    <div className="flex justify-between mt-1">
+                      <span className="text-slate-400">{t.normalAuxm}:</span>
+                      <span className="text-white font-mono">{bonusUsage.usedRegular.toFixed(2)} AUXM</span>
                     </div>
                   )}
                 </div>
-              ) : (
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">{metal} {lang === "tr" ? "Bakiye" : "Balance"}</span>
-                  <span className="text-white font-mono">{metalBalance.toFixed(4)}g</span>
+              )}
+
+              {/* Insufficient Balance Warning */}
+              {hasInsufficientBalance && (
+                <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
+                  <p className="text-red-400 text-sm">{t.insufficientBalance}</p>
                 </div>
               )}
-            </div>
 
-            {/* Current Price */}
-            <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-400">
-                  {mode === "buy" 
-                    ? (lang === "tr" ? "Alış Fiyatı" : "Ask Price")
-                    : (lang === "tr" ? "Satış Fiyatı" : "Bid Price")}
-                </span>
-                <span className="text-lg font-bold text-white font-mono">
-                  ${effectivePrice.toFixed(2)}<span className="text-sm text-slate-400">/g</span>
-                </span>
-              </div>
-            </div>
+              {/* Error Message */}
+              {errorMessage && !result && (
+                <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
+                  <p className="text-red-400 text-sm">{errorMessage}</p>
+                </div>
+              )}
 
-            {/* Amount Input */}
-            <div>
-              <label className="block text-sm text-slate-400 mb-2">
-                {lang === "tr" ? "Miktar (gram)" : "Amount (grams)"}
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  min="0.0001"
-                  step="0.0001"
-                  disabled={isProcessing}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-emerald-500 disabled:opacity-50"
-                  placeholder="1.0000"
-                />
+              {/* Action Buttons */}
+              <div className="flex gap-3">
                 <button
-                  onClick={handleMaxClick}
-                  disabled={isProcessing}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 rounded-lg text-emerald-400 font-semibold transition-colors"
+                  onClick={onClose}
+                  className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-medium text-slate-300 transition-all"
                 >
-                  MAX
+                  {t.cancel}
                 </button>
-              </div>
-            </div>
-
-            {/* Payment Method - Only for Buy */}
-            {mode === "buy" && (
-              <div>
-                <label className="block text-sm text-slate-400 mb-2">
-                  {lang === "tr" ? "Ödeme Yöntemi" : "Payment Method"}
-                </label>
-                <div className="grid grid-cols-6 gap-2">
-                  {PAYMENT_METHODS.map((pm) => (
-                    <button
-                      key={pm.id}
-                      onClick={() => setPaymentMethod(pm.id)}
-                      disabled={isProcessing}
-                      className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${
-                        paymentMethod === pm.id
-                          ? "bg-purple-500/20 border-purple-500"
-                          : "bg-slate-800 border-slate-700 hover:border-slate-600"
-                      }`}
-                    >
-                      <div 
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                        style={{ backgroundColor: pm.color }}
-                      >
-                        {pm.icon}
-                      </div>
-                      <span className="text-xs text-slate-300">{pm.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Calculation */}
-            <div className={`p-4 rounded-xl border ${
-              mode === "buy" 
-                ? "bg-emerald-500/10 border-emerald-500/30" 
-                : "bg-red-500/10 border-red-500/30"
-            }`}>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">{lang === "tr" ? "Brüt Değer" : "Gross Value"}</span>
-                  <span className="text-white font-mono">${grossValue.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Spread (%{(SPREAD[mode] * 100).toFixed(1)})</span>
-                  <span className="text-slate-400 font-mono">${spreadFee.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between pt-2 border-t border-slate-700">
-                  <span className={`font-semibold ${mode === "buy" ? "text-emerald-400" : "text-red-400"}`}>
-                    {mode === "buy" 
-                      ? (lang === "tr" ? "Toplam Ödeme" : "Total Cost")
-                      : (lang === "tr" ? "Toplam Alacak" : "Total Receive")}
-                  </span>
-                  <span className={`text-lg font-bold font-mono ${mode === "buy" ? "text-emerald-400" : "text-red-400"}`}>
-                    {mode === "buy" 
-                      ? `${totalCostInPayment.toFixed(paymentMethod === "USDT" || paymentMethod === "AUXM" ? 2 : 6)} ${paymentMethod}` 
-                      : `${totalReceiveInPayment.toFixed(2)} AUXM`}
-                  </span>
-                </div>
-              </div>
-
-              {/* Bonus usage info - sadece AUXM için */}
-              {mode === "buy" && paymentMethod === "AUXM" && userBalance.bonusAuxm > 0 && amountNum > 0 && (
-                <div className="mt-3 pt-3 border-t border-slate-700">
-                  <p className="text-xs text-purple-400">
-                    🎁 {bonusUsage.usedBonus.toFixed(2)} Bonus + {bonusUsage.usedRegular.toFixed(2)} AUXM {lang === "tr" ? "kullanılacak" : "will be used"}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Error Message */}
-            {errorMessage && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30">
-                <p className="text-sm text-red-400">{errorMessage}</p>
-              </div>
-            )}
-
-            {/* Insufficient Balance Warning */}
-            {!canAfford && amountNum > 0 && (
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                <p className="text-sm text-amber-400">
-                  {mode === "buy" 
-                    ? (lang === "tr" ? `Yetersiz ${paymentMethod} bakiyesi` : `Insufficient ${paymentMethod} balance`)
-                    : (lang === "tr" ? `Yetersiz ${metal} bakiyesi` : `Insufficient ${metal} balance`)}
-                </p>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <button
-                onClick={onClose}
-                disabled={isProcessing}
-                className="px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-medium hover:bg-slate-700 transition-colors disabled:opacity-50"
-              >
-                {lang === "tr" ? "İptal" : "Cancel"}
-              </button>
-              <button
-                onClick={handleTrade}
-                disabled={isProcessing || !canAfford || amountNum <= 0}
-                className={`px-4 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${
-                  mode === "buy"
-                    ? "bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/25"
-                    : "bg-red-500 hover:bg-red-400 text-white shadow-lg shadow-red-500/25"
-                }`}
-              >
-                {isProcessing ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    {lang === "tr" ? "İşleniyor..." : "Processing..."}
-                  </>
+                
+                {orderType === "limit" ? (
+                  // Limit Order Button
+                  <button
+                    onClick={handleTradeClick}
+                    disabled={isProcessing || amountNum <= 0 || limitPriceNum <= 0 || hasInsufficientBalance || !walletAddress}
+                    className={`flex-1 py-3 rounded-xl font-semibold text-white transition-all ${
+                      isProcessing || amountNum <= 0 || limitPriceNum <= 0 || hasInsufficientBalance || !walletAddress
+                        ? "bg-slate-600 cursor-not-allowed"
+                        : "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+                    }`}
+                  >
+                    {isProcessing ? t.processing : t.placeOrder}
+                  </button>
+                ) : !showConfirmation ? (
+                  // Market Order - Get Quote Button
+                  <button
+                    onClick={handleTradeClick}
+                    disabled={isProcessing || amountNum <= 0 || hasInsufficientBalance || !walletAddress}
+                    className={`flex-1 py-3 rounded-xl font-semibold text-white transition-all ${
+                      isProcessing || amountNum <= 0 || hasInsufficientBalance || !walletAddress
+                        ? "bg-slate-600 cursor-not-allowed"
+                        : mode === "buy"
+                          ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                          : "bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600"
+                    }`}
+                  >
+                    {isProcessing ? t.processing : `${mode === "buy" ? t.buy : t.sell} ${metal}`}
+                  </button>
                 ) : (
-                  mode === "buy" 
-                    ? (lang === "tr" ? "Satın Al" : "Buy Now")
-                    : (lang === "tr" ? "Şimdi Sat" : "Sell Now")
+                  // Market Order - Confirm Button
+                  <button
+                    onClick={handleConfirmTrade}
+                    disabled={isProcessing || countdown <= 0}
+                    className={`flex-1 py-3 rounded-xl font-semibold text-white transition-all ${
+                      isProcessing || countdown <= 0
+                        ? "bg-slate-600 cursor-not-allowed"
+                        : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 animate-pulse"
+                    }`}
+                  >
+                    {isProcessing ? t.processing : countdown <= 0 ? t.newPrice : `✓ ${t.confirm} (${countdown}s)`}
+                  </button>
                 )}
-              </button>
-            </div>
-          </div>
-        )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

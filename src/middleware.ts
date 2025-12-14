@@ -10,17 +10,27 @@ export function middleware(request: NextRequest) {
   const response = NextResponse.next();
   
   // Security Headers
-  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.auxite.io https://*.thirdweb.com https://*.merkle.io https://*.walletconnect.com https://*.walletconnect.org https://api.binance.com https://api.coingecko.com https://www.goldapi.io https://*.upstash.io wss://*;"
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' data:",
+      "frame-src 'self' https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com",
+      "connect-src 'self' https://api.auxite.io https://*.thirdweb.com https://*.merkle.io https://*.walletconnect.com https://*.walletconnect.org https://api.binance.com https://api.coingecko.com https://www.goldapi.io https://*.upstash.io https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com wss://*",
+      "media-src 'self' blob:",
+      "worker-src 'self' blob:",
+    ].join('; ')
   );
   response.headers.set(
     'Permissions-Policy',
-    'camera=(), microphone=(), geolocation=()'
+    'camera=(self), microphone=(self), geolocation=()'
   );
 
   // CORS - Only allow own domain

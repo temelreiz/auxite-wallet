@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
-/**
- * Recurring Buy / DCA Component
- * Otomatik düzenli alım yönetimi
- */
+import { useLanguage } from "@/components/LanguageContext";
 
 interface RecurringBuy {
   id: string;
@@ -13,7 +9,7 @@ interface RecurringBuy {
   amount: number;
   frequency: "daily" | "weekly" | "biweekly" | "monthly";
   status: "active" | "paused" | "completed" | "cancelled";
-  paymentSource: "usd_balance" | "usdt_balance";
+  paymentSource: "usd_balance" | "usdt_balance" | "eth_balance" | "btc_balance" | "xrp_balance" | "sol_balance";
   dayOfWeek?: number;
   dayOfMonth?: number;
   hour: number;
@@ -28,138 +24,242 @@ interface RecurringBuy {
 
 interface Props {
   walletAddress: string;
-  lang: "tr" | "en";
+  lang?: string;
   usdBalance?: number;
   usdtBalance?: number;
+  ethBalance?: number;
+  btcBalance?: number;
+  xrpBalance?: number;
+  solBalance?: number;
 }
 
-const t = {
+// ============================================
+// LOCAL TRANSLATIONS - 6 Language Support
+// ============================================
+const t: Record<string, any> = {
   tr: {
-    title: "Otomatik Alım (DCA)",
-    subtitle: "Düzenli aralıklarla otomatik kripto alın",
+    title: "Düzenli Yatırım",
+    subtitle: "Düzenli aralıklarla otomatik metal alın",
     createPlan: "Yeni Plan",
-    activePlans: "Aktif Planlar",
-    pausedPlans: "Duraklatılmış",
-    completedPlans: "Tamamlanmış",
     noPlans: "Henüz otomatik alım planı yok",
     token: "Token",
     amount: "Miktar (USD)",
     frequency: "Sıklık",
     paymentSource: "Ödeme Kaynağı",
-    frequencies: {
-      daily: "Günlük",
-      weekly: "Haftalık",
-      biweekly: "2 Haftada Bir",
-      monthly: "Aylık",
-    },
+    frequencies: { daily: "Günlük", weekly: "Haftalık", biweekly: "2 Haftada Bir", monthly: "Aylık" },
     days: ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"],
     create: "Oluştur",
     cancel: "İptal",
     pause: "Duraklat",
     resume: "Devam Et",
     delete: "Sil",
-    stats: {
-      totalSpent: "Toplam Harcanan",
-      totalBought: "Toplam Alınan",
-      avgPrice: "Ortalama Fiyat",
-      executions: "Çalışma Sayısı",
-      nextRun: "Sonraki Çalışma",
-    },
-    status: {
-      active: "Aktif",
-      paused: "Duraklatılmış",
-      completed: "Tamamlandı",
-      cancelled: "İptal Edildi",
-    },
+    confirm: "Onayla",
+    status: { active: "Aktif", paused: "Duraklatılmış", completed: "Tamamlandı", cancelled: "İptal Edildi" },
+    success: { created: "Otomatik alım planı başarıyla oluşturuldu!", paused: "Plan duraklatıldı", resumed: "Plan devam ettirildi", deleted: "Plan silindi" },
+    confirmMessages: { pause: "Bu planı duraklatmak istediğinizden emin misiniz?", resume: "Bu planı devam ettirmek istediğinizden emin misiniz?", delete: "Bu planı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz." },
+    autoStake: "Alımları Biriktir",
+    autoStakeDesc: "Her alım biriktirme havuzuna da eklensin",
+    month: "Ay",
   },
   en: {
-    title: "Auto Buy (DCA)",
-    subtitle: "Automatically buy crypto at regular intervals",
+    title: "Auto-Invest",
+    subtitle: "Automatically buy metals at regular intervals",
     createPlan: "New Plan",
-    activePlans: "Active Plans",
-    pausedPlans: "Paused",
-    completedPlans: "Completed",
     noPlans: "No recurring buy plans yet",
     token: "Token",
     amount: "Amount (USD)",
     frequency: "Frequency",
     paymentSource: "Payment Source",
-    frequencies: {
-      daily: "Daily",
-      weekly: "Weekly",
-      biweekly: "Bi-weekly",
-      monthly: "Monthly",
-    },
+    frequencies: { daily: "Daily", weekly: "Weekly", biweekly: "Biweekly", monthly: "Monthly" },
     days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
     create: "Create",
     cancel: "Cancel",
     pause: "Pause",
     resume: "Resume",
     delete: "Delete",
-    stats: {
-      totalSpent: "Total Spent",
-      totalBought: "Total Bought",
-      avgPrice: "Avg Price",
-      executions: "Executions",
-      nextRun: "Next Run",
-    },
-    status: {
-      active: "Active",
-      paused: "Paused",
-      completed: "Completed",
-      cancelled: "Cancelled",
-    },
+    confirm: "Confirm",
+    status: { active: "Active", paused: "Paused", completed: "Completed", cancelled: "Cancelled" },
+    success: { created: "Auto buy plan created successfully!", paused: "Plan paused", resumed: "Plan resumed", deleted: "Plan deleted" },
+    confirmMessages: { pause: "Are you sure you want to pause this plan?", resume: "Are you sure you want to resume this plan?", delete: "Are you sure you want to delete this plan? This action cannot be undone." },
+    autoStake: "Auto-Stake",
+    autoStakeDesc: "Add each purchase to staking pool",
+    month: "Mo",
+  },
+  de: {
+    title: "Auto-Investieren",
+    subtitle: "Automatisch Metalle in regelmäßigen Abständen kaufen",
+    createPlan: "Neuer Plan",
+    noPlans: "Noch keine automatischen Kaufpläne",
+    token: "Token",
+    amount: "Betrag (USD)",
+    frequency: "Häufigkeit",
+    paymentSource: "Zahlungsquelle",
+    frequencies: { daily: "Täglich", weekly: "Wöchentlich", biweekly: "Alle 2 Wochen", monthly: "Monatlich" },
+    days: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"],
+    create: "Erstellen",
+    cancel: "Abbrechen",
+    pause: "Pausieren",
+    resume: "Fortsetzen",
+    delete: "Löschen",
+    confirm: "Bestätigen",
+    status: { active: "Aktiv", paused: "Pausiert", completed: "Abgeschlossen", cancelled: "Abgebrochen" },
+    success: { created: "Automatischer Kaufplan erfolgreich erstellt!", paused: "Plan pausiert", resumed: "Plan fortgesetzt", deleted: "Plan gelöscht" },
+    confirmMessages: { pause: "Möchten Sie diesen Plan wirklich pausieren?", resume: "Möchten Sie diesen Plan wirklich fortsetzen?", delete: "Möchten Sie diesen Plan wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden." },
+    autoStake: "Auto-Staken",
+    autoStakeDesc: "Jeden Kauf zum Staking-Pool hinzufügen",
+    month: "Mo",
+  },
+  fr: {
+    title: "Investissement Auto",
+    subtitle: "Achetez automatiquement des métaux à intervalles réguliers",
+    createPlan: "Nouveau Plan",
+    noPlans: "Aucun plan d'achat automatique",
+    token: "Token",
+    amount: "Montant (USD)",
+    frequency: "Fréquence",
+    paymentSource: "Source de Paiement",
+    frequencies: { daily: "Quotidien", weekly: "Hebdomadaire", biweekly: "Bimensuel", monthly: "Mensuel" },
+    days: ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"],
+    create: "Créer",
+    cancel: "Annuler",
+    pause: "Pause",
+    resume: "Reprendre",
+    delete: "Supprimer",
+    confirm: "Confirmer",
+    status: { active: "Actif", paused: "En pause", completed: "Terminé", cancelled: "Annulé" },
+    success: { created: "Plan d'achat automatique créé avec succès!", paused: "Plan en pause", resumed: "Plan repris", deleted: "Plan supprimé" },
+    confirmMessages: { pause: "Êtes-vous sûr de vouloir mettre ce plan en pause?", resume: "Êtes-vous sûr de vouloir reprendre ce plan?", delete: "Êtes-vous sûr de vouloir supprimer ce plan? Cette action est irréversible." },
+    autoStake: "Auto-Staking",
+    autoStakeDesc: "Ajouter chaque achat au pool de staking",
+    month: "Mois",
+  },
+  ar: {
+    title: "الاستثمار التلقائي",
+    subtitle: "شراء المعادن تلقائياً على فترات منتظمة",
+    createPlan: "خطة جديدة",
+    noPlans: "لا توجد خطط شراء تلقائية بعد",
+    token: "الرمز",
+    amount: "المبلغ (USD)",
+    frequency: "التكرار",
+    paymentSource: "مصدر الدفع",
+    frequencies: { daily: "يومي", weekly: "أسبوعي", biweekly: "كل أسبوعين", monthly: "شهري" },
+    days: ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
+    create: "إنشاء",
+    cancel: "إلغاء",
+    pause: "إيقاف مؤقت",
+    resume: "استئناف",
+    delete: "حذف",
+    confirm: "تأكيد",
+    status: { active: "نشط", paused: "متوقف مؤقتاً", completed: "مكتمل", cancelled: "ملغى" },
+    success: { created: "تم إنشاء خطة الشراء التلقائي بنجاح!", paused: "تم إيقاف الخطة مؤقتاً", resumed: "تم استئناف الخطة", deleted: "تم حذف الخطة" },
+    confirmMessages: { pause: "هل أنت متأكد من إيقاف هذه الخطة مؤقتاً؟", resume: "هل أنت متأكد من استئناف هذه الخطة؟", delete: "هل أنت متأكد من حذف هذه الخطة؟ لا يمكن التراجع عن هذا الإجراء." },
+    autoStake: "التخزين التلقائي",
+    autoStakeDesc: "إضافة كل عملية شراء إلى مجمع التخزين",
+    month: "شهر",
+  },
+  ru: {
+    title: "Авто-инвестирование",
+    subtitle: "Автоматически покупайте металлы через регулярные интервалы",
+    createPlan: "Новый План",
+    noPlans: "Планов автопокупки пока нет",
+    token: "Токен",
+    amount: "Сумма (USD)",
+    frequency: "Частота",
+    paymentSource: "Источник Оплаты",
+    frequencies: { daily: "Ежедневно", weekly: "Еженедельно", biweekly: "Раз в 2 недели", monthly: "Ежемесячно" },
+    days: ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"],
+    create: "Создать",
+    cancel: "Отмена",
+    pause: "Пауза",
+    resume: "Возобновить",
+    delete: "Удалить",
+    confirm: "Подтвердить",
+    status: { active: "Активен", paused: "Приостановлен", completed: "Завершён", cancelled: "Отменён" },
+    success: { created: "План автопокупки успешно создан!", paused: "План приостановлен", resumed: "План возобновлён", deleted: "План удалён" },
+    confirmMessages: { pause: "Вы уверены, что хотите приостановить этот план?", resume: "Вы уверены, что хотите возобновить этот план?", delete: "Вы уверены, что хотите удалить этот план? Это действие нельзя отменить." },
+    autoStake: "Авто-стейкинг",
+    autoStakeDesc: "Добавлять каждую покупку в пул стейкинга",
+    month: "Мес",
   },
 };
 
 const TOKENS = [
-  { symbol: "BTC", name: "Bitcoin", icon: "₿" },
-  { symbol: "ETH", name: "Ethereum", icon: "Ξ" },
-  { symbol: "XRP", name: "Ripple", icon: "✕" },
-  { symbol: "SOL", name: "Solana", icon: "◎" },
-  { symbol: "AUXG", name: "Gold", icon: "🥇" },
-  { symbol: "AUXS", name: "Silver", icon: "🥈" },
+  { symbol: "AUXG", name: "Gold", icon: "/gold-favicon-32x32.png", isImage: true },
+  { symbol: "AUXS", name: "Silver", icon: "/silver-favicon-32x32.png", isImage: true },
+  { symbol: "AUXPT", name: "Platinum", icon: "/platinum-favicon-32x32.png", isImage: true },
+  { symbol: "AUXPD", name: "Palladium", icon: "/palladium-favicon-32x32.png", isImage: true },
 ];
 
-export function RecurringBuyManager({ walletAddress, lang, usdBalance = 0, usdtBalance = 0 }: Props) {
-  const labels = t[lang];
+export function RecurringBuyManager({ 
+  walletAddress, 
+  lang: propLang, 
+  usdBalance = 0, 
+  usdtBalance = 0,
+  ethBalance = 0,
+  btcBalance = 0,
+  xrpBalance = 0,
+  solBalance = 0,
+}: Props) {
+  const { lang: contextLang } = useLanguage();
+  const lang = propLang || contextLang || "en";
+  const labels = t[lang] || t.en;
   const [plans, setPlans] = useState<RecurringBuy[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
+  
+  // Success/Error messages
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  
+  // Confirmation modal
+  const [confirmModal, setConfirmModal] = useState<{
+    show: boolean;
+    type: "pause" | "resume" | "delete";
+    planId: string;
+    planToken: string;
+  } | null>(null);
 
   // Form state
-  const [selectedToken, setSelectedToken] = useState("BTC");
+  const [selectedToken, setSelectedToken] = useState("AUXG");
   const [amount, setAmount] = useState("50");
   const [frequency, setFrequency] = useState<"daily" | "weekly" | "biweekly" | "monthly">("weekly");
-  const [paymentSource, setPaymentSource] = useState<"usd_balance" | "usdt_balance">("usd_balance");
-  const [dayOfWeek, setDayOfWeek] = useState(1); // Pazartesi
-  const [dayOfMonth, setDayOfMonth] = useState(1);
+  const [dayOfWeek, setDayOfWeek] = useState(1);
+  const [paymentSource, setPaymentSource] = useState<"usd_balance" | "usdt_balance" | "eth_balance" | "btc_balance" | "xrp_balance" | "sol_balance">("usd_balance");
+  const [autoStake, setAutoStake] = useState(false);
+  const [stakeDuration, setStakeDuration] = useState<3 | 6 | 12>(6);
 
   useEffect(() => {
-    fetchPlans();
+    if (walletAddress) fetchPlans();
   }, [walletAddress]);
+
+  // Auto-hide success message
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   const fetchPlans = async () => {
     try {
-      const res = await fetch("/api/recurring", {
+      const res = await fetch("/api/recurring-buy", {
         headers: { "x-wallet-address": walletAddress },
       });
       const data = await res.json();
       setPlans(data.plans || []);
-    } catch (error) {
-      console.error("Fetch plans error:", error);
+    } catch (err) {
+      console.error("Fetch plans error:", err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreate = async () => {
-    if (!amount || parseFloat(amount) < 10) return;
-
     setCreating(true);
+    setErrorMessage("");
     try {
-      const res = await fetch("/api/recurring", {
+      const res = await fetch("/api/recurring-buy", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -169,288 +269,422 @@ export function RecurringBuyManager({ walletAddress, lang, usdBalance = 0, usdtB
           token: selectedToken,
           amount: parseFloat(amount),
           frequency,
-          paymentSource,
           dayOfWeek: frequency === "weekly" || frequency === "biweekly" ? dayOfWeek : undefined,
-          dayOfMonth: frequency === "monthly" ? dayOfMonth : undefined,
-          hour: 12,
+          paymentSource,
+          autoStake,
+          stakeDuration: autoStake ? stakeDuration : undefined,
+          hour: 9,
         }),
       });
-
+      
+      const data = await res.json();
+      
       if (res.ok) {
         setShowCreate(false);
-        setAmount("50");
+        setSuccessMessage(labels.success.created);
         fetchPlans();
+        // Reset form
+        setAmount("50");
+        setSelectedToken("AUXG");
+        setFrequency("weekly");
+        setPaymentSource("usd_balance");
+      } else {
+        setErrorMessage(data.error || "Bir hata oluştu");
       }
-    } catch (error) {
-      console.error("Create plan error:", error);
+    } catch (err) {
+      console.error("Create error:", err);
+      setErrorMessage("Bir hata oluştu");
     } finally {
       setCreating(false);
     }
   };
 
-  const handleAction = async (planId: string, action: "pause" | "resume" | "cancel") => {
+  const handleConfirmAction = async () => {
+    if (!confirmModal) return;
+    
+    const { type, planId } = confirmModal;
+    
     try {
-      await fetch("/api/recurring", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-wallet-address": walletAddress,
-        },
-        body: JSON.stringify({ planId, action }),
-      });
+      if (type === "delete") {
+        await fetch(`/api/recurring-buy?id=${planId}`, {
+          method: "DELETE",
+          headers: { "x-wallet-address": walletAddress },
+        });
+        setSuccessMessage(labels.success.deleted);
+      } else {
+        await fetch("/api/recurring-buy", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "x-wallet-address": walletAddress },
+          body: JSON.stringify({ planId, action: type }),
+        });
+        setSuccessMessage(type === "pause" ? labels.success.paused : labels.success.resumed);
+      }
       fetchPlans();
-    } catch (error) {
-      console.error("Action error:", error);
+    } catch (err) {
+      console.error("Action error:", err);
+    } finally {
+      setConfirmModal(null);
     }
   };
 
-  const handleDelete = async (planId: string) => {
-    try {
-      await fetch(`/api/recurring?id=${planId}`, {
-        method: "DELETE",
-        headers: { "x-wallet-address": walletAddress },
-      });
-      fetchPlans();
-    } catch (error) {
-      console.error("Delete error:", error);
-    }
-  };
-
-  const activePlans = plans.filter((p) => p.status === "active");
-  const otherPlans = plans.filter((p) => p.status !== "active");
-
-  const formatNextRun = (date?: string) => {
-    if (!date) return "-";
-    const d = new Date(date);
-    return d.toLocaleDateString(lang === "tr" ? "tr-TR" : "en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  if (loading) {
-    return (
-      <div className="animate-pulse space-y-4">
-        <div className="h-12 bg-slate-800 rounded-xl" />
-        <div className="h-40 bg-slate-800 rounded-xl" />
-      </div>
-    );
+  if (!walletAddress) {
+    return <div className="text-center text-slate-400 py-8">Cüzdan bağlantısı gerekli</div>;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Success Message */}
+      {successMessage && (
+        <div className="p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-emerald-400 flex items-center gap-3">
+          <span className="text-xl">✅</span>
+          <span>{successMessage}</span>
+        </div>
+      )}
+      
+      {/* Error Message */}
+      {errorMessage && (
+        <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-400 flex items-center gap-3">
+          <span className="text-xl">❌</span>
+          <span>{errorMessage}</span>
+          <button onClick={() => setErrorMessage("")} className="ml-auto">✕</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">{labels.title}</h3>
-          <p className="text-sm text-slate-400">{labels.subtitle}</p>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{labels.title}</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">{labels.subtitle}</p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
-        >
-          + {labels.createPlan}
-        </button>
+        {!showCreate && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600"
+          >
+            + {labels.createPlan}
+          </button>
+        )}
       </div>
 
-      {/* Active Plans */}
-      {activePlans.length > 0 && (
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium text-slate-400">{labels.activePlans}</h4>
-          {activePlans.map((plan) => (
-            <PlanCard
-              key={plan.id}
-              plan={plan}
-              labels={labels}
-              onPause={() => handleAction(plan.id, "pause")}
-              onDelete={() => handleDelete(plan.id)}
-              formatNextRun={formatNextRun}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Other Plans */}
-      {otherPlans.length > 0 && (
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium text-slate-400">
-            {labels.pausedPlans} / {labels.completedPlans}
-          </h4>
-          {otherPlans.map((plan) => (
-            <PlanCard
-              key={plan.id}
-              plan={plan}
-              labels={labels}
-              onResume={plan.status === "paused" ? () => handleAction(plan.id, "resume") : undefined}
-              onDelete={() => handleDelete(plan.id)}
-              formatNextRun={formatNextRun}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* No Plans */}
-      {plans.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-4xl mb-4">📅</div>
-          <p className="text-slate-400">{labels.noPlans}</p>
-        </div>
-      )}
-
-      {/* Create Modal */}
+      {/* Create Form */}
       {showCreate && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 rounded-2xl w-full max-w-md border border-slate-700">
-            <div className="p-6 border-b border-slate-700">
-              <h3 className="text-lg font-semibold text-white">{labels.createPlan}</h3>
+        <div className="bg-white dark:bg-slate-800/50 rounded-xl p-4 border border-stone-200 dark:border-slate-700 space-y-4">
+          {/* Token Selection */}
+          <div>
+            <label className="text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.token}</label>
+            <div className="grid grid-cols-4 gap-2">
+              {TOKENS.map((token) => (
+                <button
+                  key={token.symbol}
+                  onClick={() => setSelectedToken(token.symbol)}
+                  className={`p-3 rounded-xl border transition-colors ${
+                    selectedToken === token.symbol
+                      ? "border-emerald-500 bg-emerald-500/10"
+                      : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
+                  }`}
+                >
+                  {token.isImage ? (
+                    <img src={token.icon} alt={token.symbol} className="w-6 h-6 mx-auto" />
+                  ) : (
+                    <div className="text-xl text-center">{token.icon}</div>
+                  )}
+                  <div className="text-xs text-center font-medium text-slate-700 dark:text-slate-300 mt-1">{token.symbol}</div>
+                </button>
+              ))}
             </div>
+          </div>
 
-            <div className="p-6 space-y-4">
-              {/* Token Selection */}
-              <div>
-                <label className="text-sm text-slate-400 mb-2 block">{labels.token}</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {TOKENS.map((token) => (
-                    <button
-                      key={token.symbol}
-                      onClick={() => setSelectedToken(token.symbol)}
-                      className={`p-3 rounded-xl border transition-colors ${
-                        selectedToken === token.symbol
-                          ? "border-emerald-500 bg-emerald-500/10"
-                          : "border-slate-700 hover:border-slate-600"
-                      }`}
-                    >
-                      <div className="text-xl">{token.icon}</div>
-                      <div className="text-sm text-white mt-1">{token.symbol}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Amount */}
-              <div>
-                <label className="text-sm text-slate-400 mb-2 block">{labels.amount}</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    min="10"
-                    max="10000"
-                    className="w-full pl-8 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white"
-                  />
-                </div>
-                <div className="flex gap-2 mt-2">
-                  {[25, 50, 100, 250, 500].map((val) => (
-                    <button
-                      key={val}
-                      onClick={() => setAmount(val.toString())}
-                      className="px-3 py-1 text-sm bg-slate-800 hover:bg-slate-700 text-slate-400 rounded"
-                    >
-                      ${val}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Frequency */}
-              <div>
-                <label className="text-sm text-slate-400 mb-2 block">{labels.frequency}</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(["daily", "weekly", "biweekly", "monthly"] as const).map((freq) => (
-                    <button
-                      key={freq}
-                      onClick={() => setFrequency(freq)}
-                      className={`p-3 rounded-xl border transition-colors ${
-                        frequency === freq
-                          ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
-                          : "border-slate-700 text-slate-400 hover:border-slate-600"
-                      }`}
-                    >
-                      {labels.frequencies[freq]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Day Selection */}
-              {(frequency === "weekly" || frequency === "biweekly") && (
-                <div>
-                  <label className="text-sm text-slate-400 mb-2 block">Gün</label>
-                  <select
-                    value={dayOfWeek}
-                    onChange={(e) => setDayOfWeek(parseInt(e.target.value))}
-                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white"
-                  >
-                    {labels.days.map((day, i) => (
-                      <option key={i} value={i}>{day}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {frequency === "monthly" && (
-                <div>
-                  <label className="text-sm text-slate-400 mb-2 block">Ayın Günü</label>
-                  <select
-                    value={dayOfMonth}
-                    onChange={(e) => setDayOfMonth(parseInt(e.target.value))}
-                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white"
-                  >
-                    {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
-                      <option key={day} value={day}>{day}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Payment Source */}
-              <div>
-                <label className="text-sm text-slate-400 mb-2 block">{labels.paymentSource}</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setPaymentSource("usd_balance")}
-                    className={`p-3 rounded-xl border transition-colors ${
-                      paymentSource === "usd_balance"
-                        ? "border-emerald-500 bg-emerald-500/10"
-                        : "border-slate-700 hover:border-slate-600"
-                    }`}
-                  >
-                    <div className="text-white font-medium">USD</div>
-                    <div className="text-xs text-slate-500">${usdBalance.toFixed(2)}</div>
-                  </button>
-                  <button
-                    onClick={() => setPaymentSource("usdt_balance")}
-                    className={`p-3 rounded-xl border transition-colors ${
-                      paymentSource === "usdt_balance"
-                        ? "border-emerald-500 bg-emerald-500/10"
-                        : "border-slate-700 hover:border-slate-600"
-                    }`}
-                  >
-                    <div className="text-white font-medium">USDT</div>
-                    <div className="text-xs text-slate-500">${usdtBalance.toFixed(2)}</div>
-                  </button>
-                </div>
-              </div>
+          {/* Amount */}
+          <div>
+            <label className="text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.amount}</label>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600 dark:text-slate-400 font-medium">$</span>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="flex-1 bg-stone-100 dark:bg-slate-900 border border-stone-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                min="10"
+              />
             </div>
+            <div className="flex gap-2 mt-2">
+              {["25", "50", "100", "250", "500"].map((val) => (
+                <button
+                  key={val}
+                  onClick={() => setAmount(val)}
+                  className="px-3 py-1 bg-stone-200 dark:bg-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-300 hover:bg-stone-300 dark:hover:bg-slate-600"
+                >
+                  ${val}
+                </button>
+              ))}
+            </div>
+          </div>
 
-            <div className="p-6 border-t border-slate-700 flex gap-3">
+          {/* Frequency */}
+          <div>
+            <label className="text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.frequency}</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(["daily", "weekly", "biweekly", "monthly"] as const).map((freq) => (
+                <button
+                  key={freq}
+                  onClick={() => setFrequency(freq)}
+                  className={`p-3 rounded-xl border transition-colors ${
+                    frequency === freq
+                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
+                      : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600 text-slate-300"
+                  }`}
+                >
+                  {labels.frequencies[freq]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Day of Week (for weekly/biweekly) */}
+          {(frequency === "weekly" || frequency === "biweekly") && (
+            <div>
+              <label className="text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">Gün</label>
+              <select
+                value={dayOfWeek}
+                onChange={(e) => setDayOfWeek(parseInt(e.target.value))}
+                className="w-full bg-stone-100 dark:bg-slate-900 border border-stone-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+              >
+                {labels.days.map((day, i) => (
+                  <option key={i} value={i}>{day}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Payment Source */}
+          <div>
+            <label className="text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.paymentSource}</label>
+            <div className="grid grid-cols-3 gap-2">
               <button
-                onClick={() => setShowCreate(false)}
-                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl"
+                onClick={() => setPaymentSource("usd_balance")}
+                className={`p-3 rounded-xl border transition-colors ${
+                  paymentSource === "usd_balance"
+                    ? "border-emerald-500 bg-emerald-500/10"
+                    : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
+                }`}
+              >
+                <div className="text-slate-900 dark:text-white font-medium">USD</div>
+                <div className="text-xs text-slate-500">${usdBalance.toFixed(2)}</div>
+              </button>
+              <button
+                onClick={() => setPaymentSource("usdt_balance")}
+                className={`p-3 rounded-xl border transition-colors ${
+                  paymentSource === "usdt_balance"
+                    ? "border-emerald-500 bg-emerald-500/10"
+                    : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
+                }`}
+              >
+                <div className="text-slate-900 dark:text-white font-medium">USDT</div>
+                <div className="text-xs text-slate-500">${usdtBalance.toFixed(2)}</div>
+              </button>
+              <button
+                onClick={() => setPaymentSource("eth_balance")}
+                className={`p-3 rounded-xl border transition-colors ${
+                  paymentSource === "eth_balance"
+                    ? "border-emerald-500 bg-emerald-500/10"
+                    : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
+                }`}
+              >
+                <div className="text-slate-900 dark:text-white font-medium">ETH</div>
+                <div className="text-xs text-slate-500">{ethBalance.toFixed(4)}</div>
+              </button>
+              <button
+                onClick={() => setPaymentSource("btc_balance")}
+                className={`p-3 rounded-xl border transition-colors ${
+                  paymentSource === "btc_balance"
+                    ? "border-emerald-500 bg-emerald-500/10"
+                    : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
+                }`}
+              >
+                <div className="text-slate-900 dark:text-white font-medium">BTC</div>
+                <div className="text-xs text-slate-500">{btcBalance.toFixed(6)}</div>
+              </button>
+              <button
+                onClick={() => setPaymentSource("xrp_balance")}
+                className={`p-3 rounded-xl border transition-colors ${
+                  paymentSource === "xrp_balance"
+                    ? "border-emerald-500 bg-emerald-500/10"
+                    : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
+                }`}
+              >
+                <div className="text-slate-900 dark:text-white font-medium">XRP</div>
+                <div className="text-xs text-slate-500">{xrpBalance.toFixed(2)}</div>
+              </button>
+              <button
+                onClick={() => setPaymentSource("sol_balance")}
+                className={`p-3 rounded-xl border transition-colors ${
+                  paymentSource === "sol_balance"
+                    ? "border-emerald-500 bg-emerald-500/10"
+                    : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
+                }`}
+              >
+                <div className="text-slate-900 dark:text-white font-medium">SOL</div>
+                <div className="text-xs text-slate-500">{solBalance.toFixed(4)}</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Auto-Stake Option */}
+          <div className="p-4 rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/30">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="text-slate-900 dark:text-white font-medium flex items-center gap-2">
+                  🔒 {labels.autoStake}
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                  {labels.autoStakeDesc}
+                </p>
+              </div>
+              <button
+                onClick={() => setAutoStake(!autoStake)}
+                className={`w-12 h-6 rounded-full transition-colors ${autoStake ? "bg-emerald-500" : "bg-stone-300 dark:bg-slate-600"}`}
+              >
+                <div className={`w-5 h-5 rounded-full bg-white transform transition-transform ${autoStake ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
+            </div>
+            {autoStake && (
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                {([3, 6, 12] as const).map((months) => (
+                  <button
+                    key={months}
+                    onClick={() => setStakeDuration(months)}
+                    className={`p-3 rounded-xl border transition-colors ${stakeDuration === months ? "border-emerald-500 bg-emerald-500/10 text-emerald-400" : "border-stone-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-stone-400 dark:hover:border-slate-600"}`}
+                  >
+                    <div className="font-medium">{months} {labels.month}</div>
+                    <div className="text-xs opacity-70">{months === 3 ? "5%" : months === 6 ? "8%" : "12%"} APY</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => setShowCreate(false)}
+              className="flex-1 py-3 bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-stone-300 dark:hover:bg-slate-600 font-medium"
+            >
+              {labels.cancel}
+            </button>
+            <button
+              onClick={handleCreate}
+              disabled={creating || !amount || parseFloat(amount) < 10}
+              className="flex-1 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 disabled:opacity-50"
+            >
+              {creating ? "..." : labels.create}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Plans List */}
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full"></div>
+        </div>
+      ) : plans.length === 0 ? (
+        <div className="text-center py-8 text-slate-500">
+          <p className="text-4xl mb-2">📅</p>
+          <p>{labels.noPlans}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {plans.map((plan) => {
+            const token = TOKENS.find((t) => t.symbol === plan.token);
+            return (
+              <div key={plan.id} className="bg-white dark:bg-slate-800/50 rounded-xl p-4 border border-stone-200 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {token?.isImage ? (
+                      <img src={token.icon} alt={token.symbol} className="w-8 h-8" />
+                    ) : (
+                      <div className="text-2xl">{token?.icon || "🪙"}</div>
+                    )}
+                    <div>
+                      <div className="font-semibold text-slate-900 dark:text-white">
+                        ${plan.amount} → {plan.token}
+                      </div>
+                      <div className="text-sm text-slate-600 dark:text-slate-400">
+                        {labels.frequencies[plan.frequency]}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      plan.status === "active" ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" :
+                      plan.status === "paused" ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400" :
+                      "bg-slate-200 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400"
+                    }`}>
+                      {labels.status[plan.status]}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  {plan.status === "active" && (
+                    <button
+                      onClick={() => setConfirmModal({ show: true, type: "pause", planId: plan.id, planToken: plan.token })}
+                      className="flex-1 py-2 bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg text-sm font-medium hover:bg-amber-200 dark:hover:bg-amber-500/20 transition-colors"
+                    >
+                      {labels.pause}
+                    </button>
+                  )}
+                  {plan.status === "paused" && (
+                    <button
+                      onClick={() => setConfirmModal({ show: true, type: "resume", planId: plan.id, planToken: plan.token })}
+                      className="flex-1 py-2 bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-sm font-medium hover:bg-emerald-200 dark:hover:bg-emerald-500/20 transition-colors"
+                    >
+                      {labels.resume}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setConfirmModal({ show: true, type: "delete", planId: plan.id, planToken: plan.token })}
+                    className="py-2 px-4 bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium hover:bg-red-200 dark:hover:bg-red-500/20 transition-colors"
+                  >
+                    {labels.delete}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 max-w-sm w-full p-6">
+            <div className="text-center mb-6">
+              <div className="text-4xl mb-4">
+                {confirmModal.type === "delete" ? "🗑️" : confirmModal.type === "pause" ? "⏸️" : "▶️"}
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                {confirmModal.planToken} {confirmModal.type === "delete" ? "Planı Sil" : confirmModal.type === "pause" ? "Planı Duraklat" : "Planı Devam Ettir"}
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400 text-sm">
+                {labels.confirmMessages[confirmModal.type]}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmModal(null)}
+                className="flex-1 py-3 bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-stone-300 dark:hover:bg-slate-600 font-medium"
               >
                 {labels.cancel}
               </button>
               <button
-                onClick={handleCreate}
-                disabled={creating || parseFloat(amount) < 10}
-                className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl disabled:opacity-50"
+                onClick={handleConfirmAction}
+                className={`flex-1 py-3 rounded-xl text-white font-medium ${
+                  confirmModal.type === "delete" 
+                    ? "bg-red-500 hover:bg-red-600" 
+                    : "bg-emerald-500 hover:bg-emerald-600"
+                }`}
               >
-                {creating ? "..." : labels.create}
+                {labels.confirm}
               </button>
             </div>
           </div>
@@ -460,103 +694,4 @@ export function RecurringBuyManager({ walletAddress, lang, usdBalance = 0, usdtB
   );
 }
 
-// Plan Card Component
-function PlanCard({
-  plan,
-  labels,
-  onPause,
-  onResume,
-  onDelete,
-  formatNextRun,
-}: {
-  plan: RecurringBuy;
-  labels: typeof t.tr;
-  onPause?: () => void;
-  onResume?: () => void;
-  onDelete: () => void;
-  formatNextRun: (date?: string) => string;
-}) {
-  const token = TOKENS.find((t) => t.symbol === plan.token);
-  
-  const statusColors = {
-    active: "text-emerald-400 bg-emerald-500/10",
-    paused: "text-amber-400 bg-amber-500/10",
-    completed: "text-blue-400 bg-blue-500/10",
-    cancelled: "text-slate-400 bg-slate-500/10",
-  };
-
-  return (
-    <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className="text-2xl">{token?.icon || "🪙"}</div>
-          <div>
-            <div className="font-medium text-white">
-              ${plan.amount} {plan.token}
-            </div>
-            <div className="text-sm text-slate-500">
-              {labels.frequencies[plan.frequency]}
-            </div>
-          </div>
-        </div>
-        <span className={`px-2 py-1 rounded text-xs ${statusColors[plan.status]}`}>
-          {labels.status[plan.status]}
-        </span>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-        <div>
-          <span className="text-slate-500">{labels.stats.totalSpent}:</span>
-          <span className="text-white ml-1">${plan.stats.totalSpent.toFixed(2)}</span>
-        </div>
-        <div>
-          <span className="text-slate-500">{labels.stats.totalBought}:</span>
-          <span className="text-white ml-1">{plan.stats.totalPurchased.toFixed(6)} {plan.token}</span>
-        </div>
-        <div>
-          <span className="text-slate-500">{labels.stats.avgPrice}:</span>
-          <span className="text-white ml-1">
-            ${plan.stats.averagePrice > 0 ? plan.stats.averagePrice.toFixed(2) : "-"}
-          </span>
-        </div>
-        <div>
-          <span className="text-slate-500">{labels.stats.executions}:</span>
-          <span className="text-white ml-1">{plan.stats.executionCount}</span>
-        </div>
-      </div>
-
-      {plan.status === "active" && (
-        <div className="text-xs text-slate-500 mb-3">
-          {labels.stats.nextRun}: {formatNextRun(plan.stats.nextExecutionAt)}
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="flex gap-2">
-        {onPause && (
-          <button
-            onClick={onPause}
-            className="flex-1 py-2 bg-amber-500/10 text-amber-400 rounded-lg text-sm hover:bg-amber-500/20"
-          >
-            {labels.pause}
-          </button>
-        )}
-        {onResume && (
-          <button
-            onClick={onResume}
-            className="flex-1 py-2 bg-emerald-500/10 text-emerald-400 rounded-lg text-sm hover:bg-emerald-500/20"
-          >
-            {labels.resume}
-          </button>
-        )}
-        <button
-          onClick={onDelete}
-          className="py-2 px-4 bg-red-500/10 text-red-400 rounded-lg text-sm hover:bg-red-500/20"
-        >
-          {labels.delete}
-        </button>
-      </div>
-    </div>
-  );
-}
+export default RecurringBuyManager;

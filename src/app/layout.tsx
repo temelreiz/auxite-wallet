@@ -1,104 +1,83 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Web3Provider from "@/context/Web3Provider";
-import { ToastProvider } from "@/components/ui/Toast";
+import { Web3Provider } from "@/components/Web3Provider";
+import { ToastProvider } from "@/components/ToastProvider";
+import { ToastProvider as UIToastProvider } from "@/components/ui/Toast";
+import { LanguageProvider } from "@/components/LanguageContext";
+import { WalletProvider } from "@/components/WalletContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// PWA & SEO Metadata
 export const metadata: Metadata = {
-  title: {
-    default: "Auxite Wallet",
-    template: "%s | Auxite Wallet",
-  },
-  description: "Precious Metals & Crypto Trading Platform",
-  keywords: ["crypto", "wallet", "bitcoin", "ethereum", "gold", "silver", "auxite"],
-  
-  // PWA
+  title: "Auxite - Tokenized Precious Metals",
+  description: "Trade digital tokens backed by physical precious metals",
   manifest: "/manifest.json",
-  
-  // Apple
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Auxite Wallet",
-  },
-  
-  // Icons
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "16x16", type: "image/png" },
-      { url: "/favicon.ico", sizes: "32x32", type: "image/png" },
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [
-      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
-  },
-  
-  // Open Graph
-  openGraph: {
-    type: "website",
-    locale: "tr_TR",
-    url: "https://auxite.com",
-    siteName: "Auxite Wallet",
-    title: "Auxite Wallet",
-    description: "Precious Metals & Crypto Trading Platform",
+    title: "Auxite",
   },
 };
 
-// Viewport
 export const viewport: Viewport = {
-  themeColor: "#10b981",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false,
-  viewportFit: "cover",
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
+    <html lang="tr" suppressHydrationWarning>
       <head>
-        {/* PWA Meta Tags */}
-        <meta name="application-name" content="Auxite Wallet" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Auxite Wallet" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="msapplication-TileColor" content="#10b981" />
-      </head>
-      <body className={inter.className}>
-        <ToastProvider>
-          <Web3Provider>{children}</Web3Provider>
-        </ToastProvider>
-        
-        {/* Service Worker Registration */}
+        {/* Theme initialization script - runs before React hydration */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').then(
-                    function(registration) {
-                      console.log('SW registered:', registration.scope);
-                    },
-                    function(err) {
-                      console.log('SW registration failed:', err);
-                    }
-                  );
-                });
-              }
+              (function() {
+                try {
+                  var theme = localStorage.getItem('auxite_theme');
+                  var lang = localStorage.getItem('auxite_language');
+                  
+                  // Apply theme
+                  if (theme === 'light') {
+                    document.documentElement.classList.add('light');
+                    document.documentElement.classList.remove('dark');
+                  } else {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('light');
+                  }
+                  
+                  // Apply RTL for Arabic
+                  if (lang === 'ar') {
+                    document.documentElement.dir = 'rtl';
+                  }
+                } catch (e) {}
+              })();
             `,
           }}
         />
+      </head>
+      <body className={`${inter.className} antialiased bg-stone-100 dark:bg-zinc-950`} suppressHydrationWarning>
+        <ToastProvider>
+          <UIToastProvider>
+            <Web3Provider>
+              <WalletProvider>
+                <LanguageProvider>
+                  {children}
+                </LanguageProvider>
+              </WalletProvider>
+            </Web3Provider>
+          </UIToastProvider>
+        </ToastProvider>
       </body>
     </html>
   );

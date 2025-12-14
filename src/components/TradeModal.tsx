@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
 import { useWallet } from "@/components/WalletContext";
 
 interface TradeModalProps {
@@ -14,7 +13,7 @@ interface TradeModalProps {
     icon: string;
   };
   mode: "buy" | "sell";
-  lang?: "tr" | "en";
+  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
 const paymentMethods = [
@@ -23,6 +22,75 @@ const paymentMethods = [
   { id: "ETH", name: "ETH", icon: "Ξ" },
   { id: "BTC", name: "BTC", icon: "₿" },
 ];
+
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    buy: "Satın Al",
+    sell: "Sat",
+    youPay: "Ödeyeceğiniz",
+    youReceive: "Alacağınız",
+    balance: "Bakiye",
+    bonus: "Bonus",
+    insufficientBalance: "Yetersiz bakiye",
+    connectWallet: "Cüzdan bağlayın",
+    processing: "İşleniyor...",
+  },
+  en: {
+    buy: "Buy",
+    sell: "Sell",
+    youPay: "You Pay",
+    youReceive: "You Receive",
+    balance: "Balance",
+    bonus: "Bonus",
+    insufficientBalance: "Insufficient balance",
+    connectWallet: "Connect wallet",
+    processing: "Processing...",
+  },
+  de: {
+    buy: "Kaufen",
+    sell: "Verkaufen",
+    youPay: "Sie zahlen",
+    youReceive: "Sie erhalten",
+    balance: "Guthaben",
+    bonus: "Bonus",
+    insufficientBalance: "Unzureichendes Guthaben",
+    connectWallet: "Wallet verbinden",
+    processing: "Wird verarbeitet...",
+  },
+  fr: {
+    buy: "Acheter",
+    sell: "Vendre",
+    youPay: "Vous payez",
+    youReceive: "Vous recevez",
+    balance: "Solde",
+    bonus: "Bonus",
+    insufficientBalance: "Solde insuffisant",
+    connectWallet: "Connecter le portefeuille",
+    processing: "Traitement...",
+  },
+  ar: {
+    buy: "شراء",
+    sell: "بيع",
+    youPay: "ستدفع",
+    youReceive: "ستحصل على",
+    balance: "الرصيد",
+    bonus: "مكافأة",
+    insufficientBalance: "رصيد غير كافٍ",
+    connectWallet: "ربط المحفظة",
+    processing: "جاري المعالجة...",
+  },
+  ru: {
+    buy: "Купить",
+    sell: "Продать",
+    youPay: "Вы платите",
+    youReceive: "Вы получите",
+    balance: "Баланс",
+    bonus: "Бонус",
+    insufficientBalance: "Недостаточный баланс",
+    connectWallet: "Подключить кошелек",
+    processing: "Обработка...",
+  },
+};
 
 export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeModalProps) {
   // Gerçek bakiyeler - useWallet hook'undan
@@ -35,6 +103,8 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
   const [amount, setAmount] = useState("");
   const [selectedCurrency, setSelectedCurrency] = useState("AUXM");
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const t = translations[lang] || translations.en;
 
   useEffect(() => {
     if (isOpen) {
@@ -88,33 +158,21 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
     }
   };
 
-  const t = {
-    buy: lang === "tr" ? "Satın Al" : "Buy",
-    sell: lang === "tr" ? "Sat" : "Sell",
-    youPay: lang === "tr" ? "Ödeyeceğiniz" : "You Pay",
-    youReceive: lang === "tr" ? "Alacağınız" : "You Receive",
-    balance: lang === "tr" ? "Bakiye" : "Balance",
-    bonus: lang === "tr" ? "Bonus" : "Bonus",
-    insufficientBalance: lang === "tr" ? "Yetersiz bakiye" : "Insufficient balance",
-    connectWallet: lang === "tr" ? "Cüzdan bağlayın" : "Connect wallet",
-    processing: lang === "tr" ? "İşleniyor..." : "Processing...",
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-slate-900 rounded-2xl border border-slate-800 shadow-xl">
-        <div className="flex items-center justify-between p-4 border-b border-slate-800">
-          <h2 className="text-lg font-semibold text-white">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-800 shadow-xl">
+        <div className="flex items-center justify-between p-4 border-b border-stone-200 dark:border-slate-800">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
             {mode === "buy" ? t.buy : t.sell} {metal.name}
           </h2>
-          <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded-lg">
+          <button onClick={onClose} className="p-1 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400">
             ✕
           </button>
         </div>
 
         <div className="p-4 space-y-4">
           <div>
-            <label className="text-sm text-slate-400 mb-2 block">
+            <label className="text-sm text-slate-500 dark:text-slate-400 mb-2 block">
               {mode === "buy" ? t.youPay : t.youReceive}
             </label>
             <div className="flex gap-2 mb-3">
@@ -124,8 +182,8 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
                   onClick={() => setSelectedCurrency(pm.id)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedCurrency === pm.id
-                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500"
-                      : "bg-slate-800 text-slate-400 border border-slate-700"
+                      ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500"
+                      : "bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-stone-200 dark:border-slate-700"
                   }`}
                 >
                   {pm.icon} {pm.name}
@@ -135,11 +193,11 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
             
             {selectedCurrency === "AUXM" && (
               <div className="flex items-center justify-between text-xs mb-2">
-                <span className="text-slate-500">{t.balance}:</span>
+                <span className="text-slate-400 dark:text-slate-500">{t.balance}:</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-white font-mono">{auxmBalance.toFixed(2)} AUXM</span>
+                  <span className="text-slate-700 dark:text-white font-mono">{auxmBalance.toFixed(2)} AUXM</span>
                   {bonusAuxm > 0 && (
-                    <span className="text-purple-400 font-mono">+{bonusAuxm.toFixed(2)} {t.bonus}</span>
+                    <span className="text-purple-600 dark:text-purple-400 font-mono">+{bonusAuxm.toFixed(2)} {t.bonus}</span>
                   )}
                 </div>
               </div>
@@ -150,39 +208,39 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className={`w-full px-4 py-3 bg-slate-800 border rounded-xl text-white text-lg font-mono focus:outline-none ${
-                hasInsufficientBalance ? "border-red-500" : "border-slate-700"
+              className={`w-full px-4 py-3 bg-stone-50 dark:bg-slate-800 border rounded-xl text-slate-800 dark:text-white text-lg font-mono focus:outline-none ${
+                hasInsufficientBalance ? "border-red-500" : "border-stone-200 dark:border-slate-700"
               }`}
             />
             {hasInsufficientBalance && (
-              <p className="text-red-400 text-xs mt-1">{t.insufficientBalance}</p>
+              <p className="text-red-500 dark:text-red-400 text-xs mt-1">{t.insufficientBalance}</p>
             )}
           </div>
 
           <div className="flex justify-center">
-            <div className="p-2 bg-slate-800 rounded-full">
+            <div className="p-2 bg-stone-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400">
               ↓
             </div>
           </div>
 
           <div>
-            <label className="text-sm text-slate-400 mb-2 block">
+            <label className="text-sm text-slate-500 dark:text-slate-400 mb-2 block">
               {mode === "buy" ? t.youReceive : t.youPay}
             </label>
-            <div className="flex items-center gap-3 p-4 bg-slate-800 border border-slate-700 rounded-xl">
+            <div className="flex items-center gap-3 p-4 bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl">
               <span className="text-2xl">{metal.icon}</span>
               <div>
-                <div className="text-white text-lg font-mono">
+                <div className="text-slate-800 dark:text-white text-lg font-mono">
                   {metalAmount.toFixed(4)} {metal.symbol}
                 </div>
-                <div className="text-slate-400 text-sm">@ ${metal.price.toFixed(2)}/g</div>
+                <div className="text-slate-500 dark:text-slate-400 text-sm">@ ${metal.price.toFixed(2)}/g</div>
               </div>
             </div>
           </div>
 
           {mode === "buy" && selectedCurrency === "AUXM" && bonusAuxm > 0 && amountNum > 0 && (
             <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-              <div className="text-xs text-purple-300">
+              <div className="text-xs text-purple-600 dark:text-purple-300">
                 💜 {lang === "tr" ? "Bonus kullanımı:" : "Bonus usage:"} 
                 <span className="font-mono ml-2">{bonusUsage.usedBonus.toFixed(2)} AUXM</span>
               </div>
@@ -194,7 +252,7 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
             disabled={!isConnected || amountNum <= 0 || hasInsufficientBalance || isProcessing}
             className={`w-full py-4 rounded-xl font-semibold text-white transition-colors ${
               !isConnected || amountNum <= 0 || hasInsufficientBalance || isProcessing
-                ? "bg-slate-700 cursor-not-allowed"
+                ? "bg-slate-300 dark:bg-slate-700 cursor-not-allowed"
                 : mode === "buy" ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"
             }`}
           >

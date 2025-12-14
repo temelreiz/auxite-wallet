@@ -1,5 +1,5 @@
-// src/lib/redis.ts
-// Auxite Wallet - Redis Client (Upstash)
+// src/lib/redis.ts - UPDATED
+// Auxite Wallet - Redis Client (Upstash) with Sorted Set support
 
 import { Redis } from "@upstash/redis";
 
@@ -49,6 +49,17 @@ export const redis = {
   hgetall: async (key: string) => getRedis().hgetall(key),
   hincrbyfloat: async (key: string, field: string, value: number) => getRedis().hincrbyfloat(key, field, value),
   pipeline: () => getRedis().pipeline(),
+  // Sorted Set operations for Limit Orders
+  zadd: async (key: string, ...members: { score: number; member: string }[]) => {
+    const r = getRedis();
+    for (const m of members) {
+      await r.zadd(key, { score: m.score, member: m.member });
+    }
+  },
+  zrem: async (key: string, ...members: string[]) => getRedis().zrem(key, ...members),
+  zrange: async (key: string, start: number, stop: number) => getRedis().zrange(key, start, stop),
+  zrangebyscore: async (key: string, min: number, max: number) => getRedis().zrange(key, min, max, { byScore: true }),
+  zcard: async (key: string) => getRedis().zcard(key),
 };
 
 // ============================================
