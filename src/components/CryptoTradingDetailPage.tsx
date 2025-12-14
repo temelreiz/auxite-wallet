@@ -759,7 +759,7 @@ export default function CryptoTradingDetailPage({
           isOpen={showConvertModal}
           onClose={() => setShowConvertModal(false)}
           crypto={cryptoId}
-          lang={lang}
+          lang={lang as 'tr' | 'en' | 'de' | 'fr' | 'ar' | 'ru'}
           cryptoBalances={cryptoBalances}
           cryptoPrices={cryptoPrices}
           metalBidPrices={metalBidPrices}
