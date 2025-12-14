@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
 
     // Bakiye kontrolu
     const balances = await redis.hgetall('balances:' + walletAddress.toLowerCase());
-    const tokenBalance = parseFloat(balances?.[token.toLowerCase()] || '0');
+    const tokenBalance = parseFloat((balances as Record<string, string>)?.[token.toLowerCase()] || '0');
     
     if (tokenBalance < amount) {
       return NextResponse.json({ 
