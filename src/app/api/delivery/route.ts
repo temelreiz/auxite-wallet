@@ -301,7 +301,7 @@ export async function DELETE(request: NextRequest) {
 
     // Bakiyeyi geri ver
     const balances = await redis.hgetall('balances:' + walletAddress.toLowerCase());
-    const currentBalance = parseFloat(balances?.[deliveryRequest.token.toLowerCase()] || '0');
+    const currentBalance = parseFloat((balances as Record<string, string>)?.[deliveryRequest.token.toLowerCase()] || '0');
     const newBalance = currentBalance + deliveryRequest.amount;
     await redis.hset('balances:' + walletAddress.toLowerCase(), { [deliveryRequest.token.toLowerCase()]: newBalance.toString() });
 
