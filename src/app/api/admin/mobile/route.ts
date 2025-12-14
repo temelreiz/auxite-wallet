@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
       
       case 'update-remote-config': {
         const { config } = body;
-        const current = (await redis.get(KEYS.REMOTE_CONFIG)) || DEFAULT_REMOTE_CONFIG;
+        const current = ((await redis.get(KEYS.REMOTE_CONFIG)) || DEFAULT_REMOTE_CONFIG) as typeof DEFAULT_REMOTE_CONFIG;
         const updated = {
           theme: { ...current.theme, ...config?.theme },
           limits: { ...current.limits, ...config?.limits },
