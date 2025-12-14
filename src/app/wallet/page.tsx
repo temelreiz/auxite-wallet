@@ -1825,6 +1825,7 @@ export default function WalletPage() {
       {/* Buy with USD Modal */}
       {showBuyWithUsd && (
         <BuyWithUsdModal
+              lang={(['de', 'fr, 'ar, 'ru].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
           isOpen={showBuyWithUsd}
           onClose={() => setShowBuyWithUsd(false)}
          
