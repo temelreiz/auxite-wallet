@@ -1836,6 +1836,7 @@ export default function WalletPage() {
       {/* USD Convert Modal */}
       {showUsdConvert && (
         <UsdConvertModal
+              lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
           isOpen={showUsdConvert}
           onClose={() => setShowUsdConvert(false)}
          
