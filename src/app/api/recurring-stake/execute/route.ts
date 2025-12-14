@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         if (metalBalance < plan.amount && plan.paymentSource !== 'metal_balance') {
           const needed = plan.amount - metalBalance;
           const sourceKey = plan.paymentSource.replace('_balance', '');
-          const sourceBalance = parseFloat(balances?.[sourceKey] || '0');
+          const sourceBalance = parseFloat((balances as Record<string, string>)?.[sourceKey] || '0');
 
           const priceData = await getMetalPrice(plan.token);
           const requiredAmount = needed * priceData.askPerGram;
