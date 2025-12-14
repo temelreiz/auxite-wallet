@@ -1814,6 +1814,7 @@ export default function WalletPage() {
       {/* USD Deposit Modal */}
       {showUsdDeposit && (
         <UsdDepositModal
+              lang={lang as 'tr' | 'en'}
           isOpen={showUsdDeposit}
           onClose={() => setShowUsdDeposit(false)}
          
