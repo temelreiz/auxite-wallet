@@ -93,7 +93,7 @@ export async function updateOraclePrices(): Promise<{
     const metals = spreadConfig.metals || spreadConfig;
 
     // 4. Apply spread for BUY prices (ask)
-    const metals = spreadConfig.metals || spreadConfig;
+    
     const askPrices = {
       gold: applySpread(basePrices.gold, 'buy', metals.gold.buy),
       silver: applySpread(basePrices.silver, 'buy', metals.silver.buy),
