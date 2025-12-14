@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         if (!checkShouldExecute(plan, now)) continue;
 
         const balances = await redis.hgetall('balances:' + walletAddress);
-        const metalBalance = parseFloat(balances?.[plan.token.toLowerCase()] || '0');
+        const metalBalance = parseFloat((balances as Record<string, string>)?.[plan.token.toLowerCase()] || '0');
 
         let stakeAmount = plan.amount;
         let purchasedAmount = 0;
