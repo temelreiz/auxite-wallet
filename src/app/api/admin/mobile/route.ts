@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'update-app-config': {
         const { ios, android } = body;
-        const current = (await redis.get(KEYS.APP_CONFIG)) || DEFAULT_APP_CONFIG;
+        const current = ((await redis.get(KEYS.APP_CONFIG)) || DEFAULT_APP_CONFIG) as typeof DEFAULT_APP_CONFIG;
         const updated = {
           ios: { ...current.ios, ...ios },
           android: { ...current.android, ...android },
