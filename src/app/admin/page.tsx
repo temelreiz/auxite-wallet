@@ -1424,7 +1424,7 @@ export default function AdminDashboard() {
                   </p>
                   <button
                     onClick={handleSendCrypto}
-                    disabled={walletProcessing || !sendAddress || !sendAmount}
+                    disabled={!!walletProcessing || !sendAddress || !sendAmount}
                     className="px-6 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-black font-medium transition-colors"
                   >
                     {walletProcessing === 'send' ? 'Gönderiliyor...' : `${sendToken} Gönder`}
