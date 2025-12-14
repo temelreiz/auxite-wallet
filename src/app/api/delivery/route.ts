@@ -292,18 +292,18 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Talep bulunamadi' }, { status: 404 });
     }
 
-    const request = requests[index];
+    const deliveryRequest = requests[index];
     
     // Sadece pending durumda iptal edilebilir
-    if (request.status !== 'pending') {
+    if (deliveryRequest.status !== 'pending') {
       return NextResponse.json({ error: 'Bu talep iptal edilemez' }, { status: 400 });
     }
 
     // Bakiyeyi geri ver
     const balances = await redis.hgetall('balances:' + walletAddress.toLowerCase());
-    const currentBalance = parseFloat(balances?.[request.token.toLowerCase()] || '0');
-    const newBalance = currentBalance + request.amount;
-    await redis.hset('balances:' + walletAddress.toLowerCase(), { [request.token.toLowerCase()]: newBalance.toString() });
+    const currentBalance = parseFloat(balances?.[deliveryRequest.token.toLowerCase()] || '0');
+    const newBalance = currentBalance + deliveryRequest.amount;
+    await redis.hset('balances:' + walletAddress.toLowerCase(), { [deliveryRequest.token.toLowerCase()]: newBalance.toString() });
 
     // Status guncelle
     requests[index].status = 'cancelled';
