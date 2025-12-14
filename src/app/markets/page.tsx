@@ -258,8 +258,6 @@ export default function MarketsPage() {
               priceChange={selectedAsset.change}
               lang={lang}
               height={500}
-              showVolume={true}
-              showMA={true}
             />
 
             {/* Trade Button */}
