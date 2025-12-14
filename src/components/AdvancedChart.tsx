@@ -624,7 +624,7 @@ export function AdvancedChart({
       const sarData = calculateSAR(displayData);
       const sarSeries = chart.addSeries(LineSeries, { 
         color: "#fbbf24", 
-        lineWidth: 0,
+        lineWidth: 1,
         pointMarkersVisible: true,
         pointMarkersRadius: 2,
       });
