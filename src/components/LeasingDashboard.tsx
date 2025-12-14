@@ -357,7 +357,7 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
   const [showRecurringStake, setShowRecurringStake] = useState(false);
 
   const { stats: rawStats, loading: statsLoading } = useDashboardStats(effectiveAddress);
-  const { rates, loading: ratesLoading } = useLeaseRates();
+  const { rates, isLoading: ratesLoading } = useLeaseRates();
   
   const t = getT(lang);
   
