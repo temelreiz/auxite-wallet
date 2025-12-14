@@ -1374,13 +1374,13 @@ export default function WalletPage() {
             {/* Price Alerts */}
             <PriceAlertsPanel
               walletAddress={currentAddress || ""}
-              lang={lang}
+              lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
               currentPrices={currentPrices}
             />
-            <AllocationFinder lang={lang} />
+            <AllocationFinder lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'} />
 
             {/* Transaction History */}
-            <TransactionHistory lang={lang} />
+            <TransactionHistory lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'} />
           </>
         ) : (
           /* Connect Wallet Message */
@@ -1412,7 +1412,7 @@ export default function WalletPage() {
         <ExchangeModal 
           isOpen={showExchange}
           onClose={() => setShowExchange(false)}
-          lang={lang}
+          lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
         />
       )}
 
@@ -1421,7 +1421,7 @@ export default function WalletPage() {
         <BuyMetalModal
           isOpen={showBuyMetal}
           onClose={() => setShowBuyMetal(false)}
-          lang={lang}
+          lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
         />
       )}
 
@@ -1430,7 +1430,7 @@ export default function WalletPage() {
           isOpen={!!selectedMetal}
           onClose={() => setSelectedMetal(null)}
           metal={selectedMetal}
-          lang={lang}
+          lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
         />
       )}
 
@@ -1439,7 +1439,7 @@ export default function WalletPage() {
           isOpen={!!selectedCrypto}
           onClose={() => setSelectedCrypto(null)}
           crypto={selectedCrypto}
-          lang={lang}
+          lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
           cryptoBalances={{
             ETH: ethBalance,
             BTC: btcBalance,
@@ -1807,7 +1807,7 @@ export default function WalletPage() {
         <WithdrawModal
           isOpen={showWithdraw}
           onClose={() => setShowWithdraw(false)}
-          lang={lang}
+          lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
         />
       )}
 
@@ -1816,7 +1816,7 @@ export default function WalletPage() {
         <UsdDepositModal
           isOpen={showUsdDeposit}
           onClose={() => setShowUsdDeposit(false)}
-          lang={lang}
+          lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
           walletAddress={currentAddress || ""}
         />
       )}
@@ -1826,7 +1826,7 @@ export default function WalletPage() {
         <BuyWithUsdModal
           isOpen={showBuyWithUsd}
           onClose={() => setShowBuyWithUsd(false)}
-          lang={lang}
+          lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
           walletAddress={currentAddress || ""}
         />
       )}
@@ -1836,7 +1836,7 @@ export default function WalletPage() {
         <UsdConvertModal
           isOpen={showUsdConvert}
           onClose={() => setShowUsdConvert(false)}
-          lang={lang}
+          lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
           walletAddress={currentAddress || ""}
         />
       )}
@@ -1845,7 +1845,7 @@ export default function WalletPage() {
       {showSecurity && (
         <SecuritySettings
           walletAddress={currentAddress || ""}
-          lang={lang}
+          lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
           onClose={() => setShowSecurity(false)}
         />
       )}
@@ -1854,7 +1854,7 @@ export default function WalletPage() {
       {showAdvancedSecurity && (
         <AdvancedSecurityModal
           walletAddress={currentAddress || ""}
-          lang={lang}
+          lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
           onClose={() => setShowAdvancedSecurity(false)}
         />
       )}
@@ -1874,7 +1874,7 @@ export default function WalletPage() {
               </button>
             </div>
             <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)] bg-white dark:bg-slate-900">
-              <PriceAlertManager walletAddress={currentAddress || ""} lang={lang} currentPrices={currentPrices} />
+              <PriceAlertManager walletAddress={currentAddress || ""} lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'} currentPrices={currentPrices} />
             </div>
           </div>
         </div>
@@ -1895,7 +1895,7 @@ export default function WalletPage() {
               </button>
             </div>
             <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)] bg-white dark:bg-slate-900">
-              <RecurringBuyManager walletAddress={currentAddress || ""} lang={lang} usdBalance={usdBalance} usdtBalance={usdtBalance} ethBalance={ethBalance} btcBalance={btcBalance} xrpBalance={xrpBalance} solBalance={solBalance} />
+              <RecurringBuyManager walletAddress={currentAddress || ""} lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'} usdBalance={usdBalance} usdtBalance={usdtBalance} ethBalance={ethBalance} btcBalance={btcBalance} xrpBalance={xrpBalance} solBalance={solBalance} />
             </div>
           </div>
         </div>
@@ -1905,7 +1905,7 @@ export default function WalletPage() {
       {showPhysicalDelivery && (
         <PhysicalDelivery
           walletAddress={currentAddress || ""}
-          lang={lang}
+          lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
           metalBalances={{
             auxg: auxgBalance,
             auxs: auxsBalance,
@@ -1933,7 +1933,7 @@ export default function WalletPage() {
             <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)] bg-white dark:bg-slate-900">
               <LimitOrdersList 
                 walletAddress={currentAddress || ""} 
-                lang={lang}
+                lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
                 onOrderCancelled={() => {
                   // Refresh pending orders count
                   setPendingOrdersCount(prev => Math.max(0, prev - 1));
