@@ -779,7 +779,7 @@ export default function WalletPage() {
                   </span>
                 </div>
               ) : (
-                <ConnectButton />
+                <ConnectButton showBalance={false} chainStatus="none" accountStatus="avatar" />
               )}
             </div>
           </div>
@@ -1400,7 +1400,7 @@ export default function WalletPage() {
                   : "Connect your wallet to view and manage your assets"}
               </p>
               <div className="flex justify-center">
-                <ConnectButton />
+                <ConnectButton showBalance={false} chainStatus="none" accountStatus="avatar" />
               </div>
             </div>
           </div>

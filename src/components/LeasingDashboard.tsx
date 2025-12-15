@@ -293,7 +293,7 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
   };
 
   return (
-    <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} className={`rounded-xl border bg-gradient-to-br ${metalGradients[offer.metal]} backdrop-blur-sm p-6 transition-all duration-300 ${isHovered ? "border-emerald-500/50 shadow-lg shadow-emerald-500/10 -translate-y-1" : "border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm dark:shadow-none"}`}>
+    <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} className={`rounded-xl border backdrop-blur-sm p-6 transition-all duration-300 ${isHovered ? "border-emerald-500/50 shadow-lg shadow-emerald-500/10 -translate-y-1" : "border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm dark:shadow-none"}`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -465,7 +465,7 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
 
         {/* Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-blue-500/20 bg-gradient-to-br from-blue-50 dark:from-blue-500/5 to-transparent p-5">
+          <div className="rounded-xl border border-blue-500/20 bg-blue-50 dark:bg-blue-500/5 p-5">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center"><span className="text-sm">💡</span></div>
               <span className="text-sm font-medium text-blue-600 dark:text-blue-300">{t.howItWorks}</span>
@@ -477,7 +477,7 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
               <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs shrink-0">4</span><span>{t.step4}</span></li>
             </ul>
           </div>
-          <div className="rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-50 dark:from-emerald-500/5 to-transparent p-5">
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/5 p-5">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center"><span className="text-sm">✓</span></div>
               <span className="text-sm font-medium text-emerald-600 dark:text-emerald-300">{t.features}</span>
