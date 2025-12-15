@@ -236,7 +236,7 @@ export function PushNotificationSetup({ walletAddress, lang: propLang }: PushNot
       };
       
       if (vapidKey) {
-        subscribeOptions.applicationServerKey = urlBase64ToUint8Array(vapidKey);
+        subscribeOptions.applicationServerKey = urlBase64ToUint8Array(vapidKey) as BufferSource;
       }
 
       const subscription = await registration.pushManager.subscribe(subscribeOptions);
