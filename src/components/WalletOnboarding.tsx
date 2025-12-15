@@ -358,7 +358,7 @@ export default function WalletOnboarding({
   const [unlockError, setUnlockError] = useState("");
   const [copied, setCopied] = useState(false);
 
-  const t = (key: string) => translations[lang][key];
+  const t = (key: string) => (translations[lang] as Record<string, string>)[key] || key;
 
   // Check if wallet exists
   useEffect(() => {
