@@ -244,9 +244,9 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
           <div className="space-y-2">
             {wallets.map((wallet) => (
               <div
-                key={wallet.id}
+                key={wallet.address}
                 className={`p-3 rounded-xl border transition-all ${
-                  wallet.id === activeWallet?.id
+                  wallet.address === activeWallet?.id
                     ? "bg-slate-800/80 border-emerald-500/50"
                     : "bg-slate-800/50 border-slate-700 hover:border-slate-600"
                 }`}
@@ -261,7 +261,7 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
                     <div>
                       <div className="text-white font-medium flex items-center gap-2">
                         {wallet.name}
-                        {wallet.id === activeWallet?.id && (
+                        {wallet.address === activeWallet?.id && (
                           <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
                         )}
                       </div>
@@ -271,16 +271,16 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
                   </div>
                   
                   <div className="flex items-center gap-1">
-                    {wallet.id !== activeWallet?.id && (
+                    {wallet.address !== activeWallet?.id && (
                       <button
-                        onClick={() => switchWallet(wallet.id)}
+                        onClick={() => switchWallet(wallet.address)}
                         className="px-3 py-1.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/30"
                       >
                         {labels.switch}
                       </button>
                     )}
                     <button
-                      onClick={() => handleRename(wallet.id, wallet.name)}
+                      onClick={() => handleRename(wallet.address, wallet.name)}
                       className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg"
                       title={labels.rename}
                     >
@@ -288,7 +288,7 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
                     </button>
                     {wallets.length > 1 && (
                       <button
-                        onClick={() => handleRemove(wallet.id)}
+                        onClick={() => handleRemove(wallet.address)}
                         className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
                         title={labels.remove}
                       >
