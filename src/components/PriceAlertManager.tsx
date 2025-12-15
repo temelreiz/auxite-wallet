@@ -3,11 +3,6 @@
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/components/LanguageContext";
 
-/**
- * Price Alert Component
- * Fiyat uyarısı oluşturma ve yönetim UI
- */
-
 interface PriceAlert {
   id: string;
   token: string;
@@ -24,7 +19,7 @@ interface Props {
   currentPrices?: Record<string, number>;
 }
 
-const localTranslations = {
+const localTranslations: Record<string, any> = {
   tr: {
     title: "Fiyat Uyarıları",
     subtitle: "Hedef fiyatlara ulaşıldığında bildirim alın",
@@ -75,6 +70,106 @@ const localTranslations = {
     difference: "Difference",
     suggestedPrices: "Suggested Targets",
   },
+  de: {
+    title: "Preisbenachrichtigungen",
+    subtitle: "Erhalten Sie Benachrichtigungen bei Zielpreisen",
+    createAlert: "Neue Benachrichtigung",
+    activeAlerts: "Aktive Benachrichtigungen",
+    triggeredAlerts: "Ausgelöste Benachrichtigungen",
+    noAlerts: "Noch keine Preisbenachrichtigungen",
+    token: "Token",
+    targetPrice: "Zielpreis",
+    direction: "Richtung",
+    above: "Steigt über",
+    below: "Fällt unter",
+    repeat: "Wiederholen",
+    create: "Erstellen",
+    cancel: "Abbrechen",
+    delete: "Löschen",
+    reactivate: "Reaktivieren",
+    active: "Aktiv",
+    triggered: "Ausgelöst",
+    expired: "Abgelaufen",
+    cancelled: "Abgebrochen",
+    currentPrice: "Aktueller Preis",
+    difference: "Differenz",
+    suggestedPrices: "Vorgeschlagene Ziele",
+  },
+  fr: {
+    title: "Alertes de Prix",
+    subtitle: "Soyez notifié lorsque les prix cibles sont atteints",
+    createAlert: "Nouvelle Alerte",
+    activeAlerts: "Alertes Actives",
+    triggeredAlerts: "Alertes Déclenchées",
+    noAlerts: "Aucune alerte de prix",
+    token: "Token",
+    targetPrice: "Prix Cible",
+    direction: "Direction",
+    above: "Dépasse",
+    below: "Descend sous",
+    repeat: "Répéter",
+    create: "Créer",
+    cancel: "Annuler",
+    delete: "Supprimer",
+    reactivate: "Réactiver",
+    active: "Active",
+    triggered: "Déclenchée",
+    expired: "Expirée",
+    cancelled: "Annulée",
+    currentPrice: "Prix Actuel",
+    difference: "Différence",
+    suggestedPrices: "Cibles Suggérées",
+  },
+  ar: {
+    title: "تنبيهات الأسعار",
+    subtitle: "احصل على إشعارات عند الوصول للأسعار المستهدفة",
+    createAlert: "تنبيه جديد",
+    activeAlerts: "التنبيهات النشطة",
+    triggeredAlerts: "التنبيهات المُفعّلة",
+    noAlerts: "لا توجد تنبيهات أسعار",
+    token: "الرمز",
+    targetPrice: "السعر المستهدف",
+    direction: "الاتجاه",
+    above: "يرتفع فوق",
+    below: "ينخفض تحت",
+    repeat: "تكرار",
+    create: "إنشاء",
+    cancel: "إلغاء",
+    delete: "حذف",
+    reactivate: "إعادة تفعيل",
+    active: "نشط",
+    triggered: "مُفعّل",
+    expired: "منتهي",
+    cancelled: "ملغى",
+    currentPrice: "السعر الحالي",
+    difference: "الفرق",
+    suggestedPrices: "الأهداف المقترحة",
+  },
+  ru: {
+    title: "Ценовые Оповещения",
+    subtitle: "Получайте уведомления при достижении целевых цен",
+    createAlert: "Новое Оповещение",
+    activeAlerts: "Активные Оповещения",
+    triggeredAlerts: "Сработавшие Оповещения",
+    noAlerts: "Ценовых оповещений пока нет",
+    token: "Токен",
+    targetPrice: "Целевая Цена",
+    direction: "Направление",
+    above: "Поднимается выше",
+    below: "Опускается ниже",
+    repeat: "Повторять",
+    create: "Создать",
+    cancel: "Отмена",
+    delete: "Удалить",
+    reactivate: "Реактивировать",
+    active: "Активно",
+    triggered: "Сработало",
+    expired: "Истекло",
+    cancelled: "Отменено",
+    currentPrice: "Текущая Цена",
+    difference: "Разница",
+    suggestedPrices: "Предложенные Цели",
+  },
 };
 
 const TOKENS = [
@@ -88,19 +183,18 @@ const TOKENS = [
 
 export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) {
   const { lang } = useLanguage();
-  const labels = localTranslations[lang as "tr" | "en"] || localTranslations.en;
+  const effectiveLang = lang || "en";
+  const labels = localTranslations[effectiveLang] || localTranslations.en;
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  // Form state
   const [selectedToken, setSelectedToken] = useState("BTC");
   const [targetPrice, setTargetPrice] = useState("");
   const [direction, setDirection] = useState<"above" | "below">("above");
   const [repeat, setRepeat] = useState(false);
 
-  // Uyarıları yükle
   useEffect(() => {
     fetchAlerts();
   }, [walletAddress]);
@@ -208,7 +302,6 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-white">{labels.title}</h3>
@@ -222,7 +315,6 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
         </button>
       </div>
 
-      {/* Active Alerts */}
       {activeAlerts.length > 0 && (
         <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
           <div className="p-4 border-b border-slate-700">
@@ -235,14 +327,13 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
                 alert={alert}
                 currentPrice={getCurrentPrice(alert.token)}
                 onDelete={() => handleDelete(alert.id)}
-                lang={lang}
+                lang={effectiveLang}
               />
             ))}
           </div>
         </div>
       )}
 
-      {/* Other Alerts */}
       {otherAlerts.length > 0 && (
         <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
           <div className="p-4 border-b border-slate-700">
@@ -256,14 +347,13 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
                 currentPrice={getCurrentPrice(alert.token)}
                 onDelete={() => handleDelete(alert.id)}
                 onReactivate={() => handleReactivate(alert.id)}
-                lang={lang}
+                lang={effectiveLang}
               />
             ))}
           </div>
         </div>
       )}
 
-      {/* No Alerts */}
       {alerts.length === 0 && (
         <div className="text-center py-12">
           <div className="text-4xl mb-4">🔔</div>
@@ -271,7 +361,6 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
         </div>
       )}
 
-      {/* Create Modal */}
       {showCreate && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 rounded-2xl w-full max-w-md border border-slate-700">
@@ -280,7 +369,6 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
             </div>
 
             <div className="p-6 space-y-4">
-              {/* Token Selection */}
               <div>
                 <label className="text-sm text-slate-400 mb-2 block">{labels.token}</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -306,7 +394,6 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
                 )}
               </div>
 
-              {/* Direction */}
               <div>
                 <label className="text-sm text-slate-400 mb-2 block">{labels.direction}</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -333,7 +420,6 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
                 </div>
               </div>
 
-              {/* Target Price */}
               <div>
                 <label className="text-sm text-slate-400 mb-2 block">{labels.targetPrice}</label>
                 <div className="relative">
@@ -347,7 +433,6 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
                   />
                 </div>
 
-                {/* Suggested Prices */}
                 {getCurrentPrice(selectedToken) > 0 && (
                   <div className="mt-2">
                     <p className="text-xs text-slate-500 mb-1">{labels.suggestedPrices}:</p>
@@ -366,7 +451,6 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
                 )}
               </div>
 
-              {/* Repeat Toggle */}
               <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
                 <span className="text-slate-300">{labels.repeat}</span>
                 <button
@@ -406,7 +490,6 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
   );
 }
 
-// Alert Row Component
 function AlertRow({
   alert,
   currentPrice,
@@ -418,9 +501,9 @@ function AlertRow({
   currentPrice: number;
   onDelete: () => void;
   onReactivate?: () => void;
-  lang: "tr" | "en";
+  lang: string;
 }) {
-  const labels = t[lang];
+  const labels = localTranslations[lang] || localTranslations.en;
   const token = TOKENS.find((t) => t.symbol === alert.token);
   const diff = currentPrice
     ? ((alert.targetPrice - currentPrice) / currentPrice) * 100
@@ -478,3 +561,5 @@ function AlertRow({
     </div>
   );
 }
+
+export default PriceAlertManager;
