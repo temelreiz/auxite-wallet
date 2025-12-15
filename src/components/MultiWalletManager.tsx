@@ -9,9 +9,6 @@ interface Props {
   onClose?: () => void;
 }
 
-// ============================================
-// LOCAL TRANSLATIONS - 6 Language Support
-// ============================================
 const translations: Record<string, any> = {
   tr: {
     title: "Cüzdan Yönetimi",
@@ -142,9 +139,9 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
   
   const walletContext = useWallet();
   
-  const wallets = walletContext?.address ? [{ address: walletContext.address, name: "Main Wallet" }] : [];
+  const wallets = walletContext?.address ? [{ address: walletContext.address, name: "Main Wallet", isLocal: false, createdAt: new Date().toISOString() }] : [];
   const activeWallet = walletContext?.address || null;
-  const switchWallet = () => {};
+  const switchWallet = (_address: string) => {};
   const removeWallet = (_id: string) => {};
   const renameWallet = (_id: string, _name: string) => {};
   
@@ -193,7 +190,6 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       {onClose && (
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -215,23 +211,21 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
         </div>
       )}
 
-      {/* Active Wallet */}
       {activeWallet && (
         <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
           <div className="text-xs text-emerald-400 mb-2">{labels.activeWallet}</div>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-white font-medium">{"Main Wallet"}</div>
+              <div className="text-white font-medium">Main Wallet</div>
               <div className="text-sm text-slate-400 font-mono">{formatAddress(activeWallet)}</div>
             </div>
-            <span className={`px-2 py-1 rounded text-xs ${false ? "bg-purple-500/20 text-purple-400" : "bg-blue-500/20 text-blue-400"}`}>
-              {false ? labels.local : labels.external}
+            <span className="px-2 py-1 rounded text-xs bg-blue-500/20 text-blue-400">
+              {labels.external}
             </span>
           </div>
         </div>
       )}
 
-      {/* All Wallets */}
       <div className="bg-slate-900 rounded-xl border border-slate-800 p-6">
         <div className="text-sm text-slate-400 mb-3">{labels.allWallets}</div>
         
@@ -303,7 +297,6 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
         )}
       </div>
 
-      {/* Rename Modal */}
       {showRenameModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 rounded-2xl border border-slate-700 p-6 max-w-sm w-full">
@@ -328,7 +321,6 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
         </div>
       )}
 
-      {/* Remove Modal */}
       {showRemoveModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 rounded-2xl border border-slate-700 p-6 max-w-sm w-full">
