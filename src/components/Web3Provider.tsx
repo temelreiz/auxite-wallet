@@ -3,7 +3,7 @@ import { WagmiProvider, createConfig, http } from "wagmi";
 import { mainnet, sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConnectKitProvider } from "connectkit";
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { injected, walletConnect } from "wagmi/connectors";
 
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
@@ -18,7 +18,7 @@ const config = createConfig({
     injected(),
     walletConnect({
       projectId,
-      showQrModal: false, // ConnectKit kendi modal'ını kullanacak
+      showQrModal: false,
       metadata: {
         name: "Auxite",
         description: "Tokenized Precious Metals Platform",
@@ -32,6 +32,16 @@ const config = createConfig({
 const queryClient = new QueryClient();
 
 export function Web3Provider({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <>{children}</>;
+  }
+
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
