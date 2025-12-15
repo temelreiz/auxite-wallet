@@ -452,7 +452,7 @@ export function LockedAssetsModal({
                         <div className="mt-3 pt-3 border-t border-stone-200 dark:border-slate-700 flex items-center justify-between text-xs">
                           <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
                             <span>{t.allocationId}: #{allocation.id.toString()}</span>
-                            <span>{t.date}: {formatDate(allocation.timestamp)}</span>
+                            <span>{t.date}: {new Date(Number(allocation.timestamp)).toLocaleDateString()}</span>
                           </div>
                           <a
                             href={`https://basescan.org/tx/${allocation.id}`}
