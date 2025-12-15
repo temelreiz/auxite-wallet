@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
-import { ConnectKitButton } from "connectkit";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { LeasingDashboard } from "@/components/LeasingDashboard";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
@@ -97,7 +97,7 @@ export default function EarnPage() {
             <p className="text-zinc-400 dark:text-zinc-400 light:text-zinc-600 mb-6 max-w-md mx-auto">
               {t("connectWalletForLeasing")}
             </p>
-            <ConnectKitButton />
+            <ConnectButton />
           </div>
         )}
       </div>

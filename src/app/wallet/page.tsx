@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAccount } from "wagmi";
-import { ConnectKitButton } from "connectkit";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
 import Image from "next/image";
 import { AllocationFinder } from "@/components/AllocationFinder";
@@ -779,7 +779,7 @@ export default function WalletPage() {
                   </span>
                 </div>
               ) : (
-                <ConnectKitButton />
+                <ConnectButton />
               )}
             </div>
           </div>
@@ -1400,7 +1400,7 @@ export default function WalletPage() {
                   : "Connect your wallet to view and manage your assets"}
               </p>
               <div className="flex justify-center">
-                <ConnectKitButton />
+                <ConnectButton />
               </div>
             </div>
           </div>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAccount, useDisconnect } from "wagmi";
-import { ConnectKitButton } from "connectkit";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useLanguage, LANGUAGES, getLanguageData, type LanguageCode } from "./LanguageContext";
 
 // ============================================
@@ -282,7 +282,7 @@ export default function TopNav() {
                   </span>
                 </div>
               ) : (
-                <ConnectKitButton />
+                <ConnectButton />
               )}
             </div>
           </div>

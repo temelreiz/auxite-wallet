@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAccount } from "wagmi";
-import { ConnectKitButton } from "connectkit";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -799,7 +799,7 @@ export default function AdminDashboard() {
           </div>
           <h1 className="text-2xl font-bold mb-4">Admin Paneli</h1>
           <p className="text-slate-400 mb-6">Admin cüzdanınızı bağlayın</p>
-          <ConnectKitButton />
+          <ConnectButton />
         </div>
       </main>
     );
@@ -921,7 +921,7 @@ export default function AdminDashboard() {
               >
                 Çıkış
               </button>
-              <ConnectKitButton />
+              <ConnectButton />
             </div>
           </div>
         </div>

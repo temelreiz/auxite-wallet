@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAccount } from "wagmi";
-import { ConnectKitButton } from "connectkit";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 // Types
 interface Allocation {
@@ -205,7 +205,7 @@ export default function VaultAssignmentPage() {
           </div>
           <h1 className="text-2xl font-bold mb-4">Vault Assignment</h1>
           <p className="text-slate-400 mb-6">Admin cüzdanınızı bağlayın</p>
-          <ConnectKitButton />
+          <ConnectButton />
         </div>
       </main>
     );
@@ -254,7 +254,7 @@ export default function VaultAssignmentPage() {
               >
                 ← Admin Panel
               </Link>
-              <ConnectKitButton />
+              <ConnectButton />
             </div>
           </div>
         </div>
