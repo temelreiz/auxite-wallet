@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAllocations, Allocation } from "@/hooks/useAllocations";
+import { useAllocations, FormattedAllocation as Allocation } from "@/hooks/useAllocations";
 import { useStaking, FormattedStake } from "@/hooks/useStaking";
 import { formatUnits } from "viem";
 
