@@ -125,7 +125,7 @@ export async function createLimitOrder(params: CreateOrderParams): Promise<{
     };
 
     // Save order to Redis
-    await r.hset(KEYS.order(orderId), order as Record<string, unknown>);
+    await r.hset(KEYS.order(orderId), order as unknown as Record<string, unknown>);
     
     // Add to user's order list
     await r.lpush(KEYS.userOrders(params.address), orderId);
