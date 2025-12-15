@@ -221,11 +221,11 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
           <div className="text-xs text-emerald-400 mb-2">{labels.activeWallet}</div>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-white font-medium">{activeWallet.name}</div>
-              <div className="text-sm text-slate-400 font-mono">{formatAddress(activeWallet.address)}</div>
+              <div className="text-white font-medium">{"Main Wallet"}</div>
+              <div className="text-sm text-slate-400 font-mono">{formatAddress(activeWallet)}</div>
             </div>
-            <span className={`px-2 py-1 rounded text-xs ${activeWallet.isLocal ? "bg-purple-500/20 text-purple-400" : "bg-blue-500/20 text-blue-400"}`}>
-              {activeWallet.isLocal ? labels.local : labels.external}
+            <span className={`px-2 py-1 rounded text-xs ${false ? "bg-purple-500/20 text-purple-400" : "bg-blue-500/20 text-blue-400"}`}>
+              {false ? labels.local : labels.external}
             </span>
           </div>
         </div>
