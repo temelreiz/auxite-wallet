@@ -344,7 +344,7 @@ export default function TradingDetailPage({
   const isPositive = initialDirectionRef.current === "up";
   
   // Safe rates with fallbacks
-  const safeRates = rates || { 
+  const safeRates = { 
     sofr: 3.66, 
     AUXG: { "3": 1.53, "6": 2.03, "12": 2.53 }, 
     AUXS: { "3": 1.23, "6": 1.73, "12": 2.23 }, 
