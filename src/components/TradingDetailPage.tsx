@@ -703,7 +703,6 @@ export default function TradingDetailPage({
                   onClose={() => setActiveTab("price")}
                   offer={leaseOffer}
                   lang={lang as 'tr' | 'en' | 'de' | 'fr' | 'ar' | 'ru'}
-                  embedded={true}
                 />
               </div>
             )}
