@@ -142,10 +142,10 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
   
   const walletContext = useWallet();
   
-  const wallets = walletContext?.wallets || [];
-  const activeWallet = walletContext?.activeWallet || null;
-  const switchWallet = walletContext?.switchWallet || (() => {});
-  const removeWallet = walletContext?.removeWallet || (() => {});
+  const wallets = walletContext?.address ? [{ address: walletContext.address, name: "Main Wallet" }] : [];
+  const activeWallet = walletContext?.address || null;
+  const switchWallet = () => {};
+  const removeWallet = () => {};
   const renameWallet = walletContext?.renameWallet || (() => {});
   
   const [showRenameModal, setShowRenameModal] = useState(false);
