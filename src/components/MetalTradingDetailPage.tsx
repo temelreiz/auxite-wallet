@@ -335,8 +335,6 @@ export function MetalTradingDetailPage({
                   priceChange={change24h}
                   lang={lang}
                   height={400}
-                  showVolume={true}
-                  showMA={true}
                 />
               )}
 
