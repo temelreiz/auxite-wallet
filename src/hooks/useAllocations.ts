@@ -183,7 +183,7 @@ export function useAllocations(metalSymbol?: 'AUXG' | 'AUXS' | 'AUXPT' | 'AUXPD'
     allocationsData.forEach((result, index) => {
       if (result.status === 'success' && result.result) {
         const metalSymbol = contractsToQuery[index].symbol;
-        const allocList = result.result as AllocationData[];
+        const allocList = result.result as unknown as AllocationData[];
         
         allocList.forEach((alloc, allocIndex) => {
           allAllocations.push(formatAllocation(alloc, allocIndex + 1, metalSymbol));
