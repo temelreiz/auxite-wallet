@@ -1103,7 +1103,7 @@ export default function TradePanel({
                     address={address}
                     metal={metalSymbol}
                     compact={true}
-                    lang={lang}
+                    lang={lang as 'tr' | 'en' | 'de' | 'fr' | 'ar' | 'ru'}
                     onOrderCancelled={refreshBalances}
                   />
                 </div>
