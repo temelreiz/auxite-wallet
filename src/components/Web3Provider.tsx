@@ -38,10 +38,6 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
@@ -52,7 +48,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
             initialChainId: sepolia.id,
           }}
         >
-          {children}
+          {mounted ? children : null}
         </ConnectKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
