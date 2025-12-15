@@ -1,10 +1,21 @@
 "use client";
-
 import { WagmiProvider, createConfig, http } from "wagmi";
 import { mainnet, sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConnectKitProvider, getDefaultConfig } from "connectkit";
 import { ReactNode } from "react";
+
+// Aave/Family wallet console hatalarını suppress et
+if (typeof window !== 'undefined') {
+  const originalError = console.error;
+  console.error = (...args: any[]) => {
+    const msg = args[0]?.toString?.() || '';
+    if (msg.includes('FamilyAccountsSdk') || msg.includes('Aave Wallet') || msg.includes('EIP1193')) {
+      return;
+    }
+    originalError.apply(console, args);
+  };
+}
 
 const config = createConfig(
   getDefaultConfig({
@@ -31,6 +42,8 @@ export function Web3Provider({ children }: { children: ReactNode }) {
           theme="midnight"
           options={{
             initialChainId: sepolia.id,
+            hideNoWalletCTA: true,
+            hideRecentBadge: true,
           }}
         >
           {children}
@@ -39,3 +52,5 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     </WagmiProvider>
   );
 }
+
+export default Web3Provider;
