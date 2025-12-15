@@ -246,7 +246,7 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
               <div
                 key={wallet.address}
                 className={`p-3 rounded-xl border transition-all ${
-                  wallet.address === activeWallet?.id
+                  wallet.address === activeWallet
                     ? "bg-slate-800/80 border-emerald-500/50"
                     : "bg-slate-800/50 border-slate-700 hover:border-slate-600"
                 }`}
@@ -261,7 +261,7 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
                     <div>
                       <div className="text-white font-medium flex items-center gap-2">
                         {wallet.name}
-                        {wallet.address === activeWallet?.id && (
+                        {wallet.address === activeWallet && (
                           <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
                         )}
                       </div>
@@ -271,7 +271,7 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
                   </div>
                   
                   <div className="flex items-center gap-1">
-                    {wallet.address !== activeWallet?.id && (
+                    {wallet.address !== activeWallet && (
                       <button
                         onClick={() => switchWallet(wallet.address)}
                         className="px-3 py-1.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/30"
