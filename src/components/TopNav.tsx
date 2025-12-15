@@ -282,7 +282,7 @@ export default function TopNav() {
                   </span>
                 </div>
               ) : (
-                <ConnectButton />
+                <ConnectButton showBalance={false} chainStatus="none" accountStatus="avatar" />
               )}
             </div>
           </div>
