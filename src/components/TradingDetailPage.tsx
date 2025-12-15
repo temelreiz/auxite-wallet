@@ -325,7 +325,7 @@ export default function TradingDetailPage({
   const t = (key: string) => translations[lang]?.[key] || translations.en[key] || key;
   
   const { address } = useWallet();
-  const { rates } = useLeaseRates();
+  const { sofr, leaseOffers } = useLeaseRates();
   const [timeFrame, setTimeFrame] = useState<TimeFrame>("4H");
   const [activeTab, setActiveTab] = useState<"price" | "info" | "data" | "orders" | "lease">("price");
   const [livePrice, setLivePrice] = useState(currentPrice);
