@@ -687,7 +687,7 @@ export default function TradingDetailPage({
             {activeTab === "orders" && (
               <div className="p-4">
                 <LimitOrdersList
-                  address={address}
+                  address={address || undefined}
                   metal={symbol}
                   compact={false}
                   lang={lang}
