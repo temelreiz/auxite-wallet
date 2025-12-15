@@ -2,54 +2,81 @@
 import { WagmiProvider, createConfig, http } from "wagmi";
 import { mainnet, sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ConnectKitProvider } from "connectkit";
+import { RainbowKitProvider, getDefaultConfig, darkTheme } from "@rainbow-me/rainbowkit";
+import type { Locale } from "@rainbow-me/rainbowkit";
 import { ReactNode, useState, useEffect } from "react";
-import { injected, walletConnect } from "wagmi/connectors";
+import "@rainbow-me/rainbowkit/styles.css";
 
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
-
-const config = createConfig({
+const config = getDefaultConfig({
+  appName: "Auxite",
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
   chains: [mainnet, sepolia],
   transports: {
     [mainnet.id]: http(),
     [sepolia.id]: http(),
   },
-  connectors: [
-    injected(),
-    walletConnect({
-      projectId,
-      showQrModal: false,
-      metadata: {
-        name: "Auxite",
-        description: "Tokenized Precious Metals Platform",
-        url: "https://auxite.io",
-        icons: ["https://auxite.io/icon.png"],
-      },
-    }),
-  ],
+  ssr: true,
 });
 
 const queryClient = new QueryClient();
 
+const getLocale = (): Locale => {
+  if (typeof window === "undefined") return "en";
+  const storedLang = localStorage.getItem("auxite_language") || "en";
+  const supported: Record<string, Locale> = {
+    tr: "tr",
+    en: "en",
+    fr: "fr",
+    ar: "ar",
+    ru: "ru",
+    de: "en",
+  };
+  return supported[storedLang] || "en";
+};
+
 export function Web3Provider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
+  const [locale, setLocale] = useState<Locale>("en");
 
   useEffect(() => {
     setMounted(true);
+    setLocale(getLocale());
+    
+    // Dil değişikliğini dinle
+    const handleStorageChange = () => {
+      setLocale(getLocale());
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    
+    // Custom event dinle (aynı tab için)
+    window.addEventListener("languageChange", handleStorageChange);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("languageChange", handleStorageChange);
+    };
   }, []);
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <ConnectKitProvider
-          theme="midnight"
-          mode="dark"
-          options={{
-            initialChainId: sepolia.id,
-          }}
+        <RainbowKitProvider
+          key={locale} // Locale değişince yeniden render
+          theme={darkTheme({
+            accentColor: "#10b981",
+            accentColorForeground: "white",
+            borderRadius: "medium",
+          })}
+          initialChain={sepolia}
+          locale={locale}
         >
-          {mounted ? children : null}
-        </ConnectKitProvider>
+          {children}
+        </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );

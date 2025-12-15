@@ -913,6 +913,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const setLang = (newLang: LanguageCode) => {
     setLangState(newLang);
     localStorage.setItem("auxite_language", newLang);
+    window.dispatchEvent(new Event("languageChange"));
+    localStorage.setItem("auxite_language", newLang);
     // Set RTL for Arabic
     document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
   };
