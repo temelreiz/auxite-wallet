@@ -574,7 +574,7 @@ export default function TradingDetailPage({
                       symbol={`${symbol}/USDT`}
                       currentPrice={livePrice}
                       priceChange={initialChange24hRef.current}
-                      lang={lang}
+                      lang={lang as 'tr' | 'en' | 'de' | 'fr' | 'ar' | 'ru'}
                       height={250}
                       showControls={true}
                       overlayIndicators={overlayIndicators}
@@ -690,7 +690,7 @@ export default function TradingDetailPage({
                   address={address || undefined}
                   metal={symbol}
                   compact={false}
-                  lang={lang}
+                  lang={lang as 'tr' | 'en' | 'de' | 'fr' | 'ar' | 'ru'}
                 />
               </div>
             )}
@@ -702,7 +702,7 @@ export default function TradingDetailPage({
                   isOpen={true}
                   onClose={() => setActiveTab("price")}
                   offer={leaseOffer}
-                  lang={lang}
+                  lang={lang as 'tr' | 'en' | 'de' | 'fr' | 'ar' | 'ru'}
                   embedded={true}
                 />
               </div>
@@ -724,7 +724,7 @@ export default function TradingDetailPage({
         </div>
       </div>
 
-      {showLeaseModal && leaseOffer && <AllocationModal isOpen={showLeaseModal} onClose={() => setShowLeaseModal(false)} offer={leaseOffer} lang={lang} />}
+      {showLeaseModal && leaseOffer && <AllocationModal isOpen={showLeaseModal} onClose={() => setShowLeaseModal(false)} offer={leaseOffer} lang={lang as 'tr' | 'en' | 'de' | 'fr' | 'ar' | 'ru'} />}
     </>
   );
 }
