@@ -3,19 +3,7 @@ import { WagmiProvider, createConfig, http } from "wagmi";
 import { mainnet, sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConnectKitProvider, getDefaultConfig } from "connectkit";
-import { ReactNode } from "react";
-
-// Aave/Family wallet console hatalarını suppress et
-if (typeof window !== 'undefined') {
-  const originalError = console.error;
-  console.error = (...args: any[]) => {
-    const msg = args[0]?.toString?.() || '';
-    if (msg.includes('FamilyAccountsSdk') || msg.includes('Aave Wallet') || msg.includes('EIP1193')) {
-      return;
-    }
-    originalError.apply(console, args);
-  };
-}
+import { ReactNode, useEffect } from "react";
 
 const config = createConfig(
   getDefaultConfig({
@@ -35,6 +23,38 @@ const config = createConfig(
 const queryClient = new QueryClient();
 
 export function Web3Provider({ children }: { children: ReactNode }) {
+  // Console hatalarını suppress et
+  useEffect(() => {
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    
+    console.error = (...args: any[]) => {
+      const msg = args.join(' ');
+      if (
+        msg.includes('Family') ||
+        msg.includes('Aave') ||
+        msg.includes('EIP1193') ||
+        msg.includes('FamilyAccountsSdk')
+      ) {
+        return;
+      }
+      originalError.apply(console, args);
+    };
+    
+    console.warn = (...args: any[]) => {
+      const msg = args.join(' ');
+      if (msg.includes('Family') || msg.includes('Aave')) {
+        return;
+      }
+      originalWarn.apply(console, args);
+    };
+
+    return () => {
+      console.error = originalError;
+      console.warn = originalWarn;
+    };
+  }, []);
+
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
