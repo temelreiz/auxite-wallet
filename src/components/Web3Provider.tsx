@@ -6,6 +6,8 @@ import { ConnectKitProvider } from "connectkit";
 import { ReactNode } from "react";
 import { injected, walletConnect } from "wagmi/connectors";
 
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
+
 const config = createConfig({
   chains: [mainnet, sepolia],
   transports: {
@@ -15,7 +17,8 @@ const config = createConfig({
   connectors: [
     injected(),
     walletConnect({
-      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
+      projectId,
+      showQrModal: false, // ConnectKit kendi modal'ını kullanacak
       metadata: {
         name: "Auxite",
         description: "Tokenized Precious Metals Platform",
@@ -34,6 +37,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <ConnectKitProvider
           theme="midnight"
+          mode="dark"
           options={{
             initialChainId: sepolia.id,
           }}
