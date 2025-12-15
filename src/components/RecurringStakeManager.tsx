@@ -499,7 +499,7 @@ export function RecurringStakeManager({
                 onChange={(e) => setDayOfWeek(parseInt(e.target.value))}
                 className="w-full bg-white dark:bg-slate-900 border border-stone-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-white"
               >
-                {labels.days.map((day, i) => (
+                {labels.days.map((day: string, i: number) => (
                   <option key={i} value={i}>{day}</option>
                 ))}
               </select>
