@@ -1,13 +1,165 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface PushNotificationSetupProps {
   walletAddress: string;
-  lang?: "tr" | "en";
+  lang?: string;
 }
 
-export function PushNotificationSetup({ walletAddress, lang = "tr" }: PushNotificationSetupProps) {
+const translations: Record<string, any> = {
+  tr: {
+    title: "Push Bildirimleri",
+    subtitle: "Anlık bildirimler alarak işlemlerinizi takip edin",
+    enabled: "Bildirimler Aktif",
+    disabled: "Bildirimler Kapalı",
+    enable: "Bildirimleri Aç",
+    disable: "Bildirimleri Kapat",
+    permissionDenied: "Bildirim izni reddedildi. Tarayıcı ayarlarından izin verin.",
+    preferences: "Bildirim Tercihleri",
+    transactions: "İşlem Bildirimleri",
+    transactionsDesc: "Alım, satım ve transfer bildirimleri",
+    priceAlerts: "Fiyat Alarmları",
+    priceAlertsDesc: "Belirlediğiniz fiyat hedeflerine ulaşıldığında",
+    security: "Güvenlik Uyarıları",
+    securityDesc: "Yeni cihaz girişleri ve güvenlik olayları",
+    marketing: "Kampanyalar",
+    marketingDesc: "Özel teklifler ve yenilikler",
+    testNotification: "Test Bildirimi Gönder",
+    walletRequired: "Cüzdan bağlantısı gerekli",
+    notificationsEnabled: "Bildirimler aktifleştirildi!",
+    notificationsDisabled: "Bildirimler kapatıldı",
+    operationFailed: "İşlem başarısız",
+    enableFailed: "Bildirimler aktifleştirilemedi",
+  },
+  en: {
+    title: "Push Notifications",
+    subtitle: "Stay updated with instant notifications",
+    enabled: "Notifications Enabled",
+    disabled: "Notifications Disabled",
+    enable: "Enable Notifications",
+    disable: "Disable Notifications",
+    permissionDenied: "Notification permission denied. Enable in browser settings.",
+    preferences: "Notification Preferences",
+    transactions: "Transaction Notifications",
+    transactionsDesc: "Buy, sell and transfer notifications",
+    priceAlerts: "Price Alerts",
+    priceAlertsDesc: "When your price targets are reached",
+    security: "Security Alerts",
+    securityDesc: "New device logins and security events",
+    marketing: "Promotions",
+    marketingDesc: "Special offers and updates",
+    testNotification: "Send Test Notification",
+    walletRequired: "Wallet connection required",
+    notificationsEnabled: "Notifications enabled!",
+    notificationsDisabled: "Notifications disabled",
+    operationFailed: "Operation failed",
+    enableFailed: "Failed to enable notifications",
+  },
+  de: {
+    title: "Push-Benachrichtigungen",
+    subtitle: "Bleiben Sie mit sofortigen Benachrichtigungen auf dem Laufenden",
+    enabled: "Benachrichtigungen Aktiviert",
+    disabled: "Benachrichtigungen Deaktiviert",
+    enable: "Benachrichtigungen Aktivieren",
+    disable: "Benachrichtigungen Deaktivieren",
+    permissionDenied: "Benachrichtigungsberechtigung verweigert. In Browsereinstellungen aktivieren.",
+    preferences: "Benachrichtigungseinstellungen",
+    transactions: "Transaktionsbenachrichtigungen",
+    transactionsDesc: "Kauf-, Verkaufs- und Transferbenachrichtigungen",
+    priceAlerts: "Preisalarme",
+    priceAlertsDesc: "Wenn Ihre Preisziele erreicht werden",
+    security: "Sicherheitswarnungen",
+    securityDesc: "Neue Geräteanmeldungen und Sicherheitsereignisse",
+    marketing: "Aktionen",
+    marketingDesc: "Sonderangebote und Updates",
+    testNotification: "Testbenachrichtigung Senden",
+    walletRequired: "Wallet-Verbindung erforderlich",
+    notificationsEnabled: "Benachrichtigungen aktiviert!",
+    notificationsDisabled: "Benachrichtigungen deaktiviert",
+    operationFailed: "Vorgang fehlgeschlagen",
+    enableFailed: "Benachrichtigungen konnten nicht aktiviert werden",
+  },
+  fr: {
+    title: "Notifications Push",
+    subtitle: "Restez informé avec des notifications instantanées",
+    enabled: "Notifications Activées",
+    disabled: "Notifications Désactivées",
+    enable: "Activer les Notifications",
+    disable: "Désactiver les Notifications",
+    permissionDenied: "Permission de notification refusée. Activez dans les paramètres du navigateur.",
+    preferences: "Préférences de Notification",
+    transactions: "Notifications de Transaction",
+    transactionsDesc: "Notifications d'achat, vente et transfert",
+    priceAlerts: "Alertes de Prix",
+    priceAlertsDesc: "Lorsque vos objectifs de prix sont atteints",
+    security: "Alertes de Sécurité",
+    securityDesc: "Nouvelles connexions et événements de sécurité",
+    marketing: "Promotions",
+    marketingDesc: "Offres spéciales et mises à jour",
+    testNotification: "Envoyer Notification Test",
+    walletRequired: "Connexion wallet requise",
+    notificationsEnabled: "Notifications activées!",
+    notificationsDisabled: "Notifications désactivées",
+    operationFailed: "Opération échouée",
+    enableFailed: "Impossible d'activer les notifications",
+  },
+  ar: {
+    title: "إشعارات الدفع",
+    subtitle: "ابق على اطلاع مع الإشعارات الفورية",
+    enabled: "الإشعارات مفعلة",
+    disabled: "الإشعارات معطلة",
+    enable: "تفعيل الإشعارات",
+    disable: "تعطيل الإشعارات",
+    permissionDenied: "تم رفض إذن الإشعارات. فعّل من إعدادات المتصفح.",
+    preferences: "تفضيلات الإشعارات",
+    transactions: "إشعارات المعاملات",
+    transactionsDesc: "إشعارات الشراء والبيع والتحويل",
+    priceAlerts: "تنبيهات الأسعار",
+    priceAlertsDesc: "عند الوصول لأهداف السعر",
+    security: "تنبيهات الأمان",
+    securityDesc: "تسجيلات دخول جديدة وأحداث أمنية",
+    marketing: "العروض",
+    marketingDesc: "عروض خاصة وتحديثات",
+    testNotification: "إرسال إشعار تجريبي",
+    walletRequired: "يتطلب اتصال المحفظة",
+    notificationsEnabled: "تم تفعيل الإشعارات!",
+    notificationsDisabled: "تم تعطيل الإشعارات",
+    operationFailed: "فشلت العملية",
+    enableFailed: "فشل تفعيل الإشعارات",
+  },
+  ru: {
+    title: "Push-уведомления",
+    subtitle: "Будьте в курсе с мгновенными уведомлениями",
+    enabled: "Уведомления Включены",
+    disabled: "Уведомления Отключены",
+    enable: "Включить Уведомления",
+    disable: "Отключить Уведомления",
+    permissionDenied: "Разрешение на уведомления отклонено. Включите в настройках браузера.",
+    preferences: "Настройки Уведомлений",
+    transactions: "Уведомления о Транзакциях",
+    transactionsDesc: "Уведомления о покупке, продаже и переводе",
+    priceAlerts: "Ценовые Оповещения",
+    priceAlertsDesc: "Когда достигнуты ваши ценовые цели",
+    security: "Оповещения Безопасности",
+    securityDesc: "Новые входы и события безопасности",
+    marketing: "Акции",
+    marketingDesc: "Специальные предложения и обновления",
+    testNotification: "Отправить Тестовое Уведомление",
+    walletRequired: "Требуется подключение кошелька",
+    notificationsEnabled: "Уведомления включены!",
+    notificationsDisabled: "Уведомления отключены",
+    operationFailed: "Операция не удалась",
+    enableFailed: "Не удалось включить уведомления",
+  },
+};
+
+export function PushNotificationSetup({ walletAddress, lang: propLang }: PushNotificationSetupProps) {
+  const { lang: contextLang } = useLanguage();
+  const lang = propLang || contextLang || "en";
+  const t = translations[lang] || translations.en;
+
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -21,41 +173,14 @@ export function PushNotificationSetup({ walletAddress, lang = "tr" }: PushNotifi
     marketing: false,
   });
 
-  const t = {
-    title: lang === "tr" ? "Push Bildirimleri" : "Push Notifications",
-    subtitle: lang === "tr" 
-      ? "Anlık bildirimler alarak işlemlerinizi takip edin" 
-      : "Stay updated with instant notifications",
-    enabled: lang === "tr" ? "Bildirimler Aktif" : "Notifications Enabled",
-    disabled: lang === "tr" ? "Bildirimler Kapalı" : "Notifications Disabled",
-    enable: lang === "tr" ? "Bildirimleri Aç" : "Enable Notifications",
-    disable: lang === "tr" ? "Bildirimleri Kapat" : "Disable Notifications",
-    permissionDenied: lang === "tr" 
-      ? "Bildirim izni reddedildi. Tarayıcı ayarlarından izin verin." 
-      : "Notification permission denied. Enable in browser settings.",
-    preferences: lang === "tr" ? "Bildirim Tercihleri" : "Notification Preferences",
-    transactions: lang === "tr" ? "İşlem Bildirimleri" : "Transaction Notifications",
-    transactionsDesc: lang === "tr" ? "Alım, satım ve transfer bildirimleri" : "Buy, sell and transfer notifications",
-    priceAlerts: lang === "tr" ? "Fiyat Alarmları" : "Price Alerts",
-    priceAlertsDesc: lang === "tr" ? "Belirlediğiniz fiyat hedeflerine ulaşıldığında" : "When your price targets are reached",
-    security: lang === "tr" ? "Güvenlik Uyarıları" : "Security Alerts",
-    securityDesc: lang === "tr" ? "Yeni cihaz girişleri ve güvenlik olayları" : "New device logins and security events",
-    marketing: lang === "tr" ? "Kampanyalar" : "Promotions",
-    marketingDesc: lang === "tr" ? "Özel teklifler ve yenilikler" : "Special offers and updates",
-    testNotification: lang === "tr" ? "Test Bildirimi Gönder" : "Send Test Notification",
-  };
-
-  // Check current status
   useEffect(() => {
     if (!walletAddress) return;
 
     const checkStatus = async () => {
-      // Check browser permission
       if ("Notification" in window) {
         setPermission(Notification.permission);
       }
 
-      // Check subscription status
       try {
         const res = await fetch("/api/notifications/subscribe", {
           headers: { "x-wallet-address": walletAddress },
@@ -75,14 +200,23 @@ export function PushNotificationSetup({ walletAddress, lang = "tr" }: PushNotifi
     checkStatus();
   }, [walletAddress]);
 
-  // Subscribe to push notifications
+  const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
   const handleSubscribe = async () => {
     setError("");
     setSuccess("");
     setLoading(true);
 
     try {
-      // Request permission
       const perm = await Notification.requestPermission();
       setPermission(perm);
 
@@ -92,21 +226,22 @@ export function PushNotificationSetup({ walletAddress, lang = "tr" }: PushNotifi
         return;
       }
 
-      // Register service worker
       const registration = await navigator.serviceWorker.register("/sw.js");
       await navigator.serviceWorker.ready;
 
-      // Subscribe to push
-      const subscription = await registration.pushManager.subscribe({
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      
+      const subscribeOptions: PushSubscriptionOptionsInit = {
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(
-          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-        ),
-      });
+      };
+      
+      if (vapidKey) {
+        subscribeOptions.applicationServerKey = urlBase64ToUint8Array(vapidKey);
+      }
 
+      const subscription = await registration.pushManager.subscribe(subscribeOptions);
       const subscriptionJson = subscription.toJSON();
 
-      // Send to backend
       const res = await fetch("/api/notifications/subscribe", {
         method: "POST",
         headers: {
@@ -124,16 +259,15 @@ export function PushNotificationSetup({ walletAddress, lang = "tr" }: PushNotifi
       }
 
       setIsSubscribed(true);
-      setSuccess(lang === "tr" ? "Bildirimler aktifleştirildi!" : "Notifications enabled!");
+      setSuccess(t.notificationsEnabled);
     } catch (err) {
       console.error("Subscribe error:", err);
-      setError(lang === "tr" ? "Bildirimler aktifleştirilemedi" : "Failed to enable notifications");
+      setError(t.enableFailed);
     } finally {
       setLoading(false);
     }
   };
 
-  // Unsubscribe
   const handleUnsubscribe = async () => {
     setError("");
     setLoading(true);
@@ -152,16 +286,15 @@ export function PushNotificationSetup({ walletAddress, lang = "tr" }: PushNotifi
       });
 
       setIsSubscribed(false);
-      setSuccess(lang === "tr" ? "Bildirimler kapatıldı" : "Notifications disabled");
+      setSuccess(t.notificationsDisabled);
     } catch (err) {
       console.error("Unsubscribe error:", err);
-      setError(lang === "tr" ? "İşlem başarısız" : "Operation failed");
+      setError(t.operationFailed);
     } finally {
       setLoading(false);
     }
   };
 
-  // Update preferences
   const updatePreference = async (key: string, value: boolean) => {
     const newPrefs = { ...preferences, [key]: value };
     setPreferences(newPrefs);
@@ -180,7 +313,6 @@ export function PushNotificationSetup({ walletAddress, lang = "tr" }: PushNotifi
     }
   };
 
-  // Send test notification
   const sendTestNotification = async () => {
     try {
       const registration = await navigator.serviceWorker.ready;
@@ -195,29 +327,16 @@ export function PushNotificationSetup({ walletAddress, lang = "tr" }: PushNotifi
     }
   };
 
-  // Helper function
-  function urlBase64ToUint8Array(base64String: string): Uint8Array {
-    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-  }
-
   if (!walletAddress) {
     return (
       <div className="p-6 text-center text-slate-400">
-        {lang === "tr" ? "Cüzdan bağlantısı gerekli" : "Wallet connection required"}
+        {t.walletRequired}
       </div>
     );
   }
 
   return (
     <div className="bg-slate-900 rounded-xl border border-slate-800 p-6">
-      {/* Header */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-white flex items-center gap-2">
           🔔 {t.title}
@@ -225,7 +344,6 @@ export function PushNotificationSetup({ walletAddress, lang = "tr" }: PushNotifi
         <p className="text-sm text-slate-400 mt-1">{t.subtitle}</p>
       </div>
 
-      {/* Error/Success Messages */}
       {error && (
         <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
           {error}
@@ -237,7 +355,6 @@ export function PushNotificationSetup({ walletAddress, lang = "tr" }: PushNotifi
         </div>
       )}
 
-      {/* Status */}
       <div className={`p-4 rounded-xl border mb-6 ${
         isSubscribed 
           ? "bg-emerald-500/10 border-emerald-500/30" 
@@ -280,7 +397,6 @@ export function PushNotificationSetup({ walletAddress, lang = "tr" }: PushNotifi
         </div>
       </div>
 
-      {/* Preferences */}
       {isSubscribed && (
         <div className="space-y-4">
           <h4 className="text-sm font-medium text-slate-400">{t.preferences}</h4>
@@ -313,7 +429,6 @@ export function PushNotificationSetup({ walletAddress, lang = "tr" }: PushNotifi
             </div>
           ))}
 
-          {/* Test Button */}
           <button
             onClick={sendTestNotification}
             className="w-full py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 text-sm mt-4"
