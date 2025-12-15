@@ -373,7 +373,7 @@ export function RecurringBuyManager({
           <div>
             <label className="text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.token}</label>
             <div className="grid grid-cols-4 gap-2">
-              {TOKENS.map((token) => (
+              {TOKENS.map((token: any) => (
                 <button
                   key={token.symbol}
                   onClick={() => setSelectedToken(token.symbol)}
@@ -449,7 +449,7 @@ export function RecurringBuyManager({
                 onChange={(e) => setDayOfWeek(parseInt(e.target.value))}
                 className="w-full bg-stone-100 dark:bg-slate-900 border border-stone-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
               >
-                {labels.days.map((day, i) => (
+                {labels.days.map((day: string, i: number) => (
                   <option key={i} value={i}>{day}</option>
                 ))}
               </select>
