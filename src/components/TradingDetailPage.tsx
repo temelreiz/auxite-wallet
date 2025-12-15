@@ -437,7 +437,7 @@ export default function TradingDetailPage({
       metal: symbol,
       name: symbol === "AUXG" ? "Gold" : symbol === "AUXS" ? "Silver" : symbol === "AUXPT" ? "Platinum" : "Palladium",
       icon: symbol === "AUXG" ? "/gold-favicon-32x32.png" : symbol === "AUXS" ? "/silver-favicon-32x32.png" : symbol === "AUXPT" ? "/platinum-favicon-32x32.png" : "/palladium-favicon-32x32.png",
-      duration: config.maxDays,
+      duration: 365,
       apy: apy12,
       minAmount: config.minAmount,
       maxAmount: 1000,
