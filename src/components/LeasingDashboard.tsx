@@ -357,12 +357,12 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
   const [showRecurringStake, setShowRecurringStake] = useState(false);
 
   const { stats: rawStats, loading: statsLoading } = useDashboardStats(effectiveAddress);
-  const { rates, isLoading: ratesLoading } = useLeaseRates();
+  const { sofr, leaseOffers, isLoading: ratesLoading } = useLeaseRates();
   
   const t = getT(lang);
   
   const stats = rawStats || { totalLocked: 0, activePositions: 0, annualEarnings: 0, avgAPY: 0 };
-  const safeRates = rates || { sofr: 3.66, AUXG: { "3": 1.53, "6": 2.03, "12": 2.53 }, AUXS: { "3": 1.23, "6": 1.73, "12": 2.23 }, AUXPT: { "3": 2.03, "6": 2.53, "12": 3.03 }, AUXPD: { "3": 1.83, "6": 2.33, "12": 2.83 } };
+  const safeRates = { sofr: sofr || 3.66, AUXG: { "3": 1.53, "6": 2.03, "12": 2.53 }, AUXS: { "3": 1.23, "6": 1.73, "12": 2.23 }, AUXPT: { "3": 2.03, "6": 2.53, "12": 3.03 }, AUXPD: { "3": 1.83, "6": 2.33, "12": 2.83 } };
 
   const availableOffers = [
     { metal: "AUXG", name: t.gold, icon: "/gold-favicon-32x32.png", metalTokenAddress: "0xE425A9923250E94Fe2F4cB99cbc0896Aea24933a", minAmount: 10, tvl: 500000, periods: [{ months: 3, apy: safeRates?.AUXG?.["3"] || 1.53 }, { months: 6, apy: safeRates?.AUXG?.["6"] || 2.03 }, { months: 12, apy: safeRates?.AUXG?.["12"] || 2.53 }] },
