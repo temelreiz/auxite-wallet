@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { AdvancedChart } from "@/components/AdvancedChart";
+import AdvancedChart from "@/components/AdvancedChart";
 
 type AssetType = "metals" | "crypto";
 type MetalSymbol = "AUXG" | "AUXS" | "AUXPT" | "AUXPD";
