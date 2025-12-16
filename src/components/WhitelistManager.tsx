@@ -248,58 +248,59 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-white">{t.title}</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t.description}</p>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h3 className="text-sm sm:text-lg font-semibold text-slate-800 dark:text-white">{t.title}</h3>
+          <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">{t.description}</p>
         </div>
         {!showAddForm && (
           <button
             onClick={() => setShowAddForm(true)}
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+            className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] sm:text-sm font-medium rounded-lg transition-colors flex items-center gap-1 sm:gap-2 flex-shrink-0"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            {t.addNew}
+            <span className="hidden sm:inline">{t.addNew}</span>
+            <span className="sm:hidden">{t.add}</span>
           </button>
         )}
       </div>
 
       {/* Success/Error Messages */}
       {success && (
-        <div className="p-3 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-emerald-600 dark:text-emerald-400 text-sm">
+        <div className="p-2.5 sm:p-3 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
           ✓ {success}
         </div>
       )}
       {error && (
-        <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-600 dark:text-red-400 text-sm">
+        <div className="p-2.5 sm:p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-600 dark:text-red-400 text-xs sm:text-sm">
           ✕ {error}
         </div>
       )}
 
       {/* Add Form */}
       {showAddForm && (
-        <div className="p-4 bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 rounded-xl space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
-              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 font-medium">{t.address}</label>
+        <div className="p-3 sm:p-4 bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 rounded-lg sm:rounded-xl space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1 font-medium">{t.address}</label>
               <input
                 type="text"
                 value={newAddress.address}
                 onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
                 placeholder="0x... / bc1... / r..."
-                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                className="w-full px-2.5 sm:px-3 py-2 sm:py-2 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg text-xs sm:text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 font-medium">{t.network}</label>
+              <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1 font-medium">{t.network}</label>
               <select
                 value={newAddress.network}
                 onChange={(e) => setNewAddress({ ...newAddress, network: e.target.value as any })}
-                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full px-2.5 sm:px-3 py-2 sm:py-2 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg text-xs sm:text-sm text-slate-800 dark:text-white focus:border-emerald-500 focus:outline-none"
               >
                 <option value="ETH">Ethereum (ETH)</option>
                 <option value="BTC">Bitcoin (BTC)</option>
@@ -309,20 +310,20 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
             </div>
           </div>
           <div>
-            <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 font-medium">{t.label}</label>
+            <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1 font-medium">{t.label}</label>
             <input
               type="text"
               value={newAddress.label}
               onChange={(e) => setNewAddress({ ...newAddress, label: e.target.value })}
               placeholder={t.labelPlaceholder}
-              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+              className="w-full px-2.5 sm:px-3 py-2 sm:py-2 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg text-xs sm:text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
             />
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <button
               onClick={handleAdd}
               disabled={submitting}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-medium rounded-lg transition-colors"
+              className="px-3 sm:px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-medium rounded-lg transition-colors text-xs sm:text-sm"
             >
               {submitting ? "..." : t.add}
             </button>
@@ -332,7 +333,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
                 setNewAddress({ address: "", label: "", network: "ETH" });
                 setError(null);
               }}
-              className="px-4 py-2 bg-stone-200 dark:bg-slate-700 hover:bg-stone-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-medium rounded-lg transition-colors"
+              className="px-3 sm:px-4 py-2 bg-stone-200 dark:bg-slate-700 hover:bg-stone-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-medium rounded-lg transition-colors text-xs sm:text-sm"
             >
               {t.cancel}
             </button>
@@ -342,11 +343,11 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
 
       {/* Address List */}
       {addresses.length === 0 ? (
-        <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-          <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="text-center py-6 sm:py-8 text-slate-500 dark:text-slate-400">
+          <svg className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
-          {t.noAddresses}
+          <p className="text-xs sm:text-sm">{t.noAddresses}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -357,33 +358,33 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
             return (
               <div
                 key={addr.id}
-                className="p-4 bg-white dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 rounded-xl flex items-center justify-between hover:border-stone-300 dark:hover:border-slate-600 transition-colors"
+                className="p-3 sm:p-4 bg-white dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 rounded-lg sm:rounded-xl flex items-center justify-between gap-2 hover:border-stone-300 dark:hover:border-slate-600 transition-colors"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0"
                     style={{ backgroundColor: networkInfo.color }}
                   >
                     {networkInfo.icon}
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-800 dark:text-white font-medium">{addr.label || networkInfo.name}</span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                      <span className="text-xs sm:text-sm text-slate-800 dark:text-white font-medium truncate">{addr.label || networkInfo.name}</span>
                       {addr.isVerified ? (
-                        <span className="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded">
+                        <span className="text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded flex-shrink-0">
                           ✓ {t.verified}
                         </span>
                       ) : (
-                        <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
+                        <span className="text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded flex-shrink-0">
                           ⏳ {t.pending}
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 font-mono">
-                      {addr.address.slice(0, 12)}...{addr.address.slice(-8)}
+                    <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 font-mono truncate">
+                      {addr.address.slice(0, 8)}...{addr.address.slice(-6)}
                     </p>
                     {timeRemaining && (
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                      <p className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500 mt-0.5 sm:mt-1">
                         {t.verifyIn} {timeRemaining}
                       </p>
                     )}
@@ -391,10 +392,10 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
                 </div>
                 <button
                   onClick={() => handleDelete(addr.id)}
-                  className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                  className="p-1.5 sm:p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
                   title={t.delete}
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>

@@ -301,24 +301,26 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-3 sm:space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-white">{labels.title}</h3>
-          <p className="text-sm text-slate-400">{labels.subtitle}</p>
+          <h3 className="text-sm sm:text-lg font-semibold text-white">{labels.title}</h3>
+          <p className="text-[10px] sm:text-sm text-slate-400">{labels.subtitle}</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
+          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-xs sm:text-sm rounded-lg transition-colors touch-manipulation w-full sm:w-auto"
         >
           + {labels.createAlert}
         </button>
       </div>
 
+      {/* Active Alerts */}
       {activeAlerts.length > 0 && (
-        <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
-          <div className="p-4 border-b border-slate-700">
-            <h4 className="font-medium text-white">{labels.activeAlerts}</h4>
+        <div className="bg-slate-800/50 rounded-lg sm:rounded-xl border border-slate-700 overflow-hidden">
+          <div className="p-2.5 sm:p-4 border-b border-slate-700">
+            <h4 className="text-xs sm:text-base font-medium text-white">{labels.activeAlerts}</h4>
           </div>
           <div className="divide-y divide-slate-700">
             {activeAlerts.map((alert) => (
@@ -334,10 +336,11 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
         </div>
       )}
 
+      {/* Triggered/Other Alerts */}
       {otherAlerts.length > 0 && (
-        <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
-          <div className="p-4 border-b border-slate-700">
-            <h4 className="font-medium text-white">{labels.triggeredAlerts}</h4>
+        <div className="bg-slate-800/50 rounded-lg sm:rounded-xl border border-slate-700 overflow-hidden">
+          <div className="p-2.5 sm:p-4 border-b border-slate-700">
+            <h4 className="text-xs sm:text-base font-medium text-white">{labels.triggeredAlerts}</h4>
           </div>
           <div className="divide-y divide-slate-700">
             {otherAlerts.map((alert) => (
@@ -354,52 +357,56 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
         </div>
       )}
 
+      {/* No Alerts */}
       {alerts.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-4xl mb-4">🔔</div>
-          <p className="text-slate-400">{labels.noAlerts}</p>
+        <div className="text-center py-6 sm:py-12">
+          <div className="text-2xl sm:text-4xl mb-3 sm:mb-4">🔔</div>
+          <p className="text-xs sm:text-base text-slate-400">{labels.noAlerts}</p>
         </div>
       )}
 
+      {/* Create Modal */}
       {showCreate && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 rounded-2xl w-full max-w-md border border-slate-700">
-            <div className="p-6 border-b border-slate-700">
-              <h3 className="text-lg font-semibold text-white">{labels.createAlert}</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-slate-900 rounded-lg sm:rounded-2xl w-full max-w-[calc(100vw-16px)] sm:max-w-md border border-slate-700 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            <div className="p-3 sm:p-6 border-b border-slate-700">
+              <h3 className="text-sm sm:text-lg font-semibold text-white">{labels.createAlert}</h3>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
+              {/* Token Selection */}
               <div>
-                <label className="text-sm text-slate-400 mb-2 block">{labels.token}</label>
-                <div className="grid grid-cols-3 gap-2">
+                <label className="text-[10px] sm:text-sm text-slate-400 mb-1.5 sm:mb-2 block">{labels.token}</label>
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   {TOKENS.map((token) => (
                     <button
                       key={token.symbol}
                       onClick={() => setSelectedToken(token.symbol)}
-                      className={`p-3 rounded-xl border transition-colors ${
+                      className={`p-1.5 sm:p-3 rounded-lg sm:rounded-xl border transition-colors touch-manipulation ${
                         selectedToken === token.symbol
                           ? "border-emerald-500 bg-emerald-500/10"
                           : "border-slate-700 hover:border-slate-600"
                       }`}
                     >
-                      <div className="text-xl">{token.icon}</div>
-                      <div className="text-sm text-white mt-1">{token.symbol}</div>
+                      <div className="text-base sm:text-xl">{token.icon}</div>
+                      <div className="text-[10px] sm:text-sm text-white mt-0.5 sm:mt-1">{token.symbol}</div>
                     </button>
                   ))}
                 </div>
                 {getCurrentPrice(selectedToken) > 0 && (
-                  <p className="text-sm text-slate-500 mt-2">
+                  <p className="text-[10px] sm:text-sm text-slate-500 mt-1.5 sm:mt-2">
                     {labels.currentPrice}: ${getCurrentPrice(selectedToken).toLocaleString()}
                   </p>
                 )}
               </div>
 
+              {/* Direction */}
               <div>
-                <label className="text-sm text-slate-400 mb-2 block">{labels.direction}</label>
-                <div className="grid grid-cols-2 gap-2">
+                <label className="text-[10px] sm:text-sm text-slate-400 mb-1.5 sm:mb-2 block">{labels.direction}</label>
+                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                   <button
                     onClick={() => setDirection("above")}
-                    className={`p-3 rounded-xl border transition-colors ${
+                    className={`p-2 sm:p-3 rounded-lg sm:rounded-xl border transition-colors text-[10px] sm:text-sm touch-manipulation ${
                       direction === "above"
                         ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
                         : "border-slate-700 text-slate-400 hover:border-slate-600"
@@ -409,7 +416,7 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
                   </button>
                   <button
                     onClick={() => setDirection("below")}
-                    className={`p-3 rounded-xl border transition-colors ${
+                    className={`p-2 sm:p-3 rounded-lg sm:rounded-xl border transition-colors text-[10px] sm:text-sm touch-manipulation ${
                       direction === "below"
                         ? "border-red-500 bg-red-500/10 text-red-400"
                         : "border-slate-700 text-slate-400 hover:border-slate-600"
@@ -420,28 +427,30 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
                 </div>
               </div>
 
+              {/* Target Price */}
               <div>
-                <label className="text-sm text-slate-400 mb-2 block">{labels.targetPrice}</label>
+                <label className="text-[10px] sm:text-sm text-slate-400 mb-1.5 sm:mb-2 block">{labels.targetPrice}</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                  <span className="absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
                   <input
                     type="number"
+                    inputMode="decimal"
                     value={targetPrice}
                     onChange={(e) => setTargetPrice(e.target.value)}
                     placeholder="0.00"
-                    className="w-full pl-8 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full pl-6 sm:pl-8 pr-3 sm:pr-4 py-2 sm:py-3 bg-slate-800 border border-slate-700 rounded-lg sm:rounded-xl text-xs sm:text-base text-white focus:outline-none focus:border-emerald-500"
                   />
                 </div>
 
                 {getCurrentPrice(selectedToken) > 0 && (
-                  <div className="mt-2">
-                    <p className="text-xs text-slate-500 mb-1">{labels.suggestedPrices}:</p>
+                  <div className="mt-1.5 sm:mt-2">
+                    <p className="text-[9px] sm:text-xs text-slate-500 mb-1">{labels.suggestedPrices}:</p>
                     <div className="flex flex-wrap gap-1">
                       {getSuggestedTargets(selectedToken, direction).map((price) => (
                         <button
                           key={price}
                           onClick={() => setTargetPrice(price.toString())}
-                          className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-400 rounded"
+                          className="px-1.5 sm:px-2 py-0.5 sm:py-1 text-[9px] sm:text-xs bg-slate-800 hover:bg-slate-700 text-slate-400 rounded touch-manipulation"
                         >
                           ${price.toLocaleString()}
                         </button>
@@ -451,34 +460,36 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
                 )}
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
-                <span className="text-slate-300">{labels.repeat}</span>
+              {/* Repeat Toggle */}
+              <div className="flex items-center justify-between p-2.5 sm:p-3 bg-slate-800/50 rounded-lg sm:rounded-xl">
+                <span className="text-xs sm:text-sm text-slate-300">{labels.repeat}</span>
                 <button
                   onClick={() => setRepeat(!repeat)}
-                  className={`w-12 h-6 rounded-full transition-colors ${
+                  className={`w-10 sm:w-12 h-5 sm:h-6 rounded-full transition-colors touch-manipulation ${
                     repeat ? "bg-emerald-500" : "bg-slate-600"
                   }`}
                 >
                   <div
-                    className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                      repeat ? "translate-x-7" : "translate-x-1"
+                    className={`w-3.5 sm:w-4 h-3.5 sm:h-4 rounded-full bg-white transition-transform ${
+                      repeat ? "translate-x-5 sm:translate-x-7" : "translate-x-1"
                     }`}
                   />
                 </button>
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-700 flex gap-3">
+            {/* Actions */}
+            <div className="p-3 sm:p-6 border-t border-slate-700 flex gap-2 sm:gap-3">
               <button
                 onClick={() => setShowCreate(false)}
-                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-colors"
+                className="flex-1 py-2 sm:py-3 bg-slate-700 hover:bg-slate-600 text-white text-xs sm:text-base rounded-lg sm:rounded-xl transition-colors touch-manipulation"
               >
                 {labels.cancel}
               </button>
               <button
                 onClick={handleCreate}
                 disabled={creating || !targetPrice}
-                className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors disabled:opacity-50"
+                className="flex-1 py-2 sm:py-3 bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-base rounded-lg sm:rounded-xl transition-colors disabled:opacity-50 touch-manipulation"
               >
                 {creating ? "..." : labels.create}
               </button>
@@ -517,18 +528,18 @@ function AlertRow({
   };
 
   return (
-    <div className="flex items-center justify-between p-4">
-      <div className="flex items-center gap-3">
-        <div className="text-2xl">{token?.icon || "🪙"}</div>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-white">{alert.token}</span>
-            <span className={`text-sm ${alert.direction === "above" ? "text-emerald-400" : "text-red-400"}`}>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 sm:p-4 gap-2 sm:gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="text-lg sm:text-2xl">{token?.icon || "🪙"}</div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+            <span className="font-medium text-xs sm:text-base text-white">{alert.token}</span>
+            <span className={`text-[10px] sm:text-sm ${alert.direction === "above" ? "text-emerald-400" : "text-red-400"}`}>
               {alert.direction === "above" ? "▲" : "▼"} ${alert.targetPrice.toLocaleString()}
             </span>
-            {alert.repeat && <span className="text-xs text-slate-500">🔄</span>}
+            {alert.repeat && <span className="text-[10px] sm:text-xs text-slate-500">🔄</span>}
           </div>
-          <div className="text-sm text-slate-500">
+          <div className="text-[10px] sm:text-sm text-slate-500">
             {currentPrice > 0 && (
               <span>
                 {labels.currentPrice}: ${currentPrice.toLocaleString()} ({diff > 0 ? "+" : ""}
@@ -539,8 +550,8 @@ function AlertRow({
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <span className={`px-2 py-1 rounded text-xs ${statusColors[alert.status]}`}>
+      <div className="flex items-center gap-1.5 sm:gap-2 self-end sm:self-auto">
+        <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[9px] sm:text-xs ${statusColors[alert.status]}`}>
           {alert.status === "active" ? labels.active : 
            alert.status === "triggered" ? labels.triggered :
            alert.status === "expired" ? labels.expired :
@@ -549,12 +560,15 @@ function AlertRow({
         {alert.status !== "active" && onReactivate && (
           <button
             onClick={onReactivate}
-            className="text-sm text-emerald-400 hover:text-emerald-300"
+            className="text-[10px] sm:text-sm text-emerald-400 hover:text-emerald-300 touch-manipulation"
           >
             {labels.reactivate}
           </button>
         )}
-        <button onClick={onDelete} className="text-sm text-red-400 hover:text-red-300">
+        <button 
+          onClick={onDelete} 
+          className="text-[10px] sm:text-sm text-red-400 hover:text-red-300 touch-manipulation"
+        >
           {labels.delete}
         </button>
       </div>

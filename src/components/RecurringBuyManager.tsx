@@ -60,6 +60,7 @@ const t: Record<string, any> = {
     autoStake: "Alımları Biriktir",
     autoStakeDesc: "Her alım biriktirme havuzuna da eklensin",
     month: "Ay",
+    day: "Gün",
   },
   en: {
     title: "Auto-Invest",
@@ -84,6 +85,7 @@ const t: Record<string, any> = {
     autoStake: "Auto-Stake",
     autoStakeDesc: "Add each purchase to staking pool",
     month: "Mo",
+    day: "Day",
   },
   de: {
     title: "Auto-Investieren",
@@ -108,6 +110,7 @@ const t: Record<string, any> = {
     autoStake: "Auto-Staken",
     autoStakeDesc: "Jeden Kauf zum Staking-Pool hinzufügen",
     month: "Mo",
+    day: "Tag",
   },
   fr: {
     title: "Investissement Auto",
@@ -132,6 +135,7 @@ const t: Record<string, any> = {
     autoStake: "Auto-Staking",
     autoStakeDesc: "Ajouter chaque achat au pool de staking",
     month: "Mois",
+    day: "Jour",
   },
   ar: {
     title: "الاستثمار التلقائي",
@@ -156,6 +160,7 @@ const t: Record<string, any> = {
     autoStake: "التخزين التلقائي",
     autoStakeDesc: "إضافة كل عملية شراء إلى مجمع التخزين",
     month: "شهر",
+    day: "يوم",
   },
   ru: {
     title: "Авто-инвестирование",
@@ -180,6 +185,7 @@ const t: Record<string, any> = {
     autoStake: "Авто-стейкинг",
     autoStakeDesc: "Добавлять каждую покупку в пул стейкинга",
     month: "Мес",
+    day: "День",
   },
 };
 
@@ -335,31 +341,31 @@ export function RecurringBuyManager({
     <div className="space-y-4">
       {/* Success Message */}
       {successMessage && (
-        <div className="p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-emerald-400 flex items-center gap-3">
-          <span className="text-xl">✅</span>
-          <span>{successMessage}</span>
+        <div className="p-3 sm:p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-emerald-400 flex items-center gap-2 sm:gap-3 text-sm">
+          <span className="text-lg sm:text-xl">✅</span>
+          <span className="flex-1">{successMessage}</span>
         </div>
       )}
       
       {/* Error Message */}
       {errorMessage && (
-        <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-400 flex items-center gap-3">
-          <span className="text-xl">❌</span>
-          <span>{errorMessage}</span>
-          <button onClick={() => setErrorMessage("")} className="ml-auto">✕</button>
+        <div className="p-3 sm:p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-400 flex items-center gap-2 sm:gap-3 text-sm">
+          <span className="text-lg sm:text-xl">❌</span>
+          <span className="flex-1">{errorMessage}</span>
+          <button onClick={() => setErrorMessage("")} className="touch-manipulation">✕</button>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{labels.title}</h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400">{labels.subtitle}</p>
+          <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">{labels.title}</h3>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">{labels.subtitle}</p>
         </div>
         {!showCreate && (
           <button
             onClick={() => setShowCreate(true)}
-            className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600"
+            className="px-4 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600 active:bg-emerald-700 touch-manipulation w-full sm:w-auto"
           >
             + {labels.createPlan}
           </button>
@@ -368,27 +374,27 @@ export function RecurringBuyManager({
 
       {/* Create Form */}
       {showCreate && (
-        <div className="bg-white dark:bg-slate-800/50 rounded-xl p-4 border border-stone-200 dark:border-slate-700 space-y-4">
+        <div className="bg-white dark:bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-stone-200 dark:border-slate-700 space-y-4">
           {/* Token Selection */}
           <div>
-            <label className="text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.token}</label>
-            <div className="grid grid-cols-4 gap-2">
+            <label className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.token}</label>
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
               {TOKENS.map((token: any) => (
                 <button
                   key={token.symbol}
                   onClick={() => setSelectedToken(token.symbol)}
-                  className={`p-3 rounded-xl border transition-colors ${
+                  className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                     selectedToken === token.symbol
                       ? "border-emerald-500 bg-emerald-500/10"
                       : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                   }`}
                 >
                   {token.isImage ? (
-                    <img src={token.icon} alt={token.symbol} className="w-6 h-6 mx-auto" />
+                    <img src={token.icon} alt={token.symbol} className="w-5 h-5 sm:w-6 sm:h-6 mx-auto" />
                   ) : (
-                    <div className="text-xl text-center">{token.icon}</div>
+                    <div className="text-lg sm:text-xl text-center">{token.icon}</div>
                   )}
-                  <div className="text-xs text-center font-medium text-slate-700 dark:text-slate-300 mt-1">{token.symbol}</div>
+                  <div className="text-[10px] sm:text-xs text-center font-medium text-slate-700 dark:text-slate-300 mt-1">{token.symbol}</div>
                 </button>
               ))}
             </div>
@@ -396,23 +402,24 @@ export function RecurringBuyManager({
 
           {/* Amount */}
           <div>
-            <label className="text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.amount}</label>
+            <label className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.amount}</label>
             <div className="flex items-center gap-2">
               <span className="text-slate-600 dark:text-slate-400 font-medium">$</span>
               <input
                 type="number"
+                inputMode="decimal"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="flex-1 bg-stone-100 dark:bg-slate-900 border border-stone-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                className="flex-1 bg-stone-100 dark:bg-slate-900 border border-stone-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm sm:text-base text-slate-900 dark:text-white"
                 min="10"
               />
             </div>
-            <div className="flex gap-2 mt-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2">
               {["25", "50", "100", "250", "500"].map((val) => (
                 <button
                   key={val}
                   onClick={() => setAmount(val)}
-                  className="px-3 py-1 bg-stone-200 dark:bg-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-300 hover:bg-stone-300 dark:hover:bg-slate-600"
+                  className="px-2.5 sm:px-3 py-1 bg-stone-200 dark:bg-slate-700 rounded-lg text-xs sm:text-sm text-slate-700 dark:text-slate-300 hover:bg-stone-300 dark:hover:bg-slate-600 touch-manipulation"
                 >
                   ${val}
                 </button>
@@ -422,16 +429,16 @@ export function RecurringBuyManager({
 
           {/* Frequency */}
           <div>
-            <label className="text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.frequency}</label>
-            <div className="grid grid-cols-2 gap-2">
+            <label className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.frequency}</label>
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
               {(["daily", "weekly", "biweekly", "monthly"] as const).map((freq) => (
                 <button
                   key={freq}
                   onClick={() => setFrequency(freq)}
-                  className={`p-3 rounded-xl border transition-colors ${
+                  className={`p-2 sm:p-3 rounded-xl border transition-colors text-xs sm:text-sm touch-manipulation ${
                     frequency === freq
                       ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
-                      : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600 text-slate-300"
+                      : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600 text-slate-600 dark:text-slate-300"
                   }`}
                 >
                   {labels.frequencies[freq]}
@@ -443,11 +450,11 @@ export function RecurringBuyManager({
           {/* Day of Week (for weekly/biweekly) */}
           {(frequency === "weekly" || frequency === "biweekly") && (
             <div>
-              <label className="text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">Gün</label>
+              <label className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.day}</label>
               <select
                 value={dayOfWeek}
                 onChange={(e) => setDayOfWeek(parseInt(e.target.value))}
-                className="w-full bg-stone-100 dark:bg-slate-900 border border-stone-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                className="w-full bg-stone-100 dark:bg-slate-900 border border-stone-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm sm:text-base text-slate-900 dark:text-white"
               >
                 {labels.days.map((day: string, i: number) => (
                   <option key={i} value={i}>{day}</option>
@@ -458,105 +465,105 @@ export function RecurringBuyManager({
 
           {/* Payment Source */}
           <div>
-            <label className="text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.paymentSource}</label>
-            <div className="grid grid-cols-3 gap-2">
+            <label className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-300 mb-2 block">{labels.paymentSource}</label>
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
               <button
                 onClick={() => setPaymentSource("usd_balance")}
-                className={`p-3 rounded-xl border transition-colors ${
+                className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                   paymentSource === "usd_balance"
                     ? "border-emerald-500 bg-emerald-500/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
-                <div className="text-slate-900 dark:text-white font-medium">USD</div>
-                <div className="text-xs text-slate-500">${usdBalance.toFixed(2)}</div>
+                <div className="text-xs sm:text-sm text-slate-900 dark:text-white font-medium">USD</div>
+                <div className="text-[10px] sm:text-xs text-slate-500">${usdBalance.toFixed(2)}</div>
               </button>
               <button
                 onClick={() => setPaymentSource("usdt_balance")}
-                className={`p-3 rounded-xl border transition-colors ${
+                className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                   paymentSource === "usdt_balance"
                     ? "border-emerald-500 bg-emerald-500/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
-                <div className="text-slate-900 dark:text-white font-medium">USDT</div>
-                <div className="text-xs text-slate-500">${usdtBalance.toFixed(2)}</div>
+                <div className="text-xs sm:text-sm text-slate-900 dark:text-white font-medium">USDT</div>
+                <div className="text-[10px] sm:text-xs text-slate-500">${usdtBalance.toFixed(2)}</div>
               </button>
               <button
                 onClick={() => setPaymentSource("eth_balance")}
-                className={`p-3 rounded-xl border transition-colors ${
+                className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                   paymentSource === "eth_balance"
                     ? "border-emerald-500 bg-emerald-500/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
-                <div className="text-slate-900 dark:text-white font-medium">ETH</div>
-                <div className="text-xs text-slate-500">{ethBalance.toFixed(4)}</div>
+                <div className="text-xs sm:text-sm text-slate-900 dark:text-white font-medium">ETH</div>
+                <div className="text-[10px] sm:text-xs text-slate-500">{ethBalance.toFixed(4)}</div>
               </button>
               <button
                 onClick={() => setPaymentSource("btc_balance")}
-                className={`p-3 rounded-xl border transition-colors ${
+                className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                   paymentSource === "btc_balance"
                     ? "border-emerald-500 bg-emerald-500/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
-                <div className="text-slate-900 dark:text-white font-medium">BTC</div>
-                <div className="text-xs text-slate-500">{btcBalance.toFixed(6)}</div>
+                <div className="text-xs sm:text-sm text-slate-900 dark:text-white font-medium">BTC</div>
+                <div className="text-[10px] sm:text-xs text-slate-500">{btcBalance.toFixed(6)}</div>
               </button>
               <button
                 onClick={() => setPaymentSource("xrp_balance")}
-                className={`p-3 rounded-xl border transition-colors ${
+                className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                   paymentSource === "xrp_balance"
                     ? "border-emerald-500 bg-emerald-500/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
-                <div className="text-slate-900 dark:text-white font-medium">XRP</div>
-                <div className="text-xs text-slate-500">{xrpBalance.toFixed(2)}</div>
+                <div className="text-xs sm:text-sm text-slate-900 dark:text-white font-medium">XRP</div>
+                <div className="text-[10px] sm:text-xs text-slate-500">{xrpBalance.toFixed(2)}</div>
               </button>
               <button
                 onClick={() => setPaymentSource("sol_balance")}
-                className={`p-3 rounded-xl border transition-colors ${
+                className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                   paymentSource === "sol_balance"
                     ? "border-emerald-500 bg-emerald-500/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
-                <div className="text-slate-900 dark:text-white font-medium">SOL</div>
-                <div className="text-xs text-slate-500">{solBalance.toFixed(4)}</div>
+                <div className="text-xs sm:text-sm text-slate-900 dark:text-white font-medium">SOL</div>
+                <div className="text-[10px] sm:text-xs text-slate-500">{solBalance.toFixed(4)}</div>
               </button>
             </div>
           </div>
 
           {/* Auto-Stake Option */}
-          <div className="p-4 rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/30">
+          <div className="p-3 sm:p-4 rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/30">
             <div className="flex items-center justify-between mb-3">
-              <div>
-                <div className="text-slate-900 dark:text-white font-medium flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="text-xs sm:text-sm text-slate-900 dark:text-white font-medium flex items-center gap-2">
                   🔒 {labels.autoStake}
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mt-1">
                   {labels.autoStakeDesc}
                 </p>
               </div>
               <button
                 onClick={() => setAutoStake(!autoStake)}
-                className={`w-12 h-6 rounded-full transition-colors ${autoStake ? "bg-emerald-500" : "bg-stone-300 dark:bg-slate-600"}`}
+                className={`w-11 sm:w-12 h-6 rounded-full transition-colors flex-shrink-0 ml-3 touch-manipulation ${autoStake ? "bg-emerald-500" : "bg-stone-300 dark:bg-slate-600"}`}
               >
-                <div className={`w-5 h-5 rounded-full bg-white transform transition-transform ${autoStake ? "translate-x-6" : "translate-x-1"}`} />
+                <div className={`w-5 h-5 rounded-full bg-white transform transition-transform ${autoStake ? "translate-x-5 sm:translate-x-6" : "translate-x-1"}`} />
               </button>
             </div>
             {autoStake && (
-              <div className="grid grid-cols-3 gap-2 mt-3">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mt-3">
                 {([3, 6, 12] as const).map((months) => (
                   <button
                     key={months}
                     onClick={() => setStakeDuration(months)}
-                    className={`p-3 rounded-xl border transition-colors ${stakeDuration === months ? "border-emerald-500 bg-emerald-500/10 text-emerald-400" : "border-stone-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-stone-400 dark:hover:border-slate-600"}`}
+                    className={`p-2 sm:p-3 rounded-xl border transition-colors text-xs sm:text-sm touch-manipulation ${stakeDuration === months ? "border-emerald-500 bg-emerald-500/10 text-emerald-400" : "border-stone-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-stone-400 dark:hover:border-slate-600"}`}
                   >
                     <div className="font-medium">{months} {labels.month}</div>
-                    <div className="text-xs opacity-70">{months === 3 ? "5%" : months === 6 ? "8%" : "12%"} APY</div>
+                    <div className="text-[10px] sm:text-xs opacity-70">{months === 3 ? "5%" : months === 6 ? "8%" : "12%"} APY</div>
                   </button>
                 ))}
               </div>
@@ -564,17 +571,17 @@ export function RecurringBuyManager({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-2 sm:gap-3 pt-2">
             <button
               onClick={() => setShowCreate(false)}
-              className="flex-1 py-3 bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-stone-300 dark:hover:bg-slate-600 font-medium"
+              className="flex-1 py-2.5 sm:py-3 bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-stone-300 dark:hover:bg-slate-600 text-sm sm:text-base font-medium touch-manipulation"
             >
               {labels.cancel}
             </button>
             <button
               onClick={handleCreate}
               disabled={creating || !amount || parseFloat(amount) < 10}
-              className="flex-1 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 disabled:opacity-50"
+              className="flex-1 py-2.5 sm:py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 active:bg-emerald-700 disabled:opacity-50 text-sm sm:text-base touch-manipulation"
             >
               {creating ? "..." : labels.create}
             </button>
@@ -585,37 +592,37 @@ export function RecurringBuyManager({
       {/* Plans List */}
       {loading ? (
         <div className="flex justify-center py-8">
-          <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full"></div>
+          <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full"></div>
         </div>
       ) : plans.length === 0 ? (
-        <div className="text-center py-8 text-slate-500">
-          <p className="text-4xl mb-2">📅</p>
-          <p>{labels.noPlans}</p>
+        <div className="text-center py-6 sm:py-8 text-slate-500">
+          <p className="text-3xl sm:text-4xl mb-2">📅</p>
+          <p className="text-sm sm:text-base">{labels.noPlans}</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {plans.map((plan) => {
             const token = TOKENS.find((t) => t.symbol === plan.token);
             return (
-              <div key={plan.id} className="bg-white dark:bg-slate-800/50 rounded-xl p-4 border border-stone-200 dark:border-slate-700">
+              <div key={plan.id} className="bg-white dark:bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-stone-200 dark:border-slate-700">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     {token?.isImage ? (
-                      <img src={token.icon} alt={token.symbol} className="w-8 h-8" />
+                      <img src={token.icon} alt={token.symbol} className="w-6 h-6 sm:w-8 sm:h-8" />
                     ) : (
-                      <div className="text-2xl">{token?.icon || "🪙"}</div>
+                      <div className="text-xl sm:text-2xl">{token?.icon || "🪙"}</div>
                     )}
                     <div>
-                      <div className="font-semibold text-slate-900 dark:text-white">
+                      <div className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
                         ${plan.amount} → {plan.token}
                       </div>
-                      <div className="text-sm text-slate-600 dark:text-slate-400">
+                      <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                         {labels.frequencies[plan.frequency]}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
+                    <span className={`text-[10px] sm:text-xs px-2 py-1 rounded-full ${
                       plan.status === "active" ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" :
                       plan.status === "paused" ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400" :
                       "bg-slate-200 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400"
@@ -628,7 +635,7 @@ export function RecurringBuyManager({
                   {plan.status === "active" && (
                     <button
                       onClick={() => setConfirmModal({ show: true, type: "pause", planId: plan.id, planToken: plan.token })}
-                      className="flex-1 py-2 bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg text-sm font-medium hover:bg-amber-200 dark:hover:bg-amber-500/20 transition-colors"
+                      className="flex-1 py-2 bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg text-xs sm:text-sm font-medium hover:bg-amber-200 dark:hover:bg-amber-500/20 transition-colors touch-manipulation"
                     >
                       {labels.pause}
                     </button>
@@ -636,14 +643,14 @@ export function RecurringBuyManager({
                   {plan.status === "paused" && (
                     <button
                       onClick={() => setConfirmModal({ show: true, type: "resume", planId: plan.id, planToken: plan.token })}
-                      className="flex-1 py-2 bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-sm font-medium hover:bg-emerald-200 dark:hover:bg-emerald-500/20 transition-colors"
+                      className="flex-1 py-2 bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs sm:text-sm font-medium hover:bg-emerald-200 dark:hover:bg-emerald-500/20 transition-colors touch-manipulation"
                     >
                       {labels.resume}
                     </button>
                   )}
                   <button
                     onClick={() => setConfirmModal({ show: true, type: "delete", planId: plan.id, planToken: plan.token })}
-                    className="py-2 px-4 bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium hover:bg-red-200 dark:hover:bg-red-500/20 transition-colors"
+                    className="py-2 px-3 sm:px-4 bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-xs sm:text-sm font-medium hover:bg-red-200 dark:hover:bg-red-500/20 transition-colors touch-manipulation"
                   >
                     {labels.delete}
                   </button>
@@ -656,32 +663,32 @@ export function RecurringBuyManager({
 
       {/* Confirmation Modal */}
       {confirmModal && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 max-w-sm w-full p-6">
-            <div className="text-center mb-6">
-              <div className="text-4xl mb-4">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-stone-200 dark:border-slate-700 max-w-[calc(100vw-24px)] sm:max-w-sm w-full p-4 sm:p-6">
+            <div className="text-center mb-4 sm:mb-6">
+              <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">
                 {confirmModal.type === "delete" ? "🗑️" : confirmModal.type === "pause" ? "⏸️" : "▶️"}
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white mb-2">
                 {confirmModal.planToken} {confirmModal.type === "delete" ? "Planı Sil" : confirmModal.type === "pause" ? "Planı Duraklat" : "Planı Devam Ettir"}
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                 {labels.confirmMessages[confirmModal.type]}
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               <button
                 onClick={() => setConfirmModal(null)}
-                className="flex-1 py-3 bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-stone-300 dark:hover:bg-slate-600 font-medium"
+                className="flex-1 py-2.5 sm:py-3 bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-stone-300 dark:hover:bg-slate-600 text-sm sm:text-base font-medium touch-manipulation"
               >
                 {labels.cancel}
               </button>
               <button
                 onClick={handleConfirmAction}
-                className={`flex-1 py-3 rounded-xl text-white font-medium ${
+                className={`flex-1 py-2.5 sm:py-3 rounded-xl text-white text-sm sm:text-base font-medium touch-manipulation ${
                   confirmModal.type === "delete" 
-                    ? "bg-red-500 hover:bg-red-600" 
-                    : "bg-emerald-500 hover:bg-emerald-600"
+                    ? "bg-red-500 hover:bg-red-600 active:bg-red-700" 
+                    : "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700"
                 }`}
               >
                 {labels.confirm}

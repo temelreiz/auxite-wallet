@@ -378,14 +378,14 @@ export function BuyWithUsdModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-stone-200 dark:border-slate-700 w-full max-w-[calc(100vw-24px)] sm:max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t.title}</h3>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h3 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">{t.title}</h3>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg transition-colors touch-manipulation"
           >
             <svg
               className="w-5 h-5 text-slate-500 dark:text-slate-400"
@@ -404,8 +404,8 @@ export function BuyWithUsdModal({
         </div>
 
         {/* Payment Method Selection */}
-        <div className="mb-5">
-          <label className="text-sm text-slate-500 dark:text-slate-400 mb-2 block">
+        <div className="mb-4 sm:mb-5">
+          <label className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-2 block">
             {t.paymentMethod}
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -413,7 +413,7 @@ export function BuyWithUsdModal({
             <button
               onClick={() => setPaymentMethod("balance")}
               disabled={usdBalance <= 0}
-              className={`p-3 rounded-xl border transition-all text-left ${
+              className={`p-2.5 sm:p-3 rounded-xl border transition-all text-left touch-manipulation ${
                 paymentMethod === "balance"
                   ? "bg-green-500/10 border-green-500"
                   : usdBalance > 0
@@ -421,11 +421,11 @@ export function BuyWithUsdModal({
                   : "bg-stone-100 dark:bg-slate-800/50 border-stone-200 dark:border-slate-700 opacity-50 cursor-not-allowed"
               }`}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-green-500">💵</span>
-                <span className="text-sm font-medium text-slate-800 dark:text-white">{t.usdBalanceOption}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                <span className="text-green-500 text-sm sm:text-base">💵</span>
+                <span className="text-xs sm:text-sm font-medium text-slate-800 dark:text-white truncate">{t.usdBalanceOption}</span>
               </div>
-              <p className="text-xs text-green-600 dark:text-green-400 font-semibold">
+              <p className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-semibold">
                 ${usdBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </p>
             </button>
@@ -433,21 +433,21 @@ export function BuyWithUsdModal({
             {/* MoonPay Option */}
             <button
               onClick={() => MOONPAY_CONFIG.enabled && setPaymentMethod("moonpay")}
-              className={`p-3 rounded-xl border transition-all text-left relative ${
+              className={`p-2.5 sm:p-3 rounded-xl border transition-all text-left relative touch-manipulation ${
                 paymentMethod === "moonpay"
                   ? "bg-purple-500/10 border-purple-500"
                   : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700 hover:border-stone-300 dark:hover:border-slate-600"
               } ${!MOONPAY_CONFIG.enabled ? "opacity-60" : ""}`}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-purple-500">💳</span>
-                <span className="text-sm font-medium text-slate-800 dark:text-white">{t.cardOption}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+                <span className="text-purple-500 text-sm sm:text-base">💳</span>
+                <span className="text-xs sm:text-sm font-medium text-slate-800 dark:text-white truncate">{t.cardOption}</span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                 {t.moonpayMinAmount}
               </p>
               {!MOONPAY_CONFIG.enabled && (
-                <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-[10px] font-semibold rounded">
+                <span className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 px-1 sm:px-1.5 py-0.5 bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-[8px] sm:text-[10px] font-semibold rounded">
                   {t.moonpayComingSoon}
                 </span>
               )}
@@ -457,10 +457,10 @@ export function BuyWithUsdModal({
 
         {/* USD Balance Display (only show when balance method selected) */}
         {paymentMethod === "balance" && (
-          <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 rounded-xl p-4 mb-5">
+          <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 rounded-xl p-3 sm:p-4 mb-4 sm:mb-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600 dark:text-slate-400">{t.usdBalance}</span>
-              <span className="text-lg font-bold text-green-600 dark:text-green-400">
+              <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">{t.usdBalance}</span>
+              <span className="text-base sm:text-lg font-bold text-green-600 dark:text-green-400">
                 ${usdBalance.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
@@ -471,71 +471,73 @@ export function BuyWithUsdModal({
         )}
 
         {/* Token Selection */}
-        <div className="mb-5">
-          <label className="text-sm text-slate-500 dark:text-slate-400 mb-2 block">
+        <div className="mb-4 sm:mb-5">
+          <label className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-2 block">
             {t.selectToken}
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          {/* Mobile: Horizontal scroll, Desktop: 3-column grid */}
+          <div className="flex sm:grid sm:grid-cols-3 gap-2 overflow-x-auto pb-2 sm:pb-0 -mx-1 px-1 sm:mx-0 sm:px-0 scrollbar-hide">
             {TOKENS.map((token) => (
               <button
                 key={token.id}
                 onClick={() => setSelectedToken(token)}
-                className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all ${
+                className={`flex flex-col items-center gap-1 p-2.5 sm:p-3 rounded-xl border transition-all flex-shrink-0 min-w-[72px] sm:min-w-0 touch-manipulation ${
                   selectedToken.id === token.id
                     ? "bg-emerald-500/20 border-emerald-500"
                     : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700 hover:border-stone-300 dark:hover:border-slate-600"
                 }`}
               >
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center"
                   style={{ backgroundColor: token.color + "30" }}
                 >
-                  <span style={{ color: token.color }}>{token.icon}</span>
+                  <span className="text-sm sm:text-base" style={{ color: token.color }}>{token.icon}</span>
                 </div>
-                <span className="text-xs text-slate-700 dark:text-slate-300">{token.symbol}</span>
+                <span className="text-[10px] sm:text-xs text-slate-700 dark:text-slate-300">{token.symbol}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Amount Input */}
-        <div className="mb-5">
+        <div className="mb-4 sm:mb-5">
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm text-slate-500 dark:text-slate-400">{t.amount} (USD)</label>
+            <label className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{t.amount} (USD)</label>
             {paymentMethod === "balance" && (
               <button
                 onClick={handleMaxClick}
-                className="text-xs text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400"
+                className="text-xs text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 touch-manipulation"
               >
                 MAX
               </button>
             )}
           </div>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400">
+            <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400">
               $
             </span>
             <input
               type="number"
+              inputMode="decimal"
               value={usdAmount}
               onChange={(e) => setUsdAmount(e.target.value)}
               placeholder="0.00"
-              className={`w-full bg-stone-50 dark:bg-slate-800 border rounded-xl pl-8 pr-4 py-3 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 ${
+              className={`w-full bg-stone-50 dark:bg-slate-800 border rounded-xl pl-7 sm:pl-8 pr-4 py-2.5 sm:py-3 text-sm sm:text-base text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 ${
                 hasInsufficientBalance ? "border-red-500" : "border-stone-200 dark:border-slate-700"
               }`}
             />
           </div>
           {hasInsufficientBalance && (
-            <p className="text-xs text-red-500 dark:text-red-400 mt-1">{t.insufficientBalance}</p>
+            <p className="text-[10px] sm:text-xs text-red-500 dark:text-red-400 mt-1">{t.insufficientBalance}</p>
           )}
         </div>
 
         {/* You Will Receive */}
         {parsedAmount > 0 && (
-          <div className="bg-stone-50 dark:bg-slate-800/50 rounded-xl p-4 mb-5">
+          <div className="bg-stone-50 dark:bg-slate-800/50 rounded-xl p-3 sm:p-4 mb-4 sm:mb-5">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-slate-500 dark:text-slate-400">{t.youWillReceive}</span>
-              <span className="text-lg font-bold text-slate-800 dark:text-white">
+              <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{t.youWillReceive}</span>
+              <span className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
                 {tokenAmount.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 6,
@@ -546,7 +548,7 @@ export function BuyWithUsdModal({
             
             {/* Bonus Display for AUXM */}
             {selectedToken.symbol === "AUXM" && bonusPercent > 0 && (
-              <div className="flex items-center justify-between mb-2 text-sm">
+              <div className="flex items-center justify-between mb-2 text-xs sm:text-sm">
                 <span className="text-purple-600 dark:text-purple-400">{t.bonus} (+{bonusPercent}%)</span>
                 <span className="font-semibold text-purple-600 dark:text-purple-400">
                   +{(bonusAmount / selectedToken.price).toFixed(2)} AUXM
@@ -557,14 +559,14 @@ export function BuyWithUsdModal({
             {/* Total with Bonus */}
             {bonusPercent > 0 && (
               <div className="flex items-center justify-between pt-2 border-t border-stone-200 dark:border-slate-700">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.totalReceive}</span>
-                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">{t.totalReceive}</span>
+                <span className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400">
                   {totalTokenAmount.toFixed(2)} {selectedToken.symbol}
                 </span>
               </div>
             )}
 
-            <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-stone-200 dark:border-slate-700">
+            <div className="flex items-center justify-between text-[10px] sm:text-xs mt-2 pt-2 border-t border-stone-200 dark:border-slate-700">
               <span className="text-slate-400 dark:text-slate-500">{t.rate}</span>
               <span className="text-slate-500 dark:text-slate-400">
                 1 {selectedToken.symbol} = ${selectedToken.price}
@@ -575,14 +577,14 @@ export function BuyWithUsdModal({
 
         {/* Error/Success Messages */}
         {error && (
-          <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-3 mb-5">
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-3 mb-4 sm:mb-5">
+            <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">{error}</p>
           </div>
         )}
 
         {success && (
-          <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 rounded-xl p-3 mb-5">
-            <p className="text-sm text-green-600 dark:text-green-400">{success}</p>
+          <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 rounded-xl p-3 mb-4 sm:mb-5">
+            <p className="text-xs sm:text-sm text-green-600 dark:text-green-400">{success}</p>
           </div>
         )}
 
@@ -590,22 +592,22 @@ export function BuyWithUsdModal({
         <button
           onClick={handleBuy}
           disabled={isLoading || !parsedAmount || (paymentMethod === "balance" && hasInsufficientBalance)}
-          className={`w-full py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 ${
+          className={`w-full py-2.5 sm:py-3 rounded-xl font-semibold text-sm sm:text-base transition-colors flex items-center justify-center gap-2 touch-manipulation ${
             isLoading || !parsedAmount || (paymentMethod === "balance" && hasInsufficientBalance)
               ? "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed"
               : paymentMethod === "moonpay"
-              ? "bg-purple-500 hover:bg-purple-600 text-white"
-              : "bg-green-500 hover:bg-green-600 text-white"
+              ? "bg-purple-500 hover:bg-purple-600 active:bg-purple-700 text-white"
+              : "bg-green-500 hover:bg-green-600 active:bg-green-700 text-white"
           }`}
         >
           {isLoading ? (
             <>
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               {t.processing}
             </>
           ) : paymentMethod === "moonpay" ? (
             <>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
               {t.cardOption} {parsedAmount > 0 && `$${parsedAmount}`}
@@ -613,7 +615,7 @@ export function BuyWithUsdModal({
           ) : (
             <>
               <svg
-                className="w-5 h-5"
+                className="w-4 h-4 sm:w-5 sm:h-5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -632,7 +634,7 @@ export function BuyWithUsdModal({
 
         {/* MoonPay Info */}
         {paymentMethod === "moonpay" && MOONPAY_CONFIG.enabled && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-3">
+          <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 text-center mt-3">
             {t.moonpayDesc}
           </p>
         )}

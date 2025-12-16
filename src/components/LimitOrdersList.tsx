@@ -193,7 +193,7 @@ export function LimitOrdersList({
   // Render metal icon
   const renderMetalIcon = (metalSymbol: string, size: 'sm' | 'md' = 'md') => {
     const metalInfo = METAL_INFO[metalSymbol];
-    const sizeClass = size === 'sm' ? 'w-5 h-5' : 'w-6 h-6';
+    const sizeClass = size === 'sm' ? 'w-4 h-4 sm:w-5 sm:h-5' : 'w-5 h-5 sm:w-6 sm:h-6';
     
     if (metalInfo) {
       return (
@@ -208,7 +208,7 @@ export function LimitOrdersList({
     // Fallback for unknown metals
     return (
       <div 
-        className={`${sizeClass} rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300`}
+        className={`${sizeClass} rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-300`}
       >
         {metalSymbol.slice(0, 2)}
       </div>
@@ -217,53 +217,53 @@ export function LimitOrdersList({
 
   if (loading && orders.length === 0) {
     return (
-      <div className={`${compact ? 'p-3' : 'p-4'} text-center text-slate-500 dark:text-slate-400`}>
-        <div className="animate-spin w-5 h-5 border-2 border-stone-300 dark:border-slate-600 border-t-emerald-500 rounded-full mx-auto mb-2"></div>
-        {t.loading}
+      <div className={`${compact ? 'p-2 sm:p-3' : 'p-3 sm:p-4'} text-center text-slate-500 dark:text-slate-400`}>
+        <div className="animate-spin w-4 h-4 sm:w-5 sm:h-5 border-2 border-stone-300 dark:border-slate-600 border-t-emerald-500 rounded-full mx-auto mb-2"></div>
+        <span className="text-xs sm:text-sm">{t.loading}</span>
       </div>
     );
   }
 
   if (orders.length === 0) {
     return (
-      <div className={`${compact ? 'p-3' : 'p-4'} text-center text-slate-500 dark:text-slate-400`}>
-        <div className="text-2xl mb-2">📋</div>
-        <p className="text-sm">{t.noOrders}</p>
+      <div className={`${compact ? 'p-2 sm:p-3' : 'p-3 sm:p-4'} text-center text-slate-500 dark:text-slate-400`}>
+        <div className="text-xl sm:text-2xl mb-2">📋</div>
+        <p className="text-xs sm:text-sm">{t.noOrders}</p>
       </div>
     );
   }
 
-  // Compact view for TradePanel
+  // Compact view for TradePanel - Responsive
   if (compact) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-1.5 sm:space-y-2">
         <div className="flex items-center justify-between px-1">
-          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t.title} ({orders.length})</span>
+          <span className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">{t.title} ({orders.length})</span>
           <button
             onClick={refresh}
             disabled={loading}
-            className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300"
+            className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300"
           >
             {t.refresh}
           </button>
         </div>
         
-        <div className="max-h-32 overflow-y-auto space-y-1">
+        <div className="max-h-28 sm:max-h-32 overflow-y-auto space-y-1">
           {orders.map((order) => (
             <div
               key={order.id}
-              className="flex items-center justify-between p-2 bg-stone-100 dark:bg-slate-800/50 rounded-lg text-xs"
+              className="flex items-center justify-between p-1.5 sm:p-2 bg-stone-100 dark:bg-slate-800/50 rounded-lg text-[10px] sm:text-xs"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                 {renderMetalIcon(order.metal, 'sm')}
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                <span className={`px-1 sm:px-1.5 py-0.5 rounded text-[8px] sm:text-[10px] font-bold ${
                   order.type === 'buy' 
                     ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' 
                     : 'bg-red-500/20 text-red-600 dark:text-red-400'
                 }`}>
                   {order.type === 'buy' ? t.buy : t.sell}
                 </span>
-                <span className="text-slate-800 dark:text-white font-mono">
+                <span className="text-slate-800 dark:text-white font-mono truncate">
                   {order.grams}g @ ${order.limitPrice}
                 </span>
               </div>
@@ -271,7 +271,7 @@ export function LimitOrdersList({
               <button
                 onClick={() => handleCancel(order.id)}
                 disabled={cancellingId === order.id}
-                className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 disabled:opacity-50"
+                className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 disabled:opacity-50 flex-shrink-0 ml-1 p-1"
               >
                 {cancellingId === order.id ? '...' : '✕'}
               </button>
@@ -282,15 +282,15 @@ export function LimitOrdersList({
     );
   }
 
-  // Full view for TradingDetailPage
+  // Full view for TradingDetailPage - Responsive
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-slate-600 dark:text-slate-300">{t.title}</h3>
+        <h3 className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300">{t.title}</h3>
         <button
           onClick={refresh}
           disabled={loading}
-          className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 disabled:opacity-50"
+          className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 disabled:opacity-50"
         >
           {loading ? '...' : t.refresh}
         </button>
@@ -304,25 +304,25 @@ export function LimitOrdersList({
           return (
             <div
               key={order.id}
-              className="p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-stone-200 dark:border-slate-700 hover:border-stone-300 dark:hover:border-slate-600 transition-colors"
+              className="p-2.5 sm:p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-stone-200 dark:border-slate-700 hover:border-stone-300 dark:hover:border-slate-600 transition-colors"
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                   {renderMetalIcon(order.metal)}
-                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                  <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold ${
                     order.type === 'buy' 
                       ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' 
                       : 'bg-red-500/20 text-red-600 dark:text-red-400'
                   }`}>
                     {order.type === 'buy' ? t.buy : t.sell}
                   </span>
-                  <span className="text-slate-800 dark:text-white font-medium">{order.metal}</span>
+                  <span className="text-slate-800 dark:text-white font-medium text-sm sm:text-base">{order.metal}</span>
                 </div>
                 
                 <button
                   onClick={() => handleCancel(order.id)}
                   disabled={cancellingId === order.id}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  className={`px-2 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-medium transition-colors flex-shrink-0 ${
                     cancellingId === order.id
                       ? 'bg-stone-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                       : 'bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/30'
@@ -332,27 +332,28 @@ export function LimitOrdersList({
                 </button>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 text-sm">
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 text-xs block">{t.amount}</span>
-                  <span className="text-slate-800 dark:text-white font-mono">{order.grams}g</span>
+              {/* Grid - Responsive: stack on very small screens */}
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                <div className="min-w-0">
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs block">{t.amount}</span>
+                  <span className="text-slate-800 dark:text-white font-mono truncate block">{order.grams}g</span>
                 </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 text-xs block">{t.limitPrice}</span>
-                  <span className="text-slate-800 dark:text-white font-mono">${order.limitPrice.toFixed(2)}</span>
+                <div className="min-w-0">
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs block">{t.limitPrice}</span>
+                  <span className="text-slate-800 dark:text-white font-mono truncate block">${order.limitPrice.toFixed(2)}</span>
                 </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 text-xs block">{t.total}</span>
-                  <span className="text-slate-800 dark:text-white font-mono">${(order.grams * order.limitPrice).toFixed(2)}</span>
+                <div className="min-w-0">
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs block">{t.total}</span>
+                  <span className="text-slate-800 dark:text-white font-mono truncate block">${(order.grams * order.limitPrice).toFixed(2)}</span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-stone-200 dark:border-slate-700/50 text-xs">
+              <div className="flex flex-col xs:flex-row xs:items-center justify-between mt-2 pt-2 border-t border-stone-200 dark:border-slate-700/50 text-[10px] sm:text-xs gap-1">
                 <span className="text-slate-500 dark:text-slate-400">
                   {t.expires}: {getTimeRemaining(order.expiresAt)}
                 </span>
-                <span className="text-slate-400 dark:text-slate-500 font-mono">
-                  {order.id.slice(0, 16)}...
+                <span className="text-slate-400 dark:text-slate-500 font-mono truncate">
+                  {order.id.slice(0, 12)}...
                 </span>
               </div>
             </div>

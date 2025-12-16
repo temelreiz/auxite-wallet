@@ -24,10 +24,16 @@ const translations: Record<string, Record<string, string>> = {
     calculating: "Metrikler hesaplanıyor...",
     noBalance: "Risk metrikleri için token bakiyesi gerekli",
     asset: "Varlık",
-    vol: "Vol",
-    corr: "Kor",
-    avgRet: "Ort Get",
+    vol: "Volatilite",
+    volShort: "Vol",
+    corr: "Korelasyon",
+    corrShort: "Kor",
+    avgRet: "Ort. Getiri",
+    avgRetShort: "Ort Get",
     range: "Aralık",
+    sharpe: "Sharpe",
+    beta: "Beta",
+    var95: "VaR 95%",
     volatilityDesc: "7 günlük fiyat değişimlerinin standart sapması",
     varDesc: "95% güven aralığında maksimum kayıp tahmini",
     rangeDesc: "7 günlük min-max fiyat farkı",
@@ -40,10 +46,16 @@ const translations: Record<string, Record<string, string>> = {
     calculating: "Calculating metrics...",
     noBalance: "Token balance required for risk metrics",
     asset: "Asset",
-    vol: "Vol",
-    corr: "Corr",
-    avgRet: "Avg Ret",
+    vol: "Volatility",
+    volShort: "Vol",
+    corr: "Correlation",
+    corrShort: "Corr",
+    avgRet: "Avg Return",
+    avgRetShort: "Avg Ret",
     range: "Range",
+    sharpe: "Sharpe",
+    beta: "Beta",
+    var95: "VaR 95%",
     volatilityDesc: "Standard deviation of 7-day price changes",
     varDesc: "Estimated maximum loss at 95% confidence",
     rangeDesc: "Min-max price difference over 7 days",
@@ -56,10 +68,16 @@ const translations: Record<string, Record<string, string>> = {
     calculating: "Metriken werden berechnet...",
     noBalance: "Token-Guthaben für Risikometriken erforderlich",
     asset: "Vermögenswert",
-    vol: "Vol",
-    corr: "Korr",
-    avgRet: "Ø Rend",
+    vol: "Volatilität",
+    volShort: "Vol",
+    corr: "Korrelation",
+    corrShort: "Korr",
+    avgRet: "Ø Rendite",
+    avgRetShort: "Ø Rend",
     range: "Spanne",
+    sharpe: "Sharpe",
+    beta: "Beta",
+    var95: "VaR 95%",
     volatilityDesc: "Standardabweichung der 7-Tage-Preisänderungen",
     varDesc: "Geschätzter maximaler Verlust bei 95% Konfidenz",
     rangeDesc: "Min-Max-Preisdifferenz über 7 Tage",
@@ -72,10 +90,16 @@ const translations: Record<string, Record<string, string>> = {
     calculating: "Calcul des métriques...",
     noBalance: "Solde de tokens requis pour les métriques de risque",
     asset: "Actif",
-    vol: "Vol",
-    corr: "Corr",
-    avgRet: "Rend Moy",
+    vol: "Volatilité",
+    volShort: "Vol",
+    corr: "Corrélation",
+    corrShort: "Corr",
+    avgRet: "Rend. Moyen",
+    avgRetShort: "Rend Moy",
     range: "Plage",
+    sharpe: "Sharpe",
+    beta: "Beta",
+    var95: "VaR 95%",
     volatilityDesc: "Écart-type des variations de prix sur 7 jours",
     varDesc: "Perte maximale estimée à 95% de confiance",
     rangeDesc: "Différence de prix min-max sur 7 jours",
@@ -89,9 +113,15 @@ const translations: Record<string, Record<string, string>> = {
     noBalance: "رصيد الرموز مطلوب لمقاييس المخاطر",
     asset: "الأصل",
     vol: "التقلب",
+    volShort: "التقلب",
     corr: "الارتباط",
+    corrShort: "الارتباط",
     avgRet: "متوسط العائد",
+    avgRetShort: "متوسط",
     range: "النطاق",
+    sharpe: "شارب",
+    beta: "بيتا",
+    var95: "VaR 95%",
     volatilityDesc: "الانحراف المعياري لتغيرات الأسعار على مدى 7 أيام",
     varDesc: "الخسارة القصوى المقدرة بثقة 95%",
     rangeDesc: "فرق السعر الأدنى-الأقصى على مدى 7 أيام",
@@ -104,10 +134,16 @@ const translations: Record<string, Record<string, string>> = {
     calculating: "Расчет метрик...",
     noBalance: "Для метрик риска требуется баланс токенов",
     asset: "Актив",
-    vol: "Вол",
-    corr: "Корр",
-    avgRet: "Ср Дох",
+    vol: "Волатильность",
+    volShort: "Вол",
+    corr: "Корреляция",
+    corrShort: "Корр",
+    avgRet: "Ср. Доход",
+    avgRetShort: "Ср Дох",
     range: "Диапазон",
+    sharpe: "Шарп",
+    beta: "Бета",
+    var95: "VaR 95%",
     volatilityDesc: "Стандартное отклонение изменений цены за 7 дней",
     varDesc: "Оценочный максимальный убыток с доверием 95%",
     rangeDesc: "Разница мин-макс цены за 7 дней",
@@ -135,6 +171,7 @@ export function RiskCorrelation({ lang = "en" }: RiskCorrelationProps) {
   const { prices } = useMetalsPrices();
   const [metrics, setMetrics] = useState<Record<string, MetalMetrics>>({});
   const [loading, setLoading] = useState(true);
+  const [selectedMetal, setSelectedMetal] = useState<string>("AUXG");
 
   const t = translations[lang] || translations.en;
 
@@ -214,153 +251,226 @@ export function RiskCorrelation({ lang = "en" }: RiskCorrelationProps) {
       avgReturn: metrics.AUXPD?.avgReturn || 0,
       drawdown: metrics.AUXPD?.priceRange.toFixed(1) || "0",
     },
-  ].filter((asset) => asset.symbol); // Show all metals regardless of balance
+  ];
 
-  const getAssetIcon = (symbol: string) => {
+  const selectedAsset = assets.find(a => a.symbol === selectedMetal) || assets[0];
+
+  const getAssetIcon = (symbol: string, size: "sm" | "md" | "lg" = "sm") => {
+    const sizeClass = size === "lg" ? "w-8 h-8" : size === "md" ? "w-6 h-6" : "w-5 h-5";
     if (metalIcons[symbol]) {
-      return <img src={metalIcons[symbol]} alt={symbol} className="w-6 h-6" />;
+      return <img src={metalIcons[symbol]} alt={symbol} className={sizeClass} />;
     }
     return <span className="text-lg">●</span>;
   };
 
   return (
-    <div className="rounded-xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6">
+    <div className="rounded-xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-3 sm:p-4 md:p-6">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-3 sm:mb-4 md:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
         <div>
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+          <h3 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-slate-100">
             {t.title}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             {t.subtitle}
           </p>
         </div>
-        <div className="flex gap-2 text-xs">
-          <button className="rounded bg-stone-100 dark:bg-slate-800 px-3 py-1 text-slate-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors">
+        <div className="flex gap-1.5 sm:gap-2 text-[10px] sm:text-xs">
+          <button className="rounded bg-stone-100 dark:bg-slate-800 px-2 sm:px-3 py-1 text-slate-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors">
             {t.comparison}
           </button>
-          <button className="rounded bg-stone-100 dark:bg-slate-800 px-3 py-1 text-slate-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors">
+          <button className="rounded bg-stone-100 dark:bg-slate-800 px-2 sm:px-3 py-1 text-slate-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors">
             {t.days}
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="py-8 text-center">
-          <div className="mb-2 text-2xl">⏳</div>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">
+        <div className="py-6 sm:py-8 text-center">
+          <div className="mb-2 text-xl sm:text-2xl">⏳</div>
+          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
             {t.calculating}
           </p>
         </div>
-      ) : assets.length === 0 ? (
-        <div className="py-8 text-center">
-          <div className="mb-2 text-4xl">📊</div>
-          <p className="text-slate-500 dark:text-slate-400">
-            {t.noBalance}
-          </p>
-        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-stone-200 dark:border-slate-800 text-left text-xs text-slate-500 dark:text-slate-400">
-                <th className="pb-3 font-medium">{t.asset}</th>
-                <th className="pb-3 text-right font-medium">
-                  {t.vol}
-                  <br />
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">{t.days}</span>
-                </th>
-                <th className="pb-3 text-right font-medium">Sharpe</th>
-                <th className="pb-3 text-right font-medium">{t.corr}</th>
-                <th className="pb-3 text-right font-medium">Beta</th>
-                <th className="pb-3 text-right font-medium">
-                  VaR
-                  <br />
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">95%</span>
-                </th>
-                <th className="pb-3 text-right font-medium">
-                  {t.avgRet}
-                  <br />
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">{t.days}</span>
-                </th>
-                <th className="pb-3 text-right font-medium">
-                  {t.range}
-                  <br />
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">%</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+        <>
+          {/* Mobile View - Metal Selector + Card */}
+          <div className="md:hidden">
+            {/* Metal Selector Buttons - 4 columns to fit all */}
+            <div className="grid grid-cols-4 gap-1.5 mb-4">
               {assets.map((asset) => (
-                <tr
+                <button
                   key={asset.symbol}
-                  className="border-b border-stone-100 dark:border-slate-800/50 transition-colors hover:bg-stone-50 dark:hover:bg-slate-800/30"
+                  onClick={() => setSelectedMetal(asset.symbol)}
+                  className={`flex flex-col items-center gap-1 px-1.5 py-2 rounded-lg transition-all ${
+                    selectedMetal === asset.symbol
+                      ? "bg-emerald-500 text-white shadow-lg"
+                      : "bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700"
+                  }`}
                 >
-                  <td className="py-3">
-                    <div className="flex items-center gap-2">
-                      {getAssetIcon(asset.symbol)}
-                      <div>
-                        <div className="font-medium text-slate-800 dark:text-slate-200">
-                          {asset.symbol}
-                        </div>
-                        <div className="text-xs text-slate-400 dark:text-slate-500">{asset.name}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 text-right">
-                    <span
-                      className={`font-mono text-sm ${
-                        asset.volatility > 2 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
-                      }`}
-                    >
-                      {asset.volatility.toFixed(2)}%
-                    </span>
-                  </td>
-                  <td className="py-3 text-right">
-                    <span className="font-mono text-sm text-slate-600 dark:text-slate-300">
-                      {asset.sharpe}
-                    </span>
-                  </td>
-                  <td className="py-3 text-right">
-                    <span className="font-mono text-sm text-slate-600 dark:text-slate-300">
-                      {asset.correlation.toFixed(2)}
-                    </span>
-                  </td>
-                  <td className="py-3 text-right">
-                    <span className="font-mono text-sm text-slate-600 dark:text-slate-300">
-                      {asset.beta.toFixed(2)}
-                    </span>
-                  </td>
-                  <td className="py-3 text-right">
-                    <span className="font-mono text-sm text-slate-600 dark:text-slate-300">
-                      {asset.var95}%
-                    </span>
-                  </td>
-                  <td className="py-3 text-right">
-                    <span
-                      className={`font-mono text-sm ${
-                        asset.avgReturn >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
-                      }`}
-                    >
-                      {asset.avgReturn >= 0 ? "+" : ""}
-                      {asset.avgReturn.toFixed(2)}%
-                    </span>
-                  </td>
-                  <td className="py-3 text-right">
-                    <span className="font-mono text-sm text-amber-600 dark:text-amber-400">
-                      {asset.drawdown}%
-                    </span>
-                  </td>
-                </tr>
+                  {getAssetIcon(asset.symbol)}
+                  <span className="text-[10px] font-medium">{asset.symbol}</span>
+                </button>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+
+            {/* Selected Metal Card */}
+            <div className="rounded-xl p-4 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700">
+              <div className="flex items-center gap-3 mb-4">
+                {getAssetIcon(selectedMetal, "lg")}
+                <div>
+                  <div className="font-bold text-lg text-slate-800 dark:text-white">{selectedAsset.symbol}</div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400">{selectedAsset.name}</div>
+                </div>
+              </div>
+
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white dark:bg-slate-700/50 rounded-lg p-3 border border-stone-200 dark:border-slate-600">
+                  <div className="text-[10px] uppercase text-slate-500 dark:text-slate-400">{t.volShort} ({t.days})</div>
+                  <div className={`text-lg font-bold font-mono ${selectedAsset.volatility > 2 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                    {selectedAsset.volatility.toFixed(2)}%
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-700/50 rounded-lg p-3 border border-stone-200 dark:border-slate-600">
+                  <div className="text-[10px] uppercase text-slate-500 dark:text-slate-400">{t.sharpe}</div>
+                  <div className="text-lg font-bold font-mono text-slate-800 dark:text-white">{selectedAsset.sharpe}</div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-700/50 rounded-lg p-3 border border-stone-200 dark:border-slate-600">
+                  <div className="text-[10px] uppercase text-slate-500 dark:text-slate-400">{t.corrShort}</div>
+                  <div className="text-lg font-bold font-mono text-slate-800 dark:text-white">{selectedAsset.correlation.toFixed(2)}</div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-700/50 rounded-lg p-3 border border-stone-200 dark:border-slate-600">
+                  <div className="text-[10px] uppercase text-slate-500 dark:text-slate-400">{t.beta}</div>
+                  <div className="text-lg font-bold font-mono text-slate-800 dark:text-white">{selectedAsset.beta.toFixed(2)}</div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-700/50 rounded-lg p-3 border border-stone-200 dark:border-slate-600">
+                  <div className="text-[10px] uppercase text-slate-500 dark:text-slate-400">{t.var95}</div>
+                  <div className="text-lg font-bold font-mono text-slate-800 dark:text-white">{selectedAsset.var95}%</div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-700/50 rounded-lg p-3 border border-stone-200 dark:border-slate-600">
+                  <div className="text-[10px] uppercase text-slate-500 dark:text-slate-400">{t.avgRetShort}</div>
+                  <div className={`text-lg font-bold font-mono ${selectedAsset.avgReturn >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                    {selectedAsset.avgReturn >= 0 ? "+" : ""}{selectedAsset.avgReturn.toFixed(2)}%
+                  </div>
+                </div>
+
+                <div className="col-span-2 bg-white dark:bg-slate-700/50 rounded-lg p-3 border border-stone-200 dark:border-slate-600">
+                  <div className="text-[10px] uppercase text-slate-500 dark:text-slate-400">{t.range} ({t.days})</div>
+                  <div className="text-lg font-bold font-mono text-amber-600 dark:text-amber-400">{selectedAsset.drawdown}%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop View - Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-stone-200 dark:border-slate-800 text-left text-xs text-slate-500 dark:text-slate-400">
+                  <th className="pb-3 font-medium">{t.asset}</th>
+                  <th className="pb-3 text-right font-medium">
+                    {t.volShort}
+                    <br />
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">{t.days}</span>
+                  </th>
+                  <th className="pb-3 text-right font-medium">{t.sharpe}</th>
+                  <th className="pb-3 text-right font-medium">{t.corrShort}</th>
+                  <th className="pb-3 text-right font-medium">{t.beta}</th>
+                  <th className="pb-3 text-right font-medium">
+                    VaR
+                    <br />
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">95%</span>
+                  </th>
+                  <th className="pb-3 text-right font-medium">
+                    {t.avgRetShort}
+                    <br />
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">{t.days}</span>
+                  </th>
+                  <th className="pb-3 text-right font-medium">
+                    {t.range}
+                    <br />
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">%</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {assets.map((asset) => (
+                  <tr
+                    key={asset.symbol}
+                    className="border-b border-stone-100 dark:border-slate-800/50 transition-colors hover:bg-stone-50 dark:hover:bg-slate-800/30"
+                  >
+                    <td className="py-3">
+                      <div className="flex items-center gap-2">
+                        {getAssetIcon(asset.symbol, "md")}
+                        <div>
+                          <div className="font-medium text-slate-800 dark:text-slate-200">
+                            {asset.symbol}
+                          </div>
+                          <div className="text-xs text-slate-400 dark:text-slate-500">{asset.name}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 text-right">
+                      <span
+                        className={`font-mono text-sm ${
+                          asset.volatility > 2 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
+                        }`}
+                      >
+                        {asset.volatility.toFixed(2)}%
+                      </span>
+                    </td>
+                    <td className="py-3 text-right">
+                      <span className="font-mono text-sm text-slate-600 dark:text-slate-300">
+                        {asset.sharpe}
+                      </span>
+                    </td>
+                    <td className="py-3 text-right">
+                      <span className="font-mono text-sm text-slate-600 dark:text-slate-300">
+                        {asset.correlation.toFixed(2)}
+                      </span>
+                    </td>
+                    <td className="py-3 text-right">
+                      <span className="font-mono text-sm text-slate-600 dark:text-slate-300">
+                        {asset.beta.toFixed(2)}
+                      </span>
+                    </td>
+                    <td className="py-3 text-right">
+                      <span className="font-mono text-sm text-slate-600 dark:text-slate-300">
+                        {asset.var95}%
+                      </span>
+                    </td>
+                    <td className="py-3 text-right">
+                      <span
+                        className={`font-mono text-sm ${
+                          asset.avgReturn >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                        }`}
+                      >
+                        {asset.avgReturn >= 0 ? "+" : ""}
+                        {asset.avgReturn.toFixed(2)}%
+                      </span>
+                    </td>
+                    <td className="py-3 text-right">
+                      <span className="font-mono text-sm text-amber-600 dark:text-amber-400">
+                        {asset.drawdown}%
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Footer Notes */}
-      {assets.length > 0 && (
-        <div className="mt-4 space-y-1 border-t border-stone-200 dark:border-slate-800 pt-4 text-xs text-slate-400 dark:text-slate-500">
+      {!loading && (
+        <div className="mt-3 sm:mt-4 space-y-0.5 sm:space-y-1 border-t border-stone-200 dark:border-slate-800 pt-3 sm:pt-4 text-[10px] sm:text-xs text-slate-400 dark:text-slate-500">
           <p>
             <strong className="text-slate-600 dark:text-slate-400">
               {lang === "tr" ? "Volatilite:" : "Volatility:"}

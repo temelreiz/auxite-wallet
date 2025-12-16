@@ -27,7 +27,7 @@ export function UsdConvertModal({
   const [success, setSuccess] = useState<string | null>(null);
 
   // Piyasa fiyatları (gerçek API'den çekilecek)
-  // USDT genelde $0.9995 - $1.0005 arası
+  // USDT genelde $0.9995 - $1.0005 arasında
   const [usdtPrice, setUsdtPrice] = useState(0.9998);
 
   const usdBalance = balances?.usd ?? 0;
@@ -174,14 +174,14 @@ export function UsdConvertModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-md w-full p-6">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-700 w-full max-w-[calc(100vw-24px)] sm:max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-white">{t.title}</h3>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h3 className="text-lg sm:text-xl font-bold text-white">{t.title}</h3>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-800 rounded-lg transition-colors touch-manipulation"
           >
             <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -192,31 +192,32 @@ export function UsdConvertModal({
         {/* From Input */}
         <div className="mb-3">
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm text-slate-400">{t.from}</label>
-            <span className="text-xs text-slate-500">
+            <label className="text-xs sm:text-sm text-slate-400">{t.from}</label>
+            <span className="text-[10px] sm:text-xs text-slate-500">
               {t.available}: {fromBalance.toFixed(2)} {fromSymbol}
             </span>
           </div>
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 sm:p-4">
+            <div className="flex items-center justify-between gap-2">
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="bg-transparent text-xl text-white outline-none w-full"
+                inputMode="decimal"
+                className="bg-transparent text-lg sm:text-xl text-white outline-none w-full min-w-0"
               />
-              <div className="flex items-center gap-2 bg-slate-700 px-3 py-1.5 rounded-lg">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isUsdToUsdt ? 'bg-green-600' : 'bg-[#26A17B]'}`}>
-                  <span className="text-white text-xs font-bold">{isUsdToUsdt ? '$' : '₮'}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-700 px-2 sm:px-3 py-1.5 rounded-lg flex-shrink-0">
+                <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center ${isUsdToUsdt ? 'bg-green-600' : 'bg-[#26A17B]'}`}>
+                  <span className="text-white text-[10px] sm:text-xs font-bold">{isUsdToUsdt ? '$' : '₮'}</span>
                 </div>
-                <span className="text-white font-medium">{fromSymbol}</span>
+                <span className="text-white text-sm sm:text-base font-medium">{fromSymbol}</span>
               </div>
             </div>
           </div>
           <button
             onClick={() => setAmount(fromBalance.toString())}
-            className="text-xs text-emerald-500 hover:text-emerald-400 mt-2"
+            className="text-xs text-emerald-500 hover:text-emerald-400 mt-2 touch-manipulation"
           >
             MAX
           </button>
@@ -226,7 +227,7 @@ export function UsdConvertModal({
         <div className="flex justify-center my-2">
           <button
             onClick={handleSwapDirection}
-            className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center hover:bg-slate-700 transition-colors"
+            className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all touch-manipulation"
             title={t.swap}
           >
             <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -236,30 +237,30 @@ export function UsdConvertModal({
         </div>
 
         {/* To Output */}
-        <div className="mb-5">
-          <label className="text-sm text-slate-400 mb-2 block">{t.to}</label>
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xl text-white">
+        <div className="mb-4 sm:mb-5">
+          <label className="text-xs sm:text-sm text-slate-400 mb-2 block">{t.to}</label>
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 sm:p-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-lg sm:text-xl text-white truncate">
                 {finalOutput > 0 ? finalOutput.toFixed(4) : '0.00'}
               </span>
-              <div className="flex items-center gap-2 bg-slate-700 px-3 py-1.5 rounded-lg">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isUsdToUsdt ? 'bg-[#26A17B]' : 'bg-green-600'}`}>
-                  <span className="text-white text-xs font-bold">{isUsdToUsdt ? '₮' : '$'}</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-700 px-2 sm:px-3 py-1.5 rounded-lg flex-shrink-0">
+                <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center ${isUsdToUsdt ? 'bg-[#26A17B]' : 'bg-green-600'}`}>
+                  <span className="text-white text-[10px] sm:text-xs font-bold">{isUsdToUsdt ? '₮' : '$'}</span>
                 </div>
-                <span className="text-white font-medium">{toSymbol}</span>
+                <span className="text-white text-sm sm:text-base font-medium">{toSymbol}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Rate Info */}
-        <div className="bg-slate-800/50 rounded-xl p-3 mb-5 space-y-2">
-          <div className="flex justify-between text-sm">
+        <div className="bg-slate-800/50 rounded-xl p-3 mb-4 sm:mb-5 space-y-2">
+          <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-slate-400">{t.rate}</span>
             <span className="text-slate-300">1 USDT = ${usdtPrice.toFixed(4)} USD</span>
           </div>
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-slate-400">{t.fee}</span>
             <span className="text-yellow-400">0.1%</span>
           </div>
@@ -268,12 +269,12 @@ export function UsdConvertModal({
         {/* Error/Success */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4">
-            <p className="text-sm text-red-400">{error}</p>
+            <p className="text-xs sm:text-sm text-red-400">{error}</p>
           </div>
         )}
         {success && (
           <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-3 mb-4">
-            <p className="text-sm text-green-400">{success}</p>
+            <p className="text-xs sm:text-sm text-green-400">{success}</p>
           </div>
         )}
 
@@ -281,10 +282,10 @@ export function UsdConvertModal({
         <button
           onClick={handleConvert}
           disabled={isLoading || !parsedAmount || parsedAmount > fromBalance}
-          className={`w-full py-3 rounded-xl font-semibold transition-colors ${
+          className={`w-full py-3 sm:py-3.5 rounded-xl font-semibold text-sm sm:text-base transition-colors touch-manipulation ${
             isLoading || !parsedAmount || parsedAmount > fromBalance
               ? "bg-slate-700 text-slate-400 cursor-not-allowed"
-              : "bg-emerald-500 hover:bg-emerald-600 text-white"
+              : "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white"
           }`}
         >
           {isLoading ? t.processing : t.convert}

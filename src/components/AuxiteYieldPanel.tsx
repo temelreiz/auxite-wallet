@@ -126,26 +126,26 @@ export default function AuxiteYieldPanel() {
   }, [amountGrams, duration, activeRate]);
 
   return (
-    <div className="rounded-2xl border border-slate-700 bg-slate-900 p-4 flex flex-col gap-4">
-      <h2 className="text-lg font-semibold text-slate-50">
+    <div className="rounded-xl sm:rounded-2xl border border-slate-700 bg-slate-900 p-3 sm:p-4 flex flex-col gap-3 sm:gap-4">
+      <h2 className="text-base sm:text-lg font-semibold text-slate-50">
         {t.title}
       </h2>
 
-      <p className="text-xs text-slate-400">
+      <p className="text-[10px] sm:text-xs text-slate-400">
         {t.subtitle}
       </p>
 
       {/* Metal seçimi */}
       <div>
-        <p className="text-xs font-medium text-slate-300 mb-1">{t.metalSelection}</p>
-        <div className="inline-flex rounded-full bg-slate-800 p-1 flex-wrap gap-1">
+        <p className="text-[10px] sm:text-xs font-medium text-slate-300 mb-1">{t.metalSelection}</p>
+        <div className="inline-flex rounded-full bg-slate-800 p-0.5 sm:p-1 flex-wrap gap-0.5 sm:gap-1">
           {METALS.map((m) => (
             <button
               key={m.id}
               type="button"
               onClick={() => setSelectedMetal(m.id)}
               className={
-                "px-3 py-1 text-xs font-semibold rounded-full " +
+                "px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold rounded-full " +
                 (selectedMetal === m.id
                   ? "bg-yellow-400 text-black"
                   : "text-slate-200 hover:bg-slate-700")
@@ -159,7 +159,7 @@ export default function AuxiteYieldPanel() {
 
       {/* Başlangıç miktarı */}
       <div>
-        <label className="block text-xs font-medium text-slate-300 mb-1">
+        <label className="block text-[10px] sm:text-xs font-medium text-slate-300 mb-1">
           {t.initialAmount}
         </label>
         <input
@@ -168,21 +168,21 @@ export default function AuxiteYieldPanel() {
           step="0.01"
           value={amountGrams}
           onChange={(e) => setAmountGrams(e.target.value)}
-          className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full rounded-lg sm:rounded-xl border border-slate-700 bg-slate-950 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
       </div>
 
       {/* Süre seçimi */}
       <div>
-        <p className="text-xs font-medium text-slate-300 mb-1">{t.duration}</p>
-        <div className="inline-flex rounded-full bg-slate-800 p-1">
+        <p className="text-[10px] sm:text-xs font-medium text-slate-300 mb-1">{t.duration}</p>
+        <div className="inline-flex rounded-full bg-slate-800 p-0.5 sm:p-1">
           {[3, 6, 12].map((m) => (
             <button
               key={m}
               type="button"
               onClick={() => setDuration(m as Duration)}
               className={
-                "px-3 py-1 text-xs font-semibold rounded-full " +
+                "px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold rounded-full " +
                 (duration === m
                   ? "bg-emerald-500 text-white"
                   : "text-slate-200 hover:bg-slate-700")
@@ -195,7 +195,7 @@ export default function AuxiteYieldPanel() {
       </div>
 
       {/* Hesaplama özeti */}
-      <div className="mt-2 text-sm">
+      <div className="mt-1 sm:mt-2 text-xs sm:text-sm">
         <p className="flex justify-between text-slate-300">
           <span>{t.metal}</span>
           <span>{selectedMetal}</span>
@@ -211,7 +211,7 @@ export default function AuxiteYieldPanel() {
 
         {result && (
           <>
-            <p className="flex justify-between mt-2 font-medium text-slate-50">
+            <p className="flex justify-between mt-1.5 sm:mt-2 font-medium text-slate-50">
               <span>{t.totalYield}</span>
               <span>{result.yieldGrams.toFixed(2)} g</span>
             </p>
@@ -223,7 +223,7 @@ export default function AuxiteYieldPanel() {
         )}
       </div>
 
-      <p className="mt-1 text-[10px] text-slate-500">
+      <p className="mt-0.5 sm:mt-1 text-[9px] sm:text-[10px] text-slate-500">
         {t.disclaimer}
       </p>
     </div>

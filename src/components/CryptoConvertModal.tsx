@@ -388,8 +388,8 @@ export function CryptoConvertModal({
   // Render icon helper
   const renderTargetIcon = (target: TargetType, size: "sm" | "md" = "md") => {
     const info = TARGET_INFO[target];
-    const sizeClasses = size === "sm" ? "w-6 h-6" : "w-7 h-7";
-    const textSize = size === "sm" ? "text-sm" : "text-lg";
+    const sizeClasses = size === "sm" ? "w-5 h-5 sm:w-6 sm:h-6" : "w-6 h-6 sm:w-7 sm:h-7";
+    const textSize = size === "sm" ? "text-xs sm:text-sm" : "text-sm sm:text-lg";
     
     if (info.iconType === "image") {
       return (
@@ -423,25 +423,25 @@ export function CryptoConvertModal({
     label: string;
   }) => (
     <div className="relative">
-      <div className="text-xs text-slate-600 dark:text-slate-400 mb-1 font-medium">{label}</div>
+      <div className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mb-1 font-medium">{label}</div>
       <button
         onClick={() => setShow(!show)}
-        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg ${TARGET_INFO[asset].bgColor} border ${TARGET_INFO[asset].borderColor} hover:opacity-80 transition-all w-full`}
+        className={`flex items-center gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg ${TARGET_INFO[asset].bgColor} border ${TARGET_INFO[asset].borderColor} hover:opacity-80 transition-all w-full`}
       >
         {renderTargetIcon(asset)}
         <div className="flex-1 text-left">
-          <div className="font-semibold text-slate-800 dark:text-white">{asset}</div>
-          <div className="text-xs text-slate-600 dark:text-slate-400">
+          <div className="font-semibold text-sm sm:text-base text-slate-800 dark:text-white">{asset}</div>
+          <div className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
             {getTargetName(asset)}
           </div>
         </div>
-        <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
       
       {show && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl shadow-xl z-10 overflow-hidden">
+        <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg sm:rounded-xl shadow-xl z-10 overflow-hidden">
           {(["AUXM", "AUXG", "AUXS", "AUXPT", "AUXPD"] as TargetType[]).map((target) => (
             <button
               key={target}
@@ -449,21 +449,21 @@ export function CryptoConvertModal({
                 onSelect(target);
                 setShow(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-stone-100 dark:hover:bg-slate-700 transition-colors ${
+              className={`w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-stone-100 dark:hover:bg-slate-700 transition-colors ${
                 asset === target ? "bg-stone-100 dark:bg-slate-700" : ""
               }`}
             >
-              <div className="w-8 h-8 flex items-center justify-center">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
                 {renderTargetIcon(target, "md")}
               </div>
               <div className="text-left flex-1">
-                <div className="font-medium text-slate-800 dark:text-white">{target}</div>
-                <div className="text-xs text-slate-600 dark:text-slate-400">
+                <div className="font-medium text-sm sm:text-base text-slate-800 dark:text-white">{target}</div>
+                <div className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
                   {getTargetName(target)}
                 </div>
               </div>
               {asset === target && (
-                <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               )}
@@ -475,48 +475,48 @@ export function CryptoConvertModal({
   );
 
   return (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 max-w-sm w-full overflow-hidden shadow-xl">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/80 flex items-end sm:items-center justify-center z-[60] p-0 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl border border-stone-300 dark:border-slate-700 w-full sm:max-w-sm overflow-hidden shadow-xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-stone-200 dark:border-slate-800">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-stone-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div 
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-lg"
               style={{ backgroundColor: cryptoInfo.color }}
             >
               {cryptoInfo.icon}
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 dark:text-white">
+              <h3 className="font-bold text-sm sm:text-base text-slate-800 dark:text-white">
                 {fromCrypto} {t.convert}
               </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
+              <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
                 {cryptoInfo.name} → {t.toAuxmMetal}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-1.5 sm:p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
           >
-            <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-3">
+        <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3">
           {/* Campaign Bonus Indicator */}
           {isCampaignActive && fromAmountNum > 0 && (
-            <div className="px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30">
-              <div className="flex items-center justify-between text-sm">
+            <div className="px-2.5 sm:px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30">
+              <div className="flex items-center justify-between text-xs sm:text-sm">
                 <span className="text-purple-600 dark:text-purple-300">🎁 Bonus AUXM</span>
                 <span className="text-purple-600 dark:text-purple-400 font-semibold">
                   +{bonusPercent}% (+${bonusUSD.toFixed(2)})
                 </span>
               </div>
-              <div className="space-y-1 text-xs mt-2">
+              <div className="space-y-1 text-[10px] sm:text-xs mt-2">
                 <div className="flex justify-between text-slate-600 dark:text-slate-400">
                   <span>{t.conversionValue}</span>
                   <span>${fromValueUSD.toFixed(2)}</span>
@@ -535,9 +535,9 @@ export function CryptoConvertModal({
           
           {/* Campaign Banner (no amount) */}
           {isCampaignActive && fromAmountNum === 0 && (
-            <div className="px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center gap-2">
+            <div className="px-2.5 sm:px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center gap-2">
               <span>🎁</span>
-              <span className="text-sm text-purple-600 dark:text-purple-300">
+              <span className="text-xs sm:text-sm text-purple-600 dark:text-purple-300">
                 +%{bonusPercent} {t.earnBonus}
               </span>
             </div>
@@ -545,20 +545,20 @@ export function CryptoConvertModal({
 
           {/* Success State */}
           {result === "success" ? (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <svg className="w-8 h-8 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="text-center py-6 sm:py-8">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">
+              <h3 className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">
                 {t.conversionSuccess}
               </h3>
-              <p className="text-slate-700 dark:text-slate-400">
+              <p className="text-sm sm:text-base text-slate-700 dark:text-slate-400">
                 {fromAmountNum.toFixed(6)} {fromCrypto} → {toAmount.toFixed(toAsset === "AUXM" ? 2 : 4)}{toAsset !== "AUXM" ? "g" : ""} {toAsset}
               </p>
               {bonusUSD > 0 && (
-                <p className="text-purple-600 dark:text-purple-400 text-sm mt-2">
+                <p className="text-purple-600 dark:text-purple-400 text-xs sm:text-sm mt-2">
                   🎁 +{bonusUSD.toFixed(2)} Bonus AUXM {t.bonusEarned}
                 </p>
               )}
@@ -566,32 +566,32 @@ export function CryptoConvertModal({
           ) : (
             <>
               {/* From Section - SABİT, değiştirilemez */}
-              <div className="p-3 rounded-xl bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
-                <div className="text-xs text-slate-600 dark:text-slate-400 mb-1 font-medium">{t.send}</div>
+              <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
+                <div className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mb-1 font-medium">{t.send}</div>
                 <div 
-                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-stone-200 dark:bg-slate-700/50 border border-stone-300 dark:border-slate-600"
+                  className="flex items-center gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg bg-stone-200 dark:bg-slate-700/50 border border-stone-300 dark:border-slate-600"
                 >
                   <div 
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-sm"
+                    className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm"
                     style={{ backgroundColor: cryptoInfo.color }}
                   >
                     {cryptoInfo.icon}
                   </div>
                   <div className="flex-1 text-left">
-                    <div className="font-semibold text-slate-800 dark:text-white">{fromCrypto}</div>
-                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                    <div className="font-semibold text-sm sm:text-base text-slate-800 dark:text-white">{fromCrypto}</div>
+                    <div className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
                       {cryptoInfo.name}
                     </div>
                   </div>
                 </div>
                 
                 <div className="flex items-center justify-between mt-2 mb-1">
-                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                  <span className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
                     {t.balance}: {fromBalance.toFixed(4)} {fromCrypto}
                   </span>
                   <button
                     onClick={handleMaxClick}
-                    className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 font-semibold"
+                    className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 font-semibold"
                   >
                     MAX
                   </button>
@@ -604,29 +604,29 @@ export function CryptoConvertModal({
                     onChange={(e) => setFromAmount(e.target.value)}
                     placeholder="0.0000"
                     disabled={isProcessing}
-                    className="w-full bg-white dark:bg-slate-900 rounded-lg px-3 py-2.5 text-lg font-mono text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 border border-stone-200 dark:border-slate-700"
+                    className="w-full bg-white dark:bg-slate-900 rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 text-base sm:text-lg font-mono text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 border border-stone-200 dark:border-slate-700"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-600 dark:text-slate-400 font-medium">
+                  <div className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium">
                     {fromCrypto}
                   </div>
                 </div>
                 
-                <div className="text-right text-xs text-slate-600 dark:text-slate-400 mt-1">
+                <div className="text-right text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mt-1">
                   ≈ ${fromValueUSD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                 </div>
               </div>
 
               {/* Arrow Indicator */}
-              <div className="flex justify-center -my-1 relative z-10">
-                <div className="w-10 h-10 rounded-full bg-purple-500 border-4 border-white dark:border-slate-900 flex items-center justify-center shadow-lg">
-                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex justify-center -my-0.5 sm:-my-1 relative z-10">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500 border-4 border-white dark:border-slate-900 flex items-center justify-center shadow-lg">
+                  <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                   </svg>
                 </div>
               </div>
 
               {/* To Section - AUXM veya Metaller */}
-              <div className="p-3 rounded-xl bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
+              <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
                 <TargetSelector 
                   asset={toAsset} 
                   onSelect={setToAsset}
@@ -635,31 +635,31 @@ export function CryptoConvertModal({
                   label={t.receive}
                 />
                 
-                <div className="text-xs text-slate-600 dark:text-slate-400 mt-2 mb-1 font-medium">
+                <div className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mt-2 mb-1 font-medium">
                   {t.youWillReceive}
                 </div>
                 
-                <div className="bg-white dark:bg-slate-900 rounded-lg px-3 py-2.5 border border-stone-200 dark:border-slate-700">
+                <div className="bg-white dark:bg-slate-900 rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 border border-stone-200 dark:border-slate-700">
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-mono text-slate-800 dark:text-white">
+                    <span className="text-base sm:text-lg font-mono text-slate-800 dark:text-white">
                       {fromAmountNum > 0 ? toAmount.toFixed(toAsset === "AUXM" ? 2 : 4) : "0.0000"}
                     </span>
-                    <span className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium">
                       {toAsset !== "AUXM" ? "gram" : toAsset}
                     </span>
                   </div>
                 </div>
                 
-                <div className="text-right text-xs text-slate-600 dark:text-slate-400 mt-1">
+                <div className="text-right text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mt-1">
                   ≈ ${(toAmount * toPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                 </div>
               </div>
 
               {/* Exchange Rate & Fee Info */}
-              <div className="px-3 py-2 rounded-lg bg-stone-50 dark:bg-slate-800/30 border border-stone-200 dark:border-slate-700 space-y-1 text-sm">
+              <div className="px-2.5 sm:px-3 py-2 rounded-lg bg-stone-50 dark:bg-slate-800/30 border border-stone-200 dark:border-slate-700 space-y-1 text-xs sm:text-sm">
                 <div className="flex justify-between">
                   <span className="text-slate-600 dark:text-slate-400">{t.exchangeRate}</span>
-                  <span className="text-slate-800 dark:text-slate-300 font-medium">
+                  <span className="text-slate-800 dark:text-slate-300 font-medium text-[11px] sm:text-sm">
                     1 {fromCrypto} = {(fromPrice / toPrice).toFixed(toAsset === "AUXM" ? 2 : 4)}{toAsset !== "AUXM" ? "g" : ""} {toAsset}
                   </span>
                 </div>
@@ -669,12 +669,12 @@ export function CryptoConvertModal({
                 </div>
                 {/* Spread detayı */}
                 {(fromSpreadPercent > 0 || toSpreadPercent > 0) && (
-                  <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500">
+                  <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500">
                     <span>({fromCrypto}: {fromSpreadPercent}% + {toAsset}: {toSpreadPercent}%)</span>
                   </div>
                 )}
                 {toAsset !== "AUXM" && (
-                  <div className="flex justify-between text-xs pt-1 border-t border-stone-200 dark:border-slate-700/50">
+                  <div className="flex justify-between text-[10px] sm:text-xs pt-1 border-t border-stone-200 dark:border-slate-700/50">
                     <span className="text-slate-500 dark:text-slate-500">{t.metalBidPrice}</span>
                     <span className="text-slate-600 dark:text-slate-400">${toPrice.toFixed(2)}/g</span>
                   </div>
@@ -683,7 +683,7 @@ export function CryptoConvertModal({
 
               {/* Insufficient Balance Warning */}
               {!canAfford && fromAmountNum > 0 && (
-                <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-600 dark:text-red-400">
+                <div className="px-2.5 sm:px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs sm:text-sm text-red-600 dark:text-red-400">
                   ⚠️ {t.insufficientBalance}
                 </div>
               )}
@@ -692,11 +692,11 @@ export function CryptoConvertModal({
               <button
                 onClick={handleConvert}
                 disabled={isProcessing || !canAfford}
-                className="w-full py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
               >
                 {isProcessing ? (
                   <>
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
@@ -704,7 +704,7 @@ export function CryptoConvertModal({
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
                     {t.convert}

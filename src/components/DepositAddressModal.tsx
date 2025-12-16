@@ -460,85 +460,93 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
 
   // Normal Deposit Form
   return (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 w-full max-w-sm max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-stone-300 dark:border-slate-700 w-full max-w-sm max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-stone-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-stone-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div 
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg"
               style={{ backgroundColor: coinData.color }}
             >
               {coinData.icon}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-white">
+              <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
                 {coin} {t.deposit}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{coinData.network}</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{coinData.network}</p>
             </div>
           </div>
           <button 
             onClick={onClose} 
-            className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 text-xl transition-colors"
+            className="p-1.5 sm:p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 text-lg sm:text-xl transition-colors"
           >
             ✕
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-3 sm:p-4">
           {/* QR Code */}
-          <div className="bg-white p-4 rounded-xl mb-4 flex items-center justify-center border border-stone-200 dark:border-transparent">
+          <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl mb-3 sm:mb-4 flex items-center justify-center border border-stone-200 dark:border-transparent">
+            <QRCodeSVG
+              value={getQRValue()}
+              size={120}
+              level="H"
+              includeMargin={true}
+              className="sm:hidden"
+            />
             <QRCodeSVG
               value={getQRValue()}
               size={140}
               level="H"
               includeMargin={true}
+              className="hidden sm:block"
             />
           </div>
 
           {/* Address */}
-          <div className="bg-stone-100 dark:bg-slate-800 rounded-xl p-3 mb-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">
+          <div className="bg-stone-100 dark:bg-slate-800 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium">
                 {t.address}
               </span>
               <button
                 onClick={() => copyToClipboard(coinData.address, "address")}
-                className={`text-xs font-medium ${copied ? "text-emerald-500" : "text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400"}`}
+                className={`text-[10px] sm:text-xs font-medium ${copied ? "text-emerald-500" : "text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400"}`}
               >
                 {copied ? `✓ ${t.copied}` : t.copy}
               </button>
             </div>
-            <p className="text-slate-800 dark:text-white font-mono text-xs break-all select-all leading-relaxed">
+            <p className="text-slate-800 dark:text-white font-mono text-[10px] sm:text-xs break-all select-all leading-relaxed">
               {coinData.address}
             </p>
           </div>
 
           {/* Memo (XRP) */}
           {coinData.memo && (
-            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl p-3 mb-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-amber-600 dark:text-amber-500 text-xs font-medium">⚠️ {t.destinationTag}</span>
+            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
+              <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                <span className="text-amber-600 dark:text-amber-500 text-[10px] sm:text-xs font-medium">⚠️ {t.destinationTag}</span>
                 <button
                   onClick={() => copyToClipboard(coinData.memo!, "memo")}
-                  className={`text-xs font-medium ${copiedMemo ? "text-amber-500" : "text-amber-600 dark:text-amber-500"}`}
+                  className={`text-[10px] sm:text-xs font-medium ${copiedMemo ? "text-amber-500" : "text-amber-600 dark:text-amber-500"}`}
                 >
                   {copiedMemo ? "✓" : t.copy}
                 </button>
               </div>
-              <p className="text-slate-800 dark:text-white font-mono text-lg font-bold">{coinData.memo}</p>
+              <p className="text-slate-800 dark:text-white font-mono text-base sm:text-lg font-bold">{coinData.memo}</p>
             </div>
           )}
 
           {/* Deposit Info */}
-          <div className="bg-stone-50 dark:bg-slate-800/50 rounded-xl p-3 mb-4 text-xs">
-            <div className="flex justify-between mb-1">
+          <div className="bg-stone-50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-3 sm:mb-4 text-[10px] sm:text-xs">
+            <div className="flex justify-between mb-0.5 sm:mb-1">
               <span className="text-slate-500 dark:text-slate-400">{t.minDeposit}</span>
               <span className="text-slate-700 dark:text-slate-300">{coinData.minDeposit}</span>
             </div>
-            <div className="flex justify-between mb-1">
+            <div className="flex justify-between mb-0.5 sm:mb-1">
               <span className="text-slate-500 dark:text-slate-400">{t.confirmTime}</span>
               <span className="text-slate-700 dark:text-slate-300">{coinData.confirmTime}</span>
             </div>
@@ -549,41 +557,41 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
           </div>
 
           {/* Test Deposit */}
-          <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 rounded-xl p-3 mb-4">
-            <p className="text-purple-600 dark:text-purple-400 text-xs font-medium mb-3">
+          <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-3 sm:mb-4">
+            <p className="text-purple-600 dark:text-purple-400 text-[10px] sm:text-xs font-medium mb-2 sm:mb-3">
               🧪 {t.testDeposit}
             </p>
             
             {/* Amount Input */}
-            <div className="flex gap-2 mb-3">
+            <div className="flex gap-1.5 sm:gap-2 mb-2 sm:mb-3">
               <input
                 type="number"
                 value={testAmount}
                 onChange={(e) => setTestAmount(e.target.value)}
                 placeholder={`0.00 ${coin}`}
-                className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-white text-sm font-mono focus:outline-none focus:border-purple-500"
+                className="flex-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-white text-xs sm:text-sm font-mono focus:outline-none focus:border-purple-500"
               />
             </div>
 
             {/* Conversion Option */}
-            <div className="mb-3">
-              <label className="flex items-center gap-3 p-3 rounded-lg bg-white dark:bg-slate-800/50 border border-stone-300 dark:border-slate-700 cursor-pointer hover:border-purple-400 dark:hover:border-slate-600 transition-colors">
+            <div className="mb-2 sm:mb-3">
+              <label className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg bg-white dark:bg-slate-800/50 border border-stone-300 dark:border-slate-700 cursor-pointer hover:border-purple-400 dark:hover:border-slate-600 transition-colors">
                 <input
                   type="checkbox"
                   checked={convertToAuxm}
                   onChange={(e) => setConvertToAuxm(e.target.checked)}
-                  className="w-4 h-4 rounded bg-stone-200 dark:bg-slate-700 border-stone-400 dark:border-slate-600 text-purple-500 focus:ring-purple-500"
+                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded bg-stone-200 dark:bg-slate-700 border-stone-400 dark:border-slate-600 text-purple-500 focus:ring-purple-500"
                 />
-                <div className="flex-1">
-                  <p className="text-sm text-slate-800 dark:text-white font-medium">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm text-slate-800 dark:text-white font-medium">
                     {t.convertToAuxm}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                     {t.conversionDesc}
                   </p>
                 </div>
                 {convertToAuxm && bonusPercent > 0 && (
-                  <span className="px-2 py-1 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-semibold">
+                  <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-[10px] sm:text-xs font-semibold flex-shrink-0">
                     +{bonusPercent}% 🎁
                   </span>
                 )}
@@ -592,24 +600,24 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
 
             {/* Preview */}
             {testAmountNum > 0 && (
-              <div className="p-3 rounded-lg bg-white dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 mb-3 text-sm">
-                <div className="flex justify-between mb-1">
+              <div className="p-2.5 sm:p-3 rounded-lg bg-white dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 mb-2 sm:mb-3 text-xs sm:text-sm">
+                <div className="flex justify-between mb-0.5 sm:mb-1">
                   <span className="text-slate-500 dark:text-slate-400">{t.depositValue}</span>
                   <span className="text-slate-800 dark:text-white">{testAmountNum} {coin}</span>
                 </div>
-                <div className="flex justify-between mb-1">
+                <div className="flex justify-between mb-0.5 sm:mb-1">
                   <span className="text-slate-500 dark:text-slate-400">{t.value}</span>
                   <span className="text-slate-800 dark:text-white">${testAmountUsd.toFixed(2)}</span>
                 </div>
-                <div className="border-t border-stone-200 dark:border-slate-700 my-2"></div>
+                <div className="border-t border-stone-200 dark:border-slate-700 my-1.5 sm:my-2"></div>
                 {convertToAuxm ? (
                   <>
-                    <div className="flex justify-between mb-1">
+                    <div className="flex justify-between mb-0.5 sm:mb-1">
                       <span className="text-slate-500 dark:text-slate-400">AUXM</span>
                       <span className="text-emerald-600 dark:text-emerald-400">{testAmountUsd.toFixed(2)}</span>
                     </div>
                     {bonusPercent > 0 && (
-                      <div className="flex justify-between mb-1">
+                      <div className="flex justify-between mb-0.5 sm:mb-1">
                         <span className="text-slate-500 dark:text-slate-400">{t.bonus} (+{bonusPercent}%)</span>
                         <span className="text-purple-600 dark:text-purple-400">+{bonusAmount.toFixed(2)}</span>
                       </div>
@@ -632,7 +640,7 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
             <button
               onClick={handleTestDeposit}
               disabled={!isConnected || !testAmount || isDepositing || testAmountNum <= 0}
-              className="w-full py-2.5 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-2 sm:py-2.5 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-xs sm:text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isDepositing ? `⏳ ${t.processing}` : t.depositBtn}
             </button>
@@ -641,7 +649,7 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
           {/* Done Button */}
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-xl bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-semibold transition-colors border border-stone-300 dark:border-slate-700"
+            className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-semibold text-sm sm:text-base transition-colors border border-stone-300 dark:border-slate-700"
           >
             {t.close}
           </button>

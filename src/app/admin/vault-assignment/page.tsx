@@ -205,7 +205,7 @@ export default function VaultAssignmentPage() {
           </div>
           <h1 className="text-2xl font-bold mb-4">Vault Assignment</h1>
           <p className="text-slate-400 mb-6">Admin cüzdanınızı bağlayın</p>
-          <ConnectButton />
+          <ConnectButton showBalance={false} chainStatus="none" accountStatus="avatar" />
         </div>
       </main>
     );
@@ -254,7 +254,7 @@ export default function VaultAssignmentPage() {
               >
                 ← Admin Panel
               </Link>
-              <ConnectButton />
+              <ConnectButton showBalance={false} chainStatus="none" accountStatus="avatar" />
             </div>
           </div>
         </div>

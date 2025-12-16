@@ -101,34 +101,71 @@ export default function EarnPage() {
 
       {/* Page Header */}
       <div className="border-b border-stone-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/30">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <h2 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-0.5 sm:mb-1">
             {t.pageTitle}
           </h2>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
             {t.pageDesc}
           </p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {isWalletConnected && currentAddress ? (
           <LeasingDashboard walletAddress={currentAddress} />
         ) : (
-          <div className="text-center py-16">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-stone-200 dark:bg-zinc-800/50 flex items-center justify-center">
-              <svg className="w-10 h-10 text-stone-400 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="text-center py-10 sm:py-16">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-full bg-stone-200 dark:bg-zinc-800/50 flex items-center justify-center">
+              <svg className="w-8 h-8 sm:w-10 sm:h-10 text-stone-400 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-zinc-800 dark:text-zinc-200 mb-2">
+            <h3 className="text-lg sm:text-xl font-semibold text-zinc-800 dark:text-zinc-200 mb-1.5 sm:mb-2">
               {t.walletRequired}
             </h3>
-            <p className="text-zinc-600 dark:text-zinc-400 mb-6 max-w-md mx-auto">
+            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mb-4 sm:mb-6 max-w-md mx-auto px-4">
               {t.connectWalletDesc}
             </p>
-            <ConnectButton />
+            <ConnectButton.Custom>
+              {({
+                account,
+                chain,
+                openAccountModal,
+                openChainModal,
+                openConnectModal,
+                mounted,
+              }) => {
+                const ready = mounted;
+                const connected = ready && account && chain;
+
+                return (
+                  <div
+                    {...(!ready && {
+                      'aria-hidden': true,
+                      style: {
+                        opacity: 0,
+                        pointerEvents: 'none',
+                        userSelect: 'none',
+                      },
+                    })}
+                  >
+                    {!connected && (
+                      <button
+                        onClick={openConnectModal}
+                        className="inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm sm:text-base transition-all shadow-lg shadow-emerald-500/20"
+                      >
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        {lang === "tr" ? "Cüzdan Bağla" : "Connect Wallet"}
+                      </button>
+                    )}
+                  </div>
+                );
+              }}
+            </ConnectButton.Custom>
           </div>
         )}
       </div>

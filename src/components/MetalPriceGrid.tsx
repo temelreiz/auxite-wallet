@@ -186,7 +186,7 @@ export default function MetalPriceGrid() {
       </div>
 
       {/* Metal Price Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {metals.map((metal) => {
           const basePrice = basePrices[metal.priceKey];
           const askPrice = prices[metal.priceKey];
@@ -221,35 +221,35 @@ export default function MetalPriceGrid() {
       </div>
 
       {/* Crypto Price Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         {/* ETH */}
         <div 
-          className="rounded-xl border border-stone-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-4 hover:border-stone-400 dark:hover:border-slate-600 cursor-pointer transition-all"
+          className="rounded-xl border border-stone-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-2.5 sm:p-4 hover:border-stone-400 dark:hover:border-slate-600 cursor-pointer transition-all flex flex-col"
           onClick={() => setShowCryptoDetail("ETH")}
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <div className="w-5 h-5 rounded-full bg-[#627EEA] flex items-center justify-center">
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="white">
                   <path d="M12 1.5l-6.5 11L12 17l6.5-4.5L12 1.5z"/>
                   <path d="M12 18.5l-6.5-4.5L12 22.5l6.5-8.5L12 18.5z" fillOpacity="0.6"/>
                 </svg>
               </div>
-              <span className="text-sm font-medium text-slate-800 dark:text-slate-200">ETH</span>
+              <span className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200">ETH</span>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded ${ethStyles.badgeBg} ${ethStyles.badgeText}`}>
+            <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded ${ethStyles.badgeBg} ${ethStyles.badgeText}`}>
               {ethStyles.arrow} {Math.abs(cryptoChanges.eth).toFixed(2)}%
             </span>
           </div>
-          <div className="text-xs text-slate-500 mb-1">Ethereum</div>
-          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.eth === "up" ? "text-emerald-400" : cryptoDirections.eth === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
+          <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1">Ethereum</div>
+          <div className={`text-base sm:text-xl font-bold font-mono mb-2 sm:mb-3 transition-colors duration-300 ${cryptoDirections.eth === "up" ? "text-emerald-400" : cryptoDirections.eth === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
             ${cryptoPrices.eth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
             onClick={(e) => { e.stopPropagation(); setShowCryptoConvert("ETH"); }}
-            className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-sm font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+            className="w-full px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 mt-auto"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
             {lang === "tr" ? "Dönüştür" : "Exchange"}
@@ -258,29 +258,29 @@ export default function MetalPriceGrid() {
 
         {/* BTC */}
         <div 
-          className="rounded-xl border border-stone-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-4 hover:border-stone-400 dark:hover:border-slate-600 cursor-pointer transition-all"
+          className="rounded-xl border border-stone-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-2.5 sm:p-4 hover:border-stone-400 dark:hover:border-slate-600 cursor-pointer transition-all flex flex-col"
           onClick={() => setShowCryptoDetail("BTC")}
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <div className="w-5 h-5 rounded-full bg-[#F7931A] flex items-center justify-center">
                 <span className="text-white text-xs font-bold">₿</span>
               </div>
-              <span className="text-sm font-medium text-slate-800 dark:text-slate-200">BTC</span>
+              <span className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200">BTC</span>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded ${btcStyles.badgeBg} ${btcStyles.badgeText}`}>
+            <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded ${btcStyles.badgeBg} ${btcStyles.badgeText}`}>
               {btcStyles.arrow} {Math.abs(cryptoChanges.btc).toFixed(2)}%
             </span>
           </div>
-          <div className="text-xs text-slate-500 mb-1">Bitcoin</div>
-          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.btc === "up" ? "text-emerald-400" : cryptoDirections.btc === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
+          <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1">Bitcoin</div>
+          <div className={`text-base sm:text-xl font-bold font-mono mb-2 sm:mb-3 transition-colors duration-300 ${cryptoDirections.btc === "up" ? "text-emerald-400" : cryptoDirections.btc === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
             ${cryptoPrices.btc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
             onClick={(e) => { e.stopPropagation(); setShowCryptoConvert("BTC"); }}
-            className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-sm font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+            className="w-full px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 mt-auto"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
             {lang === "tr" ? "Dönüştür" : "Exchange"}
@@ -289,31 +289,31 @@ export default function MetalPriceGrid() {
 
         {/* XRP */}
         <div 
-          className="rounded-xl border border-stone-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-4 hover:border-stone-400 dark:hover:border-slate-600 cursor-pointer transition-all"
+          className="rounded-xl border border-stone-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-2.5 sm:p-4 hover:border-stone-400 dark:hover:border-slate-600 cursor-pointer transition-all flex flex-col"
           onClick={() => setShowCryptoDetail("XRP")}
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <div className="w-5 h-5 rounded-full bg-[#23292F] flex items-center justify-center">
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="white">
                   <path d="M12 0L4 6l8 6 8-6-8-6zM4 18l8 6 8-6-8-6-8 6z"/>
                 </svg>
               </div>
-              <span className="text-sm font-medium text-slate-800 dark:text-slate-200">XRP</span>
+              <span className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200">XRP</span>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded ${xrpStyles.badgeBg} ${xrpStyles.badgeText}`}>
+            <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded ${xrpStyles.badgeBg} ${xrpStyles.badgeText}`}>
               {xrpStyles.arrow} {Math.abs(cryptoChanges.xrp || 0).toFixed(2)}%
             </span>
           </div>
-          <div className="text-xs text-slate-500 mb-1">Ripple</div>
-          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.xrp === "up" ? "text-emerald-400" : cryptoDirections.xrp === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
+          <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1">Ripple</div>
+          <div className={`text-base sm:text-xl font-bold font-mono mb-2 sm:mb-3 transition-colors duration-300 ${cryptoDirections.xrp === "up" ? "text-emerald-400" : cryptoDirections.xrp === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
             ${(cryptoPrices.xrp || 2.20).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
             onClick={(e) => { e.stopPropagation(); setShowCryptoConvert("XRP"); }}
-            className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-sm font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+            className="w-full px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 mt-auto"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
             {lang === "tr" ? "Dönüştür" : "Exchange"}
@@ -322,31 +322,31 @@ export default function MetalPriceGrid() {
 
         {/* SOL */}
         <div 
-          className="rounded-xl border border-stone-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-4 hover:border-stone-400 dark:hover:border-slate-600 cursor-pointer transition-all"
+          className="rounded-xl border border-stone-300 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-2.5 sm:p-4 hover:border-stone-400 dark:hover:border-slate-600 cursor-pointer transition-all flex flex-col"
           onClick={() => setShowCryptoDetail("SOL")}
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#9945FF] to-[#14F195] flex items-center justify-center">
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="white">
                   <path d="M4 17.5l3.5-3.5H20l-3.5 3.5H4zM4 6.5l3.5 3.5H20l-3.5-3.5H4zM4 12h16"/>
                 </svg>
               </div>
-              <span className="text-sm font-medium text-slate-800 dark:text-slate-200">SOL</span>
+              <span className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200">SOL</span>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded ${solStyles.badgeBg} ${solStyles.badgeText}`}>
+            <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded ${solStyles.badgeBg} ${solStyles.badgeText}`}>
               {solStyles.arrow} {Math.abs(cryptoChanges.sol || 0).toFixed(2)}%
             </span>
           </div>
-          <div className="text-xs text-slate-500 mb-1">Solana</div>
-          <div className={`text-xl font-bold font-mono mb-3 transition-colors duration-300 ${cryptoDirections.sol === "up" ? "text-emerald-400" : cryptoDirections.sol === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
+          <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1">Solana</div>
+          <div className={`text-base sm:text-xl font-bold font-mono mb-2 sm:mb-3 transition-colors duration-300 ${cryptoDirections.sol === "up" ? "text-emerald-400" : cryptoDirections.sol === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
             ${(cryptoPrices.sol || 235).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
             onClick={(e) => { e.stopPropagation(); setShowCryptoConvert("SOL"); }}
-            className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-sm font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+            className="w-full px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:from-blue-700 active:to-indigo-800 text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 mt-auto"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
             {lang === "tr" ? "Dönüştür" : "Exchange"}
@@ -355,86 +355,86 @@ export default function MetalPriceGrid() {
       </div>
 
       {/* Action Buttons Row */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
         {/* Yatır / Add Funds */}
         <button
           onClick={() => setShowDeposit(true)}
-          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-emerald-500 transition-all group"
+          className="flex flex-col items-center gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-emerald-500 transition-all group"
         >
-          <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
-            <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </div>
-          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-            {{ tr: "Yatır", en: "Add Funds", de: "Einzahlen", fr: "Déposer", ar: "إيداع", ru: "Пополнить" }[lang] || "Add Funds"}
+          <span className="text-[10px] sm:text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors text-center leading-tight">
+            {lang === "tr" ? "Yatır" : "Add Funds"}
           </span>
         </button>
 
         {/* Gönder / Transfer */}
         <button
           onClick={() => setShowTransfer(true)}
-          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-blue-500 transition-all group"
+          className="flex flex-col items-center gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-blue-500 transition-all group"
         >
-          <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
-            <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
           </div>
-          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-            {{ tr: "Gönder", en: "Transfer", de: "Senden", fr: "Envoyer", ar: "تحويل", ru: "Перевод" }[lang] || "Transfer"}
+          <span className="text-[10px] sm:text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors text-center leading-tight">
+            {lang === "tr" ? "Gönder" : "Transfer"}
           </span>
         </button>
 
         {/* Hızlı Al / Quick Buy */}
         <button
           onClick={() => setShowBuyMetal(true)}
-          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-purple-500 transition-all group"
+          className="flex flex-col items-center gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-purple-500 transition-all group"
         >
-          <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
-            <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
-          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-            {{ tr: "Hızlı Al", en: "Quick Buy", de: "Schnellkauf", fr: "Achat Rapide", ar: "شراء سريع", ru: "Быстрая покупка" }[lang] || "Quick Buy"}
+          <span className="text-[10px] sm:text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors text-center leading-tight">
+            {lang === "tr" ? "Hızlı Al" : "Quick Buy"}
           </span>
         </button>
 
         {/* Dönüştür / Exchange */}
         <button
           onClick={() => setShowExchange(true)}
-          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-orange-500 transition-all group"
+          className="flex flex-col items-center gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-orange-500 transition-all group"
         >
-          <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center group-hover:bg-orange-500/30 transition-colors">
-            <svg className="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-500/20 flex items-center justify-center group-hover:bg-orange-500/30 transition-colors">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
           </div>
-          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-            {{ tr: "Dönüştür", en: "Exchange", de: "Umtauschen", fr: "Échanger", ar: "تبادل", ru: "Обмен" }[lang] || "Exchange"}
+          <span className="text-[10px] sm:text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors text-center leading-tight">
+            {lang === "tr" ? "Dönüştür" : "Exchange"}
           </span>
         </button>
 
         {/* Kazan / Earn */}
         <Link
           href="/stake"
-          className="flex flex-col items-center gap-2 px-4 py-4 rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-amber-500 transition-all group"
+          className="flex flex-col items-center gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-amber-500 transition-all group"
         >
-          <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center group-hover:bg-amber-500/30 transition-colors">
-            <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-500/20 flex items-center justify-center group-hover:bg-amber-500/30 transition-colors">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-            {{ tr: "Biriktir", en: "Stake", de: "Staken", fr: "Staker", ar: "ستيك", ru: "Стейкинг" }[lang] || "Stake"}
+          <span className="text-[10px] sm:text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors text-center leading-tight">
+            {lang === "tr" ? "Biriktir" : "Stake"}
           </span>
         </Link>
       </div>
 
       {/* Ecosystem Description */}
-      <div className="p-4 rounded-xl bg-stone-100 dark:bg-slate-800/30 border border-stone-200 dark:border-slate-700">
-        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+      <div className="p-3 sm:p-4 rounded-xl bg-stone-100 dark:bg-slate-800/30 border border-stone-200 dark:border-slate-700">
+        <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
           {lang === "tr"
             ? "Auxite ekosistemindeki tüm tokenlar, temsil ettikleri metal türüne karşılık gelen fiziksel değer üzerine yapılandırılmıştır; ilgili varlıklar, dünya genelindeki yetkili ve denetimli depolama tesisleri üzerinden muhafaza edilir."
             : "All tokens in the Auxite ecosystem are structured on physical value corresponding to the metal type they represent; related assets are stored through authorized and audited storage facilities worldwide."}

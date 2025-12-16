@@ -220,60 +220,50 @@ export function AllocationFinder({ lang = "en" }: AllocationFinderProps) {
   if (!mounted) return null;
 
   return (
-    <div className="rounded-xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 shadow-sm dark:shadow-none">
+    <div className="rounded-lg sm:rounded-xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-3 sm:p-6 shadow-sm dark:shadow-none">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-            📍 {t.title}
-          </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            {t.subtitle}
-          </p>
-        </div>
-        {isConnected && address && (
-          <div className="text-right">
-            <div className="text-xs text-slate-500">{t.wallet}</div>
-            <div className="text-sm font-mono text-slate-700 dark:text-slate-300">
-              {address.slice(0, 6)}...{address.slice(-4)}
-            </div>
-          </div>
-        )}
+      <div className="mb-3 sm:mb-6">
+        <h2 className="text-sm sm:text-lg font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 sm:gap-2">
+          📍 {t.title}
+        </h2>
+        <p className="text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5 sm:mt-1">
+          {t.subtitle}
+        </p>
       </div>
 
       {!isConnected ? (
-        <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+        <div className="text-center py-8 sm:py-12 text-slate-500 dark:text-slate-400 text-xs sm:text-base">
           {t.connectWallet}
         </div>
       ) : isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-          <span className="ml-3 text-slate-500 dark:text-slate-400">
+        <div className="flex items-center justify-center py-8 sm:py-12">
+          <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-emerald-500"></div>
+          <span className="ml-2 sm:ml-3 text-slate-500 dark:text-slate-400 text-xs sm:text-base">
             {t.loading}
           </span>
         </div>
       ) : (
         <>
           {/* Metal Summary */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
             {(["AUXG", "AUXS", "AUXPT", "AUXPD"] as const).map((metal) => (
               <button
                 key={metal}
                 onClick={() => setSelectedMetal(selectedMetal === metal ? "all" : metal)}
-                className={`p-4 rounded-lg border transition-colors ${
+                className={`p-2.5 sm:p-4 rounded-lg border transition-colors ${
                   selectedMetal === metal
                     ? "bg-stone-100 dark:bg-slate-800 border-emerald-500"
                     : "bg-stone-50 dark:bg-slate-800/30 border-stone-200 dark:border-slate-700 hover:border-stone-300 dark:hover:border-slate-600"
                 }`}
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <img src={metalIcons[metal]} alt={metal} className="w-5 h-5" />
-                  <div className="text-xs text-slate-600 dark:text-slate-400">{metalNames[metal][lang]}</div>
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                  <img src={metalIcons[metal]} alt={metal} className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <div className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">{metalNames[metal][lang]}</div>
                 </div>
-                <div className={`text-lg font-bold ${metalColors[metal]}`}>
+                <div className={`text-sm sm:text-lg font-bold ${metalColors[metal]}`}>
                   {totalGrams[metal].toLocaleString()} g
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400">
                   {allocationsByMetal[metal].length} {t.records}
                 </div>
               </button>
@@ -282,21 +272,21 @@ export function AllocationFinder({ lang = "en" }: AllocationFinderProps) {
 
           {/* Allocation List */}
           {filteredAllocations.length === 0 ? (
-            <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+            <div className="text-center py-8 sm:py-12 text-slate-500 dark:text-slate-400 text-xs sm:text-base">
               {t.noRecords}
             </div>
           ) : (
             <>
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              <div className="mb-3 sm:mb-4 flex items-center justify-between">
+                <h3 className="text-[10px] sm:text-sm font-medium text-slate-600 dark:text-slate-400">
                   {t.allocationRecords}
                 </h3>
-                <span className="px-2 py-1 rounded bg-stone-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs">
+                <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded bg-stone-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[9px] sm:text-xs">
                   {totals.count} {t.records} • {totals.grams.toLocaleString()}g
                 </span>
               </div>
 
-              <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              <div className="space-y-2 sm:space-y-3 max-h-[300px] sm:max-h-[400px] overflow-y-auto">
                 {filteredAllocations.map((alloc) => {
                   const location = custodianToLocation[alloc.custodian] || { flag: "🏦", city: alloc.custodian };
                   const date = new Date(alloc.timestamp * 1000);
@@ -307,31 +297,31 @@ export function AllocationFinder({ lang = "en" }: AllocationFinderProps) {
                   return (
                     <div
                       key={alloc.id}
-                      className="p-4 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 hover:border-stone-300 dark:hover:border-slate-600 transition-colors"
+                      className="p-2.5 sm:p-4 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 hover:border-stone-300 dark:hover:border-slate-600 transition-colors"
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <img src={metalIcons[alloc.metal]} alt={alloc.metal} className="w-8 h-8" />
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className={`font-semibold ${metalColors[alloc.metal]}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <img src={metalIcons[alloc.metal]} alt={alloc.metal} className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                              <span className={`font-semibold text-xs sm:text-base ${metalColors[alloc.metal]}`}>
                                 {alloc.grams.toLocaleString()}g {alloc.metal}
                               </span>
-                              <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                              <span className="text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                                 {t.verified}
                               </span>
                             </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                            <div className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1 font-mono truncate">
                               {alloc.serialNumber}
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-300">
+                        <div className="text-right flex-shrink-0">
+                          <div className="flex items-center gap-1 text-[10px] sm:text-sm text-slate-700 dark:text-slate-300">
                             <span>{location.flag}</span>
-                            <span>{location.city}</span>
+                            <span className="hidden sm:inline">{location.city}</span>
                           </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <div className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1">
                             {date.toLocaleDateString(localeMap[lang] || "en-US")}
                           </div>
                         </div>
@@ -344,11 +334,11 @@ export function AllocationFinder({ lang = "en" }: AllocationFinderProps) {
           )}
 
           {/* Info Footer */}
-          <div className="mt-4 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
-            <div className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
+          <div className="mt-3 sm:mt-4 p-2.5 sm:p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+            <div className="text-[10px] sm:text-sm font-medium text-blue-700 dark:text-blue-300 mb-1.5 sm:mb-2">
               ℹ️ {t.howItWorks}
             </div>
-            <ul className="text-xs text-blue-600 dark:text-blue-200 space-y-1">
+            <ul className="text-[9px] sm:text-xs text-blue-600 dark:text-blue-200 space-y-0.5 sm:space-y-1">
               <li>• {t.point1}</li>
               <li>• {t.point2}</li>
               <li>• {t.point3}</li>

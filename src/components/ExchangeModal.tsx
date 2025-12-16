@@ -498,13 +498,13 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
     return (
       <>
         <span className="text-xs text-slate-500 dark:text-slate-500 mb-1 block">{label}</span>
-        <button type="button" onClick={onClick} className="w-full flex items-center gap-3 p-2 rounded-lg bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-600 hover:border-stone-300 dark:hover:border-slate-500 transition-colors">
+        <button type="button" onClick={onClick} className="w-full flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-lg bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-600 hover:border-stone-300 dark:hover:border-slate-500 transition-colors">
           {renderIcon(asset)}
           <div className="flex-1 text-left">
-            <div className="font-semibold text-slate-800 dark:text-white">{asset}</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">{info.name[lang] || info.name.en}</div>
+            <div className="font-semibold text-sm sm:text-base text-slate-800 dark:text-white">{asset}</div>
+            <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{info.name[lang] || info.name.en}</div>
           </div>
-          <svg className="w-5 h-5 text-slate-400 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
         </button>
       </>
     );
@@ -517,19 +517,19 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
   const isUsdToCrypto = fromAsset === "USD" && ASSETS[toAsset].category === "crypto" && toAsset !== "USDT";
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 w-full max-w-sm max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 border-b border-stone-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-stone-200 dark:border-slate-700 w-full max-w-sm max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-stone-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
           <div>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white">{t.title}</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{t.subtitle}</p>
+            <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">{t.title}</h2>
+            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{t.subtitle}</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 text-xl">✕</button>
+          <button onClick={onClose} className="p-1.5 sm:p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 text-lg sm:text-xl">✕</button>
         </div>
 
-        <div className="p-4 space-y-3">
-          <div className="px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/30 text-xs text-blue-600 dark:text-blue-300">
-            <p className="font-medium mb-1">ℹ️ {t.conversionRules}</p>
+        <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3">
+          <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-blue-500/10 border border-blue-500/30 text-[10px] sm:text-xs text-blue-600 dark:text-blue-300">
+            <p className="font-medium mb-0.5 sm:mb-1">ℹ️ {t.conversionRules}</p>
             <ul className="space-y-0.5 text-blue-500 dark:text-blue-400/80">
               <li>• {t.rule1}</li>
               <li>• {t.rule2}</li>
@@ -539,49 +539,49 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
           </div>
 
           {result === "success" ? (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <svg className="w-8 h-8 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            <div className="text-center py-6 sm:py-8">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
               </div>
-              <h3 className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">{t.success}</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm">{fromAsset === "USD" ? "$" : ""}{formatAmount(fromAmountNum, fromAsset)} {getAssetUnit(fromAsset)} → {formatAmount(toAmount, toAsset)} {getAssetUnit(toAsset)}</p>
+              <h3 className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 mb-1.5 sm:mb-2">{t.success}</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{fromAsset === "USD" ? "$" : ""}{formatAmount(fromAmountNum, fromAsset)} {getAssetUnit(fromAsset)} → {formatAmount(toAmount, toAsset)} {getAssetUnit(toAsset)}</p>
             </div>
           ) : (
             <>
-              <div className="p-3 rounded-xl bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
+              <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
                 <div className="relative">
                   {renderAssetButton(fromAsset, () => { setShowFromSelect(!showFromSelect); setShowToSelect(false); }, t.from)}
                   <AssetDropdown isOpen={showFromSelect} onSelect={handleFromSelect} allowedAssets={allAssets.filter(a => a !== fromAsset)} currentAsset={fromAsset} position="bottom" lang={lang} getBalance={getBalance} />
                 </div>
-                <div className="flex items-center justify-between mt-3 mb-1">
-                  <span className="text-xs text-slate-500 dark:text-slate-500">{t.balance}: {fromAsset === "USD" ? "$" : ""}{formatBalance(fromAsset)} {fromAsset !== "USD" ? getAssetUnit(fromAsset) : ""}</span>
-                  <button onClick={() => setFromAmount(fromBalance.toString())} className="text-xs text-emerald-500 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 font-semibold">MAX</button>
+                <div className="flex items-center justify-between mt-2.5 sm:mt-3 mb-0.5 sm:mb-1">
+                  <span className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500">{t.balance}: {fromAsset === "USD" ? "$" : ""}{formatBalance(fromAsset)} {fromAsset !== "USD" ? getAssetUnit(fromAsset) : ""}</span>
+                  <button onClick={() => setFromAmount(fromBalance.toString())} className="text-[10px] sm:text-xs text-emerald-500 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 font-semibold">MAX</button>
                 </div>
                 <div className="relative">
-                  <input type="number" value={fromAmount} onChange={(e) => setFromAmount(e.target.value)} placeholder="0.00" disabled={isProcessing} className="w-full bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg px-3 py-3 pr-16 text-lg font-mono text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50" />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 dark:text-slate-400">{getAssetUnit(fromAsset)}</span>
+                  <input type="number" value={fromAmount} onChange={(e) => setFromAmount(e.target.value)} placeholder="0.00" disabled={isProcessing} className="w-full bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg px-2.5 sm:px-3 py-2.5 sm:py-3 pr-14 sm:pr-16 text-base sm:text-lg font-mono text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50" />
+                  <span className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">{getAssetUnit(fromAsset)}</span>
                 </div>
-                <div className="text-right text-xs text-slate-500 dark:text-slate-500 mt-1">≈ ${fromValueUSD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</div>
+                <div className="text-right text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mt-1">≈ ${fromValueUSD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</div>
               </div>
 
-              <div className="flex justify-center -my-1 relative z-10">
-                <button onClick={handleSwap} disabled={isProcessing || !isConversionAllowed(toAsset, fromAsset)} className="w-10 h-10 rounded-full bg-orange-500 hover:bg-orange-600 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed border-4 border-white dark:border-slate-900 flex items-center justify-center transition-colors shadow-lg">
-                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
+              <div className="flex justify-center -my-0.5 sm:-my-1 relative z-10">
+                <button onClick={handleSwap} disabled={isProcessing || !isConversionAllowed(toAsset, fromAsset)} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-500 hover:bg-orange-600 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed border-4 border-white dark:border-slate-900 flex items-center justify-center transition-colors shadow-lg">
+                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
                 </button>
               </div>
 
-              <div className="p-3 rounded-xl bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 relative">
+              <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 relative">
                 {renderAssetButton(toAsset, () => { setShowToSelect(!showToSelect); setShowFromSelect(false); }, t.to)}
                 <AssetDropdown isOpen={showToSelect} onSelect={handleToSelect} allowedAssets={allowedToTargets.filter(a => a !== toAsset)} currentAsset={toAsset} position="top" lang={lang} getBalance={getBalance} />
-                <div className="text-xs text-slate-500 dark:text-slate-500 mt-3 mb-1">{t.youWillReceive}</div>
-                <div className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg px-3 py-3 relative">
-                  <span className="text-lg font-mono text-slate-800 dark:text-white">{fromAmountNum > 0 ? formatAmount(toAmount, toAsset) : "0.00"}</span>
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 dark:text-slate-400">{getAssetUnit(toAsset)}</span>
+                <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mt-2.5 sm:mt-3 mb-0.5 sm:mb-1">{t.youWillReceive}</div>
+                <div className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg px-2.5 sm:px-3 py-2.5 sm:py-3 relative">
+                  <span className="text-base sm:text-lg font-mono text-slate-800 dark:text-white">{fromAmountNum > 0 ? formatAmount(toAmount, toAsset) : "0.00"}</span>
+                  <span className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">{getAssetUnit(toAsset)}</span>
                 </div>
-                <div className="text-right text-xs text-slate-500 dark:text-slate-500 mt-1">≈ ${(toAmount * toPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</div>
+                <div className="text-right text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mt-1">≈ ${(toAmount * toPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</div>
               </div>
 
-              <div className="px-3 py-2 rounded-lg bg-stone-50 dark:bg-slate-800/30 border border-stone-200 dark:border-slate-700 space-y-1 text-xs">
+              <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-stone-50 dark:bg-slate-800/30 border border-stone-200 dark:border-slate-700 space-y-0.5 sm:space-y-1 text-[10px] sm:text-xs">
                 <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">{t.rate}</span><span className="text-slate-700 dark:text-slate-300">1 {fromAsset} = {(fromPrice / toPrice).toFixed(ASSETS[toAsset].category === "metal" ? 4 : 2)} {toAsset}</span></div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 dark:text-slate-400">Spread</span>
@@ -589,22 +589,22 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
                 </div>
                 {/* Spread detayı */}
                 {(fromSpreadPercent > 0 || toSpreadPercent > 0) && (
-                  <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500">
+                  <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500">
                     <span>({fromAsset}: {fromSpreadPercent}% + {toAsset}: {toSpreadPercent}%)</span>
                   </div>
                 )}
               </div>
 
-              {isCryptoToCrypto && <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-500 dark:text-red-400">⚠️ {t.cryptoToCrypto}</div>}
-              {isAuxmToCrypto && <div className="px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-600 dark:text-amber-400">⚠️ {t.auxmToCrypto}</div>}
-              {isUsdToCrypto && <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-500 dark:text-red-400">⚠️ {t.usdToCrypto}</div>}
-              {!canAfford && fromAmountNum > 0 && !isCryptoToCrypto && !isAuxmToCrypto && !isUsdToCrypto && <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-500 dark:text-red-400">⚠️ {t.insufficientBalance}</div>}
+              {isCryptoToCrypto && <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-[10px] sm:text-xs text-red-500 dark:text-red-400">⚠️ {t.cryptoToCrypto}</div>}
+              {isAuxmToCrypto && <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">⚠️ {t.auxmToCrypto}</div>}
+              {isUsdToCrypto && <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-[10px] sm:text-xs text-red-500 dark:text-red-400">⚠️ {t.usdToCrypto}</div>}
+              {!canAfford && fromAmountNum > 0 && !isCryptoToCrypto && !isAuxmToCrypto && !isUsdToCrypto && <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-[10px] sm:text-xs text-red-500 dark:text-red-400">⚠️ {t.insufficientBalance}</div>}
 
-              <button onClick={handleExchange} disabled={isProcessing || !canAfford || isCryptoToCrypto || isAuxmToCrypto || isUsdToCrypto} className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2">
+              <button onClick={handleExchange} disabled={isProcessing || !canAfford || isCryptoToCrypto || isAuxmToCrypto || isUsdToCrypto} className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-white text-sm sm:text-base bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5 sm:gap-2">
                 {isProcessing ? (
-                  <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>{t.processing}</>
+                  <><svg className="animate-spin h-3.5 w-3.5 sm:h-4 sm:w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>{t.processing}</>
                 ) : (
-                  <><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>{t.exchange}</>
+                  <><svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>{t.exchange}</>
                 )}
               </button>
             </>

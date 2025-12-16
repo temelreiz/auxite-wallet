@@ -290,80 +290,80 @@ export function LockedAssetsModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-xl">
-        {/* Header */}
-        <div className="p-4 border-b border-stone-200 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
-              <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-1.5 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-stone-200 dark:border-slate-700 w-full max-w-2xl max-h-[98vh] sm:max-h-[90vh] overflow-hidden shadow-xl flex flex-col">
+        {/* Header - Responsive */}
+        <div className="p-2.5 sm:p-4 border-b border-stone-200 dark:border-slate-800 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 sm:w-6 sm:h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-white">{t.title}</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{t.subtitle}</p>
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-lg font-bold text-slate-800 dark:text-white truncate">{t.title}</h2>
+              <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 truncate hidden sm:block">{t.subtitle}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-1.5 sm:p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0 ml-2"
           >
-            <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        {/* Summary Card */}
-        <div className="p-4 border-b border-stone-200 dark:border-slate-800 bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">{t.totalLocked}</p>
-              <div className="flex items-center gap-4 mt-1 flex-wrap">
+        {/* Summary Card - Responsive */}
+        <div className="p-2.5 sm:p-4 border-b border-stone-200 dark:border-slate-800 bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-sm text-slate-600 dark:text-slate-400">{t.totalLocked}</p>
+              <div className="flex items-center gap-1.5 sm:gap-4 mt-1 flex-wrap">
                 {/* Allocation totals */}
                 {Object.entries(totalGrams || {}).map(([metal, grams]) => (
                   grams > 0 && (
-                    <div key={`alloc-${metal}`} className="flex items-center gap-1">
-                      <img src={METAL_INFO[metal]?.icon} alt={metal} className="w-5 h-5" />
-                      <span className={`font-semibold ${METAL_INFO[metal]?.color}`}>{grams}g</span>
+                    <div key={`alloc-${metal}`} className="flex items-center gap-0.5 sm:gap-1">
+                      <img src={METAL_INFO[metal]?.icon} alt={metal} className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                      <span className={`font-semibold text-[10px] sm:text-sm ${METAL_INFO[metal]?.color}`}>{grams}g</span>
                     </div>
                   )
                 ))}
                 {/* Staking totals */}
                 {Object.entries(stakingTotalGrams).map(([metal, grams]) => (
                   grams > 0 && (
-                    <div key={`stake-${metal}`} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20">
-                      <img src={METAL_INFO[metal]?.icon} alt={metal} className="w-4 h-4" />
-                      <span className={`font-semibold text-emerald-600 dark:text-emerald-400 text-sm`}>{grams.toFixed(2)}g</span>
-                      <span className="text-xs text-emerald-500">staked</span>
+                    <div key={`stake-${metal}`} className="flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 rounded-full bg-emerald-500/20">
+                      <img src={METAL_INFO[metal]?.icon} alt={metal} className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className={`font-semibold text-emerald-600 dark:text-emerald-400 text-[9px] sm:text-sm`}>{grams.toFixed(2)}g</span>
+                      <span className="text-[8px] sm:text-xs text-emerald-500 hidden sm:inline">staked</span>
                     </div>
                   )
                 ))}
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t.estValue}</p>
-              <p className="text-2xl font-bold text-amber-500">${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <div className="text-left sm:text-right flex-shrink-0">
+              <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400">{t.estValue}</p>
+              <p className="text-lg sm:text-2xl font-bold text-amber-500">${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-stone-200 dark:border-slate-800">
+        {/* Tabs - Responsive */}
+        <div className="flex border-b border-stone-200 dark:border-slate-800 flex-shrink-0">
           <button
             onClick={() => setActiveTab("allocations")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
+            className={`flex-1 px-1.5 sm:px-4 py-2 sm:py-3 text-[10px] sm:text-sm font-medium transition-colors relative ${
               activeTab === "allocations"
                 ? "text-amber-600 dark:text-amber-400"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            <span className="flex items-center justify-center gap-2">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <span className="flex items-center justify-center gap-1 sm:gap-2">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              {t.allocations}
+              <span className="truncate">{t.allocations}</span>
             </span>
             {activeTab === "allocations" && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500"></div>
@@ -371,19 +371,19 @@ export function LockedAssetsModal({
           </button>
           <button
             onClick={() => setActiveTab("staking")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
+            className={`flex-1 px-1.5 sm:px-4 py-2 sm:py-3 text-[10px] sm:text-sm font-medium transition-colors relative ${
               activeTab === "staking"
                 ? "text-amber-600 dark:text-amber-400"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            <span className="flex items-center justify-center gap-2">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <span className="flex items-center justify-center gap-1 sm:gap-2">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {t.stakingPositions}
+              <span className="truncate">{t.stakingPositions}</span>
               {activeStakes.length > 0 && (
-                <span className="px-1.5 py-0.5 text-xs rounded-full bg-emerald-500 text-white">{activeStakes.length}</span>
+                <span className="px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-xs rounded-full bg-emerald-500 text-white ml-0.5">{activeStakes.length}</span>
               )}
             </span>
             {activeTab === "staking" && (
@@ -392,27 +392,27 @@ export function LockedAssetsModal({
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-4 overflow-y-auto max-h-[calc(90vh-320px)]">
+        {/* Content - Responsive with scroll */}
+        <div className="p-2.5 sm:p-4 overflow-y-auto flex-1 min-h-0">
           {activeTab === "allocations" && (
-            <div className="space-y-4">
-              <p className="text-sm text-slate-500 dark:text-slate-400">{t.allocationsDesc}</p>
+            <div className="space-y-2 sm:space-y-4">
+              <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">{t.allocationsDesc}</p>
               
               {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+                <div className="flex items-center justify-center py-6 sm:py-12">
+                  <div className="animate-spin rounded-full h-5 w-5 sm:h-8 sm:w-8 border-b-2 border-amber-500"></div>
                 </div>
               ) : allocations.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-stone-100 dark:bg-slate-800 flex items-center justify-center">
-                    <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="text-center py-6 sm:py-12">
+                  <div className="w-10 h-10 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4 rounded-full bg-stone-100 dark:bg-slate-800 flex items-center justify-center">
+                    <svg className="w-5 h-5 sm:w-8 sm:h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   </div>
-                  <p className="text-slate-500 dark:text-slate-400">{t.noAllocations}</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{t.noAllocations}</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {allocations.map((allocation) => {
                     const metalInfo = METAL_INFO[allocation.metal];
                     const grams = Number(allocation.grams);
@@ -422,37 +422,37 @@ export function LockedAssetsModal({
                     return (
                       <div
                         key={`${allocation.metal}-${allocation.id.toString()}`}
-                        className="p-4 rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50 hover:border-amber-500/50 transition-colors"
+                        className="p-2.5 sm:p-4 rounded-lg sm:rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50 hover:border-amber-500/50 transition-colors"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <img src={metalInfo.icon} alt={allocation.metal} className="w-10 h-10" />
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className={`font-semibold ${metalInfo.color}`}>{allocation.metal}</span>
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                            <img src={metalInfo.icon} alt={allocation.metal} className="w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                                <span className={`font-semibold text-xs sm:text-base ${metalInfo.color}`}>{allocation.metal}</span>
+                                <span className="text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                                   {t.allocated}
                                 </span>
                               </div>
-                              <div className="text-sm text-slate-500 dark:text-slate-400">
+                              <div className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 truncate">
                                 {getCustodianName(allocation.custodian)}
                               </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-slate-800 dark:text-white">
+                          <div className="text-right flex-shrink-0">
+                            <div className="font-semibold text-slate-800 dark:text-white text-xs sm:text-base">
                               {grams}g
                             </div>
-                            <div className="text-sm text-slate-500 dark:text-slate-400">
+                            <div className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">
                               ≈ ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </div>
                           </div>
                         </div>
                         
-                        <div className="mt-3 pt-3 border-t border-stone-200 dark:border-slate-700 flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
+                        <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-stone-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 text-[9px] sm:text-xs">
+                          <div className="flex items-center gap-2 sm:gap-4 text-slate-500 dark:text-slate-400 flex-wrap">
                             <span>{t.allocationId}: #{allocation.id.toString()}</span>
-                            <span>{t.date}: {new Date(Number(allocation.timestamp)).toLocaleDateString()}</span>
+                            <span className="hidden sm:inline">{t.date}: {new Date(Number(allocation.timestamp)).toLocaleDateString()}</span>
                           </div>
                           <a
                             href={`https://basescan.org/tx/${allocation.id}`}
@@ -461,7 +461,7 @@ export function LockedAssetsModal({
                             className="text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
                           >
                             {t.viewOnChain}
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
                           </a>
@@ -475,27 +475,27 @@ export function LockedAssetsModal({
           )}
 
           {activeTab === "staking" && (
-            <div className="space-y-4">
-              <p className="text-sm text-slate-500 dark:text-slate-400">{t.stakingDesc}</p>
+            <div className="space-y-2 sm:space-y-4">
+              <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">{t.stakingDesc}</p>
               
               {stakingLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+                <div className="flex items-center justify-center py-6 sm:py-12">
+                  <div className="animate-spin rounded-full h-5 w-5 sm:h-8 sm:w-8 border-b-2 border-amber-500"></div>
                 </div>
               ) : activeStakes.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-stone-100 dark:bg-slate-800 flex items-center justify-center">
-                    <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="text-center py-6 sm:py-12">
+                  <div className="w-10 h-10 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4 rounded-full bg-stone-100 dark:bg-slate-800 flex items-center justify-center">
+                    <svg className="w-5 h-5 sm:w-8 sm:h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <p className="text-slate-500 dark:text-slate-400">{t.noPositions}</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                  <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{t.noPositions}</p>
+                  <p className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500 mt-1 sm:mt-2">
                     {lang === "tr" ? "Stake pozisyonlarınızı Biriktir sekmesinden oluşturabilirsiniz." : "You can create staking positions from the Earn tab."}
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {activeStakes.map((stake) => {
                     const metalInfo = METAL_INFO[stake.metalSymbol];
                     const price = metalPrices[stake.metalSymbol as keyof typeof metalPrices] || 0;
@@ -504,54 +504,54 @@ export function LockedAssetsModal({
                     return (
                       <div
                         key={stake.id}
-                        className="p-4 rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50 hover:border-emerald-500/50 transition-colors"
+                        className="p-2.5 sm:p-4 rounded-lg sm:rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50 hover:border-emerald-500/50 transition-colors"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <img src={metalInfo?.icon || "/gold-favicon-32x32.png"} alt={stake.metalSymbol} className="w-10 h-10" />
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className={`font-semibold ${metalInfo?.color || "text-amber-500"}`}>{stake.metalSymbol}</span>
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${stake.isMatured ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-blue-500/20 text-blue-600 dark:text-blue-400"}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                            <img src={metalInfo?.icon || "/gold-favicon-32x32.png"} alt={stake.metalSymbol} className="w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                                <span className={`font-semibold text-xs sm:text-base ${metalInfo?.color || "text-amber-500"}`}>{stake.metalSymbol}</span>
+                                <span className={`text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full ${stake.isMatured ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-blue-500/20 text-blue-600 dark:text-blue-400"}`}>
                                   {stake.isMatured ? t.completed : t.active}
                                 </span>
                               </div>
-                              <div className="text-sm text-slate-500 dark:text-slate-400">
+                              <div className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">
                                 {stake.durationMonths} {lang === "tr" ? "ay" : "months"} • {stake.apyPercent.toFixed(2)}% APY
                               </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-slate-800 dark:text-white">
+                          <div className="text-right flex-shrink-0">
+                            <div className="font-semibold text-slate-800 dark:text-white text-xs sm:text-base">
                               {stake.amountGrams.toFixed(2)}g
                             </div>
-                            <div className="text-sm text-slate-500 dark:text-slate-400">
+                            <div className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">
                               ≈ ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </div>
                           </div>
                         </div>
                         
                         {/* Progress Bar */}
-                        <div className="mt-3 pt-3 border-t border-stone-200 dark:border-slate-700">
-                          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+                        <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-stone-200 dark:border-slate-700">
+                          <div className="flex items-center justify-between text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 mb-1">
                             <span>{lang === "tr" ? "İlerleme" : "Progress"}</span>
                             <span>{stake.progress.toFixed(1)}%</span>
                           </div>
-                          <div className="h-1.5 bg-stone-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                          <div className="h-1 sm:h-1.5 bg-stone-200 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div 
                               className={`h-full rounded-full ${stake.isMatured ? "bg-emerald-500" : "bg-blue-500"}`}
                               style={{ width: `${Math.min(100, stake.progress)}%` }}
                             />
                           </div>
                           {!stake.isMatured && stake.timeRemaining && (
-                            <div className="text-xs text-slate-400 mt-1 text-right">
+                            <div className="text-[9px] sm:text-xs text-slate-400 mt-1 text-right">
                               {stake.timeRemaining} {t.daysLeft}
                             </div>
                           )}
                         </div>
 
-                        <div className="mt-3 flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                        <div className="mt-2 sm:mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 text-[9px] sm:text-xs">
+                          <div className="flex items-center gap-2 sm:gap-3 text-slate-500 dark:text-slate-400 flex-wrap">
                             <span>Code: {stake.shortCode}</span>
                             <span className="text-emerald-500">+{stake.expectedRewardGrams.toFixed(4)}g {lang === "tr" ? "ödül" : "reward"}</span>
                           </div>
@@ -562,7 +562,7 @@ export function LockedAssetsModal({
                             className="text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
                           >
                             {t.viewOnChain}
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
                           </a>
@@ -576,11 +576,11 @@ export function LockedAssetsModal({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-stone-200 dark:border-slate-800">
+        {/* Footer - Responsive */}
+        <div className="p-2.5 sm:p-4 border-t border-stone-200 dark:border-slate-800 flex-shrink-0">
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-xl bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-medium transition-colors"
+            className="w-full py-2 sm:py-3 rounded-lg sm:rounded-xl bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-medium transition-colors text-xs sm:text-base"
           >
             {t.close}
           </button>

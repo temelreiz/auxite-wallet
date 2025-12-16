@@ -391,26 +391,26 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
 
   if (!walletAddress) {
     return (
-      <div className="p-6 text-center text-slate-600 dark:text-slate-400">
+      <div className="p-4 sm:p-6 text-center text-slate-600 dark:text-slate-400 text-sm">
         {t.walletRequired}
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 shadow-sm dark:shadow-none p-6">
+    <div className="bg-white dark:bg-slate-900 rounded-lg sm:rounded-xl border border-stone-200 dark:border-slate-800 shadow-sm dark:shadow-none p-3 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+      <div className="flex items-center justify-between mb-3 sm:mb-6">
+        <div className="min-w-0">
+          <h3 className="text-sm sm:text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-1.5 sm:gap-2">
             🔔 {t.title}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t.subtitle}</p>
+          <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1 truncate">{t.subtitle}</p>
         </div>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 text-sm font-medium"
+            className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 text-[10px] sm:text-sm font-medium flex-shrink-0 ml-2"
           >
             + {t.newAlert}
           </button>
@@ -419,35 +419,35 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
 
       {/* Messages */}
       {error && (
-        <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-600 dark:text-red-400 text-sm">
+        <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-600 dark:text-red-400 text-xs sm:text-sm">
           {error}
         </div>
       )}
       {success && (
-        <div className="mb-4 p-3 bg-emerald-500/20 border border-emerald-500/50 rounded-lg text-emerald-600 dark:text-emerald-400 text-sm">
+        <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 bg-emerald-500/20 border border-emerald-500/50 rounded-lg text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
           {success}
         </div>
       )}
 
       {/* Create Form */}
       {showForm && (
-        <div className="mb-6 p-4 bg-stone-50 dark:bg-slate-800/50 rounded-xl border border-stone-200 dark:border-slate-700 space-y-4">
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-stone-50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl border border-stone-200 dark:border-slate-700 space-y-3 sm:space-y-4">
           {/* Token Select */}
           <div>
-            <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2 font-medium">{t.token}</label>
-            <div className="grid grid-cols-4 gap-2">
+            <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t.token}</label>
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
               {TOKENS.map((token) => (
                 <button
                   key={token.symbol}
                   onClick={() => setSelectedToken(token.symbol)}
-                  className={`p-3 rounded-lg border text-center transition-colors flex flex-col items-center gap-1 ${
+                  className={`p-2 sm:p-3 rounded-lg border text-center transition-colors flex flex-col items-center gap-0.5 sm:gap-1 ${
                     selectedToken === token.symbol
                       ? "border-emerald-500 bg-emerald-500/10"
                       : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-stone-400 dark:hover:border-slate-600"
                   }`}
                 >
                   {renderTokenIcon(token, "sm")}
-                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{token.symbol}</p>
+                  <p className="text-[9px] sm:text-xs text-slate-600 dark:text-slate-400 mt-0.5 sm:mt-1">{token.symbol}</p>
                 </button>
               ))}
             </div>
@@ -455,16 +455,16 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
 
           {/* Target Price */}
           <div>
-            <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2 font-medium">{t.targetPrice} ($)</label>
+            <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t.targetPrice} ($)</label>
             <input
               type="number"
               value={targetPrice}
               onChange={(e) => setTargetPrice(e.target.value)}
               placeholder="0.00"
-              className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg sm:rounded-xl text-xs sm:text-base text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
             />
             {currentPrices[selectedToken.toLowerCase()] && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {t.currentPrice}: ${currentPrices[selectedToken.toLowerCase()]?.toLocaleString()}
               </p>
             )}
@@ -472,11 +472,11 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
 
           {/* Direction */}
           <div>
-            <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2 font-medium">{t.direction}</label>
-            <div className="grid grid-cols-2 gap-2">
+            <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t.direction}</label>
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
               <button
                 onClick={() => setDirection("above")}
-                className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
+                className={`p-2 sm:p-3 rounded-lg border text-[10px] sm:text-sm font-medium transition-colors ${
                   direction === "above"
                     ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                     : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
@@ -486,7 +486,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
               </button>
               <button
                 onClick={() => setDirection("below")}
-                className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
+                className={`p-2 sm:p-3 rounded-lg border text-[10px] sm:text-sm font-medium transition-colors ${
                   direction === "below"
                     ? "border-red-500 bg-red-500/10 text-red-600 dark:text-red-400"
                     : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
@@ -498,13 +498,13 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
           </div>
 
           {/* Expires & Repeat */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4">
             <div>
-              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2 font-medium">{t.expiresIn}</label>
+              <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t.expiresIn}</label>
               <select
                 value={expiresInDays}
                 onChange={(e) => setExpiresInDays(parseInt(e.target.value))}
-                className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-2 sm:px-4 py-2 sm:py-3 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg sm:rounded-xl text-xs sm:text-base text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
               >
                 <option value={7}>7 {t.days}</option>
                 <option value={14}>14 {t.days}</option>
@@ -514,10 +514,10 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2 font-medium">{t.repeat}</label>
+              <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t.repeat}</label>
               <button
                 onClick={() => setRepeat(!repeat)}
-                className={`w-full p-3 rounded-lg border text-sm font-medium transition-colors ${
+                className={`w-full p-2 sm:p-3 rounded-lg border text-[10px] sm:text-sm font-medium transition-colors ${
                   repeat
                     ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                     : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
@@ -529,20 +529,20 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-2 sm:gap-3 pt-1 sm:pt-2">
             <button
               onClick={() => {
                 setShowForm(false);
                 setError("");
               }}
-              className="flex-1 py-3 bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-stone-300 dark:hover:bg-slate-600 font-medium"
+              className="flex-1 py-2 sm:py-3 bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg sm:rounded-xl hover:bg-stone-300 dark:hover:bg-slate-600 font-medium text-xs sm:text-base"
             >
               {t.cancel}
             </button>
             <button
               onClick={handleCreate}
               disabled={loading || !targetPrice}
-              className="flex-1 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 disabled:opacity-50 font-medium"
+              className="flex-1 py-2 sm:py-3 bg-emerald-500 text-white rounded-lg sm:rounded-xl hover:bg-emerald-600 disabled:opacity-50 font-medium text-xs sm:text-base"
             >
               {loading ? "..." : t.create}
             </button>
@@ -552,16 +552,16 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
 
       {/* Alerts List */}
       {loading && !showForm ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-slate-600 border-t-emerald-500 rounded-full"></div>
+        <div className="flex items-center justify-center py-6 sm:py-8">
+          <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-2 border-stone-300 dark:border-slate-600 border-t-emerald-500 rounded-full"></div>
         </div>
       ) : alerts.length === 0 ? (
-        <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-          <p className="text-4xl mb-2">🔕</p>
-          <p>{t.noAlerts}</p>
+        <div className="text-center py-6 sm:py-8 text-slate-500 dark:text-slate-400">
+          <p className="text-2xl sm:text-4xl mb-2">🔕</p>
+          <p className="text-xs sm:text-base">{t.noAlerts}</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {alerts.map((alert) => {
             const token = TOKENS.find(tk => tk.symbol === alert.token);
             const distance = calculateDistance(alert);
@@ -569,34 +569,34 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
             return (
               <div
                 key={alert.id}
-                className={`p-4 rounded-xl border ${
+                className={`p-3 sm:p-4 rounded-lg sm:rounded-xl border ${
                   alert.status === "active"
                     ? "bg-stone-50 dark:bg-slate-800/50 border-stone-200 dark:border-slate-700"
                     : "bg-stone-100/50 dark:bg-slate-800/30 border-stone-200/50 dark:border-slate-700/50"
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                     <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ backgroundColor: token?.isImage ? 'transparent' : (token?.color + "20") }}
                     >
                       {token && renderTokenIcon(token, "lg")}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-800 dark:text-white">{alert.token}</span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                        <span className="font-medium text-xs sm:text-base text-slate-800 dark:text-white">{alert.token}</span>
+                        <span className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">
                           {token && t[token.nameKey]}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(alert.status)}`}>
+                        <span className={`text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${getStatusColor(alert.status)}`}>
                           {getStatusText(alert.status)}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                      <p className="text-[10px] sm:text-sm text-slate-600 dark:text-slate-400">
                         {alert.direction === "above" ? "📈" : "📉"} ${alert.targetPrice.toLocaleString()}
                         {distance !== null && alert.status === "active" && (
-                          <span className={`ml-2 ${distance > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                          <span className={`ml-1 sm:ml-2 ${distance > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                             ({distance > 0 ? "+" : ""}{distance.toFixed(2)}%)
                           </span>
                         )}
@@ -604,13 +604,13 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                     {alert.repeat && (
-                      <span className="text-xs text-slate-500 dark:text-slate-400">🔄</span>
+                      <span className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">🔄</span>
                     )}
                     <button
                       onClick={() => handleDelete(alert.id)}
-                      className="p-2 hover:bg-red-500/20 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                      className="p-1.5 sm:p-2 hover:bg-red-500/20 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                     >
                       🗑️
                     </button>

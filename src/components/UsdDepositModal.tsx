@@ -74,19 +74,19 @@ export function UsdDepositModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 max-w-md w-full p-6">
-        <div className="flex items-center justify-between mb-6">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-stone-200 dark:border-slate-700 max-w-md w-full p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t.title}</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{t.subtitle}</p>
+            <h3 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">{t.title}</h3>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{t.subtitle}</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-1.5 sm:p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
           >
             <svg
-              className="w-5 h-5 text-slate-500 dark:text-slate-400"
+              className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 dark:text-slate-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -101,10 +101,10 @@ export function UsdDepositModal({
           </button>
         </div>
 
-        <div className="text-center py-8">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-purple-500/20 flex items-center justify-center">
+        <div className="text-center py-6 sm:py-8">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 sm:mb-4 rounded-full bg-purple-500/20 flex items-center justify-center">
             <svg
-              className="w-10 h-10 text-purple-500 dark:text-purple-400"
+              className="w-8 h-8 sm:w-10 sm:h-10 text-purple-500 dark:text-purple-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -117,23 +117,23 @@ export function UsdDepositModal({
               />
             </svg>
           </div>
-          <h4 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{t.comingSoon}</h4>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">{t.comingSoonDesc}</p>
+          <h4 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white mb-1.5 sm:mb-2">{t.comingSoon}</h4>
+          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-4 sm:mb-6">{t.comingSoonDesc}</p>
           
-          <div className="bg-stone-100 dark:bg-slate-800 rounded-xl p-4 mb-6">
-            <div className="flex items-center justify-center gap-2 text-slate-700 dark:text-slate-300">
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+          <div className="bg-stone-100 dark:bg-slate-800 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
+            <div className="flex items-center justify-center gap-1.5 sm:gap-2 text-slate-700 dark:text-slate-300">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="12" cy="12" r="10" fill="#7C3AED" />
                 <path d="M8 12a4 4 0 108 0 4 4 0 00-8 0z" fill="white" />
               </svg>
-              <span className="font-semibold">MoonPay</span>
+              <span className="font-semibold text-sm sm:text-base">MoonPay</span>
             </div>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t.poweredBy}</p>
+            <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 mt-1.5 sm:mt-2">{t.poweredBy}</p>
           </div>
 
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-semibold transition-colors"
+            className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-semibold text-sm sm:text-base transition-colors"
           >
             {t.notifyMe}
           </button>

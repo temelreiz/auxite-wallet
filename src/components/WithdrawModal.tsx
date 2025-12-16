@@ -330,88 +330,88 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
   const cryptoList: WithdrawCrypto[] = ["USDT", "BTC", "ETH", "XRP", "SOL"];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative z-10 w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 overflow-hidden max-h-[90vh] flex flex-col shadow-xl">
+      <div className="relative z-10 w-full max-w-md bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-stone-300 dark:border-slate-700 overflow-hidden max-h-[90vh] flex flex-col shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <div className="flex items-center gap-2 sm:gap-3">
             {step === "confirm" && (
               <button onClick={() => setStep("select")} className="p-1 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400">
                 ←
               </button>
             )}
             <div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-white">{t.withdraw}</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">{t.withdraw}</h2>
+              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                 {step === "select" ? t.withdrawAuxm : t.confirmTx}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 text-xl">✕</button>
+          <button onClick={onClose} className="p-1.5 sm:p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 text-lg sm:text-xl">✕</button>
         </div>
 
         {/* Result */}
         {result && (
-          <div className="p-6 text-center">
-            <div className="text-6xl mb-4">
+          <div className="p-4 sm:p-6 text-center">
+            <div className="text-5xl sm:text-6xl mb-3 sm:mb-4">
               {result.type === "success" ? "✅" : "❌"}
             </div>
-            <h3 className={`text-xl font-bold mb-2 ${result.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+            <h3 className={`text-lg sm:text-xl font-bold mb-1.5 sm:mb-2 ${result.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
               {result.type === "success" ? t.withdrawalStarted : t.error}
             </h3>
-            <p className="text-slate-600 dark:text-slate-300">{result.message}</p>
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">{result.message}</p>
             {result.type === "success" && (
-              <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">{t.txComplete}</p>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-500 mt-1.5 sm:mt-2">{t.txComplete}</p>
             )}
           </div>
         )}
 
         {/* Content */}
         {!result && (
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
             {step === "select" ? (
               <>
                 {/* AUXM Balance */}
-                <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30">
+                <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">{t.withdrawableBalance}</p>
-                      <p className="text-2xl font-bold text-slate-800 dark:text-white">{withdrawableAuxm.toFixed(2)} <span className="text-purple-600 dark:text-purple-400">AUXM</span></p>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">{t.withdrawableBalance}</p>
+                      <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">{withdrawableAuxm.toFixed(2)} <span className="text-purple-600 dark:text-purple-400">AUXM</span></p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-slate-500 dark:text-slate-500">{t.bonusLocked}</p>
-                      <p className="text-sm text-purple-600 dark:text-purple-400">{bonusAuxm.toFixed(2)} AUXM</p>
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500">{t.bonusLocked}</p>
+                      <p className="text-xs sm:text-sm text-purple-600 dark:text-purple-400">{bonusAuxm.toFixed(2)} AUXM</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Amount Input */}
                 <div>
-                  <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">{t.auxmAmount}</label>
-                  <div className="flex gap-2">
+                  <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2">{t.auxmAmount}</label>
+                  <div className="flex gap-1.5 sm:gap-2">
                     <input
                       type="number"
                       value={auxmAmount}
                       onChange={(e) => setAuxmAmount(e.target.value)}
                       placeholder="0.00"
-                      className="flex-1 px-4 py-3 rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-white text-lg font-mono focus:outline-none focus:border-red-500 dark:focus:border-red-500"
+                      className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-white text-base sm:text-lg font-mono focus:outline-none focus:border-red-500 dark:focus:border-red-500"
                     />
                     <button
                       onClick={handleMaxClick}
-                      className="px-4 py-3 rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 font-semibold hover:bg-red-200 dark:hover:bg-red-500/30 transition-colors"
+                      className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 font-semibold text-sm sm:text-base hover:bg-red-200 dark:hover:bg-red-500/30 transition-colors"
                     >
                       MAX
                     </button>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">≈ ${auxmAmountNum.toFixed(2)} USD</p>
+                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mt-0.5 sm:mt-1">≈ ${auxmAmountNum.toFixed(2)} USD</p>
                 </div>
 
                 {/* Crypto Selection */}
                 <div>
-                  <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">{t.selectCrypto}</label>
-                  <div className="grid grid-cols-5 gap-2">
+                  <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2">{t.selectCrypto}</label>
+                  <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
                     {cryptoList.map((cryptoKey) => {
                       const c = WITHDRAW_CRYPTOS[cryptoKey];
                       const isSelected = selectedCrypto === cryptoKey;
@@ -419,16 +419,16 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                         <button
                           key={cryptoKey}
                           onClick={() => setSelectedCrypto(cryptoKey)}
-                          className={`p-3 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                          className={`p-2 sm:p-3 rounded-lg sm:rounded-xl border flex flex-col items-center gap-0.5 sm:gap-1 transition-all ${
                             isSelected 
                               ? "border-red-500 bg-red-50 dark:bg-red-500/20" 
                               : "border-stone-300 dark:border-slate-700 bg-stone-100 dark:bg-slate-800 hover:border-stone-400 dark:hover:border-slate-600"
                           }`}
                         >
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: c.color }}>
+                          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm" style={{ backgroundColor: c.color }}>
                             {c.icon}
                           </div>
-                          <span className="text-xs text-slate-700 dark:text-slate-300">{cryptoKey}</span>
+                          <span className="text-[10px] sm:text-xs text-slate-700 dark:text-slate-300">{cryptoKey}</span>
                         </button>
                       );
                     })}
@@ -437,7 +437,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
 
                 {/* Withdraw Address */}
                 <div>
-                  <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">
+                  <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2">
                     {selectedCrypto} {t.walletAddress}
                   </label>
                   <input
@@ -445,15 +445,15 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                     value={withdrawAddress}
                     onChange={(e) => setWithdrawAddress(e.target.value)}
                     placeholder={selectedCrypto === "BTC" ? "bc1q..." : selectedCrypto === "XRP" ? "r..." : "0x..."}
-                    className="w-full px-4 py-3 rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-white font-mono text-sm focus:outline-none focus:border-red-500 dark:focus:border-red-500"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-white font-mono text-xs sm:text-sm focus:outline-none focus:border-red-500 dark:focus:border-red-500"
                   />
-                  <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">{t.network}: {crypto.network}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mt-0.5 sm:mt-1">{t.network}: {crypto.network}</p>
                 </div>
 
                 {/* XRP Memo */}
                 {selectedCrypto === "XRP" && (
                   <div>
-                    <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">
+                    <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2">
                       Destination Tag <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -461,23 +461,23 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                       value={xrpMemo}
                       onChange={(e) => setXrpMemo(e.target.value)}
                       placeholder="123456789"
-                      className="w-full px-4 py-3 rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-white font-mono text-sm focus:outline-none focus:border-red-500 dark:focus:border-red-500"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-white font-mono text-xs sm:text-sm focus:outline-none focus:border-red-500 dark:focus:border-red-500"
                     />
                   </div>
                 )}
 
                 {/* You Will Receive */}
                 {auxmAmountNum > 0 && (
-                  <div className="p-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-slate-600 dark:text-slate-400">{t.youWillReceive}</span>
-                      <span className="text-xl font-bold text-slate-800 dark:text-white">{receiveAmount.toFixed(6)} {selectedCrypto}</span>
+                  <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30">
+                    <div className="flex justify-between items-center mb-1.5 sm:mb-2">
+                      <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">{t.youWillReceive}</span>
+                      <span className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">{receiveAmount.toFixed(6)} {selectedCrypto}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-slate-500 dark:text-slate-500">{t.networkFee}</span>
                       <span className="text-slate-600 dark:text-slate-400">-{feeInCrypto} {selectedCrypto}</span>
                     </div>
-                    <div className="flex justify-between text-sm pt-2 mt-2 border-t border-red-200 dark:border-red-500/30">
+                    <div className="flex justify-between text-xs sm:text-sm pt-1.5 sm:pt-2 mt-1.5 sm:mt-2 border-t border-red-200 dark:border-red-500/30">
                       <span className="text-red-600 dark:text-red-400 font-semibold">{t.netReceive}</span>
                       <span className="text-red-600 dark:text-red-400 font-bold">{netReceiveAmount.toFixed(6)} {selectedCrypto}</span>
                     </div>
@@ -486,21 +486,21 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
 
                 {/* Warnings */}
                 {!canAfford && auxmAmountNum > 0 && (
-                  <div className="p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30">
-                    <p className="text-sm text-red-600 dark:text-red-400">⚠️ {t.insufficientBalance}</p>
+                  <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30">
+                    <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">⚠️ {t.insufficientBalance}</p>
                   </div>
                 )}
 
                 {!meetsMinimum && auxmAmountNum > 0 && canAfford && (
-                  <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
-                    <p className="text-sm text-amber-600 dark:text-amber-400">⚠️ {t.minimum}: {crypto.minWithdraw} {selectedCrypto}</p>
+                  <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
+                    <p className="text-xs sm:text-sm text-amber-600 dark:text-amber-400">⚠️ {t.minimum}: {crypto.minWithdraw} {selectedCrypto}</p>
                   </div>
                 )}
               </>
             ) : (
               /* Confirm Step */
               <>
-                <div className="p-4 rounded-xl bg-stone-100 dark:bg-slate-800/50 border border-stone-300 dark:border-slate-700 space-y-3">
+                <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800/50 border border-stone-300 dark:border-slate-700 space-y-2 sm:space-y-3 text-xs sm:text-sm">
                   <div className="flex justify-between">
                     <span className="text-slate-600 dark:text-slate-400">{t.auxmToWithdraw}</span>
                     <span className="text-slate-800 dark:text-white font-semibold">{auxmAmountNum.toFixed(2)} AUXM</span>
@@ -511,7 +511,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600 dark:text-slate-400">{t.address}</span>
-                    <span className="text-slate-800 dark:text-white font-mono text-sm">{withdrawAddress.slice(0, 8)}...{withdrawAddress.slice(-6)}</span>
+                    <span className="text-slate-800 dark:text-white font-mono text-xs sm:text-sm">{withdrawAddress.slice(0, 8)}...{withdrawAddress.slice(-6)}</span>
                   </div>
                   {selectedCrypto === "XRP" && xrpMemo && (
                     <div className="flex justify-between">
@@ -519,34 +519,34 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                       <span className="text-slate-800 dark:text-white font-mono">{xrpMemo}</span>
                     </div>
                   )}
-                  <div className="flex justify-between pt-2 border-t border-stone-300 dark:border-slate-700">
+                  <div className="flex justify-between pt-1.5 sm:pt-2 border-t border-stone-300 dark:border-slate-700">
                     <span className="text-slate-600 dark:text-slate-400">{t.networkFee}</span>
                     <span className="text-slate-700 dark:text-slate-300">{feeInCrypto} {selectedCrypto}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-red-600 dark:text-red-400 font-semibold">{t.netReceive}</span>
-                    <span className="text-red-600 dark:text-red-400 font-bold text-lg">{netReceiveAmount.toFixed(6)} {selectedCrypto}</span>
+                    <span className="text-red-600 dark:text-red-400 font-bold text-base sm:text-lg">{netReceiveAmount.toFixed(6)} {selectedCrypto}</span>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
-                  <p className="text-sm text-amber-700 dark:text-amber-300">⚠️ {t.verifyAddress}</p>
+                <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
+                  <p className="text-xs sm:text-sm text-amber-700 dark:text-amber-300">⚠️ {t.verifyAddress}</p>
                 </div>
 
                 {/* 2FA Input */}
                 {(is2FAEnabled || requires2FA) && (
-                  <div className="p-4 rounded-xl bg-stone-100 dark:bg-slate-800/50 border border-emerald-300 dark:border-emerald-500/30">
-                    <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">🔐 {t.twoFaCode}</label>
+                  <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800/50 border border-emerald-300 dark:border-emerald-500/30">
+                    <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2">🔐 {t.twoFaCode}</label>
                     <input
                       type="text"
                       value={twoFactorCode}
                       onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                       placeholder="000000"
-                      className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-stone-300 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-center text-xl font-mono tracking-widest focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-slate-900 border border-stone-300 dark:border-slate-700 rounded-lg sm:rounded-xl text-slate-800 dark:text-white text-center text-lg sm:text-xl font-mono tracking-widest focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
                       maxLength={6}
                     />
                     {requires2FA && (
-                      <p className="text-xs text-red-600 dark:text-red-400 mt-2">{t.twoFaRequired}</p>
+                      <p className="text-[10px] sm:text-xs text-red-600 dark:text-red-400 mt-1.5 sm:mt-2">{t.twoFaRequired}</p>
                     )}
                   </div>
                 )}
@@ -557,12 +557,12 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
 
         {/* Footer */}
         {!result && (
-          <div className="p-4 border-t border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <div className="p-3 sm:p-4 border-t border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900">
             {step === "select" ? (
               <button
                 onClick={handleContinue}
                 disabled={!canAfford || !meetsMinimum || !hasValidAddress || !hasXrpMemo || auxmAmountNum <= 0}
-                className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base text-white bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {t.continue}
               </button>
@@ -570,10 +570,10 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
               <button
                 onClick={handleWithdraw}
                 disabled={isProcessing || (is2FAEnabled && twoFactorCode.length !== 6)}
-                className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+                className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base text-white bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 disabled:opacity-50 flex items-center justify-center gap-1.5 sm:gap-2 transition-all"
               >
                 {isProcessing ? (
-                  <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> {t.processing}</>
+                  <><span className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> {t.processing}</>
                 ) : (
                   t.confirmWithdrawal
                 )}
