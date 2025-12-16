@@ -1570,7 +1570,7 @@ export default function WalletPage() {
       {/* Advanced Security Modal */}
       {showAdvancedSecurity && (
         <AdvancedSecurityModal
-              lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
+              lang={(["de", "fr", "ar", "ru"].includes(lang) ? "en" : lang) as "tr" | "en"}
           walletAddress={currentAddress || ""}
          
           onClose={() => setShowAdvancedSecurity(false)}

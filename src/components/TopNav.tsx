@@ -42,7 +42,7 @@ const translations: Record<string, Record<string, string>> = {
   de: {
     markets: "Märkte",
     stake: "Staken",
-    wallet: "Wallet",
+    wallet: "Geldbörse",
     profile: "Profil",
     actions: "Aktionen",
     autoInvest: "Auto-Invest",
