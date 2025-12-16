@@ -72,7 +72,6 @@ export async function GET() {
     // UI'ın istediği format:
     const metals = METALS.map((m) => {
       const priceObj = json.data.find((p: any) => p.symbol === m.id);
-
       return {
         id: m.id,
         symbol: m.symbol,
