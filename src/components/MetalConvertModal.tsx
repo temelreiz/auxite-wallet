@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useWallet } from "@/components/WalletContext";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface MetalConvertModalProps {
   isOpen: boolean;
@@ -200,7 +201,10 @@ export function MetalConvertModal({
   const [result, setResult] = useState<{ type: "success" | "error"; message?: string } | null>(null);
   const [showToSelect, setShowToSelect] = useState(false);
 
-  const t = translations[lang] || translations.en;
+  console.log("MetalConvertModal lang:", lang);
+  const { lang: currentLang } = useLanguage();
+  const effectiveLang = currentLang;
+  const t = translations[effectiveLang] || translations.en;
 
   useEffect(() => {
     if (isOpen) {

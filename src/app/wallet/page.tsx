@@ -1122,6 +1122,7 @@ export default function WalletPage() {
         <ExchangeModal 
           isOpen={showExchange}
           onClose={() => setShowExchange(false)}
+          lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
          
         />
       )}
@@ -1131,6 +1132,7 @@ export default function WalletPage() {
         <BuyMetalModal
           isOpen={showBuyMetal}
           onClose={() => setShowBuyMetal(false)}
+          lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
          
         />
       )}
@@ -1140,6 +1142,7 @@ export default function WalletPage() {
           isOpen={!!selectedMetal}
           onClose={() => setSelectedMetal(null)}
           metal={selectedMetal}
+          lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
          
         />
       )}
@@ -1517,6 +1520,7 @@ export default function WalletPage() {
         <WithdrawModal
           isOpen={showWithdraw}
           onClose={() => setShowWithdraw(false)}
+          lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
          
         />
       )}
@@ -1535,7 +1539,7 @@ export default function WalletPage() {
       {/* Buy with USD Modal */}
       {showBuyWithUsd && (
         <BuyWithUsdModal
-              lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
+              lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
           isOpen={showBuyWithUsd}
           onClose={() => setShowBuyWithUsd(false)}
          
@@ -1546,7 +1550,7 @@ export default function WalletPage() {
       {/* USD Convert Modal */}
       {showUsdConvert && (
         <UsdConvertModal
-              lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
+              lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
           isOpen={showUsdConvert}
           onClose={() => setShowUsdConvert(false)}
          
@@ -1566,7 +1570,7 @@ export default function WalletPage() {
       {/* Advanced Security Modal */}
       {showAdvancedSecurity && (
         <AdvancedSecurityModal
-              lang={(['de', 'fr', 'ar', 'ru'].includes(lang) ? 'en' : lang) as 'tr' | 'en'}
+              lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
           walletAddress={currentAddress || ""}
          
           onClose={() => setShowAdvancedSecurity(false)}

@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useWallet } from "./WalletContext";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface BuyWithUsdModalProps {
   isOpen: boolean;
@@ -292,7 +293,9 @@ export function BuyWithUsdModal({
   const bonusAmount = selectedToken.symbol === "AUXM" ? parsedAmount * (bonusPercent / 100) : 0;
   const totalTokenAmount = tokenAmount + (bonusAmount / selectedToken.price);
 
-  const t = texts[lang] || texts.en;
+  const { lang: currentLang } = useLanguage();
+  const effectiveLang = currentLang;
+  const t = texts[effectiveLang] || texts.en;
 
   useEffect(() => {
     if (isOpen) {
