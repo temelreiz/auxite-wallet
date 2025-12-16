@@ -7,10 +7,100 @@ import { useWallet } from "./WalletContext";
 interface UsdConvertModalProps {
   isOpen: boolean;
   onClose: () => void;
-  lang: "tr" | "en";
+  lang: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   walletAddress: string;
   initialDirection?: "usd-to-usdt" | "usdt-to-usd";
 }
+
+// ============================================
+// 6-LANGUAGE TRANSLATIONS
+// ============================================
+const texts: Record<string, Record<string, string>> = {
+  tr: {
+    title: "USD ↔ USDT Dönüştür",
+    from: "Gönder",
+    to: "Al",
+    available: "Kullanılabilir",
+    rate: "Piyasa Kuru",
+    fee: "İşlem Ücreti",
+    convert: "Dönüştür",
+    processing: "İşleniyor...",
+    success: "Dönüşüm başarılı!",
+    insufficientBalance: "Yetersiz bakiye",
+    minAmount: "Minimum: $1",
+    swap: "Yönü Değiştir",
+  },
+  en: {
+    title: "Convert USD ↔ USDT",
+    from: "From",
+    to: "To",
+    available: "Available",
+    rate: "Market Rate",
+    fee: "Fee",
+    convert: "Convert",
+    processing: "Processing...",
+    success: "Conversion successful!",
+    insufficientBalance: "Insufficient balance",
+    minAmount: "Minimum: $1",
+    swap: "Swap Direction",
+  },
+  de: {
+    title: "USD ↔ USDT Umwandeln",
+    from: "Von",
+    to: "Nach",
+    available: "Verfügbar",
+    rate: "Marktkurs",
+    fee: "Gebühr",
+    convert: "Umwandeln",
+    processing: "Wird verarbeitet...",
+    success: "Umwandlung erfolgreich!",
+    insufficientBalance: "Unzureichendes Guthaben",
+    minAmount: "Minimum: $1",
+    swap: "Richtung wechseln",
+  },
+  fr: {
+    title: "Convertir USD ↔ USDT",
+    from: "De",
+    to: "Vers",
+    available: "Disponible",
+    rate: "Taux du marché",
+    fee: "Frais",
+    convert: "Convertir",
+    processing: "Traitement...",
+    success: "Conversion réussie!",
+    insufficientBalance: "Solde insuffisant",
+    minAmount: "Minimum: 1$",
+    swap: "Inverser la direction",
+  },
+  ar: {
+    title: "تحويل USD ↔ USDT",
+    from: "من",
+    to: "إلى",
+    available: "متاح",
+    rate: "سعر السوق",
+    fee: "الرسوم",
+    convert: "تحويل",
+    processing: "جاري المعالجة...",
+    success: "تم التحويل بنجاح!",
+    insufficientBalance: "رصيد غير كافٍ",
+    minAmount: "الحد الأدنى: 1$",
+    swap: "عكس الاتجاه",
+  },
+  ru: {
+    title: "Конвертировать USD ↔ USDT",
+    from: "От",
+    to: "К",
+    available: "Доступно",
+    rate: "Рыночный курс",
+    fee: "Комиссия",
+    convert: "Конвертировать",
+    processing: "Обработка...",
+    success: "Конвертация успешна!",
+    insufficientBalance: "Недостаточно средств",
+    minAmount: "Минимум: $1",
+    swap: "Сменить направление",
+  },
+};
 
 export function UsdConvertModal({
   isOpen,
@@ -49,38 +139,7 @@ export function UsdConvertModal({
   const fee = parsedAmount * 0.001; // %0.1 işlem ücreti
   const finalOutput = outputAmount - (outputAmount * 0.001);
 
-  const texts = {
-    tr: {
-      title: "USD ↔ USDT Dönüştür",
-      from: "Gönder",
-      to: "Al",
-      available: "Kullanılabilir",
-      rate: "Piyasa Kuru",
-      fee: "İşlem Ücreti",
-      convert: "Dönüştür",
-      processing: "İşleniyor...",
-      success: "Dönüşüm başarılı!",
-      insufficientBalance: "Yetersiz bakiye",
-      minAmount: "Minimum: $1",
-      swap: "Yönü Değiştir",
-    },
-    en: {
-      title: "Convert USD ↔ USDT",
-      from: "From",
-      to: "To",
-      available: "Available",
-      rate: "Market Rate",
-      fee: "Fee",
-      convert: "Convert",
-      processing: "Processing...",
-      success: "Conversion successful!",
-      insufficientBalance: "Insufficient balance",
-      minAmount: "Minimum: $1",
-      swap: "Swap Direction",
-    },
-  };
-
-  const t = texts[lang];
+  const t = texts[lang] || texts.en;
 
   // USDT fiyatını çek (gerçek API)
   useEffect(() => {
