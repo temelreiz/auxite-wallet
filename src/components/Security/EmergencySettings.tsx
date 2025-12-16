@@ -23,7 +23,7 @@ interface EmergencyConfig {
 
 interface Props {
   walletAddress: string;
-  lang: "tr" | "en";
+  lang: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
 const t = {
@@ -118,7 +118,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
     canRecover: true,
   });
 
-  const labels = t[lang];
+  const labels = (t as Record<string, typeof t.en>)[lang] || t.en;
 
   useEffect(() => {
     fetchData();

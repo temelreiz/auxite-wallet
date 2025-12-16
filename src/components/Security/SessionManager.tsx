@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 interface SessionManagerProps {
   walletAddress: string;
-  lang?: "tr" | "en";
+  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
 interface Session {
@@ -19,7 +19,7 @@ interface Session {
   isCurrent: boolean;
 }
 
-export function SessionManager({ walletAddress, lang = "tr" }: SessionManagerProps) {
+export function SessionManager({ walletAddress, lang = "en" }: SessionManagerProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);

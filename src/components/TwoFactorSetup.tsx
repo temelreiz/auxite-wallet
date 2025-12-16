@@ -5,7 +5,7 @@ import { QRCodeSVG } from "qrcode.react";
 
 interface TwoFactorSetupProps {
   walletAddress?: string;
-  lang?: "tr" | "en";
+  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   onClose?: () => void;
 }
 

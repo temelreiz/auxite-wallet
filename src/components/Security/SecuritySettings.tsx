@@ -9,7 +9,7 @@ import { SecurityLogs } from "./SecurityLogs";
 
 interface SecuritySettingsProps {
   walletAddress: string;
-  lang?: "tr" | "en";
+  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   onClose?: () => void;
 }
 
@@ -24,7 +24,7 @@ interface SecurityStatus {
 
 export function SecuritySettings({ 
   walletAddress, 
-  lang = "tr",
+  lang = "en",
   onClose 
 }: SecuritySettingsProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "2fa" | "biometric" | "devices" | "sessions" | "logs">("overview");

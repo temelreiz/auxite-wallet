@@ -7,7 +7,7 @@ import { EmergencySettings } from "./EmergencySettings";
 
 interface Props {
   walletAddress: string;
-  lang: "tr" | "en";
+  lang: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   onClose: () => void;
 }
 
@@ -58,6 +58,98 @@ const t = {
       notified: "You'll be notified",
     },
   },
+  de: {
+    title: "Erweiterte Sicherheit",
+    tabs: {
+      multisig: "Multi-Sig",
+      limits: "Limits",
+      emergency: "Notfall",
+      insurance: "Versicherung",
+    },
+    insurance: {
+      title: "Vermögensversicherung",
+      subtitle: "Schutz für Ihre Vermögenswerte",
+      comingSoon: "Demnächst",
+      description: "Die Vermögensversicherung wird bald verfügbar sein. Diese Funktion beinhaltet:",
+      features: [
+        "Schutz vor Hacks und Sicherheitsverletzungen",
+        "Smart-Contract-Ausfallversicherung",
+        "Entschädigung bei Diebstahl",
+        "24/7 Sicherheitsüberwachung",
+      ],
+      notifyMe: "Benachrichtigen",
+      notified: "Sie werden benachrichtigt",
+    },
+  },
+  fr: {
+    title: "Sécurité Avancée",
+    tabs: {
+      multisig: "Multi-Sig",
+      limits: "Limites",
+      emergency: "Urgence",
+      insurance: "Assurance",
+    },
+    insurance: {
+      title: "Assurance des Actifs",
+      subtitle: "Protection de vos actifs",
+      comingSoon: "Bientôt",
+      description: "La fonction d'assurance des actifs sera bientôt disponible. Cette fonction comprend:",
+      features: [
+        "Protection contre les piratages et les violations de sécurité",
+        "Assurance contre les défaillances de smart contract",
+        "Indemnisation en cas de vol",
+        "Surveillance de sécurité 24/7",
+      ],
+      notifyMe: "Me Notifier",
+      notified: "Vous serez notifié",
+    },
+  },
+  ar: {
+    title: "الأمان المتقدم",
+    tabs: {
+      multisig: "توقيع متعدد",
+      limits: "الحدود",
+      emergency: "طوارئ",
+      insurance: "تأمين",
+    },
+    insurance: {
+      title: "تأمين الأصول",
+      subtitle: "حماية لأصولك",
+      comingSoon: "قريباً",
+      description: "ستتوفر ميزة تأمين الأصول قريباً. تشمل هذه الميزة:",
+      features: [
+        "الحماية من الاختراقات والانتهاكات الأمنية",
+        "تأمين ضد فشل العقود الذكية",
+        "تعويض في حالة السرقة",
+        "مراقبة أمنية على مدار الساعة",
+      ],
+      notifyMe: "أبلغني",
+      notified: "سيتم إبلاغك",
+    },
+  },
+  ru: {
+    title: "Расширенная Безопасность",
+    tabs: {
+      multisig: "Мульти-Подпись",
+      limits: "Лимиты",
+      emergency: "Экстренный",
+      insurance: "Страхование",
+    },
+    insurance: {
+      title: "Страхование Активов",
+      subtitle: "Защита ваших активов",
+      comingSoon: "Скоро",
+      description: "Функция страхования активов скоро будет доступна. Эта функция включает:",
+      features: [
+        "Защита от взломов и нарушений безопасности",
+        "Страхование от сбоев смарт-контрактов",
+        "Компенсация в случае кражи",
+        "Круглосуточный мониторинг безопасности",
+      ],
+      notifyMe: "Уведомить меня",
+      notified: "Вы будете уведомлены",
+    },
+  },
 };
 
 type TabType = "multisig" | "limits" | "emergency" | "insurance";
@@ -66,7 +158,7 @@ export function AdvancedSecurityModal({ walletAddress, lang, onClose }: Props) {
   const [activeTab, setActiveTab] = useState<TabType>("multisig");
   const [insuranceNotified, setInsuranceNotified] = useState(false);
 
-  const labels = t[lang];
+  const labels = (t as Record<string, typeof t.en>)[lang] || t.en;
 
   const tabs: { id: TabType; label: string; icon: string }[] = [
     { id: "multisig", label: labels.tabs.multisig, icon: "👥" },

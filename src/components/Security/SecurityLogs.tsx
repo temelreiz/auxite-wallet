@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 interface SecurityLogsProps {
   walletAddress: string;
-  lang?: "tr" | "en";
+  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
 interface SecurityLog {
@@ -16,7 +16,7 @@ interface SecurityLog {
   relativeTime: string;
 }
 
-export function SecurityLogs({ walletAddress, lang = "tr" }: SecurityLogsProps) {
+export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) {
   const [logs, setLogs] = useState<SecurityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "info" | "warning" | "danger">("all");

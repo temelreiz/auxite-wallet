@@ -5,7 +5,7 @@ import { startRegistration, startAuthentication } from "@simplewebauthn/browser"
 
 interface BiometricSetupProps {
   walletAddress: string;
-  lang?: "tr" | "en";
+  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru" | "de" | "fr" | "ar" | "ru";
   onStatusChange?: () => void;
 }
 
@@ -20,7 +20,7 @@ interface Passkey {
 
 export function BiometricSetup({ 
   walletAddress, 
-  lang = "tr",
+  lang = "en",
   onStatusChange 
 }: BiometricSetupProps) {
   const [passkeys, setPasskeys] = useState<Passkey[]>([]);

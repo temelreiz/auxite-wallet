@@ -35,7 +35,7 @@ interface MultiSigConfig {
 
 interface Props {
   walletAddress: string;
-  lang: "tr" | "en";
+  lang: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
 const t = {
@@ -116,7 +116,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
   const [showAddSigner, setShowAddSigner] = useState(false);
   const [newSigner, setNewSigner] = useState({ name: "", address: "", email: "", role: "approver" });
 
-  const labels = t[lang];
+  const labels = (t as Record<string, typeof t.en>)[lang] || t.en;
 
   useEffect(() => {
     fetchData();

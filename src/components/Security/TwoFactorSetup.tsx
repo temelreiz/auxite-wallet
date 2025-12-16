@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 interface TwoFactorSetupProps {
   walletAddress: string;
-  lang?: "tr" | "en";
+  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru" | "de" | "fr" | "ar" | "ru";
   onStatusChange?: () => void;
 }
 
@@ -16,7 +16,7 @@ interface TwoFAStatus {
 
 export function TwoFactorSetup({ 
   walletAddress, 
-  lang = "tr",
+  lang = "en",
   onStatusChange 
 }: TwoFactorSetupProps) {
   const [status, setStatus] = useState<TwoFAStatus | null>(null);

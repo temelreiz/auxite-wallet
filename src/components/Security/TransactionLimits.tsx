@@ -20,7 +20,7 @@ interface TransactionLimits {
 
 interface Props {
   walletAddress: string;
-  lang: "tr" | "en";
+  lang: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
 const t = {
@@ -82,7 +82,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
   const [newAddress, setNewAddress] = useState("");
   const [showAddAddress, setShowAddAddress] = useState(false);
 
-  const labels = t[lang];
+  const labels = (t as Record<string, typeof t.en>)[lang] || t.en;
 
   useEffect(() => {
     fetchData();

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 interface DeviceManagerProps {
   walletAddress: string;
-  lang?: "tr" | "en";
+  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru" | "de" | "fr" | "ar" | "ru";
 }
 
 interface Device {
@@ -29,7 +29,7 @@ interface Device {
   isCurrent: boolean;
 }
 
-export function DeviceManager({ walletAddress, lang = "tr" }: DeviceManagerProps) {
+export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);

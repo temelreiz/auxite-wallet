@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 
 interface TwoFactorVerifyProps {
   walletAddress: string;
-  lang?: "tr" | "en";
+  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru" | "de" | "fr" | "ar" | "ru";
   title?: string;
   description?: string;
   onVerified: (verificationToken: string) => void;
@@ -14,7 +14,7 @@ interface TwoFactorVerifyProps {
 
 export function TwoFactorVerify({
   walletAddress,
-  lang = "tr",
+  lang = "en",
   title,
   description,
   onVerified,
