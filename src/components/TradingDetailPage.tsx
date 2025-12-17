@@ -143,14 +143,37 @@ export default function TradingDetailPage({
   const leaseConfig = useMemo(() => getLeaseConfigBySymbol(symbol), [symbol]);
   const leaseOffer = useMemo(() => {
     if (!leaseConfig) return null;
-    return {
-      metalId: metalId,
-      metalName: name,
-      metalSymbol: symbol,
-      currentPrice: currentPrice,
-      rates: safeRates,
+    
+    const metalTokenAddresses: Record<string, string> = {
+      AUXG: "0x...",
+      AUXS: "0x...",
+      AUXPT: "0x...",
+      AUXPD: "0x...",
     };
-  }, [leaseConfig, metalId, name, symbol, currentPrice, safeRates]);
+    
+    const rates = safeRates[symbol as keyof typeof safeRates];
+    const periods = typeof rates === 'object' && rates !== null ? [
+      { months: 3, days: 90, apy: (rates as any)["3"] || 1.5 },
+      { months: 6, days: 180, apy: (rates as any)["6"] || 2.0 },
+      { months: 12, days: 365, apy: (rates as any)["12"] || 2.5 },
+    ] : [
+      { months: 3, days: 90, apy: 1.5 },
+      { months: 6, days: 180, apy: 2.0 },
+      { months: 12, days: 365, apy: 2.5 },
+    ];
+    
+    return {
+      metal: symbol,
+      name: name,
+      icon: METAL_ICONS[symbol] || "/images/metals/gold.png",
+      metalTokenAddress: metalTokenAddresses[symbol] || "0x...",
+      periods: periods,
+      minAmount: 1,
+      maxAmount: 1000000,
+      tvl: 0,
+      contractAddress: "0x...",
+    };
+  }, [leaseConfig, symbol, name, safeRates]);
 
   const spreadPercent = 1.5;
   const liveAskPrice = askPrice || currentPrice * (1 + spreadPercent / 100);
