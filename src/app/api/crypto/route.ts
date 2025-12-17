@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 // Binance API - No API key required for public endpoints
 const BINANCE_API = "https://api.binance.com/api/v3/ticker/24hr";
 
-// Symbol mapping
-const SYMBOLS = ["BTCUSDT", "ETHUSDT", "XRPUSDT", "SOLUSDT"];
+// Symbol mapping - USDCUSDT eklendi (USDT değerini hesaplamak için)
+const SYMBOLS = ["BTCUSDT", "ETHUSDT", "XRPUSDT", "SOLUSDT", "USDCUSDT"];
 
 // Price adjustments from settings (ask/bid spread)
 const DEFAULT_SETTINGS = {
@@ -38,8 +38,12 @@ export async function GET() {
     const data = await response.json();
 
     // Parse Binance response
-    const prices: Record<string, { usd: number; usd_24h_change: number }> = {};
+    const prices: Record<string, { usd: number; usd_24h_change: number; try?: number }> = {};
     
+    // USDT değeri için USDCUSDT kullanacağız
+    let usdtPrice = 1.00;
+    let usdtChange = 0;
+
     for (const ticker of data) {
       const symbol = ticker.symbol;
       const price = parseFloat(ticker.lastPrice);
@@ -53,13 +57,23 @@ export async function GET() {
         prices.ripple = { usd: price, usd_24h_change: change24h };
       } else if (symbol === "SOLUSDT") {
         prices.solana = { usd: price, usd_24h_change: change24h };
+      } else if (symbol === "USDCUSDT") {
+        // USDCUSDT = 1 USDC kaç USDT eder
+        // USDT'nin USD değeri ≈ 1 / USDCUSDT (çünkü USDC ≈ $1)
+        usdtPrice = 1 / price;
+        usdtChange = -change24h; // Ters ilişki
       }
     }
 
-    // Add USDT/TRY rate
+    // Add USDT with USD value
+    prices.tether = { 
+      usd: usdtPrice, 
+      usd_24h_change: usdtChange,
+      try: USDT_TRY_RATE 
+    };
+
     const result = {
       ...prices,
-      tether: { try: USDT_TRY_RATE },
       source: "binance",
       timestamp: Date.now(),
     };
@@ -79,7 +93,7 @@ export async function GET() {
         bitcoin: { usd: 97500, usd_24h_change: 0 },
         ripple: { usd: 2.20, usd_24h_change: 0 },
         solana: { usd: 235, usd_24h_change: 0 },
-        tether: { try: USDT_TRY_RATE },
+        tether: { usd: 1.00, usd_24h_change: 0, try: USDT_TRY_RATE },
         source: "fallback",
         error: error instanceof Error ? error.message : "Unknown error",
       },
