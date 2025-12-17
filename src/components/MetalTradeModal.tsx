@@ -1,5 +1,5 @@
-"use client";
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 
 interface MetalTradeModalProps {
   isOpen: boolean;
@@ -50,10 +50,10 @@ type PaymentMethod = "AUXM" | "USDT" | "BTC" | "ETH" | "XRP" | "SOL";
 type OrderType = "market" | "limit";
 
 const METAL_INFO = {
-  AUXG: { name: "Gold", nameTr: "Altın", icon: "🥇", color: "#FFD700" },
-  AUXS: { name: "Silver", nameTr: "Gümüş", icon: "🥈", color: "#C0C0C0" },
-  AUXPT: { name: "Platinum", nameTr: "Platin", icon: "⚪", color: "#E5E4E2" },
-  AUXPD: { name: "Palladium", nameTr: "Paladyum", icon: "🔘", color: "#CED0DD" },
+  AUXG: { name: "Gold", nameTr: "Altın", icon: "/images/metals/gold.png", color: "#FFD700" },
+  AUXS: { name: "Silver", nameTr: "Gümüş", icon: "/images/metals/silver.png", color: "#C0C0C0" },
+  AUXPT: { name: "Platinum", nameTr: "Platin", icon: "/images/metals/platinum.png", color: "#E5E4E2" },
+  AUXPD: { name: "Palladium", nameTr: "Paladyum", icon: "/images/metals/palladium.png", color: "#CED0DD" },
 };
 
 const PAYMENT_METHODS: { id: PaymentMethod; name: string; icon: string; color: string }[] = [
@@ -93,14 +93,12 @@ export function MetalTradeModal({
   const [result, setResult] = useState<"success" | "error" | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   
-  // Quote state
   const [quote, setQuote] = useState<Quote | null>(null);
   const [countdown, setCountdown] = useState(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const metalInfo = METAL_INFO[metal];
 
-  // Translations
   const t = lang === "tr" ? {
     buy: "Al",
     sell: "Sat",
@@ -175,7 +173,6 @@ export function MetalTradeModal({
     placeOrder: "Place Order",
   };
 
-  // Reset on close/open
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
@@ -191,7 +188,6 @@ export function MetalTradeModal({
     }
   }, [isOpen, initialMode]);
 
-  // Set default limit price when switching to limit mode
   useEffect(() => {
     if (orderType === "limit" && !limitPrice) {
       const defaultPrice = mode === "buy" ? currentPrice : (bidPrice || currentPrice * 0.98);
@@ -199,7 +195,6 @@ export function MetalTradeModal({
     }
   }, [orderType, mode, currentPrice, bidPrice, limitPrice]);
 
-  // Countdown timer
   useEffect(() => {
     if (!quote || countdown <= 0) return;
     
@@ -216,12 +211,9 @@ export function MetalTradeModal({
     return () => clearInterval(timer);
   }, [quote]);
 
-  // Calculate values
   const amountNum = parseFloat(amount) || 0;
   const limitPriceNum = parseFloat(limitPrice) || 0;
   
-  // For market orders, use quote price or current market price
-  // For limit orders, use the user-specified limit price
   const getDisplayPrice = () => {
     if (orderType === "limit") {
       return limitPriceNum;
@@ -231,7 +223,6 @@ export function MetalTradeModal({
   
   const displayPrice = getDisplayPrice();
   
-  // Get available balance based on payment method
   const getAvailableBalance = (pm: PaymentMethod): number => {
     if (pm === "AUXM") {
       return (userBalance?.auxm || 0) + (userBalance?.bonusAuxm || 0);
@@ -239,7 +230,6 @@ export function MetalTradeModal({
     return userBalance?.crypto?.[pm] || 0;
   };
 
-  // Calculate total cost/payout
   const calculateTotal = () => {
     if (mode === "buy") {
       const totalUSD = amountNum * displayPrice;
@@ -256,13 +246,10 @@ export function MetalTradeModal({
   const total = calculateTotal();
   const availableBalance = getAvailableBalance(paymentMethod);
   
-  // For buy: check if enough payment balance
-  // For sell: check if enough metal balance
   const hasInsufficientBalance = mode === "buy" 
     ? total > availableBalance 
     : amountNum > (userBalance?.metals?.[metal] || 0);
 
-  // Bonus usage calculation
   const calculateBonusUsage = () => {
     if (mode !== "buy" || paymentMethod !== "AUXM") {
       return { usedBonus: 0, usedRegular: total };
@@ -276,7 +263,6 @@ export function MetalTradeModal({
 
   const bonusUsage = calculateBonusUsage();
 
-  // Handle Market Order
   const handleMarketOrder = async () => {
     if (!walletAddress || amountNum <= 0 || hasInsufficientBalance) return;
     
@@ -284,7 +270,6 @@ export function MetalTradeModal({
     setErrorMessage("");
     
     try {
-      // Get quote
       const quoteRes = await fetch("/api/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -313,7 +298,6 @@ export function MetalTradeModal({
     }
   };
 
-  // Handle Limit Order
   const handleLimitOrder = async () => {
     if (!walletAddress || amountNum <= 0 || limitPriceNum <= 0 || hasInsufficientBalance) return;
     
@@ -321,7 +305,6 @@ export function MetalTradeModal({
     setErrorMessage("");
     
     try {
-      // Place limit order
       const orderRes = await fetch("/api/orders/limit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -351,7 +334,6 @@ export function MetalTradeModal({
     }
   };
 
-  // Handle Trade Click
   const handleTradeClick = () => {
     if (orderType === "market") {
       handleMarketOrder();
@@ -360,7 +342,6 @@ export function MetalTradeModal({
     }
   };
 
-  // Handle Confirm Market Trade
   const handleConfirmTrade = async () => {
     if (!quote || !walletAddress || countdown <= 0) return;
     
@@ -400,10 +381,18 @@ export function MetalTradeModal({
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-slate-900 rounded-2xl border border-slate-700 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        {/* Header */}
+        {/* Header with Metal Icon */}
         <div className="flex items-center justify-between p-4 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{metalInfo.icon}</span>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: metalInfo.color + '30' }}>
+              <Image 
+                src={metalInfo.icon} 
+                alt={metal} 
+                width={28} 
+                height={28}
+                className="object-contain"
+              />
+            </div>
             <div>
               <h2 className="text-lg font-bold text-white">{metalName}</h2>
               <p className="text-xs text-slate-400">{metal}</p>
@@ -418,7 +407,6 @@ export function MetalTradeModal({
 
         <div className="p-4 space-y-4">
           {result === "success" ? (
-            // Success State
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -518,51 +506,25 @@ export function MetalTradeModal({
                     </div>
                     <div className="flex justify-between text-sm border-t border-slate-700 pt-1">
                       <span className="text-slate-400">{t.total}</span>
-                      <span className="text-white font-mono font-medium">
-                        {((userBalance?.auxm || 0) + (userBalance?.bonusAuxm || 0)).toFixed(2)} AUXM
-                      </span>
+                      <span className="text-white font-mono">{((userBalance?.auxm || 0) + (userBalance?.bonusAuxm || 0)).toFixed(2)} AUXM</span>
                     </div>
                   </>
                 )}
               </div>
 
-              {/* Current Market Price Display */}
-              <div className="p-3 bg-slate-800/50 rounded-xl flex justify-between items-center">
-                <span className="text-slate-400 text-sm">
-                  {orderType === "market" 
-                    ? (mode === "buy" ? t.askPrice : t.bidPrice)
-                    : t.currentMarketPrice
-                  }
-                </span>
-                <div className="text-right">
-                  <span className="text-xl font-bold text-white">
-                    ${(mode === "buy" ? currentPrice : (bidPrice || currentPrice * 0.98)).toFixed(2)}
-                  </span>
-                  <span className="text-slate-400 text-sm"> / gram</span>
+              {/* Price Display */}
+              <div className="p-3 bg-slate-800/50 rounded-xl">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">{mode === "buy" ? t.askPrice : t.bidPrice}</span>
+                  <span className="text-emerald-400 font-mono">${displayPrice.toFixed(2)}/g</span>
                 </div>
+                {quote && (
+                  <div className="flex justify-between text-sm mt-1">
+                    <span className="text-slate-400">{t.spread}</span>
+                    <span className="text-amber-400 font-mono">{quote.spreadPercent.toFixed(2)}%</span>
+                  </div>
+                )}
               </div>
-
-              {/* Quote Timer (Market Orders Only) */}
-              {orderType === "market" && quote && countdown > 0 && (
-                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-emerald-400">🔒</span>
-                      <span className="text-emerald-300 text-sm font-medium">{t.priceLocked}</span>
-                    </div>
-                    <div className={`flex items-center gap-1 px-3 py-1 rounded-lg ${
-                      countdown <= 5 ? 'bg-red-500/20 text-red-400 animate-pulse' : 'bg-emerald-500/20 text-emerald-400'
-                    }`}>
-                      <span className="text-xl font-bold font-mono">{countdown}</span>
-                      <span className="text-xs">{t.seconds}</span>
-                    </div>
-                  </div>
-                  <div className="mt-2 flex justify-between text-xs">
-                    <span className="text-slate-400">{t.spread}:</span>
-                    <span className="text-emerald-400">{quote.spreadPercent}%</span>
-                  </div>
-                </div>
-              )}
 
               {/* Amount Input */}
               <div>
@@ -572,13 +534,13 @@ export function MetalTradeModal({
                     type="number"
                     value={amount}
                     onChange={(e) => { setAmount(e.target.value); setQuote(null); setShowConfirmation(false); }}
-                    placeholder="0"
+                    placeholder="0.00"
                     min="0"
                     step="0.01"
-                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-lg font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-lg font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-20"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                    <span className="text-slate-500 text-sm">gram</span>
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <span className="text-slate-500">grams</span>
                     <button
                       onClick={() => {
                         const maxPrice = orderType === "limit" ? limitPriceNum : displayPrice;
@@ -597,7 +559,7 @@ export function MetalTradeModal({
                 </div>
               </div>
 
-              {/* Limit Price Input (Limit Orders Only) */}
+              {/* Limit Price Input */}
               {orderType === "limit" && (
                 <div>
                   <label className="text-sm text-slate-400 mb-2 block">{t.limitPrice}</label>
@@ -614,7 +576,6 @@ export function MetalTradeModal({
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">/ gram</span>
                   </div>
-                  {/* Quick price buttons */}
                   <div className="flex gap-2 mt-2">
                     {[-5, -2, -1, 0, 1, 2, 5].map((percent) => {
                       const basePrice = mode === "buy" ? currentPrice : (bidPrice || currentPrice * 0.98);
@@ -639,7 +600,7 @@ export function MetalTradeModal({
                 </div>
               )}
 
-              {/* Payment Method (Buy only) */}
+              {/* Payment Method */}
               {mode === "buy" && (
                 <div>
                   <label className="text-sm text-slate-400 mb-2 block">{t.paymentMethod}</label>
@@ -728,7 +689,6 @@ export function MetalTradeModal({
                 </button>
                 
                 {orderType === "limit" ? (
-                  // Limit Order Button
                   <button
                     onClick={handleTradeClick}
                     disabled={isProcessing || amountNum <= 0 || limitPriceNum <= 0 || hasInsufficientBalance || !walletAddress}
@@ -741,7 +701,6 @@ export function MetalTradeModal({
                     {isProcessing ? t.processing : t.placeOrder}
                   </button>
                 ) : !showConfirmation ? (
-                  // Market Order - Get Quote Button
                   <button
                     onClick={handleTradeClick}
                     disabled={isProcessing || amountNum <= 0 || hasInsufficientBalance || !walletAddress}
@@ -756,7 +715,6 @@ export function MetalTradeModal({
                     {isProcessing ? t.processing : `${mode === "buy" ? t.buy : t.sell} ${metal}`}
                   </button>
                 ) : (
-                  // Market Order - Confirm Button
                   <button
                     onClick={handleConfirmTrade}
                     disabled={isProcessing || countdown <= 0}

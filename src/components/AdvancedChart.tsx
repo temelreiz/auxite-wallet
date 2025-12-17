@@ -68,14 +68,11 @@ const translations: Record<string, { overlay: string; panel: string; volume: str
 };
 
 const METAL_ICONS: Record<string, string> = {
-  AUXG: "/images/metals/gold.png",
-  AUXS: "/images/metals/silver.png",
-  AUXPT: "/images/metals/platinum.png",
-  AUXPD: "/images/metals/palladium.png",
-  Gold: "/images/metals/gold.png",
-  Silver: "/images/metals/silver.png",
-  Platinum: "/images/metals/platinum.png",
-  Palladium: "/images/metals/palladium.png",
+  AUXG: "/gold-favicon-32x32.png",
+  AUXS: "/silver-favicon-32x32.png",
+  AUXPT: "/platinum-favicon-32x32.png",
+  AUXPD: "/palladium-favicon-32x32.png",
+  
 };
 
 // Indicator calculations

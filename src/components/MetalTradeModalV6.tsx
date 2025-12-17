@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
+import Image from "next/image";
 import { useTradeV6 } from "@/hooks/useTradeV6";
 import { 
   TOKEN_CONFIG, 
@@ -13,7 +14,7 @@ import {
 } from "@/config/contracts";
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TYPES
+// TYPES & CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface MetalTradeModalV6Props {
@@ -25,6 +26,14 @@ interface MetalTradeModalV6Props {
 }
 
 type OrderType = "market" | "limit";
+
+// Metal icon paths
+const METAL_ICONS: Record<string, string> = {
+  AUXG: "/images/metals/gold.png",
+  AUXS: "/images/metals/silver.png",
+  AUXPT: "/images/metals/platinum.png",
+  AUXPD: "/images/metals/palladium.png",
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRANSLATIONS
@@ -147,6 +156,7 @@ export function MetalTradeModalV6({
 
   // Metal info
   const metalInfo = TOKEN_CONFIG.METALS[metal];
+  const metalIcon = METAL_ICONS[metal];
   const amountNum = parseFloat(amount) || 0;
   const limitPriceNum = parseFloat(limitPrice) || 0;
 
@@ -218,29 +228,9 @@ export function MetalTradeModalV6({
   const handleLimitOrder = async () => {
     if (!isConnected || amountNum <= 0 || limitPriceNum <= 0) return;
 
-    // TODO: Implement limit order logic
-    // This could be:
-    // 1. Smart contract based limit orders
-    // 2. Backend API based limit orders
-    // For now, we'll simulate success
-    
     try {
-      // Placeholder for limit order API call
-      // await fetch("/api/orders/limit", {
-      //   method: "POST",
-      //   body: JSON.stringify({
-      //     type: mode,
-      //     metal,
-      //     grams: amountNum,
-      //     limitPrice: limitPriceNum,
-      //     address,
-      //   }),
-      // });
-      
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       setLimitOrderSuccess(true);
-      
     } catch (error) {
       console.error("Limit order failed:", error);
     }
@@ -272,14 +262,20 @@ export function MetalTradeModalV6({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="relative w-full max-w-md bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto">
         
-        {/* Header */}
+        {/* Header with Metal Icon */}
         <div className="flex items-center justify-between p-4 border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
           <div className="flex items-center gap-3">
             <div 
-              className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
+              className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden"
               style={{ backgroundColor: metalInfo.color + "30" }}
             >
-              {metalInfo.icon}
+              <Image 
+                src={metalIcon} 
+                alt={metal} 
+                width={28} 
+                height={28}
+                className="object-contain"
+              />
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">
@@ -313,7 +309,7 @@ export function MetalTradeModalV6({
               </div>
               <h3 className="text-xl font-bold text-white mb-2">{t.success}</h3>
               {state.txHash && (
-                <a
+                
                   href={`https://sepolia.etherscan.io/tx/${state.txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -349,18 +345,24 @@ export function MetalTradeModalV6({
                 onClick={onClose}
                 className="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-xl text-white font-medium"
               >
-                {t.cancel}
+                OK
               </button>
             </div>
           )}
 
           {/* Error State */}
           {state.step === "error" && (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
-              <p className="text-sm text-red-400">{state.error}</p>
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
+                <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Error</h3>
+              <p className="text-sm text-red-400 mb-4">{state.error}</p>
               <button
                 onClick={reset}
-                className="mt-2 text-sm text-red-400 hover:text-red-300 underline"
+                className="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl text-white font-medium"
               >
                 {t.tryAgain}
               </button>
@@ -368,12 +370,12 @@ export function MetalTradeModalV6({
           )}
 
           {/* Normal State */}
-          {state.step !== "success" && !limitOrderSuccess && (
+          {state.step !== "success" && state.step !== "error" && !limitOrderSuccess && (
             <>
               {/* Buy/Sell Toggle */}
               <div className="grid grid-cols-2 gap-2 p-1 bg-slate-800 rounded-xl">
                 <button
-                  onClick={() => { setMode("buy"); setLimitPrice(""); }}
+                  onClick={() => setMode("buy")}
                   disabled={isLoading || isConfirming}
                   className={`py-2.5 rounded-lg font-semibold transition-all ${
                     mode === "buy"
@@ -384,7 +386,7 @@ export function MetalTradeModalV6({
                   {t.buy}
                 </button>
                 <button
-                  onClick={() => { setMode("sell"); setLimitPrice(""); }}
+                  onClick={() => setMode("sell")}
                   disabled={isLoading || isConfirming}
                   className={`py-2.5 rounded-lg font-semibold transition-all ${
                     mode === "sell"
@@ -432,90 +434,95 @@ export function MetalTradeModalV6({
               </div>
 
               {/* Balance Display */}
-              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700 space-y-2">
+              <div className="p-3 bg-slate-800/50 rounded-xl space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">ETH {t.balance}</span>
+                  <span className="text-slate-400">{t.balance} (ETH)</span>
                   <span className="text-white font-mono">{ethBalance} ETH</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">{metal} {t.balance}</span>
+                  <span className="text-slate-400">{t.balance} ({metal})</span>
                   <span className="text-white font-mono">{metalBalance.toFixed(3)}g</span>
                 </div>
-                {pendingRefund > 0n && (
+                {pendingRefund > 0 && (
                   <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-700">
                     <span className="text-amber-400">💰 {t.pendingRefund}</span>
-                    <button
-                      onClick={withdrawRefund}
-                      className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-xs hover:bg-amber-500/30"
-                    >
-                      {formatEth(pendingRefund)} ETH {t.withdraw}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-400 font-mono">{formatEth(pendingRefund)} ETH</span>
+                      <button
+                        onClick={withdrawRefund}
+                        disabled={isLoading || isConfirming}
+                        className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded hover:bg-amber-500/30 disabled:opacity-50"
+                      >
+                        {t.withdraw}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* Current Price Display */}
-              <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-400">
-                    {orderType === "market" 
-                      ? (mode === "buy" ? t.askPrice : t.bidPrice)
-                      : t.currentPrice
-                    }
+              {/* Price Display */}
+              <div className="p-3 bg-slate-800/50 rounded-xl">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">{t.askPrice}</span>
+                  <span className="text-emerald-400 font-mono">
+                    ${askPricePerGram > 0 ? askPricePerGram.toFixed(2) : "—"}/g
                   </span>
-                  <span className="text-lg font-bold text-white font-mono">
-                    ${(mode === "buy" ? askPricePerGram : bidPricePerGram).toFixed(2)}
-                    <span className="text-sm text-slate-400">/g</span>
+                </div>
+                <div className="flex justify-between text-sm mt-1">
+                  <span className="text-slate-400">{t.bidPrice}</span>
+                  <span className="text-red-400 font-mono">
+                    ${bidPricePerGram > 0 ? bidPricePerGram.toFixed(2) : "—"}/g
                   </span>
                 </div>
               </div>
 
               {/* Amount Input */}
               <div>
-                <label className="block text-sm text-slate-400 mb-2">{t.amount}</label>
+                <label className="text-sm text-slate-400 mb-2 block">{t.amount}</label>
                 <div className="relative">
                   <input
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    min={TRADE_CONFIG.MIN_TRADE_GRAMS}
+                    placeholder="0.00"
+                    min="0"
                     step="0.001"
                     disabled={isLoading || isConfirming}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-emerald-500 disabled:opacity-50"
-                    placeholder="1.000"
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-lg font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-24 disabled:opacity-50"
                   />
-                  {mode === "sell" && (
-                    <button
-                      onClick={handleMaxClick}
-                      disabled={isLoading || isConfirming}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 rounded-lg text-emerald-400 font-semibold transition-colors"
-                    >
-                      MAX
-                    </button>
-                  )}
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <span className="text-slate-500">grams</span>
+                    {mode === "sell" && (
+                      <button
+                        onClick={handleMaxClick}
+                        disabled={isLoading || isConfirming}
+                        className="px-2 py-1 text-xs bg-emerald-500/20 text-emerald-400 rounded hover:bg-emerald-500/30 disabled:opacity-50"
+                      >
+                        MAX
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Limit Price Input (Limit Orders Only) */}
+              {/* Limit Price Input */}
               {orderType === "limit" && (
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">{t.limitPrice}</label>
+                  <label className="text-sm text-slate-400 mb-2 block">{t.limitPrice}</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
                     <input
                       type="number"
                       value={limitPrice}
                       onChange={(e) => setLimitPrice(e.target.value)}
+                      placeholder="0.00"
                       min="0"
                       step="0.01"
                       disabled={isLoading || isConfirming}
-                      className="w-full pl-8 pr-16 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono focus:outline-none focus:border-blue-500 disabled:opacity-50"
-                      placeholder="0.00"
+                      className="w-full pl-8 pr-16 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-lg font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">/g</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">/ gram</span>
                   </div>
-                  
-                  {/* Quick price adjustment buttons */}
                   <div className="flex gap-2 mt-2">
                     {[-5, -2, -1, 0, 1, 2, 5].map((percent) => {
                       const basePrice = mode === "buy" ? askPricePerGram : bidPricePerGram;
@@ -655,7 +662,6 @@ export function MetalTradeModalV6({
                 </button>
                 
                 {orderType === "market" ? (
-                  // Market Order Button
                   <button
                     onClick={handleTrade}
                     disabled={isLoading || isConfirming || !canAfford || amountNum <= 0 || !isConnected}
@@ -678,7 +684,6 @@ export function MetalTradeModalV6({
                     )}
                   </button>
                 ) : (
-                  // Limit Order Button
                   <button
                     onClick={handleTrade}
                     disabled={isLoading || isConfirming || !canAfford || amountNum <= 0 || limitPriceNum <= 0 || !isConnected}

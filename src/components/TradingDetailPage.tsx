@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 
 const AdvancedChart = dynamic(() => import("./AdvancedChart"), { ssr: false });
 import type { MetalId } from "@/lib/metals";
@@ -83,12 +84,20 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
-// Metal colors for icons
-const metalColors: Record<string, { bg: string; text: string }> = {
-  AUXG: { bg: "bg-gradient-to-br from-yellow-400 to-amber-600", text: "text-amber-900" },
-  AUXS: { bg: "bg-gradient-to-br from-gray-300 to-slate-400", text: "text-slate-700" },
-  AUXPT: { bg: "bg-gradient-to-br from-slate-200 to-slate-400", text: "text-slate-600" },
-  AUXPD: { bg: "bg-gradient-to-br from-zinc-300 to-zinc-500", text: "text-zinc-700" },
+// Metal icon paths
+const METAL_ICONS: Record<string, string> = {
+  AUXG: "/images/metals/gold.png",
+  AUXS: "/images/metals/silver.png",
+  AUXPT: "/images/metals/platinum.png",
+  AUXPD: "/images/metals/palladium.png",
+};
+
+// Metal background colors for icon container
+const metalBgColors: Record<string, string> = {
+  AUXG: "bg-amber-500/20",
+  AUXS: "bg-slate-400/20",
+  AUXPT: "bg-slate-300/20",
+  AUXPD: "bg-zinc-400/20",
 };
 
 type TimeFrame = "15m" | "1H" | "4H" | "1D" | "1W";
@@ -131,89 +140,37 @@ export default function TradingDetailPage({
   const t = useCallback((key: string) => translations[lang]?.[key] || translations.en[key] || key, [lang]);
   
   const [activeTab, setActiveTab] = useState<"price" | "info" | "data" | "orders" | "lease">("price");
-  const [timeFrame, setTimeFrame] = useState<TimeFrame>("4H");
-  const [overlayIndicators, setOverlayIndicators] = useState<OverlayIndicator[]>(["MA"]);
-  const [panelIndicator, setPanelIndicator] = useState<PanelIndicator | null>("RSI");
   const [showLeaseModal, setShowLeaseModal] = useState(false);
-
-  // Price simulation - use currentPrice prop
-  const initialPriceRef = useRef(currentPrice);
-  const initialChange24hRef = useRef(change24h ?? 0);
-  const [livePrice, setLivePrice] = useState(currentPrice);
-  const isPositive = direction === "up" || (change24h ?? 0) >= 0;
-
-  // Sync livePrice when currentPrice prop changes
-  useEffect(() => {
-    if (currentPrice && currentPrice > 0) {
-      setLivePrice(currentPrice);
-      initialPriceRef.current = currentPrice;
-    }
-  }, [currentPrice]);
-
-  useEffect(() => {
-    if (!livePrice || livePrice <= 0) return;
-    const interval = setInterval(() => {
-      setLivePrice(prev => {
-        const change = (Math.random() - 0.5) * 0.1;
-        return Math.max(prev * 0.95, Math.min(prev * 1.05, prev + change));
-      });
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [livePrice]);
-
-  // Chart data
-  const chartData = useMemo(() => {
-    if (propChartData && propChartData.length > 0) return propChartData;
-    const data = [];
-    const now = Math.floor(Date.now() / 1000);
-    let basePrice = initialPriceRef.current || currentPrice || 1;
-    for (let i = 100; i >= 0; i--) {
-      const time = now - i * 3600;
-      const change = (Math.random() - 0.5) * basePrice * 0.02;
-      const open = basePrice;
-      const close = basePrice + change;
-      const high = Math.max(open, close) * (1 + Math.random() * 0.01);
-      const low = Math.min(open, close) * (1 - Math.random() * 0.01);
-      const volume = Math.random() * 1000000;
-      data.push({ time, open, high, low, close, volume });
-      basePrice = close;
-    }
-    return data;
-  }, [propChartData, currentPrice]);
-
-  // Lease config
-  const leaseConfig = getLeaseConfigBySymbol(symbol);
+  const [timeframe, setTimeframe] = useState<TimeFrame>("4H");
+  const [overlayIndicators, setOverlayIndicators] = useState<OverlayIndicator[]>([]);
+  const [panelIndicator, setPanelIndicator] = useState<PanelIndicator | null>(null);
+  
+  const leaseConfig = useMemo(() => getLeaseConfigBySymbol(symbol), [symbol]);
   const leaseOffer = useMemo(() => {
     if (!leaseConfig) return null;
-    
-    // Get APY rates
-    const metalRates = safeRates[symbol as keyof typeof safeRates];
-    const apy3 = typeof metalRates === 'object' ? (metalRates as any)["3"] || 1.53 : 1.53;
-    const apy6 = typeof metalRates === 'object' ? (metalRates as any)["6"] || 2.03 : 2.03;
-    const apy12 = typeof metalRates === 'object' ? (metalRates as any)["12"] || 2.53 : 2.53;
-    
     return {
-      metal: symbol,
-      name: symbol === "AUXG" ? "Gold" : symbol === "AUXS" ? "Silver" : symbol === "AUXPT" ? "Platinum" : "Palladium",
-      icon: symbol === "AUXG" ? "/gold-favicon-32x32.png" : symbol === "AUXS" ? "/silver-favicon-32x32.png" : symbol === "AUXPT" ? "/platinum-favicon-32x32.png" : "/palladium-favicon-32x32.png",
-      duration: 365,
-      apy: apy12,
-      minAmount: leaseConfig.minAmount,
-      maxAmount: 1000,
-      tvl: 0,
-      metalTokenAddress: leaseConfig.metalTokenAddress || "0x",
-      contractAddress: leaseConfig.contractAddress || "0x",
-      periods: [
-        { months: 3, days: 90, apy: apy3 },
-        { months: 6, days: 180, apy: apy6 },
-        { months: 12, days: 365, apy: apy12 },
-      ],
+      metalId: metalId,
+      metalName: name,
+      metalSymbol: symbol,
+      currentPrice: currentPrice,
+      rates: safeRates,
     };
-  }, [symbol, leaseConfig]);
+  }, [leaseConfig, metalId, name, symbol, currentPrice, safeRates]);
 
-  // Bid/Ask prices - use props if available, otherwise calculate
-  const liveBidPrice = bidPrice || (livePrice || 0) * 0.995;
-  const liveAskPrice = askPrice || (livePrice || 0) * 1.005;
+  // Live prices with spread
+  const spreadPercent = 1.5;
+  const liveAskPrice = askPrice || currentPrice * (1 + spreadPercent / 100);
+  const liveBidPrice = bidPrice || currentPrice * (1 - spreadPercent / 100);
+  
+  const isPositive = change24h >= 0;
+  
+  // Calculate 24h high/low (simulated)
+  const high24h = currentPrice * 1.012;
+  const low24h = currentPrice * 0.988;
+
+  // Get metal icon
+  const metalIcon = METAL_ICONS[symbol];
+  const metalBg = metalBgColors[symbol] || "bg-amber-500/20";
 
   const tabs = [
     { id: "price", label: t("price") },
@@ -229,11 +186,21 @@ export default function TradingDetailPage({
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
         
         <div className="relative w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col border border-stone-200 dark:border-slate-800 overflow-hidden">
-          {/* Header */}
+          {/* Header with Metal Icon */}
           <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 border-b border-stone-200 dark:border-slate-800">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm ${metalColors[symbol]?.bg || "bg-gradient-to-br from-yellow-400 to-amber-600"} ${metalColors[symbol]?.text || "text-amber-900"}`}>
-                {symbol.replace("AUX", "")}
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center overflow-hidden ${metalBg}`}>
+                {metalIcon ? (
+                  <Image 
+                    src={metalIcon} 
+                    alt={symbol} 
+                    width={28} 
+                    height={28}
+                    className="object-contain"
+                  />
+                ) : (
+                  <span className="font-bold text-xs sm:text-sm">{symbol.replace("AUX", "")}</span>
+                )}
               </div>
               <div>
                 <div className="flex items-center gap-1 sm:gap-2">
@@ -278,42 +245,50 @@ export default function TradingDetailPage({
                 <div className="flex items-center justify-between mb-2 sm:mb-4">
                   <div>
                     <div className="flex items-baseline gap-1 sm:gap-2">
-                      <span className={`text-xl sm:text-2xl md:text-3xl font-bold ${isPositive ? "text-emerald-500" : "text-red-500"}`}>
-                        ${(livePrice || 0).toFixed(2)}
+                      <span className={`text-xl sm:text-2xl font-bold ${isPositive ? "text-emerald-500" : "text-red-500"}`}>
+                        ${currentPrice.toFixed(2)}
                       </span>
-                      <span className="text-emerald-500 text-[10px] sm:text-xs">● LIVE</span>
+                      <span className="text-emerald-500 text-xs sm:text-sm font-medium animate-pulse">● LIVE</span>
                     </div>
-                    <div className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-0.5 sm:mt-1">
-                      ₺{((livePrice || 0) * 34.5).toLocaleString("tr-TR", { minimumFractionDigits: 2 })}
+                    <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
+                      ₺{(currentPrice * 34.5).toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </div>
                   </div>
-                  <div className="text-right text-[10px] sm:text-xs md:text-sm space-y-0.5 sm:space-y-1">
-                    <div className="text-slate-500 dark:text-slate-400">{t("high24h")} <span className="text-emerald-500">${((initialPriceRef.current || 0) * 1.008).toFixed(2)}</span></div>
-                    <div className="text-slate-500 dark:text-slate-400">{t("low24h")} <span className="text-red-500">${((initialPriceRef.current || 0) * 0.992).toFixed(2)}</span></div>
-                    <div className="text-slate-500 dark:text-slate-400">{t("volume24h")} <span className="text-slate-900 dark:text-white">11.87M</span></div>
+                  <div className="text-right space-y-0.5 sm:space-y-1">
+                    <div className="text-[10px] sm:text-xs">
+                      <span className="text-slate-500 dark:text-slate-400">{t("high24h")} </span>
+                      <span className="text-emerald-500 font-medium">${high24h.toFixed(2)}</span>
+                    </div>
+                    <div className="text-[10px] sm:text-xs">
+                      <span className="text-slate-500 dark:text-slate-400">{t("low24h")} </span>
+                      <span className="text-red-500 font-medium">${low24h.toFixed(2)}</span>
+                    </div>
+                    <div className="text-[10px] sm:text-xs">
+                      <span className="text-slate-500 dark:text-slate-400">{t("volume24h")} </span>
+                      <span className="text-slate-700 dark:text-slate-300 font-medium">11.87M</span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Chart */}
-                <div className="rounded-xl overflow-hidden">
+                <div className="h-[250px] sm:h-[300px] md:h-[350px]">
                   <AdvancedChart
-                    data={chartData.map(c => ({ 
-                      time: c.time as any, 
-                      open: c.open, high: c.high, low: c.low, close: c.close, volume: c.volume 
-                    }))}
-                    symbol={`${symbol}/USDT`}
-                    currentPrice={livePrice || 0}
-                    priceChange={initialChange24hRef.current}
-                    lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
-                    height={250}
-                    timeframe={timeFrame}
-                    onTimeframeChange={setTimeFrame}
+                    data={propChartData || []}
+                    symbol={symbol}
+                    currentPrice={currentPrice}
+                    priceChange={change24h}
+                    lang={lang}
+                    height={300}
+                    timeframe={timeframe}
+                    onTimeframeChange={setTimeframe}
                     overlayIndicators={overlayIndicators}
                     onOverlayChange={setOverlayIndicators}
                     panelIndicator={panelIndicator}
                     onPanelChange={setPanelIndicator}
                     showControls={true}
                     showHeader={false}
+                    embedded={true}
+                    metalIcon={metalIcon}
                   />
                 </div>
               </div>
