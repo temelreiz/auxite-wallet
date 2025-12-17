@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import Image from "next/image";
 import {
   createChart,
   IChartApi,
@@ -11,6 +12,7 @@ import {
   ColorType,
   CrosshairMode,
   Time,
+  LogicalRange,
 } from "lightweight-charts";
 
 interface ChartData {
@@ -52,7 +54,8 @@ interface Props {
   onPanelChange?: (indicator: PanelIndicator | null) => void;
   showControls?: boolean;
   showHeader?: boolean;
-  embedded?: boolean; // When true, skip outer container styling
+  embedded?: boolean;
+  metalIcon?: string; // Metal icon path
 }
 
 const translations: Record<string, { overlay: string; panel: string; volume: string; high: string; low: string; open: string; close: string }> = {
@@ -62,6 +65,18 @@ const translations: Record<string, { overlay: string; panel: string; volume: str
   fr: { overlay: "Superposition", panel: "Panneau", volume: "Volume", high: "Haut", low: "Bas", open: "Ouverture", close: "Clôture" },
   ar: { overlay: "تراكب", panel: "لوحة", volume: "الحجم", high: "أعلى", low: "أدنى", open: "افتتاح", close: "إغلاق" },
   ru: { overlay: "Наложение", panel: "Панель", volume: "Объём", high: "Макс", low: "Мин", open: "Открытие", close: "Закрытие" },
+};
+
+// Metal icon mapping
+const METAL_ICONS: Record<string, string> = {
+  AUXG: "/images/metals/gold.svg",
+  AUXS: "/images/metals/silver.svg",
+  AUXPT: "/images/metals/platinum.svg",
+  AUXPD: "/images/metals/palladium.svg",
+  Gold: "/images/metals/gold.svg",
+  Silver: "/images/metals/silver.svg",
+  Platinum: "/images/metals/platinum.svg",
+  Palladium: "/images/metals/palladium.svg",
 };
 
 // Indicator calculations
@@ -169,6 +184,7 @@ export default function AdvancedChart({
   overlayIndicators: propOverlay, onOverlayChange,
   panelIndicator: propPanel, onPanelChange,
   showControls = true, showHeader = true, embedded = false,
+  metalIcon,
 }: Props) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const panelContainerRef = useRef<HTMLDivElement>(null);
@@ -178,11 +194,14 @@ export default function AdvancedChart({
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const overlaySeriesRef = useRef<Map<string, ISeriesApi<"Line">>>(new Map());
   const panelSeriesRef = useRef<Map<string, ISeriesApi<"Line" | "Histogram">>>(new Map());
-  const firstRenderRef = useRef(true);
-  const panelFirstRenderRef = useRef(true);
+  
+  const isFirstMountRef = useRef(true);
+  const savedVisibleRangeRef = useRef<LogicalRange | null>(null);
 
-  // Theme detection - robust check
   const [isDark, setIsDark] = useState(true);
+
+  // Get icon for the symbol
+  const iconSrc = metalIcon || METAL_ICONS[symbol] || METAL_ICONS[symbol.replace('AUX', '')] || null;
 
   useEffect(() => {
     const checkTheme = () => {
@@ -194,25 +213,21 @@ export default function AdvancedChart({
       if (hasDarkClass) return setIsDark(true);
       if (hasLightClass) return setIsDark(false);
       
-      // Check localStorage
       const stored = localStorage.getItem('theme');
       if (stored === 'dark') return setIsDark(true);
       if (stored === 'light') return setIsDark(false);
       
-      // System preference
       setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
     };
 
     checkTheme();
 
-    // Listen for changes
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     
     window.addEventListener('storage', checkTheme);
     window.addEventListener('themeChange', checkTheme);
     
-    // Fallback interval
     const interval = setInterval(checkTheme, 300);
 
     return () => {
@@ -223,22 +238,27 @@ export default function AdvancedChart({
     };
   }, []);
 
-  // Local state
   const [timeframe, setLocalTimeframe] = useState<TimeframeKey>(propTimeframe || "4H");
   const [overlayIndicators, setLocalOverlay] = useState<OverlayIndicator[]>(propOverlay || []);
   const [panelIndicator, setLocalPanel] = useState<PanelIndicator | null>(propPanel || null);
   const [crosshairData, setCrosshairData] = useState<ChartData | null>(null);
 
-  // Sync with props
   useEffect(() => { if (propTimeframe) setLocalTimeframe(propTimeframe); }, [propTimeframe]);
   useEffect(() => { if (propOverlay) setLocalOverlay(propOverlay); }, [propOverlay]);
   useEffect(() => { if (propPanel !== undefined) setLocalPanel(propPanel); }, [propPanel]);
 
-  const setTimeframe = useCallback((tf: TimeframeKey) => { setLocalTimeframe(tf); onTimeframeChange?.(tf); }, [onTimeframeChange]);
+  const setTimeframe = useCallback((tf: TimeframeKey) => { 
+    isFirstMountRef.current = true;
+    savedVisibleRangeRef.current = null;
+    setLocalTimeframe(tf); 
+    onTimeframeChange?.(tf); 
+  }, [onTimeframeChange]);
+  
   const toggleOverlay = useCallback((ind: OverlayIndicator) => {
     const newIndicators = overlayIndicators.includes(ind) ? overlayIndicators.filter(i => i !== ind) : [...overlayIndicators, ind];
     setLocalOverlay(newIndicators); onOverlayChange?.(newIndicators);
   }, [overlayIndicators, onOverlayChange]);
+  
   const togglePanel = useCallback((ind: PanelIndicator) => {
     const newIndicator = panelIndicator === ind ? null : ind;
     setLocalPanel(newIndicator); onPanelChange?.(newIndicator);
@@ -246,7 +266,6 @@ export default function AdvancedChart({
 
   const labels = translations[lang] || translations.en;
 
-  // Colors based on theme
   const colors = useMemo(() => ({
     background: isDark ? '#0f172a' : '#ffffff',
     textColor: isDark ? '#94a3b8' : '#64748b',
@@ -258,7 +277,6 @@ export default function AdvancedChart({
     volumeDown: 'rgba(239, 68, 68, 0.3)',
   }), [isDark]);
 
-  // Display data
   const displayData = useMemo(() => {
     if (data && data.length > 0) return data;
     const now = Math.floor(Date.now() / 1000);
@@ -278,16 +296,20 @@ export default function AdvancedChart({
 
   const formatPrice = (price: number) => price >= 1 ? price.toFixed(2) : price.toFixed(6);
 
-  // Chart heights - panel açıkken main chart küçülür
   const panelHeight = 80;
   const mainChartHeight = panelIndicator ? height - panelHeight - 30 : height;
 
-  // Create chart - recreate when theme changes
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    // Remove existing chart
     if (chartRef.current) {
+      try {
+        const currentRange = chartRef.current.timeScale().getVisibleLogicalRange();
+        if (currentRange) {
+          savedVisibleRangeRef.current = currentRange;
+        }
+      } catch (e) {}
+      
       chartRef.current.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
@@ -316,7 +338,6 @@ export default function AdvancedChart({
 
     chartRef.current = chart;
 
-    // Candlestick series
     const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: colors.upColor, downColor: colors.downColor,
       borderUpColor: colors.upColor, borderDownColor: colors.downColor,
@@ -325,7 +346,6 @@ export default function AdvancedChart({
     candleSeries.setData(displayData);
     candleSeriesRef.current = candleSeries;
 
-    // Volume series
     const volumeSeries = chart.addSeries(HistogramSeries, {
       priceFormat: { type: "volume" },
       priceScaleId: "volume",
@@ -338,7 +358,6 @@ export default function AdvancedChart({
     })));
     volumeSeriesRef.current = volumeSeries;
 
-    // Crosshair handler
     chart.subscribeCrosshairMove((param) => {
       if (param.time && param.seriesData.size > 0) {
         const candleData = param.seriesData.get(candleSeries);
@@ -346,13 +365,19 @@ export default function AdvancedChart({
       } else setCrosshairData(null);
     });
 
-    // Fit content
-    if (firstRenderRef.current) {
+    if (isFirstMountRef.current) {
       chart.timeScale().fitContent();
-      firstRenderRef.current = false;
+      isFirstMountRef.current = false;
+    } else if (savedVisibleRangeRef.current) {
+      setTimeout(() => {
+        try {
+          if (chartRef.current && savedVisibleRangeRef.current) {
+            chartRef.current.timeScale().setVisibleLogicalRange(savedVisibleRangeRef.current);
+          }
+        } catch (e) {}
+      }, 10);
     }
 
-    // Resize handler
     const handleResize = () => {
       if (chartContainerRef.current && chart) {
         chart.applyOptions({ width: chartContainerRef.current.clientWidth });
@@ -363,9 +388,8 @@ export default function AdvancedChart({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [displayData, height, colors, isDark, panelIndicator]); // Recreate when panel changes
+  }, [displayData, height, colors, isDark, panelIndicator]);
 
-  // Update overlay indicators
   useEffect(() => {
     if (!chartRef.current || displayData.length === 0) return;
     const chart = chartRef.current;
@@ -410,7 +434,6 @@ export default function AdvancedChart({
     }
   }, [displayData, overlayIndicators, isDark]);
 
-  // Panel chart setup
   useEffect(() => {
     if (!panelContainerRef.current || !panelIndicator) {
       if (panelChartRef.current) {
@@ -421,14 +444,12 @@ export default function AdvancedChart({
       return;
     }
 
-    // Remove and recreate panel chart
     if (panelChartRef.current) {
       panelChartRef.current.remove();
       panelChartRef.current = null;
       panelSeriesRef.current.clear();
     }
 
-    panelFirstRenderRef.current = true;
     const panelChart = createChart(panelContainerRef.current, {
       width: panelContainerRef.current.clientWidth,
       height: panelHeight,
@@ -475,12 +496,8 @@ export default function AdvancedChart({
       panelSeriesRef.current.set("vol", volSeries);
     }
 
-    if (panelFirstRenderRef.current) {
-      panelChart.timeScale().fitContent();
-      panelFirstRenderRef.current = false;
-    }
+    panelChart.timeScale().fitContent();
 
-    // Sync with main chart
     if (chartRef.current) {
       chartRef.current.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
         if (range && panelChartRef.current) {
@@ -490,7 +507,6 @@ export default function AdvancedChart({
     }
   }, [displayData, panelIndicator, colors, isDark]);
 
-  // Cleanup
   useEffect(() => {
     return () => {
       if (panelChartRef.current) {
@@ -507,18 +523,29 @@ export default function AdvancedChart({
   const isPositive = (priceChange || 0) >= 0;
   const displayPrice = currentPrice || null;
 
-  // Container classes based on embedded prop
   const containerClass = embedded
     ? "w-full"
     : `rounded-xl border overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-stone-200'}`;
 
   return (
     <div className={containerClass}>
-      {/* Header - only show if showHeader is true and not embedded */}
+      {/* Header with Metal Icon */}
       {showHeader && !embedded && (
         <div className={`px-3 py-2 border-b ${isDark ? 'border-slate-800' : 'border-stone-200'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              {/* Metal Icon */}
+              {iconSrc && (
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-slate-800' : 'bg-stone-100'}`}>
+                  <Image 
+                    src={iconSrc} 
+                    alt={symbol} 
+                    width={24} 
+                    height={24}
+                    className="object-contain"
+                  />
+                </div>
+              )}
               <span className={`text-base font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{symbol}</span>
               {displayPrice && (
                 <div className="flex items-center gap-2">
