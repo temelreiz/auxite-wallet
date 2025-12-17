@@ -112,7 +112,7 @@ interface TradingDetailPageProps {
   onClose: () => void;
   onBuy: () => void;
   onSell: () => void;
-  chartData?: { time: number; open: number; high: number; low: number; close: number; volume: number }[];
+  chartData?: any[];
   lang?: string;
 }
 
