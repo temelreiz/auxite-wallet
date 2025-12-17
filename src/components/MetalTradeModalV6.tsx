@@ -309,15 +309,15 @@ export function MetalTradeModalV6({
             </div>
             <h3 className="text-xl font-bold text-white mb-2">{t.success}</h3>
             {state.txHash && (
-      
-            href={`https://sepolia.etherscan.io/tx/${state.txHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-emerald-400 hover:underline"
-            >
-            {t.viewTx} ↗
-          </a>
-          )}
+              <a
+                href={`https://sepolia.etherscan.io/tx/${state.txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-emerald-400 hover:underline"
+              >
+                {t.viewTx} ↗
+              </a>
+            )}
           </div>
           )}
             
