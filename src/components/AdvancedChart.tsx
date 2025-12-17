@@ -55,7 +55,7 @@ interface Props {
   showControls?: boolean;
   showHeader?: boolean;
   embedded?: boolean;
-  metalIcon?: string; // Metal icon path
+  metalIcon?: string;
 }
 
 const translations: Record<string, { overlay: string; panel: string; volume: string; high: string; low: string; open: string; close: string }> = {
@@ -67,16 +67,15 @@ const translations: Record<string, { overlay: string; panel: string; volume: str
   ru: { overlay: "Наложение", panel: "Панель", volume: "Объём", high: "Макс", low: "Мин", open: "Открытие", close: "Закрытие" },
 };
 
-// Metal icon mapping
 const METAL_ICONS: Record<string, string> = {
-  AUXG: "/images/metals/gold.svg",
-  AUXS: "/images/metals/silver.svg",
-  AUXPT: "/images/metals/platinum.svg",
-  AUXPD: "/images/metals/palladium.svg",
-  Gold: "/images/metals/gold.svg",
-  Silver: "/images/metals/silver.svg",
-  Platinum: "/images/metals/platinum.svg",
-  Palladium: "/images/metals/palladium.svg",
+  AUXG: "/images/metals/gold.png",
+  AUXS: "/images/metals/silver.png",
+  AUXPT: "/images/metals/platinum.png",
+  AUXPD: "/images/metals/palladium.png",
+  Gold: "/images/metals/gold.png",
+  Silver: "/images/metals/silver.png",
+  Platinum: "/images/metals/platinum.png",
+  Palladium: "/images/metals/palladium.png",
 };
 
 // Indicator calculations
@@ -178,6 +177,60 @@ function calculateMACD(data: ChartData[]): { macd: LineData[]; signal: LineData[
   return { macd, signal, histogram };
 }
 
+// Generate sample data that ends at currentPrice
+function generateSampleData(currentPrice: number, count: number = 100): ChartData[] {
+  const now = Math.floor(Date.now() / 1000);
+  const interval = 3600; // 1 hour
+  const decimals = currentPrice >= 10 ? 2 : 4;
+  
+  // Generate normalized random walk
+  const rawData: { open: number; high: number; low: number; close: number }[] = [];
+  let price = 100;
+  
+  for (let i = count; i >= 0; i--) {
+    const volatilityPercent = 0.015;
+    const changePercent = (Math.random() - 0.48) * volatilityPercent;
+    const open = price;
+    const close = open * (1 + changePercent);
+    const highExtra = Math.random() * volatilityPercent * 0.5;
+    const lowExtra = Math.random() * volatilityPercent * 0.5;
+    const high = Math.max(open, close) * (1 + highExtra);
+    const low = Math.min(open, close) * (1 - lowExtra);
+    rawData.push({ open, high, low, close });
+    price = close;
+  }
+  
+  // Scale to match currentPrice
+  const lastClose = rawData[rawData.length - 1].close;
+  const scaleFactor = currentPrice / lastClose;
+  
+  const data: ChartData[] = [];
+  for (let i = 0; i <= count; i++) {
+    const time = (now - (count - i) * interval) as Time;
+    const raw = rawData[i];
+    const volume = Math.random() * 1000000;
+    
+    data.push({
+      time,
+      open: parseFloat((raw.open * scaleFactor).toFixed(decimals)),
+      high: parseFloat((raw.high * scaleFactor).toFixed(decimals)),
+      low: parseFloat((raw.low * scaleFactor).toFixed(decimals)),
+      close: parseFloat((raw.close * scaleFactor).toFixed(decimals)),
+      volume
+    });
+  }
+  
+  // Ensure last candle = currentPrice exactly
+  if (data.length > 0) {
+    const last = data[data.length - 1];
+    last.close = parseFloat(currentPrice.toFixed(decimals));
+    last.high = Math.max(last.high, last.close);
+    last.low = Math.min(last.low, last.close);
+  }
+  
+  return data;
+}
+
 export default function AdvancedChart({
   data, symbol, currentPrice, priceChange, lang = "en", height = 300,
   timeframe: propTimeframe, onTimeframeChange,
@@ -197,44 +250,43 @@ export default function AdvancedChart({
   
   const isFirstMountRef = useRef(true);
   const savedVisibleRangeRef = useRef<LogicalRange | null>(null);
+  const chartCreatedRef = useRef(false);
 
   const [isDark, setIsDark] = useState(true);
 
-  // Get icon for the symbol
-  const iconSrc = metalIcon || METAL_ICONS[symbol] || METAL_ICONS[symbol.replace('AUX', '')] || null;
+  const iconSrc = metalIcon || METAL_ICONS[symbol] || null;
 
+  // Theme detection - only run once on mount and on actual changes
   useEffect(() => {
     const checkTheme = () => {
-      if (typeof window === 'undefined') return true;
+      if (typeof window === 'undefined') return;
       const html = document.documentElement;
       const hasDarkClass = html.classList.contains('dark');
       const hasLightClass = html.classList.contains('light');
       
-      if (hasDarkClass) return setIsDark(true);
-      if (hasLightClass) return setIsDark(false);
+      let newIsDark = true;
+      if (hasDarkClass) newIsDark = true;
+      else if (hasLightClass) newIsDark = false;
+      else {
+        const stored = localStorage.getItem('theme');
+        if (stored === 'dark') newIsDark = true;
+        else if (stored === 'light') newIsDark = false;
+        else newIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
       
-      const stored = localStorage.getItem('theme');
-      if (stored === 'dark') return setIsDark(true);
-      if (stored === 'light') return setIsDark(false);
-      
-      setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
+      setIsDark(prev => {
+        if (prev !== newIsDark) return newIsDark;
+        return prev;
+      });
     };
 
     checkTheme();
 
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    
-    window.addEventListener('storage', checkTheme);
-    window.addEventListener('themeChange', checkTheme);
-    
-    const interval = setInterval(checkTheme, 300);
 
     return () => {
       observer.disconnect();
-      window.removeEventListener('storage', checkTheme);
-      window.removeEventListener('themeChange', checkTheme);
-      clearInterval(interval);
     };
   }, []);
 
@@ -277,39 +329,57 @@ export default function AdvancedChart({
     volumeDown: 'rgba(239, 68, 68, 0.3)',
   }), [isDark]);
 
+  // Generate or use provided data - memoized to prevent regeneration
   const displayData = useMemo(() => {
-    if (data && data.length > 0) return data;
-    const now = Math.floor(Date.now() / 1000);
-    const sample: ChartData[] = [];
-    let price = currentPrice || 100;
-    for (let i = 100; i >= 0; i--) {
-      const time = (now - i * 3600) as Time;
-      const change = (Math.random() - 0.5) * price * 0.02;
-      const open = price, close = price + change;
-      const high = Math.max(open, close) + Math.random() * price * 0.01;
-      const low = Math.min(open, close) - Math.random() * price * 0.01;
-      sample.push({ time, open, high, low, close, volume: Math.random() * 1000000 });
-      price = close;
+    if (data && data.length > 0) {
+      // If data is provided, scale it to end at currentPrice
+      if (currentPrice && data.length > 0) {
+        const lastClose = data[data.length - 1].close;
+        if (Math.abs(lastClose - currentPrice) > 0.01) {
+          const scaleFactor = currentPrice / lastClose;
+          const decimals = currentPrice >= 10 ? 2 : 4;
+          return data.map((d, i) => {
+            const scaled = {
+              ...d,
+              open: parseFloat((d.open * scaleFactor).toFixed(decimals)),
+              high: parseFloat((d.high * scaleFactor).toFixed(decimals)),
+              low: parseFloat((d.low * scaleFactor).toFixed(decimals)),
+              close: parseFloat((d.close * scaleFactor).toFixed(decimals)),
+            };
+            // Ensure last candle = currentPrice
+            if (i === data.length - 1) {
+              scaled.close = parseFloat(currentPrice.toFixed(decimals));
+              scaled.high = Math.max(scaled.high, scaled.close);
+              scaled.low = Math.min(scaled.low, scaled.close);
+            }
+            return scaled;
+          });
+        }
+      }
+      return data;
     }
-    return sample;
+    return generateSampleData(currentPrice || 100);
   }, [data, currentPrice]);
 
-  const formatPrice = (price: number) => price >= 1 ? price.toFixed(2) : price.toFixed(6);
+  const formatPrice = (price: number) => price >= 1 ? price.toFixed(2) : price.toFixed(4);
 
   const panelHeight = 80;
   const mainChartHeight = panelIndicator ? height - panelHeight - 30 : height;
 
+  // Create chart only once, update data separately
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    if (chartRef.current) {
+    // Save range before recreating
+    if (chartRef.current && !isFirstMountRef.current) {
       try {
         const currentRange = chartRef.current.timeScale().getVisibleLogicalRange();
-        if (currentRange) {
-          savedVisibleRangeRef.current = currentRange;
-        }
+        if (currentRange) savedVisibleRangeRef.current = currentRange;
       } catch (e) {}
-      
+    }
+
+    // Remove existing chart
+    if (chartRef.current) {
       chartRef.current.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
@@ -337,6 +407,7 @@ export default function AdvancedChart({
     });
 
     chartRef.current = chart;
+    chartCreatedRef.current = true;
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: colors.upColor, downColor: colors.downColor,
@@ -365,6 +436,7 @@ export default function AdvancedChart({
       } else setCrosshairData(null);
     });
 
+    // Fit or restore range
     if (isFirstMountRef.current) {
       chart.timeScale().fitContent();
       isFirstMountRef.current = false;
@@ -375,7 +447,7 @@ export default function AdvancedChart({
             chartRef.current.timeScale().setVisibleLogicalRange(savedVisibleRangeRef.current);
           }
         } catch (e) {}
-      }, 10);
+      }, 50);
     }
 
     const handleResize = () => {
@@ -388,8 +460,23 @@ export default function AdvancedChart({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [displayData, height, colors, isDark, panelIndicator]);
+  }, [mainChartHeight, colors, isDark]); // Remove displayData from deps to prevent flicker
 
+  // Update data without recreating chart
+  useEffect(() => {
+    if (candleSeriesRef.current && displayData.length > 0) {
+      candleSeriesRef.current.setData(displayData);
+    }
+    if (volumeSeriesRef.current && displayData.length > 0) {
+      volumeSeriesRef.current.setData(displayData.map(d => ({
+        time: d.time,
+        value: d.volume || 0,
+        color: d.close >= d.open ? colors.volumeUp : colors.volumeDown,
+      })));
+    }
+  }, [displayData, colors]);
+
+  // Update overlay indicators
   useEffect(() => {
     if (!chartRef.current || displayData.length === 0) return;
     const chart = chartRef.current;
@@ -432,8 +519,9 @@ export default function AdvancedChart({
       sarSeries.setData(calculateSAR(displayData));
       overlaySeriesRef.current.set("sar", sarSeries);
     }
-  }, [displayData, overlayIndicators, isDark]);
+  }, [displayData, overlayIndicators]);
 
+  // Panel chart
   useEffect(() => {
     if (!panelContainerRef.current || !panelIndicator) {
       if (panelChartRef.current) {
@@ -505,8 +593,9 @@ export default function AdvancedChart({
         }
       });
     }
-  }, [displayData, panelIndicator, colors, isDark]);
+  }, [displayData, panelIndicator, colors]);
 
+  // Cleanup
   useEffect(() => {
     return () => {
       if (panelChartRef.current) {
@@ -529,12 +618,10 @@ export default function AdvancedChart({
 
   return (
     <div className={containerClass}>
-      {/* Header with Metal Icon */}
       {showHeader && !embedded && (
         <div className={`px-3 py-2 border-b ${isDark ? 'border-slate-800' : 'border-stone-200'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Metal Icon */}
               {iconSrc && (
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-slate-800' : 'bg-stone-100'}`}>
                   <Image 
@@ -574,7 +661,6 @@ export default function AdvancedChart({
         </div>
       )}
 
-      {/* Timeframe Controls */}
       {showControls && (
         <div className={`px-2 sm:px-3 py-1 sm:py-1.5 border-b flex items-center gap-0.5 sm:gap-1 ${isDark ? 'border-slate-800/50 bg-slate-900' : 'border-stone-200/50 bg-white'}`}>
           {(["15m", "1H", "4H", "1D", "1W"] as TimeframeKey[]).map((tf) => (
@@ -595,10 +681,8 @@ export default function AdvancedChart({
         </div>
       )}
 
-      {/* Chart */}
       <div ref={chartContainerRef} className="w-full" style={{ overflow: 'hidden' }} />
 
-      {/* Panel Indicator */}
       {panelIndicator && (
         <div className={`border-t ${isDark ? 'border-slate-800' : 'border-stone-200'}`}>
           <div className={`px-3 py-1 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
@@ -612,7 +696,6 @@ export default function AdvancedChart({
         </div>
       )}
 
-      {/* Indicator Controls */}
       {showControls && (
         <div className={`px-2 sm:px-3 py-1.5 sm:py-2 border-t space-y-1 sm:space-y-1.5 ${isDark ? 'border-slate-800 bg-slate-900' : 'border-stone-200 bg-white'}`}>
           <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
