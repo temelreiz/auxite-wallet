@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
@@ -12,9 +12,6 @@ import { LimitOrdersList } from "./LimitOrdersList";
 import { useWallet } from "@/components/WalletContext";
 import { useLanguage } from "@/components/LanguageContext";
 
-// ============================================
-// 6-LANGUAGE TRANSLATIONS
-// ============================================
 const translations: Record<string, Record<string, string>> = {
   tr: {
     today: "Bugün", days7: "7 Gün", days30: "30 Gün", days90: "90 Gün", days180: "180 Gün", year1: "1 Yıl",
@@ -92,7 +89,6 @@ const METAL_ICONS: Record<string, string> = {
   AUXPD: "/images/metals/palladium.png",
 };
 
-// Metal background colors for icon container
 const metalBgColors: Record<string, string> = {
   AUXG: "bg-amber-500/20",
   AUXS: "bg-slate-400/20",
@@ -128,7 +124,6 @@ export default function TradingDetailPage({
   const lang = propLang || contextLang || "en";
   const { address } = useWallet();
   
-  // Default rates
   const safeRates = { 
     sofr: 3.66, 
     AUXG: { "3": 1.53, "6": 2.03, "12": 2.53 }, 
@@ -157,18 +152,15 @@ export default function TradingDetailPage({
     };
   }, [leaseConfig, metalId, name, symbol, currentPrice, safeRates]);
 
-  // Live prices with spread
   const spreadPercent = 1.5;
   const liveAskPrice = askPrice || currentPrice * (1 + spreadPercent / 100);
   const liveBidPrice = bidPrice || currentPrice * (1 - spreadPercent / 100);
   
   const isPositive = change24h >= 0;
   
-  // Calculate 24h high/low (simulated)
   const high24h = currentPrice * 1.012;
   const low24h = currentPrice * 0.988;
 
-  // Get metal icon
   const metalIcon = METAL_ICONS[symbol];
   const metalBg = metalBgColors[symbol] || "bg-amber-500/20";
 
@@ -179,6 +171,10 @@ export default function TradingDetailPage({
     { id: "orders", label: t("orders") },
     { id: "lease", label: t("stake") },
   ];
+
+  const handleTimeframeChange = useCallback((tf: TimeFrame) => {
+    setTimeframe(tf);
+  }, []);
 
   return (
     <>
@@ -191,13 +187,7 @@ export default function TradingDetailPage({
             <div className="flex items-center gap-2 sm:gap-3">
               <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center overflow-hidden ${metalBg}`}>
                 {metalIcon ? (
-                  <Image 
-                    src={metalIcon} 
-                    alt={symbol} 
-                    width={28} 
-                    height={28}
-                    className="object-contain"
-                  />
+                  <Image src={metalIcon} alt={symbol} width={28} height={28} className="object-contain" />
                 ) : (
                   <span className="font-bold text-xs sm:text-sm">{symbol.replace("AUX", "")}</span>
                 )}
@@ -241,7 +231,7 @@ export default function TradingDetailPage({
             {/* Price Tab */}
             {activeTab === "price" && (
               <div className="p-2 sm:p-3 md:p-4">
-                {/* Price Header */}
+                {/* Price Header - NO TL */}
                 <div className="flex items-center justify-between mb-2 sm:mb-4">
                   <div>
                     <div className="flex items-baseline gap-1 sm:gap-2">
@@ -249,9 +239,6 @@ export default function TradingDetailPage({
                         ${currentPrice.toFixed(2)}
                       </span>
                       <span className="text-emerald-500 text-xs sm:text-sm font-medium animate-pulse">● LIVE</span>
-                    </div>
-                    <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
-                      ₺{(currentPrice * 34.5).toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </div>
                   </div>
                   <div className="text-right space-y-0.5 sm:space-y-1">
@@ -280,7 +267,7 @@ export default function TradingDetailPage({
                     lang={lang}
                     height={300}
                     timeframe={timeframe}
-                    onTimeframeChange={setTimeframe}
+                    onTimeframeChange={handleTimeframeChange}
                     overlayIndicators={overlayIndicators}
                     onOverlayChange={setOverlayIndicators}
                     panelIndicator={panelIndicator}

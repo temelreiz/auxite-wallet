@@ -299,28 +299,28 @@ export function MetalTradeModalV6({
         {/* Content */}
         <div className="p-4 space-y-4">
           
-          {/* Success State - Market Order */}
-          {state.step === "success" && orderType === "market" && (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">{t.success}</h3>
-              {state.txHash && (
-                
-                  href={`https://sepolia.etherscan.io/tx/${state.txHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-emerald-400 hover:underline"
-                >
-                  {t.viewTx} ↗
-                </a>
-              )}
+         {/* Success State - Market Order */}
+        {state.step === "success" && orderType === "market" && (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
             </div>
+            <h3 className="text-xl font-bold text-white mb-2">{t.success}</h3>
+            {state.txHash && (
+      
+            href={`https://sepolia.etherscan.io/tx/${state.txHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-emerald-400 hover:underline"
+            >
+            {t.viewTx} ↗
+          </a>
           )}
-
+          </div>
+          )}
+            
           {/* Success State - Limit Order */}
           {limitOrderSuccess && orderType === "limit" && (
             <div className="text-center py-8">

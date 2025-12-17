@@ -68,12 +68,31 @@ const translations: Record<string, { overlay: string; panel: string; volume: str
 };
 
 const METAL_ICONS: Record<string, string> = {
-  AUXG: "/gold-favicon-32x32.png",
-  AUXS: "/silver-favicon-32x32.png",
-  AUXPT: "/platinum-favicon-32x32.png",
-  AUXPD: "/palladium-favicon-32x32.png",
-  
+  AUXG: "/images/metals/gold.png",
+  AUXS: "/images/metals/silver.png",
+  AUXPT: "/images/metals/platinum.png",
+  AUXPD: "/images/metals/palladium.png",
 };
+
+// Seeded random number generator (mulberry32)
+function createSeededRandom(seed: number) {
+  return function() {
+    let t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash);
+}
 
 // Indicator calculations
 function calculateMA(data: ChartData[], period: number): LineData[] {
@@ -174,30 +193,38 @@ function calculateMACD(data: ChartData[]): { macd: LineData[]; signal: LineData[
   return { macd, signal, histogram };
 }
 
-// Generate sample data that ends at currentPrice
-function generateSampleData(currentPrice: number, count: number = 100): ChartData[] {
+// Generate sample data with SEEDED random
+function generateSampleData(currentPrice: number, symbol: string, timeframe: TimeframeKey, count: number = 100): ChartData[] {
+  const seed = hashString(`${symbol}-${timeframe}-v3`);
+  const random = createSeededRandom(seed);
+  
   const now = Math.floor(Date.now() / 1000);
-  const interval = 3600; // 1 hour
+  const intervals: Record<TimeframeKey, number> = {
+    "15m": 15 * 60,
+    "1H": 60 * 60,
+    "4H": 4 * 60 * 60,
+    "1D": 24 * 60 * 60,
+    "1W": 7 * 24 * 60 * 60,
+  };
+  const interval = intervals[timeframe];
   const decimals = currentPrice >= 10 ? 2 : 4;
   
-  // Generate normalized random walk
   const rawData: { open: number; high: number; low: number; close: number }[] = [];
   let price = 100;
   
   for (let i = count; i >= 0; i--) {
     const volatilityPercent = 0.015;
-    const changePercent = (Math.random() - 0.48) * volatilityPercent;
+    const changePercent = (random() - 0.48) * volatilityPercent;
     const open = price;
     const close = open * (1 + changePercent);
-    const highExtra = Math.random() * volatilityPercent * 0.5;
-    const lowExtra = Math.random() * volatilityPercent * 0.5;
+    const highExtra = random() * volatilityPercent * 0.5;
+    const lowExtra = random() * volatilityPercent * 0.5;
     const high = Math.max(open, close) * (1 + highExtra);
     const low = Math.min(open, close) * (1 - lowExtra);
     rawData.push({ open, high, low, close });
     price = close;
   }
   
-  // Scale to match currentPrice
   const lastClose = rawData[rawData.length - 1].close;
   const scaleFactor = currentPrice / lastClose;
   
@@ -205,7 +232,7 @@ function generateSampleData(currentPrice: number, count: number = 100): ChartDat
   for (let i = 0; i <= count; i++) {
     const time = (now - (count - i) * interval) as Time;
     const raw = rawData[i];
-    const volume = Math.random() * 1000000;
+    const volume = random() * 1000000;
     
     data.push({
       time,
@@ -217,7 +244,6 @@ function generateSampleData(currentPrice: number, count: number = 100): ChartDat
     });
   }
   
-  // Ensure last candle = currentPrice exactly
   if (data.length > 0) {
     const last = data[data.length - 1];
     last.close = parseFloat(currentPrice.toFixed(decimals));
@@ -247,13 +273,13 @@ export default function AdvancedChart({
   
   const isFirstMountRef = useRef(true);
   const savedVisibleRangeRef = useRef<LogicalRange | null>(null);
-  const chartCreatedRef = useRef(false);
+  const dataKeyRef = useRef<string>("");
 
   const [isDark, setIsDark] = useState(true);
 
   const iconSrc = metalIcon || METAL_ICONS[symbol] || null;
 
-  // Theme detection - only run once on mount and on actual changes
+  // Theme detection - run once
   useEffect(() => {
     const checkTheme = () => {
       if (typeof window === 'undefined') return;
@@ -271,35 +297,26 @@ export default function AdvancedChart({
         else newIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       }
       
-      setIsDark(prev => {
-        if (prev !== newIsDark) return newIsDark;
-        return prev;
-      });
+      setIsDark(prev => prev !== newIsDark ? newIsDark : prev);
     };
 
     checkTheme();
-
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, []);
 
-  const [timeframe, setLocalTimeframe] = useState<TimeframeKey>(propTimeframe || "4H");
+  const timeframe = propTimeframe || "4H";
   const [overlayIndicators, setLocalOverlay] = useState<OverlayIndicator[]>(propOverlay || []);
   const [panelIndicator, setLocalPanel] = useState<PanelIndicator | null>(propPanel || null);
   const [crosshairData, setCrosshairData] = useState<ChartData | null>(null);
 
-  useEffect(() => { if (propTimeframe) setLocalTimeframe(propTimeframe); }, [propTimeframe]);
   useEffect(() => { if (propOverlay) setLocalOverlay(propOverlay); }, [propOverlay]);
   useEffect(() => { if (propPanel !== undefined) setLocalPanel(propPanel); }, [propPanel]);
 
-  const setTimeframe = useCallback((tf: TimeframeKey) => { 
+  const handleTimeframeChange = useCallback((tf: TimeframeKey) => { 
     isFirstMountRef.current = true;
     savedVisibleRangeRef.current = null;
-    setLocalTimeframe(tf); 
     onTimeframeChange?.(tf); 
   }, [onTimeframeChange]);
   
@@ -326,46 +343,53 @@ export default function AdvancedChart({
     volumeDown: 'rgba(239, 68, 68, 0.3)',
   }), [isDark]);
 
-  // Generate or use provided data - memoized to prevent regeneration
+  // Generate or use provided data - STABLE
   const displayData = useMemo(() => {
+    const price = currentPrice || 100;
+    const decimals = price >= 10 ? 2 : 4;
+    
     if (data && data.length > 0) {
-      // If data is provided, scale it to end at currentPrice
-      if (currentPrice && data.length > 0) {
-        const lastClose = data[data.length - 1].close;
-        if (Math.abs(lastClose - currentPrice) > 0.01) {
-          const scaleFactor = currentPrice / lastClose;
-          const decimals = currentPrice >= 10 ? 2 : 4;
-          return data.map((d, i) => {
-            const scaled = {
-              ...d,
-              open: parseFloat((d.open * scaleFactor).toFixed(decimals)),
-              high: parseFloat((d.high * scaleFactor).toFixed(decimals)),
-              low: parseFloat((d.low * scaleFactor).toFixed(decimals)),
-              close: parseFloat((d.close * scaleFactor).toFixed(decimals)),
-            };
-            // Ensure last candle = currentPrice
-            if (i === data.length - 1) {
-              scaled.close = parseFloat(currentPrice.toFixed(decimals));
-              scaled.high = Math.max(scaled.high, scaled.close);
-              scaled.low = Math.min(scaled.low, scaled.close);
-            }
-            return scaled;
-          });
-        }
+      const lastClose = data[data.length - 1].close;
+      if (Math.abs(lastClose - price) > 0.01) {
+        const scaleFactor = price / lastClose;
+        return data.map((d, i) => {
+          const scaled = {
+            ...d,
+            open: parseFloat((d.open * scaleFactor).toFixed(decimals)),
+            high: parseFloat((d.high * scaleFactor).toFixed(decimals)),
+            low: parseFloat((d.low * scaleFactor).toFixed(decimals)),
+            close: parseFloat((d.close * scaleFactor).toFixed(decimals)),
+          };
+          if (i === data.length - 1) {
+            scaled.close = parseFloat(price.toFixed(decimals));
+            scaled.high = Math.max(scaled.high, scaled.close);
+            scaled.low = Math.min(scaled.low, scaled.close);
+          }
+          return scaled;
+        });
       }
       return data;
     }
-    return generateSampleData(currentPrice || 100);
-  }, [data, currentPrice]);
+    
+    return generateSampleData(price, symbol, timeframe);
+  }, [data, currentPrice, symbol, timeframe]);
 
   const formatPrice = (price: number) => price >= 1 ? price.toFixed(2) : price.toFixed(4);
 
   const panelHeight = 80;
   const mainChartHeight = panelIndicator ? height - panelHeight - 30 : height;
 
-  // Create chart only once, update data separately
+  // Create chart ONLY when necessary (height, colors change) - NOT on data change
   useEffect(() => {
     if (!chartContainerRef.current) return;
+
+    const newDataKey = `${symbol}-${timeframe}-${mainChartHeight}-${isDark}`;
+    
+    // Only recreate if structural changes
+    if (chartRef.current && dataKeyRef.current === newDataKey) {
+      return;
+    }
+    dataKeyRef.current = newDataKey;
 
     // Save range before recreating
     if (chartRef.current && !isFirstMountRef.current) {
@@ -397,14 +421,13 @@ export default function AdvancedChart({
         horzLines: { color: colors.gridColor },
       },
       crosshair: { mode: CrosshairMode.Normal },
-      rightPriceScale: { borderColor: colors.borderColor },
+      rightPriceScale: { borderColor: colors.borderColor, autoScale: true },
       timeScale: { borderColor: colors.borderColor, timeVisible: true, secondsVisible: false },
       handleScroll: { mouseWheel: true, pressedMouseMove: true },
       handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
     });
 
     chartRef.current = chart;
-    chartCreatedRef.current = true;
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: colors.upColor, downColor: colors.downColor,
@@ -457,21 +480,7 @@ export default function AdvancedChart({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [mainChartHeight, colors, isDark]); // Remove displayData from deps to prevent flicker
-
-  // Update data without recreating chart
-  useEffect(() => {
-    if (candleSeriesRef.current && displayData.length > 0) {
-      candleSeriesRef.current.setData(displayData);
-    }
-    if (volumeSeriesRef.current && displayData.length > 0) {
-      volumeSeriesRef.current.setData(displayData.map(d => ({
-        time: d.time,
-        value: d.volume || 0,
-        color: d.close >= d.open ? colors.volumeUp : colors.volumeDown,
-      })));
-    }
-  }, [displayData, colors]);
+  }, [symbol, timeframe, mainChartHeight, colors, isDark, displayData]);
 
   // Update overlay indicators
   useEffect(() => {
@@ -484,50 +493,63 @@ export default function AdvancedChart({
     overlaySeriesRef.current.clear();
 
     if (overlayIndicators.includes("MA")) {
-      const ma7Series = chart.addSeries(LineSeries, { color: "#f59e0b", lineWidth: 1 });
-      ma7Series.setData(calculateMA(displayData, 7));
-      overlaySeriesRef.current.set("ma7", ma7Series);
-      const ma25Series = chart.addSeries(LineSeries, { color: "#3b82f6", lineWidth: 1 });
-      ma25Series.setData(calculateMA(displayData, 25));
-      overlaySeriesRef.current.set("ma25", ma25Series);
+      const ma7 = calculateMA(displayData, 7);
+      const ma25 = calculateMA(displayData, 25);
+      if (ma7.length > 0) {
+        const ma7Series = chart.addSeries(LineSeries, { color: "#f59e0b", lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+        ma7Series.setData(ma7);
+        overlaySeriesRef.current.set("ma7", ma7Series);
+      }
+      if (ma25.length > 0) {
+        const ma25Series = chart.addSeries(LineSeries, { color: "#3b82f6", lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+        ma25Series.setData(ma25);
+        overlaySeriesRef.current.set("ma25", ma25Series);
+      }
     }
+
     if (overlayIndicators.includes("EMA")) {
-      const ema12Series = chart.addSeries(LineSeries, { color: "#06b6d4", lineWidth: 1 });
-      ema12Series.setData(calculateEMA(displayData, 12));
-      overlaySeriesRef.current.set("ema12", ema12Series);
-      const ema26Series = chart.addSeries(LineSeries, { color: "#a855f7", lineWidth: 1 });
-      ema26Series.setData(calculateEMA(displayData, 26));
-      overlaySeriesRef.current.set("ema26", ema26Series);
+      const ema12 = calculateEMA(displayData, 12);
+      const ema26 = calculateEMA(displayData, 26);
+      if (ema12.length > 0) {
+        const ema12Series = chart.addSeries(LineSeries, { color: "#06b6d4", lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+        ema12Series.setData(ema12);
+        overlaySeriesRef.current.set("ema12", ema12Series);
+      }
+      if (ema26.length > 0) {
+        const ema26Series = chart.addSeries(LineSeries, { color: "#a855f7", lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+        ema26Series.setData(ema26);
+        overlaySeriesRef.current.set("ema26", ema26Series);
+      }
     }
+
     if (overlayIndicators.includes("BOLL")) {
       const boll = calculateBollinger(displayData);
-      const upperSeries = chart.addSeries(LineSeries, { color: "#f97316", lineWidth: 1 });
-      upperSeries.setData(boll.upper);
-      overlaySeriesRef.current.set("bollUpper", upperSeries);
-      const middleSeries = chart.addSeries(LineSeries, { color: "#f97316", lineWidth: 1, lineStyle: 2 });
-      middleSeries.setData(boll.middle);
-      overlaySeriesRef.current.set("bollMiddle", middleSeries);
-      const lowerSeries = chart.addSeries(LineSeries, { color: "#f97316", lineWidth: 1 });
-      lowerSeries.setData(boll.lower);
-      overlaySeriesRef.current.set("bollLower", lowerSeries);
+      if (boll.upper.length > 0) {
+        const upperSeries = chart.addSeries(LineSeries, { color: "rgba(34, 197, 94, 0.5)", lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+        upperSeries.setData(boll.upper);
+        overlaySeriesRef.current.set("bollUpper", upperSeries);
+        const middleSeries = chart.addSeries(LineSeries, { color: "rgba(156, 163, 175, 0.5)", lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+        middleSeries.setData(boll.middle);
+        overlaySeriesRef.current.set("bollMiddle", middleSeries);
+        const lowerSeries = chart.addSeries(LineSeries, { color: "rgba(239, 68, 68, 0.5)", lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
+        lowerSeries.setData(boll.lower);
+        overlaySeriesRef.current.set("bollLower", lowerSeries);
+      }
     }
+
     if (overlayIndicators.includes("SAR")) {
-      const sarSeries = chart.addSeries(LineSeries, { color: "#ec4899", lineWidth: 1, lineStyle: 1 });
-      sarSeries.setData(calculateSAR(displayData));
-      overlaySeriesRef.current.set("sar", sarSeries);
+      const sar = calculateSAR(displayData);
+      if (sar.length > 0) {
+        const sarSeries = chart.addSeries(LineSeries, { color: "#facc15", lineWidth: 1, lineStyle: 1, priceLineVisible: false, lastValueVisible: false });
+        sarSeries.setData(sar);
+        overlaySeriesRef.current.set("sar", sarSeries);
+      }
     }
   }, [displayData, overlayIndicators]);
 
-  // Panel chart
+  // Panel indicator chart
   useEffect(() => {
-    if (!panelContainerRef.current || !panelIndicator) {
-      if (panelChartRef.current) {
-        panelChartRef.current.remove();
-        panelChartRef.current = null;
-        panelSeriesRef.current.clear();
-      }
-      return;
-    }
+    if (!panelContainerRef.current) return;
 
     if (panelChartRef.current) {
       panelChartRef.current.remove();
@@ -535,43 +557,41 @@ export default function AdvancedChart({
       panelSeriesRef.current.clear();
     }
 
+    if (!panelIndicator || displayData.length === 0) return;
+
     const panelChart = createChart(panelContainerRef.current, {
       width: panelContainerRef.current.clientWidth,
       height: panelHeight,
-      layout: {
-        background: { type: ColorType.Solid, color: colors.background },
-        textColor: colors.textColor,
-        attributionLogo: false,
-      },
-      grid: {
-        vertLines: { color: colors.gridColor },
-        horzLines: { color: colors.gridColor },
-      },
+      layout: { background: { type: ColorType.Solid, color: colors.background }, textColor: colors.textColor, attributionLogo: false },
+      grid: { vertLines: { color: colors.gridColor }, horzLines: { color: colors.gridColor } },
       rightPriceScale: { borderColor: colors.borderColor },
-      timeScale: { borderColor: colors.borderColor, visible: false },
-      handleScroll: false,
-      handleScale: false,
+      timeScale: { visible: false },
     });
     panelChartRef.current = panelChart;
 
-    if (panelIndicator === "RSI" && displayData.length > 0) {
-      const rsiSeries = panelChart.addSeries(LineSeries, { color: "#8b5cf6", lineWidth: 2 });
-      rsiSeries.setData(calculateRSI(displayData));
-      panelSeriesRef.current.set("rsi", rsiSeries);
+    if (panelIndicator === "RSI") {
+      const rsi = calculateRSI(displayData);
+      if (rsi.length > 0) {
+        const rsiSeries = panelChart.addSeries(LineSeries, { color: "#a855f7", lineWidth: 2, priceLineVisible: false });
+        rsiSeries.setData(rsi);
+        panelSeriesRef.current.set("rsi", rsiSeries);
+      }
     }
-    if (panelIndicator === "MACD" && displayData.length > 0) {
+    if (panelIndicator === "MACD") {
       const macdData = calculateMACD(displayData);
-      const histSeries = panelChart.addSeries(HistogramSeries, { priceScaleId: "macd" });
-      histSeries.setData(macdData.histogram);
-      panelSeriesRef.current.set("macdHist", histSeries);
-      const macdLine = panelChart.addSeries(LineSeries, { color: "#3b82f6", lineWidth: 1, priceScaleId: "macd" });
-      macdLine.setData(macdData.macd);
-      panelSeriesRef.current.set("macdLine", macdLine);
-      const signalLine = panelChart.addSeries(LineSeries, { color: "#f59e0b", lineWidth: 1, priceScaleId: "macd" });
-      signalLine.setData(macdData.signal);
-      panelSeriesRef.current.set("signalLine", signalLine);
+      if (macdData.macd.length > 0) {
+        const histSeries = panelChart.addSeries(HistogramSeries, { priceFormat: { type: "price" } });
+        histSeries.setData(macdData.histogram);
+        panelSeriesRef.current.set("macdHist", histSeries);
+        const macdLine = panelChart.addSeries(LineSeries, { color: "#3b82f6", lineWidth: 1, priceLineVisible: false });
+        macdLine.setData(macdData.macd);
+        panelSeriesRef.current.set("macdLine", macdLine);
+        const signalLine = panelChart.addSeries(LineSeries, { color: "#f59e0b", lineWidth: 1, priceLineVisible: false });
+        signalLine.setData(macdData.signal);
+        panelSeriesRef.current.set("signalLine", signalLine);
+      }
     }
-    if (panelIndicator === "VOL" && displayData.length > 0) {
+    if (panelIndicator === "VOL") {
       const volSeries = panelChart.addSeries(HistogramSeries, { priceFormat: { type: "volume" } });
       volSeries.setData(displayData.map(d => ({
         time: d.time,
@@ -614,20 +634,14 @@ export default function AdvancedChart({
     : `rounded-xl border overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-stone-200'}`;
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} style={{ overflow: 'hidden' }}>
       {showHeader && !embedded && (
         <div className={`px-3 py-2 border-b ${isDark ? 'border-slate-800' : 'border-stone-200'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {iconSrc && (
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-slate-800' : 'bg-stone-100'}`}>
-                  <Image 
-                    src={iconSrc} 
-                    alt={symbol} 
-                    width={24} 
-                    height={24}
-                    className="object-contain"
-                  />
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-stone-100'}`}>
+                  <Image src={iconSrc} alt={symbol} width={24} height={24} className="object-contain" />
                 </div>
               )}
               <span className={`text-base font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{symbol}</span>
@@ -663,7 +677,7 @@ export default function AdvancedChart({
           {(["15m", "1H", "4H", "1D", "1W"] as TimeframeKey[]).map((tf) => (
             <button
               key={tf}
-              onClick={() => setTimeframe(tf)}
+              onClick={() => handleTimeframeChange(tf)}
               className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded transition-colors ${
                 timeframe === tf
                   ? "bg-emerald-500 text-white"
@@ -733,26 +747,14 @@ export default function AdvancedChart({
           </div>
           {overlayIndicators.includes("MA") && (
             <div className="flex items-center gap-3 text-[10px] pt-1">
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-0.5 bg-amber-500"></span>
-                <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>MA(7)</span>
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-0.5 bg-blue-500"></span>
-                <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>MA(25)</span>
-              </span>
+              <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-amber-500"></span><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>MA(7)</span></span>
+              <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-blue-500"></span><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>MA(25)</span></span>
             </div>
           )}
           {overlayIndicators.includes("EMA") && (
             <div className="flex items-center gap-3 text-[10px] pt-1">
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-0.5 bg-cyan-500"></span>
-                <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>EMA(12)</span>
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-3 h-0.5 bg-purple-500"></span>
-                <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>EMA(26)</span>
-              </span>
+              <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-cyan-500"></span><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>EMA(12)</span></span>
+              <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-purple-500"></span><span className={isDark ? 'text-slate-400' : 'text-slate-500'}>EMA(26)</span></span>
             </div>
           )}
         </div>
