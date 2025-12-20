@@ -30,7 +30,7 @@ const KEYS = {
 async function getUserMeta(address: string): Promise<UserMeta | null> {
   const data = await redis.get(KEYS.userMeta(address));
   if (!data) return null;
-  return typeof data === 'string' ? JSON.parse(data) : data;
+  return typeof data === 'string' ? JSON.parse(data) as UserMeta : data as UserMeta;
 }
 
 async function setUserMeta(address: string, meta: Partial<UserMeta>): Promise<void> {
