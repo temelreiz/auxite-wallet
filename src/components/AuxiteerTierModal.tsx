@@ -741,4 +741,4 @@ export function useAuxiteerTierLocal(
 }
 
 // Re-export API-based hook as primary
-export { useAuxiteerTierHook as useAuxiteerTier } from "@/hooks/useAuxiteerTier";
+export { useAuxiteerTier } from "@/hooks/useAuxiteerTier";
