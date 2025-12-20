@@ -1705,7 +1705,7 @@ export default function AdminDashboard() {
                     <input
                       type="text"
                       value={newBanner.subtitle?.tr || ''}
-                      onChange={(e) => setNewBanner({ ...newBanner, subtitle: { ...newBanner.subtitle, tr: e.target.value } })}
+                      onChange={(e) => setNewBanner({ ...newBanner, subtitle: { tr: e.target.value, en: newBanner.subtitle?.en || '' } })}
                       className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
                     />
                   </div>
@@ -1714,7 +1714,7 @@ export default function AdminDashboard() {
                     <input
                       type="text"
                       value={newBanner.subtitle?.en || ''}
-                      onChange={(e) => setNewBanner({ ...newBanner, subtitle: { ...newBanner.subtitle, en: e.target.value } })}
+                      onChange={(e) => setNewBanner({ ...newBanner, subtitle: { tr: newBanner.subtitle?.tr || '', en: e.target.value } })}
                       className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
                     />
                   </div>
