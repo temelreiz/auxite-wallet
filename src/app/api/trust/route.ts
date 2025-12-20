@@ -74,8 +74,8 @@ export async function GET(request: NextRequest) {
     }
     
     // Use cached data or defaults
-    const supply = trustData?.supply || DEFAULT_SUPPLY;
-    const reports = trustData?.reports || DEFAULT_REPORTS;
+    const supply = (trustData as any)?.supply || DEFAULT_SUPPLY;
+    const reports = (trustData as any)?.reports || DEFAULT_REPORTS;
     const totalReserves = calculateTotalReserves(supply);
     
     return NextResponse.json({
