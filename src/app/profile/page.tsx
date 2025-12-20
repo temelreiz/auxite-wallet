@@ -1,11 +1,17 @@
 "use client";
 import React from "react";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAccount, useDisconnect } from "wagmi";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
 import { WhitelistManager } from "@/components/WhitelistManager";
+import AuxiteerTierModal, { AuxiteerBadge, AUXITEER_TIERS } from "@/components/AuxiteerTierModal";
+import { useAuxiteerTier, getTierColor, getTierBgColor, getTierBorderColor } from "@/hooks/useAuxiteerTier";
+import FAQModal from "@/components/FAQModal";
+import LegalModal from "@/components/LegalModal";
+import { QRLoginModal } from "@/components/auth/QRLoginModal";
+import OpenInMobileModal from "@/components/auth/OpenInMobileModal";
 
 type MenuSection = "personal" | "security" | "notifications" | "referral" | "preferences" | "danger";
 
@@ -39,6 +45,48 @@ export default function ProfilePage() {
   const [displayCurrency, setDisplayCurrency] = useState("USD");
   const [copySuccess, setCopySuccess] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
+  const [showAuxiteerModal, setShowAuxiteerModal] = useState(false);
+  const [showFAQModal, setShowFAQModal] = useState(false);
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  const [showMobilePairModal, setShowMobilePairModal] = useState(false);
+  const [showOpenInMobileModal, setShowOpenInMobileModal] = useState(false);
+
+  // User UID - generated from wallet address
+  const userUID = useMemo(() => {
+    if (!address) return "------";
+    // Create a short unique ID from wallet address
+    const hash = address.slice(2, 10).toUpperCase();
+    return `AUX-${hash}`;
+  }, [address]);
+
+  // Avatar colors based on wallet address
+  const avatarColors = useMemo(() => {
+    if (!address) return { bg: "#64748b", text: "#ffffff" };
+    const hash = parseInt(address.slice(2, 8), 16);
+    const colors = [
+      { bg: "#10b981", text: "#ffffff" }, // Emerald
+      { bg: "#3b82f6", text: "#ffffff" }, // Blue
+      { bg: "#8b5cf6", text: "#ffffff" }, // Purple
+      { bg: "#f59e0b", text: "#ffffff" }, // Amber
+      { bg: "#ef4444", text: "#ffffff" }, // Red
+      { bg: "#06b6d4", text: "#ffffff" }, // Cyan
+      { bg: "#ec4899", text: "#ffffff" }, // Pink
+      { bg: "#14b8a6", text: "#ffffff" }, // Teal
+    ];
+    return colors[hash % colors.length];
+  }, [address]);
+
+  // Avatar initials
+  const avatarInitials = useMemo(() => {
+    if (!address) return "??";
+    return address.slice(2, 4).toUpperCase();
+  }, [address]);
+
+  // Auxiteer Tier - Real data from API
+  const { tier: auxiteerTierData, stats: auxiteerStats, isLoading: tierLoading, refetch: refetchTier } = useAuxiteerTier();
+  
+  // Find the full tier config from AUXITEER_TIERS
+  const currentTier = AUXITEER_TIERS.find(t => t.id === auxiteerTierData?.id) || AUXITEER_TIERS[0];
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -208,6 +256,53 @@ export default function ProfilePage() {
                 <p className="text-[10px] sm:text-sm text-slate-500 dark:text-zinc-500">{lang === "tr" ? "Hesap bilgilerinizi yönetin" : "Manage your account information"}</p>
               </div>
             </div>
+
+            {/* User Avatar & UID Card */}
+            {isConnected && address && (
+              <div className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-br from-slate-100 via-white to-slate-50 dark:from-zinc-800 dark:via-zinc-800/80 dark:to-zinc-900 border border-stone-200 dark:border-zinc-700 shadow-sm">
+                <div className="flex items-center gap-4 sm:gap-6">
+                  {/* Avatar */}
+                  <div 
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl flex items-center justify-center text-2xl sm:text-3xl font-bold shadow-lg flex-shrink-0"
+                    style={{ 
+                      backgroundColor: avatarColors.bg,
+                      color: avatarColors.text,
+                      boxShadow: `0 10px 25px -5px ${avatarColors.bg}40`
+                    }}
+                  >
+                    {avatarInitials}
+                  </div>
+                  
+                  {/* User Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                        {lang === "tr" ? "Doğrulanmış" : "Verified"}
+                      </span>
+                    </div>
+                    <p className="font-mono text-lg sm:text-xl font-bold text-slate-800 dark:text-white mb-1">{userUID}</p>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 truncate">{address}</p>
+                  </div>
+                  
+                  {/* Copy UID Button */}
+                  <button 
+                    onClick={() => handleCopy(userUID, "wallet")} 
+                    className="p-2 sm:p-3 rounded-xl bg-stone-100 dark:bg-zinc-700 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors flex-shrink-0"
+                  >
+                    {copySuccess ? (
+                      <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {isConnected && address && (
               <div className="p-3 sm:p-5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-500/20">
                 <div className="flex items-center justify-between gap-2">
@@ -226,6 +321,50 @@ export default function ProfilePage() {
                 </div>
               </div>
             )}
+
+            {/* Auxiteer Tier Card */}
+            <div 
+              className="p-3 sm:p-5 rounded-xl sm:rounded-2xl cursor-pointer transition-all hover:shadow-lg"
+              style={{ 
+                background: `linear-gradient(135deg, ${currentTier.bgColor} 0%, transparent 100%)`,
+                border: `1px solid ${currentTier.borderColor}`,
+              }}
+              onClick={() => setShowAuxiteerModal(true)}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+                  <div 
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${currentTier.color} 0%, ${currentTier.color}99 100%)`,
+                      boxShadow: `0 10px 25px -5px ${currentTier.color}40`,
+                    }}
+                  >
+                    <span className="w-5 h-5 sm:w-6 sm:h-6 text-white">{currentTier.icon}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-xs font-medium mb-0.5 sm:mb-1" style={{ color: currentTier.color }}>
+                      {lang === "tr" ? "Auxiteer Seviyeniz" : "Your Auxiteer Tier"}
+                    </p>
+                    <p className="text-sm sm:text-lg font-bold text-slate-800 dark:text-white">{currentTier.name}</p>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 mb-0.5">{lang === "tr" ? "Spread / Ücret" : "Spread / Fee"}</p>
+                  <p className="text-sm sm:text-base font-semibold" style={{ color: currentTier.color }}>
+                    {currentTier.spread} / {currentTier.fee}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-200/50 dark:border-zinc-700/50 flex items-center justify-between">
+                <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400">
+                  {lang === "tr" ? "Detayları görüntüle" : "View details"}
+                </span>
+                <svg className="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
             <div className="grid gap-2 sm:gap-3">
               <InfoCard icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>} label={t("email")} value={userData.email} action={() => openEditModal("email")} />
               <InfoCard icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>} label={t("phone")} value={userData.phone} action={() => openEditModal("phone")} />
@@ -449,6 +588,97 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
+
+              {/* Mobile Pairing */}
+              <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">
+                        {lang === "tr" ? "Mobil Uygulama" : "Mobile App"}
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500">
+                        {lang === "tr" ? "QR ile mobilde açın" : "Open on mobile via QR"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1.5 sm:gap-2">
+                    <button 
+                      onClick={() => setShowMobilePairModal(true)}
+                      className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-600 dark:text-blue-400 transition-colors"
+                    >
+                      {lang === "tr" ? "QR Tara" : "Scan QR"}
+                    </button>
+                    {isConnected && address && (
+                      <button 
+                        onClick={() => setShowOpenInMobileModal(true)}
+                        className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-600 dark:text-indigo-400 transition-colors"
+                      >
+                        {lang === "tr" ? "Mobilde Aç" : "Open in Mobile"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* FAQ */}
+              <div 
+                onClick={() => setShowFAQModal(true)}
+                className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50 cursor-pointer hover:border-stone-300 dark:hover:border-zinc-600 transition-all"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">
+                        {lang === "tr" ? "Sıkça Sorulan Sorular" : "FAQ"}
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500">
+                        {lang === "tr" ? "Yardım ve destek" : "Help and support"}
+                      </p>
+                    </div>
+                  </div>
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 dark:text-zinc-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Legal */}
+              <div 
+                onClick={() => setShowLegalModal(true)}
+                className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50 cursor-pointer hover:border-stone-300 dark:hover:border-zinc-600 transition-all"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">
+                        {lang === "tr" ? "Yasal Bilgiler" : "Legal Information"}
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500">
+                        {lang === "tr" ? "Kullanım koşulları, gizlilik" : "Terms, privacy policy"}
+                      </p>
+                    </div>
+                  </div>
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 dark:text-zinc-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -632,6 +862,54 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Auxiteer Tier Modal */}
+      <AuxiteerTierModal
+        isOpen={showAuxiteerModal}
+        onClose={() => setShowAuxiteerModal(false)}
+        currentTierId={currentTier.id}
+        userBalance={auxiteerStats?.balanceUsd || 0}
+        userDays={auxiteerStats?.daysSinceRegistration || 0}
+        isKycVerified={auxiteerStats?.isKycVerified || false}
+        hasMetalAsset={auxiteerStats?.hasMetalAsset || false}
+        hasActiveEarnLease={auxiteerStats?.hasActiveLease || false}
+      />
+
+      {/* FAQ Modal */}
+      <FAQModal
+        isOpen={showFAQModal}
+        onClose={() => setShowFAQModal(false)}
+        lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
+      />
+
+      {/* Legal Modal */}
+      <LegalModal
+        isOpen={showLegalModal}
+        onClose={() => setShowLegalModal(false)}
+        lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
+      />
+
+      {/* Mobile QR Login Modal */}
+      <QRLoginModal
+        isOpen={showMobilePairModal}
+        onClose={() => setShowMobilePairModal(false)}
+        onSuccess={(walletAddress, authToken) => {
+          console.log("Mobile login success:", walletAddress);
+          setShowMobilePairModal(false);
+        }}
+        lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
+      />
+
+      {/* Open in Mobile Modal */}
+      {isConnected && address && (
+        <OpenInMobileModal
+          isOpen={showOpenInMobileModal}
+          onClose={() => setShowOpenInMobileModal(false)}
+          walletAddress={address}
+          action="open_app"
+          lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
+        />
       )}
     </main>
   );
