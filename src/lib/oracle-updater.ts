@@ -131,8 +131,9 @@ export async function updateOraclePrices(): Promise<{
     for (const update of updates) {
       console.log(`Updating ${update.name}: $${update.pricePerGram.toFixed(2)}/g (E6/kg: ${update.price})`);
       
+      await new Promise(r => setTimeout(r, 2000)); // Wait 2s between txs
       const tx = await oracle.setManualPrice(update.id, update.price);
-      // tx.wait() removed - dont wait for confirmation
+      // Dont wait for confirmation - delay between txs is enough
       txHashes.push(tx.hash);
     }
 
