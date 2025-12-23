@@ -704,3 +704,36 @@ export function useAuxiteerTierLocal(
 }
 
 export default AuxiteerTierModal;
+
+// ============================================
+// AUXITEER BADGE COMPONENT
+// ============================================
+interface AuxiteerBadgeProps {
+  tier: AuxiteerTier;
+  size?: "sm" | "md" | "lg";
+  showLabel?: boolean;
+}
+
+export function AuxiteerBadge({ tier, size = "md", showLabel = true }: AuxiteerBadgeProps) {
+  const sizeClasses = {
+    sm: "w-5 h-5 text-xs",
+    md: "w-7 h-7 text-sm",
+    lg: "w-10 h-10 text-base",
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <div
+        className={`${sizeClasses[size]} rounded-lg flex items-center justify-center`}
+        style={{ backgroundColor: tier.bgColor, color: tier.color }}
+      >
+        {tier.icon}
+      </div>
+      {showLabel && (
+        <span className="font-medium" style={{ color: tier.color }}>
+          {tier.name}
+        </span>
+      )}
+    </div>
+  );
+}
