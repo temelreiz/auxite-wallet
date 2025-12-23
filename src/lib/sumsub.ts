@@ -49,10 +49,10 @@ export async function createApplicant(externalUserId: string, email?: string, ph
     console.log('Sumsub TEST MODE - createApplicant');
     return { id: 'test_' + externalUserId, createdAt: new Date().toISOString(), externalUserId, email, phone };
   }
-  return sumsubRequest('POST', '/resources/applicants?levelName=basic-kyc-level', { externalUserId, email, phone });
+  return sumsubRequest('POST', '/resources/applicants?levelName=id-and-liveness', { externalUserId, email, phone });
 }
 
-export async function createAccessToken(externalUserId: string, levelName: string = 'basic-kyc-level'): Promise<string> {
+export async function createAccessToken(externalUserId: string, levelName: string = 'id-and-liveness'): Promise<string> {
   if (IS_TEST) {
     console.log('Sumsub TEST MODE - createAccessToken');
     return 'test_token_' + externalUserId + '_' + Date.now();

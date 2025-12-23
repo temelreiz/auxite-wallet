@@ -1,5 +1,6 @@
 // src/app/api/trade/route.ts
 // V6 BLOCKCHAIN ENTEGRASYONLU - Gerçek token mint/burn işlemleri
+// ✅ AUXITEER TIER BAZLI FEE ENTEGRASYONU
 
 import { NextRequest, NextResponse } from "next/server";
 import { executeQuote } from "@/lib/quote-service";
@@ -9,13 +10,13 @@ import { validateRequest } from "@/lib/validations";
 import { withRateLimit, tradeLimiter, checkSuspiciousActivity } from "@/lib/security/rate-limiter";
 import { logTrade, logAudit } from "@/lib/security/audit-logger";
 import { getMetalSpread } from "@/lib/spread-config";
+import { getUserTier, calculateTierFee, getDefaultTier } from "@/lib/auxiteer-service";
 import {
   buyMetalToken,
   sellMetalToken,
   calculateBuyCost,
   calculateSellPayout,
   getTokenPrices,
-
   checkReserveLimit,
 } from "@/lib/v6-token-service";
 
@@ -45,7 +46,8 @@ const tradePreviewSchema = z.object({
   fromToken: z.string().min(1).max(10),
   toToken: z.string().min(1).max(10),
   amount: z.coerce.number().positive().max(1000000000),
-  price: z.coerce.number().positive().optional(), // Optional - will fetch from contract
+  price: z.coerce.number().positive().optional(),
+  address: z.string().optional(), // For tier-based fee preview
 });
 
 const tradeExecuteSchema = z.object({
@@ -55,13 +57,13 @@ const tradeExecuteSchema = z.object({
   toToken: z.string().min(1).max(10),
   fromAmount: z.number().positive().max(1000000000),
   price: z.number().positive().optional(),
-  slippage: z.number().min(0).max(10).default(1), // 1% default
+  slippage: z.number().min(0).max(10).default(1),
   executeOnChain: z.boolean().default(true),
-  quoteId: z.string().optional(), // Quote ID for locked price // Execute on blockchain
+  quoteId: z.string().optional(),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// GET - Trade Preview (Fiyat Hesaplama)
+// GET - Trade Preview (Fiyat Hesaplama) - TIER BAZLI FEE
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function GET(request: NextRequest) {
@@ -77,6 +79,7 @@ export async function GET(request: NextRequest) {
       toToken: searchParams.get("toToken"),
       amount: searchParams.get("amount"),
       price: searchParams.get("price"),
+      address: searchParams.get("address"), // Optional: for tier-based fee
     };
 
     const validation = tradePreviewSchema.safeParse(input);
@@ -87,7 +90,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { type, fromToken, toToken, amount } = validation.data;
+    const { type, fromToken, toToken, amount, address } = validation.data;
     const fromTokenLower = fromToken.toLowerCase();
     const toTokenLower = toToken.toLowerCase();
 
@@ -96,31 +99,53 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Geçersiz token" }, { status: 400 });
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET USER TIER FOR FEE CALCULATION
+    // ═══════════════════════════════════════════════════════════════════════
+    let userTier = getDefaultTier();
+    let tierInfo = null;
+    
+    if (address) {
+      try {
+        const tierData = await getUserTier(address);
+        userTier = tierData.tier;
+        tierInfo = {
+          id: userTier.id,
+          name: userTier.name,
+          feePercent: userTier.fee,
+          spreadPercent: userTier.spread,
+        };
+      } catch (e) {
+        console.warn("Could not fetch user tier, using default:", e);
+      }
+    }
+
+    // Fee percentage based on tier (default Regular: 0.35%)
+    const tierFeePercent = userTier.fee;
+    
     let toAmount: number;
     let fee: number;
     let price: number;
     let costETH: number | undefined;
     let blockchainData: any = null;
-
     let spreadPercent: { buy: number; sell: number } = { buy: 0, sell: 0 };
+
     // ───────────────────────────────────────────────────────────────────────
     // Metal Token Alım (AUXM → AUXG/AUXS/AUXPT/AUXPD)
     // ───────────────────────────────────────────────────────────────────────
     if (type === "buy" && fromTokenLower === "auxm" && METALS.includes(toTokenLower)) {
-      // Get price from blockchain contract
       const prices = await getTokenPrices(toToken);
       spreadPercent = prices.spreadPercent;
-      price = prices.askPerGram; // Use locked quote price or contract price
+      price = prices.askPerGram;
       
-      fee = amount * 0.001; // 0.1% platform fee
+      // ✅ TIER BAZLI FEE
+      fee = calculateTierFee(amount, tierFeePercent);
       const netAmount = amount - fee;
       toAmount = netAmount / price;
       
-      // Calculate actual ETH cost
       const costResult = await calculateBuyCost(toToken, toAmount);
       costETH = costResult.costETH;
       
-      // Check reserve limit
       const reserveCheck = await checkReserveLimit(toToken, toAmount);
       
       blockchainData = {
@@ -134,14 +159,13 @@ export async function GET(request: NextRequest) {
     // Metal Token Satım (AUXG/AUXS/AUXPT/AUXPD → AUXM)
     // ───────────────────────────────────────────────────────────────────────
     else if (type === "sell" && METALS.includes(fromTokenLower) && toTokenLower === "auxm") {
-      // Get price from blockchain contract
       const prices = await getTokenPrices(fromToken);
-      price = prices.bidPerGram; // Use locked quote price or contract price
+      price = prices.bidPerGram;
       
-      fee = amount * price * 0.001; // 0.1% platform fee
+      // ✅ TIER BAZLI FEE
+      fee = calculateTierFee(amount * price, tierFeePercent);
       toAmount = (amount * price) - fee;
       
-      // Calculate actual ETH payout
       const payoutResult = await calculateSellPayout(fromToken, amount);
       
       blockchainData = {
@@ -153,17 +177,17 @@ export async function GET(request: NextRequest) {
     // Swap (Metal → Metal)
     // ───────────────────────────────────────────────────────────────────────
     else if (type === "swap" && METALS.includes(fromTokenLower) && METALS.includes(toTokenLower)) {
-      // Sell from → Buy to
       const fromPrices = await getTokenPrices(fromToken);
       const toPrices = await getTokenPrices(toToken);
       
       const sellPrice = fromPrices.bidPerGram;
       const buyPrice = toPrices.askPerGram;
       
-      fee = amount * sellPrice * 0.002; // 0.2% swap fee
+      // ✅ TIER BAZLI FEE (swap için 2x normal fee)
+      fee = calculateTierFee(amount * sellPrice, tierFeePercent * 2);
       const auxmValue = (amount * sellPrice) - fee;
       toAmount = auxmValue / buyPrice;
-      price = sellPrice / buyPrice; // Exchange rate
+      price = sellPrice / buyPrice;
       
       blockchainData = {
         sellPrice,
@@ -176,7 +200,7 @@ export async function GET(request: NextRequest) {
     // ───────────────────────────────────────────────────────────────────────
     else {
       price = validation.data.price || 1;
-      fee = amount * 0.001;
+      fee = calculateTierFee(amount, tierFeePercent);
       toAmount = (amount - fee) * price;
     }
 
@@ -190,9 +214,11 @@ export async function GET(request: NextRequest) {
         toAmount: parseFloat(toAmount.toFixed(6)),
         price: parseFloat(price.toFixed(4)),
         fee: parseFloat(fee.toFixed(4)),
+        feePercent: tierFeePercent,
         spread: type === "buy" ? spreadPercent.buy.toFixed(2) + "%" : spreadPercent.sell.toFixed(2) + "%",
         blockchainEnabled: BLOCKCHAIN_ENABLED,
         blockchain: blockchainData,
+        tier: tierInfo, // Include tier info in response
       },
     });
 
@@ -203,7 +229,7 @@ export async function GET(request: NextRequest) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// POST - Trade Execute
+// POST - Trade Execute - TIER BAZLI FEE
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function POST(request: NextRequest) {
@@ -239,6 +265,20 @@ export async function POST(request: NextRequest) {
 
     const normalizedAddress = address.toLowerCase();
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET USER TIER FOR FEE CALCULATION
+    // ═══════════════════════════════════════════════════════════════════════
+    let userTier = getDefaultTier();
+    try {
+      const tierData = await getUserTier(normalizedAddress);
+      userTier = tierData.tier;
+      console.log(`📊 User tier: ${userTier.name} (fee: ${userTier.fee}%)`);
+    } catch (e) {
+      console.warn("Could not fetch user tier, using default Regular:", e);
+    }
+    
+    const tierFeePercent = userTier.fee;
+
     // Quote validation (if provided)
     let lockedPrice: number | undefined;
     if (quoteId) {
@@ -249,7 +289,6 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      // Verify quote matches request
       if (quote.type !== type || (type === "buy" && quote.metal !== toToken.toUpperCase()) || (type === "sell" && quote.metal !== fromToken.toUpperCase())) {
         return NextResponse.json(
           { error: "Quote parametreleri uyuşmuyor" },
@@ -312,7 +351,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Skip balance check for on-chain crypto purchases (ETH comes from blockchain)
     const isOnChainCryptoBuy = executeOnChain && type === "buy" && ["eth", "btc", "usdt", "xrp", "sol"].includes(fromTokenLower);
     
     if (fromAmount > availableBalance && !isOnChainCryptoBuy) {
@@ -324,7 +362,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // 7. CALCULATE & EXECUTE
+    // 7. CALCULATE & EXECUTE WITH TIER-BASED FEE
     // ═══════════════════════════════════════════════════════════════════════
 
     let toAmount: number;
@@ -335,18 +373,18 @@ export async function POST(request: NextRequest) {
     let txHash: string | undefined;
 
     // ───────────────────────────────────────────────────────────────────────
-    // METAL BUY (AUXM → Metal Token)
+    // METAL BUY (AUXM → Metal Token) - TIER BAZLI FEE
     // ───────────────────────────────────────────────────────────────────────
     if (type === "buy" && fromTokenLower === "auxm" && METALS.includes(toTokenLower)) {
       const prices = await getTokenPrices(toToken);
       spreadPercent = prices.spreadPercent;
       price = lockedPrice || prices.askPerGram;
       
-      fee = fromAmount * 0.001;
+      // ✅ TIER BAZLI FEE
+      fee = calculateTierFee(fromAmount, tierFeePercent);
       const netAmount = fromAmount - fee;
       toAmount = netAmount / price;
 
-      // Reserve check
       const reserveCheck = await checkReserveLimit(toToken, toAmount);
       if (false) { // TEMP: reserve check disabled
         return NextResponse.json({
@@ -354,7 +392,6 @@ export async function POST(request: NextRequest) {
         }, { status: 400 });
       }
 
-      // Execute on blockchain
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
         console.log(`🔷 Executing blockchain buy: ${toAmount}g ${toToken.toUpperCase()}`);
         
@@ -381,16 +418,16 @@ export async function POST(request: NextRequest) {
       }
     }
     // ───────────────────────────────────────────────────────────────────────
-    // METAL SELL (Metal Token → AUXM)
+    // METAL SELL (Metal Token → AUXM) - TIER BAZLI FEE
     // ───────────────────────────────────────────────────────────────────────
     else if (type === "sell" && METALS.includes(fromTokenLower) && toTokenLower === "auxm") {
       const prices = await getTokenPrices(fromToken);
       price = prices.bidPerGram;
       
-      fee = fromAmount * price * 0.001;
+      // ✅ TIER BAZLI FEE
+      fee = calculateTierFee(fromAmount * price, tierFeePercent);
       toAmount = (fromAmount * price) - fee;
 
-      // Execute on blockchain
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
         console.log(`🔷 Executing blockchain sell: ${fromAmount}g ${fromToken.toUpperCase()}`);
         
@@ -417,7 +454,7 @@ export async function POST(request: NextRequest) {
       }
     }
     // ───────────────────────────────────────────────────────────────────────
-    // SWAP (Metal → Metal)
+    // SWAP (Metal → Metal) - TIER BAZLI FEE
     // ───────────────────────────────────────────────────────────────────────
     else if (type === "swap" && METALS.includes(fromTokenLower) && METALS.includes(toTokenLower)) {
       const fromPrices = await getTokenPrices(fromToken);
@@ -426,14 +463,13 @@ export async function POST(request: NextRequest) {
       const sellPrice = fromPrices.bidPerGram;
       const buyPrice = toPrices.askPerGram;
       
-      fee = fromAmount * sellPrice * 0.002;
+      // ✅ TIER BAZLI FEE (swap için 2x normal fee)
+      fee = calculateTierFee(fromAmount * sellPrice, tierFeePercent * 2);
       const auxmValue = (fromAmount * sellPrice) - fee;
       toAmount = auxmValue / buyPrice;
       price = sellPrice / buyPrice;
 
-      // Execute on blockchain (sell + buy)
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
-        // 1. Sell fromToken
         const sellResult = await sellMetalToken(fromToken, fromAmount, address);
         if (!sellResult.success) {
           return NextResponse.json({
@@ -441,10 +477,8 @@ export async function POST(request: NextRequest) {
           }, { status: 500 });
         }
 
-        // 2. Buy toToken
         const buyResult = await buyMetalToken(toToken, toAmount, undefined, slippage);
         if (!buyResult.success) {
-          // Rollback: Return ETH from sell to user balance
           return NextResponse.json({
             error: `Swap alım başarısız: ${buyResult.error}. Satış tutarı iade edildi.`,
             partialTxHash: sellResult.txHash,
@@ -460,14 +494,14 @@ export async function POST(request: NextRequest) {
       }
     }
     // ───────────────────────────────────────────────────────────────────────
-    // ───────────────────────────────────────────────────────────────────────
-    // CRYPTO → METAL (Buy metal with crypto)
+    // CRYPTO → METAL (Buy metal with crypto) - TIER BAZLI FEE
     // ───────────────────────────────────────────────────────────────────────
     else if (type === "buy" && CRYPTOS.includes(fromTokenLower) && METALS.includes(toTokenLower)) {
       const prices = await getTokenPrices(toToken);
       price = prices.askPerGram;
       
-      fee = fromAmount * price * 0.001;
+      // ✅ TIER BAZLI FEE
+      fee = calculateTierFee(fromAmount * price, tierFeePercent);
       toAmount = fromAmount - (fee / price);
       
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
@@ -480,13 +514,14 @@ export async function POST(request: NextRequest) {
       }
     }
     // ───────────────────────────────────────────────────────────────────────
-    // METAL → CRYPTO (Sell metal for crypto)
+    // METAL → CRYPTO (Sell metal for crypto) - TIER BAZLI FEE
     // ───────────────────────────────────────────────────────────────────────
     else if (type === "sell" && METALS.includes(fromTokenLower) && CRYPTOS.includes(toTokenLower)) {
       const prices = await getTokenPrices(fromToken);
       price = prices.bidPerGram;
       
-      fee = fromAmount * price * 0.001;
+      // ✅ TIER BAZLI FEE
+      fee = calculateTierFee(fromAmount * price, tierFeePercent);
       toAmount = (fromAmount * price) - fee;
       
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
@@ -499,20 +534,20 @@ export async function POST(request: NextRequest) {
       }
     }
     // ───────────────────────────────────────────────────────────────────────
-    // CRYPTO → AUXM (Deposit crypto as AUXM)
+    // CRYPTO → AUXM - TIER BAZLI FEE
     // ───────────────────────────────────────────────────────────────────────
     else if (CRYPTOS.includes(fromTokenLower) && toTokenLower === "auxm") {
       price = 1;
-      fee = fromAmount * 0.001;
+      fee = calculateTierFee(fromAmount, tierFeePercent);
       toAmount = fromAmount - fee;
       blockchainResult = { executed: false, reason: "Off-chain AUXM conversion" };
     }
     // ───────────────────────────────────────────────────────────────────────
-    // AUXM → CRYPTO
+    // AUXM → CRYPTO - TIER BAZLI FEE
     // ───────────────────────────────────────────────────────────────────────
     else if (fromTokenLower === "auxm" && CRYPTOS.includes(toTokenLower)) {
       price = 1;
-      fee = fromAmount * 0.001;
+      fee = calculateTierFee(fromAmount, tierFeePercent);
       toAmount = fromAmount - fee;
       blockchainResult = { executed: false, reason: "Off-chain AUXM conversion" };
     }
@@ -522,11 +557,11 @@ export async function POST(request: NextRequest) {
     else if (CRYPTOS.includes(fromTokenLower) && CRYPTOS.includes(toTokenLower)) {
       return NextResponse.json({ error: "Crypto-Crypto dönüşüm desteklenmiyor" }, { status: 400 });
     }
-    // OTHER TRADES (non-blockchain)
+    // OTHER TRADES - TIER BAZLI FEE
     // ───────────────────────────────────────────────────────────────────────
     else {
       price = validation.data.price || 1;
-      fee = fromAmount * 0.001;
+      fee = calculateTierFee(fromAmount, tierFeePercent);
       toAmount = (fromAmount - fee) * price;
       blockchainResult = { executed: false, reason: "Non-metal trade" };
     }
@@ -562,12 +597,14 @@ export async function POST(request: NextRequest) {
       fromAmount: fromAmount.toString(),
       toAmount: toAmount.toFixed(6),
       fee: fee.toFixed(4),
+      feePercent: tierFeePercent,
       price: price.toString(),
       usedBonus: usedBonus.toString(),
       status: "completed",
       timestamp: Date.now(),
       blockchain: blockchainResult,
       txHash,
+      tier: userTier.id, // ✅ Track which tier was used
       ip: ip.split(".").slice(0, 3).join(".") + ".***",
     };
 
@@ -600,11 +637,16 @@ export async function POST(request: NextRequest) {
         fromAmount,
         toAmount: parseFloat(toAmount.toFixed(6)),
         fee: parseFloat(fee.toFixed(4)),
+        feePercent: tierFeePercent,
         price: parseFloat(price.toFixed(4)),
         usedBonus,
         status: "completed",
         txHash,
         blockchain: blockchainResult,
+        tier: {
+          id: userTier.id,
+          name: userTier.name,
+        },
       },
       balances: {
         auxm: parseFloat(updatedBalance?.auxm as string || "0"),
