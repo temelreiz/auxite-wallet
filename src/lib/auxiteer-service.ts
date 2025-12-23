@@ -118,7 +118,7 @@ const TIER_CONFIG_KEY = 'auxiteer:tier:config';
 
 // Cache for tier config (5 minute TTL)
 let tierConfigCache: { tiers: AuxiteerTierConfig[]; timestamp: number } | null = null;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 30 * 1000; // 30 seconds // 5 minutes
 
 /**
  * Get tier configuration from Redis (with caching)
