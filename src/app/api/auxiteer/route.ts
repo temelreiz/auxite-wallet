@@ -6,6 +6,28 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { redis, getUserBalance } from '@/lib/redis';
+
+// Redis'ten dinamik tier config al
+const TIER_CONFIG_KEY = "auxiteer:tier:config";
+async function getDynamicTiers(): Promise<AuxiteerTierConfig[]> {
+  try {
+    const config = await redis.get(TIER_CONFIG_KEY);
+    if (config) {
+      const tiers = typeof config === "string" ? JSON.parse(config) : config;
+      // Merge with default tiers (for styling etc)
+      return AUXITEER_TIERS.map(defaultTier => {
+        const redisTier = tiers.find((t: any) => t.id === defaultTier.id);
+        if (redisTier) {
+          return { ...defaultTier, spread: redisTier.spread, fee: redisTier.fee };
+        }
+        return defaultTier;
+      });
+    }
+  } catch (e) {
+    console.error("Failed to get dynamic tiers:", e);
+  }
+  return AUXITEER_TIERS;
+}
 import { AUXITEER_TIERS, AuxiteerTierConfig } from '@/lib/auxiteer-config';
 
 // ============================================
@@ -244,12 +266,29 @@ export async function GET(request: NextRequest) {
       },
     } : null;
 
+    // Redis'ten güncel tier spread/fee al
+    let dynamicSpread = tier.spread;
+    let dynamicFee = tier.fee;
+    try {
+      const tierConfig = await redis.get("auxiteer:tier:config");
+      if (tierConfig) {
+        const tiers = typeof tierConfig === "string" ? JSON.parse(tierConfig) : tierConfig;
+        const redisTier = tiers.find((t: any) => t.id === tier.id);
+        if (redisTier) {
+          dynamicSpread = redisTier.spread;
+          dynamicFee = redisTier.fee;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to get dynamic tier config:", e);
+    }
+
     return NextResponse.json({
       tier: {
         id: tier.id,
         name: tier.name,
-        spread: tier.spread,
-        fee: tier.fee,
+        spread: dynamicSpread,
+        fee: dynamicFee,
       },
       stats: {
         balanceUsd: Math.round(balanceUsd * 100) / 100,
