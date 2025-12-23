@@ -1,5 +1,5 @@
-// src/app/api/admin/auxiteer/stats/route.ts
-// Auxiteer Tier Statistics API
+// src/app/api/admin/stats/route.ts
+// Admin Dashboard Statistics API
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
@@ -9,107 +9,120 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-// GET - Tier statistics
+// GET - Dashboard statistics
 export async function GET(request: NextRequest) {
   try {
-    const adminKey = request.headers.get('x-admin-key');
-    if (adminKey !== process.env.ADMIN_SECRET) {
+    // Auth check - Bearer token veya ADMIN_SECRET
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    
+    if (!token || token === 'null' || token === 'undefined') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Get all user meta keys
-    const keys = await redis.keys('user:*:meta');
-    
-    const tierCounts: Record<string, number> = {
-      regular: 0,
-      core: 0,
-      reserve: 0,
-      vault: 0,
-      sovereign: 0,
-    };
-    
-    const tierVolumes: Record<string, number> = {
-      regular: 0,
-      core: 0,
-      reserve: 0,
-      vault: 0,
-      sovereign: 0,
-    };
-    
-    const tierBalances: Record<string, number[]> = {
-      regular: [],
-      core: [],
-      reserve: [],
-      vault: [],
-      sovereign: [],
-    };
+    // Stats hesaplama
+    let totalUsers = 0;
+    let totalTrades = 0;
+    let totalVolume = 0;
+    let pendingWithdraws = 0;
+    let pendingKYC = 0;
+    let activeAlerts = 0;
 
-    for (const key of keys) {
-      try {
-        const meta = await redis.get(key);
-        if (!meta) continue;
-        
-        const userData = typeof meta === 'string' ? JSON.parse(meta) : meta;
-        const tierId = userData.auxiteerTier || 'regular';
-        
-        if (tierCounts[tierId] !== undefined) {
-          tierCounts[tierId]++;
-        }
-        
-        // Get user balance
-        const address = userData.walletAddress;
-        if (address) {
-          const balanceKey = `user:${address.toLowerCase()}:balance`;
-          const balance = await redis.hgetall(balanceKey);
-          
-          if (balance) {
-            // Calculate USD value (simplified)
-            let totalUsd = 0;
-            totalUsd += parseFloat(balance.auxm as string || '0');
-            totalUsd += parseFloat(balance.usdt as string || '0');
-            totalUsd += parseFloat(balance.usd as string || '0');
-            // Add metal values (approximate)
-            totalUsd += parseFloat(balance.auxg as string || '0') * 85;
-            totalUsd += parseFloat(balance.auxs as string || '0') * 1;
-            totalUsd += parseFloat(balance.auxpt as string || '0') * 32;
-            totalUsd += parseFloat(balance.auxpd as string || '0') * 34;
-            
-            if (tierBalances[tierId]) {
-              tierBalances[tierId].push(totalUsd);
+    try {
+      // Toplam kullanıcı sayısı
+      const userKeys = await redis.keys('user:*:meta');
+      totalUsers = userKeys.length;
+
+      // KYC bekleyenler
+      for (const key of userKeys) {
+        try {
+          const meta = await redis.get(key);
+          if (meta) {
+            const userData = typeof meta === 'string' ? JSON.parse(meta) : meta;
+            if (userData.kycStatus === 'pending') {
+              pendingKYC++;
             }
           }
-          
-          // Get user volume (from transactions)
-          const txKey = `user:${address.toLowerCase()}:transactions`;
-          const txCount = await redis.llen(txKey);
-          // Simplified: just count transactions * average
-          if (tierVolumes[tierId] !== undefined) {
-            tierVolumes[tierId] += txCount * 500; // Rough estimate
-          }
+        } catch (e) {
+          // Skip invalid entries
         }
-      } catch (e) {
-        // Skip invalid entries
       }
+
+      // Toplam trade sayısı
+      const tradeCountStr = await redis.get('stats:total:trades');
+      totalTrades = tradeCountStr ? parseInt(tradeCountStr as string) : 0;
+
+      // Toplam hacim
+      const volumeStr = await redis.get('stats:total:volume');
+      totalVolume = volumeStr ? parseFloat(volumeStr as string) : 0;
+
+      // Bekleyen çekimler
+      const withdrawKeys = await redis.keys('withdraw:pending:*');
+      pendingWithdraws = withdrawKeys.length;
+
+      // Alternatif: withdraw listesinden
+      if (pendingWithdraws === 0) {
+        const pendingList = await redis.lrange('withdraws:pending', 0, -1);
+        pendingWithdraws = pendingList.length;
+      }
+
+      // Aktif duyurular
+      const announcementKeys = await redis.keys('announcement:*');
+      for (const key of announcementKeys) {
+        try {
+          const ann = await redis.get(key);
+          if (ann) {
+            const data = typeof ann === 'string' ? JSON.parse(ann) : ann;
+            if (data.active) {
+              activeAlerts++;
+            }
+          }
+        } catch (e) {
+          // Skip
+        }
+      }
+
+      // Alternatif: announcements listesinden
+      if (activeAlerts === 0) {
+        const annList = await redis.lrange('announcements:active', 0, -1);
+        activeAlerts = annList.length;
+      }
+
+    } catch (redisError) {
+      console.error('Redis error:', redisError);
+      // Redis hatası olsa bile varsayılan değerlerle devam et
     }
 
-    // Calculate stats
-    const stats = Object.keys(tierCounts).map(tierId => {
-      const balances = tierBalances[tierId] || [];
-      const avgBalance = balances.length > 0 
-        ? balances.reduce((a, b) => a + b, 0) / balances.length 
-        : 0;
-      
-      return {
-        tierId,
-        userCount: tierCounts[tierId] || 0,
-        totalVolume: tierVolumes[tierId] || 0,
-        avgBalance: Math.round(avgBalance * 100) / 100,
-      };
+    // Volume formatla
+    const formatVolume = (vol: number): string => {
+      if (vol >= 1000000) {
+        return `$${(vol / 1000000).toFixed(2)}M`;
+      } else if (vol >= 1000) {
+        return `$${(vol / 1000).toFixed(2)}K`;
+      }
+      return `$${vol.toFixed(2)}`;
+    };
+
+    return NextResponse.json({
+      totalUsers,
+      totalTrades,
+      totalVolume: formatVolume(totalVolume),
+      pendingWithdraws,
+      pendingKYC,
+      activeAlerts,
     });
 
-    return NextResponse.json({ stats });
   } catch (error) {
-    console.error('Get tier stats error:', error);
-    return NextResponse.json({ error: 'Failed to get stats' }, { status: 500 });
+    console.error('Admin stats error:', error);
+    return NextResponse.json({ 
+      error: 'Failed to load stats',
+      // Fallback data
+      totalUsers: 0,
+      totalTrades: 0,
+      totalVolume: '$0',
+      pendingWithdraws: 0,
+      pendingKYC: 0,
+      activeAlerts: 0,
+    }, { status: 500 });
   }
 }
