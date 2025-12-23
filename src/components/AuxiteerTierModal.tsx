@@ -352,9 +352,9 @@ export function AuxiteerTierModal({
   hasActiveEarnLease = false,
   currentTierId,
 }: AuxiteerTierModalProps) {
-  const { language } = useLanguage();
+  const { lang } = useLanguage();
   const { address } = useAccount();
-  const t = translations[language] || translations.en;
+  const t = translations[lang] || translations.en;
 
   // ✅ Dynamic tiers from API
   const [tiers, setTiers] = useState<AuxiteerTier[]>(DEFAULT_TIERS);
