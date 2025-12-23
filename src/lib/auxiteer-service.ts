@@ -39,7 +39,8 @@ export interface UserTierInfo {
 // TIER CONFIGURATION
 // ============================================
 
-export const AUXITEER_TIERS: AuxiteerTierConfig[] = [
+// Default tiers (fallback if Redis is empty)
+export const DEFAULT_AUXITEER_TIERS: AuxiteerTierConfig[] = [
   {
     id: 'regular',
     name: 'Regular',
@@ -111,6 +112,41 @@ export const AUXITEER_TIERS: AuxiteerTierConfig[] = [
     },
   },
 ];
+
+// Redis key for tier config
+const TIER_CONFIG_KEY = 'auxiteer:tier:config';
+
+// Cache for tier config (5 minute TTL)
+let tierConfigCache: { tiers: AuxiteerTierConfig[]; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Get tier configuration from Redis (with caching)
+ */
+async function getTierConfig(): Promise<AuxiteerTierConfig[]> {
+  // Check cache
+  if (tierConfigCache && Date.now() - tierConfigCache.timestamp < CACHE_TTL) {
+    return tierConfigCache.tiers;
+  }
+  
+  try {
+    const config = await redis.get(TIER_CONFIG_KEY);
+    
+    if (config) {
+      const tiers = typeof config === 'string' ? JSON.parse(config) : config;
+      tierConfigCache = { tiers, timestamp: Date.now() };
+      return tiers;
+    }
+  } catch (e) {
+    console.error('Failed to get tier config from Redis:', e);
+  }
+  
+  // Return default if Redis fails or is empty
+  return DEFAULT_AUXITEER_TIERS;
+}
+
+// Export for backwards compatibility
+export const AUXITEER_TIERS = DEFAULT_AUXITEER_TIERS;
 
 // ============================================
 // REDIS KEYS
@@ -214,16 +250,18 @@ async function calculateBalanceUsd(address: string): Promise<{ balanceUsd: numbe
 /**
  * Kullanıcının Auxiteer tier bilgisini döndürür
  * Trade API'de fee hesaplamak için kullanılır
+ * Redis'ten güncel tier config'i okur
  */
 export async function getUserTier(address: string): Promise<UserTierInfo> {
   const normalizedAddress = address.toLowerCase();
   
-  // Get user data
-  const [userMeta, isKycVerified, hasActiveLease, balanceData] = await Promise.all([
+  // Get user data and tier config in parallel
+  const [userMeta, isKycVerified, hasActiveLease, balanceData, tierConfig] = await Promise.all([
     getUserMeta(normalizedAddress),
     getKycStatus(normalizedAddress),
     hasActiveLeasePosition(normalizedAddress),
     calculateBalanceUsd(normalizedAddress),
+    getTierConfig(), // Get from Redis
   ]);
   
   const daysSinceReg = userMeta ? calculateDaysSinceRegistration(userMeta.registeredAt) : 0;
@@ -231,8 +269,8 @@ export async function getUserTier(address: string): Promise<UserTierInfo> {
   const { balanceUsd, hasMetalAsset } = balanceData;
   
   // Determine tier (check from highest to lowest)
-  const tiers = [...AUXITEER_TIERS].reverse();
-  let userTier = AUXITEER_TIERS[0]; // Default: Regular
+  const tiers = [...tierConfig].reverse();
+  let userTier = tierConfig[0]; // Default: Regular (first tier)
   
   for (const tier of tiers) {
     const req = tier.requirements;

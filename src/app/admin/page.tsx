@@ -242,6 +242,29 @@ interface GeoStats {
   percentage: number;
 }
 
+// Auxiteer Types
+interface AuxiteerTierConfig {
+  id: string;
+  name: string;
+  spread: number;
+  fee: number;
+  requirements: {
+    kyc: boolean;
+    minBalanceUsd: number;
+    minDays: number;
+    metalAsset: boolean;
+    activeEarnLease: boolean;
+    invitation: boolean;
+  };
+}
+
+interface SovereignInvitation {
+  walletAddress: string;
+  invitedAt: string;
+  invitedBy: string;
+  status: 'active' | 'revoked';
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -291,9 +314,65 @@ const FEATURE_LABELS: Record<string, { tr: string; en: string; icon: string }> =
   nftSupport: { tr: "NFT Desteği", en: "NFT Support", icon: "🖼️" },
 };
 
+// Auxiteer Constants
+const DEFAULT_AUXITEER_TIERS: AuxiteerTierConfig[] = [
+  {
+    id: 'regular',
+    name: 'Regular',
+    spread: 1.00,
+    fee: 0.35,
+    requirements: { kyc: false, minBalanceUsd: 0, minDays: 0, metalAsset: false, activeEarnLease: false, invitation: false },
+  },
+  {
+    id: 'core',
+    name: 'Core',
+    spread: 0.80,
+    fee: 0.25,
+    requirements: { kyc: true, minBalanceUsd: 10000, minDays: 7, metalAsset: false, activeEarnLease: false, invitation: false },
+  },
+  {
+    id: 'reserve',
+    name: 'Reserve',
+    spread: 0.65,
+    fee: 0.18,
+    requirements: { kyc: true, minBalanceUsd: 100000, minDays: 30, metalAsset: true, activeEarnLease: false, invitation: false },
+  },
+  {
+    id: 'vault',
+    name: 'Vault',
+    spread: 0.50,
+    fee: 0.12,
+    requirements: { kyc: true, minBalanceUsd: 500000, minDays: 90, metalAsset: true, activeEarnLease: true, invitation: false },
+  },
+  {
+    id: 'sovereign',
+    name: 'Sovereign',
+    spread: 0,
+    fee: 0,
+    requirements: { kyc: true, minBalanceUsd: 1000000, minDays: 180, metalAsset: true, activeEarnLease: true, invitation: true },
+  },
+];
+
+const TIER_COLORS: Record<string, string> = {
+  regular: '#64748b',
+  core: '#10b981',
+  reserve: '#3b82f6',
+  vault: '#8b5cf6',
+  sovereign: '#f59e0b',
+};
+
+const TIER_ICONS: Record<string, string> = {
+  regular: '👤',
+  core: '🛡️',
+  reserve: '📦',
+  vault: '🏛️',
+  sovereign: '⭐',
+};
+
 const TABS = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
   { id: "analytics", label: "Analitik", icon: "📈" },
+  { id: "auxiteer", label: "Auxiteer", icon: "⭐" },
   { id: "spreads", label: "Spread", icon: "💹" },
   { id: "oracle", label: "Oracle", icon: "🔮" },
   { id: "wallet", label: "Hot Wallet", icon: "💰" },
@@ -490,6 +569,15 @@ export default function AdminDashboard() {
   // Messages
   const [message, setMessage] = useState({ type: "", text: "" });
 
+  // Auxiteer States
+  const [auxiteerTiers, setAuxiteerTiers] = useState<AuxiteerTierConfig[]>(DEFAULT_AUXITEER_TIERS);
+  const [auxiteerEditingTier, setAuxiteerEditingTier] = useState<string | null>(null);
+  const [auxiteerSaving, setAuxiteerSaving] = useState(false);
+  const [auxiteerMessage, setAuxiteerMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [sovereignInvitations, setSovereignInvitations] = useState<SovereignInvitation[]>([]);
+  const [newSovereignAddress, setNewSovereignAddress] = useState("");
+  const [sovereignLoading, setSovereignLoading] = useState(false);
+
   // ═══════════════════════════════════════════════════════════════════════════════
   // AUTH LOGIC
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -579,6 +667,8 @@ export default function AdminDashboard() {
     loadCampaigns();
     loadAnnouncements();
     loadAnalytics();
+    loadAuxiteerConfig();
+    loadSovereignInvitations();
   };
 
   const loadStats = async () => {
@@ -776,6 +866,136 @@ export default function AdminDashboard() {
       loadAnalytics();
     }
   }, [analyticsRange, authenticated, activeTab]);
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // AUXITEER FUNCTIONS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  const loadAuxiteerConfig = async () => {
+    try {
+      const res = await fetch("/api/admin/auxiteer/config", { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.tiers) setAuxiteerTiers(data.tiers);
+      }
+    } catch (e) {
+      console.error("Failed to load auxiteer config:", e);
+    }
+  };
+
+  const loadSovereignInvitations = async () => {
+    try {
+      const res = await fetch("/api/admin/auxiteer/invitations", { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.invitations) setSovereignInvitations(data.invitations);
+      }
+    } catch (e) {
+      console.error("Failed to load invitations:", e);
+    }
+  };
+
+  const updateAuxiteerTierValue = (tierId: string, field: string, value: number | boolean) => {
+    setAuxiteerTiers(prev => prev.map(tier => {
+      if (tier.id !== tierId) return tier;
+      
+      if (field === 'spread' || field === 'fee') {
+        return { ...tier, [field]: value as number };
+      }
+      
+      if (field.startsWith('req_')) {
+        const reqField = field.replace('req_', '') as keyof typeof tier.requirements;
+        return {
+          ...tier,
+          requirements: { ...tier.requirements, [reqField]: value },
+        };
+      }
+      
+      return tier;
+    }));
+  };
+
+  const saveAuxiteerConfig = async () => {
+    setAuxiteerSaving(true);
+    setAuxiteerMessage(null);
+    
+    try {
+      const res = await fetch("/api/admin/auxiteer/config", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ tiers: auxiteerTiers }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        setAuxiteerMessage({ type: 'success', text: 'Tier ayarları kaydedildi!' });
+        setAuxiteerEditingTier(null);
+      } else {
+        setAuxiteerMessage({ type: 'error', text: data.error || 'Kaydetme başarısız' });
+      }
+    } catch (e) {
+      setAuxiteerMessage({ type: 'error', text: 'Bağlantı hatası' });
+    } finally {
+      setAuxiteerSaving(false);
+      setTimeout(() => setAuxiteerMessage(null), 3000);
+    }
+  };
+
+  const inviteToSovereign = async () => {
+    if (!newSovereignAddress || !newSovereignAddress.startsWith('0x')) {
+      alert('Geçerli bir cüzdan adresi girin');
+      return;
+    }
+    
+    setSovereignLoading(true);
+    
+    try {
+      const res = await fetch("/api/admin/auxiteer/invite", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ walletAddress: newSovereignAddress }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        setNewSovereignAddress("");
+        loadSovereignInvitations();
+        alert('Kullanıcı Sovereign tier\'a davet edildi!');
+      } else {
+        alert(data.error || 'Davet başarısız');
+      }
+    } catch (e) {
+      alert('Bağlantı hatası');
+    } finally {
+      setSovereignLoading(false);
+    }
+  };
+
+  const revokeSovereignInvitation = async (walletAddress: string) => {
+    if (!confirm('Bu kullanıcının Sovereign davetini iptal etmek istediğinize emin misiniz?')) {
+      return;
+    }
+    
+    try {
+      const res = await fetch("/api/admin/auxiteer/invite", {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ walletAddress }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        loadSovereignInvitations();
+      } else {
+        alert(data.error || 'İptal başarısız');
+      }
+    } catch (e) {
+      alert('Bağlantı hatası');
+    }
+  };
   // ═══════════════════════════════════════════════════════════════════════════════
   // HANDLER FUNCTIONS
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -2336,6 +2556,270 @@ export default function AdminDashboard() {
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Auxiteer Tab */}
+          {activeTab === "auxiteer" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">⭐ Auxiteer Program Yönetimi</h2>
+                <button
+                  onClick={saveAuxiteerConfig}
+                  disabled={auxiteerSaving}
+                  className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-medium disabled:opacity-50"
+                >
+                  {auxiteerSaving ? 'Kaydediliyor...' : '💾 Kaydet'}
+                </button>
+              </div>
+
+              {/* Success/Error Message */}
+              {auxiteerMessage && (
+                <div className={`p-4 rounded-xl ${
+                  auxiteerMessage.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                }`}>
+                  {auxiteerMessage.text}
+                </div>
+              )}
+
+              {/* Tier Cards */}
+              <div className="grid gap-6">
+                {auxiteerTiers.map((tier) => (
+                  <div
+                    key={tier.id}
+                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6"
+                  >
+                    {/* Tier Header */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                          style={{ backgroundColor: TIER_COLORS[tier.id] + '20' }}
+                        >
+                          {TIER_ICONS[tier.id]}
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold" style={{ color: TIER_COLORS[tier.id] }}>
+                            {tier.name}
+                          </h3>
+                          <p className="text-slate-400 text-sm">ID: {tier.id}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setAuxiteerEditingTier(auxiteerEditingTier === tier.id ? null : tier.id)}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm"
+                      >
+                        {auxiteerEditingTier === tier.id ? '✕ Kapat' : '✏️ Düzenle'}
+                      </button>
+                    </div>
+
+                    {/* Fee & Spread Display */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      <div className="p-4 bg-slate-800/50 rounded-xl">
+                        <p className="text-slate-400 text-sm mb-1">Spread</p>
+                        <p className="text-2xl font-bold" style={{ color: TIER_COLORS[tier.id] }}>
+                          {tier.spread === 0 ? 'Custom' : `${tier.spread.toFixed(2)}%`}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-slate-800/50 rounded-xl">
+                        <p className="text-slate-400 text-sm mb-1">İşlem Ücreti</p>
+                        <p className="text-2xl font-bold" style={{ color: TIER_COLORS[tier.id] }}>
+                          {tier.fee === 0 ? 'Custom' : `${tier.fee.toFixed(2)}%`}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-slate-800/50 rounded-xl">
+                        <p className="text-slate-400 text-sm mb-1">Min. Bakiye</p>
+                        <p className="text-lg font-bold text-white">
+                          ${tier.requirements.minBalanceUsd.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-slate-800/50 rounded-xl">
+                        <p className="text-slate-400 text-sm mb-1">Min. Gün</p>
+                        <p className="text-lg font-bold text-white">
+                          {tier.requirements.minDays}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Requirements Pills */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {tier.requirements.kyc && (
+                        <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm">
+                          KYC Gerekli
+                        </span>
+                      )}
+                      {tier.requirements.metalAsset && (
+                        <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-sm">
+                          Metal Varlık
+                        </span>
+                      )}
+                      {tier.requirements.activeEarnLease && (
+                        <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm">
+                          Aktif Earn/Lease
+                        </span>
+                      )}
+                      {tier.requirements.invitation && (
+                        <span className="px-3 py-1 bg-rose-500/20 text-rose-400 rounded-full text-sm">
+                          Sadece Davetli
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Edit Form */}
+                    {auxiteerEditingTier === tier.id && (
+                      <div className="mt-6 pt-6 border-t border-slate-700">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          {/* Spread */}
+                          <div>
+                            <label className="block text-sm text-slate-400 mb-2">Spread (%)</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="10"
+                              value={tier.spread}
+                              onChange={(e) => updateAuxiteerTierValue(tier.id, 'spread', parseFloat(e.target.value) || 0)}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                            />
+                          </div>
+                          
+                          {/* Fee */}
+                          <div>
+                            <label className="block text-sm text-slate-400 mb-2">Fee (%)</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="5"
+                              value={tier.fee}
+                              onChange={(e) => updateAuxiteerTierValue(tier.id, 'fee', parseFloat(e.target.value) || 0)}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                            />
+                          </div>
+                          
+                          {/* Min Balance */}
+                          <div>
+                            <label className="block text-sm text-slate-400 mb-2">Min. Bakiye ($)</label>
+                            <input
+                              type="number"
+                              step="1000"
+                              min="0"
+                              value={tier.requirements.minBalanceUsd}
+                              onChange={(e) => updateAuxiteerTierValue(tier.id, 'req_minBalanceUsd', parseInt(e.target.value) || 0)}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                            />
+                          </div>
+                          
+                          {/* Min Days */}
+                          <div>
+                            <label className="block text-sm text-slate-400 mb-2">Min. Gün</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={tier.requirements.minDays}
+                              onChange={(e) => updateAuxiteerTierValue(tier.id, 'req_minDays', parseInt(e.target.value) || 0)}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Boolean Requirements */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                          {[
+                            { key: 'kyc', label: 'KYC Gerekli' },
+                            { key: 'metalAsset', label: 'Metal Varlık' },
+                            { key: 'activeEarnLease', label: 'Aktif Earn/Lease' },
+                            { key: 'invitation', label: 'Davet Gerekli' },
+                          ].map(({ key, label }) => (
+                            <label key={key} className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg cursor-pointer hover:bg-slate-800">
+                              <input
+                                type="checkbox"
+                                checked={tier.requirements[key as keyof typeof tier.requirements] as boolean}
+                                onChange={(e) => updateAuxiteerTierValue(tier.id, `req_${key}`, e.target.checked)}
+                                className="w-5 h-5 rounded border-slate-600 bg-slate-700 text-amber-500 focus:ring-amber-500"
+                              />
+                              <span className="text-sm">{label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Sovereign Invitations */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <span>⭐</span> Sovereign Tier Davetleri
+                </h3>
+                
+                {/* Invite Form */}
+                <div className="flex gap-4 mb-6">
+                  <input
+                    type="text"
+                    placeholder="Cüzdan adresi (0x...)"
+                    value={newSovereignAddress}
+                    onChange={(e) => setNewSovereignAddress(e.target.value)}
+                    className="flex-1 bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white font-mono"
+                  />
+                  <button
+                    onClick={inviteToSovereign}
+                    disabled={sovereignLoading || !newSovereignAddress}
+                    className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-black font-medium rounded-xl disabled:opacity-50"
+                  >
+                    {sovereignLoading ? 'Gönderiliyor...' : '⭐ Davet Et'}
+                  </button>
+                </div>
+
+                {/* Invitations List */}
+                {sovereignInvitations.length === 0 ? (
+                  <p className="text-slate-400 text-center py-4">Henüz davet yok</p>
+                ) : (
+                  <div className="space-y-3">
+                    {sovereignInvitations.map((inv) => (
+                      <div
+                        key={inv.walletAddress}
+                        className={`p-4 rounded-xl flex items-center justify-between ${
+                          inv.status === 'active' ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-slate-800/50'
+                        }`}
+                      >
+                        <div>
+                          <p className="font-mono text-sm">
+                            {inv.walletAddress.slice(0, 10)}...{inv.walletAddress.slice(-8)}
+                          </p>
+                          <p className="text-slate-400 text-xs mt-1">
+                            Davet: {new Date(inv.invitedAt).toLocaleDateString('tr-TR')}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            inv.status === 'active' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-600 text-slate-400'
+                          }`}>
+                            {inv.status === 'active' ? 'Aktif' : 'İptal'}
+                          </span>
+                          {inv.status === 'active' && (
+                            <button
+                              onClick={() => revokeSovereignInvitation(inv.walletAddress)}
+                              className="px-3 py-1 bg-red-500/20 text-red-400 rounded-lg text-sm hover:bg-red-500/30"
+                            >
+                              İptal Et
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Info Note */}
+              <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+                <p className="text-blue-300 text-sm">
+                  ℹ️ Tier ayarları kaydedildiğinde tüm kullanıcılar için anlık olarak geçerli olur. 
+                  Spread ve fee değerleri trade işlemlerinde otomatik uygulanır.
+                </p>
               </div>
             </div>
           )}
