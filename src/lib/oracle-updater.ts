@@ -132,7 +132,7 @@ export async function updateOraclePrices(): Promise<{
       console.log(`Updating ${update.name}: $${update.pricePerGram.toFixed(2)}/g (E6/kg: ${update.price})`);
       
       const tx = await oracle.setManualPrice(update.id, update.price);
-      await tx.wait();
+      // tx.wait() removed - dont wait for confirmation
       txHashes.push(tx.hash);
     }
 
