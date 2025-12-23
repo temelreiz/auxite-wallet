@@ -57,7 +57,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
       const data = await res.json();
       const metalsWithPrices = METALS_BASE.map(metal => ({
         ...metal,
-        price: data[metal.name]?.askPerGram || data[metal.symbol.toLowerCase()]?.price || 0,
+        price: data.prices?.[metal.symbol] || data[metal.name]?.askPerGram || 0,
         spread: data[metal.name]?.spreadPercent?.buy || 0,
       }));
       setMetals(metalsWithPrices);
