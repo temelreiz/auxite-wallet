@@ -36,7 +36,7 @@ const GOLDAPI_SYMBOLS: Record<string, string> = {
   AUXPD: "XPD",
 };
 
-// Redis'ten spread ayarlarını al
+// Redis'ten spread ayarlarını al - Admin panel formatından oku
 async function getSpreadSettings(): Promise<Record<string, { askAdjust: number; bidAdjust: number }>> {
   try {
     const { Redis } = await import("@upstash/redis");
@@ -45,16 +45,31 @@ async function getSpreadSettings(): Promise<Record<string, { askAdjust: number; 
       token: process.env.UPSTASH_REDIS_REST_TOKEN!,
     });
     
-    const settings = await redis.get(SETTINGS_KEY);
-    if (settings && typeof settings === "object") {
-      return { ...DEFAULT_SETTINGS, ...(settings as any) };
+    const adminConfig = await redis.get("admin:spread:config:v2");
+    
+    if (adminConfig && typeof adminConfig === "object") {
+      const config = adminConfig as any;
+      const metals = config.metals || config;
+      const symbolMap: Record<string, string> = { gold: "AUXG", silver: "AUXS", platinum: "AUXPT", palladium: "AUXPD" };
+      const settings: Record<string, { askAdjust: number; bidAdjust: number }> = {};
+      
+      for (const [metalName, symbol] of Object.entries(symbolMap)) {
+        const metalSpread = metals[metalName];
+        if (metalSpread) {
+          settings[symbol] = { askAdjust: metalSpread.buy || 2, bidAdjust: -(metalSpread.sell || 1) };
+        } else {
+          settings[symbol] = DEFAULT_SETTINGS[symbol];
+        }
+      }
+      return { ...DEFAULT_SETTINGS, ...settings };
     }
     return DEFAULT_SETTINGS;
   } catch (error) {
-    console.error("Redis error:", error);
+    console.error("Redis spread error:", error);
     return DEFAULT_SETTINGS;
   }
 }
+
 
 async function fetchAllGoldApiChanges(): Promise<Record<string, number>> {
   if (Object.keys(goldApiCache).length > 0 && Date.now() - goldApiLastFetch < GOLDAPI_CACHE_DURATION) {
