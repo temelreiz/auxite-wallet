@@ -329,6 +329,7 @@ function formatFee(fee: number): string {
 // COMPONENT PROPS
 // ============================================
 interface AuxiteerTierModalProps {
+  currentTierId?: string;
   isOpen: boolean;
   onClose: () => void;
   userBalance?: number;
@@ -349,6 +350,7 @@ export function AuxiteerTierModal({
   isKycVerified = false,
   hasMetalAsset = false,
   hasActiveEarnLease = false,
+  currentTierId,
 }: AuxiteerTierModalProps) {
   const { language } = useLanguage();
   const { address } = useAccount();
