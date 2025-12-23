@@ -86,7 +86,12 @@ export default function ProfilePage() {
   const { tier: auxiteerTierData, stats: auxiteerStats, isLoading: tierLoading, refetch: refetchTier } = useAuxiteerTier();
   
   // Find the full tier config from AUXITEER_TIERS
-  const currentTier = AUXITEER_TIERS.find(t => t.id === auxiteerTierData?.id) || AUXITEER_TIERS[0];
+  const baseTier = AUXITEER_TIERS.find(t => t.id === auxiteerTierData?.id) || AUXITEER_TIERS[0];
+  const currentTier = {
+    ...baseTier,
+    spread: auxiteerTierData?.spread ? (auxiteerTierData.spread === 0 ? "Custom" : auxiteerTierData.spread.toFixed(2) + "%") : baseTier.spread,
+    fee: auxiteerTierData?.fee ? (auxiteerTierData.fee === 0 ? "Custom" : auxiteerTierData.fee.toFixed(2) + "%") : baseTier.fee,
+  };
 
   useEffect(() => { setMounted(true); }, []);
 
