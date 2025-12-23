@@ -46,7 +46,10 @@ const tradePreviewSchema = z.object({
   fromToken: z.string().min(1).max(10),
   toToken: z.string().min(1).max(10),
   amount: z.coerce.number().positive().max(1000000000),
-  price: z.coerce.number().positive().optional(),
+  price: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined) ? undefined : Number(val),
+    z.number().positive().optional()
+  ),
   address: z.string().optional(), // For tier-based fee preview
 });
 
