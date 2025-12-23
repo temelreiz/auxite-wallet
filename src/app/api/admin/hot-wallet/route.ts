@@ -157,6 +157,18 @@ async function getSOLBalance(): Promise<string> {
 }
 
 // Get all balances with caching
+
+// Timeout wrapper for blockchain calls
+async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  const timeout = new Promise<T>((_, reject) =>
+    setTimeout(() => reject(new Error("Timeout")), ms)
+  );
+  try {
+    return await Promise.race([promise, timeout]);
+  } catch {
+    return fallback;
+  }
+}
 async function getAllBalances(forceRefresh = false): Promise<any> {
   // Check cache first (5 minute TTL)
   if (!forceRefresh) {
@@ -176,6 +188,11 @@ async function getAllBalances(forceRefresh = false): Promise<any> {
 
   // Fetch all balances in parallel
   const [ethData, btcBalance, xrpBalance, solBalance] = await Promise.all([
+    withTimeout(getETHBalance(), 5000, { eth: "0", usdt: "0" }),
+    withTimeout(getBTCBalance(), 5000, "0"),
+    withTimeout(getXRPBalance(), 5000, "0"),
+    withTimeout(getSOLBalance(), 5000, "0"),
+  ].map(p => p)); // Original: [
     getETHBalance(),
     getBTCBalance(),
     getXRPBalance(),
