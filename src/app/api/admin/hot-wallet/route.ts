@@ -48,6 +48,21 @@ const KEYS = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// TIMEOUT WRAPPER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  const timeout = new Promise<T>((_, reject) =>
+    setTimeout(() => reject(new Error("Timeout")), ms)
+  );
+  try {
+    return await Promise.race([promise, timeout]);
+  } catch {
+    return fallback;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // BALANCE FETCHERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -67,7 +82,7 @@ async function getETHBalance(): Promise<{ eth: string; usdt: string }> {
       const ERC20_ABI = ['function balanceOf(address) view returns (uint256)'];
       const usdtContract = new ethers.Contract(USDT_CONTRACT, ERC20_ABI, provider);
       const usdtRaw = await usdtContract.balanceOf(WALLETS.ETH.address);
-      usdtBalance = ethers.formatUnits(usdtRaw, 6); // USDT has 6 decimals
+      usdtBalance = ethers.formatUnits(usdtRaw, 6);
     } catch (e) {
       console.error('USDT balance error:', e);
     }
@@ -81,14 +96,12 @@ async function getETHBalance(): Promise<{ eth: string; usdt: string }> {
 
 async function getBTCBalance(): Promise<string> {
   try {
-    // Using BlockCypher API (free tier: 200 req/hour)
     const response = await fetch(
       `https://api.blockcypher.com/v1/btc/main/addrs/${WALLETS.BTC.address}/balance`
     );
     
     if (response.ok) {
       const data = await response.json();
-      // Balance is in satoshis, convert to BTC
       return (data.balance / 100000000).toFixed(8);
     }
     return '0';
@@ -100,7 +113,6 @@ async function getBTCBalance(): Promise<string> {
 
 async function getXRPBalance(): Promise<string> {
   try {
-    // Using XRP Ledger public API
     const response = await fetch('https://s1.ripple.com:51234/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -116,7 +128,6 @@ async function getXRPBalance(): Promise<string> {
     if (response.ok) {
       const data = await response.json();
       if (data.result?.account_data?.Balance) {
-        // Balance is in drops (1 XRP = 1,000,000 drops)
         return (parseInt(data.result.account_data.Balance) / 1000000).toFixed(6);
       }
     }
@@ -145,7 +156,6 @@ async function getSOLBalance(): Promise<string> {
     if (response.ok) {
       const data = await response.json();
       if (data.result?.value !== undefined) {
-        // Balance is in lamports (1 SOL = 1,000,000,000 lamports)
         return (data.result.value / 1000000000).toFixed(9);
       }
     }
@@ -156,19 +166,10 @@ async function getSOLBalance(): Promise<string> {
   }
 }
 
-// Get all balances with caching
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET ALL BALANCES WITH CACHING
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// Timeout wrapper for blockchain calls
-async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
-  const timeout = new Promise<T>((_, reject) =>
-    setTimeout(() => reject(new Error("Timeout")), ms)
-  );
-  try {
-    return await Promise.race([promise, timeout]);
-  } catch {
-    return fallback;
-  }
-}
 async function getAllBalances(forceRefresh = false): Promise<any> {
   // Check cache first (5 minute TTL)
   if (!forceRefresh) {
@@ -177,26 +178,33 @@ async function getAllBalances(forceRefresh = false): Promise<any> {
       if (cached) {
         const parsed = typeof cached === 'string' ? JSON.parse(cached) : cached;
         const cacheAge = Date.now() - (parsed.timestamp || 0);
-        if (cacheAge < 5 * 60 * 1000) { // 5 minutes
+        if (cacheAge < 5 * 60 * 1000) {
           return parsed;
         }
       }
     } catch (e) {
       console.error('Cache read error:', e);
     }
+    
+    // Return placeholder if no cache (avoid timeout on first load)
+    return {
+      ETH: { address: WALLETS.ETH.address, balance: '0', network: 'Ethereum', explorer: `https://etherscan.io/address/${WALLETS.ETH.address}` },
+      USDT: { address: WALLETS.ETH.address, balance: '0', network: 'Ethereum (ERC-20)', explorer: `https://etherscan.io/address/${WALLETS.ETH.address}` },
+      BTC: { address: WALLETS.BTC.address, balance: '0', network: 'Bitcoin', explorer: `https://www.blockchain.com/btc/address/${WALLETS.BTC.address}` },
+      XRP: { address: WALLETS.XRP.address, balance: '0', network: 'XRP Ledger', memo: WALLETS.XRP.memo, explorer: `https://xrpscan.com/account/${WALLETS.XRP.address}` },
+      SOL: { address: WALLETS.SOL.address, balance: '0', network: 'Solana', explorer: `https://solscan.io/account/${WALLETS.SOL.address}` },
+      timestamp: Date.now(),
+      lastUpdated: new Date().toISOString(),
+      note: 'Bakiyeleri görmek için Yenile butonuna tıklayın',
+    };
   }
 
-  // Fetch all balances in parallel
+  // Fetch all balances in parallel with timeout
   const [ethData, btcBalance, xrpBalance, solBalance] = await Promise.all([
-    withTimeout(getETHBalance(), 5000, { eth: "0", usdt: "0" }),
-    withTimeout(getBTCBalance(), 5000, "0"),
-    withTimeout(getXRPBalance(), 5000, "0"),
-    withTimeout(getSOLBalance(), 5000, "0"),
-  ].map(p => p)); // Original: [
-    getETHBalance(),
-    getBTCBalance(),
-    getXRPBalance(),
-    getSOLBalance(),
+    withTimeout(getETHBalance(), 8000, { eth: '0', usdt: '0' }),
+    withTimeout(getBTCBalance(), 8000, '0'),
+    withTimeout(getXRPBalance(), 8000, '0'),
+    withTimeout(getSOLBalance(), 8000, '0'),
   ]);
 
   const balances = {
@@ -237,7 +245,7 @@ async function getAllBalances(forceRefresh = false): Promise<any> {
 
   // Cache the results
   try {
-    await redis.set(KEYS.CACHED_BALANCES, JSON.stringify(balances), { ex: 300 }); // 5 min TTL
+    await redis.set(KEYS.CACHED_BALANCES, JSON.stringify(balances), { ex: 300 });
   } catch (e) {
     console.error('Cache write error:', e);
   }
@@ -250,11 +258,11 @@ async function getAllBalances(forceRefresh = false): Promise<any> {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function sendETH(toAddress: string, amount: string): Promise<{ success: boolean; txHash?: string; error?: string }> {
-  try {
-    if (!WALLETS.ETH.privateKey) {
-      return { success: false, error: 'ETH private key not configured' };
-    }
+  if (!WALLETS.ETH.privateKey) {
+    return { success: false, error: 'ETH private key not configured' };
+  }
 
+  try {
     const { ethers } = await import('ethers');
     const rpcUrl = process.env.ETHEREUM_RPC_URL || 'https://eth-mainnet.g.alchemy.com/v2/demo';
     const provider = new ethers.JsonRpcProvider(rpcUrl);
@@ -265,100 +273,48 @@ async function sendETH(toAddress: string, amount: string): Promise<{ success: bo
       value: ethers.parseEther(amount),
     });
 
-    const receipt = await tx.wait();
-    return { success: true, txHash: receipt?.hash };
+    await tx.wait();
+    return { success: true, txHash: tx.hash };
   } catch (e: any) {
     return { success: false, error: e.message };
   }
 }
 
 async function sendUSDT(toAddress: string, amount: string): Promise<{ success: boolean; txHash?: string; error?: string }> {
-  try {
-    if (!WALLETS.ETH.privateKey) {
-      return { success: false, error: 'ETH private key not configured' };
-    }
+  if (!WALLETS.ETH.privateKey) {
+    return { success: false, error: 'ETH private key not configured' };
+  }
 
+  try {
     const { ethers } = await import('ethers');
     const rpcUrl = process.env.ETHEREUM_RPC_URL || 'https://eth-mainnet.g.alchemy.com/v2/demo';
     const provider = new ethers.JsonRpcProvider(rpcUrl);
     const wallet = new ethers.Wallet(WALLETS.ETH.privateKey, provider);
 
-    const ERC20_ABI = ['function transfer(address to, uint256 amount) returns (bool)'];
-    const usdtContract = new ethers.Contract(USDT_CONTRACT, ERC20_ABI, wallet);
-
-    const amountUnits = ethers.parseUnits(amount, 6); // USDT has 6 decimals
-    const tx = await usdtContract.transfer(toAddress, amountUnits);
-    const receipt = await tx.wait();
-
-    return { success: true, txHash: receipt?.hash };
+    const ERC20_ABI = [
+      'function transfer(address to, uint256 amount) returns (bool)',
+    ];
+    const contract = new ethers.Contract(USDT_CONTRACT, ERC20_ABI, wallet);
+    
+    const tx = await contract.transfer(toAddress, ethers.parseUnits(amount, 6));
+    await tx.wait();
+    
+    return { success: true, txHash: tx.hash };
   } catch (e: any) {
     return { success: false, error: e.message };
   }
 }
 
 async function sendBTC(toAddress: string, amount: string): Promise<{ success: boolean; txHash?: string; error?: string }> {
-  // BTC transfers require more complex handling with UTXOs
-  // For production, use a service like BlockCypher, BitGo, or run your own node
-  
-  if (!WALLETS.BTC.privateKey) {
-    return { success: false, error: 'BTC private key not configured' };
-  }
-
-  try {
-    // Using BlockCypher API for transaction creation
-    const apiToken = process.env.BLOCKCYPHER_TOKEN || '';
-    
-    // Step 1: Create new transaction skeleton
-    const newTxRes = await fetch(`https://api.blockcypher.com/v1/btc/main/txs/new?token=${apiToken}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        inputs: [{ addresses: [WALLETS.BTC.address] }],
-        outputs: [{ addresses: [toAddress], value: Math.floor(parseFloat(amount) * 100000000) }]
-      })
-    });
-
-    if (!newTxRes.ok) {
-      const error = await newTxRes.json();
-      return { success: false, error: error.error || 'Failed to create BTC transaction' };
-    }
-
-    // For full implementation, you would need to sign the transaction
-    // This requires bitcoinjs-lib or similar library
-    return { success: false, error: 'BTC signing not implemented - use BitGo or similar service for production' };
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
+  return { success: false, error: 'BTC signing requires bitcoinjs-lib - implement in separate service' };
 }
 
-async function sendXRP(toAddress: string, amount: string, destinationTag?: number): Promise<{ success: boolean; txHash?: string; error?: string }> {
-  if (!WALLETS.XRP.secret) {
-    return { success: false, error: 'XRP secret not configured' };
-  }
-
-  try {
-    // Using xrpl.js would be ideal, but for API route we'll use REST API
-    // For production, implement proper signing with xrpl library
-    
-    return { success: false, error: 'XRP signing requires xrpl.js - implement in separate service' };
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
+async function sendXRP(toAddress: string, amount: string, memo?: string): Promise<{ success: boolean; txHash?: string; error?: string }> {
+  return { success: false, error: 'XRP signing requires xrpl.js - implement in separate service' };
 }
 
 async function sendSOL(toAddress: string, amount: string): Promise<{ success: boolean; txHash?: string; error?: string }> {
-  if (!WALLETS.SOL.privateKey) {
-    return { success: false, error: 'SOL private key not configured' };
-  }
-
-  try {
-    // Using @solana/web3.js would be ideal
-    // For production, implement proper signing
-    
-    return { success: false, error: 'SOL signing requires @solana/web3.js - implement in separate service' };
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
+  return { success: false, error: 'SOL signing requires @solana/web3.js - implement in separate service' };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -374,11 +330,7 @@ export async function GET(request: NextRequest) {
     switch (type) {
       case 'balances': {
         const balances = await getAllBalances(refresh);
-        
-        // Get pending withdraws count
         const pendingCount = await redis.llen(KEYS.PENDING_WITHDRAWS) || 0;
-        
-        // Get stats
         const stats = await redis.get(KEYS.WALLET_STATS) || {};
 
         return NextResponse.json({
@@ -475,7 +427,6 @@ export async function POST(request: NextRequest) {
         }
 
         if (result.success) {
-          // Log to history
           const withdrawRecord = {
             id: `wd_${Date.now()}`,
             txHash: result.txHash,
@@ -487,8 +438,6 @@ export async function POST(request: NextRequest) {
             timestamp: new Date().toISOString(),
           };
           await redis.lpush(KEYS.WITHDRAW_HISTORY, JSON.stringify(withdrawRecord));
-          
-          // Clear balance cache
           await redis.del(KEYS.CACHED_BALANCES);
         }
 
@@ -510,20 +459,17 @@ export async function POST(request: NextRequest) {
         };
 
         await redis.lpush(KEYS.PENDING_WITHDRAWS, JSON.stringify(withdrawRequest));
-
         return NextResponse.json({ success: true, request: withdrawRequest });
       }
 
       case 'approve-withdraw': {
         const { withdrawId } = body;
-        
         const pending = await redis.lrange(KEYS.PENDING_WITHDRAWS, 0, -1);
         
         for (const item of pending) {
           const withdraw = typeof item === 'string' ? JSON.parse(item) : item;
           
           if (withdraw.id === withdrawId) {
-            // Process the withdrawal
             let result: { success: boolean; txHash?: string; error?: string };
             
             switch (withdraw.token?.toUpperCase()) {
@@ -547,14 +493,9 @@ export async function POST(request: NextRequest) {
             }
 
             if (result.success) {
-              // Remove from pending
               await redis.lrem(KEYS.PENDING_WITHDRAWS, 1, JSON.stringify(withdraw));
-              
-              // Add to history
               const historyRecord = { ...withdraw, txHash: result.txHash, status: 'completed', processedAt: new Date().toISOString() };
               await redis.lpush(KEYS.WITHDRAW_HISTORY, JSON.stringify(historyRecord));
-              
-              // Clear cache
               await redis.del(KEYS.CACHED_BALANCES);
             }
 
@@ -567,7 +508,6 @@ export async function POST(request: NextRequest) {
 
       case 'cancel-withdraw': {
         const { withdrawId } = body;
-
         const pending = await redis.lrange(KEYS.PENDING_WITHDRAWS, 0, -1);
         
         for (const item of pending) {
