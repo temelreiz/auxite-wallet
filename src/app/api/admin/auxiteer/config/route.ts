@@ -53,7 +53,7 @@ const DEFAULT_TIERS = [
 // GET - Tier config
 export async function GET(request: NextRequest) {
   try {
-    const adminKey = request.headers.get('x-admin-key');
+    const adminKey = request.headers.get('x-admin-key') || request.headers.get('authorization')?.replace('Bearer ', '');
     if (adminKey !== process.env.ADMIN_SECRET) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 // POST - Update tier config
 export async function POST(request: NextRequest) {
   try {
-    const adminKey = request.headers.get('x-admin-key');
+    const adminKey = request.headers.get('x-admin-key') || request.headers.get('authorization')?.replace('Bearer ', '');
     if (adminKey !== process.env.ADMIN_SECRET) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
