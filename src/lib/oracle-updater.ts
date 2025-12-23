@@ -39,6 +39,8 @@ export async function fetchMetalPrices(): Promise<MetalPrices> {
   const prices: any = {};
 
   for (const metal of metals) {
+    // Rate limit: wait 300ms between requests
+    await new Promise(r => setTimeout(r, 300));
     const res = await fetch(`https://www.goldapi.io/api/${metal}/USD`, {
       headers: { 'x-access-token': apiKey }
     });
