@@ -2,6 +2,60 @@
 // Limit Order Management for Auxite
 
 import { getRedis, getUserBalance, incrementBalance, addTransaction } from './redis';
+import { createPublicClient, http, formatUnits } from 'viem';
+import { sepolia } from 'viem/chains';
+
+// Blockchain client for balance checks
+const RPC_URL = process.env.SEPOLIA_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
+const client = createPublicClient({
+  chain: sepolia,
+  transport: http(RPC_URL, { timeout: 10000 }),
+});
+
+const METAL_TOKENS: Record<string, `0x${string}`> = {
+  AUXG: "0xBF74Fc9f0dD50A79f9FaC2e9Aa05a268E3dcE6b6",
+  AUXS: "0x705D9B193e5E349847C2Efb18E68fe989eC2C0e9",
+  AUXPT: "0x1819447f624D8e22C1A4F3B14e96693625B6d74F",
+  AUXPD: "0xb23545dE86bE9F65093D3a51a6ce52Ace0d8935E",
+};
+const USDT_ADDRESS = "0x738e3134d83014B7a63CFF08C13CBBF0671EEeF2" as `0x${string}`;
+
+const ERC20_ABI = [
+  {
+    name: "balanceOf",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ type: "uint256" }],
+  },
+] as const;
+
+// Get blockchain balance for a token
+async function getBlockchainBalance(address: string, token: string): Promise<number> {
+  try {
+    if (token === 'USDT') {
+      const balance = await client.readContract({
+        address: USDT_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "balanceOf",
+        args: [address as `0x${string}`],
+      });
+      return parseFloat(formatUnits(balance, 6));
+    } else if (METAL_TOKENS[token]) {
+      const balance = await client.readContract({
+        address: METAL_TOKENS[token],
+        abi: ERC20_ABI,
+        functionName: "balanceOf",
+        args: [address as `0x${string}`],
+      });
+      return parseFloat(formatUnits(balance, 18));
+    }
+    return 0;
+  } catch (error) {
+    console.error(`Error getting blockchain balance for ${token}:`, error);
+    return 0;
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -13,14 +67,14 @@ export interface LimitOrder {
   type: 'buy' | 'sell';
   metal: 'AUXG' | 'AUXS' | 'AUXPT' | 'AUXPD';
   grams: number;
-  limitPrice: number; // USD per gram
+  limitPrice: number;
   paymentMethod: 'AUXM' | 'USDT' | 'USD';
   status: 'pending' | 'filled' | 'partially_filled' | 'cancelled' | 'expired';
   filledGrams: number;
   filledAt?: string;
   txHash?: string;
   createdAt: string;
-  expiresAt: string; // Default 7 days
+  expiresAt: string;
   updatedAt: string;
 }
 
@@ -57,7 +111,6 @@ export async function createLimitOrder(params: CreateOrderParams): Promise<{
   try {
     const r = getRedis();
     
-    // Validate params
     if (params.grams <= 0) {
       return { success: false, error: 'Invalid amount' };
     }
@@ -65,43 +118,45 @@ export async function createLimitOrder(params: CreateOrderParams): Promise<{
       return { success: false, error: 'Invalid limit price' };
     }
 
-    // Check user balance for buy orders
+    const paymentMethod = params.paymentMethod || 'AUXM';
+    const totalCost = params.grams * params.limitPrice;
+
+    // Check balance for buy orders
     if (params.type === 'buy') {
-      const balance = await getUserBalance(params.address);
-      const totalCost = params.grams * params.limitPrice;
-      
-      const paymentMethod = params.paymentMethod || 'AUXM';
       let availableBalance = 0;
       
-      if (paymentMethod === 'AUXM') {
-        availableBalance = balance.totalAuxm;
-      } else if (paymentMethod === 'USDT') {
-        availableBalance = balance.usdt;
-      } else if (paymentMethod === 'USD') {
-        availableBalance = balance.usd;
+      if (paymentMethod === 'USDT') {
+        // USDT is on blockchain
+        availableBalance = await getBlockchainBalance(params.address, 'USDT');
+      } else {
+        // AUXM and USD are in Redis
+        const balance = await getUserBalance(params.address);
+        availableBalance = paymentMethod === 'AUXM' ? balance.totalAuxm : balance.usd;
       }
       
       if (availableBalance < totalCost) {
         return { success: false, error: `Insufficient ${paymentMethod} balance. Need: $${totalCost.toFixed(2)}, Have: $${availableBalance.toFixed(2)}` };
       }
       
-      // Reserve funds (lock them)
-      const lockField = paymentMethod.toLowerCase() as 'auxm' | 'usdt' | 'usd';
-      await incrementBalance(params.address, { [lockField]: -totalCost });
+      // Only lock Redis-based balances (AUXM, USD)
+      // USDT will be transferred on-chain when order fills
+      if (paymentMethod !== 'USDT') {
+        const lockField = paymentMethod.toLowerCase() as 'auxm' | 'usd';
+        await incrementBalance(params.address, { [lockField]: -totalCost });
+      }
     }
     
     // Check metal balance for sell orders
     if (params.type === 'sell') {
-      const balance = await getUserBalance(params.address);
-      const metalKey = params.metal.toLowerCase() as 'auxg' | 'auxs' | 'auxpt' | 'auxpd';
-      const metalBalance = balance[metalKey];
+      // Metals are on blockchain
+      const metalBalance = await getBlockchainBalance(params.address, params.metal);
       
       if (metalBalance < params.grams) {
         return { success: false, error: `Insufficient ${params.metal} balance. Need: ${params.grams}g, Have: ${metalBalance.toFixed(4)}g` };
       }
       
-      // Reserve metal (lock it)
-      await incrementBalance(params.address, { [metalKey]: -params.grams });
+      // Note: Metal will be transferred on-chain when order fills
+      // We don't lock it in Redis since it's on blockchain
     }
 
     // Generate order ID
@@ -116,7 +171,7 @@ export async function createLimitOrder(params: CreateOrderParams): Promise<{
       metal: params.metal,
       grams: params.grams,
       limitPrice: params.limitPrice,
-      paymentMethod: params.paymentMethod || 'AUXM',
+      paymentMethod: paymentMethod,
       status: 'pending',
       filledGrams: 0,
       createdAt: now.toISOString(),
@@ -126,13 +181,8 @@ export async function createLimitOrder(params: CreateOrderParams): Promise<{
 
     // Save order to Redis
     await r.hset(KEYS.order(orderId), order as unknown as Record<string, unknown>);
-    
-    // Add to user's order list
     await r.lpush(KEYS.userOrders(params.address), orderId);
     
-    // Add to pending orders (sorted by price for matching)
-    // For buy orders: higher price = higher priority (willing to pay more)
-    // For sell orders: lower price = higher priority (willing to sell cheaper)
     const score = params.type === 'buy' ? -params.limitPrice : params.limitPrice;
     await r.zadd(KEYS.pendingOrders(params.metal), { score, member: orderId });
     await r.lpush(KEYS.allPendingOrders(), orderId);
@@ -210,7 +260,6 @@ export async function getUserLimitOrders(
 export async function getPendingOrdersForMetal(metal: string): Promise<LimitOrder[]> {
   try {
     const r = getRedis();
-    // Get all pending order IDs for this metal
     const orderIds = await r.zrange(KEYS.pendingOrders(metal), 0, -1);
     
     const orders: LimitOrder[] = [];
@@ -218,7 +267,6 @@ export async function getPendingOrdersForMetal(metal: string): Promise<LimitOrde
     for (const id of orderIds) {
       const order = await getLimitOrder(String(id));
       if (order && order.status === 'pending') {
-        // Check expiry
         if (new Date(order.expiresAt) < new Date()) {
           await expireOrder(order.id);
         } else {
@@ -258,16 +306,11 @@ export async function cancelLimitOrder(
       return { success: false, error: `Cannot cancel order with status: ${order.status}` };
     }
     
-    // Refund locked funds
-    if (order.type === 'buy') {
+    // Refund locked Redis funds (only AUXM/USD)
+    if (order.type === 'buy' && order.paymentMethod !== 'USDT') {
       const refundAmount = (order.grams - order.filledGrams) * order.limitPrice;
-      const refundField = order.paymentMethod.toLowerCase() as 'auxm' | 'usdt' | 'usd';
+      const refundField = order.paymentMethod.toLowerCase() as 'auxm' | 'usd';
       await incrementBalance(order.address, { [refundField]: refundAmount });
-    } else {
-      // Refund locked metal
-      const refundGrams = order.grams - order.filledGrams;
-      const metalKey = order.metal.toLowerCase() as 'auxg' | 'auxs' | 'auxpt' | 'auxpd';
-      await incrementBalance(order.address, { [metalKey]: refundGrams });
     }
     
     // Update order status
@@ -276,7 +319,6 @@ export async function cancelLimitOrder(
       updatedAt: new Date().toISOString(),
     });
     
-    // Remove from pending
     await r.zrem(KEYS.pendingOrders(order.metal), orderId);
     
     console.log(`❌ Limit order cancelled: ${orderId}`);
@@ -300,15 +342,11 @@ async function expireOrder(orderId: string): Promise<void> {
     
     if (!order || order.status !== 'pending') return;
     
-    // Refund locked funds
-    if (order.type === 'buy') {
+    // Refund locked Redis funds (only AUXM/USD)
+    if (order.type === 'buy' && order.paymentMethod !== 'USDT') {
       const refundAmount = (order.grams - order.filledGrams) * order.limitPrice;
-      const refundField = order.paymentMethod.toLowerCase() as 'auxm' | 'usdt' | 'usd';
+      const refundField = order.paymentMethod.toLowerCase() as 'auxm' | 'usd';
       await incrementBalance(order.address, { [refundField]: refundAmount });
-    } else {
-      const refundGrams = order.grams - order.filledGrams;
-      const metalKey = order.metal.toLowerCase() as 'auxg' | 'auxs' | 'auxpt' | 'auxpd';
-      await incrementBalance(order.address, { [metalKey]: refundGrams });
     }
     
     await r.hset(KEYS.order(orderId), {
@@ -346,7 +384,6 @@ export async function fillLimitOrder(
       return { success: false, error: `Order not pending: ${order.status}` };
     }
     
-    // Verify price condition
     if (order.type === 'buy' && currentPrice > order.limitPrice) {
       return { success: false, error: 'Price too high for buy order' };
     }
@@ -356,31 +393,36 @@ export async function fillLimitOrder(
     
     const gramsToFill = order.grams - order.filledGrams;
     
-    // Execute the trade
+    // For USDT orders, on-chain execution would happen here
+    // For now, we just update Redis balances for non-USDT orders
+    
     if (order.type === 'buy') {
-      // User receives metal (funds already locked)
       const metalKey = order.metal.toLowerCase() as 'auxg' | 'auxs' | 'auxpt' | 'auxpd';
-      await incrementBalance(order.address, { [metalKey]: gramsToFill });
       
-      // Calculate actual cost at current price (might be less than limit)
-      const actualCost = gramsToFill * currentPrice;
-      const lockedAmount = gramsToFill * order.limitPrice;
-      const refund = lockedAmount - actualCost;
-      
-      // Refund difference if current price is lower
-      if (refund > 0) {
-        const refundField = order.paymentMethod.toLowerCase() as 'auxm' | 'usdt' | 'usd';
-        await incrementBalance(order.address, { [refundField]: refund });
+      if (order.paymentMethod !== 'USDT') {
+        // Redis-based: credit metal
+        await incrementBalance(order.address, { [metalKey]: gramsToFill });
+        
+        const actualCost = gramsToFill * currentPrice;
+        const lockedAmount = gramsToFill * order.limitPrice;
+        const refund = lockedAmount - actualCost;
+        
+        if (refund > 0) {
+          const refundField = order.paymentMethod.toLowerCase() as 'auxm' | 'usd';
+          await incrementBalance(order.address, { [refundField]: refund });
+        }
       }
+      // Note: USDT orders need on-chain execution (not implemented yet)
       
     } else {
-      // Sell order: User receives payment (metal already locked)
-      const payout = gramsToFill * currentPrice;
-      const payoutField = order.paymentMethod.toLowerCase() as 'auxm' | 'usdt' | 'usd';
-      await incrementBalance(order.address, { [payoutField]: payout });
+      // Sell order
+      if (order.paymentMethod !== 'USDT') {
+        const payout = gramsToFill * currentPrice;
+        const payoutField = order.paymentMethod.toLowerCase() as 'auxm' | 'usd';
+        await incrementBalance(order.address, { [payoutField]: payout });
+      }
     }
     
-    // Update order
     await r.hset(KEYS.order(orderId), {
       status: 'filled',
       filledGrams: order.grams,
@@ -389,10 +431,8 @@ export async function fillLimitOrder(
       updatedAt: new Date().toISOString(),
     });
     
-    // Remove from pending
     await r.zrem(KEYS.pendingOrders(order.metal), orderId);
     
-    // Add transaction record
     await addTransaction(order.address, {
       type: 'swap',
       fromToken: order.type === 'buy' ? order.paymentMethod : order.metal,
@@ -409,7 +449,7 @@ export async function fillLimitOrder(
       },
     });
     
-    console.log(`✅ Limit order filled: ${orderId} - ${order.type} ${gramsToFill}g ${order.metal} @ $${currentPrice} (limit: $${order.limitPrice})`);
+    console.log(`✅ Limit order filled: ${orderId} - ${order.type} ${gramsToFill}g ${order.metal} @ $${currentPrice}`);
     
     return { success: true };
     
@@ -425,8 +465,8 @@ export async function fillLimitOrder(
 
 export async function checkAndFillMatchingOrders(
   metal: string,
-  currentAskPrice: number, // Price to buy from platform
-  currentBidPrice: number  // Price to sell to platform
+  currentAskPrice: number,
+  currentBidPrice: number
 ): Promise<{ filled: number; errors: string[] }> {
   const results = { filled: 0, errors: [] as string[] };
   
@@ -438,13 +478,11 @@ export async function checkAndFillMatchingOrders(
       let executionPrice = 0;
       
       if (order.type === 'buy') {
-        // Buy order fills when current ask price <= limit price
         if (currentAskPrice <= order.limitPrice) {
           shouldFill = true;
           executionPrice = currentAskPrice;
         }
       } else {
-        // Sell order fills when current bid price >= limit price
         if (currentBidPrice >= order.limitPrice) {
           shouldFill = true;
           executionPrice = currentBidPrice;
