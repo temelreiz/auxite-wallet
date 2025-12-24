@@ -608,6 +608,9 @@ export default function AdminDashboard() {
     if (activeTab === "wallet") {
       intervals.push(setInterval(() => loadHotWallet(false), 300000));
     }
+    if (activeTab === "users") {
+      loadUsers();
+    }
     if (activeTab === "analytics") {
       intervals.push(setInterval(loadAnalytics, 120000));
     }
@@ -867,6 +870,21 @@ export default function AdminDashboard() {
     }
   }, [analyticsRange, authenticated, activeTab]);
 
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // USERS FUNCTIONS
+  // ═══════════════════════════════════════════════════════════════════════════════
+  const loadUsers = async () => {
+    try {
+      const res = await fetch("/api/admin/users", { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.users) setUsers(data.users);
+      }
+    } catch (e) {
+      console.error("Failed to load users:", e);
+    }
+  };
   // ═══════════════════════════════════════════════════════════════════════════════
   // AUXITEER FUNCTIONS
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -2961,7 +2979,24 @@ export default function AdminDashboard() {
                   onChange={(e) => setUserSearch(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white mb-4"
                 />
-                <p className="text-slate-400 text-center py-8">Kullanıcı listesi yükleniyor...</p>
+                {users.length === 0 ? (
+                  <p className="text-slate-400 text-center py-8">Kullanıcı bulunamadı</p>
+                ) : (
+                  <div className="space-y-3">
+                    {users.filter(u => !userSearch || u.walletAddress?.toLowerCase().includes(userSearch.toLowerCase())).map((user: any) => (
+                      <div key={user.walletAddress} className="p-4 bg-slate-800/50 rounded-xl flex items-center justify-between">
+                        <div>
+                          <p className="font-mono text-sm">{user.walletAddress?.slice(0, 10)}...{user.walletAddress?.slice(-6)}</p>
+                          <p className="text-xs text-slate-400">Tier: {user.auxiteerTier || "Regular"}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm">{(user.balance?.auxm || 0).toFixed(2)} AUXM</p>
+                          <p className="text-xs text-slate-400">{user.registeredAt ? new Date(user.registeredAt).toLocaleDateString() : "-"}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
