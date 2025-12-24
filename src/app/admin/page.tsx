@@ -1964,7 +1964,7 @@ export default function AdminDashboard() {
                       value={(newBanner.subtitle as any)?.[bannerLangTab] || ''}
                       onChange={(e) => setNewBanner({ 
                         ...newBanner, 
-                        subtitle: { ...newBanner.subtitle, [bannerLangTab]: e.target.value } 
+                        subtitle: { tr: newBanner.subtitle?.tr || '', en: newBanner.subtitle?.en || '', ...newBanner.subtitle, [bannerLangTab]: e.target.value } 
                       })}
                       className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
                       dir={bannerLangTab === 'ar' ? 'rtl' : 'ltr'}
