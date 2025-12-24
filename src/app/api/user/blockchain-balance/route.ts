@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createPublicClient, http, formatUnits } from "viem";
 import { sepolia } from "viem/chains";
 
+const RPC_URL = process.env.SEPOLIA_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
+
 const client = createPublicClient({
   chain: sepolia,
-  transport: http(),
+  transport: http(RPC_URL, { timeout: 10000 }),
 });
 
 const METAL_TOKENS: Record<string, `0x${string}`> = {
@@ -33,10 +35,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const balances: Record<string, number> = {};
+    const balances: Record<string, number> = {
+      auxg: 0, auxs: 0, auxpt: 0, auxpd: 0, usdt: 0, eth: 0,
+    };
 
-    // Get metal balances (18 decimals)
-    for (const [symbol, tokenAddress] of Object.entries(METAL_TOKENS)) {
+    const promises = Object.entries(METAL_TOKENS).map(async ([symbol, tokenAddress]) => {
       try {
         const balance = await client.readContract({
           address: tokenAddress,
@@ -44,32 +47,29 @@ export async function GET(request: NextRequest) {
           functionName: "balanceOf",
           args: [address as `0x${string}`],
         });
-        balances[symbol.toLowerCase()] = parseFloat(formatUnits(balance, 18));
-      } catch (e) {
-        balances[symbol.toLowerCase()] = 0;
+        return { symbol: symbol.toLowerCase(), balance: parseFloat(formatUnits(balance, 18)) };
+      } catch {
+        return { symbol: symbol.toLowerCase(), balance: 0 };
       }
-    }
+    });
 
-    // Get USDT balance (6 decimals)
-    try {
-      const usdtBalance = await client.readContract({
+    promises.push(
+      client.readContract({
         address: USDT_ADDRESS,
         abi: ERC20_ABI,
         functionName: "balanceOf",
         args: [address as `0x${string}`],
-      });
-      balances.usdt = parseFloat(formatUnits(usdtBalance, 6));
-    } catch (e) {
-      balances.usdt = 0;
-    }
+      }).then(b => ({ symbol: "usdt", balance: parseFloat(formatUnits(b, 6)) })).catch(() => ({ symbol: "usdt", balance: 0 }))
+    );
 
-    // Get ETH balance
-    try {
-      const ethBalance = await client.getBalance({ address: address as `0x${string}` });
-      balances.eth = parseFloat(formatUnits(ethBalance, 18));
-    } catch (e) {
-      balances.eth = 0;
-    }
+    promises.push(
+      client.getBalance({ address: address as `0x${string}` })
+        .then(b => ({ symbol: "eth", balance: parseFloat(formatUnits(b, 18)) }))
+        .catch(() => ({ symbol: "eth", balance: 0 }))
+    );
+
+    const results = await Promise.all(promises);
+    results.forEach(r => { balances[r.symbol] = r.balance; });
 
     return NextResponse.json({
       success: true,
@@ -79,6 +79,11 @@ export async function GET(request: NextRequest) {
       timestamp: Date.now(),
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Blockchain balance error:", error);
+    return NextResponse.json({
+      success: false,
+      error: error.message,
+      balances: { auxg: 0, auxs: 0, auxpt: 0, auxpd: 0, usdt: 0, eth: 0 },
+    }, { status: 200 });
   }
 }
