@@ -26,10 +26,10 @@ export function DynamicBanner() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    loadBanners();
+    loadBanners(language);
   }, [language]);
 
-  const loadBanners = async () => {
+  const loadBanners = async (lang: string) => {
     try {
       const res = await fetch("/api/mobile/banners?active=true");
       const data = await res.json();
@@ -38,8 +38,8 @@ export function DynamicBanner() {
         .filter((b: any) => b.active)
         .map((b: any) => ({
           ...b,
-          title: typeof b.title === 'object' ? (b.title[language] || b.title.en || b.title.tr) : b.title,
-          subtitle: typeof b.subtitle === 'object' ? (b.subtitle[language] || b.subtitle.en || b.subtitle.tr) : b.subtitle,
+          title: typeof b.title === 'object' ? (b.title[lang] || b.title.en || b.title.tr) : b.title,
+          subtitle: typeof b.subtitle === 'object' ? (b.subtitle[lang] || b.subtitle.en || b.subtitle.tr) : b.subtitle,
         }))
         .sort((a: Banner, b: Banner) => b.priority - a.priority);
       
