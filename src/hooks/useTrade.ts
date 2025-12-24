@@ -6,10 +6,10 @@ import { parseUnits, formatUnits } from "viem";
 
 // Metal token addresses
 const METAL_TOKENS: Record<string, `0x${string}`> = {
-  AUXG: (process.env.NEXT_PUBLIC_AUXG_ADDRESS || "0x3F8067C9E3706D16E1aF0C6Eba8688d6154b9a7a") as `0x${string}`,
-  AUXS: (process.env.NEXT_PUBLIC_AUXS_ADDRESS || "0x0b43Da9aaf53b8AfA430683bCbD8cB89622C53a3") as `0x${string}`,
-  AUXPT: (process.env.NEXT_PUBLIC_AUXPT_ADDRESS || "0xcd14F991C9de712C7665e9d138A31d098207F649") as `0x${string}`,
-  AUXPD: (process.env.NEXT_PUBLIC_AUXPD_ADDRESS || "0x7619BAcf538F9FA07cf428dC57897aEfF975594b") as `0x${string}`,
+  AUXG: (process.env.NEXT_PUBLIC_AUXG_ADDRESS || "0xBF74Fc9f0dD50A79f9FaC2e9Aa05a268E3dcE6b6") as `0x${string}`,
+  AUXS: (process.env.NEXT_PUBLIC_AUXS_ADDRESS || "0x705D9B193e5E349847C2Efb18E68fe989eC2C0e9") as `0x${string}`,
+  AUXPT: (process.env.NEXT_PUBLIC_AUXPT_ADDRESS || "0x1819447f624D8e22C1A4F3B14e96693625B6d74F") as `0x${string}`,
+  AUXPD: (process.env.NEXT_PUBLIC_AUXPD_ADDRESS || "0xb23545dE86bE9F65093D3a51a6ce52Ace0d8935E") as `0x${string}`,
 };
 
 // USDT address on Sepolia (mock for testing)
@@ -17,6 +17,9 @@ const USDT_ADDRESS = "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06" as `0x${string
 
 // Treasury/Exchange address (where tokens are bought from/sold to)
 const TREASURY_ADDRESS = "0xD24B2bca1E0b58a2EAE5b1184871219f9a8EE944" as `0x${string}`;
+
+// Gas limit for ERC20 operations
+const GAS_LIMIT = BigInt(100000);
 
 const ERC20_ABI = [
   {
@@ -124,7 +127,6 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
       setStep("approving");
       setErrorMessage("");
 
-      const metalAmount = parseUnits(amountInGrams.toString(), 18);
       const usdtAmount = parseUnits((amountInGrams * pricePerGram).toFixed(6), 6); // USDT has 6 decimals
 
       // Step 1: Approve USDT spending
@@ -133,6 +135,7 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
         abi: ERC20_ABI,
         functionName: "approve",
         args: [TREASURY_ADDRESS, usdtAmount],
+        gas: GAS_LIMIT,
       });
 
     } catch (error: any) {
@@ -169,6 +172,7 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
         abi: ERC20_ABI,
         functionName: "transfer",
         args: [TREASURY_ADDRESS, metalAmount],
+        gas: GAS_LIMIT,
       });
 
     } catch (error: any) {
