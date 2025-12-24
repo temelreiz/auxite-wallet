@@ -2983,10 +2983,10 @@ export default function AdminDashboard() {
                   <p className="text-slate-400 text-center py-8">Kullanıcı bulunamadı</p>
                 ) : (
                   <div className="space-y-3">
-                    {users.filter(u => !userSearch || u.walletAddress?.toLowerCase().includes(userSearch.toLowerCase())).map((user: any) => (
-                      <div key={user.walletAddress} className="p-4 bg-slate-800/50 rounded-xl flex items-center justify-between">
+                    {users.filter(u => !userSearch || u.address?.toLowerCase().includes(userSearch.toLowerCase())).map((user: any) => (
+                      <div key={user.address} className="p-4 bg-slate-800/50 rounded-xl flex items-center justify-between">
                         <div>
-                          <p className="font-mono text-sm">{user.walletAddress?.slice(0, 10)}...{user.walletAddress?.slice(-6)}</p>
+                          <p className="font-mono text-sm">{user.address?.slice(0, 10)}...{user.address?.slice(-6)}</p>
                           <p className="text-xs text-slate-400">Tier: {user.auxiteerTier || "Regular"}</p>
                         </div>
                         <div className="text-right">

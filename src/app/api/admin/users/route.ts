@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
           const balance = balanceData ? (typeof balanceData === 'string' ? JSON.parse(balanceData) : balanceData) : {};
           
           const userWithBalance = {
-            walletAddress: address,
+            address: address,
             ...user,
             balance,
           };
