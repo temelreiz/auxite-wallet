@@ -18,7 +18,7 @@ interface Banner {
 const AUTO_SCROLL_INTERVAL = 8000;
 
 export function DynamicBanner() {
-  const { language } = useLanguage();
+  const { lang: language } = useLanguage();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
