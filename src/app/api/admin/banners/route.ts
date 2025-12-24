@@ -42,6 +42,7 @@ const DEFAULT_BANNERS: BannersData = {
       active: true,
       priority: 100,
       createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
     {
@@ -55,6 +56,7 @@ const DEFAULT_BANNERS: BannersData = {
       active: true,
       priority: 90,
       createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
   ],
@@ -164,6 +166,7 @@ export async function POST(request: NextRequest) {
           active: banner.active !== false,
           priority: banner.priority || 50,
           createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
         bannersData.banners.push(newBanner);
         break;
