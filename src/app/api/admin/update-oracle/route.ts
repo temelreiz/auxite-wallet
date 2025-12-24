@@ -3,22 +3,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { updateOraclePrices, fetchMetalPrices, getOraclePrices } from '@/lib/oracle-updater';
 
 // GET - Check current prices
+// GET - Check current oracle prices (no GoldAPI call)
 export async function GET() {
   try {
-    const [apiPrices, oraclePrices] = await Promise.all([
-      fetchMetalPrices(),
-      getOraclePrices(),
-    ]);
-
+    const oraclePrices = await getOraclePrices();
+    
     return NextResponse.json({
-      api: {
-        gold: (apiPrices.gold / 31.1035).toFixed(2),
-        silver: (apiPrices.silver / 31.1035).toFixed(2),
-        platinum: (apiPrices.platinum / 31.1035).toFixed(2),
-        palladium: (apiPrices.palladium / 31.1035).toFixed(2),
-      },
       oracle: oraclePrices,
-      needsUpdate: Math.abs(apiPrices.gold / 31.1035 - oraclePrices.gold) > 1,
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
