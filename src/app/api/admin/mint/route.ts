@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 
 const CONTRACTS = {
-  AUXG: process.env.NEXT_PUBLIC_AUXG_ADDRESS,
-  AUXS: process.env.NEXT_PUBLIC_AUXS_ADDRESS,
-  AUXPT: process.env.NEXT_PUBLIC_AUXPT_ADDRESS,
-  AUXPD: process.env.NEXT_PUBLIC_AUXPD_ADDRESS,
+  AUXG: process.env.NEXT_PUBLIC_AUXG_ADDRESS || "0xBF74Fc9f0dD50A79f9FaC2e9Aa05a268E3dcE6b6",
+  AUXS: process.env.NEXT_PUBLIC_AUXS_ADDRESS || "0x705D9B193e5E349847C2Efb18E68fe989eC2C0e9",
+  AUXPT: process.env.NEXT_PUBLIC_AUXPT_ADDRESS || "0x1819447f624D8e22C1A4F3B14e96693625B6d74F",
+  AUXPD: process.env.NEXT_PUBLIC_AUXPD_ADDRESS || "0xb23545dE86bE9F65093D3a51a6ce52Ace0d8935E",
 };
 
 const MINT_ABI = [

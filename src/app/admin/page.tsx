@@ -2896,7 +2896,8 @@ export default function AdminDashboard() {
                     >
                       <option>Zurich Vault</option>
                       <option>London Vault</option>
-                      <option>Singapore Vault</option>
+                      <option>Istanbul Vault</option>
+                      <option>Dubai Vault</option>
                     </select>
                   </div>
                 </div>
