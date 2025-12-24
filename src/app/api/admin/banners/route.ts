@@ -154,15 +154,20 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case "add": {
         const newBanner: Banner = {
-          ...banner,
           id: banner.id || `banner-${Date.now()}`,
+          title: { tr: banner.titleTr || banner.title?.tr || "", en: banner.titleEn || banner.title?.en || "" },
+          subtitle: { tr: banner.subtitleTr || banner.subtitle?.tr || "", en: banner.subtitleEn || banner.subtitle?.en || "" },
+          backgroundColor: banner.bgColor || banner.backgroundColor || "#10b981",
+          textColor: banner.textColor || "#ffffff",
+          actionType: banner.actionType || "none",
+          actionValue: banner.actionValue || "",
+          active: banner.active !== false,
+          priority: banner.priority || 50,
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
         };
         bannersData.banners.push(newBanner);
         break;
       }
-      
       case "update": {
         const index = bannersData.banners.findIndex((b) => b.id === bannerId);
         if (index === -1) {
