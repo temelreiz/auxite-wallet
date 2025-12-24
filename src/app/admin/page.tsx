@@ -129,8 +129,8 @@ interface PushNotification {
 // NEW: Banner Type
 interface Banner {
   id: string;
-  title: { tr: string; en: string };
-  subtitle?: { tr: string; en: string };
+  title: { tr: string; en: string; de?: string; fr?: string; ar?: string; ru?: string };
+  subtitle?: { tr: string; en: string; de?: string; fr?: string; ar?: string; ru?: string };
   imageUrl?: string;
   backgroundColor: string;
   textColor: string;
@@ -169,7 +169,7 @@ interface Campaign {
 // NEW: Alert/Announcement Type
 interface Announcement {
   id: string;
-  title: { tr: string; en: string };
+  title: { tr: string; en: string; de?: string; fr?: string; ar?: string; ru?: string };
   message: { tr: string; en: string };
   type: 'info' | 'warning' | 'success' | 'error' | 'maintenance';
   priority: 'low' | 'medium' | 'high' | 'critical';
@@ -521,6 +521,7 @@ export default function AdminDashboard() {
     platform: 'all',
   });
   const [bannerSaving, setBannerSaving] = useState(false);
+  const [bannerLangTab, setBannerLangTab] = useState("tr");
 
   // NEW: Campaigns State
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -1917,45 +1918,78 @@ export default function AdminDashboard() {
               <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
                 <h3 className="font-semibold mb-4">Yeni Banner Ekle</h3>
                 
+                {/* Dil Seçici Tabs */}
+                <div className="flex gap-1 mb-4 flex-wrap">
+                  {['TR', 'EN', 'DE', 'FR', 'AR', 'RU'].map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => setBannerLangTab(lang.toLowerCase())}
+                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                        bannerLangTab === lang.toLowerCase()
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      }`}
+                    >
+                      {lang}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Başlık - Aktif Dil */}
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">Başlık (TR) *</label>
+                    <label className="block text-xs text-slate-400 mb-1">
+                      Başlık ({bannerLangTab.toUpperCase()}) {['tr', 'en'].includes(bannerLangTab) && '*'}
+                    </label>
                     <input
                       type="text"
-                      value={newBanner.title?.tr || ''}
-                      onChange={(e) => setNewBanner({ ...newBanner, title: { ...newBanner.title!, tr: e.target.value } })}
-                      placeholder="🎉 Hoş Geldiniz!"
+                      value={(newBanner.title as any)?.[bannerLangTab] || ''}
+                      onChange={(e) => setNewBanner({ 
+                        ...newBanner, 
+                        title: { ...newBanner.title!, [bannerLangTab]: e.target.value } 
+                      })}
+                      placeholder={bannerLangTab === 'tr' ? '🎉 Hoş Geldiniz!' : bannerLangTab === 'en' ? '🎉 Welcome!' : bannerLangTab === 'de' ? '🎉 Willkommen!' : bannerLangTab === 'fr' ? '🎉 Bienvenue!' : bannerLangTab === 'ar' ? '🎉 مرحباً!' : '🎉 Добро пожаловать!'}
                       className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
+                      dir={bannerLangTab === 'ar' ? 'rtl' : 'ltr'}
                     />
                   </div>
+                  
+                  {/* Alt Başlık - Aktif Dil */}
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">Başlık (EN) *</label>
+                    <label className="block text-xs text-slate-400 mb-1">
+                      Alt Başlık ({bannerLangTab.toUpperCase()})
+                    </label>
                     <input
                       type="text"
-                      value={newBanner.title?.en || ''}
-                      onChange={(e) => setNewBanner({ ...newBanner, title: { ...newBanner.title!, en: e.target.value } })}
-                      placeholder="🎉 Welcome!"
+                      value={(newBanner.subtitle as any)?.[bannerLangTab] || ''}
+                      onChange={(e) => setNewBanner({ 
+                        ...newBanner, 
+                        subtitle: { ...newBanner.subtitle, [bannerLangTab]: e.target.value } 
+                      })}
                       className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
+                      dir={bannerLangTab === 'ar' ? 'rtl' : 'ltr'}
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs text-slate-400 mb-1">Alt Başlık (TR)</label>
-                    <input
-                      type="text"
-                      value={newBanner.subtitle?.tr || ''}
-                      onChange={(e) => setNewBanner({ ...newBanner, subtitle: { tr: e.target.value, en: newBanner.subtitle?.en || '' } })}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
-                    />
+
+                  {/* Dil Durumu Göstergesi */}
+                  <div className="md:col-span-2">
+                    <p className="text-xs text-slate-500 mb-2">Dil Durumu:</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {['tr', 'en', 'de', 'fr', 'ar', 'ru'].map((lang) => (
+                        <span 
+                          key={lang}
+                          className={`px-2 py-0.5 rounded text-xs ${
+                            (newBanner.title as any)?.[lang] 
+                              ? 'bg-emerald-500/20 text-emerald-400' 
+                              : 'bg-slate-700 text-slate-500'
+                          }`}
+                        >
+                          {lang.toUpperCase()}: {(newBanner.title as any)?.[lang] ? '✓' : '—'}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs text-slate-400 mb-1">Alt Başlık (EN)</label>
-                    <input
-                      type="text"
-                      value={newBanner.subtitle?.en || ''}
-                      onChange={(e) => setNewBanner({ ...newBanner, subtitle: { tr: newBanner.subtitle?.tr || '', en: e.target.value } })}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
-                    />
-                  </div>
+
                   <div>
                     <label className="block text-xs text-slate-400 mb-1">Arka Plan Rengi</label>
                     <div className="flex gap-2">
@@ -1999,16 +2033,15 @@ export default function AdminDashboard() {
 
                 {/* Preview */}
                 <div className="mt-4 p-4 bg-slate-800/50 rounded-xl">
-                  <p className="text-xs text-slate-400 mb-2">Önizleme</p>
+                  <p className="text-xs text-slate-400 mb-2">Önizleme ({bannerLangTab.toUpperCase()})</p>
                   <div className="h-20 rounded-lg flex items-center justify-between px-4" style={{ backgroundColor: newBanner.backgroundColor || '#10b981', color: newBanner.textColor || '#ffffff' }}>
-                    <div>
-                      <p className="font-semibold">{newBanner.title?.tr || 'Banner Başlığı'}</p>
-                      <p className="text-sm opacity-80">{newBanner.subtitle?.tr || 'Alt başlık'}</p>
+                    <div style={{ direction: bannerLangTab === 'ar' ? 'rtl' : 'ltr' }}>
+                      <p className="font-semibold">{(newBanner.title as any)?.[bannerLangTab] || 'Banner Başlığı'}</p>
+                      <p className="text-sm opacity-80">{(newBanner.subtitle as any)?.[bannerLangTab] || 'Alt başlık'}</p>
                     </div>
                     {newBanner.actionType !== 'none' && <span className="text-xl">→</span>}
                   </div>
                 </div>
-
                 <button onClick={handleAddBanner} disabled={bannerSaving} className="mt-4 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white font-medium disabled:opacity-50">
                   {bannerSaving ? "Ekleniyor..." : "Banner Ekle"}
                 </button>

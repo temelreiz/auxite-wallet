@@ -3,7 +3,7 @@ import { kv } from "@vercel/kv";
 
 interface Banner {
   id: string;
-  title: { tr: string; en: string };
+  title: { tr: string; en: string; de?: string; fr?: string; ar?: string; ru?: string };
   subtitle?: { tr: string; en: string };
   imageUrl?: string;
   backgroundColor: string;
@@ -28,8 +28,8 @@ const BANNERS_KEY = "mobile:banners";
 const DEFAULT_BANNERS: Banner[] = [
   {
     id: "welcome-banner",
-    title: { tr: "Auxite'e Hoş Geldiniz! 🎉", en: "Welcome to Auxite! 🎉" },
-    subtitle: { tr: "Değerli metal yatırımına başlayın", en: "Start investing in precious metals" },
+    title: { tr: "Auxite'e Hoş Geldiniz! 🎉", en: "Welcome to Auxite! 🎉", de: "Willkommen bei Auxite! 🎉", fr: "Bienvenue sur Auxite! 🎉", ar: "مرحباً بك في Auxite! 🎉", ru: "Добро пожаловать в Auxite! 🎉" },
+    subtitle: { tr: "Değerli metal yatırımına başlayın", en: "Start investing in precious metals", de: "Beginnen Sie mit Edelmetall-Investitionen", fr: "Commencez à investir dans les métaux précieux", ar: "ابدأ الاستثمار في المعادن الثمينة", ru: "Начните инвестировать в драгоценные металлы" },
     backgroundColor: "#8b5cf6",
     textColor: "#ffffff",
     actionType: "screen",
@@ -41,8 +41,8 @@ const DEFAULT_BANNERS: Banner[] = [
   },
   {
     id: "auxm-bonus",
-    title: { tr: "🎁 %2 AUXM Bonus", en: "🎁 2% AUXM Bonus" },
-    subtitle: { tr: "AUXM ile işlem yap, bonus kazan!", en: "Trade with AUXM, earn bonus!" },
+    title: { tr: "🎁 %2 AUXM Bonus", en: "🎁 2% AUXM Bonus", de: "🎁 2% AUXM Bonus", fr: "🎁 2% Bonus AUXM", ar: "🎁 مكافأة AUXM 2%", ru: "🎁 2% бонус AUXM" },
+    subtitle: { tr: "AUXM ile işlem yap, bonus kazan!", en: "Trade with AUXM, earn bonus!", de: "Handel mit AUXM, verdiene Bonus!", fr: "Tradez avec AUXM, gagnez des bonus!", ar: "تداول باستخدام AUXM واربح مكافآت!", ru: "Торгуйте с AUXM, получайте бонусы!" },
     backgroundColor: "#10b981",
     textColor: "#ffffff",
     actionType: "screen",
