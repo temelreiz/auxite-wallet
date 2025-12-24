@@ -28,9 +28,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { to, amount, metal, custodian } = body;
+    const { address, to, amount, metal, custodian } = body;
+    const recipient = to || address;
 
-    if (!to || !amount || !metal) {
+    if (!recipient || !amount || !metal) {
       return NextResponse.json({ error: 'Missing required fields: to, amount, metal' }, { status: 400 });
     }
 
@@ -57,10 +58,10 @@ export async function POST(request: NextRequest) {
     let tx;
     if (custodian) {
       // V7 with vault assignment
-      tx = await contract.mintWithAllocation(to, amountWei, custodian);
+      tx = await contract.mintWithAllocation(recipient, amountWei, custodian);
     } else {
       // Simple mint
-      tx = await contract.mint(to, amountWei);
+      tx = await contract.mint(recipient, amountWei);
     }
 
     // Don't wait for confirmation to avoid timeout
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
       success: true,
       txHash: tx.hash,
       metal,
-      to,
+      recipient,
       amount,
       custodian: custodian || 'N/A',
       message: `Minting ${amount}g ${metal} to ${to}`,
