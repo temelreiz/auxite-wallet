@@ -67,6 +67,15 @@ export function DynamicBanner() {
     };
   }, [banners.length]);
 
+  const handleClick = () => {
+    if (!banners.length) return;
+    const currentBanner = banners[activeIndex];
+    if (currentBanner.actionType === 'none') return;
+    if (currentBanner.actionType === 'screen' && currentBanner.actionValue) {
+      window.location.href = `/${currentBanner.actionValue}`;
+    }
+  };
+
   if (loading) {
     return (
       <div className="h-20 bg-slate-800/50 rounded-xl animate-pulse" />
@@ -80,7 +89,7 @@ export function DynamicBanner() {
         style={{ backgroundColor: "#10b981" }}
       >
         <div>
-          <p className="text-white font-bold text-base">Auxite'e Hoş Geldiniz! 🎉</p>
+          <p className="text-white font-bold text-base">Auxite&apos;e Hoş Geldiniz! 🎉</p>
           <p className="text-white/80 text-sm">Değerli metal yatırımlarınızı dijitalleştirin</p>
         </div>
       </div>
@@ -88,17 +97,14 @@ export function DynamicBanner() {
   }
 
   const currentBanner = banners[activeIndex];
+  const isClickable = currentBanner.actionType !== 'none';
 
   return (
     <div className="space-y-2">
       <div
-        className={`h-20 rounded-xl flex items-center justify-between px-5 cursor-pointer transition-opacity duration-300 ${fade ? 'opacity-100' : 'opacity-0'}`}
+        className={`h-20 rounded-xl flex items-center justify-between px-5 transition-opacity duration-300 ${fade ? 'opacity-100' : 'opacity-0'} ${isClickable ? 'cursor-pointer hover:opacity-90' : ''}`}
         style={{ backgroundColor: currentBanner.backgroundColor || "#10b981" }}
-        onClick={() => {
-          if (currentBanner.actionType === 'screen' && currentBanner.actionValue) {
-            window.location.href = `/${currentBanner.actionValue}`;
-          }
-        }}
+        onClick={handleClick}
       >
         <div className="flex-1">
           <p 
@@ -116,10 +122,8 @@ export function DynamicBanner() {
             </p>
           )}
         </div>
-        {currentBanner.actionType !== 'none' && (
-          <div 
-            className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center"
-          >
+        {isClickable && (
+          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
             <svg className="w-4 h-4" fill="none" stroke={currentBanner.textColor || "#fff"} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
