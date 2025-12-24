@@ -9,7 +9,7 @@ import { ExchangeModal } from "./ExchangeModal";
 import { BuyMetalModal } from "./BuyMetalModal";
 import CryptoTradingDetailPage from "./CryptoTradingDetailPage";
 import { CryptoConvertModal } from "./CryptoConvertModal";
-import { CampaignBanner } from "./CampaignBanner";
+import { DynamicBanner } from "./DynamicBanner";
 import { useLanguage } from "@/components/LanguageContext";
 
 // Metal icon mapping
@@ -163,7 +163,7 @@ export default function MetalPriceGrid() {
   return (
     <div className="space-y-4">
       {/* Campaign Banner */}
-      <CampaignBanner lang={lang} variant="full" />
+      <DynamicBanner />
 
       {/* Header */}
       <div className="flex items-center justify-between">
