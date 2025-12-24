@@ -4,7 +4,7 @@ import { kv } from "@vercel/kv";
 interface Banner {
   id: string;
   title: { tr: string; en: string; de?: string; fr?: string; ar?: string; ru?: string };
-  subtitle?: { tr: string; en: string };
+  subtitle?: { tr: string; en: string; de?: string; fr?: string; ar?: string; ru?: string };
   imageUrl?: string;
   backgroundColor: string;
   textColor: string;
