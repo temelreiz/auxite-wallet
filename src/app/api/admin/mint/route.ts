@@ -2,16 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 
 const CONTRACTS = {
-  AUXG: process.env.NEXT_PUBLIC_AUXG_ADDRESS || "0xBF74Fc9f0dD50A79f9FaC2e9Aa05a268E3dcE6b6",
-  AUXS: process.env.NEXT_PUBLIC_AUXS_ADDRESS || "0x705D9B193e5E349847C2Efb18E68fe989eC2C0e9",
-  AUXPT: process.env.NEXT_PUBLIC_AUXPT_ADDRESS || "0x1819447f624D8e22C1A4F3B14e96693625B6d74F",
-  AUXPD: process.env.NEXT_PUBLIC_AUXPD_ADDRESS || "0xb23545dE86bE9F65093D3a51a6ce52Ace0d8935E",
+  AUXG: "0xBF74Fc9f0dD50A79f9FaC2e9Aa05a268E3dcE6b6",
+  AUXS: "0x705D9B193e5E349847C2Efb18E68fe989eC2C0e9",
+  AUXPT: "0x1819447f624D8e22C1A4F3B14e96693625B6d74F",
+  AUXPD: "0xb23545dE86bE9F65093D3a51a6ce52Ace0d8935E",
 };
 
 const MINT_ABI = [
-  'function mint(address to, uint256 amount) external',
-  'function mintWithAllocation(address to, uint256 amount, string calldata custodian) external',
-  'function decimals() view returns (uint8)',
+  'function adminMint(address buyer, uint256 grams, string calldata custodian) external',
 ];
 
 export async function POST(request: NextRequest) {
@@ -32,7 +30,7 @@ export async function POST(request: NextRequest) {
     const recipient = to || address;
 
     if (!recipient || !amount || !metal) {
-      return NextResponse.json({ error: 'Missing required fields: to, amount, metal' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing required fields: address, amount, metal' }, { status: 400 });
     }
 
     const contractAddress = CONTRACTS[metal as keyof typeof CONTRACTS];
@@ -51,28 +49,20 @@ export async function POST(request: NextRequest) {
     const wallet = new ethers.Wallet(privateKey, provider);
     const contract = new ethers.Contract(contractAddress, MINT_ABI, wallet);
 
-    // Get decimals (should be 18 for gram tokens)
-    const decimals = await contract.decimals();
-    const amountWei = ethers.parseUnits(amount.toString(), decimals);
+    // adminMint expects grams as integer
+    const grams = parseInt(amount);
+    const custodianValue = custodian || 'Zurich Vault';
 
-    let tx;
-    if (custodian) {
-      // V7 with vault assignment
-      tx = await contract.mintWithAllocation(recipient, amountWei, custodian);
-    } else {
-      // Simple mint
-      tx = await contract.mint(recipient, amountWei);
-    }
+    const tx = await contract.adminMint(recipient, grams, custodianValue);
 
-    // Don't wait for confirmation to avoid timeout
     return NextResponse.json({
       success: true,
       txHash: tx.hash,
       metal,
       recipient,
-      amount,
-      custodian: custodian || 'N/A',
-      message: `Minting ${amount}g ${metal} to ${to}`,
+      amount: grams,
+      custodian: custodianValue,
+      message: `Minting ${grams}g ${metal} to ${recipient}`,
     });
 
   } catch (error: any) {
