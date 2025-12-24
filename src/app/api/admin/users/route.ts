@@ -21,35 +21,39 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search')?.toLowerCase() || '';
-    const limit = parseInt(searchParams.get('limit') || '50');
 
     // Get all user keys
     const userKeys = await redis.keys('user:*:meta');
     
     const users = [];
-    for (const key of userKeys.slice(0, limit)) {
+    for (const key of userKeys) {
       try {
         const userData = await redis.get(key);
         if (userData) {
           const user = typeof userData === 'string' ? JSON.parse(userData) : userData;
           
+          // Get user balance
+          const address = user.walletAddress?.toLowerCase() || key.split(':')[1];
+          const balanceKey = `user:${address}:balance`;
+          const balanceData = await redis.get(balanceKey);
+          const balance = balanceData ? (typeof balanceData === 'string' ? JSON.parse(balanceData) : balanceData) : {};
+          
+          const userWithBalance = {
+            walletAddress: address,
+            ...user,
+            balance,
+          };
+
           // Search filter
           if (search) {
-            const address = user.walletAddress?.toLowerCase() || '';
-            const email = user.email?.toLowerCase() || '';
-            if (!address.includes(search) && !email.includes(search)) {
+            const addr = userWithBalance.walletAddress?.toLowerCase() || '';
+            const email = userWithBalance.email?.toLowerCase() || '';
+            if (!addr.includes(search) && !email.includes(search)) {
               continue;
             }
           }
           
-          // Get user balance
-          const balanceKey = `user:${user.walletAddress?.toLowerCase()}:balance`;
-          const balance = await redis.get(balanceKey) || {};
-          
-          users.push({
-            ...user,
-            balance: typeof balance === 'string' ? JSON.parse(balance) : balance,
-          });
+          users.push(userWithBalance);
         }
       } catch (e) {
         console.error('Error parsing user:', key, e);
