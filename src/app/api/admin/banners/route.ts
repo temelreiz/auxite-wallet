@@ -131,12 +131,15 @@ export async function GET(request: NextRequest) {
 // POST - Banner ekle/güncelle (Admin only)
 export async function POST(request: NextRequest) {
   try {
-    // Auth kontrolü
+    // Auth kontrolü - session token
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
-    
-    if (!token || token !== process.env.ADMIN_SECRET) {
+    if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const session = await kv.get(`admin:session:${token}`);
+    if (!session) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
     
     const body = await request.json();
