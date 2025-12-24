@@ -1,48 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 
-// Metal token addresses
+// Metal token addresses (Sepolia)
 const METAL_TOKENS: Record<string, `0x${string}`> = {
-  AUXG: (process.env.NEXT_PUBLIC_AUXG_ADDRESS || "0xBF74Fc9f0dD50A79f9FaC2e9Aa05a268E3dcE6b6") as `0x${string}`,
-  AUXS: (process.env.NEXT_PUBLIC_AUXS_ADDRESS || "0x705D9B193e5E349847C2Efb18E68fe989eC2C0e9") as `0x${string}`,
-  AUXPT: (process.env.NEXT_PUBLIC_AUXPT_ADDRESS || "0x1819447f624D8e22C1A4F3B14e96693625B6d74F") as `0x${string}`,
-  AUXPD: (process.env.NEXT_PUBLIC_AUXPD_ADDRESS || "0xb23545dE86bE9F65093D3a51a6ce52Ace0d8935E") as `0x${string}`,
+  AUXG: "0xBF74Fc9f0dD50A79f9FaC2e9Aa05a268E3dcE6b6",
+  AUXS: "0x705D9B193e5E349847C2Efb18E68fe989eC2C0e9",
+  AUXPT: "0x1819447f624D8e22C1A4F3B14e96693625B6d74F",
+  AUXPD: "0xb23545dE86bE9F65093D3a51a6ce52Ace0d8935E",
 };
 
-// USDT address on Sepolia (mock for testing)
+// USDT address on Sepolia
 const USDT_ADDRESS = "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06" as `0x${string}`;
 
-// Treasury/Exchange address (where tokens are bought from/sold to)
-const TREASURY_ADDRESS = "0xD24B2bca1E0b58a2EAE5b1184871219f9a8EE944" as `0x${string}`;
-
-// Gas limit for ERC20 operations
-const GAS_LIMIT = BigInt(100000);
+// Exchange contract address
+const EXCHANGE_ADDRESS = "0xfEC17a1CBc2E8dA56f67BC69a1178dA8a8Ad245b" as `0x${string}`;
 
 const ERC20_ABI = [
-  {
-    name: "transfer",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "to", type: "address" },
-      { name: "amount", type: "uint256" },
-    ],
-    outputs: [{ type: "bool" }],
-  },
-  {
-    name: "transferFrom",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "from", type: "address" },
-      { name: "to", type: "address" },
-      { name: "amount", type: "uint256" },
-    ],
-    outputs: [{ type: "bool" }],
-  },
   {
     name: "approve",
     type: "function",
@@ -72,6 +48,63 @@ const ERC20_ABI = [
   },
 ] as const;
 
+const EXCHANGE_ABI = [
+  {
+    name: "buy",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "symbol", type: "string" },
+      { name: "grams", type: "uint256" },
+    ],
+    outputs: [],
+  },
+  {
+    name: "sell",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "symbol", type: "string" },
+      { name: "grams", type: "uint256" },
+    ],
+    outputs: [],
+  },
+  {
+    name: "getBuyQuote",
+    type: "function",
+    stateMutability: "view",
+    inputs: [
+      { name: "symbol", type: "string" },
+      { name: "grams", type: "uint256" },
+    ],
+    outputs: [{ name: "usdtCost", type: "uint256" }],
+  },
+  {
+    name: "getSellQuote",
+    type: "function",
+    stateMutability: "view",
+    inputs: [
+      { name: "symbol", type: "string" },
+      { name: "grams", type: "uint256" },
+    ],
+    outputs: [{ name: "usdtPayout", type: "uint256" }],
+  },
+  {
+    name: "buyPrices",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "string" }],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    name: "sellPrices",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "string" }],
+    outputs: [{ type: "uint256" }],
+  },
+] as const;
+
 interface UseTradeProps {
   metalSymbol: string;
 }
@@ -80,6 +113,7 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
   const { address } = useAccount();
   const [step, setStep] = useState<"idle" | "approving" | "trading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [pendingAction, setPendingAction] = useState<{ type: 'buy' | 'sell'; grams: number } | null>(null);
 
   const metalTokenAddress = METAL_TOKENS[metalSymbol];
 
@@ -91,12 +125,37 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
     args: address ? [address] : undefined,
   });
 
+  // Get user's USDT balance
+  const { data: usdtBalance } = useReadContract({
+    address: USDT_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+  });
+
+  // Get USDT allowance for exchange
+  const { data: usdtAllowance, refetch: refetchAllowance } = useReadContract({
+    address: USDT_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "allowance",
+    args: address ? [address, EXCHANGE_ADDRESS] : undefined,
+  });
+
+  // Get metal allowance for exchange (for selling)
+  const { data: metalAllowance, refetch: refetchMetalAllowance } = useReadContract({
+    address: metalTokenAddress,
+    abi: ERC20_ABI,
+    functionName: "allowance",
+    args: address ? [address, EXCHANGE_ADDRESS] : undefined,
+  });
+
   // Write contract hooks
   const { 
     writeContract: writeApprove, 
     data: approveHash,
     isPending: isApprovePending,
     error: approveError,
+    reset: resetApprove,
   } = useWriteContract();
 
   const { 
@@ -104,6 +163,7 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
     data: tradeHash,
     isPending: isTradePending,
     error: tradeError,
+    reset: resetTrade,
   } = useWriteContract();
 
   // Wait for transactions
@@ -115,7 +175,39 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
     hash: tradeHash,
   });
 
-  // Buy metal tokens (user pays USDT, receives metal tokens)
+  // After approve success, execute the trade
+  useEffect(() => {
+    if (isApproveSuccess && step === "approving" && pendingAction) {
+      refetchAllowance();
+      refetchMetalAllowance();
+      
+      // Small delay to ensure allowance is updated
+      setTimeout(() => {
+        executeTrade(pendingAction.type, pendingAction.grams);
+      }, 1000);
+    }
+  }, [isApproveSuccess]);
+
+  // Execute trade after approval
+  const executeTrade = async (type: 'buy' | 'sell', grams: number) => {
+    try {
+      setStep("trading");
+      const gramsWei = parseUnits(grams.toString(), 18);
+
+      writeTrade({
+        address: EXCHANGE_ADDRESS,
+        abi: EXCHANGE_ABI,
+        functionName: type,
+        args: [metalSymbol, gramsWei],
+      });
+    } catch (error: any) {
+      console.error("Trade error:", error);
+      setErrorMessage(error.message || "Trade failed");
+      setStep("error");
+    }
+  };
+
+  // Buy metal tokens (user pays USDT)
   const buy = async (amountInGrams: number, pricePerGram: number) => {
     if (!address) {
       setErrorMessage("Wallet not connected");
@@ -124,20 +216,27 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
     }
 
     try {
-      setStep("approving");
       setErrorMessage("");
+      setPendingAction({ type: 'buy', grams: amountInGrams });
 
-      const usdtAmount = parseUnits((amountInGrams * pricePerGram).toFixed(6), 6); // USDT has 6 decimals
+      const usdtAmount = parseUnits((amountInGrams * pricePerGram).toFixed(6), 6);
+      const currentAllowance = usdtAllowance || BigInt(0);
 
-      // Step 1: Approve USDT spending
-      writeApprove({
-        address: USDT_ADDRESS,
-        abi: ERC20_ABI,
-        functionName: "approve",
-        args: [TREASURY_ADDRESS, usdtAmount],
-        gas: GAS_LIMIT,
-      });
-
+      // Check if we need approval
+      if (currentAllowance < usdtAmount) {
+        setStep("approving");
+        // Approve a larger amount to avoid frequent approvals
+        const approveAmount = usdtAmount * BigInt(10);
+        writeApprove({
+          address: USDT_ADDRESS,
+          abi: ERC20_ABI,
+          functionName: "approve",
+          args: [EXCHANGE_ADDRESS, approveAmount],
+        });
+      } else {
+        // Already approved, execute trade directly
+        executeTrade('buy', amountInGrams);
+      }
     } catch (error: any) {
       console.error("Buy error:", error);
       setErrorMessage(error.message || "Transaction failed");
@@ -145,7 +244,7 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
     }
   };
 
-  // Sell metal tokens (user pays metal tokens, receives USDT)
+  // Sell metal tokens (receive USDT)
   const sell = async (amountInGrams: number) => {
     if (!address) {
       setErrorMessage("Wallet not connected");
@@ -154,10 +253,11 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
     }
 
     try {
-      setStep("trading");
       setErrorMessage("");
+      setPendingAction({ type: 'sell', grams: amountInGrams });
 
       const metalAmount = parseUnits(amountInGrams.toString(), 18);
+      const currentAllowance = metalAllowance || BigInt(0);
 
       // Check if user has enough balance
       if (metalBalance && metalAmount > metalBalance) {
@@ -166,15 +266,20 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
         return;
       }
 
-      // Transfer metal tokens to treasury
-      writeTrade({
-        address: metalTokenAddress,
-        abi: ERC20_ABI,
-        functionName: "transfer",
-        args: [TREASURY_ADDRESS, metalAmount],
-        gas: GAS_LIMIT,
-      });
-
+      // Check if we need approval
+      if (currentAllowance < metalAmount) {
+        setStep("approving");
+        const approveAmount = metalAmount * BigInt(10);
+        writeApprove({
+          address: metalTokenAddress,
+          abi: ERC20_ABI,
+          functionName: "approve",
+          args: [EXCHANGE_ADDRESS, approveAmount],
+        });
+      } else {
+        // Already approved, execute trade directly
+        executeTrade('sell', amountInGrams);
+      }
     } catch (error: any) {
       console.error("Sell error:", error);
       setErrorMessage(error.message || "Transaction failed");
@@ -186,26 +291,32 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
   const reset = () => {
     setStep("idle");
     setErrorMessage("");
+    setPendingAction(null);
+    resetApprove();
+    resetTrade();
   };
 
   // Update step based on transaction status
-  if (isApproveSuccess && step === "approving") {
-    setStep("trading");
-  }
-  
-  if (isTradeSuccess && step === "trading") {
-    setStep("success");
-  }
+  useEffect(() => {
+    if (isTradeSuccess && step === "trading") {
+      setStep("success");
+      setPendingAction(null);
+    }
+  }, [isTradeSuccess, step]);
 
-  if (approveError && step === "approving") {
-    setStep("error");
-    setErrorMessage(approveError.message);
-  }
+  useEffect(() => {
+    if (approveError && step === "approving") {
+      setStep("error");
+      setErrorMessage(approveError.message);
+    }
+  }, [approveError, step]);
 
-  if (tradeError && step === "trading") {
-    setStep("error");
-    setErrorMessage(tradeError.message);
-  }
+  useEffect(() => {
+    if (tradeError && step === "trading") {
+      setStep("error");
+      setErrorMessage(tradeError.message);
+    }
+  }, [tradeError, step]);
 
   return {
     buy,
@@ -219,5 +330,6 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
     approveHash,
     tradeHash,
     metalBalance: metalBalance ? formatUnits(metalBalance, 18) : "0",
+    usdtBalance: usdtBalance ? formatUnits(usdtBalance, 6) : "0",
   };
 }
