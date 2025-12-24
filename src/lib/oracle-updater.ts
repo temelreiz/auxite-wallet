@@ -4,8 +4,8 @@ import { getSpreadConfig, applySpread } from './spread-config';
 
 const ORACLE_ADDRESS = '0x45677fc1bE2F59937Fd6A93145Db76beB38a7CcA';
 const ORACLE_ABI = [
-  'function setManualPrice(bytes32 metalId, uint256 priceE6) external',
-  'function getPrice(bytes32 metalId) view returns (uint256)',
+  'function updatePrice(bytes32 metalId, uint256 priceE6) external',
+  'function getBasePerKgE6(bytes32 metalId) external view returns (uint256)',
   'function getETHPriceE6() view returns (uint256)'
 ];
 
@@ -132,7 +132,7 @@ export async function updateOraclePrices(): Promise<{
       console.log(`Updating ${update.name}: $${update.pricePerGram.toFixed(2)}/g (E6/kg: ${update.price})`);
       
       await new Promise(r => setTimeout(r, 2000)); // Wait 2s between txs
-      const tx = await oracle.setManualPrice(update.id, update.price);
+      const tx = await oracle.updatePrice(update.id, update.price);
       // Dont wait for confirmation - delay between txs is enough
       txHashes.push(tx.hash);
     }
@@ -170,10 +170,10 @@ export async function getOraclePrices(): Promise<{
   const oracle = new ethers.Contract(ORACLE_ADDRESS, ORACLE_ABI, provider);
 
   const [goldE6, silverE6, platinumE6, palladiumE6, ethE6] = await Promise.all([
-    oracle.getPrice(METAL_IDS.GOLD).catch(() => 0n),
-    oracle.getPrice(METAL_IDS.SILVER).catch(() => 0n),
-    oracle.getPrice(METAL_IDS.PLATINUM).catch(() => 0n),
-    oracle.getPrice(METAL_IDS.PALLADIUM).catch(() => 0n),
+    oracle.getBasePerKgE6(METAL_IDS.GOLD).catch(() => 0n),
+    oracle.getBasePerKgE6(METAL_IDS.SILVER).catch(() => 0n),
+    oracle.getBasePerKgE6(METAL_IDS.PLATINUM).catch(() => 0n),
+    oracle.getBasePerKgE6(METAL_IDS.PALLADIUM).catch(() => 0n),
     oracle.getETHPriceE6(),
   ]);
 
