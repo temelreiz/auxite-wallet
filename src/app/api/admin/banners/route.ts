@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
     
-    if (!token || token !== process.env.ADMIN_PASSWORD) {
+    if (!token || token !== process.env.ADMIN_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
