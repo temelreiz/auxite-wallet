@@ -42,7 +42,6 @@ const DEFAULT_BANNERS: BannersData = {
       active: true,
       priority: 100,
       createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
     {
