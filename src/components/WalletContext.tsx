@@ -1,6 +1,5 @@
 // src/components/WalletContext.tsx
 "use client";
-
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { useAccount } from "wagmi";
 
@@ -34,6 +33,12 @@ interface BalanceSummary {
     note: string;
   } | null;
   totalValueUsd: number;
+  metals?: {
+    auxg: number;
+    auxs: number;
+    auxpt: number;
+    auxpd: number;
+  };
 }
 
 interface WalletContextType {
@@ -67,9 +72,8 @@ const DEFAULT_BALANCES: UserBalances = {
 };
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-
   const { address: wagmiAddress, isConnected: wagmiConnected, chainId: wagmiChainId } = useAccount();
-  // Storage keys
+
   const STORAGE_KEYS = {
     HAS_WALLET: "auxite_has_wallet",
     WALLET_ADDRESS: "auxite_wallet_address",
@@ -77,18 +81,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     SESSION_UNLOCKED: "auxite_session_unlocked",
   };
 
-  // Local wallet state
   const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
   const [walletMode, setWalletMode] = useState<string | null>(null);
   const [isSessionUnlocked, setIsSessionUnlocked] = useState(false);
+  const [balances, setBalances] = useState<UserBalances | null>(null);
+  const [summary, setSummary] = useState<BalanceSummary | null>(null);
+  const [balancesLoading, setBalancesLoading] = useState(false);
+  const [balancesError, setBalancesError] = useState<string | null>(null);
 
-  // Load local wallet on mount
   useEffect(() => {
     const savedMode = localStorage.getItem(STORAGE_KEYS.WALLET_MODE);
     const hasLocalWallet = localStorage.getItem(STORAGE_KEYS.HAS_WALLET);
     const localAddress = localStorage.getItem(STORAGE_KEYS.WALLET_ADDRESS);
     const sessionUnlocked = sessionStorage.getItem(STORAGE_KEYS.SESSION_UNLOCKED);
-    
+
     setWalletMode(savedMode);
     if (savedMode === "local" && hasLocalWallet === "true" && localAddress) {
       setLocalWalletAddress(localAddress);
@@ -98,50 +104,56 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Determine effective address and connection status
-  const isConnected = 
-    (walletMode === "local" && !!localWalletAddress && isSessionUnlocked) ||
-    ((walletMode === "external" || !walletMode) && wagmiConnected);
-  
-  const address = walletMode === "local" ? localWalletAddress : wagmiAddress || null;
+  const isConnected = walletMode === "local"
+    ? isSessionUnlocked && !!localWalletAddress
+    : wagmiConnected;
 
-  
-  const [balances, setBalances] = useState<UserBalances | null>(null);
-  const [summary, setSummary] = useState<BalanceSummary | null>(null);
-  const [balancesLoading, setBalancesLoading] = useState(false);
-  const [balancesError, setBalancesError] = useState<string | null>(null);
+  const address = walletMode === "local" ? localWalletAddress : wagmiAddress ?? null;
+  const chainId = wagmiChainId ?? null;
 
   const fetchBalances = useCallback(async (walletAddress: string) => {
     console.log("🔄 fetchBalances called:", walletAddress);
-    
+
     if (!walletAddress) {
       console.log("❌ No wallet address");
       return;
     }
-
     setBalancesLoading(true);
     setBalancesError(null);
-
     try {
-      const url = `/api/user/balance?address=${walletAddress}`;
-      console.log("📡 Fetching:", url);
-      
-      const response = await fetch(url);
-      console.log("📥 Response status:", response.status);
+      // Fetch both Redis and blockchain balances
+      const [redisRes, blockchainRes] = await Promise.all([
+        fetch(`/api/user/balance?address=${walletAddress}`),
+        fetch(`/api/user/blockchain-balance?address=${walletAddress}`),
+      ]);
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
+      const redisData = await redisRes.json();
+      const blockchainData = await blockchainRes.json();
 
-      const data = await response.json();
-      console.log("✅ Balance data:", data);
+      console.log("✅ Redis data:", redisData);
+      console.log("✅ Blockchain data:", blockchainData);
 
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      // Merge: use Redis for AUXM/bonus, blockchain for metals/ETH/USDT
+      const mergedBalances = {
+        ...redisData.balances,
+        auxg: blockchainData.balances?.auxg ?? redisData.balances?.auxg ?? 0,
+        auxs: blockchainData.balances?.auxs ?? redisData.balances?.auxs ?? 0,
+        auxpt: blockchainData.balances?.auxpt ?? redisData.balances?.auxpt ?? 0,
+        auxpd: blockchainData.balances?.auxpd ?? redisData.balances?.auxpd ?? 0,
+        eth: blockchainData.balances?.eth ?? redisData.balances?.eth ?? 0,
+        usdt: blockchainData.balances?.usdt ?? redisData.balances?.usdt ?? 0,
+      };
 
-      setBalances(data.balances);
-      setSummary(data.summary);
+      setBalances(mergedBalances);
+      setSummary({
+        ...redisData.summary,
+        metals: {
+          auxg: mergedBalances.auxg,
+          auxs: mergedBalances.auxs,
+          auxpt: mergedBalances.auxpt,
+          auxpd: mergedBalances.auxpd,
+        },
+      });
     } catch (error) {
       console.error("❌ Balance fetch error:", error);
       setBalancesError(error instanceof Error ? error.message : "Bakiye alınamadı");
@@ -158,31 +170,21 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [address, fetchBalances]);
 
   useEffect(() => {
-    console.log("📍 Wagmi state:", { isConnected, address: address, chainId: wagmiChainId });
-    
     if (isConnected && address) {
-      console.log("✅ Wagmi connected! Fetching balances...");
       fetchBalances(address);
-
       const interval = setInterval(() => {
-        console.log("⏰ Auto-refresh balances");
         fetchBalances(address);
       }, 30000);
-
       return () => clearInterval(interval);
-    } else {
-      console.log("❌ Wagmi not connected, clearing balances");
-      setBalances(null);
-      setSummary(null);
     }
-  }, [isConnected, address, wagmiChainId, fetchBalances]);
+  }, [isConnected, address, fetchBalances]);
 
   return (
     <WalletContext.Provider
       value={{
         isConnected,
         address,
-        chainId: wagmiChainId || null,
+        chainId,
         balances,
         summary,
         balancesLoading,
@@ -201,29 +203,4 @@ export function useWallet() {
     throw new Error("useWallet must be used within a WalletProvider");
   }
   return context;
-}
-
-export function useBalance(token: keyof UserBalances) {
-  const { balances } = useWallet();
-  return balances?.[token] ?? 0;
-}
-
-export function useMetalBalances() {
-  const { balances } = useWallet();
-  return {
-    auxg: balances?.auxg ?? 0,
-    auxs: balances?.auxs ?? 0,
-    auxpt: balances?.auxpt ?? 0,
-    auxpd: balances?.auxpd ?? 0,
-  };
-}
-
-export function useAuxmBalance() {
-  const { balances, summary } = useWallet();
-  return {
-    total: balances?.totalAuxm ?? 0,
-    available: summary?.withdrawableAuxm ?? 0,
-    bonus: balances?.bonusAuxm ?? 0,
-    bonusExpiresAt: balances?.bonusExpiresAt ?? null,
-  };
 }
