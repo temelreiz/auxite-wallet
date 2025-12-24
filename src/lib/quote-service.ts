@@ -9,7 +9,7 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-const QUOTE_TTL = 30; // 30 saniye geçerli
+const QUOTE_TTL = 90; // 90 saniye geçerli
 
 export interface Quote {
   id: string;
