@@ -13,10 +13,10 @@ const METAL_TOKENS: Record<string, `0x${string}`> = {
 };
 
 // USDT address on Sepolia
-const USDT_ADDRESS = "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06" as `0x${string}`;
+const USDT_ADDRESS = "0x738e3134d83014B7a63CFF08C13CBBF0671EEeF2" as `0x${string}`;
 
 // Exchange contract address
-const EXCHANGE_ADDRESS = "0xfEC17a1CBc2E8dA56f67BC69a1178dA8a8Ad245b" as `0x${string}`;
+const EXCHANGE_ADDRESS = "0xCdFC3e54Bf2A884cd647dC205c89B46C878072Fc" as `0x${string}`;
 
 const ERC20_ABI = [
   {
