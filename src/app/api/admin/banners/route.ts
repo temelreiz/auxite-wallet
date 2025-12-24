@@ -196,3 +196,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+// DELETE - Reset banners to defaults
+export async function DELETE(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const session = await kv.get(`admin:session:${token}`);
+    if (!session) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    // Delete the key - defaults will be recreated on next GET
+    await kv.del(BANNERS_KEY);
+    
+    return NextResponse.json({ success: true, message: "Banners reset to defaults" });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
