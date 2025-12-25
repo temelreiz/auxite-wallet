@@ -11,6 +11,8 @@ import { withRateLimit, tradeLimiter, checkSuspiciousActivity } from "@/lib/secu
 import { logTrade, logAudit } from "@/lib/security/audit-logger";
 import { getMetalSpread } from "@/lib/spread-config";
 import { getUserTier, calculateTierFee, getDefaultTier } from "@/lib/auxiteer-service";
+import { createPublicClient, http, formatUnits } from "viem";
+import { sepolia } from "viem/chains";
 import {
   buyMetalToken,
   sellMetalToken,
@@ -31,11 +33,59 @@ const redis = new Redis({
 
 // Tokens
 const METALS = ["auxg", "auxs", "auxpt", "auxpd"];
-const CRYPTOS = ["eth", "btc", "xrp", "sol"];
+const CRYPTOS = ["eth", "btc", "xrp", "sol", "usdt"];
 const VALID_TOKENS = [...METALS, "auxm", ...CRYPTOS];
 
 // Feature flag: Enable/disable blockchain execution
 const BLOCKCHAIN_ENABLED = process.env.ENABLE_BLOCKCHAIN_TRADES === "true";
+
+// Blockchain client for balance checks
+const RPC_URL = process.env.SEPOLIA_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
+const publicClient = createPublicClient({
+  chain: sepolia,
+  transport: http(RPC_URL, { timeout: 10000 }),
+});
+
+// Token addresses
+const TOKEN_ADDRESSES: Record<string, `0x${string}`> = {
+  auxg: "0xBF74Fc9f0dD50A79f9FaC2e9Aa05a268E3dcE6b6",
+  auxs: "0x705D9B193e5E349847C2Efb18E68fe989eC2C0e9",
+  auxpt: "0x1819447f624D8e22C1A4F3B14e96693625B6d74F",
+  auxpd: "0xb23545dE86bE9F65093D3a51a6ce52Ace0d8935E",
+  usdt: "0x738e3134d83014B7a63CFF08C13CBBF0671EEeF2",
+};
+
+const ERC20_ABI = [
+  {
+    name: "balanceOf",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ type: "uint256" }],
+  },
+] as const;
+
+// Get blockchain balance for on-chain tokens
+async function getBlockchainBalance(address: string, token: string): Promise<number> {
+  const tokenLower = token.toLowerCase();
+  const tokenAddress = TOKEN_ADDRESSES[tokenLower];
+  
+  if (!tokenAddress) return 0;
+  
+  try {
+    const decimals = tokenLower === "usdt" ? 6 : 18;
+    const balance = await publicClient.readContract({
+      address: tokenAddress,
+      abi: ERC20_ABI,
+      functionName: "balanceOf",
+      args: [address as `0x${string}`],
+    });
+    return parseFloat(formatUnits(balance, decimals));
+  } catch (error) {
+    console.error(`Error getting blockchain balance for ${token}:`, error);
+    return 0;
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // VALIDATION
@@ -335,8 +385,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Kullanıcı bulunamadı" }, { status: 404 });
     }
 
-    const fromBalance = parseFloat(currentBalance[fromTokenLower] as string || "0");
+    let fromBalance = parseFloat(currentBalance[fromTokenLower] as string || "0");
     const bonusAuxm = parseFloat(currentBalance.bonusauxm as string || "0");
+
+    // Check blockchain balance for on-chain tokens (USDT, metals)
+    const ON_CHAIN_TOKENS = ["usdt", "auxg", "auxs", "auxpt", "auxpd"];
+    if (ON_CHAIN_TOKENS.includes(fromTokenLower)) {
+      const blockchainBalance = await getBlockchainBalance(normalizedAddress, fromTokenLower);
+      console.log(`📊 Blockchain balance for ${fromTokenLower}: ${blockchainBalance}`);
+      fromBalance = blockchainBalance;
+    }
 
     // 6. Balance check
     let availableBalance = fromBalance;
