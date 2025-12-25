@@ -341,11 +341,17 @@ export async function updateOraclePrices(): Promise<boolean> {
       return false;
     }
     
-    // Convert $/gram to $/oz * 1e6
-    const auxgOzE6 = Math.round(metalData.data.AUXG.price * GRAMS_PER_OZ * 1_000_000);
-    const auxsOzE6 = Math.round(metalData.data.AUXS.price * GRAMS_PER_OZ * 1_000_000);
-    const auxptOzE6 = Math.round(metalData.data.AUXPT.price * GRAMS_PER_OZ * 1_000_000);
-    const auxpdOzE6 = Math.round(metalData.data.AUXPD.price * GRAMS_PER_OZ * 1_000_000);
+    // Parse metal prices from array
+    const metals: Record<string, number> = {};
+    for (const m of metalData.data) {
+      metals[m.symbol] = m.priceOz;
+    }
+    
+    // Already in $/oz, convert to * 1e6
+    const auxgOzE6 = Math.round((metals.AUXG || 4500) * 1_000_000);
+    const auxsOzE6 = Math.round((metals.AUXS || 30) * 1_000_000);
+    const auxptOzE6 = Math.round((metals.AUXPT || 950) * 1_000_000);
+    const auxpdOzE6 = Math.round((metals.AUXPD || 1000) * 1_000_000);
     const ethPriceE6 = Math.round((ethData.ethereum?.usd || 3500) * 1_000_000);
     
     console.log('🔄 Updating Oracle prices:');
