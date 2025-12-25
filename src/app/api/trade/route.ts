@@ -388,12 +388,34 @@ export async function POST(request: NextRequest) {
     let fromBalance = parseFloat(currentBalance[fromTokenLower] as string || "0");
     const bonusAuxm = parseFloat(currentBalance.bonusauxm as string || "0");
 
-    // Check blockchain balance for on-chain tokens (USDT, metals)
+    // Debug: Log all balances
+    console.log(`📊 Balance Debug for ${normalizedAddress}:`);
+    console.log(`   Redis ${fromTokenLower}: ${fromBalance}`);
+    console.log(`   Redis bonusAuxm: ${bonusAuxm}`);
+    console.log(`   Redis all:`, currentBalance);
+
+    // Check blockchain balance for on-chain tokens (metals + USDT)
     const ON_CHAIN_TOKENS = ["usdt", "auxg", "auxs", "auxpt", "auxpd"];
     if (ON_CHAIN_TOKENS.includes(fromTokenLower)) {
       const blockchainBalance = await getBlockchainBalance(normalizedAddress, fromTokenLower);
-      console.log(`📊 Blockchain balance for ${fromTokenLower}: ${blockchainBalance}`);
+      console.log(`   Blockchain ${fromTokenLower}: ${blockchainBalance}`);
       fromBalance = blockchainBalance;
+    }
+    
+    // For AUXM: Use Redis balance (it's off-chain token)
+    // Make sure we're reading the correct key
+    if (fromTokenLower === "auxm") {
+      // Try both 'auxm' and 'AUXM' keys
+      const auxmBalance = parseFloat(currentBalance.auxm as string || currentBalance.AUXM as string || "0");
+      console.log(`   AUXM from Redis: ${auxmBalance}`);
+      fromBalance = auxmBalance;
+    }
+    
+    // For other cryptos (ETH, BTC, etc.) - use Redis balance
+    // These are tracked off-chain in this system
+    const OFF_CHAIN_CRYPTOS = ["eth", "btc", "xrp", "sol"];
+    if (OFF_CHAIN_CRYPTOS.includes(fromTokenLower)) {
+      console.log(`   ${fromTokenLower} is off-chain, using Redis: ${fromBalance}`);
     }
 
     // 6. Balance check
@@ -411,6 +433,8 @@ export async function POST(request: NextRequest) {
         usedRegular = fromAmount - bonusAuxm;
       }
     }
+
+    console.log(`📊 Balance Check: required=${fromAmount}, available=${availableBalance}, fromBalance=${fromBalance}, bonusAuxm=${bonusAuxm}`);
 
     const isOnChainCryptoBuy = executeOnChain && type === "buy" && ["eth", "btc", "usdt", "xrp", "sol"].includes(fromTokenLower);
     
