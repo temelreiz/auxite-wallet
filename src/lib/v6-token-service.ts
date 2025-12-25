@@ -23,6 +23,8 @@ const TOKEN_ABI = [
 ];
 
 const ORACLE_ABI = [
+  'function setAllPrices(uint256 auxgOzE6, uint256 auxsOzE6, uint256 auxptOzE6, uint256 auxpdOzE6, uint256 ethPriceE6)',
+  'function getAllPricesOzE6() view returns (uint256, uint256, uint256, uint256, uint256)',
   'function getETHPriceE6() view returns (uint256)',
 ];
 
@@ -318,5 +320,67 @@ export async function sellMetalToken(
       success: false,
       error: error.message,
     };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ORACLE PRICE UPDATE
+// ═══════════════════════════════════════════════════════════════════════════
+
+const GRAMS_PER_OZ = 31.1035;
+
+/**
+ * Update Oracle prices from API before trade
+ */
+export async function updateOraclePrices(): Promise<boolean> {
+  try {
+    const wallet = getHotWallet();
+    const oracle = new ethers.Contract(ORACLE_ADDRESS, ORACLE_ABI, wallet);
+    
+    // Fetch current prices from API
+    const [metalRes, ethRes] = await Promise.all([
+      fetch('https://auxite-wallet.vercel.app/api/metals'),
+      fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'),
+    ]);
+    
+    const metalData = await metalRes.json();
+    const ethData = await ethRes.json();
+    
+    if (!metalData.ok || !metalData.data) {
+      console.error('Failed to fetch metal prices');
+      return false;
+    }
+    
+    // Convert $/gram to $/oz * 1e6
+    const auxgOzE6 = Math.round(metalData.data.AUXG.price * GRAMS_PER_OZ * 1_000_000);
+    const auxsOzE6 = Math.round(metalData.data.AUXS.price * GRAMS_PER_OZ * 1_000_000);
+    const auxptOzE6 = Math.round(metalData.data.AUXPT.price * GRAMS_PER_OZ * 1_000_000);
+    const auxpdOzE6 = Math.round(metalData.data.AUXPD.price * GRAMS_PER_OZ * 1_000_000);
+    const ethPriceE6 = Math.round((ethData.ethereum?.usd || 3500) * 1_000_000);
+    
+    console.log('🔄 Updating Oracle prices:');
+    console.log(`   AUXG: $${(auxgOzE6 / 1_000_000).toFixed(2)}/oz`);
+    console.log(`   AUXS: $${(auxsOzE6 / 1_000_000).toFixed(2)}/oz`);
+    console.log(`   AUXPT: $${(auxptOzE6 / 1_000_000).toFixed(2)}/oz`);
+    console.log(`   AUXPD: $${(auxpdOzE6 / 1_000_000).toFixed(2)}/oz`);
+    console.log(`   ETH: $${(ethPriceE6 / 1_000_000).toFixed(2)}`);
+    
+    // Update Oracle on-chain
+    const tx = await oracle.setAllPrices(
+      auxgOzE6,
+      auxsOzE6,
+      auxptOzE6,
+      auxpdOzE6,
+      ethPriceE6,
+      { gasLimit: 200000 }
+    );
+    
+    await tx.wait(1);
+    console.log('✅ Oracle prices updated:', tx.hash);
+    
+    return true;
+  } catch (error: any) {
+    console.error('Oracle update error:', error.message);
+    return false;
   }
 }

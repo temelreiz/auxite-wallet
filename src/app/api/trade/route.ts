@@ -1,7 +1,6 @@
 // src/app/api/trade/route.ts
 // V6 BLOCKCHAIN ENTEGRASYONLU - Gerçek token mint/burn işlemleri
 // ✅ AUXITEER TIER BAZLI FEE ENTEGRASYONU
-
 import { NextRequest, NextResponse } from "next/server";
 import { executeQuote } from "@/lib/quote-service";
 import { Redis } from "@upstash/redis";
@@ -14,6 +13,7 @@ import { getUserTier, calculateTierFee, getDefaultTier } from "@/lib/auxiteer-se
 import { createPublicClient, http, formatUnits } from "viem";
 import { sepolia } from "viem/chains";
 import {
+  updateOraclePrices,
   buyMetalToken,
   sellMetalToken,
   calculateBuyCost,
@@ -480,6 +480,7 @@ export async function POST(request: NextRequest) {
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
         console.log(`🔷 Executing blockchain buy: ${toAmount}g ${toToken.toUpperCase()}`);
         
+        await updateOraclePrices();
         const buyResult = await buyMetalToken(toToken, toAmount, undefined, slippage);
         
         if (!buyResult.success) {
@@ -562,6 +563,7 @@ export async function POST(request: NextRequest) {
           }, { status: 500 });
         }
 
+        await updateOraclePrices();
         const buyResult = await buyMetalToken(toToken, toAmount, undefined, slippage);
         if (!buyResult.success) {
           return NextResponse.json({
@@ -590,6 +592,7 @@ export async function POST(request: NextRequest) {
       toAmount = (fromAmount - fee) / price;
       
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
+        await updateOraclePrices();
         const buyResult = await buyMetalToken(toToken, toAmount, undefined, slippage);
         if (!buyResult.success) {
           return NextResponse.json({ error: `Blockchain işlemi başarısız: ${buyResult.error}` }, { status: 500 });
