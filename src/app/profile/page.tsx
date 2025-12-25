@@ -422,7 +422,8 @@ export default function ProfilePage() {
             {/* Whitelist Manager - Withdrawal Addresses */}
             {isConnected && address && (
               <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-stone-200 dark:border-zinc-700">
-                <WhitelistManager 
+                <WhitelistManager
+                  walletAddress={address} 
                   lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} 
                 />
               </div>
