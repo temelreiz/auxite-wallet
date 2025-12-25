@@ -14,7 +14,7 @@ const MOCK_BALANCE = {
 };
 
 // Blockchain RPC
-const RPC_URL = process.env.BLOCKCHAIN_RPC_URL || "https://sepolia.base.org";
+const RPC_URL = process.env.BLOCKCHAIN_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
 
 // Token Contracts (On-chain)
 const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
