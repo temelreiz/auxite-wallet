@@ -510,7 +510,7 @@ export async function POST(request: NextRequest) {
       price = prices.bidPerGram;
       
       // ✅ TIER BAZLI FEE
-      fee = calculateTierFee(fromAmount * price, tierFeePercent);
+      fee = calculateTierFee(fromAmount, tierFeePercent);
       toAmount = (fromAmount * price) - fee;
 
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
@@ -586,8 +586,8 @@ export async function POST(request: NextRequest) {
       price = prices.askPerGram;
       
       // ✅ TIER BAZLI FEE
-      fee = calculateTierFee(fromAmount * price, tierFeePercent);
-      toAmount = fromAmount - (fee / price);
+      fee = calculateTierFee(fromAmount, tierFeePercent);
+      toAmount = (fromAmount - fee) / price;
       
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
         const buyResult = await buyMetalToken(toToken, toAmount, undefined, slippage);
@@ -606,7 +606,7 @@ export async function POST(request: NextRequest) {
       price = prices.bidPerGram;
       
       // ✅ TIER BAZLI FEE
-      fee = calculateTierFee(fromAmount * price, tierFeePercent);
+      fee = calculateTierFee(fromAmount, tierFeePercent);
       toAmount = (fromAmount * price) - fee;
       
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
