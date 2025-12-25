@@ -146,7 +146,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, lang = 'en' }: QRLogi
       const response = await fetch('/api/auth/pair/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sourceDevice: 'web', targetDevice: 'mobile' }),
+        body: JSON.stringify({ sourceDevice: 'web', targetDevice: 'mobile', walletAddress }),
       });
 
       if (!response.ok) throw new Error('Failed to create session');
@@ -159,7 +159,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, lang = 'en' }: QRLogi
       console.error('Create session error:', error);
       setStatus('expired');
     }
-  }, []);
+  }, [walletAddress]);
 
   // Poll for status updates
   const checkStatus = useCallback(async () => {
