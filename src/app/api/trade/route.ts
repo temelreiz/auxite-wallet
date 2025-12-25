@@ -481,7 +481,7 @@ export async function POST(request: NextRequest) {
         console.log(`🔷 Executing blockchain buy: ${toAmount}g ${toToken.toUpperCase()}`);
         
         await updateOraclePrices();
-        const buyResult = await buyMetalToken(toToken, toAmount, undefined, slippage);
+        const buyResult = await buyMetalToken(toToken, toAmount, address, slippage);
         
         if (!buyResult.success) {
           return NextResponse.json({
@@ -564,7 +564,7 @@ export async function POST(request: NextRequest) {
         }
 
         await updateOraclePrices();
-        const buyResult = await buyMetalToken(toToken, toAmount, undefined, slippage);
+        const buyResult = await buyMetalToken(toToken, toAmount, address, slippage);
         if (!buyResult.success) {
           return NextResponse.json({
             error: `Swap alım başarısız: ${buyResult.error}. Satış tutarı iade edildi.`,
@@ -593,7 +593,7 @@ export async function POST(request: NextRequest) {
       
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
         await updateOraclePrices();
-        const buyResult = await buyMetalToken(toToken, toAmount, undefined, slippage);
+        const buyResult = await buyMetalToken(toToken, toAmount, address, slippage);
         if (!buyResult.success) {
           return NextResponse.json({ error: `Blockchain işlemi başarısız: ${buyResult.error}` }, { status: 500 });
         }

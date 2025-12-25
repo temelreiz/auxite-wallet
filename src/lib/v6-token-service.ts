@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 const CONTRACTS: Record<string, string> = {
   auxg: '0xDc47ee58d95c6CcF515e2532b3F792A623b2BcbF',
   auxs: '0xA51e78dbDF6EFe6C5Fe933ffb3De410cf9513883',
-  auxpt: '0x472578d3d235894b4d34458E2d16cA7A571abc7a', 
+  auxpt: '0x472578d3d235894b4d34458E2d16cA7A571abc7a',
   auxpd: '0x419B25b00aDe21146a4f3dF3b151108E82088727',
 };
 
@@ -20,6 +20,7 @@ const TOKEN_ABI = [
   'function decimals() view returns (uint8)',
   'function askPerKgE6() view returns (uint256)',
   'function bidPerKgE6() view returns (uint256)',
+  'function transfer(address to, uint256 amount) returns (bool)',
 ];
 
 const ORACLE_ABI = [
@@ -67,7 +68,6 @@ export interface TokenPrices {
   askPerGram: number;
   bidPerGram: number;
   spreadPercent: { buy: number; sell: number };
-  // Contract prices (for reference)
   contractAskPerGram?: number;
   contractBidPerGram?: number;
 }
@@ -76,17 +76,12 @@ export interface TokenPrices {
  * Get token prices - API prices with spread for display/quote
  */
 export async function getTokenPrices(token: string): Promise<TokenPrices> {
-  // Get base price from API (real-time)
   const basePrice = await getMetalPrice(token);
-  
-  // Get admin spread
   const spread = await getMetalSpread(token);
   
-  // Apply spread for user-facing prices
   const askPerGram = applySpread(basePrice, 'buy', spread.buy);
   const bidPerGram = applySpread(basePrice, 'sell', spread.sell);
   
-  // Also get contract prices for reference
   let contractAskPerGram: number | undefined;
   let contractBidPerGram: number | undefined;
   
@@ -124,33 +119,25 @@ export async function getETHUSDPrice(): Promise<number> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// COST CALCULATION - Uses CONTRACT prices for blockchain operations
+// COST CALCULATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-/**
- * Calculate buy cost using CONTRACT's calculateBuyCost (for blockchain ops)
- */
 export async function calculateBuyCost(
   token: string,
   grams: number
 ): Promise<{ costWei: bigint; costETH: number; costUSD: number }> {
   const contract = getTokenContract(token);
-  const gramsInt = BigInt(Math.ceil(grams)); // Contract expects integer grams
+  const gramsInt = BigInt(Math.ceil(grams));
   
-  // Use contract's own calculation
   const costWei = await contract.calculateBuyCost(gramsInt);
   const costETH = parseFloat(ethers.formatEther(costWei));
   
-  // Get USD value for display
   const ethPrice = await getETHUSDPrice();
   const costUSD = costETH * ethPrice;
   
   return { costWei, costETH, costUSD };
 }
 
-/**
- * Calculate sell payout using CONTRACT's calculateSellPayout
- */
 export async function calculateSellPayout(
   token: string,
   grams: number
@@ -179,7 +166,7 @@ export async function checkReserveLimit(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// BUY FUNCTION - Uses CONTRACT price
+// BUY FUNCTION
 // ═══════════════════════════════════════════════════════════════════════════
 
 export interface BuyResult {
@@ -195,27 +182,22 @@ export async function buyMetalToken(
   token: string,
   grams: number,
   toAddress?: string,
-  slippagePercent: number = 5 // Increased default slippage
+  slippagePercent: number = 5
 ): Promise<BuyResult> {
   try {
     const wallet = getHotWallet();
     const contract = getTokenContract(token, wallet);
     const provider = getProvider();
     
-    // Use integer grams (contract requirement)
     const gramsInt = BigInt(Math.ceil(grams));
     
-    // Get cost from CONTRACT (not API)
     const costWei = await contract.calculateBuyCost(gramsInt);
     const costETH = parseFloat(ethers.formatEther(costWei));
     
-    // Add slippage buffer
     const maxCostWei = costWei + (costWei * BigInt(Math.floor(slippagePercent * 100))) / 10000n;
     
-    // Check hot wallet ETH balance
     const ethBalance = await provider.getBalance(wallet.address);
     
-    // Estimate gas
     const gasEstimate = await contract.buy.estimateGas(
       gramsInt,
       maxCostWei,
@@ -233,7 +215,6 @@ export async function buyMetalToken(
       };
     }
     
-    // Get USD value for logging
     const ethPrice = await getETHUSDPrice();
     const costUSD = costETH * ethPrice;
     
@@ -252,6 +233,16 @@ export async function buyMetalToken(
     const receipt = await tx.wait(1);
     
     console.log(`✅ Buy complete: ${receipt.hash}`);
+    
+    // Transfer tokens to user if toAddress provided
+    if (toAddress) {
+      const decimals = await contract.decimals();
+      const tokenAmount = gramsInt * (10n ** BigInt(decimals));
+      console.log(`🔄 Transferring ${gramsInt}g to ${toAddress}`);
+      const transferTx = await contract.transfer(toAddress, tokenAmount);
+      await transferTx.wait(1);
+      console.log(`✅ Transfer complete: ${transferTx.hash}`);
+    }
     
     return {
       success: true,
@@ -293,7 +284,6 @@ export async function sellMetalToken(
     
     const gramsInt = BigInt(Math.ceil(grams));
     
-    // Get payout from contract
     const payoutWei = await contract.calculateSellPayout(gramsInt);
     const payoutETH = parseFloat(ethers.formatEther(payoutWei));
     
