@@ -22,21 +22,21 @@ const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
     address: "0x738e3134d83014B7a63CFF08C13CBBF0671EEeF2", 
     decimals: 6 
   },
-  auxg: { 
-    address: "0xDc47ee58d95c6CcF515e2532b3F792A623b2BcbF", 
-    decimals: 18 
+  auxg: {
+    address: "0xDc47ee58d95c6CcF515e2532b3F792A623b2BcbF",
+    decimals: 3
   },
   auxs: { 
     address: "0xA51e78dbDF6EFe6C5Fe933ffb3De410cf9513883", 
-    decimals: 18 
+    decimals: 3 
   },
   auxpt: { 
     address: "0x472578d3d235894b4d34458E2d16cA7A571abc7a", 
-    decimals: 18 
+    decimals: 3 
   },
   auxpd: { 
     address: "0x419B25b00aDe21146a4f3dF3b151108E82088727", 
-    decimals: 18 
+    decimals: 3 
   },
 };
 
