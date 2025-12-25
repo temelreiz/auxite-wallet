@@ -910,6 +910,7 @@ export default function ProfilePage() {
       {/* Open in Mobile Modal */}
       {isConnected && address && (
         <OpenInMobileModal
+          walletAddress={address}
           isOpen={showOpenInMobileModal}
           onClose={() => setShowOpenInMobileModal(false)}
           action="open_app"
