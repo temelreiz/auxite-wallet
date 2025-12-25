@@ -423,7 +423,6 @@ export default function ProfilePage() {
             {isConnected && address && (
               <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-stone-200 dark:border-zinc-700">
                 <WhitelistManager 
-                  walletAddress={address} 
                   lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} 
                 />
               </div>
@@ -912,7 +911,6 @@ export default function ProfilePage() {
         <OpenInMobileModal
           isOpen={showOpenInMobileModal}
           onClose={() => setShowOpenInMobileModal(false)}
-          walletAddress={address}
           action="open_app"
           lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
         />
