@@ -898,7 +898,6 @@ export default function ProfilePage() {
       {/* Mobile QR Login Modal */}
       <QRLoginModal
         walletAddress={address}
-        walletAddress={address}
         isOpen={showMobilePairModal}
         onClose={() => setShowMobilePairModal(false)}
         onSuccess={(walletAddress, authToken) => {
