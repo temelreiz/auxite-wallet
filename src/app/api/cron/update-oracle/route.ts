@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { updateOraclePrices } from "@/lib/v6-token-service";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");

@@ -9,6 +9,9 @@
     "src/app/api/trade/route.ts": {
       "maxDuration": 60
     },
+    "src/app/api/cron/update-oracle/route.ts": {
+      "maxDuration": 60
+    },
     "src/app/api/cron/**/*.ts": {
       "maxDuration": 30
     },
