@@ -3,10 +3,10 @@ import { ethers } from 'ethers';
 
 // Contract addresses (Sepolia)
 const CONTRACTS: Record<string, string> = {
-  auxg: '0x28e0938457c5bf02Fe35208b7b1098af7Ec20d91',
-  auxs: '0xSILVER_ADDRESS',
-  auxpt: '0xPLATINUM_ADDRESS', 
-  auxpd: '0xPALLADIUM_ADDRESS',
+  auxg: '0xBF74Fc9f0dD50A79f9FaC2e9Aa05a268E3dcE6b6',
+  auxs: '0x705D9B193e5E349847C2Efb18E68fe989eC2C0e9',
+  auxpt: '0x1819447f624D8e22C1A4F3B14e96693625B6d74F', 
+  auxpd: '0xb23545dE86bE9F65093D3a51a6ce52Ace0d8935E',
 };
 
 const ORACLE_ADDRESS = '0x45677fc1bE2F59937Fd6A93145Db76beB38a7CcA';
@@ -14,7 +14,7 @@ const ORACLE_ADDRESS = '0x45677fc1bE2F59937Fd6A93145Db76beB38a7CcA';
 const TOKEN_ABI = [
   'function calculateBuyCost(uint256 grams) view returns (uint256)',
   'function calculateSellPayout(uint256 grams) view returns (uint256)',
-  'function buyWithSlippage(uint256 grams, uint256 maxCost) payable',
+  'function buy(uint256 grams, uint256 maxCostWei) payable',
   'function sell(uint256 grams)',
   'function balanceOf(address) view returns (uint256)',
   'function decimals() view returns (uint8)',
@@ -214,7 +214,7 @@ export async function buyMetalToken(
     const ethBalance = await provider.getBalance(wallet.address);
     
     // Estimate gas
-    const gasEstimate = await contract.buyWithSlippage.estimateGas(
+    const gasEstimate = await contract.buy.estimateGas(
       gramsInt,
       maxCostWei,
       { value: maxCostWei }
@@ -238,7 +238,7 @@ export async function buyMetalToken(
     console.log(`🔷 Buying ${gramsInt}g ${token.toUpperCase()} for ~${costETH.toFixed(6)} ETH ($${costUSD.toFixed(2)})`);
     
     // Execute buy
-    const tx = await contract.buyWithSlippage(
+    const tx = await contract.buy(
       gramsInt,
       maxCostWei,
       {
