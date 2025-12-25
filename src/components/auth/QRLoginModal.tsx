@@ -21,6 +21,7 @@ interface QRLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (walletAddress: string, authToken: string) => void;
+  walletAddress?: string;  // ✅ Mevcut wallet adresi
   lang?: 'tr' | 'en' | 'de' | 'fr' | 'ar' | 'ru';
 }
 
@@ -129,7 +130,7 @@ const translations = {
   },
 };
 
-export function QRLoginModal({ isOpen, onClose, onSuccess, lang = 'en' }: QRLoginModalProps) {
+export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang = 'en' }: QRLoginModalProps) {
   const t = translations[lang] || translations.en;
   
   const [session, setSession] = useState<PairingSession | null>(null);
@@ -146,7 +147,11 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, lang = 'en' }: QRLogi
       const response = await fetch('/api/auth/pair/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sourceDevice: 'web', targetDevice: 'mobile' }),
+        body: JSON.stringify({ 
+          sourceDevice: 'web', 
+          targetDevice: 'mobile',
+          walletAddress: walletAddress,  // ✅ Wallet adresini gönder
+        }),
       });
 
       if (!response.ok) throw new Error('Failed to create session');
@@ -159,7 +164,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, lang = 'en' }: QRLogi
       console.error('Create session error:', error);
       setStatus('expired');
     }
-  }, []);
+  }, [walletAddress]);
 
   // Poll for status updates
   const checkStatus = useCallback(async () => {

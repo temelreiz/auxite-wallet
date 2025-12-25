@@ -1,6 +1,5 @@
 // app/api/auth/pair/create/route.ts
 // Creates a new pairing session for QR code display (Web → Mobile login)
-
 import { NextRequest, NextResponse } from 'next/server';
 import { kv } from '@vercel/kv';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,17 +9,22 @@ const SESSION_EXPIRY = 300; // 5 minutes
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { sourceDevice = 'web', targetDevice = 'mobile' } = body;
+    const { sourceDevice = 'web', targetDevice = 'mobile', walletAddress } = body;
 
     // Generate unique session ID and 6-digit pairing code
     const sessionId = uuidv4();
     const pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
     
+    // ✅ QR'a wallet address'i de ekle
+    const qrData = walletAddress 
+      ? `auxite://auth?session=${sessionId}&code=${pairingCode}&address=${walletAddress}`
+      : `auxite://auth?session=${sessionId}&code=${pairingCode}`;
+    
     const session = {
       sessionId,
       pairingCode,
-      qrData: `auxite://auth?session=${sessionId}&code=${pairingCode}`,
-      walletAddress: null,
+      qrData,
+      walletAddress: walletAddress || null,
       sourceDevice,
       targetDevice,
       expiresAt: Date.now() + (SESSION_EXPIRY * 1000),
@@ -42,6 +46,7 @@ export async function POST(req: NextRequest) {
       qrData: session.qrData,
       expiresAt: session.expiresAt,
       status: session.status,
+      walletAddress: session.walletAddress,
     });
   } catch (error) {
     console.error('Create pairing session error:', error);
