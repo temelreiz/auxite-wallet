@@ -1,4 +1,5 @@
 // src/app/api/trade/route.ts
+export const maxDuration = 60;
 // V6 BLOCKCHAIN ENTEGRASYONLU - Gerçek token mint/burn işlemleri
 // ✅ AUXITEER TIER BAZLI FEE ENTEGRASYONU
 import { NextRequest, NextResponse } from "next/server";
@@ -480,7 +481,7 @@ export async function POST(request: NextRequest) {
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
         console.log(`🔷 Executing blockchain buy: ${toAmount}g ${toToken.toUpperCase()}`);
         
-        await updateOraclePrices();
+        // Oracle updated via cron
         const buyResult = await buyMetalToken(toToken, toAmount, address, slippage);
         
         if (!buyResult.success) {
@@ -563,7 +564,7 @@ export async function POST(request: NextRequest) {
           }, { status: 500 });
         }
 
-        await updateOraclePrices();
+        // Oracle updated via cron
         const buyResult = await buyMetalToken(toToken, toAmount, address, slippage);
         if (!buyResult.success) {
           return NextResponse.json({
@@ -592,7 +593,7 @@ export async function POST(request: NextRequest) {
       toAmount = (fromAmount - fee) / price;
       
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
-        await updateOraclePrices();
+        // Oracle updated via cron
         const buyResult = await buyMetalToken(toToken, toAmount, address, slippage);
         if (!buyResult.success) {
           return NextResponse.json({ error: `Blockchain işlemi başarısız: ${buyResult.error}` }, { status: 500 });

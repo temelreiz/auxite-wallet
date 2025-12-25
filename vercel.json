@@ -6,10 +6,22 @@
   "installCommand": "npm ci",
   "regions": ["fra1"],
   "functions": {
+    "src/app/api/trade/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/**/*.ts": {
+      "maxDuration": 30
+    },
     "src/app/api/**/*.ts": {
       "maxDuration": 30
     }
   },
+  "crons": [
+    {
+      "path": "/api/cron/update-oracle",
+      "schedule": "*/5 * * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
