@@ -18,6 +18,7 @@ interface PairingSession {
 }
 
 interface QRLoginModalProps {
+  walletAddress?: string;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (walletAddress: string, authToken: string) => void;
@@ -129,7 +130,7 @@ const translations = {
   },
 };
 
-export function QRLoginModal({ isOpen, onClose, onSuccess, lang = 'en' }: QRLoginModalProps) {
+export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang = 'en' }: QRLoginModalProps) {
   const t = translations[lang] || translations.en;
   
   const [session, setSession] = useState<PairingSession | null>(null);
