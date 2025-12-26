@@ -1,11 +1,10 @@
 // app/api/reserves/route.ts
-// Fiziksel Metal Rezervleri API
+// Auxite Fiziksel Metal Rezervleri - Toplam Stok
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 
 export const dynamic = 'force-dynamic';
 
-// Kasa lokasyonları
 const VAULTS = {
   IST: { name: 'Istanbul', country: 'Turkey', code: 'IST' },
   DB: { name: 'Dubai', country: 'UAE', code: 'DB' },
@@ -13,7 +12,6 @@ const VAULTS = {
   LN: { name: 'London', country: 'UK', code: 'LN' },
 };
 
-// Metal birimleri (gram)
 const METAL_UNITS = {
   AUXG: [1, 5, 10, 20, 50, 100, 500, 1000],
   AUXS: [50, 100, 250, 500, 1000, 311, 3110],
@@ -21,14 +19,13 @@ const METAL_UNITS = {
   AUXPD: [1, 5, 10, 25, 50, 100, 500, 1000],
 };
 
-// Seri numarası oluştur
 function generateSerialNumber(metal: string, vault: string, sequence: number): string {
   const year = new Date().getFullYear();
   const seq = String(sequence).padStart(5, '0');
   return `AUX-${metal.replace('AUX', '')}-${year}-${vault}-${seq}`;
 }
 
-// GET - Rezervleri getir
+// GET - Auxite'ın toplam rezervlerini getir
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -36,7 +33,6 @@ export async function GET(request: NextRequest) {
     const vault = searchParams.get('vault');
     const detailed = searchParams.get('detailed') === 'true';
 
-    // Index'ten tüm seri numaralarını al
     const metals = metal ? [metal] : ['AUXG', 'AUXS', 'AUXPT', 'AUXPD'];
     let allSerials: string[] = [];
     
@@ -50,11 +46,11 @@ export async function GET(request: NextRequest) {
       const bar = await redis.hgetall(`reserve:bar:${serialNumber}`);
       if (bar) {
         if (vault && bar.vault !== vault) continue;
-        reserves.push(bar);
+        reserves.push({ ...bar, serialNumber });
       }
     }
 
-    // Özet hesapla
+    // Özet hesapla - allocated gram'ları da hesaba kat
     const summary: Record<string, { total: number; allocated: number; available: number; byVault: Record<string, number> }> = {};
     
     for (const bar of reserves) {
@@ -62,19 +58,20 @@ export async function GET(request: NextRequest) {
       if (!summary[m]) {
         summary[m] = { total: 0, allocated: 0, available: 0, byVault: {} };
       }
-      const grams = parseFloat(bar.grams as string) || 0;
-      summary[m].total += grams;
-      if (bar.status === 'allocated') {
-        summary[m].allocated += grams;
-      } else {
-        summary[m].available += grams;
-      }
+      
+      const totalGrams = parseFloat(bar.grams as string) || 0;
+      const allocatedGrams = parseFloat(bar.allocatedGrams as string) || 0;
+      const availableGrams = totalGrams - allocatedGrams;
+      
+      summary[m].total += totalGrams;
+      summary[m].allocated += allocatedGrams;
+      summary[m].available += availableGrams;
       
       const v = bar.vault as string;
-      summary[m].byVault[v] = (summary[m].byVault[v] || 0) + grams;
+      summary[m].byVault[v] = (summary[m].byVault[v] || 0) + availableGrams;
     }
 
-    // Token supply
+    // Token supply = Toplam rezerv (1:1 backing)
     const tokenSupply = {
       AUXG: summary.AUXG?.total || 0,
       AUXS: summary.AUXS?.total || 0,
@@ -129,10 +126,10 @@ export async function POST(request: NextRequest) {
       serialNumber,
       metal,
       grams: grams.toString(),
+      allocatedGrams: '0',
       vault,
       purity: purity || (metal === 'AUXG' ? '999.9' : metal === 'AUXS' ? '999' : '999.5'),
       status: 'available',
-      allocatedTo: '',
       supplier: supplier || '',
       purchaseDate: purchaseDate || new Date().toISOString(),
       certificateUrl: certificateUrl || '',
