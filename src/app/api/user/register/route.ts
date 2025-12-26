@@ -1,7 +1,17 @@
 // app/api/user/register/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
 
+
+
+// 12 haneli alfanümerik UID oluştur
+function generateUID(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let uid = "";
+  for (let i = 0; i < 12; i++) {
+    uid += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return uid;
+}
 export const dynamic = "force-dynamic";
 
 // Redis bağlantısı
@@ -58,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Yeni kullanıcı oluştur
-    const userId = uuidv4();
+    const userId = generateUID();
     const createdAt = new Date().toISOString();
 
     const userData = {
