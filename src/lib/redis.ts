@@ -60,6 +60,11 @@ export const redis = {
   zrange: async (key: string, start: number, stop: number) => getRedis().zrange(key, start, stop),
   zrangebyscore: async (key: string, min: number, max: number) => getRedis().zrange(key, min, max, { byScore: true }),
   zcard: async (key: string) => getRedis().zcard(key),
+  // Set operations
+  sadd: async (key: string, ...members: string[]) => getRedis().sadd(key, ...members),
+  srem: async (key: string, ...members: string[]) => getRedis().srem(key, ...members),
+  smembers: async (key: string) => getRedis().smembers(key),
+  sismember: async (key: string, member: string) => getRedis().sismember(key, member),
 };
 
 // ============================================
