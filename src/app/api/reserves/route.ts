@@ -15,8 +15,8 @@ const VAULTS = {
 
 // Metal birimleri (gram)
 const METAL_UNITS = {
-  AUXG: [1, 5, 10, 20, 50, 100, 500, 1000], // 1g - 1kg
-  AUXS: [50, 100, 250, 500, 1000, 311, 3110], // 50g - 100oz
+  AUXG: [1, 5, 10, 20, 50, 100, 500, 1000],
+  AUXS: [50, 100, 250, 500, 1000, 311, 3110],
   AUXPT: [1, 5, 10, 25, 50, 100, 500, 1000],
   AUXPD: [1, 5, 10, 25, 50, 100, 500, 1000],
 };
@@ -36,14 +36,19 @@ export async function GET(request: NextRequest) {
     const vault = searchParams.get('vault');
     const detailed = searchParams.get('detailed') === 'true';
 
-    // Toplam rezervleri getir
-    const reserveKeys = await redis.keys('reserve:bar:*');
+    // Index'ten tüm seri numaralarını al
+    const metals = metal ? [metal] : ['AUXG', 'AUXS', 'AUXPT', 'AUXPD'];
+    let allSerials: string[] = [];
     
+    for (const m of metals) {
+      const serials = await redis.smembers(`reserve:index:${m}`) as string[];
+      allSerials = [...allSerials, ...serials];
+    }
+
     let reserves: any[] = [];
-    for (const key of reserveKeys) {
-      const bar = await redis.hgetall(key);
+    for (const serialNumber of allSerials) {
+      const bar = await redis.hgetall(`reserve:bar:${serialNumber}`);
       if (bar) {
-        if (metal && bar.metal !== metal) continue;
         if (vault && bar.vault !== vault) continue;
         reserves.push(bar);
       }
@@ -69,7 +74,7 @@ export async function GET(request: NextRequest) {
       summary[m].byVault[v] = (summary[m].byVault[v] || 0) + grams;
     }
 
-    // Token supply (blockchain'den - şimdilik mock)
+    // Token supply
     const tokenSupply = {
       AUXG: summary.AUXG?.total || 0,
       AUXS: summary.AUXS?.total || 0,
@@ -127,10 +132,10 @@ export async function POST(request: NextRequest) {
       vault,
       purity: purity || (metal === 'AUXG' ? '999.9' : metal === 'AUXS' ? '999' : '999.5'),
       status: 'available',
-      allocatedTo: null,
-      supplier: supplier || null,
+      allocatedTo: '',
+      supplier: supplier || '',
       purchaseDate: purchaseDate || new Date().toISOString(),
-      certificateUrl: certificateUrl || null,
+      certificateUrl: certificateUrl || '',
       createdAt: new Date().toISOString(),
     };
 
