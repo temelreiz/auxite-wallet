@@ -234,8 +234,9 @@ export async function buyMetalToken(
     
     console.log(`✅ Buy complete: ${receipt.hash}`);
     
-    // Transfer tokens to user if toAddress provided
-    if (toAddress) {
+    // Skip transfer - tokens stay in hot wallet for now
+    // TODO: Implement buyFor in contract
+    if (false && toAddress) { // Disabled - too slow
       const decimals = await contract.decimals();
       const tokenAmount = gramsInt * (10n ** BigInt(decimals));
       console.log(`🔄 Transferring ${gramsInt}g to ${toAddress}`);
