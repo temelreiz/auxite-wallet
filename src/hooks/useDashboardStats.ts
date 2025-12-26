@@ -13,10 +13,10 @@ interface DashboardStats {
 
 // Metal prices (USD per gram) - in production, fetch from oracle
 const METAL_PRICES: Record<string, number> = {
-  AUXG: 85,    // Gold ~$85/gram
-  AUXS: 1.05,  // Silver ~$1.05/gram
-  AUXPT: 32,   // Platinum ~$32/gram
-  AUXPD: 35,   // Palladium ~$35/gram
+  AUXG: 143,    // Gold ~$85/gram
+  AUXS: 2.4,  // Silver ~$1.05/gram
+  AUXPT: 75,   // Platinum ~$32/gram
+  AUXPD: 55,   // Palladium ~$35/gram
 };
 
 export function useDashboardStats(address?: string) {
