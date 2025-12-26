@@ -61,8 +61,8 @@ export const redis = {
   zrangebyscore: async (key: string, min: number, max: number) => getRedis().zrange(key, min, max, { byScore: true }),
   zcard: async (key: string) => getRedis().zcard(key),
   // Set operations
-  sadd: async (key: string, ...members: string[]) => getRedis().sadd(key, ...members),
-  srem: async (key: string, ...members: string[]) => getRedis().srem(key, ...members),
+  sadd: async (key: string, member: string) => getRedis().sadd(key, member),
+  srem: async (key: string, member: string) => getRedis().srem(key, member),
   smembers: async (key: string) => getRedis().smembers(key),
   sismember: async (key: string, member: string) => getRedis().sismember(key, member),
 };
