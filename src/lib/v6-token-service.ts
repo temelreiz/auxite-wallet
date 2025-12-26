@@ -3,10 +3,10 @@ import { ethers } from 'ethers';
 
 // Contract addresses (Sepolia)
 const CONTRACTS: Record<string, string> = {
-  auxg: '0xDc47ee58d95c6CcF515e2532b3F792A623b2BcbF',
-  auxs: '0xA51e78dbDF6EFe6C5Fe933ffb3De410cf9513883',
-  auxpt: '0x472578d3d235894b4d34458E2d16cA7A571abc7a',
-  auxpd: '0x419B25b00aDe21146a4f3dF3b151108E82088727',
+  auxg: '0x74C143Acd7Ee02CfffD1c23FB5B2Ee9dEBE369AC',
+  auxs: '0xb6179d8eDAC23c5d4F69B128a1b974baB788828D',
+  auxpt: '0x02A712F9aF81Ee9E55b154e5bae08Fe831c59c15',
+  auxpd: '0xb0d5929b5F0486865072c6933911947e999947E0',
 };
 
 const ORACLE_ADDRESS = '0x8ccA0FC65B5b745cdF8C427cb43e1EC29A95a51d';
@@ -15,6 +15,7 @@ const TOKEN_ABI = [
   'function calculateBuyCost(uint256 grams) view returns (uint256)',
   'function calculateSellPayout(uint256 grams) view returns (uint256)',
   'function buy(uint256 grams, uint256 maxCostWei) payable',
+  'function buyFor(address to, uint256 grams, uint256 maxCostWei) payable',
   'function sell(uint256 grams)',
   'function balanceOf(address) view returns (uint256)',
   'function decimals() view returns (uint8)',
@@ -221,7 +222,7 @@ export async function buyMetalToken(
     console.log(`🔷 Buying ${gramsInt}g ${token.toUpperCase()} for ~${costETH.toFixed(6)} ETH ($${costUSD.toFixed(2)})`);
     
     // Execute buy
-    const tx = await contract.buy(
+    const tx = await contract.buyFor(toAddress || wallet.address,
       gramsInt,
       maxCostWei,
       {
