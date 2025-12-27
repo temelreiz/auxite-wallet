@@ -189,3 +189,100 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+// DELETE - Allocation'ı release et (satış sonrası rezerve geri döner)
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const address = searchParams.get('address');
+    const allocationId = searchParams.get('id');
+    const grams = parseFloat(searchParams.get('grams') || '0');
+
+    if (!address || !allocationId) {
+      return NextResponse.json({ error: 'address and id required' }, { status: 400 });
+    }
+
+    // Kullanıcı UID'sini bul
+    const userUid = await redis.get(`user:address:${address.toLowerCase()}:uid`) as string;
+    if (!userUid) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Kullanıcının allocation listesini al
+    const allocDataRaw = await redis.get(`allocation:user:${userUid}:list`);
+    if (!allocDataRaw) {
+      return NextResponse.json({ error: 'No allocations found' }, { status: 404 });
+    }
+
+    let allocations: any[] = typeof allocDataRaw === 'string' ? JSON.parse(allocDataRaw) : allocDataRaw;
+    
+    // İlgili allocation'ı bul
+    const allocIndex = allocations.findIndex(a => a.id === allocationId && a.status === 'active');
+    if (allocIndex === -1) {
+      return NextResponse.json({ error: 'Allocation not found' }, { status: 404 });
+    }
+
+    const allocation = allocations[allocIndex];
+    const releaseGrams = grams > 0 ? Math.min(grams, parseFloat(allocation.grams)) : parseFloat(allocation.grams);
+
+    // Külçeyi güncelle - allocated miktarı azalt
+    const bar = await redis.hgetall(`reserve:bar:${allocation.serialNumber}`);
+    if (bar) {
+      const currentAllocated = parseFloat(bar.allocatedGrams as string) || 0;
+      const newAllocated = Math.max(0, currentAllocated - releaseGrams);
+      
+      await redis.hset(`reserve:bar:${allocation.serialNumber}`, {
+        allocatedGrams: newAllocated.toString(),
+        status: 'available'
+      });
+
+      // Available index'e geri ekle
+      await redis.sadd('reserve:index:available', allocation.serialNumber);
+    }
+
+    // Allocation'ı güncelle veya sil
+    const remainingGrams = parseFloat(allocation.grams) - releaseGrams;
+    if (remainingGrams <= 0) {
+      // Tamamen release - allocation'ı "released" yap
+      allocations[allocIndex] = {
+        ...allocation,
+        status: 'released',
+        releasedAt: new Date().toISOString(),
+        releasedGrams: releaseGrams.toString(),
+      };
+    } else {
+      // Kısmi release - gram'ı güncelle
+      allocations[allocIndex] = {
+        ...allocation,
+        grams: remainingGrams.toString(),
+      };
+      // Yeni bir released kayıt ekle
+      allocations.push({
+        ...allocation,
+        id: `${allocation.id}-released-${Date.now()}`,
+        grams: releaseGrams.toString(),
+        status: 'released',
+        releasedAt: new Date().toISOString(),
+      });
+    }
+
+    // Listeyi kaydet
+    await redis.set(`allocation:user:${userUid}:list`, JSON.stringify(allocations));
+
+    console.log(`✅ Released: ${releaseGrams}g from ${allocation.serialNumber} back to reserves`);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Allocation released',
+      released: {
+        allocationId,
+        grams: releaseGrams,
+        serialNumber: allocation.serialNumber,
+        metal: allocation.metal,
+      }
+    });
+  } catch (error: any) {
+    console.error('Allocation release error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
