@@ -292,7 +292,7 @@ export async function POST(request: NextRequest) {
     const certHash = "0x" + createHash("sha256").update(certHashData).digest("hex");
     
     // Arka planda anchor et (non-blocking)
-    anchorCertificateBackground(certNumber, certHash);
+    await anchorCertificateBackground(certNumber, certHash);
     console.log(`✅ Certificate issued: ${certNumber} for ${allocations.length} bars`);
 
     // Listeyi kaydet
