@@ -220,7 +220,7 @@ const translations: Record<string, Record<string, string>> = {
 export default function AllocationFinder({ lang = "en" }: AllocationFinderProps) {
   const t = translations[lang] || translations.en;
   const { address, isConnected } = useAccount();
-  const { allocations, loading: allocLoading } = useAllocations(address);
+  const { allocations, loading: allocLoading } = useAllocations();
 
   // Certificate state
   const [certInput, setCertInput] = useState("");
