@@ -217,6 +217,30 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(`✅ Allocation: ${allocGrams}g ${metal} to ${userUid} from ${bar.serialNumber}`);
+
+      // Sertifika oluştur
+      const certNumber = `AUX-CERT-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      const certificate = {
+        certificateNumber: certNumber,
+        userUid,
+        address: address.toLowerCase(),
+        allocationId: allocation.id,
+        metal,
+        metalName: metal === "AUXG" ? "Gold" : metal === "AUXS" ? "Silver" : metal === "AUXPT" ? "Platinum" : "Palladium",
+        grams: allocGrams.toString(),
+        serialNumber: bar.serialNumber,
+        vault: bar.vault,
+        vaultName: VAULT_NAMES[bar.vault] || bar.vault,
+        purity: bar.purity,
+        barSize: bar.barGrams.toString(),
+        issuedAt: now,
+        status: "active",
+        issuer: "Auxite Precious Metals AG",
+      };
+      await redis.hset(`certificate:${certNumber}`, certificate);
+      await redis.sadd(`certificates:user:${userUid}`, certNumber);
+      allocation.certificateNumber = certNumber;
+      console.log(`✅ Certificate issued: ${certNumber}`);
     }
 
     // Listeyi kaydet
