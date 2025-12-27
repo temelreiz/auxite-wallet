@@ -1,23 +1,10 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
-import { useAllocations } from "@/hooks/useAllocations";
 import Image from "next/image";
 
 interface AllocationFinderProps {
   lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
-}
-
-interface DisplayAllocation {
-  id: string;
-  metal: string;
-  symbol: string;
-  grams: number;
-  custodian: string;
-  timestamp: number;
-  serialNumber: string;
-  vaultName?: string;
-  certificateNumber?: string;
 }
 
 const metalIcons: Record<string, string> = {
@@ -37,14 +24,12 @@ const metalColors: Record<string, string> = {
 const translations: Record<string, Record<string, string>> = {
   tr: {
     allocationTitle: "📍 Allocation Bulucu",
-    allocationSubtitle: "Smart contract'tan kayıtlı fiziksel metal varlıklarınız",
+    allocationSubtitle: "Kayıtlı fiziksel metal varlıklarınız",
     noRecords: "Henüz varlık kaydı yok",
     records: "kayıt",
     loading: "Yükleniyor...",
     grams: "g",
     vault: "Kasa:",
-    serial: "Seri:",
-    date: "Tarih:",
     certTitle: "🔐 Sertifika Doğrulama",
     certSubtitle: "Dijital sertifikanızı doğrulayın",
     certPlaceholder: "AUX-CERT-2025-XXXXXX",
@@ -67,14 +52,12 @@ const translations: Record<string, Record<string, string>> = {
   },
   en: {
     allocationTitle: "📍 Allocation Finder",
-    allocationSubtitle: "Your registered physical metal assets from smart contract",
+    allocationSubtitle: "Your registered physical metal assets",
     noRecords: "No asset records yet",
     records: "records",
     loading: "Loading...",
     grams: "g",
     vault: "Vault:",
-    serial: "Serial:",
-    date: "Date:",
     certTitle: "🔐 Certificate Verifier",
     certSubtitle: "Verify your digital certificate",
     certPlaceholder: "AUX-CERT-2025-XXXXXX",
@@ -97,16 +80,14 @@ const translations: Record<string, Record<string, string>> = {
   },
   de: {
     allocationTitle: "📍 Allokationsfinder",
-    allocationSubtitle: "Ihre registrierten physischen Metallbestände",
-    noRecords: "Noch keine Vermögensaufzeichnungen",
+    allocationSubtitle: "Ihre registrierten Metallbestände",
+    noRecords: "Noch keine Aufzeichnungen",
     records: "Einträge",
     loading: "Wird geladen...",
     grams: "g",
     vault: "Tresor:",
-    serial: "Serie:",
-    date: "Datum:",
     certTitle: "🔐 Zertifikatsprüfung",
-    certSubtitle: "Überprüfen Sie Ihr digitales Zertifikat",
+    certSubtitle: "Zertifikat überprüfen",
     certPlaceholder: "AUX-CERT-2025-XXXXXX",
     verify: "Prüfen",
     verifying: "Wird geprüft...",
@@ -127,20 +108,18 @@ const translations: Record<string, Record<string, string>> = {
   },
   fr: {
     allocationTitle: "📍 Recherche d'Allocation",
-    allocationSubtitle: "Vos actifs métalliques physiques enregistrés",
-    noRecords: "Aucun enregistrement d'actif",
+    allocationSubtitle: "Vos actifs métalliques enregistrés",
+    noRecords: "Aucun enregistrement",
     records: "enregistrements",
     loading: "Chargement...",
     grams: "g",
     vault: "Coffre:",
-    serial: "Série:",
-    date: "Date:",
     certTitle: "🔐 Vérificateur de Certificat",
-    certSubtitle: "Vérifiez votre certificat numérique",
+    certSubtitle: "Vérifiez votre certificat",
     certPlaceholder: "AUX-CERT-2025-XXXXXX",
     verify: "Vérifier",
     verifying: "Vérification...",
-    enterCert: "Entrez le numéro de certificat",
+    enterCert: "Entrez le numéro",
     certNotFound: "Certificat non trouvé",
     metal: "Métal:",
     weight: "Poids:",
@@ -157,16 +136,14 @@ const translations: Record<string, Record<string, string>> = {
   },
   ar: {
     allocationTitle: "📍 باحث التخصيص",
-    allocationSubtitle: "أصولك المعدنية المادية المسجلة",
-    noRecords: "لا توجد سجلات أصول",
+    allocationSubtitle: "أصولك المعدنية المسجلة",
+    noRecords: "لا توجد سجلات",
     records: "سجلات",
     loading: "جاري التحميل...",
     grams: "جرام",
     vault: "الخزنة:",
-    serial: "التسلسلي:",
-    date: "التاريخ:",
     certTitle: "🔐 التحقق من الشهادة",
-    certSubtitle: "تحقق من شهادتك الرقمية",
+    certSubtitle: "تحقق من شهادتك",
     certPlaceholder: "AUX-CERT-2025-XXXXXX",
     verify: "تحقق",
     verifying: "جاري التحقق...",
@@ -187,20 +164,18 @@ const translations: Record<string, Record<string, string>> = {
   },
   ru: {
     allocationTitle: "📍 Поиск Распределения",
-    allocationSubtitle: "Ваши зарегистрированные физические металлические активы",
-    noRecords: "Записей активов пока нет",
+    allocationSubtitle: "Ваши зарегистрированные активы",
+    noRecords: "Записей пока нет",
     records: "записей",
     loading: "Загрузка...",
     grams: "г",
     vault: "Хранилище:",
-    serial: "Серия:",
-    date: "Дата:",
     certTitle: "🔐 Проверка Сертификата",
-    certSubtitle: "Проверьте ваш цифровой сертификат",
+    certSubtitle: "Проверьте ваш сертификат",
     certPlaceholder: "AUX-CERT-2025-XXXXXX",
     verify: "Проверить",
     verifying: "Проверка...",
-    enterCert: "Введите номер сертификата",
+    enterCert: "Введите номер",
     certNotFound: "Сертификат не найден",
     metal: "Металл:",
     weight: "Вес:",
@@ -220,13 +195,41 @@ const translations: Record<string, Record<string, string>> = {
 export default function AllocationFinder({ lang = "en" }: AllocationFinderProps) {
   const t = translations[lang] || translations.en;
   const { address, isConnected } = useAccount();
-  const { allocations, loading: allocLoading } = useAllocations();
+
+  // Allocation state - from API
+  const [allocations, setAllocations] = useState<any[]>([]);
+  const [allocLoading, setAllocLoading] = useState(false);
 
   // Certificate state
   const [certInput, setCertInput] = useState("");
   const [certLoading, setCertLoading] = useState(false);
   const [certError, setCertError] = useState("");
   const [certResult, setCertResult] = useState<any>(null);
+
+  // Fetch allocations from API
+  useEffect(() => {
+    if (!address) {
+      setAllocations([]);
+      return;
+    }
+
+    const fetchAllocations = async () => {
+      setAllocLoading(true);
+      try {
+        const res = await fetch(`/api/allocations?address=${address}`);
+        const data = await res.json();
+        if (data.allocations) {
+          setAllocations(data.allocations);
+        }
+      } catch (err) {
+        console.error("Failed to fetch allocations:", err);
+      } finally {
+        setAllocLoading(false);
+      }
+    };
+
+    fetchAllocations();
+  }, [address]);
 
   const handleCertVerify = async () => {
     const trimmed = certInput.trim().toUpperCase();
@@ -254,11 +257,12 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
   const locale = lang === "tr" ? "tr-TR" : lang === "de" ? "de-DE" : lang === "fr" ? "fr-FR" : lang === "ar" ? "ar-SA" : lang === "ru" ? "ru-RU" : "en-US";
 
   const formatDate = (ts: number | string) => {
+    if (!ts) return "-";
     const d = typeof ts === "string" ? new Date(ts) : new Date(ts * 1000);
     return d.toLocaleDateString(locale);
   };
 
-  // Metal summaries
+  // Metal summaries from allocations
   const metalSummary = useMemo(() => {
     const summary: Record<string, { grams: number; count: number }> = {
       AUXG: { grams: 0, count: 0 },
@@ -267,7 +271,7 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
       AUXPD: { grams: 0, count: 0 },
     };
     allocations.forEach((a: any) => {
-      const metal = a.metal || a.metalId;
+      const metal = a.metal || "AUXG";
       if (summary[metal]) {
         summary[metal].grams += parseFloat(a.grams) || 0;
         summary[metal].count += 1;
@@ -278,9 +282,15 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
 
   const getPdfUrl = (certNum: string) => `/api/certificates/pdf?certNumber=${certNum}&format=html`;
 
+  const metalNames: Record<string, string> = {
+    AUXG: t.gold,
+    AUXS: t.silver,
+    AUXPT: t.platinum,
+    AUXPD: t.palladium,
+  };
+
   return (
     <div className="mt-6">
-      {/* 2 Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* LEFT: Allocation Finder */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5">
@@ -303,7 +313,7 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
               <div key={metal} className={`rounded-xl p-2 text-center border ${metalSummary[metal].count > 0 ? "border-emerald-500/50 bg-emerald-500/5" : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"}`}>
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Image src={metalIcons[metal]} alt={metal} width={16} height={16} />
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400">{t[metal.toLowerCase().replace("aux", "") as keyof typeof t] || metal}</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">{metalNames[metal]}</span>
                 </div>
                 <p className={`text-sm font-bold ${metalColors[metal]}`}>{metalSummary[metal].grams.toFixed(0)} {t.grams}</p>
                 <p className="text-[9px] text-slate-400">{metalSummary[metal].count} {t.records}</p>
@@ -329,8 +339,8 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-[9px] text-slate-400">{a.serialNumber?.slice(0, 15) || "-"}</p>
-                      <p className="text-[9px] text-slate-500">{a.allocatedAt ? formatDate(a.allocatedAt) : "-"}</p>
+                      <p className="text-[9px] text-slate-400 truncate max-w-[100px]">{a.serialNumber || "-"}</p>
+                      <p className="text-[9px] text-slate-500">{formatDate(a.allocatedAt)}</p>
                     </div>
                   </div>
                 ))}
