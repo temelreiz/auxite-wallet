@@ -199,6 +199,7 @@ export async function POST(request: NextRequest) {
         status: 'active',
         txHash: txHash || null,
         allocatedAt: now,
+        certificateNumber: "",
       };
 
       existingAllocs.push(allocation);
