@@ -54,6 +54,13 @@ const translations = {
   },
 };
 
+const METAL_ICONS: Record<string, string> = {
+  AUXG: '/images/metals/gold.png',
+  AUXS: '/images/metals/silver.png',
+  AUXPT: '/images/metals/platinum.png',
+  AUXPD: '/images/metals/palladium.png',
+};
+
 const METAL_INFO: Record<string, { name: string; nameEn: string; color: string; gradient: string }> = {
   AUXG: { name: 'Altın', nameEn: 'Gold', color: '#EAB308', gradient: 'from-yellow-400 to-amber-500' },
   AUXS: { name: 'Gümüş', nameEn: 'Silver', color: '#94A3B8', gradient: 'from-gray-300 to-gray-400' },
@@ -206,7 +213,7 @@ export default function ReservesPage() {
                     <div className="p-6">
                       <div className="flex items-center gap-4 mb-4">
                         <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${info.gradient} flex items-center justify-center`}>
-                          <Image src={`/metals/${metal.toLowerCase().replace('aux', '')}.png`} alt={metal} width={32} height={32} className="drop-shadow-lg" />
+                          <Image src={METAL_ICONS[metal] || "/images/metals/gold.png"} alt={metal} width={32} height={32} className="drop-shadow-lg" />
                         </div>
                         <div className="flex-1">
                           <h3 className="text-lg font-bold text-slate-800 dark:text-white">{metal}</h3>
