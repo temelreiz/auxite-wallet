@@ -1,5 +1,5 @@
 // app/api/allocations/route.ts
-// Kullanıcı Metal Allocation API - Reserve'den düşer
+// Kullanıcı Metal Allocation API - Multiple Bar Support
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 
@@ -14,6 +14,13 @@ function generateUID(): string {
   }
   return uid;
 }
+
+const VAULT_NAMES: Record<string, string> = {
+  IST: 'Istanbul',
+  ZH: 'Zurich',
+  DB: 'Dubai',
+  LN: 'London',
+};
 
 // GET - Kullanıcının allocation'larını getir
 export async function GET(request: NextRequest) {
@@ -83,10 +90,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Yeni allocation oluştur (satın alma sonrası)
+// POST - Yeni allocation oluştur (birden fazla külçe desteği)
 export async function POST(request: NextRequest) {
   try {
-    const { address, metal, grams, vault, txHash } = await request.json();
+    const { address, metal, grams, preferredVault, txHash } = await request.json();
 
     if (!address || !metal || !grams) {
       return NextResponse.json({ error: 'address, metal, grams required' }, { status: 400 });
@@ -102,87 +109,126 @@ export async function POST(request: NextRequest) {
       console.log(`✅ New UID created: ${userUid} for ${address}`);
     }
 
-    // Uygun külçe bul (yeterli gram'a sahip, available)
-    const serials = await redis.smembers(`reserve:index:${metal}`) as string[];
-    let selectedBar: any = null;
-
-    for (const serialNumber of serials) {
-      const bar = await redis.hgetall(`reserve:bar:${serialNumber}`);
-      if (!bar || bar.status !== 'available') continue;
-      if (vault && bar.vault !== vault) continue;
-      
-      const barGrams = parseFloat(bar.grams as string) || 0;
-      const barAllocated = parseFloat(bar.allocatedGrams as string) || 0;
-      const barAvailable = barGrams - barAllocated;
-      
-      if (barAvailable >= grams) {
-        selectedBar = { ...bar, serialNumber, barGrams, barAllocated, barAvailable };
-        break;
-      }
-    }
-
-    if (!selectedBar) {
-      return NextResponse.json({ 
-        error: 'Insufficient reserve', 
-        requested: { metal, grams, vault } 
-      }, { status: 400 });
-    }
-
-    // Allocation oluştur
-    const allocationId = `${userUid}-${selectedBar.serialNumber}-${Date.now()}`;
-    const allocation = {
-      id: allocationId,
-      userUid,
-      serialNumber: selectedBar.serialNumber,
-      metal,
-      grams: grams.toString(),
-      vault: selectedBar.vault,
-      vaultName: selectedBar.vault === 'IST' ? 'Istanbul' : 
-                 selectedBar.vault === 'ZH' ? 'Zurich' : 
-                 selectedBar.vault === 'DB' ? 'Dubai' : 
-                 selectedBar.vault === 'LN' ? 'London' : selectedBar.vault,
-      purity: selectedBar.purity,
-      status: 'active',
-      txHash: txHash || null,
-      allocatedAt: new Date().toISOString(),
-    };
-
-    // Kullanıcının allocation listesine ekle
+    // Mevcut allocation listesini al
     const existingRaw = await redis.get(`allocation:user:${userUid}:list`);
     let existingAllocs: any[] = [];
     if (existingRaw) {
       existingAllocs = typeof existingRaw === 'string' ? JSON.parse(existingRaw) : existingRaw;
     }
-    existingAllocs.push(allocation);
-    await redis.set(`allocation:user:${userUid}:list`, JSON.stringify(existingAllocs));
 
-    // Külçedeki allocated miktarı güncelle
-    const newAllocated = selectedBar.barAllocated + grams;
-    await redis.hset(`reserve:bar:${selectedBar.serialNumber}`, { 
-      allocatedGrams: newAllocated.toString(),
-      status: newAllocated >= selectedBar.barGrams ? 'fully_allocated' : 'available'
-    });
+    // Tüm uygun külçeleri bul ve gram'a göre sırala
+    const serials = await redis.smembers(`reserve:index:${metal}`) as string[];
+    const availableBars: any[] = [];
 
-    // Tam allocate olduysa available index'ten çıkar
-    if (newAllocated >= selectedBar.barGrams) {
-      await redis.srem('reserve:index:available', selectedBar.serialNumber);
+    for (const serialNumber of serials) {
+      const bar = await redis.hgetall(`reserve:bar:${serialNumber}`);
+      if (!bar || bar.status === 'fully_allocated') continue;
+      
+      const barGrams = parseFloat(bar.grams as string) || 0;
+      const barAllocated = parseFloat(bar.allocatedGrams as string) || 0;
+      const barAvailable = barGrams - barAllocated;
+      
+      if (barAvailable > 0) {
+        availableBars.push({ 
+          ...bar, 
+          serialNumber, 
+          barGrams, 
+          barAllocated, 
+          barAvailable 
+        });
+      }
     }
 
-    console.log(`✅ Allocation: ${grams}g ${metal} to ${userUid} from ${selectedBar.serialNumber}`);
+    // Gram'a göre sırala (küçükten büyüğe - best fit)
+    availableBars.sort((a, b) => a.barGrams - b.barGrams);
+
+    // Greedy allocation - tam eşleşen külçeleri tercih et
+    let remainingGrams = grams;
+    const allocations: any[] = [];
+    const usedBars: any[] = [];
+
+    // Önce tam eşleşenleri bul
+    for (const bar of availableBars) {
+      if (bar.barAvailable === remainingGrams) {
+        usedBars.push({ bar, allocGrams: bar.barAvailable });
+        remainingGrams = 0;
+        break;
+      }
+    }
+
+    // Tam eşleşme yoksa, kombinasyon bul
+    if (remainingGrams > 0) {
+      // Büyükten küçüğe sırala
+      availableBars.sort((a, b) => b.barGrams - a.barGrams);
+      
+      for (const bar of availableBars) {
+        if (remainingGrams <= 0) break;
+        if (usedBars.find(u => u.bar.serialNumber === bar.serialNumber)) continue;
+        
+        const allocGrams = Math.min(bar.barAvailable, remainingGrams);
+        if (allocGrams > 0) {
+          usedBars.push({ bar, allocGrams });
+          remainingGrams -= allocGrams;
+        }
+      }
+    }
+
+    if (remainingGrams > 0) {
+      return NextResponse.json({ 
+        error: 'Insufficient reserve', 
+        requested: grams,
+        available: grams - remainingGrams,
+        metal 
+      }, { status: 400 });
+    }
+
+    // Allocation'ları oluştur
+    const now = new Date().toISOString();
+    
+    for (const { bar, allocGrams } of usedBars) {
+      const allocation = {
+        id: `${userUid}-${bar.serialNumber}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        userUid,
+        serialNumber: bar.serialNumber,
+        metal,
+        grams: allocGrams.toString(),
+        vault: bar.vault,
+        vaultName: VAULT_NAMES[bar.vault] || bar.vault,
+        purity: bar.purity,
+        barSize: bar.barGrams,
+        status: 'active',
+        txHash: txHash || null,
+        allocatedAt: now,
+      };
+
+      existingAllocs.push(allocation);
+      allocations.push(allocation);
+
+      // Külçeyi güncelle
+      const newAllocated = bar.barAllocated + allocGrams;
+      await redis.hset(`reserve:bar:${bar.serialNumber}`, { 
+        allocatedGrams: newAllocated.toString(),
+        status: newAllocated >= bar.barGrams ? 'fully_allocated' : 'available'
+      });
+
+      // Tam allocate olduysa available index'ten çıkar
+      if (newAllocated >= bar.barGrams) {
+        await redis.srem('reserve:index:available', bar.serialNumber);
+      }
+
+      console.log(`✅ Allocation: ${allocGrams}g ${metal} to ${userUid} from ${bar.serialNumber}`);
+    }
+
+    // Listeyi kaydet
+    await redis.set(`allocation:user:${userUid}:list`, JSON.stringify(existingAllocs));
 
     return NextResponse.json({
       success: true,
-      message: 'Allocation created',
+      message: `Allocated ${grams}g ${metal} across ${allocations.length} bar(s)`,
       userUid,
-      allocation,
-      bar: {
-        serialNumber: selectedBar.serialNumber,
-        vault: selectedBar.vault,
-        purity: selectedBar.purity,
-        totalGrams: selectedBar.barGrams,
-        allocatedGrams: newAllocated,
-        remainingGrams: selectedBar.barGrams - newAllocated,
-      }
+      allocations,
+      totalGrams: grams,
+      barCount: allocations.length,
     });
   } catch (error: any) {
     console.error('Allocation create error:', error);

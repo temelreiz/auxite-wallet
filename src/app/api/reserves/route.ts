@@ -19,10 +19,10 @@ const METAL_UNITS = {
   AUXPD: [1, 5, 10, 25, 50, 100, 500, 1000],
 };
 
-function generateSerialNumber(metal: string, vault: string, sequence: number): string {
-  const year = new Date().getFullYear();
-  const seq = String(sequence).padStart(5, '0');
-  return `AUX-${metal.replace('AUX', '')}-${year}-${vault}-${seq}`;
+function generateSerialNumber(metal: string, sequence: number): string {
+  
+  const baseNum = 1000000 + sequence;
+  return `${metal}-${baseNum}`;
 }
 
 // GET - Auxite'ın toplam rezervlerini getir
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
 
     const seqKey = `reserve:seq:${metal}:${vault}`;
     const sequence = await redis.incr(seqKey);
-    const serialNumber = generateSerialNumber(metal, vault, sequence);
+    const serialNumber = generateSerialNumber(metal, sequence);
 
     const bar = {
       serialNumber,
