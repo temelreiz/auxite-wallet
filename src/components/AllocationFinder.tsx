@@ -365,8 +365,8 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
                       : hasRecords
                       ? "border-emerald-500/50 bg-emerald-500/5 hover:border-emerald-500 hover:bg-emerald-500/10"
                       : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-600"
-                  } ${hasRecords ? "cursor-pointer" : "cursor-default opacity-60"}`}
-                  disabled={!hasRecords}
+                  } ${hasRecords ? "" : "opacity-70"}`}
+                  
                 >
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <Image src={metalIcons[metal]} alt={metal} width={16} height={16} />
