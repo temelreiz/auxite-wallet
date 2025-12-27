@@ -21,18 +21,38 @@ function generateCertificateHash(certificate: any): string {
   return createHash('sha256').update(data).digest('hex');
 }
 
-const METAL_NAMES: Record<string, string> = {
-  AUXG: 'Gold (Au)',
-  AUXS: 'Silver (Ag)',
-  AUXPT: 'Platinum (Pt)',
-  AUXPD: 'Palladium (Pd)',
+// Allocation Event ID oluştur
+function generateAllocationEventId(): string {
+  const random = Math.random().toString(36).substring(2, 10).toUpperCase();
+  return `ALLOC-EVT-${random}`;
+}
+
+// Ledger Reference oluştur
+function generateLedgerReference(): string {
+  const year = new Date().getFullYear();
+  const seq = Math.floor(Math.random() * 999999).toString().padStart(6, '0');
+  return `AUX-LEDGER-${year}-${seq}`;
+}
+
+const METAL_NAMES: Record<string, { full: string; symbol: string }> = {
+  AUXG: { full: 'Gold', symbol: 'Au' },
+  AUXS: { full: 'Silver', symbol: 'Ag' },
+  AUXPT: { full: 'Platinum', symbol: 'Pt' },
+  AUXPD: { full: 'Palladium', symbol: 'Pd' },
 };
 
-const PURITY_INFO: Record<string, string> = {
-  AUXG: '.9999 (LBMA Good Delivery Standard)',
-  AUXS: '.999 (LBMA Good Delivery Standard)',
-  AUXPT: '.9995 (LPPM Standard)',
-  AUXPD: '.9995 (LPPM Standard)',
+const PURITY_BY_METAL: Record<string, string> = {
+  AUXG: '.9999',
+  AUXS: '.999',
+  AUXPT: '.9995',
+  AUXPD: '.9995',
+};
+
+const REFINER_INFO: Record<string, string> = {
+  AUXG: 'LBMA-Listed Refiner',
+  AUXS: 'LBMA-Listed Refiner',
+  AUXPT: 'LPPM-Listed Refiner',
+  AUXPD: 'LPPM-Listed Refiner',
 };
 
 const VAULT_INFO: Record<string, { name: string; id: string; location: string }> = {
@@ -42,12 +62,12 @@ const VAULT_INFO: Record<string, { name: string; id: string; location: string }>
   LN: { name: 'Vault D – London Facility', id: 'UK-LDN-VAULT-01', location: 'London, UK' },
 };
 
-// GET - Sertifika PDF verisi oluştur (JSON olarak, frontend'de PDF'e çevrilecek)
+// GET - Sertifika PDF verisi oluştur
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const certNumber = searchParams.get('certNumber');
-    const format = searchParams.get('format') || 'json'; // json veya html
+    const format = searchParams.get('format') || 'json';
 
     if (!certNumber) {
       return NextResponse.json({ error: 'certNumber required' }, { status: 400 });
@@ -59,12 +79,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Certificate not found' }, { status: 404 });
     }
 
-    // Kullanıcının tüm allocation'larını bul (aynı işlemden)
+    // Kullanıcının tüm allocation'larını bul
     const allocDataRaw = await redis.get(`allocation:user:${certificate.userUid}:list`);
     let allocations: any[] = [];
     if (allocDataRaw) {
       const allAllocs = typeof allocDataRaw === 'string' ? JSON.parse(allocDataRaw) : allocDataRaw;
-      // Bu sertifikayla eşleşen allocation'ları bul
       allocations = allAllocs.filter((a: any) => 
         a.certificateNumber === certNumber || 
         a.serialNumber === certificate.serialNumber
@@ -80,6 +99,11 @@ export async function GET(request: NextRequest) {
       id: `${certificate.vault}-VAULT-01`,
       location: certificate.vaultName || certificate.vault,
     };
+
+    // Metal bilgisi
+    const metalInfo = METAL_NAMES[certificate.metal] || { full: certificate.metal, symbol: '' };
+    const purity = PURITY_BY_METAL[certificate.metal] || certificate.purity;
+    const refiner = REFINER_INFO[certificate.metal] || 'Listed Refiner';
 
     // Sertifika verisi
     const pdfData = {
@@ -98,9 +122,11 @@ export async function GET(request: NextRequest) {
 
       // Allocated Metal Details
       metal: {
-        type: METAL_NAMES[certificate.metal] || certificate.metal,
+        type: `${metalInfo.full} (${metalInfo.symbol})`,
         symbol: certificate.metal,
-        purity: PURITY_INFO[certificate.metal] || certificate.purity,
+        purity: purity,
+        refiner: refiner,
+        certification: 'Refiner Assay Certified',
         totalWeight: `${certificate.grams} grams`,
         allocationDate: certificate.issuedAt,
       },
@@ -135,6 +161,12 @@ export async function GET(request: NextRequest) {
         leasing: 'No (unless opted-in separately by holder)',
       },
 
+      // Ledger & Audit
+      ledger: {
+        allocationEventId: certificate.allocationEventId || generateAllocationEventId(),
+        ledgerReference: certificate.ledgerReference || generateLedgerReference(),
+      },
+
       // Verification
       verification: {
         hash: certHash,
@@ -150,31 +182,33 @@ export async function GET(request: NextRequest) {
         timestamp: certificate.issuedAt,
       },
 
+      // Legal Disclaimers
+      disclaimers: [
+        'This certificate is governed by the Auxite Terms of Service and Redemption Policy.',
+        'In case of any discrepancy, the Auxite allocation ledger and custodian records shall prevail.',
+        'This certificate may be replaced or voided in the event of reallocation, consolidation, or redemption.',
+      ],
+
       // Footer
       footer: 'This document may be digitally signed and timestamped. Physical printing is for reference only; the authoritative version is available via Auxite verification service.',
     };
 
-    // HTML format istendiyse
+    // HTML format
     if (format === 'html') {
       const html = generateCertificateHTML(pdfData);
       return new NextResponse(html, {
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-        },
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
       });
     }
 
-    return NextResponse.json({
-      success: true,
-      certificate: pdfData,
-    });
+    return NextResponse.json({ success: true, certificate: pdfData });
   } catch (error: any) {
     console.error('Certificate PDF error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-// HTML sertifika oluştur (PDF'e dönüştürülebilir)
+// HTML sertifika oluştur
 function generateCertificateHTML(data: any): string {
   return `
 <!DOCTYPE html>
@@ -250,39 +284,18 @@ function generateCertificateHTML(data: any): string {
     }
     .section-title span { font-size: 18px; }
     
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+    table { width: 100%; border-collapse: collapse; }
     table th, table td {
       padding: 10px 12px;
       text-align: left;
       border-bottom: 1px solid #e2e8f0;
     }
-    table th {
-      font-size: 11px;
-      color: #64748b;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-    table td {
-      font-size: 13px;
-      color: #1e293b;
-    }
+    table th { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; }
+    table td { font-size: 13px; color: #1e293b; }
     table td.mono { font-family: monospace; }
     
-    .status-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-    .status-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 12px;
-      background: white;
-      border-radius: 4px;
-    }
+    .status-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .status-item { display: flex; justify-content: space-between; padding: 8px 12px; background: white; border-radius: 4px; }
     .status-item label { color: #64748b; font-size: 12px; }
     .status-item span { font-weight: 600; font-size: 12px; }
     .status-item span.yes { color: #10b981; }
@@ -299,30 +312,48 @@ function generateCertificateHTML(data: any): string {
       margin: 10px 0;
     }
     
-    .verification-url {
-      color: #3b82f6;
-      text-decoration: none;
-      font-size: 12px;
+    .ledger-box {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      padding: 12px;
+      border-radius: 4px;
+      margin: 15px 0;
     }
+    .ledger-box p { font-size: 12px; color: #92400e; margin: 4px 0; }
+    .ledger-box strong { color: #78350f; }
+    
+    .verification-url { color: #3b82f6; text-decoration: none; font-size: 12px; }
     
     .qr-placeholder {
-      width: 100px;
-      height: 100px;
+      width: 100px; height: 100px;
       background: #f1f5f9;
       border: 2px dashed #cbd5e1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      color: #64748b;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: #64748b;
       margin-top: 10px;
     }
     
-    .declaration {
-      font-size: 12px;
-      color: #475569;
-      font-style: italic;
-      line-height: 1.8;
+    .declaration { font-size: 12px; color: #475569; font-style: italic; line-height: 1.8; }
+    
+    .disclaimers {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+    .disclaimers p {
+      font-size: 11px;
+      color: #991b1b;
+      margin: 8px 0;
+      padding-left: 15px;
+      position: relative;
+    }
+    .disclaimers p::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #dc2626;
     }
     
     .signature {
@@ -355,11 +386,7 @@ function generateCertificateHTML(data: any): string {
     
     @media print {
       body { background: white; }
-      .certificate { 
-        box-shadow: none; 
-        margin: 0;
-        border: none;
-      }
+      .certificate { box-shadow: none; margin: 0; border: none; }
     }
   </style>
 </head>
@@ -399,6 +426,8 @@ function generateCertificateHTML(data: any): string {
           <tr><th>Field</th><th>Value</th></tr>
           <tr><td>Metal Type</td><td><strong>${data.metal.type}</strong></td></tr>
           <tr><td>Purity</td><td>${data.metal.purity}</td></tr>
+          <tr><td>Refiner</td><td>${data.metal.refiner}</td></tr>
+          <tr><td>Certification</td><td>${data.metal.certification}</td></tr>
           <tr><td>Total Allocated Weight</td><td><strong>${data.metal.totalWeight}</strong></td></tr>
           <tr><td>Allocation Effective Date</td><td>${new Date(data.metal.allocationDate).toISOString()}</td></tr>
         </table>
@@ -439,22 +468,19 @@ function generateCertificateHTML(data: any): string {
       <div class="section">
         <div class="section-title"><span>🔐</span> Certification Status</div>
         <div class="status-grid">
-          <div class="status-item">
-            <label>Status</label>
-            <span class="yes">${data.status.current}</span>
-          </div>
-          <div class="status-item">
-            <label>Redeemable</label>
-            <span class="yes">${data.status.redeemable}</span>
-          </div>
-          <div class="status-item">
-            <label>Rehypothecation</label>
-            <span class="no">${data.status.rehypothecation}</span>
-          </div>
-          <div class="status-item">
-            <label>Leasing</label>
-            <span class="no">${data.status.leasing}</span>
-          </div>
+          <div class="status-item"><label>Status</label><span class="yes">${data.status.current}</span></div>
+          <div class="status-item"><label>Redeemable</label><span class="yes">${data.status.redeemable}</span></div>
+          <div class="status-item"><label>Rehypothecation</label><span class="no">${data.status.rehypothecation}</span></div>
+          <div class="status-item"><label>Leasing</label><span class="no">${data.status.leasing}</span></div>
+        </div>
+      </div>
+      
+      <!-- Ledger & Audit Reference -->
+      <div class="section">
+        <div class="section-title"><span>📋</span> Ledger & Audit Reference</div>
+        <div class="ledger-box">
+          <p><strong>Allocation Event ID:</strong> ${data.ledger.allocationEventId}</p>
+          <p><strong>Ledger Reference:</strong> ${data.ledger.ledgerReference}</p>
         </div>
       </div>
       
@@ -465,16 +491,19 @@ function generateCertificateHTML(data: any): string {
         <div class="hash-box">${data.verification.hash}</div>
         <p style="font-size: 12px; margin-bottom: 8px;"><strong>Verification URL:</strong></p>
         <a href="${data.verification.url}" class="verification-url">${data.verification.url}</a>
-        <div class="qr-placeholder">
-          QR Code<br>
-          (Scan to Verify)
-        </div>
+        <div class="qr-placeholder">QR Code<br>(Scan to Verify)</div>
       </div>
       
       <!-- Issuer Declaration -->
       <div class="section">
         <div class="section-title"><span>⚖️</span> Issuer Declaration</div>
         <p class="declaration">${data.issuer.declaration}</p>
+        
+        <!-- Legal Disclaimers -->
+        <div class="disclaimers">
+          ${data.disclaimers.map((d: string) => `<p>${d}</p>`).join('')}
+        </div>
+        
         <div class="signature">
           <div class="signature-box">
             <div class="signature-line">Auxite Global</div>
@@ -488,9 +517,7 @@ function generateCertificateHTML(data: any): string {
       </div>
     </div>
     
-    <div class="footer">
-      ${data.footer}
-    </div>
+    <div class="footer">${data.footer}</div>
   </div>
 </body>
 </html>
