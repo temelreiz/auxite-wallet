@@ -2,8 +2,27 @@
 // Kullanıcı Metal Allocation API - Bar Size Based Allocation
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
+import { createHash } from 'crypto';
 
 export const dynamic = 'force-dynamic';
+
+// Arka planda certificate anchor (non-blocking)
+async function anchorCertificateBackground(certNumber: string, certHash: string) {
+  try {
+    const { anchorCertificate } = await import("@/lib/blockchain");
+    console.log(`⛓️ Anchoring certificate ${certNumber}...`);
+    const result = await anchorCertificate(certHash, certNumber);
+    await redis.hset(`certificate:${certNumber}`, {
+      txHash: result.txHash,
+      anchoredAt: new Date().toISOString(),
+      anchored: "true",
+    });
+    console.log(`✅ Certificate ${certNumber} anchored: ${result.txHash}`);
+  } catch (error: any) {
+    console.error(`❌ Anchor failed for ${certNumber}:`, error.message);
+  }
+}
+
 
 // 12 haneli alfanümerik UID oluştur
 function generateUID(): string {
@@ -258,6 +277,22 @@ export async function POST(request: NextRequest) {
     };
     await redis.hset(`certificate:${certNumber}`, certificate);
     await redis.sadd(`certificates:user:${userUid}`, certNumber);
+
+    // Sertifika hash oluştur ve blockchain'e anchor et
+    const certHashData = JSON.stringify({
+      certificateNumber: certNumber,
+      userUid,
+      metal,
+      grams: grams.toString(),
+      serialNumber: certificate.serialNumber,
+      vault: certificate.vault,
+      purity: certificate.purity,
+      issuedAt: certificate.issuedAt,
+    });
+    const certHash = "0x" + createHash("sha256").update(certHashData).digest("hex");
+    
+    // Arka planda anchor et (non-blocking)
+    anchorCertificateBackground(certNumber, certHash);
     console.log(`✅ Certificate issued: ${certNumber} for ${allocations.length} bars`);
 
     // Listeyi kaydet

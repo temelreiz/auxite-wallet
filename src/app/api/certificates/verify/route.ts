@@ -1,5 +1,5 @@
 // app/api/certificates/verify/route.ts
-// Certificate Verification API
+// Certificate Verification API with On-Chain Verification
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import { createHash } from 'crypto';
@@ -41,6 +41,30 @@ const METAL_NAMES: Record<string, string> = {
   AUXPD: 'Palladium',
 };
 
+// On-chain verification
+async function verifyOnChain(certNumber: string): Promise<{
+  anchored: boolean;
+  timestamp: number | null;
+  certHash: string | null;
+  txHash: string | null;
+} | null> {
+  try {
+    const { verifyCertificateOnChain } = await import('@/lib/blockchain');
+    const result = await verifyCertificateOnChain(certNumber);
+    if (result) {
+      return {
+        anchored: result.anchored,
+        timestamp: result.timestamp,
+        certHash: result.certHash,
+        txHash: null, // TX hash'i event'ten almak gerekir
+      };
+    }
+  } catch (error) {
+    console.error('On-chain verify error:', error);
+  }
+  return null;
+}
+
 // GET - Sertifika doğrula
 export async function GET(request: NextRequest) {
   try {
@@ -62,15 +86,6 @@ export async function GET(request: NextRequest) {
       certificate = await redis.hgetall(`certificate:${certNumber}`);
     }
 
-    // Hash ile ara (TODO: implement hash lookup)
-    if (!certificate && hash) {
-      // Hash lookup için index gerekli
-      return NextResponse.json({ 
-        verified: false, 
-        error: 'Hash lookup not yet implemented' 
-      });
-    }
-
     if (!certificate || !certificate.certificateNumber) {
       return NextResponse.json({
         verified: false,
@@ -81,6 +96,18 @@ export async function GET(request: NextRequest) {
 
     // Hash oluştur
     const certHash = generateCertificateHash(certificate);
+
+    // On-chain verification dene
+    let onChainResult = null;
+    if (certNumber) {
+      onChainResult = await verifyOnChain(certNumber);
+    }
+
+    // Blockchain durumu - Redis'ten veya on-chain'den
+    const isAnchored = certificate.anchored === 'true' || onChainResult?.anchored === true;
+    const anchorTimestamp = onChainResult?.timestamp 
+      ? new Date(onChainResult.timestamp * 1000).toISOString()
+      : certificate.anchoredAt || null;
 
     // Yanıt oluştur (hassas bilgileri maskele)
     return NextResponse.json({
@@ -100,11 +127,14 @@ export async function GET(request: NextRequest) {
         status: certificate.status,
       },
       blockchain: {
-        anchored: !!certificate.txHash,
+        anchored: isAnchored,
         hash: certHash,
         chain: process.env.NEXT_PUBLIC_CHAIN === 'mainnet' ? 'Base' : 'Base Sepolia',
-        timestamp: certificate.anchoredAt || null,
+        timestamp: anchorTimestamp,
         txHash: certificate.txHash || null,
+        explorerUrl: certificate.txHash 
+          ? `https://${process.env.NEXT_PUBLIC_CHAIN === 'mainnet' ? '' : 'sepolia.'}basescan.org/tx/${certificate.txHash}`
+          : null,
       },
       verifiedAt: new Date().toISOString(),
     });
@@ -117,7 +147,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Sertifikayı blockchain'e anchor et
+// POST - Sertifikayı manuel anchor et (admin)
 export async function POST(request: NextRequest) {
   try {
     const { certNumber } = await request.json();
@@ -133,7 +163,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Zaten anchor edilmiş mi?
-    if (certificate.txHash) {
+    if (certificate.anchored === 'true' || certificate.txHash) {
       return NextResponse.json({
         success: true,
         message: 'Already anchored',
@@ -144,14 +174,31 @@ export async function POST(request: NextRequest) {
     // Hash oluştur
     const certHash = generateCertificateHash(certificate);
 
-    // TODO: Blockchain'e anchor et
-    // Bu kısım contract deploy edildikten sonra aktif edilecek
+    // Blockchain'e anchor et
+    try {
+      const { anchorCertificate } = await import('@/lib/blockchain');
+      const result = await anchorCertificate(certHash, certNumber);
+      
+      // Redis'i güncelle
+      await redis.hset(`certificate:${certNumber}`, {
+        txHash: result.txHash,
+        anchoredAt: new Date().toISOString(),
+        anchored: 'true',
+      });
 
-    return NextResponse.json({
-      success: true,
-      message: 'Anchoring not yet implemented - contract deployment pending',
-      hash: certHash,
-    });
+      return NextResponse.json({
+        success: true,
+        message: 'Certificate anchored successfully',
+        txHash: result.txHash,
+        hash: certHash,
+      });
+    } catch (anchorError: any) {
+      return NextResponse.json({
+        success: false,
+        error: `Anchoring failed: ${anchorError.message}`,
+        hash: certHash,
+      }, { status: 500 });
+    }
   } catch (error: any) {
     console.error('Certificate anchor error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
