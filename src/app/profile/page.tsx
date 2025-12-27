@@ -51,14 +51,33 @@ export default function ProfilePage() {
   const [showMobilePairModal, setShowMobilePairModal] = useState(false);
   const [showOpenInMobileModal, setShowOpenInMobileModal] = useState(false);
 
-  // User UID - generated from wallet address
-  const userUID = useMemo(() => {
-    if (!address) return "------";
-    // Create a short unique ID from wallet address
-    const hash = address.slice(2, 10).toUpperCase();
-    return `AUX-${hash}`;
+  // User UID - fetched from API
+  const [userUID, setUserUID] = useState("------");
+  
+  useEffect(() => {
+    if (address) {
+      fetch(`/api/allocations?address=${address}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.uid) {
+            setUserUID(data.uid);
+          } else {
+            // UID yoksa oluştur
+            fetch(`/api/allocations`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ address, metal: 'AUXG', grams: 0 })
+            })
+              .then(r => r.json())
+              .then(d => {
+                if (d.userUid) setUserUID(d.userUid);
+              })
+              .catch(() => {});
+          }
+        })
+        .catch(err => console.log("UID fetch error:", err));
+    }
   }, [address]);
-
   // Avatar colors based on wallet address
   const avatarColors = useMemo(() => {
     if (!address) return { bg: "#64748b", text: "#ffffff" };
