@@ -1,630 +1,275 @@
-// src/app/trust/page.tsx
-// Auxite Wallet - Trust Center (Mobile-style rich content)
-
 "use client";
-
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
-import { 
-  Shield, 
-  FileText, 
-  Lock, 
-  BarChart3,
-  CheckCircle, 
-  Building2,
-  Globe,
-  Eye,
-  Key,
-  Download,
-  ExternalLink,
-  RefreshCw,
-  TrendingUp,
-  Award,
-  Heart,
-  Zap
-} from "lucide-react";
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// TRANSLATIONS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const translations: Record<string, Record<string, string>> = {
-  tr: {
-    title: "Güven Merkezi",
-    subtitle: "Fiziksel Değerli Metallerle 1:1 Destekli",
-    totalReserves: "Toplam Rezerv",
-    fullyBacked: "Tam Destekli",
-    assetTypes: "Varlık Türü",
-    vaultCount: "Kasa Lokasyonu",
-    
-    // Navigation Cards
-    porTitle: "Rezerv Kanıtı (PoR)",
-    porDesc: "Gerçek zamanlı on-chain doğrulama",
-    auditsTitle: "Denetim Raporları",
-    auditsDesc: "Bağımsız Big 4 denetimleri",
-    custodyTitle: "Saklama Bilgisi",
-    custodyDesc: "LBMA sertifikalı kasalar",
-    supplyTitle: "Token Arz Analizi",
-    supplyDesc: "Anlık arz ve dolaşım verileri",
-    
-    // Our Commitment
-    commitmentTitle: "Taahhütümüz",
-    commitment1Title: "Tam Şeffaflık",
-    commitment1Desc: "Tüm rezerv verileri gerçek zamanlı olarak on-chain'de doğrulanabilir. Hiçbir şeyi gizlemiyoruz.",
-    commitment2Title: "Bağımsız Doğrulama",
-    commitment2Desc: "Deloitte ve PwC tarafından aylık denetimler. Tüm raporlar halka açık.",
-    commitment3Title: "Sigortalı Varlıklar",
-    commitment3Desc: "1 Milyar $ toplam sigorta kapsamı. Lloyd's, AXA ve Chubb güvencesi.",
-    commitment4Title: "Anında İtfa",
-    commitment4Desc: "Token'larınızı istediğiniz zaman fiziksel metale dönüştürün veya satın.",
-    
-    // Supply Snapshot
-    supplySnapshot: "Arz Durumu",
-    viewAll: "Tümünü Gör",
-    totalSupply: "Toplam Arz",
-    circulating: "Dolaşımdaki",
-    backing: "Destek",
-    lastAudit: "Son Denetim",
-    grams: "gram",
-    
-    // Latest Reports
-    latestReports: "Son Denetim Raporları",
-    downloadPdf: "PDF İndir",
-    verifiedBy: "Doğrulayan",
-    
-    // Security
-    securityTitle: "Banka Düzeyinde Güvenlik",
-    securityDesc: "Tüm fiziksel varlıklar İsviçre, Londra ve Singapur'daki LBMA sertifikalı kasalarda saklanmaktadır.",
-    learnMore: "Daha Fazla Bilgi",
-    
-    // Stats
-    lastUpdated: "Son Güncelleme",
-    refreshing: "Güncelleniyor...",
+const trustSections = [
+  {
+    title: "Proof of Reserves",
+    titleTr: "Rezerv Kanıtı",
+    description: "Real-time verification of physical metal backing all Auxite tokens",
+    descriptionTr: "Tüm Auxite tokenlarını destekleyen fiziksel metalin gerçek zamanlı doğrulaması",
+    href: "/trust/reserves",
+    icon: "📊",
+    color: "emerald",
   },
-  en: {
-    title: "Trust Center",
-    subtitle: "Backed 1:1 by Physical Precious Metals",
-    totalReserves: "Total Reserves",
-    fullyBacked: "Fully Backed",
-    assetTypes: "Asset Types",
-    vaultCount: "Vault Locations",
-    
-    porTitle: "Proof of Reserves",
-    porDesc: "Real-time on-chain verification",
-    auditsTitle: "Audit Reports",
-    auditsDesc: "Independent Big 4 audits",
-    custodyTitle: "Custody Information",
-    custodyDesc: "LBMA certified vaults",
-    supplyTitle: "Supply Analytics",
-    supplyDesc: "Live supply and circulation data",
-    
-    commitmentTitle: "Our Commitment",
-    commitment1Title: "Full Transparency",
-    commitment1Desc: "All reserve data is verifiable on-chain in real-time. We hide nothing.",
-    commitment2Title: "Independent Verification",
-    commitment2Desc: "Monthly audits by Deloitte and PwC. All reports publicly available.",
-    commitment3Title: "Insured Assets",
-    commitment3Desc: "$1 Billion total insurance coverage. Backed by Lloyd's, AXA, and Chubb.",
-    commitment4Title: "Instant Redemption",
-    commitment4Desc: "Convert your tokens to physical metal or sell anytime you want.",
-    
-    supplySnapshot: "Supply Snapshot",
-    viewAll: "View All",
-    totalSupply: "Total Supply",
-    circulating: "Circulating",
-    backing: "Backing",
-    lastAudit: "Last Audit",
-    grams: "grams",
-    
-    latestReports: "Latest Audit Reports",
-    downloadPdf: "Download PDF",
-    verifiedBy: "Verified by",
-    
-    securityTitle: "Bank-Grade Security",
-    securityDesc: "All physical assets are stored in LBMA-certified vaults across Switzerland, London, and Singapore.",
-    learnMore: "Learn More",
-    
-    lastUpdated: "Last Updated",
-    refreshing: "Refreshing...",
+  {
+    title: "Custody Information",
+    titleTr: "Saklama Bilgileri",
+    description: "Details about our approved custodians and vault locations",
+    descriptionTr: "Onaylı saklama kuruluşları ve kasa lokasyonları hakkında detaylar",
+    href: "/trust/custody",
+    icon: "🏦",
+    color: "blue",
   },
-  de: {
-    title: "Vertrauenszentrum",
-    subtitle: "1:1 durch physische Edelmetalle gedeckt",
-    totalReserves: "Gesamtreserven",
-    fullyBacked: "Voll gedeckt",
-    assetTypes: "Vermögensarten",
-    vaultCount: "Tresorstandorte",
-    
-    porTitle: "Reservenachweis",
-    porDesc: "Echtzeit On-Chain-Verifizierung",
-    auditsTitle: "Prüfberichte",
-    auditsDesc: "Unabhängige Big 4 Prüfungen",
-    custodyTitle: "Verwahrungsinformationen",
-    custodyDesc: "LBMA-zertifizierte Tresore",
-    supplyTitle: "Angebotsanalyse",
-    supplyDesc: "Live Angebots- und Umlaufdaten",
-    
-    commitmentTitle: "Unsere Verpflichtung",
-    commitment1Title: "Volle Transparenz",
-    commitment1Desc: "Alle Reservedaten sind in Echtzeit auf der Blockchain verifizierbar.",
-    commitment2Title: "Unabhängige Verifizierung",
-    commitment2Desc: "Monatliche Prüfungen durch Deloitte und PwC.",
-    commitment3Title: "Versicherte Vermögenswerte",
-    commitment3Desc: "1 Milliarde $ Gesamtversicherungsschutz.",
-    commitment4Title: "Sofortige Einlösung",
-    commitment4Desc: "Wandeln Sie Ihre Token jederzeit in physisches Metall um.",
-    
-    supplySnapshot: "Angebotsübersicht",
-    viewAll: "Alle anzeigen",
-    totalSupply: "Gesamtangebot",
-    circulating: "Im Umlauf",
-    backing: "Deckung",
-    lastAudit: "Letzte Prüfung",
-    grams: "Gramm",
-    
-    latestReports: "Neueste Prüfberichte",
-    downloadPdf: "PDF herunterladen",
-    verifiedBy: "Verifiziert von",
-    
-    securityTitle: "Bankensicherheit",
-    securityDesc: "Alle physischen Vermögenswerte werden in LBMA-zertifizierten Tresoren aufbewahrt.",
-    learnMore: "Mehr erfahren",
-    
-    lastUpdated: "Zuletzt aktualisiert",
-    refreshing: "Aktualisiere...",
+  {
+    title: "Audit Reports",
+    titleTr: "Denetim Raporları",
+    description: "Third-party independent audit results and verification",
+    descriptionTr: "Üçüncü taraf bağımsız denetim sonuçları ve doğrulama",
+    href: "/trust/audits",
+    icon: "🧾",
+    color: "purple",
   },
-  fr: {
-    title: "Centre de Confiance",
-    subtitle: "Soutenu 1:1 par des métaux précieux physiques",
-    totalReserves: "Réserves Totales",
-    fullyBacked: "Entièrement Soutenu",
-    assetTypes: "Types d'Actifs",
-    vaultCount: "Emplacements des Coffres",
-    
-    porTitle: "Preuve de Réserves",
-    porDesc: "Vérification on-chain en temps réel",
-    auditsTitle: "Rapports d'Audit",
-    auditsDesc: "Audits Big 4 indépendants",
-    custodyTitle: "Informations de Garde",
-    custodyDesc: "Coffres certifiés LBMA",
-    supplyTitle: "Analyse de l'Offre",
-    supplyDesc: "Données d'offre et de circulation en direct",
-    
-    commitmentTitle: "Notre Engagement",
-    commitment1Title: "Transparence Totale",
-    commitment1Desc: "Toutes les données de réserve sont vérifiables on-chain en temps réel.",
-    commitment2Title: "Vérification Indépendante",
-    commitment2Desc: "Audits mensuels par Deloitte et PwC.",
-    commitment3Title: "Actifs Assurés",
-    commitment3Desc: "1 milliard $ de couverture d'assurance totale.",
-    commitment4Title: "Rachat Instantané",
-    commitment4Desc: "Convertissez vos tokens en métal physique à tout moment.",
-    
-    supplySnapshot: "Aperçu de l'Offre",
-    viewAll: "Voir Tout",
-    totalSupply: "Offre Totale",
-    circulating: "En Circulation",
-    backing: "Soutien",
-    lastAudit: "Dernier Audit",
-    grams: "grammes",
-    
-    latestReports: "Derniers Rapports d'Audit",
-    downloadPdf: "Télécharger PDF",
-    verifiedBy: "Vérifié par",
-    
-    securityTitle: "Sécurité Bancaire",
-    securityDesc: "Tous les actifs physiques sont stockés dans des coffres certifiés LBMA.",
-    learnMore: "En Savoir Plus",
-    
-    lastUpdated: "Dernière mise à jour",
-    refreshing: "Actualisation...",
+  {
+    title: "Token Supply",
+    titleTr: "Token Arzı",
+    description: "Circulating supply and allocation statistics",
+    descriptionTr: "Dolaşımdaki arz ve tahsis istatistikleri",
+    href: "/trust/supply",
+    icon: "🪙",
+    color: "amber",
   },
-  ar: {
-    title: "مركز الثقة",
-    subtitle: "مدعوم 1:1 بالمعادن الثمينة الفعلية",
-    totalReserves: "إجمالي الاحتياطيات",
-    fullyBacked: "مدعوم بالكامل",
-    assetTypes: "أنواع الأصول",
-    vaultCount: "مواقع الخزائن",
-    
-    porTitle: "إثبات الاحتياطيات",
-    porDesc: "التحقق على السلسلة في الوقت الفعلي",
-    auditsTitle: "تقارير التدقيق",
-    auditsDesc: "تدقيقات Big 4 المستقلة",
-    custodyTitle: "معلومات الحفظ",
-    custodyDesc: "خزائن معتمدة من LBMA",
-    supplyTitle: "تحليل العرض",
-    supplyDesc: "بيانات العرض والتداول المباشرة",
-    
-    commitmentTitle: "التزامنا",
-    commitment1Title: "شفافية كاملة",
-    commitment1Desc: "جميع بيانات الاحتياطي قابلة للتحقق على السلسلة في الوقت الفعلي.",
-    commitment2Title: "التحقق المستقل",
-    commitment2Desc: "تدقيقات شهرية من قبل Deloitte و PwC.",
-    commitment3Title: "أصول مؤمنة",
-    commitment3Desc: "تغطية تأمينية إجمالية بقيمة 1 مليار دولار.",
-    commitment4Title: "استرداد فوري",
-    commitment4Desc: "حول رموزك إلى معدن فعلي في أي وقت.",
-    
-    supplySnapshot: "لمحة عن العرض",
-    viewAll: "عرض الكل",
-    totalSupply: "إجمالي العرض",
-    circulating: "في التداول",
-    backing: "الدعم",
-    lastAudit: "آخر تدقيق",
-    grams: "جرام",
-    
-    latestReports: "أحدث تقارير التدقيق",
-    downloadPdf: "تحميل PDF",
-    verifiedBy: "تم التحقق من قبل",
-    
-    securityTitle: "أمان بمستوى البنوك",
-    securityDesc: "يتم تخزين جميع الأصول المادية في خزائن معتمدة من LBMA.",
-    learnMore: "اعرف المزيد",
-    
-    lastUpdated: "آخر تحديث",
-    refreshing: "جاري التحديث...",
-  },
-  ru: {
-    title: "Центр Доверия",
-    subtitle: "Обеспечен 1:1 физическими драгоценными металлами",
-    totalReserves: "Общие Резервы",
-    fullyBacked: "Полностью Обеспечен",
-    assetTypes: "Типы Активов",
-    vaultCount: "Расположение Хранилищ",
-    
-    porTitle: "Доказательство Резервов",
-    porDesc: "Верификация on-chain в реальном времени",
-    auditsTitle: "Аудиторские Отчеты",
-    auditsDesc: "Независимые аудиты Big 4",
-    custodyTitle: "Информация о Хранении",
-    custodyDesc: "Сертифицированные LBMA хранилища",
-    supplyTitle: "Аналитика Предложения",
-    supplyDesc: "Данные о предложении и обращении в реальном времени",
-    
-    commitmentTitle: "Наши Обязательства",
-    commitment1Title: "Полная Прозрачность",
-    commitment1Desc: "Все данные о резервах верифицируемы on-chain в реальном времени.",
-    commitment2Title: "Независимая Верификация",
-    commitment2Desc: "Ежемесячные аудиты от Deloitte и PwC.",
-    commitment3Title: "Застрахованные Активы",
-    commitment3Desc: "Общее страховое покрытие на $1 млрд.",
-    commitment4Title: "Мгновенный Выкуп",
-    commitment4Desc: "Конвертируйте токены в физический металл в любое время.",
-    
-    supplySnapshot: "Обзор Предложения",
-    viewAll: "Смотреть Все",
-    totalSupply: "Общее Предложение",
-    circulating: "В Обращении",
-    backing: "Обеспечение",
-    lastAudit: "Последний Аудит",
-    grams: "грамм",
-    
-    latestReports: "Последние Аудиторские Отчеты",
-    downloadPdf: "Скачать PDF",
-    verifiedBy: "Верифицировано",
-    
-    securityTitle: "Банковская Безопасность",
-    securityDesc: "Все физические активы хранятся в сертифицированных LBMA хранилищах.",
-    learnMore: "Узнать Больше",
-    
-    lastUpdated: "Последнее обновление",
-    refreshing: "Обновление...",
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// DATA
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const supplyData = [
-  { symbol: 'AUXG', name: 'Auxite Gold', totalSupply: 125847.52, circulatingSupply: 118234.18, reservesBacked: 100, lastAudit: '2024-12-15', icon: '🥇', gradient: 'from-yellow-400 to-amber-500' },
-  { symbol: 'AUXS', name: 'Auxite Silver', totalSupply: 2847562.75, circulatingSupply: 2456123.50, reservesBacked: 100, lastAudit: '2024-12-15', icon: '🥈', gradient: 'from-slate-300 to-slate-400' },
-  { symbol: 'AUXPT', name: 'Auxite Platinum', totalSupply: 8547.25, circulatingSupply: 7823.80, reservesBacked: 100, lastAudit: '2024-12-15', icon: '💎', gradient: 'from-slate-200 to-slate-300' },
-  { symbol: 'AUXPD', name: 'Auxite Palladium', totalSupply: 4523.10, circulatingSupply: 4102.75, reservesBacked: 100, lastAudit: '2024-12-15', icon: '💜', gradient: 'from-purple-300 to-purple-400' },
 ];
 
-const auditReports = [
-  { id: '1', title: 'December 2024 Reserve Attestation', date: '2024-12-15', auditor: 'Deloitte', type: 'monthly' as const },
-  { id: '2', title: 'Q4 2024 Comprehensive Audit', date: '2024-12-01', auditor: 'PwC', type: 'quarterly' as const },
-  { id: '3', title: 'November 2024 Reserve Attestation', date: '2024-11-15', auditor: 'Deloitte', type: 'monthly' as const },
-];
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export default function TrustCenterPage() {
+export default function TrustPage() {
   const { lang } = useLanguage();
-  const t = translations[lang] || translations.en;
-  
-  const [mounted, setMounted] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(new Date().toISOString());
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setLastUpdated(new Date().toISOString());
-      setIsRefreshing(false);
-    }, 1500);
-  };
-
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num);
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const navCards = [
-    { id: 'por', title: t.porTitle, desc: t.porDesc, icon: Shield, color: 'emerald', gradient: 'from-emerald-500 to-emerald-600', href: '/trust/reserves' },
-    { id: 'audits', title: t.auditsTitle, desc: t.auditsDesc, icon: FileText, color: 'blue', gradient: 'from-blue-500 to-blue-600', href: '/trust/audits' },
-    { id: 'custody', title: t.custodyTitle, desc: t.custodyDesc, icon: Lock, color: 'amber', gradient: 'from-amber-500 to-amber-600', href: '/trust/custody' },
-    { id: 'supply', title: t.supplyTitle, desc: t.supplyDesc, icon: BarChart3, color: 'purple', gradient: 'from-purple-500 to-purple-600', href: '/trust/supply' },
-  ];
-
-  const commitments = [
-    { icon: Eye, title: t.commitment1Title, desc: t.commitment1Desc, color: 'emerald' },
-    { icon: Award, title: t.commitment2Title, desc: t.commitment2Desc, color: 'blue' },
-    { icon: Shield, title: t.commitment3Title, desc: t.commitment3Desc, color: 'purple' },
-    { icon: Zap, title: t.commitment4Title, desc: t.commitment4Desc, color: 'amber' },
-  ];
-
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-zinc-600 border-t-emerald-500 rounded-full" />
-      </div>
-    );
-  }
+  const isTr = lang === 'tr';
 
   return (
-    <main className="min-h-screen bg-stone-100 dark:bg-zinc-950">
+    <div className="min-h-screen bg-stone-100 dark:bg-slate-950">
       <TopNav />
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/10 via-transparent to-transparent dark:from-emerald-900/20" />
-        
-        <div className="relative max-w-6xl mx-auto px-4 pt-8 pb-12">
-          {/* Live Badge */}
-          <div className="flex justify-center mb-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-emerald-600 dark:text-emerald-400 text-sm font-medium">Live Data</span>
-            </div>
+      
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Hero Section */}
+        <header className="text-center mb-12">
+          <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-6">
+            <svg className="w-10 h-10 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
           </div>
+          <h1 className="text-4xl font-bold text-slate-800 dark:text-white mb-4">
+            🔐 Trust Center
+          </h1>
+          <p className="text-xl text-emerald-600 dark:text-emerald-400 font-medium mb-4">
+            Transparency. Allocation. Verification.
+          </p>
+          <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+            {isTr 
+              ? 'Auxite, dijital varlıkların fiziksel gerçekliğe karşı doğrulanabilir olması gerektiği ilkesi üzerine kurulmuştur. Her Auxite tokeni, güvenli bir şekilde saklanan ve denetlenebilir fiziksel değerli metali temsil eder.'
+              : 'Auxite is built on the principle that digital assets must be verifiable against physical reality. Every Auxite token represents physically allocated precious metal, securely stored and auditable.'
+            }
+          </p>
+        </header>
 
-          {/* Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <Shield className="w-10 h-10 text-white" />
-            </div>
-          </div>
-
-          {/* Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white mb-3">{t.title}</h1>
-            <p className="text-lg text-slate-600 dark:text-slate-400">{t.subtitle}</p>
-          </div>
-
-          {/* Stats */}
-          <div className="flex justify-center mb-6">
-            <div className="inline-flex flex-wrap justify-center items-center gap-4 sm:gap-8 p-4 sm:p-6 rounded-2xl bg-white/80 dark:bg-zinc-800/80 backdrop-blur border border-stone-200 dark:border-zinc-700 shadow-lg">
-              <div className="text-center px-4">
-                <p className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white">$487M</p>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">{t.totalReserves}</p>
-              </div>
-              <div className="w-px h-12 bg-stone-200 dark:bg-zinc-700 hidden sm:block" />
-              <div className="text-center px-4">
-                <p className="text-2xl sm:text-3xl font-bold text-emerald-500">100%</p>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">{t.fullyBacked}</p>
-              </div>
-              <div className="w-px h-12 bg-stone-200 dark:bg-zinc-700 hidden sm:block" />
-              <div className="text-center px-4">
-                <p className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white">4</p>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">{t.assetTypes}</p>
-              </div>
-              <div className="w-px h-12 bg-stone-200 dark:bg-zinc-700 hidden sm:block" />
-              <div className="text-center px-4">
-                <p className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white">3</p>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">{t.vaultCount}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Refresh */}
-          <div className="flex justify-center">
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-white transition-colors"
-            >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              {isRefreshing ? t.refreshing : `${t.lastUpdated}: ${formatDate(lastUpdated)}`}
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Navigation Cards */}
-      <section className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {navCards.map((card) => (
+        {/* Navigation Cards */}
+        <div className="grid md:grid-cols-2 gap-6 mb-12">
+          {trustSections.map((section) => (
             <Link
-              key={card.id}
-              href={card.href}
-              className="group p-5 rounded-2xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700 hover:border-emerald-500/50 hover:shadow-lg transition-all hover:-translate-y-1"
+              key={section.href}
+              href={section.href}
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 hover:border-emerald-500 hover:shadow-xl transition-all group"
             >
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
-                <card.icon className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-slate-800 dark:text-white mb-1">{card.title}</h3>
-              <p className="text-sm text-slate-600 dark:text-zinc-400">{card.desc}</p>
-              <div className="mt-3 flex items-center text-sm text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                <span>{t.viewAll}</span>
-                <ExternalLink className="w-3.5 h-3.5 ml-1" />
+              <div className="flex items-start gap-4">
+                <span className="text-4xl">{section.icon}</span>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-slate-800 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                    {isTr ? section.titleTr : section.title}
+                  </h2>
+                  <p className="text-slate-600 dark:text-slate-400 mt-2">
+                    {isTr ? section.descriptionTr : section.description}
+                  </p>
+                </div>
+                <svg className="w-6 h-6 text-slate-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </Link>
           ))}
         </div>
-      </section>
 
-      {/* Our Commitment */}
-      <section className="max-w-6xl mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-white text-center mb-8">{t.commitmentTitle}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {commitments.map((item, index) => (
-            <div key={index} className="p-5 rounded-2xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700">
-              <div className={`w-12 h-12 rounded-xl mb-4 flex items-center justify-center ${
-                item.color === 'emerald' ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
-                item.color === 'blue' ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' :
-                item.color === 'purple' ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400' :
-                'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
-              }`}>
-                <item.icon className="w-6 h-6" />
-              </div>
-              <h3 className="font-semibold text-slate-800 dark:text-white mb-2">{item.title}</h3>
-              <p className="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">{item.desc}</p>
+        {/* Key Principles */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
+              <span className="text-2xl">🏦</span>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Supply Snapshot */}
-      <section className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white">{t.supplySnapshot}</h2>
-          <Link href="/trust/supply" className="text-sm text-emerald-500 hover:text-emerald-600 transition-colors">
-            {t.viewAll} →
-          </Link>
-        </div>
-
-        <div className="bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700 rounded-2xl overflow-hidden">
-          {/* Table Header */}
-          <div className="hidden sm:grid grid-cols-5 gap-4 px-6 py-4 bg-stone-50 dark:bg-zinc-800 text-sm text-slate-500 dark:text-zinc-400 font-medium">
-            <div>Asset</div>
-            <div className="text-right">{t.totalSupply}</div>
-            <div className="text-right">{t.circulating}</div>
-            <div className="text-right">{t.backing}</div>
-            <div className="text-right">{t.lastAudit}</div>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
+              {isTr ? 'Fiziksel Tahsis' : 'Physical Allocation'}
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              {isTr 
+                ? 'Tüm değerli metaller fiziksel olarak tutulur, tam tahsis edilir, külçe bazında ayrılır ve onaylı saklama kuruluşlarında depolanır.'
+                : 'All precious metals are physically held, fully allocated, segregated by bar, and stored with approved custodians.'
+              }
+            </p>
           </div>
 
-          {/* Table Rows */}
-          {supplyData.map((asset, index) => (
-            <div
-              key={asset.symbol}
-              className={`grid grid-cols-2 sm:grid-cols-5 gap-4 px-6 py-4 items-center hover:bg-stone-50 dark:hover:bg-zinc-800/50 transition-colors ${
-                index !== supplyData.length - 1 ? 'border-b border-stone-100 dark:border-zinc-800' : ''
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${asset.gradient} flex items-center justify-center shadow`}>
-                  <span className="text-lg">{asset.icon}</span>
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-800 dark:text-white">{asset.symbol}</p>
-                  <p className="text-xs text-slate-500 dark:text-zinc-500 hidden sm:block">{asset.name}</p>
-                </div>
-              </div>
-              <div className="text-right sm:block hidden">
-                <p className="text-slate-800 dark:text-white font-medium">{formatNumber(asset.totalSupply)}</p>
-                <p className="text-xs text-slate-500 dark:text-zinc-500">{t.grams}</p>
-              </div>
-              <div className="text-right sm:block hidden">
-                <p className="text-slate-800 dark:text-white font-medium">{formatNumber(asset.circulatingSupply)}</p>
-                <p className="text-xs text-slate-500 dark:text-zinc-500">{t.grams}</p>
-              </div>
-              <div className="text-right">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  {asset.reservesBacked}%
-                </span>
-              </div>
-              <div className="text-right text-slate-500 dark:text-zinc-400 text-sm hidden sm:block">
-                {formatDate(asset.lastAudit)}
-              </div>
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+            <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
+              <span className="text-2xl">📦</span>
             </div>
-          ))}
-        </div>
-      </section>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
+              {isTr ? 'Dijital Sertifikalar' : 'Digital Certificates'}
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              {isTr 
+                ? 'Her uygun tahsis için tahsis numarası, külçe seri numaraları, metal türü ve doğrulama hash içeren bir Dijital Sertifika düzenlenir.'
+                : 'For every eligible allocation, a Digital Certificate is issued with allocation number, bar serial numbers, metal type, and verification hash.'
+              }
+            </p>
+          </div>
 
-      {/* Latest Reports */}
-      <section className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white">{t.latestReports}</h2>
-          <Link href="/trust/audits" className="text-sm text-emerald-500 hover:text-emerald-600 transition-colors">
-            {t.viewAll} →
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+            <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
+              <span className="text-2xl">🔍</span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
+              {isTr ? 'Doğrulama & Bütünlük' : 'Verification & Integrity'}
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              {isTr 
+                ? 'Tüm sertifikalar Auxite doğrulama servisi üzerinden bağımsız olarak doğrulanabilir. Sertifika hashleri veri bütünlüğünü sağlar.'
+                : 'All certificates can be independently verified via the Auxite verification service. Certificate hashes ensure data integrity.'
+              }
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+            <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
+              <span className="text-2xl">🧾</span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
+              {isTr ? 'Rezerv Kanıtı & Denetim' : 'Proof of Reserves & Audit'}
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              {isTr 
+                ? 'Auxite, toplam metal varlıklarını, tahsis doğruluğunu ve dolaşımdaki token arzını doğrulamak için bağımsız üçüncü taraf denetçilerle çalışır.'
+                : 'Auxite engages independent third-party auditors to verify total metal holdings, allocation accuracy, and circulating token supply.'
+              }
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+              <span className="text-2xl">🛡</span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
+              {isTr ? 'Saklama & Risk' : 'Custody & Risk'}
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              {isTr 
+                ? 'Metaller yeniden ipoteklenmeyen saklama altında tutulur. Sahibi tarafından açıkça onaylanmadıkça hiçbir metal kiralanmaz veya yükümlülük altına alınmaz.'
+                : 'Metals are held under non-rehypothecated custody. No metal is leased or encumbered unless explicitly opted-in by the holder.'
+              }
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+              <span className="text-2xl">🔄</span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
+              {isTr ? 'Yaşam Döngüsü Şeffaflığı' : 'Lifecycle Transparency'}
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              {isTr 
+                ? 'Her tahsis net bir yaşam döngüsü izler: Ayrılmış → Tahsis Edilmiş → İtfa Edilmiş / Arşivlenmiş. Geçmiş veriler denetlenebilir kalır.'
+                : 'Every allocation follows a clear lifecycle: Reserved → Allocated → Redeemed / Archived. Historical data remains auditable.'
+              }
+            </p>
+          </div>
+        </div>
+
+        {/* What Auxite Is */}
+        <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl p-8 text-white mb-12">
+          <h2 className="text-2xl font-bold mb-6">
+            ⚖️ {isTr ? 'Auxite Nedir — ve Ne Değildir' : 'What Auxite Is — and Is Not'}
+          </h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="font-semibold mb-3 text-emerald-100">Auxite {isTr ? 'şudur' : 'is'}:</h3>
+              <ul className="space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-200">✓</span>
+                  <span>{isTr ? 'Tahsisli değerli metalleri yönetmek için dijital bir platform' : 'A digital platform for administering allocated precious metals'}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-200">✓</span>
+                  <span>{isTr ? 'Şeffaflık öncelikli bir RWA altyapısı' : 'A transparency-first RWA infrastructure'}</span>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-3 text-emerald-100">Auxite {isTr ? 'değildir' : 'is not'}:</h3>
+              <ul className="space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-red-300">✗</span>
+                  <span>{isTr ? 'Bir banka' : 'A bank'}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-300">✗</span>
+                  <span>{isTr ? 'Bir stablecoin ihraççısı' : 'A stablecoin issuer'}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-300">✗</span>
+                  <span>{isTr ? 'Bir menkul kıymet ihraççısı' : 'A securities issuer'}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-300">✗</span>
+                  <span>{isTr ? 'Getiri garantisi veren bir ürün' : 'A yield-guaranteeing product'}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Verify Certificate CTA */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 text-center">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">
+            🔍 {isTr ? 'Sertifika Doğrula' : 'Verify a Certificate'}
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">
+            {isTr 
+              ? 'Auxite dijital sertifikasının gerçekliğini ve geçerliliğini doğrulayın'
+              : 'Verify the authenticity and validity of an Auxite digital certificate'
+            }
+          </p>
+          <Link
+            href="/verify"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors"
+          >
+            {isTr ? 'Doğrulama Sayfasına Git' : 'Go to Verification Page'}
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {auditReports.map((report) => (
-            <div
-              key={report.id}
-              className="group p-5 rounded-2xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700 hover:border-emerald-500/50 transition-all cursor-pointer"
-            >
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${
-                report.type === 'monthly' ? 'bg-emerald-100 dark:bg-emerald-500/20' :
-                report.type === 'quarterly' ? 'bg-blue-100 dark:bg-blue-500/20' : 'bg-amber-100 dark:bg-amber-500/20'
-              }`}>
-                <FileText className={`w-5 h-5 ${
-                  report.type === 'monthly' ? 'text-emerald-600 dark:text-emerald-400' :
-                  report.type === 'quarterly' ? 'text-blue-600 dark:text-blue-400' : 'text-amber-600 dark:text-amber-400'
-                }`} />
-              </div>
-
-              <h3 className="font-semibold text-slate-800 dark:text-white mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                {report.title}
-              </h3>
-              
-              <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-zinc-400 mb-4">
-                <span>{formatDate(report.date)}</span>
-                <span>•</span>
-                <span>{t.verifiedBy} {report.auditor}</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-zinc-500 group-hover:text-emerald-500 transition-colors">
-                <Download className="w-4 h-4" />
-                <span>{t.downloadPdf}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Security Banner */}
-      <section className="max-w-6xl mx-auto px-4 py-8 pb-16">
-        <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-blue-500/10 dark:from-emerald-500/20 dark:to-blue-500/20 border border-emerald-500/20">
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-              <Lock className="w-8 h-8 text-emerald-500" />
-            </div>
-            <div className="flex-1 text-center sm:text-left">
-              <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">{t.securityTitle}</h3>
-              <p className="text-slate-600 dark:text-zinc-400">{t.securityDesc}</p>
-            </div>
-            <Link
-              href="/trust/custody"
-              className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors flex-shrink-0"
-            >
-              {t.learnMore}
+        {/* Legal Links */}
+        <div className="mt-8 text-center">
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
+            {isTr ? 'Yasal belgeler için:' : 'For legal documentation:'}
+            <Link href="/legal/terms" className="text-emerald-600 dark:text-emerald-400 hover:underline mx-2">
+              {isTr ? 'Kullanım Koşulları' : 'Terms of Service'}
             </Link>
-          </div>
+            •
+            <Link href="/legal/redemption" className="text-emerald-600 dark:text-emerald-400 hover:underline mx-2">
+              {isTr ? 'Geri Ödeme Politikası' : 'Redemption Policy'}
+            </Link>
+          </p>
         </div>
-      </section>
-    </main>
+      </main>
+    </div>
   );
 }
