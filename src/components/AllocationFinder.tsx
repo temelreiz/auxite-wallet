@@ -1,8 +1,8 @@
 "use client";
-
 import { useState, useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { useAllocations } from "@/hooks/useAllocations";
+import Image from "next/image";
 
 interface AllocationFinderProps {
   lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
@@ -16,139 +16,200 @@ interface DisplayAllocation {
   custodian: string;
   timestamp: number;
   serialNumber: string;
+  vaultName?: string;
+  certificateNumber?: string;
 }
 
 const metalIcons: Record<string, string> = {
-  AUXG: "/gold-favicon-32x32.png",
-  AUXS: "/silver-favicon-32x32.png",
-  AUXPT: "/platinum-favicon-32x32.png",
-  AUXPD: "/palladium-favicon-32x32.png",
+  AUXG: "/images/metals/gold.png",
+  AUXS: "/images/metals/silver.png",
+  AUXPT: "/images/metals/platinum.png",
+  AUXPD: "/images/metals/palladium.png",
 };
 
 const metalColors: Record<string, string> = {
-  AUXG: "text-amber-600 dark:text-amber-400",
-  AUXS: "text-slate-600 dark:text-slate-300",
-  AUXPT: "text-blue-600 dark:text-blue-400",
-  AUXPD: "text-purple-600 dark:text-purple-400",
+  AUXG: "text-amber-500",
+  AUXS: "text-slate-400",
+  AUXPT: "text-blue-400",
+  AUXPD: "text-purple-400",
 };
 
-// 6-Language translations
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    title: "Varlıklarım Nerede?",
-    subtitle: "Smart contract'tan kayıtlı fiziksel metal varlıklarınızı görüntüleyin",
-    wallet: "Cüzdan",
-    connectWallet: "Varlıklarınızı görmek için cüzdanınızı bağlayın",
-    loading: "Contract'tan yükleniyor...",
+    allocationTitle: "📍 Allocation Bulucu",
+    allocationSubtitle: "Smart contract'tan kayıtlı fiziksel metal varlıklarınız",
     noRecords: "Henüz varlık kaydı yok",
     records: "kayıt",
-    allocationRecords: "Varlık Kayıtları",
-    verified: "Onaylandı",
-    howItWorks: "Nasıl Çalışır",
-    point1: "Her varlık tahsisi blockchain'de kayıtlıdır",
-    point2: "Fiziksel metaller lisanslı vault'larda saklanır",
-    point3: "Her kayıt benzersiz bir seri numarasına sahiptir",
-    point4: "Veriler doğrudan smart contract'tan okunur",
+    loading: "Yükleniyor...",
+    grams: "g",
+    vault: "Kasa:",
+    serial: "Seri:",
+    date: "Tarih:",
+    certTitle: "🔐 Sertifika Doğrulama",
+    certSubtitle: "Dijital sertifikanızı doğrulayın",
+    certPlaceholder: "AUX-CERT-2025-XXXXXX",
+    verify: "Doğrula",
+    verifying: "Doğrulanıyor...",
+    enterCert: "Sertifika numarasını girin",
+    certNotFound: "Sertifika bulunamadı",
+    metal: "Metal:",
+    weight: "Ağırlık:",
+    purity: "Saflık:",
+    issuedAt: "Düzenlenme:",
+    anchored: "Blockchain'de Kayıtlı",
+    pending: "Beklemede",
+    viewExplorer: "Explorer'da Gör",
+    viewPdf: "Sertifika PDF",
     gold: "Altın",
     silver: "Gümüş",
     platinum: "Platin",
     palladium: "Paladyum",
   },
   en: {
-    title: "Where Are My Assets?",
-    subtitle: "View your registered physical metal assets from smart contract",
-    wallet: "Wallet",
-    connectWallet: "Connect your wallet to view your assets",
-    loading: "Loading from contract...",
+    allocationTitle: "📍 Allocation Finder",
+    allocationSubtitle: "Your registered physical metal assets from smart contract",
     noRecords: "No asset records yet",
     records: "records",
-    allocationRecords: "Asset Records",
-    verified: "Verified",
-    howItWorks: "How It Works",
-    point1: "Each asset allocation is recorded on blockchain",
-    point2: "Physical metals are stored in licensed vaults",
-    point3: "Each record has a unique serial number",
-    point4: "Data is read directly from smart contract",
+    loading: "Loading...",
+    grams: "g",
+    vault: "Vault:",
+    serial: "Serial:",
+    date: "Date:",
+    certTitle: "🔐 Certificate Verifier",
+    certSubtitle: "Verify your digital certificate",
+    certPlaceholder: "AUX-CERT-2025-XXXXXX",
+    verify: "Verify",
+    verifying: "Verifying...",
+    enterCert: "Enter certificate number",
+    certNotFound: "Certificate not found",
+    metal: "Metal:",
+    weight: "Weight:",
+    purity: "Purity:",
+    issuedAt: "Issued:",
+    anchored: "Anchored On-Chain",
+    pending: "Pending",
+    viewExplorer: "View on Explorer",
+    viewPdf: "Certificate PDF",
     gold: "Gold",
     silver: "Silver",
     platinum: "Platinum",
     palladium: "Palladium",
   },
   de: {
-    title: "Wo sind meine Vermögenswerte?",
-    subtitle: "Zeigen Sie Ihre registrierten physischen Metallbestände vom Smart Contract an",
-    wallet: "Wallet",
-    connectWallet: "Verbinden Sie Ihre Wallet, um Ihre Vermögenswerte zu sehen",
-    loading: "Wird vom Contract geladen...",
+    allocationTitle: "📍 Allokationsfinder",
+    allocationSubtitle: "Ihre registrierten physischen Metallbestände",
     noRecords: "Noch keine Vermögensaufzeichnungen",
     records: "Einträge",
-    allocationRecords: "Vermögensaufzeichnungen",
-    verified: "Verifiziert",
-    howItWorks: "So funktioniert's",
-    point1: "Jede Vermögenszuweisung wird auf der Blockchain aufgezeichnet",
-    point2: "Physische Metalle werden in lizenzierten Tresoren gelagert",
-    point3: "Jeder Eintrag hat eine eindeutige Seriennummer",
-    point4: "Daten werden direkt vom Smart Contract gelesen",
+    loading: "Wird geladen...",
+    grams: "g",
+    vault: "Tresor:",
+    serial: "Serie:",
+    date: "Datum:",
+    certTitle: "🔐 Zertifikatsprüfung",
+    certSubtitle: "Überprüfen Sie Ihr digitales Zertifikat",
+    certPlaceholder: "AUX-CERT-2025-XXXXXX",
+    verify: "Prüfen",
+    verifying: "Wird geprüft...",
+    enterCert: "Zertifikatsnummer eingeben",
+    certNotFound: "Zertifikat nicht gefunden",
+    metal: "Metall:",
+    weight: "Gewicht:",
+    purity: "Reinheit:",
+    issuedAt: "Ausgestellt:",
+    anchored: "On-Chain verankert",
+    pending: "Ausstehend",
+    viewExplorer: "Im Explorer ansehen",
+    viewPdf: "Zertifikat PDF",
     gold: "Gold",
     silver: "Silber",
     platinum: "Platin",
     palladium: "Palladium",
   },
   fr: {
-    title: "Où sont mes actifs?",
-    subtitle: "Consultez vos actifs métalliques physiques enregistrés depuis le smart contract",
-    wallet: "Portefeuille",
-    connectWallet: "Connectez votre portefeuille pour voir vos actifs",
-    loading: "Chargement depuis le contrat...",
+    allocationTitle: "📍 Recherche d'Allocation",
+    allocationSubtitle: "Vos actifs métalliques physiques enregistrés",
     noRecords: "Aucun enregistrement d'actif",
     records: "enregistrements",
-    allocationRecords: "Enregistrements d'Actifs",
-    verified: "Vérifié",
-    howItWorks: "Comment ça marche",
-    point1: "Chaque allocation d'actif est enregistrée sur la blockchain",
-    point2: "Les métaux physiques sont stockés dans des coffres agréés",
-    point3: "Chaque enregistrement a un numéro de série unique",
-    point4: "Les données sont lues directement depuis le smart contract",
+    loading: "Chargement...",
+    grams: "g",
+    vault: "Coffre:",
+    serial: "Série:",
+    date: "Date:",
+    certTitle: "🔐 Vérificateur de Certificat",
+    certSubtitle: "Vérifiez votre certificat numérique",
+    certPlaceholder: "AUX-CERT-2025-XXXXXX",
+    verify: "Vérifier",
+    verifying: "Vérification...",
+    enterCert: "Entrez le numéro de certificat",
+    certNotFound: "Certificat non trouvé",
+    metal: "Métal:",
+    weight: "Poids:",
+    purity: "Pureté:",
+    issuedAt: "Émis le:",
+    anchored: "Ancré on-chain",
+    pending: "En attente",
+    viewExplorer: "Voir sur Explorer",
+    viewPdf: "Certificat PDF",
     gold: "Or",
     silver: "Argent",
     platinum: "Platine",
     palladium: "Palladium",
   },
   ar: {
-    title: "أين أصولي؟",
-    subtitle: "عرض أصولك المعدنية الفعلية المسجلة من العقد الذكي",
-    wallet: "المحفظة",
-    connectWallet: "اربط محفظتك لعرض أصولك",
-    loading: "جاري التحميل من العقد...",
-    noRecords: "لا توجد سجلات أصول بعد",
+    allocationTitle: "📍 باحث التخصيص",
+    allocationSubtitle: "أصولك المعدنية المادية المسجلة",
+    noRecords: "لا توجد سجلات أصول",
     records: "سجلات",
-    allocationRecords: "سجلات الأصول",
-    verified: "موثق",
-    howItWorks: "كيف يعمل",
-    point1: "كل تخصيص أصول مسجل على البلوكشين",
-    point2: "المعادن الفعلية مخزنة في خزائن مرخصة",
-    point3: "كل سجل له رقم تسلسلي فريد",
-    point4: "البيانات تُقرأ مباشرة من العقد الذكي",
+    loading: "جاري التحميل...",
+    grams: "جرام",
+    vault: "الخزنة:",
+    serial: "التسلسلي:",
+    date: "التاريخ:",
+    certTitle: "🔐 التحقق من الشهادة",
+    certSubtitle: "تحقق من شهادتك الرقمية",
+    certPlaceholder: "AUX-CERT-2025-XXXXXX",
+    verify: "تحقق",
+    verifying: "جاري التحقق...",
+    enterCert: "أدخل رقم الشهادة",
+    certNotFound: "الشهادة غير موجودة",
+    metal: "المعدن:",
+    weight: "الوزن:",
+    purity: "النقاء:",
+    issuedAt: "صدرت في:",
+    anchored: "مثبت على السلسلة",
+    pending: "قيد الانتظار",
+    viewExplorer: "عرض في المستكشف",
+    viewPdf: "شهادة PDF",
     gold: "ذهب",
     silver: "فضة",
     platinum: "بلاتين",
     palladium: "بالاديوم",
   },
   ru: {
-    title: "Где мои активы?",
-    subtitle: "Просмотр зарегистрированных физических металлических активов из смарт-контракта",
-    wallet: "Кошелёк",
-    connectWallet: "Подключите кошелёк для просмотра ваших активов",
-    loading: "Загрузка из контракта...",
-    noRecords: "Записей об активах пока нет",
+    allocationTitle: "📍 Поиск Распределения",
+    allocationSubtitle: "Ваши зарегистрированные физические металлические активы",
+    noRecords: "Записей активов пока нет",
     records: "записей",
-    allocationRecords: "Записи об Активах",
-    verified: "Подтверждено",
-    howItWorks: "Как это работает",
-    point1: "Каждое распределение активов записывается в блокчейн",
-    point2: "Физические металлы хранятся в лицензированных хранилищах",
-    point3: "Каждая запись имеет уникальный серийный номер",
-    point4: "Данные читаются напрямую из смарт-контракта",
+    loading: "Загрузка...",
+    grams: "г",
+    vault: "Хранилище:",
+    serial: "Серия:",
+    date: "Дата:",
+    certTitle: "🔐 Проверка Сертификата",
+    certSubtitle: "Проверьте ваш цифровой сертификат",
+    certPlaceholder: "AUX-CERT-2025-XXXXXX",
+    verify: "Проверить",
+    verifying: "Проверка...",
+    enterCert: "Введите номер сертификата",
+    certNotFound: "Сертификат не найден",
+    metal: "Металл:",
+    weight: "Вес:",
+    purity: "Чистота:",
+    issuedAt: "Выдан:",
+    anchored: "Закреплен в блокчейне",
+    pending: "Ожидание",
+    viewExplorer: "Смотреть в Explorer",
+    viewPdf: "Сертификат PDF",
     gold: "Золото",
     silver: "Серебро",
     platinum: "Платина",
@@ -156,199 +217,227 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
-const metalNames: Record<string, Record<string, string>> = {
-  AUXG: { tr: "Altın", en: "Gold", de: "Gold", fr: "Or", ar: "ذهب", ru: "Золото" },
-  AUXS: { tr: "Gümüş", en: "Silver", de: "Silber", fr: "Argent", ar: "فضة", ru: "Серебро" },
-  AUXPT: { tr: "Platin", en: "Platinum", de: "Platin", fr: "Platine", ar: "بلاتين", ru: "Платина" },
-  AUXPD: { tr: "Paladyum", en: "Palladium", de: "Palladium", fr: "Palladium", ar: "بالاديوم", ru: "Палладий" },
-};
-
-const custodianToLocation: Record<string, { flag: string; city: string }> = {
-  "Auxite Custodian": { flag: "🇹🇷", city: "Istanbul" },
-  "Auxite Istanbul": { flag: "🇹🇷", city: "Istanbul" },
-  "Auxite Switzerland": { flag: "🇨🇭", city: "Zurich" },
-  "Auxite Dubai": { flag: "🇦🇪", city: "Dubai" },
-  "Auxite Singapore": { flag: "🇸🇬", city: "Singapore" },
-  "Auxite London": { flag: "🇬🇧", city: "London" },
-};
-
-export function AllocationFinder({ lang = "en" }: AllocationFinderProps) {
-  const { address, isConnected } = useAccount();
-  const { allocations, allocationsByMetal, totalGrams, isLoading } = useAllocations();
-  const [mounted, setMounted] = useState(false);
-  const [selectedMetal, setSelectedMetal] = useState<string>("all");
-
+export default function AllocationFinder({ lang = "en" }: AllocationFinderProps) {
   const t = translations[lang] || translations.en;
+  const { address, isConnected } = useAccount();
+  const { allocations, loading: allocLoading } = useAllocations(address);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Certificate state
+  const [certInput, setCertInput] = useState("");
+  const [certLoading, setCertLoading] = useState(false);
+  const [certError, setCertError] = useState("");
+  const [certResult, setCertResult] = useState<any>(null);
 
-  const displayAllocations: DisplayAllocation[] = useMemo(() => {
-    return allocations.map((alloc) => {
-      const timestamp = Number(alloc.timestamp);
-      const date = new Date(timestamp * 1000);
-      const year = date.getFullYear();
-      const serialNum = String(alloc.id).padStart(6, "0");
-      
-      return {
-        id: `${alloc.metal}-${alloc.id}`,
-        metal: alloc.metal,
-        symbol: alloc.metal,
-        grams: Number(alloc.grams),
-        custodian: alloc.custodian,
-        timestamp,
-        serialNumber: `${alloc.metal}-${year}-${serialNum}`,
-      };
+  const handleCertVerify = async () => {
+    const trimmed = certInput.trim().toUpperCase();
+    if (!trimmed) return;
+    setCertLoading(true);
+    setCertError("");
+    setCertResult(null);
+    try {
+      const res = await fetch(`/api/certificates/verify?certNumber=${encodeURIComponent(trimmed)}`);
+      const data = await res.json();
+      if (data.verified) {
+        setCertResult(data);
+      } else {
+        setCertError(data.error || t.certNotFound);
+      }
+    } catch {
+      setCertError("Error");
+    } finally {
+      setCertLoading(false);
+    }
+  };
+
+  const isValidCert = certInput.trim().length > 5;
+
+  const locale = lang === "tr" ? "tr-TR" : lang === "de" ? "de-DE" : lang === "fr" ? "fr-FR" : lang === "ar" ? "ar-SA" : lang === "ru" ? "ru-RU" : "en-US";
+
+  const formatDate = (ts: number | string) => {
+    const d = typeof ts === "string" ? new Date(ts) : new Date(ts * 1000);
+    return d.toLocaleDateString(locale);
+  };
+
+  // Metal summaries
+  const metalSummary = useMemo(() => {
+    const summary: Record<string, { grams: number; count: number }> = {
+      AUXG: { grams: 0, count: 0 },
+      AUXS: { grams: 0, count: 0 },
+      AUXPT: { grams: 0, count: 0 },
+      AUXPD: { grams: 0, count: 0 },
+    };
+    allocations.forEach((a: any) => {
+      const metal = a.metal || a.metalId;
+      if (summary[metal]) {
+        summary[metal].grams += parseFloat(a.grams) || 0;
+        summary[metal].count += 1;
+      }
     });
+    return summary;
   }, [allocations]);
 
-  const filteredAllocations = useMemo(() => {
-    if (selectedMetal === "all") return displayAllocations;
-    return displayAllocations.filter((a) => a.metal === selectedMetal);
-  }, [displayAllocations, selectedMetal]);
-
-  const totals = useMemo(() => {
-    const total = { grams: 0, count: 0 };
-    filteredAllocations.forEach((a) => {
-      total.grams += a.grams;
-      total.count += 1;
-    });
-    return total;
-  }, [filteredAllocations]);
-
-  if (!mounted) return null;
+  const getPdfUrl = (certNum: string) => `/api/certificates/pdf?certNumber=${certNum}&format=html`;
 
   return (
-    <div className="rounded-lg sm:rounded-xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-3 sm:p-6 shadow-sm dark:shadow-none">
-      {/* Header */}
-      <div className="mb-3 sm:mb-6">
-        <h2 className="text-sm sm:text-lg font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 sm:gap-2">
-          📍 {t.title}
-        </h2>
-        <p className="text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5 sm:mt-1">
-          {t.subtitle}
-        </p>
-      </div>
+    <div className="mt-6">
+      {/* 2 Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* LEFT: Allocation Finder */}
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t.allocationTitle}</h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{t.allocationSubtitle}</p>
+            </div>
+          </div>
 
-      {!isConnected ? (
-        <div className="text-center py-8 sm:py-12 text-slate-500 dark:text-slate-400 text-xs sm:text-base">
-          {t.connectWallet}
-        </div>
-      ) : isLoading ? (
-        <div className="flex items-center justify-center py-8 sm:py-12">
-          <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-emerald-500"></div>
-          <span className="ml-2 sm:ml-3 text-slate-500 dark:text-slate-400 text-xs sm:text-base">
-            {t.loading}
-          </span>
-        </div>
-      ) : (
-        <>
-          {/* Metal Summary */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
+          {/* Metal Summary Cards */}
+          <div className="grid grid-cols-4 gap-2 mb-4">
             {(["AUXG", "AUXS", "AUXPT", "AUXPD"] as const).map((metal) => (
-              <button
-                key={metal}
-                onClick={() => setSelectedMetal(selectedMetal === metal ? "all" : metal)}
-                className={`p-2.5 sm:p-4 rounded-lg border transition-colors ${
-                  selectedMetal === metal
-                    ? "bg-stone-100 dark:bg-slate-800 border-emerald-500"
-                    : "bg-stone-50 dark:bg-slate-800/30 border-stone-200 dark:border-slate-700 hover:border-stone-300 dark:hover:border-slate-600"
-                }`}
-              >
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                  <img src={metalIcons[metal]} alt={metal} className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <div className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">{metalNames[metal][lang]}</div>
+              <div key={metal} className={`rounded-xl p-2 text-center border ${metalSummary[metal].count > 0 ? "border-emerald-500/50 bg-emerald-500/5" : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"}`}>
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Image src={metalIcons[metal]} alt={metal} width={16} height={16} />
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">{t[metal.toLowerCase().replace("aux", "") as keyof typeof t] || metal}</span>
                 </div>
-                <div className={`text-sm sm:text-lg font-bold ${metalColors[metal]}`}>
-                  {totalGrams[metal].toLocaleString()} g
-                </div>
-                <div className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400">
-                  {allocationsByMetal[metal].length} {t.records}
-                </div>
-              </button>
+                <p className={`text-sm font-bold ${metalColors[metal]}`}>{metalSummary[metal].grams.toFixed(0)} {t.grams}</p>
+                <p className="text-[9px] text-slate-400">{metalSummary[metal].count} {t.records}</p>
+              </div>
             ))}
           </div>
 
           {/* Allocation List */}
-          {filteredAllocations.length === 0 ? (
-            <div className="text-center py-8 sm:py-12 text-slate-500 dark:text-slate-400 text-xs sm:text-base">
-              {t.noRecords}
-            </div>
-          ) : (
-            <>
-              <div className="mb-3 sm:mb-4 flex items-center justify-between">
-                <h3 className="text-[10px] sm:text-sm font-medium text-slate-600 dark:text-slate-400">
-                  {t.allocationRecords}
-                </h3>
-                <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded bg-stone-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[9px] sm:text-xs">
-                  {totals.count} {t.records} • {totals.grams.toLocaleString()}g
-                </span>
-              </div>
-
-              <div className="space-y-2 sm:space-y-3 max-h-[300px] sm:max-h-[400px] overflow-y-auto">
-                {filteredAllocations.map((alloc) => {
-                  const location = custodianToLocation[alloc.custodian] || { flag: "🏦", city: alloc.custodian };
-                  const date = new Date(alloc.timestamp * 1000);
-                  const localeMap: Record<string, string> = {
-                    tr: "tr-TR", en: "en-US", de: "de-DE", fr: "fr-FR", ar: "ar-SA", ru: "ru-RU"
-                  };
-                  
-                  return (
-                    <div
-                      key={alloc.id}
-                      className="p-2.5 sm:p-4 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 hover:border-stone-300 dark:hover:border-slate-600 transition-colors"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                          <img src={metalIcons[alloc.metal]} alt={alloc.metal} className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" />
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                              <span className={`font-semibold text-xs sm:text-base ${metalColors[alloc.metal]}`}>
-                                {alloc.grams.toLocaleString()}g {alloc.metal}
-                              </span>
-                              <span className="text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-                                {t.verified}
-                              </span>
-                            </div>
-                            <div className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1 font-mono truncate">
-                              {alloc.serialNumber}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="flex items-center gap-1 text-[10px] sm:text-sm text-slate-700 dark:text-slate-300">
-                            <span>{location.flag}</span>
-                            <span className="hidden sm:inline">{location.city}</span>
-                          </div>
-                          <div className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1">
-                            {date.toLocaleDateString(localeMap[lang] || "en-US")}
-                          </div>
-                        </div>
+          <div className="min-h-[140px] max-h-[220px] overflow-y-auto">
+            {allocLoading ? (
+              <p className="text-xs text-slate-400 text-center py-6">{t.loading}</p>
+            ) : allocations.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-6">{t.noRecords}</p>
+            ) : (
+              <div className="space-y-2">
+                {allocations.slice(0, 10).map((a: any, idx: number) => (
+                  <div key={a.id || idx} className="flex items-center justify-between rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <Image src={metalIcons[a.metal] || metalIcons.AUXG} alt={a.metal} width={20} height={20} />
+                      <div>
+                        <span className="text-xs font-semibold text-slate-800 dark:text-white">{a.metal}</span>
+                        <p className="text-[10px] text-slate-500">{parseFloat(a.grams).toFixed(2)}{t.grams} · {a.vaultName || a.vault || "-"}</p>
                       </div>
                     </div>
-                  );
-                })}
+                    <div className="text-right">
+                      <p className="text-[9px] text-slate-400">{a.serialNumber?.slice(0, 15) || "-"}</p>
+                      <p className="text-[9px] text-slate-500">{a.allocatedAt ? formatDate(a.allocatedAt) : "-"}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </>
-          )}
-
-          {/* Info Footer */}
-          <div className="mt-3 sm:mt-4 p-2.5 sm:p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
-            <div className="text-[10px] sm:text-sm font-medium text-blue-700 dark:text-blue-300 mb-1.5 sm:mb-2">
-              ℹ️ {t.howItWorks}
-            </div>
-            <ul className="text-[9px] sm:text-xs text-blue-600 dark:text-blue-200 space-y-0.5 sm:space-y-1">
-              <li>• {t.point1}</li>
-              <li>• {t.point2}</li>
-              <li>• {t.point3}</li>
-              <li>• {t.point4}</li>
-            </ul>
+            )}
           </div>
-        </>
-      )}
+        </div>
+
+        {/* RIGHT: Certificate Verifier */}
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+              <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t.certTitle}</h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{t.certSubtitle}</p>
+            </div>
+          </div>
+
+          {/* Certificate Input */}
+          <div className="flex gap-2 mb-4">
+            <input
+              className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2.5 text-xs font-mono text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/60 uppercase"
+              placeholder={t.certPlaceholder}
+              value={certInput}
+              onChange={(e) => setCertInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => e.key === "Enter" && handleCertVerify()}
+            />
+            <button
+              onClick={handleCertVerify}
+              disabled={!isValidCert || certLoading}
+              className={"rounded-xl px-4 py-2.5 text-xs font-semibold transition whitespace-nowrap " + (isValidCert && !certLoading ? "bg-amber-500 text-white hover:bg-amber-400" : "cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-400")}
+            >
+              {certLoading ? t.verifying : t.verify}
+            </button>
+          </div>
+
+          {/* Certificate Result */}
+          <div className="min-h-[180px]">
+            {certError && <p className="text-xs text-red-500 text-center py-4">{certError}</p>}
+            
+            {!certResult && !certError && (
+              <div className="text-center py-8">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <p className="text-[11px] text-slate-400">{t.enterCert}</p>
+              </div>
+            )}
+
+            {certResult && certResult.verified && (
+              <div className="space-y-3">
+                {/* Status Badge */}
+                <div className="flex items-center justify-center">
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold ${certResult.blockchain?.anchored ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"}`}>
+                    <div className={`w-2 h-2 rounded-full ${certResult.blockchain?.anchored ? "bg-emerald-500" : "bg-amber-500"}`} />
+                    {certResult.blockchain?.anchored ? t.anchored : t.pending}
+                  </div>
+                </div>
+
+                {/* Certificate Details */}
+                <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 p-3 space-y-2">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">{t.metal}</span>
+                    <span className="font-semibold text-slate-800 dark:text-white">{certResult.certificate.metalName} ({certResult.certificate.metal})</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">{t.weight}</span>
+                    <span className="font-semibold text-slate-800 dark:text-white">{certResult.certificate.grams}g</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">{t.purity}</span>
+                    <span className="text-slate-800 dark:text-white">{certResult.certificate.purity}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-slate-500">{t.issuedAt}</span>
+                    <span className="text-slate-800 dark:text-white">{formatDate(certResult.certificate.issuedAt)}</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  {certResult.blockchain?.explorerUrl && (
+                    <a href={certResult.blockchain.explorerUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      {t.viewExplorer}
+                    </a>
+                  )}
+                  <a href={getPdfUrl(certResult.certificate.certificateNumber)} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-[10px] font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    {t.viewPdf}
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
-
-export default AllocationFinder;
