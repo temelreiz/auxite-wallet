@@ -466,7 +466,7 @@ export default function AssetCheckerPanel({ lang: propLang }: Props) {
                 {/* Action Buttons */}
                 <div className="flex gap-2 pt-1">
                   {certResult.blockchain?.explorerUrl && (
-                    
+                    <a
                       href={certResult.blockchain.explorerUrl}
                       target="_blank"
                       rel="noopener noreferrer"
