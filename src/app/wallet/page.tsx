@@ -5,7 +5,7 @@ import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
 import Image from "next/image";
-import { AllocationFinder } from "@/components/AllocationFinder";
+import AllocationFinder from "@/components/AllocationFinder";
 import { TransactionHistory } from "@/components/TransactionHistory";
 import { ExchangeModal } from "@/components/ExchangeModal";
 import { BuyMetalModal } from "@/components/BuyMetalModal";
