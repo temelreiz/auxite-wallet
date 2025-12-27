@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
 
       // Allocation oluştur
       const allocation = {
-        id: `${userUid}-${selectedBar.serialNumber}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        id: `${userUid}-${metal}-${String(existingAllocs.filter(a => a.metal === metal).length + allocations.length + 1).padStart(3, "0")}`,
         userUid,
         serialNumber: selectedBar.serialNumber,
         metal,
