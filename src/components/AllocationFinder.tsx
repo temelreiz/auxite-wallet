@@ -21,15 +21,24 @@ const metalColors: Record<string, string> = {
   AUXPD: "text-purple-400",
 };
 
+const metalBorders: Record<string, string> = {
+  AUXG: "border-amber-500 bg-amber-500/10",
+  AUXS: "border-slate-400 bg-slate-400/10",
+  AUXPT: "border-blue-400 bg-blue-400/10",
+  AUXPD: "border-purple-400 bg-purple-400/10",
+};
+
 const translations: Record<string, Record<string, string>> = {
   tr: {
     allocationTitle: "📍 Allocation Bulucu",
     allocationSubtitle: "Kayıtlı fiziksel metal varlıklarınız",
     noRecords: "Henüz varlık kaydı yok",
+    noMetalRecords: "Bu metal için kayıt yok",
     records: "kayıt",
     loading: "Yükleniyor...",
     grams: "g",
     vault: "Kasa:",
+    all: "Tümü",
     certTitle: "🔐 Sertifika Doğrulama",
     certSubtitle: "Dijital sertifikanızı doğrulayın",
     certPlaceholder: "AUX-CERT-2025-XXXXXX",
@@ -54,10 +63,12 @@ const translations: Record<string, Record<string, string>> = {
     allocationTitle: "📍 Allocation Finder",
     allocationSubtitle: "Your registered physical metal assets",
     noRecords: "No asset records yet",
+    noMetalRecords: "No records for this metal",
     records: "records",
     loading: "Loading...",
     grams: "g",
     vault: "Vault:",
+    all: "All",
     certTitle: "🔐 Certificate Verifier",
     certSubtitle: "Verify your digital certificate",
     certPlaceholder: "AUX-CERT-2025-XXXXXX",
@@ -82,10 +93,12 @@ const translations: Record<string, Record<string, string>> = {
     allocationTitle: "📍 Allokationsfinder",
     allocationSubtitle: "Ihre registrierten Metallbestände",
     noRecords: "Noch keine Aufzeichnungen",
+    noMetalRecords: "Keine Einträge für dieses Metall",
     records: "Einträge",
     loading: "Wird geladen...",
     grams: "g",
     vault: "Tresor:",
+    all: "Alle",
     certTitle: "🔐 Zertifikatsprüfung",
     certSubtitle: "Zertifikat überprüfen",
     certPlaceholder: "AUX-CERT-2025-XXXXXX",
@@ -110,10 +123,12 @@ const translations: Record<string, Record<string, string>> = {
     allocationTitle: "📍 Recherche d'Allocation",
     allocationSubtitle: "Vos actifs métalliques enregistrés",
     noRecords: "Aucun enregistrement",
+    noMetalRecords: "Aucun enregistrement pour ce métal",
     records: "enregistrements",
     loading: "Chargement...",
     grams: "g",
     vault: "Coffre:",
+    all: "Tous",
     certTitle: "🔐 Vérificateur de Certificat",
     certSubtitle: "Vérifiez votre certificat",
     certPlaceholder: "AUX-CERT-2025-XXXXXX",
@@ -138,10 +153,12 @@ const translations: Record<string, Record<string, string>> = {
     allocationTitle: "📍 باحث التخصيص",
     allocationSubtitle: "أصولك المعدنية المسجلة",
     noRecords: "لا توجد سجلات",
+    noMetalRecords: "لا توجد سجلات لهذا المعدن",
     records: "سجلات",
     loading: "جاري التحميل...",
     grams: "جرام",
     vault: "الخزنة:",
+    all: "الكل",
     certTitle: "🔐 التحقق من الشهادة",
     certSubtitle: "تحقق من شهادتك",
     certPlaceholder: "AUX-CERT-2025-XXXXXX",
@@ -166,10 +183,12 @@ const translations: Record<string, Record<string, string>> = {
     allocationTitle: "📍 Поиск Распределения",
     allocationSubtitle: "Ваши зарегистрированные активы",
     noRecords: "Записей пока нет",
+    noMetalRecords: "Нет записей для этого металла",
     records: "записей",
     loading: "Загрузка...",
     grams: "г",
     vault: "Хранилище:",
+    all: "Все",
     certTitle: "🔐 Проверка Сертификата",
     certSubtitle: "Проверьте ваш сертификат",
     certPlaceholder: "AUX-CERT-2025-XXXXXX",
@@ -194,11 +213,12 @@ const translations: Record<string, Record<string, string>> = {
 
 export default function AllocationFinder({ lang = "en" }: AllocationFinderProps) {
   const t = translations[lang] || translations.en;
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
 
-  // Allocation state - from API
+  // Allocation state
   const [allocations, setAllocations] = useState<any[]>([]);
   const [allocLoading, setAllocLoading] = useState(false);
+  const [selectedMetal, setSelectedMetal] = useState<string | null>(null);
 
   // Certificate state
   const [certInput, setCertInput] = useState("");
@@ -262,7 +282,7 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
     return d.toLocaleDateString(locale);
   };
 
-  // Metal summaries from allocations
+  // Metal summaries
   const metalSummary = useMemo(() => {
     const summary: Record<string, { grams: number; count: number }> = {
       AUXG: { grams: 0, count: 0 },
@@ -280,6 +300,12 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
     return summary;
   }, [allocations]);
 
+  // Filtered allocations based on selected metal
+  const filteredAllocations = useMemo(() => {
+    if (!selectedMetal) return allocations;
+    return allocations.filter((a: any) => a.metal === selectedMetal);
+  }, [allocations, selectedMetal]);
+
   const getPdfUrl = (certNum: string) => `/api/certificates/pdf?certNumber=${certNum}&format=html`;
 
   const metalNames: Record<string, string> = {
@@ -287,6 +313,14 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
     AUXS: t.silver,
     AUXPT: t.platinum,
     AUXPD: t.palladium,
+  };
+
+  const handleMetalClick = (metal: string) => {
+    if (selectedMetal === metal) {
+      setSelectedMetal(null); // Deselect if already selected
+    } else {
+      setSelectedMetal(metal);
+    }
   };
 
   return (
@@ -301,40 +335,80 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
-            <div>
+            <div className="flex-1">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t.allocationTitle}</h3>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">{t.allocationSubtitle}</p>
             </div>
+            {selectedMetal && (
+              <button
+                onClick={() => setSelectedMetal(null)}
+                className="text-[10px] px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+              >
+                {t.all} ✕
+              </button>
+            )}
           </div>
 
-          {/* Metal Summary Cards */}
+          {/* Metal Summary Cards - Clickable */}
           <div className="grid grid-cols-4 gap-2 mb-4">
-            {(["AUXG", "AUXS", "AUXPT", "AUXPD"] as const).map((metal) => (
-              <div key={metal} className={`rounded-xl p-2 text-center border ${metalSummary[metal].count > 0 ? "border-emerald-500/50 bg-emerald-500/5" : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"}`}>
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Image src={metalIcons[metal]} alt={metal} width={16} height={16} />
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400">{metalNames[metal]}</span>
-                </div>
-                <p className={`text-sm font-bold ${metalColors[metal]}`}>{metalSummary[metal].grams.toFixed(0)} {t.grams}</p>
-                <p className="text-[9px] text-slate-400">{metalSummary[metal].count} {t.records}</p>
-              </div>
-            ))}
+            {(["AUXG", "AUXS", "AUXPT", "AUXPD"] as const).map((metal) => {
+              const isSelected = selectedMetal === metal;
+              const hasRecords = metalSummary[metal].count > 0;
+              
+              return (
+                <button
+                  key={metal}
+                  onClick={() => handleMetalClick(metal)}
+                  className={`rounded-xl p-2 text-center border transition-all duration-200 ${
+                    isSelected
+                      ? metalBorders[metal]
+                      : hasRecords
+                      ? "border-emerald-500/50 bg-emerald-500/5 hover:border-emerald-500 hover:bg-emerald-500/10"
+                      : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-600"
+                  } ${hasRecords ? "cursor-pointer" : "cursor-default opacity-60"}`}
+                  disabled={!hasRecords}
+                >
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Image src={metalIcons[metal]} alt={metal} width={16} height={16} />
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">{metalNames[metal]}</span>
+                  </div>
+                  <p className={`text-sm font-bold ${metalColors[metal]}`}>
+                    {metalSummary[metal].grams.toFixed(0)} {t.grams}
+                  </p>
+                  <p className="text-[9px] text-slate-400">{metalSummary[metal].count} {t.records}</p>
+                  {isSelected && (
+                    <div className={`w-full h-0.5 mt-1 rounded-full ${metalColors[metal].replace('text-', 'bg-')}`} />
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* Allocation List */}
           <div className="min-h-[140px] max-h-[220px] overflow-y-auto">
             {allocLoading ? (
               <p className="text-xs text-slate-400 text-center py-6">{t.loading}</p>
-            ) : allocations.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-6">{t.noRecords}</p>
+            ) : filteredAllocations.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-6">
+                {selectedMetal ? t.noMetalRecords : t.noRecords}
+              </p>
             ) : (
               <div className="space-y-2">
-                {allocations.slice(0, 10).map((a: any, idx: number) => (
-                  <div key={a.id || idx} className="flex items-center justify-between rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 px-3 py-2">
+                {filteredAllocations.slice(0, 10).map((a: any, idx: number) => (
+                  <div 
+                    key={a.id || idx} 
+                    className={`flex items-center justify-between rounded-xl border px-3 py-2 transition-colors ${
+                      selectedMetal === a.metal 
+                        ? `${metalBorders[a.metal]} border-opacity-50` 
+                        : "border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60"
+                    }`}
+                  >
                     <div className="flex items-center gap-2">
                       <Image src={metalIcons[a.metal] || metalIcons.AUXG} alt={a.metal} width={20} height={20} />
                       <div>
-                        <span className="text-xs font-semibold text-slate-800 dark:text-white">{a.metal}</span>
+                        <span className={`text-xs font-semibold ${metalColors[a.metal] || "text-slate-800 dark:text-white"}`}>
+                          {a.metal}
+                        </span>
                         <p className="text-[10px] text-slate-500">{parseFloat(a.grams).toFixed(2)}{t.grams} · {a.vaultName || a.vault || "-"}</p>
                       </div>
                     </div>
