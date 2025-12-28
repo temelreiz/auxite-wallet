@@ -233,16 +233,36 @@ export default function ProfilePage() {
     URL.revokeObjectURL(url);
   };
 
-  // Save edit
-  const handleSaveEdit = () => {
-    if (!editModal || !editValue.trim()) return;
-
-    setUserData(prev => ({
-      ...prev,
-      [editModal]: editValue,
-    }));
-    setEditModal(null);
-    setEditValue("");
+  // Save edit - API'ye kaydet
+  const handleSaveEdit = async () => {
+    if (!editModal || !editValue.trim() || !address) return;
+    
+    try {
+      const response = await fetch("/api/user/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address,
+          [editModal]: editValue,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setUserData(prev => ({
+          ...prev,
+          [editModal]: editValue,
+        }));
+        setEditModal(null);
+        setEditValue("");
+      } else {
+        alert("Failed to save: " + (data.error || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Save error:", err);
+      alert("Failed to save profile");
+    }
   };
 
   // Open edit modal
