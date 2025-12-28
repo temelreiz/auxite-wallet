@@ -353,18 +353,24 @@ export function MetalTradeModal({
     }
     
     // Market order için önce allocation preview kontrol et
+    console.log("🔍 handleTradeClick - mode:", mode, "showAllocationWarning:", showAllocationWarning);
     if (mode === "buy" && !showAllocationWarning) {
       try {
+        const auxmAmount = amountNum * currentPrice;
+        console.log("🔍 Checking allocation preview - amount:", amountNum, "price:", currentPrice, "auxm:", auxmAmount, "address:", walletAddress);
         const previewRes = await fetch(
-          `/api/trade?type=buy&fromToken=AUXM&toToken=${metal}&amount=${amountNum * currentPrice}&address=${walletAddress}`
+          `/api/trade?type=buy&fromToken=AUXM&toToken=${metal}&amount=${auxmAmount}&address=${walletAddress}`
         );
         const previewData = await previewRes.json();
+        console.log("🔍 Preview response:", previewData);
         
         if (previewData.preview?.allocationPreview?.hasPartialAllocation) {
+          console.log("🔍 Has partial allocation, showing warning");
           setAllocationPreview(previewData.preview.allocationPreview);
           setShowAllocationWarning(true);
           return;
         }
+        console.log("🔍 No partial allocation, proceeding");
       } catch (e) {
         console.warn("Preview check failed:", e);
       }
