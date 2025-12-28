@@ -3,7 +3,7 @@
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@auxite.com';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@auxite.io';
 
 interface EmailOptions {
   to: string;
