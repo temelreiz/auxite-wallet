@@ -153,6 +153,7 @@ export async function POST(request: NextRequest) {
 
     if (!address || !metal || !grams) {
       return NextResponse.json({ error: 'address, metal, grams required' }, { status: 400 });
+    }
 
     // Partial Allocation: Sadece tam gramlar allocate edilir
     const wholeGrams = Math.floor(grams);
