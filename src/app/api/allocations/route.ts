@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import { createHash } from 'crypto';
+import { sendCertificateEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,6 +42,13 @@ const VAULT_NAMES: Record<string, string> = {
   LN: 'London',
 };
 
+
+const METAL_NAMES: Record<string, string> = {
+  AUXG: "Gold",
+  AUXS: "Silver",
+  AUXPT: "Platinum",
+  AUXPD: "Palladium",
+};
 // Bar boyutları (büyükten küçüğe - greedy allocation için)
 const BAR_SIZES: Record<string, number[]> = {
   AUXG: [1000, 500, 100, 50, 20, 10, 5, 1],
@@ -141,7 +149,7 @@ export async function GET(request: NextRequest) {
 // POST - Yeni allocation oluştur (bar boyutlarına göre parçala)
 export async function POST(request: NextRequest) {
   try {
-    const { address, metal, grams, preferredVault, txHash } = await request.json();
+    const { address, metal, grams, preferredVault, txHash, email, holderName } = await request.json();
 
     if (!address || !metal || !grams) {
       return NextResponse.json({ error: 'address, metal, grams required' }, { status: 400 });
@@ -293,6 +301,22 @@ export async function POST(request: NextRequest) {
     
     // Arka planda anchor et (non-blocking)
     await anchorCertificateBackground(certNumber, certHash);
+
+    // Email gönder (eğer email varsa)
+    if (email) {
+      try {
+        await sendCertificateEmail(email, "", {
+          certificateNumber: certNumber,
+          metal,
+          metalName: METAL_NAMES[metal] || metal,
+          grams: grams.toString(),
+          holderName: holderName || undefined,
+        });
+        console.log(`📧 Certificate email sent to ${email}`);
+      } catch (emailErr: any) {
+        console.error(`❌ Certificate email failed:`, emailErr.message);
+      }
+    }
     console.log(`✅ Certificate issued: ${certNumber} for ${allocations.length} bars`);
 
     // Listeyi kaydet
