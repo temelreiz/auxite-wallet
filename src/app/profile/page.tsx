@@ -30,14 +30,38 @@ export default function ProfilePage() {
   
   // Editable user data
   const [userData, setUserData] = useState({
-    email: "user@example.com",
-    phone: "+90 555 123 4567",
-    country: "Turkey",
+    email: "",
+    phone: "",
+    country: "",
     timezone: "Europe/Istanbul",
     referralCode: "AUX-" + (address?.slice(2, 8).toUpperCase() || "XXXXXX"),
     totalReferrals: 12,
     totalEarnings: 450.25,
   });
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Fetch user profile from API
+  useEffect(() => {
+    if (address) {
+      setIsLoadingProfile(true);
+      fetch(`/api/user/profile?address=${address}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.success && data.profile) {
+            setUserData(prev => ({
+              ...prev,
+              email: data.profile.email || "",
+              phone: data.profile.phone || "",
+              country: data.profile.country || "",
+              timezone: data.profile.timezone || "Europe/Istanbul",
+            }));
+          }
+        })
+        .catch(err => console.error("Profile fetch error:", err))
+        .finally(() => setIsLoadingProfile(false));
+    }
+  }, [address]);
 
   // Modal states
   const [editModal, setEditModal] = useState<"email" | "phone" | "country" | "timezone" | "password" | "currency" | null>(null);
