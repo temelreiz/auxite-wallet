@@ -1,4 +1,5 @@
 // src/app/api/trade/route.ts
+import { sendCertificateEmail } from "@/lib/email";
 export const maxDuration = 60;
 // V6 BLOCKCHAIN ENTEGRASYONLU - Gerçek token mint/burn işlemleri
 // ✅ AUXITEER TIER BAZLI FEE ENTEGRASYONU
@@ -114,6 +115,8 @@ const tradeExecuteSchema = z.object({
   slippage: z.number().min(0).max(10).default(1),
   executeOnChain: z.boolean().default(true),
   quoteId: z.string().optional(),
+  email: z.string().email().optional(),
+  holderName: z.string().optional(),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -315,6 +318,8 @@ export async function POST(request: NextRequest) {
       slippage,
       executeOnChain,
       quoteId,
+      email,
+      holderName,
     } = validation.data;
 
     const normalizedAddress = address.toLowerCase();
@@ -713,6 +718,35 @@ export async function POST(request: NextRequest) {
       toAmount
     );
 
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 9.5 AUTO ALLOCATION & CERTIFICATE EMAIL (Metal Buy Only)
+    // ═══════════════════════════════════════════════════════════════════════
+    let certificateNumber: string | undefined;
+    if (type === "buy" && METALS.includes(toTokenLower) && toAmount > 0) {
+      try {
+        // Create allocation via internal API call
+        const allocRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://auxite-wallet.vercel.app"}/api/allocations`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            address: normalizedAddress,
+            metal: toToken.toUpperCase(),
+            grams: toAmount,
+            txHash,
+            email,
+            holderName,
+          }),
+        });
+        const allocData = await allocRes.json();
+        if (allocData.success) {
+          certificateNumber = allocData.certificateNumber;
+          console.log(`📜 Certificate issued: ${certificateNumber}`);
+        }
+      } catch (allocErr: any) {
+        console.error("Auto-allocation failed:", allocErr.message);
+      }
+    }
     // 10. Get updated balance
     const updatedBalance = await redis.hgetall(balanceKey);
 
