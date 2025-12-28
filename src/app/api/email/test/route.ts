@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
         metalName: 'Gold',
         grams: '10.0000',
       });
-      return NextResponse.json({ success: true, type: 'certificate', ...result });
+      return NextResponse.json({ type: 'certificate', ...result });
     }
 
     if (type === 'staking') {
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         startDate: new Date().toISOString().split('T')[0],
         endDate: new Date(Date.now() + 91 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       });
-      return NextResponse.json({ success: true, type: 'staking', ...result });
+      return NextResponse.json({ type: 'staking', ...result });
     }
 
     return NextResponse.json({ error: 'Invalid type. Use "certificate" or "staking"' }, { status: 400 });
