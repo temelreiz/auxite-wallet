@@ -64,6 +64,14 @@ export default function TradePanel({
   const [countdown, setCountdown] = useState(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [tradeSuccess, setTradeSuccess] = useState(false);
+  const [showAllocationWarning, setShowAllocationWarning] = useState(false);
+  const [allocationPreview, setAllocationPreview] = useState<{
+    totalGrams: number;
+    allocatedGrams: number;
+    nonAllocatedGrams: number;
+    hasPartialAllocation: boolean;
+    suggestion?: { gramsToAdd: number; auxmToAdd: number; targetGrams: number; };
+  } | null>(null);
   const [mode, setMode] = useState<"buy" | "sell">(initialMode);
   const [orderType, setOrderType] = useState<OrderType>("market");
   const [amount, setAmount] = useState<string>("1");
@@ -554,7 +562,54 @@ export default function TradePanel({
   }, [countdown, quote, t.priceExpired, t.getNewPrice]);
 
   // Handle Market Trade
+  const handleAllocationConfirm = () => {
+    setShowAllocationWarning(false);
+    proceedWithMarketTrade();
+  };
+
+  const handleAddMoreForAllocation = () => {
+    if (allocationPreview?.suggestion) {
+      setAmount(allocationPreview.suggestion.targetGrams.toString());
+    }
+    setShowAllocationWarning(false);
+    setAllocationPreview(null);
+  };
+
   const handleMarketTrade = async () => {
+    if (!isConnected || !address) {
+      alert(t.connectWallet);
+      return;
+    }
+    if (amountNum <= 0) {
+      alert(t.enterValidAmount);
+      return;
+    }
+    
+    // Allocation preview kontrolü (sadece buy modunda ve henüz warning gösterilmediyse)
+    if (mode === "buy" && !showAllocationWarning && !showConfirmation) {
+      try {
+        const auxmAmount = amountNum * currentPrice;
+        const previewRes = await fetch(
+          `/api/trade?type=buy&fromToken=AUXM&toToken=${metalSymbol}&amount=${auxmAmount}&address=${address}`
+        );
+        const previewData = await previewRes.json();
+        
+        if (previewData.preview?.allocationPreview?.hasPartialAllocation) {
+          setAllocationPreview(previewData.preview.allocationPreview);
+          setShowAllocationWarning(true);
+          return;
+        }
+      } catch (e) {
+        console.warn("Allocation preview check failed:", e);
+      }
+    }
+    
+    proceedWithMarketTrade();
+  };
+
+  const proceedWithMarketTrade = async () => {
+    setShowAllocationWarning(false);
+    
     if (!isConnected || !address) {
       alert(t.connectWallet);
       return;
@@ -708,6 +763,87 @@ export default function TradePanel({
         </div>
 
         <div className="p-3">
+          {/* Allocation Warning */}
+          {showAllocationWarning && allocationPreview && (
+            <div className="py-4">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-14 h-14 bg-amber-500/20 rounded-full flex items-center justify-center">
+                  <svg className="w-7 h-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              </div>
+              
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white text-center mb-2">
+                {lang === "tr" ? "Kısmi Allocation" : "Partial Allocation"}
+              </h3>
+              
+              <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-4">
+                {lang === "tr" 
+                  ? `${allocationPreview.totalGrams.toFixed(4)}g ${metalSymbol} satın alıyorsunuz:`
+                  : `You are buying ${allocationPreview.totalGrams.toFixed(4)}g ${metalSymbol}:`}
+              </p>
+              
+              <div className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-4 space-y-3 mb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                      {lang === "tr" ? "Kasada Allocate" : "Vault Allocated"}
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                    {allocationPreview.allocatedGrams}g
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center">
+                      <span className="text-amber-500 text-xs">○</span>
+                    </div>
+                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                      {lang === "tr" ? "Non-Allocated" : "Non-Allocated"}
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                    {allocationPreview.nonAllocatedGrams.toFixed(4)}g
+                  </span>
+                </div>
+              </div>
+              
+              <p className="text-xs text-slate-400 dark:text-slate-500 text-center mb-4">
+                {lang === "tr" 
+                  ? "Sadece tam gramlar fiziksel metale allocate edilebilir. Kesirli kısım bakiyenizde non-allocated olarak kalır."
+                  : "Only whole grams can be allocated to physical metal. Fractional amounts remain non-allocated in your balance."}
+              </p>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {allocationPreview.suggestion && (
+                  <button
+                    onClick={handleAddMoreForAllocation}
+                    className="px-4 py-3 rounded-xl bg-stone-200 dark:bg-slate-800 border border-stone-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-stone-300 dark:hover:bg-slate-700 transition-colors text-sm font-medium"
+                  >
+                    <span className="block text-xs text-slate-500 dark:text-slate-400 mb-0.5">
+                      {lang === "tr" ? "Ekle" : "Add"}
+                    </span>
+                    +{allocationPreview.suggestion.gramsToAdd.toFixed(4)}g → {allocationPreview.suggestion.targetGrams}g
+                  </button>
+                )}
+                <button
+                  onClick={handleAllocationConfirm}
+                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold hover:from-amber-600 hover:to-yellow-600 transition-colors text-sm"
+                >
+                  {lang === "tr" ? "Devam Et" : "Continue"}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Success State - Market */}
           {isSuccess && orderType === "market" && (
             <div className="text-center py-6">
@@ -772,7 +908,7 @@ export default function TradePanel({
           )}
 
           {/* Normal State */}
-          {!isSuccess && !limitOrderSuccess && (
+          {!isSuccess && !limitOrderSuccess && !showAllocationWarning && (
             <>
               {/* Launch Campaign Banner */}
               {isLaunchCampaignActive() && mode === "buy" && (
