@@ -621,8 +621,11 @@ export default function TradePanel({
       return;
     }
     
-    // Allocation preview kontrolü (sadece buy modunda ve henüz warning gösterilmediyse)
-    if (mode === "buy" && !showAllocationWarning && !showConfirmation) {
+    // Allocation preview kontrolü (sadece buy modunda ve kesirli gram girildiğinde)
+    // Tam gram girildiğinde (1, 2, 3...) uyarı gösterme - fee düzeltmesi API'de yapılacak
+    const isWholeGram = Number.isInteger(amountNum);
+    
+    if (mode === "buy" && !showAllocationWarning && !showConfirmation && !isWholeGram) {
       try {
         const auxmAmount = amountNum * currentPrice;
         const previewRes = await fetch(
