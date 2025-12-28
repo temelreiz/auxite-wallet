@@ -171,8 +171,7 @@ export async function POST(request: NextRequest) {
         message: "Insufficient for allocation"
       }, { status: 400 });
     }
-    }
-
+    
     // Kullanıcı UID'sini bul veya oluştur
     let userUid = await redis.get(`user:address:${address.toLowerCase()}:uid`) as string;
     
