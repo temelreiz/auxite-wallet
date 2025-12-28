@@ -782,7 +782,7 @@ export default function TradePanel({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       <div className="absolute inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative z-10 w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-800 shadow-2xl ">
+      <div className="relative z-10 w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
           <div>
