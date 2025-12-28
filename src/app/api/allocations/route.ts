@@ -329,7 +329,7 @@ export async function POST(request: NextRequest) {
         if (userId) {
           const userData = await redis.hgetall(`user:${userId}`);
           userEmail = userData?.email as string || "";
-          console.log(\`📧 Found user email from Redis: \${userEmail}\`);
+          console.log(`📧 Found user email from Redis: ${userEmail}`);
         }
       } catch (e) {
         console.warn("Could not fetch user email from Redis:", e);
