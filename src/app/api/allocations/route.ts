@@ -153,6 +153,24 @@ export async function POST(request: NextRequest) {
 
     if (!address || !metal || !grams) {
       return NextResponse.json({ error: 'address, metal, grams required' }, { status: 400 });
+
+    // Partial Allocation: Sadece tam gramlar allocate edilir
+    const wholeGrams = Math.floor(grams);
+    const fractionalGrams = parseFloat((grams - wholeGrams).toFixed(4));
+
+    // Minimum 1 gram gerekli
+    if (wholeGrams < 1) {
+      return NextResponse.json({ 
+        error: "Minimum 1g required for allocation",
+        allocatedGrams: wholeGrams,
+      nonAllocatedGrams: fractionalGrams,
+      totalGrams: grams,
+        wholeGrams: 0,
+        fractionalGrams,
+        needMore: parseFloat((1 - fractionalGrams).toFixed(4)),
+        message: "Insufficient for allocation"
+      }, { status: 400 });
+    }
     }
 
     // Kullanıcı UID'sini bul veya oluştur
@@ -173,7 +191,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Gram'ı bar boyutlarına böl
-    const barSizeBreakdown = splitIntoBarSizes(grams, metal);
+    const barSizeBreakdown = splitIntoBarSizes(wholeGrams, metal);
     console.log(`📦 Allocation breakdown for ${grams}g ${metal}:`, barSizeBreakdown);
 
     // Her bar boyutu için uygun külçe bul
@@ -269,7 +287,7 @@ export async function POST(request: NextRequest) {
       address: address.toLowerCase(),
       metal,
       metalName: metal === "AUXG" ? "Gold" : metal === "AUXS" ? "Silver" : metal === "AUXPT" ? "Platinum" : "Palladium",
-      grams: grams.toString(),
+      grams: wholeGrams.toString(),
       // İlk allocation'ın bilgilerini kullan
       serialNumber: allocations.map(a => a.serialNumber).join(', '),
       vault: allocations[0]?.vault || '',
@@ -291,7 +309,7 @@ export async function POST(request: NextRequest) {
       certificateNumber: certNumber,
       userUid,
       metal,
-      grams: grams.toString(),
+      grams: wholeGrams.toString(),
       serialNumber: certificate.serialNumber,
       vault: certificate.vault,
       purity: certificate.purity,
@@ -309,7 +327,7 @@ export async function POST(request: NextRequest) {
           certificateNumber: certNumber,
           metal,
           metalName: METAL_NAMES[metal] || metal,
-          grams: grams.toString(),
+          grams: wholeGrams.toString(),
           holderName: holderName || undefined,
         });
         console.log(`📧 Certificate email sent to ${email}`);
@@ -324,10 +342,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Allocated ${grams}g ${metal} across ${allocations.length} bar(s)`,
+      message: `Allocated ${wholeGrams}g ${metal} across ${allocations.length} bar(s)`,
       userUid,
       allocations,
       breakdown: barSizeBreakdown,
+      allocatedGrams: wholeGrams,
+      nonAllocatedGrams: fractionalGrams,
       totalGrams: grams,
       barCount: allocations.length,
       certificateNumber: certNumber,
