@@ -334,12 +334,45 @@ export function MetalTradeModal({
     }
   };
 
-  const handleTradeClick = () => {
-    if (orderType === "market") {
-      handleMarketOrder();
-    } else {
+  const handleTradeClick = async () => {
+    if (orderType === "limit") {
       handleLimitOrder();
+      return;
     }
+    
+    // Market order için önce allocation preview kontrol et
+    if (mode === "buy" && !showAllocationWarning) {
+      try {
+        const previewRes = await fetch(
+          `/api/trade?type=buy&fromToken=AUXM&toToken=${metal}&amount=${amountNum * currentPrice}&address=${walletAddress}`
+        );
+        const previewData = await previewRes.json();
+        
+        if (previewData.preview?.allocationPreview?.hasPartialAllocation) {
+          setAllocationPreview(previewData.preview.allocationPreview);
+          setShowAllocationWarning(true);
+          return;
+        }
+      } catch (e) {
+        console.warn("Preview check failed:", e);
+      }
+    }
+    
+    handleMarketOrder();
+  };
+  
+  const handleAllocationConfirm = () => {
+    setShowAllocationWarning(false);
+    handleMarketOrder();
+  };
+  
+  const handleAddMoreAuxm = () => {
+    if (allocationPreview?.suggestion) {
+      // Yeni miktarı hesapla (hedef gram * fiyat)
+      const newAuxmAmount = allocationPreview.suggestion.targetGrams * currentPrice;
+      setAmount(allocationPreview.suggestion.targetGrams.toString());
+    }
+    setShowAllocationWarning(false);
   };
 
   const handleConfirmTrade = async () => {
@@ -406,6 +439,89 @@ export function MetalTradeModal({
         </div>
 
         <div className="p-4 space-y-4">
+          {/* Allocation Warning Modal */}
+          {showAllocationWarning && allocationPreview && (
+            <div className="py-4">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-14 h-14 bg-amber-500/20 rounded-full flex items-center justify-center">
+                  <svg className="w-7 h-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              </div>
+              
+              <h3 className="text-lg font-bold text-white text-center mb-2">
+                {lang === "tr" ? "Kısmi Allocation" : "Partial Allocation"}
+              </h3>
+              
+              <p className="text-sm text-slate-400 text-center mb-4">
+                {lang === "tr" 
+                  ? `${allocationPreview.totalGrams.toFixed(4)}g ${metal} satın alıyorsunuz:`
+                  : `You are buying ${allocationPreview.totalGrams.toFixed(4)}g ${metal}:`}
+              </p>
+              
+              <div className="bg-slate-800/50 rounded-xl p-4 space-y-3 mb-4">
+                {/* Allocated */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-slate-300">
+                      {lang === "tr" ? "Kasada Allocate" : "Vault Allocated"}
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium text-emerald-400">
+                    {allocationPreview.allocatedGrams}g
+                  </span>
+                </div>
+                
+                {/* Non-Allocated */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center">
+                      <span className="text-amber-500 text-xs">○</span>
+                    </div>
+                    <span className="text-sm text-slate-300">
+                      {lang === "tr" ? "Non-Allocated" : "Non-Allocated"}
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium text-amber-400">
+                    {allocationPreview.nonAllocatedGrams.toFixed(4)}g
+                  </span>
+                </div>
+              </div>
+              
+              <p className="text-xs text-slate-500 text-center mb-4">
+                {lang === "tr" 
+                  ? "Sadece tam gramlar fiziksel altına allocate edilebilir. Kesirli kısım bakiyenizde non-allocated olarak kalır."
+                  : "Only whole grams can be allocated to physical metal. Fractional amounts remain non-allocated in your balance."}
+              </p>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {allocationPreview.suggestion && (
+                  <button
+                    onClick={handleAddMoreAuxm}
+                    className="px-4 py-3 rounded-xl bg-slate-800 border border-slate-600 text-slate-200 hover:bg-slate-700 transition-colors text-sm font-medium"
+                  >
+                    <span className="block text-xs text-slate-400 mb-0.5">
+                      {lang === "tr" ? "Ekle" : "Add"}
+                    </span>
+                    +{allocationPreview.suggestion.gramsToAdd.toFixed(4)}g → {allocationPreview.suggestion.targetGrams}g
+                  </button>
+                )}
+                <button
+                  onClick={handleAllocationConfirm}
+                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold hover:from-amber-600 hover:to-yellow-600 transition-colors text-sm"
+                >
+                  {lang === "tr" ? "Devam Et" : "Continue"}
+                </button>
+              </div>
+            </div>
+          )}
+          
           {result === "success" ? (
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -426,7 +542,7 @@ export function MetalTradeModal({
                 {t.close}
               </button>
             </div>
-          ) : (
+          ) : showAllocationWarning ? null : (
             <>
               {/* Buy/Sell Toggle */}
               <div className="grid grid-cols-2 gap-2 p-1 bg-slate-800 rounded-xl">

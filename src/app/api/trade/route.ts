@@ -261,6 +261,41 @@ export async function GET(request: NextRequest) {
       toAmount = (amount - fee) * price;
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // ALLOCATION PREVIEW (sadece metal alımlarında)
+    // ═══════════════════════════════════════════════════════════════════════
+    let allocationPreview = null;
+    
+    if (type === "buy" && METALS.includes(toTokenLower)) {
+      const allocatedGrams = Math.floor(toAmount);
+      const nonAllocatedGrams = parseFloat((toAmount - allocatedGrams).toFixed(6));
+      
+      if (nonAllocatedGrams > 0) {
+        // Bir sonraki tam grama ulaşmak için gereken ek miktar
+        const gramsNeededForNextWhole = parseFloat((1 - nonAllocatedGrams).toFixed(6));
+        const additionalAuxmNeeded = parseFloat((gramsNeededForNextWhole * (price / (1 - tierFeePercent / 100))).toFixed(2));
+        
+        allocationPreview = {
+          totalGrams: parseFloat(toAmount.toFixed(6)),
+          allocatedGrams,
+          nonAllocatedGrams,
+          hasPartialAllocation: true,
+          suggestion: {
+            gramsToAdd: gramsNeededForNextWhole,
+            auxmToAdd: additionalAuxmNeeded,
+            targetGrams: allocatedGrams + 1,
+          },
+        };
+      } else {
+        allocationPreview = {
+          totalGrams: parseFloat(toAmount.toFixed(6)),
+          allocatedGrams,
+          nonAllocatedGrams: 0,
+          hasPartialAllocation: false,
+        };
+      }
+    }
+
     return NextResponse.json({
       success: true,
       preview: {
@@ -275,7 +310,8 @@ export async function GET(request: NextRequest) {
         spread: type === "buy" ? spreadPercent.buy.toFixed(2) + "%" : spreadPercent.sell.toFixed(2) + "%",
         blockchainEnabled: BLOCKCHAIN_ENABLED,
         blockchain: blockchainData,
-        tier: tierInfo, // Include tier info in response
+        tier: tierInfo,
+        allocationPreview, // Partial allocation bilgisi
       },
     });
 
@@ -723,6 +759,7 @@ export async function POST(request: NextRequest) {
     // 9.5 AUTO ALLOCATION & CERTIFICATE EMAIL (Metal Buy Only)
     // ═══════════════════════════════════════════════════════════════════════
     let certificateNumber: string | undefined;
+    let allocationInfo: { allocatedGrams?: number; nonAllocatedGrams?: number } = {};
     if (type === "buy" && METALS.includes(toTokenLower) && toAmount > 0) {
       try {
         // Create allocation via internal API call
@@ -740,6 +777,10 @@ export async function POST(request: NextRequest) {
         });
         const allocData = await allocRes.json();
         if (allocData.success) {
+          allocationInfo = {
+            allocatedGrams: allocData.allocatedGrams,
+            nonAllocatedGrams: allocData.nonAllocatedGrams,
+          };
           certificateNumber = allocData.certificateNumber;
           console.log(`📜 Certificate issued: ${certificateNumber}`);
         }
@@ -770,6 +811,13 @@ export async function POST(request: NextRequest) {
           id: userTier.id,
           name: userTier.name,
         },
+
+        allocation: allocationInfo.allocatedGrams ? {
+          certificateNumber,
+          allocatedGrams: allocationInfo.allocatedGrams,
+          nonAllocatedGrams: allocationInfo.nonAllocatedGrams,
+        } : undefined,
+
       },
       balances: {
         auxm: parseFloat(updatedBalance?.auxm as string || "0"),
