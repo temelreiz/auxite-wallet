@@ -571,7 +571,7 @@ export default function TradePanel({
       
       const timer = setTimeout(() => {
         onClose();
-      }, 3000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [isSuccess, tradeHash, mode, amountNum, address, metalSymbol, onClose]);
@@ -782,7 +782,7 @@ export default function TradePanel({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       <div className="absolute inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative z-10 w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-800 shadow-2xl max-h-[80vh] overflow-y-auto">
+      <div className="relative z-10 w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-800 shadow-2xl ">
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
           <div>
@@ -801,7 +801,7 @@ export default function TradePanel({
           </button>
         </div>
 
-        <div className="p-3">
+        <div className="p-2">
           {/* Allocation Warning */}
           {showAllocationWarning && allocationPreview && (
             <div className="py-4">

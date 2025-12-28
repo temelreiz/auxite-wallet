@@ -192,7 +192,7 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
   const executeTrade = async (type: 'buy' | 'sell', grams: number) => {
     try {
       setStep("trading");
-      const gramsWei = parseUnits(grams.toString(), 18);
+      const gramsWei = parseUnits(grams.toString(), 3); // Metal tokens use 3 decimals
 
       writeTrade({
         address: EXCHANGE_ADDRESS,
@@ -256,7 +256,7 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
       setErrorMessage("");
       setPendingAction({ type: 'sell', grams: amountInGrams });
 
-      const metalAmount = parseUnits(amountInGrams.toString(), 18);
+      const metalAmount = parseUnits(amountInGrams.toString(), 3); // Metal tokens use 3 decimals
       const currentAllowance = metalAllowance || BigInt(0);
 
       // Check if user has enough balance
@@ -329,7 +329,7 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
     isSuccess: isTradeSuccess,
     approveHash,
     tradeHash,
-    metalBalance: metalBalance ? formatUnits(metalBalance, 18) : "0",
+    metalBalance: metalBalance ? formatUnits(metalBalance, 3) : "0",
     usdtBalance: usdtBalance ? formatUnits(usdtBalance, 6) : "0",
   };
 }
