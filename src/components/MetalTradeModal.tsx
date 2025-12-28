@@ -96,6 +96,18 @@ export function MetalTradeModal({
   const [quote, setQuote] = useState<Quote | null>(null);
   const [countdown, setCountdown] = useState(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showAllocationWarning, setShowAllocationWarning] = useState(false);
+  const [allocationPreview, setAllocationPreview] = useState<{
+    totalGrams: number;
+    allocatedGrams: number;
+    nonAllocatedGrams: number;
+    hasPartialAllocation: boolean;
+    suggestion?: {
+      gramsToAdd: number;
+      auxmToAdd: number;
+      targetGrams: number;
+    };
+  } | null>(null);
 
   const metalInfo = METAL_INFO[metal];
 
