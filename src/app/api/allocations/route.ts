@@ -320,10 +320,25 @@ export async function POST(request: NextRequest) {
     // Arka planda anchor et (non-blocking)
     await anchorCertificateBackground(certNumber, certHash);
 
-    // Email gönder (eğer email varsa)
-    if (email) {
+    // Email gönder - yoksa Redis'ten user email'ini çek
+    let userEmail = email;
+    if (!userEmail) {
       try {
-        await sendCertificateEmail(email, "", {
+        // user:address:{address} -> userId -> user:{userId} hash'inden email al
+        const userId = await redis.get(`user:address:${address.toLowerCase()}`);
+        if (userId) {
+          const userData = await redis.hgetall(`user:${userId}`);
+          userEmail = userData?.email as string || "";
+          console.log(\`📧 Found user email from Redis: \${userEmail}\`);
+        }
+      } catch (e) {
+        console.warn("Could not fetch user email from Redis:", e);
+      }
+    }
+    
+    if (userEmail) {
+      try {
+        await sendCertificateEmail(userEmail, "", {
           certificateNumber: certNumber,
           metal,
           metalName: METAL_NAMES[metal] || metal,

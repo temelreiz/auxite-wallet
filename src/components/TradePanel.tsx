@@ -530,15 +530,51 @@ export default function TradePanel({
     }
   }, [orderType, marketPrice, limitPrice]);
 
-  // Auto close on success after 2 seconds
+  // Auto close on success after 2 seconds + Allocation API call
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && tradeHash) {
+      // Call allocation API for buy orders
+      if (mode === "buy" && amountNum > 0) {
+        const callAllocationAPI = async () => {
+          try {
+            // Get user email from user meta API
+            let userEmail = "";
+            try {
+              const metaRes = await fetch(`/api/user/balance?address=${address}`);
+              const metaData = await metaRes.json();
+              userEmail = metaData.email || metaData.user?.email || "";
+            } catch (e) {
+              console.warn("Could not fetch user email:", e);
+            }
+            
+            const allocRes = await fetch("/api/allocations", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                address: address,
+                metal: metalSymbol,
+                grams: amountNum,
+                txHash: tradeHash,
+                email: userEmail,
+              }),
+            });
+            const allocData = await allocRes.json();
+            if (allocData.success) {
+              console.log("📜 Allocation created:", allocData.certificateNumber);
+            }
+          } catch (e) {
+            console.warn("Allocation API call failed:", e);
+          }
+        };
+        callAllocationAPI();
+      }
+      
       const timer = setTimeout(() => {
         onClose();
-      }, 2000);
+      }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [isSuccess, onClose]);
+  }, [isSuccess, tradeHash, mode, amountNum, address, metalSymbol, onClose]);
 
   // Countdown timer
   // Countdown timer - simple local countdown
