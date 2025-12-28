@@ -52,7 +52,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const key = `stakes:${address.toLowerCase()}`;
-    const existing = await redis.get(key) || [];
+    const existingData = await redis.get(key);
+    const existing = existingData ? (typeof existingData === "string" ? JSON.parse(existingData) : existingData) : [];
     const stakes = Array.isArray(existing) ? existing : [];
     
     const lockDays = duration || 91;
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
     };
 
     stakes.push(newStake);
-    await redis.set(key, stakes);
+    await redis.set(key, JSON.stringify(stakes));
 
     // Stake detaylarını ayrıca kaydet (agreement için)
     await redis.hset(`stake:${stakeId}`, {
