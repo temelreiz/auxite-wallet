@@ -38,6 +38,17 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
   const t = translations[lang] || translations.en;
   const { address } = useAccount();
   
+  // Debug: Component mount
+  useEffect(() => {
+    console.log("🟢 BuyMetalModal MOUNTED", { isOpen, address });
+    return () => console.log("🔴 BuyMetalModal UNMOUNTED");
+  }, []);
+
+  // Debug: Props/state changes
+  useEffect(() => {
+    console.log("🔄 BuyMetalModal state change", { isOpen, address });
+  }, [isOpen, address]);
+  
   const [metals, setMetals] = useState<MetalInfo[]>([]);
   const [selectedMetal, setSelectedMetal] = useState<MetalInfo | null>(null);
   const [selectedPayment, setSelectedPayment] = useState(PAYMENT_METHODS[0]);
@@ -59,10 +70,12 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
   } | null>(null);
 
   const fetchPrices = useCallback(async () => {
+    console.log("📊 BuyMetalModal fetchPrices called");
     setIsLoadingPrices(true);
     try {
       const res = await fetch('/api/prices');
       const data = await res.json();
+      console.log("📊 BuyMetalModal prices received:", data);
       const metalsWithPrices = METALS_BASE.map(metal => ({
         ...metal,
         price: data.prices?.[metal.symbol] || data[metal.name]?.askPerGram || 0,
@@ -70,48 +83,87 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
       }));
       setMetals(metalsWithPrices);
       if (!selectedMetal && metalsWithPrices.length > 0) setSelectedMetal(metalsWithPrices[0]);
-    } catch (err: any) { console.error('Trade error:', err); setError(err?.message || t.error); }
+    } catch (err: any) { 
+      console.error('❌ BuyMetalModal fetchPrices error:', err); 
+      setError(err?.message || t.error); 
+    }
     finally { setIsLoadingPrices(false); }
   }, [selectedMetal, t.error]);
 
   const fetchBalances = useCallback(async () => {
-    if (!address) return;
+    console.log("💰 BuyMetalModal fetchBalances called, address:", address);
+    if (!address) {
+      console.log("❌ BuyMetalModal fetchBalances - no address");
+      return;
+    }
     try {
+      // Redis balance
       const res = await fetch(`/api/user/balance?address=${address}`);
       const data = await res.json();
+      console.log("💰 BuyMetalModal balance received:", data);
+      
       if (data.success && data.balances) {
+        const auxmBalance = parseFloat(data.balances.auxm || 0) + parseFloat(data.balances.bonusauxm || 0);
+        const ethBalance = parseFloat(data.balances.eth || 0);
+        const btcBalance = parseFloat(data.balances.btc || 0);
+        
+        console.log("💰 BuyMetalModal parsed balances:", { AUXM: auxmBalance, ETH: ethBalance, BTC: btcBalance });
+        
         setBalances({
-          AUXM: parseFloat(data.balances.auxm || 0) + parseFloat(data.balances.bonusauxm || 0),
-          ETH: parseFloat(data.balances.eth || 0),
-          BTC: parseFloat(data.balances.btc || 0),
+          AUXM: auxmBalance,
+          ETH: ethBalance,
+          BTC: btcBalance,
         });
       }
-    } catch (err) { console.error('Balance fetch error:', err); }
+    } catch (err) { 
+      console.error('❌ BuyMetalModal fetchBalances error:', err); 
+    }
   }, [address]);
 
   const fetchPreview = useCallback(async () => {
-    if (!selectedMetal || !amount || parseFloat(amount) <= 0 || !address) { setPreview(null); return; }
+    if (!selectedMetal || !amount || parseFloat(amount) <= 0 || !address) { 
+      setPreview(null); 
+      return; 
+    }
+    console.log("🔍 BuyMetalModal fetchPreview called", { selectedMetal: selectedMetal.symbol, amount, address });
     setIsLoadingPreview(true);
     setError(null);
     try {
-      const res = await fetch(`/api/trade?type=buy&fromToken=${selectedPayment.symbol}&toToken=${selectedMetal.symbol}&amount=${amount}&address=${address}`);
+      const url = `/api/trade?type=buy&fromToken=${selectedPayment.symbol}&toToken=${selectedMetal.symbol}&amount=${amount}&address=${address}`;
+      console.log("🔍 BuyMetalModal fetchPreview URL:", url);
+      const res = await fetch(url);
       const data = await res.json();
+      console.log("🔍 BuyMetalModal preview received:", data);
       if (data.success && data.preview) {
-        setPreview({ toAmount: data.preview.toAmount, price: data.preview.price, fee: data.preview.fee, feePercent: data.preview.feePercent, spread: data.preview.spread, tier: data.preview.tier, allocationPreview: data.preview.allocationPreview });
+        setPreview({ 
+          toAmount: data.preview.toAmount, 
+          price: data.preview.price, 
+          fee: data.preview.fee, 
+          feePercent: data.preview.feePercent, 
+          spread: data.preview.spread, 
+          tier: data.preview.tier, 
+          allocationPreview: data.preview.allocationPreview 
+        });
         if (data.preview.allocationPreview) setAllocationPreview(data.preview.allocationPreview);
-      } else { setError(data.error || t.error); }
-    } catch (err: any) { console.error('Trade error:', err); setError(err?.message || t.error); }
+      } else { 
+        console.log("❌ BuyMetalModal preview error:", data.error);
+        setError(data.error || t.error); 
+      }
+    } catch (err: any) { 
+      console.error('❌ BuyMetalModal fetchPreview error:', err); 
+      setError(err?.message || t.error); 
+    }
     finally { setIsLoadingPreview(false); }
   }, [selectedMetal, selectedPayment, amount, address, t.error]);
 
   const handleConfirmWithAllocation = () => {
+    console.log("✅ handleConfirmWithAllocation called");
     setShowAllocationWarning(false);
     executeTradeNow();
   };
 
   const handleAddMoreForAllocation = () => {
     if (allocationPreview?.suggestion && selectedMetal) {
-      // Hedef gram için gereken AUXM miktarını hesapla
       const targetGrams = allocationPreview.suggestion.targetGrams;
       const pricePerGram = preview?.price || selectedMetal.price;
       const feePercent = preview?.feePercent || 0.35;
@@ -122,13 +174,13 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
   };
 
   const executeTrade = async () => {
-    console.log('🔵 executeTrade called', { preview, address, selectedMetal, allocationPreview, showAllocationWarning });
+    console.log('🔵 executeTrade called', { preview: !!preview, address, selectedMetal: selectedMetal?.symbol, allocationPreview, showAllocationWarning });
     if (!preview || !address || !selectedMetal) {
-      console.log('❌ executeTrade early return - missing data');
+      console.log('❌ executeTrade early return - missing data', { preview: !!preview, address, selectedMetal: !!selectedMetal });
       return;
     }
     
-    // Allocation warning kontrolü
+    // Allocation warning kontrolü - sadece 1 gram ve üzeri için göster
     if (allocationPreview?.hasPartialAllocation && !showAllocationWarning && (preview?.toAmount || 0) >= 1) {
       console.log('⚠️ Showing allocation warning');
       setShowAllocationWarning(true);
@@ -149,31 +201,81 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
     setIsProcessing(true);
     setError(null);
     try {
-      console.log('📤 Sending trade request...');
+      const payload = { 
+        address, 
+        type: 'buy', 
+        fromToken: selectedPayment.symbol, 
+        toToken: selectedMetal.symbol, 
+        fromAmount: parseFloat(amount), 
+        executeOnChain: true 
+      };
+      console.log('📤 Sending trade request...', payload);
       const res = await fetch('/api/trade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, type: 'buy', fromToken: selectedPayment.symbol, toToken: selectedMetal.symbol, fromAmount: parseFloat(amount), executeOnChain: true }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
+      console.log('📥 Trade response:', data);
       if (data.success) {
+        console.log('✅ Trade successful!');
         setSuccess(true);
-        setTimeout(() => { setSuccess(false); setAmount(""); setPreview(null); fetchBalances(); onSuccess?.(); onClose(); }, 2000);
-      } else { setError(data.error || t.error); }
-    } catch (err: any) { console.error('Trade error:', err); setError(err?.message || t.error); }
+        setTimeout(() => { 
+          setSuccess(false); 
+          setAmount(""); 
+          setPreview(null); 
+          fetchBalances(); 
+          onSuccess?.(); 
+          onClose(); 
+        }, 2000);
+      } else { 
+        console.log('❌ Trade failed:', data.error);
+        setError(data.error || t.error); 
+      }
+    } catch (err: any) { 
+      console.error('❌ Trade error:', err); 
+      setError(err?.message || t.error); 
+    }
     finally { setIsProcessing(false); }
   };
 
-  useEffect(() => { if (isOpen) { fetchPrices(); fetchBalances(); } }, [isOpen, fetchPrices, fetchBalances]);
-  useEffect(() => { const timer = setTimeout(() => fetchPreview(), 500); return () => clearTimeout(timer); }, [fetchPreview]);
-  useEffect(() => { if (!isOpen) return; const interval = setInterval(fetchPrices, 30000); return () => clearInterval(interval); }, [isOpen, fetchPrices]);
+  // Effect: Modal açıldığında fiyatları ve bakiyeleri getir
+  useEffect(() => { 
+    console.log("🔄 BuyMetalModal useEffect[isOpen] triggered", { isOpen });
+    if (isOpen) { 
+      console.log("🟢 Modal is OPEN - fetching prices and balances");
+      fetchPrices(); 
+      fetchBalances(); 
+    } 
+  }, [isOpen, fetchPrices, fetchBalances]);
+  
+  // Effect: Preview için debounce
+  useEffect(() => { 
+    const timer = setTimeout(() => fetchPreview(), 500); 
+    return () => clearTimeout(timer); 
+  }, [fetchPreview]);
+  
+  // Effect: Fiyat güncelleme interval
+  useEffect(() => { 
+    if (!isOpen) return; 
+    const interval = setInterval(fetchPrices, 30000); 
+    return () => clearInterval(interval); 
+  }, [isOpen, fetchPrices]);
 
-  if (!isOpen) return null;
+  // Debug: Render check
+  console.log("🟢 BuyMetalModal RENDER", { isOpen, address, metalsCount: metals.length });
+
+  if (!isOpen) {
+    console.log("🔴 BuyMetalModal returning null (isOpen=false)");
+    return null;
+  }
 
   const balance = balances[selectedPayment.symbol] || 0;
   const amountNum = parseFloat(amount) || 0;
   const isInsufficientBalance = amountNum > balance;
   const canTrade = amountNum > 0 && !isInsufficientBalance && preview && !isProcessing;
+
+  console.log("🟢 BuyMetalModal rendering UI", { balance, amountNum, isInsufficientBalance, canTrade });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/50 backdrop-blur-sm">
