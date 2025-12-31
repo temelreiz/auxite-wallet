@@ -23,7 +23,7 @@ export function middleware(request: NextRequest) {
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
       "frame-src 'self' https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com",
-      "connect-src 'self' https://api.auxite.io https://*.thirdweb.com https://*.merkle.io https://*.walletconnect.com https://*.walletconnect.org https://api.binance.com https://api.coingecko.com https://www.goldapi.io https://*.upstash.io https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com wss://*",
+      "connect-src 'self' https://api.auxite.io https://*.thirdweb.com https://*.merkle.io https://*.walletconnect.com https://*.walletconnect.org https://*.web3modal.org https://*.web3modal.com https://*.reown.com https://api.binance.com https://api.coingecko.com https://www.goldapi.io https://*.upstash.io https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com wss://*",
       "media-src 'self' blob:",
       "worker-src 'self' blob:",
     ].join('; ')

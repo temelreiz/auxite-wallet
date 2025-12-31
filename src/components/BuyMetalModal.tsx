@@ -70,7 +70,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
       }));
       setMetals(metalsWithPrices);
       if (!selectedMetal && metalsWithPrices.length > 0) setSelectedMetal(metalsWithPrices[0]);
-    } catch (err) { setError(t.error); }
+    } catch (err: any) { console.error('Trade error:', err); setError(err?.message || t.error); }
     finally { setIsLoadingPrices(false); }
   }, [selectedMetal, t.error]);
 
@@ -100,7 +100,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
         setPreview({ toAmount: data.preview.toAmount, price: data.preview.price, fee: data.preview.fee, feePercent: data.preview.feePercent, spread: data.preview.spread, tier: data.preview.tier, allocationPreview: data.preview.allocationPreview });
         if (data.preview.allocationPreview) setAllocationPreview(data.preview.allocationPreview);
       } else { setError(data.error || t.error); }
-    } catch (err) { setError(t.error); }
+    } catch (err: any) { console.error('Trade error:', err); setError(err?.message || t.error); }
     finally { setIsLoadingPreview(false); }
   }, [selectedMetal, selectedPayment, amount, address, t.error]);
 
@@ -122,23 +122,34 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
   };
 
   const executeTrade = async () => {
-    if (!preview || !address || !selectedMetal) return;
+    console.log('🔵 executeTrade called', { preview, address, selectedMetal, allocationPreview, showAllocationWarning });
+    if (!preview || !address || !selectedMetal) {
+      console.log('❌ executeTrade early return - missing data');
+      return;
+    }
     
     // Allocation warning kontrolü
-    if (allocationPreview?.hasPartialAllocation && !showAllocationWarning) {
+    if (allocationPreview?.hasPartialAllocation && !showAllocationWarning && (preview?.toAmount || 0) >= 1) {
+      console.log('⚠️ Showing allocation warning');
       setShowAllocationWarning(true);
       return;
     }
     
+    console.log('✅ Calling executeTradeNow');
     executeTradeNow();
   };
 
   const executeTradeNow = async () => {
-    if (!preview || !address || !selectedMetal) return;
+    console.log('🔵 executeTradeNow called');
+    if (!preview || !address || !selectedMetal) {
+      console.log('❌ executeTradeNow early return');
+      return;
+    }
     setShowAllocationWarning(false);
     setIsProcessing(true);
     setError(null);
     try {
+      console.log('📤 Sending trade request...');
       const res = await fetch('/api/trade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -149,7 +160,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
         setSuccess(true);
         setTimeout(() => { setSuccess(false); setAmount(""); setPreview(null); fetchBalances(); onSuccess?.(); onClose(); }, 2000);
       } else { setError(data.error || t.error); }
-    } catch (err) { setError(t.error); }
+    } catch (err: any) { console.error('Trade error:', err); setError(err?.message || t.error); }
     finally { setIsProcessing(false); }
   };
 

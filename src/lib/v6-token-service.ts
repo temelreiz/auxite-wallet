@@ -212,7 +212,7 @@ export async function buyMetalToken(
     if (ethBalance < totalNeeded) {
       return {
         success: false,
-        error: `Insufficient hot wallet ETH. Need: ${ethers.formatEther(totalNeeded)} ETH, Have: ${ethers.formatEther(ethBalance)} ETH`,
+        error: `İşlem için yeterli bakiye yok. Lütfen daha sonra tekrar deneyin.`,
       };
     }
     
@@ -222,12 +222,21 @@ export async function buyMetalToken(
     console.log(`🔷 Buying ${gramsInt}g ${token.toUpperCase()} for ~${costETH.toFixed(6)} ETH ($${costUSD.toFixed(2)})`);
     
     // Execute buy
+    // Get current nonce to avoid replacement issues
+    const nonce = await provider.getTransactionCount(wallet.address, 'latest');
+    const baseFee = feeData.maxFeePerGas || ethers.parseUnits("30", "gwei");
+    const priorityFee = ethers.parseUnits("2", "gwei");
+    const maxFee = baseFee + priorityFee;
+    
     const tx = await contract.buyFor(toAddress || wallet.address,
       gramsInt,
       maxCostWei,
       {
         value: maxCostWei,
         gasLimit: gasEstimate + 50000n,
+        nonce: nonce,
+        maxPriorityFeePerGas: priorityFee,
+        maxFeePerGas: maxFee,
       }
     );
     

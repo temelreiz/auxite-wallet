@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Redis } from "@upstash/redis";
 import { getUserBalance, setBalance, incrementBalance, addBonusAuxm, ensureUser } from "@/lib/redis";
 import { ethers } from "ethers";
 
@@ -93,6 +94,27 @@ async function getAllBlockchainBalances(address: string): Promise<Record<string,
   return balances;
 }
 
+
+// Redis for staked amounts
+const redisClient = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
+
+// Get staked amounts from Redis
+async function getStakedAmounts(address: string): Promise<Record<string, number>> {
+  const metals = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
+  const staked: Record<string, number> = {};
+  
+  for (const metal of metals) {
+    const key = `staked:${address.toLowerCase()}:${metal}`;
+    const amount = await redisClient.get(key);
+    staked[metal.toLowerCase()] = parseFloat(String(amount || 0));
+  }
+  
+  return staked;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // HYBRID BALANCE FUNCTION
 // ═══════════════════════════════════════════════════════════════════════════
@@ -100,6 +122,7 @@ async function getAllBlockchainBalances(address: string): Promise<Record<string,
 async function getHybridBalance(address: string): Promise<{
   balances: Record<string, number>;
   sources: Record<string, "blockchain" | "redis">;
+  stakedAmounts?: Record<string, number>;
 }> {
   // 1. Get Redis balance (off-chain data)
   const redisBalance = await getUserBalance(address);
@@ -107,23 +130,26 @@ async function getHybridBalance(address: string): Promise<{
   // 2. Get Blockchain balances (on-chain tokens)
   const blockchainBalances = await getAllBlockchainBalances(address);
   
-  // 3. Merge - prioritize blockchain for on-chain tokens
+  // 3. Get staked amounts
+  const stakedAmounts = await getStakedAmounts(address);
+  
+  // 4. Merge - prioritize blockchain for on-chain tokens, subtract staked
   const balances: Record<string, number> = {
     // Off-chain from Redis
     auxm: parseFloat(String(redisBalance.auxm || 0)),
-    bonusAuxm: parseFloat(String(redisBalance.bonusAuxm || 0)),
+    bonusAuxm: parseFloat(String((redisBalance as any).bonusauxm || redisBalance.bonusAuxm || 0)),
     eth: parseFloat(String(redisBalance.eth || 0)),
     btc: parseFloat(String(redisBalance.btc || 0)),
     xrp: parseFloat(String(redisBalance.xrp || 0)),
     sol: parseFloat(String(redisBalance.sol || 0)),
     usd: parseFloat(String(redisBalance.usd || 0)),
     
-    // On-chain from Blockchain
-    usdt: blockchainBalances.usdt || 0,
-    auxg: blockchainBalances.auxg || 0,
-    auxs: blockchainBalances.auxs || 0,
-    auxpt: blockchainBalances.auxpt || 0,
-    auxpd: blockchainBalances.auxpd || 0,
+    // On-chain from Blockchain + Off-chain from Redis (subtract staked amounts for available balance)
+    usdt: (blockchainBalances.usdt || 0) + parseFloat(String(redisBalance.usdt || 0)),
+    auxg: Math.max(0, (blockchainBalances.auxg || 0) + parseFloat(String(redisBalance.auxg || 0)) - (stakedAmounts.auxg || 0)),
+    auxs: Math.max(0, (blockchainBalances.auxs || 0) + parseFloat(String(redisBalance.auxs || 0)) - (stakedAmounts.auxs || 0)),
+    auxpt: Math.max(0, (blockchainBalances.auxpt || 0) + parseFloat(String(redisBalance.auxpt || 0)) - (stakedAmounts.auxpt || 0)),
+    auxpd: Math.max(0, (blockchainBalances.auxpd || 0) + parseFloat(String(redisBalance.auxpd || 0)) - (stakedAmounts.auxpd || 0)),
   };
   
   // Calculate totalAuxm
@@ -145,7 +171,7 @@ async function getHybridBalance(address: string): Promise<{
     auxpd: "blockchain",
   };
   
-  return { balances, sources };
+  return { balances, sources, stakedAmounts };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -191,7 +217,7 @@ export async function GET(request: NextRequest) {
       const redisBalance = await getUserBalance(address);
       balances = {
         auxm: parseFloat(String(redisBalance.auxm || 0)),
-        bonusAuxm: parseFloat(String(redisBalance.bonusAuxm || 0)),
+        bonusAuxm: parseFloat(String((redisBalance as any).bonusauxm || redisBalance.bonusAuxm || 0)),
         totalAuxm: parseFloat(String(redisBalance.totalAuxm || 0)),
         auxg: parseFloat(String(redisBalance.auxg || 0)),
         auxs: parseFloat(String(redisBalance.auxs || 0)),

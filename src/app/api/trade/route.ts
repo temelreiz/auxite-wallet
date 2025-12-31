@@ -50,6 +50,7 @@ const publicClient = createPublicClient({
 
 // Token addresses
 const TOKEN_ADDRESSES: Record<string, `0x${string}`> = {
+  // V8 Token Addresses
   auxg: "0x74C143Acd7Ee02CfffD1c23FB5B2Ee9dEBE369AC",
   auxs: "0xb6179d8eDAC23c5d4F69B128a1b974baB788828D",
   auxpt: "0x02A712F9aF81Ee9E55b154e5bae08Fe831c59c15",
@@ -440,21 +441,20 @@ export async function POST(request: NextRequest) {
     const ON_CHAIN_TOKENS = ["usdt", "auxg", "auxs", "auxpt", "auxpd"];
     if (ON_CHAIN_TOKENS.includes(fromTokenLower)) {
       const blockchainBalance = await getBlockchainBalance(normalizedAddress, fromTokenLower);
-      console.log(`   Blockchain ${fromTokenLower}: ${blockchainBalance}`);
-      fromBalance = blockchainBalance;
+      const redisOffChain = parseFloat(currentBalance[fromTokenLower] as string || "0");
+      console.log(`   Blockchain ${fromTokenLower}: ${blockchainBalance}, Redis: ${redisOffChain}`);
+      // Total = blockchain + redis (off-chain trades)
+      fromBalance = blockchainBalance + redisOffChain;
     }
     
     // For AUXM: Use Redis balance (it's off-chain token)
-    // Make sure we're reading the correct key
     if (fromTokenLower === "auxm") {
-      // Try both 'auxm' and 'AUXM' keys
       const auxmBalance = parseFloat(currentBalance.auxm as string || currentBalance.AUXM as string || "0");
       console.log(`   AUXM from Redis: ${auxmBalance}`);
       fromBalance = auxmBalance;
     }
     
     // For other cryptos (ETH, BTC, etc.) - use Redis balance
-    // These are tracked off-chain in this system
     const OFF_CHAIN_CRYPTOS = ["eth", "btc", "xrp", "sol"];
     if (OFF_CHAIN_CRYPTOS.includes(fromTokenLower)) {
       console.log(`   ${fromTokenLower} is off-chain, using Redis: ${fromBalance}`);
@@ -520,6 +520,24 @@ export async function POST(request: NextRequest) {
       }
 
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
+        // Hot wallet ETH kontrolü
+        const hotWalletAddress = process.env.HOT_WALLET_ETH_ADDRESS;
+        if (hotWalletAddress) {
+          try {
+            const hotWalletBalance = await publicClient.getBalance({ address: hotWalletAddress as `0x${string}` });
+            const hotWalletETH = parseFloat(formatUnits(hotWalletBalance, 18));
+            console.log(`🔋 Hot wallet ETH: ${hotWalletETH}`);
+            if (hotWalletETH < 0.001) {
+              return NextResponse.json({
+                error: "Sistem bakımda - blockchain işlemleri geçici olarak devre dışı. Lütfen daha sonra tekrar deneyin.",
+                code: "HOT_WALLET_INSUFFICIENT_ETH",
+              }, { status: 503 });
+            }
+          } catch (e) {
+            console.error("Hot wallet balance check failed:", e);
+          }
+        }
+        
         console.log(`🔷 Executing blockchain buy: ${toAmount}g ${toToken.toUpperCase()}`);
         
         // Oracle updated via cron

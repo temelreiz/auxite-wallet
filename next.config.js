@@ -14,7 +14,7 @@ const nextConfig = {
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https: http:",
               "frame-src 'self' https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com",
-              "connect-src 'self' https: wss: ws:",
+              "connect-src 'self' https: wss: ws: https://*.web3modal.org https://*.walletconnect.com https://*.walletconnect.org https://*.reown.com wss://*.walletconnect.com wss://*.walletconnect.org",
               "media-src 'self' blob:",
               "worker-src 'self' blob:",
             ].join('; ')

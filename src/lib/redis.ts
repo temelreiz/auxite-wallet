@@ -130,7 +130,7 @@ export async function getUserBalance(address: string): Promise<UserBalance> {
     // Redis'ten gelen değerleri parse et
     const balance: UserBalance = {
       auxm: parseFloat(String(data.auxm || 0)),
-      bonusAuxm: parseFloat(String(data.bonusAuxm || 0)),
+      bonusAuxm: parseFloat(String(data.bonusauxm || data.bonusAuxm || 0)),
       totalAuxm: 0, // Hesaplanacak
       bonusExpiresAt: data.bonusExpiresAt ? String(data.bonusExpiresAt) : null,
       auxg: parseFloat(String(data.auxg || 0)),
