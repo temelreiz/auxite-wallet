@@ -77,7 +77,7 @@ export async function getTokenPrices(token: string): Promise<{
   bidUSD: number; 
   askPerGram: number;
   bidPerGram: number;
-  spreadPercent: number;
+  spreadPercent: { buy: number; sell: number };
 }> {
   try {
     const contract = getTokenContract(token);
@@ -90,7 +90,8 @@ export async function getTokenPrices(token: string): Promise<{
     const askUSD = askETH * ethPrice;
     const bidUSD = bidETH * ethPrice;
     
-    const spreadPercent = askUSD > 0 ? ((askUSD - bidUSD) / askUSD) * 100 : 0;
+    const spread = askUSD > 0 ? ((askUSD - bidUSD) / askUSD) * 100 : 0;
+    const spreadPercent = { buy: spread, sell: spread };
     
     return {
       askUSD,
