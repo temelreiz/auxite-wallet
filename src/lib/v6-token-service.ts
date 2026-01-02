@@ -343,9 +343,9 @@ export async function getTokenBalance(token: string, address: string): Promise<n
   return parseFloat(ethers.formatUnits(balance, decimals));
 }
 
-export async function checkReserveLimit(token: string, grams: number): Promise<boolean> {
+export async function checkReserveLimit(token: string, grams: number): Promise<{ allowed: boolean; maxMintable: number }> {
   // V8 contracts have reserve limit disabled for testing
-  return true;
+  return { allowed: true, maxMintable: 1000000 };
 }
 
 export async function getHotWalletBalance(token: string): Promise<number> {
