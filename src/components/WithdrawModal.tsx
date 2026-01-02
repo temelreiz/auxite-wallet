@@ -202,7 +202,7 @@ const WITHDRAW_CRYPTOS: Record<WithdrawCrypto, {
 }> = {
   USDT: { name: "Tether", icon: "₮", color: "#26A17B", network: "Ethereum / Tron", minWithdraw: 10, fee: 1 },
   BTC: { name: "Bitcoin", icon: "₿", color: "#F7931A", network: "Bitcoin Network", minWithdraw: 0.0005, fee: 0.0001 },
-  ETH: { name: "Ethereum", icon: "Ξ", color: "#627EEA", network: "Ethereum / Base", minWithdraw: 0.01, fee: 0.001 },
+  ETH: { name: "Ethereum", icon: "Ξ", color: "#627EEA", network: "Ethereum / Base", minWithdraw: 0.001, fee: 0.001 },
   XRP: { name: "Ripple", icon: "✕", color: "#23292F", network: "XRP Ledger", minWithdraw: 1, fee: 0.1 },
   SOL: { name: "Solana", icon: "◎", color: "#9945FF", network: "Solana", minWithdraw: 0.1, fee: 0.01 },
 };
@@ -314,7 +314,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
         throw new Error(data.error || "Withdrawal failed");
       }
 
-      setResult({ type: "success", message: `${data.withdrawal.cryptoAmount.toFixed(2)} ${selectedCrypto}` });
+      setResult({ type: "success", message: `${data.withdrawal.cryptoAmount.toFixed(6)} ${selectedCrypto}` });
       await refreshBalances();
       
       setTimeout(() => onClose(), 3000);

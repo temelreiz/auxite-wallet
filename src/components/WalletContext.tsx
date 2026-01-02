@@ -121,29 +121,51 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setBalancesLoading(true);
     setBalancesError(null);
     try {
-      // Fetch both Redis and blockchain balances
-      const [redisRes, blockchainRes] = await Promise.all([
+      // Fetch Redis, blockchain and allocations
+      const [redisRes, blockchainRes, allocRes] = await Promise.all([
         fetch(`/api/user/balance?address=${walletAddress}`),
         fetch(`/api/user/blockchain-balance?address=${walletAddress}`),
+        fetch(`/api/allocations?address=${walletAddress}`),
       ]);
-
       const redisData = await redisRes.json();
       const blockchainData = await blockchainRes.json();
-
+      const allocData = await allocRes.json();
+      
       console.log("✅ Redis data:", redisData);
       console.log("✅ Blockchain data:", blockchainData);
+      console.log("✅ Allocation data:", allocData);
 
-      // Merge: use Redis for AUXM/bonus, blockchain for metals/ETH/USDT
+      // Calculate allocation totals
+      const allocTotals = { auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 };
+      if (allocData.allocations) {
+        allocData.allocations.forEach((a: any) => {
+          const metal = a.metal?.toLowerCase();
+          const grams = parseFloat(a.grams) || 0;
+          if (metal && allocTotals.hasOwnProperty(metal)) {
+            allocTotals[metal as keyof typeof allocTotals] += grams;
+          }
+        });
+      }
+      console.log("✅ Allocation totals:", allocTotals);
+
+// AUXM from Redis, metals/ETH from blockchain
       const mergedBalances = {
-        ...redisData.balances,
-        auxg: blockchainData.balances?.auxg ?? redisData.balances?.auxg ?? 0,
-        auxs: blockchainData.balances?.auxs ?? redisData.balances?.auxs ?? 0,
-        auxpt: blockchainData.balances?.auxpt ?? redisData.balances?.auxpt ?? 0,
-        auxpd: blockchainData.balances?.auxpd ?? redisData.balances?.auxpd ?? 0,
-        eth: blockchainData.balances?.eth ?? redisData.balances?.eth ?? 0,
-        usdt: blockchainData.balances?.usdt ?? redisData.balances?.usdt ?? 0,
+        auxm: redisData.balances?.auxm ?? 0,
+        bonusAuxm: redisData.balances?.bonusAuxm ?? 0,
+        auxg: allocTotals.auxg,
+        auxs: allocTotals.auxs,
+        auxpt: allocTotals.auxpt,
+        auxpd: allocTotals.auxpd,
+        eth: blockchainData.balances?.eth ?? 0,
+        usdt: blockchainData.balances?.usdt ?? 0,
+        btc: redisData.balances?.btc ?? 0,
+        xrp: redisData.balances?.xrp ?? 0,
+        sol: redisData.balances?.sol ?? 0,
+        usd: redisData.balances?.usd ?? 0,
+        totalAuxm: (redisData.balances?.auxm ?? 0) + (redisData.balances?.bonusAuxm ?? 0),
+        bonusExpiresAt: redisData.balances?.bonusExpiresAt ?? null,
       };
-
+     
       setBalances(mergedBalances);
       setSummary({
         ...redisData.summary,

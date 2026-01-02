@@ -326,7 +326,7 @@ export function LockedAssetsModal({
                   grams > 0 && (
                     <div key={`alloc-${metal}`} className="flex items-center gap-0.5 sm:gap-1">
                       <img src={METAL_INFO[metal]?.icon} alt={metal} className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
-                      <span className={`font-semibold text-[10px] sm:text-sm ${METAL_INFO[metal]?.color}`}>{grams}g</span>
+                      <span className={`font-semibold text-[10px] sm:text-sm ${METAL_INFO[metal]?.color}`}>{grams.toFixed(2)}g</span>
                     </div>
                   )
                 ))}
@@ -414,9 +414,9 @@ export function LockedAssetsModal({
               ) : (
                 <div className="space-y-2 sm:space-y-3">
                   {allocations.map((allocation) => {
-                    const metalInfo = METAL_INFO[allocation.metal];
+                    const metalInfo = METAL_INFO[allocation.metalSymbol] || { icon: "/gold-favicon-32x32.png", color: "text-amber-500" };
                     const grams = Number(allocation.grams);
-                    const price = metalPrices[allocation.metal as keyof typeof metalPrices] || 0;
+                    const price = metalPrices[allocation.metalSymbol as keyof typeof metalPrices] || 0;
                     const value = grams * price;
 
                     return (
@@ -441,7 +441,7 @@ export function LockedAssetsModal({
                           </div>
                           <div className="text-right flex-shrink-0">
                             <div className="font-semibold text-slate-800 dark:text-white text-xs sm:text-base">
-                              {grams}g
+                              {grams.toFixed(2)}g
                             </div>
                             <div className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">
                               ≈ ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

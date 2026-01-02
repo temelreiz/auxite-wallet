@@ -271,7 +271,7 @@ AssetDropdown.displayName = "AssetDropdown";
 
 export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalProps) {
   const t = translations[lang] || translations.en;
-  const { balances, refreshBalances } = useWallet();
+  const { balances, refreshBalances, address } = useWallet();
   const { prices: metalPrices } = useMetalsPrices();
   const { prices: cryptoPrices } = useCryptoPrices();
 
@@ -282,6 +282,7 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
   const [result, setResult] = useState<"success" | "error" | null>(null);
   const [showFromSelect, setShowFromSelect] = useState(false);
   const [showToSelect, setShowToSelect] = useState(false);
+  const [showAllocationWarning, setShowAllocationWarning] = useState(false);
   
   // Spread config state
   const [spreadConfig, setSpreadConfig] = useState<SpreadConfig>(DEFAULT_SPREAD);
@@ -442,8 +443,23 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
     }
   };
 
+  // Check if toAsset is a metal
+  const METALS = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
+  const isMetalPurchase = METALS.includes(toAsset);
+  const isWholeGram = Math.abs(toAmount - Math.floor(toAmount)) < 0.0001;
+  const allocatedGrams = Math.floor(toAmount);
+  const nonAllocatedGrams = toAmount - allocatedGrams;
+
   const handleExchange = async () => {
     if (!canAfford) return;
+    
+    // Show allocation warning for metal purchases with fractional grams
+    if (isMetalPurchase && !isWholeGram && !showAllocationWarning) {
+      setShowAllocationWarning(true);
+      return;
+    }
+    
+    setShowAllocationWarning(false);
     setIsProcessing(true);
     try {
       // API'ye spread bilgilerini de gönder
@@ -451,6 +467,7 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          address,
           fromAsset,
           toAsset,
           fromAmount: fromAmountNum,
@@ -599,6 +616,21 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
               {isAuxmToCrypto && <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">⚠️ {t.auxmToCrypto}</div>}
               {isUsdToCrypto && <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-[10px] sm:text-xs text-red-500 dark:text-red-400">⚠️ {t.usdToCrypto}</div>}
               {!canAfford && fromAmountNum > 0 && !isCryptoToCrypto && !isAuxmToCrypto && !isUsdToCrypto && <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-[10px] sm:text-xs text-red-500 dark:text-red-400">⚠️ {t.insufficientBalance}</div>}
+              {showAllocationWarning && (
+                <div className="px-3 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <span className="text-sm font-medium text-amber-600 dark:text-amber-400">{lang === "tr" ? "Kısmi Allocation" : "Partial Allocation"}</span>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    {lang === "tr" ? `${toAmount.toFixed(4)}g ${toAsset} alıyorsunuz. Sadece ${allocatedGrams}g fiziksel metale allocate edilecek, ${nonAllocatedGrams.toFixed(4)}g bakiyenizde kalacak.` : `You are buying ${toAmount.toFixed(4)}g ${toAsset}. Only ${allocatedGrams}g will be allocated to physical metal, ${nonAllocatedGrams.toFixed(4)}g will remain in your balance.`}
+                  </p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setShowAllocationWarning(false)} className="flex-1 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium">{lang === "tr" ? "İptal" : "Cancel"}</button>
+                    <button onClick={() => { setShowAllocationWarning(false); handleExchange(); }} disabled={isProcessing} className="flex-1 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium">{lang === "tr" ? "Devam Et" : "Continue"}</button>
+                  </div>
+                </div>
+              )}
 
               <button onClick={handleExchange} disabled={isProcessing || !canAfford || isCryptoToCrypto || isAuxmToCrypto || isUsdToCrypto} className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-white text-sm sm:text-base bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5 sm:gap-2">
                 {isProcessing ? (

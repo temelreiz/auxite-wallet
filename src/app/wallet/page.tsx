@@ -14,6 +14,7 @@ import { PriceAlertsPanel } from "@/components/PriceAlertsPanel";
 import { CryptoConvertModal } from "@/components/CryptoConvertModal";
 import { MetalConvertModal } from "@/components/MetalConvertModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
+import { TransferModal } from "@/components/TransferModal";
 import { UsdDepositModal } from "@/components/UsdDepositModal";
 import { BuyWithUsdModal } from "@/components/BuyWithUsdModal";
 import { UsdConvertModal } from "@/components/UsdConvertModal";
@@ -942,8 +943,8 @@ export default function WalletPage() {
                 // Allocation totals
                 const allocTotals: Record<string, number> = { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 };
                 allocations?.forEach((a) => {
-                  if (allocTotals[a.metal] !== undefined) {
-                    allocTotals[a.metal] += Number(a.grams);
+                  if (allocTotals[a.metalSymbol] !== undefined) {
+                    allocTotals[a.metalSymbol] += Number(a.grams);
                   }
                 });
                 
@@ -988,10 +989,10 @@ export default function WalletPage() {
                     AUXPD: "/palladium-favicon-32x32.png",
                   };
                   previewItems.push({
-                    icon: iconMap[a.metal] || "/gold-favicon-32x32.png",
+                    icon: iconMap[a.metalSymbol] || "/gold-favicon-32x32.png",
                     label: `${a.metal} - Vault`,
                     grams: Number(a.grams),
-                    value: Number(a.grams) * (metalPrices[a.metal as keyof typeof metalPrices] || 0),
+                    value: Number(a.grams) * (metalPrices[a.metalSymbol as keyof typeof metalPrices] || 0),
                     type: "allocation"
                   });
                 });
@@ -1305,100 +1306,10 @@ export default function WalletPage() {
           </div>
         </div>
       )}
+      
 
       {/* Transfer Modal */}
-      {showTransfer && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 max-w-md w-full p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-                {wx.transfer}
-              </h3>
-              <button
-                onClick={() => setShowTransfer(false)}
-                className="p-2 hover:bg-stone-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Token Selection with Icons */}
-            <div className="mb-4">
-              <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{wx.token}</label>
-              <div className="relative">
-                <select className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white appearance-none pl-12">
-                  <option value="AUXG">AUXG - {wx.gold}</option>
-                  <option value="AUXS">AUXS - {wx.silver}</option>
-                  <option value="AUXPT">AUXPT - {wx.platinum}</option>
-                  <option value="AUXPD">AUXPD - {wx.palladium}</option>
-                  <option value="ETH">ETH - Ethereum</option>
-                  <option value="BTC">BTC - Bitcoin</option>
-                  <option value="XRP">XRP - Ripple</option>
-                  <option value="SOL">SOL - Solana</option>
-                  <option value="USDT">USDT - Tether</option>
-                </select>
-                <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                  <img src="/gold-favicon-32x32.png" alt="" className="w-6 h-6" />
-                </div>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Recipient Address */}
-            <div className="mb-4">
-              <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{wx.recipientAddress}</label>
-              <input
-                type="text"
-                placeholder="0x..."
-                className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
-              />
-            </div>
-
-            {/* Amount */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm text-slate-600 dark:text-slate-400">{wx.amount}</label>
-                <span className="text-xs text-slate-500 dark:text-slate-500">{wx.balance}: {auxgBalance.toFixed(2)} AUXG</span>
-              </div>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input
-                    type="number"
-                    placeholder="0.00"
-                    className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
-                  />
-                </div>
-                <button className="px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl text-emerald-600 dark:text-emerald-500 font-medium hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors">
-                  MAX
-                </button>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">≈ $0.00 USD</p>
-            </div>
-
-            {/* Fee Info */}
-            <div className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-3 mb-6 border border-stone-200 dark:border-slate-700">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600 dark:text-slate-400">{wx.networkFee}</span>
-                <span className="text-slate-700 dark:text-slate-300">~$0.50</span>
-              </div>
-            </div>
-
-            <button className="w-full py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold transition-colors flex items-center justify-center gap-2">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
-              {wx.send}
-            </button>
-          </div>
-        </div>
-      )}
-
+      <TransferModal isOpen={showTransfer} onClose={() => setShowTransfer(false)} lang={lang} />
       {/* Receive Modal */}
       {showReceive && (
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useAccount } from "wagmi";
+import { useWallet } from "./WalletContext";
 
 interface BuyMetalModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ const PAYMENT_METHODS = [
 function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModalProps) {
   const t = translations[lang] || translations.en;
   const { address } = useAccount();
+  const { balances: walletBalances, refreshBalances } = useWallet();
   
   // Debug: Component mount
   useEffect(() => {
@@ -46,14 +48,13 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
 
   // Debug: Props/state changes
   useEffect(() => {
-    console.log("🔄 BuyMetalModal state change", { isOpen, address });
-  }, [isOpen, address]);
+    console.log("🔄 BuyMetalModal state change", { isOpen, address, walletBalances });
+  }, [isOpen, address, walletBalances]);
   
   const [metals, setMetals] = useState<MetalInfo[]>([]);
   const [selectedMetal, setSelectedMetal] = useState<MetalInfo | null>(null);
   const [selectedPayment, setSelectedPayment] = useState(PAYMENT_METHODS[0]);
   const [amount, setAmount] = useState("");
-  const [balances, setBalances] = useState<Record<string, number>>({});
   const [preview, setPreview] = useState<TradePreview | null>(null);
   const [isLoadingPrices, setIsLoadingPrices] = useState(true);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
@@ -68,6 +69,22 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
     hasPartialAllocation: boolean;
     suggestion?: { gramsToAdd: number; auxmToAdd: number; targetGrams: number; };
   } | null>(null);
+
+  // Calculate balance from WalletContext
+  const getBalance = useCallback(() => {
+    if (!walletBalances) return 0;
+    
+    switch (selectedPayment.symbol) {
+      case 'AUXM':
+        return (walletBalances.auxm || 0) + (walletBalances.bonusAuxm || 0);
+      case 'ETH':
+        return walletBalances.eth || 0;
+      case 'BTC':
+        return walletBalances.btc || 0;
+      default:
+        return 0;
+    }
+  }, [walletBalances, selectedPayment.symbol]);
 
   const fetchPrices = useCallback(async () => {
     console.log("📊 BuyMetalModal fetchPrices called");
@@ -89,36 +106,6 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
     }
     finally { setIsLoadingPrices(false); }
   }, [selectedMetal, t.error]);
-
-  const fetchBalances = useCallback(async () => {
-    console.log("💰 BuyMetalModal fetchBalances called, address:", address);
-    if (!address) {
-      console.log("❌ BuyMetalModal fetchBalances - no address");
-      return;
-    }
-    try {
-      // Redis balance
-      const res = await fetch(`/api/user/balance?address=${address}`);
-      const data = await res.json();
-      console.log("💰 BuyMetalModal balance received:", data);
-      
-      if (data.success && data.balances) {
-        const auxmBalance = parseFloat(data.balances.auxm || 0) + parseFloat(data.balances.bonusauxm || 0);
-        const ethBalance = parseFloat(data.balances.eth || 0);
-        const btcBalance = parseFloat(data.balances.btc || 0);
-        
-        console.log("💰 BuyMetalModal parsed balances:", { AUXM: auxmBalance, ETH: ethBalance, BTC: btcBalance });
-        
-        setBalances({
-          AUXM: auxmBalance,
-          ETH: ethBalance,
-          BTC: btcBalance,
-        });
-      }
-    } catch (err) { 
-      console.error('❌ BuyMetalModal fetchBalances error:', err); 
-    }
-  }, [address]);
 
   const fetchPreview = useCallback(async () => {
     if (!selectedMetal || !amount || parseFloat(amount) <= 0 || !address) { 
@@ -220,11 +207,12 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
       if (data.success) {
         console.log('✅ Trade successful!');
         setSuccess(true);
+        // Refresh balances from WalletContext
+        await refreshBalances();
         setTimeout(() => { 
           setSuccess(false); 
           setAmount(""); 
           setPreview(null); 
-          fetchBalances(); 
           onSuccess?.(); 
           onClose(); 
         }, 2000);
@@ -239,15 +227,14 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
     finally { setIsProcessing(false); }
   };
 
-  // Effect: Modal açıldığında fiyatları ve bakiyeleri getir
+  // Effect: Modal açıldığında fiyatları getir
   useEffect(() => { 
     console.log("🔄 BuyMetalModal useEffect[isOpen] triggered", { isOpen });
     if (isOpen) { 
-      console.log("🟢 Modal is OPEN - fetching prices and balances");
+      console.log("🟢 Modal is OPEN - fetching prices");
       fetchPrices(); 
-      fetchBalances(); 
     } 
-  }, [isOpen, fetchPrices, fetchBalances]);
+  }, [isOpen, fetchPrices]);
   
   // Effect: Preview için debounce
   useEffect(() => { 
@@ -263,14 +250,14 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
   }, [isOpen, fetchPrices]);
 
   // Debug: Render check
-  console.log("🟢 BuyMetalModal RENDER", { isOpen, address, metalsCount: metals.length });
+  console.log("🟢 BuyMetalModal RENDER", { isOpen, address, metalsCount: metals.length, walletBalances });
 
   if (!isOpen) {
     console.log("🔴 BuyMetalModal returning null (isOpen=false)");
     return null;
   }
 
-  const balance = balances[selectedPayment.symbol] || 0;
+  const balance = getBalance();
   const amountNum = parseFloat(amount) || 0;
   const isInsufficientBalance = amountNum > balance;
   const canTrade = amountNum > 0 && !isInsufficientBalance && preview && !isProcessing;

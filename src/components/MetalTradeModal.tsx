@@ -1,3 +1,4 @@
+import { useWallet } from "./WalletContext";
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 
@@ -74,17 +75,29 @@ export function MetalTradeModal({
   bidPrice,
   initialMode = "buy",
   lang = "en",
-  userBalance = { 
-    auxm: 1250.50, 
-    bonusAuxm: 25.00, 
-    metals: { AUXG: 15.75, AUXS: 500, AUXPT: 2.5, AUXPD: 1.25 },
-    crypto: { USDT: 500, BTC: 0.001, ETH: 0.5, XRP: 1000, SOL: 10 }
-  },
   cryptoPrices = { BTC: 97500, ETH: 3650, XRP: 2.20, SOL: 235 },
   walletAddress,
   onTradeComplete,
 }: MetalTradeModalProps) {
+  const { balances: walletBalances } = useWallet();
   const [mode, setMode] = useState<"buy" | "sell">(initialMode);
+  const userBalance = {
+    auxm: walletBalances?.auxm || 0,
+    bonusAuxm: walletBalances?.bonusAuxm || 0,
+    metals: {
+      AUXG: walletBalances?.auxg || 0,
+      AUXS: walletBalances?.auxs || 0,
+      AUXPT: walletBalances?.auxpt || 0,
+      AUXPD: walletBalances?.auxpd || 0,
+    },
+    crypto: {
+      USDT: walletBalances?.usdt || 0,
+      BTC: walletBalances?.btc || 0,
+      ETH: walletBalances?.eth || 0,
+      XRP: walletBalances?.xrp || 0,
+      SOL: walletBalances?.sol || 0,
+    },
+  };
   const [orderType, setOrderType] = useState<OrderType>("market");
   const [amount, setAmount] = useState<string>("1");
   const [limitPrice, setLimitPrice] = useState<string>("");

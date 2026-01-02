@@ -79,6 +79,7 @@ export default function TradePanel({
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("AUXM");
   const [limitOrderSuccess, setLimitOrderSuccess] = useState(false);
   const [isPlacingLimitOrder, setIsPlacingLimitOrder] = useState(false);
+  const [isAuxmTrading, setIsAuxmTrading] = useState(false);
   const { prices: cryptoPrices, loading: pricesLoading } = useCryptoPrices();
   
   const {
@@ -94,8 +95,12 @@ export default function TradePanel({
     metalBalance,
   } = useTrade({ metalSymbol });
 
-  // Mock AUXM balance - gerçek uygulamada API'den gelecek
-  const [auxmBalance] = useState({ auxm: 1250.50, bonusAuxm: 25.00 });
+
+  // Use WalletContext balance instead of mock data
+  const auxmBalance = { 
+    auxm: balances?.auxm || 0, 
+    bonusAuxm: balances?.bonusAuxm || 0 
+  };
   const totalAuxm = auxmBalance.auxm + auxmBalance.bonusAuxm;
 
   // WalletContext balance
@@ -611,7 +616,9 @@ export default function TradePanel({
     setAllocationPreview(null);
   };
 
+
   const handleMarketTrade = async () => {
+    console.log("🔵 handleMarketTrade", { isConnected, address, amountNum, mode });
     if (!isConnected || !address) {
       alert(t.connectWallet);
       return;
@@ -643,10 +650,12 @@ export default function TradePanel({
       }
     }
     
+    console.log("🟡 Calling proceedWithMarketTrade");
     proceedWithMarketTrade();
   };
 
   const proceedWithMarketTrade = async () => {
+    console.log("🟢 proceedWithMarketTrade", { quote, countdown, showConfirmation, canAffordAuxm, selectedCurrency });
     setShowAllocationWarning(false);
     
     if (!isConnected || !address) {
@@ -698,17 +707,44 @@ export default function TradePanel({
     if (showConfirmation && quote) {
       try {
         if (mode === "buy") {
-          await buy(amountNum, quote.pricePerGram);
+          if (selectedCurrency === "AUXM") {
+            // AUXM ile alım - API kullan
+            setIsAuxmTrading(true);
+            console.log("🟣 AUXM Buy via API", { amountNum, metalSymbol, address });
+            const res = await fetch("/api/trade", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "buy",
+                fromToken: "AUXM",
+                toToken: metalSymbol,
+                fromAmount: amountNum * quote.pricePerGram,
+                address,
+                executeOnChain: true,
+              }),
+            });
+            const data = await res.json();
+            console.log("🟣 API Response:", data);
+            if (!data.success) throw new Error(data.error || "Trade failed");
+            toast.success(t.tradeSuccess || "Trade successful!");
+            setShowConfirmation(false);
+            setQuote(null);
+            setIsAuxmTrading(false);
+          } else {
+            // USDT/ETH/BTC ile alım - on-chain
+            await buy(amountNum, quote.pricePerGram);
+          }
         } else {
+          // Sell mode - always on-chain (user must sign with Metamask)
           await sell(amountNum);
         }
         await refreshBalances();
       } catch (error: any) {
         toast.error(t.tradeFailed, error.message);
+        setIsAuxmTrading(false);
       }
     }
   };
-
   // Handle Limit Order
   const handleLimitOrder = async () => {
     if (!isConnected || !address) {
@@ -769,12 +805,13 @@ export default function TradePanel({
     }
   };
 
-  const isProcessing = isApproving || isTrading || isPlacingLimitOrder;
+  const isProcessing = isApproving || isTrading || isPlacingLimitOrder || isAuxmTrading;
 
   const getStepText = () => {
     if (isApproving) return t.tokenApproval;
     if (isTrading) return t.waitingTransaction;
     if (isPlacingLimitOrder) return t.placingOrder;
+    if (isAuxmTrading) return t.processing || "İşlem yapılıyor...";
     return "";
   };
 

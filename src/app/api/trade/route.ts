@@ -429,7 +429,7 @@ export async function POST(request: NextRequest) {
     }
 
     let fromBalance = parseFloat(currentBalance[fromTokenLower] as string || "0");
-    const bonusAuxm = parseFloat(currentBalance.bonusauxm as string || "0");
+    const bonusAuxm = parseFloat(currentBalance.bonusauxm as string || currentBalance.bonusAuxm as string || "0");
 
     // Debug: Log all balances
     console.log(`📊 Balance Debug for ${normalizedAddress}:`);
@@ -723,7 +723,7 @@ export async function POST(request: NextRequest) {
     // Deduct from token
     if (type === "buy" && fromTokenLower === "auxm" && usedBonus > 0) {
       if (usedBonus > 0) {
-        multi.hincrbyfloat(balanceKey, "bonusauxm", -usedBonus);
+        multi.hincrbyfloat(balanceKey, "bonusAuxm", -usedBonus);
       }
       if (usedRegular > 0) {
         multi.hincrbyfloat(balanceKey, "auxm", -usedRegular);
@@ -779,6 +779,7 @@ export async function POST(request: NextRequest) {
     let certificateNumber: string | undefined;
     let allocationInfo: { allocatedGrams?: number; nonAllocatedGrams?: number } = {};
     if (type === "buy" && METALS.includes(toTokenLower) && toAmount > 0) {
+      console.log("🔍 Allocation check:", { type, toTokenLower, toAmount, metalsIncludes: METALS.includes(toTokenLower) });
       try {
         // Create allocation via internal API call
         const allocRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://auxite-wallet.vercel.app"}/api/allocations`, {
@@ -795,6 +796,7 @@ export async function POST(request: NextRequest) {
         });
         const allocData = await allocRes.json();
         if (allocData.success) {
+        console.log("📦 Allocation response:", JSON.stringify(allocData));
           allocationInfo = {
             allocatedGrams: allocData.allocatedGrams,
             nonAllocatedGrams: allocData.nonAllocatedGrams,
