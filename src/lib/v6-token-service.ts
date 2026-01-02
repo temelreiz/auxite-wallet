@@ -243,11 +243,12 @@ export async function buyMetalToken(
     console.log('Buy complete:', receipt.hash);
     
     // Transfer to user if specified
-    if (toAddress && toAddress !== wallet.address) {
+    if (toAddress && toAddress.toLowerCase() !== wallet.address.toLowerCase()) {
       const decimals = await contract.decimals();
       const tokenAmount = gramsInt * (10n ** BigInt(Number(decimals) - 3));
       console.log('Transferring ' + gramsInt + 'g to ' + toAddress);
-      const transferTx = await contract.transfer(toAddress, tokenAmount);
+      const checksumAddress = ethers.getAddress(toAddress);
+      const transferTx = await contract.transfer(checksumAddress, tokenAmount);
       await transferTx.wait(1);
       console.log('Transfer complete:', transferTx.hash);
     }
