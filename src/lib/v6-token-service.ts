@@ -3,13 +3,13 @@ import { ethers } from 'ethers';
 
 // Contract addresses (Sepolia)
 const CONTRACTS: Record<string, string> = {
-  auxg: '0x74C143Acd7Ee02CfffD1c23FB5B2Ee9dEBE369AC',
-  auxs: '0xb6179d8eDAC23c5d4F69B128a1b974baB788828D',
-  auxpt: '0x02A712F9aF81Ee9E55b154e5bae08Fe831c59c15',
-  auxpd: '0xb0d5929b5F0486865072c6933911947e999947E0',
+  auxg: '0xD14D32B1e03B3027D1f8381EeeC567e147De9CCe',
+  auxs: '0xc924EE950BF5A5Fbe3c26eECB27D99031B441caD',
+  auxpt: '0x37402EA435a91567223C132414C3A50C6bBc7200',
+  auxpd: '0x6026338B9Bfd94fed07EA61cbE60b15e300911DC',
 };
 
-const ORACLE_ADDRESS = '0x8ccA0FC65B5b745cdF8C427cb43e1EC29A95a51d';
+const ORACLE_ADDRESS = '0x68C5C98DB68284A0211a1FDCA668Ee66ef15b08d';
 
 const TOKEN_ABI = [
   'function calculateBuyCost(uint256 grams) view returns (uint256)',

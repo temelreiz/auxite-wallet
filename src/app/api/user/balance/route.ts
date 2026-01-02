@@ -24,19 +24,19 @@ const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
     decimals: 6 
   },
   auxg: {
-    address: "0x74C143Acd7Ee02CfffD1c23FB5B2Ee9dEBE369AC",
+    address: "0xD14D32B1e03B3027D1f8381EeeC567e147De9CCe",
     decimals: 3
   },
   auxs: { 
-    address: "0xb6179d8eDAC23c5d4F69B128a1b974baB788828D", 
+    address: "0xc924EE950BF5A5Fbe3c26eECB27D99031B441caD", 
     decimals: 3 
   },
   auxpt: { 
-    address: "0x02A712F9aF81Ee9E55b154e5bae08Fe831c59c15", 
+    address: "0x37402EA435a91567223C132414C3A50C6bBc7200", 
     decimals: 3 
   },
   auxpd: { 
-    address: "0xb0d5929b5F0486865072c6933911947e999947E0", 
+    address: "0x6026338B9Bfd94fed07EA61cbE60b15e300911DC", 
     decimals: 3 
   },
 };
