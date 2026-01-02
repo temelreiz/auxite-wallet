@@ -858,6 +858,6 @@ export async function POST(request: NextRequest) {
       success: false,
     });
 
-    return NextResponse.json({ error: "Trade işlemi başarısız" }, { status: 500 });
+    return NextResponse.json({ error: "Trade işlemi başarısız", details: error.message }, { status: 500 });
   }
 }
