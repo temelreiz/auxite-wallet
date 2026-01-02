@@ -49,7 +49,7 @@ function getHotWallet(): ethers.Wallet {
 
 function getTokenContract(token: string, signer?: ethers.Wallet): ethers.Contract {
   const address = CONTRACTS[token.toLowerCase()];
-  if (!address) throw new Error(`Unknown token: ${token}`);
+  if (!address) throw new Error('Unknown token: ' + token);
   return new ethers.Contract(address, TOKEN_ABI, signer || getProvider());
 }
 
@@ -101,7 +101,7 @@ export async function getTokenPrices(token: string): Promise<{
       spreadPercent,
     };
   } catch (error) {
-    console.error(`Failed to get ${token} prices:`, error);
+    console.error('Failed to get ' + token + ' prices:', error);
     throw error;
   }
 }
@@ -155,17 +155,12 @@ export async function updateOraclePrices(metals: MetalPrices, ethPriceUSD?: numb
     const auxpdOzE6 = Math.round((metals.AUXPD || 0) * 1_000_000);
     const ethE6 = Math.round((ethPriceUSD || 3500) * 1_000_000);
     
-    console.log('📊 Updating oracle prices:');
-    console.log(`   AUXG: $${(auxgOzE6 / 1_000_000).toFixed(2)}/oz`);
-    console.log(`   AUXS: $${(auxsOzE6 / 1_000_000).toFixed(2)}/oz`);
-    console.log(`   AUXPT: $${(auxptOzE6 / 1_000_000).toFixed(2)}/oz`);
-    console.log(`   AUXPD: $${(auxpdOzE6 / 1_000_000).toFixed(2)}/oz`);
-    console.log(`   ETH: $${(ethE6 / 1_000_000).toFixed(2)}`);
+    console.log('Updating oracle prices:', { auxgOzE6, auxsOzE6, auxptOzE6, auxpdOzE6, ethE6 });
     
     const tx = await oracle.setAllPrices(auxgOzE6, auxsOzE6, auxptOzE6, auxpdOzE6, ethE6);
     const receipt = await tx.wait();
     
-    console.log(`✅ Oracle updated: ${receipt.hash}`);
+    console.log('Oracle updated:', receipt.hash);
     return { success: true, txHash: receipt.hash };
   } catch (error: any) {
     console.error('Oracle update failed:', error);
@@ -212,21 +207,22 @@ export async function buyMetalToken(
     // Estimate gas
     const gasEstimate = await contract.buy.estimateGas(gramsInt, "Zurich", { value: maxCostWei });
     const feeData = await provider.getFeeData();
-    const gasCost = gasEstimate * (feeData.maxFeePerGas || ethers.parseUnits("50", "gwei"));
+    const maxFeePerGas = feeData.maxFeePerGas || ethers.parseUnits("50", "gwei");
+    const gasCost = BigInt(gasEstimate) * maxFeePerGas;
     
     const totalNeeded = maxCostWei + gasCost;
     
     if (ethBalance < totalNeeded) {
       return {
         success: false,
-        error: `İşlem için yeterli bakiye yok. Lütfen daha sonra tekrar deneyin.`,
+        error: 'Insufficient ETH balance for transaction',
       };
     }
     
     const ethPrice = await getETHUSDPrice();
     const costUSD = costETH * ethPrice;
     
-    console.log(`🔷 Buying ${gramsInt}g ${token.toUpperCase()} for ~${costETH.toFixed(6)} ETH ($${costUSD.toFixed(2)})`);
+    console.log('Buying ' + gramsInt + 'g ' + token.toUpperCase() + ' for ' + costETH.toFixed(6) + ' ETH ($' + costUSD.toFixed(2) + ')');
     
     // Execute buy
     const nonce = await provider.getTransactionCount(wallet.address, 'latest');
@@ -236,7 +232,7 @@ export async function buyMetalToken(
     
     const tx = await contract.buy(gramsInt, "Zurich", {
       value: maxCostWei,
-      gasLimit: gasEstimate + 50000n,
+      gasLimit: BigInt(gasEstimate) + 50000n,
       nonce: nonce,
       maxPriorityFeePerGas: priorityFee,
       maxFeePerGas: maxFee,
@@ -244,16 +240,16 @@ export async function buyMetalToken(
     
     const receipt = await tx.wait(1);
     
-    console.log(`✅ Buy complete: ${receipt.hash}`);
+    console.log('Buy complete:', receipt.hash);
     
     // Transfer to user if specified
     if (toAddress && toAddress !== wallet.address) {
       const decimals = await contract.decimals();
-      const tokenAmount = gramsInt * (10n ** BigInt(decimals - 3)); // grams to smallest unit
-      console.log(`🔄 Transferring ${gramsInt}g to ${toAddress}`);
+      const tokenAmount = gramsInt * (10n ** BigInt(decimals - 3));
+      console.log('Transferring ' + gramsInt + 'g to ' + toAddress);
       const transferTx = await contract.transfer(toAddress, tokenAmount);
       await transferTx.wait(1);
-      console.log(`✅ Transfer complete: ${transferTx.hash}`);
+      console.log('Transfer complete:', transferTx.hash);
     }
     
     return {
@@ -301,7 +297,7 @@ export async function sellMetalToken(
     if (balance < tokenAmount) {
       return {
         success: false,
-        error: `Yetersiz ${token.toUpperCase()} bakiyesi`,
+        error: 'Insufficient ' + token.toUpperCase() + ' balance',
       };
     }
     
@@ -311,13 +307,13 @@ export async function sellMetalToken(
     const ethPrice = await getETHUSDPrice();
     const payoutUSD = payoutETH * ethPrice;
     
-    console.log(`🔶 Selling ${gramsInt}g ${token.toUpperCase()} for ~${payoutETH.toFixed(6)} ETH ($${payoutUSD.toFixed(2)})`);
+    console.log('Selling ' + gramsInt + 'g ' + token.toUpperCase() + ' for ' + payoutETH.toFixed(6) + ' ETH ($' + payoutUSD.toFixed(2) + ')');
     
     // Execute sell
     const tx = await contract.sell(gramsInt);
     const receipt = await tx.wait(1);
     
-    console.log(`✅ Sell complete: ${receipt.hash}`);
+    console.log('Sell complete:', receipt.hash);
     
     return {
       success: true,
