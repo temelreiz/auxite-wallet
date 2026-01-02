@@ -188,7 +188,7 @@ export async function buyMetalToken(
   slippagePercent: number = 5
 ): Promise<BuyResult> {
   // Normalize address to checksum format
-  const normalizedToAddress = toAddress ? ethers.getAddress(toAddress) : undefined;
+  const normalizedToAddress = toAddress ? ethers.getAddress(toAddress.toLowerCase()) : undefined;
   try {
     const wallet = getHotWallet();
     const contract = getTokenContract(token, wallet);
