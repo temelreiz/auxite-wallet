@@ -24,7 +24,7 @@ const ERC20_ABI = [
 
 // On-chain tokens - TEMPORARILY DISABLED until contract mint is fixed
 // const ON_CHAIN_TOKENS = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
-const ON_CHAIN_TOKENS: string[] = []; // All tokens use off-chain for now
+const ON_CHAIN_TOKENS = ["AUXG", "AUXS", "AUXPT", "AUXPD"]; // On-chain transfers enabled
 
 // Off-chain tokens (Redis only) - includes metals temporarily
 const OFF_CHAIN_TOKENS = ["AUXG", "AUXS", "AUXPT", "AUXPD", "AUXM", "ETH", "USDT", "BTC", "XRP", "SOL"];
