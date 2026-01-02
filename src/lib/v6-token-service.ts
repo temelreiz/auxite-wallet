@@ -72,7 +72,13 @@ export async function getETHUSDPrice(): Promise<number> {
   }
 }
 
-export async function getTokenPrices(token: string): Promise<{ askUSD: number; bidUSD: number }> {
+export async function getTokenPrices(token: string): Promise<{ 
+  askUSD: number; 
+  bidUSD: number; 
+  askPerGram: number;
+  bidPerGram: number;
+  spreadPercent: number;
+}> {
   try {
     const contract = getTokenContract(token);
     const [askWei, bidWei] = await contract.getPrice();
@@ -81,9 +87,17 @@ export async function getTokenPrices(token: string): Promise<{ askUSD: number; b
     const askETH = parseFloat(ethers.formatEther(askWei));
     const bidETH = parseFloat(ethers.formatEther(bidWei));
     
+    const askUSD = askETH * ethPrice;
+    const bidUSD = bidETH * ethPrice;
+    
+    const spreadPercent = askUSD > 0 ? ((askUSD - bidUSD) / askUSD) * 100 : 0;
+    
     return {
-      askUSD: askETH * ethPrice,
-      bidUSD: bidETH * ethPrice,
+      askUSD,
+      bidUSD,
+      askPerGram: askUSD,
+      bidPerGram: bidUSD,
+      spreadPercent,
     };
   } catch (error) {
     console.error(`Failed to get ${token} prices:`, error);
