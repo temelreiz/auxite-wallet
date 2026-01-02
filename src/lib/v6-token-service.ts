@@ -187,6 +187,8 @@ export async function buyMetalToken(
   toAddress?: string,
   slippagePercent: number = 5
 ): Promise<BuyResult> {
+  // Normalize address to checksum format
+  const normalizedToAddress = toAddress ? ethers.getAddress(toAddress) : undefined;
   try {
     const wallet = getHotWallet();
     const contract = getTokenContract(token, wallet);
@@ -243,12 +245,12 @@ export async function buyMetalToken(
     console.log('Buy complete:', receipt.hash);
     
     // Transfer to user if specified
-    if (toAddress && toAddress.toLowerCase() !== wallet.address.toLowerCase()) {
+    if (normalizedToAddress && normalizedToAddress.toLowerCase() !== wallet.address.toLowerCase()) {
       const decimals = await contract.decimals();
       const tokenAmount = gramsInt * (10n ** BigInt(Number(decimals) - 3));
-      console.log('Transferring ' + gramsInt + 'g to ' + toAddress);
-      const checksumAddress = ethers.getAddress(toAddress);
-      const transferTx = await contract.transfer(checksumAddress, tokenAmount);
+      console.log('Transferring ' + gramsInt + 'g to ' + normalizedToAddress);
+      
+      const transferTx = await contract.transfer(normalizedToAddress, tokenAmount);
       await transferTx.wait(1);
       console.log('Transfer complete:', transferTx.hash);
     }
