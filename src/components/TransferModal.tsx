@@ -218,6 +218,11 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const availableBalance = getAvailableBalance(selectedToken);
   const canAfford = amountNum > 0 && amountNum <= availableBalance;
   const isValidAddress = recipientAddress.length >= 42 && recipientAddress.startsWith("0x");
+  
+  // Recipient check state
+  const [isCheckingRecipient, setIsCheckingRecipient] = useState(false);
+  const [recipientValid, setRecipientValid] = useState<boolean | null>(null);
+  
   const canSend = canAfford && isValidAddress && amountNum > 0 && !!address && (!isMetal || recipientValid === true) && (!isMetal || selectedAllocationId);
   const needsUnlock = isMetal && amountNum > availableBalance && amountNum <= onChainBalance;
 
@@ -233,10 +238,6 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
       setSelectedAllocationId(null);
     }
   }, [selectedToken, metalAllocations.length]);
-  
-  // Recipient check state
-  const [isCheckingRecipient, setIsCheckingRecipient] = useState(false);
-  const [recipientValid, setRecipientValid] = useState<boolean | null>(null);
   
   // Check if recipient is Auxite user (for metals)
   useEffect(() => {
