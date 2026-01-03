@@ -212,6 +212,7 @@ export async function GET(request: NextRequest) {
     let balances: Record<string, number>;
     let sources: Record<string, string> | undefined;
     let responseSource: string;
+    let onChainBalances: Record<string, number> | undefined;
 
     if (source === "redis") {
       // Only Redis
@@ -250,7 +251,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Hybrid (default) - Best of both worlds
       const result = await getHybridBalance(address);
-      const onChainBalances = result.onChainBalances;
+      onChainBalances = result.onChainBalances;
       balances = result.balances;
       sources = result.sources;
       responseSource = "hybrid";
