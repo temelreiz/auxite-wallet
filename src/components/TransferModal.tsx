@@ -13,7 +13,15 @@ interface TransferModalProps {
   lang?: string;
 }
 
-const TOKEN_INFO: Record<TokenType, { name: string; icon: string; iconType: "image" | "symbol"; color: string; onChain: boolean; decimals: number; address?: string }> = {
+const TOKEN_INFO: Record<TokenType, { 
+  name: string; 
+  icon: string; 
+  iconType: "image" | "symbol"; 
+  color: string; 
+  onChain: boolean; 
+  decimals: number; 
+  address?: string;
+}> = {
   AUXG: { name: "Gold", icon: "/gold-favicon-32x32.png", iconType: "image", color: "#F59E0B", onChain: true, decimals: 3, address: process.env.NEXT_PUBLIC_AUXG_V8 },
   AUXS: { name: "Silver", icon: "/silver-favicon-32x32.png", iconType: "image", color: "#94A3B8", onChain: true, decimals: 3, address: process.env.NEXT_PUBLIC_AUXS_V8 },
   AUXPT: { name: "Platinum", icon: "/platinum-favicon-32x32.png", iconType: "image", color: "#CBD5E1", onChain: true, decimals: 3, address: process.env.NEXT_PUBLIC_AUXPT_V8 },
@@ -59,6 +67,7 @@ const translations: Record<string, Record<string, string>> = {
     cancel: "İptal",
     walletNotConnected: "Cüzdan bağlı değil",
     signTransaction: "Cüzdanınızda işlemi onaylayın",
+    onChainNote: "On-chain transfer - Cüzdanınızda imzalamanız gerekecek",
   },
   en: {
     title: "Transfer",
@@ -79,6 +88,7 @@ const translations: Record<string, Record<string, string>> = {
     cancel: "Cancel",
     walletNotConnected: "Wallet not connected",
     signTransaction: "Please confirm the transaction in your wallet",
+    onChainNote: "On-chain transfer - You'll need to sign in your wallet",
   },
 };
 
@@ -95,14 +105,12 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const [errorMessage, setErrorMessage] = useState("");
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
-  // Wagmi hooks for on-chain transfer
   const { writeContract, isPending: isWritePending, data: writeData } = useWriteContract();
   
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash: txHash,
   });
 
-  // Handle transaction confirmation
   useEffect(() => {
     if (writeData) {
       setTxHash(writeData);
@@ -113,17 +121,13 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     if (isConfirmed && txHash) {
       setResult("success");
       setIsProcessing(false);
-      
-      // Refresh balances after confirmation
       setTimeout(async () => {
         if (refreshBalances) await refreshBalances();
       }, 2000);
-      
       setTimeout(() => onClose(), 3000);
     }
   }, [isConfirmed, txHash, refreshBalances, onClose]);
 
-  // Reset on close
   useEffect(() => {
     if (!isOpen) {
       setSelectedToken("AUXM");
@@ -140,7 +144,6 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const tokenInfo = TOKEN_INFO[selectedToken];
   const amountNum = parseFloat(amount) || 0;
   
-  // Get balance for selected token
   const getBalance = (token: TokenType): number => {
     if (!balances) return 0;
     const key = token.toLowerCase() as keyof typeof balances;
@@ -163,9 +166,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     setErrorMessage("");
     
     try {
-      // Check if this is an on-chain token
       if (tokenInfo.onChain && tokenInfo.address) {
-        // On-chain ERC20 transfer - user signs with their wallet
         const amountInUnits = parseUnits(amount, tokenInfo.decimals);
         
         writeContract({
@@ -174,10 +175,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           functionName: "transfer",
           args: [recipientAddress as `0x${string}`, amountInUnits],
         });
-        
-        // The rest is handled by useEffect watching isConfirmed
       } else {
-        // Off-chain transfer (AUXM, BTC, XRP, SOL) - use API
         const response = await fetch("/api/transfer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -193,7 +191,6 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         
         if (data.success) {
           setResult("success");
-          
           await new Promise(resolve => setTimeout(resolve, 2000));
           if (refreshBalances) await refreshBalances();
           setTimeout(() => onClose(), 2500);
@@ -216,13 +213,15 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
       return <img src={info.icon} alt={token} className="w-6 h-6" />;
     }
     return (
-      <div className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: info.color }}>
+      <div 
+        className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-sm" 
+        style={{ backgroundColor: info.color }}
+      >
         {info.icon}
       </div>
     );
   };
 
-  // Processing/Confirming Screen
   if ((isWritePending || isConfirming) && !result) {
     return (
       <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
@@ -254,7 +253,6 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     );
   }
 
-  // Success/Error Screen
   if (result) {
     return (
       <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
@@ -276,9 +274,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           <p className="text-slate-600 dark:text-slate-400 mb-2">
             {amountNum.toFixed(4)} {selectedToken}
           </p>
-          {errorMessage && (
-            <p className="text-red-500 text-sm mb-4">{errorMessage}</p>
-          )}
+          {errorMessage && <p className="text-red-500 text-sm mb-4">{errorMessage}</p>}
           {txHash && result === "success" && (
             
               href={`https://sepolia.etherscan.io/tx/${txHash}`}
@@ -303,7 +299,6 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   return (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 max-w-md w-full p-6 shadow-xl">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t.title}</h3>
@@ -319,7 +314,6 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           </button>
         </div>
 
-        {/* Token Selection */}
         <div className="mb-4">
           <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t.selectToken}</label>
           <div className="grid grid-cols-5 gap-2">
@@ -340,19 +334,17 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           </div>
         </div>
 
-        {/* On-chain indicator */}
         {tokenInfo.onChain && (
           <div className="mb-4 p-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg">
             <p className="text-xs text-blue-700 dark:text-blue-400 flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              {lang === "tr" ? "On-chain transfer - Cüzdanınızda imzalamanız gerekecek" : "On-chain transfer - You'll need to sign in your wallet"}
+              {t.onChainNote}
             </p>
           </div>
         )}
 
-        {/* Recipient Address */}
         <div className="mb-4">
           <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t.recipientAddress}</label>
           <input
@@ -367,7 +359,6 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           )}
         </div>
 
-        {/* Amount */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <label className="text-sm text-slate-600 dark:text-slate-400">{t.amount}</label>
@@ -376,15 +367,13 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
             </span>
           </div>
           <div className="flex gap-2">
-            <div className="relative flex-1">
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
-              />
-            </div>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+              className="flex-1 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+            />
             <button
               onClick={handleMaxClick}
               className="px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl text-emerald-600 dark:text-emerald-500 font-medium hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
@@ -397,7 +386,6 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           )}
         </div>
 
-        {/* Fee Info */}
         <div className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-3 mb-4 border border-stone-200 dark:border-slate-700">
           <div className="flex justify-between text-sm">
             <span className="text-slate-600 dark:text-slate-400">{t.networkFee}</span>
@@ -407,16 +395,12 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           </div>
         </div>
 
-        {/* Wallet Connection Warning */}
         {!address && (
           <div className="bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-500/50 rounded-xl p-3 mb-4">
-            <p className="text-amber-700 dark:text-amber-400 text-sm">
-              {t.walletNotConnected}
-            </p>
+            <p className="text-amber-700 dark:text-amber-400 text-sm">{t.walletNotConnected}</p>
           </div>
         )}
 
-        {/* Send Button */}
         <button
           onClick={handleTransfer}
           disabled={!canSend || isProcessing}
