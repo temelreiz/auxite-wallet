@@ -272,39 +272,6 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   // Get allocations for selected metal
   const metalAllocations = allocations.filter(a => a.metalSymbol === selectedToken && a.active === true);
   
-  // Auto-select first allocation if metal and none selected
-  useEffect(() => {
-    if (isMetal && metalAllocations.length > 0 && !selectedAllocationId) {
-      setSelectedAllocationId(metalAllocations[0].id);
-    }
-    if (!isMetal) {
-      setSelectedAllocationId(null);
-    }
-  }, [selectedToken, metalAllocations.length]);
-  
-  // Check if recipient is Auxite user (for metals)
-  useEffect(() => {
-    const checkRecipient = async () => {
-      if (!isMetal || !isValidAddress) {
-        setRecipientValid(null);
-        return;
-      }
-      setIsCheckingRecipient(true);
-      try {
-        const res = await fetch(`/api/user/check?address=${recipientAddress}`);
-        const data = await res.json();
-        setRecipientValid(data.exists === true);
-      } catch {
-        setRecipientValid(false);
-      }
-      setIsCheckingRecipient(false);
-    };
-    
-    const timeout = setTimeout(checkRecipient, 500);
-    return () => clearTimeout(timeout);
-  }, [recipientAddress, isMetal, isValidAddress]);
-
-  const handleMaxClick = () => {
     setAmount(availableBalance.toString());
   };
 
