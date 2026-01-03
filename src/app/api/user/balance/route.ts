@@ -146,10 +146,10 @@ async function getHybridBalance(address: string): Promise<{
     
     // On-chain from Blockchain + Off-chain from Redis (subtract staked amounts for available balance)
     usdt: (blockchainBalances.usdt || 0) + parseFloat(String(redisBalance.usdt || 0)),
-    auxg: Math.max(0, (blockchainBalances.auxg || 0) + parseFloat(String(redisBalance.auxg || 0)) - (stakedAmounts.auxg || 0)),
-    auxs: Math.max(0, (blockchainBalances.auxs || 0) + parseFloat(String(redisBalance.auxs || 0)) - (stakedAmounts.auxs || 0)),
-    auxpt: Math.max(0, (blockchainBalances.auxpt || 0) + parseFloat(String(redisBalance.auxpt || 0)) - (stakedAmounts.auxpt || 0)),
-    auxpd: Math.max(0, (blockchainBalances.auxpd || 0) + parseFloat(String(redisBalance.auxpd || 0)) - (stakedAmounts.auxpd || 0)),
+    auxg: Math.max(0, (blockchainBalances.auxg || 0) - (stakedAmounts.auxg || 0)),
+    auxs: Math.max(0, (blockchainBalances.auxs || 0) - (stakedAmounts.auxs || 0)),
+    auxpt: Math.max(0, (blockchainBalances.auxpt || 0) - (stakedAmounts.auxpt || 0)),
+    auxpd: Math.max(0, (blockchainBalances.auxpd || 0) - (stakedAmounts.auxpd || 0)),
   };
   
   // Calculate totalAuxm
