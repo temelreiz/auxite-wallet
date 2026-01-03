@@ -63,7 +63,6 @@ const translations: Record<string, Record<string, string>> = {
     error: "Transfer Başarısız",
     insufficientBalance: "Yetersiz bakiye",
     invalidAddress: "Geçersiz adres",
-    enterAmount: "Miktar girin",
     cancel: "İptal",
     walletNotConnected: "Cüzdan bağlı değil",
     signTransaction: "Cüzdanınızda işlemi onaylayın",
@@ -84,11 +83,10 @@ const translations: Record<string, Record<string, string>> = {
     error: "Transfer Failed",
     insufficientBalance: "Insufficient balance",
     invalidAddress: "Invalid address",
-    enterAmount: "Enter amount",
     cancel: "Cancel",
     walletNotConnected: "Wallet not connected",
     signTransaction: "Please confirm the transaction in your wallet",
-    onChainNote: "On-chain transfer - You'll need to sign in your wallet",
+    onChainNote: "On-chain transfer - You will need to sign in your wallet",
   },
 };
 
@@ -168,7 +166,6 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     try {
       if (tokenInfo.onChain && tokenInfo.address) {
         const amountInUnits = parseUnits(amount, tokenInfo.decimals);
-        
         writeContract({
           address: tokenInfo.address as `0x${string}`,
           abi: ERC20_ABI,
@@ -186,9 +183,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
             amount: amountNum,
           }),
         });
-
         const data = await response.json();
-        
         if (data.success) {
           setResult("success");
           await new Promise(resolve => setTimeout(resolve, 2000));
@@ -213,15 +208,13 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
       return <img src={info.icon} alt={token} className="w-6 h-6" />;
     }
     return (
-      <div 
-        className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-sm" 
-        style={{ backgroundColor: info.color }}
-      >
+      <div className="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: info.color }}>
         {info.icon}
       </div>
     );
   };
 
+  // Processing screen
   if ((isWritePending || isConfirming) && !result) {
     return (
       <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
@@ -235,16 +228,9 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           <h3 className="text-xl font-bold mb-2 text-slate-800 dark:text-white">
             {isWritePending ? t.signTransaction : t.confirming}
           </h3>
-          <p className="text-slate-600 dark:text-slate-400 mb-4">
-            {amountNum.toFixed(4)} {selectedToken}
-          </p>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">{amountNum.toFixed(4)} {selectedToken}</p>
           {txHash && (
-            
-              href={`https://sepolia.etherscan.io/tx/${txHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:underline text-sm"
-            >
+            <a href={"https://sepolia.etherscan.io/tx/" + txHash} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline text-sm">
               View on Etherscan
             </a>
           )}
@@ -253,11 +239,12 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     );
   }
 
+  // Result screen
   if (result) {
     return (
       <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 max-w-md w-full p-6 shadow-xl text-center">
-          <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${result === "success" ? "bg-emerald-500" : "bg-red-500"}`}>
+          <div className={"w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center " + (result === "success" ? "bg-emerald-500" : "bg-red-500")}>
             {result === "success" ? (
               <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -268,27 +255,17 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
               </svg>
             )}
           </div>
-          <h3 className={`text-xl font-bold mb-2 ${result === "success" ? "text-emerald-500" : "text-red-500"}`}>
+          <h3 className={"text-xl font-bold mb-2 " + (result === "success" ? "text-emerald-500" : "text-red-500")}>
             {result === "success" ? t.success : t.error}
           </h3>
-          <p className="text-slate-600 dark:text-slate-400 mb-2">
-            {amountNum.toFixed(4)} {selectedToken}
-          </p>
+          <p className="text-slate-600 dark:text-slate-400 mb-2">{amountNum.toFixed(4)} {selectedToken}</p>
           {errorMessage && <p className="text-red-500 text-sm mb-4">{errorMessage}</p>}
           {txHash && result === "success" && (
-            
-              href={`https://sepolia.etherscan.io/tx/${txHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:underline text-sm block mb-4"
-            >
+            <a href={"https://sepolia.etherscan.io/tx/" + txHash} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline text-sm block mb-4">
               View on Etherscan
             </a>
           )}
-          <button
-            onClick={onClose}
-            className="px-6 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-          >
+          <button onClick={onClose} className="px-6 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
             {t.cancel}
           </button>
         </div>
@@ -296,6 +273,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     );
   }
 
+  // Main form
   return (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 max-w-md w-full p-6 shadow-xl">
@@ -304,10 +282,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
             <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t.title}</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">{t.subtitle}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-stone-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-stone-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
             <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -321,11 +296,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
               <button
                 key={token}
                 onClick={() => setSelectedToken(token)}
-                className={`p-2 rounded-lg border flex flex-col items-center gap-1 transition-all ${
-                  selectedToken === token
-                    ? "border-blue-500 bg-blue-50 dark:bg-blue-500/20"
-                    : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
-                }`}
+                className={"p-2 rounded-lg border flex flex-col items-center gap-1 transition-all " + (selectedToken === token ? "border-blue-500 bg-blue-50 dark:bg-blue-500/20" : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600")}
               >
                 {renderTokenIcon(token)}
                 <span className="text-[10px] text-slate-700 dark:text-slate-300">{token}</span>
@@ -354,17 +325,13 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
             placeholder="0x..."
             className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 font-mono text-sm"
           />
-          {recipientAddress && !isValidAddress && (
-            <p className="text-xs text-red-500 mt-1">{t.invalidAddress}</p>
-          )}
+          {recipientAddress && !isValidAddress && <p className="text-xs text-red-500 mt-1">{t.invalidAddress}</p>}
         </div>
 
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <label className="text-sm text-slate-600 dark:text-slate-400">{t.amount}</label>
-            <span className="text-xs text-slate-500 dark:text-slate-500">
-              {t.balance}: {tokenBalance.toFixed(4)} {selectedToken}
-            </span>
+            <span className="text-xs text-slate-500">{t.balance}: {tokenBalance.toFixed(4)} {selectedToken}</span>
           </div>
           <div className="flex gap-2">
             <input
@@ -374,24 +341,17 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
               placeholder="0.00"
               className="flex-1 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
             />
-            <button
-              onClick={handleMaxClick}
-              className="px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl text-emerald-600 dark:text-emerald-500 font-medium hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors"
-            >
+            <button onClick={handleMaxClick} className="px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl text-emerald-600 dark:text-emerald-500 font-medium hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors">
               MAX
             </button>
           </div>
-          {amountNum > 0 && !canAfford && (
-            <p className="text-xs text-red-500 mt-1">{t.insufficientBalance}</p>
-          )}
+          {amountNum > 0 && !canAfford && <p className="text-xs text-red-500 mt-1">{t.insufficientBalance}</p>}
         </div>
 
         <div className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-3 mb-4 border border-stone-200 dark:border-slate-700">
           <div className="flex justify-between text-sm">
             <span className="text-slate-600 dark:text-slate-400">{t.networkFee}</span>
-            <span className="text-slate-700 dark:text-slate-300">
-              {tokenInfo.onChain ? "~$0.50 (gas)" : "0 (Off-chain)"}
-            </span>
+            <span className="text-slate-700 dark:text-slate-300">{tokenInfo.onChain ? "~$0.50 (gas)" : "0 (Off-chain)"}</span>
           </div>
         </div>
 
@@ -407,20 +367,20 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           className="w-full py-3 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold transition-colors flex items-center justify-center gap-2"
         >
           {isProcessing ? (
-            <>
+            <span className="flex items-center gap-2">
               <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
               {t.sending}
-            </>
+            </span>
           ) : (
-            <>
+            <span className="flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
               {t.send}
-            </>
+            </span>
           )}
         </button>
       </div>
