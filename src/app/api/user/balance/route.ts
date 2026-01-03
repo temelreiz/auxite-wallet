@@ -171,7 +171,7 @@ async function getHybridBalance(address: string): Promise<{
     auxpd: "blockchain",
   };
   
-  return { balances, sources, stakedAmounts };
+  return { balances, sources, stakedAmounts, onChainBalances: blockchainBalances };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -249,6 +249,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Hybrid (default) - Best of both worlds
       const result = await getHybridBalance(address);
+      const onChainBalances = result.onChainBalances;
       balances = result.balances;
       sources = result.sources;
       responseSource = "hybrid";
@@ -280,7 +281,8 @@ export async function GET(request: NextRequest) {
       },
       timestamp: Date.now(),
       source: responseSource,
-      ...(sources && { sources }), // Include source breakdown for debugging
+      ...(sources && { sources }),
+      ...(onChainBalances && { onChainBalances }), // On-chain only balances for transfers
     });
   } catch (error) {
     console.error("Balance API error:", error);
