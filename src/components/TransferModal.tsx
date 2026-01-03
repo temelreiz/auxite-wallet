@@ -36,6 +36,7 @@ const TOKEN_INFO: Record<TokenType, {
 };
 
 const METAL_TOKENS: TokenType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
+const TRANSFERABLE_TOKENS: TokenType[] = ["ETH", "USDT", "BTC", "XRP", "SOL"];
 
 const ERC20_ABI = [
   {
@@ -113,7 +114,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const { isConnected } = useAccount();
   const { allocations, totalGrams, refresh: refreshAllocations } = useAllocations();
   
-  const [selectedToken, setSelectedToken] = useState<TokenType>("AUXM");
+  const [selectedToken, setSelectedToken] = useState<TokenType>("ETH");
   const [recipientAddress, setRecipientAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -125,6 +126,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   // Unlock states
   const [showUnlockFlow, setShowUnlockFlow] = useState(false);
   const [unlockAmount, setUnlockAmount] = useState("");
+  const [selectedAllocationId, setSelectedAllocationId] = useState<string | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
 
   const { writeContract, isPending: isWritePending, data: writeData } = useWriteContract();
@@ -216,8 +218,47 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const availableBalance = getAvailableBalance(selectedToken);
   const canAfford = amountNum > 0 && amountNum <= availableBalance;
   const isValidAddress = recipientAddress.length >= 42 && recipientAddress.startsWith("0x");
-  const canSend = canAfford && isValidAddress && amountNum > 0 && !!address;
+  const canSend = canAfford && isValidAddress && amountNum > 0 && !!address && (!isMetal || recipientValid === true) && (!isMetal || selectedAllocationId);
   const needsUnlock = isMetal && amountNum > availableBalance && amountNum <= onChainBalance;
+
+  // Get allocations for selected metal
+  const metalAllocations = allocations.filter(a => a.metalSymbol === selectedToken && a.status === 'active');
+  
+  // Auto-select first allocation if metal and none selected
+  useEffect(() => {
+    if (isMetal && metalAllocations.length > 0 && !selectedAllocationId) {
+      setSelectedAllocationId(metalAllocations[0].id);
+    }
+    if (!isMetal) {
+      setSelectedAllocationId(null);
+    }
+  }, [selectedToken, metalAllocations.length]);
+  
+  // Recipient check state
+  const [isCheckingRecipient, setIsCheckingRecipient] = useState(false);
+  const [recipientValid, setRecipientValid] = useState<boolean | null>(null);
+  
+  // Check if recipient is Auxite user (for metals)
+  useEffect(() => {
+    const checkRecipient = async () => {
+      if (!isMetal || !isValidAddress) {
+        setRecipientValid(null);
+        return;
+      }
+      setIsCheckingRecipient(true);
+      try {
+        const res = await fetch(`/api/user/check?address=${recipientAddress}`);
+        const data = await res.json();
+        setRecipientValid(data.exists === true);
+      } catch {
+        setRecipientValid(false);
+      }
+      setIsCheckingRecipient(false);
+    };
+    
+    const timeout = setTimeout(checkRecipient, 500);
+    return () => clearTimeout(timeout);
+  }, [recipientAddress, isMetal, isValidAddress]);
 
   const handleMaxClick = () => {
     setAmount(availableBalance.toString());
@@ -280,7 +321,41 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     setErrorMessage("");
     
     try {
-      if (tokenInfo.onChain && tokenInfo.address) {
+      // Metal transfer için: önce alıcının Auxite kullanıcısı olup olmadığını kontrol et
+      if (isMetal) {
+        // Allocation transfer et
+        const allocResponse = await fetch("/api/allocations", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fromAddress: address,
+            toAddress: recipientAddress,
+            allocationId: selectedAllocationId, // Transfer edilecek allocation
+            grams: amountNum,
+          }),
+        });
+        const allocData = await allocResponse.json();
+        
+        if (!allocData.success) {
+          if (allocData.code === 'RECIPIENT_NOT_REGISTERED') {
+            throw new Error(lang === 'tr' 
+              ? 'Alıcı Auxite kullanıcısı değil. Metaller sadece kayıtlı Auxite kullanıcılarına transfer edilebilir.'
+              : 'Recipient is not an Auxite user. Metals can only be transferred to registered Auxite users.');
+          }
+          throw new Error(allocData.error || "Allocation transfer failed");
+        }
+        
+        // Sonra on-chain token transfer
+        const amountInUnits = parseUnits(amount, tokenInfo.decimals);
+        writeContract({
+          address: tokenInfo.address as `0x${string}`,
+          abi: ERC20_ABI,
+          functionName: "transfer",
+          args: [recipientAddress as `0x${string}`, amountInUnits],
+          gas: BigInt(200000),
+        });
+      } else if (tokenInfo.onChain && tokenInfo.address) {
+        // Kripto transfer (sadece on-chain)
         const amountInUnits = parseUnits(amount, tokenInfo.decimals);
         writeContract({
           address: tokenInfo.address as `0x${string}`,
@@ -290,6 +365,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           gas: BigInt(200000),
         });
       } else {
+        // Off-chain transfer (BTC, XRP, SOL)
         const response = await fetch("/api/transfer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -482,7 +558,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         <div className="mb-4">
           <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t.selectToken}</label>
           <div className="grid grid-cols-5 gap-2">
-            {(Object.keys(TOKEN_INFO) as TokenType[]).map((token) => (
+            {(TRANSFERABLE_TOKENS).map((token) => (
               <button
                 key={token}
                 onClick={() => setSelectedToken(token)}

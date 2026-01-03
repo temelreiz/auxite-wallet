@@ -465,3 +465,163 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+// PATCH - Allocation'ı başka kullanıcıya transfer et
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { fromAddress, toAddress, allocationId, grams: transferGrams } = body;
+
+    if (!fromAddress || !toAddress || !allocationId) {
+      return NextResponse.json({ error: 'fromAddress, toAddress and allocationId required' }, { status: 400 });
+    }
+
+    // Gönderen UID'sini bul
+    const fromUid = await redis.get(`user:address:${fromAddress.toLowerCase()}:uid`) as string;
+    if (!fromUid) {
+      return NextResponse.json({ error: 'Sender not found' }, { status: 404 });
+    }
+
+    // Alıcı UID'sini bul - Auxite kullanıcısı olmalı
+    let toUid = await redis.get(`user:address:${toAddress.toLowerCase()}:uid`) as string;
+    if (!toUid) {
+      return NextResponse.json({ 
+        error: 'Recipient is not an Auxite user. Metals can only be transferred to registered Auxite users.',
+        code: 'RECIPIENT_NOT_REGISTERED'
+      }, { status: 400 });
+    }
+
+    // Gönderenin allocation listesini al
+    const fromAllocDataRaw = await redis.get(`allocation:user:${fromUid}:list`);
+    if (!fromAllocDataRaw) {
+      return NextResponse.json({ error: 'No allocations found' }, { status: 404 });
+    }
+    let fromAllocations: any[] = typeof fromAllocDataRaw === 'string' ? JSON.parse(fromAllocDataRaw) : fromAllocDataRaw;
+
+    // İlgili allocation'ı bul
+    const allocIndex = fromAllocations.findIndex(a => a.id === allocationId && a.status === 'active');
+    if (allocIndex === -1) {
+      return NextResponse.json({ error: 'Allocation not found' }, { status: 404 });
+    }
+
+    const allocation = fromAllocations[allocIndex];
+    const allocationGrams = parseFloat(allocation.grams);
+    const gramsToTransfer = transferGrams ? Math.min(parseFloat(transferGrams), allocationGrams) : allocationGrams;
+
+    // Eski sertifikayı VOID yap
+    const oldCertNumber = allocation.certificateNumber;
+    if (oldCertNumber) {
+      await redis.hset(`certificate:${oldCertNumber}`, {
+        status: 'VOID',
+        voidedAt: new Date().toISOString(),
+        voidReason: 'TRANSFERRED',
+        transferredTo: toAddress.toLowerCase(),
+      });
+    }
+
+    // Yeni sertifika numarası oluştur (aynı seri no ile)
+    const year = new Date().getFullYear();
+    const newCertUID = generateUID().substring(0, 6);
+    const newCertNumber = `AUX-CERT-${year}-${newCertUID}`;
+
+    // Alıcının allocation listesini al veya oluştur
+    const toAllocDataRaw = await redis.get(`allocation:user:${toUid}:list`);
+    let toAllocations: any[] = toAllocDataRaw 
+      ? (typeof toAllocDataRaw === 'string' ? JSON.parse(toAllocDataRaw) : toAllocDataRaw)
+      : [];
+
+    // Yeni allocation kaydı oluştur (alıcı için)
+    const newAllocationId = `${allocation.metal}-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+    const newAllocation = {
+      id: newAllocationId,
+      metal: allocation.metal,
+      grams: gramsToTransfer.toString(),
+      serialNumber: allocation.serialNumber, // Aynı bar
+      barSize: allocation.barSize,
+      certificateNumber: newCertNumber,
+      allocatedAt: new Date().toISOString(),
+      status: 'active',
+      transferredFrom: fromAddress.toLowerCase(),
+      originalCertificate: oldCertNumber,
+    };
+
+    toAllocations.push(newAllocation);
+    await redis.set(`allocation:user:${toUid}:list`, JSON.stringify(toAllocations));
+
+    // Gönderenin allocation'ını güncelle
+    const remainingGrams = allocationGrams - gramsToTransfer;
+    if (remainingGrams <= 0) {
+      // Tamamı transfer edildi
+      fromAllocations[allocIndex] = {
+        ...allocation,
+        status: 'transferred',
+        transferredAt: new Date().toISOString(),
+        transferredTo: toAddress.toLowerCase(),
+        newCertificateNumber: newCertNumber,
+      };
+    } else {
+      // Kısmi transfer
+      fromAllocations[allocIndex] = {
+        ...allocation,
+        grams: remainingGrams.toString(),
+      };
+      fromAllocations.push({
+        ...allocation,
+        id: `${allocation.id}-transferred-${Date.now()}`,
+        grams: gramsToTransfer.toString(),
+        status: 'transferred',
+        transferredAt: new Date().toISOString(),
+        transferredTo: toAddress.toLowerCase(),
+        newCertificateNumber: newCertNumber,
+      });
+    }
+    await redis.set(`allocation:user:${fromUid}:list`, JSON.stringify(fromAllocations));
+
+    // Yeni sertifikayı kaydet
+    const metalName = METAL_NAMES[allocation.metal] || allocation.metal;
+    const certData = {
+      certificateNumber: newCertNumber,
+      owner: toAddress.toLowerCase(),
+      metal: allocation.metal,
+      metalName,
+      grams: gramsToTransfer,
+      serialNumber: allocation.serialNumber,
+      barSize: allocation.barSize,
+      issuedAt: new Date().toISOString(),
+      status: 'active',
+      transferredFrom: fromAddress.toLowerCase(),
+      originalCertificate: oldCertNumber,
+    };
+    
+    // Sertifikayı hash'le
+    const certHash = createHash('sha256').update(JSON.stringify(certData)).digest('hex');
+    await redis.hset(`certificate:${newCertNumber}`, {
+      ...certData,
+      hash: certHash,
+    });
+
+    // Arka planda blockchain'e anchor et
+    anchorCertificateBackground(newCertNumber, certHash);
+
+    console.log(`✅ Allocation transferred: ${gramsToTransfer}g ${allocation.metal} from ${fromAddress} to ${toAddress}`);
+    console.log(`   Old cert: ${oldCertNumber} (VOID) → New cert: ${newCertNumber}`);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Allocation transferred successfully',
+      transfer: {
+        from: fromAddress.toLowerCase(),
+        to: toAddress.toLowerCase(),
+        metal: allocation.metal,
+        grams: gramsToTransfer,
+        serialNumber: allocation.serialNumber,
+        oldCertificate: oldCertNumber,
+        newCertificate: newCertNumber,
+        allocationId: newAllocationId,
+      }
+    });
+  } catch (error: any) {
+    console.error('Allocation transfer error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
