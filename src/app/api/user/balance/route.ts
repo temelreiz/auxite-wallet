@@ -123,6 +123,7 @@ async function getHybridBalance(address: string): Promise<{
   balances: Record<string, number>;
   sources: Record<string, "blockchain" | "redis">;
   stakedAmounts?: Record<string, number>;
+  onChainBalances?: Record<string, number>;
 }> {
   // 1. Get Redis balance (off-chain data)
   const redisBalance = await getUserBalance(address);
