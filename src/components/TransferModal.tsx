@@ -102,12 +102,30 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const [result, setResult] = useState<"success" | "error" | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
+  const [onChainBalances, setOnChainBalances] = useState<Record<string, number>>({});
 
   const { writeContract, isPending: isWritePending, data: writeData } = useWriteContract();
   
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash: txHash,
   });
+
+  useEffect(() => {
+    // Fetch on-chain balances for transfer
+    const fetchOnChainBalances = async () => {
+      if (!address) return;
+      try {
+        const res = await fetch(`/api/user/balance?address=${address}`);
+        const data = await res.json();
+        if (data.onChainBalances) {
+          setOnChainBalances(data.onChainBalances);
+        }
+      } catch (e) {
+        console.error("Failed to fetch on-chain balances:", e);
+      }
+    };
+    fetchOnChainBalances();
+  }, [address, isOpen]);
 
   useEffect(() => {
     if (writeData) {
@@ -143,6 +161,13 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const amountNum = parseFloat(amount) || 0;
   
   const getBalance = (token: TokenType): number => {
+    const info = TOKEN_INFO[token];
+    // For on-chain tokens, use onChainBalances
+    if (info.onChain && info.address) {
+      const key = token.toLowerCase();
+      return onChainBalances[key] || 0;
+    }
+    // For off-chain tokens, use regular balances
     if (!balances) return 0;
     const key = token.toLowerCase() as keyof typeof balances;
     return parseFloat(String(balances[key] || 0));
