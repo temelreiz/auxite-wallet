@@ -227,7 +227,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const needsUnlock = isMetal && amountNum > availableBalance && amountNum <= onChainBalance;
 
   // Get allocations for selected metal
-  const metalAllocations = allocations.filter(a => a.metalSymbol === selectedToken && a.status === 'active');
+  const metalAllocations = allocations.filter(a => a.metalSymbol === selectedToken && a.active === true);
   
   // Auto-select first allocation if metal and none selected
   useEffect(() => {
