@@ -184,6 +184,51 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     }
   }, [isOpen]);
 
+  // Auto-select allocation and check recipient
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    // Auto-select first allocation for metals
+    const currentIsMetal = METAL_TOKENS.includes(selectedToken);
+    if (currentIsMetal && allocations.length > 0) {
+      const metalAllocs = allocations.filter(a => a.metalSymbol === selectedToken && a.active === true);
+      if (metalAllocs.length > 0 && !selectedAllocationId) {
+        setSelectedAllocationId(metalAllocs[0].id);
+      }
+    }
+    if (!currentIsMetal) {
+      setSelectedAllocationId(null);
+    }
+  }, [isOpen, selectedToken, allocations, selectedAllocationId]);
+
+  // Check if recipient is Auxite user (for metals)
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const currentIsMetal = METAL_TOKENS.includes(selectedToken);
+    const validAddress = recipientAddress.length >= 42 && recipientAddress.startsWith("0x");
+    
+    if (!currentIsMetal || !validAddress) {
+      setRecipientValid(null);
+      return;
+    }
+    
+    const checkRecipient = async () => {
+      setIsCheckingRecipient(true);
+      try {
+        const res = await fetch(`/api/user/check?address=${recipientAddress}`);
+        const data = await res.json();
+        setRecipientValid(data.exists === true);
+      } catch {
+        setRecipientValid(false);
+      }
+      setIsCheckingRecipient(false);
+    };
+    
+    const timeout = setTimeout(checkRecipient, 500);
+    return () => clearTimeout(timeout);
+  }, [isOpen, recipientAddress, selectedToken]);
+
   if (!isOpen) return null;
 
   const tokenInfo = TOKEN_INFO[selectedToken];
