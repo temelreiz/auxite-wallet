@@ -124,6 +124,8 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
       if (data.success) {
         setResult("success");
         
+        // Wait for blockchain confirmation then refresh
+        await new Promise(resolve => setTimeout(resolve, 2000));
         if (refreshBalances) await refreshBalances();
         setTimeout(() => onClose(), 2500);
       } else {
