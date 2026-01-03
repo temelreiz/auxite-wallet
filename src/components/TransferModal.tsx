@@ -22,13 +22,13 @@ const TOKEN_INFO: Record<TokenType, {
   decimals: number; 
   address?: string;
 }> = {
-  AUXG: { name: "Gold", icon: "/gold-favicon-32x32.png", iconType: "image", color: "#F59E0B", onChain: true, decimals: 3, address: process.env.NEXT_PUBLIC_AUXG_V8 },
-  AUXS: { name: "Silver", icon: "/silver-favicon-32x32.png", iconType: "image", color: "#94A3B8", onChain: true, decimals: 3, address: process.env.NEXT_PUBLIC_AUXS_V8 },
-  AUXPT: { name: "Platinum", icon: "/platinum-favicon-32x32.png", iconType: "image", color: "#CBD5E1", onChain: true, decimals: 3, address: process.env.NEXT_PUBLIC_AUXPT_V8 },
-  AUXPD: { name: "Palladium", icon: "/palladium-favicon-32x32.png", iconType: "image", color: "#64748B", onChain: true, decimals: 3, address: process.env.NEXT_PUBLIC_AUXPD_V8 },
+  AUXG: { name: "Gold", icon: "/gold-favicon-32x32.png", iconType: "image", color: "#F59E0B", onChain: true, decimals: 3, address: "0xD14D32B1e03B3027D1f8381EeeC567e147De9CCe" },
+  AUXS: { name: "Silver", icon: "/silver-favicon-32x32.png", iconType: "image", color: "#94A3B8", onChain: true, decimals: 3, address: "0xc924EE950BF5A5Fbe3c26eECB27D99031B441caD" },
+  AUXPT: { name: "Platinum", icon: "/platinum-favicon-32x32.png", iconType: "image", color: "#CBD5E1", onChain: true, decimals: 3, address: "0x37402EA435a91567223C132414C3A50C6bBc7200" },
+  AUXPD: { name: "Palladium", icon: "/palladium-favicon-32x32.png", iconType: "image", color: "#64748B", onChain: true, decimals: 3, address: "0x6026338B9Bfd94fed07EA61cbE60b15e300911DC" },
   AUXM: { name: "Auxite Money", icon: "◈", iconType: "symbol", color: "#A855F7", onChain: false, decimals: 2 },
   ETH: { name: "Ethereum", icon: "Ξ", iconType: "symbol", color: "#627EEA", onChain: true, decimals: 18 },
-  USDT: { name: "Tether", icon: "₮", iconType: "symbol", color: "#26A17B", onChain: true, decimals: 6, address: process.env.NEXT_PUBLIC_USDT_ADDRESS },
+  USDT: { name: "Tether", icon: "₮", iconType: "symbol", color: "#26A17B", onChain: true, decimals: 6, address: "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06" },
   BTC: { name: "Bitcoin", icon: "₿", iconType: "symbol", color: "#F7931A", onChain: false, decimals: 8 },
   XRP: { name: "Ripple", icon: "✕", iconType: "symbol", color: "#23292F", onChain: false, decimals: 6 },
   SOL: { name: "Solana", icon: "◎", iconType: "symbol", color: "#9945FF", onChain: false, decimals: 9 },
