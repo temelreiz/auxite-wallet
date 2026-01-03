@@ -167,7 +167,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
       if (tokenInfo.onChain && tokenInfo.address) {
         const amountInUnits = parseUnits(amount, tokenInfo.decimals);
         writeContract({
-          gas: BigInt(100000),
+          gas: BigInt(200000),
           address: tokenInfo.address as `0x${string}`,
           abi: ERC20_ABI,
           functionName: "transfer",
