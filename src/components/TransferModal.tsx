@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useWallet } from "@/components/WalletContext";
-import { useAccount } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { parseUnits } from "viem";
 
 type TokenType = "AUXG" | "AUXS" | "AUXPT" | "AUXPD" | "AUXM" | "ETH" | "USDT" | "BTC" | "XRP" | "SOL";
 
@@ -12,18 +13,31 @@ interface TransferModalProps {
   lang?: string;
 }
 
-const TOKEN_INFO: Record<TokenType, { name: string; icon: string; iconType: "image" | "symbol"; color: string }> = {
-  AUXG: { name: "Gold", icon: "/gold-favicon-32x32.png", iconType: "image", color: "#F59E0B" },
-  AUXS: { name: "Silver", icon: "/silver-favicon-32x32.png", iconType: "image", color: "#94A3B8" },
-  AUXPT: { name: "Platinum", icon: "/platinum-favicon-32x32.png", iconType: "image", color: "#CBD5E1" },
-  AUXPD: { name: "Palladium", icon: "/palladium-favicon-32x32.png", iconType: "image", color: "#64748B" },
-  AUXM: { name: "Auxite Money", icon: "◈", iconType: "symbol", color: "#A855F7" },
-  ETH: { name: "Ethereum", icon: "Ξ", iconType: "symbol", color: "#627EEA" },
-  USDT: { name: "Tether", icon: "₮", iconType: "symbol", color: "#26A17B" },
-  BTC: { name: "Bitcoin", icon: "₿", iconType: "symbol", color: "#F7931A" },
-  XRP: { name: "Ripple", icon: "✕", iconType: "symbol", color: "#23292F" },
-  SOL: { name: "Solana", icon: "◎", iconType: "symbol", color: "#9945FF" },
+const TOKEN_INFO: Record<TokenType, { name: string; icon: string; iconType: "image" | "symbol"; color: string; onChain: boolean; decimals: number; address?: string }> = {
+  AUXG: { name: "Gold", icon: "/gold-favicon-32x32.png", iconType: "image", color: "#F59E0B", onChain: true, decimals: 3, address: process.env.NEXT_PUBLIC_AUXG_V8 },
+  AUXS: { name: "Silver", icon: "/silver-favicon-32x32.png", iconType: "image", color: "#94A3B8", onChain: true, decimals: 3, address: process.env.NEXT_PUBLIC_AUXS_V8 },
+  AUXPT: { name: "Platinum", icon: "/platinum-favicon-32x32.png", iconType: "image", color: "#CBD5E1", onChain: true, decimals: 3, address: process.env.NEXT_PUBLIC_AUXPT_V8 },
+  AUXPD: { name: "Palladium", icon: "/palladium-favicon-32x32.png", iconType: "image", color: "#64748B", onChain: true, decimals: 3, address: process.env.NEXT_PUBLIC_AUXPD_V8 },
+  AUXM: { name: "Auxite Money", icon: "◈", iconType: "symbol", color: "#A855F7", onChain: false, decimals: 2 },
+  ETH: { name: "Ethereum", icon: "Ξ", iconType: "symbol", color: "#627EEA", onChain: true, decimals: 18 },
+  USDT: { name: "Tether", icon: "₮", iconType: "symbol", color: "#26A17B", onChain: true, decimals: 6, address: process.env.NEXT_PUBLIC_USDT_ADDRESS },
+  BTC: { name: "Bitcoin", icon: "₿", iconType: "symbol", color: "#F7931A", onChain: false, decimals: 8 },
+  XRP: { name: "Ripple", icon: "✕", iconType: "symbol", color: "#23292F", onChain: false, decimals: 6 },
+  SOL: { name: "Solana", icon: "◎", iconType: "symbol", color: "#9945FF", onChain: false, decimals: 9 },
 };
+
+const ERC20_ABI = [
+  {
+    name: "transfer",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" }
+    ],
+    outputs: [{ type: "bool" }]
+  }
+] as const;
 
 const translations: Record<string, Record<string, string>> = {
   tr: {
@@ -36,12 +50,15 @@ const translations: Record<string, Record<string, string>> = {
     networkFee: "Ağ Ücreti",
     send: "Gönder",
     sending: "Gönderiliyor...",
+    confirming: "Onay bekleniyor...",
     success: "Transfer Başarılı!",
     error: "Transfer Başarısız",
     insufficientBalance: "Yetersiz bakiye",
     invalidAddress: "Geçersiz adres",
     enterAmount: "Miktar girin",
     cancel: "İptal",
+    walletNotConnected: "Cüzdan bağlı değil",
+    signTransaction: "Cüzdanınızda işlemi onaylayın",
   },
   en: {
     title: "Transfer",
@@ -53,12 +70,15 @@ const translations: Record<string, Record<string, string>> = {
     networkFee: "Network Fee",
     send: "Send",
     sending: "Sending...",
+    confirming: "Confirming...",
     success: "Transfer Successful!",
     error: "Transfer Failed",
     insufficientBalance: "Insufficient balance",
     invalidAddress: "Invalid address",
     enterAmount: "Enter amount",
     cancel: "Cancel",
+    walletNotConnected: "Wallet not connected",
+    signTransaction: "Please confirm the transaction in your wallet",
   },
 };
 
@@ -72,6 +92,36 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<"success" | "error" | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
+
+  // Wagmi hooks for on-chain transfer
+  const { writeContract, isPending: isWritePending, data: writeData } = useWriteContract();
+  
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: txHash,
+  });
+
+  // Handle transaction confirmation
+  useEffect(() => {
+    if (writeData) {
+      setTxHash(writeData);
+    }
+  }, [writeData]);
+
+  useEffect(() => {
+    if (isConfirmed && txHash) {
+      setResult("success");
+      setIsProcessing(false);
+      
+      // Refresh balances after confirmation
+      setTimeout(async () => {
+        if (refreshBalances) await refreshBalances();
+      }, 2000);
+      
+      setTimeout(() => onClose(), 3000);
+    }
+  }, [isConfirmed, txHash, refreshBalances, onClose]);
 
   // Reset on close
   useEffect(() => {
@@ -80,11 +130,14 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
       setRecipientAddress("");
       setAmount("");
       setResult(null);
+      setErrorMessage("");
+      setTxHash(undefined);
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
+  const tokenInfo = TOKEN_INFO[selectedToken];
   const amountNum = parseFloat(amount) || 0;
   
   // Get balance for selected token
@@ -107,35 +160,52 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     if (!canSend || !address) return;
     
     setIsProcessing(true);
+    setErrorMessage("");
+    
     try {
-      const response = await fetch("/api/transfer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fromAddress: address,
-          toAddress: recipientAddress,
-          token: selectedToken,
-          amount: amountNum,
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        setResult("success");
+      // Check if this is an on-chain token
+      if (tokenInfo.onChain && tokenInfo.address) {
+        // On-chain ERC20 transfer - user signs with their wallet
+        const amountInUnits = parseUnits(amount, tokenInfo.decimals);
         
-        // Wait for blockchain confirmation then refresh
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        if (refreshBalances) await refreshBalances();
-        setTimeout(() => onClose(), 2500);
+        writeContract({
+          address: tokenInfo.address as `0x${string}`,
+          abi: ERC20_ABI,
+          functionName: "transfer",
+          args: [recipientAddress as `0x${string}`, amountInUnits],
+        });
+        
+        // The rest is handled by useEffect watching isConfirmed
       } else {
-        throw new Error(data.error || "Transfer failed");
+        // Off-chain transfer (AUXM, BTC, XRP, SOL) - use API
+        const response = await fetch("/api/transfer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fromAddress: address,
+            toAddress: recipientAddress,
+            token: selectedToken,
+            amount: amountNum,
+          }),
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          setResult("success");
+          
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          if (refreshBalances) await refreshBalances();
+          setTimeout(() => onClose(), 2500);
+        } else {
+          throw new Error(data.error || "Transfer failed");
+        }
+        setIsProcessing(false);
       }
     } catch (error: any) {
       console.error("Transfer error:", error);
+      setErrorMessage(error.message || "Transfer failed");
       setResult("error");
-      
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -151,6 +221,38 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
       </div>
     );
   };
+
+  // Processing/Confirming Screen
+  if ((isWritePending || isConfirming) && !result) {
+    return (
+      <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 max-w-md w-full p-6 shadow-xl text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500 flex items-center justify-center">
+            <svg className="animate-spin h-8 w-8 text-white" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold mb-2 text-slate-800 dark:text-white">
+            {isWritePending ? t.signTransaction : t.confirming}
+          </h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            {amountNum.toFixed(4)} {selectedToken}
+          </p>
+          {txHash && (
+            
+              href={`https://sepolia.etherscan.io/tx/${txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:underline text-sm"
+            >
+              View on Etherscan
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // Success/Error Screen
   if (result) {
@@ -171,9 +273,22 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           <h3 className={`text-xl font-bold mb-2 ${result === "success" ? "text-emerald-500" : "text-red-500"}`}>
             {result === "success" ? t.success : t.error}
           </h3>
-          <p className="text-slate-600 dark:text-slate-400 mb-4">
+          <p className="text-slate-600 dark:text-slate-400 mb-2">
             {amountNum.toFixed(4)} {selectedToken}
           </p>
+          {errorMessage && (
+            <p className="text-red-500 text-sm mb-4">{errorMessage}</p>
+          )}
+          {txHash && result === "success" && (
+            
+              href={`https://sepolia.etherscan.io/tx/${txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:underline text-sm block mb-4"
+            >
+              View on Etherscan
+            </a>
+          )}
           <button
             onClick={onClose}
             className="px-6 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
@@ -207,7 +322,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         {/* Token Selection */}
         <div className="mb-4">
           <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t.selectToken}</label>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-5 gap-2">
             {(Object.keys(TOKEN_INFO) as TokenType[]).map((token) => (
               <button
                 key={token}
@@ -224,6 +339,18 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
             ))}
           </div>
         </div>
+
+        {/* On-chain indicator */}
+        {tokenInfo.onChain && (
+          <div className="mb-4 p-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg">
+            <p className="text-xs text-blue-700 dark:text-blue-400 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              {lang === "tr" ? "On-chain transfer - Cüzdanınızda imzalamanız gerekecek" : "On-chain transfer - You'll need to sign in your wallet"}
+            </p>
+          </div>
+        )}
 
         {/* Recipient Address */}
         <div className="mb-4">
@@ -271,11 +398,11 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         </div>
 
         {/* Fee Info */}
-        <div className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-3 mb-6 border border-stone-200 dark:border-slate-700">
+        <div className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-3 mb-4 border border-stone-200 dark:border-slate-700">
           <div className="flex justify-between text-sm">
             <span className="text-slate-600 dark:text-slate-400">{t.networkFee}</span>
             <span className="text-slate-700 dark:text-slate-300">
-              {selectedToken === "AUXM" ? "0 (Off-chain)" : "~$0.50"}
+              {tokenInfo.onChain ? "~$0.50 (gas)" : "0 (Off-chain)"}
             </span>
           </div>
         </div>
@@ -284,7 +411,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         {!address && (
           <div className="bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-500/50 rounded-xl p-3 mb-4">
             <p className="text-amber-700 dark:text-amber-400 text-sm">
-              {lang === "tr" ? "Cüzdan bağlı değil" : "Wallet not connected"}
+              {t.walletNotConnected}
             </p>
           </div>
         )}
