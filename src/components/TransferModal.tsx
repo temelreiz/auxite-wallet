@@ -128,6 +128,8 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const [unlockAmount, setUnlockAmount] = useState("");
   const [selectedAllocationId, setSelectedAllocationId] = useState<string | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
+  const [isCheckingRecipient, setIsCheckingRecipient] = useState(false);
+  const [recipientValid, setRecipientValid] = useState<boolean | null>(null);
 
   const { writeContract, isPending: isWritePending, data: writeData } = useWriteContract();
   
@@ -218,10 +220,6 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const availableBalance = getAvailableBalance(selectedToken);
   const canAfford = amountNum > 0 && amountNum <= availableBalance;
   const isValidAddress = recipientAddress.length >= 42 && recipientAddress.startsWith("0x");
-  
-  // Recipient check state
-  const [isCheckingRecipient, setIsCheckingRecipient] = useState(false);
-  const [recipientValid, setRecipientValid] = useState<boolean | null>(null);
   
   const canSend = canAfford && isValidAddress && amountNum > 0 && !!address && (!isMetal || recipientValid === true) && (!isMetal || selectedAllocationId);
   const needsUnlock = isMetal && amountNum > availableBalance && amountNum <= onChainBalance;
