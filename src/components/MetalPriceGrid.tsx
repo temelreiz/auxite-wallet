@@ -10,6 +10,7 @@ import { BuyMetalModal } from "./BuyMetalModal";
 import CryptoTradingDetailPage from "./CryptoTradingDetailPage";
 import { CryptoConvertModal } from "./CryptoConvertModal";
 import { DynamicBanner } from "./DynamicBanner";
+import { TransferModal } from "@/components/TransferModal";
 import { useLanguage } from "@/components/LanguageContext";
 
 // Metal icon mapping
@@ -675,91 +676,11 @@ export default function MetalPriceGrid() {
         />
       )}
       {/* Transfer Modal */}
-      {showTransfer && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 max-w-md w-full p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-                {lang === "tr" ? "Gönder" : "Transfer"}
-              </h3>
-              <button
-                onClick={() => setShowTransfer(false)}
-                className="p-2 hover:bg-stone-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Token Selection */}
-            <div className="mb-4">
-              <label className="text-sm text-slate-500 dark:text-slate-400 mb-2 block">{lang === "tr" ? "Token" : "Token"}</label>
-              <div className="relative">
-                <select className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white appearance-none pl-12">
-                  <option value="AUXG">AUXG - {lang === "tr" ? "Altın" : "Gold"}</option>
-                  <option value="AUXS">AUXS - {lang === "tr" ? "Gümüş" : "Silver"}</option>
-                  <option value="AUXPT">AUXPT - {lang === "tr" ? "Platin" : "Platinum"}</option>
-                  <option value="AUXPD">AUXPD - {lang === "tr" ? "Paladyum" : "Palladium"}</option>
-                  <option value="ETH">ETH - Ethereum</option>
-                  <option value="BTC">BTC - Bitcoin</option>
-                  <option value="XRP">XRP - Ripple</option>
-                  <option value="SOL">SOL - Solana</option>
-                  <option value="USDT">USDT - Tether</option>
-                </select>
-                <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                  <img src="/gold-favicon-32x32.png" alt="" className="w-6 h-6" />
-                </div>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg className="w-5 h-5 text-slate-400 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Recipient Address */}
-            <div className="mb-4">
-              <label className="text-sm text-slate-500 dark:text-slate-400 mb-2 block">{lang === "tr" ? "Alıcı Adresi" : "Recipient Address"}</label>
-              <input
-                type="text"
-                placeholder="0x..."
-                className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
-              />
-            </div>
-
-            {/* Amount */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm text-slate-500 dark:text-slate-400">{lang === "tr" ? "Miktar" : "Amount"}</label>
-                <span className="text-xs text-slate-500 dark:text-slate-500">{lang === "tr" ? "Bakiye" : "Balance"}: 998,953.91 AUXG</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  className="flex-1 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
-                />
-                <button className="px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl text-emerald-600 dark:text-emerald-500 font-medium hover:bg-stone-200 dark:hover:bg-slate-700 transition-colors">
-                  MAX
-                </button>
-              </div>
-            </div>
-
-            {/* Fee Info */}
-            <div className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-3 mb-6">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500 dark:text-slate-400">{lang === "tr" ? "Ağ Ücreti" : "Network Fee"}</span>
-                <span className="text-slate-700 dark:text-slate-300">~$0.50</span>
-              </div>
-            </div>
-
-            <button className="w-full py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold transition-colors">
-              {lang === "tr" ? "Gönder" : "Send"}
-            </button>
-          </div>
-        </div>
-      )}
+      <TransferModal 
+        isOpen={showTransfer} 
+        onClose={() => setShowTransfer(false)} 
+        lang={lang} 
+      />
 
       {/* Receive Modal */}
       {showReceive && (
