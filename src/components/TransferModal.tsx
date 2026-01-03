@@ -97,7 +97,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const tokenBalance = getBalance(selectedToken);
   const canAfford = amountNum > 0 && amountNum <= tokenBalance;
   const isValidAddress = recipientAddress.length >= 42 && recipientAddress.startsWith("0x");
-  const canSend = canAfford && isValidAddress && amountNum > 0;
+  const canSend = canAfford && isValidAddress && amountNum > 0 && !!address;
 
   const handleMaxClick = () => {
     setAmount(tokenBalance.toString());
@@ -277,6 +277,15 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
             </span>
           </div>
         </div>
+
+        {/* Wallet Connection Warning */}
+        {!address && (
+          <div className="bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-500/50 rounded-xl p-3 mb-4">
+            <p className="text-amber-700 dark:text-amber-400 text-sm">
+              {lang === "tr" ? "Cüzdan bağlı değil" : "Wallet not connected"}
+            </p>
+          </div>
+        )}
 
         {/* Send Button */}
         <button
