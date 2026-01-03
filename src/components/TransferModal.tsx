@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useWallet } from "@/components/WalletContext";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseUnits } from "viem";
+import { useAllocations } from "@/hooks/useAllocations";
 
 type TokenType = "AUXG" | "AUXS" | "AUXPT" | "AUXPD" | "AUXM" | "ETH" | "USDT" | "BTC" | "XRP" | "SOL";
 
@@ -34,6 +35,8 @@ const TOKEN_INFO: Record<TokenType, {
   SOL: { name: "Solana", icon: "◎", iconType: "symbol", color: "#9945FF", onChain: false, decimals: 9 },
 };
 
+const METAL_TOKENS: TokenType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
+
 const ERC20_ABI = [
   {
     name: "transfer",
@@ -55,6 +58,8 @@ const translations: Record<string, Record<string, string>> = {
     recipientAddress: "Alıcı Adresi",
     amount: "Miktar",
     balance: "Bakiye",
+    available: "Kullanılabilir",
+    locked: "Kilitli",
     networkFee: "Ağ Ücreti",
     send: "Gönder",
     sending: "Gönderiliyor...",
@@ -67,6 +72,11 @@ const translations: Record<string, Record<string, string>> = {
     walletNotConnected: "Cüzdan bağlı değil",
     signTransaction: "Cüzdanınızda işlemi onaylayın",
     onChainNote: "On-chain transfer - Cüzdanınızda imzalamanız gerekecek",
+    unlockRequired: "Transfer için önce varlıklarınızı kiltten çıkarmanız gerekiyor",
+    unlock: "Kilidi Aç",
+    unlocking: "Kilit açılıyor...",
+    unlockSuccess: "Kilit açıldı!",
+    unlockAmount: "Açılacak Miktar",
   },
   en: {
     title: "Transfer",
@@ -75,6 +85,8 @@ const translations: Record<string, Record<string, string>> = {
     recipientAddress: "Recipient Address",
     amount: "Amount",
     balance: "Balance",
+    available: "Available",
+    locked: "Locked",
     networkFee: "Network Fee",
     send: "Send",
     sending: "Sending...",
@@ -87,6 +99,11 @@ const translations: Record<string, Record<string, string>> = {
     walletNotConnected: "Wallet not connected",
     signTransaction: "Please confirm the transaction in your wallet",
     onChainNote: "On-chain transfer - You will need to sign in your wallet",
+    unlockRequired: "You need to unlock your assets before transferring",
+    unlock: "Unlock",
+    unlocking: "Unlocking...",
+    unlockSuccess: "Unlocked!",
+    unlockAmount: "Amount to Unlock",
   },
 };
 
@@ -94,6 +111,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const t = translations[lang] || translations.en;
   const { balances, refreshBalances, address } = useWallet();
   const { isConnected } = useAccount();
+  const { allocations, totalGrams, refresh: refreshAllocations } = useAllocations();
   
   const [selectedToken, setSelectedToken] = useState<TokenType>("AUXM");
   const [recipientAddress, setRecipientAddress] = useState("");
@@ -103,6 +121,11 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const [errorMessage, setErrorMessage] = useState("");
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
   const [onChainBalances, setOnChainBalances] = useState<Record<string, number>>({});
+  
+  // Unlock states
+  const [showUnlockFlow, setShowUnlockFlow] = useState(false);
+  const [unlockAmount, setUnlockAmount] = useState("");
+  const [isUnlocking, setIsUnlocking] = useState(false);
 
   const { writeContract, isPending: isWritePending, data: writeData } = useWriteContract();
   
@@ -110,8 +133,8 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     hash: txHash,
   });
 
+  // Fetch on-chain balances
   useEffect(() => {
-    // Fetch on-chain balances for transfer
     const fetchOnChainBalances = async () => {
       if (!address) return;
       try {
@@ -152,6 +175,8 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
       setResult(null);
       setErrorMessage("");
       setTxHash(undefined);
+      setShowUnlockFlow(false);
+      setUnlockAmount("");
     }
   }, [isOpen]);
 
@@ -159,27 +184,93 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
 
   const tokenInfo = TOKEN_INFO[selectedToken];
   const amountNum = parseFloat(amount) || 0;
+  const isMetal = METAL_TOKENS.includes(selectedToken);
   
-  const getBalance = (token: TokenType): number => {
+  // Get locked amount for metals
+  const getLockedAmount = (token: TokenType): number => {
+    if (!isMetal) return 0;
+    return totalGrams[token] || 0;
+  };
+
+  // Get on-chain balance
+  const getOnChainBalance = (token: TokenType): number => {
+    const key = token.toLowerCase();
+    return onChainBalances[key] || 0;
+  };
+
+  // Get available (unlocked) balance for transfer
+  const getAvailableBalance = (token: TokenType): number => {
     const info = TOKEN_INFO[token];
-    // For on-chain tokens, use onChainBalances
     if (info.onChain && info.address) {
-      const key = token.toLowerCase();
-      return onChainBalances[key] || 0;
+      const onChain = getOnChainBalance(token);
+      const locked = getLockedAmount(token);
+      return Math.max(0, onChain - locked);
     }
-    // For off-chain tokens, use regular balances
     if (!balances) return 0;
     const key = token.toLowerCase() as keyof typeof balances;
     return parseFloat(String(balances[key] || 0));
   };
 
-  const tokenBalance = getBalance(selectedToken);
-  const canAfford = amountNum > 0 && amountNum <= tokenBalance;
+  const lockedAmount = getLockedAmount(selectedToken);
+  const onChainBalance = getOnChainBalance(selectedToken);
+  const availableBalance = getAvailableBalance(selectedToken);
+  const canAfford = amountNum > 0 && amountNum <= availableBalance;
   const isValidAddress = recipientAddress.length >= 42 && recipientAddress.startsWith("0x");
   const canSend = canAfford && isValidAddress && amountNum > 0 && !!address;
+  const needsUnlock = isMetal && amountNum > availableBalance && amountNum <= onChainBalance;
 
   const handleMaxClick = () => {
-    setAmount(tokenBalance.toString());
+    setAmount(availableBalance.toString());
+  };
+
+  const handleUnlock = async () => {
+    if (!address || !unlockAmount) return;
+    
+    const unlockAmountNum = parseFloat(unlockAmount);
+    if (unlockAmountNum <= 0 || unlockAmountNum > lockedAmount) return;
+    
+    setIsUnlocking(true);
+    
+    try {
+      // Find allocations to release
+      const metalAllocations = allocations.filter(a => a.metalSymbol === selectedToken);
+      let remainingToUnlock = unlockAmountNum;
+      
+      for (const alloc of metalAllocations) {
+        if (remainingToUnlock <= 0) break;
+        
+        const releaseAmount = Math.min(alloc.grams, remainingToUnlock);
+        
+        const res = await fetch(`/api/allocations?address=${address}&id=${alloc.id}&grams=${releaseAmount}`, {
+          method: "DELETE",
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+          remainingToUnlock -= releaseAmount;
+        }
+      }
+      
+      // Refresh allocations and balances
+      await refreshAllocations();
+      if (refreshBalances) await refreshBalances();
+      
+      // Refetch on-chain balances
+      const res = await fetch(`/api/user/balance?address=${address}`);
+      const data = await res.json();
+      if (data.onChainBalances) {
+        setOnChainBalances(data.onChainBalances);
+      }
+      
+      setShowUnlockFlow(false);
+      setUnlockAmount("");
+      
+    } catch (error: any) {
+      console.error("Unlock error:", error);
+      setErrorMessage(error.message || "Unlock failed");
+    } finally {
+      setIsUnlocking(false);
+    }
   };
 
   const handleTransfer = async () => {
@@ -192,11 +283,11 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
       if (tokenInfo.onChain && tokenInfo.address) {
         const amountInUnits = parseUnits(amount, tokenInfo.decimals);
         writeContract({
-          gas: BigInt(200000),
           address: tokenInfo.address as `0x${string}`,
           abi: ERC20_ABI,
           functionName: "transfer",
           args: [recipientAddress as `0x${string}`, amountInUnits],
+          gas: BigInt(200000),
         });
       } else {
         const response = await fetch("/api/transfer", {
@@ -239,6 +330,79 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
       </div>
     );
   };
+
+  // Unlock Flow Screen
+  if (showUnlockFlow) {
+    return (
+      <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 max-w-md w-full p-6 shadow-xl">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t.unlock} {selectedToken}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t.unlockRequired}</p>
+            </div>
+            <button onClick={() => setShowUnlockFlow(false)} className="p-2 hover:bg-stone-200 dark:hover:bg-slate-800 rounded-lg">
+              <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl p-4 mb-4">
+            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m5.657-9.657a8 8 0 11-14.142 0m14.142 0A8 8 0 0012 3v0m0 10.243V9" />
+              </svg>
+              <span className="text-sm font-medium">{t.locked}: {lockedAmount.toFixed(4)} {selectedToken}</span>
+            </div>
+          </div>
+          
+          <div className="mb-4">
+            <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t.unlockAmount}</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={unlockAmount}
+                onChange={(e) => setUnlockAmount(e.target.value)}
+                placeholder="0.00"
+                max={lockedAmount}
+                className="flex-1 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white"
+              />
+              <button
+                onClick={() => setUnlockAmount(lockedAmount.toString())}
+                className="px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl text-emerald-600 dark:text-emerald-500 font-medium"
+              >
+                MAX
+              </button>
+            </div>
+          </div>
+          
+          <button
+            onClick={handleUnlock}
+            disabled={isUnlocking || !unlockAmount || parseFloat(unlockAmount) <= 0}
+            className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-semibold flex items-center justify-center gap-2"
+          >
+            {isUnlocking ? (
+              <>
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                {t.unlocking}
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                </svg>
+                {t.unlock}
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Processing screen
   if ((isWritePending || isConfirming) && !result) {
@@ -342,6 +506,40 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           </div>
         )}
 
+        {/* Locked/Available Balance for Metals */}
+        {isMetal && lockedAmount > 0 && (
+          <div className="mb-4 p-3 bg-stone-100 dark:bg-slate-800 rounded-xl border border-stone-200 dark:border-slate-700">
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-slate-600 dark:text-slate-400">{t.balance}:</span>
+              <span className="text-slate-800 dark:text-white">{onChainBalance.toFixed(4)} {selectedToken}</span>
+            </div>
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m4-10V4a2 2 0 00-2-2h-2a2 2 0 00-2 2v1" />
+                </svg>
+                {t.locked}:
+              </span>
+              <span className="text-amber-600 dark:text-amber-400">{lockedAmount.toFixed(4)} {selectedToken}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-emerald-600 dark:text-emerald-400">{t.available}:</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">{availableBalance.toFixed(4)} {selectedToken}</span>
+            </div>
+            {availableBalance < onChainBalance && (
+              <button
+                onClick={() => setShowUnlockFlow(true)}
+                className="mt-2 w-full py-2 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-600 dark:text-amber-400 text-sm font-medium hover:bg-amber-500/30 transition-colors flex items-center justify-center gap-1"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                </svg>
+                {t.unlock}
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="mb-4">
           <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t.recipientAddress}</label>
           <input
@@ -357,7 +555,9 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <label className="text-sm text-slate-600 dark:text-slate-400">{t.amount}</label>
-            <span className="text-xs text-slate-500">{t.balance}: {tokenBalance.toFixed(4)} {selectedToken}</span>
+            {!isMetal && (
+              <span className="text-xs text-slate-500">{t.balance}: {availableBalance.toFixed(4)} {selectedToken}</span>
+            )}
           </div>
           <div className="flex gap-2">
             <input
@@ -371,7 +571,12 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
               MAX
             </button>
           </div>
-          {amountNum > 0 && !canAfford && <p className="text-xs text-red-500 mt-1">{t.insufficientBalance}</p>}
+          {amountNum > 0 && !canAfford && !needsUnlock && (
+            <p className="text-xs text-red-500 mt-1">{t.insufficientBalance}</p>
+          )}
+          {needsUnlock && (
+            <p className="text-xs text-amber-500 mt-1">{t.unlockRequired}</p>
+          )}
         </div>
 
         <div className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-3 mb-4 border border-stone-200 dark:border-slate-700">
@@ -388,9 +593,13 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         )}
 
         <button
-          onClick={handleTransfer}
-          disabled={!canSend || isProcessing}
-          className="w-full py-3 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold transition-colors flex items-center justify-center gap-2"
+          onClick={needsUnlock ? () => setShowUnlockFlow(true) : handleTransfer}
+          disabled={(!canSend && !needsUnlock) || isProcessing}
+          className={"w-full py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 " + 
+            (needsUnlock 
+              ? "bg-amber-500 hover:bg-amber-600 text-white" 
+              : "bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white"
+            )}
         >
           {isProcessing ? (
             <span className="flex items-center gap-2">
@@ -399,6 +608,13 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
               {t.sending}
+            </span>
+          ) : needsUnlock ? (
+            <span className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+              </svg>
+              {t.unlock}
             </span>
           ) : (
             <span className="flex items-center gap-2">
@@ -415,4 +631,3 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
 }
 
 export default TransferModal;
-// force rebuild  3 Oca 2026 Cmt +03 17:00:23
