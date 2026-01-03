@@ -2,12 +2,6 @@
 
 import { useState, useEffect, createContext, useContext, useCallback } from "react";
 
-/**
- * Toast Notification System
- * Kullanıcıya bildirim göstermek için
- */
-
-// Types
 type ToastType = "success" | "error" | "warning" | "info";
 
 interface Toast {
@@ -28,10 +22,8 @@ interface ToastContextType {
   info: (title: string, message?: string) => void;
 }
 
-// Context
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-// Hook
 export function useToast() {
   const context = useContext(ToastContext);
   if (!context) {
@@ -40,7 +32,6 @@ export function useToast() {
   return context;
 }
 
-// Provider
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -53,8 +44,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     const newToast = { ...toast, id };
     setToasts((prev) => [...prev, newToast]);
 
-    // Auto dismiss
-    const duration = toast.duration ?? 5000;
+    const duration = toast.duration ?? 3000;
     if (duration > 0) {
       setTimeout(() => removeToast(id), duration);
     }
@@ -65,7 +55,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, [addToast]);
 
   const error = useCallback((title: string, message?: string) => {
-    addToast({ type: "error", title, message, duration: 7000 });
+    addToast({ type: "error", title, message, duration: 5000 });
   }, [addToast]);
 
   const warning = useCallback((title: string, message?: string) => {
@@ -79,106 +69,76 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast, success, error, warning, info }}>
       {children}
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      {toasts.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-[100] p-4">
+          {toasts.map((toast) => (
+            <ToastModal key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
+          ))}
+        </div>
+      )}
     </ToastContext.Provider>
   );
 }
 
-// Toast Container
-function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast: (id: string) => void }) {
-  return (
-    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
-      {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
-      ))}
-    </div>
-  );
-}
-
-// Toast Item
-function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
-  const [isExiting, setIsExiting] = useState(false);
-
-  const handleClose = () => {
-    setIsExiting(true);
-    setTimeout(onClose, 200);
-  };
-
+function ToastModal({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   const icons = {
     success: (
-      <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+      <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
       </svg>
     ),
     error: (
-      <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
       </svg>
     ),
     warning: (
-      <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
     ),
     info: (
-      <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
   };
 
-  const colors = {
-    success: "border-emerald-500/30 bg-emerald-500/10",
-    error: "border-red-500/30 bg-red-500/10",
-    warning: "border-amber-500/30 bg-amber-500/10",
-    info: "border-blue-500/30 bg-blue-500/10",
+  const iconBg = {
+    success: "bg-emerald-500",
+    error: "bg-red-500",
+    warning: "bg-amber-500",
+    info: "bg-blue-500",
+  };
+
+  const titleColor = {
+    success: "text-emerald-500",
+    error: "text-red-500",
+    warning: "text-amber-500",
+    info: "text-blue-500",
   };
 
   return (
-    <div
-      className={`
-        pointer-events-auto
-        flex items-start gap-3 p-4 rounded-xl border backdrop-blur-sm
-        shadow-lg shadow-black/20
-        ${colors[toast.type]}
-        transform transition-all duration-200
-        ${isExiting ? "opacity-0 translate-x-4" : "opacity-100 translate-x-0"}
-        animate-slideIn
-      `}
-    >
-      <div className="flex-shrink-0 mt-0.5">{icons[toast.type]}</div>
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-white">{toast.title}</p>
-        {toast.message && (
-          <p className="mt-1 text-sm text-slate-300">{toast.message}</p>
-        )}
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 max-w-sm w-full p-6 shadow-xl text-center animate-scale-in">
+      <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${iconBg[toast.type]}`}>
+        {icons[toast.type]}
       </div>
+      <h3 className={`text-xl font-bold mb-2 ${titleColor[toast.type]}`}>
+        {toast.title}
+      </h3>
+      {toast.message && (
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          {toast.message}
+        </p>
+      )}
       <button
-        onClick={handleClose}
-        className="flex-shrink-0 text-slate-400 hover:text-white transition-colors"
+        onClick={onClose}
+        className="px-6 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        Tamam
       </button>
     </div>
   );
 }
 
-// CSS (global.css'e ekle)
-export const toastAnimations = `
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-slideIn {
-  animation: slideIn 0.2s ease-out;
-}
-`;
+export default ToastProvider;
