@@ -516,7 +516,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
             <div className="flex justify-between text-sm mb-1">
               <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1">
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m4-10V4a2 2 0 00-2-2h-2a2 2 0 00-2 2v1" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 {t.locked}:
               </span>
