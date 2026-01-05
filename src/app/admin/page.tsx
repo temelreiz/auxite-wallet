@@ -384,6 +384,10 @@ const TABS = [
   { id: "withdraws", label: "Çekim", icon: "📤" },
   { id: "mobile", label: "Mobil", icon: "📱" },
   { id: "mint", label: "Mint", icon: "🏭" },
+  { id: "website", label: "Website", icon: "🌐" },
+  { id: "siteRoadmap", label: "Roadmap", icon: "🗺️" },
+  { id: "siteTeam", label: "Site Ekip", icon: "👨‍👩‍👧‍👦" },
+  { id: "siteVaults", label: "Kasalar", icon: "🏛️" },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -580,6 +584,27 @@ export default function AdminDashboard() {
   const [sovereignLoading, setSovereignLoading] = useState(false);
 
   // ═══════════════════════════════════════════════════════════════════════════════
+  // WEBSITE MANAGEMENT STATES
+  // ═══════════════════════════════════════════════════════════════════════════════
+  
+  const [websiteSettings, setWebsiteSettings] = useState({
+    maintenanceMode: false,
+    maintenanceMessage: { en: '', tr: '' },
+    announcementBar: null as any,
+    socialLinks: { twitter: '', telegram: '', discord: '', linkedin: '' },
+    contactEmail: 'hello@auxite.io',
+    supportEmail: 'support@auxite.io',
+  });
+  const [roadmapPhases, setRoadmapPhases] = useState<any[]>([]);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [vaultLocations, setVaultLocations] = useState<any[]>([]);
+  const [websiteSEO, setWebsiteSEO] = useState<any[]>([]);
+  const [websiteLoading, setWebsiteLoading] = useState(false);
+  const [websiteSaving, setWebsiteSaving] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [showWebsiteModal, setShowWebsiteModal] = useState<string | null>(null);
+
+  // ═══════════════════════════════════════════════════════════════════════════════
   // AUTH LOGIC
   // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -673,6 +698,7 @@ export default function AdminDashboard() {
     loadAnalytics();
     loadAuxiteerConfig();
     loadSovereignInvitations();
+    loadWebsiteData();
   };
 
   const loadStats = async () => {
@@ -911,6 +937,116 @@ export default function AdminDashboard() {
       }
     } catch (e) {
       console.error("Failed to load invitations:", e);
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // WEBSITE MANAGEMENT FUNCTIONS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  const loadWebsiteData = async () => {
+    setWebsiteLoading(true);
+    try {
+      const [settingsRes, roadmapRes, teamRes, vaultsRes, seoRes] = await Promise.all([
+        fetch('/api/admin/website/settings', { headers: getAuthHeaders() }),
+        fetch('/api/admin/website/roadmap', { headers: getAuthHeaders() }),
+        fetch('/api/admin/website/team', { headers: getAuthHeaders() }),
+        fetch('/api/admin/website/vaults', { headers: getAuthHeaders() }),
+        fetch('/api/admin/website/seo', { headers: getAuthHeaders() }),
+      ]);
+      
+      if (settingsRes.ok) setWebsiteSettings(await settingsRes.json());
+      if (roadmapRes.ok) setRoadmapPhases(await roadmapRes.json());
+      if (teamRes.ok) setTeamMembers(await teamRes.json());
+      if (vaultsRes.ok) setVaultLocations(await vaultsRes.json());
+      if (seoRes.ok) setWebsiteSEO(await seoRes.json());
+    } catch (err) {
+      console.error('Website data load error:', err);
+    }
+    setWebsiteLoading(false);
+  };
+
+  const saveWebsiteSettings = async () => {
+    setWebsiteSaving(true);
+    try {
+      const res = await fetch('/api/admin/website/settings', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(websiteSettings),
+      });
+      if (res.ok) {
+        setMessage({ type: 'success', text: 'Website ayarları kaydedildi!' });
+      } else {
+        setMessage({ type: 'error', text: 'Kaydetme hatası!' });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Bağlantı hatası!' });
+    }
+    setWebsiteSaving(false);
+    setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+  };
+
+  const saveRoadmapPhase = async (phase: any) => {
+    try {
+      const res = await fetch('/api/admin/website/roadmap', {
+        method: phase.id && !phase.id.startsWith('phase_') ? 'PUT' : 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(phase),
+      });
+      if (res.ok) {
+        loadWebsiteData();
+        setShowWebsiteModal(null);
+        setEditingItem(null);
+      }
+    } catch (err) {
+      alert('Kaydetme hatası!');
+    }
+  };
+
+  const saveTeamMember = async (member: any) => {
+    try {
+      const res = await fetch('/api/admin/website/team', {
+        method: member.id && !member.id.startsWith('member_') ? 'PUT' : 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(member),
+      });
+      if (res.ok) {
+        loadWebsiteData();
+        setShowWebsiteModal(null);
+        setEditingItem(null);
+      }
+    } catch (err) {
+      alert('Kaydetme hatası!');
+    }
+  };
+
+  const saveVaultLocation = async (vault: any) => {
+    try {
+      const res = await fetch('/api/admin/website/vaults', {
+        method: vault.id && !vault.id.startsWith('vault_') ? 'PUT' : 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(vault),
+      });
+      if (res.ok) {
+        loadWebsiteData();
+        setShowWebsiteModal(null);
+        setEditingItem(null);
+      }
+    } catch (err) {
+      alert('Kaydetme hatası!');
+    }
+  };
+
+  const deleteWebsiteItem = async (type: string, id: string) => {
+    if (!confirm('Silmek istediğinize emin misiniz?')) return;
+    try {
+      await fetch(`/api/admin/website/${type}/${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      loadWebsiteData();
+    } catch (err) {
+      alert('Silme hatası!');
     }
   };
 
@@ -3058,6 +3194,682 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════════════════════════════ */}
+          {/* WEBSITE MANAGEMENT TABS */}
+          {/* ═══════════════════════════════════════════════════════════════════════════════ */}
+
+          {/* Website Settings Tab */}
+          {activeTab === "website" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">🌐 Website Ayarları</h2>
+                <button onClick={loadWebsiteData} disabled={websiteLoading} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm">
+                  {websiteLoading ? "Yükleniyor..." : "🔄 Yenile"}
+                </button>
+              </div>
+
+              {/* Maintenance Mode */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  🚧 Bakım Modu
+                  <span className={`px-2 py-1 rounded text-xs ${websiteSettings.maintenanceMode ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
+                    {websiteSettings.maintenanceMode ? 'AKTİF' : 'KAPALI'}
+                  </span>
+                </h3>
+                <div className="space-y-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={websiteSettings.maintenanceMode}
+                      onChange={(e) => setWebsiteSettings({ ...websiteSettings, maintenanceMode: e.target.checked })}
+                      className="w-5 h-5 rounded bg-slate-700 border-slate-600"
+                    />
+                    <span>Bakım modunu aktif et</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-2">Mesaj (EN)</label>
+                      <input
+                        type="text"
+                        value={websiteSettings.maintenanceMessage?.en || ''}
+                        onChange={(e) => setWebsiteSettings({
+                          ...websiteSettings,
+                          maintenanceMessage: { ...websiteSettings.maintenanceMessage, en: e.target.value }
+                        })}
+                        placeholder="We're currently under maintenance..."
+                        className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-2">Mesaj (TR)</label>
+                      <input
+                        type="text"
+                        value={websiteSettings.maintenanceMessage?.tr || ''}
+                        onChange={(e) => setWebsiteSettings({
+                          ...websiteSettings,
+                          maintenanceMessage: { ...websiteSettings.maintenanceMessage, tr: e.target.value }
+                        })}
+                        placeholder="Şu anda bakımdayız..."
+                        className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Links */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-4">🔗 Sosyal Medya Linkleri</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(websiteSettings.socialLinks || {}).map(([key, value]) => (
+                    <div key={key}>
+                      <label className="block text-sm text-slate-400 mb-2 capitalize">{key}</label>
+                      <input
+                        type="text"
+                        value={value as string}
+                        onChange={(e) => setWebsiteSettings({
+                          ...websiteSettings,
+                          socialLinks: { ...websiteSettings.socialLinks, [key]: e.target.value }
+                        })}
+                        placeholder={`https://${key}.com/...`}
+                        className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Contact Emails */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-4">📧 İletişim E-postaları</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">Genel İletişim</label>
+                    <input
+                      type="email"
+                      value={websiteSettings.contactEmail || ''}
+                      onChange={(e) => setWebsiteSettings({ ...websiteSettings, contactEmail: e.target.value })}
+                      placeholder="hello@auxite.io"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">Destek</label>
+                    <input
+                      type="email"
+                      value={websiteSettings.supportEmail || ''}
+                      onChange={(e) => setWebsiteSettings({ ...websiteSettings, supportEmail: e.target.value })}
+                      placeholder="support@auxite.io"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={saveWebsiteSettings}
+                disabled={websiteSaving}
+                className="w-full py-3 bg-amber-500 hover:bg-amber-600 rounded-xl text-black font-semibold disabled:opacity-50"
+              >
+                {websiteSaving ? 'Kaydediliyor...' : '💾 Ayarları Kaydet'}
+              </button>
+            </div>
+          )}
+
+          {/* Roadmap Tab */}
+          {activeTab === "siteRoadmap" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">🗺️ Roadmap Yönetimi</h2>
+                <button
+                  onClick={() => {
+                    setEditingItem({
+                      id: '',
+                      phase: '',
+                      title: { en: '', tr: '' },
+                      status: 'upcoming',
+                      items: []
+                    });
+                    setShowWebsiteModal('roadmap');
+                  }}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-black font-medium"
+                >
+                  + Yeni Faz Ekle
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {roadmapPhases.map((phase: any) => (
+                  <div
+                    key={phase.id}
+                    className={`bg-slate-900/50 border rounded-xl p-6 ${
+                      phase.status === 'current' ? 'border-amber-500/50' : 
+                      phase.status === 'completed' ? 'border-green-500/30' : 'border-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          phase.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                          phase.status === 'current' ? 'bg-amber-500/20 text-amber-400' :
+                          'bg-slate-700 text-slate-400'
+                        }`}>
+                          {phase.phase}
+                        </span>
+                        <h3 className="font-semibold text-lg">{phase.title?.tr || phase.title?.en}</h3>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingItem(phase);
+                            setShowWebsiteModal('roadmap');
+                          }}
+                          className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => deleteWebsiteItem('roadmap', phase.id)}
+                          className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {phase.items?.map((item: any, i: number) => (
+                        <div key={i} className="flex items-center gap-3 p-2 bg-slate-800/50 rounded-lg">
+                          <span className={`w-5 h-5 rounded border-2 flex items-center justify-center text-xs ${
+                            item.done ? 'bg-green-500 border-green-500 text-white' : 'border-slate-600'
+                          }`}>
+                            {item.done && '✓'}
+                          </span>
+                          <span className={item.done ? 'text-slate-500 line-through' : 'text-white'}>
+                            {item.text?.tr || item.text?.en}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Team Tab */}
+          {activeTab === "siteTeam" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">👨‍👩‍👧‍👦 Site Ekip Yönetimi</h2>
+                <button
+                  onClick={() => {
+                    setEditingItem({
+                      id: '',
+                      name: '',
+                      role: { en: '', tr: '' },
+                      bio: { en: '', tr: '' },
+                      type: 'team',
+                      order: teamMembers.length,
+                      active: true
+                    });
+                    setShowWebsiteModal('team');
+                  }}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-black font-medium"
+                >
+                  + Yeni Üye Ekle
+                </button>
+              </div>
+
+              {/* Team Members */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-4">Ekip Üyeleri</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {teamMembers.filter((m: any) => m.type === 'team').map((member: any) => (
+                    <div key={member.id} className="p-4 bg-slate-800/50 rounded-xl flex gap-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-amber-500/20 to-amber-500/10 rounded-xl flex items-center justify-center text-2xl">
+                        👤
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold">{member.name}</h4>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => { setEditingItem(member); setShowWebsiteModal('team'); }}
+                              className="p-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs"
+                            >✏️</button>
+                            <button
+                              onClick={() => deleteWebsiteItem('team', member.id)}
+                              className="p-1.5 bg-red-500/20 hover:bg-red-500/30 rounded text-xs text-red-400"
+                            >🗑️</button>
+                          </div>
+                        </div>
+                        <p className="text-sm text-amber-400">{member.role?.tr || member.role?.en}</p>
+                        <p className="text-xs text-slate-400 mt-1 line-clamp-2">{member.bio?.tr || member.bio?.en}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Advisors */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-4">Danışmanlar</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {teamMembers.filter((m: any) => m.type === 'advisor').map((member: any) => (
+                    <div key={member.id} className="p-4 bg-slate-800/50 rounded-xl text-center">
+                      <div className="w-12 h-12 bg-amber-500/10 rounded-full mx-auto mb-3 flex items-center justify-center text-xl">👤</div>
+                      <h4 className="font-semibold text-sm">{member.name}</h4>
+                      <p className="text-xs text-amber-400">{member.role?.tr || member.role?.en}</p>
+                      <div className="flex justify-center gap-2 mt-2">
+                        <button onClick={() => { setEditingItem(member); setShowWebsiteModal('team'); }} className="text-xs text-slate-400 hover:text-white">✏️</button>
+                        <button onClick={() => deleteWebsiteItem('team', member.id)} className="text-xs text-red-400">🗑️</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Partners */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-4">Partnerler</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {teamMembers.filter((m: any) => m.type === 'partner').map((member: any) => (
+                    <div key={member.id} className="p-4 bg-slate-800/50 rounded-xl text-center">
+                      <div className="text-3xl mb-2">{member.avatar || '🏢'}</div>
+                      <h4 className="font-semibold text-sm">{member.name}</h4>
+                      <p className="text-xs text-slate-400">{member.role?.tr || member.role?.en}</p>
+                      <div className="flex justify-center gap-2 mt-2">
+                        <button onClick={() => { setEditingItem(member); setShowWebsiteModal('team'); }} className="text-xs text-slate-400 hover:text-white">✏️</button>
+                        <button onClick={() => deleteWebsiteItem('team', member.id)} className="text-xs text-red-400">🗑️</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Vaults Tab */}
+          {activeTab === "siteVaults" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">🏛️ Kasa Lokasyonları</h2>
+                <button
+                  onClick={() => {
+                    setEditingItem({
+                      id: '',
+                      city: '',
+                      country: '',
+                      flag: '🏳️',
+                      status: 'coming',
+                      capacity: '',
+                      metals: ['AUXG'],
+                      coordinates: { x: 50, y: 50 }
+                    });
+                    setShowWebsiteModal('vault');
+                  }}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-black font-medium"
+                >
+                  + Yeni Kasa Ekle
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {vaultLocations.map((vault: any) => (
+                  <div
+                    key={vault.id}
+                    className={`bg-slate-900/50 border rounded-xl p-6 ${
+                      vault.status === 'active' ? 'border-green-500/30' :
+                      vault.status === 'maintenance' ? 'border-red-500/30' : 'border-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-3xl">{vault.flag}</span>
+                        <div>
+                          <h3 className="font-semibold text-lg">{vault.city}</h3>
+                          <p className="text-sm text-slate-400">{vault.country}</p>
+                        </div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        vault.status === 'active' ? 'bg-green-500/20 text-green-400' :
+                        vault.status === 'maintenance' ? 'bg-red-500/20 text-red-400' :
+                        'bg-amber-500/20 text-amber-400'
+                      }`}>
+                        {vault.status === 'active' ? 'Aktif' : vault.status === 'maintenance' ? 'Bakımda' : 'Yakında'}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="text-xs text-slate-400">Kapasite</p>
+                        <p className="font-semibold">{vault.capacity}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400">Koordinatlar</p>
+                        <p className="font-mono text-sm">{vault.coordinates?.x}, {vault.coordinates?.y}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {vault.metals?.map((metal: string) => (
+                        <span key={metal} className="px-2 py-1 bg-amber-500/10 rounded text-amber-400 text-xs">
+                          {metal}
+                        </span>
+                      ))}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setEditingItem(vault); setShowWebsiteModal('vault'); }}
+                        className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm"
+                      >
+                        ✏️ Düzenle
+                      </button>
+                      <button
+                        onClick={() => deleteWebsiteItem('vaults', vault.id)}
+                        className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 text-sm"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Website Edit Modal */}
+          {showWebsiteModal && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+                  <h3 className="text-xl font-semibold">
+                    {showWebsiteModal === 'roadmap' && '🗺️ Roadmap Fazı'}
+                    {showWebsiteModal === 'team' && '👨‍👩‍👧‍👦 Ekip Üyesi'}
+                    {showWebsiteModal === 'vault' && '🏛️ Kasa Lokasyonu'}
+                  </h3>
+                  <button onClick={() => { setShowWebsiteModal(null); setEditingItem(null); }} className="text-slate-400 hover:text-white text-xl">✕</button>
+                </div>
+                
+                <div className="p-6 space-y-4">
+                  {showWebsiteModal === 'roadmap' && editingItem && (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Faz (örn: Q1 2025)</label>
+                          <input
+                            type="text"
+                            value={editingItem.phase || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, phase: e.target.value })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Durum</label>
+                          <select
+                            value={editingItem.status || 'upcoming'}
+                            onChange={(e) => setEditingItem({ ...editingItem, status: e.target.value })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          >
+                            <option value="upcoming">Yakında</option>
+                            <option value="current">Devam Ediyor</option>
+                            <option value="completed">Tamamlandı</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Başlık (EN)</label>
+                          <input
+                            type="text"
+                            value={editingItem.title?.en || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, title: { ...editingItem.title, en: e.target.value } })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Başlık (TR)</label>
+                          <input
+                            type="text"
+                            value={editingItem.title?.tr || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, title: { ...editingItem.title, tr: e.target.value } })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-slate-400 mb-2">Maddeler (her satır bir madde, [x] tamamlanmış)</label>
+                        <textarea
+                          value={editingItem.items?.map((i: any) => `${i.done ? '[x] ' : '[ ] '}${i.text?.tr || i.text?.en}`).join('\n') || ''}
+                          onChange={(e) => {
+                            const items = e.target.value.split('\n').filter(line => line.trim()).map(line => ({
+                              text: { en: line.replace(/^\[.\] /, ''), tr: line.replace(/^\[.\] /, '') },
+                              done: line.startsWith('[x]')
+                            }));
+                            setEditingItem({ ...editingItem, items });
+                          }}
+                          rows={6}
+                          placeholder="[ ] Madde 1&#10;[x] Tamamlanmış madde"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white font-mono text-sm"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {showWebsiteModal === 'team' && editingItem && (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">İsim</label>
+                          <input
+                            type="text"
+                            value={editingItem.name || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Tip</label>
+                          <select
+                            value={editingItem.type || 'team'}
+                            onChange={(e) => setEditingItem({ ...editingItem, type: e.target.value })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          >
+                            <option value="team">Ekip Üyesi</option>
+                            <option value="advisor">Danışman</option>
+                            <option value="partner">Partner</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Rol (EN)</label>
+                          <input
+                            type="text"
+                            value={editingItem.role?.en || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, role: { ...editingItem.role, en: e.target.value } })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Rol (TR)</label>
+                          <input
+                            type="text"
+                            value={editingItem.role?.tr || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, role: { ...editingItem.role, tr: e.target.value } })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Bio (EN)</label>
+                          <textarea
+                            value={editingItem.bio?.en || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, bio: { ...editingItem.bio, en: e.target.value } })}
+                            rows={3}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Bio (TR)</label>
+                          <textarea
+                            value={editingItem.bio?.tr || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, bio: { ...editingItem.bio, tr: e.target.value } })}
+                            rows={3}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">LinkedIn</label>
+                          <input
+                            type="text"
+                            value={editingItem.linkedin || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, linkedin: e.target.value })}
+                            placeholder="https://linkedin.com/in/..."
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Twitter</label>
+                          <input
+                            type="text"
+                            value={editingItem.twitter || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, twitter: e.target.value })}
+                            placeholder="https://twitter.com/..."
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {showWebsiteModal === 'vault' && editingItem && (
+                    <>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Şehir</label>
+                          <input
+                            type="text"
+                            value={editingItem.city || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, city: e.target.value })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Ülke</label>
+                          <input
+                            type="text"
+                            value={editingItem.country || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, country: e.target.value })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Bayrak Emoji</label>
+                          <input
+                            type="text"
+                            value={editingItem.flag || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, flag: e.target.value })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-center text-2xl"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Kapasite</label>
+                          <input
+                            type="text"
+                            value={editingItem.capacity || ''}
+                            onChange={(e) => setEditingItem({ ...editingItem, capacity: e.target.value })}
+                            placeholder="10,000 kg"
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Durum</label>
+                          <select
+                            value={editingItem.status || 'coming'}
+                            onChange={(e) => setEditingItem({ ...editingItem, status: e.target.value })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          >
+                            <option value="active">Aktif</option>
+                            <option value="coming">Yakında</option>
+                            <option value="maintenance">Bakımda</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">X Koordinatı (%)</label>
+                          <input
+                            type="number"
+                            value={editingItem.coordinates?.x || 50}
+                            onChange={(e) => setEditingItem({ ...editingItem, coordinates: { ...editingItem.coordinates, x: Number(e.target.value) } })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-400 mb-2">Y Koordinatı (%)</label>
+                          <input
+                            type="number"
+                            value={editingItem.coordinates?.y || 50}
+                            onChange={(e) => setEditingItem({ ...editingItem, coordinates: { ...editingItem.coordinates, y: Number(e.target.value) } })}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-slate-400 mb-2">Desteklenen Metaller</label>
+                        <div className="flex flex-wrap gap-3">
+                          {['AUXG', 'AUXS', 'AUXPT', 'AUXPD'].map((metal) => (
+                            <label key={metal} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={editingItem.metals?.includes(metal)}
+                                onChange={(e) => {
+                                  const metals = e.target.checked
+                                    ? [...(editingItem.metals || []), metal]
+                                    : (editingItem.metals || []).filter((m: string) => m !== metal);
+                                  setEditingItem({ ...editingItem, metals });
+                                }}
+                                className="w-4 h-4 rounded bg-slate-700"
+                              />
+                              <span>{metal}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+                
+                <div className="p-6 border-t border-slate-800 flex gap-3">
+                  <button
+                    onClick={() => { setShowWebsiteModal(null); setEditingItem(null); }}
+                    className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl"
+                  >
+                    İptal
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (showWebsiteModal === 'roadmap') saveRoadmapPhase(editingItem);
+                      if (showWebsiteModal === 'team') saveTeamMember(editingItem);
+                      if (showWebsiteModal === 'vault') saveVaultLocation(editingItem);
+                    }}
+                    className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 rounded-xl text-black font-semibold"
+                  >
+                    💾 Kaydet
+                  </button>
+                </div>
               </div>
             </div>
           )}
