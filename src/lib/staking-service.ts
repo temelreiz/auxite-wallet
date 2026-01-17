@@ -2,18 +2,19 @@
 // On-chain staking service using V8 tokens and StakingV2 contract
 
 import { ethers } from "ethers";
+import { METAL_TOKENS, STAKING_CONTRACT, ACTIVE_NETWORK } from "@/config/contracts-v8";
 
 // Config
-const RPC_URL = process.env.SEPOLIA_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
+const RPC_URL = ACTIVE_NETWORK.rpcUrl;
 
-// V8 Contract Addresses
-const STAKING_V2_ADDRESS = process.env.NEXT_PUBLIC_STAKING_V2 || "0x96ff8358183BA045e3d6cDA4ca2AfF30423A9dC8";
+// V8 Contract Addresses from central config
+const STAKING_V2_ADDRESS = STAKING_CONTRACT || process.env.NEXT_PUBLIC_STAKING_V2 || "";
 
 const TOKEN_V8_ADDRESSES: Record<string, string> = {
-  AUXG: process.env.NEXT_PUBLIC_AUXG_V8 || "0xD14D32B1e03B3027D1f8381EeeC567e147De9CCe",
-  AUXS: process.env.NEXT_PUBLIC_AUXS_V8 || "0xc924EE950BF5A5Fbe3c26eECB27D99031B441caD",
-  AUXPT: process.env.NEXT_PUBLIC_AUXPT_V8 || "0x37402EA435a91567223C132414C3A50C6bBc7200",
-  AUXPD: process.env.NEXT_PUBLIC_AUXPD_V8 || "0x6026338B9Bfd94fed07EA61cbE60b15e300911DC",
+  AUXG: METAL_TOKENS.AUXG,
+  AUXS: METAL_TOKENS.AUXS,
+  AUXPT: METAL_TOKENS.AUXPT,
+  AUXPD: METAL_TOKENS.AUXPD,
 };
 
 // Metal IDs (keccak256 hash)

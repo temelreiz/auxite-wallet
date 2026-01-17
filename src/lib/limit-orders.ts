@@ -4,6 +4,7 @@
 import { getRedis, getUserBalance, incrementBalance, addTransaction } from './redis';
 import { createPublicClient, http, formatUnits } from 'viem';
 import { sepolia } from 'viem/chains';
+import { METAL_TOKENS, USDT_ADDRESS } from '@/config/contracts-v8';
 
 // Blockchain client for balance checks
 const RPC_URL = process.env.SEPOLIA_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
@@ -11,14 +12,6 @@ const client = createPublicClient({
   chain: sepolia,
   transport: http(RPC_URL, { timeout: 10000 }),
 });
-
-const METAL_TOKENS: Record<string, `0x${string}`> = {
-  AUXG: "0xBF74Fc9f0dD50A79f9FaC2e9Aa05a268E3dcE6b6",
-  AUXS: "0x705D9B193e5E349847C2Efb18E68fe989eC2C0e9",
-  AUXPT: "0x1819447f624D8e22C1A4F3B14e96693625B6d74F",
-  AUXPD: "0xb23545dE86bE9F65093D3a51a6ce52Ace0d8935E",
-};
-const USDT_ADDRESS = "0x738e3134d83014B7a63CFF08C13CBBF0671EEeF2" as `0x${string}`;
 
 const ERC20_ABI = [
   {
@@ -41,9 +34,10 @@ async function getBlockchainBalance(address: string, token: string): Promise<num
         args: [address as `0x${string}`],
       });
       return parseFloat(formatUnits(balance, 6));
-    } else if (METAL_TOKENS[token]) {
+    } else if (token in METAL_TOKENS) {
+      const tokenAddress = METAL_TOKENS[token as keyof typeof METAL_TOKENS];
       const balance = await client.readContract({
-        address: METAL_TOKENS[token],
+        address: tokenAddress,
         abi: ERC20_ABI,
         functionName: "balanceOf",
         args: [address as `0x${string}`],

@@ -3,20 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
-
-// Metal token addresses (Sepolia)
-const METAL_TOKENS: Record<string, `0x${string}`> = {
-  AUXG: "0xBF74Fc9f0dD50A79f9FaC2e9Aa05a268E3dcE6b6",
-  AUXS: "0x705D9B193e5E349847C2Efb18E68fe989eC2C0e9",
-  AUXPT: "0x1819447f624D8e22C1A4F3B14e96693625B6d74F",
-  AUXPD: "0xb23545dE86bE9F65093D3a51a6ce52Ace0d8935E",
-};
-
-// USDT address on Sepolia
-const USDT_ADDRESS = "0x738e3134d83014B7a63CFF08C13CBBF0671EEeF2" as `0x${string}`;
-
-// Exchange contract address
-const EXCHANGE_ADDRESS = "0xCdFC3e54Bf2A884cd647dC205c89B46C878072Fc" as `0x${string}`;
+import { METAL_TOKENS, USDT_ADDRESS, EXCHANGE_ADDRESS } from "@/config/contracts-v8";
 
 const ERC20_ABI = [
   {
@@ -115,7 +102,7 @@ export function useTrade({ metalSymbol }: UseTradeProps) {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [pendingAction, setPendingAction] = useState<{ type: 'buy' | 'sell'; grams: number } | null>(null);
 
-  const metalTokenAddress = METAL_TOKENS[metalSymbol];
+  const metalTokenAddress = METAL_TOKENS[metalSymbol as keyof typeof METAL_TOKENS];
 
   // Get user's metal token balance
   const { data: metalBalance } = useReadContract({

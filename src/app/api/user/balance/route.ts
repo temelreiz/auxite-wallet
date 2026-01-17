@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { getUserBalance, setBalance, incrementBalance, addBonusAuxm, ensureUser } from "@/lib/redis";
 import { ethers } from "ethers";
+import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURATION
@@ -17,28 +18,13 @@ const MOCK_BALANCE = {
 // Blockchain RPC
 const RPC_URL = process.env.BLOCKCHAIN_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
 
-// Token Contracts (On-chain)
+// Token Contracts from central config
 const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
-  usdt: { 
-    address: "0x738e3134d83014B7a63CFF08C13CBBF0671EEeF2", 
-    decimals: 6 
-  },
-  auxg: {
-    address: "0xD14D32B1e03B3027D1f8381EeeC567e147De9CCe",
-    decimals: 3
-  },
-  auxs: { 
-    address: "0xc924EE950BF5A5Fbe3c26eECB27D99031B441caD", 
-    decimals: 3 
-  },
-  auxpt: { 
-    address: "0x37402EA435a91567223C132414C3A50C6bBc7200", 
-    decimals: 3 
-  },
-  auxpd: { 
-    address: "0x6026338B9Bfd94fed07EA61cbE60b15e300911DC", 
-    decimals: 3 
-  },
+  usdt: { address: USDT_ADDRESS, decimals: 6 },
+  auxg: { address: METAL_TOKENS.AUXG, decimals: 3 },
+  auxs: { address: METAL_TOKENS.AUXS, decimals: 3 },
+  auxpt: { address: METAL_TOKENS.AUXPT, decimals: 3 },
+  auxpd: { address: METAL_TOKENS.AUXPD, decimals: 3 },
 };
 
 // Which tokens are on-chain vs off-chain

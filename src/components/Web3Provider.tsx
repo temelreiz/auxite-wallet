@@ -1,169 +1,99 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
-import {
-  RainbowKitProvider,
-  getDefaultConfig,
-  lightTheme,
-  darkTheme,
-  AvatarComponent,
-} from "@rainbow-me/rainbowkit";
-import { WagmiProvider, http } from "wagmi";
-import { mainnet, sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { WagmiProvider, http, createConfig } from "wagmi";
+import { mainnet, sepolia, baseSepolia } from "wagmi/chains";
+import { RainbowKitProvider, darkTheme, connectorsForWallets } from "@rainbow-me/rainbowkit";
+import { metaMaskWallet, coinbaseWallet, walletConnectWallet, rainbowWallet } from "@rainbow-me/rainbowkit/wallets";
+import { WalletProvider } from "@/components/WalletContext";
+import { APP_CHAIN } from "@/config/chains";
 
-// Sadece gerekli importlar
-import "@rainbow-me/rainbowkit/styles.css";
-
-// Query client
 const queryClient = new QueryClient();
 
-// Wagmi config
-const config = getDefaultConfig({
-  appName: "Auxite Wallet",
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "demo-project-id",
-  chains: [sepolia, mainnet],
+const projectId = (process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "demo-project-id").trim();
+
+// Manuel connector tanimlama - getDefaultConfig kullanmiyoruz
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: "Popular",
+      wallets: [
+        metaMaskWallet,
+        coinbaseWallet,
+        walletConnectWallet,
+        rainbowWallet,
+      ],
+    },
+  ],
+  {
+    appName: "Auxite Wallet",
+    projectId,
+  }
+);
+
+const config = createConfig({
+  connectors,
+  chains: [mainnet, sepolia, baseSepolia],
   transports: {
-    [sepolia.id]: http(),
     [mainnet.id]: http(),
+    [sepolia.id]: http(),
+    [baseSepolia.id]: http(),
   },
   ssr: true,
 });
 
-// Custom Avatar Component
-const CustomAvatar: AvatarComponent = ({ address, ensImage, size }) => {
-  if (ensImage) {
+export function Web3Provider({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  const [storageError, setStorageError] = useState(false);
+
+  useEffect(() => {
+    // localStorage erisimini test et
+    try {
+      const test = "__storage_test__";
+      window.localStorage.setItem(test, test);
+      window.localStorage.removeItem(test);
+      setMounted(true);
+    } catch (e) {
+      console.warn("localStorage not available:", e);
+      setStorageError(true);
+      setMounted(true);
+    }
+  }, []);
+
+  if (!mounted) {
     return (
-      <img
-        src={ensImage}
-        width={size}
-        height={size}
-        style={{ borderRadius: 999 }}
-        alt="ENS Avatar"
-      />
+      <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-zinc-600 border-t-emerald-500 rounded-full"></div>
+      </div>
     );
   }
 
-  // Generate deterministic gradient based on address
-  const colors = [
-    ['#10b981', '#059669'], // emerald
-    ['#3b82f6', '#2563eb'], // blue
-    ['#8b5cf6', '#7c3aed'], // violet
-    ['#f59e0b', '#d97706'], // amber
-    ['#ec4899', '#db2777'], // pink
-    ['#06b6d4', '#0891b2'], // cyan
-  ];
-
-  const colorIndex = parseInt(address.slice(2, 4), 16) % colors.length;
-  const [color1, color2] = colors[colorIndex];
-
-  return (
-    <div
-      style={{
-        background: `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`,
-        borderRadius: 999,
-        height: size,
-        width: size,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: size * 0.4,
-      }}
-    >
-      {address.slice(2, 4).toUpperCase()}
-    </div>
-  );
-};
-
-export function Web3Provider({ children }: { children: ReactNode }) {
-  const [isDark, setIsDark] = useState(true);
-  const [mounted, setMounted] = useState(false);
-
-  // Theme detection
-  useEffect(() => {
-    setMounted(true);
-
-    const checkTheme = () => {
-      if (typeof window === 'undefined') return;
-      
-      const html = document.documentElement;
-      const hasDarkClass = html.classList.contains('dark');
-      const hasLightClass = html.classList.contains('light');
-      
-      if (hasDarkClass) {
-        setIsDark(true);
-        return;
-      }
-      if (hasLightClass) {
-        setIsDark(false);
-        return;
-      }
-      
-      // Check localStorage
-      const stored = localStorage.getItem('theme');
-      if (stored === 'dark') {
-        setIsDark(true);
-        return;
-      }
-      if (stored === 'light') {
-        setIsDark(false);
-        return;
-      }
-      
-      // System preference
-      setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
-    };
-
-    checkTheme();
-
-    // Listen for theme changes
-    const observer = new MutationObserver(checkTheme);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    });
-
-    window.addEventListener('storage', checkTheme);
-    window.addEventListener('themeChange', checkTheme);
-
-    // Fallback interval for edge cases
-    const interval = setInterval(checkTheme, 500);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('storage', checkTheme);
-      window.removeEventListener('themeChange', checkTheme);
-      clearInterval(interval);
-    };
-  }, []);
-
-  // Create theme based on current mode
-  const theme = isDark
-    ? darkTheme({
-        accentColor: '#10b981',
-        accentColorForeground: 'white',
-        borderRadius: 'medium',
-        fontStack: 'system',
-        overlayBlur: 'small',
-      })
-    : lightTheme({
-        accentColor: '#10b981',
-        accentColorForeground: 'white',
-        borderRadius: 'medium',
-        fontStack: 'system',
-        overlayBlur: 'small',
-      });
-
-  // SSR hydration fix
-  if (!mounted) {
+  if (storageError) {
     return (
-      <WagmiProvider config={config}>
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
-      </WagmiProvider>
+      <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md text-center shadow-lg">
+          <div className="text-4xl mb-4">🔒</div>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
+            Storage Access Required
+          </h2>
+          <p className="text-slate-600 dark:text-zinc-400 mb-4">
+            This app requires access to browser storage. Please:
+          </p>
+          <ul className="text-left text-sm text-slate-600 dark:text-zinc-400 space-y-2 mb-4">
+            <li>• Disable private/incognito mode</li>
+            <li>• Allow 3rd party cookies in browser settings</li>
+            <li>• If using Brave, disable Shields for this site</li>
+            <li>• Try a different browser (Chrome, Firefox)</li>
+          </ul>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -171,13 +101,19 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
-          theme={theme}
-          avatar={CustomAvatar}
-          locale="en"
-          showRecentTransactions={true}
-          coolMode
+          theme={darkTheme({
+            accentColor: "#10b981",
+            accentColorForeground: "white",
+            borderRadius: "medium",
+          })}
+          initialChain={APP_CHAIN.chainId === mainnet.id ? mainnet : sepolia}
+          modalSize="compact"
+          appInfo={{
+            appName: "Auxite Wallet",
+            learnMoreUrl: undefined,
+          }}
         >
-          {children}
+          <WalletProvider>{children}</WalletProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

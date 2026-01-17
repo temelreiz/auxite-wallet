@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { ethers } from "ethers";
+import { METAL_TOKENS } from "@/config/contracts-v8";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-// Token contract addresses (V8)
+// Token contract addresses from central config
 const TOKEN_CONTRACTS: Record<string, string> = {
-  AUXG: process.env.NEXT_PUBLIC_AUXG_V8 || "0xD14D32B1e03B3027D1f8381EeeC567e147De9CCe",
-  AUXS: process.env.NEXT_PUBLIC_AUXS_V8 || "0xc924EE950BF5A5Fbe3c26eECB27D99031B441caD",
-  AUXPT: process.env.NEXT_PUBLIC_AUXPT_V8 || "0x37402EA435a91567223C132414C3A50C6bBc7200",
-  AUXPD: process.env.NEXT_PUBLIC_AUXPD_V8 || "0x6026338B9Bfd94fed07EA61cbE60b15e300911DC",
+  AUXG: METAL_TOKENS.AUXG,
+  AUXS: METAL_TOKENS.AUXS,
+  AUXPT: METAL_TOKENS.AUXPT,
+  AUXPD: METAL_TOKENS.AUXPD,
 };
 
 // ERC20 ABI for transfer

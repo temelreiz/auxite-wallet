@@ -9,6 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { METAL_TOKENS, ORACLE_ADDRESS } from "@/config/contracts-v8";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -269,14 +270,8 @@ interface SovereignInvitation {
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const V7_CONTRACTS = {
-  AUXG: "0xBF74Fc9f0dD50A79f9FaC2e9Aa05a268E3dcE6b6",
-  AUXS: "0x705D9B193e5E349847C2Efb18E68fe989eC2C0e9",
-  AUXPT: "0x1819447f624D8e22C1A4F3B14e96693625B6d74F",
-  AUXPD: "0xb23545dE86bE9F929D700cf5815D8E717fDb6",
-};
-
-const ORACLE_ADDRESS = "0x7253c38967eFAcb0f929D700cf5815D8E717fDb6";
+// Contract addresses from central config
+const V7_CONTRACTS = METAL_TOKENS;
 
 const ADMIN_ADDRESSES = [
   "0xD24B2bca1E0b58a2EAE5b1184871219f9a8EE944",

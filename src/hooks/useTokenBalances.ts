@@ -2,7 +2,7 @@
 
 import { useAccount, useReadContracts } from "wagmi";
 import { formatUnits } from "viem";
-import { METAL_TOKENS } from "@/contracts/leasingContracts";
+import { METAL_TOKENS } from "@/config/contracts-v8";
 import { ERC20_ABI } from "@/contracts/ERC20";
 
 export function useTokenBalances() {

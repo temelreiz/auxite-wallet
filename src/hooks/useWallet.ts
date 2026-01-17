@@ -1,140 +1,93 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import {
+  useAccount,
+  useDisconnect,
+  useSwitchChain,
+  useConnections,
+} from "wagmi";
+import { mainnet, sepolia, baseSepolia } from "wagmi/chains";
+import type { Chain } from "wagmi/chains";
 
-type WalletState = {
-  address: string | null;
+/**
+ * Auxite Wallet - unified wallet hook
+ * - Works with RainbowKit connectors (WalletConnect / MetaMask / Rabby / Coinbase)
+ * - Provides: address, isConnected, connector info, chain info, disconnect, switchChain
+ */
+export type WalletInfo = {
+  address: `0x${string}` | undefined;
   isConnected: boolean;
-  connecting: boolean;
-  error: string | null;
+  isConnecting: boolean;
+  isDisconnected: boolean;
+
+  connectorId?: string;
+  connectorName?: string;
+
+  chainId: number;
+  chain: Chain;
+
+  // Actions
+  disconnect: () => void;
+  canSwitchChain: boolean;
+  switchChain?: (targetChainId: number) => Promise<void>;
+
+  // Optional: raw connections for debugging/UI
+  connectionsCount: number;
 };
 
-export function useWallet() {
-  const [state, setState] = useState<WalletState>({
-    address: null,
-    isConnected: false,
-    connecting: false,
-    error: null,
-  });
+const SUPPORTED_CHAINS: Chain[] = [mainnet, sepolia, baseSepolia];
 
-  const isClient = typeof window !== "undefined";
+/** Resolve chain object from chainId. Falls back to Sepolia. */
+function resolveChain(chainId: number | undefined): Chain {
+  if (!chainId) return sepolia;
+  const found = SUPPORTED_CHAINS.find((c) => c.id === chainId);
+  return found ?? sepolia;
+}
 
-  useEffect(() => {
-    if (!isClient) return;
-    const eth = (window as any).ethereum;
-    if (!eth) return;
+export function useWallet(): WalletInfo {
+  // useAccount'tan chain bilgisi alıyoruz - Metamask değişikliklerini reaktif olarak takip eder
+  const account = useAccount();
+  const { disconnect } = useDisconnect();
+  const { switchChainAsync, isPending: isSwitching } = useSwitchChain();
+  const connections = useConnections();
 
-    // Sayfa açılırken mevcut hesapları oku
-    eth
-      .request({ method: "eth_accounts" })
-      .then((accounts: string[]) => {
-        if (accounts && accounts.length > 0) {
-          setState((s) => ({
-            ...s,
-            address: accounts[0],
-            isConnected: true,
-            error: null,
-          }));
-        }
-      })
-      .catch((err: any) => {
-        console.warn("eth_accounts error:", err);
-      });
+  // account.chainId Metamask'taki gerçek chain'i takip eder
+  const chainId = account.chainId ?? 0;
+  const chain = useMemo(() => resolveChain(account.chainId), [account.chainId]);
 
-    const handleAccountsChanged = (accounts: string[]) => {
-      if (!accounts || accounts.length === 0) {
-        setState({
-          address: null,
-          isConnected: false,
-          connecting: false,
-          error: null,
-        });
-      } else {
-        setState((s) => ({
-          ...s,
-          address: accounts[0],
-          isConnected: true,
-          connecting: false,
-          error: null,
-        }));
-      }
+  const connectorId = account.connector?.id;
+  const connectorName = account.connector?.name;
+
+  const canSwitchChain = typeof switchChainAsync === "function";
+
+  const switchChain = useMemo(() => {
+    if (!canSwitchChain) return undefined;
+    return async (targetChainId: number) => {
+      // Avoid no-op calls
+      if (targetChainId === chainId) return;
+      await switchChainAsync({ chainId: targetChainId });
     };
-
-    const handleChainChanged = () => {
-      eth
-        .request({ method: "eth_accounts" })
-        .then((accounts: string[]) => handleAccountsChanged(accounts))
-        .catch((err: any) =>
-          console.error("eth_accounts on chainChanged error:", err),
-        );
-    };
-
-    eth.on?.("accountsChanged", handleAccountsChanged);
-    eth.on?.("chainChanged", handleChainChanged);
-
-    return () => {
-      eth.removeListener?.("accountsChanged", handleAccountsChanged);
-      eth.removeListener?.("chainChanged", handleChainChanged);
-    };
-  }, [isClient]);
-
-  const connect = async () => {
-    if (!isClient) return;
-    const eth = (window as any).ethereum;
-    if (!eth) {
-      setState((s) => ({
-        ...s,
-        error: "Tarayıcı cüzdanı (MetaMask vb.) bulunamadı.",
-      }));
-      return;
-    }
-
-    try {
-      setState((s) => ({ ...s, connecting: true, error: null }));
-      const accounts: string[] = await eth.request({
-        method: "eth_requestAccounts",
-      });
-      if (accounts && accounts.length > 0) {
-        setState({
-          address: accounts[0],
-          isConnected: true,
-          connecting: false,
-          error: null,
-        });
-      } else {
-        setState({
-          address: null,
-          isConnected: false,
-          connecting: false,
-          error: "Herhangi bir hesap seçilmedi.",
-        });
-      }
-    } catch (err: any) {
-      console.error("eth_requestAccounts error:", err);
-      setState((s) => ({
-        ...s,
-        connecting: false,
-        error:
-          err?.message || "Cüzdana bağlanmaya çalışırken bir hata oluştu.",
-      }));
-    }
-  };
-
-  const disconnect = () => {
-    setState({
-      address: null,
-      isConnected: false,
-      connecting: false,
-      error: null,
-    });
-  };
+  }, [canSwitchChain, chainId, switchChainAsync]);
 
   return {
-    address: state.address,
-    isConnected: state.isConnected,
-    connecting: state.connecting,
-    error: state.error,
-    connect,
-    disconnect,
+    address: account.address as `0x${string}` | undefined,
+    isConnected: account.isConnected,
+    isConnecting: account.isConnecting || isSwitching,
+    isDisconnected: account.isDisconnected,
+
+    connectorId,
+    connectorName,
+
+    chainId,
+    chain,
+
+    disconnect: () => disconnect(),
+    canSwitchChain,
+    switchChain,
+
+    connectionsCount: connections?.length ?? 0,
   };
 }
+
+export default useWallet;

@@ -6,13 +6,15 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAccount, useWriteContract, useReadContract, useWaitForTransactionReceipt, useBalance } from "wagmi";
 import { 
-  CONTRACTS, 
-  AUXITE_TOKEN_V6_ABI, 
+  METAL_TOKENS as CONTRACTS,
   TOKEN_CONFIG,
-  TRADE_CONFIG,
   getTokenAddress,
   gramsToTokenAmount,
   tokenAmountToGrams,
+} from "@/config/contracts-v8";
+import {
+  AUXITE_TOKEN_V6_ABI,
+  TRADE_CONFIG,
   calculateMaxCost,
   calculateMinPayout,
   formatEth,

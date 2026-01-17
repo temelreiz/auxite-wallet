@@ -1,15 +1,14 @@
 // V8 Token Service - Blockchain operations for Auxite V8 Contracts
 import { ethers } from 'ethers';
+import { METAL_TOKENS, ORACLE_ADDRESS } from '@/config/contracts-v8';
 
-// Contract addresses (Sepolia) - V8
+// Contract addresses from central config
 const CONTRACTS: Record<string, string> = {
-  auxg: '0xD14D32B1e03B3027D1f8381EeeC567e147De9CCe',
-  auxs: '0xc924EE950BF5A5Fbe3c26eECB27D99031B441caD',
-  auxpt: '0x37402EA435a91567223C132414C3A50C6bBc7200',
-  auxpd: '0x6026338B9Bfd94fed07EA61cbE60b15e300911DC',
+  auxg: METAL_TOKENS.AUXG,
+  auxs: METAL_TOKENS.AUXS,
+  auxpt: METAL_TOKENS.AUXPT,
+  auxpd: METAL_TOKENS.AUXPD,
 };
-
-const ORACLE_ADDRESS = '0x68C5C98DB68284A0211a1FDCA668Ee66ef15b08d';
 
 // V8 Contract ABI
 const TOKEN_ABI = [

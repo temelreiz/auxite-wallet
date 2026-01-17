@@ -7,11 +7,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import Image from "next/image";
 import { useTradeV6 } from "@/hooks/useTradeV6";
-import { 
-  TOKEN_CONFIG, 
-  TRADE_CONFIG,
-  formatEth,
-} from "@/config/contracts";
+import { TOKEN_CONFIG } from "@/config/contracts-v8";
+import { TRADE_CONFIG, formatEth } from "@/config/contracts";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES & CONSTANTS

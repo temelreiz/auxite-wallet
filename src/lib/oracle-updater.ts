@@ -1,8 +1,8 @@
 // Oracle Price Updater - Fetches prices and updates blockchain with spread
 import { ethers } from 'ethers';
 import { getSpreadConfig, applySpread } from './spread-config';
+import { ORACLE_ADDRESS } from '@/config/contracts-v8';
 
-const ORACLE_ADDRESS = '0x45677fc1bE2F59937Fd6A93145Db76beB38a7CcA';
 const ORACLE_ABI = [
   'function updatePrice(bytes32 metalId, uint256 priceE6) external',
   'function getBasePerKgE6(bytes32 metalId) external view returns (uint256)',

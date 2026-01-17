@@ -23,6 +23,7 @@ import {
   getTokenPrices,
   checkReserveLimit,
 } from "@/lib/v6-token-service";
+import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIG
@@ -48,14 +49,13 @@ const publicClient = createPublicClient({
   transport: http(RPC_URL, { timeout: 10000 }),
 });
 
-// Token addresses
+// Token addresses from central config
 const TOKEN_ADDRESSES: Record<string, `0x${string}`> = {
-  // V8 Token Addresses
-  auxg: "0xD14D32B1e03B3027D1f8381EeeC567e147De9CCe",
-  auxs: "0xc924EE950BF5A5Fbe3c26eECB27D99031B441caD",
-  auxpt: "0x37402EA435a91567223C132414C3A50C6bBc7200",
-  auxpd: "0x6026338B9Bfd94fed07EA61cbE60b15e300911DC",
-  usdt: "0x738e3134d83014B7a63CFF08C13CBBF0671EEeF2",
+  auxg: METAL_TOKENS.AUXG,
+  auxs: METAL_TOKENS.AUXS,
+  auxpt: METAL_TOKENS.AUXPT,
+  auxpd: METAL_TOKENS.AUXPD,
+  usdt: USDT_ADDRESS,
 };
 
 const ERC20_ABI = [
