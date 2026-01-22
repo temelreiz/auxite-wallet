@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseUnits, erc20Abi } from "viem";
 import { useStaking, METAL_IDS } from "@/hooks/useStaking";
+import { useWallet } from "@/components/WalletContext";
 
 // 6-language translations
 const translations: Record<string, Record<string, string>> = {
@@ -381,6 +382,7 @@ function StakeCodeDisplay({ stakeCode, shortCode, txHash, lang }: {
 function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps) {
   const t = translations[lang] || translations.en;
   const { address, isConnected } = useAccount();
+  const { balances } = useWallet();
   
   // Staking hook
   const { 
@@ -401,6 +403,14 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
   const stakingContractAddress = process.env.NEXT_PUBLIC_STAKING_CONTRACT as `0x${string}`;
   const tokenAddress = offer?.metalTokenAddress as `0x${string}`;
 
+  // Get balance from WalletContext (allocation-based)
+  const getMetalBalance = () => {
+    if (!balances || !offer) return 0;
+    const metalKey = offer.metal.toLowerCase() as keyof typeof balances;
+    return (balances[metalKey] as number) || 0;
+  };
+  const walletMetalBalance = getMetalBalance();
+
   // Debug logs
   console.log("AllocationModal Debug:", {
     tokenAddress,
@@ -408,9 +418,10 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
     address,
     isOpen,
     offerMetal: offer?.metal, fullOffer: offer,
+    walletMetalBalance,
   });
 
-  // Read token balance
+  // Read token balance (on-chain - keeping for reference)
   const { data: balanceData } = useReadContract({
     address: tokenAddress,
     abi: erc20Abi,
@@ -472,7 +483,8 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
   // Calculate values
   const amountNum = parseFloat(amount) || 0;
   const amountInTokenUnits = BigInt(Math.floor(amountNum * 1000)); // 3 decimals
-  const balanceNum = balanceData ? Number(balanceData) / 1000 : 0; // Convert from 3 decimals
+  const onChainBalance = balanceData ? Number(balanceData) / 1000 : 0; // On-chain balance
+  const balanceNum = walletMetalBalance > 0 ? walletMetalBalance : onChainBalance; // Prefer wallet balance
   const currentAllowance = allowanceData ? Number(allowanceData) / 1000 : 0;
   const currentPeriod = offer.periods.find(p => p.months === selectedPeriod) || offer.periods[0];
   const periodDays = currentPeriod.days || (selectedPeriod === 12 ? 365 : selectedPeriod * 30);
@@ -567,7 +579,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
               <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
               </svg>
-              {t.amount} (gram)
+              {t.amount} ({offer.metal})
             </label>
             <div className="relative">
               <input
@@ -593,11 +605,11 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                 <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
-                {t.balance}: {balanceNum.toFixed(4)}g
+                {t.balance}: {balanceNum.toFixed(4)} {offer.metal}
               </span>
               {amountNum > 0 && amountNum < offer.minAmount && (
                 <span className="text-[10px] sm:text-xs text-red-400">
-                  Min. {offer.minAmount}g
+                  Min. {offer.minAmount} {offer.metal}
                 </span>
               )}
             </div>
