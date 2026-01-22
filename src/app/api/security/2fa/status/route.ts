@@ -20,6 +20,8 @@ export async function GET(request: NextRequest) {
     }
 
     const key = get2FAKey(address);
+    
+    // Hash olarak oku
     const data = await redis.hgetall(key);
     
     if (!data || Object.keys(data).length === 0) {
@@ -30,11 +32,21 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Parse backup codes to get count
+    // Redis'ten gelen "true" string'ini boolean'a çevir
+    const isEnabled = data.enabled === true || data.enabled === "true";
+    const hasSecret = !!data.secret;
+    
+    // Backup codes sayısını hesapla
     let backupCodesRemaining = 0;
-    if (data.backupCodes) {
+    if (data.backupCodesRemaining) {
+      backupCodesRemaining = typeof data.backupCodesRemaining === 'string' 
+        ? parseInt(data.backupCodesRemaining, 10) 
+        : data.backupCodesRemaining;
+    } else if (data.backupCodes) {
       try {
-        const codes = JSON.parse(data.backupCodes as string);
+        const codes = typeof data.backupCodes === 'string' 
+          ? JSON.parse(data.backupCodes) 
+          : data.backupCodes;
         backupCodesRemaining = Array.isArray(codes) ? codes.length : 0;
       } catch {
         backupCodesRemaining = 0;
@@ -42,10 +54,10 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      enabled: data.enabled === "true",
-      setupRequired: !data.secret,
+      enabled: isEnabled && hasSecret,
+      setupRequired: !hasSecret,
       backupCodesRemaining,
-      enabledAt: data.enabledAt || null,
+      enabledAt: data.enabledAt ? Number(data.enabledAt) : undefined,
     });
 
   } catch (error) {
