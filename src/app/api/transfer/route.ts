@@ -2,11 +2,72 @@ import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { ethers } from "ethers";
 import { METAL_TOKENS } from "@/config/contracts-v8";
+import * as OTPAuth from "otpauth";
+import * as crypto from "crypto";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 2FA VERIFICATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+function get2FAKey(address: string): string {
+  return `user:${address.toLowerCase()}:2fa`;
+}
+
+function hashCode(code: string): string {
+  return crypto.createHash("sha256").update(code).digest("hex");
+}
+
+async function verify2FA(address: string, code: string): Promise<{ valid: boolean; error?: string }> {
+  const key = get2FAKey(address);
+  const user2FA = await redis.hgetall(key);
+  
+  // 2FA aktif değilse, geç
+  if ((user2FA?.enabled !== true && user2FA?.enabled !== "true") || !user2FA?.secret) {
+    return { valid: true }; // 2FA zorunlu değil
+  }
+  
+  // Kod girilmemişse
+  if (!code) {
+    return { valid: false, error: "2FA kodu gerekli" };
+  }
+  
+  // TOTP doğrula
+  try {
+    const totp = new OTPAuth.TOTP({
+      issuer: "Auxite",
+      label: "user",
+      algorithm: "SHA1",
+      digits: 6,
+      period: 30,
+      secret: user2FA.secret as string,
+    });
+    const delta = totp.validate({ token: code, window: 1 });
+    if (delta !== null) {
+      return { valid: true };
+    }
+  } catch (e) {
+    console.error("TOTP verify error:", e);
+  }
+  
+  // Backup kodu dene
+  const backupCodes = user2FA.backupCodes ? JSON.parse(user2FA.backupCodes as string) : [];
+  const hashedInput = hashCode(code.toUpperCase());
+  const codeIndex = backupCodes.indexOf(hashedInput);
+  
+  if (codeIndex !== -1) {
+    // Kullanılan backup kodunu sil
+    backupCodes.splice(codeIndex, 1);
+    await redis.hset(key, { backupCodes: JSON.stringify(backupCodes) });
+    return { valid: true };
+  }
+  
+  return { valid: false, error: "Geçersiz 2FA kodu" };
+}
 
 // Token contract addresses from central config
 const TOKEN_CONTRACTS: Record<string, string> = {
@@ -32,7 +93,7 @@ const OFF_CHAIN_TOKENS = ["AUXG", "AUXS", "AUXPT", "AUXPD", "AUXM", "ETH", "USDT
 
 export async function POST(request: NextRequest) {
   try {
-    const { fromAddress, toAddress, token, amount } = await request.json();
+    const { fromAddress, toAddress, token, amount, twoFactorCode } = await request.json();
 
     if (!fromAddress || !toAddress || !token || !amount) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -44,6 +105,15 @@ export async function POST(request: NextRequest) {
 
     if (fromAddress.toLowerCase() === toAddress.toLowerCase()) {
       return NextResponse.json({ error: "Cannot transfer to yourself" }, { status: 400 });
+    }
+
+    // 2FA Kontrolü (aktif ise)
+    const twoFAResult = await verify2FA(fromAddress, twoFactorCode || "");
+    if (!twoFAResult.valid) {
+      return NextResponse.json({ 
+        error: twoFAResult.error || "2FA doğrulama başarısız",
+        requires2FA: true 
+      }, { status: 403 });
     }
 
     const normalizedFrom = fromAddress.toLowerCase();

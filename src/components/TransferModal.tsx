@@ -76,6 +76,8 @@ const translations: Record<string, Record<string, string>> = {
     checkingRecipient: "Kontrol ediliyor...",
     auxiteUser: "Auxite kullanıcısı ✓",
     notAuxiteUser: "Alıcı Auxite kullanıcısı değil",
+    twoFaCode: "2FA Doğrulama Kodu",
+    twoFaRequired: "2FA kodu gerekli",
   },
   en: {
     title: "Transfer",
@@ -100,6 +102,8 @@ const translations: Record<string, Record<string, string>> = {
     checkingRecipient: "Checking...",
     auxiteUser: "Auxite user ✓",
     notAuxiteUser: "Recipient is not an Auxite user",
+    twoFaCode: "2FA Verification Code",
+    twoFaRequired: "2FA code required",
   },
 };
 
@@ -120,9 +124,22 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const [onChainBalances, setOnChainBalances] = useState<Record<string, number>>({});
   const [isCheckingRecipient, setIsCheckingRecipient] = useState(false);
   const [recipientValid, setRecipientValid] = useState<boolean | null>(null);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
 
   const { writeContract, isPending: isWritePending, data: writeData } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
+
+  // Check if 2FA is enabled for user
+  useEffect(() => {
+    if (!address || !isOpen) return;
+    setRequires2FA(false);
+    fetch(`/api/security/2fa?address=${address}`)
+      .then(res => res.json())
+      .then(data => setIs2FAEnabled(data.enabled))
+      .catch(() => setIs2FAEnabled(false));
+  }, [address, isOpen]);
 
   // Fetch on-chain balances
   useEffect(() => {
@@ -168,6 +185,8 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
       setErrorMessage("");
       setTxHash(undefined);
       setRecipientValid(null);
+      setTwoFactorCode("");
+      setRequires2FA(false);
     }
   }, [isOpen]);
 
@@ -295,9 +314,17 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
             toAddress: recipientAddress,
             token: selectedToken,
             amount: amountNum,
+            twoFactorCode: is2FAEnabled ? twoFactorCode : undefined,
           }),
         });
         const data = await response.json();
+        
+        if (data.requires2FA) {
+          setRequires2FA(true);
+          setIsProcessing(false);
+          return;
+        }
+        
         if (data.success) {
           setResult("success");
           if (refreshBalances) await refreshBalances();
@@ -507,10 +534,28 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           )}
         </div>
 
+        {/* 2FA Input */}
+        {(is2FAEnabled || requires2FA) && (
+          <div className="mb-4">
+            <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">🔐 {t.twoFaCode}</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={twoFactorCode}
+              onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="000000"
+              className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white text-center text-lg tracking-widest font-mono"
+            />
+            {requires2FA && (
+              <p className="text-xs text-red-500 mt-2">{t.twoFaRequired}</p>
+            )}
+          </div>
+        )}
+
         {/* Send Button */}
         <button
           onClick={handleTransfer}
-          disabled={!canSend || isProcessing}
+          disabled={!canSend || isProcessing || (is2FAEnabled && twoFactorCode.length !== 6)}
           className="w-full py-3 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold transition-colors flex items-center justify-center gap-2"
         >
           {isProcessing ? (

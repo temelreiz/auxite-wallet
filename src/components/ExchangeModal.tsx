@@ -57,10 +57,10 @@ const DEFAULT_SPREAD: SpreadConfig = {
 
 const ASSETS: Record<AssetType, AssetInfo> = {
   USD: { name: { tr: "Amerikan Doları", en: "US Dollar", de: "US-Dollar", fr: "Dollar US", ar: "دولار أمريكي", ru: "Доллар США" }, icon: "$", iconType: "symbol", category: "fiat", color: "#22C55E", unit: "USD" },
-  AUXG: { name: { tr: "Altın", en: "Gold", de: "Gold", fr: "Or", ar: "ذهب", ru: "Золото" }, icon: "/gold-favicon-32x32.png", iconType: "image", category: "metal", color: "#F59E0B", unit: "gram" },
-  AUXS: { name: { tr: "Gümüş", en: "Silver", de: "Silber", fr: "Argent", ar: "فضة", ru: "Серебро" }, icon: "/silver-favicon-32x32.png", iconType: "image", category: "metal", color: "#94A3B8", unit: "gram" },
-  AUXPT: { name: { tr: "Platin", en: "Platinum", de: "Platin", fr: "Platine", ar: "بلاتين", ru: "Платина" }, icon: "/platinum-favicon-32x32.png", iconType: "image", category: "metal", color: "#CBD5E1", unit: "gram" },
-  AUXPD: { name: { tr: "Paladyum", en: "Palladium", de: "Palladium", fr: "Palladium", ar: "بالاديوم", ru: "Палладий" }, icon: "/palladium-favicon-32x32.png", iconType: "image", category: "metal", color: "#64748B", unit: "gram" },
+  AUXG: { name: { tr: "Altın", en: "Gold", de: "Gold", fr: "Or", ar: "ذهب", ru: "Золото" }, icon: "/gold-favicon-32x32.png", iconType: "image", category: "metal", color: "#F59E0B", unit: "AUXG" },
+  AUXS: { name: { tr: "Gümüş", en: "Silver", de: "Silber", fr: "Argent", ar: "فضة", ru: "Серебро" }, icon: "/silver-favicon-32x32.png", iconType: "image", category: "metal", color: "#94A3B8", unit: "AUXS" },
+  AUXPT: { name: { tr: "Platin", en: "Platinum", de: "Platin", fr: "Platine", ar: "بلاتين", ru: "Платина" }, icon: "/platinum-favicon-32x32.png", iconType: "image", category: "metal", color: "#CBD5E1", unit: "AUXPT" },
+  AUXPD: { name: { tr: "Paladyum", en: "Palladium", de: "Palladium", fr: "Palladium", ar: "بالاديوم", ru: "Палладий" }, icon: "/palladium-favicon-32x32.png", iconType: "image", category: "metal", color: "#64748B", unit: "AUXPD" },
   AUXM: { name: { tr: "Auxite Para", en: "Auxite Money", de: "Auxite Geld", fr: "Auxite Monnaie", ar: "أموال أوكسايت", ru: "Деньги Auxite" }, icon: "◈", iconType: "symbol", category: "platform", color: "#A855F7", unit: "AUXM" },
   ETH: { name: { tr: "Ethereum", en: "Ethereum", de: "Ethereum", fr: "Ethereum", ar: "إيثريوم", ru: "Эфириум" }, icon: "Ξ", iconType: "symbol", category: "crypto", color: "#627EEA", unit: "ETH" },
   BTC: { name: { tr: "Bitcoin", en: "Bitcoin", de: "Bitcoin", fr: "Bitcoin", ar: "بيتكوين", ru: "Биткоин" }, icon: "₿", iconType: "symbol", category: "crypto", color: "#F7931A", unit: "BTC" },
