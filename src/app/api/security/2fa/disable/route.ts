@@ -1,106 +1,116 @@
-/**
- * 2FA Disable API
- * POST: 2FA'yı kapat (mevcut kod ile doğrulama gerekli)
- */
+// src/app/api/security/2fa/disable/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { Redis } from "@upstash/redis";
+import * as OTPAuth from "otpauth";
+import * as crypto from "crypto";
 
-import { NextRequest, NextResponse } from 'next/server';
-import { redis } from '@/lib/redis';
-import { verifyToken, verifyBackupCode } from '@/lib/security/totp';
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
+
+function get2FAKey(address: string): string {
+  return `user:2fa:${address.toLowerCase()}`;
+}
+
+function verifyCode(secret: string, code: string): boolean {
+  const totp = new OTPAuth.TOTP({
+    issuer: "Auxite",
+    label: "user",
+    algorithm: "SHA1",
+    digits: 6,
+    period: 30,
+    secret: secret,
+  });
+  const delta = totp.validate({ token: code, window: 1 });
+  return delta !== null;
+}
+
+function hashCode(code: string): string {
+  return crypto.createHash("sha256").update(code).digest("hex");
+}
 
 export async function POST(request: NextRequest) {
-  try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    
-    if (!walletAddress) {
-      return NextResponse.json(
-        { error: 'Wallet adresi gerekli' },
-        { status: 401 }
-      );
-    }
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
 
+  try {
+    const address = request.headers.get("x-wallet-address");
     const body = await request.json();
-    const { code, password, isBackupCode = false } = body;
+    const { code } = body;
+
+    if (!address) {
+      return NextResponse.json({ error: "Address required" }, { status: 400 });
+    }
 
     if (!code) {
-      return NextResponse.json(
-        { error: 'Doğrulama kodu gerekli' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Doğrulama kodu gerekli" }, { status: 400 });
     }
 
-    // 2FA verisini al
-    const twoFAData = await redis.get(`user:2fa:${walletAddress}`);
+    const key = get2FAKey(address);
+    const normalizedAddress = address.toLowerCase();
+
+    // Get 2FA data
+    const data = await redis.hgetall(key);
     
-    if (!twoFAData) {
-      return NextResponse.json(
-        { error: '2FA aktif değil' },
-        { status: 400 }
-      );
+    if (!data || data.enabled !== "true" || !data.secret) {
+      return NextResponse.json({ 
+        error: "2FA zaten devre dışı" 
+      }, { status: 400 });
     }
 
-    const data = typeof twoFAData === 'string' ? JSON.parse(twoFAData) : twoFAData;
+    const secret = data.secret as string;
+    let verified = false;
 
-    if (!data.enabled) {
-      return NextResponse.json(
-        { error: '2FA zaten kapalı' },
-        { status: 400 }
-      );
+    // Try TOTP code
+    if (verifyCode(secret, code)) {
+      verified = true;
     }
 
-    // Kodu doğrula
-    let isValid = false;
+    // Try backup code if TOTP failed
+    if (!verified) {
+      let backupCodes: string[] = [];
+      
+      if (data.hashedBackupCodes) {
+        try {
+          backupCodes = JSON.parse(data.hashedBackupCodes as string);
+        } catch {}
+      }
+      
+      if (backupCodes.length === 0 && data.backupCodes) {
+        try {
+          backupCodes = JSON.parse(data.backupCodes as string);
+        } catch {}
+      }
 
-    if (isBackupCode) {
-      const index = verifyBackupCode(code, data.hashedBackupCodes);
-      isValid = index !== -1;
-    } else {
-      isValid = verifyToken(code, data.secret);
+      const hashedInput = hashCode(code.toUpperCase());
+      if (backupCodes.includes(hashedInput)) {
+        verified = true;
+      }
     }
 
-    if (!isValid) {
-      return NextResponse.json(
-        { error: 'Geçersiz doğrulama kodu' },
-        { status: 400 }
-      );
+    if (!verified) {
+      return NextResponse.json({ 
+        error: "Geçersiz doğrulama kodu" 
+      }, { status: 400 });
     }
 
-    // 2FA'yı kapat (veriyi tamamen sil)
-    await redis.del(`user:2fa:${walletAddress}`);
+    // Disable 2FA - delete all data
+    await redis.del(key);
 
-    // Security log
-    await logSecurityEvent(walletAddress, '2FA_DISABLED', {
-      method: isBackupCode ? 'backup_code' : 'totp',
-    });
+    // Audit log
+    await redis.lpush(`user:${normalizedAddress}:security_logs`, JSON.stringify({
+      action: "2fa_disabled",
+      ip,
+      timestamp: Date.now(),
+    }));
 
     return NextResponse.json({
       success: true,
-      message: '2FA başarıyla kapatıldı',
+      message: "2FA başarıyla devre dışı bırakıldı",
     });
+
   } catch (error) {
-    console.error('2FA disable error:', error);
-    return NextResponse.json(
-      { error: '2FA kapatma başarısız' },
-      { status: 500 }
-    );
+    console.error("2FA disable error:", error);
+    return NextResponse.json({ error: "İşlem başarısız" }, { status: 500 });
   }
-}
-
-// Security event loglama
-async function logSecurityEvent(
-  walletAddress: string,
-  event: string,
-  details: Record<string, unknown>
-) {
-  const logEntry = {
-    event,
-    walletAddress,
-    details,
-    timestamp: new Date().toISOString(),
-  };
-
-  await redis.lpush(
-    `user:security:logs:${walletAddress}`,
-    JSON.stringify(logEntry)
-  );
-  await redis.ltrim(`user:security:logs:${walletAddress}`, 0, 99);
 }

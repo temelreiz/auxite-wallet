@@ -1,106 +1,118 @@
-/**
- * 2FA Enable API
- * POST: 2FA kurulumunu tamamla ve aktifleştir
- */
+// src/app/api/security/2fa/enable/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { Redis } from "@upstash/redis";
+import * as OTPAuth from "otpauth";
+import * as crypto from "crypto";
 
-import { NextRequest, NextResponse } from 'next/server';
-import { redis } from '@/lib/redis';
-import { verifyToken } from '@/lib/security/totp';
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
+
+function get2FAKey(address: string): string {
+  return `user:2fa:${address.toLowerCase()}`;
+}
+
+function verifyCode(secret: string, code: string): boolean {
+  const totp = new OTPAuth.TOTP({
+    issuer: "Auxite",
+    label: "user",
+    algorithm: "SHA1",
+    digits: 6,
+    period: 30,
+    secret: secret,
+  });
+  const delta = totp.validate({ token: code, window: 1 });
+  return delta !== null;
+}
+
+function hashCode(code: string): string {
+  return crypto.createHash("sha256").update(code).digest("hex");
+}
 
 export async function POST(request: NextRequest) {
-  try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    
-    if (!walletAddress) {
-      return NextResponse.json(
-        { error: 'Wallet adresi gerekli' },
-        { status: 401 }
-      );
-    }
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
 
+  try {
+    const address = request.headers.get("x-wallet-address");
     const body = await request.json();
     const { code } = body;
 
-    if (!code || code.length !== 6) {
-      return NextResponse.json(
-        { error: '6 haneli doğrulama kodu gerekli' },
-        { status: 400 }
-      );
+    if (!address) {
+      return NextResponse.json({ error: "Address required" }, { status: 400 });
     }
 
-    // Pending 2FA verisini al
-    const pendingData = await redis.get(`user:2fa:pending:${walletAddress}`);
+    if (!code) {
+      return NextResponse.json({ error: "Doğrulama kodu gerekli" }, { status: 400 });
+    }
+
+    const key = get2FAKey(address);
+    const normalizedAddress = address.toLowerCase();
+
+    // Get temp secret from setup
+    const data = await redis.hgetall(key);
+    const tempSecret = data?.tempSecret as string;
+    const tempBackupCodes = data?.tempBackupCodes as string;
+
+    if (!tempSecret) {
+      return NextResponse.json({ 
+        error: "Önce kurulum başlatın" 
+      }, { status: 400 });
+    }
+
+    // Verify the code
+    if (!verifyCode(tempSecret, code)) {
+      return NextResponse.json({ 
+        error: "Geçersiz doğrulama kodu" 
+      }, { status: 400 });
+    }
+
+    // Parse and hash backup codes for storage
+    let backupCodes: string[] = [];
+    let hashedBackupCodes: string[] = [];
     
-    if (!pendingData) {
-      return NextResponse.json(
-        { error: '2FA kurulumu bulunamadı veya süresi doldu. Lütfen tekrar başlatın.' },
-        { status: 400 }
-      );
+    if (tempBackupCodes) {
+      try {
+        backupCodes = JSON.parse(tempBackupCodes);
+        hashedBackupCodes = backupCodes.map(hashCode);
+      } catch {
+        // Generate new if parse fails
+        backupCodes = [];
+        for (let i = 0; i < 10; i++) {
+          backupCodes.push(crypto.randomBytes(4).toString("hex").toUpperCase());
+        }
+        hashedBackupCodes = backupCodes.map(hashCode);
+      }
     }
 
-    const pending = typeof pendingData === 'string' ? JSON.parse(pendingData) : pendingData as any;
-
-    // TOTP kodunu doğrula
-    const isValid = verifyToken(code, pending.secret);
-
-    if (!isValid) {
-      return NextResponse.json(
-        { error: 'Geçersiz doğrulama kodu. QR kodu taradığınızdan emin olun.' },
-        { status: 400 }
-      );
-    }
-
-    // 2FA'yı aktifleştir
-    const twoFAData = {
-      secret: pending.secret,
-      hashedBackupCodes: pending.hashedBackupCodes,
-      backupCodesRemaining: pending.hashedBackupCodes.length,
-      enabled: true,
-      enabledAt: new Date().toISOString(),
-    };
-
-    // Kalıcı olarak kaydet
-    await redis.set(`user:2fa:${walletAddress}`, JSON.stringify(twoFAData));
-
-    // Pending veriyi sil
-    await redis.del(`user:2fa:pending:${walletAddress}`);
-
-    // Security log
-    await logSecurityEvent(walletAddress, '2FA_ENABLED', {
-      backupCodesCount: pending.hashedBackupCodes.length,
+    // Enable 2FA - store hashed backup codes
+    await redis.hset(key, {
+      secret: tempSecret,
+      enabled: "true",
+      enabledAt: Date.now().toString(),
+      backupCodes: JSON.stringify(hashedBackupCodes), // Store hashed versions
+      hashedBackupCodes: JSON.stringify(hashedBackupCodes), // Also store here for compatibility
+      backupCodesRemaining: hashedBackupCodes.length.toString(),
     });
+
+    // Clean up temp data
+    await redis.hdel(key, "tempSecret", "tempBackupCodes", "setupStarted");
+
+    // Audit log
+    await redis.lpush(`user:${normalizedAddress}:security_logs`, JSON.stringify({
+      action: "2fa_enabled",
+      ip,
+      timestamp: Date.now(),
+    }));
 
     return NextResponse.json({
       success: true,
-      message: '2FA başarıyla aktifleştirildi',
-      backupCodesRemaining: pending.hashedBackupCodes.length,
+      backupCodes, // Return plain text codes - shown only once!
+      message: "2FA başarıyla aktifleştirildi. Backup kodlarını güvenli bir yere kaydedin!",
     });
+
   } catch (error) {
-    console.error('2FA enable error:', error);
-    return NextResponse.json(
-      { error: '2FA aktifleştirme başarısız' },
-      { status: 500 }
-    );
+    console.error("2FA enable error:", error);
+    return NextResponse.json({ error: "Enable failed" }, { status: 500 });
   }
-}
-
-// Security event loglama
-async function logSecurityEvent(
-  walletAddress: string,
-  event: string,
-  details: Record<string, unknown>
-) {
-  const logEntry = {
-    event,
-    walletAddress,
-    details,
-    timestamp: new Date().toISOString(),
-  };
-
-  // Son 100 log'u tut
-  await redis.lpush(
-    `user:security:logs:${walletAddress}`,
-    JSON.stringify(logEntry)
-  );
-  await redis.ltrim(`user:security:logs:${walletAddress}`, 0, 99);
 }

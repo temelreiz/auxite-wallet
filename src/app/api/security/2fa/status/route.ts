@@ -1,45 +1,55 @@
-/**
- * 2FA Status API
- * GET: Mevcut 2FA durumunu al
- */
+// src/app/api/security/2fa/status/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { Redis } from "@upstash/redis";
 
-import { NextRequest, NextResponse } from 'next/server';
-import { redis } from '@/lib/redis';
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
+
+function get2FAKey(address: string): string {
+  return `user:2fa:${address.toLowerCase()}`;
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    
-    if (!walletAddress) {
-      return NextResponse.json(
-        { error: 'Wallet adresi gerekli' },
-        { status: 401 }
-      );
+    const address = request.headers.get("x-wallet-address");
+
+    if (!address) {
+      return NextResponse.json({ error: "Address required" }, { status: 400 });
     }
 
-    // 2FA verisini al
-    const twoFAData = await redis.get(`user:2fa:${walletAddress}`);
+    const key = get2FAKey(address);
+    const data = await redis.hgetall(key);
     
-    if (!twoFAData) {
+    if (!data || Object.keys(data).length === 0) {
       return NextResponse.json({
         enabled: false,
         setupRequired: true,
+        backupCodesRemaining: 0,
       });
     }
 
-    const data = typeof twoFAData === 'string' ? JSON.parse(twoFAData) : twoFAData as any;
+    // Parse backup codes to get count
+    let backupCodesRemaining = 0;
+    if (data.backupCodes) {
+      try {
+        const codes = JSON.parse(data.backupCodes as string);
+        backupCodesRemaining = Array.isArray(codes) ? codes.length : 0;
+      } catch {
+        backupCodesRemaining = 0;
+      }
+    }
 
     return NextResponse.json({
-      enabled: data.enabled,
-      enabledAt: data.enabledAt,
-      backupCodesRemaining: data.hashedBackupCodes?.length || 0,
-      setupRequired: false,
+      enabled: data.enabled === "true",
+      setupRequired: !data.secret,
+      backupCodesRemaining,
+      enabledAt: data.enabledAt || null,
     });
+
   } catch (error) {
-    console.error('2FA status error:', error);
-    return NextResponse.json(
-      { error: '2FA durumu alınamadı' },
-      { status: 500 }
-    );
+    console.error("2FA status error:", error);
+    return NextResponse.json({ error: "Status check failed" }, { status: 500 });
   }
 }

@@ -1,74 +1,97 @@
-/**
- * 2FA Setup API
- * POST: QR kod ve secret oluştur
- */
+// src/app/api/security/2fa/setup/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { Redis } from "@upstash/redis";
+import * as OTPAuth from "otpauth";
+import * as crypto from "crypto";
+import QRCode from "qrcode";
 
-import { NextRequest, NextResponse } from 'next/server';
-import { redis } from '@/lib/redis';
-import { setupTwoFactor, hashBackupCode } from '@/lib/security/totp';
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
+
+function get2FAKey(address: string): string {
+  return `user:2fa:${address.toLowerCase()}`;
+}
+
+function generateSecret(): string {
+  const secret = new OTPAuth.Secret({ size: 20 });
+  return secret.base32;
+}
+
+function generateBackupCodes(): string[] {
+  const codes: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    codes.push(crypto.randomBytes(4).toString("hex").toUpperCase());
+  }
+  return codes;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    // Wallet address al
-    const walletAddress = request.headers.get('x-wallet-address');
+    const address = request.headers.get("x-wallet-address");
+
+    if (!address) {
+      return NextResponse.json({ error: "Address required" }, { status: 400 });
+    }
+
+    const key = get2FAKey(address);
+    const normalizedAddress = address.toLowerCase();
+
+    // Check if already enabled
+    const existing = await redis.hget(key, "enabled");
+    if (existing === "true") {
+      return NextResponse.json({ 
+        error: "2FA zaten aktif. Önce devre dışı bırakın." 
+      }, { status: 400 });
+    }
+
+    // Generate new secret
+    const secret = generateSecret();
     
-    if (!walletAddress) {
-      return NextResponse.json(
-        { error: 'Wallet adresi gerekli' },
-        { status: 401 }
-      );
-    }
+    // Create TOTP for QR code
+    const totp = new OTPAuth.TOTP({
+      issuer: "Auxite",
+      label: `Auxite:${normalizedAddress.slice(0, 8)}`,
+      algorithm: "SHA1",
+      digits: 6,
+      period: 30,
+      secret: secret,
+    });
 
-    // Mevcut 2FA durumunu kontrol et
-    const existing2FA = await redis.get(`user:2fa:${walletAddress}`);
-    if (existing2FA) {
-      const data = typeof existing2FA === 'string' ? JSON.parse(existing2FA) : existing2FA as any;
-      if (data.enabled) {
-        return NextResponse.json(
-          { error: '2FA zaten aktif' },
-          { status: 400 }
-        );
-      }
-    }
+    const otpauthUrl = totp.toString();
 
-    // Email al (opsiyonel, QR kodda gösterilecek)
-    const body = await request.json().catch(() => ({}));
-    const email = body.email || `${walletAddress.slice(0, 8)}@auxite.wallet`;
+    // Generate QR code as data URL
+    const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl, {
+      width: 200,
+      margin: 2,
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF",
+      },
+    });
 
-    // 2FA setup oluştur
-    const setupData = await setupTwoFactor(email);
+    // Generate backup codes (plain text - will be shown once)
+    const backupCodes = generateBackupCodes();
 
-    // Backup kodlarını hashle
-    const hashedBackupCodes = setupData.backupCodes.map(code => hashBackupCode(code));
+    // Store temp secret (not enabled yet)
+    await redis.hset(key, {
+      tempSecret: secret,
+      tempBackupCodes: JSON.stringify(backupCodes),
+      setupStarted: Date.now().toString(),
+    });
 
-    // Geçici olarak Redis'e kaydet (15 dakika geçerli)
-    // Kullanıcı doğrulama yapınca kalıcı olacak
-    const tempData = {
-      secret: setupData.secret,
-      hashedBackupCodes,
-      enabled: false,
-      setupStartedAt: new Date().toISOString(),
-    };
-
-    await redis.set(
-      `user:2fa:pending:${walletAddress}`,
-      JSON.stringify(tempData),
-      'EX',
-      900 // 15 dakika
-    );
-
-    // Response - secret'ı gösterme, sadece QR kod
     return NextResponse.json({
       success: true,
-      qrCodeDataUrl: setupData.qrCodeDataUrl,
-      backupCodes: setupData.backupCodes, // İlk ve son kez göster
-      message: 'QR kodu tarayın ve doğrulama kodunu girin',
+      secret,
+      qrCodeDataUrl,
+      qrCodeUrl: otpauthUrl,
+      backupCodes, // Plain text - show to user once
+      message: "QR kodu tarayın ve doğrulama kodunu girin",
     });
+
   } catch (error) {
-    console.error('2FA setup error:', error);
-    return NextResponse.json(
-      { error: '2FA kurulumu başarısız' },
-      { status: 500 }
-    );
+    console.error("2FA setup error:", error);
+    return NextResponse.json({ error: "Setup failed" }, { status: 500 });
   }
 }
