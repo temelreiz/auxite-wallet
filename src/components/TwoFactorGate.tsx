@@ -132,7 +132,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
   const [copied, setCopied] = useState(false);
   const [showManualKey, setShowManualKey] = useState(false);
 
-  const API_URL = "/api/security/2fa";
+  const API_BASE = "/api/security/2fa";
 
   // Check 2FA status
   const check2FAStatus = async () => {
@@ -145,9 +145,10 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
       console.log("Checking 2FA status for:", walletAddress);
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      const res = await fetch(`${API_URL}?address=${walletAddress}`, {
+      const res = await fetch(`${API_BASE}/status`, {
+        headers: { "x-wallet-address": walletAddress },
         signal: controller.signal,
       });
       
@@ -160,7 +161,10 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
       const data = await res.json();
       console.log("2FA Status response:", data);
 
-      if (data.enabled === true) {
+      // Check if 2FA is enabled - also check enabledAt as backup
+      const isEnabled = data.enabled === true || (data.enabledAt && data.backupCodesRemaining > 0);
+      
+      if (isEnabled) {
         console.log("2FA is enabled, showing verify screen");
         setStep("verify");
       } else {
@@ -189,13 +193,13 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      const res = await fetch(API_URL, {
+      const res = await fetch(`${API_BASE}/setup`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "setup",
-          address: walletAddress,
-        }),
+        headers: { 
+          "Content-Type": "application/json",
+          "x-wallet-address": walletAddress,
+        },
+        body: JSON.stringify({}),
         signal: controller.signal,
       });
 
@@ -244,14 +248,13 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
     setError(null);
 
     try {
-      const res = await fetch(API_URL, {
+      const res = await fetch(`${API_BASE}/enable`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "enable",
-          address: walletAddress,
-          code,
-        }),
+        headers: { 
+          "Content-Type": "application/json",
+          "x-wallet-address": walletAddress,
+        },
+        body: JSON.stringify({ code }),
       });
 
       const data = await res.json();
@@ -282,20 +285,22 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
     setError(null);
 
     try {
-      const res = await fetch(API_URL, {
+      const res = await fetch(`${API_BASE}/verify`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-wallet-address": walletAddress,
+        },
         body: JSON.stringify({
-          action: "verify",
-          address: walletAddress,
           code: useBackupCode ? code.toUpperCase() : code,
+          isBackupCode: useBackupCode,
         }),
       });
 
       const data = await res.json();
       console.log("Verify response:", data);
 
-      if (!res.ok || !data.success) {
+      if (!res.ok || !data.valid) {
         throw new Error(data.error || t.invalidCode);
       }
 
