@@ -43,7 +43,7 @@ const NETWORK_FEES_AUXM: Record<string, number> = {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function get2FAKey(address: string): string {
-  return `user:${address.toLowerCase()}:2fa`;
+  return `user:2fa:${address.toLowerCase()}`;
 }
 
 function hashCode(code: string): string {
@@ -52,10 +52,18 @@ function hashCode(code: string): string {
 
 async function verify2FA(address: string, code: string): Promise<{ valid: boolean; error?: string; enabled?: boolean }> {
   const key = get2FAKey(address);
-  const user2FA = await redis.hgetall(key);
+  const data = await redis.get(key);
   
-  // 2FA aktif değilse, işleme izin verme
-  if ((user2FA?.enabled !== true && user2FA?.enabled !== "true") || !user2FA?.secret) {
+  // 2FA verisi yoksa
+  if (!data) {
+    return { valid: false, error: "2FA etkinleştirilmemiş. Lütfen önce 2FA'yı aktif edin.", enabled: false };
+  }
+  
+  // JSON parse
+  const user2FA = typeof data === 'string' ? JSON.parse(data) : data;
+  
+  // 2FA aktif değilse
+  if (!user2FA?.enabled || !user2FA?.secret) {
     return { valid: false, error: "2FA etkinleştirilmemiş. Lütfen önce 2FA'yı aktif edin.", enabled: false };
   }
   
@@ -83,14 +91,16 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
   }
   
   // Backup kodu dene
-  const backupCodes = user2FA.backupCodes ? JSON.parse(user2FA.backupCodes as string) : [];
+  const backupCodes = user2FA.hashedBackupCodes || [];
   const hashedInput = hashCode(code.toUpperCase());
   const codeIndex = backupCodes.indexOf(hashedInput);
   
   if (codeIndex !== -1) {
     // Kullanılan backup kodunu sil
     backupCodes.splice(codeIndex, 1);
-    await redis.hset(key, { backupCodes: JSON.stringify(backupCodes) });
+    user2FA.hashedBackupCodes = backupCodes;
+    user2FA.backupCodesRemaining = backupCodes.length;
+    await redis.set(key, JSON.stringify(user2FA));
     return { valid: true, enabled: true };
   }
   
