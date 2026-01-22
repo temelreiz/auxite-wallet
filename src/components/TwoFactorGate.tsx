@@ -29,6 +29,9 @@ const translations: Record<string, Record<string, string>> = {
     tooManyAttempts: "Çok fazla başarısız deneme. Lütfen bekleyin.",
     setupSuccess: "2FA başarıyla kuruldu!",
     error: "Bir hata oluştu",
+    loading: "Yükleniyor...",
+    retry: "Tekrar Dene",
+    connectionError: "Bağlantı hatası. Tekrar deneyin.",
   },
   en: {
     setupTitle: "2FA Setup Required",
@@ -55,6 +58,9 @@ const translations: Record<string, Record<string, string>> = {
     tooManyAttempts: "Too many failed attempts. Please wait.",
     setupSuccess: "2FA successfully set up!",
     error: "An error occurred",
+    loading: "Loading...",
+    retry: "Retry",
+    connectionError: "Connection error. Please retry.",
   },
   de: {
     setupTitle: "2FA-Einrichtung erforderlich", setupDesc: "Sie müssen die Zwei-Faktor-Authentifizierung einrichten.",
@@ -65,6 +71,7 @@ const translations: Record<string, Record<string, string>> = {
     verifying: "Verifiziere...", cancel: "Abbrechen", continue: "Weiter", invalidCode: "Ungültiger Code",
     codeCopied: "Kopiert!", useBackupCode: "Backup-Code", useAuthenticator: "Authenticator",
     tooManyAttempts: "Zu viele Fehlversuche.", setupSuccess: "2FA erfolgreich!", error: "Ein Fehler ist aufgetreten",
+    loading: "Laden...", retry: "Wiederholen", connectionError: "Verbindungsfehler.",
   },
   fr: {
     setupTitle: "Configuration 2FA requise", setupDesc: "Vous devez configurer l'authentification à deux facteurs.",
@@ -75,6 +82,7 @@ const translations: Record<string, Record<string, string>> = {
     verifying: "Vérification...", cancel: "Annuler", continue: "Continuer", invalidCode: "Code invalide",
     codeCopied: "Copié!", useBackupCode: "Code de secours", useAuthenticator: "Authenticator",
     tooManyAttempts: "Trop de tentatives.", setupSuccess: "2FA configuré!", error: "Une erreur s'est produite",
+    loading: "Chargement...", retry: "Réessayer", connectionError: "Erreur de connexion.",
   },
   ar: {
     setupTitle: "إعداد 2FA مطلوب", setupDesc: "تحتاج إلى إعداد المصادقة الثنائية.", verifyTitle: "التحقق من 2FA",
@@ -84,6 +92,7 @@ const translations: Record<string, Record<string, string>> = {
     verify: "تحقق", verifying: "جاري التحقق...", cancel: "إلغاء", continue: "متابعة", invalidCode: "رمز غير صالح",
     codeCopied: "تم النسخ!", useBackupCode: "رمز احتياطي", useAuthenticator: "المصادق",
     tooManyAttempts: "محاولات كثيرة.", setupSuccess: "تم إعداد 2FA!", error: "حدث خطأ",
+    loading: "جاري التحميل...", retry: "إعادة المحاولة", connectionError: "خطأ في الاتصال.",
   },
   ru: {
     setupTitle: "Требуется настройка 2FA", setupDesc: "Настройте двухфакторную аутентификацию.",
@@ -95,6 +104,7 @@ const translations: Record<string, Record<string, string>> = {
     continue: "Продолжить", invalidCode: "Неверный код", codeCopied: "Скопировано!",
     useBackupCode: "Резервный код", useAuthenticator: "Аутентификатор", tooManyAttempts: "Слишком много попыток.",
     setupSuccess: "2FA настроен!", error: "Произошла ошибка",
+    loading: "Загрузка...", retry: "Повторить", connectionError: "Ошибка соединения.",
   },
 };
 
@@ -106,7 +116,7 @@ interface TwoFactorGateProps {
   lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
-type Step = "checking" | "setup-qr" | "setup-backup" | "verify";
+type Step = "checking" | "error" | "setup-qr" | "setup-backup" | "verify";
 
 export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang = "en" }: TwoFactorGateProps) {
   const t = translations[lang] || translations.en;
@@ -122,48 +132,63 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
   const [copied, setCopied] = useState(false);
   const [showManualKey, setShowManualKey] = useState(false);
 
-  // API base URL
   const API_URL = "/api/security/2fa";
 
-  // Check 2FA status when modal opens
-  useEffect(() => {
-    if (!isOpen || !walletAddress) return;
+  // Check 2FA status
+  const check2FAStatus = async () => {
+    setStep("checking");
+    setError(null);
+    setCode("");
+    setUseBackupCode(false);
 
-    const check2FAStatus = async () => {
-      setStep("checking");
-      setError(null);
-      setCode("");
-      setUseBackupCode(false);
+    try {
+      console.log("Checking 2FA status for:", walletAddress);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-      try {
-        // GET /api/security/2fa?address=xxx
-        const res = await fetch(`${API_URL}?address=${walletAddress}`);
-        const data = await res.json();
+      const res = await fetch(`${API_URL}?address=${walletAddress}`, {
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
 
-        console.log("2FA Status:", data);
-
-        if (data.enabled === true) {
-          // 2FA zaten kurulu - sadece verify iste
-          setStep("verify");
-        } else {
-          // 2FA kurulu değil - setup başlat
-          await startSetup();
-        }
-      } catch (err) {
-        console.error("2FA status check error:", err);
-        setError(t.error);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
-    };
 
-    check2FAStatus();
-  }, [isOpen, walletAddress]);
+      const data = await res.json();
+      console.log("2FA Status response:", data);
 
+      if (data.enabled === true) {
+        console.log("2FA is enabled, showing verify screen");
+        setStep("verify");
+      } else {
+        console.log("2FA not enabled, starting setup");
+        await startSetup();
+      }
+    } catch (err: any) {
+      console.error("2FA status check error:", err);
+      if (err.name === "AbortError") {
+        setError(t.connectionError);
+      } else {
+        setError(err.message || t.error);
+      }
+      setStep("error");
+    }
+  };
+
+  // Start setup
   const startSetup = async () => {
     setIsProcessing(true);
     setError(null);
 
     try {
-      // POST /api/security/2fa with action: "setup"
+      console.log("Starting 2FA setup...");
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -171,9 +196,13 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
           action: "setup",
           address: walletAddress,
         }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       const data = await res.json();
+      console.log("Setup response:", data);
 
       if (!res.ok) {
         throw new Error(data.error || "Setup failed");
@@ -181,7 +210,6 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
 
       setSecret(data.secret);
 
-      // Generate QR code from URL
       if (data.qrCodeUrl) {
         const qr = await QRCode.toDataURL(data.qrCodeUrl, { width: 200, margin: 2 });
         setQrCodeDataUrl(qr);
@@ -190,12 +218,25 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
       setStep("setup-qr");
     } catch (err: any) {
       console.error("Setup error:", err);
-      setError(err.message || t.error);
+      if (err.name === "AbortError") {
+        setError(t.connectionError);
+      } else {
+        setError(err.message || t.error);
+      }
+      setStep("error");
     } finally {
       setIsProcessing(false);
     }
   };
 
+  // Run check when modal opens
+  useEffect(() => {
+    if (isOpen && walletAddress) {
+      check2FAStatus();
+    }
+  }, [isOpen, walletAddress]);
+
+  // Verify setup code (enable 2FA)
   const handleVerifySetup = async () => {
     if (code.length !== 6) return;
 
@@ -203,7 +244,6 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
     setError(null);
 
     try {
-      // POST /api/security/2fa with action: "enable"
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -215,12 +255,12 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
       });
 
       const data = await res.json();
+      console.log("Enable response:", data);
 
       if (!res.ok) {
         throw new Error(data.error || t.invalidCode);
       }
 
-      // Setup başarılı - backup kodları göster
       if (data.backupCodes) {
         setBackupCodes(data.backupCodes);
       }
@@ -233,6 +273,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
     }
   };
 
+  // Verify code (for existing 2FA)
   const handleVerify = async () => {
     const codeLength = useBackupCode ? 8 : 6;
     if (code.length !== codeLength) return;
@@ -241,7 +282,6 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
     setError(null);
 
     try {
-      // POST /api/security/2fa with action: "verify"
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -253,12 +293,12 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
       });
 
       const data = await res.json();
+      console.log("Verify response:", data);
 
       if (!res.ok || !data.success) {
         throw new Error(data.error || t.invalidCode);
       }
 
-      // Doğrulama başarılı
       onVerified();
     } catch (err: any) {
       setError(err.message || t.invalidCode);
@@ -268,7 +308,6 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
   };
 
   const handleBackupCodesSaved = () => {
-    // Backup kodları kaydedildi - işleme devam et
     onVerified();
   };
 
@@ -295,10 +334,13 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
         <div className="p-4 sm:p-6 border-b border-stone-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-              step === "verify" ? "bg-amber-100 dark:bg-amber-500/20" : "bg-blue-100 dark:bg-blue-500/20"
+              step === "verify" ? "bg-amber-100 dark:bg-amber-500/20" : 
+              step === "error" ? "bg-red-100 dark:bg-red-500/20" :
+              "bg-blue-100 dark:bg-blue-500/20"
             }`}>
               <span className="text-2xl">
                 {step === "checking" && "⏳"}
+                {step === "error" && "❌"}
                 {step === "setup-qr" && "📱"}
                 {step === "setup-backup" && "🔐"}
                 {step === "verify" && "🔑"}
@@ -306,10 +348,14 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
             </div>
             <div className="flex-1">
               <h2 className="text-lg font-bold text-slate-800 dark:text-white">
-                {step === "setup-qr" || step === "setup-backup" ? t.setupTitle : t.verifyTitle}
+                {step === "error" ? t.error :
+                 step === "setup-qr" || step === "setup-backup" ? t.setupTitle : 
+                 t.verifyTitle}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {step === "setup-qr" || step === "setup-backup" ? t.setupDesc : t.verifyDesc}
+                {step === "error" ? "" :
+                 step === "setup-qr" || step === "setup-backup" ? t.setupDesc : 
+                 t.verifyDesc}
               </p>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
@@ -324,7 +370,31 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
           {step === "checking" && (
             <div className="flex flex-col items-center py-8">
               <div className="w-12 h-12 border-4 border-amber-200 border-t-amber-500 rounded-full animate-spin mb-4" />
-              <p className="text-slate-500 dark:text-slate-400">Loading...</p>
+              <p className="text-slate-500 dark:text-slate-400">{t.loading}</p>
+            </div>
+          )}
+
+          {/* Error with Retry */}
+          {step === "error" && (
+            <div className="flex flex-col items-center py-8">
+              <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center mb-4">
+                <span className="text-3xl">❌</span>
+              </div>
+              <p className="text-red-600 dark:text-red-400 mb-4 text-center">{error || t.connectionError}</p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={onClose}
+                  className="px-4 py-2 rounded-lg bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium"
+                >
+                  {t.cancel}
+                </button>
+                <button 
+                  onClick={check2FAStatus}
+                  className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium"
+                >
+                  {t.retry}
+                </button>
+              </div>
             </div>
           )}
 
@@ -407,9 +477,9 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  {backupCodes.map((code, i) => (
+                  {backupCodes.map((backupCode, i) => (
                     <div key={i} className="px-3 py-2 bg-white dark:bg-slate-900 rounded-lg text-center font-mono text-sm text-slate-800 dark:text-white">
-                      {code}
+                      {backupCode}
                     </div>
                   ))}
                 </div>
