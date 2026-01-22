@@ -30,8 +30,10 @@ import { useStaking } from "@/hooks/useStaking";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 import { useLanguage, LANGUAGES, getLanguageData, type LanguageCode } from "@/components/LanguageContext";
+import { RequireAllowedChain } from "@/components/RequireAllowedChain";
+import { useWalletContext } from "@/components/WalletContext";
+import { APP_CHAIN, isAllowedChain } from "@/config/chains";
 
-import { useWallet } from "@/components/WalletContext";
 
 // ============================================
 // LOCAL TRANSLATIONS - 6 Language Support
@@ -39,10 +41,11 @@ import { useWallet } from "@/components/WalletContext";
 const walletTranslations: Record<string, Record<string, string>> = {
   tr: {
     myAssets: "Auxite ve Crypto Varlıklarım",
-    lockedAssets: "Kilitli Varlıklar",
+    allocatedAndStaked: "Tahsisli & Stake",
     totalLocked: "Toplam Kilitli",
     estValue: "Tahmini Değer",
     estimatedTotalValue: "Tahmini Toplam Değer",
+    usdBalance: "USD Bakiyesi",
     auxmBalance: "AUXM Bakiyesi",
     bonus: "Bonus",
     gold: "Altın",
@@ -89,10 +92,11 @@ const walletTranslations: Record<string, Record<string, string>> = {
   },
   en: {
     myAssets: "My Auxite and Crypto Assets",
-    lockedAssets: "Locked Assets",
+    allocatedAndStaked: "Allocated & Staked",
     totalLocked: "Total Locked",
     estValue: "Est. Value",
     estimatedTotalValue: "Estimated Total Value",
+    usdBalance: "USD Balance",
     auxmBalance: "AUXM Balance",
     bonus: "Bonus",
     gold: "Gold",
@@ -139,10 +143,11 @@ const walletTranslations: Record<string, Record<string, string>> = {
   },
   de: {
     myAssets: "Meine Auxite und Crypto Vermögenswerte",
-    lockedAssets: "Gesperrte Vermögenswerte",
+    allocatedAndStaked: "Zugewiesen & Gestaked",
     totalLocked: "Gesamt Gesperrt",
     estValue: "Gesch. Wert",
     estimatedTotalValue: "Geschätzter Gesamtwert",
+    usdBalance: "USD-Guthaben",
     auxmBalance: "AUXM Guthaben",
     bonus: "Bonus",
     gold: "Gold",
@@ -189,10 +194,11 @@ const walletTranslations: Record<string, Record<string, string>> = {
   },
   fr: {
     myAssets: "Mes Actifs Auxite et Crypto",
-    lockedAssets: "Actifs Verrouillés",
+    allocatedAndStaked: "Alloué & Staké",
     totalLocked: "Total Verrouillé",
     estValue: "Valeur Est.",
     estimatedTotalValue: "Valeur Totale Estimée",
+    usdBalance: "Solde USD",
     auxmBalance: "Solde AUXM",
     bonus: "Bonus",
     gold: "Or",
@@ -239,10 +245,11 @@ const walletTranslations: Record<string, Record<string, string>> = {
   },
   ar: {
     myAssets: "أصولي من Auxite والعملات المشفرة",
-    lockedAssets: "الأصول المقفلة",
+    allocatedAndStaked: "مخصص ومرهون",
     totalLocked: "إجمالي المقفل",
     estValue: "القيمة التقديرية",
     estimatedTotalValue: "إجمالي القيمة المقدرة",
+    usdBalance: "رصيد الدولار",
     auxmBalance: "رصيد AUXM",
     bonus: "مكافأة",
     gold: "ذهب",
@@ -289,10 +296,11 @@ const walletTranslations: Record<string, Record<string, string>> = {
   },
   ru: {
     myAssets: "Мои Auxite и Крипто Активы",
-    lockedAssets: "Заблокированные Активы",
+    allocatedAndStaked: "Распределено и Застейкано",
     totalLocked: "Всего Заблокировано",
     estValue: "Оц. Стоимость",
     estimatedTotalValue: "Оценочная общая стоимость",
+    usdBalance: "Баланс USD",
     auxmBalance: "Баланс AUXM",
     bonus: "Бонус",
     gold: "Золото",
@@ -357,7 +365,8 @@ export default function WalletPage() {
   
 
   // Bakiyeler - useWallet hook
-  const { balances } = useWallet();
+  const { balances, isConnected, chainId, canSwitchChain, switchChain } = useWalletContext();
+  const isWrongChain = isConnected && chainId !== null && !isAllowedChain(chainId);
   const { allocations, totalGrams: allocationGrams, isLoading: allocLoading } = useAllocations();
   const { activeStakes, loading: stakingLoading } = useStaking();
   const auxmBalance = balances?.auxm ?? 0;
@@ -468,6 +477,30 @@ export default function WalletPage() {
   // USD cinsinden toplam değer (USDT * USDT/USD kuru)
   const totalEstimatedUsd = totalEstimatedValue * usdtPrice;
 
+  // Auxite & Crypto değeri (metaller + kripto)
+  const auxiteAndCryptoValue = 
+    (auxgBalance * (metalAskPrices?.AUXG || 0)) +
+    (auxsBalance * (metalAskPrices?.AUXS || 0)) +
+    (auxptBalance * (metalAskPrices?.AUXPT || 0)) +
+    (auxpdBalance * (metalAskPrices?.AUXPD || 0)) +
+    (ethBalance * (cryptoPrices?.eth || 0)) +
+    (btcBalance * (cryptoPrices?.btc || 0)) +
+    (xrpBalance * (cryptoPrices?.xrp || 0)) +
+    (solBalance * (cryptoPrices?.sol || 0)) +
+    (balances?.usdt || 0);
+
+  // Allocated & Staked değeri (bakiyelerden hesapla)
+  const allocatedValue = 
+    (auxgBalance || 0) * (metalAskPrices?.AUXG || 0) +
+    (auxsBalance || 0) * (metalAskPrices?.AUXS || 0) +
+    (auxptBalance || 0) * (metalAskPrices?.AUXPT || 0) +
+    (auxpdBalance || 0) * (metalAskPrices?.AUXPD || 0);
+  
+  // TODO: Staked değeri eklenecek (staking API'den)
+  const stakedValue = 0;
+  
+  const allocatedAndStakedValue = allocatedValue + stakedValue;
+
   // Deposit coins list
   const depositCoins = [
     { id: "BTC", name: "Bitcoin", icon: "₿", color: "#F7931A" },
@@ -551,6 +584,45 @@ export default function WalletPage() {
 
   return (
     <main className="min-h-screen bg-stone-100 dark:bg-slate-950 text-slate-900 dark:text-white">
+      {/* Wrong chain banner (P0: block critical actions) */}
+      {isWrongChain && (
+        <div className="bg-red-600 text-white text-sm px-4 py-3 flex items-center justify-center gap-3 flex-wrap">
+          <span>
+            {lang === "tr"
+              ? `Yanlış ağ algılandı. Devam etmek için ${APP_CHAIN.name} ağına geçin.`
+              : lang === "de"
+              ? `Falsches Netzwerk erkannt. Bitte wechseln Sie zu ${APP_CHAIN.name}, um fortzufahren.`
+              : lang === "fr"
+              ? `Réseau incorrect détecté. Passez à ${APP_CHAIN.name} pour continuer.`
+              : lang === "ar"
+              ? `تم اكتشاف شبكة خاطئة. يرجى التبديل إلى ${APP_CHAIN.name} للمتابعة.`
+              : lang === "ru"
+              ? `Обнаружена неверная сеть. Переключитесь на ${APP_CHAIN.name}, чтобы продолжить.`
+              : `Wrong network detected. Switch to ${APP_CHAIN.name} to continue.`}
+          </span>
+
+          {canSwitchChain && switchChain && (
+            <button
+              type="button"
+              onClick={() => switchChain(APP_CHAIN.chainId)}
+              className="bg-white/15 hover:bg-white/25 transition px-3 py-1.5 rounded-lg font-semibold"
+            >
+              {lang === "tr"
+                ? `Ağa geç`
+                : lang === "de"
+                ? `Wechseln`
+                : lang === "fr"
+                ? `Basculer`
+                : lang === "ar"
+                ? `تبديل`
+                : lang === "ru"
+                ? `Переключить`
+                : `Switch`}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* TopNav with wallet actions */}
       <TopNav
         showWalletActions={true}
@@ -689,13 +761,13 @@ export default function WalletPage() {
                   <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-500 mb-0.5 sm:mb-1">
                     {wx.auxiteAndCrypto}
                   </p>
-                  <p className="text-sm sm:text-lg font-semibold text-emerald-400">$125,456.78</p>
+                  <p className="text-sm sm:text-lg font-semibold text-emerald-400">${auxiteAndCryptoValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                 </div>
                 <div className="text-center min-w-[70px] sm:min-w-0">
                   <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-500 mb-0.5 sm:mb-1">
-                    {wx.lockedAssets}
+                    {wx.allocatedAndStaked}
                   </p>
-                  <p className="text-sm sm:text-lg font-semibold text-amber-400">$13,000.00</p>
+                  <p className="text-sm sm:text-lg font-semibold text-amber-400">${allocatedAndStakedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                 </div>
                 <button 
                   onClick={() => setShowPendingOrders(true)}
@@ -718,17 +790,19 @@ export default function WalletPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-emerald-500 flex items-center justify-center">
-                      <span className="text-white text-lg sm:text-xl font-bold">₮</span>
+                      <span className="text-white text-lg sm:text-xl font-bold">$</span>
                     </div>
                     <div>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">{wx.estimatedTotalValue}</p>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">{wx.usdBalance || "USD Balance"}</p>
                       <p className="text-lg sm:text-2xl font-bold text-slate-800 dark:text-white">
-                        {totalEstimatedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} 
-                        <span className="text-emerald-500 dark:text-emerald-400 text-sm sm:text-lg ml-1">USDT</span>
+                        ${usdBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} 
+                        <span className="text-emerald-500 dark:text-emerald-400 text-sm sm:text-lg ml-1">USD</span>
                       </p>
-                      <p className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-0.5">
-                        ≈ ${totalEstimatedUsd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD
-                      </p>
+                      {usdtBalance > 0 && (
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                          + {usdtBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USDT
+                        </p>
+                      )}
                     </div>
                   </div>
                   {/* USD Actions */}
@@ -925,10 +999,10 @@ export default function WalletPage() {
                 {wx.ecosystemDesc}
               </p>
             </div>
-            {/* Kilitli Varlıklar Section - Tıklanabilir */}
+            {/* Allocated & Staked Section - Tıklanabilir */}
             <div>
               <h3 className="text-sm sm:text-lg font-semibold text-slate-800 dark:text-white mb-2 sm:mb-4">
-                {wx.lockedAssets}
+                {wx.allocatedAndStaked}
               </h3>
               
               {(() => {
@@ -1194,38 +1268,36 @@ export default function WalletPage() {
             </div>
             
             <div className="space-y-3">
-              {/* On-Chain Deposit */}
+              {/* Kripto Yatır - NowPayments */}
               <button
                 onClick={() => {
                   setShowDeposit(false);
                   setShowOnChainDeposit(true);
                 }}
-                className="w-full p-4 rounded-xl border border-stone-300 dark:border-slate-700 hover:border-slate-500 dark:hover:border-slate-600 bg-stone-50 dark:bg-slate-800/50 hover:bg-stone-100 dark:hover:bg-slate-800 transition-all text-left flex items-start gap-4"
+                className="w-full p-4 rounded-xl border-2 border-blue-500/50 hover:border-blue-500 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all text-left flex items-start gap-4 relative overflow-hidden"
               >
-                <div className="w-10 h-10 rounded-lg bg-stone-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-slate-700 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                  </svg>
+                <div className="absolute top-2 right-2 px-2 py-0.5 bg-emerald-500 text-white text-xs font-bold rounded">
+                  {lang === "tr" ? "+%15 BONUS" : "+15% BONUS"}
+                </div>
+                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-blue-600 dark:text-blue-400 font-bold text-lg">₿</span>
                 </div>
                 <div className="flex-1">
                   <h4 className="text-slate-800 dark:text-white font-semibold mb-1">
                     {lang === "tr" ? "Kripto Yatır" :
                      lang === "de" ? "Krypto Einzahlen" :
-                     lang === "fr" ? "Déposer Crypto" :
+                     lang === "fr" ? "Dépôt Crypto" :
                      lang === "ar" ? "إيداع العملات المشفرة" :
                      lang === "ru" ? "Депозит Крипто" :
-                     "On-Chain Deposit"}
+                     "Deposit Crypto"}
                   </h4>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {lang === "tr" ? "Diğer borsalardan/cüzdanlardan kripto yatırın" :
-                     lang === "de" ? "Krypto von anderen Börsen/Wallets einzahlen" :
-                     lang === "fr" ? "Déposez des cryptos depuis d'autres exchanges" :
-                     lang === "ar" ? "إيداع العملات المشفرة من محافظ أخرى" :
-                     lang === "ru" ? "Внесите криптовалюту с других бирж/кошельков" :
-                     "Deposit crypto from other exchanges/wallets"}
+                    {lang === "tr" 
+                      ? "BTC, ETH, USDT, SOL ve daha fazlası" 
+                      : "BTC, ETH, USDT, SOL and more"}
                   </p>
                 </div>
-                <svg className="w-5 h-5 text-slate-500 dark:text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>

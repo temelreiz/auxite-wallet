@@ -1,14 +1,18 @@
-import "@rainbow-me/rainbowkit/styles.css";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+
+import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
+
 import { Web3Provider } from "@/components/Web3Provider";
 import { ToastProvider } from "@/components/ToastProvider";
 import { ToastProvider as UIToastProvider } from "@/components/ui/Toast";
 import { LanguageProvider } from "@/components/LanguageContext";
-import { WalletProvider } from "@/components/WalletContext";
+import { ChainGuard } from "@/components/ChainGuard";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Auxite - Tokenized Precious Metals",
@@ -36,9 +40,11 @@ export default function RootLayout({
   return (
     <html lang="tr" suppressHydrationWarning>
       <head>
+        {/* Default PWA icons (ensure these files exist in /public) */}
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
+
         {/* Theme initialization script - runs before React hydration */}
         <script
           dangerouslySetInnerHTML={{
@@ -47,8 +53,7 @@ export default function RootLayout({
                 try {
                   var theme = localStorage.getItem('auxite_theme');
                   var lang = localStorage.getItem('auxite_language');
-                  
-                  // Apply theme
+
                   if (theme === 'light') {
                     document.documentElement.classList.add('light');
                     document.documentElement.classList.remove('dark');
@@ -56,8 +61,7 @@ export default function RootLayout({
                     document.documentElement.classList.add('dark');
                     document.documentElement.classList.remove('light');
                   }
-                  
-                  // Apply RTL for Arabic
+
                   if (lang === 'ar') {
                     document.documentElement.dir = 'rtl';
                   }
@@ -67,15 +71,15 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} antialiased bg-stone-100 dark:bg-zinc-950`} suppressHydrationWarning>
+      <body
+        className={`${inter.className} antialiased bg-stone-100 dark:bg-zinc-950`}
+        suppressHydrationWarning
+      >
         <ToastProvider>
           <UIToastProvider>
             <Web3Provider>
-              <WalletProvider>
-                <LanguageProvider>
-                  {children}
-                </LanguageProvider>
-              </WalletProvider>
+              <ChainGuard />
+              <LanguageProvider>{children}</LanguageProvider>
             </Web3Provider>
           </UIToastProvider>
         </ToastProvider>

@@ -33,6 +33,9 @@ const PAYMENT_METHODS = [
   { symbol: "AUXM", icon: "💵", name: "AUXM" },
   { symbol: "ETH", icon: "Ξ", name: "ETH" },
   { symbol: "BTC", icon: "₿", name: "BTC" },
+  { symbol: "XRP", icon: "✕", name: "XRP" },
+  { symbol: "SOL", icon: "◎", name: "SOL" },
+  { symbol: "USDT", icon: "₮", name: "USDT" },
 ];
 
 function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModalProps) {
@@ -81,6 +84,12 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
         return walletBalances.eth || 0;
       case 'BTC':
         return walletBalances.btc || 0;
+      case 'XRP':
+        return walletBalances.xrp || 0;
+      case 'SOL':
+        return walletBalances.sol || 0;
+      case 'USDT':
+        return walletBalances.usdt || 0;
       default:
         return 0;
     }
@@ -294,17 +303,17 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
 
           <div>
             <label className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2 block">{t.youPay}</label>
-            <div className="grid grid-cols-3 gap-2 mb-3">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
               {PAYMENT_METHODS.map((method) => (
-                <button key={method.symbol} onClick={() => setSelectedPayment(method)} className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${selectedPayment.symbol === method.symbol ? "border-purple-500 bg-purple-50 dark:bg-purple-500/20" : "border-stone-200 dark:border-slate-700"}`}>
-                  <span className="text-xl">{method.icon}</span>
-                  <span className={`text-xs font-semibold ${selectedPayment.symbol === method.symbol ? "text-purple-600 dark:text-purple-400" : "text-slate-700 dark:text-slate-300"}`}>{method.name}</span>
+                <button key={method.symbol} onClick={() => setSelectedPayment(method)} className={`p-2 sm:p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${selectedPayment.symbol === method.symbol ? "border-purple-500 bg-purple-50 dark:bg-purple-500/20" : "border-stone-200 dark:border-slate-700"}`}>
+                  <span className="text-lg sm:text-xl">{method.icon}</span>
+                  <span className={`text-[10px] sm:text-xs font-semibold ${selectedPayment.symbol === method.symbol ? "text-purple-600 dark:text-purple-400" : "text-slate-700 dark:text-slate-300"}`}>{method.name}</span>
                 </button>
               ))}
             </div>
             <div className="flex justify-between text-sm mb-3">
               <span className="text-slate-500">{t.balance}:</span>
-              <span className={`font-medium ${isInsufficientBalance ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>{balance.toFixed(selectedPayment.symbol === 'BTC' ? 6 : 2)} {selectedPayment.symbol}</span>
+              <span className={`font-medium ${isInsufficientBalance ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>{balance.toFixed(['BTC', 'ETH', 'SOL'].includes(selectedPayment.symbol) ? 6 : 2)} {selectedPayment.symbol}</span>
             </div>
             <div className="relative">
               <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full px-4 py-4 pr-20 rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500 text-lg font-medium" />

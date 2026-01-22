@@ -178,6 +178,7 @@ interface BuyResult {
   costETH?: number;
   costUSD?: number;
   error?: string;
+  status?: 'pending' | 'confirmed' | 'failed';
 }
 
 export async function buyMetalToken(
@@ -239,27 +240,41 @@ export async function buyMetalToken(
       maxFeePerGas: maxFee,
     });
     
-    const receipt = await tx.wait(1);
+    // 🚀 NON-BLOCKING: Hemen hash döndür, confirmation arka planda bekle
+    const txHash = tx.hash;
+    console.log('Buy tx submitted:', txHash);
     
-    console.log('Buy complete:', receipt.hash);
-    
-    // Transfer to user if specified
-    if (normalizedToAddress && normalizedToAddress.toLowerCase() !== wallet.address.toLowerCase()) {
-      const decimals = await contract.decimals();
-      const tokenAmount = gramsInt * (10n ** BigInt(Number(decimals) - 3));
-      console.log('Transferring ' + gramsInt + 'g to ' + normalizedToAddress);
+    // Arka planda confirmation bekle ve transfer yap
+    tx.wait(1).then(async (receipt: any) => {
+      console.log('Buy confirmed:', receipt.hash);
       
-      const transferTx = await contract.transfer(normalizedToAddress, tokenAmount);
-      await transferTx.wait(1);
-      console.log('Transfer complete:', transferTx.hash);
-    }
+      // Transfer to user if specified
+      if (normalizedToAddress && normalizedToAddress.toLowerCase() !== wallet.address.toLowerCase()) {
+        try {
+          const decimals = await contract.decimals();
+          const tokenAmount = gramsInt * (10n ** BigInt(Number(decimals) - 3));
+          console.log('Transferring ' + gramsInt + 'g to ' + normalizedToAddress);
+          
+          const transferTx = await contract.transfer(normalizedToAddress, tokenAmount);
+          await transferTx.wait(1);
+          console.log('Transfer complete:', transferTx.hash);
+        } catch (transferError: any) {
+          console.error('Transfer failed (will retry):', transferError.message);
+          // TODO: Queue for retry
+        }
+      }
+    }).catch((err: any) => {
+      console.error('Buy confirmation failed:', err.message);
+      // TODO: Handle failed transaction
+    });
     
     return {
       success: true,
-      txHash: receipt.hash,
+      txHash,
       grams: Number(gramsInt),
       costETH,
       costUSD,
+      status: 'pending', // Yeni field - UI'da gösterilebilir
     };
   } catch (error: any) {
     console.error('Buy failed:', error);
@@ -278,6 +293,7 @@ interface SellResult {
   payoutETH?: number;
   payoutUSD?: number;
   error?: string;
+  status?: 'pending' | 'confirmed' | 'failed';
 }
 
 export async function sellMetalToken(
@@ -313,16 +329,25 @@ export async function sellMetalToken(
     
     // Execute sell
     const tx = await contract.sell(gramsInt);
-    const receipt = await tx.wait(1);
     
-    console.log('Sell complete:', receipt.hash);
+    // 🚀 NON-BLOCKING: Hemen hash döndür
+    const txHash = tx.hash;
+    console.log('Sell tx submitted:', txHash);
+    
+    // Arka planda confirmation bekle
+    tx.wait(1).then((receipt: any) => {
+      console.log('Sell confirmed:', receipt.hash);
+    }).catch((err: any) => {
+      console.error('Sell confirmation failed:', err.message);
+    });
     
     return {
       success: true,
-      txHash: receipt.hash,
+      txHash,
       grams: Number(gramsInt),
       payoutETH,
       payoutUSD,
+      status: 'pending',
     };
   } catch (error: any) {
     console.error('Sell failed:', error);

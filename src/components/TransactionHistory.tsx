@@ -18,6 +18,7 @@ const typeIcons: Record<string, { icon: string; color: string }> = {
   deposit: { icon: "↓", color: "text-emerald-600 dark:text-emerald-400" },
   withdraw: { icon: "↑", color: "text-red-600 dark:text-red-400" },
   swap: { icon: "⇄", color: "text-blue-600 dark:text-blue-400" },
+  exchange: { icon: "⇄", color: "text-blue-600 dark:text-blue-400" },
   transfer: { icon: "→", color: "text-purple-600 dark:text-purple-400" },
   bonus: { icon: "🎁", color: "text-yellow-600 dark:text-yellow-400" },
   buy: { icon: "🛒", color: "text-emerald-600 dark:text-emerald-400" },
@@ -53,6 +54,7 @@ const translations: Record<string, Record<string, string>> = {
     transfer: "Transfer",
     buy: "Alım",
     sell: "Satış",
+    exchange: "Dönüşüm",
   },
   en: {
     title: "Transaction History",
@@ -81,6 +83,7 @@ const translations: Record<string, Record<string, string>> = {
     transfer: "Transfer",
     buy: "Buy",
     sell: "Sell",
+    exchange: "Exchange",
   },
   de: {
     title: "Transaktionsverlauf",
@@ -109,6 +112,7 @@ const translations: Record<string, Record<string, string>> = {
     transfer: "Transfer",
     buy: "Kauf",
     sell: "Verkauf",
+    exchange: "Umtausch",
   },
   fr: {
     title: "Historique des Transactions",
@@ -137,6 +141,7 @@ const translations: Record<string, Record<string, string>> = {
     transfer: "Transfert",
     buy: "Achat",
     sell: "Vente",
+    exchange: "Échange",
   },
   ar: {
     title: "سجل المعاملات",
@@ -165,6 +170,7 @@ const translations: Record<string, Record<string, string>> = {
     transfer: "تحويل",
     buy: "شراء",
     sell: "بيع",
+    exchange: "تحويل",
   },
   ru: {
     title: "История Транзакций",
@@ -193,6 +199,7 @@ const translations: Record<string, Record<string, string>> = {
     transfer: "Перевод",
     buy: "Покупка",
     sell: "Продажа",
+    exchange: "Обмен",
   },
 };
 
@@ -343,17 +350,23 @@ export function TransactionHistory({ lang = "en" }: TransactionHistoryProps) {
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm flex-wrap">
-                        {tx.type === "swap" && tx.fromToken && tx.toToken ? (
+                        {((tx.type as string) === "swap" || (tx.type as string) === "exchange") && tx.fromToken && tx.toToken ? (
                           <>
                             <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{getTokenIcon(tx.fromToken)} {parseFloat(tx.fromAmount || "0").toFixed(4)} {tx.fromToken}</span>
                             <span className="text-slate-400 dark:text-slate-500">→</span>
                             <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">{getTokenIcon(tx.toToken)} {parseFloat(tx.toAmount || "0").toFixed(4)} {tx.toToken}</span>
                           </>
-                        ) : tx.type === "buy" && tx.fromToken && tx.toToken ? (
+                        ) : (tx.type as string) === "buy" && tx.fromToken && tx.toToken ? (
                           <>
                             <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{getTokenIcon(tx.fromToken)} {parseFloat(tx.fromAmount || "0").toFixed(2)} {tx.fromToken}</span>
                             <span className="text-slate-400 dark:text-slate-500">→</span>
                             <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">{getTokenIcon(tx.toToken)} {parseFloat(tx.toAmount || "0").toFixed(4)}g {tx.toToken}</span>
+                          </>
+                        ) : (tx.type as string) === "sell" && tx.fromToken && tx.toToken ? (
+                          <>
+                            <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{getTokenIcon(tx.fromToken)} {parseFloat(tx.fromAmount || "0").toFixed(4)}g {tx.fromToken}</span>
+                            <span className="text-slate-400 dark:text-slate-500">→</span>
+                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">{getTokenIcon(tx.toToken)} {parseFloat(tx.toAmount || "0").toFixed(4)} {tx.toToken}</span>
                           </>
                         ) : (
                           <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{tx.token && getTokenIcon(tx.token)} {parseFloat(tx.amount || "0").toFixed(4)} {tx.token}</span>

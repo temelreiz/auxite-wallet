@@ -26,6 +26,51 @@ import {
 import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
 
 // ═══════════════════════════════════════════════════════════════════════════
+// CRYPTO PRICE HELPER - Direkt Binance'den fiyat al
+// ═══════════════════════════════════════════════════════════════════════════
+
+const BINANCE_SYMBOLS: Record<string, string> = {
+  eth: "ETHUSDT",
+  btc: "BTCUSDT",
+  xrp: "XRPUSDT",
+  sol: "SOLUSDT",
+};
+
+const FALLBACK_CRYPTO_PRICES: Record<string, number> = {
+  eth: 3000,
+  btc: 90000,
+  xrp: 2,
+  sol: 130,
+  usdt: 1,
+};
+
+async function getCryptoPrice(symbol: string): Promise<number> {
+  const symbolLower = symbol.toLowerCase();
+  
+  // USDT her zaman 1
+  if (symbolLower === "usdt") return 1;
+  
+  const binanceSymbol = BINANCE_SYMBOLS[symbolLower];
+  if (!binanceSymbol) return FALLBACK_CRYPTO_PRICES[symbolLower] || 0;
+  
+  try {
+    const response = await fetch(
+      `https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`,
+      { cache: "no-store" }
+    );
+    
+    if (response.ok) {
+      const data = await response.json();
+      return parseFloat(data.price) || FALLBACK_CRYPTO_PRICES[symbolLower];
+    }
+  } catch (error) {
+    console.error(`Binance price fetch error for ${symbol}:`, error);
+  }
+  
+  return FALLBACK_CRYPTO_PRICES[symbolLower] || 0;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -232,6 +277,39 @@ export async function GET(request: NextRequest) {
       };
     }
     // ───────────────────────────────────────────────────────────────────────
+    // CRYPTO → METAL (ETH/BTC/XRP/SOL/USDT → AUXG/AUXS/AUXPT/AUXPD)
+    // ───────────────────────────────────────────────────────────────────────
+    else if (type === "buy" && CRYPTOS.includes(fromTokenLower) && METALS.includes(toTokenLower)) {
+      // 1. Crypto fiyatını al (direkt Binance'den)
+      const cryptoPrice = await getCryptoPrice(fromTokenLower);
+      
+      if (cryptoPrice === 0) {
+        return NextResponse.json({ error: `${fromToken} fiyatı alınamadı` }, { status: 400 });
+      }
+      
+      // 2. Crypto'yu USD'ye çevir
+      const usdValue = amount * cryptoPrice;
+      
+      // 3. Metal fiyatını al
+      const metalPrices = await getTokenPrices(toToken);
+      spreadPercent = metalPrices.spreadPercent;
+      price = metalPrices.askPerGram;
+      
+      // 4. Fee hesapla (USD değeri üzerinden)
+      fee = calculateTierFee(usdValue, tierFeePercent);
+      const netUsdValue = usdValue - fee;
+      
+      // 5. Alınacak metal miktarını hesapla
+      toAmount = netUsdValue / price;
+      
+      blockchainData = {
+        cryptoPrice,
+        usdValue,
+        metalPrice: price,
+        netUsdValue,
+      };
+    }
+    // ───────────────────────────────────────────────────────────────────────
     // Swap (Metal → Metal)
     // ───────────────────────────────────────────────────────────────────────
     else if (type === "swap" && METALS.includes(fromTokenLower) && METALS.includes(toTokenLower)) {
@@ -337,6 +415,8 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse & validate
     const body = await request.json();
+    console.log(`📥 TRADE REQUEST BODY:`, JSON.stringify(body));
+    
     const validation = tradeExecuteSchema.safeParse(body);
     
     if (!validation.success) {
@@ -478,13 +558,13 @@ export async function POST(request: NextRequest) {
 
     console.log(`📊 Balance Check: required=${fromAmount}, available=${availableBalance}, fromBalance=${fromBalance}, bonusAuxm=${bonusAuxm}`);
 
-    const isOnChainCryptoBuy = executeOnChain && type === "buy" && ["eth", "btc", "usdt", "xrp", "sol"].includes(fromTokenLower);
-    
-    if (fromAmount > availableBalance && !isOnChainCryptoBuy) {
+    // Bakiye kontrolü - TÜM tokenlar için geçerli
+    if (fromAmount > availableBalance) {
       return NextResponse.json({
         error: "Yetersiz bakiye",
         required: fromAmount,
         available: availableBalance,
+        token: fromToken.toUpperCase(),
       }, { status: 400 });
     }
 
@@ -507,10 +587,21 @@ export async function POST(request: NextRequest) {
       spreadPercent = prices.spreadPercent;
       price = lockedPrice || prices.askPerGram;
       
+      // 🔍 DEBUG: Hesaplama değerlerini logla
+      console.log(`🔍 BUY CALCULATION DEBUG:`);
+      console.log(`   fromAmount: ${fromAmount}`);
+      console.log(`   lockedPrice: ${lockedPrice}`);
+      console.log(`   prices.askPerGram: ${prices.askPerGram}`);
+      console.log(`   FINAL price: ${price}`);
+      
       // ✅ TIER BAZLI FEE
       fee = calculateTierFee(fromAmount, tierFeePercent);
       const netAmount = fromAmount - fee;
       toAmount = netAmount / price;
+      
+      console.log(`   fee: ${fee}`);
+      console.log(`   netAmount: ${netAmount}`);
+      console.log(`   toAmount (grams): ${toAmount}`);
 
       const reserveCheck = await checkReserveLimit(toToken, toAmount);
       if (false) { // TEMP: reserve check disabled
@@ -644,12 +735,26 @@ export async function POST(request: NextRequest) {
     // CRYPTO → METAL (Buy metal with crypto) - TIER BAZLI FEE
     // ───────────────────────────────────────────────────────────────────────
     else if (type === "buy" && CRYPTOS.includes(fromTokenLower) && METALS.includes(toTokenLower)) {
-      const prices = await getTokenPrices(toToken);
-      price = prices.askPerGram;
+      // 1. Crypto fiyatını al (direkt Binance'den)
+      const cryptoPrice = await getCryptoPrice(fromTokenLower);
       
-      // ✅ TIER BAZLI FEE
-      fee = calculateTierFee(fromAmount, tierFeePercent);
-      toAmount = (fromAmount - fee) / price;
+      if (cryptoPrice === 0) {
+        return NextResponse.json({ error: `${fromToken} fiyatı alınamadı` }, { status: 400 });
+      }
+      
+      // 2. Crypto'yu USD'ye çevir
+      const usdValue = fromAmount * cryptoPrice;
+      
+      // 3. Metal fiyatını al
+      const metalPrices = await getTokenPrices(toToken);
+      price = metalPrices.askPerGram;
+      
+      // 4. Fee hesapla (USD değeri üzerinden)
+      fee = calculateTierFee(usdValue, tierFeePercent);
+      const netUsdValue = usdValue - fee;
+      
+      // 5. Alınacak metal miktarını hesapla
+      toAmount = netUsdValue / price;
       
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
         // Oracle updated via cron
@@ -658,7 +763,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: `Blockchain işlemi başarısız: ${buyResult.error}` }, { status: 500 });
         }
         txHash = buyResult.txHash;
-        blockchainResult = { executed: true, txHash, costETH: buyResult.costETH };
+        blockchainResult = { executed: true, txHash, costETH: buyResult.costETH, cryptoPrice, usdValue };
       }
     }
     // ───────────────────────────────────────────────────────────────────────

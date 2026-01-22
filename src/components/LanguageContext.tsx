@@ -161,6 +161,9 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     AUXS: "Gümüş",
     AUXPT: "Platin",
     AUXPD: "Paladyum",
+    wrongNetworkDetected: "Yanlış ağ. Devam etmek için lütfen {chain} ağına geçin.",
+    switchToChain: "{chain} ağına geç",
+
   },
   
   en: {
@@ -305,6 +308,8 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     AUXS: "Silver",
     AUXPT: "Platinum",
     AUXPD: "Palladium",
+    wrongNetworkDetected: "Wrong network detected. Please switch to {chain} to continue.",
+    switchToChain: "Switch to {chain}",
   },
   
   de: {
@@ -449,6 +454,9 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     AUXS: "Silber",
     AUXPT: "Platin",
     AUXPD: "Palladium",
+    wrongNetworkDetected: "Falsches Netzwerk. Bitte wechsle zu {chain}, um fortzufahren.",
+    switchToChain: "Zu {chain} wechseln",
+
   },
   
   fr: {
@@ -593,6 +601,9 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     AUXS: "Argent",
     AUXPT: "Platine",
     AUXPD: "Palladium",
+    wrongNetworkDetected: "Mauvais réseau. Veuillez passer sur {chain} pour continuer.",
+    switchToChain: "Passer sur {chain}",
+
   },
   
   ar: {
@@ -737,6 +748,9 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     AUXS: "فضة",
     AUXPT: "بلاتين",
     AUXPD: "بالاديوم",
+    wrongNetworkDetected: "شبكة غير صحيحة. يرجى التبديل إلى {chain} للمتابعة.",
+    switchToChain: "التبديل إلى {chain}",
+
   },
   
   ru: {
@@ -881,6 +895,9 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     AUXS: "Серебро",
     AUXPT: "Платина",
     AUXPD: "Палладий",
+    wrongNetworkDetected: "Неверная сеть. Переключитесь на {chain}, чтобы продолжить.",
+    switchToChain: "Переключиться на {chain}",
+
   },
 };
 

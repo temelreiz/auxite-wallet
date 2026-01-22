@@ -1,33 +1,68 @@
-// middleware.ts (proje root'una koyun)
+// middleware.ts (project root)
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Geliştirme modunda bypass için secret key
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "auxite2024secret";
+// DEV bypass key - Production'da ENV'den alınmalı, varsayılan yok
+const ADMIN_SECRET = process.env.ADMIN_SECRET;
 const CRON_SECRET = process.env.CRON_SECRET;
 
-// İzin verilen path'ler (API'ler çalışmaya devam etmeli)
 const ALLOWED_PATHS = [
   "/api/",
   "/under-construction",
   "/_next/",
   "/favicon.ico",
-  "/auxite-wallet-logo.png",
+  "/manifest.json",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/apple-touch-icon.png",
+  "/icon-192.png",
+  "/icon-512.png",
   "/gold-favicon-32x32.png",
   "/silver-favicon-32x32.png",
   "/platinum-favicon-32x32.png",
   "/palladium-favicon-32x32.png",
+  "/auxite-wallet-logo.png",
 ];
+
+function buildCsp() {
+  const isDev = process.env.NODE_ENV === "development";
+  
+  // Production'da daha sıkı CSP
+  const scriptSrc = isDev
+    ? "'self' 'unsafe-inline' 'unsafe-eval' https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com"
+    : "'self' 'unsafe-inline' https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com"; // Production'da unsafe-eval yok
+
+  return [
+    "default-src 'self'",
+    `script-src ${scriptSrc}`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' data: blob: https:",
+    "frame-src 'self' https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com",
+    "connect-src 'self' https: wss: https://api.auxite.io https://*.walletconnect.com https://*.walletconnect.org https://*.web3modal.org https://*.web3modal.com https://*.reown.com https://*.infura.io https://*.alchemy.com",
+    "media-src 'self' blob:",
+    "worker-src 'self' blob:",
+    "frame-ancestors 'none'", // Clickjacking koruması
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const response = NextResponse.next();
 
-  // ============================================
-  // SECURITY HEADERS - YENİ
-  // ============================================
+  // Trace header (helps debugging via curl -I)
+  response.headers.set("x-auxite-mw", "wallet-security-v2");
+
+  // =====================================================
+  // 1) SECURITY HEADERS
+  // =====================================================
   response.headers.set("X-DNS-Prefetch-Control", "on");
-  response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=63072000; includeSubDomains; preload"
+  );
   response.headers.set("X-XSS-Protection", "1; mode=block");
   response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -36,64 +71,29 @@ export function middleware(request: NextRequest) {
     "Permissions-Policy",
     "camera=(), microphone=(), geolocation=(), interest-cohort=()"
   );
+  response.headers.set("Content-Security-Policy", buildCsp());
 
-  // ============================================
-  // CRON ENDPOINT PROTECTION - YENİ
-  // ============================================
+  // =====================================================
+  // 2) CRON ENDPOINT PROTECTION
+  // =====================================================
   if (pathname.startsWith("/api/cron/")) {
     const authHeader = request.headers.get("authorization");
     const isVercelCron = request.headers.get("x-vercel-cron") === "true";
     const hasValidAuth = authHeader === `Bearer ${CRON_SECRET}`;
 
     if (!isVercelCron && !hasValidAuth && CRON_SECRET) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     return response;
   }
 
-  // ============================================
-  // MEVCUT UNDER CONSTRUCTION LOGIC
-  // ============================================
-  
-  // API ve static dosyalara izin ver
-  if (ALLOWED_PATHS.some((path) => pathname.startsWith(path))) {
-    return response;
-  }
-
-  // Admin secret ile bypass (URL'de ?secret=xxx veya cookie)
-  const url = new URL(request.url);
-  const secretParam = url.searchParams.get("secret");
-  const secretCookie = request.cookies.get("admin_secret")?.value;
-
-  if (secretParam === ADMIN_SECRET) {
-    // Cookie ayarla ve devam et
-    response.cookies.set("admin_secret", ADMIN_SECRET, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24, // 24 saat
-    });
-    return response;
-  }
-
-  if (secretCookie === ADMIN_SECRET) {
-    return response;
-  }
-
-  // Under construction sayfasına yönlendir
-  return NextResponse.rewrite(new URL("/under-construction", request.url));
+  // =====================================================
+  // 3) UNDER-CONSTRUCTION GATE (DISABLED)
+  // =====================================================
+  // Gate devre dışı - tüm sayfalara erişim açık
+  return response;
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     */
-    "/((?!_next/static|_next/image).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image).*)"],
 };

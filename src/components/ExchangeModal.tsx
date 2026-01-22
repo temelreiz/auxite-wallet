@@ -477,19 +477,20 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
         }),
       });
       
-      if (!response.ok) {
-        throw new Error('Exchange failed');
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        console.error('Exchange failed:', data.error);
+        setResult("error");
+        return;
       }
       
       setResult("success");
       if (refreshBalances) await refreshBalances();
       setTimeout(() => onClose(), 2500);
-    } catch {
-      // Fallback: Simulated exchange for demo
-      await new Promise((r) => setTimeout(r, 1500));
-      setResult("success");
-      if (refreshBalances) await refreshBalances();
-      setTimeout(() => onClose(), 2500);
+    } catch (error) {
+      console.error('Exchange error:', error);
+      setResult("error");
     } finally {
       setIsProcessing(false);
     }

@@ -278,3 +278,11 @@ select:focus-visible {
     transform: scale(1);
   }
 }
+
+/* Hide RainbowKit learn more sidebar */
+[data-rk] [class*="rkDetailSidebar"],
+[data-rk] [class*="learnMore"],
+[data-rk] [class*="sidebar"] {
+  display: none !important;
+}
+

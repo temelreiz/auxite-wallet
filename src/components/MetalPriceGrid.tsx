@@ -2,6 +2,7 @@
 import { DepositAddressModal } from "@/components/DepositAddressModal";
 import { useState } from "react";
 import Link from "next/link";
+import { useAccount } from "wagmi";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import MetalPriceCard from "./MetalPriceCard";
@@ -95,6 +96,7 @@ function getDirectionStyles(change: number): { badgeBg: string; badgeText: strin
 // Props artık gerekli değil - useLanguage hook'u kullanılıyor
 export default function MetalPriceGrid() {
   const { t, lang } = useLanguage();
+  const { address } = useAccount();
   const { basePrices, prices, bidPrices, directions, changes, loading } = useMetalsPrices();
   const { prices: cryptoPrices, changes: cryptoChanges, directions: cryptoDirections, loading: cryptoLoading } = useCryptoPrices();
   const [showExchange, setShowExchange] = useState(false);
@@ -112,8 +114,8 @@ export default function MetalPriceGrid() {
   const [selectedDepositCoin, setSelectedDepositCoin] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Demo wallet address
-  const walletAddress = "0xe6df...3ba3";
+  // Wallet address - from useAccount or localStorage
+  const walletAddress = address || localStorage.getItem("auxite_wallet_address") || "";
   
   // Deposit coins list
   const depositCoins = [
@@ -479,7 +481,62 @@ export default function MetalPriceGrid() {
             </div>
             
             <div className="space-y-3">
-              {/* On-Chain Deposit */}
+              {/* Kripto ile Yatır - Önerilen */}
+              <button
+                onClick={() => {
+                  setShowDeposit(false);
+                  setShowOnChainDeposit(true);
+                }}
+                className="w-full p-4 rounded-xl border-2 border-blue-500/50 hover:border-blue-500 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all text-left flex items-start gap-4 relative overflow-hidden"
+              >
+                <div className="absolute top-2 right-2 px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded">
+                  {lang === "tr" ? "ÖNERİLEN" : "RECOMMENDED"}
+                </div>
+                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-blue-600 dark:text-blue-400 font-bold text-lg">₿</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-slate-800 dark:text-white font-semibold mb-1">
+                    {lang === "tr" ? "Kripto ile Yatır" : "Deposit with Crypto"}
+                  </h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    {lang === "tr" 
+                      ? "BTC, ETH, USDT, SOL, XRP • +%15'e kadar bonus" 
+                      : "BTC, ETH, USDT, SOL, XRP • Up to +15% bonus"}
+                  </p>
+                </div>
+                <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* Deposit Fiat */}
+              <button
+                onClick={() => {
+                  setShowDeposit(false);
+                  setShowFiatDeposit(true);
+                }}
+                className="w-full p-4 rounded-xl border border-green-500/30 hover:border-green-500/50 bg-green-50 dark:bg-transparent hover:bg-green-100 dark:hover:bg-green-500/5 transition-all text-left flex items-start gap-4"
+              >
+                <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-green-600 dark:text-green-400 font-bold text-lg">$</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-slate-800 dark:text-white font-semibold mb-1">
+                    {lang === "tr" ? "Fiat Yatır" : "Deposit Fiat"}
+                  </h4>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {lang === "tr" 
+                      ? "Kredi kartı, Apple/Google Pay ile USD/TRY yatırın" 
+                      : "Deposit USD/TRY via card, Apple/Google Pay"}
+                  </p>
+                </div>
+                <svg className="w-5 h-5 text-slate-500 dark:text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* On-Chain Deposit - Manuel */}
               <button
                 onClick={() => {
                   setShowDeposit(false);
@@ -493,39 +550,13 @@ export default function MetalPriceGrid() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-slate-800 dark:text-white font-semibold mb-1">On-Chain Deposit</h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {lang === "tr" 
-                      ? "Diğer borsalardan/cüzdanlardan kripto yatırın" 
-                      : "Deposit crypto from other exchanges/wallets"}
-                  </p>
-                </div>
-                <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-
-              {/* Deposit Fiat */}
-              <button
-                onClick={() => {
-                  setShowDeposit(false);
-                  setShowFiatDeposit(true);
-                }}
-                className="w-full p-4 rounded-xl border border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600 bg-stone-50 dark:bg-transparent hover:bg-stone-100 dark:hover:bg-slate-800/50 transition-all text-left flex items-start gap-4"
-              >
-                <div className="w-10 h-10 rounded-lg bg-stone-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
                   <h4 className="text-slate-800 dark:text-white font-semibold mb-1">
-                    {lang === "tr" ? "Fiat Yatır" : "Deposit Fiat"}
+                    {lang === "tr" ? "Manuel Transfer" : "Manual Transfer"}
                   </h4>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {lang === "tr" 
-                      ? "Kredi kartı, Apple/Google Pay ile USD/TRY yatırın" 
-                      : "Deposit USD/TRY via card, Apple/Google Pay"}
+                      ? "Deposit adresine direkt transfer" 
+                      : "Direct transfer to deposit address"}
                   </p>
                 </div>
                 <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -675,6 +706,7 @@ export default function MetalPriceGrid() {
           lang={lang}
         />
       )}
+
       {/* Transfer Modal */}
       <TransferModal 
         isOpen={showTransfer} 

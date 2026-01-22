@@ -1,59 +1,37 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // API CORS (if auxite.io needs to call wallet APIs)
   async headers() {
     return [
       {
-        // CORS for API routes - allows auxite.io to fetch lease rates
-        source: '/api/:path*',
+        source: "/api/:path*",
         headers: [
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
-        ]
-      },
-      {
-        source: '/:path*',
-        headers: [
+          { key: "Access-Control-Allow-Credentials", value: "true" },
+          // If you can, replace * with https://www.auxite.io for tighter CORS
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET,POST,OPTIONS" },
           {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://api.sumsub.com https://in.sumsub.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob: https: http:",
-              "frame-src 'self' https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com",
-              "connect-src 'self' https: wss: ws: https://*.web3modal.org https://*.walletconnect.com https://*.walletconnect.org https://*.reown.com wss://*.walletconnect.com wss://*.walletconnect.org",
-              "media-src 'self' blob:",
-              "worker-src 'self' blob:",
-            ].join('; ')
-          }
-        ]
-      }
-    ]
+            key: "Access-Control-Allow-Headers",
+            value: "Content-Type, Authorization",
+          },
+        ],
+      },
+    ];
   },
+
   images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: '**' }
-    ]
+    remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
+
   // Family wallet hatalarını engelle
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        'family': false,
-      };
-      
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        'family': false,
-      };
+      config.resolve.alias = { ...config.resolve.alias, family: false };
+      config.resolve.fallback = { ...config.resolve.fallback, family: false };
     }
     return config;
   },
-}
+};
 
 const { withSentryConfig } = require("@sentry/nextjs");
 

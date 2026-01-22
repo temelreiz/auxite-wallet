@@ -16,7 +16,7 @@ jest.mock('next/image', () => ({
 // Mock wagmi - virtual true for optional dependencies
 jest.mock('wagmi', () => ({
   useAccount: () => ({
-    address: '0xD24B2bca1E0b58a2EAE5b1184871219f9a8EE944',
+    address: '0x7bb286a8C876aC6283Dd0B95d8ec853bbDb20378',
     isConnected: true,
   }),
   useBalance: () => ({ data: { formatted: '1.5' }, isLoading: false }),

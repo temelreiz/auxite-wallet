@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useWallet } from "@/components/WalletContext";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
@@ -186,55 +186,54 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
-const DEPOSIT_ADDRESSES: Record<string, { 
-  address: string; 
+// Coin metadata (adresler NowPayments'tan dinamik olarak alınacak)
+const COIN_METADATA: Record<string, { 
   network: string; 
-  memo?: string;
   color: string;
   icon: string;
   minDeposit: string;
   confirmTime: string;
+  nowpaymentsCurrency: string;
 }> = {
   BTC: { 
-    address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", 
     network: "Bitcoin",
     color: "#F7931A",
     icon: "₿",
     minDeposit: "0.0001 BTC",
     confirmTime: "~30 min (3 conf)",
+    nowpaymentsCurrency: "btc",
   },
   ETH: { 
-    address: "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", 
-    network: "Ethereum / Base",
+    network: "Ethereum",
     color: "#627EEA",
     icon: "Ξ",
     minDeposit: "0.001 ETH",
     confirmTime: "~5 min (12 conf)",
+    nowpaymentsCurrency: "eth",
   },
   XRP: { 
-    address: "r4pNH6DdDtVknt8NZAhhbcY8Wqr46QoGae", 
     network: "XRP Ledger",
-    memo: "123456",
     color: "#23292F",
     icon: "✕",
     minDeposit: "10 XRP",
     confirmTime: "~10 sec",
+    nowpaymentsCurrency: "xrp",
   },
   SOL: { 
-    address: "6orrQ2dRuiFwH5w3wddQjQNbPT6w7vEN7eMW9wUNM1Qe", 
     network: "Solana",
     color: "#9945FF",
     icon: "◎",
-    minDeposit: "0.01 SOL",
+    minDeposit: "0.1 SOL",
     confirmTime: "~30 sec",
+    nowpaymentsCurrency: "sol",
   },
   USDT: {
-    address: "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6",
-    network: "Ethereum / Tron",
+    network: "Tron (TRC20)",
     color: "#26A17B",
     icon: "₮",
     minDeposit: "10 USDT",
-    confirmTime: "~5 min",
+    confirmTime: "~1 min",
+    nowpaymentsCurrency: "usdttrc20",
   },
 };
 
@@ -244,24 +243,72 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
   
   const [copied, setCopied] = useState(false);
   const [copiedMemo, setCopiedMemo] = useState(false);
-  const [testAmount, setTestAmount] = useState("");
-  const [convertToAuxm, setConvertToAuxm] = useState(false);
-  const [isDepositing, setIsDepositing] = useState(false);
-  const [depositResult, setDepositResult] = useState<{
-    success: boolean;
-    converted?: boolean;
-    auxmReceived?: number;
-    bonusReceived?: number;
-    coinReceived?: number;
-    coin?: string;
-  } | null>(null);
+  
+  // NowPayments dynamic address state
+  const [depositAddress, setDepositAddress] = useState<string | null>(null);
+  const [extraId, setExtraId] = useState<string | null>(null); // For XRP memo etc
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+  const [addressError, setAddressError] = useState<string | null>(null);
 
   const t = translations[lang] || translations.en;
+  const coinMeta = COIN_METADATA[coin];
+
+  // Fetch deposit address from NowPayments when modal opens
+  useEffect(() => {
+    if (isOpen && coin && address && coinMeta && !depositAddress) {
+      fetchDepositAddress();
+    }
+  }, [isOpen, coin, address]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setDepositAddress(null);
+      setExtraId(null);
+      setPaymentId(null);
+      setAddressError(null);
+    }
+  }, [isOpen]);
+
+  const fetchDepositAddress = async () => {
+    if (!address || !coinMeta) return;
+    
+    setIsLoadingAddress(true);
+    setAddressError(null);
+    
+    try {
+      const response = await fetch("/api/nowpayments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          coin: coin,
+          address: address,
+          amount: 100, // Default amount for address generation
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.payment?.address) {
+        setDepositAddress(data.payment.address);
+        setPaymentId(data.payment.id);
+        if (data.payment.extraId) {
+          setExtraId(data.payment.extraId);
+        }
+      } else {
+        setAddressError(data.error || "Failed to generate address");
+      }
+    } catch (error) {
+      console.error("Error fetching deposit address:", error);
+      setAddressError("Network error. Please try again.");
+    } finally {
+      setIsLoadingAddress(false);
+    }
+  };
 
   if (!isOpen) return null;
-
-  const coinData = DEPOSIT_ADDRESSES[coin];
-  if (!coinData) return null;
+  if (!coinMeta) return null;
 
   const copyToClipboard = async (text: string, type: "address" | "memo") => {
     try {
@@ -279,12 +326,13 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
   };
 
   const getQRValue = () => {
+    if (!depositAddress) return "";
     switch (coin) {
-      case "BTC": return `bitcoin:${coinData.address}`;
-      case "ETH": return `ethereum:${coinData.address}`;
-      case "XRP": return coinData.memo ? `https://xrpl.to/${coinData.address}?dt=${coinData.memo}` : coinData.address;
-      case "SOL": return `solana:${coinData.address}`;
-      default: return coinData.address;
+      case "BTC": return `bitcoin:${depositAddress}`;
+      case "ETH": return `ethereum:${depositAddress}`;
+      case "XRP": return extraId ? `https://xrpl.to/${depositAddress}?dt=${extraId}` : depositAddress;
+      case "SOL": return `solana:${depositAddress}`;
+      default: return depositAddress;
     }
   };
 
@@ -299,165 +347,6 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
     return priceMap[coin] || 1;
   };
 
-  const testAmountNum = parseFloat(testAmount) || 0;
-  const testAmountUsd = testAmountNum * getCryptoPrice();
-  
-  const getBonusPercent = (usd: number) => {
-    if (usd >= 10000) return 15;
-    if (usd >= 5000) return 12;
-    if (usd >= 1000) return 10;
-    if (usd >= 100) return 5;
-    return 0;
-  };
-  
-  const bonusPercent = getBonusPercent(testAmountUsd);
-  const bonusAmount = testAmountUsd * (bonusPercent / 100);
-
-  const handleTestDeposit = async () => {
-    if (!isConnected || !address || !testAmount) return;
-
-    const amount = parseFloat(testAmount);
-    if (amount <= 0) return;
-
-    setIsDepositing(true);
-    setDepositResult(null);
-
-    try {
-      const response = await fetch("/api/deposit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          address,
-          coin,
-          amount,
-          convertToAuxm,
-          txHash: `test_${Date.now()}`,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Deposit failed");
-      }
-
-      setDepositResult({
-        success: true,
-        converted: data.deposit.converted,
-        auxmReceived: data.deposit.auxmReceived,
-        bonusReceived: data.deposit.bonusReceived,
-        coinReceived: data.deposit.coinReceived,
-        coin: data.deposit.coin,
-      });
-
-      await refreshBalances();
-
-      setTimeout(() => {
-        onClose();
-      }, 3000);
-
-      setTestAmount("");
-
-    } catch (err) {
-      console.error("Test deposit error:", err);
-      setDepositResult({ success: false });
-    } finally {
-      setIsDepositing(false);
-    }
-  };
-
-  // Success Screen
-  if (depositResult?.success) {
-    return (
-      <div className="fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center z-50 p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 w-full max-w-sm">
-          <div className="p-8 text-center">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <svg className="w-10 h-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
-              {t.depositSuccess}
-            </h2>
-            
-            <div className="bg-stone-100 dark:bg-slate-800 rounded-xl p-4 mb-4">
-              {depositResult.converted ? (
-                <>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-slate-600 dark:text-slate-400">AUXM {t.received}</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                      +{depositResult.auxmReceived?.toFixed(2)}
-                    </span>
-                  </div>
-                  {depositResult.bonusReceived && depositResult.bonusReceived > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">{t.bonus}</span>
-                      <span className="text-purple-600 dark:text-purple-400 font-bold">
-                        +{depositResult.bonusReceived?.toFixed(2)}
-                      </span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">{depositResult.coin} {t.received}</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                    +{depositResult.coinReceived}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
-              3 {t.autoClose}
-            </p>
-            
-            <button
-              onClick={onClose}
-              className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold transition-colors"
-            >
-              {t.viewWallet}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Error Screen
-  if (depositResult && !depositResult.success) {
-    return (
-      <div className="fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center z-50 p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-300 dark:border-slate-700 w-full max-w-sm">
-          <div className="p-8 text-center">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
-              <svg className="w-10 h-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-            
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
-              {t.depositFailed}
-            </h2>
-            
-            <p className="text-slate-600 dark:text-slate-400 text-sm mb-6">
-              {t.errorOccurred}
-            </p>
-            
-            <button
-              onClick={() => setDepositResult(null)}
-              className="w-full py-3 rounded-xl bg-stone-200 dark:bg-slate-700 hover:bg-stone-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-semibold transition-colors"
-            >
-              {t.tryAgain}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Normal Deposit Form
   return (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/80 flex items-center justify-center z-50 p-3 sm:p-4">
@@ -467,15 +356,15 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
           <div className="flex items-center gap-2 sm:gap-3">
             <div 
               className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg"
-              style={{ backgroundColor: coinData.color }}
+              style={{ backgroundColor: coinMeta.color }}
             >
-              {coinData.icon}
+              {coinMeta.icon}
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
                 {coin} {t.deposit}
               </h2>
-              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{coinData.network}</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{coinMeta.network}</p>
             </div>
           </div>
           <button 
@@ -488,163 +377,132 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
 
         {/* Content */}
         <div className="p-3 sm:p-4">
-          {/* QR Code */}
-          <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl mb-3 sm:mb-4 flex items-center justify-center border border-stone-200 dark:border-transparent">
-            <QRCodeSVG
-              value={getQRValue()}
-              size={120}
-              level="H"
-              includeMargin={true}
-              className="sm:hidden"
-            />
-            <QRCodeSVG
-              value={getQRValue()}
-              size={140}
-              level="H"
-              includeMargin={true}
-              className="hidden sm:block"
-            />
-          </div>
-
-          {/* Address */}
-          <div className="bg-stone-100 dark:bg-slate-800 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
-            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-              <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium">
-                {t.address}
-              </span>
-              <button
-                onClick={() => copyToClipboard(coinData.address, "address")}
-                className={`text-[10px] sm:text-xs font-medium ${copied ? "text-emerald-500" : "text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400"}`}
-              >
-                {copied ? `✓ ${t.copied}` : t.copy}
-              </button>
-            </div>
-            <p className="text-slate-800 dark:text-white font-mono text-[10px] sm:text-xs break-all select-all leading-relaxed">
-              {coinData.address}
-            </p>
-          </div>
-
-          {/* Memo (XRP) */}
-          {coinData.memo && (
-            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
-              <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                <span className="text-amber-600 dark:text-amber-500 text-[10px] sm:text-xs font-medium">⚠️ {t.destinationTag}</span>
-                <button
-                  onClick={() => copyToClipboard(coinData.memo!, "memo")}
-                  className={`text-[10px] sm:text-xs font-medium ${copiedMemo ? "text-amber-500" : "text-amber-600 dark:text-amber-500"}`}
-                >
-                  {copiedMemo ? "✓" : t.copy}
-                </button>
-              </div>
-              <p className="text-slate-800 dark:text-white font-mono text-base sm:text-lg font-bold">{coinData.memo}</p>
+          {/* Loading State */}
+          {isLoadingAddress && (
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+              <p className="text-slate-600 dark:text-slate-400 text-sm">
+                {lang === "tr" ? "Adres oluşturuluyor..." : "Generating address..."}
+              </p>
             </div>
           )}
 
-          {/* Deposit Info */}
-          <div className="bg-stone-50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-3 sm:mb-4 text-[10px] sm:text-xs">
-            <div className="flex justify-between mb-0.5 sm:mb-1">
-              <span className="text-slate-500 dark:text-slate-400">{t.minDeposit}</span>
-              <span className="text-slate-700 dark:text-slate-300">{coinData.minDeposit}</span>
-            </div>
-            <div className="flex justify-between mb-0.5 sm:mb-1">
-              <span className="text-slate-500 dark:text-slate-400">{t.confirmTime}</span>
-              <span className="text-slate-700 dark:text-slate-300">{coinData.confirmTime}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500 dark:text-slate-400">{t.price}</span>
-              <span className="text-slate-700 dark:text-slate-300">${getCryptoPrice().toLocaleString()}</span>
-            </div>
-          </div>
-
-          {/* Test Deposit */}
-          <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-3 sm:mb-4">
-            <p className="text-purple-600 dark:text-purple-400 text-[10px] sm:text-xs font-medium mb-2 sm:mb-3">
-              🧪 {t.testDeposit}
-            </p>
-            
-            {/* Amount Input */}
-            <div className="flex gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-              <input
-                type="number"
-                value={testAmount}
-                onChange={(e) => setTestAmount(e.target.value)}
-                placeholder={`0.00 ${coin}`}
-                className="flex-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-white text-xs sm:text-sm font-mono focus:outline-none focus:border-purple-500"
-              />
-            </div>
-
-            {/* Conversion Option */}
-            <div className="mb-2 sm:mb-3">
-              <label className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg bg-white dark:bg-slate-800/50 border border-stone-300 dark:border-slate-700 cursor-pointer hover:border-purple-400 dark:hover:border-slate-600 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={convertToAuxm}
-                  onChange={(e) => setConvertToAuxm(e.target.checked)}
-                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded bg-stone-200 dark:bg-slate-700 border-stone-400 dark:border-slate-600 text-purple-500 focus:ring-purple-500"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm text-slate-800 dark:text-white font-medium">
-                    {t.convertToAuxm}
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
-                    {t.conversionDesc}
-                  </p>
-                </div>
-                {convertToAuxm && bonusPercent > 0 && (
-                  <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-[10px] sm:text-xs font-semibold flex-shrink-0">
-                    +{bonusPercent}% 🎁
-                  </span>
-                )}
-              </label>
-            </div>
-
-            {/* Preview */}
-            {testAmountNum > 0 && (
-              <div className="p-2.5 sm:p-3 rounded-lg bg-white dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 mb-2 sm:mb-3 text-xs sm:text-sm">
-                <div className="flex justify-between mb-0.5 sm:mb-1">
-                  <span className="text-slate-500 dark:text-slate-400">{t.depositValue}</span>
-                  <span className="text-slate-800 dark:text-white">{testAmountNum} {coin}</span>
-                </div>
-                <div className="flex justify-between mb-0.5 sm:mb-1">
-                  <span className="text-slate-500 dark:text-slate-400">{t.value}</span>
-                  <span className="text-slate-800 dark:text-white">${testAmountUsd.toFixed(2)}</span>
-                </div>
-                <div className="border-t border-stone-200 dark:border-slate-700 my-1.5 sm:my-2"></div>
-                {convertToAuxm ? (
-                  <>
-                    <div className="flex justify-between mb-0.5 sm:mb-1">
-                      <span className="text-slate-500 dark:text-slate-400">AUXM</span>
-                      <span className="text-emerald-600 dark:text-emerald-400">{testAmountUsd.toFixed(2)}</span>
-                    </div>
-                    {bonusPercent > 0 && (
-                      <div className="flex justify-between mb-0.5 sm:mb-1">
-                        <span className="text-slate-500 dark:text-slate-400">{t.bonus} (+{bonusPercent}%)</span>
-                        <span className="text-purple-600 dark:text-purple-400">+{bonusAmount.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-semibold">
-                      <span className="text-slate-800 dark:text-white">{t.total}</span>
-                      <span className="text-emerald-600 dark:text-emerald-400">{(testAmountUsd + bonusAmount).toFixed(2)} AUXM</span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex justify-between font-semibold">
-                    <span className="text-slate-800 dark:text-white">{t.receive}</span>
-                    <span className="text-emerald-600 dark:text-emerald-400">{testAmountNum} {coin}</span>
-                  </div>
-                )}
+          {/* Error State */}
+          {addressError && !isLoadingAddress && (
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center mb-4">
+                <span className="text-2xl">❌</span>
               </div>
-            )}
+              <p className="text-red-600 dark:text-red-400 text-sm mb-4">{addressError}</p>
+              <button
+                onClick={fetchDepositAddress}
+                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium"
+              >
+                {lang === "tr" ? "Tekrar Dene" : "Try Again"}
+              </button>
+            </div>
+          )}
 
-            {/* Deposit Button */}
-            <button
-              onClick={handleTestDeposit}
-              disabled={!isConnected || !testAmount || isDepositing || testAmountNum <= 0}
-              className="w-full py-2 sm:py-2.5 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-xs sm:text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isDepositing ? `⏳ ${t.processing}` : t.depositBtn}
-            </button>
-          </div>
+          {/* Address Loaded */}
+          {depositAddress && !isLoadingAddress && !addressError && (
+            <>
+              {/* QR Code */}
+              <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl mb-3 sm:mb-4 flex items-center justify-center border border-stone-200 dark:border-transparent">
+                <QRCodeSVG
+                  value={getQRValue()}
+                  size={120}
+                  level="H"
+                  includeMargin={true}
+                  className="sm:hidden"
+                />
+                <QRCodeSVG
+                  value={getQRValue()}
+                  size={140}
+                  level="H"
+                  includeMargin={true}
+                  className="hidden sm:block"
+                />
+              </div>
+
+              {/* Address */}
+              <div className="bg-stone-100 dark:bg-slate-800 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium">
+                    {t.address}
+                  </span>
+                  <button
+                    onClick={() => copyToClipboard(depositAddress, "address")}
+                    className={`text-[10px] sm:text-xs font-medium ${copied ? "text-emerald-500" : "text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400"}`}
+                  >
+                    {copied ? `✓ ${t.copied}` : t.copy}
+                  </button>
+                </div>
+                <p className="text-slate-800 dark:text-white font-mono text-[10px] sm:text-xs break-all select-all leading-relaxed">
+                  {depositAddress}
+                </p>
+              </div>
+
+              {/* Extra ID / Memo (XRP etc) */}
+              {extraId && (
+                <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
+                  <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                    <span className="text-amber-600 dark:text-amber-500 text-[10px] sm:text-xs font-medium">⚠️ {t.destinationTag}</span>
+                    <button
+                      onClick={() => copyToClipboard(extraId, "memo")}
+                      className={`text-[10px] sm:text-xs font-medium ${copiedMemo ? "text-amber-500" : "text-amber-600 dark:text-amber-500"}`}
+                    >
+                      {copiedMemo ? "✓" : t.copy}
+                    </button>
+                  </div>
+                  <p className="text-slate-800 dark:text-white font-mono text-base sm:text-lg font-bold">{extraId}</p>
+                </div>
+              )}
+
+              {/* Bonus Info */}
+              <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
+                <p className="text-emerald-700 dark:text-emerald-400 text-xs font-medium mb-2">
+                  🎁 {lang === "tr" ? "AUXM Bonus Oranları" : "AUXM Bonus Rates"}
+                </p>
+                <div className="grid grid-cols-2 gap-1 text-[10px]">
+                  <span className="text-slate-600 dark:text-slate-400">$10-99:</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">+15%</span>
+                  <span className="text-slate-600 dark:text-slate-400">$100-499:</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">+10%</span>
+                  <span className="text-slate-600 dark:text-slate-400">$500-999:</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">+7%</span>
+                  <span className="text-slate-600 dark:text-slate-400">$1,000-4,999:</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">+5%</span>
+                  <span className="text-slate-600 dark:text-slate-400">$5,000+:</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">+3%</span>
+                </div>
+              </div>
+
+              {/* Deposit Info */}
+              <div className="bg-stone-50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-3 sm:mb-4 text-[10px] sm:text-xs">
+                <div className="flex justify-between mb-0.5 sm:mb-1">
+                  <span className="text-slate-500 dark:text-slate-400">{t.minDeposit}</span>
+                  <span className="text-slate-700 dark:text-slate-300">{coinMeta.minDeposit}</span>
+                </div>
+                <div className="flex justify-between mb-0.5 sm:mb-1">
+                  <span className="text-slate-500 dark:text-slate-400">{t.confirmTime}</span>
+                  <span className="text-slate-700 dark:text-slate-300">{coinMeta.confirmTime}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">{t.price}</span>
+                  <span className="text-slate-700 dark:text-slate-300">${getCryptoPrice().toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Important Notice */}
+              <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg p-2.5 mb-3">
+                <p className="text-blue-700 dark:text-blue-400 text-[10px] sm:text-xs">
+                  ℹ️ {lang === "tr" 
+                    ? "Bu adrese sadece " + coin + " gönderin. Bakiyeniz otomatik güncellenecektir."
+                    : "Only send " + coin + " to this address. Your balance will update automatically."}
+                </p>
+              </div>
+            </>
+          )}
 
           {/* Done Button */}
           <button

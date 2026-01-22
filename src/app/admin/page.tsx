@@ -273,9 +273,10 @@ interface SovereignInvitation {
 // Contract addresses from central config
 const V7_CONTRACTS = METAL_TOKENS;
 
-const ADMIN_ADDRESSES = [
-  "0xD24B2bca1E0b58a2EAE5b1184871219f9a8EE944",
-].map(a => a.toLowerCase());
+// Admin addresses from environment variable
+const ADMIN_ADDRESSES = (process.env.NEXT_PUBLIC_ADMIN_ADDRESSES || "0x101bD08219773E0ff8cD3805542c0A2835Fec0FF")
+  .split(",")
+  .map(a => a.trim().toLowerCase());
 
 const METALS = [
   { key: "gold", symbol: "AUXG", name: "Altın", icon: "🥇", color: "text-amber-500" },
@@ -392,10 +393,10 @@ type TabId = typeof TABS[number]['id'];
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function AdminDashboard() {
-  const { isConnected, address } = useAccount();
+  // Wallet connection is optional now
+  const { address } = useAccount();
   
   // Auth State
-  const [isAdmin, setIsAdmin] = useState(false);
   const [password, setPassword] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
   const [authError, setAuthError] = useState("");
@@ -600,22 +601,28 @@ export default function AdminDashboard() {
   const [showWebsiteModal, setShowWebsiteModal] = useState<string | null>(null);
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // AUTH LOGIC
+  // AUTH LOGIC - Only password based
   // ═══════════════════════════════════════════════════════════════════════════════
 
   useEffect(() => {
-    if (address) {
-      const isAdminWallet = ADMIN_ADDRESSES.includes(address.toLowerCase());
-      setIsAdmin(isAdminWallet);
-      if (isAdminWallet) {
-        const token = sessionStorage.getItem("auxite_admin_token");
-        if (token) {
+    // Check for existing session
+    const token = sessionStorage.getItem("auxite_admin_token");
+    if (token) {
+      // Verify token is still valid
+      fetch("/api/admin/auth", {
+        headers: { "Authorization": `Bearer ${token}` }
+      }).then(res => {
+        if (res.ok) {
           setAuthenticated(true);
           loadAllData();
+        } else {
+          sessionStorage.removeItem("auxite_admin_token");
         }
-      }
+      }).catch(() => {
+        sessionStorage.removeItem("auxite_admin_token");
+      });
     }
-  }, [address]);
+  }, []);
 
   // Auto refresh intervals
   useEffect(() => {
@@ -1613,51 +1620,22 @@ export default function AdminDashboard() {
   const formatPercentage = (num: number) => {
     return `${num >= 0 ? '+' : ''}${num.toFixed(1)}%`;
   };
+
   // ═══════════════════════════════════════════════════════════════════════════════
-  // RENDER - NOT CONNECTED
+  // RENDER - AUTH CHECK
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  if (!isConnected) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-800 flex items-center justify-center">
-            <span className="text-4xl">🔐</span>
-          </div>
-          <h1 className="text-2xl font-bold mb-4">Admin Paneli</h1>
-          <p className="text-slate-400 mb-6">Devam etmek için cüzdanınızı bağlayın</p>
-          <ConnectButton />
-        </div>
-      </main>
-    );
-  }
-
-  // NOT ADMIN
-  if (!isAdmin) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
-            <span className="text-4xl">⛔</span>
-          </div>
-          <h1 className="text-2xl font-bold mb-4">Erişim Reddedildi</h1>
-          <p className="text-slate-400 mb-6">Bu cüzdan admin yetkisine sahip değil</p>
-          <p className="text-xs text-slate-600 font-mono">{address}</p>
-        </div>
-      </main>
-    );
-  }
-
-  // NOT AUTHENTICATED
+  // NOT AUTHENTICATED - Show password login
   if (!authenticated) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
         <div className="w-full max-w-sm p-8 bg-slate-900 rounded-2xl border border-slate-800">
           <div className="text-center mb-6">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-500/20 flex items-center justify-center">
-              <span className="text-3xl">🔑</span>
+              <span className="text-3xl">🔐</span>
             </div>
-            <h1 className="text-xl font-bold">Admin Şifresi</h1>
+            <h1 className="text-xl font-bold">Auxite Admin</h1>
+            <p className="text-slate-400 text-sm mt-2">Yönetim paneline giriş yapın</p>
           </div>
           
           <form onSubmit={handleLogin}>
@@ -1665,15 +1643,15 @@ export default function AdminDashboard() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Şifre"
+              placeholder="Admin Şifresi"
               className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white mb-4 focus:outline-none focus:border-amber-500"
               autoFocus
             />
             {authError && <p className="text-red-400 text-sm mb-4">{authError}</p>}
             <button
               type="submit"
-              disabled={authLoading}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold py-3 rounded-xl disabled:opacity-50"
+              disabled={authLoading || !password}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold py-3 rounded-xl disabled:opacity-50 transition-colors"
             >
               {authLoading ? "Kontrol ediliyor..." : "Giriş Yap"}
             </button>
@@ -1703,8 +1681,8 @@ export default function AdminDashboard() {
           </div>
           
           <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-400">
-              {address?.slice(0, 6)}...{address?.slice(-4)}
+            <span className="text-sm text-emerald-400 font-medium">
+              ● Admin Oturumu Aktif
             </span>
             <button
               onClick={handleLogout}

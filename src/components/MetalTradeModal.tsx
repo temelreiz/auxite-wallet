@@ -312,8 +312,10 @@ export function MetalTradeModal({
         throw new Error(quoteData.error || "Quote failed");
       }
       
-      setQuote(quoteData);
-      setCountdown(quoteData.timeRemaining || 15);
+      // API response: { success, quote: {...}, message }
+      // Sadece quote objesini state'e set et
+      setQuote(quoteData.quote);
+      setCountdown(quoteData.quote?.timeRemaining || quoteData.timeRemaining || 15);
       setShowConfirmation(true);
       
     } catch (error: any) {
@@ -369,8 +371,9 @@ export function MetalTradeModal({
     console.log("🔍 handleTradeClick - mode:", mode, "showAllocationWarning:", showAllocationWarning);
     if (mode === "buy" && !showAllocationWarning) {
       try {
-        const auxmAmount = amountNum * currentPrice;
-        console.log("🔍 Checking allocation preview - amount:", amountNum, "price:", currentPrice, "auxm:", auxmAmount, "address:", walletAddress);
+        // displayPrice = spread uygulanmış fiyat (askPerGram), currentPrice = ham fiyat
+        const auxmAmount = amountNum * displayPrice;
+        console.log("🔍 Checking allocation preview - amount:", amountNum, "displayPrice:", displayPrice, "auxm:", auxmAmount, "address:", walletAddress);
         const previewRes = await fetch(
           `/api/trade?type=buy&fromToken=AUXM&toToken=${metal}&amount=${auxmAmount}&address=${walletAddress}`
         );
@@ -399,8 +402,8 @@ export function MetalTradeModal({
   
   const handleAddMoreAuxm = () => {
     if (allocationPreview?.suggestion) {
-      // Yeni miktarı hesapla (hedef gram * fiyat)
-      const newAuxmAmount = allocationPreview.suggestion.targetGrams * currentPrice;
+      // Yeni miktarı hesapla (hedef gram * spread'li fiyat)
+      const newAuxmAmount = allocationPreview.suggestion.targetGrams * displayPrice;
       setAmount(allocationPreview.suggestion.targetGrams.toString());
     }
     setShowAllocationWarning(false);
@@ -413,14 +416,23 @@ export function MetalTradeModal({
     setErrorMessage("");
     
     try {
+      // Quote'tan gelen değerleri kullan
+      const tradePayload = {
+        quoteId: quote.id,
+        type: mode, // "buy" veya "sell"
+        fromToken: mode === "buy" ? "AUXM" : metal,
+        toToken: mode === "buy" ? metal : "AUXM",
+        fromAmount: mode === "buy" ? quote.totalAUXM : quote.grams,
+        address: walletAddress,
+        executeOnChain: true,
+      };
+      
+      console.log("🔷 Trade payload:", tradePayload);
+      
       const tradeRes = await fetch("/api/trade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quoteId: quote.id,
-          paymentMethod: mode === "buy" ? paymentMethod : "AUXM",
-          address: walletAddress,
-        }),
+        body: JSON.stringify(tradePayload),
       });
       
       const tradeData = await tradeRes.json();

@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 
-const AUXITE_API = "https://api.auxite.io/api/prices?chain=84532";
 const GOLDAPI_URL = "https://www.goldapi.io/api";
-const GOLDAPI_KEY = process.env.GOLDAPI_KEY || process.env.NEXT_PUBLIC_GOLDAPI_KEY || "";
+const GOLDAPI_KEY = process.env.GOLDAPI_KEY || "";
 
 const TROY_OZ_TO_GRAM = 31.1035;
-const SETTINGS_KEY = "auxite:price-settings";
 
 const DEFAULT_SETTINGS: Record<string, { askAdjust: number; bidAdjust: number }> = {
   AUXG: { askAdjust: 2, bidAdjust: -1 },
@@ -16,18 +14,7 @@ const DEFAULT_SETTINGS: Record<string, { askAdjust: number; bidAdjust: number }>
 
 let cachedData: any = null;
 let lastFetchTime: number = 0;
-const CACHE_DURATION = 3000;
-
-let goldApiCache: Record<string, number> = {};
-let goldApiLastFetch: number = 0;
-const GOLDAPI_CACHE_DURATION = 300000;
-
-const FALLBACK = {
-  AUXG: { oz: 2650, gram: 85.22 },
-  AUXS: { oz: 30, gram: 0.97 },
-  AUXPT: { oz: 980, gram: 31.52 },
-  AUXPD: { oz: 1050, gram: 33.76 },
-};
+const CACHE_DURATION = 5000; // 5 saniye cache
 
 const GOLDAPI_SYMBOLS: Record<string, string> = {
   AUXG: "XAU",
@@ -36,7 +23,14 @@ const GOLDAPI_SYMBOLS: Record<string, string> = {
   AUXPD: "XPD",
 };
 
-// Redis'ten spread ayarlarını al - Admin panel formatından oku
+const FALLBACK_PRICES: Record<string, { oz: number; gram: number }> = {
+  AUXG: { oz: 2750, gram: 88.42 },
+  AUXS: { oz: 31, gram: 1.00 },
+  AUXPT: { oz: 1000, gram: 32.15 },
+  AUXPD: { oz: 1000, gram: 32.15 },
+};
+
+// Redis'ten spread ayarlarını al
 async function getSpreadSettings(): Promise<Record<string, { askAdjust: number; bidAdjust: number }>> {
   try {
     const { Redis } = await import("@upstash/redis");
@@ -70,16 +64,15 @@ async function getSpreadSettings(): Promise<Record<string, { askAdjust: number; 
   }
 }
 
-
-async function fetchAllGoldApiChanges(): Promise<Record<string, number>> {
-  if (Object.keys(goldApiCache).length > 0 && Date.now() - goldApiLastFetch < GOLDAPI_CACHE_DURATION) {
-    return goldApiCache;
+// GoldAPI'den fiyatları çek
+async function fetchGoldApiPrices(): Promise<Record<string, { price: number; change: number }>> {
+  if (!GOLDAPI_KEY) {
+    console.warn("⚠️ GOLDAPI_KEY not set");
+    return {};
   }
 
-  if (!GOLDAPI_KEY) return { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 };
+  const results: Record<string, { price: number; change: number }> = {};
 
-  const changes: Record<string, number> = {};
-  
   for (const [symbol, goldSymbol] of Object.entries(GOLDAPI_SYMBOLS)) {
     try {
       const response = await fetch(`${GOLDAPI_URL}/${goldSymbol}/USD`, {
@@ -87,119 +80,120 @@ async function fetchAllGoldApiChanges(): Promise<Record<string, number>> {
           "x-access-token": GOLDAPI_KEY,
           "Content-Type": "application/json",
         },
+        cache: "no-store",
       });
 
       if (response.ok) {
         const data = await response.json();
+        const priceOz = data.price || 0;
+        const changePercent = data.chg_percent || (data.ch && data.prev_close_price ? (data.ch / data.prev_close_price) * 100 : 0);
         
-        let changePercent = 0;
-        if (data.chg_percent !== null && data.chg_percent !== undefined) {
-          changePercent = data.chg_percent;
-        } else if (data.ch && data.prev_close_price) {
-          changePercent = (data.ch / data.prev_close_price) * 100;
-        }
+        results[symbol] = {
+          price: priceOz,
+          change: Math.round(changePercent * 100) / 100,
+        };
         
-        changes[symbol] = Math.round(changePercent * 100) / 100;
+        console.log(`✅ ${symbol}: $${priceOz}/oz (${changePercent > 0 ? '+' : ''}${changePercent.toFixed(2)}%)`);
       } else {
-        changes[symbol] = goldApiCache[symbol] || 0;
+        console.warn(`⚠️ GoldAPI ${symbol} error: ${response.status}`);
       }
-      
-      await new Promise(resolve => setTimeout(resolve, 250));
+
+      // Rate limit önleme
+      await new Promise(resolve => setTimeout(resolve, 200));
     } catch (error) {
-      changes[symbol] = goldApiCache[symbol] || 0;
+      console.error(`❌ GoldAPI ${symbol} fetch error:`, error);
     }
   }
 
-  goldApiCache = changes;
-  goldApiLastFetch = Date.now();
-  
-  return changes;
+  return results;
 }
 
 export async function GET() {
   const now = Date.now();
 
+  // Cache kontrolü
   if (cachedData && now - lastFetchTime < CACHE_DURATION) {
-    return NextResponse.json(cachedData);
+    return NextResponse.json({ ...cachedData, cached: true });
   }
 
   try {
-    // Paralel olarak tüm verileri çek
-    const [auxiteResponse, goldApiChanges, spreadSettings] = await Promise.all([
-      fetch(AUXITE_API, { cache: "no-store" }),
-      fetchAllGoldApiChanges(),
+    // Paralel olarak verileri çek
+    const [goldApiData, spreadSettings] = await Promise.all([
+      fetchGoldApiPrices(),
       getSpreadSettings(),
     ]);
 
-    if (!auxiteResponse.ok) throw new Error("Auxite API error");
-
-    const data = await auxiteResponse.json();
     const basePrices: Record<string, number> = {};
-    const prices: Record<string, number> = {}; // Ask prices (spread uygulanmış)
-    const bidPrices: Record<string, number> = {}; // Bid prices (spread uygulanmış)
+    const prices: Record<string, number> = {};
+    const bidPrices: Record<string, number> = {};
     const spotPrices: Record<string, number> = {};
+    const changes: Record<string, number> = {};
 
-    if (data.ok && data.data) {
-      for (const item of data.data) {
-        const symbol = item.symbol;
-        const priceOz = parseFloat(item.priceOz || item.price || 0);
-        const priceGram = priceOz / TROY_OZ_TO_GRAM;
-        const basePrice = Math.round(priceGram * 100) / 100;
+    for (const symbol of Object.keys(GOLDAPI_SYMBOLS)) {
+      const apiData = goldApiData[symbol];
+      const fallback = FALLBACK_PRICES[symbol];
+      
+      // Fiyat: API'den veya fallback
+      const priceOz = apiData?.price || fallback.oz;
+      const priceGram = priceOz / TROY_OZ_TO_GRAM;
+      const basePrice = Math.round(priceGram * 100) / 100;
 
-        // Base fiyat
-        basePrices[symbol] = basePrice;
-        spotPrices[symbol] = priceOz;
+      basePrices[symbol] = basePrice;
+      spotPrices[symbol] = priceOz;
+      changes[symbol] = apiData?.change || 0;
 
-        // Spread ayarlarını uygula
-        const settings = spreadSettings[symbol] || DEFAULT_SETTINGS[symbol];
-        if (settings) {
-          prices[symbol] = Math.round(basePrice * (1 + settings.askAdjust / 100) * 100) / 100;
-          bidPrices[symbol] = Math.round(basePrice * (1 + settings.bidAdjust / 100) * 100) / 100;
-        } else {
-          prices[symbol] = basePrice;
-          bidPrices[symbol] = basePrice;
-        }
-      }
+      // Spread uygula
+      const settings = spreadSettings[symbol] || DEFAULT_SETTINGS[symbol];
+      prices[symbol] = Math.round(basePrice * (1 + settings.askAdjust / 100) * 100) / 100;
+      bidPrices[symbol] = Math.round(basePrice * (1 + settings.bidAdjust / 100) * 100) / 100;
     }
 
-    const result = { 
-      success: true, 
+    const hasRealData = Object.keys(goldApiData).length > 0;
+    
+    const result = {
+      success: true,
       basePrices,
-      prices, 
-      bidPrices, 
-      spotPrices, 
-      changes: goldApiChanges,
+      prices,
+      bidPrices,
+      spotPrices,
+      changes,
       spreadSettings,
-      timestamp: now, 
-      source: "auxite" 
+      timestamp: now,
+      source: hasRealData ? "goldapi" : "fallback",
     };
+
     cachedData = result;
     lastFetchTime = now;
 
     return NextResponse.json(result);
   } catch (error) {
-    if (cachedData) return NextResponse.json({ ...cachedData, cached: true });
+    console.error("❌ Prices API error:", error);
+
+    // Fallback response
+    if (cachedData) {
+      return NextResponse.json({ ...cachedData, cached: true, error: "Using cache" });
+    }
 
     const basePrices: Record<string, number> = {};
     const prices: Record<string, number> = {};
     const bidPrices: Record<string, number> = {};
-    
-    for (const [s, d] of Object.entries(FALLBACK)) {
-      basePrices[s] = d.gram;
-      const settings = DEFAULT_SETTINGS[s];
-      prices[s] = Math.round(d.gram * (1 + settings.askAdjust / 100) * 100) / 100;
-      bidPrices[s] = Math.round(d.gram * (1 + settings.bidAdjust / 100) * 100) / 100;
+
+    for (const [symbol, fallback] of Object.entries(FALLBACK_PRICES)) {
+      basePrices[symbol] = fallback.gram;
+      const settings = DEFAULT_SETTINGS[symbol];
+      prices[symbol] = Math.round(fallback.gram * (1 + settings.askAdjust / 100) * 100) / 100;
+      bidPrices[symbol] = Math.round(fallback.gram * (1 + settings.bidAdjust / 100) * 100) / 100;
     }
 
     return NextResponse.json({
-      success: true, 
+      success: true,
       basePrices,
-      prices, 
+      prices,
       bidPrices,
-      spotPrices: Object.fromEntries(Object.entries(FALLBACK).map(([k, v]) => [k, v.oz])),
+      spotPrices: Object.fromEntries(Object.entries(FALLBACK_PRICES).map(([k, v]) => [k, v.oz])),
       changes: { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 },
       spreadSettings: DEFAULT_SETTINGS,
-      timestamp: now, 
+      timestamp: now,
       source: "fallback",
     });
   }
