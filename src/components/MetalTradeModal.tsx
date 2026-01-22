@@ -132,7 +132,7 @@ export function MetalTradeModal({
     orderType: "Emir Tipi",
     marketDesc: "Anlık piyasa fiyatından işlem",
     limitDesc: "Belirlediğin fiyattan işlem",
-    amount: "Miktar (gram)",
+    amount: "Miktar",
     limitPrice: "Limit Fiyat",
     currentMarketPrice: "Güncel Piyasa Fiyatı",
     askPrice: "Satış Fiyatı (Ask)",
@@ -168,7 +168,7 @@ export function MetalTradeModal({
     orderType: "Order Type",
     marketDesc: "Trade at current market price",
     limitDesc: "Trade at your specified price",
-    amount: "Amount (grams)",
+    amount: "Amount",
     limitPrice: "Limit Price",
     currentMarketPrice: "Current Market Price",
     askPrice: "Ask Price",
@@ -653,7 +653,7 @@ export function MetalTradeModal({
                   <span className="text-white font-mono">
                     {mode === "buy" 
                       ? `${availableBalance.toFixed(paymentMethod === "BTC" ? 6 : 2)} ${paymentMethod}`
-                      : `${userBalance?.metals?.[metal]?.toFixed(4) || "0.0000"}g`
+                      : `${userBalance?.metals?.[metal]?.toFixed(4) || "0.0000"} ${metal}`
                     }
                   </span>
                 </div>
@@ -699,7 +699,7 @@ export function MetalTradeModal({
                     className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-lg font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-20"
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                    <span className="text-slate-500">grams</span>
+                    <span className="text-slate-500">{metal}</span>
                     <button
                       onClick={() => {
                         const maxPrice = orderType === "limit" ? limitPriceNum : displayPrice;

@@ -221,7 +221,7 @@ export default function TradePanel({
       campaignDesc: "Metal satın al, bonus AUXM kazan!",
       askPrice: "Satış Fiyatı",
       bidPrice: "Alış Fiyatı",
-      amountGrams: "Miktar (gram)",
+      amountGrams: "Miktar",
       paymentMethod: "Ödeme Yöntemi",
       receiveAs: "Alınacak Para Birimi",
       pleaseWait: "Lütfen bekleyin",
@@ -280,7 +280,7 @@ export default function TradePanel({
       campaignDesc: "Buy metals and earn bonus AUXM!",
       askPrice: "Ask Price",
       bidPrice: "Bid Price",
-      amountGrams: "Amount (grams)",
+      amountGrams: "Amount",
       paymentMethod: "Payment Method",
       receiveAs: "Receive As",
       pleaseWait: "Please wait",
@@ -339,7 +339,7 @@ export default function TradePanel({
       campaignDesc: "Metalle kaufen und Bonus-AUXM verdienen!",
       askPrice: "Verkaufspreis",
       bidPrice: "Kaufpreis",
-      amountGrams: "Menge (Gramm)",
+      amountGrams: "Menge",
       paymentMethod: "Zahlungsmethode",
       receiveAs: "Erhalten als",
       pleaseWait: "Bitte warten",
@@ -398,7 +398,7 @@ export default function TradePanel({
       campaignDesc: "Achetez des métaux et gagnez des AUXM bonus!",
       askPrice: "Prix de vente",
       bidPrice: "Prix d'achat",
-      amountGrams: "Montant (grammes)",
+      amountGrams: "Montant",
       paymentMethod: "Méthode de paiement",
       receiveAs: "Recevoir en",
       pleaseWait: "Veuillez patienter",
@@ -457,7 +457,7 @@ export default function TradePanel({
       campaignDesc: "اشترِ المعادن واكسب مكافأة AUXM!",
       askPrice: "سعر البيع",
       bidPrice: "سعر الشراء",
-      amountGrams: "الكمية (غرام)",
+      amountGrams: "الكمية",
       paymentMethod: "طريقة الدفع",
       receiveAs: "استلام كـ",
       pleaseWait: "يرجى الانتظار",
@@ -516,7 +516,7 @@ export default function TradePanel({
       campaignDesc: "Покупайте металлы и зарабатывайте бонус AUXM!",
       askPrice: "Цена продажи",
       bidPrice: "Цена покупки",
-      amountGrams: "Количество (грамм)",
+      amountGrams: "Количество",
       paymentMethod: "Способ оплаты",
       receiveAs: "Получить как",
       pleaseWait: "Пожалуйста, подождите",
@@ -1062,21 +1062,35 @@ export default function TradePanel({
 
               {/* Balance Display */}
               <div className="mb-2 p-2 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-400">AUXM {t.balance}</span>
-                  <span className="text-slate-900 dark:text-white font-mono">{auxmBalance.auxm.toFixed(2)} AUXM</span>
-                </div>
-                {auxmBalance.bonusAuxm > 0 && (
+                {mode === "buy" ? (
                   <>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-purple-400">🎁 {t.bonus} AUXM</span>
-                      <span className="text-purple-400 font-mono">+{auxmBalance.bonusAuxm.toFixed(2)} AUXM</span>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-slate-400">{selectedCurrency} {t.balance}</span>
+                      <span className="text-slate-900 dark:text-white font-mono">
+                        {selectedCurrency === "AUXM" 
+                          ? `${auxmBalance.auxm.toFixed(2)} AUXM`
+                          : `${(balances?.[selectedCurrency.toLowerCase() as keyof typeof balances] as number || 0).toFixed(selectedCurrency === "BTC" ? 6 : 2)} ${selectedCurrency}`
+                        }
+                      </span>
                     </div>
-                    <div className="flex justify-between text-xs border-t border-stone-200 dark:border-slate-700 pt-1 mt-1">
-                      <span className="text-slate-400">{t.total}</span>
-                      <span className="text-slate-900 dark:text-white font-mono font-medium">{totalAuxm.toFixed(2)} AUXM</span>
-                    </div>
+                    {selectedCurrency === "AUXM" && auxmBalance.bonusAuxm > 0 && (
+                      <>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-purple-400">🎁 {t.bonus} AUXM</span>
+                          <span className="text-purple-400 font-mono">+{auxmBalance.bonusAuxm.toFixed(2)} AUXM</span>
+                        </div>
+                        <div className="flex justify-between text-xs border-t border-stone-200 dark:border-slate-700 pt-1 mt-1">
+                          <span className="text-slate-400">{t.total}</span>
+                          <span className="text-slate-900 dark:text-white font-mono font-medium">{totalAuxm.toFixed(2)} AUXM</span>
+                        </div>
+                      </>
+                    )}
                   </>
+                ) : (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">{metalSymbol} {t.balance}</span>
+                    <span className="text-slate-900 dark:text-white font-mono">{walletMetalBalance.toFixed(4)} {metalSymbol}</span>
+                  </div>
                 )}
               </div>
 
@@ -1113,7 +1127,7 @@ export default function TradePanel({
 
               {/* Amount Input */}
               <div className="mb-2">
-                <label className="block text-xs text-slate-400 mb-1">{t.amountGrams}</label>
+                <label className="block text-xs text-slate-400 mb-1">{t.amountGrams} ({metalSymbol})</label>
                 <div className="relative">
                   <input
                     type="number"
