@@ -71,6 +71,47 @@ export async function getETHUSDPrice(): Promise<number> {
   }
 }
 
+// Price cache for API calls
+let priceCache: { prices: any; bidPrices: any; timestamp: number } | null = null;
+const PRICE_CACHE_DURATION = 5000; // 5 saniye cache
+
+async function fetchPricesFromAPI(): Promise<{ prices: any; bidPrices: any }> {
+  const now = Date.now();
+  
+  // Cache kontrolü
+  if (priceCache && now - priceCache.timestamp < PRICE_CACHE_DURATION) {
+    return { prices: priceCache.prices, bidPrices: priceCache.bidPrices };
+  }
+  
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io';
+    const response = await fetch(`${baseUrl}/api/prices`, {
+      cache: 'no-store',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch prices');
+    }
+    
+    const data = await response.json();
+    
+    priceCache = {
+      prices: data.prices,
+      bidPrices: data.bidPrices,
+      timestamp: now,
+    };
+    
+    return { prices: data.prices, bidPrices: data.bidPrices };
+  } catch (error) {
+    console.error('Failed to fetch prices from API:', error);
+    // Fallback prices
+    return {
+      prices: { AUXG: 160, AUXS: 3.3, AUXPT: 87, AUXPD: 61 },
+      bidPrices: { AUXG: 150, AUXS: 2.7, AUXPT: 72, AUXPD: 58 },
+    };
+  }
+}
+
 export async function getTokenPrices(token: string): Promise<{ 
   askUSD: number; 
   bidUSD: number; 
@@ -79,18 +120,17 @@ export async function getTokenPrices(token: string): Promise<{
   spreadPercent: { buy: number; sell: number };
 }> {
   try {
-    const contract = getTokenContract(token);
-    const [askWei, bidWei] = await contract.getPrice();
-    const ethPrice = await getETHUSDPrice();
+    // /api/prices'dan fiyat çek (GoldAPI + spread)
+    const { prices, bidPrices } = await fetchPricesFromAPI();
     
-    const askETH = parseFloat(ethers.formatEther(askWei));
-    const bidETH = parseFloat(ethers.formatEther(bidWei));
-    
-    const askUSD = askETH * ethPrice;
-    const bidUSD = bidETH * ethPrice;
+    const tokenUpper = token.toUpperCase();
+    const askUSD = prices[tokenUpper] || 0;
+    const bidUSD = bidPrices[tokenUpper] || 0;
     
     const spread = askUSD > 0 ? ((askUSD - bidUSD) / askUSD) * 100 : 0;
     const spreadPercent = { buy: spread, sell: spread };
+    
+    console.log(`📊 ${tokenUpper} prices from API: ask=$${askUSD}, bid=$${bidUSD}`);
     
     return {
       askUSD,
