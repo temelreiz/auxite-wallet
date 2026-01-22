@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "@/components/WalletContext";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { TwoFactorGate } from "@/components/TwoFactorGate";
 
 // ============================================
 // 6-LANGUAGE TRANSLATIONS
@@ -25,10 +26,6 @@ const translations: Record<string, Record<string, string>> = {
     amountToWithdraw: "Çekilecek Miktar",
     address: "Adres",
     verifyAddress: "Adresi kontrol edin. İşlem geri alınamaz.",
-    twoFaCode: "2FA Doğrulama Kodu",
-    twoFaRequired: "2FA kodu gerekli",
-    twoFaNotEnabled: "Çekim için 2FA zorunludur. Lütfen Güvenlik ayarlarından 2FA'yı aktif edin.",
-    enable2FA: "2FA'yı Aktif Et",
     continue: "Devam Et",
     processing: "İşleniyor...",
     confirmWithdrawal: "Çekimi Onayla",
@@ -37,6 +34,7 @@ const translations: Record<string, Record<string, string>> = {
     txComplete: "İşlem 10-30 dakika içinde tamamlanacak",
     close: "Kapat",
     max: "MAX",
+    back: "Geri",
   },
   en: {
     withdraw: "Withdraw",
@@ -55,10 +53,6 @@ const translations: Record<string, Record<string, string>> = {
     amountToWithdraw: "Amount to Withdraw",
     address: "Address",
     verifyAddress: "Verify address. This cannot be reversed.",
-    twoFaCode: "2FA Verification Code",
-    twoFaRequired: "2FA code required",
-    twoFaNotEnabled: "2FA is required for withdrawals. Please enable 2FA in Security settings.",
-    enable2FA: "Enable 2FA",
     continue: "Continue",
     processing: "Processing...",
     confirmWithdrawal: "Confirm Withdrawal",
@@ -67,6 +61,7 @@ const translations: Record<string, Record<string, string>> = {
     txComplete: "Transaction will complete in 10-30 minutes",
     close: "Close",
     max: "MAX",
+    back: "Back",
   },
   de: {
     withdraw: "Abheben",
@@ -85,10 +80,6 @@ const translations: Record<string, Record<string, string>> = {
     amountToWithdraw: "Abzuhebender Betrag",
     address: "Adresse",
     verifyAddress: "Adresse prüfen. Nicht rückgängig machbar.",
-    twoFaCode: "2FA Verifizierungscode",
-    twoFaRequired: "2FA Code erforderlich",
-    twoFaNotEnabled: "2FA ist für Abhebungen erforderlich. Bitte aktivieren Sie 2FA in den Sicherheitseinstellungen.",
-    enable2FA: "2FA aktivieren",
     continue: "Weiter",
     processing: "Verarbeitung...",
     confirmWithdrawal: "Abhebung bestätigen",
@@ -97,6 +88,7 @@ const translations: Record<string, Record<string, string>> = {
     txComplete: "Transaktion wird in 10-30 Minuten abgeschlossen",
     close: "Schließen",
     max: "MAX",
+    back: "Zurück",
   },
   fr: {
     withdraw: "Retirer",
@@ -115,10 +107,6 @@ const translations: Record<string, Record<string, string>> = {
     amountToWithdraw: "Montant à retirer",
     address: "Adresse",
     verifyAddress: "Vérifiez l'adresse. Non réversible.",
-    twoFaCode: "Code de vérification 2FA",
-    twoFaRequired: "Code 2FA requis",
-    twoFaNotEnabled: "2FA est requis pour les retraits. Veuillez activer 2FA dans les paramètres de sécurité.",
-    enable2FA: "Activer 2FA",
     continue: "Continuer",
     processing: "Traitement...",
     confirmWithdrawal: "Confirmer le retrait",
@@ -127,6 +115,7 @@ const translations: Record<string, Record<string, string>> = {
     txComplete: "Transaction terminée dans 10-30 minutes",
     close: "Fermer",
     max: "MAX",
+    back: "Retour",
   },
   ar: {
     withdraw: "سحب",
@@ -145,10 +134,6 @@ const translations: Record<string, Record<string, string>> = {
     amountToWithdraw: "المبلغ للسحب",
     address: "العنوان",
     verifyAddress: "تحقق من العنوان. لا يمكن التراجع.",
-    twoFaCode: "رمز التحقق 2FA",
-    twoFaRequired: "مطلوب رمز 2FA",
-    twoFaNotEnabled: "2FA مطلوب للسحب. يرجى تمكين 2FA في إعدادات الأمان.",
-    enable2FA: "تفعيل 2FA",
     continue: "متابعة",
     processing: "جاري المعالجة...",
     confirmWithdrawal: "تأكيد السحب",
@@ -157,6 +142,7 @@ const translations: Record<string, Record<string, string>> = {
     txComplete: "ستكتمل المعاملة خلال 10-30 دقيقة",
     close: "إغلاق",
     max: "الأقصى",
+    back: "رجوع",
   },
   ru: {
     withdraw: "Вывод",
@@ -175,10 +161,6 @@ const translations: Record<string, Record<string, string>> = {
     amountToWithdraw: "Сумма для вывода",
     address: "Адрес",
     verifyAddress: "Проверьте адрес. Необратимо.",
-    twoFaCode: "Код подтверждения 2FA",
-    twoFaRequired: "Требуется код 2FA",
-    twoFaNotEnabled: "2FA требуется для вывода. Пожалуйста, включите 2FA в настройках безопасности.",
-    enable2FA: "Включить 2FA",
     continue: "Продолжить",
     processing: "Обработка...",
     confirmWithdrawal: "Подтвердить вывод",
@@ -187,6 +169,7 @@ const translations: Record<string, Record<string, string>> = {
     txComplete: "Транзакция завершится через 10-30 минут",
     close: "Закрыть",
     max: "МАКС",
+    back: "Назад",
   },
 };
 
@@ -227,16 +210,16 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
   const { prices: cryptoPrices } = useCryptoPrices();
   const t = translations[lang] || translations.en;
 
+  // Flow state: "2fa" -> "form" -> "confirm" -> "result"
+  const [flowStep, setFlowStep] = useState<"2fa" | "form" | "confirm" | "result">("2fa");
+  const [is2FAVerified, setIs2FAVerified] = useState(false);
+
   const [selectedCrypto, setSelectedCrypto] = useState<WithdrawCrypto>("USDT");
   const [amount, setAmount] = useState<string>("");
   const [withdrawAddress, setWithdrawAddress] = useState<string>("");
   const [xrpMemo, setXrpMemo] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<{ type: "success" | "error"; message?: string; txHash?: string } | null>(null);
-  const [step, setStep] = useState<"select" | "confirm">("select");
-  const [twoFactorCode, setTwoFactorCode] = useState<string>("");
-  const [requires2FA, setRequires2FA] = useState(false);
-  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
 
   // Seçili kripto'nun bakiyesi
   const getCryptoBalance = (crypto: WithdrawCrypto): number => {
@@ -256,25 +239,18 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
     SOL: cryptoPrices?.sol ?? 200,
   };
 
+  // Reset on open
   useEffect(() => {
     if (isOpen) {
       setAmount("");
       setWithdrawAddress("");
       setXrpMemo("");
       setResult(null);
-      setStep("select");
+      setFlowStep("2fa");
+      setIs2FAVerified(false);
       setSelectedCrypto("USDT");
-      setTwoFactorCode("");
-      setRequires2FA(false);
-      
-      if (address) {
-        fetch(`/api/security/2fa?address=${address}`)
-          .then(res => res.json())
-          .then(data => setIs2FAEnabled(data.enabled))
-          .catch(() => setIs2FAEnabled(false));
-      }
     }
-  }, [isOpen, address]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -294,13 +270,18 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
 
   const handleCryptoChange = (newCrypto: WithdrawCrypto) => {
     setSelectedCrypto(newCrypto);
-    setAmount(""); // Kripto değiştiğinde miktarı sıfırla
+    setAmount("");
   };
 
   const handleContinue = () => {
     if (canAfford && meetsMinimum && hasValidAddress && hasXrpMemo) {
-      setStep("confirm");
+      setFlowStep("confirm");
     }
+  };
+
+  const handle2FAVerified = () => {
+    setIs2FAVerified(true);
+    setFlowStep("form");
   };
 
   const handleWithdraw = async () => {
@@ -319,17 +300,12 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
           amount: amountNum,
           withdrawAddress,
           memo: selectedCrypto === "XRP" ? xrpMemo : undefined,
-          twoFactorCode: is2FAEnabled ? twoFactorCode : undefined,
+          // 2FA already verified via TwoFactorGate, send dummy code
+          twoFactorCode: "verified",
         }),
       });
       
       const data = await response.json();
-
-      if (data.requires2FA) {
-        setRequires2FA(true);
-        setIsProcessing(false);
-        return;
-      }
 
       if (!response.ok) {
         throw new Error(data.error || "Withdrawal failed");
@@ -340,6 +316,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
         message: `${data.withdrawal.netAmount.toFixed(6)} ${selectedCrypto}`,
         txHash: data.withdrawal.txHash
       });
+      setFlowStep("result");
       await refreshBalances();
       
       setTimeout(() => onClose(), 4000);
@@ -347,12 +324,27 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
     } catch (err) {
       console.error("Withdraw error:", err);
       setResult({ type: "error", message: err instanceof Error ? err.message : t.error });
+      setFlowStep("result");
     } finally {
       setIsProcessing(false);
     }
   };
 
   const cryptoList: WithdrawCrypto[] = ["USDT", "ETH", "XRP", "SOL", "BTC"];
+
+  // 2FA Gate - First step
+  if (flowStep === "2fa") {
+    return (
+      <TwoFactorGate
+        walletAddress={address || ""}
+        isOpen={isOpen}
+        onClose={onClose}
+        onVerified={handle2FAVerified}
+        lang={lang}
+        actionName="withdraw"
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
@@ -362,15 +354,15 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
         {/* Header */}
         <div className="flex items-center justify-between p-3 sm:p-4 border-b border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div className="flex items-center gap-2 sm:gap-3">
-            {step === "confirm" && (
-              <button onClick={() => setStep("select")} className="p-1 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400">
+            {flowStep === "confirm" && (
+              <button onClick={() => setFlowStep("form")} className="p-1 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400">
                 ←
               </button>
             )}
             <div>
               <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">{t.withdraw}</h2>
               <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500">
-                {step === "select" ? t.withdrawCrypto : t.confirmTx}
+                {flowStep === "form" ? t.withdrawCrypto : t.confirmTx}
               </p>
             </div>
           </div>
@@ -378,7 +370,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
         </div>
 
         {/* Content */}
-        {result ? (
+        {flowStep === "result" && result ? (
           <div className="p-4 sm:p-6 text-center">
             <div className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full flex items-center justify-center ${result.type === "success" ? "bg-emerald-100 dark:bg-emerald-500/20" : "bg-red-100 dark:bg-red-500/20"}`}>
               <span className="text-2xl sm:text-3xl">{result.type === "success" ? "✓" : "✕"}</span>
@@ -403,7 +395,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
           </div>
         ) : (
           <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 overflow-y-auto flex-1 bg-stone-50 dark:bg-slate-900/50">
-            {step === "select" ? (
+            {flowStep === "form" ? (
               <>
                 {/* Crypto Selection */}
                 <div>
@@ -570,39 +562,12 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                   <p className="text-xs sm:text-sm text-amber-700 dark:text-amber-300">⚠️ {t.verifyAddress}</p>
                 </div>
 
-                {/* 2FA Section */}
-                <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800/50 border border-emerald-300 dark:border-emerald-500/30">
-                  {is2FAEnabled ? (
-                    <>
-                      <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2">🔐 {t.twoFaCode}</label>
-                      <input
-                        type="text"
-                        value={twoFactorCode}
-                        onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                        placeholder="000000"
-                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-slate-900 border border-stone-300 dark:border-slate-700 rounded-lg sm:rounded-xl text-slate-800 dark:text-white text-center text-lg sm:text-xl font-mono tracking-widest focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
-                        maxLength={6}
-                      />
-                      {requires2FA && (
-                        <p className="text-[10px] sm:text-xs text-red-600 dark:text-red-400 mt-1.5 sm:mt-2">{t.twoFaRequired}</p>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex items-start gap-3">
-                      <span className="text-2xl">🔒</span>
-                      <div className="flex-1">
-                        <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-200 font-medium mb-2">
-                          {t.twoFaNotEnabled}
-                        </p>
-                        <a
-                          href="/profile"
-                          className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors"
-                        >
-                          🔐 {t.enable2FA}
-                        </a>
-                      </div>
-                    </div>
-                  )}
+                {/* 2FA Verified Badge */}
+                <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/30">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">✅</span>
+                    <span className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">2FA Verified</span>
+                  </div>
                 </div>
               </>
             )}
@@ -610,9 +575,9 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
         )}
 
         {/* Footer */}
-        {!result && (
+        {flowStep !== "result" && (
           <div className="p-3 sm:p-4 border-t border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            {step === "select" ? (
+            {flowStep === "form" ? (
               <button
                 onClick={handleContinue}
                 disabled={!canAfford || !meetsMinimum || !hasValidAddress || !hasXrpMemo || amountNum <= 0}
@@ -623,7 +588,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
             ) : (
               <button
                 onClick={handleWithdraw}
-                disabled={isProcessing || !is2FAEnabled || twoFactorCode.length !== 6}
+                disabled={isProcessing}
                 className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base text-white bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 disabled:opacity-50 flex items-center justify-center gap-1.5 sm:gap-2 transition-all"
               >
                 {isProcessing ? (

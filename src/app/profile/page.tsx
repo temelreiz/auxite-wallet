@@ -63,6 +63,26 @@ export default function ProfilePage() {
     }
   }, [address]);
 
+  // Fetch 2FA status from API
+  useEffect(() => {
+    if (!address) return;
+    
+    const fetch2FAStatus = async () => {
+      try {
+        const res = await fetch(`/api/security/2fa/status`, {
+          headers: { "x-wallet-address": address },
+        });
+        const data = await res.json();
+        setTwoFactorEnabled(data.enabled === true);
+      } catch (err) {
+        console.error("2FA status fetch error:", err);
+        setTwoFactorEnabled(false);
+      }
+    };
+    
+    fetch2FAStatus();
+  }, [address]);
+
   // Modal states
   const [editModal, setEditModal] = useState<"email" | "phone" | "country" | "timezone" | "password" | "currency" | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -102,6 +122,7 @@ export default function ProfilePage() {
         .catch(err => console.log("UID fetch error:", err));
     }
   }, [address]);
+  
   // Avatar colors based on wallet address
   const avatarColors = useMemo(() => {
     if (!address) return { bg: "#64748b", text: "#ffffff" };
@@ -183,11 +204,9 @@ export default function ProfilePage() {
         setShareSuccess(true);
         setTimeout(() => setShareSuccess(false), 2000);
       } catch (err) {
-        // User cancelled or error
         console.log("Share cancelled or failed");
       }
     } else {
-      // Fallback: copy referral link
       await handleCopy(`https://auxite.com/register?ref=${userData.referralCode}`, "referral");
     }
   };
@@ -275,6 +294,7 @@ export default function ProfilePage() {
     }
   };
 
+  // Toggle component - sadece notifications için kullanılacak
   const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
     <button
       onClick={onChange}
@@ -329,19 +349,12 @@ export default function ProfilePage() {
             {isConnected && address && (
               <div className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-br from-slate-100 via-white to-slate-50 dark:from-zinc-800 dark:via-zinc-800/80 dark:to-zinc-900 border border-stone-200 dark:border-zinc-700 shadow-sm">
                 <div className="flex items-center gap-4 sm:gap-6">
-                  {/* Avatar */}
                   <div 
                     className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl flex items-center justify-center text-2xl sm:text-3xl font-bold shadow-lg flex-shrink-0"
-                    style={{ 
-                      backgroundColor: avatarColors.bg,
-                      color: avatarColors.text,
-                      boxShadow: `0 10px 25px -5px ${avatarColors.bg}40`
-                    }}
+                    style={{ backgroundColor: avatarColors.bg, color: avatarColors.text, boxShadow: `0 10px 25px -5px ${avatarColors.bg}40` }}
                   >
                     {avatarInitials}
                   </div>
-                  
-                  {/* User Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
@@ -351,21 +364,8 @@ export default function ProfilePage() {
                     <p className="font-mono text-lg sm:text-xl font-bold text-slate-800 dark:text-white mb-1">{userUID}</p>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 truncate">{address}</p>
                   </div>
-                  
-                  {/* Copy UID Button */}
-                  <button 
-                    onClick={() => handleCopy(userUID, "wallet")} 
-                    className="p-2 sm:p-3 rounded-xl bg-stone-100 dark:bg-zinc-700 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors flex-shrink-0"
-                  >
-                    {copySuccess ? (
-                      <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : (
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    )}
+                  <button onClick={() => handleCopy(userUID, "wallet")} className="p-2 sm:p-3 rounded-xl bg-stone-100 dark:bg-zinc-700 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors flex-shrink-0">
+                    {copySuccess ? <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> : <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>}
                   </button>
                 </div>
               </div>
@@ -393,44 +393,27 @@ export default function ProfilePage() {
             {/* Auxiteer Tier Card */}
             <div 
               className="p-3 sm:p-5 rounded-xl sm:rounded-2xl cursor-pointer transition-all hover:shadow-lg"
-              style={{ 
-                background: `linear-gradient(135deg, ${currentTier.bgColor} 0%, transparent 100%)`,
-                border: `1px solid ${currentTier.borderColor}`,
-              }}
+              style={{ background: `linear-gradient(135deg, ${currentTier.bgColor} 0%, transparent 100%)`, border: `1px solid ${currentTier.borderColor}` }}
               onClick={() => setShowAuxiteerModal(true)}
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
-                  <div 
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0"
-                    style={{ 
-                      background: `linear-gradient(135deg, ${currentTier.color} 0%, ${currentTier.color}99 100%)`,
-                      boxShadow: `0 10px 25px -5px ${currentTier.color}40`,
-                    }}
-                  >
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0" style={{ background: `linear-gradient(135deg, ${currentTier.color} 0%, ${currentTier.color}99 100%)`, boxShadow: `0 10px 25px -5px ${currentTier.color}40` }}>
                     <span className="w-5 h-5 sm:w-6 sm:h-6 text-white">{currentTier.icon}</span>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] sm:text-xs font-medium mb-0.5 sm:mb-1" style={{ color: currentTier.color }}>
-                      {lang === "tr" ? "Auxiteer Seviyeniz" : "Your Auxiteer Tier"}
-                    </p>
+                    <p className="text-[10px] sm:text-xs font-medium mb-0.5 sm:mb-1" style={{ color: currentTier.color }}>{lang === "tr" ? "Auxiteer Seviyeniz" : "Your Auxiteer Tier"}</p>
                     <p className="text-sm sm:text-lg font-bold text-slate-800 dark:text-white">{currentTier.name}</p>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 mb-0.5">{lang === "tr" ? "Spread / Ücret" : "Spread / Fee"}</p>
-                  <p className="text-sm sm:text-base font-semibold" style={{ color: currentTier.color }}>
-                    {currentTier.spread} / {currentTier.fee}
-                  </p>
+                  <p className="text-sm sm:text-base font-semibold" style={{ color: currentTier.color }}>{currentTier.spread} / {currentTier.fee}</p>
                 </div>
               </div>
               <div className="mt-3 pt-3 border-t border-slate-200/50 dark:border-zinc-700/50 flex items-center justify-between">
-                <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400">
-                  {lang === "tr" ? "Detayları görüntüle" : "View details"}
-                </span>
-                <svg className="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <span className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400">{lang === "tr" ? "Detayları görüntüle" : "View details"}</span>
+                <svg className="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </div>
             </div>
             <div className="grid gap-2 sm:gap-3">
@@ -441,6 +424,7 @@ export default function ProfilePage() {
             </div>
           </div>
         );
+
       case "security":
         return (
           <div className="space-y-4 sm:space-y-6">
@@ -453,20 +437,60 @@ export default function ProfilePage() {
                 <p className="text-[10px] sm:text-sm text-slate-500 dark:text-zinc-500">{lang === "tr" ? "Hesap güvenliğinizi koruyun" : "Protect your account security"}</p>
               </div>
             </div>
-            <div className="p-3 sm:p-5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20">
+
+            {/* 2FA Status Card - No Toggle, Just Status */}
+            <div className={`p-3 sm:p-5 rounded-xl sm:rounded-2xl border ${
+              twoFactorEnabled 
+                ? "bg-gradient-to-br from-emerald-500/10 via-green-500/5 to-transparent border-emerald-500/20" 
+                : "bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border-amber-500/20"
+            }`}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20 flex-shrink-0">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 ${
+                    twoFactorEnabled 
+                      ? "bg-gradient-to-br from-emerald-500 to-green-500 shadow-emerald-500/20" 
+                      : "bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-500/20"
+                  }`}>
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
                   </div>
                   <div className="min-w-0">
                     <p className="font-medium text-xs sm:text-base text-slate-800 dark:text-white">{t("twoFactorAuth")}</p>
-                    <p className="text-[10px] sm:text-sm text-slate-500 dark:text-zinc-400">{twoFactorEnabled ? (lang === "tr" ? "Hesabınız korunuyor" : "Your account is protected") : (lang === "tr" ? "Ek güvenlik katmanı ekleyin" : "Add an extra layer of security")}</p>
+                    <p className={`text-[10px] sm:text-sm ${twoFactorEnabled ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                      {twoFactorEnabled 
+                        ? (lang === "tr" ? "✓ Aktif - Hesabınız korunuyor" : "✓ Active - Your account is protected")
+                        : (lang === "tr" ? "○ Kurulmamış" : "○ Not set up")}
+                    </p>
                   </div>
                 </div>
-                <Toggle enabled={twoFactorEnabled} onChange={() => setTwoFactorEnabled(!twoFactorEnabled)} />
+                {/* Status Badge */}
+                <div className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
+                  twoFactorEnabled 
+                    ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300" 
+                    : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300"
+                }`}>
+                  {twoFactorEnabled 
+                    ? (lang === "tr" ? "Aktif" : "Active") 
+                    : (lang === "tr" ? "Pasif" : "Inactive")}
+                </div>
+              </div>
+              
+              {/* Info text */}
+              <div className={`mt-3 pt-3 border-t ${twoFactorEnabled ? "border-emerald-500/20" : "border-amber-500/20"}`}>
+                <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400">
+                  {twoFactorEnabled 
+                    ? (lang === "tr" 
+                        ? "2FA, para çekme ve transfer işlemlerinde otomatik olarak istenir." 
+                        : "2FA is automatically required for withdrawals and transfers.")
+                    : (lang === "tr" 
+                        ? "2FA, ilk para çekme veya transfer işleminizde otomatik olarak kurulacaktır." 
+                        : "2FA will be set up automatically on your first withdrawal or transfer.")}
+                </p>
               </div>
             </div>
+
+            {/* Change Password */}
             <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
@@ -482,17 +506,15 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Whitelist Manager - Withdrawal Addresses */}
+            {/* Whitelist Manager */}
             {isConnected && address && (
               <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-stone-200 dark:border-zinc-700">
-                <WhitelistManager
-                  walletAddress={address} 
-                  lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} 
-                />
+                <WhitelistManager walletAddress={address} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
               </div>
             )}
           </div>
         );
+
       case "notifications":
         return (
           <div className="space-y-4 sm:space-y-6">
@@ -528,6 +550,7 @@ export default function ProfilePage() {
             </div>
           </div>
         );
+
       case "referral":
         return (
           <div className="space-y-4 sm:space-y-6">
@@ -544,37 +567,11 @@ export default function ProfilePage() {
               <p className="text-[10px] sm:text-xs text-purple-600 dark:text-purple-400/80 font-medium mb-2 sm:mb-3">{t("yourReferralCode")}</p>
               <code className="block w-full px-3 sm:px-5 py-3 sm:py-4 bg-white/50 dark:bg-zinc-800/80 rounded-lg sm:rounded-xl font-mono text-lg sm:text-2xl text-purple-600 dark:text-purple-400 tracking-wider text-center border border-purple-200 dark:border-transparent mb-3 sm:mb-4">{userData.referralCode}</code>
               <div className="flex gap-2 sm:gap-3">
-                <button 
-                  onClick={() => handleCopy(userData.referralCode, "referral")} 
-                  className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white/50 dark:bg-zinc-700/50 hover:bg-white dark:hover:bg-zinc-600 text-slate-700 dark:text-zinc-300 font-medium transition-colors border border-stone-200 dark:border-transparent flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
-                >
-                  {copySuccess ? (
-                    <>
-                      <svg className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                      {lang === "tr" ? "Kopyalandı!" : "Copied!"}
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                      {t("copy")}
-                    </>
-                  )}
+                <button onClick={() => handleCopy(userData.referralCode, "referral")} className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white/50 dark:bg-zinc-700/50 hover:bg-white dark:hover:bg-zinc-600 text-slate-700 dark:text-zinc-300 font-medium transition-colors border border-stone-200 dark:border-transparent flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                  {copySuccess ? <><svg className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>{lang === "tr" ? "Kopyalandı!" : "Copied!"}</> : <><svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>{t("copy")}</>}
                 </button>
-                <button 
-                  onClick={handleShare}
-                  className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-medium shadow-lg shadow-purple-500/20 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
-                >
-                  {shareSuccess ? (
-                    <>
-                      <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                      {lang === "tr" ? "Paylaşıldı!" : "Shared!"}
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                      {t("share")}
-                    </>
-                  )}
+                <button onClick={handleShare} className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-medium shadow-lg shadow-purple-500/20 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                  {shareSuccess ? <><svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>{lang === "tr" ? "Paylaşıldı!" : "Shared!"}</> : <><svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>{t("share")}</>}
                 </button>
               </div>
             </div>
@@ -590,6 +587,7 @@ export default function ProfilePage() {
             </div>
           </div>
         );
+
       case "preferences":
         return (
           <div className="space-y-4 sm:space-y-6">
@@ -607,19 +605,13 @@ export default function ProfilePage() {
               <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-700/50 flex items-center justify-center flex-shrink-0">
-                      <span className="text-base sm:text-lg">💵</span>
-                    </div>
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-700/50 flex items-center justify-center flex-shrink-0"><span className="text-base sm:text-lg">💵</span></div>
                     <div className="min-w-0">
                       <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500 mb-0.5">{t("displayCurrency")}</p>
-                      <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">{displayCurrency} ({displayCurrency === "USD" ? "$" : displayCurrency === "EUR" ? "€" : displayCurrency === "TRY" ? "₺" : displayCurrency === "GBP" ? "£" : "$"})</p>
+                      <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">{displayCurrency}</p>
                     </div>
                   </div>
-                  <select
-                    value={displayCurrency}
-                    onChange={(e) => setDisplayCurrency(e.target.value)}
-                    className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-sm font-medium rounded-lg bg-stone-100 dark:bg-zinc-700/50 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors border-none focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  >
+                  <select value={displayCurrency} onChange={(e) => setDisplayCurrency(e.target.value)} className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-sm font-medium rounded-lg bg-stone-100 dark:bg-zinc-700/50 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors border-none focus:outline-none focus:ring-2 focus:ring-teal-500">
                     <option value="USD">USD ($)</option>
                     <option value="EUR">EUR (€)</option>
                     <option value="TRY">TRY (₺)</option>
@@ -632,27 +624,15 @@ export default function ProfilePage() {
               <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-700/50 flex items-center justify-center flex-shrink-0">
-                      <span className="text-base sm:text-lg">📊</span>
-                    </div>
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-700/50 flex items-center justify-center flex-shrink-0"><span className="text-base sm:text-lg">📊</span></div>
                     <div className="min-w-0">
                       <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500 mb-0.5">{t("exportData")}</p>
                       <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">CSV, JSON</p>
                     </div>
                   </div>
                   <div className="flex gap-1.5 sm:gap-2">
-                    <button 
-                      onClick={() => handleExportData("csv")}
-                      className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-stone-100 dark:bg-zinc-700/50 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors"
-                    >
-                      CSV
-                    </button>
-                    <button 
-                      onClick={() => handleExportData("json")}
-                      className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-teal-500/20 hover:bg-teal-500/30 text-teal-600 dark:text-teal-400 transition-colors"
-                    >
-                      JSON
-                    </button>
+                    <button onClick={() => handleExportData("csv")} className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-stone-100 dark:bg-zinc-700/50 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors">CSV</button>
+                    <button onClick={() => handleExportData("json")} className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-stone-100 dark:bg-zinc-700/50 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors">JSON</button>
                   </div>
                 </div>
               </div>
@@ -662,94 +642,55 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
                     <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">
-                        {lang === "tr" ? "Mobil Uygulama" : "Mobile App"}
-                      </p>
-                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500">
-                        {lang === "tr" ? "QR ile mobilde açın" : "Open on mobile via QR"}
-                      </p>
+                      <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">{lang === "tr" ? "Mobil Uygulama" : "Mobile App"}</p>
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500">{lang === "tr" ? "QR ile mobilde açın" : "Open on mobile via QR"}</p>
                     </div>
                   </div>
                   <div className="flex gap-1.5 sm:gap-2">
-                    <button 
-                      onClick={() => setShowMobilePairModal(true)}
-                      className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-600 dark:text-blue-400 transition-colors"
-                    >
-                      {lang === "tr" ? "QR Tara" : "Scan QR"}
-                    </button>
-                    {isConnected && address && (
-                      <button 
-                        onClick={() => setShowOpenInMobileModal(true)}
-                        className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-600 dark:text-indigo-400 transition-colors"
-                      >
-                        {lang === "tr" ? "Mobilde Aç" : "Open in Mobile"}
-                      </button>
-                    )}
+                    <button onClick={() => setShowMobilePairModal(true)} className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-600 dark:text-blue-400 transition-colors">{lang === "tr" ? "QR Tara" : "Scan QR"}</button>
+                    {isConnected && address && <button onClick={() => setShowOpenInMobileModal(true)} className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-600 dark:text-indigo-400 transition-colors">{lang === "tr" ? "Mobilde Aç" : "Open in Mobile"}</button>}
                   </div>
                 </div>
               </div>
 
               {/* FAQ */}
-              <div 
-                onClick={() => setShowFAQModal(true)}
-                className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50 cursor-pointer hover:border-stone-300 dark:hover:border-zinc-600 transition-all"
-              >
+              <div onClick={() => setShowFAQModal(true)} className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50 cursor-pointer hover:border-stone-300 dark:hover:border-zinc-600 transition-all">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
                     <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">
-                        {lang === "tr" ? "Sıkça Sorulan Sorular" : "FAQ"}
-                      </p>
-                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500">
-                        {lang === "tr" ? "Yardım ve destek" : "Help and support"}
-                      </p>
+                      <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">{lang === "tr" ? "Sıkça Sorulan Sorular" : "FAQ"}</p>
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500">{lang === "tr" ? "Yardım ve destek" : "Help and support"}</p>
                     </div>
                   </div>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 dark:text-zinc-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 dark:text-zinc-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </div>
               </div>
 
               {/* Legal */}
-              <div 
-                onClick={() => setShowLegalModal(true)}
-                className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50 cursor-pointer hover:border-stone-300 dark:hover:border-zinc-600 transition-all"
-              >
+              <div onClick={() => setShowLegalModal(true)} className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50 cursor-pointer hover:border-stone-300 dark:hover:border-zinc-600 transition-all">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
                     <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">
-                        {lang === "tr" ? "Yasal Bilgiler" : "Legal Information"}
-                      </p>
-                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500">
-                        {lang === "tr" ? "Kullanım koşulları, gizlilik" : "Terms, privacy policy"}
-                      </p>
+                      <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">{lang === "tr" ? "Yasal Bilgiler" : "Legal Information"}</p>
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500">{lang === "tr" ? "Kullanım koşulları, gizlilik" : "Terms, privacy policy"}</p>
                     </div>
                   </div>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 dark:text-zinc-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 dark:text-zinc-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </div>
               </div>
             </div>
           </div>
         );
+
       case "danger":
         return (
           <div className="space-y-4 sm:space-y-6">
@@ -771,6 +712,7 @@ export default function ProfilePage() {
             </div>
           </div>
         );
+
       default: return null;
     }
   };
@@ -790,7 +732,6 @@ export default function ProfilePage() {
     return "text-slate-600 dark:text-zinc-400 hover:bg-stone-100 dark:hover:bg-zinc-800/50 hover:text-slate-800 dark:hover:text-zinc-200 border border-transparent";
   };
 
-  // Edit modal labels
   const getModalTitle = () => {
     switch (editModal) {
       case "email": return lang === "tr" ? "E-posta Düzenle" : "Edit Email";
@@ -813,7 +754,6 @@ export default function ProfilePage() {
       </div>
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
-          {/* Mobile: Icon-only horizontal tabs, Desktop: Full sidebar */}
           <div className="lg:w-72 flex-shrink-0">
             <div className="lg:sticky lg:top-6 flex lg:flex-col gap-1.5 sm:gap-2 overflow-x-auto pb-2 lg:pb-0 -mx-3 px-3 sm:-mx-0 sm:px-0 lg:space-y-2">
               {menuItems.map((item) => (
@@ -839,44 +779,20 @@ export default function ProfilePage() {
             {editModal === "password" ? (
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-zinc-400 mb-1.5 sm:mb-2">
-                    {lang === "tr" ? "Mevcut Şifre" : "Current Password"}
-                  </label>
-                  <input
-                    type="password"
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="••••••••"
-                  />
+                  <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-zinc-400 mb-1.5 sm:mb-2">{lang === "tr" ? "Mevcut Şifre" : "Current Password"}</label>
+                  <input type="password" className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="••••••••" />
                 </div>
                 <div>
-                  <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-zinc-400 mb-1.5 sm:mb-2">
-                    {lang === "tr" ? "Yeni Şifre" : "New Password"}
-                  </label>
-                  <input
-                    type="password"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="••••••••"
-                  />
+                  <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-zinc-400 mb-1.5 sm:mb-2">{lang === "tr" ? "Yeni Şifre" : "New Password"}</label>
+                  <input type="password" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="••••••••" />
                 </div>
                 <div>
-                  <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-zinc-400 mb-1.5 sm:mb-2">
-                    {lang === "tr" ? "Yeni Şifre (Tekrar)" : "Confirm New Password"}
-                  </label>
-                  <input
-                    type="password"
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="••••••••"
-                  />
+                  <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-zinc-400 mb-1.5 sm:mb-2">{lang === "tr" ? "Yeni Şifre (Tekrar)" : "Confirm New Password"}</label>
+                  <input type="password" className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="••••••••" />
                 </div>
               </div>
             ) : editModal === "timezone" ? (
-              <select
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
+              <select value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 <option value="Europe/Istanbul">Europe/Istanbul (GMT+3)</option>
                 <option value="Europe/London">Europe/London (GMT+0)</option>
                 <option value="Europe/Berlin">Europe/Berlin (GMT+1)</option>
@@ -887,11 +803,7 @@ export default function ProfilePage() {
                 <option value="Asia/Tokyo">Asia/Tokyo (GMT+9)</option>
               </select>
             ) : editModal === "country" ? (
-              <select
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
+              <select value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 <option value="Turkey">🇹🇷 Turkey</option>
                 <option value="United States">🇺🇸 United States</option>
                 <option value="United Kingdom">🇬🇧 United Kingdom</option>
@@ -902,84 +814,22 @@ export default function ProfilePage() {
                 <option value="Singapore">🇸🇬 Singapore</option>
               </select>
             ) : (
-              <input
-                type={editModal === "email" ? "email" : "text"}
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                placeholder={editModal === "email" ? "email@example.com" : editModal === "phone" ? "+90 555 123 4567" : ""}
-              />
+              <input type={editModal === "email" ? "email" : "text"} value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder={editModal === "email" ? "email@example.com" : editModal === "phone" ? "+90 555 123 4567" : ""} />
             )}
 
             <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6">
-              <button
-                onClick={() => {
-                  setEditModal(null);
-                  setEditValue("");
-                }}
-                className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-medium hover:bg-stone-300 dark:hover:bg-zinc-600 transition-colors text-sm sm:text-base"
-              >
-                {t("cancel")}
-              </button>
-              <button
-                onClick={handleSaveEdit}
-                className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors text-sm sm:text-base"
-              >
-                {t("save")}
-              </button>
+              <button onClick={() => { setEditModal(null); setEditValue(""); }} className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-medium hover:bg-stone-300 dark:hover:bg-zinc-600 transition-colors text-sm sm:text-base">{t("cancel")}</button>
+              <button onClick={handleSaveEdit} className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors text-sm sm:text-base">{t("save")}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Auxiteer Tier Modal */}
-      <AuxiteerTierModal
-        isOpen={showAuxiteerModal}
-        onClose={() => setShowAuxiteerModal(false)}
-        currentTierId={currentTier.id}
-        userBalance={auxiteerStats?.balanceUsd || 0}
-        userDays={auxiteerStats?.daysSinceRegistration || 0}
-        isKycVerified={auxiteerStats?.isKycVerified || false}
-        hasMetalAsset={auxiteerStats?.hasMetalAsset || false}
-        hasActiveEarnLease={auxiteerStats?.hasActiveLease || false}
-      />
-
-      {/* FAQ Modal */}
-      <FAQModal
-        isOpen={showFAQModal}
-        onClose={() => setShowFAQModal(false)}
-        lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
-      />
-
-      {/* Legal Modal */}
-      <LegalModal
-        isOpen={showLegalModal}
-        onClose={() => setShowLegalModal(false)}
-        lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
-      />
-
-      {/* Mobile QR Login Modal */}
-      <QRLoginModal
-        walletAddress={address}
-        isOpen={showMobilePairModal}
-        onClose={() => setShowMobilePairModal(false)}
-        onSuccess={(walletAddress, authToken) => {
-          console.log("Mobile login success:", walletAddress);
-          setShowMobilePairModal(false);
-        }}
-        lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
-      />
-
-      {/* Open in Mobile Modal */}
-      {isConnected && address && (
-        <OpenInMobileModal
-          walletAddress={address}
-          isOpen={showOpenInMobileModal}
-          onClose={() => setShowOpenInMobileModal(false)}
-          action="open_app"
-          lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
-        />
-      )}
+      <AuxiteerTierModal isOpen={showAuxiteerModal} onClose={() => setShowAuxiteerModal(false)} currentTierId={currentTier.id} userBalance={auxiteerStats?.balanceUsd || 0} userDays={auxiteerStats?.daysSinceRegistration || 0} isKycVerified={auxiteerStats?.isKycVerified || false} hasMetalAsset={auxiteerStats?.hasMetalAsset || false} hasActiveEarnLease={auxiteerStats?.hasActiveLease || false} />
+      <FAQModal isOpen={showFAQModal} onClose={() => setShowFAQModal(false)} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
+      <LegalModal isOpen={showLegalModal} onClose={() => setShowLegalModal(false)} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
+      <QRLoginModal walletAddress={address} isOpen={showMobilePairModal} onClose={() => setShowMobilePairModal(false)} onSuccess={(walletAddress, authToken) => { console.log("Mobile login success:", walletAddress); setShowMobilePairModal(false); }} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
+      {isConnected && address && <OpenInMobileModal walletAddress={address} isOpen={showOpenInMobileModal} onClose={() => setShowOpenInMobileModal(false)} action="open_app" lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />}
     </main>
   );
 }
