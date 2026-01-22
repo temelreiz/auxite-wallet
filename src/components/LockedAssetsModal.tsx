@@ -20,7 +20,7 @@ interface LockedAssetsModalProps {
 // 6-language translations
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    title: "Kilitli Varlıklar",
+    title: "Tahsisli Varlıklar",
     subtitle: "Fiziksel metal tahsisleri ve stake pozisyonları",
     allocations: "Fiziksel Tahsisler",
     allocationsDesc: "Kasa lokasyonlarına göre tahsis edilmiş metalleriniz",
@@ -28,7 +28,7 @@ const translations: Record<string, Record<string, string>> = {
     stakingDesc: "Aktif stake pozisyonlarınız",
     noAllocations: "Henüz tahsis bulunmuyor",
     noPositions: "Henüz stake pozisyonu bulunmuyor",
-    totalLocked: "Toplam Kilitli",
+    totalLocked: "Toplam",
     estValue: "Tahmini Değer",
     vault: "Kasa",
     amount: "Miktar",
@@ -54,7 +54,7 @@ const translations: Record<string, Record<string, string>> = {
     dubai: "Dubai Kasası",
   },
   en: {
-    title: "Locked Assets",
+    title: "Allocated Assets",
     subtitle: "Physical metal allocations and staking positions",
     allocations: "Physical Allocations",
     allocationsDesc: "Your metals allocated to vault locations",
@@ -62,7 +62,7 @@ const translations: Record<string, Record<string, string>> = {
     stakingDesc: "Your active staking positions",
     noAllocations: "No allocations yet",
     noPositions: "No staking positions yet",
-    totalLocked: "Total Locked",
+    totalLocked: "Total",
     estValue: "Est. Value",
     vault: "Vault",
     amount: "Amount",
@@ -88,7 +88,7 @@ const translations: Record<string, Record<string, string>> = {
     dubai: "Dubai Vault",
   },
   de: {
-    title: "Gesperrte Vermögenswerte",
+    title: "Zugewiesene Vermögenswerte",
     subtitle: "Physische Metallzuweisungen und Staking-Positionen",
     allocations: "Physische Zuweisungen",
     allocationsDesc: "Ihre Metalle, die Tresorstandorten zugewiesen sind",
@@ -96,7 +96,7 @@ const translations: Record<string, Record<string, string>> = {
     stakingDesc: "Ihre aktiven Staking-Positionen",
     noAllocations: "Noch keine Zuweisungen",
     noPositions: "Noch keine Staking-Positionen",
-    totalLocked: "Gesamt Gesperrt",
+    totalLocked: "Gesamt",
     estValue: "Gesch. Wert",
     vault: "Tresor",
     amount: "Betrag",
@@ -122,7 +122,7 @@ const translations: Record<string, Record<string, string>> = {
     dubai: "Dubai Tresor",
   },
   fr: {
-    title: "Actifs Verrouillés",
+    title: "Actifs Alloués",
     subtitle: "Allocations de métaux physiques et positions de staking",
     allocations: "Allocations Physiques",
     allocationsDesc: "Vos métaux alloués aux emplacements de coffre",
@@ -130,7 +130,7 @@ const translations: Record<string, Record<string, string>> = {
     stakingDesc: "Vos positions de staking actives",
     noAllocations: "Aucune allocation pour le moment",
     noPositions: "Aucune position de staking pour le moment",
-    totalLocked: "Total Verrouillé",
+    totalLocked: "Total",
     estValue: "Valeur Est.",
     vault: "Coffre",
     amount: "Montant",
@@ -156,7 +156,7 @@ const translations: Record<string, Record<string, string>> = {
     dubai: "Coffre Dubaï",
   },
   ar: {
-    title: "الأصول المقفلة",
+    title: "الأصول المخصصة",
     subtitle: "تخصيصات المعادن الفعلية ومراكز التخزين",
     allocations: "التخصيصات الفعلية",
     allocationsDesc: "معادنك المخصصة لمواقع الخزائن",
@@ -164,7 +164,7 @@ const translations: Record<string, Record<string, string>> = {
     stakingDesc: "مراكز التخزين النشطة الخاصة بك",
     noAllocations: "لا توجد تخصيصات بعد",
     noPositions: "لا توجد مراكز تخزين بعد",
-    totalLocked: "إجمالي المقفل",
+    totalLocked: "الإجمالي",
     estValue: "القيمة المقدرة",
     vault: "الخزنة",
     amount: "المبلغ",
@@ -190,7 +190,7 @@ const translations: Record<string, Record<string, string>> = {
     dubai: "خزنة دبي",
   },
   ru: {
-    title: "Заблокированные Активы",
+    title: "Распределённые Активы",
     subtitle: "Физические распределения металлов и позиции стейкинга",
     allocations: "Физические Распределения",
     allocationsDesc: "Ваши металлы, распределённые по хранилищам",
@@ -198,7 +198,7 @@ const translations: Record<string, Record<string, string>> = {
     stakingDesc: "Ваши активные позиции стейкинга",
     noAllocations: "Распределений пока нет",
     noPositions: "Позиций стейкинга пока нет",
-    totalLocked: "Всего Заблокировано",
+    totalLocked: "Всего",
     estValue: "Оценочная стоимость",
     vault: "Хранилище",
     amount: "Сумма",
@@ -297,7 +297,7 @@ export function LockedAssetsModal({
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
               <svg className="w-4 h-4 sm:w-6 sm:h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
             <div className="min-w-0">

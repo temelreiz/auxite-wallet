@@ -42,7 +42,7 @@ const walletTranslations: Record<string, Record<string, string>> = {
   tr: {
     myAssets: "Auxite ve Crypto Varlıklarım",
     allocatedAndStaked: "Tahsisli & Stake",
-    totalLocked: "Toplam Kilitli",
+    totalLocked: "Toplam",
     estValue: "Tahmini Değer",
     estimatedTotalValue: "Tahmini Toplam Değer",
     usdBalance: "USD Bakiyesi",
@@ -93,7 +93,7 @@ const walletTranslations: Record<string, Record<string, string>> = {
   en: {
     myAssets: "My Auxite and Crypto Assets",
     allocatedAndStaked: "Allocated & Staked",
-    totalLocked: "Total Locked",
+    totalLocked: "Total",
     estValue: "Est. Value",
     estimatedTotalValue: "Estimated Total Value",
     usdBalance: "USD Balance",
@@ -144,7 +144,7 @@ const walletTranslations: Record<string, Record<string, string>> = {
   de: {
     myAssets: "Meine Auxite und Crypto Vermögenswerte",
     allocatedAndStaked: "Zugewiesen & Gestaked",
-    totalLocked: "Gesamt Gesperrt",
+    totalLocked: "Gesamt",
     estValue: "Gesch. Wert",
     estimatedTotalValue: "Geschätzter Gesamtwert",
     usdBalance: "USD-Guthaben",
@@ -195,7 +195,7 @@ const walletTranslations: Record<string, Record<string, string>> = {
   fr: {
     myAssets: "Mes Actifs Auxite et Crypto",
     allocatedAndStaked: "Alloué & Staké",
-    totalLocked: "Total Verrouillé",
+    totalLocked: "Total",
     estValue: "Valeur Est.",
     estimatedTotalValue: "Valeur Totale Estimée",
     usdBalance: "Solde USD",
@@ -246,7 +246,7 @@ const walletTranslations: Record<string, Record<string, string>> = {
   ar: {
     myAssets: "أصولي من Auxite والعملات المشفرة",
     allocatedAndStaked: "مخصص ومرهون",
-    totalLocked: "إجمالي المقفل",
+    totalLocked: "الإجمالي",
     estValue: "القيمة التقديرية",
     estimatedTotalValue: "إجمالي القيمة المقدرة",
     usdBalance: "رصيد الدولار",
@@ -297,7 +297,7 @@ const walletTranslations: Record<string, Record<string, string>> = {
   ru: {
     myAssets: "Мои Auxite и Крипто Активы",
     allocatedAndStaked: "Распределено и Застейкано",
-    totalLocked: "Всего Заблокировано",
+    totalLocked: "Всего",
     estValue: "Оц. Стоимость",
     estimatedTotalValue: "Оценочная общая стоимость",
     usdBalance: "Баланс USD",
@@ -1092,7 +1092,7 @@ export default function WalletPage() {
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
                           <svg className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
                         </div>
                         <div className="min-w-0">
