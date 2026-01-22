@@ -166,7 +166,7 @@ export async function GET() {
       bidPrices[symbol] = Math.round(basePrice * (1 + settings.bidAdjust / 100) * 100) / 100;
     }
 
-    const hasRealData = Object.keys(goldApiData).length > 0;
+    const hasRealData = goldApiData !== null && Object.keys(goldApiData).length > 0;
     
     const result = {
       success: true,
