@@ -29,6 +29,8 @@ const translations: Record<string, Record<string, string>> = {
     verifyAddress: "Adresi kontrol edin. İşlem geri alınamaz.",
     twoFaCode: "2FA Doğrulama Kodu",
     twoFaRequired: "2FA kodu gerekli",
+    twoFaNotEnabled: "Çekim için 2FA zorunludur. Lütfen Güvenlik ayarlarından 2FA'yı aktif edin.",
+    enable2FA: "2FA'yı Aktif Et",
     continue: "Devam Et",
     processing: "İşleniyor...",
     confirmWithdrawal: "Çekimi Onayla",
@@ -58,6 +60,8 @@ const translations: Record<string, Record<string, string>> = {
     verifyAddress: "Verify address. This cannot be reversed.",
     twoFaCode: "2FA Verification Code",
     twoFaRequired: "2FA code required",
+    twoFaNotEnabled: "2FA is required for withdrawals. Please enable 2FA in Security settings.",
+    enable2FA: "Enable 2FA",
     continue: "Continue",
     processing: "Processing...",
     confirmWithdrawal: "Confirm Withdrawal",
@@ -533,23 +537,40 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                   <p className="text-xs sm:text-sm text-amber-700 dark:text-amber-300">⚠️ {t.verifyAddress}</p>
                 </div>
 
-                {/* 2FA Input */}
-                {(is2FAEnabled || requires2FA) && (
-                  <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800/50 border border-emerald-300 dark:border-emerald-500/30">
-                    <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2">🔐 {t.twoFaCode}</label>
-                    <input
-                      type="text"
-                      value={twoFactorCode}
-                      onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      placeholder="000000"
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-slate-900 border border-stone-300 dark:border-slate-700 rounded-lg sm:rounded-xl text-slate-800 dark:text-white text-center text-lg sm:text-xl font-mono tracking-widest focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
-                      maxLength={6}
-                    />
-                    {requires2FA && (
-                      <p className="text-[10px] sm:text-xs text-red-600 dark:text-red-400 mt-1.5 sm:mt-2">{t.twoFaRequired}</p>
-                    )}
-                  </div>
-                )}
+                {/* 2FA Section - Always show, required for withdrawals */}
+                <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800/50 border border-emerald-300 dark:border-emerald-500/30">
+                  {is2FAEnabled ? (
+                    <>
+                      <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2">🔐 {t.twoFaCode}</label>
+                      <input
+                        type="text"
+                        value={twoFactorCode}
+                        onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        placeholder="000000"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-slate-900 border border-stone-300 dark:border-slate-700 rounded-lg sm:rounded-xl text-slate-800 dark:text-white text-center text-lg sm:text-xl font-mono tracking-widest focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
+                        maxLength={6}
+                      />
+                      {requires2FA && (
+                        <p className="text-[10px] sm:text-xs text-red-600 dark:text-red-400 mt-1.5 sm:mt-2">{t.twoFaRequired}</p>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">🔒</span>
+                      <div className="flex-1">
+                        <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-200 font-medium mb-2">
+                          {t.twoFaNotEnabled}
+                        </p>
+                        <a
+                          href="/profile"
+                          className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors"
+                        >
+                          🔐 {t.enable2FA}
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -569,7 +590,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
             ) : (
               <button
                 onClick={handleWithdraw}
-                disabled={isProcessing || (is2FAEnabled && twoFactorCode.length !== 6)}
+                disabled={isProcessing || !is2FAEnabled || twoFactorCode.length !== 6}
                 className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base text-white bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 disabled:opacity-50 flex items-center justify-center gap-1.5 sm:gap-2 transition-all"
               >
                 {isProcessing ? (

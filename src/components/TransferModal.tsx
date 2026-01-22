@@ -78,6 +78,8 @@ const translations: Record<string, Record<string, string>> = {
     notAuxiteUser: "Alıcı Auxite kullanıcısı değil",
     twoFaCode: "2FA Doğrulama Kodu",
     twoFaRequired: "2FA kodu gerekli",
+    twoFaNotEnabled: "Transfer için 2FA zorunludur. Lütfen Güvenlik ayarlarından 2FA'yı aktif edin.",
+    enable2FA: "2FA'yı Aktif Et",
   },
   en: {
     title: "Transfer",
@@ -104,6 +106,8 @@ const translations: Record<string, Record<string, string>> = {
     notAuxiteUser: "Recipient is not an Auxite user",
     twoFaCode: "2FA Verification Code",
     twoFaRequired: "2FA code required",
+    twoFaNotEnabled: "2FA is required for transfers. Please enable 2FA in Security settings.",
+    enable2FA: "Enable 2FA",
   },
 };
 
@@ -534,28 +538,47 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           )}
         </div>
 
-        {/* 2FA Input */}
-        {(is2FAEnabled || requires2FA) && (
-          <div className="mb-4">
-            <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">🔐 {t.twoFaCode}</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={twoFactorCode}
-              onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="000000"
-              className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white text-center text-lg tracking-widest font-mono"
-            />
-            {requires2FA && (
-              <p className="text-xs text-red-500 mt-2">{t.twoFaRequired}</p>
-            )}
-          </div>
-        )}
+        {/* 2FA Section - Always show, required for transfers */}
+        <div className="mb-4">
+          {is2FAEnabled ? (
+            <>
+              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">🔐 {t.twoFaCode}</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={twoFactorCode}
+                onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white text-center text-lg tracking-widest font-mono"
+              />
+              {requires2FA && (
+                <p className="text-xs text-red-500 mt-2">{t.twoFaRequired}</p>
+              )}
+            </>
+          ) : (
+            <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">🔒</span>
+                <div className="flex-1">
+                  <p className="text-sm text-amber-800 dark:text-amber-200 font-medium mb-2">
+                    {t.twoFaNotEnabled}
+                  </p>
+                  <a
+                    href="/profile"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    🔐 {t.enable2FA}
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Send Button */}
         <button
           onClick={handleTransfer}
-          disabled={!canSend || isProcessing || (is2FAEnabled && twoFactorCode.length !== 6)}
+          disabled={!canSend || isProcessing || !is2FAEnabled || twoFactorCode.length !== 6}
           className="w-full py-3 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold transition-colors flex items-center justify-center gap-2"
         >
           {isProcessing ? (

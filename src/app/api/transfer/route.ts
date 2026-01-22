@@ -22,18 +22,18 @@ function hashCode(code: string): string {
   return crypto.createHash("sha256").update(code).digest("hex");
 }
 
-async function verify2FA(address: string, code: string): Promise<{ valid: boolean; error?: string }> {
+async function verify2FA(address: string, code: string): Promise<{ valid: boolean; error?: string; enabled?: boolean }> {
   const key = get2FAKey(address);
   const user2FA = await redis.hgetall(key);
   
-  // 2FA aktif değilse, geç
+  // 2FA aktif değilse, işleme izin verme
   if ((user2FA?.enabled !== true && user2FA?.enabled !== "true") || !user2FA?.secret) {
-    return { valid: true }; // 2FA zorunlu değil
+    return { valid: false, error: "2FA etkinleştirilmemiş. Lütfen önce 2FA'yı aktif edin.", enabled: false };
   }
   
   // Kod girilmemişse
   if (!code) {
-    return { valid: false, error: "2FA kodu gerekli" };
+    return { valid: false, error: "2FA kodu gerekli", enabled: true };
   }
   
   // TOTP doğrula
@@ -48,7 +48,7 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
     });
     const delta = totp.validate({ token: code, window: 1 });
     if (delta !== null) {
-      return { valid: true };
+      return { valid: true, enabled: true };
     }
   } catch (e) {
     console.error("TOTP verify error:", e);
@@ -63,10 +63,10 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
     // Kullanılan backup kodunu sil
     backupCodes.splice(codeIndex, 1);
     await redis.hset(key, { backupCodes: JSON.stringify(backupCodes) });
-    return { valid: true };
+    return { valid: true, enabled: true };
   }
   
-  return { valid: false, error: "Geçersiz 2FA kodu" };
+  return { valid: false, error: "Geçersiz 2FA kodu", enabled: true };
 }
 
 // Token contract addresses from central config
@@ -107,12 +107,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Cannot transfer to yourself" }, { status: 400 });
     }
 
-    // 2FA Kontrolü (aktif ise)
+    // 2FA Kontrolü (ZORUNLU)
     const twoFAResult = await verify2FA(fromAddress, twoFactorCode || "");
     if (!twoFAResult.valid) {
       return NextResponse.json({ 
         error: twoFAResult.error || "2FA doğrulama başarısız",
-        requires2FA: true 
+        requires2FA: true,
+        twoFAEnabled: twoFAResult.enabled
       }, { status: 403 });
     }
 
