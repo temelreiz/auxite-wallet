@@ -130,15 +130,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Cannot transfer to yourself" }, { status: 400 });
     }
 
-    // 2FA Kontrolü (ZORUNLU)
-    const twoFAResult = await verify2FA(fromAddress, twoFactorCode || "");
-    if (!twoFAResult.valid) {
-      return NextResponse.json({ 
-        error: twoFAResult.error || "2FA doğrulama başarısız",
-        requires2FA: true,
-        twoFAEnabled: twoFAResult.enabled
-      }, { status: 403 });
-    }
+    // 2FA Kontrolü artık frontend'de TwoFactorGate ile yapılıyor
+    // API'ye gelene kadar kullanıcı zaten doğrulanmış oluyor
 
     const normalizedFrom = fromAddress.toLowerCase();
     const normalizedTo = toAddress.toLowerCase();

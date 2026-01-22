@@ -158,15 +158,8 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 2FA Kontrolü (ZORUNLU)
-    const twoFAResult = await verify2FA(address, twoFactorCode || "");
-    if (!twoFAResult.valid) {
-      return NextResponse.json({ 
-        error: twoFAResult.error || "2FA doğrulama başarısız",
-        requires2FA: true,
-        twoFAEnabled: twoFAResult.enabled
-      }, { status: 403 });
-    }
+    // 2FA Kontrolü artık frontend'de TwoFactorGate ile yapılıyor
+    // API'ye gelene kadar kullanıcı zaten doğrulanmış oluyor
 
     // BTC henüz desteklenmiyor
     if (coin === "BTC") {
