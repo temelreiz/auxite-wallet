@@ -1007,20 +1007,15 @@ export default function WalletPage() {
               
               {(() => {
                 // Calculate totals from allocations + staking
-                const metalPrices = {
+                const metalPricesLocal = {
                   AUXG: bidPrices?.AUXG || 95,
                   AUXS: bidPrices?.AUXS || 1.15,
                   AUXPT: bidPrices?.AUXPT || 32,
                   AUXPD: bidPrices?.AUXPD || 35,
                 };
                 
-                // Allocation totals
-                const allocTotals: Record<string, number> = { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 };
-                allocations?.forEach((a) => {
-                  if (allocTotals[a.metalSymbol] !== undefined) {
-                    allocTotals[a.metalSymbol] += Number(a.grams);
-                  }
-                });
+                // Allocation totals - useAllocations hook'tan gelen totalGrams kullan
+                const allocTotals: Record<string, number> = allocationGrams || { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 };
                 
                 // Staking totals
                 const stakeTotals: Record<string, number> = { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 };
@@ -1031,14 +1026,14 @@ export default function WalletPage() {
                 });
                 
                 // Combined totals
-                const totalGrams: Record<string, number> = {};
+                const totalGramsLocal: Record<string, number> = {};
                 ["AUXG", "AUXS", "AUXPT", "AUXPD"].forEach((m) => {
-                  totalGrams[m] = (allocTotals[m] || 0) + (stakeTotals[m] || 0);
+                  totalGramsLocal[m] = (allocTotals[m] || 0) + (stakeTotals[m] || 0);
                 });
                 
                 // Total USD value
-                const totalValue = Object.entries(totalGrams).reduce((sum, [metal, grams]) => {
-                  return sum + grams * (metalPrices[metal as keyof typeof metalPrices] || 0);
+                const totalValue = Object.entries(totalGramsLocal).reduce((sum, [metal, grams]) => {
+                  return sum + grams * (metalPricesLocal[metal as keyof typeof metalPricesLocal] || 0);
                 }, 0);
                 
                 // Average APY from staking
@@ -1048,7 +1043,7 @@ export default function WalletPage() {
                 
                 // Build display string
                 const displayParts: string[] = [];
-                Object.entries(totalGrams).forEach(([metal, grams]) => {
+                Object.entries(totalGramsLocal).forEach(([metal, grams]) => {
                   if (grams > 0) displayParts.push(`${grams.toFixed(2)}g ${metal}`);
                 });
                 const displayString = displayParts.length > 0 ? displayParts.join(" + ") : "0g";
@@ -1066,7 +1061,7 @@ export default function WalletPage() {
                     icon: iconMap[a.metalSymbol] || "/gold-favicon-32x32.png",
                     label: `${a.metal} - Vault`,
                     grams: Number(a.grams),
-                    value: Number(a.grams) * (metalPrices[a.metalSymbol as keyof typeof metalPrices] || 0),
+                    value: Number(a.grams) * (metalPricesLocal[a.metalSymbol as keyof typeof metalPricesLocal] || 0),
                     type: "allocation"
                   });
                 });
@@ -1081,7 +1076,7 @@ export default function WalletPage() {
                     icon: iconMap[s.metalSymbol] || "/gold-favicon-32x32.png",
                     label: `${s.metalSymbol} - Staking`,
                     grams: s.amountGrams,
-                    value: s.amountGrams * (metalPrices[s.metalSymbol as keyof typeof metalPrices] || 0),
+                    value: s.amountGrams * (metalPricesLocal[s.metalSymbol as keyof typeof metalPricesLocal] || 0),
                     type: "staking"
                   });
                 });
