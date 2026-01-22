@@ -1,11 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import QRCode from "qrcode";
 
-// ============================================
-// TRANSLATIONS
-// ============================================
 const translations: Record<string, Record<string, string>> = {
   tr: {
     setupTitle: "2FA Kurulumu Gerekli",
@@ -61,17 +58,17 @@ const translations: Record<string, Record<string, string>> = {
   },
   de: {
     setupTitle: "2FA-Einrichtung erforderlich",
-    setupDesc: "Sie müssen die Zwei-Faktor-Authentifizierung einrichten, um diese Aktion auszuführen.",
+    setupDesc: "Sie müssen die Zwei-Faktor-Authentifizierung einrichten.",
     verifyTitle: "2FA-Verifizierung",
-    verifyDesc: "Geben Sie den Verifizierungscode ein, um diese Aktion zu bestätigen.",
+    verifyDesc: "Geben Sie den Verifizierungscode ein.",
     scanQR: "QR-Code scannen",
-    scanQRDesc: "Mit Google Authenticator oder Authy App scannen",
+    scanQRDesc: "Mit Google Authenticator oder Authy scannen",
     manualEntry: "Manuelle Eingabe",
     secretKey: "Geheimschlüssel",
     verificationCode: "Verifizierungscode",
     enterCode: "6-stelligen Code eingeben",
     backupCodes: "Backup-Codes",
-    backupCodesDesc: "Speichern Sie diese Codes an einem sicheren Ort.",
+    backupCodesDesc: "Speichern Sie diese Codes sicher.",
     saveBackupCodes: "Codes gespeichert",
     verify: "Verifizieren",
     verifying: "Verifiziere...",
@@ -81,15 +78,15 @@ const translations: Record<string, Record<string, string>> = {
     codeCopied: "Kopiert!",
     useBackupCode: "Backup-Code verwenden",
     useAuthenticator: "Authenticator verwenden",
-    tooManyAttempts: "Zu viele Fehlversuche. Versuchen Sie es in 15 Minuten erneut.",
+    tooManyAttempts: "Zu viele Fehlversuche. 15 Minuten warten.",
     setupSuccess: "2FA erfolgreich eingerichtet!",
     error: "Ein Fehler ist aufgetreten",
   },
   fr: {
     setupTitle: "Configuration 2FA requise",
-    setupDesc: "Vous devez configurer l'authentification à deux facteurs pour effectuer cette action.",
+    setupDesc: "Vous devez configurer l'authentification à deux facteurs.",
     verifyTitle: "Vérification 2FA",
-    verifyDesc: "Entrez le code de vérification pour confirmer cette action.",
+    verifyDesc: "Entrez le code de vérification.",
     scanQR: "Scanner le code QR",
     scanQRDesc: "Scanner avec Google Authenticator ou Authy",
     manualEntry: "Entrée manuelle",
@@ -97,7 +94,7 @@ const translations: Record<string, Record<string, string>> = {
     verificationCode: "Code de vérification",
     enterCode: "Entrez le code à 6 chiffres",
     backupCodes: "Codes de secours",
-    backupCodesDesc: "Enregistrez ces codes dans un endroit sûr.",
+    backupCodesDesc: "Enregistrez ces codes en lieu sûr.",
     saveBackupCodes: "Codes enregistrés",
     verify: "Vérifier",
     verifying: "Vérification...",
@@ -105,43 +102,43 @@ const translations: Record<string, Record<string, string>> = {
     continue: "Continuer",
     invalidCode: "Code invalide",
     codeCopied: "Copié!",
-    useBackupCode: "Utiliser code de secours",
-    useAuthenticator: "Utiliser authenticator",
+    useBackupCode: "Code de secours",
+    useAuthenticator: "Authenticator",
     tooManyAttempts: "Trop de tentatives. Réessayez dans 15 minutes.",
-    setupSuccess: "2FA configuré avec succès!",
+    setupSuccess: "2FA configuré!",
     error: "Une erreur s'est produite",
   },
   ar: {
     setupTitle: "إعداد 2FA مطلوب",
-    setupDesc: "تحتاج إلى إعداد المصادقة الثنائية لتنفيذ هذا الإجراء.",
+    setupDesc: "تحتاج إلى إعداد المصادقة الثنائية.",
     verifyTitle: "التحقق من 2FA",
-    verifyDesc: "أدخل رمز التحقق لتأكيد هذا الإجراء.",
+    verifyDesc: "أدخل رمز التحقق.",
     scanQR: "امسح رمز QR",
     scanQRDesc: "امسح باستخدام Google Authenticator أو Authy",
     manualEntry: "إدخال يدوي",
     secretKey: "المفتاح السري",
     verificationCode: "رمز التحقق",
-    enterCode: "أدخل الرمز المكون من 6 أرقام",
+    enterCode: "أدخل الرمز",
     backupCodes: "رموز النسخ الاحتياطي",
-    backupCodesDesc: "احفظ هذه الرموز في مكان آمن.",
-    saveBackupCodes: "تم حفظ الرموز",
+    backupCodesDesc: "احفظ هذه الرموز بأمان.",
+    saveBackupCodes: "تم الحفظ",
     verify: "تحقق",
     verifying: "جاري التحقق...",
     cancel: "إلغاء",
     continue: "متابعة",
     invalidCode: "رمز غير صالح",
     codeCopied: "تم النسخ!",
-    useBackupCode: "استخدم رمز النسخ الاحتياطي",
-    useAuthenticator: "استخدم المصادق",
-    tooManyAttempts: "محاولات كثيرة جداً. حاول مرة أخرى خلال 15 دقيقة.",
-    setupSuccess: "تم إعداد 2FA بنجاح!",
+    useBackupCode: "رمز احتياطي",
+    useAuthenticator: "المصادق",
+    tooManyAttempts: "محاولات كثيرة. انتظر 15 دقيقة.",
+    setupSuccess: "تم إعداد 2FA!",
     error: "حدث خطأ",
   },
   ru: {
     setupTitle: "Требуется настройка 2FA",
-    setupDesc: "Вам необходимо настроить двухфакторную аутентификацию для выполнения этого действия.",
+    setupDesc: "Настройте двухфакторную аутентификацию.",
     verifyTitle: "Проверка 2FA",
-    verifyDesc: "Введите код подтверждения для подтверждения этого действия.",
+    verifyDesc: "Введите код подтверждения.",
     scanQR: "Сканировать QR-код",
     scanQRDesc: "Сканируйте с помощью Google Authenticator или Authy",
     manualEntry: "Ручной ввод",
@@ -157,10 +154,10 @@ const translations: Record<string, Record<string, string>> = {
     continue: "Продолжить",
     invalidCode: "Неверный код",
     codeCopied: "Скопировано!",
-    useBackupCode: "Использовать резервный код",
-    useAuthenticator: "Использовать аутентификатор",
-    tooManyAttempts: "Слишком много попыток. Повторите через 15 минут.",
-    setupSuccess: "2FA успешно настроен!",
+    useBackupCode: "Резервный код",
+    useAuthenticator: "Аутентификатор",
+    tooManyAttempts: "Слишком много попыток. Подождите 15 минут.",
+    setupSuccess: "2FA настроен!",
     error: "Произошла ошибка",
   },
 };
@@ -171,19 +168,11 @@ interface TwoFactorGateProps {
   onClose: () => void;
   onVerified: () => void;
   lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
-  actionName?: string; // "withdraw", "send", "login" etc.
 }
 
-type Step = "checking" | "setup-qr" | "setup-backup" | "verify" | "success";
+type Step = "checking" | "setup-qr" | "setup-backup" | "verify";
 
-export function TwoFactorGate({
-  walletAddress,
-  isOpen,
-  onClose,
-  onVerified,
-  lang = "en",
-  actionName = "action",
-}: TwoFactorGateProps) {
+export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang = "en" }: TwoFactorGateProps) {
   const t = translations[lang] || translations.en;
 
   const [step, setStep] = useState<Step>("checking");
@@ -197,7 +186,7 @@ export function TwoFactorGate({
   const [copied, setCopied] = useState(false);
   const [showManualKey, setShowManualKey] = useState(false);
 
-  // Check 2FA status on open
+  // Check 2FA status when modal opens
   useEffect(() => {
     if (!isOpen || !walletAddress) return;
 
@@ -205,6 +194,7 @@ export function TwoFactorGate({
       setStep("checking");
       setError(null);
       setCode("");
+      setUseBackupCode(false);
 
       try {
         const res = await fetch(`/api/security/2fa/status`, {
@@ -213,9 +203,10 @@ export function TwoFactorGate({
         const data = await res.json();
 
         if (data.enabled) {
+          // 2FA zaten kurulu - sadece verify iste
           setStep("verify");
         } else {
-          // Start 2FA setup
+          // 2FA kurulu değil - setup başlat
           await startSetup();
         }
       } catch (err) {
@@ -250,14 +241,11 @@ export function TwoFactorGate({
       setSecret(data.secret);
       setBackupCodes(data.backupCodes || []);
 
-      // Generate QR code if not provided
+      // Generate QR code
       if (data.qrCodeDataUrl) {
         setQrCodeDataUrl(data.qrCodeDataUrl);
       } else if (data.qrCodeUrl) {
-        const qr = await QRCode.toDataURL(data.qrCodeUrl, {
-          width: 200,
-          margin: 2,
-        });
+        const qr = await QRCode.toDataURL(data.qrCodeUrl, { width: 200, margin: 2 });
         setQrCodeDataUrl(qr);
       }
 
@@ -291,11 +279,12 @@ export function TwoFactorGate({
         throw new Error(data.error || t.invalidCode);
       }
 
-      // Setup successful - show backup codes
+      // Setup başarılı - backup kodları göster
       if (data.backupCodes) {
         setBackupCodes(data.backupCodes);
       }
       setStep("setup-backup");
+      setCode("");
     } catch (err: any) {
       setError(err.message || t.invalidCode);
     } finally {
@@ -330,15 +319,12 @@ export function TwoFactorGate({
         return;
       }
 
-      if (!res.ok) {
+      if (!res.ok || !data.valid) {
         throw new Error(data.error || t.invalidCode);
       }
 
-      // Verification successful
-      setStep("success");
-      setTimeout(() => {
-        onVerified();
-      }, 500);
+      // Doğrulama başarılı - callback'i çağır
+      onVerified();
     } catch (err: any) {
       setError(err.message || t.invalidCode);
     } finally {
@@ -347,10 +333,8 @@ export function TwoFactorGate({
   };
 
   const handleBackupCodesSaved = () => {
-    setStep("success");
-    setTimeout(() => {
-      onVerified();
-    }, 500);
+    // Backup kodları kaydedildi - artık doğrulanmış sayılır
+    onVerified();
   };
 
   const copyToClipboard = async (text: string) => {
@@ -376,24 +360,21 @@ export function TwoFactorGate({
         <div className="p-4 sm:p-6 border-b border-stone-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-              step === "success" 
-                ? "bg-emerald-100 dark:bg-emerald-500/20" 
-                : "bg-amber-100 dark:bg-amber-500/20"
+              step === "verify" ? "bg-amber-100 dark:bg-amber-500/20" : "bg-blue-100 dark:bg-blue-500/20"
             }`}>
               <span className="text-2xl">
                 {step === "checking" && "⏳"}
                 {step === "setup-qr" && "📱"}
                 {step === "setup-backup" && "🔐"}
                 {step === "verify" && "🔑"}
-                {step === "success" && "✅"}
               </span>
             </div>
             <div className="flex-1">
               <h2 className="text-lg font-bold text-slate-800 dark:text-white">
-                {step === "setup-qr" || step === "setup-backup" ? t.setupTitle : step === "success" ? t.setupSuccess : t.verifyTitle}
+                {step === "setup-qr" || step === "setup-backup" ? t.setupTitle : t.verifyTitle}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {step === "setup-qr" || step === "setup-backup" ? t.setupDesc : step === "success" ? "" : t.verifyDesc}
+                {step === "setup-qr" || step === "setup-backup" ? t.setupDesc : t.verifyDesc}
               </p>
             </div>
             <button
@@ -411,16 +392,15 @@ export function TwoFactorGate({
           {step === "checking" && (
             <div className="flex flex-col items-center py-8">
               <div className="w-12 h-12 border-4 border-amber-200 border-t-amber-500 rounded-full animate-spin mb-4" />
-              <p className="text-slate-500 dark:text-slate-400">Checking 2FA status...</p>
+              <p className="text-slate-500 dark:text-slate-400">Loading...</p>
             </div>
           )}
 
           {/* Setup - QR Code */}
           {step === "setup-qr" && (
             <div className="space-y-4">
-              {/* QR Code */}
               <div className="flex flex-col items-center">
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{t.scanQRDesc}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 text-center">{t.scanQRDesc}</p>
                 {qrCodeDataUrl && (
                   <div className="bg-white p-3 rounded-xl shadow-lg">
                     <img src={qrCodeDataUrl} alt="QR Code" className="w-48 h-48" />
@@ -428,25 +408,16 @@ export function TwoFactorGate({
                 )}
               </div>
 
-              {/* Manual Entry */}
               <div className="pt-2">
-                <button
-                  onClick={() => setShowManualKey(!showManualKey)}
-                  className="text-sm text-amber-600 dark:text-amber-400 hover:underline"
-                >
+                <button onClick={() => setShowManualKey(!showManualKey)} className="text-sm text-amber-600 dark:text-amber-400 hover:underline">
                   {showManualKey ? "Hide" : t.manualEntry} →
                 </button>
                 {showManualKey && secret && (
                   <div className="mt-2 p-3 bg-stone-100 dark:bg-slate-800 rounded-lg">
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t.secretKey}:</p>
                     <div className="flex items-center gap-2">
-                      <code className="flex-1 text-sm font-mono text-slate-800 dark:text-white break-all">
-                        {secret}
-                      </code>
-                      <button
-                        onClick={() => copyToClipboard(secret)}
-                        className="p-1.5 bg-white dark:bg-slate-700 rounded text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                      >
+                      <code className="flex-1 text-sm font-mono text-slate-800 dark:text-white break-all">{secret}</code>
+                      <button onClick={() => copyToClipboard(secret)} className="p-1.5 bg-white dark:bg-slate-700 rounded text-slate-500 hover:text-slate-700">
                         {copied ? "✓" : "📋"}
                       </button>
                     </div>
@@ -454,11 +425,8 @@ export function TwoFactorGate({
                 )}
               </div>
 
-              {/* Code Input */}
               <div>
-                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">
-                  {t.verificationCode}
-                </label>
+                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">{t.verificationCode}</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -471,19 +439,14 @@ export function TwoFactorGate({
                 />
               </div>
 
-              {/* Error */}
               {error && (
                 <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg">
                   <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
                 </div>
               )}
 
-              {/* Buttons */}
               <div className="flex gap-3 pt-2">
-                <button
-                  onClick={onClose}
-                  className="flex-1 py-3 rounded-xl bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-stone-300 dark:hover:bg-slate-600 transition-colors"
-                >
+                <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-stone-300 dark:hover:bg-slate-600 transition-colors">
                   {t.cancel}
                 </button>
                 <button
@@ -501,37 +464,25 @@ export function TwoFactorGate({
           {step === "setup-backup" && (
             <div className="space-y-4">
               <div className="p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl">
-                <p className="text-sm text-amber-800 dark:text-amber-200">
-                  ⚠️ {t.backupCodesDesc}
-                </p>
+                <p className="text-sm text-amber-800 dark:text-amber-200">⚠️ {t.backupCodesDesc}</p>
               </div>
 
-              {/* Backup Codes Grid */}
               <div className="bg-stone-100 dark:bg-slate-800 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {t.backupCodes}
-                  </span>
-                  <button
-                    onClick={copyAllBackupCodes}
-                    className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
-                  >
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.backupCodes}</span>
+                  <button onClick={copyAllBackupCodes} className="text-xs text-amber-600 dark:text-amber-400 hover:underline">
                     {copied ? t.codeCopied : "Copy all"}
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {backupCodes.map((code, i) => (
-                    <div
-                      key={i}
-                      className="px-3 py-2 bg-white dark:bg-slate-900 rounded-lg text-center font-mono text-sm text-slate-800 dark:text-white"
-                    >
+                    <div key={i} className="px-3 py-2 bg-white dark:bg-slate-900 rounded-lg text-center font-mono text-sm text-slate-800 dark:text-white">
                       {code}
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Continue Button */}
               <button
                 onClick={handleBackupCodesSaved}
                 className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold transition-colors"
@@ -544,7 +495,6 @@ export function TwoFactorGate({
           {/* Verify */}
           {step === "verify" && (
             <div className="space-y-4">
-              {/* Code Input */}
               <div>
                 <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">
                   {useBackupCode ? t.backupCodes : t.verificationCode}
@@ -566,31 +516,21 @@ export function TwoFactorGate({
                 />
               </div>
 
-              {/* Toggle backup code mode */}
               <button
-                onClick={() => {
-                  setUseBackupCode(!useBackupCode);
-                  setCode("");
-                  setError(null);
-                }}
+                onClick={() => { setUseBackupCode(!useBackupCode); setCode(""); setError(null); }}
                 className="text-sm text-amber-600 dark:text-amber-400 hover:underline"
               >
                 {useBackupCode ? t.useAuthenticator : t.useBackupCode} →
               </button>
 
-              {/* Error */}
               {error && (
                 <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg">
                   <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
                 </div>
               )}
 
-              {/* Buttons */}
               <div className="flex gap-3 pt-2">
-                <button
-                  onClick={onClose}
-                  className="flex-1 py-3 rounded-xl bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-stone-300 dark:hover:bg-slate-600 transition-colors"
-                >
+                <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-stone-300 dark:hover:bg-slate-600 transition-colors">
                   {t.cancel}
                 </button>
                 <button
@@ -601,18 +541,6 @@ export function TwoFactorGate({
                   {isProcessing ? t.verifying : t.verify}
                 </button>
               </div>
-            </div>
-          )}
-
-          {/* Success */}
-          {step === "success" && (
-            <div className="flex flex-col items-center py-6">
-              <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-500/20 rounded-full flex items-center justify-center mb-4">
-                <span className="text-3xl">✅</span>
-              </div>
-              <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
-                {t.setupSuccess}
-              </p>
             </div>
           )}
         </div>

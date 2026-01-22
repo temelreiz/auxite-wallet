@@ -17,14 +17,8 @@ interface TransferModalProps {
 }
 
 const TOKEN_INFO: Record<TokenType, { 
-  name: string; 
-  icon: string; 
-  iconType: "image" | "symbol"; 
-  color: string; 
-  onChain: boolean; 
-  decimals: number; 
-  address?: string;
-  isMetal?: boolean;
+  name: string; icon: string; iconType: "image" | "symbol"; color: string; 
+  onChain: boolean; decimals: number; address?: string; isMetal?: boolean;
 }> = {
   AUXG: { name: "Gold", icon: "/gold-favicon-32x32.png", iconType: "image", color: "#F59E0B", onChain: true, decimals: 3, address: METAL_TOKEN_ADDRESSES.AUXG, isMetal: true },
   AUXS: { name: "Silver", icon: "/silver-favicon-32x32.png", iconType: "image", color: "#94A3B8", onChain: true, decimals: 3, address: METAL_TOKEN_ADDRESSES.AUXS, isMetal: true },
@@ -41,57 +35,30 @@ const TRANSFERABLE_TOKENS: TokenType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD", "ETH
 const METAL_TOKENS: TokenType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
 
 const ERC20_ABI = [
-  {
-    name: "transfer",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "to", type: "address" },
-      { name: "amount", type: "uint256" }
-    ],
-    outputs: [{ type: "bool" }]
-  }
+  { name: "transfer", type: "function", stateMutability: "nonpayable",
+    inputs: [{ name: "to", type: "address" }, { name: "amount", type: "uint256" }],
+    outputs: [{ type: "bool" }] }
 ] as const;
 
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    title: "Transfer",
-    subtitle: "Varlıklarınızı başka bir cüzdana gönderin",
-    selectToken: "Token Seç",
-    recipientAddress: "Alıcı Adresi",
-    amount: "Miktar",
-    balance: "Bakiye",
-    send: "Gönder",
-    sending: "Gönderiliyor...",
-    success: "Transfer Başarılı!",
-    error: "Transfer Başarısız",
-    insufficientBalance: "Yetersiz bakiye",
-    invalidAddress: "Geçersiz adres",
-    cancel: "Kapat",
+    title: "Transfer", subtitle: "Varlıklarınızı başka bir cüzdana gönderin", selectToken: "Token Seç",
+    recipientAddress: "Alıcı Adresi", amount: "Miktar", balance: "Bakiye", send: "Gönder",
+    sending: "Gönderiliyor...", success: "Transfer Başarılı!", error: "Transfer Başarısız",
+    insufficientBalance: "Yetersiz bakiye", invalidAddress: "Geçersiz adres", cancel: "Kapat",
     onChainNote: "On-chain transfer - Cüzdanınızda imzalamanız gerekecek",
     metalNote: "Metal transferi sadece kayıtlı Auxite kullanıcılarına yapılabilir",
-    checkingRecipient: "Kontrol ediliyor...",
-    auxiteUser: "Auxite kullanıcısı ✓",
+    checkingRecipient: "Kontrol ediliyor...", auxiteUser: "Auxite kullanıcısı ✓",
     notAuxiteUser: "Alıcı Auxite kullanıcısı değil",
   },
   en: {
-    title: "Transfer",
-    subtitle: "Send assets to another wallet",
-    selectToken: "Select Token",
-    recipientAddress: "Recipient Address",
-    amount: "Amount",
-    balance: "Balance",
-    send: "Send",
-    sending: "Sending...",
-    success: "Transfer Successful!",
-    error: "Transfer Failed",
-    insufficientBalance: "Insufficient balance",
-    invalidAddress: "Invalid address",
-    cancel: "Close",
+    title: "Transfer", subtitle: "Send assets to another wallet", selectToken: "Select Token",
+    recipientAddress: "Recipient Address", amount: "Amount", balance: "Balance", send: "Send",
+    sending: "Sending...", success: "Transfer Successful!", error: "Transfer Failed",
+    insufficientBalance: "Insufficient balance", invalidAddress: "Invalid address", cancel: "Close",
     onChainNote: "On-chain transfer - You will need to sign in your wallet",
     metalNote: "Metal transfers can only be made to registered Auxite users",
-    checkingRecipient: "Checking...",
-    auxiteUser: "Auxite user ✓",
+    checkingRecipient: "Checking...", auxiteUser: "Auxite user ✓",
     notAuxiteUser: "Recipient is not an Auxite user",
   },
 };
@@ -102,7 +69,9 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const { isConnected } = useAccount();
   const { allocations, totalGrams, refresh: refreshAllocations } = useAllocations();
   
-  const [flowStep, setFlowStep] = useState<"2fa" | "form">("2fa");
+  // Flow: "form" -> "2fa" -> işlem
+  const [flowStep, setFlowStep] = useState<"form" | "2fa" | "result">("form");
+  
   const [selectedToken, setSelectedToken] = useState<TokenType>("ETH");
   const [recipientAddress, setRecipientAddress] = useState("");
   const [amount, setAmount] = useState("");
@@ -135,6 +104,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     if (isConfirmed && txHash) {
       setResult("success");
       setIsProcessing(false);
+      setFlowStep("result");
       setTimeout(async () => {
         if (refreshBalances) await refreshBalances();
         if (refreshAllocations) await refreshAllocations();
@@ -144,7 +114,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
 
   useEffect(() => {
     if (isOpen) {
-      setFlowStep("2fa");
+      setFlowStep("form");
       setSelectedToken("ETH");
       setRecipientAddress("");
       setAmount("");
@@ -155,6 +125,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     }
   }, [isOpen]);
 
+  // Check recipient for metals
   useEffect(() => {
     if (!isOpen || flowStep !== "form") return;
     const isMetal = METAL_TOKENS.includes(selectedToken);
@@ -174,19 +145,6 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
 
   if (!isOpen) return null;
 
-  if (flowStep === "2fa") {
-    return (
-      <TwoFactorGate
-        walletAddress={address || ""}
-        isOpen={isOpen}
-        onClose={onClose}
-        onVerified={() => setFlowStep("form")}
-        lang={lang as any}
-        actionName="transfer"
-      />
-    );
-  }
-
   const tokenInfo = TOKEN_INFO[selectedToken];
   const amountNum = parseFloat(amount) || 0;
   const isMetal = METAL_TOKENS.includes(selectedToken);
@@ -203,10 +161,19 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const isValidAddress = recipientAddress.length >= 42 && recipientAddress.startsWith("0x");
   const canSend = canAfford && isValidAddress && amountNum > 0 && !!address && (!isMetal || recipientValid === true);
 
-  const handleTransfer = async () => {
-    if (!canSend || !address) return;
+  // Gönder butonuna basıldı - 2FA'ya geç
+  const handleSendClick = () => {
+    if (canSend) {
+      setFlowStep("2fa");
+    }
+  };
+
+  // 2FA doğrulandı - transfer işlemini yap
+  const handle2FAVerified = async () => {
+    setFlowStep("form");
     setIsProcessing(true);
     setErrorMessage("");
+    
     try {
       if (isMetal) {
         const metalAllocations = allocations.filter(a => a.metalSymbol === selectedToken && a.active);
@@ -225,12 +192,23 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         const amountInUnits = parseUnits(amount, tokenInfo.decimals);
         writeContract({ address: tokenInfo.address as `0x${string}`, abi: ERC20_ABI, functionName: "transfer", args: [recipientAddress as `0x${string}`, amountInUnits], gas: BigInt(200000) });
       } else {
-        const response = await fetch("/api/transfer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fromAddress: address, toAddress: recipientAddress, token: selectedToken, amount: amountNum, twoFactorCode: "verified" }) });
+        const response = await fetch("/api/transfer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fromAddress: address, toAddress: recipientAddress, token: selectedToken, amount: amountNum }) });
         const data = await response.json();
-        if (data.success) { setResult("success"); if (refreshBalances) await refreshBalances(); } else { throw new Error(data.error || "Transfer failed"); }
+        if (data.success) { 
+          setResult("success"); 
+          setFlowStep("result");
+          if (refreshBalances) await refreshBalances(); 
+        } else { 
+          throw new Error(data.error || "Transfer failed"); 
+        }
         setIsProcessing(false);
       }
-    } catch (error: any) { setErrorMessage(error.message || "Transfer failed"); setResult("error"); setIsProcessing(false); }
+    } catch (error: any) { 
+      setErrorMessage(error.message || "Transfer failed"); 
+      setResult("error"); 
+      setFlowStep("result");
+      setIsProcessing(false); 
+    }
   };
 
   const renderTokenIcon = (token: TokenType) => {
@@ -239,7 +217,21 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     return <span className="text-lg" style={{ color: info.color }}>{info.icon}</span>;
   };
 
-  if (result === "success") {
+  // 2FA Modal
+  if (flowStep === "2fa") {
+    return (
+      <TwoFactorGate
+        walletAddress={address || ""}
+        isOpen={true}
+        onClose={() => setFlowStep("form")}
+        onVerified={handle2FAVerified}
+        lang={lang as any}
+      />
+    );
+  }
+
+  // Result screens
+  if (flowStep === "result" && result === "success") {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 max-w-md w-full p-6 text-center">
@@ -254,7 +246,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     );
   }
 
-  if (result === "error") {
+  if (flowStep === "result" && result === "error") {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 max-w-md w-full p-6 text-center">
@@ -269,6 +261,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     );
   }
 
+  // Form
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
@@ -280,11 +273,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           <button onClick={onClose} className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-500">✕</button>
         </div>
 
-        <div className="mb-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-2">
-          <span className="text-lg">✅</span>
-          <span className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">2FA Verified</span>
-        </div>
-
+        {/* Token Selection */}
         <div className="mb-4">
           <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t.selectToken}</label>
           <div className="grid grid-cols-5 gap-2">
@@ -297,18 +286,19 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           </div>
         </div>
 
+        {/* Notices */}
         {isMetal && (
           <div className="mb-4 p-2 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg">
             <p className="text-xs text-amber-700 dark:text-amber-400">⚠️ {t.metalNote}</p>
           </div>
         )}
-
         {tokenInfo.onChain && !isMetal && (
           <div className="mb-4 p-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg">
             <p className="text-xs text-blue-700 dark:text-blue-400">⚡ {t.onChainNote}</p>
           </div>
         )}
 
+        {/* Recipient Address */}
         <div className="mb-4">
           <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t.recipientAddress}</label>
           <input type="text" value={recipientAddress} onChange={(e) => setRecipientAddress(e.target.value)} placeholder="0x..." className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white font-mono text-sm" />
@@ -320,6 +310,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           )}
         </div>
 
+        {/* Amount */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <label className="text-sm text-slate-600 dark:text-slate-400">{t.amount}</label>
@@ -332,8 +323,17 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           {amountNum > 0 && !canAfford && <p className="text-xs text-red-500 mt-1">{t.insufficientBalance}</p>}
         </div>
 
-        <button onClick={handleTransfer} disabled={!canSend || isProcessing} className="w-full py-3 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-semibold flex items-center justify-center gap-2">
-          {isProcessing ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> {t.sending}</> : <><span>📤</span> {t.send}</>}
+        {/* Send Button */}
+        <button 
+          onClick={handleSendClick} 
+          disabled={!canSend || isProcessing} 
+          className="w-full py-3 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-semibold flex items-center justify-center gap-2"
+        >
+          {isProcessing ? (
+            <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> {t.sending}</>
+          ) : (
+            <>🔐 {t.send}</>
+          )}
         </button>
       </div>
     </div>
