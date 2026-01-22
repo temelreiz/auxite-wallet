@@ -14,7 +14,7 @@ const DEFAULT_SETTINGS: Record<string, { askAdjust: number; bidAdjust: number }>
 
 let cachedData: any = null;
 let lastFetchTime: number = 0;
-const CACHE_DURATION = 5000; // 5 saniye cache
+const CACHE_DURATION = 30000; // 30 saniye cache - rate limit önleme
 
 const GOLDAPI_SYMBOLS: Record<string, string> = {
   AUXG: "XAU",
@@ -64,16 +64,18 @@ async function getSpreadSettings(): Promise<Record<string, { askAdjust: number; 
   }
 }
 
-// GoldAPI'den fiyatları çek
-async function fetchGoldApiPrices(): Promise<Record<string, { price: number; change: number }>> {
+// GoldAPI'den fiyatları çek - Tüm metaller başarılı olmalı
+async function fetchGoldApiPrices(): Promise<Record<string, { price: number; change: number }> | null> {
   if (!GOLDAPI_KEY) {
     console.warn("⚠️ GOLDAPI_KEY not set");
-    return {};
+    return null;
   }
 
   const results: Record<string, { price: number; change: number }> = {};
+  const metals = Object.entries(GOLDAPI_SYMBOLS);
+  let successCount = 0;
 
-  for (const [symbol, goldSymbol] of Object.entries(GOLDAPI_SYMBOLS)) {
+  for (const [symbol, goldSymbol] of metals) {
     try {
       const response = await fetch(`${GOLDAPI_URL}/${goldSymbol}/USD`, {
         headers: {
@@ -88,21 +90,31 @@ async function fetchGoldApiPrices(): Promise<Record<string, { price: number; cha
         const priceOz = data.price || 0;
         const changePercent = data.chg_percent || (data.ch && data.prev_close_price ? (data.ch / data.prev_close_price) * 100 : 0);
         
-        results[symbol] = {
-          price: priceOz,
-          change: Math.round(changePercent * 100) / 100,
-        };
-        
-        console.log(`✅ ${symbol}: $${priceOz}/oz (${changePercent > 0 ? '+' : ''}${changePercent.toFixed(2)}%)`);
+        if (priceOz > 0) {
+          results[symbol] = {
+            price: priceOz,
+            change: Math.round(changePercent * 100) / 100,
+          };
+          successCount++;
+          console.log(`✅ ${symbol}: $${priceOz}/oz (${changePercent > 0 ? '+' : ''}${changePercent.toFixed(2)}%)`);
+        } else {
+          console.warn(`⚠️ GoldAPI ${symbol}: invalid price 0`);
+        }
       } else {
         console.warn(`⚠️ GoldAPI ${symbol} error: ${response.status}`);
       }
 
       // Rate limit önleme
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 300));
     } catch (error) {
       console.error(`❌ GoldAPI ${symbol} fetch error:`, error);
     }
+  }
+
+  // Tüm 4 metal başarılı olmalı, yoksa null dön (cache kullanılacak)
+  if (successCount < 4) {
+    console.warn(`⚠️ Only ${successCount}/4 metals fetched, using cache`);
+    return null;
   }
 
   return results;
@@ -123,6 +135,12 @@ export async function GET() {
       getSpreadSettings(),
     ]);
 
+    // GoldAPI başarısız olduysa ve cache varsa, cache'i kullan
+    if (goldApiData === null && cachedData) {
+      console.log("⚠️ GoldAPI failed, using cached data");
+      return NextResponse.json({ ...cachedData, cached: true, stale: true });
+    }
+
     const basePrices: Record<string, number> = {};
     const prices: Record<string, number> = {};
     const bidPrices: Record<string, number> = {};
@@ -130,7 +148,7 @@ export async function GET() {
     const changes: Record<string, number> = {};
 
     for (const symbol of Object.keys(GOLDAPI_SYMBOLS)) {
-      const apiData = goldApiData[symbol];
+      const apiData = goldApiData?.[symbol];
       const fallback = FALLBACK_PRICES[symbol];
       
       // Fiyat: API'den veya fallback
