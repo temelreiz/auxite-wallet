@@ -39,13 +39,16 @@ export async function GET(request: NextRequest) {
     // Backup codes sayısını hesapla
     let backupCodesRemaining = 0;
     if (data.backupCodesRemaining) {
-      backupCodesRemaining = typeof data.backupCodesRemaining === 'string' 
-        ? parseInt(data.backupCodesRemaining, 10) 
-        : data.backupCodesRemaining;
+      const val = data.backupCodesRemaining;
+      if (typeof val === 'string') {
+        backupCodesRemaining = parseInt(val, 10) || 0;
+      } else if (typeof val === 'number') {
+        backupCodesRemaining = val;
+      }
     } else if (data.backupCodes) {
       try {
         const codes = typeof data.backupCodes === 'string' 
-          ? JSON.parse(data.backupCodes) 
+          ? JSON.parse(data.backupCodes as string) 
           : data.backupCodes;
         backupCodesRemaining = Array.isArray(codes) ? codes.length : 0;
       } catch {
