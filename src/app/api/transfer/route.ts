@@ -24,18 +24,20 @@ function hashCode(code: string): string {
 
 async function verify2FA(address: string, code: string): Promise<{ valid: boolean; error?: string; enabled?: boolean }> {
   const key = get2FAKey(address);
-  const data = await redis.get(key);
+  
+  // HASH olarak oku (hgetall kullan, get değil!)
+  const data = await redis.hgetall(key);
   
   // 2FA verisi yoksa
-  if (!data) {
+  if (!data || Object.keys(data).length === 0) {
     return { valid: false, error: "2FA etkinleştirilmemiş. Lütfen önce 2FA'yı aktif edin.", enabled: false };
   }
   
-  // JSON parse
-  const user2FA = typeof data === 'string' ? JSON.parse(data) : data;
+  // String "true" kontrolü - Redis hash'ten string olarak gelir
+  const isEnabled = data.enabled === true || data.enabled === "true";
   
   // 2FA aktif değilse
-  if (!user2FA?.enabled || !user2FA?.secret) {
+  if (!isEnabled || !data.secret) {
     return { valid: false, error: "2FA etkinleştirilmemiş. Lütfen önce 2FA'yı aktif edin.", enabled: false };
   }
   
@@ -52,7 +54,7 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
       algorithm: "SHA1",
       digits: 6,
       period: 30,
-      secret: user2FA.secret as string,
+      secret: data.secret as string,
     });
     const delta = totp.validate({ token: code, window: 1 });
     if (delta !== null) {
@@ -63,16 +65,27 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
   }
   
   // Backup kodu dene
-  const backupCodes = user2FA.hashedBackupCodes || [];
+  let backupCodes: string[] = [];
+  if (data.backupCodes) {
+    try {
+      backupCodes = typeof data.backupCodes === 'string' 
+        ? JSON.parse(data.backupCodes) 
+        : data.backupCodes as string[];
+    } catch {
+      backupCodes = [];
+    }
+  }
+  
   const hashedInput = hashCode(code.toUpperCase());
   const codeIndex = backupCodes.indexOf(hashedInput);
   
   if (codeIndex !== -1) {
     // Kullanılan backup kodunu sil
     backupCodes.splice(codeIndex, 1);
-    user2FA.hashedBackupCodes = backupCodes;
-    user2FA.backupCodesRemaining = backupCodes.length;
-    await redis.set(key, JSON.stringify(user2FA));
+    await redis.hset(key, { 
+      backupCodes: JSON.stringify(backupCodes),
+      backupCodesRemaining: backupCodes.length 
+    });
     return { valid: true, enabled: true };
   }
   

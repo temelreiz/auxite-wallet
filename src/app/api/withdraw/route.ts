@@ -69,8 +69,9 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
     return { valid: false, error: "2FA etkinleştirilmemiş. Lütfen önce 2FA'yı aktif edin.", enabled: false };
   }
   
-  // 2FA aktif değilse
-  if (data.enabled !== "true" || !data.secret) {
+  // 2FA aktif değilse - hem string "true" hem boolean true kontrol et
+  const isEnabled = data.enabled === true || data.enabled === "true";
+  if (!isEnabled || !data.secret) {
     return { valid: false, error: "2FA etkinleştirilmemiş. Lütfen önce 2FA'yı aktif edin.", enabled: false };
   }
   
