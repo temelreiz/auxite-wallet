@@ -10,21 +10,19 @@ import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 const translations: Record<string, Record<string, string>> = {
   tr: {
     withdraw: "Para Çek",
-    withdrawAuxm: "AUXM'i kripto olarak çekin",
+    withdrawCrypto: "Kripto bakiyenizden çekin",
     confirmTx: "İşlemi onaylayın",
-    withdrawableBalance: "Çekilebilir Bakiye",
-    bonusLocked: "Bonus (çekilemez)",
-    auxmAmount: "Çekilecek AUXM Miktarı",
+    availableBalance: "Kullanılabilir Bakiye",
+    amount: "Çekilecek Miktar",
     selectCrypto: "Kripto Seçin",
     walletAddress: "Cüzdan Adresi",
     network: "Ağ",
     youWillReceive: "Alacağınız",
     networkFee: "Ağ Ücreti",
     netReceive: "Net Alacak",
-    insufficientBalance: "Yetersiz AUXM bakiyesi",
+    insufficientBalance: "Yetersiz bakiye",
     minimum: "Minimum çekim",
-    auxmToWithdraw: "Çekilecek AUXM",
-    convertTo: "Dönüşüm",
+    amountToWithdraw: "Çekilecek Miktar",
     address: "Adres",
     verifyAddress: "Adresi kontrol edin. İşlem geri alınamaz.",
     twoFaCode: "2FA Doğrulama Kodu",
@@ -38,24 +36,23 @@ const translations: Record<string, Record<string, string>> = {
     error: "Hata!",
     txComplete: "İşlem 10-30 dakika içinde tamamlanacak",
     close: "Kapat",
+    max: "MAX",
   },
   en: {
     withdraw: "Withdraw",
-    withdrawAuxm: "Withdraw AUXM as crypto",
+    withdrawCrypto: "Withdraw from your crypto balance",
     confirmTx: "Confirm transaction",
-    withdrawableBalance: "Withdrawable Balance",
-    bonusLocked: "Bonus (locked)",
-    auxmAmount: "AUXM Amount to Withdraw",
+    availableBalance: "Available Balance",
+    amount: "Amount to Withdraw",
     selectCrypto: "Select Crypto",
     walletAddress: "Wallet Address",
     network: "Network",
     youWillReceive: "You will receive",
     networkFee: "Network Fee",
     netReceive: "Net Receive",
-    insufficientBalance: "Insufficient AUXM balance",
+    insufficientBalance: "Insufficient balance",
     minimum: "Minimum",
-    auxmToWithdraw: "AUXM to Withdraw",
-    convertTo: "Convert to",
+    amountToWithdraw: "Amount to Withdraw",
     address: "Address",
     verifyAddress: "Verify address. This cannot be reversed.",
     twoFaCode: "2FA Verification Code",
@@ -69,28 +66,29 @@ const translations: Record<string, Record<string, string>> = {
     error: "Error!",
     txComplete: "Transaction will complete in 10-30 minutes",
     close: "Close",
+    max: "MAX",
   },
   de: {
     withdraw: "Abheben",
-    withdrawAuxm: "AUXM als Krypto abheben",
+    withdrawCrypto: "Von Ihrem Krypto-Guthaben abheben",
     confirmTx: "Transaktion bestätigen",
-    withdrawableBalance: "Abhebares Guthaben",
-    bonusLocked: "Bonus (gesperrt)",
-    auxmAmount: "Abzuhebender AUXM Betrag",
+    availableBalance: "Verfügbares Guthaben",
+    amount: "Abzuhebender Betrag",
     selectCrypto: "Krypto auswählen",
     walletAddress: "Wallet-Adresse",
     network: "Netzwerk",
     youWillReceive: "Sie erhalten",
     networkFee: "Netzwerkgebühr",
     netReceive: "Netto-Empfang",
-    insufficientBalance: "Unzureichendes AUXM Guthaben",
+    insufficientBalance: "Unzureichendes Guthaben",
     minimum: "Minimum",
-    auxmToWithdraw: "AUXM zum Abheben",
-    convertTo: "Umwandeln in",
+    amountToWithdraw: "Abzuhebender Betrag",
     address: "Adresse",
     verifyAddress: "Adresse prüfen. Nicht rückgängig machbar.",
     twoFaCode: "2FA Verifizierungscode",
     twoFaRequired: "2FA Code erforderlich",
+    twoFaNotEnabled: "2FA ist für Abhebungen erforderlich. Bitte aktivieren Sie 2FA in den Sicherheitseinstellungen.",
+    enable2FA: "2FA aktivieren",
     continue: "Weiter",
     processing: "Verarbeitung...",
     confirmWithdrawal: "Abhebung bestätigen",
@@ -98,28 +96,29 @@ const translations: Record<string, Record<string, string>> = {
     error: "Fehler!",
     txComplete: "Transaktion wird in 10-30 Minuten abgeschlossen",
     close: "Schließen",
+    max: "MAX",
   },
   fr: {
     withdraw: "Retirer",
-    withdrawAuxm: "Retirer AUXM en crypto",
+    withdrawCrypto: "Retirer de votre solde crypto",
     confirmTx: "Confirmer la transaction",
-    withdrawableBalance: "Solde retirable",
-    bonusLocked: "Bonus (verrouillé)",
-    auxmAmount: "Montant AUXM à retirer",
+    availableBalance: "Solde disponible",
+    amount: "Montant à retirer",
     selectCrypto: "Sélectionner Crypto",
     walletAddress: "Adresse du portefeuille",
     network: "Réseau",
     youWillReceive: "Vous recevrez",
     networkFee: "Frais de réseau",
     netReceive: "Réception nette",
-    insufficientBalance: "Solde AUXM insuffisant",
+    insufficientBalance: "Solde insuffisant",
     minimum: "Minimum",
-    auxmToWithdraw: "AUXM à retirer",
-    convertTo: "Convertir en",
+    amountToWithdraw: "Montant à retirer",
     address: "Adresse",
     verifyAddress: "Vérifiez l'adresse. Non réversible.",
     twoFaCode: "Code de vérification 2FA",
     twoFaRequired: "Code 2FA requis",
+    twoFaNotEnabled: "2FA est requis pour les retraits. Veuillez activer 2FA dans les paramètres de sécurité.",
+    enable2FA: "Activer 2FA",
     continue: "Continuer",
     processing: "Traitement...",
     confirmWithdrawal: "Confirmer le retrait",
@@ -127,28 +126,29 @@ const translations: Record<string, Record<string, string>> = {
     error: "Erreur!",
     txComplete: "Transaction terminée dans 10-30 minutes",
     close: "Fermer",
+    max: "MAX",
   },
   ar: {
     withdraw: "سحب",
-    withdrawAuxm: "سحب AUXM كعملة مشفرة",
+    withdrawCrypto: "السحب من رصيدك المشفر",
     confirmTx: "تأكيد المعاملة",
-    withdrawableBalance: "الرصيد القابل للسحب",
-    bonusLocked: "المكافأة (مقفلة)",
-    auxmAmount: "مبلغ AUXM للسحب",
+    availableBalance: "الرصيد المتاح",
+    amount: "المبلغ للسحب",
     selectCrypto: "اختر العملة",
     walletAddress: "عنوان المحفظة",
     network: "الشبكة",
     youWillReceive: "ستستلم",
     networkFee: "رسوم الشبكة",
     netReceive: "صافي الاستلام",
-    insufficientBalance: "رصيد AUXM غير كافٍ",
+    insufficientBalance: "رصيد غير كافٍ",
     minimum: "الحد الأدنى",
-    auxmToWithdraw: "AUXM للسحب",
-    convertTo: "تحويل إلى",
+    amountToWithdraw: "المبلغ للسحب",
     address: "العنوان",
     verifyAddress: "تحقق من العنوان. لا يمكن التراجع.",
     twoFaCode: "رمز التحقق 2FA",
     twoFaRequired: "مطلوب رمز 2FA",
+    twoFaNotEnabled: "2FA مطلوب للسحب. يرجى تمكين 2FA في إعدادات الأمان.",
+    enable2FA: "تفعيل 2FA",
     continue: "متابعة",
     processing: "جاري المعالجة...",
     confirmWithdrawal: "تأكيد السحب",
@@ -156,28 +156,29 @@ const translations: Record<string, Record<string, string>> = {
     error: "خطأ!",
     txComplete: "ستكتمل المعاملة خلال 10-30 دقيقة",
     close: "إغلاق",
+    max: "الأقصى",
   },
   ru: {
     withdraw: "Вывод",
-    withdrawAuxm: "Вывести AUXM как крипто",
+    withdrawCrypto: "Вывести с вашего крипто баланса",
     confirmTx: "Подтвердить транзакцию",
-    withdrawableBalance: "Доступный баланс",
-    bonusLocked: "Бонус (заблокирован)",
-    auxmAmount: "Сумма AUXM для вывода",
+    availableBalance: "Доступный баланс",
+    amount: "Сумма для вывода",
     selectCrypto: "Выберите криптовалюту",
     walletAddress: "Адрес кошелька",
     network: "Сеть",
     youWillReceive: "Вы получите",
     networkFee: "Комиссия сети",
     netReceive: "Чистый доход",
-    insufficientBalance: "Недостаточный баланс AUXM",
+    insufficientBalance: "Недостаточный баланс",
     minimum: "Минимум",
-    auxmToWithdraw: "AUXM для вывода",
-    convertTo: "Конвертировать в",
+    amountToWithdraw: "Сумма для вывода",
     address: "Адрес",
     verifyAddress: "Проверьте адрес. Необратимо.",
     twoFaCode: "Код подтверждения 2FA",
     twoFaRequired: "Требуется код 2FA",
+    twoFaNotEnabled: "2FA требуется для вывода. Пожалуйста, включите 2FA в настройках безопасности.",
+    enable2FA: "Включить 2FA",
     continue: "Продолжить",
     processing: "Обработка...",
     confirmWithdrawal: "Подтвердить вывод",
@@ -185,6 +186,7 @@ const translations: Record<string, Record<string, string>> = {
     error: "Ошибка!",
     txComplete: "Транзакция завершится через 10-30 минут",
     close: "Закрыть",
+    max: "МАКС",
   },
 };
 
@@ -206,9 +208,18 @@ const WITHDRAW_CRYPTOS: Record<WithdrawCrypto, {
 }> = {
   USDT: { name: "Tether", icon: "₮", color: "#26A17B", network: "Ethereum / Tron", minWithdraw: 10, fee: 1 },
   BTC: { name: "Bitcoin", icon: "₿", color: "#F7931A", network: "Bitcoin Network", minWithdraw: 0.0005, fee: 0.0001 },
-  ETH: { name: "Ethereum", icon: "Ξ", color: "#627EEA", network: "Ethereum / Base", minWithdraw: 0.001, fee: 0.001 },
-  XRP: { name: "Ripple", icon: "✕", color: "#23292F", network: "XRP Ledger", minWithdraw: 1, fee: 0.1 },
+  ETH: { name: "Ethereum", icon: "Ξ", color: "#627EEA", network: "Ethereum / Base", minWithdraw: 0.005, fee: 0.001 },
+  XRP: { name: "Ripple", icon: "✕", color: "#23292F", network: "XRP Ledger", minWithdraw: 10, fee: 0.1 },
   SOL: { name: "Solana", icon: "◎", color: "#9945FF", network: "Solana", minWithdraw: 0.1, fee: 0.01 },
+};
+
+// Balance key mapping
+const BALANCE_KEYS: Record<WithdrawCrypto, string> = {
+  USDT: "usdt",
+  BTC: "btc",
+  ETH: "eth",
+  XRP: "xrp",
+  SOL: "sol",
 };
 
 export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalProps) {
@@ -217,22 +228,26 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
   const t = translations[lang] || translations.en;
 
   const [selectedCrypto, setSelectedCrypto] = useState<WithdrawCrypto>("USDT");
-  const [auxmAmount, setAuxmAmount] = useState<string>("");
+  const [amount, setAmount] = useState<string>("");
   const [withdrawAddress, setWithdrawAddress] = useState<string>("");
   const [xrpMemo, setXrpMemo] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [result, setResult] = useState<{ type: "success" | "error"; message?: string } | null>(null);
+  const [result, setResult] = useState<{ type: "success" | "error"; message?: string; txHash?: string } | null>(null);
   const [step, setStep] = useState<"select" | "confirm">("select");
   const [twoFactorCode, setTwoFactorCode] = useState<string>("");
   const [requires2FA, setRequires2FA] = useState(false);
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
 
-  // Gerçek bakiyeler
-  const auxmBalance = balances?.auxm ?? 0;
-  const bonusAuxm = balances?.bonusAuxm ?? 0;
-  const withdrawableAuxm = auxmBalance;
+  // Seçili kripto'nun bakiyesi
+  const getCryptoBalance = (crypto: WithdrawCrypto): number => {
+    const key = BALANCE_KEYS[crypto];
+    return (balances as any)?.[key] ?? 0;
+  };
 
-  // Crypto fiyatları
+  const currentBalance = getCryptoBalance(selectedCrypto);
+  const crypto = WITHDRAW_CRYPTOS[selectedCrypto];
+
+  // Crypto fiyatları (USD cinsinden göstermek için)
   const realCryptoPrices: Record<WithdrawCrypto, number> = {
     USDT: 1,
     BTC: cryptoPrices?.btc ?? 95000,
@@ -243,7 +258,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
 
   useEffect(() => {
     if (isOpen) {
-      setAuxmAmount("");
+      setAmount("");
       setWithdrawAddress("");
       setXrpMemo("");
       setResult(null);
@@ -263,21 +278,23 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
 
   if (!isOpen) return null;
 
-  const crypto = WITHDRAW_CRYPTOS[selectedCrypto];
-  const auxmAmountNum = parseFloat(auxmAmount) || 0;
-  const cryptoPrice = realCryptoPrices[selectedCrypto];
-  
-  const receiveAmount = auxmAmountNum / cryptoPrice;
-  const feeInCrypto = crypto.fee;
-  const netReceiveAmount = Math.max(0, receiveAmount - feeInCrypto);
+  const amountNum = parseFloat(amount) || 0;
+  const feeAmount = crypto.fee;
+  const netReceiveAmount = Math.max(0, amountNum - feeAmount);
+  const usdValue = amountNum * realCryptoPrices[selectedCrypto];
 
-  const canAfford = auxmAmountNum <= withdrawableAuxm && auxmAmountNum > 0;
-  const meetsMinimum = receiveAmount >= crypto.minWithdraw;
+  const canAfford = amountNum <= currentBalance && amountNum > 0;
+  const meetsMinimum = amountNum >= crypto.minWithdraw;
   const hasValidAddress = withdrawAddress.length > 10;
   const hasXrpMemo = selectedCrypto !== "XRP" || xrpMemo.length > 0;
 
   const handleMaxClick = () => {
-    setAuxmAmount(withdrawableAuxm.toFixed(2));
+    setAmount(currentBalance.toString());
+  };
+
+  const handleCryptoChange = (newCrypto: WithdrawCrypto) => {
+    setSelectedCrypto(newCrypto);
+    setAmount(""); // Kripto değiştiğinde miktarı sıfırla
   };
 
   const handleContinue = () => {
@@ -299,7 +316,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
         body: JSON.stringify({
           address,
           coin: selectedCrypto,
-          auxmAmount: auxmAmountNum,
+          amount: amountNum,
           withdrawAddress,
           memo: selectedCrypto === "XRP" ? xrpMemo : undefined,
           twoFactorCode: is2FAEnabled ? twoFactorCode : undefined,
@@ -318,10 +335,14 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
         throw new Error(data.error || "Withdrawal failed");
       }
 
-      setResult({ type: "success", message: `${data.withdrawal.cryptoAmount.toFixed(6)} ${selectedCrypto}` });
+      setResult({ 
+        type: "success", 
+        message: `${data.withdrawal.netAmount.toFixed(6)} ${selectedCrypto}`,
+        txHash: data.withdrawal.txHash
+      });
       await refreshBalances();
       
-      setTimeout(() => onClose(), 3000);
+      setTimeout(() => onClose(), 4000);
 
     } catch (err) {
       console.error("Withdraw error:", err);
@@ -331,7 +352,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
     }
   };
 
-  const cryptoList: WithdrawCrypto[] = ["USDT", "BTC", "ETH", "XRP", "SOL"];
+  const cryptoList: WithdrawCrypto[] = ["USDT", "ETH", "XRP", "SOL", "BTC"];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
@@ -348,102 +369,114 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
             )}
             <div>
               <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">{t.withdraw}</h2>
-              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
-                {step === "select" ? t.withdrawAuxm : t.confirmTx}
+              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500">
+                {step === "select" ? t.withdrawCrypto : t.confirmTx}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 sm:p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 text-lg sm:text-xl">✕</button>
+          <button onClick={onClose} className="p-1.5 sm:p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400">✕</button>
         </div>
 
-        {/* Result */}
-        {result && (
+        {/* Content */}
+        {result ? (
           <div className="p-4 sm:p-6 text-center">
-            <div className="text-5xl sm:text-6xl mb-3 sm:mb-4">
-              {result.type === "success" ? "✅" : "❌"}
+            <div className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full flex items-center justify-center ${result.type === "success" ? "bg-emerald-100 dark:bg-emerald-500/20" : "bg-red-100 dark:bg-red-500/20"}`}>
+              <span className="text-2xl sm:text-3xl">{result.type === "success" ? "✓" : "✕"}</span>
             </div>
             <h3 className={`text-lg sm:text-xl font-bold mb-1.5 sm:mb-2 ${result.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
               {result.type === "success" ? t.withdrawalStarted : t.error}
             </h3>
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">{result.message}</p>
-            {result.type === "success" && (
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-500 mt-1.5 sm:mt-2">{t.txComplete}</p>
+            {result.message && (
+              <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base mb-2">{result.message}</p>
             )}
+            {result.type === "success" && (
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-500">{t.txComplete}</p>
+            )}
+            {result.txHash && (
+              <p className="text-xs text-slate-500 dark:text-slate-500 mt-2 font-mono break-all">
+                TX: {result.txHash.slice(0, 20)}...
+              </p>
+            )}
+            <button onClick={onClose} className="mt-4 px-6 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+              {t.close}
+            </button>
           </div>
-        )}
-
-        {/* Content */}
-        {!result && (
-          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
+        ) : (
+          <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 overflow-y-auto flex-1 bg-stone-50 dark:bg-slate-900/50">
             {step === "select" ? (
               <>
-                {/* AUXM Balance */}
-                <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">{t.withdrawableBalance}</p>
-                      <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">{withdrawableAuxm.toFixed(2)} <span className="text-purple-600 dark:text-purple-400">AUXM</span></p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500">{t.bonusLocked}</p>
-                      <p className="text-xs sm:text-sm text-purple-600 dark:text-purple-400">{bonusAuxm.toFixed(2)} AUXM</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Amount Input */}
-                <div>
-                  <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2">{t.auxmAmount}</label>
-                  <div className="flex gap-1.5 sm:gap-2">
-                    <input
-                      type="number"
-                      value={auxmAmount}
-                      onChange={(e) => setAuxmAmount(e.target.value)}
-                      placeholder="0.00"
-                      className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-white text-base sm:text-lg font-mono focus:outline-none focus:border-red-500 dark:focus:border-red-500"
-                    />
-                    <button
-                      onClick={handleMaxClick}
-                      className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 font-semibold text-sm sm:text-base hover:bg-red-200 dark:hover:bg-red-500/30 transition-colors"
-                    >
-                      MAX
-                    </button>
-                  </div>
-                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mt-0.5 sm:mt-1">≈ ${auxmAmountNum.toFixed(2)} USD</p>
-                </div>
-
                 {/* Crypto Selection */}
                 <div>
                   <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2">{t.selectCrypto}</label>
                   <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-                    {cryptoList.map((cryptoKey) => {
-                      const c = WITHDRAW_CRYPTOS[cryptoKey];
-                      const isSelected = selectedCrypto === cryptoKey;
+                    {cryptoList.map((c) => {
+                      const cryptoInfo = WITHDRAW_CRYPTOS[c];
+                      const balance = getCryptoBalance(c);
                       return (
                         <button
-                          key={cryptoKey}
-                          onClick={() => setSelectedCrypto(cryptoKey)}
-                          className={`p-2 sm:p-3 rounded-lg sm:rounded-xl border flex flex-col items-center gap-0.5 sm:gap-1 transition-all ${
-                            isSelected 
-                              ? "border-red-500 bg-red-50 dark:bg-red-500/20" 
-                              : "border-stone-300 dark:border-slate-700 bg-stone-100 dark:bg-slate-800 hover:border-stone-400 dark:hover:border-slate-600"
+                          key={c}
+                          onClick={() => handleCryptoChange(c)}
+                          className={`p-2 sm:p-3 rounded-lg sm:rounded-xl border-2 transition-all flex flex-col items-center gap-0.5 sm:gap-1 ${
+                            selectedCrypto === c
+                              ? "border-red-500 bg-red-50 dark:bg-red-500/10"
+                              : "border-stone-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-500/50 bg-white dark:bg-slate-800"
                           }`}
                         >
-                          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm" style={{ backgroundColor: c.color }}>
-                            {c.icon}
-                          </div>
-                          <span className="text-[10px] sm:text-xs text-slate-700 dark:text-slate-300">{cryptoKey}</span>
+                          <span className="text-lg sm:text-xl" style={{ color: cryptoInfo.color }}>{cryptoInfo.icon}</span>
+                          <span className="text-[10px] sm:text-xs font-semibold text-slate-800 dark:text-white">{c}</span>
+                          <span className="text-[8px] sm:text-[10px] text-slate-500 dark:text-slate-500">
+                            {balance > 0 ? balance.toFixed(4) : "0"}
+                          </span>
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* Withdraw Address */}
+                {/* Available Balance Display */}
+                <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-slate-100 to-stone-100 dark:from-slate-800 dark:to-slate-800/50 border border-stone-200 dark:border-slate-700">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">{t.availableBalance}</span>
+                    <div className="text-right">
+                      <span className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
+                        {currentBalance.toFixed(6)} {selectedCrypto}
+                      </span>
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500">
+                        ≈ ${(currentBalance * realCryptoPrices[selectedCrypto]).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Amount Input */}
                 <div>
-                  <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2">
-                    {selectedCrypto} {t.walletAddress}
-                  </label>
+                  <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2">{t.amount}</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="0.00"
+                      step="any"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-16 sm:pr-20 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-white text-base sm:text-lg font-semibold focus:outline-none focus:border-red-500 dark:focus:border-red-500"
+                    />
+                    <button
+                      onClick={handleMaxClick}
+                      className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 px-2 sm:px-3 py-1 sm:py-1.5 bg-red-500 hover:bg-red-600 text-white text-[10px] sm:text-xs font-bold rounded-md sm:rounded-lg transition-colors"
+                    >
+                      {t.max}
+                    </button>
+                  </div>
+                  {amountNum > 0 && (
+                    <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mt-1">
+                      ≈ ${usdValue.toFixed(2)} USD
+                    </p>
+                  )}
+                </div>
+
+                {/* Wallet Address */}
+                <div>
+                  <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2">{t.walletAddress}</label>
                   <input
                     type="text"
                     value={withdrawAddress}
@@ -471,15 +504,15 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                 )}
 
                 {/* You Will Receive */}
-                {auxmAmountNum > 0 && (
+                {amountNum > 0 && (
                   <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30">
                     <div className="flex justify-between items-center mb-1.5 sm:mb-2">
                       <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">{t.youWillReceive}</span>
-                      <span className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">{receiveAmount.toFixed(6)} {selectedCrypto}</span>
+                      <span className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">{amountNum.toFixed(6)} {selectedCrypto}</span>
                     </div>
                     <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-slate-500 dark:text-slate-500">{t.networkFee}</span>
-                      <span className="text-slate-600 dark:text-slate-400">-{feeInCrypto} {selectedCrypto}</span>
+                      <span className="text-slate-600 dark:text-slate-400">-{feeAmount} {selectedCrypto}</span>
                     </div>
                     <div className="flex justify-between text-xs sm:text-sm pt-1.5 sm:pt-2 mt-1.5 sm:mt-2 border-t border-red-200 dark:border-red-500/30">
                       <span className="text-red-600 dark:text-red-400 font-semibold">{t.netReceive}</span>
@@ -489,13 +522,13 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                 )}
 
                 {/* Warnings */}
-                {!canAfford && auxmAmountNum > 0 && (
+                {!canAfford && amountNum > 0 && (
                   <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30">
                     <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">⚠️ {t.insufficientBalance}</p>
                   </div>
                 )}
 
-                {!meetsMinimum && auxmAmountNum > 0 && canAfford && (
+                {!meetsMinimum && amountNum > 0 && canAfford && (
                   <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
                     <p className="text-xs sm:text-sm text-amber-600 dark:text-amber-400">⚠️ {t.minimum}: {crypto.minWithdraw} {selectedCrypto}</p>
                   </div>
@@ -506,12 +539,12 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
               <>
                 <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800/50 border border-stone-300 dark:border-slate-700 space-y-2 sm:space-y-3 text-xs sm:text-sm">
                   <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">{t.auxmToWithdraw}</span>
-                    <span className="text-slate-800 dark:text-white font-semibold">{auxmAmountNum.toFixed(2)} AUXM</span>
+                    <span className="text-slate-600 dark:text-slate-400">{t.amountToWithdraw}</span>
+                    <span className="text-slate-800 dark:text-white font-semibold">{amountNum.toFixed(6)} {selectedCrypto}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">{t.convertTo}</span>
-                    <span className="text-slate-800 dark:text-white font-semibold">{selectedCrypto}</span>
+                    <span className="text-slate-600 dark:text-slate-400">USD Value</span>
+                    <span className="text-slate-800 dark:text-white font-semibold">${usdValue.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600 dark:text-slate-400">{t.address}</span>
@@ -525,7 +558,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                   )}
                   <div className="flex justify-between pt-1.5 sm:pt-2 border-t border-stone-300 dark:border-slate-700">
                     <span className="text-slate-600 dark:text-slate-400">{t.networkFee}</span>
-                    <span className="text-slate-700 dark:text-slate-300">{feeInCrypto} {selectedCrypto}</span>
+                    <span className="text-slate-700 dark:text-slate-300">{feeAmount} {selectedCrypto}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-red-600 dark:text-red-400 font-semibold">{t.netReceive}</span>
@@ -537,7 +570,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                   <p className="text-xs sm:text-sm text-amber-700 dark:text-amber-300">⚠️ {t.verifyAddress}</p>
                 </div>
 
-                {/* 2FA Section - Always show, required for withdrawals */}
+                {/* 2FA Section */}
                 <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800/50 border border-emerald-300 dark:border-emerald-500/30">
                   {is2FAEnabled ? (
                     <>
@@ -582,7 +615,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
             {step === "select" ? (
               <button
                 onClick={handleContinue}
-                disabled={!canAfford || !meetsMinimum || !hasValidAddress || !hasXrpMemo || auxmAmountNum <= 0}
+                disabled={!canAfford || !meetsMinimum || !hasValidAddress || !hasXrpMemo || amountNum <= 0}
                 className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base text-white bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {t.continue}

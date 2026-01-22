@@ -14,29 +14,37 @@ interface WithdrawRequest {
   twoFactorCode?: string;
   address: string;
   coin: string;
-  auxmAmount: number;
+  amount: number; // Direkt kripto miktarı
   withdrawAddress: string;
   memo?: string;
 }
 
-// Crypto fiyatları (fallback)
-const FALLBACK_PRICES: Record<string, number> = {
-  USDT: 1,
-  BTC: 97500,
-  ETH: 3500,
-  XRP: 2.2,
-  SOL: 200,
+// Network fee (kripto cinsinden)
+const NETWORK_FEES: Record<string, number> = {
+  USDT: 1,      // 1 USDT gas fee
+  ETH: 0.001,   // 0.001 ETH gas fee
+  XRP: 0.1,     // 0.1 XRP fee
+  SOL: 0.01,    // 0.01 SOL fee
+  BTC: 0.0001,  // 0.0001 BTC fee
 };
 
-// Network fee (AUXM olarak, kullanıcıdan kesilir)
-const NETWORK_FEES_AUXM: Record<string, number> = {
-  USDT: 5,     // ~$5 gas fee
-  ETH: 7,      // ~$7 gas fee
-  XRP: 0.1,    // XRP fee çok düşük
-  SOL: 0.1,    // SOL fee çok düşük
-  BTC: 10,     // BTC fee
+// Minimum çekim miktarları
+const MIN_WITHDRAW: Record<string, number> = {
+  USDT: 10,
+  ETH: 0.005,
+  XRP: 10,
+  SOL: 0.1,
+  BTC: 0.0005,
 };
 
+// Balance key mapping
+const BALANCE_KEYS: Record<string, string> = {
+  USDT: "usdt",
+  BTC: "btc",
+  ETH: "eth",
+  XRP: "xrp",
+  SOL: "sol",
+};
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 2FA VERIFICATION
@@ -110,15 +118,29 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
 export async function POST(request: NextRequest) {
   try {
     const body: WithdrawRequest = await request.json();
-    const { address, coin, auxmAmount, withdrawAddress, memo, twoFactorCode } = body;
+    const { address, coin, amount, withdrawAddress, memo, twoFactorCode } = body;
 
     // Validation
-    if (!address || !coin || !auxmAmount || !withdrawAddress) {
+    if (!address || !coin || !amount || !withdrawAddress) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    if (auxmAmount <= 0) {
+    if (amount <= 0) {
       return NextResponse.json({ error: "Amount must be positive" }, { status: 400 });
+    }
+
+    // Desteklenen coinler
+    const supportedCoins = ["USDT", "ETH", "XRP", "SOL", "BTC"];
+    if (!supportedCoins.includes(coin)) {
+      return NextResponse.json({ error: "Unsupported cryptocurrency" }, { status: 400 });
+    }
+
+    // Minimum çekim kontrolü
+    const minAmount = MIN_WITHDRAW[coin] || 0;
+    if (amount < minAmount) {
+      return NextResponse.json({ 
+        error: `Minimum withdrawal is ${minAmount} ${coin}` 
+      }, { status: 400 });
     }
 
     // 2FA Kontrolü (ZORUNLU)
@@ -130,7 +152,6 @@ export async function POST(request: NextRequest) {
         twoFAEnabled: twoFAResult.enabled
       }, { status: 403 });
     }
-
 
     // BTC henüz desteklenmiyor
     if (coin === "BTC") {
@@ -149,41 +170,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const auxmBalance = parseFloat(currentBalance.auxm as string || "0");
-    const networkFeeAuxm = NETWORK_FEES_AUXM[coin] || 5;
-    const totalRequired = auxmAmount + networkFeeAuxm;
+    // Seçili kripto'nun bakiyesini kontrol et
+    const balanceFieldKey = BALANCE_KEYS[coin];
+    const cryptoBalance = parseFloat(currentBalance[balanceFieldKey] as string || "0");
+    const networkFee = NETWORK_FEES[coin] || 0;
 
-    if (totalRequired > auxmBalance) {
+    console.log(`📊 Withdraw check - Coin: ${coin}, Balance: ${cryptoBalance}, Requested: ${amount}, Fee: ${networkFee}`);
+
+    if (amount > cryptoBalance) {
       return NextResponse.json({ 
-        error: "Insufficient balance",
-        required: totalRequired,
-        available: auxmBalance,
-        breakdown: {
-          withdrawAmount: auxmAmount,
-          networkFee: networkFeeAuxm,
-        }
+        error: `Insufficient ${coin} balance`,
+        required: amount,
+        available: cryptoBalance,
       }, { status: 400 });
     }
 
-    // Crypto fiyatını al
-    let cryptoPrice = FALLBACK_PRICES[coin] || 1;
-    try {
-      const priceRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/crypto`);
-      const priceData = await priceRes.json();
-      const coinMap: Record<string, string> = {
-        BTC: 'bitcoin',
-        ETH: 'ethereum',
-        XRP: 'ripple',
-        SOL: 'solana',
-        USDT: 'tether'
-      };
-      cryptoPrice = priceData[coinMap[coin]]?.usd || FALLBACK_PRICES[coin];
-    } catch {
-      console.log('Using fallback price for', coin);
+    // Net gönderilecek miktar (fee düşüldükten sonra)
+    const netAmount = amount - networkFee;
+    
+    if (netAmount <= 0) {
+      return NextResponse.json({ 
+        error: `Amount too small. Minimum after fee: ${networkFee} ${coin}`,
+      }, { status: 400 });
     }
-
-    // AUXM → Crypto dönüşümü (1 AUXM = $1)
-    const cryptoAmount = auxmAmount / cryptoPrice;
 
     // Transaction ID oluştur
     const txId = `withdraw_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -192,12 +201,10 @@ export async function POST(request: NextRequest) {
     const transaction = {
       id: txId,
       type: "withdraw",
-      fromToken: "AUXM",
-      toToken: coin,
-      fromAmount: auxmAmount.toString(),
-      toAmount: cryptoAmount.toFixed(8),
-      fee: networkFeeAuxm.toString(),
-      feeToken: "AUXM",
+      coin: coin,
+      amount: amount.toString(),
+      netAmount: netAmount.toString(),
+      fee: networkFee.toString(),
       withdrawAddress,
       memo: memo || null,
       status: "processing",
@@ -207,15 +214,20 @@ export async function POST(request: NextRequest) {
     const txKey = `user:${normalizedAddress}:transactions`;
     
     // Önce bakiyeyi düş
-    await redis.hincrbyfloat(balanceKey, "auxm", -(auxmAmount + networkFeeAuxm));
+    await redis.hincrbyfloat(balanceKey, balanceFieldKey, -amount);
     
     // Transaction'ı kaydet
     await redis.lpush(txKey, JSON.stringify(transaction));
 
     // ===== GERÇEK BLOCKCHAIN TRANSFERİ =====
-    console.log(`🚀 Processing ${coin} withdraw: ${cryptoAmount} to ${withdrawAddress}`);
+    console.log(`🚀 Processing ${coin} withdraw: ${netAmount} to ${withdrawAddress}`);
     
-    const withdrawResult = await processWithdraw(coin, withdrawAddress, cryptoAmount, coin === "XRP" && memo ? parseInt(memo) : undefined);
+    const withdrawResult = await processWithdraw(
+      coin, 
+      withdrawAddress, 
+      netAmount, 
+      coin === "XRP" && memo ? parseInt(memo) : undefined
+    );
 
     if (withdrawResult.success) {
       // Başarılı - transaction'ı güncelle
@@ -249,23 +261,22 @@ export async function POST(request: NextRequest) {
         withdrawal: {
           id: txId,
           coin,
-          auxmAmount,
-          cryptoAmount,
-          networkFee: networkFeeAuxm,
+          amount,
+          netAmount,
+          networkFee,
           withdrawAddress,
           status: "completed",
           txHash: withdrawResult.txHash,
           explorerUrl: getExplorerUrl(coin, withdrawResult.txHash!),
         },
         balances: {
-          auxm: parseFloat(updatedBalance?.auxm as string || "0"),
-          bonusAuxm: parseFloat(updatedBalance?.bonusauxm as string || "0"),
+          [balanceFieldKey]: parseFloat(updatedBalance?.[balanceFieldKey] as string || "0"),
         },
       });
 
     } else {
       // Başarısız - bakiyeyi geri yükle
-      await redis.hincrbyfloat(balanceKey, "auxm", auxmAmount + networkFeeAuxm);
+      await redis.hincrbyfloat(balanceKey, balanceFieldKey, amount);
       
       // Transaction'ı failed olarak güncelle
       const transactions = await redis.lrange(txKey, 0, 50);
