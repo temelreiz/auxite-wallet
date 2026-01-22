@@ -26,7 +26,7 @@ const translations: Record<string, Record<string, string>> = {
     codeCopied: "Kopyalandı!",
     useBackupCode: "Yedek kodu kullan",
     useAuthenticator: "Authenticator kullan",
-    tooManyAttempts: "Çok fazla başarısız deneme. 15 dakika sonra tekrar deneyin.",
+    tooManyAttempts: "Çok fazla başarısız deneme. Lütfen bekleyin.",
     setupSuccess: "2FA başarıyla kuruldu!",
     error: "Bir hata oluştu",
   },
@@ -52,113 +52,49 @@ const translations: Record<string, Record<string, string>> = {
     codeCopied: "Copied!",
     useBackupCode: "Use backup code",
     useAuthenticator: "Use authenticator",
-    tooManyAttempts: "Too many failed attempts. Try again in 15 minutes.",
+    tooManyAttempts: "Too many failed attempts. Please wait.",
     setupSuccess: "2FA successfully set up!",
     error: "An error occurred",
   },
   de: {
-    setupTitle: "2FA-Einrichtung erforderlich",
-    setupDesc: "Sie müssen die Zwei-Faktor-Authentifizierung einrichten.",
-    verifyTitle: "2FA-Verifizierung",
-    verifyDesc: "Geben Sie den Verifizierungscode ein.",
-    scanQR: "QR-Code scannen",
-    scanQRDesc: "Mit Google Authenticator oder Authy scannen",
-    manualEntry: "Manuelle Eingabe",
-    secretKey: "Geheimschlüssel",
-    verificationCode: "Verifizierungscode",
-    enterCode: "6-stelligen Code eingeben",
-    backupCodes: "Backup-Codes",
-    backupCodesDesc: "Speichern Sie diese Codes sicher.",
-    saveBackupCodes: "Codes gespeichert",
-    verify: "Verifizieren",
-    verifying: "Verifiziere...",
-    cancel: "Abbrechen",
-    continue: "Weiter",
-    invalidCode: "Ungültiger Code",
-    codeCopied: "Kopiert!",
-    useBackupCode: "Backup-Code verwenden",
-    useAuthenticator: "Authenticator verwenden",
-    tooManyAttempts: "Zu viele Fehlversuche. 15 Minuten warten.",
-    setupSuccess: "2FA erfolgreich eingerichtet!",
-    error: "Ein Fehler ist aufgetreten",
+    setupTitle: "2FA-Einrichtung erforderlich", setupDesc: "Sie müssen die Zwei-Faktor-Authentifizierung einrichten.",
+    verifyTitle: "2FA-Verifizierung", verifyDesc: "Geben Sie den Verifizierungscode ein.", scanQR: "QR-Code scannen",
+    scanQRDesc: "Mit Google Authenticator oder Authy scannen", manualEntry: "Manuelle Eingabe", secretKey: "Geheimschlüssel",
+    verificationCode: "Verifizierungscode", enterCode: "6-stelligen Code eingeben", backupCodes: "Backup-Codes",
+    backupCodesDesc: "Speichern Sie diese Codes sicher.", saveBackupCodes: "Codes gespeichert", verify: "Verifizieren",
+    verifying: "Verifiziere...", cancel: "Abbrechen", continue: "Weiter", invalidCode: "Ungültiger Code",
+    codeCopied: "Kopiert!", useBackupCode: "Backup-Code", useAuthenticator: "Authenticator",
+    tooManyAttempts: "Zu viele Fehlversuche.", setupSuccess: "2FA erfolgreich!", error: "Ein Fehler ist aufgetreten",
   },
   fr: {
-    setupTitle: "Configuration 2FA requise",
-    setupDesc: "Vous devez configurer l'authentification à deux facteurs.",
-    verifyTitle: "Vérification 2FA",
-    verifyDesc: "Entrez le code de vérification.",
-    scanQR: "Scanner le code QR",
-    scanQRDesc: "Scanner avec Google Authenticator ou Authy",
-    manualEntry: "Entrée manuelle",
-    secretKey: "Clé secrète",
-    verificationCode: "Code de vérification",
-    enterCode: "Entrez le code à 6 chiffres",
-    backupCodes: "Codes de secours",
-    backupCodesDesc: "Enregistrez ces codes en lieu sûr.",
-    saveBackupCodes: "Codes enregistrés",
-    verify: "Vérifier",
-    verifying: "Vérification...",
-    cancel: "Annuler",
-    continue: "Continuer",
-    invalidCode: "Code invalide",
-    codeCopied: "Copié!",
-    useBackupCode: "Code de secours",
-    useAuthenticator: "Authenticator",
-    tooManyAttempts: "Trop de tentatives. Réessayez dans 15 minutes.",
-    setupSuccess: "2FA configuré!",
-    error: "Une erreur s'est produite",
+    setupTitle: "Configuration 2FA requise", setupDesc: "Vous devez configurer l'authentification à deux facteurs.",
+    verifyTitle: "Vérification 2FA", verifyDesc: "Entrez le code de vérification.", scanQR: "Scanner le code QR",
+    scanQRDesc: "Scanner avec Google Authenticator ou Authy", manualEntry: "Entrée manuelle", secretKey: "Clé secrète",
+    verificationCode: "Code de vérification", enterCode: "Entrez le code à 6 chiffres", backupCodes: "Codes de secours",
+    backupCodesDesc: "Enregistrez ces codes en lieu sûr.", saveBackupCodes: "Codes enregistrés", verify: "Vérifier",
+    verifying: "Vérification...", cancel: "Annuler", continue: "Continuer", invalidCode: "Code invalide",
+    codeCopied: "Copié!", useBackupCode: "Code de secours", useAuthenticator: "Authenticator",
+    tooManyAttempts: "Trop de tentatives.", setupSuccess: "2FA configuré!", error: "Une erreur s'est produite",
   },
   ar: {
-    setupTitle: "إعداد 2FA مطلوب",
-    setupDesc: "تحتاج إلى إعداد المصادقة الثنائية.",
-    verifyTitle: "التحقق من 2FA",
-    verifyDesc: "أدخل رمز التحقق.",
-    scanQR: "امسح رمز QR",
-    scanQRDesc: "امسح باستخدام Google Authenticator أو Authy",
-    manualEntry: "إدخال يدوي",
-    secretKey: "المفتاح السري",
-    verificationCode: "رمز التحقق",
-    enterCode: "أدخل الرمز",
-    backupCodes: "رموز النسخ الاحتياطي",
-    backupCodesDesc: "احفظ هذه الرموز بأمان.",
-    saveBackupCodes: "تم الحفظ",
-    verify: "تحقق",
-    verifying: "جاري التحقق...",
-    cancel: "إلغاء",
-    continue: "متابعة",
-    invalidCode: "رمز غير صالح",
-    codeCopied: "تم النسخ!",
-    useBackupCode: "رمز احتياطي",
-    useAuthenticator: "المصادق",
-    tooManyAttempts: "محاولات كثيرة. انتظر 15 دقيقة.",
-    setupSuccess: "تم إعداد 2FA!",
-    error: "حدث خطأ",
+    setupTitle: "إعداد 2FA مطلوب", setupDesc: "تحتاج إلى إعداد المصادقة الثنائية.", verifyTitle: "التحقق من 2FA",
+    verifyDesc: "أدخل رمز التحقق.", scanQR: "امسح رمز QR", scanQRDesc: "امسح باستخدام Google Authenticator أو Authy",
+    manualEntry: "إدخال يدوي", secretKey: "المفتاح السري", verificationCode: "رمز التحقق", enterCode: "أدخل الرمز",
+    backupCodes: "رموز النسخ الاحتياطي", backupCodesDesc: "احفظ هذه الرموز بأمان.", saveBackupCodes: "تم الحفظ",
+    verify: "تحقق", verifying: "جاري التحقق...", cancel: "إلغاء", continue: "متابعة", invalidCode: "رمز غير صالح",
+    codeCopied: "تم النسخ!", useBackupCode: "رمز احتياطي", useAuthenticator: "المصادق",
+    tooManyAttempts: "محاولات كثيرة.", setupSuccess: "تم إعداد 2FA!", error: "حدث خطأ",
   },
   ru: {
-    setupTitle: "Требуется настройка 2FA",
-    setupDesc: "Настройте двухфакторную аутентификацию.",
-    verifyTitle: "Проверка 2FA",
-    verifyDesc: "Введите код подтверждения.",
-    scanQR: "Сканировать QR-код",
-    scanQRDesc: "Сканируйте с помощью Google Authenticator или Authy",
-    manualEntry: "Ручной ввод",
-    secretKey: "Секретный ключ",
-    verificationCode: "Код подтверждения",
-    enterCode: "Введите 6-значный код",
-    backupCodes: "Резервные коды",
-    backupCodesDesc: "Сохраните эти коды в безопасном месте.",
-    saveBackupCodes: "Коды сохранены",
-    verify: "Подтвердить",
-    verifying: "Проверка...",
-    cancel: "Отмена",
-    continue: "Продолжить",
-    invalidCode: "Неверный код",
-    codeCopied: "Скопировано!",
-    useBackupCode: "Резервный код",
-    useAuthenticator: "Аутентификатор",
-    tooManyAttempts: "Слишком много попыток. Подождите 15 минут.",
-    setupSuccess: "2FA настроен!",
-    error: "Произошла ошибка",
+    setupTitle: "Требуется настройка 2FA", setupDesc: "Настройте двухфакторную аутентификацию.",
+    verifyTitle: "Проверка 2FA", verifyDesc: "Введите код подтверждения.", scanQR: "Сканировать QR-код",
+    scanQRDesc: "Сканируйте с помощью Google Authenticator или Authy", manualEntry: "Ручной ввод",
+    secretKey: "Секретный ключ", verificationCode: "Код подтверждения", enterCode: "Введите 6-значный код",
+    backupCodes: "Резервные коды", backupCodesDesc: "Сохраните эти коды в безопасном месте.",
+    saveBackupCodes: "Коды сохранены", verify: "Подтвердить", verifying: "Проверка...", cancel: "Отмена",
+    continue: "Продолжить", invalidCode: "Неверный код", codeCopied: "Скопировано!",
+    useBackupCode: "Резервный код", useAuthenticator: "Аутентификатор", tooManyAttempts: "Слишком много попыток.",
+    setupSuccess: "2FA настроен!", error: "Произошла ошибка",
   },
 };
 
@@ -186,6 +122,9 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
   const [copied, setCopied] = useState(false);
   const [showManualKey, setShowManualKey] = useState(false);
 
+  // API base URL
+  const API_URL = "/api/security/2fa";
+
   // Check 2FA status when modal opens
   useEffect(() => {
     if (!isOpen || !walletAddress) return;
@@ -197,12 +136,13 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
       setUseBackupCode(false);
 
       try {
-        const res = await fetch(`/api/security/2fa/status`, {
-          headers: { "x-wallet-address": walletAddress },
-        });
+        // GET /api/security/2fa?address=xxx
+        const res = await fetch(`${API_URL}?address=${walletAddress}`);
         const data = await res.json();
 
-        if (data.enabled) {
+        console.log("2FA Status:", data);
+
+        if (data.enabled === true) {
           // 2FA zaten kurulu - sadece verify iste
           setStep("verify");
         } else {
@@ -223,13 +163,14 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
     setError(null);
 
     try {
-      const res = await fetch("/api/security/2fa/setup", {
+      // POST /api/security/2fa with action: "setup"
+      const res = await fetch(API_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-wallet-address": walletAddress,
-        },
-        body: JSON.stringify({}),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "setup",
+          address: walletAddress,
+        }),
       });
 
       const data = await res.json();
@@ -239,18 +180,16 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
       }
 
       setSecret(data.secret);
-      setBackupCodes(data.backupCodes || []);
 
-      // Generate QR code
-      if (data.qrCodeDataUrl) {
-        setQrCodeDataUrl(data.qrCodeDataUrl);
-      } else if (data.qrCodeUrl) {
+      // Generate QR code from URL
+      if (data.qrCodeUrl) {
         const qr = await QRCode.toDataURL(data.qrCodeUrl, { width: 200, margin: 2 });
         setQrCodeDataUrl(qr);
       }
 
       setStep("setup-qr");
     } catch (err: any) {
+      console.error("Setup error:", err);
       setError(err.message || t.error);
     } finally {
       setIsProcessing(false);
@@ -264,13 +203,15 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
     setError(null);
 
     try {
-      const res = await fetch("/api/security/2fa/enable", {
+      // POST /api/security/2fa with action: "enable"
+      const res = await fetch(API_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-wallet-address": walletAddress,
-        },
-        body: JSON.stringify({ code }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "enable",
+          address: walletAddress,
+          code,
+        }),
       });
 
       const data = await res.json();
@@ -300,30 +241,24 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
     setError(null);
 
     try {
-      const res = await fetch("/api/security/2fa/verify", {
+      // POST /api/security/2fa with action: "verify"
+      const res = await fetch(API_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-wallet-address": walletAddress,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          code,
-          isBackupCode: useBackupCode,
+          action: "verify",
+          address: walletAddress,
+          code: useBackupCode ? code.toUpperCase() : code,
         }),
       });
 
       const data = await res.json();
 
-      if (data.locked) {
-        setError(t.tooManyAttempts);
-        return;
-      }
-
-      if (!res.ok || !data.valid) {
+      if (!res.ok || !data.success) {
         throw new Error(data.error || t.invalidCode);
       }
 
-      // Doğrulama başarılı - callback'i çağır
+      // Doğrulama başarılı
       onVerified();
     } catch (err: any) {
       setError(err.message || t.invalidCode);
@@ -333,7 +268,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
   };
 
   const handleBackupCodesSaved = () => {
-    // Backup kodları kaydedildi - artık doğrulanmış sayılır
+    // Backup kodları kaydedildi - işleme devam et
     onVerified();
   };
 
@@ -377,10 +312,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
                 {step === "setup-qr" || step === "setup-backup" ? t.setupDesc : t.verifyDesc}
               </p>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-            >
+            <button onClick={onClose} className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
               ✕
             </button>
           </div>
