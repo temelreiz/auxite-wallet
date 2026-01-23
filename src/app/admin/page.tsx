@@ -3281,13 +3281,7 @@ export default function AdminDashboard() {
                           >
                             {walletProcessing === w.id ? "..." : "✅ Onayla"}
                           </button>
-                          <button 
-                            onClick={() => handleRejectWithdraw(w.id)} 
-                            disabled={walletProcessing === w.id} 
-                            className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg text-white text-sm disabled:opacity-50"
-                          >
-                            ❌
-                          </button>
+                          
                         </div>
                       </div>
                     ))}
