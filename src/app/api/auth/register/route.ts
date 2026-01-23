@@ -6,6 +6,7 @@ import { Redis } from '@upstash/redis';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
+import { sendVerificationEmail } from '@/lib/email-service';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -94,20 +95,20 @@ export async function POST(request: NextRequest) {
     // ══════════════════════════════════════════════════════════════
     // SEND VERIFICATION EMAIL
     // ══════════════════════════════════════════════════════════════
-    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io'}/verify-email?token=${verificationToken}&email=${encodeURIComponent(normalizedEmail)}`;
+    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io'}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(normalizedEmail)}`;
     
-    // Queue email for sending (we'll implement email service separately)
-    await redis.lpush('email:queue', JSON.stringify({
-      type: 'verification',
-      to: normalizedEmail,
-      subject: 'Verify your Auxite account',
-      data: {
-        name: name || normalizedEmail.split('@')[0],
-        verificationUrl,
-        language,
-      },
-      createdAt: Date.now(),
-    }));
+    // Send email directly
+    const emailResult = await sendVerificationEmail(
+      normalizedEmail,
+      name || normalizedEmail.split('@')[0],
+      verificationUrl,
+      language
+    );
+
+    if (!emailResult.success) {
+      console.error('Failed to send verification email:', emailResult.error);
+      // Don't fail registration, just log the error
+    }
 
     // ══════════════════════════════════════════════════════════════
     // GENERATE JWT TOKEN
