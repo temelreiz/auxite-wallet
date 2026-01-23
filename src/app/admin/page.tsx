@@ -3078,96 +3078,249 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              {/* Balances */}
-              {walletBalances && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {Object.entries(walletBalances).map(([token, data]: [string, any]) => (
-                    <div key={token} className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-                      <p className="text-slate-400 text-sm">{token}</p>
-                      <p className="text-xl font-bold">{typeof data === 'object' ? data.balance : data}</p>
+              {/* Wallet Adresleri */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-4 text-amber-400">📍 Hot Wallet Adresleri</h3>
+                <div className="space-y-3">
+                  {/* ETH */}
+                  <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🔷</span>
+                      <div>
+                        <p className="font-medium">ETH (Ethereum)</p>
+                        <p className="text-xs text-slate-400">Ethereum Mainnet</p>
+                      </div>
                     </div>
-                  ))}
+                    <div className="text-right">
+                      <a 
+                        href={`https://etherscan.io/address/0x7227130EAaad17a35300A90631984676d303f5A0`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-sm text-blue-400 hover:text-blue-300"
+                      >
+                        0x7227...f5A0
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* USDT */}
+                  <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">💵</span>
+                      <div>
+                        <p className="font-medium">USDT (Tether)</p>
+                        <p className="text-xs text-slate-400">ERC-20 (ETH ile aynı)</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <a 
+                        href={`https://etherscan.io/address/0x7227130EAaad17a35300A90631984676d303f5A0`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-sm text-green-400 hover:text-green-300"
+                      >
+                        0x7227...f5A0
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* BTC */}
+                  <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🟠</span>
+                      <div>
+                        <p className="font-medium">BTC (Bitcoin)</p>
+                        <p className="text-xs text-slate-400">Bitcoin Mainnet</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <a 
+                        href={`https://blockstream.info/address/bc1qs3yecqqtxps7hqay2gqjs9yxs6eh3vtw90ln45`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-sm text-orange-400 hover:text-orange-300"
+                      >
+                        bc1qs3...ln45
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* SOL */}
+                  <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🟣</span>
+                      <div>
+                        <p className="font-medium">SOL (Solana)</p>
+                        <p className="text-xs text-slate-400">Solana Mainnet</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <a 
+                        href={`https://solscan.io/account/FtiPuYiukZvkNM7gTamEa8wohSqrbytvvANsg6j9YSjJ`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-sm text-purple-400 hover:text-purple-300"
+                      >
+                        FtiPu...YSjJ
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* XRP */}
+                  <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">⚪</span>
+                      <div>
+                        <p className="font-medium">XRP (Ripple)</p>
+                        <p className="text-xs text-slate-400">XRP Ledger</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <a 
+                        href={`https://xrpscan.com/account/r4RUrt23xkfN1urecHLetqdxXNgrnqi5x5`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-sm text-slate-300 hover:text-white"
+                      >
+                        r4RUr...qi5x5
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bakiyeler */}
+              {walletBalances && (
+                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                  <h3 className="font-semibold mb-4 text-emerald-400">💎 Bakiyeler</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {Object.entries(walletBalances).map(([token, data]: [string, any]) => {
+                      const icons: Record<string, string> = {
+                        ETH: '🔷',
+                        USDT: '💵',
+                        BTC: '🟠',
+                        SOL: '🟣',
+                        XRP: '⚪'
+                      };
+                      const colors: Record<string, string> = {
+                        ETH: 'text-blue-400',
+                        USDT: 'text-green-400',
+                        BTC: 'text-orange-400',
+                        SOL: 'text-purple-400',
+                        XRP: 'text-slate-300'
+                      };
+                      return (
+                        <div key={token} className="bg-slate-800/50 rounded-xl p-4 text-center">
+                          <span className="text-2xl">{icons[token] || '💰'}</span>
+                          <p className={`text-xl font-bold mt-2 ${colors[token] || 'text-white'}`}>
+                            {typeof data === 'object' ? data.balance : data}
+                          </p>
+                          <p className="text-slate-400 text-sm">{token}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
               {/* Send Form */}
               <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                <h3 className="font-semibold mb-4">Kripto Gönder</h3>
+                <h3 className="font-semibold mb-4 text-amber-400">📤 Kripto Gönder</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <select value={sendToken} onChange={(e) => setSendToken(e.target.value)} className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white">
-                    <option>ETH</option>
-                    <option>USDT</option>
-                    <option>BTC</option>
+                    <option value="ETH">🔷 ETH</option>
+                    <option value="USDT">💵 USDT</option>
+                    <option value="BTC">🟠 BTC</option>
+                    <option value="SOL">🟣 SOL</option>
+                    <option value="XRP">⚪ XRP</option>
                   </select>
-                  <input type="text" placeholder="Adres" value={sendAddress} onChange={(e) => setSendAddress(e.target.value)} className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white font-mono" />
-                  <input type="text" placeholder="Miktar" value={sendAmount} onChange={(e) => setSendAmount(e.target.value)} className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white" />
-                  <button onClick={handleSendCrypto} disabled={walletProcessing === 'send'} className="bg-amber-500 hover:bg-amber-600 text-black font-medium rounded-lg disabled:opacity-50">
-                    {walletProcessing === 'send' ? "Gönderiliyor..." : "Gönder"}
+                  <input 
+                    type="text" 
+                    placeholder="Alıcı Adresi" 
+                    value={sendAddress} 
+                    onChange={(e) => setSendAddress(e.target.value)} 
+                    className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white font-mono text-sm" 
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="Miktar" 
+                    value={sendAmount} 
+                    onChange={(e) => setSendAmount(e.target.value)} 
+                    className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white" 
+                  />
+                  <button 
+                    onClick={handleSendCrypto} 
+                    disabled={walletProcessing === 'send'} 
+                    className="bg-amber-500 hover:bg-amber-600 text-black font-medium rounded-lg disabled:opacity-50"
+                  >
+                    {walletProcessing === 'send' ? "Gönderiliyor..." : "🚀 Gönder"}
                   </button>
                 </div>
+                <p className="text-xs text-slate-500 mt-3">
+                  ⚠️ Dikkat: Bu işlem geri alınamaz. Adresi doğru girdiğinizden emin olun.
+                </p>
               </div>
-            </div>
-          )}
 
-          {/* Users Tab */}
-          {activeTab === "users" && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold">👥 Kullanıcı Yönetimi</h2>
-              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                <input
-                  type="text"
-                  placeholder="Kullanıcı ara (adres, email)"
-                  value={userSearch}
-                  onChange={(e) => setUserSearch(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white mb-4"
-                />
-                {users.length === 0 ? (
-                  <p className="text-slate-400 text-center py-8">Kullanıcı bulunamadı</p>
-                ) : (
-                  <div className="space-y-3">
-                    {users.filter(u => !userSearch || u.address?.toLowerCase().includes(userSearch.toLowerCase())).map((user: any) => (
-                      <div key={user.address} className="p-4 bg-slate-800/50 rounded-xl flex items-center justify-between">
-                        <div>
-                          <p className="font-mono text-sm">{user.address?.slice(0, 10)}...{user.address?.slice(-6)}</p>
-                          <p className="text-xs text-slate-400">Tier: {user.auxiteerTier || "Regular"}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm">{(user.balance?.auxm || 0).toFixed(2)} AUXM</p>
-                          <p className="text-xs text-slate-400">{user.registeredAt ? new Date(user.registeredAt).toLocaleDateString() : "-"}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Withdraws Tab */}
-          {activeTab === "withdraws" && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold">📤 Bekleyen Çekimler</h2>
-              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                {pendingUserWithdraws.length === 0 ? (
-                  <p className="text-slate-400 text-center py-8">Bekleyen çekim yok</p>
-                ) : (
+              {/* Pending Withdraws */}
+              {pendingUserWithdraws.length > 0 && (
+                <div className="bg-slate-900/50 border border-amber-800/50 rounded-xl p-6">
+                  <h3 className="font-semibold mb-4 text-amber-400">⏳ Bekleyen Çekimler ({pendingUserWithdraws.length})</h3>
                   <div className="space-y-3">
                     {pendingUserWithdraws.map((w: any) => (
                       <div key={w.id} className="p-4 bg-slate-800/50 rounded-xl flex items-center justify-between">
                         <div>
                           <p className="font-mono text-sm">{w.address?.slice(0, 10)}...{w.address?.slice(-6)}</p>
                           <p className="text-lg font-bold">{w.amount} {w.token}</p>
+                          <p className="text-xs text-slate-400">{new Date(w.timestamp).toLocaleString()}</p>
                         </div>
                         <div className="flex gap-2">
-                          <button onClick={() => handleApproveWithdraw(w.id)} disabled={walletProcessing === w.id} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white text-sm disabled:opacity-50">
-                            {walletProcessing === w.id ? "..." : "Onayla"}
+                          <button 
+                            onClick={() => handleApproveWithdraw(w.id)} 
+                            disabled={walletProcessing === w.id} 
+                            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white text-sm disabled:opacity-50"
+                          >
+                            {walletProcessing === w.id ? "..." : "✅ Onayla"}
+                          </button>
+                          <button 
+                            onClick={() => handleRejectWithdraw(w.id)} 
+                            disabled={walletProcessing === w.id} 
+                            className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg text-white text-sm disabled:opacity-50"
+                          >
+                            ❌
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* History */}
+              {walletHistory.length > 0 && (
+                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                  <h3 className="font-semibold mb-4">📜 Son İşlemler</h3>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {walletHistory.slice(0, 10).map((tx: any, i: number) => (
+                      <div key={tx.id || i} className="p-3 bg-slate-800/50 rounded-lg flex items-center justify-between text-sm">
+                        <div>
+                          <span className={tx.type === 'withdraw' ? 'text-red-400' : 'text-green-400'}>
+                            {tx.type === 'withdraw' ? '📤' : '📥'} {tx.type}
+                          </span>
+                          <span className="ml-2 font-medium">{tx.amount} {tx.token}</span>
+                        </div>
+                        <div className="text-right">
+                          {tx.txHash && (
+                            <a href={`https://etherscan.io/tx/${tx.txHash}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 font-mono text-xs">
+                              {tx.txHash.slice(0, 10)}...
+                            </a>
+                          )}
+                          <p className="text-xs text-slate-500">{tx.timestamp ? new Date(tx.timestamp).toLocaleString() : ''}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
