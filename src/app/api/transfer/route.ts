@@ -118,6 +118,8 @@ export async function POST(request: NextRequest) {
   try {
     const { fromAddress, toAddress, token, amount, twoFactorCode } = await request.json();
 
+    console.log("Transfer request:", { fromAddress, toAddress, token, amount, amountType: typeof amount });
+
     if (!fromAddress || !toAddress || !token || !amount) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
