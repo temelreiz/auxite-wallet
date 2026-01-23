@@ -181,19 +181,32 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Log transaction
+      // Log transaction - Gönderen için
       const txId = `transfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const transaction = {
+      const senderTransaction = {
         id: txId,
-        type: "transfer_out",
+        type: "send",
         token: tokenUpper,
-        amount: amount.toString(),
+        amount: `-${amount}`,
         toAddress: normalizedTo,
         txHash: receipt.hash,
         status: "completed",
         timestamp: Date.now(),
       };
-      await redis.lpush(`user:${normalizedFrom}:transactions`, JSON.stringify(transaction));
+      await redis.lpush(`user:${normalizedFrom}:transactions`, JSON.stringify(senderTransaction));
+
+      // Log transaction - Alıcı için
+      const receiverTransaction = {
+        id: txId,
+        type: "receive",
+        token: tokenUpper,
+        amount: `+${amount}`,
+        fromAddress: normalizedFrom,
+        txHash: receipt.hash,
+        status: "completed",
+        timestamp: Date.now(),
+      };
+      await redis.lpush(`user:${normalizedTo}:transactions`, JSON.stringify(receiverTransaction));
 
       return NextResponse.json({
         success: true,
@@ -245,22 +258,24 @@ export async function POST(request: NextRequest) {
       // Log transactions
       const txId = `transfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
+      // Gönderen için - eksi miktar
       const senderTx = {
         id: txId,
-        type: "transfer_out",
+        type: "send",
         token: tokenUpper,
-        amount: amount.toString(),
+        amount: `-${amount}`,
         toAddress: normalizedTo,
         status: "completed",
         timestamp: Date.now(),
       };
       await redis.lpush(`user:${normalizedFrom}:transactions`, JSON.stringify(senderTx));
 
+      // Alıcı için - artı miktar
       const receiverTx = {
         id: txId,
-        type: "transfer_in",
+        type: "receive",
         token: tokenUpper,
-        amount: amount.toString(),
+        amount: `+${amount}`,
         fromAddress: normalizedFrom,
         status: "completed",
         timestamp: Date.now(),
