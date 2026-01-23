@@ -23,7 +23,18 @@ function verifyTOTP(secret: string, code: string): boolean {
       period: 30,
       secret: secret,
     });
-    const delta = totp.validate({ token: code, window: 1 });
+    
+    // Window 2 = ±60 saniye tolerans (zaman senkronizasyon sorunları için)
+    const delta = totp.validate({ token: code, window: 2 });
+    
+    console.log("TOTP validation:", { 
+      secretLength: secret.length,
+      code, 
+      delta,
+      currentCode: totp.generate(),
+      serverTime: new Date().toISOString()
+    });
+    
     return delta !== null;
   } catch (error) {
     console.error("TOTP verify error:", error);
@@ -41,6 +52,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { code, isBackupCode } = body;
 
+    console.log("2FA verify request:", { address, codeLength: code?.length, isBackupCode });
+
     if (!address) {
       return NextResponse.json({ error: "Address required" }, { status: 400 });
     }
@@ -52,15 +65,23 @@ export async function POST(request: NextRequest) {
     const key = get2FAKey(address);
     const data = await redis.hgetall(key);
 
+    console.log("2FA Redis data:", { 
+      key, 
+      hasData: !!data, 
+      enabled: data?.enabled,
+      hasSecret: !!data?.secret,
+      secretLength: (data?.secret as string)?.length
+    });
+
     if (!data || Object.keys(data).length === 0) {
-      return NextResponse.json({ error: "2FA aktif değil" }, { status: 400 });
+      return NextResponse.json({ error: "2FA aktif değil", valid: false }, { status: 400 });
     }
 
     // String "true" kontrolü - ÖNEMLİ!
     const isEnabled = data.enabled === true || data.enabled === "true";
     
     if (!isEnabled || !data.secret) {
-      return NextResponse.json({ error: "2FA aktif değil" }, { status: 400 });
+      return NextResponse.json({ error: "2FA aktif değil", valid: false }, { status: 400 });
     }
 
     const secret = data.secret as string;
@@ -102,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     // TOTP kod kontrolü
     if (!verifyTOTP(secret, code)) {
-      return NextResponse.json({ error: "Geçersiz kod", valid: false }, { status: 400 });
+      return NextResponse.json({ error: "Geçersiz doğrulama kodu", valid: false }, { status: 400 });
     }
 
     return NextResponse.json({
@@ -112,6 +133,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("2FA verify error:", error);
-    return NextResponse.json({ error: "Doğrulama başarısız" }, { status: 500 });
+    return NextResponse.json({ error: "Doğrulama başarısız", valid: false }, { status: 500 });
   }
 }
