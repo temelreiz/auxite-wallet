@@ -41,9 +41,9 @@ export default function LoginPage() {
 
       // Redirect
       if (data.requiresWalletSetup) {
-        router.push('/onboarding');
+        router.push('/');
       } else {
-        router.push('/dashboard');
+        router.push('/');
       }
     } catch (err) {
       setError('Connection error. Please try again.');
