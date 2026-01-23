@@ -1,7 +1,10 @@
 // lib/blockchain-service.ts
+// AWS Secrets Manager entegrasyonlu versiyon
+
 import { ethers } from 'ethers';
 import * as xrpl from 'xrpl';
 import { Connection, Keypair, PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
 
 // ERC20 ABI (sadece transfer fonksiyonu)
 const ERC20_ABI = [
@@ -18,26 +21,88 @@ interface WithdrawResult {
 }
 
 // =====================
+// AWS SECRETS MANAGER
+// =====================
+let cachedSecrets: Record<string, string> | null = null;
+let secretsLastFetched: number = 0;
+const SECRETS_CACHE_TTL = 5 * 60 * 1000; // 5 dakika
+
+async function getSecrets(): Promise<Record<string, string>> {
+  // Cache kontrolü
+  if (cachedSecrets && (Date.now() - secretsLastFetched) < SECRETS_CACHE_TTL) {
+    return cachedSecrets;
+  }
+
+  // AWS yoksa env'den oku (fallback)
+  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+    console.log("⚠️ AWS credentials not found, using env variables");
+    return {
+      HOT_WALLET_MNEMONIC: process.env.HOT_WALLET_MNEMONIC || '',
+      HOT_WALLET_ETH_PRIVATE_KEY: process.env.HOT_WALLET_ETH_PRIVATE_KEY || '',
+      HOT_WALLET_SOL_PRIVATE_KEY: process.env.HOT_WALLET_SOL_PRIVATE_KEY || '',
+    };
+  }
+
+  try {
+    const client = new SecretsManagerClient({
+      region: process.env.AWS_REGION || 'eu-central-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
+    });
+
+    const command = new GetSecretValueCommand({
+      SecretId: process.env.AWS_SECRET_NAME || 'auxite/hot-wallet',
+    });
+
+    const response = await client.send(command);
+    
+    if (response.SecretString) {
+      cachedSecrets = JSON.parse(response.SecretString);
+      secretsLastFetched = Date.now();
+      console.log("✅ Secrets loaded from AWS Secrets Manager");
+      return cachedSecrets!;
+    }
+
+    throw new Error("No secret string found");
+  } catch (error: any) {
+    console.error("❌ AWS Secrets Manager error:", error.message);
+    // Fallback to env
+    return {
+      HOT_WALLET_MNEMONIC: process.env.HOT_WALLET_MNEMONIC || '',
+      HOT_WALLET_ETH_PRIVATE_KEY: process.env.HOT_WALLET_ETH_PRIVATE_KEY || '',
+      HOT_WALLET_SOL_PRIVATE_KEY: process.env.HOT_WALLET_SOL_PRIVATE_KEY || '',
+    };
+  }
+}
+
+// =====================
 // ETH WITHDRAW
 // =====================
 export async function withdrawETH(
   toAddress: string,
-  amount: number // in ETH
+  amount: number
 ): Promise<WithdrawResult> {
   try {
+    const secrets = await getSecrets();
+    const privateKey = secrets.HOT_WALLET_ETH_PRIVATE_KEY;
+    
+    if (!privateKey) {
+      return { success: false, error: "ETH private key not configured" };
+    }
+
     const provider = new ethers.JsonRpcProvider(process.env.ETH_MAINNET_RPC);
-    const wallet = new ethers.Wallet(process.env.HOT_WALLET_ETH_PRIVATE_KEY!, provider);
+    const wallet = new ethers.Wallet(privateKey, provider);
 
     console.log(`🔷 ETH Withdraw: ${amount} ETH to ${toAddress}`);
     console.log(`   Hot Wallet: ${wallet.address}`);
 
-    // Check hot wallet balance
     const balance = await provider.getBalance(wallet.address);
     const amountWei = ethers.parseEther(amount.toFixed(8));
     
-    // Get current gas price
     const feeData = await provider.getFeeData();
-    const gasLimit = 21000n; // Standard ETH transfer
+    const gasLimit = 21000n;
     const maxFeePerGas = feeData.maxFeePerGas || ethers.parseUnits('50', 'gwei');
     const estimatedGasCost = gasLimit * maxFeePerGas;
 
@@ -51,7 +116,6 @@ export async function withdrawETH(
       };
     }
 
-    // Send transaction
     const tx = await wallet.sendTransaction({
       to: toAddress.trim(),
       value: amountWei,
@@ -61,10 +125,7 @@ export async function withdrawETH(
     });
 
     console.log(`   TX Hash: ${tx.hash}`);
-
-    // Wait for confirmation
     const receipt = await tx.wait(1);
-
     console.log(`   ✅ Confirmed in block ${receipt?.blockNumber}`);
 
     return {
@@ -83,21 +144,25 @@ export async function withdrawETH(
 // =====================
 export async function withdrawUSDT(
   toAddress: string,
-  amount: number // in USDT
+  amount: number
 ): Promise<WithdrawResult> {
   try {
+    const secrets = await getSecrets();
+    const privateKey = secrets.HOT_WALLET_ETH_PRIVATE_KEY;
+    
+    if (!privateKey) {
+      return { success: false, error: "ETH private key not configured" };
+    }
+
     const provider = new ethers.JsonRpcProvider(process.env.ETH_MAINNET_RPC);
-    const wallet = new ethers.Wallet(process.env.HOT_WALLET_ETH_PRIVATE_KEY!, provider);
+    const wallet = new ethers.Wallet(privateKey, provider);
     
-    // USDT Mainnet Contract Address
     const USDT_CONTRACT = process.env.USDT_CONTRACT_ADDRESS || '0xdAC17F958D2ee523a2206206994597C13D831ec7';
-    
     const usdtContract = new ethers.Contract(USDT_CONTRACT, ERC20_ABI, wallet);
 
     console.log(`💵 USDT Withdraw: ${amount} USDT to ${toAddress}`);
     console.log(`   Hot Wallet: ${wallet.address}`);
 
-    // Check USDT balance
     const decimals = await usdtContract.decimals();
     const usdtBalance = await usdtContract.balanceOf(wallet.address);
     const amountInUnits = ethers.parseUnits(amount.toFixed(2), decimals);
@@ -111,10 +176,9 @@ export async function withdrawUSDT(
       };
     }
 
-    // Check ETH for gas
     const ethBalance = await provider.getBalance(wallet.address);
     const feeData = await provider.getFeeData();
-    const gasLimit = 100000n; // ERC20 transfer needs more gas
+    const gasLimit = 100000n;
     const maxFeePerGas = feeData.maxFeePerGas || ethers.parseUnits('50', 'gwei');
     const estimatedGasCost = gasLimit * maxFeePerGas;
 
@@ -128,7 +192,6 @@ export async function withdrawUSDT(
       };
     }
 
-    // Send USDT transfer
     const tx = await usdtContract.transfer(toAddress.trim(), amountInUnits, {
       maxFeePerGas,
       maxPriorityFeePerGas: feeData.maxPriorityFeePerGas || ethers.parseUnits('2', 'gwei'),
@@ -136,9 +199,7 @@ export async function withdrawUSDT(
     });
 
     console.log(`   TX Hash: ${tx.hash}`);
-
     const receipt = await tx.wait(1);
-
     console.log(`   ✅ Confirmed in block ${receipt?.blockNumber}`);
 
     return {
@@ -157,23 +218,21 @@ export async function withdrawUSDT(
 // =====================
 export async function withdrawXRP(
   toAddress: string,
-  amount: number, // in XRP
-  tag?: number // Destination Tag (optional)
+  amount: number,
+  tag?: number
 ): Promise<WithdrawResult> {
-  const client = new xrpl.Client('wss://xrplcluster.com'); // Mainnet
+  const client = new xrpl.Client('wss://xrplcluster.com');
   
   try {
     await client.connect();
-
-    // XRP wallet from seed/secret
-    // Önce HOT_WALLET_XRP_SECRET dene, yoksa mnemonic'ten türet
+    
+    const secrets = await getSecrets();
     let wallet: xrpl.Wallet;
     
     if (process.env.HOT_WALLET_XRP_SECRET) {
       wallet = xrpl.Wallet.fromSeed(process.env.HOT_WALLET_XRP_SECRET);
-    } else if (process.env.HOT_WALLET_MNEMONIC) {
-      // Mnemonic'ten XRP wallet türet
-      wallet = xrpl.Wallet.fromMnemonic(process.env.HOT_WALLET_MNEMONIC);
+    } else if (secrets.HOT_WALLET_MNEMONIC) {
+      wallet = xrpl.Wallet.fromMnemonic(secrets.HOT_WALLET_MNEMONIC);
     } else {
       throw new Error('XRP wallet credentials not configured');
     }
@@ -182,14 +241,13 @@ export async function withdrawXRP(
     console.log(`   Hot Wallet: ${wallet.classicAddress}`);
     if (tag) console.log(`   Destination Tag: ${tag}`);
 
-    // Check balance
     const accountInfo = await client.request({
       command: 'account_info',
       account: wallet.classicAddress,
     });
     
-    const balance = parseFloat(accountInfo.result.account_data.Balance) / 1000000; // drops to XRP
-    const reserveAmount = 10; // XRP reserve requirement
+    const balance = parseFloat(accountInfo.result.account_data.Balance) / 1000000;
+    const reserveAmount = 10;
     
     console.log(`   Balance: ${balance} XRP (${reserveAmount} XRP reserve)`);
     console.log(`   Available: ${(balance - reserveAmount).toFixed(2)} XRP`);
@@ -201,7 +259,6 @@ export async function withdrawXRP(
       };
     }
 
-    // Prepare payment with optional DestinationTag
     const payment: xrpl.Payment = {
       TransactionType: 'Payment',
       Account: wallet.classicAddress,
@@ -210,15 +267,11 @@ export async function withdrawXRP(
       ...(tag !== undefined && tag !== null && { DestinationTag: tag }),
     };
 
-    // Auto-fill and sign
     const prepared = await client.autofill(payment);
     const signed = wallet.sign(prepared);
-    
-    // Submit and wait
     const result = await client.submitAndWait(signed.tx_blob);
     
     console.log(`   TX Hash: ${result.result.hash}`);
-
     await client.disconnect();
 
     if (result.result.meta && typeof result.result.meta === 'object' && 'TransactionResult' in result.result.meta) {
@@ -248,28 +301,30 @@ export async function withdrawXRP(
 // =====================
 export async function withdrawSOL(
   toAddress: string,
-  amount: number // in SOL
+  amount: number
 ): Promise<WithdrawResult> {
   try {
+    const secrets = await getSecrets();
+    const privateKeyStr = secrets.HOT_WALLET_SOL_PRIVATE_KEY;
+    
+    if (!privateKeyStr) {
+      return { success: false, error: "SOL private key not configured" };
+    }
+
     const connection = new Connection(
       process.env.SOL_MAINNET_RPC || 'https://api.mainnet-beta.solana.com', 
       'confirmed'
     );
     
-    // Private key hex formatında (bizim ürettiğimiz)
     let keypair: Keypair;
-    const privateKeyStr = process.env.HOT_WALLET_SOL_PRIVATE_KEY!;
     
     if (privateKeyStr.length === 128) {
-      // Hex format (64 bytes = 128 hex chars)
       const privateKeyBytes = Buffer.from(privateKeyStr, 'hex');
       keypair = Keypair.fromSecretKey(privateKeyBytes);
     } else if (privateKeyStr.length === 88) {
-      // Base64 format
       const privateKeyBytes = Buffer.from(privateKeyStr, 'base64');
       keypair = Keypair.fromSecretKey(privateKeyBytes);
     } else {
-      // JSON array format [1,2,3,...]
       const privateKeyArray = JSON.parse(privateKeyStr);
       keypair = Keypair.fromSecretKey(Uint8Array.from(privateKeyArray));
     }
@@ -277,10 +332,9 @@ export async function withdrawSOL(
     console.log(`🟣 SOL Withdraw: ${amount} SOL to ${toAddress}`);
     console.log(`   Hot Wallet: ${keypair.publicKey.toBase58()}`);
 
-    // Check balance
     const balance = await connection.getBalance(keypair.publicKey);
     const amountLamports = Math.floor(parseFloat(amount.toFixed(9)) * LAMPORTS_PER_SOL);
-    const feeEstimate = 5000; // 5000 lamports is typical fee
+    const feeEstimate = 5000;
 
     console.log(`   Balance: ${(balance / LAMPORTS_PER_SOL).toFixed(6)} SOL`);
     console.log(`   Sending: ${amount} SOL + ~0.000005 SOL fee`);
@@ -292,7 +346,6 @@ export async function withdrawSOL(
       };
     }
 
-    // Create transfer instruction
     const transaction = new Transaction().add(
       SystemProgram.transfer({
         fromPubkey: keypair.publicKey,
@@ -301,7 +354,6 @@ export async function withdrawSOL(
       })
     );
 
-    // Send and confirm
     const signature = await sendAndConfirmTransaction(connection, transaction, [keypair]);
 
     console.log(`   TX Hash: ${signature}`);
@@ -323,15 +375,11 @@ export async function withdrawSOL(
 // =====================
 export async function withdrawBTC(
   toAddress: string,
-  amount: number // in BTC
+  amount: number
 ): Promise<WithdrawResult> {
-  // BTC için şimdilik manual approval gerekli
-  // Veya NOWPayments payout API kullanılabilir
-  
   console.log(`🟠 BTC Withdraw Request: ${amount} BTC to ${toAddress}`);
   console.log(`   ⚠️ BTC withdrawals require manual processing`);
   
-  // Option 1: NOWPayments kullan (eğer varsa)
   if (process.env.NOWPAYMENTS_API_KEY) {
     try {
       const { createBTCPayout } = await import('./nowpayments-service');
@@ -354,7 +402,6 @@ export async function withdrawBTC(
     }
   }
   
-  // Option 2: Manual approval için pending olarak işaretle
   return {
     success: false,
     error: 'BTC withdrawals are processed manually. Your request has been queued.',
@@ -368,7 +415,7 @@ export async function processWithdraw(
   coin: string,
   toAddress: string,
   amount: number,
-  tag?: number // For XRP Destination Tag
+  tag?: number
 ): Promise<WithdrawResult> {
   console.log(`\n${'='.repeat(50)}`);
   console.log(`Processing ${coin} withdrawal: ${amount} to ${toAddress}`);
@@ -397,7 +444,6 @@ export async function getHotWalletBalances(): Promise<Record<string, number>> {
   const balances: Record<string, number> = {};
 
   try {
-    // ETH & USDT
     const ethProvider = new ethers.JsonRpcProvider(process.env.ETH_MAINNET_RPC);
     const ethAddress = process.env.HOT_WALLET_ETH_ADDRESS!;
     
@@ -416,7 +462,6 @@ export async function getHotWalletBalances(): Promise<Record<string, number>> {
   }
 
   try {
-    // XRP
     const xrpClient = new xrpl.Client('wss://xrplcluster.com');
     await xrpClient.connect();
     const accountInfo = await xrpClient.request({
@@ -431,7 +476,6 @@ export async function getHotWalletBalances(): Promise<Record<string, number>> {
   }
 
   try {
-    // SOL
     const solConnection = new Connection(
       process.env.SOL_MAINNET_RPC || 'https://api.mainnet-beta.solana.com', 
       'confirmed'
@@ -443,7 +487,6 @@ export async function getHotWalletBalances(): Promise<Record<string, number>> {
     balances.SOL = 0;
   }
 
-  // BTC - şimdilik 0 (manual tracking gerekli)
   balances.BTC = 0;
 
   return balances;
