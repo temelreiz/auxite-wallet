@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import Image from "next/image";
 import MetalPriceGrid from "@/components/MetalPriceGrid";
@@ -17,13 +18,20 @@ const STORAGE_KEYS = {
   WALLET_ADDRESS: "auxite_wallet_address",
   WALLET_MODE: "auxite_wallet_mode",
   SESSION_UNLOCKED: "auxite_session_unlocked",
+  AUTH_TOKEN: "authToken",
+  USER: "user",
 };
 
 export default function Home() {
   const { t, lang } = useLanguage();
+  const router = useRouter();
   
   // External wallet (MetaMask, etc.)
   const { isConnected: isExternalConnected } = useAccount();
+  
+  // Auth state
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [user, setUser] = useState<any>(null);
   
   // Local wallet state
   const [walletMode, setWalletMode] = useState<"choosing" | "local" | "external" | null>(null);
@@ -33,10 +41,70 @@ export default function Home() {
   // UI state
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check wallet state on mount
+  // Check auth state on mount
   useEffect(() => {
-    checkWalletState();
+    checkAuthState();
   }, []);
+
+  const checkAuthState = async () => {
+    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+    const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
+
+    // No token = not authenticated
+    if (!token) {
+      setIsAuthenticated(false);
+      setIsLoading(false);
+      return;
+    }
+
+    // Parse user
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        
+        // If user has wallet address from auth, use it
+        if (parsedUser.walletAddress) {
+          setLocalWalletAddress(parsedUser.walletAddress);
+        }
+      } catch (e) {
+        console.error("Failed to parse user:", e);
+      }
+    }
+
+    // Verify token with API (optional but recommended)
+    try {
+      const response = await fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.user) {
+          setUser(data.user);
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
+          
+          if (data.user.walletAddress) {
+            setLocalWalletAddress(data.user.walletAddress);
+          }
+        }
+        setIsAuthenticated(true);
+      } else {
+        // Token invalid
+        localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.USER);
+        setIsAuthenticated(false);
+      }
+    } catch (error) {
+      // Network error - use cached auth
+      setIsAuthenticated(true);
+    }
+
+    // Check wallet state
+    checkWalletState();
+  };
 
   const checkWalletState = () => {
     const savedMode = localStorage.getItem(STORAGE_KEYS.WALLET_MODE);
@@ -61,11 +129,34 @@ export default function Home() {
   };
 
   // Handle local wallet ready
-  const handleLocalWalletReady = (address: string) => {
+  const handleLocalWalletReady = async (address: string) => {
     setLocalWalletAddress(address);
     setLocalWalletReady(true);
     localStorage.setItem(STORAGE_KEYS.WALLET_MODE, "local");
     sessionStorage.setItem(STORAGE_KEYS.SESSION_UNLOCKED, "true");
+
+    // Link wallet to auth account
+    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+    if (token) {
+      try {
+        const response = await fetch('/api/auth/link-wallet', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ walletAddress: address }),
+        });
+
+        const data = await response.json();
+        if (data.success && data.user) {
+          setUser(data.user);
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
+        }
+      } catch (error) {
+        console.error("Failed to link wallet:", error);
+      }
+    }
   };
 
   // Handle external wallet choice
@@ -81,11 +172,22 @@ export default function Home() {
 
   // Logout / Switch wallet
   const handleLogout = () => {
+    // Clear auth
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    
+    // Clear wallet
     localStorage.removeItem(STORAGE_KEYS.WALLET_MODE);
     sessionStorage.removeItem(STORAGE_KEYS.SESSION_UNLOCKED);
+    
     setWalletMode("choosing");
     setLocalWalletReady(false);
     setLocalWalletAddress(null);
+    setIsAuthenticated(false);
+    setUser(null);
+    
+    // Redirect to login
+    router.push('/auth/login');
   };
 
   // Determine if wallet is connected
@@ -94,7 +196,7 @@ export default function Home() {
     (walletMode === "external" && isExternalConnected);
 
   // Loading state
-  if (isLoading) {
+  if (isLoading || isAuthenticated === null) {
     return (
       <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
@@ -104,6 +206,19 @@ export default function Home() {
             </svg>
           </div>
           <div className="animate-spin w-6 h-6 border-2 border-stone-300 dark:border-zinc-600 border-t-emerald-500 rounded-full mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated - redirect to login
+  if (!isAuthenticated) {
+    router.push('/auth/login');
+    return (
+      <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-6 h-6 border-2 border-stone-300 dark:border-zinc-600 border-t-emerald-500 rounded-full mx-auto"></div>
+          <p className="text-slate-500 dark:text-zinc-400 mt-4">Redirecting to login...</p>
         </div>
       </div>
     );
@@ -123,6 +238,11 @@ export default function Home() {
               height={50}
               className="h-14 w-auto mx-auto mb-6"
             />
+            {user && (
+              <p className="text-sm text-emerald-500 mb-4">
+                👋 {t("welcome")}, {user.name || user.email}
+              </p>
+            )}
             <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
               {t("chooseWallet")}
             </h1>
@@ -185,6 +305,14 @@ export default function Home() {
           <p className="text-xs text-slate-400 dark:text-zinc-500 text-center mt-6">
             {t("keysStayWithYou")}
           </p>
+
+          {/* Logout link */}
+          <button
+            onClick={handleLogout}
+            className="w-full mt-4 text-sm text-slate-400 hover:text-red-500 transition-colors"
+          >
+            {t("logout") || "Çıkış Yap"}
+          </button>
         </div>
       </div>
     );
