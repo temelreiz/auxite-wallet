@@ -20,7 +20,108 @@ interface EmailData {
 
 const templates = {
   // ────────────────────────────────────────────────────────────────────────────
-  // VERIFICATION EMAIL
+  // VERIFICATION EMAIL WITH CODE (for mobile)
+  // ────────────────────────────────────────────────────────────────────────────
+  'verification-code': (data: EmailData) => {
+    const { name, code, verificationUrl, language = 'en' } = data;
+    
+    const content = {
+      en: {
+        subject: 'Verify your Auxite account',
+        title: 'Email Verification',
+        greeting: `Hi ${name},`,
+        message: 'Thank you for creating an Auxite account. Use the code below to verify your email:',
+        codeLabel: 'Your verification code:',
+        orUseLink: 'Or click the button below:',
+        buttonText: 'Verify Email',
+        expiry: 'This code will expire in 10 minutes.',
+        ignore: 'If you did not create an account, please ignore this email.',
+      },
+      tr: {
+        subject: 'Auxite hesabınızı doğrulayın',
+        title: 'E-posta Doğrulama',
+        greeting: `Merhaba ${name},`,
+        message: 'Auxite hesabı oluşturduğunuz için teşekkürler. E-postanızı doğrulamak için aşağıdaki kodu kullanın:',
+        codeLabel: 'Doğrulama kodunuz:',
+        orUseLink: 'Veya aşağıdaki butona tıklayın:',
+        buttonText: 'E-postayı Doğrula',
+        expiry: 'Bu kod 10 dakika içinde geçerliliğini yitirecektir.',
+        ignore: 'Hesap oluşturmadıysanız, bu e-postayı görmezden gelebilirsiniz.',
+      },
+      de: {
+        subject: 'Bestätigen Sie Ihr Auxite-Konto',
+        title: 'E-Mail-Verifizierung',
+        greeting: `Hallo ${name},`,
+        message: 'Vielen Dank für die Erstellung eines Auxite-Kontos. Verwenden Sie den folgenden Code:',
+        codeLabel: 'Ihr Bestätigungscode:',
+        orUseLink: 'Oder klicken Sie auf den Button:',
+        buttonText: 'E-Mail bestätigen',
+        expiry: 'Dieser Code läuft in 10 Minuten ab.',
+        ignore: 'Falls Sie kein Konto erstellt haben, ignorieren Sie diese E-Mail.',
+      },
+      ar: {
+        subject: 'تأكيد حساب Auxite الخاص بك',
+        title: 'التحقق من البريد الإلكتروني',
+        greeting: `مرحباً ${name}،`,
+        message: 'شكراً لإنشاء حساب Auxite. استخدم الرمز أدناه للتحقق:',
+        codeLabel: 'رمز التحقق الخاص بك:',
+        orUseLink: 'أو انقر على الزر أدناه:',
+        buttonText: 'تأكيد البريد',
+        expiry: 'ستنتهي صلاحية هذا الرمز خلال 10 دقائق.',
+        ignore: 'إذا لم تقم بإنشاء حساب، يرجى تجاهل هذا البريد.',
+      },
+      ru: {
+        subject: 'Подтвердите ваш аккаунт Auxite',
+        title: 'Подтверждение email',
+        greeting: `Привет ${name},`,
+        message: 'Спасибо за создание аккаунта Auxite. Используйте код ниже для подтверждения:',
+        codeLabel: 'Ваш код подтверждения:',
+        orUseLink: 'Или нажмите на кнопку:',
+        buttonText: 'Подтвердить email',
+        expiry: 'Этот код истечет через 10 минут.',
+        ignore: 'Если вы не создавали аккаунт, проигнорируйте это письмо.',
+      },
+      fr: {
+        subject: 'Vérifiez votre compte Auxite',
+        title: 'Vérification de l\'email',
+        greeting: `Bonjour ${name},`,
+        message: 'Merci d\'avoir créé un compte Auxite. Utilisez le code ci-dessous:',
+        codeLabel: 'Votre code de vérification:',
+        orUseLink: 'Ou cliquez sur le bouton:',
+        buttonText: 'Vérifier l\'email',
+        expiry: 'Ce code expirera dans 10 minutes.',
+        ignore: 'Si vous n\'avez pas créé de compte, ignorez cet email.',
+      },
+    };
+
+    const t = content[language as keyof typeof content] || content.en;
+
+    return {
+      subject: t.subject,
+      html: generateEmailHTML({
+        title: t.title,
+        content: `
+          <p>${t.greeting}</p>
+          <p>${t.message}</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 10px;">${t.codeLabel}</p>
+            <div style="background-color: #f1f5f9; border-radius: 12px; padding: 20px; display: inline-block;">
+              <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #10B981;">${code}</span>
+            </div>
+          </div>
+          <p style="color: #64748b; font-size: 14px; text-align: center;">${t.orUseLink}</p>
+          <div style="text-align: center; margin: 20px 0;">
+            <a href="${verificationUrl}" style="background-color: #10B981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.buttonText}</a>
+          </div>
+          <p style="color: #64748b; font-size: 14px;">${t.expiry}</p>
+          <p style="color: #94a3b8; font-size: 12px;">${t.ignore}</p>
+        `,
+      }),
+    };
+  },
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // VERIFICATION EMAIL (link only - for web)
   // ────────────────────────────────────────────────────────────────────────────
   verification: (data: EmailData) => {
     const { name, verificationUrl, language = 'en' } = data;
@@ -43,24 +144,6 @@ const templates = {
         buttonText: 'E-postayı Doğrula',
         expiry: 'Bu bağlantı 24 saat içinde geçerliliğini yitirecektir.',
         ignore: 'Hesap oluşturmadıysanız, bu e-postayı görmezden gelebilirsiniz.',
-      },
-      de: {
-        subject: 'Bestätigen Sie Ihr Auxite-Konto',
-        title: 'E-Mail-Verifizierung',
-        greeting: `Hallo ${name},`,
-        message: 'Vielen Dank für die Erstellung eines Auxite-Kontos. Bitte bestätigen Sie Ihre E-Mail-Adresse:',
-        buttonText: 'E-Mail bestätigen',
-        expiry: 'Dieser Link läuft in 24 Stunden ab.',
-        ignore: 'Falls Sie kein Konto erstellt haben, ignorieren Sie diese E-Mail.',
-      },
-      ar: {
-        subject: 'تأكيد حساب Auxite الخاص بك',
-        title: 'التحقق من البريد الإلكتروني',
-        greeting: `مرحباً ${name}،`,
-        message: 'شكراً لإنشاء حساب Auxite. يرجى تأكيد عنوان بريدك الإلكتروني:',
-        buttonText: 'تأكيد البريد',
-        expiry: 'ستنتهي صلاحية هذا الرابط خلال 24 ساعة.',
-        ignore: 'إذا لم تقم بإنشاء حساب، يرجى تجاهل هذا البريد.',
       },
     };
 
@@ -118,34 +201,6 @@ const templates = {
         cta: 'Başlayın',
         support: 'Sorularınız varsa, destek ekibimiz size yardımcı olmak için burada.',
       },
-      de: {
-        subject: 'Willkommen bei Auxite!',
-        title: 'Willkommen bei Auxite',
-        greeting: `Hallo ${name},`,
-        message: 'Ihre E-Mail wurde verifiziert und Ihr Auxite-Konto ist jetzt aktiv!',
-        features: [
-          'Kaufen und verkaufen Sie tokenisierte Edelmetalle',
-          'Handeln Sie Kryptowährungen sicher',
-          'Verdienen Sie Staking-Belohnungen',
-          'Speichern Sie Ihre digitalen Vermögenswerte sicher',
-        ],
-        cta: 'Loslegen',
-        support: 'Bei Fragen steht Ihnen unser Support-Team zur Verfügung.',
-      },
-      ar: {
-        subject: 'مرحباً بك في Auxite!',
-        title: 'مرحباً بك في Auxite',
-        greeting: `مرحباً ${name}،`,
-        message: 'تم التحقق من بريدك الإلكتروني وحسابك نشط الآن!',
-        features: [
-          'شراء وبيع المعادن الثمينة المرمزة',
-          'تداول العملات المشفرة بأمان',
-          'احصل على مكافآت الستاكينغ',
-          'احفظ أصولك الرقمية بأمان',
-        ],
-        cta: 'ابدأ الآن',
-        support: 'إذا كانت لديك أي أسئلة، فريق الدعم هنا للمساعدة.',
-      },
     };
 
     const t = content[language as keyof typeof content] || content.en;
@@ -183,37 +238,19 @@ const templates = {
         subject: 'Reset your Auxite password',
         title: 'Password Reset',
         greeting: `Hi ${name},`,
-        message: 'We received a request to reset your password. Click the button below to choose a new password:',
+        message: 'We received a request to reset your password. Click the button below:',
         buttonText: 'Reset Password',
         expiry: `This link will expire in ${expiryMinutes} minutes.`,
-        ignore: 'If you did not request a password reset, please ignore this email. Your password will remain unchanged.',
+        ignore: 'If you did not request this, please ignore this email.',
       },
       tr: {
         subject: 'Auxite şifrenizi sıfırlayın',
         title: 'Şifre Sıfırlama',
         greeting: `Merhaba ${name},`,
-        message: 'Şifrenizi sıfırlamak için bir talep aldık. Yeni bir şifre belirlemek için aşağıdaki butona tıklayın:',
+        message: 'Şifrenizi sıfırlamak için bir talep aldık. Aşağıdaki butona tıklayın:',
         buttonText: 'Şifreyi Sıfırla',
         expiry: `Bu bağlantı ${expiryMinutes} dakika içinde geçerliliğini yitirecektir.`,
-        ignore: 'Şifre sıfırlama talebinde bulunmadıysanız, bu e-postayı görmezden gelin. Şifreniz değişmeyecektir.',
-      },
-      de: {
-        subject: 'Setzen Sie Ihr Auxite-Passwort zurück',
-        title: 'Passwort zurücksetzen',
-        greeting: `Hallo ${name},`,
-        message: 'Wir haben eine Anfrage zum Zurücksetzen Ihres Passworts erhalten:',
-        buttonText: 'Passwort zurücksetzen',
-        expiry: `Dieser Link läuft in ${expiryMinutes} Minuten ab.`,
-        ignore: 'Falls Sie dies nicht angefordert haben, ignorieren Sie diese E-Mail.',
-      },
-      ar: {
-        subject: 'إعادة تعيين كلمة مرور Auxite',
-        title: 'إعادة تعيين كلمة المرور',
-        greeting: `مرحباً ${name}،`,
-        message: 'تلقينا طلباً لإعادة تعيين كلمة المرور. انقر على الزر أدناه:',
-        buttonText: 'إعادة تعيين',
-        expiry: `ستنتهي صلاحية هذا الرابط خلال ${expiryMinutes} دقيقة.`,
-        ignore: 'إذا لم تطلب ذلك، تجاهل هذا البريد.',
+        ignore: 'Bu talebi siz yapmadıysanız, bu e-postayı görmezden gelin.',
       },
     };
 
@@ -227,7 +264,7 @@ const templates = {
           <p>${t.greeting}</p>
           <p>${t.message}</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetUrl}" style="background-color: #EF4444; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.buttonText}</a>
+            <a href="${resetUrl}" style="background-color: #10B981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.buttonText}</a>
           </div>
           <p style="color: #64748b; font-size: 14px;">${t.expiry}</p>
           <p style="color: #94a3b8; font-size: 12px;">${t.ignore}</p>
@@ -237,66 +274,7 @@ const templates = {
   },
 
   // ────────────────────────────────────────────────────────────────────────────
-  // PASSWORD CHANGED CONFIRMATION
-  // ────────────────────────────────────────────────────────────────────────────
-  'password-changed': (data: EmailData) => {
-    const { name, timestamp, language = 'en' } = data;
-    
-    const content = {
-      en: {
-        subject: 'Your Auxite password has been changed',
-        title: 'Password Changed',
-        greeting: `Hi ${name},`,
-        message: 'Your Auxite password was successfully changed.',
-        time: `Time: ${new Date(timestamp).toLocaleString('en-US')}`,
-        warning: 'If you did not make this change, please contact our support team immediately and secure your account.',
-      },
-      tr: {
-        subject: 'Auxite şifreniz değiştirildi',
-        title: 'Şifre Değiştirildi',
-        greeting: `Merhaba ${name},`,
-        message: 'Auxite şifreniz başarıyla değiştirildi.',
-        time: `Zaman: ${new Date(timestamp).toLocaleString('tr-TR')}`,
-        warning: 'Bu değişikliği siz yapmadıysanız, lütfen hemen destek ekibimizle iletişime geçin ve hesabınızı güvence altına alın.',
-      },
-      de: {
-        subject: 'Ihr Auxite-Passwort wurde geändert',
-        title: 'Passwort geändert',
-        greeting: `Hallo ${name},`,
-        message: 'Ihr Auxite-Passwort wurde erfolgreich geändert.',
-        time: `Zeit: ${new Date(timestamp).toLocaleString('de-DE')}`,
-        warning: 'Falls Sie diese Änderung nicht vorgenommen haben, kontaktieren Sie sofort unser Support-Team.',
-      },
-      ar: {
-        subject: 'تم تغيير كلمة مرور Auxite الخاصة بك',
-        title: 'تم تغيير كلمة المرور',
-        greeting: `مرحباً ${name}،`,
-        message: 'تم تغيير كلمة مرور Auxite بنجاح.',
-        time: `الوقت: ${new Date(timestamp).toLocaleString('ar-SA')}`,
-        warning: 'إذا لم تقم بهذا التغيير، اتصل بفريق الدعم فوراً.',
-      },
-    };
-
-    const t = content[language as keyof typeof content] || content.en;
-
-    return {
-      subject: t.subject,
-      html: generateEmailHTML({
-        title: t.title,
-        content: `
-          <p>${t.greeting}</p>
-          <p>${t.message}</p>
-          <p style="color: #64748b; font-size: 14px;">${t.time}</p>
-          <div style="background-color: #fef3c7; border-radius: 8px; padding: 16px; margin: 20px 0;">
-            <p style="color: #92400e; margin: 0;">⚠️ ${t.warning}</p>
-          </div>
-        `,
-      }),
-    };
-  },
-
-  // ────────────────────────────────────────────────────────────────────────────
-  // 2FA CODE EMAIL (for login verification)
+  // 2FA CODE EMAIL
   // ────────────────────────────────────────────────────────────────────────────
   '2fa-code': (data: EmailData) => {
     const { name, code, language = 'en' } = data;
@@ -308,7 +286,7 @@ const templates = {
         greeting: `Hi ${name},`,
         message: 'Your verification code is:',
         expiry: 'This code will expire in 10 minutes.',
-        ignore: 'If you did not request this code, please ignore this email and ensure your account is secure.',
+        ignore: 'If you did not request this code, please ignore this email.',
       },
       tr: {
         subject: 'Auxite doğrulama kodunuz',
@@ -316,7 +294,7 @@ const templates = {
         greeting: `Merhaba ${name},`,
         message: 'Doğrulama kodunuz:',
         expiry: 'Bu kod 10 dakika içinde geçerliliğini yitirecektir.',
-        ignore: 'Bu kodu talep etmediyseniz, bu e-postayı görmezden gelin ve hesabınızın güvenliğini kontrol edin.',
+        ignore: 'Bu kodu talep etmediyseniz, bu e-postayı görmezden gelin.',
       },
     };
 
@@ -360,15 +338,12 @@ function generateEmailHTML({ title, content }: { title: string; content: string 
     <tr>
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 30px; text-align: center;">
               <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">AUXITE</h1>
               <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">Tokenized Precious Metals</p>
             </td>
           </tr>
-          
-          <!-- Content -->
           <tr>
             <td style="padding: 40px 30px;">
               <h2 style="color: #1e293b; margin: 0 0 20px 0; font-size: 24px;">${title}</h2>
@@ -377,8 +352,6 @@ function generateEmailHTML({ title, content }: { title: string; content: string 
               </div>
             </td>
           </tr>
-          
-          <!-- Footer -->
           <tr>
             <td style="background-color: #f8fafc; padding: 24px 30px; border-top: 1px solid #e2e8f0;">
               <p style="color: #64748b; font-size: 12px; margin: 0; text-align: center;">
@@ -439,7 +412,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// DIRECT SEND FUNCTION (without queue)
+// DIRECT SEND FUNCTIONS
 // ══════════════════════════════════════════════════════════════════════════════
 
 export async function sendVerificationEmail(email: string, name: string, verificationUrl: string, language: string = 'en') {
@@ -447,6 +420,14 @@ export async function sendVerificationEmail(email: string, name: string, verific
     type: 'verification',
     to: email,
     data: { name, verificationUrl, language },
+  });
+}
+
+export async function sendVerificationCodeEmail(email: string, name: string, code: string, verificationUrl: string, language: string = 'en') {
+  return sendEmail({
+    type: 'verification-code',
+    to: email,
+    data: { name, code, verificationUrl, language },
   });
 }
 
@@ -463,14 +444,6 @@ export async function sendPasswordResetEmail(email: string, name: string, resetU
     type: 'password-reset',
     to: email,
     data: { name, resetUrl, expiryMinutes: 60, language },
-  });
-}
-
-export async function sendPasswordChangedEmail(email: string, name: string, language: string = 'en') {
-  return sendEmail({
-    type: 'password-changed',
-    to: email,
-    data: { name, timestamp: new Date().toISOString(), language },
   });
 }
 

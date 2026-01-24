@@ -6,7 +6,7 @@ import { Redis } from '@upstash/redis';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
-import { sendVerificationEmail } from '@/lib/email-service';
+import { sendEmail } from '@/lib/email-service';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -20,6 +20,11 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Password requirements: min 8 chars, 1 uppercase, 1 lowercase, 1 number
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+// Generate 6 digit code
+function generateVerificationCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -69,6 +74,7 @@ export async function POST(request: NextRequest) {
     // ══════════════════════════════════════════════════════════════
     const passwordHash = await bcrypt.hash(password, 12);
     const verificationToken = randomBytes(32).toString('hex');
+    const verificationCode = generateVerificationCode();
     const userId = randomBytes(16).toString('hex');
 
     const userData = {
@@ -78,10 +84,12 @@ export async function POST(request: NextRequest) {
       name: name || '',
       phone: phone || '',
       language,
-      walletAddress: '', // Will be set after wallet onboarding
+      walletAddress: '',
       authProvider: 'email',
       emailVerified: false,
       verificationToken,
+      verificationCode,
+      verificationCodeExpiry: Date.now() + 10 * 60 * 1000, // 10 minutes
       createdAt: Date.now(),
       lastLogin: Date.now(),
     };
@@ -93,22 +101,21 @@ export async function POST(request: NextRequest) {
     await redis.set(`auth:email:${normalizedEmail}`, userId);
 
     // ══════════════════════════════════════════════════════════════
-    // SEND VERIFICATION EMAIL
+    // SEND VERIFICATION EMAIL WITH CODE
     // ══════════════════════════════════════════════════════════════
     const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io'}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(normalizedEmail)}`;
     
-    // Send email directly
-    const emailResult = await sendVerificationEmail(
-      normalizedEmail,
-      name || normalizedEmail.split('@')[0],
-      verificationUrl,
-      language
-    );
-
-    if (!emailResult.success) {
-      console.error('Failed to send verification email:', emailResult.error);
-      // Don't fail registration, just log the error
-    }
+    // Send email with both link and code
+    await sendEmail({
+      type: 'verification-code',
+      to: normalizedEmail,
+      data: {
+        name: name || normalizedEmail.split('@')[0],
+        code: verificationCode,
+        verificationUrl,
+        language,
+      },
+    });
 
     // ══════════════════════════════════════════════════════════════
     // GENERATE JWT TOKEN
@@ -137,6 +144,7 @@ export async function POST(request: NextRequest) {
         walletAddress: '',
       },
       token,
+      requiresEmailVerification: true,
       requiresWalletSetup: true,
     });
 
