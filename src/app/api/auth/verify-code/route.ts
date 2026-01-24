@@ -56,7 +56,8 @@ export async function POST(request: NextRequest) {
     // ══════════════════════════════════════════════════════════════
     // VERIFY CODE
     // ══════════════════════════════════════════════════════════════
-    if (userData.verificationCode !== code) {
+    // Compare as strings to handle both string and number types
+    if (String(userData.verificationCode) !== String(code)) {
       return NextResponse.json(
         { success: false, error: 'Invalid verification code' },
         { status: 400 }
