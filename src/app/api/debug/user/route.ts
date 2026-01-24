@@ -38,3 +38,34 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const email = searchParams.get('email');
+
+    if (!email) {
+      return NextResponse.json({ error: 'Email required' }, { status: 400 });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Delete user data
+    const deleted = await redis.del(`auth:user:${normalizedEmail}`);
+    
+    // Delete email index
+    await redis.del(`auth:email:${normalizedEmail}`);
+
+    if (deleted === 0) {
+      return NextResponse.json({ error: 'User not found', email: normalizedEmail }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `User ${normalizedEmail} deleted`,
+    });
+
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
