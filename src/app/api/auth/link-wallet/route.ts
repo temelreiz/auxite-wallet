@@ -1,5 +1,5 @@
 // src/app/api/auth/link-wallet/route.ts
-// Link Wallet Address to User Account
+// Link wallet address to user account
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
@@ -10,48 +10,34 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'auxite-jwt-secret-change-in-production';
-
-// Verify JWT and get user info
-function verifyToken(authHeader: string | null): { userId: string; email: string } | null {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-  
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-    return {
-      userId: decoded.userId,
-      email: decoded.email,
-    };
-  } catch (error) {
-    return null;
-  }
-}
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 
 export async function POST(request: NextRequest) {
   try {
-    // ══════════════════════════════════════════════════════════════
-    // AUTHENTICATION
-    // ══════════════════════════════════════════════════════════════
-    const authHeader = request.headers.get('Authorization');
-    const user = verifyToken(authHeader);
-
-    if (!user) {
+    // Get token from header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const body = await request.json();
-    const { walletAddress } = body;
+    const token = authHeader.split(' ')[1];
 
-    // ══════════════════════════════════════════════════════════════
-    // VALIDATION
-    // ══════════════════════════════════════════════════════════════
+    // Verify token
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    const { walletAddress } = await request.json();
+
     if (!walletAddress) {
       return NextResponse.json(
         { success: false, error: 'Wallet address is required' },
@@ -59,7 +45,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate Ethereum address format
+    // Validate wallet address format (Ethereum)
     if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
       return NextResponse.json(
         { success: false, error: 'Invalid wallet address format' },
@@ -67,26 +53,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const normalizedWallet = walletAddress.toLowerCase();
-    const normalizedEmail = user.email.toLowerCase();
-
-    // ══════════════════════════════════════════════════════════════
-    // CHECK IF WALLET ALREADY LINKED TO ANOTHER USER
-    // ══════════════════════════════════════════════════════════════
-    const existingWalletUser = await redis.get(`auth:wallet:${normalizedWallet}`);
-    
-    if (existingWalletUser && existingWalletUser !== normalizedEmail) {
+    const userEmail = decoded.email;
+    if (!userEmail) {
       return NextResponse.json(
-        { success: false, error: 'This wallet is already linked to another account' },
-        { status: 409 }
+        { success: false, error: 'Invalid token - no email' },
+        { status: 401 }
       );
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // GET USER DATA
-    // ══════════════════════════════════════════════════════════════
-    const userData = await redis.hgetall(`auth:user:${normalizedEmail}`) as any;
-    
+    // Get user from Redis
+    const userData = await redis.hgetall(`auth:user:${userEmail}`) as any;
     if (!userData || Object.keys(userData).length === 0) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
@@ -94,107 +70,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // LINK WALLET TO USER
-    // ══════════════════════════════════════════════════════════════
-    
-    // Update user record
-    await redis.hset(`auth:user:${normalizedEmail}`, {
-      walletAddress: normalizedWallet,
-      walletLinkedAt: Date.now(),
-    });
-
-    // Create wallet -> email index
-    await redis.set(`auth:wallet:${normalizedWallet}`, normalizedEmail);
-
-    // ══════════════════════════════════════════════════════════════
-    // UPDATE EXISTING WALLET DATA (if any)
-    // ══════════════════════════════════════════════════════════════
-    // Link email to existing wallet user data
-    const walletUserData = await redis.hgetall(`user:${normalizedWallet}`) as any;
-    
-    if (walletUserData && Object.keys(walletUserData).length > 0) {
-      await redis.hset(`user:${normalizedWallet}`, {
-        email: normalizedEmail,
-        authLinked: true,
-        authLinkedAt: Date.now(),
-      });
-    } else {
-      // Create new wallet user record
-      await redis.hset(`user:${normalizedWallet}`, {
-        address: normalizedWallet,
-        email: normalizedEmail,
-        authLinked: true,
-        authLinkedAt: Date.now(),
-        createdAt: Date.now(),
-      });
+    // Check if wallet is already linked to another user
+    const existingUser = await redis.get(`wallet:${walletAddress.toLowerCase()}`);
+    if (existingUser && existingUser !== userEmail) {
+      return NextResponse.json(
+        { success: false, error: 'Wallet already linked to another account' },
+        { status: 400 }
+      );
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // GENERATE NEW JWT TOKEN (with wallet info)
-    // ══════════════════════════════════════════════════════════════
+    // Update user with wallet address
+    await redis.hset(`auth:user:${userEmail}`, {
+      walletAddress: walletAddress,
+    });
+
+    // Create wallet -> email mapping for reverse lookup
+    await redis.set(`wallet:${walletAddress.toLowerCase()}`, userEmail);
+
+    // Generate new token with wallet address
     const newToken = jwt.sign(
       {
         userId: userData.id,
-        email: normalizedEmail,
-        emailVerified: userData.emailVerified === 'true' || userData.emailVerified === true,
-        walletAddress: normalizedWallet,
+        email: userEmail,
+        emailVerified: true,
+        walletAddress: walletAddress,
       },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    // ══════════════════════════════════════════════════════════════
-    // RESPONSE
-    // ══════════════════════════════════════════════════════════════
+    // Return updated user
+    const updatedUser = {
+      id: userData.id,
+      email: userEmail,
+      name: userData.name,
+      emailVerified: true,
+      walletAddress: walletAddress,
+    };
+
     return NextResponse.json({
       success: true,
       message: 'Wallet linked successfully',
-      user: {
-        id: userData.id,
-        email: normalizedEmail,
-        name: userData.name || '',
-        emailVerified: userData.emailVerified === 'true' || userData.emailVerified === true,
-        walletAddress: normalizedWallet,
-      },
+      user: updatedUser,
       token: newToken,
     });
 
   } catch (error: any) {
     console.error('Link wallet error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to link wallet. Please try again.' },
-      { status: 500 }
-    );
-  }
-}
-
-// GET - Check if wallet is already linked
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const walletAddress = searchParams.get('wallet');
-
-    if (!walletAddress) {
-      return NextResponse.json(
-        { success: false, error: 'Wallet address is required' },
-        { status: 400 }
-      );
-    }
-
-    const normalizedWallet = walletAddress.toLowerCase();
-    const linkedEmail = await redis.get(`auth:wallet:${normalizedWallet}`);
-
-    return NextResponse.json({
-      success: true,
-      isLinked: !!linkedEmail,
-      // Don't expose the actual email for privacy
-    });
-
-  } catch (error: any) {
-    console.error('Check wallet link error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to check wallet status' },
+      { success: false, error: 'Failed to link wallet' },
       { status: 500 }
     );
   }
