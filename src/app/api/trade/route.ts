@@ -12,8 +12,8 @@ import { withRateLimit, tradeLimiter, checkSuspiciousActivity } from "@/lib/secu
 import { logTrade, logAudit } from "@/lib/security/audit-logger";
 import { getMetalSpread } from "@/lib/spread-config";
 import { getUserTier, calculateTierFee, getDefaultTier } from "@/lib/auxiteer-service";
-import { createPublicClient, http, formatUnits } from "viem";
-import { sepolia } from "viem/chains";
+import { createPublicClient, http, formatUnits, formatEther } from "viem";
+import { sepolia, mainnet } from "viem/chains";
 import {
   updateOraclePrices,
   buyMetalToken,
@@ -87,12 +87,23 @@ const VALID_TOKENS = [...METALS, "auxm", ...CRYPTOS];
 // Feature flag: Enable/disable blockchain execution
 const BLOCKCHAIN_ENABLED = process.env.ENABLE_BLOCKCHAIN_TRADES === "true";
 
-// Blockchain client for balance checks
-const RPC_URL = process.env.SEPOLIA_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
-const publicClient = createPublicClient({
+// Blockchain clients
+// Sepolia for ERC-20 tokens (metals, USDT)
+const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
+const sepoliaClient = createPublicClient({
   chain: sepolia,
-  transport: http(RPC_URL, { timeout: 10000 }),
+  transport: http(SEPOLIA_RPC_URL, { timeout: 10000 }),
 });
+
+// Mainnet for native ETH
+const ETH_RPC_URL = process.env.ETH_RPC_URL || "https://eth-mainnet.g.alchemy.com/v2/demo";
+const mainnetClient = createPublicClient({
+  chain: mainnet,
+  transport: http(ETH_RPC_URL, { timeout: 10000 }),
+});
+
+// Keep publicClient for backward compatibility
+const publicClient = sepoliaClient;
 
 // Token addresses from central config
 const TOKEN_ADDRESSES: Record<string, `0x${string}`> = {
@@ -113,8 +124,27 @@ const ERC20_ABI = [
   },
 ] as const;
 
-// Get blockchain balance for on-chain tokens
-async function getBlockchainBalance(address: string, token: string): Promise<number> {
+// ═══════════════════════════════════════════════════════════════════════════
+// BLOCKCHAIN BALANCE FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Get native ETH balance from Mainnet
+async function getEthBalance(address: string): Promise<number> {
+  try {
+    const balance = await mainnetClient.getBalance({
+      address: address as `0x${string}`,
+    });
+    const ethBalance = parseFloat(formatEther(balance));
+    console.log(`   ETH balance from Mainnet: ${ethBalance}`);
+    return ethBalance;
+  } catch (error) {
+    console.error("Error getting ETH balance from Mainnet:", error);
+    return 0;
+  }
+}
+
+// Get ERC-20 token balance from Sepolia
+async function getErc20Balance(address: string, token: string): Promise<number> {
   const tokenLower = token.toLowerCase();
   const tokenAddress = TOKEN_ADDRESSES[tokenLower];
   
@@ -122,7 +152,7 @@ async function getBlockchainBalance(address: string, token: string): Promise<num
   
   try {
     const decimals = tokenLower === "usdt" ? 6 : 18;
-    const balance = await publicClient.readContract({
+    const balance = await sepoliaClient.readContract({
       address: tokenAddress,
       abi: ERC20_ABI,
       functionName: "balanceOf",
@@ -130,9 +160,22 @@ async function getBlockchainBalance(address: string, token: string): Promise<num
     });
     return parseFloat(formatUnits(balance, decimals));
   } catch (error) {
-    console.error(`Error getting blockchain balance for ${token}:`, error);
+    console.error(`Error getting ERC-20 balance for ${token}:`, error);
     return 0;
   }
+}
+
+// Get blockchain balance for on-chain tokens (unified function)
+async function getBlockchainBalance(address: string, token: string): Promise<number> {
+  const tokenLower = token.toLowerCase();
+  
+  // ETH - Native token on Mainnet
+  if (tokenLower === "eth") {
+    return await getEthBalance(address);
+  }
+  
+  // ERC-20 tokens on Sepolia (metals + USDT)
+  return await getErc20Balance(address, token);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -517,14 +560,27 @@ export async function POST(request: NextRequest) {
     console.log(`   Redis bonusAuxm: ${bonusAuxm}`);
     console.log(`   Redis all:`, currentBalance);
 
-    // Check blockchain balance for on-chain tokens (metals + USDT)
-    const ON_CHAIN_TOKENS = ["usdt", "auxg", "auxs", "auxpt", "auxpd"];
+    // ═══════════════════════════════════════════════════════════════════════
+    // CHECK BLOCKCHAIN BALANCE FOR ON-CHAIN TOKENS
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    // Tokens that have on-chain balance:
+    // - ETH: Native token on Ethereum Mainnet
+    // - USDT, AUXG, AUXS, AUXPT, AUXPD: ERC-20 on Sepolia
+    const ON_CHAIN_TOKENS = ["eth", "usdt", "auxg", "auxs", "auxpt", "auxpd"];
+    
     if (ON_CHAIN_TOKENS.includes(fromTokenLower)) {
       const blockchainBalance = await getBlockchainBalance(normalizedAddress, fromTokenLower);
       const redisOffChain = parseFloat(currentBalance[fromTokenLower] as string || "0");
       console.log(`   Blockchain ${fromTokenLower}: ${blockchainBalance}, Redis: ${redisOffChain}`);
-      // Total = blockchain + redis (off-chain trades)
-      fromBalance = blockchainBalance + redisOffChain;
+      
+      // For ETH: Use only blockchain balance (no Redis component)
+      // For others: Total = blockchain + redis (off-chain trades)
+      if (fromTokenLower === "eth") {
+        fromBalance = blockchainBalance;
+      } else {
+        fromBalance = blockchainBalance + redisOffChain;
+      }
     }
     
     // For AUXM: Use Redis balance (it's off-chain token)
@@ -534,10 +590,10 @@ export async function POST(request: NextRequest) {
       fromBalance = auxmBalance;
     }
     
-    // For other cryptos (ETH, BTC, etc.) - use Redis balance
-    const OFF_CHAIN_CRYPTOS = ["eth", "btc", "xrp", "sol"];
-    if (OFF_CHAIN_CRYPTOS.includes(fromTokenLower)) {
-      console.log(`   ${fromTokenLower} is off-chain, using Redis: ${fromBalance}`);
+    // For other cryptos (BTC, XRP, SOL) - use Redis balance (custodial)
+    const CUSTODIAL_CRYPTOS = ["btc", "xrp", "sol"];
+    if (CUSTODIAL_CRYPTOS.includes(fromTokenLower)) {
+      console.log(`   ${fromTokenLower} is custodial, using Redis: ${fromBalance}`);
     }
 
     // 6. Balance check
