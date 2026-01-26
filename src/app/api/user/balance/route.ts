@@ -15,8 +15,10 @@ const MOCK_BALANCE = {
   auxg: 15.75, auxs: 500, auxpt: 2.5, auxpd: 1.25, eth: 0.5, btc: 0.01, xrp: 100, sol: 2.5, usdt: 0,
 };
 
-// Blockchain RPC
-const RPC_URL = process.env.BLOCKCHAIN_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
+// Blockchain RPC - Ethereum Mainnet
+const ETH_RPC_URL = process.env.ETH_RPC_URL || process.env.BLOCKCHAIN_RPC_URL || "https://eth-mainnet.g.alchemy.com/v2/demo";
+// Sepolia for tokens
+const SEPOLIA_RPC_URL = process.env.BLOCKCHAIN_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
 
 // Token Contracts from central config
 const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
@@ -29,7 +31,7 @@ const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
 
 // Which tokens are on-chain vs off-chain
 const ON_CHAIN_TOKENS = ["usdt", "auxg", "auxs", "auxpt", "auxpd"];
-const OFF_CHAIN_TOKENS = ["auxm", "bonusauxm", "eth", "btc", "xrp", "sol"];
+const OFF_CHAIN_TOKENS = ["auxm", "bonusauxm", "btc", "xrp", "sol"];
 
 // ERC20 ABI (minimal)
 const ERC20_ABI = [
@@ -38,18 +40,29 @@ const ERC20_ABI = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// BLOCKCHAIN BALANCE HELPER
+// BLOCKCHAIN BALANCE HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
+
+// Get native ETH balance from Ethereum Mainnet
+async function getEthBalance(address: string): Promise<number> {
+  try {
+    const provider = new ethers.JsonRpcProvider(ETH_RPC_URL);
+    const balance = await provider.getBalance(address);
+    return parseFloat(ethers.formatEther(balance));
+  } catch (error) {
+    console.error('ETH balance error:', error);
+    return 0;
+  }
+}
 
 async function getBlockchainBalance(address: string, token: string): Promise<number> {
   try {
     const tokenConfig = TOKEN_CONTRACTS[token.toLowerCase()];
     if (!tokenConfig || !tokenConfig.address) {
-      // Contract not configured, return 0
       return 0;
     }
 
-    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    const provider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
     const contract = new ethers.Contract(tokenConfig.address, ERC20_ABI, provider);
     
     const balance = await contract.balanceOf(address);
@@ -65,15 +78,20 @@ async function getBlockchainBalance(address: string, token: string): Promise<num
 async function getAllBlockchainBalances(address: string): Promise<Record<string, number>> {
   const balances: Record<string, number> = {};
   
-  // Fetch all on-chain balances in parallel
-  const promises = ON_CHAIN_TOKENS.map(async (token) => {
+  // Fetch ETH balance from mainnet
+  const ethPromise = getEthBalance(address);
+  
+  // Fetch all ERC20 token balances in parallel
+  const tokenPromises = ON_CHAIN_TOKENS.map(async (token) => {
     const balance = await getBlockchainBalance(address, token);
     return { token, balance };
   });
   
-  const results = await Promise.all(promises);
+  const [ethBalance, ...tokenResults] = await Promise.all([ethPromise, ...tokenPromises]);
   
-  results.forEach(({ token, balance }) => {
+  balances.eth = ethBalance;
+  
+  tokenResults.forEach(({ token, balance }) => {
     balances[token] = balance;
   });
   
@@ -114,24 +132,26 @@ async function getHybridBalance(address: string): Promise<{
   // 1. Get Redis balance (off-chain data)
   const redisBalance = await getUserBalance(address);
   
-  // 2. Get Blockchain balances (on-chain tokens)
+  // 2. Get Blockchain balances (on-chain tokens + ETH)
   const blockchainBalances = await getAllBlockchainBalances(address);
   
   // 3. Get staked amounts
   const stakedAmounts = await getStakedAmounts(address);
   
-  // 4. Merge - prioritize blockchain for on-chain tokens, subtract staked
+  // 4. Merge - prioritize blockchain for on-chain tokens
   const balances: Record<string, number> = {
     // Off-chain from Redis
     auxm: parseFloat(String(redisBalance.auxm || 0)),
     bonusAuxm: parseFloat(String((redisBalance as any).bonusauxm || redisBalance.bonusAuxm || 0)),
-    eth: parseFloat(String(redisBalance.eth || 0)),
     btc: parseFloat(String(redisBalance.btc || 0)),
     xrp: parseFloat(String(redisBalance.xrp || 0)),
     sol: parseFloat(String(redisBalance.sol || 0)),
     usd: parseFloat(String(redisBalance.usd || 0)),
     
-    // On-chain from Blockchain + Off-chain from Redis (subtract staked amounts for available balance)
+    // ETH from Blockchain (mainnet)
+    eth: blockchainBalances.eth || 0,
+    
+    // ERC20 tokens from Blockchain + Off-chain from Redis (subtract staked amounts)
     usdt: (blockchainBalances.usdt || 0) + parseFloat(String(redisBalance.usdt || 0)),
     auxg: Math.max(0, (blockchainBalances.auxg || 0) + parseFloat(String(redisBalance.auxg || 0)) - (stakedAmounts.auxg || 0)),
     auxs: Math.max(0, (blockchainBalances.auxs || 0) + parseFloat(String(redisBalance.auxs || 0)) - (stakedAmounts.auxs || 0)),
@@ -146,7 +166,7 @@ async function getHybridBalance(address: string): Promise<{
   const sources: Record<string, "blockchain" | "redis"> = {
     auxm: "redis",
     bonusAuxm: "redis",
-    eth: "redis",
+    eth: "blockchain",  // Now from blockchain!
     btc: "redis",
     xrp: "redis",
     sol: "redis",
@@ -220,14 +240,14 @@ export async function GET(request: NextRequest) {
       };
       responseSource = "redis";
     } else if (source === "blockchain") {
-      // Only Blockchain (for on-chain tokens)
+      // Only Blockchain (for on-chain tokens + ETH)
       const blockchainBalances = await getAllBlockchainBalances(address);
       balances = {
         auxm: 0,
         bonusAuxm: 0,
         totalAuxm: 0,
+        eth: blockchainBalances.eth || 0,
         ...blockchainBalances,
-        eth: 0,
         btc: 0,
         xrp: 0,
         sol: 0,
@@ -270,7 +290,7 @@ export async function GET(request: NextRequest) {
       timestamp: Date.now(),
       source: responseSource,
       ...(sources && { sources }),
-      ...(onChainBalances && { onChainBalances }), // On-chain only balances for transfers
+      ...(onChainBalances && { onChainBalances }),
     });
   } catch (error) {
     console.error("Balance API error:", error);
@@ -332,4 +352,3 @@ export async function PUT(request: NextRequest) {
   const { balances } = await getHybridBalance(address);
   return NextResponse.json({ success: true, newBalance: balances, expiresAt: expiresAt.toISOString(), source: "hybrid" });
 }
-// rebuild 1767454943
