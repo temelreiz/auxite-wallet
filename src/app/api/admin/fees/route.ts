@@ -9,15 +9,28 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-// Admin authentication (simple token check - enhance for production)
+// Admin authentication - supports both ADMIN_SECRET and session token
 const ADMIN_SECRET = process.env.ADMIN_SECRET || "auxite-admin-secret";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-function isAuthorized(request: NextRequest): boolean {
+async function isAuthorized(request: NextRequest): Promise<boolean> {
   const authHeader = request.headers.get("authorization");
   if (!authHeader) return false;
   
   const token = authHeader.replace("Bearer ", "");
-  return token === ADMIN_SECRET;
+  
+  // Check direct ADMIN_SECRET
+  if (token === ADMIN_SECRET) return true;
+  
+  // Check session token from Redis (admin panel login)
+  try {
+    const sessionData = await redis.get(`admin:session:${token}`);
+    if (sessionData) return true;
+  } catch (e) {
+    console.error("Session check error:", e);
+  }
+  
+  return false;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -25,7 +38,7 @@ function isAuthorized(request: NextRequest): boolean {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!await isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -109,7 +122,7 @@ export async function GET(request: NextRequest) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!await isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
