@@ -367,6 +367,7 @@ const TIER_ICONS: Record<string, string> = {
 
 const TABS = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
+  { id: "fees", label: "Fees", icon: "💵" },
   { id: "analytics", label: "Analitik", icon: "📈" },
   { id: "auxiteer", label: "Auxiteer", icon: "⭐" },
   { id: "spreads", label: "Spread", icon: "💹" },
@@ -447,6 +448,16 @@ export default function AdminDashboard() {
 
   // Hot Wallet
   const [walletBalances, setWalletBalances] = useState<any>(null);
+
+  // Platform Fees
+  const [platformFees, setPlatformFees] = useState<{
+    fees: Record<string, { total: number; pending: number; transferred: number; transactionCount: number; valueUsd: number }>;
+    summary: { totalValueUsd: number; tokenCount: number };
+    recentTransfers: any[];
+  } | null>(null);
+  const [feesLoading, setFeesLoading] = useState(false);
+  const [transferModal, setTransferModal] = useState<{ token: string; pending: number } | null>(null);
+  const [transferForm, setTransferForm] = useState({ amount: 0, ledgerAddress: '', txHash: '', note: '' });
   const [walletLoading, setWalletLoading] = useState(false);
   const [walletProcessing, setWalletProcessing] = useState<string | null>(null);
   const [pendingUserWithdraws, setPendingUserWithdraws] = useState<any[]>([]);
@@ -642,6 +653,10 @@ export default function AdminDashboard() {
     if (activeTab === "analytics") {
       intervals.push(setInterval(loadAnalytics, 120000));
     }
+    if (activeTab === "fees") {
+      loadFees();
+      intervals.push(setInterval(loadFees, 60000));
+    }
     
     return () => intervals.forEach(clearInterval);
   }, [authenticated, activeTab]);
@@ -758,6 +773,52 @@ export default function AdminDashboard() {
       console.error("Failed to load wallet:", e);
     } finally {
       setWalletLoading(false);
+    }
+  };
+
+  // Load Platform Fees
+  const loadFees = async () => {
+    setFeesLoading(true);
+    try {
+      const res = await fetch("/api/admin/fees", { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setPlatformFees(data);
+      }
+    } catch (e) {
+      console.error("Failed to load fees:", e);
+    } finally {
+      setFeesLoading(false);
+    }
+  };
+
+  // Transfer fees to Ledger
+  const transferFeesToLedger = async () => {
+    if (!transferModal) return;
+    try {
+      const res = await fetch("/api/admin/fees", {
+        method: "POST",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: transferModal.token,
+          amount: transferForm.amount,
+          ledgerAddress: transferForm.ledgerAddress,
+          txHash: transferForm.txHash,
+          note: transferForm.note,
+        }),
+      });
+      if (res.ok) {
+        alert("Transfer kaydedildi!");
+        setTransferModal(null);
+        setTransferForm({ amount: 0, ledgerAddress: '', txHash: '', note: '' });
+        loadFees();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Transfer başarısız");
+      }
+    } catch (e) {
+      console.error("Transfer error:", e);
+      alert("Transfer hatası");
     }
   };
 
@@ -1784,6 +1845,198 @@ export default function AdminDashboard() {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Fees Tab */}
+          {activeTab === "fees" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">💵 Platform Fee'leri</h2>
+                <button
+                  onClick={loadFees}
+                  disabled={feesLoading}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm flex items-center gap-2"
+                >
+                  <span className={feesLoading ? "animate-spin" : ""}>🔄</span>
+                  Yenile
+                </button>
+              </div>
+
+              {/* Summary Cards */}
+              {platformFees && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-gradient-to-r from-emerald-900/50 to-emerald-800/30 border border-emerald-700/50 rounded-xl p-6">
+                    <div className="text-emerald-400 text-sm mb-1">Toplam Fee (USD)</div>
+                    <div className="text-3xl font-bold text-white">${platformFees.summary.totalValueUsd.toFixed(2)}</div>
+                  </div>
+                  <div className="bg-gradient-to-r from-amber-900/50 to-amber-800/30 border border-amber-700/50 rounded-xl p-6">
+                    <div className="text-amber-400 text-sm mb-1">Bekleyen (Ledger'a aktarılmamış)</div>
+                    <div className="text-3xl font-bold text-white">${platformFees.summary.totalValueUsd.toFixed(2)}</div>
+                  </div>
+                  <div className="bg-gradient-to-r from-blue-900/50 to-blue-800/30 border border-blue-700/50 rounded-xl p-6">
+                    <div className="text-blue-400 text-sm mb-1">Token Çeşidi</div>
+                    <div className="text-3xl font-bold text-white">{platformFees.summary.tokenCount}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Fees by Token */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+                <div className="p-4 border-b border-slate-800">
+                  <h3 className="font-semibold">Token Bazlı Fee'ler</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-slate-800/50">
+                      <tr>
+                        <th className="text-left p-4 text-slate-400 text-sm">Token</th>
+                        <th className="text-right p-4 text-slate-400 text-sm">Toplam</th>
+                        <th className="text-right p-4 text-slate-400 text-sm">Bekleyen</th>
+                        <th className="text-right p-4 text-slate-400 text-sm">Transfer Edilmiş</th>
+                        <th className="text-right p-4 text-slate-400 text-sm">İşlem Sayısı</th>
+                        <th className="text-right p-4 text-slate-400 text-sm">USD Değeri</th>
+                        <th className="text-center p-4 text-slate-400 text-sm">İşlem</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {platformFees && Object.entries(platformFees.fees).map(([token, data]) => (
+                        <tr key={token} className="border-t border-slate-800 hover:bg-slate-800/30">
+                          <td className="p-4 font-medium">{token}</td>
+                          <td className="p-4 text-right font-mono">{data.total.toFixed(6)}</td>
+                          <td className="p-4 text-right font-mono text-amber-400">{data.pending.toFixed(6)}</td>
+                          <td className="p-4 text-right font-mono text-emerald-400">{data.transferred.toFixed(6)}</td>
+                          <td className="p-4 text-right">{data.transactionCount}</td>
+                          <td className="p-4 text-right font-semibold">${data.valueUsd.toFixed(2)}</td>
+                          <td className="p-4 text-center">
+                            {data.pending > 0 && (
+                              <button
+                                onClick={() => {
+                                  setTransferModal({ token, pending: data.pending });
+                                  setTransferForm({ amount: data.pending, ledgerAddress: '', txHash: '', note: '' });
+                                }}
+                                className="px-3 py-1 bg-amber-500 hover:bg-amber-600 rounded text-black text-sm font-medium"
+                              >
+                                Transfer
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {(!platformFees || Object.keys(platformFees.fees).length === 0) && (
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-slate-500">
+                            Henüz fee toplanmamış
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Recent Transfers */}
+              {platformFees && platformFees.recentTransfers.length > 0 && (
+                <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+                  <div className="p-4 border-b border-slate-800">
+                    <h3 className="font-semibold">Son Transferler (Ledger'a)</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-slate-800/50">
+                        <tr>
+                          <th className="text-left p-4 text-slate-400 text-sm">Tarih</th>
+                          <th className="text-left p-4 text-slate-400 text-sm">Token</th>
+                          <th className="text-right p-4 text-slate-400 text-sm">Miktar</th>
+                          <th className="text-left p-4 text-slate-400 text-sm">Ledger Adresi</th>
+                          <th className="text-left p-4 text-slate-400 text-sm">TX Hash</th>
+                          <th className="text-left p-4 text-slate-400 text-sm">Not</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {platformFees.recentTransfers.map((transfer: any, i: number) => (
+                          <tr key={transfer.id || i} className="border-t border-slate-800">
+                            <td className="p-4 text-sm">{new Date(transfer.timestamp).toLocaleString('tr-TR')}</td>
+                            <td className="p-4 font-medium">{transfer.token}</td>
+                            <td className="p-4 text-right font-mono">{transfer.amount}</td>
+                            <td className="p-4 font-mono text-xs">{transfer.ledgerAddress?.slice(0, 20)}...</td>
+                            <td className="p-4 font-mono text-xs">{transfer.txHash?.slice(0, 16)}...</td>
+                            <td className="p-4 text-sm text-slate-400">{transfer.note || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Transfer Modal */}
+              {transferModal && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                  <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md">
+                    <div className="p-6 border-b border-slate-800">
+                      <h3 className="text-xl font-bold">💵 Fee Transfer - {transferModal.token}</h3>
+                      <p className="text-slate-400 text-sm mt-1">Bekleyen: {transferModal.pending.toFixed(6)} {transferModal.token}</p>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <div>
+                        <label className="block text-sm text-slate-400 mb-2">Miktar</label>
+                        <input
+                          type="number"
+                          step="0.000001"
+                          value={transferForm.amount}
+                          onChange={(e) => setTransferForm({ ...transferForm, amount: parseFloat(e.target.value) || 0 })}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-slate-400 mb-2">Ledger Adresi</label>
+                        <input
+                          type="text"
+                          value={transferForm.ledgerAddress}
+                          onChange={(e) => setTransferForm({ ...transferForm, ledgerAddress: e.target.value })}
+                          placeholder="0x..."
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-slate-400 mb-2">TX Hash (opsiyonel)</label>
+                        <input
+                          type="text"
+                          value={transferForm.txHash}
+                          onChange={(e) => setTransferForm({ ...transferForm, txHash: e.target.value })}
+                          placeholder="0x..."
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-slate-400 mb-2">Not</label>
+                        <input
+                          type="text"
+                          value={transferForm.note}
+                          onChange={(e) => setTransferForm({ ...transferForm, note: e.target.value })}
+                          placeholder="Weekly fee withdrawal"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                        />
+                      </div>
+                    </div>
+                    <div className="p-6 border-t border-slate-800 flex gap-3">
+                      <button
+                        onClick={() => setTransferModal(null)}
+                        className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl"
+                      >
+                        İptal
+                      </button>
+                      <button
+                        onClick={transferFeesToLedger}
+                        className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 rounded-xl text-black font-semibold"
+                      >
+                        ✅ Transfer Kaydet
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
