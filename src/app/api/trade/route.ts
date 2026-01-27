@@ -1010,6 +1010,30 @@ export async function POST(request: NextRequest) {
 
     const multi = redis.multi();
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // COLLECT PLATFORM FEES
+    // ─────────────────────────────────────────────────────────────────────────
+    if (fee > 0) {
+      // Determine fee token (usually the fromToken for buys, USD value for sells)
+      let feeToken = fromTokenLower;
+      let feeAmount = fee;
+      
+      // For metal sales, fee is in USD value - convert to appropriate token
+      if (METALS.includes(fromTokenLower) && (toTokenLower === "auxm" || CRYPTOS.includes(toTokenLower))) {
+        feeToken = "usd"; // Fee collected in USD equivalent
+      }
+      
+      // Store fee in platform account
+      multi.hincrbyfloat(`platform:fees:${feeToken}`, "total", feeAmount);
+      multi.hincrbyfloat(`platform:fees:${feeToken}`, "pending", feeAmount); // Not yet transferred to Ledger
+      multi.hincrby("platform:fees:count", feeToken, 1); // Transaction count
+      
+      console.log(`💰 Fee collected: ${feeAmount.toFixed(4)} ${feeToken.toUpperCase()}`);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // DEDUCT FROM USER BALANCE
+    // ─────────────────────────────────────────────────────────────────────────
     // Deduct from token
     if (type === "buy" && fromTokenLower === "auxm" && usedBonus > 0) {
       if (usedBonus > 0) {
@@ -1028,6 +1052,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // ADD TO USER BALANCE
+    // ─────────────────────────────────────────────────────────────────────────
     // Add to token
     // For ETH: Don't add to Redis if sent via blockchain
     const ON_CHAIN_TO_TOKENS = ["eth"];
