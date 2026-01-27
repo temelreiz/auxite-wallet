@@ -12,7 +12,8 @@ import { withRateLimit, tradeLimiter, checkSuspiciousActivity } from "@/lib/secu
 import { logTrade, logAudit } from "@/lib/security/audit-logger";
 import { getMetalSpread } from "@/lib/spread-config";
 import { getUserTier, calculateTierFee, getDefaultTier } from "@/lib/auxiteer-service";
-import { createPublicClient, http, formatUnits, formatEther } from "viem";
+import { createPublicClient, createWalletClient, http, formatUnits, formatEther, parseEther } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 import { sepolia, mainnet } from "viem/chains";
 import {
   updateOraclePrices,
@@ -104,6 +105,76 @@ const mainnetClient = createPublicClient({
 
 // Keep publicClient for backward compatibility
 const publicClient = sepoliaClient;
+
+// Hot wallet for ETH transfers (Mainnet)
+const HOT_WALLET_PRIVATE_KEY = process.env.HOT_WALLET_ETH_PRIVATE_KEY;
+
+// Create wallet client for ETH transfers
+function getMainnetWalletClient() {
+  if (!HOT_WALLET_PRIVATE_KEY) {
+    throw new Error("HOT_WALLET_ETH_PRIVATE_KEY not configured");
+  }
+  const account = privateKeyToAccount(HOT_WALLET_PRIVATE_KEY as `0x${string}`);
+  return createWalletClient({
+    account,
+    chain: mainnet,
+    transport: http(ETH_RPC_URL, { timeout: 30000 }),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ETH TRANSFER FUNCTION (Hot Wallet → User)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function sendEthToUser(
+  toAddress: string,
+  amountEth: number
+): Promise<{ success: boolean; txHash?: string; error?: string }> {
+  try {
+    const walletClient = getMainnetWalletClient();
+    const account = walletClient.account;
+    
+    if (!account) {
+      return { success: false, error: "Wallet account not found" };
+    }
+    
+    // Check hot wallet balance
+    const hotWalletBalance = await mainnetClient.getBalance({ address: account.address });
+    const amountWei = parseEther(amountEth.toString());
+    
+    // Estimate gas
+    const gasPrice = await mainnetClient.getGasPrice();
+    const gasLimit = BigInt(21000);
+    const gasCost = gasLimit * gasPrice;
+    
+    const totalRequired = amountWei + gasCost;
+    
+    console.log(`💸 ETH Transfer: ${amountEth} ETH to ${toAddress}`);
+    console.log(`   Hot wallet balance: ${formatEther(hotWalletBalance)} ETH`);
+    console.log(`   Required (incl. gas): ${formatEther(totalRequired)} ETH`);
+    
+    if (hotWalletBalance < totalRequired) {
+      return { 
+        success: false, 
+        error: `Insufficient hot wallet balance. Available: ${formatEther(hotWalletBalance)} ETH, Required: ${formatEther(totalRequired)} ETH` 
+      };
+    }
+    
+    // Send transaction
+    const txHash = await walletClient.sendTransaction({
+      to: toAddress as `0x${string}`,
+      value: amountWei,
+      gas: gasLimit,
+    });
+    
+    console.log(`✅ ETH Transfer TX: ${txHash}`);
+    
+    return { success: true, txHash };
+  } catch (error: any) {
+    console.error("ETH Transfer error:", error);
+    return { success: false, error: error.message };
+  }
+}
 
 // Token addresses from central config
 const TOKEN_ADDRESSES: Record<string, `0x${string}`> = {
@@ -823,23 +894,81 @@ export async function POST(request: NextRequest) {
       }
     }
     // ───────────────────────────────────────────────────────────────────────
-    // METAL → CRYPTO (Sell metal for crypto) - TIER BAZLI FEE
+    // METAL → CRYPTO (Sell metal for crypto) - NON-CUSTODIAL ETH TRANSFER
     // ───────────────────────────────────────────────────────────────────────
     else if (type === "sell" && METALS.includes(fromTokenLower) && CRYPTOS.includes(toTokenLower)) {
+      // 1. Get metal price
       const prices = await getTokenPrices(fromToken);
-      price = prices.bidPerGram;
+      const metalPricePerGram = prices.bidPerGram;
       
-      // ✅ TIER BAZLI FEE
-      fee = calculateTierFee(fromAmount, tierFeePercent);
-      toAmount = (fromAmount * price) - fee;
+      // 2. Get crypto price
+      const cryptoPrice = await getCryptoPrice(toTokenLower);
+      if (cryptoPrice === 0) {
+        return NextResponse.json({ error: `${toToken} fiyatı alınamadı` }, { status: 400 });
+      }
       
+      // 3. Calculate USD value of metal
+      const metalValueUsd = fromAmount * metalPricePerGram;
+      
+      // 4. Calculate fee (on USD value)
+      fee = calculateTierFee(metalValueUsd, tierFeePercent);
+      const netValueUsd = metalValueUsd - fee;
+      
+      // 5. Calculate crypto amount
+      toAmount = netValueUsd / cryptoPrice;
+      price = metalPricePerGram / cryptoPrice;
+      
+      console.log(`📊 METAL → CRYPTO Calculation:`);
+      console.log(`   Metal: ${fromAmount}g ${fromToken} @ $${metalPricePerGram}/g = $${metalValueUsd.toFixed(2)}`);
+      console.log(`   Fee: $${fee.toFixed(2)} (${tierFeePercent}%)`);
+      console.log(`   Net USD: $${netValueUsd.toFixed(2)}`);
+      console.log(`   Crypto: ${toAmount.toFixed(6)} ${toToken} @ $${cryptoPrice}`);
+      
+      // 6. Execute blockchain operations
       if (BLOCKCHAIN_ENABLED && executeOnChain) {
+        // 6a. Burn metal token (Sepolia)
+        console.log(`🔥 Burning ${fromAmount}g ${fromToken}...`);
         const sellResult = await sellMetalToken(fromToken, fromAmount, address);
         if (!sellResult.success) {
-          return NextResponse.json({ error: `Blockchain işlemi başarısız: ${sellResult.error}` }, { status: 500 });
+          return NextResponse.json({ 
+            error: `Metal burn başarısız: ${sellResult.error}` 
+          }, { status: 500 });
         }
-        txHash = sellResult.txHash;
-        blockchainResult = { executed: true, txHash, payoutETH: sellResult.payoutETH };
+        console.log(`✅ Metal burned: ${sellResult.txHash}`);
+        
+        // 6b. Send ETH to user (Mainnet) - Only for ETH
+        if (toTokenLower === "eth") {
+          console.log(`💸 Sending ${toAmount.toFixed(6)} ETH to ${address}...`);
+          const ethTransfer = await sendEthToUser(address, toAmount);
+          if (!ethTransfer.success) {
+            // Metal already burned, log error but continue
+            console.error(`❌ ETH transfer failed: ${ethTransfer.error}`);
+            return NextResponse.json({ 
+              error: `Metal satıldı ancak ETH transferi başarısız: ${ethTransfer.error}. Lütfen destek ile iletişime geçin.`,
+              metalBurnTxHash: sellResult.txHash,
+            }, { status: 500 });
+          }
+          
+          txHash = ethTransfer.txHash;
+          blockchainResult = { 
+            executed: true, 
+            metalBurnTxHash: sellResult.txHash,
+            ethTransferTxHash: ethTransfer.txHash,
+            payoutETH: toAmount,
+            payoutUSD: netValueUsd,
+          };
+        } else {
+          // For other cryptos (BTC, XRP, SOL) - not yet implemented
+          txHash = sellResult.txHash;
+          blockchainResult = { 
+            executed: true, 
+            txHash: sellResult.txHash, 
+            payoutETH: sellResult.payoutETH,
+            note: `${toToken} transfer not yet implemented - credited to Redis balance`
+          };
+        }
+      } else {
+        blockchainResult = { executed: false, reason: "Blockchain disabled" };
       }
     }
     // ───────────────────────────────────────────────────────────────────────
@@ -890,11 +1019,23 @@ export async function POST(request: NextRequest) {
         multi.hincrbyfloat(balanceKey, "auxm", -usedRegular);
       }
     } else {
-      multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
+      // For on-chain tokens (ETH, metals), don't deduct from Redis if blockchain executed
+      const ON_CHAIN_FROM_TOKENS = ["eth", "auxg", "auxs", "auxpt", "auxpd"];
+      if (ON_CHAIN_FROM_TOKENS.includes(fromTokenLower) && blockchainResult?.executed) {
+        console.log(`   Skipping Redis deduction for ${fromTokenLower} - handled on-chain`);
+      } else {
+        multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
+      }
     }
 
     // Add to token
-    multi.hincrbyfloat(balanceKey, toTokenLower, toAmount);
+    // For ETH: Don't add to Redis if sent via blockchain
+    const ON_CHAIN_TO_TOKENS = ["eth"];
+    if (ON_CHAIN_TO_TOKENS.includes(toTokenLower) && blockchainResult?.executed && blockchainResult?.ethTransferTxHash) {
+      console.log(`   Skipping Redis credit for ${toTokenLower} - sent via blockchain`);
+    } else {
+      multi.hincrbyfloat(balanceKey, toTokenLower, toAmount);
+    }
 
     // Transaction record
     const txId = txHash || `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
