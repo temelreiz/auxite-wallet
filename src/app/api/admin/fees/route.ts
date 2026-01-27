@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { kv } from "@vercel/kv";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -11,7 +12,6 @@ const redis = new Redis({
 
 // Admin authentication - supports both ADMIN_SECRET and session token
 const ADMIN_SECRET = process.env.ADMIN_SECRET || "auxite-admin-secret";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 async function isAuthorized(request: NextRequest): Promise<boolean> {
   const authHeader = request.headers.get("authorization");
@@ -22,10 +22,10 @@ async function isAuthorized(request: NextRequest): Promise<boolean> {
   // Check direct ADMIN_SECRET
   if (token === ADMIN_SECRET) return true;
   
-  // Check session token from Redis (admin panel login)
+  // Check session token from Vercel KV (admin panel login)
   try {
-    const sessionData = await redis.get(`admin:session:${token}`);
-    if (sessionData) return true;
+    const session = await kv.get(`admin:session:${token}`);
+    if (session) return true;
   } catch (e) {
     console.error("Session check error:", e);
   }
