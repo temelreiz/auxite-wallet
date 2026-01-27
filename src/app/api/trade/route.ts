@@ -222,7 +222,14 @@ async function getErc20Balance(address: string, token: string): Promise<number> 
   if (!tokenAddress) return 0;
   
   try {
-    const decimals = tokenLower === "usdt" ? 6 : 18;
+    // Correct decimals for each token type
+    let decimals = 18; // default
+    if (tokenLower === "usdt") {
+      decimals = 6;
+    } else if (["auxg", "auxs", "auxpt", "auxpd"].includes(tokenLower)) {
+      decimals = 3; // Metal tokens use 3 decimals
+    }
+    
     const balance = await sepoliaClient.readContract({
       address: tokenAddress,
       abi: ERC20_ABI,
