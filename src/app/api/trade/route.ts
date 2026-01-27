@@ -639,39 +639,43 @@ export async function POST(request: NextRequest) {
     console.log(`   Redis all:`, currentBalance);
 
     // ═══════════════════════════════════════════════════════════════════════
-    // CHECK BLOCKCHAIN BALANCE FOR ON-CHAIN TOKENS
+    // CHECK BALANCE FOR TOKENS
     // ═══════════════════════════════════════════════════════════════════════
     
-    // Tokens that have on-chain balance:
-    // - ETH: Native token on Ethereum Mainnet
-    // - USDT, AUXG, AUXS, AUXPT, AUXPD: ERC-20 on Sepolia
-    const ON_CHAIN_TOKENS = ["eth", "usdt", "auxg", "auxs", "auxpt", "auxpd"];
-    
-    if (ON_CHAIN_TOKENS.includes(fromTokenLower)) {
+    // ETH: Use blockchain balance only (non-custodial)
+    if (fromTokenLower === "eth") {
       const blockchainBalance = await getBlockchainBalance(normalizedAddress, fromTokenLower);
-      const redisOffChain = parseFloat(currentBalance[fromTokenLower] as string || "0");
-      console.log(`   Blockchain ${fromTokenLower}: ${blockchainBalance}, Redis: ${redisOffChain}`);
-      
-      // For ETH: Use only blockchain balance (no Redis component)
-      // For others: Total = blockchain + redis (off-chain trades)
-      if (fromTokenLower === "eth") {
-        fromBalance = blockchainBalance;
-      } else {
-        fromBalance = blockchainBalance + redisOffChain;
-      }
+      console.log(`   Blockchain ${fromTokenLower}: ${blockchainBalance}`);
+      fromBalance = blockchainBalance;
     }
     
-    // For AUXM: Use Redis balance (it's off-chain token)
+    // Metals (AUXG, AUXS, AUXPT, AUXPD): Use Redis balance (custodial for trading)
+    // Actual blockchain balance is for physical delivery/withdraw only
+    const METALS_REDIS = ["auxg", "auxs", "auxpt", "auxpd"];
+    if (METALS_REDIS.includes(fromTokenLower)) {
+      fromBalance = parseFloat(currentBalance[fromTokenLower] as string || "0");
+      console.log(`   Metal ${fromTokenLower} from Redis: ${fromBalance}`);
+    }
+    
+    // USDT: Use blockchain balance
+    if (fromTokenLower === "usdt") {
+      const blockchainBalance = await getBlockchainBalance(normalizedAddress, fromTokenLower);
+      console.log(`   Blockchain ${fromTokenLower}: ${blockchainBalance}`);
+      fromBalance = blockchainBalance;
+    }
+    
+    // AUXM: Use Redis balance (off-chain token)
     if (fromTokenLower === "auxm") {
       const auxmBalance = parseFloat(currentBalance.auxm as string || currentBalance.AUXM as string || "0");
       console.log(`   AUXM from Redis: ${auxmBalance}`);
       fromBalance = auxmBalance;
     }
     
-    // For other cryptos (BTC, XRP, SOL) - use Redis balance (custodial)
+    // Custodial cryptos (BTC, XRP, SOL): Use Redis balance
     const CUSTODIAL_CRYPTOS = ["btc", "xrp", "sol"];
     if (CUSTODIAL_CRYPTOS.includes(fromTokenLower)) {
-      console.log(`   ${fromTokenLower} is custodial, using Redis: ${fromBalance}`);
+      fromBalance = parseFloat(currentBalance[fromTokenLower] as string || "0");
+      console.log(`   ${fromTokenLower} is custodial, Redis: ${fromBalance}`);
     }
 
     // 6. Balance check
@@ -901,7 +905,8 @@ export async function POST(request: NextRequest) {
       }
     }
     // ───────────────────────────────────────────────────────────────────────
-    // METAL → CRYPTO (Sell metal for crypto) - NON-CUSTODIAL ETH TRANSFER
+    // METAL → CRYPTO (Sell metal for crypto) - REDIS BASED + ETH TRANSFER
+    // Metal balance is tracked in Redis, actual burn happens on withdraw
     // ───────────────────────────────────────────────────────────────────────
     else if (type === "sell" && METALS.includes(fromTokenLower) && CRYPTOS.includes(toTokenLower)) {
       // 1. Get metal price
@@ -931,51 +936,33 @@ export async function POST(request: NextRequest) {
       console.log(`   Net USD: $${netValueUsd.toFixed(2)}`);
       console.log(`   Crypto: ${toAmount.toFixed(6)} ${toToken} @ $${cryptoPrice}`);
       
-      // 6. Execute blockchain operations
-      if (BLOCKCHAIN_ENABLED && executeOnChain) {
-        // 6a. Burn metal token (Sepolia)
-        console.log(`🔥 Burning ${fromAmount}g ${fromToken}...`);
-        const sellResult = await sellMetalToken(fromToken, fromAmount, address);
-        if (!sellResult.success) {
+      // 6. For ETH: Transfer from hot wallet to user (non-custodial)
+      if (toTokenLower === "eth" && BLOCKCHAIN_ENABLED) {
+        console.log(`💸 Sending ${toAmount.toFixed(6)} ETH to ${address}...`);
+        const ethTransfer = await sendEthToUser(address, toAmount);
+        if (!ethTransfer.success) {
+          console.error(`❌ ETH transfer failed: ${ethTransfer.error}`);
           return NextResponse.json({ 
-            error: `Metal burn başarısız: ${sellResult.error}` 
+            error: `ETH transferi başarısız: ${ethTransfer.error}`,
           }, { status: 500 });
         }
-        console.log(`✅ Metal burned: ${sellResult.txHash}`);
         
-        // 6b. Send ETH to user (Mainnet) - Only for ETH
-        if (toTokenLower === "eth") {
-          console.log(`💸 Sending ${toAmount.toFixed(6)} ETH to ${address}...`);
-          const ethTransfer = await sendEthToUser(address, toAmount);
-          if (!ethTransfer.success) {
-            // Metal already burned, log error but continue
-            console.error(`❌ ETH transfer failed: ${ethTransfer.error}`);
-            return NextResponse.json({ 
-              error: `Metal satıldı ancak ETH transferi başarısız: ${ethTransfer.error}. Lütfen destek ile iletişime geçin.`,
-              metalBurnTxHash: sellResult.txHash,
-            }, { status: 500 });
-          }
-          
-          txHash = ethTransfer.txHash;
-          blockchainResult = { 
-            executed: true, 
-            metalBurnTxHash: sellResult.txHash,
-            ethTransferTxHash: ethTransfer.txHash,
-            payoutETH: toAmount,
-            payoutUSD: netValueUsd,
-          };
-        } else {
-          // For other cryptos (BTC, XRP, SOL) - not yet implemented
-          txHash = sellResult.txHash;
-          blockchainResult = { 
-            executed: true, 
-            txHash: sellResult.txHash, 
-            payoutETH: sellResult.payoutETH,
-            note: `${toToken} transfer not yet implemented - credited to Redis balance`
-          };
-        }
+        txHash = ethTransfer.txHash;
+        blockchainResult = { 
+          executed: true, 
+          ethTransferTxHash: ethTransfer.txHash,
+          payoutETH: toAmount,
+          payoutUSD: netValueUsd,
+          note: "Metal deducted from Redis, ETH sent to user wallet"
+        };
+        console.log(`✅ ETH sent to user: ${ethTransfer.txHash}`);
       } else {
-        blockchainResult = { executed: false, reason: "Blockchain disabled" };
+        // For other cryptos (BTC, XRP, SOL) - credit to Redis (custodial)
+        blockchainResult = { 
+          executed: false, 
+          reason: "Custodial crypto - credited to Redis balance",
+          payoutUSD: netValueUsd,
+        };
       }
     }
     // ───────────────────────────────────────────────────────────────────────
@@ -1050,12 +1037,13 @@ export async function POST(request: NextRequest) {
         multi.hincrbyfloat(balanceKey, "auxm", -usedRegular);
       }
     } else {
-      // For on-chain tokens (ETH, metals), don't deduct from Redis if blockchain executed
-      const ON_CHAIN_FROM_TOKENS = ["eth", "auxg", "auxs", "auxpt", "auxpd"];
-      if (ON_CHAIN_FROM_TOKENS.includes(fromTokenLower) && blockchainResult?.executed) {
-        console.log(`   Skipping Redis deduction for ${fromTokenLower} - handled on-chain`);
+      // For ETH buy: Skip Redis deduction (user transferred ETH on-chain)
+      // For metals: Always deduct from Redis (we track metal balances in Redis)
+      if (fromTokenLower === "eth" && type === "buy" && blockchainResult?.executed) {
+        console.log(`   Skipping Redis deduction for ETH - transferred on-chain`);
       } else {
         multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
+        console.log(`   Deducting ${fromAmount} ${fromTokenLower} from Redis`);
       }
     }
 
