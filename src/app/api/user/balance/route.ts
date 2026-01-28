@@ -296,11 +296,23 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Fetch transactions
+    const txKey = `user:${address.toLowerCase()}:transactions`;
+    const rawTransactions = await redisClient.lrange(txKey, 0, 49);
+    const transactions = rawTransactions.map((tx: any) => {
+      try {
+        return typeof tx === 'string' ? JSON.parse(tx) : tx;
+      } catch {
+        return null;
+      }
+    }).filter(Boolean);
+
     return NextResponse.json({
       success: true,
       address: address.toLowerCase(),
       balances,
       stakedAmounts,
+      transactions,
       summary: {
         totalAuxm: balances.totalAuxm || (balances.auxm + balances.bonusAuxm),
         withdrawableAuxm: balances.auxm,
