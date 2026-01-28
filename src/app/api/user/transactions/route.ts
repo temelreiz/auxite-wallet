@@ -1,182 +1,85 @@
-// src/app/api/transactions/route.ts
-// Auxite Wallet - Transaction History API with Redis
+// src/app/api/user/transactions/route.ts
+// Transaction History API
 
 import { NextRequest, NextResponse } from "next/server";
-import {
-  getTransactions,
-  addTransaction,
-  type Transaction,
-} from "@/lib/redis";
+import { Redis } from "@upstash/redis";
 
-// Mock mode flag
-const USE_MOCK = !process.env.UPSTASH_REDIS_REST_URL;
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
-// Mock transactions
-const MOCK_TRANSACTIONS: Transaction[] = [
-  {
-    id: "tx_1",
-    type: "deposit",
-    token: "AUXM",
-    amount: 1000,
-    status: "completed",
-    timestamp: Date.now() - 86400000,
-    txHash: "0x1234...5678",
-    metadata: { method: "bank_transfer" },
-  },
-  {
-    id: "tx_2",
-    type: "swap",
-    fromToken: "AUXM",
-    toToken: "AUXG",
-    fromAmount: 500,
-    toAmount: 5.85,
-    status: "completed",
-    timestamp: Date.now() - 172800000,
-  },
-  {
-    id: "tx_3",
-    type: "bonus",
-    token: "AUXM",
-    amount: 25,
-    status: "completed",
-    timestamp: Date.now() - 259200000,
-    metadata: { reason: "welcome_bonus" },
-  },
-  {
-    id: "tx_4",
-    type: "swap",
-    fromToken: "AUXM",
-    toToken: "AUXS",
-    fromAmount: 100,
-    toAmount: 100.5,
-    status: "completed",
-    timestamp: Date.now() - 345600000,
-  },
-  {
-    id: "tx_5",
-    type: "withdraw",
-    token: "AUXM",
-    amount: 200,
-    status: "completed",
-    timestamp: Date.now() - 432000000,
-    txHash: "0xabcd...ef01",
-    metadata: { method: "bank_transfer", destination: "TR12..." },
-  },
-];
-
-/**
- * GET - Transaction geçmişini al
- */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const address = searchParams.get("address");
   const limit = parseInt(searchParams.get("limit") || "20");
   const offset = parseInt(searchParams.get("offset") || "0");
-  const type = searchParams.get("type"); // filter by type
+  const typeFilter = searchParams.get("type"); // comma-separated types
 
   if (!address) {
-    return NextResponse.json(
-      { error: "Address parameter is required" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Address required" }, { status: 400 });
   }
 
   try {
-    let transactions: Transaction[];
+    const normalizedAddress = address.toLowerCase();
+    const txKey = `user:${normalizedAddress}:transactions`;
 
-    if (USE_MOCK) {
-      transactions = MOCK_TRANSACTIONS;
-    } else {
-      transactions = await getTransactions(address, limit, offset);
-    }
+    // Get all transactions
+    const rawTransactions = await redis.lrange(txKey, 0, -1);
+    
+    let transactions = rawTransactions.map((tx: any) => {
+      try {
+        return typeof tx === 'string' ? JSON.parse(tx) : tx;
+      } catch {
+        return null;
+      }
+    }).filter(Boolean);
 
-    // Type filter
-    if (type) {
-      transactions = transactions.filter((tx) => tx.type === type);
-    }
+    // Calculate summary before filtering
+    const summary = {
+      total: transactions.length,
+      deposits: transactions.filter((t: any) => t.type === 'deposit').length,
+      withdrawals: transactions.filter((t: any) => t.type === 'withdraw').length,
+      trades: transactions.filter((t: any) => ['buy', 'sell', 'trade_buy', 'trade_sell', 'exchange', 'swap'].includes(t.type)).length,
+      transfers: transactions.filter((t: any) => ['transfer_in', 'transfer_out'].includes(t.type)).length,
+      stakes: transactions.filter((t: any) => ['stake', 'unstake'].includes(t.type)).length,
+    };
 
-    // Pagination için toplam sayı
-    const total = transactions.length;
-
-    return NextResponse.json({
-      success: true,
-      address: address.toLowerCase(),
-      transactions,
-      pagination: {
-        limit,
-        offset,
-        total,
-        hasMore: offset + limit < total,
-      },
-      timestamp: Date.now(),
-      source: USE_MOCK ? "mock" : "redis",
-    });
-  } catch (error) {
-    console.error("Transactions fetch error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch transactions" },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * POST - Yeni transaction ekle (internal use only)
- */
-export async function POST(request: NextRequest) {
-  try {
-    // API key kontrolü
-    const apiKey = request.headers.get("x-api-key");
-    if (apiKey !== process.env.INTERNAL_API_KEY) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const { address, transaction } = body;
-
-    if (!address || !transaction) {
-      return NextResponse.json(
-        { error: "Missing required fields: address, transaction" },
-        { status: 400 }
-      );
-    }
-
-    // Transaction validation
-    const validTypes = ["deposit", "withdraw", "swap", "transfer", "bonus"];
-    if (!validTypes.includes(transaction.type)) {
-      return NextResponse.json(
-        { error: `Invalid transaction type. Valid types: ${validTypes.join(", ")}` },
-        { status: 400 }
-      );
-    }
-
-    if (USE_MOCK) {
-      const mockId = `tx_mock_${Date.now()}`;
-      console.log(`[MOCK] Transaction added for ${address}:`, { id: mockId, ...transaction });
-      return NextResponse.json({
-        success: true,
-        transactionId: mockId,
-        message: "[MOCK] Transaction added",
-        source: "mock",
+    // Filter by type if specified
+    if (typeFilter) {
+      const types = typeFilter.split(',').map(t => t.trim());
+      transactions = transactions.filter((tx: any) => {
+        // Map some types
+        const txType = tx.type;
+        if (types.includes(txType)) return true;
+        // Handle trade filter
+        if (types.includes('trade_buy') && txType === 'buy') return true;
+        if (types.includes('trade_sell') && txType === 'sell') return true;
+        if (types.includes('exchange') && txType === 'swap') return true;
+        return false;
       });
     }
 
-    const transactionId = await addTransaction(address, {
-      ...transaction,
-      status: transaction.status || "pending",
-    });
+    // Sort by timestamp descending (newest first)
+    transactions.sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0));
+
+    // Paginate
+    const total = transactions.length;
+    const paginatedTransactions = transactions.slice(offset, offset + limit);
 
     return NextResponse.json({
       success: true,
-      transactionId,
-      message: "Transaction added successfully",
-      source: "redis",
+      transactions: paginatedTransactions,
+      summary,
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasMore: offset + limit < total,
+      },
     });
-  } catch (error) {
-    console.error("Add transaction error:", error);
-    return NextResponse.json(
-      { error: "Failed to add transaction" },
-      { status: 500 }
-    );
+  } catch (error: any) {
+    console.error("Transactions API error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
