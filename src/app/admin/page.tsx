@@ -367,6 +367,7 @@ const TIER_ICONS: Record<string, string> = {
 
 const TABS = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
+  { id: "pending", label: "Pending TX", icon: "⏳" },
   { id: "fees", label: "Fees", icon: "💵" },
   { id: "analytics", label: "Analitik", icon: "📈" },
   { id: "auxiteer", label: "Auxiteer", icon: "⭐" },
@@ -458,6 +459,12 @@ export default function AdminDashboard() {
   const [feesLoading, setFeesLoading] = useState(false);
   const [transferModal, setTransferModal] = useState<{ token: string; pending: number } | null>(null);
   const [transferForm, setTransferForm] = useState({ amount: 0, ledgerAddress: '', txHash: '', note: '' });
+
+  // Pending Transactions
+  const [pendingTransactions, setPendingTransactions] = useState<any[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const [verifyingTx, setVerifyingTx] = useState<string | null>(null);
+
   const [walletLoading, setWalletLoading] = useState(false);
   const [walletProcessing, setWalletProcessing] = useState<string | null>(null);
   const [pendingUserWithdraws, setPendingUserWithdraws] = useState<any[]>([]);
@@ -657,6 +664,10 @@ export default function AdminDashboard() {
       loadFees();
       intervals.push(setInterval(loadFees, 60000));
     }
+    if (activeTab === "pending") {
+      loadPendingTransactions();
+      intervals.push(setInterval(loadPendingTransactions, 30000));
+    }
     
     return () => intervals.forEach(clearInterval);
   }, [authenticated, activeTab]);
@@ -819,6 +830,46 @@ export default function AdminDashboard() {
     } catch (e) {
       console.error("Transfer error:", e);
       alert("Transfer hatası");
+    }
+  };
+
+  // Load Pending Transactions
+  const loadPendingTransactions = async () => {
+    setPendingLoading(true);
+    try {
+      const res = await fetch("/api/admin/pending-transactions", { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setPendingTransactions(data.transactions || []);
+      }
+    } catch (e) {
+      console.error("Failed to load pending transactions:", e);
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
+  // Verify pending transactions (trigger cron manually)
+  const verifyPendingTransactions = async () => {
+    setVerifyingTx('all');
+    try {
+      const res = await fetch("/api/cron/verify-pending-transfers", { 
+        method: "POST",
+        headers: getAuthHeaders() 
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Doğrulama tamamlandı: ${data.results?.verified || 0} onaylandı, ${data.results?.failed || 0} başarısız, ${data.results?.stillPending || 0} bekliyor`);
+        loadPendingTransactions();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Doğrulama başarısız");
+      }
+    } catch (e) {
+      console.error("Verify error:", e);
+      alert("Doğrulama hatası");
+    } finally {
+      setVerifyingTx(null);
     }
   };
 
@@ -2037,6 +2088,165 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Pending Transactions Tab */}
+          {activeTab === "pending" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">⏳ Pending Transactions</h2>
+                <div className="flex items-center gap-3">
+                  <span className="text-slate-400 text-sm">
+                    {pendingTransactions.length} bekleyen işlem
+                  </span>
+                  <button
+                    onClick={loadPendingTransactions}
+                    disabled={pendingLoading}
+                    className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 disabled:opacity-50"
+                  >
+                    {pendingLoading ? "Yükleniyor..." : "🔄 Yenile"}
+                  </button>
+                  <button
+                    onClick={verifyPendingTransactions}
+                    disabled={verifyingTx === 'all'}
+                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-500 disabled:opacity-50"
+                  >
+                    {verifyingTx === 'all' ? "Doğrulanıyor..." : "✅ Tümünü Doğrula"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-slate-800 rounded-xl p-4">
+                  <div className="text-slate-400 text-sm mb-1">Bekleyen</div>
+                  <div className="text-2xl font-bold text-amber-400">
+                    {pendingTransactions.filter(t => t.status === 'pending_confirmation').length}
+                  </div>
+                </div>
+                <div className="bg-slate-800 rounded-xl p-4">
+                  <div className="text-slate-400 text-sm mb-1">Onaylanan</div>
+                  <div className="text-2xl font-bold text-green-400">
+                    {pendingTransactions.filter(t => t.status === 'completed').length}
+                  </div>
+                </div>
+                <div className="bg-slate-800 rounded-xl p-4">
+                  <div className="text-slate-400 text-sm mb-1">Başarısız</div>
+                  <div className="text-2xl font-bold text-red-400">
+                    {pendingTransactions.filter(t => t.status === 'failed').length}
+                  </div>
+                </div>
+                <div className="bg-slate-800 rounded-xl p-4">
+                  <div className="text-slate-400 text-sm mb-1">Toplam ETH</div>
+                  <div className="text-2xl font-bold text-blue-400">
+                    {pendingTransactions.reduce((sum, t) => sum + parseFloat(t.fromAmount || 0), 0).toFixed(4)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Transactions Table */}
+              <div className="bg-slate-800 rounded-xl overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-slate-700">
+                    <tr>
+                      <th className="text-left p-3 text-slate-300">Tarih</th>
+                      <th className="text-left p-3 text-slate-300">Kullanıcı</th>
+                      <th className="text-left p-3 text-slate-300">İşlem</th>
+                      <th className="text-left p-3 text-slate-300">Miktar</th>
+                      <th className="text-left p-3 text-slate-300">TX Hash</th>
+                      <th className="text-left p-3 text-slate-300">Durum</th>
+                      <th className="text-left p-3 text-slate-300">Yaş</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingLoading ? (
+                      <tr>
+                        <td colSpan={7} className="p-8 text-center text-slate-400">
+                          Yükleniyor...
+                        </td>
+                      </tr>
+                    ) : pendingTransactions.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="p-8 text-center text-slate-400">
+                          Bekleyen işlem yok 🎉
+                        </td>
+                      </tr>
+                    ) : (
+                      pendingTransactions.map((tx, i) => {
+                        const age = Date.now() - tx.timestamp;
+                        const ageMin = Math.floor(age / 60000);
+                        const isOld = ageMin > 5;
+                        
+                        return (
+                          <tr key={tx.id || i} className="border-t border-slate-700 hover:bg-slate-750">
+                            <td className="p-3 text-slate-300 text-sm">
+                              {new Date(tx.timestamp).toLocaleString('tr-TR')}
+                            </td>
+                            <td className="p-3">
+                              <span className="font-mono text-xs text-slate-400">
+                                {tx.address?.slice(0, 6)}...{tx.address?.slice(-4)}
+                              </span>
+                            </td>
+                            <td className="p-3">
+                              <span className="text-amber-400">{tx.fromToken}</span>
+                              <span className="text-slate-500 mx-1">→</span>
+                              <span className="text-green-400">{tx.toToken}</span>
+                            </td>
+                            <td className="p-3">
+                              <div className="text-white">{parseFloat(tx.fromAmount).toFixed(6)} {tx.fromToken}</div>
+                              <div className="text-slate-400 text-xs">→ {parseFloat(tx.toAmount).toFixed(4)} {tx.toToken}</div>
+                            </td>
+                            <td className="p-3">
+                              {tx.ethTransferTxHash || tx.txHash ? (
+                                <a
+                                  href={`https://etherscan.io/tx/${tx.ethTransferTxHash || tx.txHash}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-mono text-xs text-blue-400 hover:underline"
+                                >
+                                  {(tx.ethTransferTxHash || tx.txHash)?.slice(0, 10)}...
+                                </a>
+                              ) : (
+                                <span className="text-slate-500">-</span>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                tx.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                                tx.status === 'failed' ? 'bg-red-500/20 text-red-400' :
+                                'bg-amber-500/20 text-amber-400'
+                              }`}>
+                                {tx.status === 'completed' ? '✅ Onaylı' :
+                                 tx.status === 'failed' ? '❌ Başarısız' :
+                                 '⏳ Bekliyor'}
+                              </span>
+                            </td>
+                            <td className="p-3">
+                              <span className={`text-sm ${isOld ? 'text-red-400' : 'text-slate-400'}`}>
+                                {ageMin < 1 ? '<1 dk' : `${ageMin} dk`}
+                                {isOld && ' ⚠️'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Info Box */}
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+                <h4 className="text-blue-400 font-medium mb-2">ℹ️ Optimistic Trading Nasıl Çalışır?</h4>
+                <ul className="text-slate-300 text-sm space-y-1">
+                  <li>• Kullanıcı ETH gönderir ve TX hash alınır</li>
+                  <li>• AUXG anında (optimistic) kullanıcıya verilir</li>
+                  <li>• Cron job her 2 dakikada TX onayını kontrol eder</li>
+                  <li>• Onaylanırsa status = completed, başarısızsa AUXG geri alınır</li>
+                  <li>• 10 dakikadan eski bekleyen işlemler timeout sayılır</li>
+                </ul>
+              </div>
             </div>
           )}
 
