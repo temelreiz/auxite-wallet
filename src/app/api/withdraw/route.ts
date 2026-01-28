@@ -31,7 +31,7 @@ const NETWORK_FEES: Record<string, number> = {
 // Minimum çekim miktarları
 const MIN_WITHDRAW: Record<string, number> = {
   USDT: 10,
-  ETH: 0.005,
+  ETH: 0.001,
   XRP: 10,
   SOL: 0.1,
   BTC: 0.0005,
