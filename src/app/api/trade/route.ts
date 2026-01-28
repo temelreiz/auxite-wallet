@@ -85,6 +85,9 @@ const METALS = ["auxg", "auxs", "auxpt", "auxpd"];
 const CRYPTOS = ["eth", "btc", "xrp", "sol", "usdt"];
 const VALID_TOKENS = [...METALS, "auxm", ...CRYPTOS];
 
+// Tokens that require on-chain transfer FROM user (non-custodial)
+const ON_CHAIN_FROM_TOKENS = ["eth"]; // User sends ETH to hot wallet
+
 // Feature flag: Enable/disable blockchain execution
 const BLOCKCHAIN_ENABLED = process.env.ENABLE_BLOCKCHAIN_TRADES === "true";
 
@@ -284,6 +287,8 @@ const tradeExecuteSchema = z.object({
   quoteId: z.string().optional(),
   email: z.string().email().optional(),
   holderName: z.string().optional(),
+  ethTransferTxHash: z.string().optional(), // TX hash from user's ETH transfer
+  optimistic: z.boolean().default(false), // Don't wait for blockchain confirmation
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -558,6 +563,8 @@ export async function POST(request: NextRequest) {
       quoteId,
       email,
       holderName,
+      ethTransferTxHash,
+      optimistic,
     } = validation.data;
 
     const normalizedAddress = address.toLowerCase();
@@ -1060,7 +1067,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Transaction record
-    const txId = txHash || `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const txId = txHash || ethTransferTxHash || `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Determine status based on optimistic mode and ETH transfer
+    // If user sent ETH (has txHash) and optimistic mode, mark as pending_confirmation
+    const hasPendingEthTransfer = ethTransferTxHash && optimistic && ON_CHAIN_FROM_TOKENS.includes(fromTokenLower);
+    const txStatus = hasPendingEthTransfer ? "pending_confirmation" : "completed";
+    
     const transaction = {
       id: txId,
       type,
@@ -1072,16 +1085,34 @@ export async function POST(request: NextRequest) {
       feePercent: tierFeePercent,
       price: price.toString(),
       usedBonus: usedBonus.toString(),
-      status: "completed",
+      status: txStatus,
       timestamp: Date.now(),
       blockchain: blockchainResult,
-      txHash,
-      tier: userTier.id, // ✅ Track which tier was used
+      txHash: txHash || ethTransferTxHash,
+      ethTransferTxHash, // Store user's ETH transfer TX for verification
+      tier: userTier.id,
       ip: ip.split(".").slice(0, 3).join(".") + ".***",
     };
 
     const txKey = `user:${normalizedAddress}:transactions`;
     multi.lpush(txKey, JSON.stringify(transaction));
+    
+    // If pending confirmation, add to pending transactions list for cron verification
+    if (txStatus === "pending_confirmation" && ethTransferTxHash) {
+      const pendingTx = {
+        txId,
+        ethTxHash: ethTransferTxHash,
+        address: normalizedAddress,
+        fromToken: fromToken.toUpperCase(),
+        toToken: toToken.toUpperCase(),
+        fromAmount,
+        toAmount,
+        timestamp: Date.now(),
+      };
+      multi.lpush("pending:eth_transfers", JSON.stringify(pendingTx));
+      multi.expire("pending:eth_transfers", 86400 * 7); // 7 gün TTL
+      console.log(`📋 Added to pending ETH transfers: ${ethTransferTxHash}`);
+    }
 
     await multi.exec();
 
