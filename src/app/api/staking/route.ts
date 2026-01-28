@@ -153,22 +153,40 @@ export async function POST(request: NextRequest) {
         }, { status: 400 });
       }
 
-      // Bakiye kontrolü
+      // Bakiye kontrolü - available balance (excluding already staked)
       const balanceKey = `user:${normalizedAddress}:balance`;
       const currentBalance = await redis.hget(balanceKey, metalLower);
-      const balance = parseFloat(currentBalance as string || "0");
+      const totalBalance = parseFloat(currentBalance as string || "0");
+      
+      // Get already staked amount
+      const stakingKey = `user:${normalizedAddress}:staking`;
+      const existingPositions = await redis.lrange(stakingKey, 0, -1);
+      let alreadyStaked = 0;
+      const now = Date.now();
+      
+      for (const pos of existingPositions) {
+        try {
+          const position = typeof pos === 'string' ? JSON.parse(pos) : pos;
+          if (position.status === 'active' && position.metal === metalLower && position.endDate > now) {
+            alreadyStaked += position.amount || 0;
+          }
+        } catch (e) {}
+      }
+      
+      const availableBalance = totalBalance - alreadyStaked;
 
-      if (balance < amount) {
+      if (availableBalance < amount) {
         return NextResponse.json({ 
           error: `Insufficient ${metal.toUpperCase()} balance`,
-          available: balance,
+          available: availableBalance,
+          totalBalance,
+          alreadyStaked,
           required: amount,
         }, { status: 400 });
       }
 
       // Stake pozisyonu oluştur
       const tier = STAKING_TIERS[duration];
-      const now = Date.now();
       const endDate = now + (duration * 24 * 60 * 60 * 1000);
       const expectedReward = (amount * tier.apy / 100) * (duration / 365);
 
@@ -184,11 +202,9 @@ export async function POST(request: NextRequest) {
         status: "active",
       };
 
-      // Bakiyeden düş ve stake pozisyonunu kaydet
+      // Sadece stake pozisyonunu kaydet (bakiyeden düşme yok - balance route hesaplayacak)
       const multi = redis.multi();
-      multi.hincrbyfloat(balanceKey, metalLower, -amount);
       
-      const stakingKey = `user:${normalizedAddress}:staking`;
       multi.lpush(stakingKey, JSON.stringify(position));
 
       // Transaction kaydı
