@@ -13,9 +13,18 @@ const redis = new Redis({
 });
 
 // Mainnet client for ETH transfer verification
+// Use multiple RPC endpoints for reliability
+const MAINNET_RPC_URLS = [
+  process.env.MAINNET_RPC_URL,
+  "https://eth.drpc.org",
+  "https://rpc.ankr.com/eth",
+  "https://ethereum.publicnode.com",
+  "https://1rpc.io/eth",
+].filter(Boolean) as string[];
+
 const mainnetClient = createPublicClient({
   chain: mainnet,
-  transport: http(process.env.MAINNET_RPC_URL || "https://eth.llamarpc.com"),
+  transport: http(MAINNET_RPC_URLS[0]),
 });
 
 const HOT_WALLET_ADDRESS = process.env.HOT_WALLET_ETH_ADDRESS?.toLowerCase();
