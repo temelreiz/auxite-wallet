@@ -17,14 +17,17 @@ const STAKEABLE_METALS = ["auxg", "auxs", "auxpt", "auxpd"];
 const STAKING_TIERS: Record<number, { apy: number; label: string }> = {
   30: { apy: 3, label: "1 Ay" },
   90: { apy: 5, label: "3 Ay" },
+  91: { apy: 5, label: "3 Ay" },  // Alternative
   180: { apy: 8, label: "6 Ay" },
+  181: { apy: 8, label: "6 Ay" }, // Alternative
   365: { apy: 12, label: "1 Yıl" },
+  366: { apy: 12, label: "1 Yıl" }, // Alternative
 };
 
 // Minimum stake miktarları (gram)
 const MIN_STAKE: Record<string, number> = {
-  auxg: 0.1,    // 0.1g altın
-  auxs: 10,     // 10g gümüş
+  auxg: 1,      // 1g altın
+  auxs: 5,      // 5g gümüş
   auxpt: 0.5,   // 0.5g platin
   auxpd: 0.5,   // 0.5g paladyum
 };
