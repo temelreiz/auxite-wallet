@@ -105,15 +105,39 @@ const redisClient = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-// Get staked amounts from Redis
+// Get staked amounts from active staking positions
 async function getStakedAmounts(address: string): Promise<Record<string, number>> {
-  const metals = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
-  const staked: Record<string, number> = {};
+  const staked: Record<string, number> = {
+    auxg: 0,
+    auxs: 0,
+    auxpt: 0,
+    auxpd: 0,
+  };
   
-  for (const metal of metals) {
-    const key = `staked:${address.toLowerCase()}:${metal}`;
-    const amount = await redisClient.get(key);
-    staked[metal.toLowerCase()] = parseFloat(String(amount || 0));
+  try {
+    // Get all staking positions for this user
+    const stakingKey = `user:${address.toLowerCase()}:staking`;
+    const positions = await redisClient.lrange(stakingKey, 0, -1);
+    
+    const now = Date.now();
+    
+    for (const pos of positions) {
+      try {
+        const position = typeof pos === 'string' ? JSON.parse(pos) : pos;
+        
+        // Only count active positions that haven't been withdrawn
+        if (position.status === 'active' && position.endDate > now) {
+          const metal = position.metal.toLowerCase();
+          if (staked.hasOwnProperty(metal)) {
+            staked[metal] += position.amount || 0;
+          }
+        }
+      } catch (e) {
+        // Skip invalid positions
+      }
+    }
+  } catch (e) {
+    console.error('Error getting staked amounts:', e);
   }
   
   return staked;
@@ -219,6 +243,7 @@ export async function GET(request: NextRequest) {
     let sources: Record<string, string> | undefined;
     let responseSource: string;
     let onChainBalances: Record<string, number> | undefined;
+    let stakedAmounts: Record<string, number> | undefined;
 
     if (source === "redis") {
       // Only Redis
@@ -260,13 +285,22 @@ export async function GET(request: NextRequest) {
       onChainBalances = result.onChainBalances;
       balances = result.balances;
       sources = result.sources;
+      stakedAmounts = result.stakedAmounts;
       responseSource = "hybrid";
+      
+      // Debug log
+      console.log(`📊 Balance for ${address}:`, {
+        auxs_total: (onChainBalances?.auxs || 0) + parseFloat(String((await getUserBalance(address)).auxs || 0)),
+        auxs_staked: stakedAmounts?.auxs || 0,
+        auxs_available: balances.auxs,
+      });
     }
 
     return NextResponse.json({
       success: true,
       address: address.toLowerCase(),
       balances,
+      stakedAmounts,
       summary: {
         totalAuxm: balances.totalAuxm || (balances.auxm + balances.bonusAuxm),
         withdrawableAuxm: balances.auxm,
