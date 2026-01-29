@@ -140,6 +140,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
 
   // Create new pairing session
   const createSession = useCallback(async () => {
+    console.log('🔵 createSession called');
     setStatus('loading');
     setSession(null);
 
@@ -149,6 +150,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
       if (!response.ok) throw new Error('Failed to create session');
 
       const data = await response.json();
+      console.log('🔵 Session created:', data);
       
       if (!data.success) throw new Error('Failed to create session');
       
@@ -163,6 +165,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
         status: 'pending',
       });
       setStatus('pending');
+      console.log('🔵 Status set to pending');
       setTimeLeft(data.expiresIn || 300);
     } catch (error) {
       console.error('Create session error:', error);
@@ -172,6 +175,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
 
   // Poll for status updates
   const checkStatus = useCallback(async () => {
+    console.log('🟡 checkStatus called, sessionId:', session?.sessionId);
     if (!session?.sessionId) return;
 
     try {
@@ -218,11 +222,14 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
 
   // Start polling when session is created
   useEffect(() => {
-      if (session && (status === 'pending' || status === 'verified')) {
+    console.log('🟢 Polling useEffect - session:', !!session, 'status:', status);
+    if (session && (status === 'pending' || status === 'verified')) {
+      console.log('🟢 Starting polling interval');
       const interval = setInterval(checkStatus, 2000);
       setPollInterval(interval);
 
       return () => {
+        console.log('🟢 Clearing polling interval');
         clearInterval(interval);
       };
     }
