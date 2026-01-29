@@ -17,16 +17,32 @@ type MenuSection = "personal" | "security" | "notifications" | "referral" | "pre
 
 export default function ProfilePage() {
   const { t, lang } = useLanguage();
-  const { isConnected, address } = useAccount();
+  const { isConnected: isExternalConnected, address: externalAddress } = useAccount();
   const { disconnect } = useDisconnect();
   const [mounted, setMounted] = useState(false);
   const [activeSection, setActiveSection] = useState<MenuSection>("personal");
+  
+  // Local wallet state (from QR login)
+  const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
+  const [walletMode, setWalletMode] = useState<string | null>(null);
+  
+  // Determine which address to use - local wallet takes priority if set
+  const address = walletMode === "local" && localWalletAddress ? localWalletAddress : externalAddress;
+  const isConnected = walletMode === "local" ? !!localWalletAddress : isExternalConnected;
   
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [priceAlertNotifications, setPriceAlertNotifications] = useState(true);
   const [transactionNotifications, setTransactionNotifications] = useState(true);
+  
+  // Load local wallet from localStorage
+  useEffect(() => {
+    const savedMode = localStorage.getItem("auxite_wallet_mode");
+    const savedAddress = localStorage.getItem("auxite_wallet_address");
+    if (savedMode) setWalletMode(savedMode);
+    if (savedAddress) setLocalWalletAddress(savedAddress);
+  }, []);
   
   // Editable user data
   const [userData, setUserData] = useState({
@@ -828,15 +844,7 @@ export default function ProfilePage() {
       <AuxiteerTierModal isOpen={showAuxiteerModal} onClose={() => setShowAuxiteerModal(false)} currentTierId={currentTier.id} userBalance={auxiteerStats?.balanceUsd || 0} userDays={auxiteerStats?.daysSinceRegistration || 0} isKycVerified={auxiteerStats?.isKycVerified || false} hasMetalAsset={auxiteerStats?.hasMetalAsset || false} hasActiveEarnLease={auxiteerStats?.hasActiveLease || false} />
       <FAQModal isOpen={showFAQModal} onClose={() => setShowFAQModal(false)} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
       <LegalModal isOpen={showLegalModal} onClose={() => setShowLegalModal(false)} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
-      <QRLoginModal walletAddress={address} isOpen={showMobilePairModal} onClose={() => setShowMobilePairModal(false)} onSuccess={(walletAddress, authToken) => { 
-        console.log("Mobile login success:", walletAddress); 
-        // Save wallet address and reload
-        localStorage.setItem('auxite_wallet_address', walletAddress);
-        localStorage.setItem('auxite_wallet_mode', 'local');
-        sessionStorage.setItem('auxite_session_unlocked', 'true');
-        setShowMobilePairModal(false);
-        window.location.reload();
-      }} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
+      <QRLoginModal walletAddress={address} isOpen={showMobilePairModal} onClose={() => setShowMobilePairModal(false)} onSuccess={(walletAddress, authToken) => { console.log("Mobile login success:", walletAddress); setShowMobilePairModal(false); }} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
       {isConnected && address && <OpenInMobileModal walletAddress={address} isOpen={showOpenInMobileModal} onClose={() => setShowOpenInMobileModal(false)} action="open_app" lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />}
     </main>
   );
