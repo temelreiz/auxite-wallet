@@ -144,18 +144,26 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
     setSession(null);
 
     try {
-      const response = await fetch('/api/auth/pair/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sourceDevice: 'web', targetDevice: 'mobile', walletAddress }),
-      });
+      const response = await fetch('/api/auth/qr-login?action=generate');
 
       if (!response.ok) throw new Error('Failed to create session');
 
-      const data: PairingSession = await response.json();
-      setSession(data);
+      const data = await response.json();
+      
+      if (!data.success) throw new Error('Failed to create session');
+      
+      // Parse qrData if it's a string
+      const qrDataObj = typeof data.qrData === 'string' ? JSON.parse(data.qrData) : data.qrData;
+      
+      setSession({
+        sessionId: data.sessionId,
+        pairingCode: data.sessionId.slice(0, 6).toUpperCase(),
+        qrData: data.qrData,
+        expiresAt: qrDataObj.expiresAt || (Date.now() + data.expiresIn * 1000),
+        status: 'pending',
+      });
       setStatus('pending');
-      setTimeLeft(Math.floor((data.expiresAt - Date.now()) / 1000));
+      setTimeLeft(data.expiresIn || 300);
     } catch (error) {
       console.error('Create session error:', error);
       setStatus('expired');
@@ -167,12 +175,10 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
     if (!session?.sessionId) return;
 
     try {
-      const response = await fetch(`/api/auth/pair/status/${session.sessionId}`);
+      const response = await fetch(`/api/auth/qr-login?action=status&sessionId=${session.sessionId}`);
       const data = await response.json();
 
-      if (data.status === 'verified') {
-        setStatus('verified');
-      } else if (data.status === 'confirmed' && data.authToken && data.walletAddress) {
+      if (data.status === 'approved' && data.walletAddress) {
         setStatus('success');
         // Clear polling
         if (pollInterval) {
@@ -181,14 +187,8 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
         }
         // Notify parent
         setTimeout(() => {
-          onSuccess(data.walletAddress, data.authToken);
+          onSuccess(data.walletAddress, session.sessionId);
         }, 1500);
-      } else if (data.status === 'rejected') {
-        setStatus('rejected');
-        if (pollInterval) {
-          clearInterval(pollInterval);
-          setPollInterval(null);
-        }
       } else if (data.status === 'expired') {
         setStatus('expired');
         if (pollInterval) {
