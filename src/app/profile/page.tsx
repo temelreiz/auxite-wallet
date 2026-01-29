@@ -174,8 +174,6 @@ export default function ProfilePage() {
     fee: auxiteerTierData?.fee ? (auxiteerTierData.fee === 0 ? "Custom" : auxiteerTierData.fee.toFixed(2) + "%") : baseTier.fee,
   };
 
-  useEffect(() => { setMounted(true); }, []);
-
   // Update referral code when address changes
   useEffect(() => {
     if (address) {
