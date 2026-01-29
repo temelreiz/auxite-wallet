@@ -1014,30 +1014,22 @@ export default function WalletPage() {
               </h3>
               
               {(() => {
-                // Calculate totals from allocations + staking
+                // Calculate totals from stakedAmounts (from WalletContext/API)
                 const metalPricesLocal = {
                   AUXG: bidPrices?.AUXG || 95,
                   AUXS: bidPrices?.AUXS || 1.15,
                   AUXPT: bidPrices?.AUXPT || 32,
                   AUXPD: bidPrices?.AUXPD || 35,
                 };
-                
-                // Allocation totals - useAllocations hook'tan gelen totalGrams kullan
-                const allocTotals: Record<string, number> = allocationGrams || { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 };
-                
-                // Staking totals
-                const stakeTotals: Record<string, number> = { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 };
-                activeStakes?.forEach((s) => {
-                  if (stakeTotals[s.metalSymbol] !== undefined) {
-                    stakeTotals[s.metalSymbol] += s.amountGrams;
-                  }
-                });
-                
-                // Combined totals
-                const totalGramsLocal: Record<string, number> = {};
-                ["AUXG", "AUXS", "AUXPT", "AUXPD"].forEach((m) => {
-                  totalGramsLocal[m] = (allocTotals[m] || 0) + (stakeTotals[m] || 0);
-                });
+
+                // Staked totals from WalletContext (API'den geliyor)
+                // Mobil "Kilitli" ile eşleşmesi için sadece staked göster
+                const totalGramsLocal: Record<string, number> = {
+                  AUXG: stakedAmounts?.auxg || 0,
+                  AUXS: stakedAmounts?.auxs || 0,
+                  AUXPT: stakedAmounts?.auxpt || 0,
+                  AUXPD: stakedAmounts?.auxpd || 0,
+                };
                 
                 // Total USD value
                 const totalValue = Object.entries(totalGramsLocal).reduce((sum, [metal, grams]) => {
