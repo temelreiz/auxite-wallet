@@ -365,7 +365,7 @@ export default function WalletPage() {
   
 
   // Bakiyeler - useWallet hook
-  const { balances, isConnected, chainId, canSwitchChain, switchChain } = useWalletContext();
+  const { balances, stakedAmounts, isConnected, chainId, canSwitchChain, switchChain } = useWalletContext();
   const isWrongChain = isConnected && chainId !== null && !isAllowedChain(chainId);
   const { allocations, totalGrams: allocationGrams, isLoading: allocLoading } = useAllocations();
   const { activeStakes, loading: stakingLoading } = useStaking();
@@ -468,11 +468,12 @@ export default function WalletPage() {
     ((allocationGrams?.AUXPT || 0) * (metalAskPrices?.AUXPT || 0)) +
     ((allocationGrams?.AUXPD || 0) * (metalAskPrices?.AUXPD || 0));
 
-  // Staked değeri (activeStakes'ten hesapla)
-  const stakedValueCalc = activeStakes?.reduce((total, stake) => {
-    const price = metalAskPrices?.[stake.metalSymbol as keyof typeof metalAskPrices] || 0;
-    return total + (stake.amountGrams * price);
-  }, 0) || 0;
+  // Staked değeri (WalletContext stakedAmounts'tan hesapla - API'den geliyor)
+  const stakedValueCalc =
+    ((stakedAmounts?.auxg || 0) * (metalAskPrices?.AUXG || 0)) +
+    ((stakedAmounts?.auxs || 0) * (metalAskPrices?.AUXS || 0)) +
+    ((stakedAmounts?.auxpt || 0) * (metalAskPrices?.AUXPT || 0)) +
+    ((stakedAmounts?.auxpd || 0) * (metalAskPrices?.AUXPD || 0));
 
   // Toplam varlık değeri hesapla (Auxite & Kripto + Tahsisli & Stake)
   const totalEstimatedValue =

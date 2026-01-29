@@ -57,6 +57,14 @@ interface BalanceSummary {
   };
 }
 
+// Staked amounts from balance API
+export interface StakedAmounts {
+  auxg: number;
+  auxs: number;
+  auxpt: number;
+  auxpd: number;
+}
+
 export interface WalletContextType {
   // wallet
   isConnected: boolean;
@@ -76,6 +84,7 @@ export interface WalletContextType {
 
   // balances
   balances: UserBalances | null;
+  stakedAmounts: StakedAmounts | null;
   summary: BalanceSummary | null;
   balancesLoading: boolean;
   balancesError: string | null;
@@ -180,6 +189,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [walletType, setWalletType] = useState<WalletType>(null);
 
   const [balances, setBalances] = useState<UserBalances | null>(null);
+  const [stakedAmounts, setStakedAmounts] = useState<StakedAmounts | null>(null);
   const [summary, setSummary] = useState<BalanceSummary | null>(null);
   const [balancesLoading, setBalancesLoading] = useState(false);
   const [balancesError, setBalancesError] = useState<string | null>(null);
@@ -237,12 +247,22 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       };
 
       setBalances(merged);
+
+      // Extract staked amounts from API response
+      setStakedAmounts({
+        auxg: redisData.stakedAmounts?.auxg ?? 0,
+        auxs: redisData.stakedAmounts?.auxs ?? 0,
+        auxpt: redisData.stakedAmounts?.auxpt ?? 0,
+        auxpd: redisData.stakedAmounts?.auxpd ?? 0,
+      });
+
       setSummary({
         ...redisData.summary,
         metals: allocTotals,
       });
     } catch {
       setBalances(DEFAULT_BALANCES);
+      setStakedAmounts({ auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 });
       setBalancesError("Balances could not be loaded");
     } finally {
       setBalancesLoading(false);
@@ -279,6 +299,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setWalletType,
 
         balances,
+        stakedAmounts,
         summary,
         balancesLoading,
         balancesError,
