@@ -222,11 +222,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         totalAuxm:
           (redisData.balances?.auxm ?? 0) + (redisData.balances?.bonusAuxm ?? 0),
         bonusExpiresAt: redisData.balances?.bonusExpiresAt ?? null,
-        // Metaller: Allocation + Redis fractional
-        auxg: allocTotals.auxg + (redisData.balances?.auxg ?? 0),
-        auxs: allocTotals.auxs + (redisData.balances?.auxs ?? 0),
-        auxpt: allocTotals.auxpt + (redisData.balances?.auxpt ?? 0),
-        auxpd: allocTotals.auxpd + (redisData.balances?.auxpd ?? 0),
+        // Metaller: Sadece Redis balance (allocations ayrı gösteriliyor)
+        auxg: redisData.balances?.auxg ?? 0,
+        auxs: redisData.balances?.auxs ?? 0,
+        auxpt: redisData.balances?.auxpt ?? 0,
+        auxpd: redisData.balances?.auxpd ?? 0,
         // Tüm crypto'lar Redis'ten (deposit edilmiş miktar)
         eth: redisData.balances?.eth ?? 0,
         btc: redisData.balances?.btc ?? 0,
