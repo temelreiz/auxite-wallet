@@ -845,9 +845,11 @@ export default function ProfilePage() {
       <LegalModal isOpen={showLegalModal} onClose={() => setShowLegalModal(false)} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
       <QRLoginModal walletAddress={address} isOpen={showMobilePairModal} onClose={() => setShowMobilePairModal(false)} onSuccess={(walletAddress, authToken) => {
           console.log("Mobile login success:", walletAddress);
-          // Save to localStorage
+          // Save to localStorage - all required keys for main page
           localStorage.setItem("auxite_wallet_mode", "local");
           localStorage.setItem("auxite_wallet_address", walletAddress);
+          localStorage.setItem("auxite_has_wallet", "true");
+          sessionStorage.setItem("auxite_session_unlocked", "true");
           // Update local state immediately
           setWalletMode("local");
           setLocalWalletAddress(walletAddress);
