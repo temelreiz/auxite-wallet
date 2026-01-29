@@ -843,7 +843,16 @@ export default function ProfilePage() {
       <AuxiteerTierModal isOpen={showAuxiteerModal} onClose={() => setShowAuxiteerModal(false)} currentTierId={currentTier.id} userBalance={auxiteerStats?.balanceUsd || 0} userDays={auxiteerStats?.daysSinceRegistration || 0} isKycVerified={auxiteerStats?.isKycVerified || false} hasMetalAsset={auxiteerStats?.hasMetalAsset || false} hasActiveEarnLease={auxiteerStats?.hasActiveLease || false} />
       <FAQModal isOpen={showFAQModal} onClose={() => setShowFAQModal(false)} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
       <LegalModal isOpen={showLegalModal} onClose={() => setShowLegalModal(false)} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
-      <QRLoginModal walletAddress={address} isOpen={showMobilePairModal} onClose={() => setShowMobilePairModal(false)} onSuccess={(walletAddress, authToken) => { console.log("Mobile login success:", walletAddress); setShowMobilePairModal(false); }} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
+      <QRLoginModal walletAddress={address} isOpen={showMobilePairModal} onClose={() => setShowMobilePairModal(false)} onSuccess={(walletAddress, authToken) => {
+          console.log("Mobile login success:", walletAddress);
+          // Save to localStorage
+          localStorage.setItem("auxite_wallet_mode", "local");
+          localStorage.setItem("auxite_wallet_address", walletAddress);
+          // Update local state immediately
+          setWalletMode("local");
+          setLocalWalletAddress(walletAddress);
+          setShowMobilePairModal(false);
+        }} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
       {isConnected && address && <OpenInMobileModal walletAddress={address} isOpen={showOpenInMobileModal} onClose={() => setShowOpenInMobileModal(false)} action="open_app" lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />}
     </main>
   );
