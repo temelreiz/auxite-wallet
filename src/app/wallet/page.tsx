@@ -461,8 +461,21 @@ export default function WalletPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Toplam varlık değeri hesapla (USDT cinsinden)
-  const totalEstimatedValue = 
+  // Allocated değeri (useAllocations'tan gelen allocationGrams kullan)
+  const allocatedValueCalc =
+    ((allocationGrams?.AUXG || 0) * (metalAskPrices?.AUXG || 0)) +
+    ((allocationGrams?.AUXS || 0) * (metalAskPrices?.AUXS || 0)) +
+    ((allocationGrams?.AUXPT || 0) * (metalAskPrices?.AUXPT || 0)) +
+    ((allocationGrams?.AUXPD || 0) * (metalAskPrices?.AUXPD || 0));
+
+  // Staked değeri (activeStakes'ten hesapla)
+  const stakedValueCalc = activeStakes?.reduce((total, stake) => {
+    const price = metalAskPrices?.[stake.metalSymbol as keyof typeof metalAskPrices] || 0;
+    return total + (stake.amountGrams * price);
+  }, 0) || 0;
+
+  // Toplam varlık değeri hesapla (Auxite & Kripto + Tahsisli & Stake)
+  const totalEstimatedValue =
     (auxgBalance * (metalAskPrices?.AUXG || 0)) +
     (auxsBalance * (metalAskPrices?.AUXS || 0)) +
     (auxptBalance * (metalAskPrices?.AUXPT || 0)) +
@@ -472,7 +485,9 @@ export default function WalletPage() {
     (xrpBalance * (cryptoPrices?.xrp || 0)) +
     (solBalance * (cryptoPrices?.sol || 0)) +
     (balances?.usdt || 0) +
-    (balances?.usd || 0);
+    (balances?.usd || 0) +
+    allocatedValueCalc +
+    stakedValueCalc;
   
   // USD cinsinden toplam değer (USDT * USDT/USD kuru)
   const totalEstimatedUsd = totalEstimatedValue * usdtPrice;
@@ -489,17 +504,8 @@ export default function WalletPage() {
     (solBalance * (cryptoPrices?.sol || 0)) +
     (balances?.usdt || 0);
 
-  // Allocated & Staked değeri (bakiyelerden hesapla)
-  const allocatedValue = 
-    (auxgBalance || 0) * (metalAskPrices?.AUXG || 0) +
-    (auxsBalance || 0) * (metalAskPrices?.AUXS || 0) +
-    (auxptBalance || 0) * (metalAskPrices?.AUXPT || 0) +
-    (auxpdBalance || 0) * (metalAskPrices?.AUXPD || 0);
-  
-  // TODO: Staked değeri eklenecek (staking API'den)
-  const stakedValue = 0;
-  
-  const allocatedAndStakedValue = allocatedValue + stakedValue;
+  // Tahsisli & Stake toplam değeri (yukarıda hesaplandı)
+  const allocatedAndStakedValue = allocatedValueCalc + stakedValueCalc;
 
   // Deposit coins list
   const depositCoins = [
