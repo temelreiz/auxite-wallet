@@ -225,15 +225,37 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
     console.log('🟢 Polling useEffect - session:', !!session, 'status:', status);
     if (session && (status === 'pending' || status === 'verified')) {
       console.log('🟢 Starting polling interval');
-      const interval = setInterval(checkStatus, 2000);
-      setPollInterval(interval);
+      
+      const pollStatus = async () => {
+        console.log('🟡 Polling status for session:', session.sessionId);
+        try {
+          const response = await fetch(`/api/auth/qr-login?action=status&sessionId=${session.sessionId}`);
+          const data = await response.json();
+          console.log('🟡 Status response:', data);
+
+          if (data.status === 'approved' && data.walletAddress) {
+            console.log('🟢 Login approved!', data.walletAddress);
+            setStatus('success');
+            setTimeout(() => {
+              onSuccess(data.walletAddress, session.sessionId);
+            }, 1500);
+          } else if (data.status === 'expired') {
+            setStatus('expired');
+          }
+        } catch (error) {
+          console.error('Poll status error:', error);
+        }
+      };
+
+      const interval = setInterval(pollStatus, 2000);
+      pollStatus(); // İlk çağrı hemen
 
       return () => {
         console.log('🟢 Clearing polling interval');
         clearInterval(interval);
       };
     }
-  }, [session, status, checkStatus]);
+  }, [session?.sessionId, status, onSuccess]);
 
   // Countdown timer
   useEffect(() => {
