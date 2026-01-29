@@ -218,7 +218,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
 
   // Start polling when session is created
   useEffect(() => {
-    if (session && status === 'pending' || status === 'verified') {
+      if (session && (status === 'pending' || status === 'verified')) {
       const interval = setInterval(checkStatus, 2000);
       setPollInterval(interval);
 
