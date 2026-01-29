@@ -2,7 +2,7 @@
 // React hook for Auxite metal allocations (from Redis API)
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount } from 'wagmi';
+import { useWallet } from '@/components/WalletContext';
 
 // Metal info
 const METAL_INFO: Record<string, { name: string; icon: string; color: string }> = {
@@ -48,7 +48,7 @@ export interface CollateralizationInfo {
 
 // Main hook for user allocations
 export function useAllocations(metalSymbol?: 'AUXG' | 'AUXS' | 'AUXPT' | 'AUXPD') {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected } = useWallet();
   const [allocations, setAllocations] = useState<FormattedAllocation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
