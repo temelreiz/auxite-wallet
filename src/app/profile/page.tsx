@@ -26,23 +26,24 @@ export default function ProfilePage() {
   const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
   const [walletMode, setWalletMode] = useState<string | null>(null);
   
+  // Load local wallet from localStorage on mount
+  useEffect(() => {
+    const savedMode = localStorage.getItem("auxite_wallet_mode");
+    const savedAddress = localStorage.getItem("auxite_wallet_address");
+    if (savedMode) setWalletMode(savedMode);
+    if (savedAddress) setLocalWalletAddress(savedAddress);
+    setMounted(true);
+  }, []);
+  
   // Determine which address to use - local wallet takes priority if set
-  const address = walletMode === "local" && localWalletAddress ? localWalletAddress : externalAddress;
-  const isConnected = walletMode === "local" ? !!localWalletAddress : isExternalConnected;
+  const address = mounted && walletMode === "local" && localWalletAddress ? localWalletAddress : externalAddress;
+  const isConnected = mounted && walletMode === "local" ? !!localWalletAddress : isExternalConnected;
   
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [priceAlertNotifications, setPriceAlertNotifications] = useState(true);
   const [transactionNotifications, setTransactionNotifications] = useState(true);
-  
-  // Load local wallet from localStorage
-  useEffect(() => {
-    const savedMode = localStorage.getItem("auxite_wallet_mode");
-    const savedAddress = localStorage.getItem("auxite_wallet_address");
-    if (savedMode) setWalletMode(savedMode);
-    if (savedAddress) setLocalWalletAddress(savedAddress);
-  }, []);
   
   // Editable user data
   const [userData, setUserData] = useState({
