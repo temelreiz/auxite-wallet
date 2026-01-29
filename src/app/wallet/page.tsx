@@ -475,7 +475,8 @@ export default function WalletPage() {
     ((stakedAmounts?.auxpt || 0) * (metalAskPrices?.AUXPT || 0)) +
     ((stakedAmounts?.auxpd || 0) * (metalAskPrices?.AUXPD || 0));
 
-  // Toplam varlık değeri hesapla (Auxite & Kripto + Tahsisli & Stake)
+  // Toplam varlık değeri hesapla (Auxite & Kripto + Tahsisli)
+  // NOT: stakedValueCalc eklenmez çünkü staked metaller zaten allocations içinde
   const totalEstimatedValue =
     (auxgBalance * (metalAskPrices?.AUXG || 0)) +
     (auxsBalance * (metalAskPrices?.AUXS || 0)) +
@@ -487,8 +488,7 @@ export default function WalletPage() {
     (solBalance * (cryptoPrices?.sol || 0)) +
     (balances?.usdt || 0) +
     (balances?.usd || 0) +
-    allocatedValueCalc +
-    stakedValueCalc;
+    allocatedValueCalc;
   
   // USD cinsinden toplam değer (USDT * USDT/USD kuru)
   const totalEstimatedUsd = totalEstimatedValue * usdtPrice;
@@ -505,8 +505,9 @@ export default function WalletPage() {
     (solBalance * (cryptoPrices?.sol || 0)) +
     (balances?.usdt || 0);
 
-  // Tahsisli & Stake toplam değeri (yukarıda hesaplandı)
-  const allocatedAndStakedValue = allocatedValueCalc + stakedValueCalc;
+  // Tahsisli & Stake toplam değeri
+  // Staked metaller allocations'ın parçası, ayrı eklenmez
+  const allocatedAndStakedValue = allocatedValueCalc;
 
   // Deposit coins list
   const depositCoins = [
