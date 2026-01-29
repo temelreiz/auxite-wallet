@@ -851,6 +851,8 @@ export default function ProfilePage() {
           // Update local state immediately
           setWalletMode("local");
           setLocalWalletAddress(walletAddress);
+          // Notify TopNav and other components
+          window.dispatchEvent(new Event("walletChanged"));
           setShowMobilePairModal(false);
         }} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
       {isConnected && address && <OpenInMobileModal walletAddress={address} isOpen={showOpenInMobileModal} onClose={() => setShowOpenInMobileModal(false)} action="open_app" lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />}

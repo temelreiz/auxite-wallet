@@ -178,10 +178,39 @@ export default function TopNav({
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
   const [trustDropdownOpen, setTrustDropdownOpen] = useState(false);
-  
+
+  // QR Login state - check localStorage
+  const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
+  const [walletMode, setWalletMode] = useState<string | null>(null);
+
   const langDropdownRef = useRef<HTMLDivElement>(null);
   const actionsDropdownRef = useRef<HTMLDivElement>(null);
   const trustDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load QR login wallet from localStorage
+  useEffect(() => {
+    const savedMode = localStorage.getItem("auxite_wallet_mode");
+    const savedAddress = localStorage.getItem("auxite_wallet_address");
+    if (savedMode) setWalletMode(savedMode);
+    if (savedAddress) setLocalWalletAddress(savedAddress);
+
+    // Listen for storage changes (when QR login happens)
+    const handleStorageChange = () => {
+      const mode = localStorage.getItem("auxite_wallet_mode");
+      const address = localStorage.getItem("auxite_wallet_address");
+      setWalletMode(mode);
+      setLocalWalletAddress(address);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    // Also listen for custom event for same-tab updates
+    window.addEventListener("walletChanged", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("walletChanged", handleStorageChange);
+    };
+  }, []);
 
   // Detect if we're on wallet page
   const isWalletPage = pathname === "/wallet";
@@ -527,7 +556,10 @@ export default function TopNav({
                   mounted,
                 }) => {
                   const ready = mounted;
-                  const connected = ready && account && chain;
+                  const externalConnected = ready && account && chain;
+                  // Check for QR login (local wallet)
+                  const isLocalWallet = walletMode === "local" && localWalletAddress;
+                  const connected = externalConnected || isLocalWallet;
 
                   return (
                     <div
@@ -541,6 +573,26 @@ export default function TopNav({
                       })}
                     >
                       {(() => {
+                        // Show local wallet if QR logged in
+                        if (isLocalWallet) {
+                          const shortAddress = `${localWalletAddress.slice(0, 6)}...${localWalletAddress.slice(-4)}`;
+                          return (
+                            <Link
+                              href="/profile"
+                              className="flex items-center gap-1.5 md:gap-2 p-1.5 md:px-3 md:py-2 rounded-full md:rounded-lg bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 border border-emerald-500/50 transition-all"
+                            >
+                              <div className="w-6 h-6 md:w-6 md:h-6 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                              <span className="hidden md:inline text-sm font-medium text-slate-700 dark:text-slate-300">
+                                {shortAddress}
+                              </span>
+                            </Link>
+                          );
+                        }
+
                         if (!connected) {
                           return (
                             <button
