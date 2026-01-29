@@ -612,7 +612,7 @@ export default function TopNav({
                             onClick={openAccountModal}
                             className="flex items-center gap-1.5 md:gap-2 p-1.5 md:px-3 md:py-2 rounded-full md:rounded-lg bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 transition-all"
                           >
-                            {account.ensAvatar ? (
+                            {account?.ensAvatar ? (
                               <img
                                 src={account.ensAvatar}
                                 alt=""
@@ -622,7 +622,7 @@ export default function TopNav({
                               <div className="w-6 h-6 md:w-6 md:h-6 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500" />
                             )}
                             <span className="hidden md:inline text-sm font-medium text-slate-700 dark:text-slate-300">
-                              {account.displayName}
+                              {account?.displayName}
                             </span>
                           </button>
                         );
