@@ -266,13 +266,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       value={{
         isConnected,
         address: address ?? null,
-        chainId: chainId ?? null,
-        chainName: chain?.name ?? null,
-        connectorName,
+        // QR login (local wallet) has no chain - return null to skip chain checks
+        chainId: isLocalWallet ? null : (chainId ?? null),
+        chainName: isLocalWallet ? null : (chain?.name ?? null),
+        connectorName: isLocalWallet ? "QR Login" : connectorName,
         disconnect,
 
-        canSwitchChain,
-        switchChain,
+        canSwitchChain: isLocalWallet ? false : canSwitchChain,
+        switchChain: isLocalWallet ? undefined : switchChain,
 
         walletType,
         setWalletType,
