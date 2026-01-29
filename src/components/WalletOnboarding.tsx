@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { QRLoginModal } from "@/components/auth/QRLoginModal";
 
 // ============================================
 // BIP39 WORD LIST (TAM 2048 KELİME)
@@ -52,6 +53,8 @@ const translations = {
     passwordHint: "En az 6 karakter",
     unlock: "Kilidi Aç",
     logout: "Çıkış Yap",
+    qrLogin: "Mobil ile QR Giriş",
+    qrLoginDesc: "Mobil uygulamadan QR okutarak giriş yapın",
   },
   en: {
     welcomeTitle: "Welcome to Auxite Wallet",
@@ -93,6 +96,8 @@ const translations = {
     passwordHint: "Minimum 6 characters",
     unlock: "Unlock",
     logout: "Log Out",
+    qrLogin: "QR Login with Mobile",
+    qrLoginDesc: "Scan QR code from mobile app to login",
   },
   de: {
     welcomeTitle: "Willkommen bei Auxite Wallet",
@@ -134,6 +139,8 @@ const translations = {
     passwordHint: "Mindestens 6 Zeichen",
     unlock: "Entsperren",
     logout: "Abmelden",
+    qrLogin: "QR-Anmeldung mit Handy",
+    qrLoginDesc: "QR-Code mit der Mobile-App scannen",
   },
   fr: {
     welcomeTitle: "Bienvenue sur Auxite Wallet",
@@ -175,6 +182,8 @@ const translations = {
     passwordHint: "Minimum 6 caractères",
     unlock: "Déverrouiller",
     logout: "Déconnexion",
+    qrLogin: "Connexion QR Mobile",
+    qrLoginDesc: "Scannez le code QR depuis l'application mobile",
   },
   ar: {
     welcomeTitle: "مرحباً بك في محفظة Auxite",
@@ -216,6 +225,8 @@ const translations = {
     passwordHint: "6 أحرف على الأقل",
     unlock: "فتح القفل",
     logout: "تسجيل الخروج",
+    qrLogin: "تسجيل الدخول بـ QR",
+    qrLoginDesc: "امسح رمز QR من تطبيق الهاتف",
   },
   ru: {
     welcomeTitle: "Добро пожаловать в Auxite Wallet",
@@ -257,6 +268,8 @@ const translations = {
     passwordHint: "Минимум 6 символов",
     unlock: "Разблокировать",
     logout: "Выйти",
+    qrLogin: "QR Вход с мобильного",
+    qrLoginDesc: "Отсканируйте QR-код в мобильном приложении",
   },
 };
 
@@ -357,6 +370,7 @@ export default function WalletOnboarding({
   const [unlockPassword, setUnlockPassword] = useState("");
   const [unlockError, setUnlockError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   const t = (key: string) => (translations[lang] as Record<string, string>)[key] || key;
 
@@ -605,6 +619,17 @@ export default function WalletOnboarding({
             {t("importWallet")}
           </button>
 
+          {/* QR Login Option */}
+          <button
+            onClick={() => setShowQRModal(true)}
+            className="w-full py-4 border border-blue-500 text-blue-500 hover:bg-blue-500/10 font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            {t("qrLogin")}
+          </button>
+
           {/* Security note */}
           <p className="text-xs text-slate-500 mt-6 flex items-center justify-center gap-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -612,6 +637,26 @@ export default function WalletOnboarding({
             </svg>
             {t("keysOnDevice")}
           </p>
+
+          {/* QR Login Modal */}
+          <QRLoginModal
+            isOpen={showQRModal}
+            onClose={() => setShowQRModal(false)}
+            onSuccess={(walletAddress, authToken) => {
+              console.log("QR Login success:", walletAddress);
+              // Save to localStorage - all required keys
+              localStorage.setItem("auxite_wallet_mode", "local");
+              localStorage.setItem("auxite_wallet_address", walletAddress);
+              localStorage.setItem("auxite_has_wallet", "true");
+              sessionStorage.setItem("auxite_session_unlocked", "true");
+              // Notify other components
+              window.dispatchEvent(new Event("walletChanged"));
+              // Close modal and trigger wallet ready
+              setShowQRModal(false);
+              onWalletReady(walletAddress);
+            }}
+            lang={lang}
+          />
         </div>
       </div>
     );

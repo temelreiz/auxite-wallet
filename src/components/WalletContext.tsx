@@ -103,15 +103,78 @@ const DEFAULT_BALANCES: UserBalances = {
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const {
-    address,
-    isConnected,
+    address: externalAddress,
+    isConnected: isExternalConnected,
     chain,
     chainId,
     connectorName,
-    disconnect,
+    disconnect: externalDisconnect,
     canSwitchChain,
     switchChain,
   } = useWalletHook();
+
+  // QR Login state - check localStorage
+  const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
+  const [walletMode, setWalletMode] = useState<string | null>(null);
+
+  // Load QR login wallet from localStorage
+  useEffect(() => {
+    const savedMode = localStorage.getItem("auxite_wallet_mode");
+    const savedAddress = localStorage.getItem("auxite_wallet_address");
+    const hasWallet = localStorage.getItem("auxite_has_wallet");
+    const sessionUnlocked = sessionStorage.getItem("auxite_session_unlocked");
+
+    if (savedMode === "local" && hasWallet === "true" && savedAddress && sessionUnlocked === "true") {
+      setWalletMode("local");
+      setLocalWalletAddress(savedAddress);
+    } else if (savedMode) {
+      setWalletMode(savedMode);
+    }
+
+    // Listen for wallet changes (QR login)
+    const handleWalletChange = () => {
+      const mode = localStorage.getItem("auxite_wallet_mode");
+      const addr = localStorage.getItem("auxite_wallet_address");
+      const hasW = localStorage.getItem("auxite_has_wallet");
+      const unlocked = sessionStorage.getItem("auxite_session_unlocked");
+
+      if (mode === "local" && hasW === "true" && addr && unlocked === "true") {
+        setWalletMode("local");
+        setLocalWalletAddress(addr);
+      } else {
+        setWalletMode(mode);
+        setLocalWalletAddress(null);
+      }
+    };
+
+    window.addEventListener("storage", handleWalletChange);
+    window.addEventListener("walletChanged", handleWalletChange);
+
+    return () => {
+      window.removeEventListener("storage", handleWalletChange);
+      window.removeEventListener("walletChanged", handleWalletChange);
+    };
+  }, []);
+
+  // Determine effective address and connection status
+  const isLocalWallet = walletMode === "local" && !!localWalletAddress;
+  const isConnected = isLocalWallet || isExternalConnected;
+  const address = isLocalWallet ? localWalletAddress : externalAddress;
+
+  // Disconnect function - handles both local and external
+  const disconnect = () => {
+    if (isLocalWallet) {
+      localStorage.removeItem("auxite_wallet_mode");
+      localStorage.removeItem("auxite_wallet_address");
+      localStorage.removeItem("auxite_has_wallet");
+      sessionStorage.removeItem("auxite_session_unlocked");
+      setWalletMode(null);
+      setLocalWalletAddress(null);
+      window.dispatchEvent(new Event("walletChanged"));
+    } else {
+      externalDisconnect();
+    }
+  };
 
   // WalletConnectModal gibi yerler seçilmiş wallet tipini tutmak istiyorsa (compat)
   const [walletType, setWalletType] = useState<WalletType>(null);
