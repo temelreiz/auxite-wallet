@@ -461,14 +461,9 @@ export default function WalletPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Allocated değeri (useAllocations'tan gelen allocationGrams kullan)
-  const allocatedValueCalc =
-    ((allocationGrams?.AUXG || 0) * (metalAskPrices?.AUXG || 0)) +
-    ((allocationGrams?.AUXS || 0) * (metalAskPrices?.AUXS || 0)) +
-    ((allocationGrams?.AUXPT || 0) * (metalAskPrices?.AUXPT || 0)) +
-    ((allocationGrams?.AUXPD || 0) * (metalAskPrices?.AUXPD || 0));
-
   // Staked değeri (WalletContext stakedAmounts'tan hesapla - API'den geliyor)
+  // NOT: Allocations artık sayılmıyor çünkü mobilde de sayılmıyor (boş array döner)
+  // Balance API zaten allocation değerlerini içeriyor
   const stakedValueCalc =
     ((stakedAmounts?.auxg || 0) * (metalAskPrices?.AUXG || 0)) +
     ((stakedAmounts?.auxs || 0) * (metalAskPrices?.AUXS || 0)) +
@@ -477,7 +472,8 @@ export default function WalletPage() {
 
   // ═══════════════════════════════════════════════════════════════════════════
   // MOBİL İLE AYNI HESAPLAMA
-  // totalValue = (metals + crypto) + (allocations + staking)
+  // totalValue = (metals + crypto) + staking
+  // NOT: Mobilde allocations boş array döner, bu yüzden biz de saymıyoruz
   // ═══════════════════════════════════════════════════════════════════════════
 
   // 1. Metals değeri (balance API'den gelen değerler - staked zaten çıkarılmış)
@@ -499,8 +495,9 @@ export default function WalletPage() {
   // 3. Available (Kullanılabilir) = metals + crypto
   const totalAvailable = metalsValue + cryptoValue;
 
-  // 4. Locked (Kilitli) = allocations + staking
-  const totalLocked = allocatedValueCalc + stakedValueCalc;
+  // 4. Locked (Kilitli) = SADECE staking (mobilde allocations boş array döner)
+  // Allocations balance içinde zaten var, tekrar eklersek çift sayım olur
+  const totalLocked = stakedValueCalc;
 
   // 5. TOPLAM VARLIK DEĞERİ = Available + Locked (MOBİL İLE AYNI)
   const totalEstimatedValue = totalAvailable + totalLocked;
@@ -512,8 +509,6 @@ export default function WalletPage() {
     metalsValue,
     cryptoValue,
     totalAvailable,
-    allocations: allocationGrams,
-    allocatedValueCalc,
     staked: stakedAmounts,
     stakedValueCalc,
     totalLocked,
