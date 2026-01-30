@@ -25,27 +25,17 @@ interface MetalChanges {
 }
 
 export function useMetalsPrices() {
+  // Realistic default prices (January 2026) - prevents $0 or $1 bugs
+  const DEFAULT_BASE = { AUXG: 165, AUXS: 3.20, AUXPT: 75, AUXPD: 58 };
+  const DEFAULT_ASK = { AUXG: 170, AUXS: 3.50, AUXPT: 82, AUXPD: 60 };
+  const DEFAULT_BID = { AUXG: 160, AUXS: 2.90, AUXPT: 68, AUXPD: 56 };
+
   // Base prices (spread'siz ham fiyat - kartlarda gösterilecek)
-  const [basePrices, setBasePrices] = useState<MetalPrices>({
-    AUXG: 0,
-    AUXS: 0,
-    AUXPT: 0,
-    AUXPD: 0,
-  });
+  const [basePrices, setBasePrices] = useState<MetalPrices>(DEFAULT_BASE);
   // Ask prices (spread'li satış fiyatı - kullanıcıya satış)
-  const [prices, setPrices] = useState<MetalPrices>({
-    AUXG: 0,
-    AUXS: 0,
-    AUXPT: 0,
-    AUXPD: 0,
-  });
+  const [prices, setPrices] = useState<MetalPrices>(DEFAULT_ASK);
   // Bid prices (spread'li alış fiyatı - kullanıcıdan alış)
-  const [bidPrices, setBidPrices] = useState<MetalPrices>({
-    AUXG: 0,
-    AUXS: 0,
-    AUXPT: 0,
-    AUXPD: 0,
-  });
+  const [bidPrices, setBidPrices] = useState<MetalPrices>(DEFAULT_BID);
   const [changes, setChanges] = useState<MetalChanges>({
     AUXG: 0,
     AUXS: 0,
@@ -73,28 +63,35 @@ export function useMetalsPrices() {
       
       const data = await response.json();
 
-      // Base prices (spread'siz)
+      // Helper: Use new value only if it's valid (> 0), otherwise keep current
+      const validPrice = (newVal: number | undefined, currentVal: number, defaultVal: number): number => {
+        if (newVal && newVal > 0) return newVal;
+        if (currentVal > 0) return currentVal;
+        return defaultVal;
+      };
+
+      // Base prices (spread'siz) - only update if valid
       const newBasePrices: MetalPrices = {
-        AUXG: data.basePrices?.AUXG || 0,
-        AUXS: data.basePrices?.AUXS || 0,
-        AUXPT: data.basePrices?.AUXPT || 0,
-        AUXPD: data.basePrices?.AUXPD || 0,
+        AUXG: validPrice(data.basePrices?.AUXG, basePrices.AUXG, DEFAULT_BASE.AUXG),
+        AUXS: validPrice(data.basePrices?.AUXS, basePrices.AUXS, DEFAULT_BASE.AUXS),
+        AUXPT: validPrice(data.basePrices?.AUXPT, basePrices.AUXPT, DEFAULT_BASE.AUXPT),
+        AUXPD: validPrice(data.basePrices?.AUXPD, basePrices.AUXPD, DEFAULT_BASE.AUXPD),
       };
 
-      // Ask prices (spread'li satış)
+      // Ask prices (spread'li satış) - only update if valid
       const newPrices: MetalPrices = {
-        AUXG: data.prices?.AUXG || 0,
-        AUXS: data.prices?.AUXS || 0,
-        AUXPT: data.prices?.AUXPT || 0,
-        AUXPD: data.prices?.AUXPD || 0,
+        AUXG: validPrice(data.prices?.AUXG, prices.AUXG, DEFAULT_ASK.AUXG),
+        AUXS: validPrice(data.prices?.AUXS, prices.AUXS, DEFAULT_ASK.AUXS),
+        AUXPT: validPrice(data.prices?.AUXPT, prices.AUXPT, DEFAULT_ASK.AUXPT),
+        AUXPD: validPrice(data.prices?.AUXPD, prices.AUXPD, DEFAULT_ASK.AUXPD),
       };
 
-      // Bid prices (spread'li alış)
+      // Bid prices (spread'li alış) - only update if valid
       const newBidPrices: MetalPrices = {
-        AUXG: data.bidPrices?.AUXG || newPrices.AUXG,
-        AUXS: data.bidPrices?.AUXS || newPrices.AUXS,
-        AUXPT: data.bidPrices?.AUXPT || newPrices.AUXPT,
-        AUXPD: data.bidPrices?.AUXPD || newPrices.AUXPD,
+        AUXG: validPrice(data.bidPrices?.AUXG, bidPrices.AUXG, DEFAULT_BID.AUXG),
+        AUXS: validPrice(data.bidPrices?.AUXS, bidPrices.AUXS, DEFAULT_BID.AUXS),
+        AUXPT: validPrice(data.bidPrices?.AUXPT, bidPrices.AUXPT, DEFAULT_BID.AUXPT),
+        AUXPD: validPrice(data.bidPrices?.AUXPD, bidPrices.AUXPD, DEFAULT_BID.AUXPD),
       };
 
       const newChanges: MetalChanges = {
@@ -104,12 +101,12 @@ export function useMetalsPrices() {
         AUXPD: data.changes?.AUXPD || 0,
       };
 
-      // Calculate directions based on base price changes
+      // Calculate directions based on base price changes (only if we have previous prices)
       const newDirections: MetalDirections = {
-        AUXG: newBasePrices.AUXG > prevPrices.current.AUXG ? "up" : newBasePrices.AUXG < prevPrices.current.AUXG ? "down" : "neutral",
-        AUXS: newBasePrices.AUXS > prevPrices.current.AUXS ? "up" : newBasePrices.AUXS < prevPrices.current.AUXS ? "down" : "neutral",
-        AUXPT: newBasePrices.AUXPT > prevPrices.current.AUXPT ? "up" : newBasePrices.AUXPT < prevPrices.current.AUXPT ? "down" : "neutral",
-        AUXPD: newBasePrices.AUXPD > prevPrices.current.AUXPD ? "up" : newBasePrices.AUXPD < prevPrices.current.AUXPD ? "down" : "neutral",
+        AUXG: prevPrices.current.AUXG > 0 ? (newBasePrices.AUXG > prevPrices.current.AUXG ? "up" : newBasePrices.AUXG < prevPrices.current.AUXG ? "down" : "neutral") : "neutral",
+        AUXS: prevPrices.current.AUXS > 0 ? (newBasePrices.AUXS > prevPrices.current.AUXS ? "up" : newBasePrices.AUXS < prevPrices.current.AUXS ? "down" : "neutral") : "neutral",
+        AUXPT: prevPrices.current.AUXPT > 0 ? (newBasePrices.AUXPT > prevPrices.current.AUXPT ? "up" : newBasePrices.AUXPT < prevPrices.current.AUXPT ? "down" : "neutral") : "neutral",
+        AUXPD: prevPrices.current.AUXPD > 0 ? (newBasePrices.AUXPD > prevPrices.current.AUXPD ? "up" : newBasePrices.AUXPD < prevPrices.current.AUXPD ? "down" : "neutral") : "neutral",
       };
 
       prevPrices.current = newBasePrices;
@@ -120,26 +117,9 @@ export function useMetalsPrices() {
       setDirections(newDirections);
       setLoading(false);
     } catch (error) {
-      // Fallback prices
-      const fallbackBase = {
-        AUXG: 136.26,
-        AUXS: 1.74,
-        AUXPT: 52.80,
-        AUXPD: 46.90,
-      };
-      setBasePrices(fallbackBase);
-      setPrices({
-        AUXG: 138.99,
-        AUXS: 1.79,
-        AUXPT: 54.12,
-        AUXPD: 48.07,
-      });
-      setBidPrices({
-        AUXG: 134.90,
-        AUXS: 1.71,
-        AUXPT: 52.14,
-        AUXPD: 46.31,
-      });
+      console.warn("Price fetch failed, keeping current values");
+      // Don't overwrite with bad fallbacks - keep current state
+      // Only set loading to false
       setLoading(false);
     }
   };
