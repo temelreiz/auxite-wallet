@@ -92,8 +92,27 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
       try {
         const res = await fetch(`/api/user/balance?address=${address}`);
         const data = await res.json();
-        if (data.onChainBalances) setOnChainBalances(data.onChainBalances);
-      } catch {}
+        console.log('TransferModal - API response:', {
+          balances: data.balances,
+          onChainBalances: data.onChainBalances
+        });
+        // Use onChainBalances if available, otherwise fall back to balances
+        if (data.onChainBalances) {
+          setOnChainBalances(data.onChainBalances);
+        } else if (data.balances) {
+          // Fallback: use balances directly
+          setOnChainBalances({
+            eth: data.balances.eth || 0,
+            auxg: data.balances.auxg || 0,
+            auxs: data.balances.auxs || 0,
+            auxpt: data.balances.auxpt || 0,
+            auxpd: data.balances.auxpd || 0,
+            usdt: data.balances.usdt || 0,
+          });
+        }
+      } catch (e) {
+        console.error('TransferModal - fetch error:', e);
+      }
     };
     fetchOnChainBalances();
   }, [address, isOpen]);
