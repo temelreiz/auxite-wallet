@@ -1061,24 +1061,10 @@ export default function WalletPage() {
                 });
                 const displayString = displayParts.length > 0 ? displayParts.join(" + ") : "0g";
                 
-                // Preview items (max 4)
+                // Preview items - SADECE staking göster (mobil ile aynı)
+                // Allocations artık gösterilmiyor çünkü mobilde de gösterilmiyor
                 const previewItems: Array<{icon: string; label: string; grams: number; value: number; type: string}> = [];
-                allocations?.slice(0, 2).forEach((a) => {
-                  const iconMap: Record<string, string> = {
-                    AUXG: "/gold-favicon-32x32.png",
-                    AUXS: "/silver-favicon-32x32.png",
-                    AUXPT: "/platinum-favicon-32x32.png",
-                    AUXPD: "/palladium-favicon-32x32.png",
-                  };
-                  previewItems.push({
-                    icon: iconMap[a.metalSymbol] || "/gold-favicon-32x32.png",
-                    label: `${a.metal} - Vault`,
-                    grams: Number(a.grams),
-                    value: Number(a.grams) * (metalPricesLocal[a.metalSymbol as keyof typeof metalPricesLocal] || 0),
-                    type: "allocation"
-                  });
-                });
-                activeStakes?.slice(0, 2).forEach((s) => {
+                activeStakes?.slice(0, 4).forEach((s) => {
                   const iconMap: Record<string, string> = {
                     AUXG: "/gold-favicon-32x32.png",
                     AUXS: "/silver-favicon-32x32.png",
