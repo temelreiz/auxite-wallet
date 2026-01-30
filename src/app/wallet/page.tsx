@@ -515,12 +515,10 @@ export default function WalletPage() {
     ((stakedAmounts?.auxpt || 0) * (metalAskPrices?.AUXPT || 0)) +
     ((stakedAmounts?.auxpd || 0) * (metalAskPrices?.AUXPD || 0));
 
-  // Allocations değeri
-  const allocatedValueCalc =
-    ((allocationGrams?.AUXG || 0) * (metalAskPrices?.AUXG || 0)) +
-    ((allocationGrams?.AUXS || 0) * (metalAskPrices?.AUXS || 0)) +
-    ((allocationGrams?.AUXPT || 0) * (metalAskPrices?.AUXPT || 0)) +
-    ((allocationGrams?.AUXPD || 0) * (metalAskPrices?.AUXPD || 0));
+  // Allocations - NOT counted separately because they're already included in balance
+  // Balance API returns: total balance - staked = available
+  // Allocations are physical records of the same tokens, not additional value
+  const allocatedValueCalc = 0; // Don't double count!
 
   // Metals değeri (balance - staked zaten çıkarılmış API'de)
   const metalsValueCalc =
