@@ -538,8 +538,10 @@ export default function WalletPage() {
     (balances?.usdt || 0) +
     (balances?.usd || 0);
 
-  // Use portfolio API if available, otherwise fallback to local calculation
-  const usePortfolioAPI = portfolio.totalValue > 0;
+  // TEMPORARILY DISABLED: Portfolio API returns wrong values (missing metal prices)
+  // TODO: Fix portfolio API then re-enable
+  // const usePortfolioAPI = portfolio.totalValue > 0;
+  const usePortfolioAPI = false; // Force fallback calculation until API is fixed
 
   const totalAvailable = usePortfolioAPI ? portfolio.availableValue : (metalsValueCalc + cryptoValueCalc);
   const totalLocked = usePortfolioAPI ? portfolio.lockedValue : (allocatedValueCalc + stakedValueCalc);
