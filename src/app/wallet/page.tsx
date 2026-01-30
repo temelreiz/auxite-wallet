@@ -29,6 +29,7 @@ import { useAllocations } from "@/hooks/useAllocations";
 import { useStaking } from "@/hooks/useStaking";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
+import { usePortfolio } from "@/hooks/usePortfolio";
 import { useLanguage, LANGUAGES, getLanguageData, type LanguageCode } from "@/components/LanguageContext";
 import { RequireAllowedChain } from "@/components/RequireAllowedChain";
 import { useWalletContext } from "@/components/WalletContext";
@@ -461,66 +462,35 @@ export default function WalletPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Staked değeri (WalletContext stakedAmounts'tan hesapla - API'den geliyor)
-  // NOT: Allocations artık sayılmıyor çünkü mobilde de sayılmıyor (boş array döner)
-  // Balance API zaten allocation değerlerini içeriyor
-  const stakedValueCalc =
-    ((stakedAmounts?.auxg || 0) * (metalAskPrices?.AUXG || 0)) +
-    ((stakedAmounts?.auxs || 0) * (metalAskPrices?.AUXS || 0)) +
-    ((stakedAmounts?.auxpt || 0) * (metalAskPrices?.AUXPT || 0)) +
-    ((stakedAmounts?.auxpd || 0) * (metalAskPrices?.AUXPD || 0));
-
   // ═══════════════════════════════════════════════════════════════════════════
-  // MOBİL İLE AYNI HESAPLAMA
-  // totalValue = (metals + crypto) + staking
-  // NOT: Mobilde allocations boş array döner, bu yüzden biz de saymıyoruz
+  // UNIFIED PORTFOLIO VALUES - From /api/user/portfolio (single source of truth)
+  // Both web and mobile use the same API, same calculations
   // ═══════════════════════════════════════════════════════════════════════════
 
-  // 1. Metals değeri (balance API'den gelen değerler - staked zaten çıkarılmış)
-  const metalsValue =
-    (auxgBalance * (metalAskPrices?.AUXG || 0)) +
-    (auxsBalance * (metalAskPrices?.AUXS || 0)) +
-    (auxptBalance * (metalAskPrices?.AUXPT || 0)) +
-    (auxpdBalance * (metalAskPrices?.AUXPD || 0));
-
-  // 2. Crypto değeri
-  const cryptoValue =
-    (ethBalance * (cryptoPrices?.eth || 0)) +
-    (btcBalance * (cryptoPrices?.btc || 0)) +
-    (xrpBalance * (cryptoPrices?.xrp || 0)) +
-    (solBalance * (cryptoPrices?.sol || 0)) +
-    (balances?.usdt || 0) +
-    (balances?.usd || 0);
-
-  // 3. Available (Kullanılabilir) = metals + crypto
-  const totalAvailable = metalsValue + cryptoValue;
-
-  // 4. Locked (Kilitli) = SADECE staking (mobilde allocations boş array döner)
-  // Allocations balance içinde zaten var, tekrar eklersek çift sayım olur
-  const totalLocked = stakedValueCalc;
-
-  // 5. TOPLAM VARLIK DEĞERİ = Available + Locked (MOBİL İLE AYNI)
-  const totalEstimatedValue = totalAvailable + totalLocked;
-
-  // DEBUG - Tüm değerleri konsola yaz
-  console.log('📊 ASSET VALUE DEBUG:', {
-    metals: { auxg: auxgBalance, auxs: auxsBalance, auxpt: auxptBalance, auxpd: auxpdBalance },
-    metalPrices: metalAskPrices,
-    metalsValue,
-    cryptoValue,
-    totalAvailable,
-    staked: stakedAmounts,
-    stakedValueCalc,
-    totalLocked,
-    TOTAL: totalEstimatedValue,
-  });
-
-  // USD cinsinden toplam değer
-  const totalEstimatedUsd = totalEstimatedValue * usdtPrice;
+  // Main values from portfolio API
+  const totalEstimatedValue = portfolio.totalValue;
+  const totalAvailable = portfolio.availableValue;
+  const totalLocked = portfolio.lockedValue;
 
   // Kart değerleri
   const auxiteAndCryptoValue = totalAvailable;
   const allocatedAndStakedValue = totalLocked;
+
+  // USD cinsinden toplam değer (API zaten USD döndürüyor)
+  const totalEstimatedUsd = totalEstimatedValue;
+
+  // DEBUG - Portfolio API değerlerini konsola yaz
+  console.log('📊 PORTFOLIO API DEBUG:', {
+    totalValue: portfolio.totalValue,
+    availableValue: portfolio.availableValue,
+    lockedValue: portfolio.lockedValue,
+    metals: portfolio.metals,
+    crypto: portfolio.crypto,
+    allocations: portfolio.allocations,
+    staking: portfolio.staking,
+    prices: portfolio.prices,
+    loading: portfolio.loading,
+  });
 
   // Deposit coins list
   const depositCoins = [
@@ -559,8 +529,13 @@ export default function WalletPage() {
     (walletMode === "local" && !!localWalletAddress && isSessionUnlocked) || 
     isExternalConnected;
 
-  const currentAddress = 
+  const currentAddress =
     (walletMode === "local" && localWalletAddress) ? localWalletAddress : externalAddress;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // UNIFIED PORTFOLIO - Single source of truth for all values
+  // ═══════════════════════════════════════════════════════════════════════════
+  const portfolio = usePortfolio(currentAddress);
 
   // Fetch pending orders count
   useEffect(() => {
