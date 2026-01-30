@@ -31,7 +31,9 @@ const TOKEN_INFO: Record<TokenType, {
   SOL: { name: "Solana", icon: "◎", iconType: "symbol", color: "#9945FF", onChain: false, decimals: 9 },
 };
 
-const TRANSFERABLE_TOKENS: TokenType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD", "ETH", "USDT", "BTC", "XRP", "SOL"];
+// ETH requires wallet signing - not supported via platform transfer
+// Users should use MetaMask or other wallets for ETH transfers
+const TRANSFERABLE_TOKENS: TokenType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD", "USDT", "BTC", "XRP", "SOL"];
 const METAL_TOKENS: TokenType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
 
 const ERC20_ABI = [
