@@ -107,12 +107,11 @@ const ERC20_ABI = [
   "function decimals() view returns (uint8)",
 ];
 
-// On-chain tokens - TEMPORARILY DISABLED until contract mint is fixed
-// const ON_CHAIN_TOKENS = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
-const ON_CHAIN_TOKENS = ["AUXG", "AUXS", "AUXPT", "AUXPD"]; // On-chain transfers enabled
+// On-chain tokens - metal tokens + native ETH
+const ON_CHAIN_TOKENS = ["AUXG", "AUXS", "AUXPT", "AUXPD", "ETH"]; // ETH is native on-chain
 
-// Off-chain tokens (Redis only) - includes metals temporarily
-const OFF_CHAIN_TOKENS = ["AUXG", "AUXS", "AUXPT", "AUXPD", "AUXM", "ETH", "USDT", "BTC", "XRP", "SOL"];
+// Off-chain tokens (Redis only)
+const OFF_CHAIN_TOKENS = ["AUXM", "USDT", "BTC", "XRP", "SOL"];
 
 export async function POST(request: NextRequest) {
   try {
@@ -143,33 +142,77 @@ export async function POST(request: NextRequest) {
     // Check if on-chain or off-chain transfer
     if (ON_CHAIN_TOKENS.includes(tokenUpper)) {
       // ============= ON-CHAIN TRANSFER =============
-      const contractAddress = TOKEN_CONTRACTS[tokenUpper];
-      if (!contractAddress) {
-        return NextResponse.json({ error: "Token contract not found" }, { status: 400 });
-      }
-
       const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL);
       const wallet = new ethers.Wallet(process.env.HOT_WALLET_ETH_PRIVATE_KEY!, provider);
-      const contract = new ethers.Contract(contractAddress, ERC20_ABI, wallet);
 
-      // Get decimals
-      const decimals = await contract.decimals();
-      const amountInUnits = ethers.parseUnits(amount.toString(), decimals);
+      let receipt: any;
+      let decimals = 18; // Default for ETH
 
-      // Check hot wallet balance
-      const hotWalletBalance = await contract.balanceOf(wallet.address);
-      if (hotWalletBalance < amountInUnits) {
-        return NextResponse.json({
-          error: "Insufficient hot wallet balance for on-chain transfer",
-          available: ethers.formatUnits(hotWalletBalance, decimals),
-          required: amount,
-        }, { status: 400 });
+      if (tokenUpper === "ETH") {
+        // ===== NATIVE ETH TRANSFER =====
+        const amountInWei = ethers.parseEther(amount.toString());
+
+        // Check USER's blockchain ETH balance (mainnet)
+        const mainnetProvider = new ethers.JsonRpcProvider(process.env.EXPO_PUBLIC_ETH_RPC_URL || 'https://mainnet.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680');
+        const userBalance = await mainnetProvider.getBalance(fromAddress);
+        const userBalanceEth = parseFloat(ethers.formatEther(userBalance));
+        console.log(`ETH Transfer - User ${fromAddress} balance: ${userBalanceEth} ETH, Requested: ${amount} ETH`);
+
+        if (userBalanceEth < amount) {
+          return NextResponse.json({
+            error: "Insufficient balance",
+            available: userBalanceEth,
+            required: amount,
+          }, { status: 400 });
+        }
+
+        // Check hot wallet ETH balance for the transfer
+        const hotWalletBalance = await provider.getBalance(wallet.address);
+        console.log(`ETH Transfer - Hot wallet balance: ${ethers.formatEther(hotWalletBalance)} ETH`);
+
+        if (hotWalletBalance < amountInWei) {
+          return NextResponse.json({
+            error: "Platform temporarily unable to process ETH transfers. Please try again later.",
+            available: ethers.formatEther(hotWalletBalance),
+            required: amount,
+          }, { status: 503 });
+        }
+
+        // Execute native ETH transfer from hot wallet
+        console.log(`🚀 Native ETH transfer: ${amount} ETH to ${toAddress}`);
+        const tx = await wallet.sendTransaction({
+          to: toAddress,
+          value: amountInWei,
+        });
+        receipt = await tx.wait();
+      } else {
+        // ===== ERC20 TOKEN TRANSFER =====
+        const contractAddress = TOKEN_CONTRACTS[tokenUpper];
+        if (!contractAddress) {
+          return NextResponse.json({ error: "Token contract not found" }, { status: 400 });
+        }
+
+        const contract = new ethers.Contract(contractAddress, ERC20_ABI, wallet);
+
+        // Get decimals
+        decimals = await contract.decimals();
+        const amountInUnits = ethers.parseUnits(amount.toString(), decimals);
+
+        // Check hot wallet balance
+        const hotWalletBalance = await contract.balanceOf(wallet.address);
+        if (hotWalletBalance < amountInUnits) {
+          return NextResponse.json({
+            error: "Insufficient hot wallet balance for on-chain transfer",
+            available: ethers.formatUnits(hotWalletBalance, decimals),
+            required: amount,
+          }, { status: 400 });
+        }
+
+        // Execute on-chain transfer
+        console.log(`🚀 On-chain transfer: ${amount} ${tokenUpper} to ${toAddress}`);
+        const tx = await contract.transfer(toAddress, amountInUnits);
+        receipt = await tx.wait();
       }
-
-      // Execute on-chain transfer
-      console.log(`🚀 On-chain transfer: ${amount} ${tokenUpper} to ${toAddress}`);
-      const tx = await contract.transfer(toAddress, amountInUnits);
-      const receipt = await tx.wait();
 
       console.log(`✅ Transfer completed: ${receipt.hash}`);
 
