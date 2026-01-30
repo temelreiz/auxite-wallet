@@ -475,39 +475,42 @@ export default function WalletPage() {
     ((stakedAmounts?.auxpt || 0) * (metalAskPrices?.AUXPT || 0)) +
     ((stakedAmounts?.auxpd || 0) * (metalAskPrices?.AUXPD || 0));
 
-  // Toplam varlık değeri = Auxite & Kripto değeri
-  // NOT: API'den gelen balance zaten staked çıkarılmış (available balance)
-  // Tahsisli & Stake kartı sadece bilgi amaçlı, toplama eklenmemeli
-  const totalEstimatedValue =
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MOBİL İLE AYNI HESAPLAMA
+  // totalValue = (metals + crypto) + (allocations + staking)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // 1. Metals değeri (balance API'den gelen değerler)
+  const metalsValue =
     (auxgBalance * (metalAskPrices?.AUXG || 0)) +
     (auxsBalance * (metalAskPrices?.AUXS || 0)) +
     (auxptBalance * (metalAskPrices?.AUXPT || 0)) +
-    (auxpdBalance * (metalAskPrices?.AUXPD || 0)) +
+    (auxpdBalance * (metalAskPrices?.AUXPD || 0));
+
+  // 2. Crypto değeri
+  const cryptoValue =
     (ethBalance * (cryptoPrices?.eth || 0)) +
     (btcBalance * (cryptoPrices?.btc || 0)) +
     (xrpBalance * (cryptoPrices?.xrp || 0)) +
     (solBalance * (cryptoPrices?.sol || 0)) +
     (balances?.usdt || 0) +
     (balances?.usd || 0);
-  
-  // USD cinsinden toplam değer (USDT * USDT/USD kuru)
+
+  // 3. Available (Kullanılabilir) = metals + crypto
+  const totalAvailable = metalsValue + cryptoValue;
+
+  // 4. Locked (Kilitli) = allocations + staking
+  const totalLocked = allocatedValueCalc + stakedValueCalc;
+
+  // 5. TOPLAM VARLIK DEĞERİ = Available + Locked (MOBİL İLE AYNI)
+  const totalEstimatedValue = totalAvailable + totalLocked;
+
+  // USD cinsinden toplam değer
   const totalEstimatedUsd = totalEstimatedValue * usdtPrice;
 
-  // Auxite & Crypto değeri (metaller + kripto)
-  const auxiteAndCryptoValue = 
-    (auxgBalance * (metalAskPrices?.AUXG || 0)) +
-    (auxsBalance * (metalAskPrices?.AUXS || 0)) +
-    (auxptBalance * (metalAskPrices?.AUXPT || 0)) +
-    (auxpdBalance * (metalAskPrices?.AUXPD || 0)) +
-    (ethBalance * (cryptoPrices?.eth || 0)) +
-    (btcBalance * (cryptoPrices?.btc || 0)) +
-    (xrpBalance * (cryptoPrices?.xrp || 0)) +
-    (solBalance * (cryptoPrices?.sol || 0)) +
-    (balances?.usdt || 0);
-
-  // Tahsisli & Stake toplam değeri = sadece staked değeri
-  // Mobil "Kilitli" ile eşleşmesi için stakedValueCalc kullan
-  const allocatedAndStakedValue = stakedValueCalc;
+  // Kart değerleri
+  const auxiteAndCryptoValue = totalAvailable;
+  const allocatedAndStakedValue = totalLocked;
 
   // Deposit coins list
   const depositCoins = [
