@@ -475,20 +475,29 @@ export default function WalletPage() {
     ((stakedAmounts?.auxpt || 0) * (metalAskPrices?.AUXPT || 0)) +
     ((stakedAmounts?.auxpd || 0) * (metalAskPrices?.AUXPD || 0));
 
-  // Toplam varlık değeri hesapla (Auxite & Kripto + Staked)
-  // Mobil ile eşleşmesi için: available balance + staked value
+  // DEBUG: Mobil ile karşılaştırma için değerleri logla
+  console.log('🔍 BALANCE DEBUG:', {
+    auxg: auxgBalance,
+    auxs: auxsBalance,
+    auxpt: auxptBalance,
+    auxpd: auxpdBalance,
+    stakedAmounts,
+    metalPrices: metalAskPrices,
+  });
+
+  // Toplam varlık değeri hesapla
+  // Mobil ile eşleşmesi için: balance - staked (çünkü balance staked dahil geliyor)
   const totalEstimatedValue =
-    (auxgBalance * (metalAskPrices?.AUXG || 0)) +
-    (auxsBalance * (metalAskPrices?.AUXS || 0)) +
-    (auxptBalance * (metalAskPrices?.AUXPT || 0)) +
-    (auxpdBalance * (metalAskPrices?.AUXPD || 0)) +
+    ((auxgBalance - (stakedAmounts?.auxg || 0)) * (metalAskPrices?.AUXG || 0)) +
+    ((auxsBalance - (stakedAmounts?.auxs || 0)) * (metalAskPrices?.AUXS || 0)) +
+    ((auxptBalance - (stakedAmounts?.auxpt || 0)) * (metalAskPrices?.AUXPT || 0)) +
+    ((auxpdBalance - (stakedAmounts?.auxpd || 0)) * (metalAskPrices?.AUXPD || 0)) +
     (ethBalance * (cryptoPrices?.eth || 0)) +
     (btcBalance * (cryptoPrices?.btc || 0)) +
     (xrpBalance * (cryptoPrices?.xrp || 0)) +
     (solBalance * (cryptoPrices?.sol || 0)) +
     (balances?.usdt || 0) +
-    (balances?.usd || 0) +
-    stakedValueCalc;
+    (balances?.usd || 0);
   
   // USD cinsinden toplam değer (USDT * USDT/USD kuru)
   const totalEstimatedUsd = totalEstimatedValue * usdtPrice;
