@@ -170,12 +170,18 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   
   const getAvailableBalance = (token: TokenType): number => {
     const info = TOKEN_INFO[token];
-    // For on-chain tokens (including ETH which has no address but is still on-chain)
-    if (info.onChain) {
-      return onChainBalances[token.toLowerCase()] || 0;
-    }
-    if (!balances) return 0;
-    return parseFloat(String((balances as any)[token.toLowerCase()] || 0));
+    const key = token.toLowerCase();
+
+    // First check onChainBalances (from API fetch)
+    const onChainBal = onChainBalances[key] || 0;
+    // Then check balances prop (from useWallet)
+    const walletBal = balances ? parseFloat(String((balances as any)[key] || 0)) : 0;
+
+    // Use whichever has a value
+    const finalBal = onChainBal > 0 ? onChainBal : walletBal;
+
+    console.log(`TransferModal.getAvailableBalance(${token}):`, { onChainBal, walletBal, finalBal });
+    return finalBal;
   };
 
   const availableBalance = getAvailableBalance(selectedToken);
