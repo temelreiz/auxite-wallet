@@ -507,24 +507,61 @@ export default function WalletPage() {
   // ═══════════════════════════════════════════════════════════════════════════
   const portfolio = usePortfolio(currentAddress);
 
-  // Main values from portfolio API
-  const totalEstimatedValue = portfolio.totalValue;
-  const totalAvailable = portfolio.availableValue;
-  const totalLocked = portfolio.lockedValue;
+  // Calculate values using existing data as fallback while portfolio API is being fixed
+  // Staked değeri
+  const stakedValueCalc =
+    ((stakedAmounts?.auxg || 0) * (metalAskPrices?.AUXG || 0)) +
+    ((stakedAmounts?.auxs || 0) * (metalAskPrices?.AUXS || 0)) +
+    ((stakedAmounts?.auxpt || 0) * (metalAskPrices?.AUXPT || 0)) +
+    ((stakedAmounts?.auxpd || 0) * (metalAskPrices?.AUXPD || 0));
+
+  // Allocations değeri
+  const allocatedValueCalc =
+    ((allocationGrams?.AUXG || 0) * (metalAskPrices?.AUXG || 0)) +
+    ((allocationGrams?.AUXS || 0) * (metalAskPrices?.AUXS || 0)) +
+    ((allocationGrams?.AUXPT || 0) * (metalAskPrices?.AUXPT || 0)) +
+    ((allocationGrams?.AUXPD || 0) * (metalAskPrices?.AUXPD || 0));
+
+  // Metals değeri (balance - staked zaten çıkarılmış API'de)
+  const metalsValueCalc =
+    (auxgBalance * (metalAskPrices?.AUXG || 0)) +
+    (auxsBalance * (metalAskPrices?.AUXS || 0)) +
+    (auxptBalance * (metalAskPrices?.AUXPT || 0)) +
+    (auxpdBalance * (metalAskPrices?.AUXPD || 0));
+
+  // Crypto değeri
+  const cryptoValueCalc =
+    (ethBalance * (cryptoPrices?.eth || 0)) +
+    (btcBalance * (cryptoPrices?.btc || 0)) +
+    (xrpBalance * (cryptoPrices?.xrp || 0)) +
+    (solBalance * (cryptoPrices?.sol || 0)) +
+    (balances?.usdt || 0) +
+    (balances?.usd || 0);
+
+  // Use portfolio API if available, otherwise fallback to local calculation
+  const usePortfolioAPI = portfolio.totalValue > 0;
+
+  const totalAvailable = usePortfolioAPI ? portfolio.availableValue : (metalsValueCalc + cryptoValueCalc);
+  const totalLocked = usePortfolioAPI ? portfolio.lockedValue : (allocatedValueCalc + stakedValueCalc);
+  const totalEstimatedValue = usePortfolioAPI ? portfolio.totalValue : (totalAvailable + totalLocked);
 
   // Kart değerleri
   const auxiteAndCryptoValue = totalAvailable;
   const allocatedAndStakedValue = totalLocked;
 
-  // USD cinsinden toplam değer (API zaten USD döndürüyor)
+  // USD cinsinden toplam değer
   const totalEstimatedUsd = totalEstimatedValue;
 
-  // DEBUG - Portfolio API değerlerini konsola yaz
-  console.log('📊 PORTFOLIO API DEBUG:', {
-    totalValue: portfolio.totalValue,
-    availableValue: portfolio.availableValue,
-    lockedValue: portfolio.lockedValue,
-    loading: portfolio.loading,
+  // DEBUG
+  console.log('📊 ASSET VALUE DEBUG:', {
+    usePortfolioAPI,
+    portfolioTotal: portfolio.totalValue,
+    fallbackTotal: metalsValueCalc + cryptoValueCalc + allocatedValueCalc + stakedValueCalc,
+    metalsValueCalc,
+    cryptoValueCalc,
+    allocatedValueCalc,
+    stakedValueCalc,
+    FINAL_TOTAL: totalEstimatedValue,
   });
 
   // Fetch pending orders count
