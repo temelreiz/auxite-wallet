@@ -462,36 +462,6 @@ export default function WalletPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // UNIFIED PORTFOLIO VALUES - From /api/user/portfolio (single source of truth)
-  // Both web and mobile use the same API, same calculations
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  // Main values from portfolio API
-  const totalEstimatedValue = portfolio.totalValue;
-  const totalAvailable = portfolio.availableValue;
-  const totalLocked = portfolio.lockedValue;
-
-  // Kart değerleri
-  const auxiteAndCryptoValue = totalAvailable;
-  const allocatedAndStakedValue = totalLocked;
-
-  // USD cinsinden toplam değer (API zaten USD döndürüyor)
-  const totalEstimatedUsd = totalEstimatedValue;
-
-  // DEBUG - Portfolio API değerlerini konsola yaz
-  console.log('📊 PORTFOLIO API DEBUG:', {
-    totalValue: portfolio.totalValue,
-    availableValue: portfolio.availableValue,
-    lockedValue: portfolio.lockedValue,
-    metals: portfolio.metals,
-    crypto: portfolio.crypto,
-    allocations: portfolio.allocations,
-    staking: portfolio.staking,
-    prices: portfolio.prices,
-    loading: portfolio.loading,
-  });
-
   // Deposit coins list
   const depositCoins = [
     { id: "BTC", name: "Bitcoin", icon: "₿", color: "#F7931A" },
@@ -536,6 +506,26 @@ export default function WalletPage() {
   // UNIFIED PORTFOLIO - Single source of truth for all values
   // ═══════════════════════════════════════════════════════════════════════════
   const portfolio = usePortfolio(currentAddress);
+
+  // Main values from portfolio API
+  const totalEstimatedValue = portfolio.totalValue;
+  const totalAvailable = portfolio.availableValue;
+  const totalLocked = portfolio.lockedValue;
+
+  // Kart değerleri
+  const auxiteAndCryptoValue = totalAvailable;
+  const allocatedAndStakedValue = totalLocked;
+
+  // USD cinsinden toplam değer (API zaten USD döndürüyor)
+  const totalEstimatedUsd = totalEstimatedValue;
+
+  // DEBUG - Portfolio API değerlerini konsola yaz
+  console.log('📊 PORTFOLIO API DEBUG:', {
+    totalValue: portfolio.totalValue,
+    availableValue: portfolio.availableValue,
+    lockedValue: portfolio.lockedValue,
+    loading: portfolio.loading,
+  });
 
   // Fetch pending orders count
   useEffect(() => {
