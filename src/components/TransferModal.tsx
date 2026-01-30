@@ -151,7 +151,10 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   
   const getAvailableBalance = (token: TokenType): number => {
     const info = TOKEN_INFO[token];
-    if (info.onChain && info.address) return onChainBalances[token.toLowerCase()] || 0;
+    // For on-chain tokens (including ETH which has no address but is still on-chain)
+    if (info.onChain) {
+      return onChainBalances[token.toLowerCase()] || 0;
+    }
     if (!balances) return 0;
     return parseFloat(String((balances as any)[token.toLowerCase()] || 0));
   };
