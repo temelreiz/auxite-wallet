@@ -111,10 +111,8 @@ const ERC20_ABI = [
 const ON_CHAIN_TOKENS = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
 
 // Off-chain tokens (Redis balance transfers)
+// ETH is handled directly in frontend via wallet signing
 const OFF_CHAIN_TOKENS = ["AUXM", "USDT", "BTC", "XRP", "SOL"];
-
-// Tokens that require wallet signing (not supported via API)
-const WALLET_SIGN_REQUIRED = ["ETH"];
 
 export async function POST(request: NextRequest) {
   try {
@@ -142,12 +140,11 @@ export async function POST(request: NextRequest) {
     const tokenKey = token.toLowerCase();
     const tokenUpper = token.toUpperCase();
 
-    // ETH transfers require wallet signing - not supported via platform API
-    if (WALLET_SIGN_REQUIRED.includes(tokenUpper)) {
+    // ETH must be transferred via wallet signing in frontend
+    if (tokenUpper === "ETH") {
       return NextResponse.json({
-        error: "ETH transfers require wallet signing. Please use your wallet app (MetaMask, etc.) to send ETH directly.",
-        code: "WALLET_SIGN_REQUIRED",
-        token: tokenUpper,
+        error: "ETH transfers must be signed via your wallet. Use the web app to transfer ETH.",
+        code: "USE_WALLET_SIGNING",
       }, { status: 400 });
     }
 
@@ -241,12 +238,11 @@ export async function POST(request: NextRequest) {
       const fromBalanceKey = `user:${normalizedFrom}:balance`;
       const toBalanceKey = `user:${normalizedTo}:balance`;
 
-      // Get sender's balance
+      // Get sender's balance from Redis
       const fromBalance = await redis.hgetall(fromBalanceKey);
       if (!fromBalance) {
         return NextResponse.json({ error: "Sender not found" }, { status: 404 });
       }
-
       const senderBalance = parseFloat(fromBalance[tokenKey] as string || "0");
 
       if (senderBalance < amount) {

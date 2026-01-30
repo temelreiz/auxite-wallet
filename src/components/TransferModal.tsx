@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useWallet } from "@/components/WalletContext";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { parseUnits } from "viem";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSendTransaction } from "wagmi";
+import { parseUnits, parseEther } from "viem";
 import { useAllocations } from "@/hooks/useAllocations";
 import { METAL_TOKENS as METAL_TOKEN_ADDRESSES, USDT_ADDRESS } from "@/config/contracts-v8";
 import { TwoFactorGate } from "@/components/TwoFactorGate";
@@ -31,9 +31,7 @@ const TOKEN_INFO: Record<TokenType, {
   SOL: { name: "Solana", icon: "◎", iconType: "symbol", color: "#9945FF", onChain: false, decimals: 9 },
 };
 
-// ETH requires wallet signing - not supported via platform transfer
-// Users should use MetaMask or other wallets for ETH transfers
-const TRANSFERABLE_TOKENS: TokenType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD", "USDT", "BTC", "XRP", "SOL"];
+const TRANSFERABLE_TOKENS: TokenType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD", "ETH", "USDT", "BTC", "XRP", "SOL"];
 const METAL_TOKENS: TokenType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
 
 const ERC20_ABI = [
@@ -86,6 +84,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const [recipientValid, setRecipientValid] = useState<boolean | null>(null);
 
   const { writeContract, data: writeData } = useWriteContract();
+  const { sendTransaction, data: sendTxData } = useSendTransaction();
   const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
 
   useEffect(() => {
@@ -119,7 +118,10 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     fetchOnChainBalances();
   }, [address, isOpen]);
 
-  useEffect(() => { if (writeData) setTxHash(writeData); }, [writeData]);
+  useEffect(() => {
+    if (writeData) setTxHash(writeData);
+    if (sendTxData) setTxHash(sendTxData);
+  }, [writeData, sendTxData]);
 
   useEffect(() => {
     if (isConfirmed && txHash) {
@@ -219,6 +221,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     
     try {
       if (isMetal) {
+        // Metal token transfer (ERC20 on Sepolia)
         const metalAllocations = allocations.filter(a => a.metalSymbol === selectedToken && a.active);
         if (metalAllocations.length > 0) {
           const allocResponse = await fetch("/api/allocations", {
@@ -231,18 +234,28 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         }
         const amountInUnits = parseUnits(amount, tokenInfo.decimals);
         writeContract({ address: tokenInfo.address as `0x${string}`, abi: ERC20_ABI, functionName: "transfer", args: [recipientAddress as `0x${string}`, amountInUnits], gas: BigInt(200000) });
+      } else if (selectedToken === "ETH") {
+        // Native ETH transfer - user signs with wallet
+        console.log(`🚀 Native ETH transfer: ${amount} ETH to ${recipientAddress}`);
+        const amountInWei = parseEther(amount);
+        sendTransaction({
+          to: recipientAddress as `0x${string}`,
+          value: amountInWei,
+        });
       } else if (tokenInfo.onChain && tokenInfo.address) {
+        // Other ERC20 token transfer
         const amountInUnits = parseUnits(amount, tokenInfo.decimals);
         writeContract({ address: tokenInfo.address as `0x${string}`, abi: ERC20_ABI, functionName: "transfer", args: [recipientAddress as `0x${string}`, amountInUnits], gas: BigInt(200000) });
       } else {
+        // Off-chain transfer via API
         const response = await fetch("/api/transfer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fromAddress: address, toAddress: recipientAddress, token: selectedToken, amount: amountNum }) });
         const data = await response.json();
-        if (data.success) { 
-          setResult("success"); 
+        if (data.success) {
+          setResult("success");
           setFlowStep("result");
-          if (refreshBalances) await refreshBalances(); 
-        } else { 
-          throw new Error(data.error || "Transfer failed"); 
+          if (refreshBalances) await refreshBalances();
+        } else {
+          throw new Error(data.error || "Transfer failed");
         }
         setIsProcessing(false);
       }
