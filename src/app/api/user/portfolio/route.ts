@@ -104,9 +104,7 @@ async function getMetalPrices(): Promise<{
   changes: Record<string, number>;
 }> {
   try {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io';
+    const baseUrl = 'https://wallet.auxite.io';
 
     const res = await fetch(`${baseUrl}/api/prices`, {
       cache: "no-store",
@@ -140,9 +138,7 @@ async function getMetalPrices(): Promise<{
 
 async function getCryptoPrices(): Promise<Record<string, number>> {
   try {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io';
+    const baseUrl = 'https://wallet.auxite.io';
 
     const res = await fetch(`${baseUrl}/api/crypto`, {
       cache: "no-store",
@@ -180,9 +176,7 @@ async function getUserBalances(address: string): Promise<{
 }> {
   try {
     // Call existing balance API (it has proper blockchain + redis + staked subtraction logic)
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io';
+    const baseUrl = 'https://wallet.auxite.io';
 
     const res = await fetch(`${baseUrl}/api/user/balance?address=${address}`, {
       cache: "no-store",
@@ -237,9 +231,7 @@ async function getAllocations(address: string): Promise<Array<{
 }>> {
   try {
     // Call existing allocations API (it has the proper UID lookup logic)
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io';
+    const baseUrl = 'https://wallet.auxite.io';
 
     const res = await fetch(`${baseUrl}/api/allocations?address=${address}`, {
       cache: "no-store",
@@ -287,9 +279,7 @@ async function getStakes(address: string): Promise<Array<{
 }>> {
   try {
     // Call existing stakes API
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io';
+    const baseUrl = 'https://wallet.auxite.io';
 
     const res = await fetch(`${baseUrl}/api/stakes?address=${address}`, {
       cache: "no-store",
