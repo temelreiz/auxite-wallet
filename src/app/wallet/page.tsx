@@ -480,7 +480,7 @@ export default function WalletPage() {
   // totalValue = (metals + crypto) + (allocations + staking)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  // 1. Metals değeri (balance API'den gelen değerler)
+  // 1. Metals değeri (balance API'den gelen değerler - staked zaten çıkarılmış)
   const metalsValue =
     (auxgBalance * (metalAskPrices?.AUXG || 0)) +
     (auxsBalance * (metalAskPrices?.AUXS || 0)) +
@@ -504,6 +504,21 @@ export default function WalletPage() {
 
   // 5. TOPLAM VARLIK DEĞERİ = Available + Locked (MOBİL İLE AYNI)
   const totalEstimatedValue = totalAvailable + totalLocked;
+
+  // DEBUG - Tüm değerleri konsola yaz
+  console.log('📊 ASSET VALUE DEBUG:', {
+    metals: { auxg: auxgBalance, auxs: auxsBalance, auxpt: auxptBalance, auxpd: auxpdBalance },
+    metalPrices: metalAskPrices,
+    metalsValue,
+    cryptoValue,
+    totalAvailable,
+    allocations: allocationGrams,
+    allocatedValueCalc,
+    staked: stakedAmounts,
+    stakedValueCalc,
+    totalLocked,
+    TOTAL: totalEstimatedValue,
+  });
 
   // USD cinsinden toplam değer
   const totalEstimatedUsd = totalEstimatedValue * usdtPrice;
