@@ -3,6 +3,30 @@
 // All calculations done here, frontends just display
 
 import { NextRequest, NextResponse } from "next/server";
+import { Redis } from "@upstash/redis";
+import { getUserBalance } from "@/lib/redis";
+import { ethers } from "ethers";
+import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
+
+// Blockchain RPC
+const ETH_RPC_URL = process.env.ETH_RPC_URL || "https://eth-mainnet.g.alchemy.com/v2/demo";
+const SEPOLIA_RPC_URL = process.env.BLOCKCHAIN_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
+
+// Token Contracts
+const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
+  usdt: { address: USDT_ADDRESS, decimals: 6 },
+  auxg: { address: METAL_TOKENS.AUXG, decimals: 3 },
+  auxs: { address: METAL_TOKENS.AUXS, decimals: 3 },
+  auxpt: { address: METAL_TOKENS.AUXPT, decimals: 3 },
+  auxpd: { address: METAL_TOKENS.AUXPD, decimals: 3 },
+};
+
+const ERC20_ABI = ["function balanceOf(address) view returns (uint256)"];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -11,90 +35,67 @@ import { NextRequest, NextResponse } from "next/server";
 interface PortfolioResponse {
   success: boolean;
   address: string;
-
-  // Main values (what to display in header)
   totalValue: number;
   availableValue: number;
   lockedValue: number;
   pendingValue: number;
-
-  // Breakdown by category
   breakdown: {
-    metals: {
-      value: number;
-      items: Array<{
-        symbol: string;
-        name: string;
-        balance: number;
-        price: number;
-        value: number;
-        change24h: number;
-      }>;
-    };
-    crypto: {
-      value: number;
-      items: Array<{
-        symbol: string;
-        name: string;
-        balance: number;
-        price: number;
-        value: number;
-        change24h: number;
-      }>;
-    };
-    allocations: {
-      value: number;
-      totalGrams: Record<string, number>;
-      items: Array<{
-        id: string;
-        metal: string;
-        metalSymbol: string;
-        grams: number;
-        price: number;
-        value: number;
-        vault: string;
-        status: string;
-      }>;
-    };
-    staking: {
-      value: number;
-      totalGrams: Record<string, number>;
-      items: Array<{
-        id: string;
-        metal: string;
-        metalSymbol: string;
-        amount: number;
-        price: number;
-        value: number;
-        apy: number;
-        duration: number;
-        startDate: string;
-        endDate: string;
-        status: string;
-      }>;
-    };
+    metals: { value: number; items: any[] };
+    crypto: { value: number; items: any[] };
+    allocations: { value: number; totalGrams: Record<string, number>; items: any[] };
+    staking: { value: number; totalGrams: Record<string, number>; items: any[] };
   };
-
-  // Single source of prices
   prices: {
     metals: Record<string, { ask: number; bid: number; spot: number; change24h: number }>;
     crypto: Record<string, number>;
     usdt: number;
   };
-
-  // Raw balances for reference
   balances: {
     metals: Record<string, number>;
     crypto: Record<string, number>;
     auxm: number;
     bonusAuxm: number;
   };
-
   timestamp: number;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PRICE FETCHING - Use existing /api/prices for consistency
+// BLOCKCHAIN BALANCE FETCHING
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function getBlockchainBalances(address: string) {
+  const balances: Record<string, number> = { eth: 0, usdt: 0, auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 };
+
+  try {
+    // ETH balance from mainnet
+    const ethProvider = new ethers.JsonRpcProvider(ETH_RPC_URL);
+    const ethBalance = await ethProvider.getBalance(address);
+    balances.eth = parseFloat(ethers.formatEther(ethBalance));
+
+    // Token balances from Sepolia
+    const sepoliaProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+
+    await Promise.all(
+      Object.entries(TOKEN_CONTRACTS).map(async ([symbol, config]) => {
+        try {
+          if (!config.address || config.address === "0x0000000000000000000000000000000000000000") return;
+          const contract = new ethers.Contract(config.address, ERC20_ABI, sepoliaProvider);
+          const balance = await contract.balanceOf(address);
+          balances[symbol] = parseFloat(ethers.formatUnits(balance, config.decimals));
+        } catch (e) {
+          // Silent fail
+        }
+      })
+    );
+  } catch (e) {
+    console.error("Blockchain balance error:", e);
+  }
+
+  return balances;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PRICE FETCHING
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function getMetalPrices(): Promise<{
@@ -104,29 +105,61 @@ async function getMetalPrices(): Promise<{
   changes: Record<string, number>;
 }> {
   try {
-    const baseUrl = 'https://wallet.auxite.io';
-
-    const res = await fetch(`${baseUrl}/api/prices`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      throw new Error(`Prices API error: ${res.status}`);
+    // Check cache first
+    const cached = await redis.get("metal_prices_cache") as any;
+    if (cached && (Date.now() - (cached.timestamp || 0)) < 120000) {
+      return {
+        ask: cached.prices || {},
+        bid: cached.bidPrices || {},
+        spot: cached.spotPrices || {},
+        changes: cached.changes || {},
+      };
     }
 
-    const data = await res.json();
-    if (!data.success) {
-      throw new Error("Invalid prices response");
-    }
+    // Fetch from GoldAPI
+    const GOLD_API_KEY = process.env.GOLD_API_KEY;
+    const TROY_OZ_TO_GRAM = 31.1035;
+    const metals = ["XAU", "XAG", "XPT", "XPD"];
+    const metalMap: Record<string, string> = { XAU: "AUXG", XAG: "AUXS", XPT: "AUXPT", XPD: "AUXPD" };
 
-    return {
-      ask: data.prices || {},
-      bid: data.bidPrices || {},
-      spot: data.spotPrices || {},
-      changes: data.changes || {},
+    const ask: Record<string, number> = {};
+    const bid: Record<string, number> = {};
+    const spot: Record<string, number> = {};
+    const changes: Record<string, number> = {};
+
+    const spreadSettings = await redis.get("spread_settings") as any || {
+      AUXG: { askAdjust: 3, bidAdjust: -3 },
+      AUXS: { askAdjust: 10, bidAdjust: -10 },
+      AUXPT: { askAdjust: 10, bidAdjust: -10 },
+      AUXPD: { askAdjust: 2.5, bidAdjust: -2.5 },
     };
+
+    for (const metal of metals) {
+      try {
+        const res = await fetch(`https://www.goldapi.io/api/${metal}/USD`, {
+          headers: { "x-access-token": GOLD_API_KEY || "" },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const symbol = metalMap[metal];
+          const pricePerGram = (data.price || 0) / TROY_OZ_TO_GRAM;
+          const spread = spreadSettings[symbol] || { askAdjust: 5, bidAdjust: -5 };
+          spot[symbol] = data.price || 0;
+          ask[symbol] = pricePerGram * (1 + spread.askAdjust / 100);
+          bid[symbol] = pricePerGram * (1 + spread.bidAdjust / 100);
+          changes[symbol] = data.chp || 0;
+        }
+      } catch (e) {
+        // Silent
+      }
+    }
+
+    // Cache
+    await redis.set("metal_prices_cache", { prices: ask, bidPrices: bid, spotPrices: spot, changes, timestamp: Date.now() }, { ex: 300 });
+
+    return { ask, bid, spot, changes };
   } catch (e) {
-    console.error("Metal prices fetch error:", e);
+    console.error("Metal prices error:", e);
     return {
       ask: { AUXG: 170, AUXS: 3.5, AUXPT: 80, AUXPD: 60 },
       bid: { AUXG: 160, AUXS: 3.0, AUXPT: 70, AUXPD: 55 },
@@ -138,181 +171,111 @@ async function getMetalPrices(): Promise<{
 
 async function getCryptoPrices(): Promise<Record<string, number>> {
   try {
-    const baseUrl = 'https://wallet.auxite.io';
-
-    const res = await fetch(`${baseUrl}/api/crypto`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      throw new Error(`Crypto API error: ${res.status}`);
+    const cached = await redis.get("crypto_prices_cache") as any;
+    if (cached && (Date.now() - (cached.timestamp || 0)) < 120000) {
+      return cached.prices || {};
     }
 
-    const data = await res.json();
-
-    return {
-      BTC: data.bitcoin?.usd || 100000,
-      ETH: data.ethereum?.usd || 3500,
-      XRP: data.ripple?.usd || 2.5,
-      SOL: data.solana?.usd || 150,
-      USDT: data.tether?.usd || 1,
-    };
-  } catch (e) {
-    console.error("Crypto prices fetch error:", e);
-    return { BTC: 100000, ETH: 3500, XRP: 2.5, SOL: 150, USDT: 1 };
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// DATA FETCHING
-// ═══════════════════════════════════════════════════════════════════════════
-
-async function getUserBalances(address: string): Promise<{
-  metals: Record<string, number>;
-  crypto: Record<string, number>;
-  auxm: number;
-  bonusAuxm: number;
-  stakedAmounts: Record<string, number>;
-}> {
-  try {
-    // Call existing balance API (it has proper blockchain + redis + staked subtraction logic)
-    const baseUrl = 'https://wallet.auxite.io';
-
-    const res = await fetch(`${baseUrl}/api/user/balance?address=${address}`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      throw new Error(`Balance API error: ${res.status}`);
-    }
-
-    const data = await res.json();
-    if (!data.success || !data.balances) {
-      throw new Error("Invalid balance response");
-    }
-
-    return {
-      metals: {
-        auxg: data.balances.auxg || 0,
-        auxs: data.balances.auxs || 0,
-        auxpt: data.balances.auxpt || 0,
-        auxpd: data.balances.auxpd || 0,
-      },
-      crypto: {
-        eth: data.balances.eth || 0,
-        btc: data.balances.btc || 0,
-        xrp: data.balances.xrp || 0,
-        sol: data.balances.sol || 0,
-        usdt: data.balances.usdt || 0,
-      },
-      auxm: data.balances.auxm || 0,
-      bonusAuxm: data.balances.bonusAuxm || 0,
-      stakedAmounts: data.stakedAmounts || { auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 },
-    };
-  } catch (e) {
-    console.error("Balance fetch error:", e);
-    return {
-      metals: { auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 },
-      crypto: { eth: 0, btc: 0, xrp: 0, sol: 0, usdt: 0 },
-      auxm: 0,
-      bonusAuxm: 0,
-      stakedAmounts: { auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 },
-    };
-  }
-}
-
-async function getAllocations(address: string): Promise<Array<{
-  id: string;
-  metal: string;
-  metalSymbol: string;
-  grams: number;
-  vault: string;
-  status: string;
-}>> {
-  try {
-    // Call existing allocations API (it has the proper UID lookup logic)
-    const baseUrl = 'https://wallet.auxite.io';
-
-    const res = await fetch(`${baseUrl}/api/allocations?address=${address}`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) return [];
-
-    const data = await res.json();
-    if (!data.success || !data.allocations) return [];
-
-    const metalNames: Record<string, string> = {
-      AUXG: "Gold",
-      AUXS: "Silver",
-      AUXPT: "Platinum",
-      AUXPD: "Palladium",
-    };
-
-    return data.allocations.map((a: any) => {
-      const metalSymbol = (a.metal || a.metalSymbol || "AUXG").toUpperCase();
-      return {
-        id: a.id || a.allocationId || `ALLOC_${Date.now()}`,
-        metal: metalNames[metalSymbol] || metalSymbol,
-        metalSymbol,
-        grams: parseFloat(a.grams || a.amount || "0"),
-        vault: a.vault || a.location || "Zurich",
-        status: a.status || "active",
+    const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,ripple,solana,tether&vs_currencies=usd");
+    if (res.ok) {
+      const data = await res.json();
+      const prices = {
+        BTC: data.bitcoin?.usd || 100000,
+        ETH: data.ethereum?.usd || 3500,
+        XRP: data.ripple?.usd || 2.5,
+        SOL: data.solana?.usd || 150,
+        USDT: data.tether?.usd || 1,
       };
-    }).filter((a: any) => a.status === "active" && a.grams > 0);
+      await redis.set("crypto_prices_cache", { prices, timestamp: Date.now() }, { ex: 300 });
+      return prices;
+    }
   } catch (e) {
-    console.error("Allocations fetch error:", e);
-    return [];
+    console.error("Crypto prices error:", e);
   }
+  return { BTC: 100000, ETH: 3500, XRP: 2.5, SOL: 150, USDT: 1 };
 }
 
-async function getStakes(address: string): Promise<Array<{
-  id: string;
-  metal: string;
-  metalSymbol: string;
-  amount: number;
-  apy: number;
-  duration: number;
-  startDate: string;
-  endDate: string;
-  status: string;
-}>> {
+// ═══════════════════════════════════════════════════════════════════════════
+// STAKING & ALLOCATIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function getStakedAmounts(address: string): Promise<Record<string, number>> {
+  const staked = { auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 };
   try {
-    // Call existing stakes API
-    const baseUrl = 'https://wallet.auxite.io';
+    const key = `stakes:${address.toLowerCase()}`;
+    const data = await redis.get(key) as any[];
+    if (data && Array.isArray(data)) {
+      for (const s of data) {
+        if (s.status === "active") {
+          const metal = (s.metal || "").toLowerCase();
+          const amount = parseFloat(s.amount) || 0;
+          if (metal in staked) {
+            staked[metal as keyof typeof staked] += amount;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Stakes fetch error:", e);
+  }
+  return staked;
+}
 
-    const res = await fetch(`${baseUrl}/api/stakes?address=${address}`, {
-      cache: "no-store",
-    });
+async function getStakes(address: string): Promise<any[]> {
+  try {
+    const key = `stakes:${address.toLowerCase()}`;
+    const data = await redis.get(key) as any[];
+    if (!data || !Array.isArray(data)) return [];
 
-    if (!res.ok) return [];
+    const metalNames: Record<string, string> = { AUXG: "Gold", AUXS: "Silver", AUXPT: "Platinum", AUXPD: "Palladium" };
 
-    const data = await res.json();
-    if (!data.success || !data.stakes) return [];
-
-    const metalNames: Record<string, string> = {
-      AUXG: "Gold",
-      AUXS: "Silver",
-      AUXPT: "Platinum",
-      AUXPD: "Palladium",
-    };
-
-    return data.stakes.map((s: any) => {
+    return data.filter(s => s.status === "active").map(s => {
       const metalSymbol = (s.metal || "AUXS").toUpperCase();
       return {
-        id: s.id || s.agreementNo || `STAKE_${Date.now()}`,
+        id: s.id || s.agreementNo,
         metal: metalNames[metalSymbol] || metalSymbol,
         metalSymbol,
         amount: parseFloat(s.amount || "0"),
         apy: parseFloat(s.apy || "0"),
-        duration: parseInt(s.duration || s.durationMonths || "90"),
-        startDate: s.startDate || s.createdAt || new Date().toISOString(),
-        endDate: s.endDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
-        status: s.status || "active",
+        duration: parseInt(s.duration || "90"),
+        startDate: s.startDate || s.createdAt,
+        endDate: s.endDate,
+        status: s.status,
       };
-    }).filter((s: any) => s.status === "active" && s.amount > 0);
+    });
   } catch (e) {
     console.error("Stakes fetch error:", e);
+    return [];
+  }
+}
+
+async function getAllocations(address: string): Promise<any[]> {
+  try {
+    // Get user UID first
+    const userKey = `user:${address.toLowerCase()}:meta`;
+    const userMeta = await redis.hgetall(userKey) as any;
+    const uid = userMeta?.uid;
+    if (!uid) return [];
+
+    const allocKey = `allocation:user:${uid}:list`;
+    const data = await redis.get(allocKey) as any[];
+    if (!data || !Array.isArray(data)) return [];
+
+    const metalNames: Record<string, string> = { AUXG: "Gold", AUXS: "Silver", AUXPT: "Platinum", AUXPD: "Palladium" };
+
+    return data.filter(a => a.status === "active").map(a => {
+      const metalSymbol = (a.metal || "AUXG").toUpperCase();
+      return {
+        id: a.id || a.allocationId,
+        metal: metalNames[metalSymbol] || metalSymbol,
+        metalSymbol,
+        grams: parseFloat(a.grams || "0"),
+        vault: a.vault || a.location || "Zurich",
+        status: a.status,
+      };
+    });
+  } catch (e) {
+    console.error("Allocations fetch error:", e);
     return [];
   }
 }
@@ -331,26 +294,38 @@ export async function GET(request: NextRequest) {
 
   try {
     // Fetch all data in parallel
-    const [metalPrices, cryptoPrices, balances, allocations, stakes] = await Promise.all([
+    const [metalPrices, cryptoPrices, redisBalance, blockchainBalances, stakedAmounts, stakes, allocations] = await Promise.all([
       getMetalPrices(),
       getCryptoPrices(),
-      getUserBalances(address),
-      getAllocations(address),
+      getUserBalance(address),
+      getBlockchainBalances(address),
+      getStakedAmounts(address),
       getStakes(address),
+      getAllocations(address),
     ]);
 
-    // Metal names
-    const metalNames: Record<string, string> = {
-      AUXG: "Gold",
-      AUXS: "Silver",
-      AUXPT: "Platinum",
-      AUXPD: "Palladium",
+    // Merge balances (blockchain + redis - staked)
+    const mergedBalances = {
+      metals: {
+        auxg: Math.max(0, (blockchainBalances.auxg || 0) + (redisBalance.auxg || 0) - (stakedAmounts.auxg || 0)),
+        auxs: Math.max(0, (blockchainBalances.auxs || 0) + (redisBalance.auxs || 0) - (stakedAmounts.auxs || 0)),
+        auxpt: Math.max(0, (blockchainBalances.auxpt || 0) + (redisBalance.auxpt || 0) - (stakedAmounts.auxpt || 0)),
+        auxpd: Math.max(0, (blockchainBalances.auxpd || 0) + (redisBalance.auxpd || 0) - (stakedAmounts.auxpd || 0)),
+      },
+      crypto: {
+        eth: blockchainBalances.eth || redisBalance.eth || 0,
+        btc: redisBalance.btc || 0,
+        xrp: redisBalance.xrp || 0,
+        sol: redisBalance.sol || 0,
+        usdt: (blockchainBalances.usdt || 0) + (redisBalance.usdt || 0),
+      },
+      auxm: redisBalance.auxm || 0,
+      bonusAuxm: redisBalance.bonusAuxm || 0,
     };
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CALCULATE METALS VALUE (Available balance)
-    // ─────────────────────────────────────────────────────────────────────────
-    const metalItems = Object.entries(balances.metals)
+    // Calculate metal values
+    const metalNames: Record<string, string> = { AUXG: "Gold", AUXS: "Silver", AUXPT: "Platinum", AUXPD: "Palladium" };
+    const metalItems = Object.entries(mergedBalances.metals)
       .filter(([_, balance]) => balance > 0)
       .map(([symbol, balance]) => {
         const upperSymbol = symbol.toUpperCase();
@@ -364,21 +339,11 @@ export async function GET(request: NextRequest) {
           change24h: metalPrices.changes[upperSymbol] || 0,
         };
       });
-
     const metalsValue = metalItems.reduce((sum, m) => sum + m.value, 0);
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CALCULATE CRYPTO VALUE
-    // ─────────────────────────────────────────────────────────────────────────
-    const cryptoNames: Record<string, string> = {
-      ETH: "Ethereum",
-      BTC: "Bitcoin",
-      XRP: "Ripple",
-      SOL: "Solana",
-      USDT: "Tether",
-    };
-
-    const cryptoItems = Object.entries(balances.crypto)
+    // Calculate crypto values
+    const cryptoNames: Record<string, string> = { ETH: "Ethereum", BTC: "Bitcoin", XRP: "Ripple", SOL: "Solana", USDT: "Tether" };
+    const cryptoItems = Object.entries(mergedBalances.crypto)
       .filter(([_, balance]) => balance > 0)
       .map(([symbol, balance]) => {
         const upperSymbol = symbol.toUpperCase();
@@ -392,46 +357,27 @@ export async function GET(request: NextRequest) {
           change24h: 0,
         };
       });
-
     const cryptoValue = cryptoItems.reduce((sum, c) => sum + c.value, 0);
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CALCULATE ALLOCATIONS VALUE (Locked - physical)
-    // ─────────────────────────────────────────────────────────────────────────
+    // Calculate allocation values
     const allocationTotals: Record<string, number> = { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 };
-
     const allocationItems = allocations.map(a => {
       const price = metalPrices.ask[a.metalSymbol] || 0;
       allocationTotals[a.metalSymbol] = (allocationTotals[a.metalSymbol] || 0) + a.grams;
-      return {
-        ...a,
-        price,
-        value: a.grams * price,
-      };
+      return { ...a, price, value: a.grams * price };
     });
-
     const allocationsValue = allocationItems.reduce((sum, a) => sum + a.value, 0);
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CALCULATE STAKING VALUE (Locked - earning)
-    // ─────────────────────────────────────────────────────────────────────────
+    // Calculate staking values
     const stakingTotals: Record<string, number> = { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 };
-
     const stakingItems = stakes.map(s => {
       const price = metalPrices.ask[s.metalSymbol] || 0;
       stakingTotals[s.metalSymbol] = (stakingTotals[s.metalSymbol] || 0) + s.amount;
-      return {
-        ...s,
-        price,
-        value: s.amount * price,
-      };
+      return { ...s, price, value: s.amount * price };
     });
-
     const stakingValue = stakingItems.reduce((sum, s) => sum + s.value, 0);
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // FINAL CALCULATIONS
-    // ─────────────────────────────────────────────────────────────────────────
+    // Final calculations
     const availableValue = metalsValue + cryptoValue;
     const lockedValue = allocationsValue + stakingValue;
     const totalValue = availableValue + lockedValue;
@@ -439,33 +385,16 @@ export async function GET(request: NextRequest) {
     const response: PortfolioResponse = {
       success: true,
       address: address.toLowerCase(),
-
       totalValue,
       availableValue,
       lockedValue,
-      pendingValue: 0, // Future: pending orders
-
+      pendingValue: 0,
       breakdown: {
-        metals: {
-          value: metalsValue,
-          items: metalItems,
-        },
-        crypto: {
-          value: cryptoValue,
-          items: cryptoItems,
-        },
-        allocations: {
-          value: allocationsValue,
-          totalGrams: allocationTotals,
-          items: allocationItems,
-        },
-        staking: {
-          value: stakingValue,
-          totalGrams: stakingTotals,
-          items: stakingItems,
-        },
+        metals: { value: metalsValue, items: metalItems },
+        crypto: { value: cryptoValue, items: cryptoItems },
+        allocations: { value: allocationsValue, totalGrams: allocationTotals, items: allocationItems },
+        staking: { value: stakingValue, totalGrams: stakingTotals, items: stakingItems },
       },
-
       prices: {
         metals: Object.fromEntries(
           Object.keys(metalPrices.ask).map(symbol => [
@@ -481,27 +410,15 @@ export async function GET(request: NextRequest) {
         crypto: cryptoPrices,
         usdt: cryptoPrices.USDT || 1,
       },
-
-      balances: {
-        metals: balances.metals,
-        crypto: balances.crypto,
-        auxm: balances.auxm,
-        bonusAuxm: balances.bonusAuxm,
-      },
-
+      balances: mergedBalances,
       timestamp: Date.now(),
     };
 
     return NextResponse.json(response, {
-      headers: {
-        "Cache-Control": "public, max-age=30, stale-while-revalidate=60",
-      },
+      headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=60" },
     });
   } catch (error) {
     console.error("Portfolio API error:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch portfolio" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: "Failed to fetch portfolio" }, { status: 500 });
   }
 }
