@@ -1,7 +1,6 @@
 // app/api/user/register/route.ts
 import { NextRequest, NextResponse } from "next/server";
-
-
+import { createCustodialWallet, getWalletAddress } from "@/lib/kms-wallet";
 
 // 12 haneli alfanümerik UID oluştur
 function generateUID(): string {
@@ -38,42 +37,65 @@ const DEPOSIT_ADDRESSES = {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { walletAddress, email, referralCode } = await request.json();
+    const { walletAddress, email, referralCode, createCustodial } = await request.json();
 
-    if (!walletAddress) {
-      return NextResponse.json(
-        { error: "walletAddress is required" },
-        { status: 400 }
-      );
-    }
+    // walletAddress is now optional - if not provided, we create a custodial wallet
+    // createCustodial flag can force custodial wallet creation
+    const wantsCustodial = createCustodial === true || !walletAddress;
 
-    const normalizedAddress = walletAddress.toLowerCase();
+    const normalizedAddress = walletAddress ? walletAddress.toLowerCase() : null;
     const redis = await getRedis();
 
-    // Mevcut kullanıcı kontrolü
-    const existingUserId = await redis.get(`user:address:${normalizedAddress}`);
+    // Mevcut kullanıcı kontrolü (only if address provided)
+    if (normalizedAddress) {
+      const existingUserId = await redis.get(`user:address:${normalizedAddress}`);
 
-    if (existingUserId) {
-      // Mevcut kullanıcıyı getir
-      const userData = await redis.hgetall(`user:${existingUserId}`);
+      if (existingUserId) {
+        // Mevcut kullanıcıyı getir
+        const userData = await redis.hgetall(`user:${existingUserId}`);
 
-      return NextResponse.json({
-        success: true,
-        message: "User already exists",
-        isNew: false,
-        userId: existingUserId,
-        user: userData,
-        depositAddresses: DEPOSIT_ADDRESSES,
-      });
+        return NextResponse.json({
+          success: true,
+          message: "User already exists",
+          isNew: false,
+          userId: existingUserId,
+          user: userData,
+          depositAddresses: DEPOSIT_ADDRESSES,
+        });
+      }
     }
 
     // Yeni kullanıcı oluştur
     const userId = generateUID();
     const createdAt = new Date().toISOString();
 
+    // Create custodial wallet with KMS encryption
+    let custodialWalletAddress = normalizedAddress;
+    let walletType = "external"; // Default: user provided external wallet
+
+    try {
+      // If no wallet provided or explicit custodial request, create custodial wallet
+      if (!walletAddress || walletAddress === "custodial") {
+        const { address, created } = await createCustodialWallet(userId);
+        custodialWalletAddress = address;
+        walletType = "custodial";
+        console.log(`🔐 Created custodial wallet for ${userId}: ${address}`);
+      }
+    } catch (kmsError) {
+      console.error("KMS wallet creation failed:", kmsError);
+      // Fall back to provided address if KMS fails
+      if (!walletAddress) {
+        return NextResponse.json(
+          { error: "Wallet creation failed. Please try again." },
+          { status: 500 }
+        );
+      }
+    }
+
     const userData = {
       id: userId,
-      walletAddress: normalizedAddress,
+      walletAddress: custodialWalletAddress,
+      walletType: walletType,
       email: email || null,
       referralCode: referralCode || null,
       createdAt,
@@ -84,7 +106,7 @@ export async function POST(request: NextRequest) {
     await redis.hset(`user:${userId}`, userData);
 
     // Cüzdan adresi -> userId eşleştirmesi
-    await redis.set(`user:address:${normalizedAddress}`, userId);
+    await redis.set(`user:address:${custodialWalletAddress}`, userId);
 
     // Email varsa email -> userId eşleştirmesi
     if (email) {

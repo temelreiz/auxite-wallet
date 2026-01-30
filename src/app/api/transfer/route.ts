@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 import { METAL_TOKENS } from "@/config/contracts-v8";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
+import { getUserIdFromAddress, sendETH, sendERC20 } from "@/lib/kms-wallet";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -140,12 +141,73 @@ export async function POST(request: NextRequest) {
     const tokenKey = token.toLowerCase();
     const tokenUpper = token.toUpperCase();
 
-    // ETH must be transferred via wallet signing in frontend
+    // ETH transfer - check if user has custodial wallet
     if (tokenUpper === "ETH") {
+      // Check if sender has a custodial wallet
+      const userId = await getUserIdFromAddress(fromAddress);
+
+      if (!userId) {
+        // Not a custodial user - they need to sign via their own wallet (frontend)
+        return NextResponse.json({
+          error: "ETH transfers must be signed via your wallet. Use the web app to transfer ETH.",
+          code: "USE_WALLET_SIGNING",
+        }, { status: 400 });
+      }
+
+      // Custodial user - we can sign on their behalf
+      console.log(`🔐 Custodial ETH transfer: ${amount} ETH from ${fromAddress} (user: ${userId}) to ${toAddress}`);
+
+      const provider = new ethers.JsonRpcProvider(
+        process.env.EXPO_PUBLIC_ETH_RPC_URL || 'https://mainnet.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680'
+      );
+
+      const result = await sendETH(userId, toAddress, amount, provider);
+
+      if (!result.success) {
+        return NextResponse.json({
+          error: result.error || "ETH transfer failed",
+        }, { status: 400 });
+      }
+
+      // Log transaction
+      const txId = `eth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const senderTx = {
+        id: txId,
+        type: "send",
+        token: "ETH",
+        amount: -amount,
+        toAddress: normalizedTo,
+        txHash: result.txHash,
+        status: "completed",
+        timestamp: Date.now(),
+      };
+      await redis.lpush(`user:${normalizedFrom}:transactions`, JSON.stringify(senderTx));
+
+      const receiverTx = {
+        id: txId,
+        type: "receive",
+        token: "ETH",
+        amount: amount,
+        fromAddress: normalizedFrom,
+        txHash: result.txHash,
+        status: "completed",
+        timestamp: Date.now(),
+      };
+      await redis.lpush(`user:${normalizedTo}:transactions`, JSON.stringify(receiverTx));
+
       return NextResponse.json({
-        error: "ETH transfers must be signed via your wallet. Use the web app to transfer ETH.",
-        code: "USE_WALLET_SIGNING",
-      }, { status: 400 });
+        success: true,
+        onChain: true,
+        transfer: {
+          id: txId,
+          from: normalizedFrom,
+          to: normalizedTo,
+          token: "ETH",
+          amount,
+          txHash: result.txHash,
+          explorerUrl: `https://etherscan.io/tx/${result.txHash}`,
+        },
+      });
     }
 
     // Check if on-chain or off-chain transfer
