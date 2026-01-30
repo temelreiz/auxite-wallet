@@ -189,6 +189,19 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const isValidAddress = recipientAddress.length >= 42 && recipientAddress.startsWith("0x");
   const canSend = canAfford && isValidAddress && amountNum > 0 && !!address && (!isMetal || recipientValid === true);
 
+  // Debug log
+  console.log('TransferModal state:', {
+    selectedToken,
+    amount,
+    amountNum,
+    availableBalance,
+    canAfford,
+    isValidAddress,
+    canSend,
+    isMetal,
+    recipientValid
+  });
+
   // Gönder butonuna basıldı - 2FA'ya geç
   const handleSendClick = () => {
     if (canSend) {
