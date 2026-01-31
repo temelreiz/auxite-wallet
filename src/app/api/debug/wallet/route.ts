@@ -145,11 +145,64 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// POST: Convert user to custodial wallet
+// POST: Convert user to custodial wallet OR transfer balances
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await request.json();
+    const body = await request.json();
+    const { action, userId, fromUserId, toUserId } = body;
 
+    // Transfer balances between users
+    if (action === 'transferBalances') {
+      if (!fromUserId || !toUserId) {
+        return NextResponse.json({ error: "fromUserId and toUserId required" }, { status: 400 });
+      }
+
+      // Get source user balances
+      const fromBalances = await redis.hgetall(`user:${fromUserId}:balance`);
+      if (!fromBalances || Object.keys(fromBalances).length === 0) {
+        return NextResponse.json({ error: "Source user has no balances" }, { status: 404 });
+      }
+
+      // Get destination user to verify it exists
+      const toUserData = await redis.hgetall(`user:${toUserId}`);
+      if (!toUserData) {
+        return NextResponse.json({ error: "Destination user not found" }, { status: 404 });
+      }
+
+      // Get existing destination balances
+      const toBalances = await redis.hgetall(`user:${toUserId}:balance`) || {};
+
+      // Merge balances
+      const transferredBalances: Record<string, { from: number; to: number; total: number }> = {};
+
+      for (const [token, amount] of Object.entries(fromBalances)) {
+        const fromAmount = parseFloat(amount as string) || 0;
+        const toAmount = parseFloat(toBalances[token] as string) || 0;
+        const totalAmount = fromAmount + toAmount;
+
+        transferredBalances[token] = {
+          from: fromAmount,
+          to: toAmount,
+          total: totalAmount
+        };
+
+        // Update destination balance
+        await redis.hset(`user:${toUserId}:balance`, { [token]: totalAmount.toString() });
+      }
+
+      // Clear source balances
+      await redis.del(`user:${fromUserId}:balance`);
+
+      return NextResponse.json({
+        success: true,
+        message: "Balances transferred successfully",
+        fromUserId,
+        toUserId,
+        transferredBalances,
+      });
+    }
+
+    // Convert user to custodial (default action)
     if (!userId) {
       return NextResponse.json({ error: "userId required" }, { status: 400 });
     }
