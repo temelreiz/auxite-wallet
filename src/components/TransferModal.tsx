@@ -255,19 +255,52 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         const amountInUnits = parseUnits(amount, tokenInfo.decimals);
         writeContract({ address: tokenInfo.address as `0x${string}`, abi: ERC20_ABI, functionName: "transfer", args: [recipientAddress as `0x${string}`, amountInUnits], gas: BigInt(200000) });
       } else if (selectedToken === "ETH") {
-        // Native ETH transfer - user signs with wallet
+        // Native ETH transfer
         console.log(`🚀 Native ETH transfer starting...`);
         console.log(`   Amount: ${amount} ETH`);
         console.log(`   To: ${recipientAddress}`);
         console.log(`   From: ${address}`);
+        console.log(`   Wallet connected: ${isConnected}`);
+
+        // If wallet not connected, try API transfer (for custodial users)
+        if (!isConnected) {
+          console.log(`📡 Wallet not connected - trying API transfer (custodial)...`);
+          const response = await fetch("/api/transfer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fromAddress: address,
+              toAddress: recipientAddress,
+              token: "ETH",
+              amount: amountNum,
+            }),
+          });
+          const data = await response.json();
+
+          if (data.success) {
+            console.log(`✅ Custodial ETH transfer successful: ${data.transfer?.txHash}`);
+            setTxHash(data.transfer?.txHash);
+            setResult("success");
+            setFlowStep("result");
+            if (refreshBalances) await refreshBalances();
+          } else if (data.code === "USE_WALLET_SIGNING") {
+            throw new Error("Cüzdanınızı bağlayın / Please connect your wallet to transfer ETH");
+          } else {
+            throw new Error(data.error || "ETH transfer failed");
+          }
+          setIsProcessing(false);
+          return;
+        }
+
+        // Wallet connected - use native signing
         const amountInWei = parseEther(amount);
         console.log(`   Amount in Wei: ${amountInWei.toString()}`);
+        console.log(`🔐 Wallet popup should appear now...`);
 
         sendTransaction({
           to: recipientAddress as `0x${string}`,
           value: amountInWei,
         });
-        console.log(`🔐 Wallet popup should appear now...`);
       } else if (tokenInfo.onChain && tokenInfo.address) {
         // Other ERC20 token transfer
         const amountInUnits = parseUnits(amount, tokenInfo.decimals);
