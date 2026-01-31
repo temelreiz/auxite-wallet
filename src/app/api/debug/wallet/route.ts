@@ -200,3 +200,61 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+// PATCH: Transfer balances from one user to another
+export async function PATCH(request: NextRequest) {
+  try {
+    const { fromUserId, toUserId } = await request.json();
+
+    if (!fromUserId || !toUserId) {
+      return NextResponse.json({ error: "fromUserId and toUserId required" }, { status: 400 });
+    }
+
+    // Get source user balances
+    const fromBalances = await redis.hgetall(`user:${fromUserId}:balance`);
+    if (!fromBalances || Object.keys(fromBalances).length === 0) {
+      return NextResponse.json({ error: "Source user has no balances" }, { status: 404 });
+    }
+
+    // Get destination user to verify it exists
+    const toUserData = await redis.hgetall(`user:${toUserId}`);
+    if (!toUserData) {
+      return NextResponse.json({ error: "Destination user not found" }, { status: 404 });
+    }
+
+    // Get existing destination balances
+    const toBalances = await redis.hgetall(`user:${toUserId}:balance`) || {};
+
+    // Merge balances
+    const transferredBalances: Record<string, { from: number; to: number; total: number }> = {};
+
+    for (const [token, amount] of Object.entries(fromBalances)) {
+      const fromAmount = parseFloat(amount as string) || 0;
+      const toAmount = parseFloat(toBalances[token] as string) || 0;
+      const totalAmount = fromAmount + toAmount;
+
+      transferredBalances[token] = {
+        from: fromAmount,
+        to: toAmount,
+        total: totalAmount
+      };
+
+      // Update destination balance
+      await redis.hset(`user:${toUserId}:balance`, { [token]: totalAmount.toString() });
+    }
+
+    // Clear source balances
+    await redis.del(`user:${fromUserId}:balance`);
+
+    return NextResponse.json({
+      success: true,
+      message: "Balances transferred successfully",
+      fromUserId,
+      toUserId,
+      transferredBalances,
+    });
+  } catch (error: any) {
+    console.error("Transfer balances error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
