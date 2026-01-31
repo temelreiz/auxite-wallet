@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, userId, fromUserId, toUserId } = body;
 
-    // Transfer balances between users
+    // Transfer balances between users (by userId)
     if (action === 'transferBalances') {
       if (!fromUserId || !toUserId) {
         return NextResponse.json({ error: "fromUserId and toUserId required" }, { status: 400 });
@@ -199,6 +199,63 @@ export async function POST(request: NextRequest) {
         fromUserId,
         toUserId,
         transferredBalances,
+      });
+    }
+
+    // Transfer balances between addresses (Redis off-chain balances)
+    if (action === 'transferByAddress') {
+      const { fromAddress, toAddress } = body;
+      if (!fromAddress || !toAddress) {
+        return NextResponse.json({ error: "fromAddress and toAddress required" }, { status: 400 });
+      }
+
+      const fromKey = `user:${fromAddress.toLowerCase()}:balance`;
+      const toKey = `user:${toAddress.toLowerCase()}:balance`;
+
+      // Get source balances
+      const fromBalances = await redis.hgetall(fromKey);
+      if (!fromBalances || Object.keys(fromBalances).length === 0) {
+        return NextResponse.json({ error: "Source address has no balances", fromKey }, { status: 404 });
+      }
+
+      // Get existing destination balances
+      const toBalances = await redis.hgetall(toKey) || {};
+
+      // Merge balances (only off-chain tokens)
+      const offChainTokens = ['auxm', 'bonusauxm', 'bonusAuxm', 'btc', 'xrp', 'sol', 'usd', 'totalAuxm', 'bonusExpiresAt'];
+      const transferredBalances: Record<string, { from: number; to: number; total: number }> = {};
+
+      for (const [token, amount] of Object.entries(fromBalances)) {
+        // Only transfer off-chain tokens
+        if (!offChainTokens.includes(token.toLowerCase()) && !offChainTokens.includes(token)) {
+          continue;
+        }
+
+        const fromAmount = parseFloat(amount as string) || 0;
+        const toAmount = parseFloat(toBalances[token] as string) || 0;
+        const totalAmount = fromAmount + toAmount;
+
+        if (fromAmount > 0) {
+          transferredBalances[token] = {
+            from: fromAmount,
+            to: toAmount,
+            total: totalAmount
+          };
+
+          // Update destination balance
+          await redis.hset(toKey, { [token]: totalAmount.toString() });
+          // Clear from source
+          await redis.hset(fromKey, { [token]: "0" });
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "Off-chain balances transferred successfully",
+        fromAddress,
+        toAddress,
+        transferredBalances,
+        note: "On-chain tokens (ETH, AUXG, AUXS, etc.) cannot be transferred without private key"
       });
     }
 
