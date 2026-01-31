@@ -2,7 +2,8 @@
 // Email service using Resend
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Make Resend optional - only initialize if API key exists
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@auxite.io';
 
 interface EmailOptions {
@@ -13,6 +14,11 @@ interface EmailOptions {
 
 export async function sendEmail({ to, subject, html }: EmailOptions) {
   try {
+    if (!resend) {
+      console.warn('⚠️ Resend API key not configured - email not sent');
+      return { success: false, error: 'Email service not configured' };
+    }
+
     const { data, error } = await resend.emails.send({
       from: `Auxite <${FROM_EMAIL}>`,
       to,

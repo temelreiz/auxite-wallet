@@ -83,9 +83,9 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const [isCheckingRecipient, setIsCheckingRecipient] = useState(false);
   const [recipientValid, setRecipientValid] = useState<boolean | null>(null);
 
-  const { writeContract, data: writeData } = useWriteContract();
-  const { sendTransaction, data: sendTxData } = useSendTransaction();
-  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
+  const { writeContract, data: writeData, error: writeError, isPending: isWritePending } = useWriteContract();
+  const { sendTransaction, data: sendTxData, error: sendError, isPending: isSendPending } = useSendTransaction();
+  const { isSuccess: isConfirmed, error: receiptError } = useWaitForTransactionReceipt({ hash: txHash });
 
   useEffect(() => {
     if (!address || !isOpen) return;
@@ -122,6 +122,26 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     if (writeData) setTxHash(writeData);
     if (sendTxData) setTxHash(sendTxData);
   }, [writeData, sendTxData]);
+
+  // Handle wallet errors (user rejection, etc.)
+  useEffect(() => {
+    const error = writeError || sendError || receiptError;
+    if (error) {
+      console.error('🔴 Wallet/Transaction error:', error);
+      const errorMsg = error.message || "Transaction failed";
+      // Check for common error types
+      if (errorMsg.includes('User rejected') || errorMsg.includes('rejected')) {
+        setErrorMessage("İşlem reddedildi / Transaction rejected by user");
+      } else if (errorMsg.includes('insufficient funds')) {
+        setErrorMessage("Yetersiz bakiye (gas dahil) / Insufficient funds for gas");
+      } else {
+        setErrorMessage(errorMsg.slice(0, 200));
+      }
+      setResult("error");
+      setFlowStep("result");
+      setIsProcessing(false);
+    }
+  }, [writeError, sendError, receiptError]);
 
   useEffect(() => {
     if (isConfirmed && txHash) {
@@ -236,12 +256,18 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         writeContract({ address: tokenInfo.address as `0x${string}`, abi: ERC20_ABI, functionName: "transfer", args: [recipientAddress as `0x${string}`, amountInUnits], gas: BigInt(200000) });
       } else if (selectedToken === "ETH") {
         // Native ETH transfer - user signs with wallet
-        console.log(`🚀 Native ETH transfer: ${amount} ETH to ${recipientAddress}`);
+        console.log(`🚀 Native ETH transfer starting...`);
+        console.log(`   Amount: ${amount} ETH`);
+        console.log(`   To: ${recipientAddress}`);
+        console.log(`   From: ${address}`);
         const amountInWei = parseEther(amount);
+        console.log(`   Amount in Wei: ${amountInWei.toString()}`);
+
         sendTransaction({
           to: recipientAddress as `0x${string}`,
           value: amountInWei,
         });
+        console.log(`🔐 Wallet popup should appear now...`);
       } else if (tokenInfo.onChain && tokenInfo.address) {
         // Other ERC20 token transfer
         const amountInUnits = parseUnits(amount, tokenInfo.decimals);
