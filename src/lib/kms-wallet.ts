@@ -147,10 +147,34 @@ export async function getDecryptedWallet(
 
 /**
  * Get user ID from wallet address
+ * Checks both custodial wallet mapping and user address mapping
  */
 export async function getUserIdFromAddress(address: string): Promise<string | null> {
-  const userId = await redis.get(`wallet:address:${address.toLowerCase()}`);
-  return userId as string | null;
+  const normalizedAddress = address.toLowerCase();
+
+  // First check custodial wallet mapping (created by createCustodialWallet)
+  let userId = await redis.get(`wallet:address:${normalizedAddress}`);
+
+  // If not found, check user address mapping (created by register API)
+  if (!userId) {
+    userId = await redis.get(`user:address:${normalizedAddress}`);
+  }
+
+  // If we found a userId, verify it's a custodial wallet
+  if (userId) {
+    const walletData = await redis.hgetall(`user:${userId}:wallet`);
+    if (walletData && walletData.encryptedPrivateKey) {
+      return userId as string;
+    }
+
+    // Also check user data for walletType
+    const userData = await redis.hgetall(`user:${userId}`);
+    if (userData && userData.walletType === 'custodial') {
+      return userId as string;
+    }
+  }
+
+  return null;
 }
 
 /**
