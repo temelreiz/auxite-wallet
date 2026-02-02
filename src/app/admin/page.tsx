@@ -3698,13 +3698,13 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <a 
-                        href={`https://etherscan.io/address/0x7227130EAaad17a35300A90631984676d303f5A0`}
+                      <a
+                        href={`https://etherscan.io/address/0x3B76632FF2d382d5f0186B4Cc294392DF431edcA`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-mono text-sm text-blue-400 hover:text-blue-300"
                       >
-                        0x7227...f5A0
+                        0x3B76...edcA
                       </a>
                     </div>
                   </div>
@@ -3719,13 +3719,13 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <a 
-                        href={`https://etherscan.io/address/0x7227130EAaad17a35300A90631984676d303f5A0`}
+                      <a
+                        href={`https://etherscan.io/address/0x3B76632FF2d382d5f0186B4Cc294392DF431edcA`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-mono text-sm text-green-400 hover:text-green-300"
                       >
-                        0x7227...f5A0
+                        0x3B76...edcA
                       </a>
                     </div>
                   </div>
@@ -3740,13 +3740,13 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <a 
-                        href={`https://blockstream.info/address/bc1qs3yecqqtxps7hqay2gqjs9yxs6eh3vtw90ln45`}
+                      <a
+                        href={`https://blockstream.info/address/1L4h8XzsLzzek6LoxGKdDsFcSaD7oxyume`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-mono text-sm text-orange-400 hover:text-orange-300"
                       >
-                        bc1qs3...ln45
+                        1L4h8...yume
                       </a>
                     </div>
                   </div>
@@ -3761,13 +3761,13 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <a 
-                        href={`https://solscan.io/account/FtiPuYiukZvkNM7gTamEa8wohSqrbytvvANsg6j9YSjJ`}
+                      <a
+                        href={`https://solscan.io/account/EoEojSR2NDeekVG3HFCzTAtyeg1n29JNW4f6Ezzg6FQe`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-mono text-sm text-purple-400 hover:text-purple-300"
                       >
-                        FtiPu...YSjJ
+                        EoEoj...6FQe
                       </a>
                     </div>
                   </div>
@@ -3782,13 +3782,13 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <a 
-                        href={`https://xrpscan.com/account/r4RUrt23xkfN1urecHLetqdxXNgrnqi5x5`}
+                      <a
+                        href={`https://xrpscan.com/account/rPcUd8sGKrs46MtndLuVWC93f3pypAiHB`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-mono text-sm text-slate-300 hover:text-white"
                       >
-                        r4RUr...qi5x5
+                        rPcUd...iHB
                       </a>
                     </div>
                   </div>
