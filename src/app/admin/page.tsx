@@ -460,6 +460,11 @@ export default function AdminDashboard() {
   const [transferModal, setTransferModal] = useState<{ token: string; pending: number } | null>(null);
   const [transferForm, setTransferForm] = useState({ amount: 0, ledgerAddress: '', txHash: '', note: '' });
 
+  // Real Crypto Transfer (On-chain)
+  const [sendCryptoModal, setSendCryptoModal] = useState(false);
+  const [sendCryptoForm, setSendCryptoForm] = useState({ token: 'ETH', amount: '', toAddress: '', note: '' });
+  const [sendCryptoLoading, setSendCryptoLoading] = useState(false);
+
   // Pending Transactions
   const [pendingTransactions, setPendingTransactions] = useState<any[]>([]);
   const [pendingLoading, setPendingLoading] = useState(false);
@@ -830,6 +835,50 @@ export default function AdminDashboard() {
     } catch (e) {
       console.error("Transfer error:", e);
       alert("Transfer hatası");
+    }
+  };
+
+  // Send REAL on-chain crypto from hot wallet
+  const sendRealCrypto = async () => {
+    if (!sendCryptoForm.toAddress || !sendCryptoForm.amount || parseFloat(sendCryptoForm.amount) <= 0) {
+      alert("Adres ve miktar gerekli!");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `UYARI: ${sendCryptoForm.amount} ${sendCryptoForm.token} gerçek kripto olarak ${sendCryptoForm.toAddress} adresine gönderilecek.\n\nBu işlem geri alınamaz! Devam etmek istiyor musunuz?`
+    );
+    if (!confirmed) return;
+
+    setSendCryptoLoading(true);
+    try {
+      const res = await fetch("/api/admin/fees", {
+        method: "POST",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "sendOnChain",
+          token: sendCryptoForm.token,
+          amount: parseFloat(sendCryptoForm.amount),
+          toAddress: sendCryptoForm.toAddress,
+          note: sendCryptoForm.note || `Admin transfer`,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        alert(`Başarılı! TX Hash: ${data.txHash}\n\nGönderilen: ${sendCryptoForm.amount} ${sendCryptoForm.token}\nNetwork Fee: ${data.networkFee || 0}`);
+        setSendCryptoModal(false);
+        setSendCryptoForm({ token: 'ETH', amount: '', toAddress: '', note: '' });
+        loadFees();
+      } else {
+        alert(`Hata: ${data.error || "Transfer başarısız"}`);
+      }
+    } catch (e: any) {
+      console.error("Send crypto error:", e);
+      alert(`Transfer hatası: ${e.message}`);
+    } finally {
+      setSendCryptoLoading(false);
     }
   };
 
@@ -1904,14 +1953,22 @@ export default function AdminDashboard() {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">💵 Platform Fee'leri</h2>
-                <button
-                  onClick={loadFees}
-                  disabled={feesLoading}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm flex items-center gap-2"
-                >
-                  <span className={feesLoading ? "animate-spin" : ""}>🔄</span>
-                  Yenile
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setSendCryptoModal(true)}
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 rounded-lg text-sm font-semibold flex items-center gap-2"
+                  >
+                    🚀 Gerçek Kripto Gönder
+                  </button>
+                  <button
+                    onClick={loadFees}
+                    disabled={feesLoading}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm flex items-center gap-2"
+                  >
+                    <span className={feesLoading ? "animate-spin" : ""}>🔄</span>
+                    Yenile
+                  </button>
+                </div>
               </div>
 
               {/* Summary Cards */}
@@ -2083,6 +2140,91 @@ export default function AdminDashboard() {
                         className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 rounded-xl text-black font-semibold"
                       >
                         ✅ Transfer Kaydet
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Send Real Crypto Modal */}
+              {sendCryptoModal && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                  <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md">
+                    <div className="p-6 border-b border-slate-800">
+                      <h3 className="text-xl font-bold">🚀 Gerçek Kripto Gönder</h3>
+                      <p className="text-amber-400 text-sm mt-1">Hot wallet'tan blockchain üzerinden transfer</p>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg p-3 text-amber-300 text-sm">
+                        ⚠️ DİKKAT: Bu işlem gerçek kripto gönderir ve geri alınamaz!
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-slate-400 mb-2">Token</label>
+                        <select
+                          value={sendCryptoForm.token}
+                          onChange={(e) => setSendCryptoForm({ ...sendCryptoForm, token: e.target.value })}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                        >
+                          <option value="ETH">ETH (Ethereum)</option>
+                          <option value="USDT">USDT (Tether)</option>
+                          <option value="XRP">XRP (Ripple)</option>
+                          <option value="SOL">SOL (Solana)</option>
+                          <option value="BTC">BTC (Bitcoin)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-slate-400 mb-2">Miktar</label>
+                        <input
+                          type="number"
+                          step="0.000001"
+                          value={sendCryptoForm.amount}
+                          onChange={(e) => setSendCryptoForm({ ...sendCryptoForm, amount: e.target.value })}
+                          placeholder="0.1"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-slate-400 mb-2">Hedef Adres</label>
+                        <input
+                          type="text"
+                          value={sendCryptoForm.toAddress}
+                          onChange={(e) => setSendCryptoForm({ ...sendCryptoForm, toAddress: e.target.value })}
+                          placeholder="0x... veya uygun format"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white font-mono text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-slate-400 mb-2">Not (opsiyonel)</label>
+                        <input
+                          type="text"
+                          value={sendCryptoForm.note}
+                          onChange={(e) => setSendCryptoForm({ ...sendCryptoForm, note: e.target.value })}
+                          placeholder="Transfer açıklaması"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                        />
+                      </div>
+                    </div>
+                    <div className="p-6 border-t border-slate-800 flex gap-3">
+                      <button
+                        onClick={() => {
+                          setSendCryptoModal(false);
+                          setSendCryptoForm({ token: 'ETH', amount: '', toAddress: '', note: '' });
+                        }}
+                        className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl"
+                        disabled={sendCryptoLoading}
+                      >
+                        İptal
+                      </button>
+                      <button
+                        onClick={sendRealCrypto}
+                        disabled={sendCryptoLoading || !sendCryptoForm.amount || !sendCryptoForm.toAddress}
+                        className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {sendCryptoLoading ? "Gönderiliyor..." : "🚀 Gönder"}
                       </button>
                     </div>
                   </div>

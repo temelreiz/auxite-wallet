@@ -131,6 +131,80 @@ export async function POST(request: NextRequest) {
     const { action, token, amount, ledgerAddress, txHash, note, toAddress } = body;
 
     // ═══════════════════════════════════════════════════════════════════════
+    // ACTION: Send REAL on-chain crypto from hot wallet to any address
+    // Supports: ETH, USDT, XRP, SOL, BTC
+    // ═══════════════════════════════════════════════════════════════════════
+    if (action === 'sendOnChain' || action === 'sendReal') {
+      if (!toAddress || !token || !amount || amount <= 0) {
+        return NextResponse.json({ error: "toAddress, token, and positive amount required" }, { status: 400 });
+      }
+
+      const supportedTokens = ['ETH', 'USDT', 'XRP', 'SOL', 'BTC'];
+      const tokenUpper = token.toUpperCase();
+
+      if (!supportedTokens.includes(tokenUpper)) {
+        return NextResponse.json({
+          error: `Token not supported for on-chain transfer. Supported: ${supportedTokens.join(', ')}`,
+          supported: supportedTokens
+        }, { status: 400 });
+      }
+
+      try {
+        // Import blockchain service
+        const { processWithdraw } = await import("@/lib/blockchain-service");
+
+        console.log(`🚀 Admin sending REAL ${tokenUpper}: ${amount} to ${toAddress}`);
+
+        // Process the actual blockchain transfer
+        const result = await processWithdraw(tokenUpper, toAddress, parseFloat(amount.toString()));
+
+        if (!result.success) {
+          return NextResponse.json({
+            success: false,
+            error: result.error || "On-chain transfer failed",
+            token: tokenUpper,
+            amount,
+            toAddress
+          }, { status: 500 });
+        }
+
+        // Record transfer in history
+        const transfer = {
+          id: `onchain_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          type: "onChainTransfer",
+          token: tokenUpper,
+          amount,
+          toAddress,
+          txHash: result.txHash,
+          fee: result.fee || 0,
+          note: note || "Admin on-chain transfer from hot wallet",
+          timestamp: Date.now(),
+          date: new Date().toISOString(),
+        };
+
+        await redis.lpush("platform:fees:transfers", JSON.stringify(transfer));
+        await redis.ltrim("platform:fees:transfers", 0, 99);
+
+        return NextResponse.json({
+          success: true,
+          message: `Successfully sent ${amount} ${tokenUpper} on-chain to ${toAddress}`,
+          transfer,
+          txHash: result.txHash,
+          networkFee: result.fee,
+        });
+      } catch (error: any) {
+        console.error("On-chain transfer error:", error);
+        return NextResponse.json({
+          success: false,
+          error: error.message || "On-chain transfer failed",
+          token: tokenUpper,
+          amount,
+          toAddress
+        }, { status: 500 });
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // ACTION: Mint/Add balance to any wallet (no fee source required)
     // ═══════════════════════════════════════════════════════════════════════
     if (action === 'mintToWallet' || action === 'addBalance') {
