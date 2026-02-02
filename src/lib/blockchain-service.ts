@@ -9,7 +9,7 @@ import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-sec
 // ETH Mainnet RPC with fallback
 const ETH_MAINNET_RPC = process.env.ETH_MAINNET_RPC ||
   process.env.ETH_RPC_URL ||
-  "https://eth-mainnet.g.alchemy.com/v2/demo";
+  "https://mainnet.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
 
 // ERC20 ABI (sadece transfer fonksiyonu)
 const ERC20_ABI = [
