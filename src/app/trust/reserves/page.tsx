@@ -28,6 +28,19 @@ const translations = {
     vaultLocations: "Kasa Konumları",
     metalReserves: "Metal Rezervleri",
     pricePerGram: "Fiyat/g",
+    platformStock: "Platform Stoğu",
+    platformStockDesc: "Satışa hazır metal stoğu - Anlık durum",
+    stockAvailable: "Satılabilir",
+    stockReserved: "Ayrılmış",
+    stockTotal: "Toplam Stok",
+    stockHistory: "Stok Hareketleri",
+    showHistory: "Geçmişi Göster",
+    hideHistory: "Geçmişi Gizle",
+    userBought: "satın aldı",
+    userSold: "sattı",
+    stockHealthy: "Stok Sağlıklı",
+    stockLow: "Düşük Stok",
+    utilizationRate: "Kullanım Oranı",
   },
   en: {
     title: "Proof of Reserves",
@@ -51,6 +64,19 @@ const translations = {
     vaultLocations: "Vault Locations",
     metalReserves: "Metal Reserves",
     pricePerGram: "Price/g",
+    platformStock: "Platform Stock",
+    platformStockDesc: "Metal inventory ready for sale - Live status",
+    stockAvailable: "Available",
+    stockReserved: "Reserved",
+    stockTotal: "Total Stock",
+    stockHistory: "Stock Movements",
+    showHistory: "Show History",
+    hideHistory: "Hide History",
+    userBought: "bought",
+    userSold: "sold",
+    stockHealthy: "Stock Healthy",
+    stockLow: "Low Stock",
+    utilizationRate: "Utilization Rate",
   },
 };
 
@@ -89,6 +115,28 @@ interface Prices {
   AUXPD: number;
 }
 
+interface PlatformStock {
+  total: number;
+  available: number;
+  reserved: number;
+  allocated: number;
+  warningThreshold: number;
+  warningAmount: number;
+  isLowStock: boolean;
+  lowStockAlertSent: boolean;
+  lastUpdated: number | null;
+  utilizationPercent: string;
+  notInitialized?: boolean;
+  recentHistory?: Array<{
+    type: string;
+    userId: string;
+    amount: number;
+    previousAvailable: number;
+    newAvailable: number;
+    timestamp: number;
+  }>;
+}
+
 export default function ReservesPage() {
   const { lang } = useLanguage();
   const t = translations[lang as keyof typeof translations] || translations.en;
@@ -96,22 +144,26 @@ export default function ReservesPage() {
   const [loading, setLoading] = useState(true);
   const [reserves, setReserves] = useState<ReservesData | null>(null);
   const [prices, setPrices] = useState<Prices>({ AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 });
+  const [platformStock, setPlatformStock] = useState<Record<string, PlatformStock>>({});
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [reservesRes, pricesRes] = await Promise.all([
+        const [reservesRes, pricesRes, stockRes] = await Promise.all([
           fetch('/api/reserves'),
           fetch('/api/prices'),
+          fetch('/api/admin/platform-stock?detailed=true'),
         ]);
-        
+
         const reservesData = await reservesRes.json();
         const pricesData = await pricesRes.json();
-        
+        const stockData = await stockRes.json();
+
         if (reservesData.success) {
           setReserves(reservesData);
         }
-        
+
         if (pricesData.prices) {
           setPrices({
             AUXG: pricesData.prices.AUXG || 0,
@@ -120,13 +172,17 @@ export default function ReservesPage() {
             AUXPD: pricesData.prices.AUXPD || 0,
           });
         }
+
+        if (stockData.success && stockData.stocks) {
+          setPlatformStock(stockData.stocks);
+        }
       } catch (err) {
         console.error('Failed to fetch reserves:', err);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
 
@@ -256,6 +312,121 @@ export default function ReservesPage() {
                 );
               })}
             </div>
+
+            {/* Platform Stock - Live Inventory */}
+            {Object.keys(platformStock).length > 0 && (
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                      📦 {t.platformStock}
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium rounded-full">
+                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                        LIVE
+                      </span>
+                    </h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">{t.platformStockDesc}</p>
+                  </div>
+                  <button
+                    onClick={() => setShowHistory(!showHistory)}
+                    className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    {showHistory ? t.hideHistory : t.showHistory}
+                  </button>
+                </div>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {Object.entries(platformStock).map(([metal, stock]) => {
+                    const info = METAL_INFO[metal];
+                    const price = prices[metal as keyof Prices] || 0;
+                    const value = stock.available * price;
+                    const usagePercent = stock.total > 0 ? parseFloat(stock.utilizationPercent) : 0;
+
+                    if (stock.notInitialized) return null;
+
+                    return (
+                      <div key={metal} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                        <div className="p-4">
+                          {/* Header */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${info?.gradient || 'from-gray-300 to-gray-400'} flex items-center justify-center`}>
+                                <Image src={METAL_ICONS[metal] || "/images/metals/gold.png"} alt={metal} width={20} height={20} />
+                              </div>
+                              <span className="font-bold text-slate-800 dark:text-white">{metal}</span>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              stock.isLowStock
+                                ? 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                            }`}>
+                              {stock.isLowStock ? t.stockLow : t.stockHealthy}
+                            </span>
+                          </div>
+
+                          {/* Available Stock */}
+                          <div className="mb-3">
+                            <p className="text-2xl font-bold text-slate-800 dark:text-white">
+                              {formatGrams(stock.available)}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {t.stockAvailable} • ${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            </p>
+                          </div>
+
+                          {/* Usage Bar */}
+                          <div className="mb-3">
+                            <div className="flex justify-between text-xs mb-1">
+                              <span className="text-slate-500 dark:text-slate-400">{t.utilizationRate}</span>
+                              <span className="text-slate-600 dark:text-slate-300">{usagePercent.toFixed(1)}%</span>
+                            </div>
+                            <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full transition-all duration-500 ${
+                                  usagePercent > 80 ? 'bg-red-500' : usagePercent > 50 ? 'bg-amber-500' : 'bg-emerald-500'
+                                }`}
+                                style={{ width: `${usagePercent}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Stats */}
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="bg-slate-50 dark:bg-slate-800 rounded p-2">
+                              <p className="text-slate-500 dark:text-slate-400">{t.stockTotal}</p>
+                              <p className="font-medium text-slate-700 dark:text-slate-200">{formatGrams(stock.total)}</p>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-800 rounded p-2">
+                              <p className="text-slate-500 dark:text-slate-400">{t.stockReserved}</p>
+                              <p className="font-medium text-slate-700 dark:text-slate-200">{formatGrams(stock.reserved)}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Recent History */}
+                        {showHistory && stock.recentHistory && stock.recentHistory.length > 0 && (
+                          <div className="border-t border-slate-200 dark:border-slate-800 p-3 bg-slate-50 dark:bg-slate-800/50">
+                            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">{t.stockHistory}</p>
+                            <div className="space-y-1 max-h-32 overflow-y-auto">
+                              {stock.recentHistory.slice(0, 5).map((entry, idx) => (
+                                <div key={idx} className="flex items-center justify-between text-xs">
+                                  <span className={entry.type === 'user_buy' ? 'text-red-500' : 'text-emerald-500'}>
+                                    {entry.type === 'user_buy' ? '↓' : '↑'} {entry.amount.toFixed(2)}g
+                                  </span>
+                                  <span className="text-slate-400">
+                                    {new Date(entry.timestamp).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Vault Locations */}
             <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">{t.vaultLocations}</h2>

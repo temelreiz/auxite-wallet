@@ -57,10 +57,10 @@ const translations = {
 };
 
 const plannedAudits = [
-  { auditor: "Big Four Auditor", scope: "reserveAudit", status: "scheduled", date: "Q1 2025" },
-  { auditor: "CertiK", scope: "smartContractAudit", status: "scheduled", date: "Q1 2025" },
-  { auditor: "Trail of Bits", scope: "securityAudit", status: "scheduled", date: "Q2 2025" },
-  { auditor: "Regulatory Partner", scope: "complianceAudit", status: "scheduled", date: "Q2 2025" },
+  { auditor: "Big Four Auditor", scope: "reserveAudit", status: "scheduled", date: "Q2 2026" },
+  { auditor: "CertiK", scope: "smartContractAudit", status: "scheduled", date: "Q2 2026" },
+  { auditor: "Trail of Bits", scope: "securityAudit", status: "scheduled", date: "Q3 2026" },
+  { auditor: "Regulatory Partner", scope: "complianceAudit", status: "scheduled", date: "Q3 2026" },
 ];
 
 const auditPartners = [
