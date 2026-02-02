@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { useAccount } from "wagmi";
 import { useWallet } from "./WalletContext";
 
 interface BuyMetalModalProps {
@@ -40,8 +39,8 @@ const PAYMENT_METHODS = [
 
 function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModalProps) {
   const t = translations[lang] || translations.en;
-  const { address } = useAccount();
-  const { balances: walletBalances, refreshBalances } = useWallet();
+  // Use WalletContext for both custodial and external wallets
+  const { address, balances: walletBalances, refreshBalances } = useWallet();
   
   // Debug: Component mount
   useEffect(() => {
