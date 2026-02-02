@@ -147,62 +147,101 @@ async function getStakedAmounts(address: string): Promise<Record<string, number>
 // HYBRID BALANCE FUNCTION
 // ═══════════════════════════════════════════════════════════════════════════
 
+// Check if user is custodial wallet (AWS KMS managed)
+async function isCustodialWallet(address: string): Promise<boolean> {
+  try {
+    const userKey = `user:${address.toLowerCase()}`;
+    const userData = await redisClient.hgetall(userKey);
+    return userData?.walletType === 'custodial';
+  } catch {
+    return false;
+  }
+}
+
 async function getHybridBalance(address: string): Promise<{
   balances: Record<string, number>;
   sources: Record<string, "blockchain" | "redis">;
   stakedAmounts?: Record<string, number>;
   onChainBalances?: Record<string, number>;
+  walletType?: string;
 }> {
   // 1. Get Redis balance (off-chain data)
   const redisBalance = await getUserBalance(address);
-  
-  // 2. Get Blockchain balances (on-chain tokens + ETH)
-  const blockchainBalances = await getAllBlockchainBalances(address);
-  
-  // 3. Get staked amounts
+
+  // 2. Check if custodial wallet - custodial users use off-chain balances
+  const isCustodial = await isCustodialWallet(address);
+
+  // 3. Get Blockchain balances (only for external wallets)
+  // For custodial wallets, skip blockchain calls to improve performance
+  const blockchainBalances = isCustodial
+    ? { eth: 0, usdt: 0, auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 }
+    : await getAllBlockchainBalances(address);
+
+  // 4. Get staked amounts
   const stakedAmounts = await getStakedAmounts(address);
-  
-  // 4. Merge - prioritize blockchain for on-chain tokens
+
+  // 5. Merge balances based on wallet type
+  const redisEth = parseFloat(String(redisBalance.eth || 0));
+  const redisUsdt = parseFloat(String(redisBalance.usdt || 0));
+  const redisAuxg = parseFloat(String(redisBalance.auxg || 0));
+  const redisAuxs = parseFloat(String(redisBalance.auxs || 0));
+  const redisAuxpt = parseFloat(String(redisBalance.auxpt || 0));
+  const redisAuxpd = parseFloat(String(redisBalance.auxpd || 0));
+
   const balances: Record<string, number> = {
-    // Off-chain from Redis
+    // Off-chain from Redis (always)
     auxm: parseFloat(String(redisBalance.auxm || 0)),
     bonusAuxm: parseFloat(String((redisBalance as any).bonusauxm || redisBalance.bonusAuxm || 0)),
     btc: parseFloat(String(redisBalance.btc || 0)),
     xrp: parseFloat(String(redisBalance.xrp || 0)),
     sol: parseFloat(String(redisBalance.sol || 0)),
     usd: parseFloat(String(redisBalance.usd || 0)),
-    
-    // ETH from Blockchain (mainnet)
-    eth: blockchainBalances.eth || 0,
-    
-    // ERC20 tokens from Blockchain + Off-chain from Redis (subtract staked amounts)
-    usdt: (blockchainBalances.usdt || 0) + parseFloat(String(redisBalance.usdt || 0)),
-    auxg: Math.max(0, (blockchainBalances.auxg || 0) + parseFloat(String(redisBalance.auxg || 0)) - (stakedAmounts.auxg || 0)),
-    auxs: Math.max(0, (blockchainBalances.auxs || 0) + parseFloat(String(redisBalance.auxs || 0)) - (stakedAmounts.auxs || 0)),
-    auxpt: Math.max(0, (blockchainBalances.auxpt || 0) + parseFloat(String(redisBalance.auxpt || 0)) - (stakedAmounts.auxpt || 0)),
-    auxpd: Math.max(0, (blockchainBalances.auxpd || 0) + parseFloat(String(redisBalance.auxpd || 0)) - (stakedAmounts.auxpd || 0)),
+
+    // ETH: Custodial uses Redis, External uses Blockchain
+    eth: isCustodial ? redisEth : (blockchainBalances.eth || 0),
+
+    // ERC20 tokens: Custodial uses Redis, External uses Blockchain + Redis
+    usdt: isCustodial ? redisUsdt : ((blockchainBalances.usdt || 0) + redisUsdt),
+    auxg: isCustodial
+      ? Math.max(0, redisAuxg - (stakedAmounts.auxg || 0))
+      : Math.max(0, (blockchainBalances.auxg || 0) + redisAuxg - (stakedAmounts.auxg || 0)),
+    auxs: isCustodial
+      ? Math.max(0, redisAuxs - (stakedAmounts.auxs || 0))
+      : Math.max(0, (blockchainBalances.auxs || 0) + redisAuxs - (stakedAmounts.auxs || 0)),
+    auxpt: isCustodial
+      ? Math.max(0, redisAuxpt - (stakedAmounts.auxpt || 0))
+      : Math.max(0, (blockchainBalances.auxpt || 0) + redisAuxpt - (stakedAmounts.auxpt || 0)),
+    auxpd: isCustodial
+      ? Math.max(0, redisAuxpd - (stakedAmounts.auxpd || 0))
+      : Math.max(0, (blockchainBalances.auxpd || 0) + redisAuxpd - (stakedAmounts.auxpd || 0)),
   };
-  
+
   // Calculate totalAuxm
   balances.totalAuxm = balances.auxm + balances.bonusAuxm;
-  
+
   // Track sources for debugging
   const sources: Record<string, "blockchain" | "redis"> = {
     auxm: "redis",
     bonusAuxm: "redis",
-    eth: "blockchain",  // Now from blockchain!
+    eth: isCustodial ? "redis" : "blockchain",
     btc: "redis",
     xrp: "redis",
     sol: "redis",
     usd: "redis",
-    usdt: "blockchain",
-    auxg: "blockchain",
-    auxs: "blockchain",
-    auxpt: "blockchain",
-    auxpd: "blockchain",
+    usdt: isCustodial ? "redis" : "blockchain",
+    auxg: isCustodial ? "redis" : "blockchain",
+    auxs: isCustodial ? "redis" : "blockchain",
+    auxpt: isCustodial ? "redis" : "blockchain",
+    auxpd: isCustodial ? "redis" : "blockchain",
   };
-  
-  return { balances, sources, stakedAmounts, onChainBalances: blockchainBalances };
+
+  return {
+    balances,
+    sources,
+    stakedAmounts,
+    onChainBalances: blockchainBalances,
+    walletType: isCustodial ? 'custodial' : 'external'
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -286,10 +325,12 @@ export async function GET(request: NextRequest) {
       balances = result.balances;
       sources = result.sources;
       stakedAmounts = result.stakedAmounts;
-      responseSource = "hybrid";
-      
+      responseSource = result.walletType === 'custodial' ? 'custodial' : 'hybrid';
+
       // Debug log
-      console.log(`📊 Balance for ${address}:`, {
+      console.log(`📊 Balance for ${address} (${result.walletType}):`, {
+        eth: balances.eth,
+        eth_source: sources?.eth,
         auxs_total: (onChainBalances?.auxs || 0) + parseFloat(String((await getUserBalance(address)).auxs || 0)),
         auxs_staked: stakedAmounts?.auxs || 0,
         auxs_available: balances.auxs,
