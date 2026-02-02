@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// POST - Mark fees as transferred to Ledger
+// POST - Mark fees as transferred to Ledger OR transfer to user wallet
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function POST(request: NextRequest) {
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { token, amount, ledgerAddress, txHash, note } = body;
+    const { action, token, amount, ledgerAddress, txHash, note, toAddress } = body;
 
     if (!token || !amount || amount <= 0) {
       return NextResponse.json({ error: "Token and positive amount required" }, { status: 400 });
@@ -141,11 +141,78 @@ export async function POST(request: NextRequest) {
     const pending = parseFloat(await redis.hget(feeKey, "pending") as string || "0");
 
     if (amount > pending) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: `Insufficient pending fees. Available: ${pending} ${token.toUpperCase()}`,
         available: pending,
       }, { status: 400 });
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // ACTION: Transfer to User Wallet (off-chain Redis balance)
+    // ═══════════════════════════════════════════════════════════════════════
+    if (action === 'transferToUser') {
+      if (!toAddress) {
+        return NextResponse.json({ error: "toAddress required for user transfer" }, { status: 400 });
+      }
+
+      const userBalanceKey = `user:${toAddress.toLowerCase()}:balance`;
+
+      // Check if user exists (optional - create balance if not)
+      const existingBalance = await redis.hgetall(userBalanceKey);
+
+      // Update fee balances (reduce pending)
+      const multi = redis.multi();
+      multi.hincrbyfloat(feeKey, "pending", -amount);
+      multi.hincrbyfloat(feeKey, "transferred", amount);
+
+      // Add to user's off-chain balance
+      multi.hincrbyfloat(userBalanceKey, tokenLower, amount);
+
+      // Record transfer
+      const transfer = {
+        id: `user_transfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        type: "toUser",
+        token: token.toUpperCase(),
+        amount,
+        toAddress: toAddress.toLowerCase(),
+        note: note || "Admin transfer from fee wallet",
+        timestamp: Date.now(),
+        date: new Date().toISOString(),
+      };
+
+      multi.lpush("platform:fees:transfers", JSON.stringify(transfer));
+      multi.ltrim("platform:fees:transfers", 0, 99);
+
+      // Also record in user's transaction history
+      const userTx = {
+        type: "deposit",
+        token: token.toUpperCase(),
+        amount,
+        source: "admin_fee_transfer",
+        note: note || "Transfer from platform fees",
+        timestamp: Date.now(),
+        date: new Date().toISOString(),
+      };
+      multi.lpush(`user:${toAddress.toLowerCase()}:transactions`, JSON.stringify(userTx));
+      multi.ltrim(`user:${toAddress.toLowerCase()}:transactions`, 0, 99);
+
+      await multi.exec();
+
+      // Get updated user balance
+      const newBalance = await redis.hget(userBalanceKey, tokenLower);
+
+      return NextResponse.json({
+        success: true,
+        message: `Transferred ${amount} ${token.toUpperCase()} to user wallet`,
+        transfer,
+        userNewBalance: parseFloat(newBalance as string || "0"),
+        remainingPending: pending - amount,
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // DEFAULT ACTION: Transfer to Ledger (existing behavior)
+    // ═══════════════════════════════════════════════════════════════════════
 
     // Update fee balances
     const multi = redis.multi();
@@ -155,6 +222,7 @@ export async function POST(request: NextRequest) {
     // Record transfer
     const transfer = {
       id: `transfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type: "toLedger",
       token: token.toUpperCase(),
       amount,
       ledgerAddress: ledgerAddress || "Not specified",
