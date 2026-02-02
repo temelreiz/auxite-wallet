@@ -279,7 +279,7 @@ const templates = {
   // ────────────────────────────────────────────────────────────────────────────
   '2fa-code': (data: EmailData) => {
     const { name, code, language = 'en' } = data;
-    
+
     const content = {
       en: {
         subject: 'Your Auxite verification code',
@@ -315,6 +315,204 @@ const templates = {
           </div>
           <p style="color: #64748b; font-size: 14px;">${t.expiry}</p>
           <p style="color: #94a3b8; font-size: 12px;">${t.ignore}</p>
+        `,
+      }),
+    };
+  },
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // DEPOSIT CONFIRMED EMAIL
+  // ────────────────────────────────────────────────────────────────────────────
+  'deposit-confirmed': (data: EmailData) => {
+    const { name, amount, token, txHash, language = 'en' } = data;
+
+    const content = {
+      en: {
+        subject: `Deposit Confirmed: ${amount} ${token}`,
+        title: 'Deposit Confirmed',
+        greeting: `Hi ${name},`,
+        message: 'Your deposit has been confirmed and credited to your account.',
+        amountLabel: 'Amount',
+        txLabel: 'Transaction',
+        viewWallet: 'View Wallet',
+      },
+      tr: {
+        subject: `Yatırma Onaylandı: ${amount} ${token}`,
+        title: 'Yatırma Onaylandı',
+        greeting: `Merhaba ${name},`,
+        message: 'Yatırmanız onaylandı ve hesabınıza eklendi.',
+        amountLabel: 'Miktar',
+        txLabel: 'İşlem',
+        viewWallet: 'Cüzdanı Görüntüle',
+      },
+    };
+
+    const t = content[language as keyof typeof content] || content.en;
+
+    return {
+      subject: t.subject,
+      html: generateEmailHTML({
+        title: t.title,
+        content: `
+          <p>${t.greeting}</p>
+          <p>${t.message}</p>
+          <div style="background-color: #ecfdf5; border: 1px solid #10B981; border-radius: 12px; padding: 20px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #10B981; font-size: 20px; font-weight: bold;">${amount} ${token}</span></p>
+            ${txHash ? `<p style="margin: 0; font-size: 12px; color: #64748b;"><strong>${t.txLabel}:</strong> ${txHash.substring(0, 20)}...</p>` : ''}
+          </div>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="https://auxite.app/wallet" style="background-color: #10B981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.viewWallet}</a>
+          </div>
+        `,
+      }),
+    };
+  },
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // WITHDRAW CONFIRMED EMAIL
+  // ────────────────────────────────────────────────────────────────────────────
+  'withdraw-confirmed': (data: EmailData) => {
+    const { name, amount, token, toAddress, txHash, fee, language = 'en' } = data;
+
+    const content = {
+      en: {
+        subject: `Withdrawal Completed: ${amount} ${token}`,
+        title: 'Withdrawal Completed',
+        greeting: `Hi ${name},`,
+        message: 'Your withdrawal has been processed successfully.',
+        amountLabel: 'Amount',
+        toLabel: 'To Address',
+        feeLabel: 'Network Fee',
+        txLabel: 'Transaction',
+        viewHistory: 'View History',
+      },
+      tr: {
+        subject: `Çekim Tamamlandı: ${amount} ${token}`,
+        title: 'Çekim Tamamlandı',
+        greeting: `Merhaba ${name},`,
+        message: 'Çekim işleminiz başarıyla tamamlandı.',
+        amountLabel: 'Miktar',
+        toLabel: 'Hedef Adres',
+        feeLabel: 'Ağ Ücreti',
+        txLabel: 'İşlem',
+        viewHistory: 'Geçmişi Görüntüle',
+      },
+    };
+
+    const t = content[language as keyof typeof content] || content.en;
+
+    return {
+      subject: t.subject,
+      html: generateEmailHTML({
+        title: t.title,
+        content: `
+          <p>${t.greeting}</p>
+          <p>${t.message}</p>
+          <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 12px; padding: 20px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #d97706; font-size: 20px; font-weight: bold;">${amount} ${token}</span></p>
+            <p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b;"><strong>${t.toLabel}:</strong> ${toAddress}</p>
+            ${fee ? `<p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b;"><strong>${t.feeLabel}:</strong> ${fee}</p>` : ''}
+            ${txHash ? `<p style="margin: 0; font-size: 12px; color: #64748b;"><strong>${t.txLabel}:</strong> ${txHash.substring(0, 20)}...</p>` : ''}
+          </div>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="https://auxite.app/wallet" style="background-color: #f59e0b; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.viewHistory}</a>
+          </div>
+        `,
+      }),
+    };
+  },
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // TRANSFER SENT EMAIL
+  // ────────────────────────────────────────────────────────────────────────────
+  'transfer-sent': (data: EmailData) => {
+    const { name, amount, token, toAddress, language = 'en' } = data;
+
+    const content = {
+      en: {
+        subject: `Transfer Sent: ${amount} ${token}`,
+        title: 'Transfer Sent',
+        greeting: `Hi ${name},`,
+        message: 'Your transfer has been sent successfully.',
+        amountLabel: 'Amount',
+        toLabel: 'To',
+        viewWallet: 'View Wallet',
+      },
+      tr: {
+        subject: `Transfer Gönderildi: ${amount} ${token}`,
+        title: 'Transfer Gönderildi',
+        greeting: `Merhaba ${name},`,
+        message: 'Transferiniz başarıyla gönderildi.',
+        amountLabel: 'Miktar',
+        toLabel: 'Alıcı',
+        viewWallet: 'Cüzdanı Görüntüle',
+      },
+    };
+
+    const t = content[language as keyof typeof content] || content.en;
+
+    return {
+      subject: t.subject,
+      html: generateEmailHTML({
+        title: t.title,
+        content: `
+          <p>${t.greeting}</p>
+          <p>${t.message}</p>
+          <div style="background-color: #ede9fe; border: 1px solid #8b5cf6; border-radius: 12px; padding: 20px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #7c3aed; font-size: 20px; font-weight: bold;">${amount} ${token}</span></p>
+            <p style="margin: 0; font-size: 12px; color: #64748b;"><strong>${t.toLabel}:</strong> ${toAddress}</p>
+          </div>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="https://auxite.app/wallet" style="background-color: #8b5cf6; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.viewWallet}</a>
+          </div>
+        `,
+      }),
+    };
+  },
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // TRANSFER RECEIVED EMAIL
+  // ────────────────────────────────────────────────────────────────────────────
+  'transfer-received': (data: EmailData) => {
+    const { name, amount, token, fromAddress, language = 'en' } = data;
+
+    const content = {
+      en: {
+        subject: `You received ${amount} ${token}`,
+        title: 'Transfer Received',
+        greeting: `Hi ${name},`,
+        message: 'You have received a transfer to your wallet.',
+        amountLabel: 'Amount',
+        fromLabel: 'From',
+        viewWallet: 'View Wallet',
+      },
+      tr: {
+        subject: `${amount} ${token} aldınız`,
+        title: 'Transfer Alındı',
+        greeting: `Merhaba ${name},`,
+        message: 'Cüzdanınıza bir transfer aldınız.',
+        amountLabel: 'Miktar',
+        fromLabel: 'Gönderen',
+        viewWallet: 'Cüzdanı Görüntüle',
+      },
+    };
+
+    const t = content[language as keyof typeof content] || content.en;
+
+    return {
+      subject: t.subject,
+      html: generateEmailHTML({
+        title: t.title,
+        content: `
+          <p>${t.greeting}</p>
+          <p>${t.message}</p>
+          <div style="background-color: #ecfdf5; border: 1px solid #10B981; border-radius: 12px; padding: 20px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #10B981; font-size: 20px; font-weight: bold;">+${amount} ${token}</span></p>
+            ${fromAddress ? `<p style="margin: 0; font-size: 12px; color: #64748b;"><strong>${t.fromLabel}:</strong> ${fromAddress.substring(0, 10)}...${fromAddress.substring(fromAddress.length - 6)}</p>` : ''}
+          </div>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="https://auxite.app/wallet" style="background-color: #10B981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.viewWallet}</a>
+          </div>
         `,
       }),
     };
@@ -458,5 +656,41 @@ export async function send2FACodeEmail(email: string, name: string, code: string
     type: '2fa-code',
     to: email,
     data: { name, code, language },
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TRANSACTION EMAIL FUNCTIONS
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function sendDepositConfirmedEmail(email: string, name: string, amount: string, token: string, txHash?: string, language: string = 'en') {
+  return sendEmail({
+    type: 'deposit-confirmed',
+    to: email,
+    data: { name, amount, token, txHash, language },
+  });
+}
+
+export async function sendWithdrawConfirmedEmail(email: string, name: string, amount: string, token: string, toAddress: string, txHash?: string, fee?: string, language: string = 'en') {
+  return sendEmail({
+    type: 'withdraw-confirmed',
+    to: email,
+    data: { name, amount, token, toAddress, txHash, fee, language },
+  });
+}
+
+export async function sendTransferSentEmail(email: string, name: string, amount: string, token: string, toAddress: string, language: string = 'en') {
+  return sendEmail({
+    type: 'transfer-sent',
+    to: email,
+    data: { name, amount, token, toAddress, language },
+  });
+}
+
+export async function sendTransferReceivedEmail(email: string, name: string, amount: string, token: string, fromAddress: string, language: string = 'en') {
+  return sendEmail({
+    type: 'transfer-received',
+    to: email,
+    data: { name, amount, token, fromAddress, language },
   });
 }
