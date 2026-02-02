@@ -675,7 +675,11 @@ export default function AdminDashboard() {
       loadPendingTransactions();
       intervals.push(setInterval(loadPendingTransactions, 30000));
     }
-    
+    if (activeTab === "mint") {
+      loadPlatformStock();
+      intervals.push(setInterval(loadPlatformStock, 60000));
+    }
+
     return () => intervals.forEach(clearInterval);
   }, [authenticated, activeTab]);
 
