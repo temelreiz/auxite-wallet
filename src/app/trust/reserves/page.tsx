@@ -11,15 +11,15 @@ const translations = {
     subtitle: "Auxite tokenlarının %100 fiziksel metallerle desteklendiğinin kanıtı",
     totalReserves: "Toplam Rezervler",
     totalValue: "Toplam Değer",
-    totalBars: "Toplam Külçe",
-    vaults: "Kasalar",
+    totalMetals: "Toplam Metal",
+    vaults: "Kasa",
     backing: "Destek Oranı",
     backToTrust: "Güven Merkezine Dön",
     gold: "Altın",
     silver: "Gümüş",
     platinum: "Platin",
     palladium: "Paladyum",
-    available: "Mevcut",
+    available: "Satılabilir",
     allocated: "Tahsis Edilmiş",
     total: "Toplam",
     lastUpdated: "Son Güncelleme",
@@ -28,26 +28,22 @@ const translations = {
     vaultLocations: "Kasa Konumları",
     metalReserves: "Metal Rezervleri",
     pricePerGram: "Fiyat/g",
-    platformStock: "Platform Stoğu",
-    platformStockDesc: "Satışa hazır metal stoğu - Anlık durum",
-    stockAvailable: "Satılabilir",
-    stockReserved: "Ayrılmış",
-    stockTotal: "Toplam Stok",
-    stockHistory: "Stok Hareketleri",
-    showHistory: "Geçmişi Göster",
-    hideHistory: "Geçmişi Gizle",
-    userBought: "satın aldı",
-    userSold: "sattı",
     stockHealthy: "Stok Sağlıklı",
     stockLow: "Düşük Stok",
     utilizationRate: "Kullanım Oranı",
+    vaultDistribution: "Kasa Dağılımı",
+    showHistory: "Geçmişi Göster",
+    hideHistory: "Geçmişi Gizle",
+    recentActivity: "Son Hareketler",
+    noActivity: "Henüz hareket yok",
+    liveStatus: "CANLI",
   },
   en: {
     title: "Proof of Reserves",
     subtitle: "Verification that Auxite tokens are 100% backed by physical metals",
     totalReserves: "Total Reserves",
     totalValue: "Total Value",
-    totalBars: "Total Bars",
+    totalMetals: "Total Metals",
     vaults: "Vaults",
     backing: "Backing Ratio",
     backToTrust: "Back to Trust Center",
@@ -64,19 +60,15 @@ const translations = {
     vaultLocations: "Vault Locations",
     metalReserves: "Metal Reserves",
     pricePerGram: "Price/g",
-    platformStock: "Platform Stock",
-    platformStockDesc: "Metal inventory ready for sale - Live status",
-    stockAvailable: "Available",
-    stockReserved: "Reserved",
-    stockTotal: "Total Stock",
-    stockHistory: "Stock Movements",
-    showHistory: "Show History",
-    hideHistory: "Hide History",
-    userBought: "bought",
-    userSold: "sold",
     stockHealthy: "Stock Healthy",
     stockLow: "Low Stock",
     utilizationRate: "Utilization Rate",
+    vaultDistribution: "Vault Distribution",
+    showHistory: "Show History",
+    hideHistory: "Hide History",
+    recentActivity: "Recent Activity",
+    noActivity: "No activity yet",
+    liveStatus: "LIVE",
   },
 };
 
@@ -93,20 +85,6 @@ const METAL_INFO: Record<string, { name: string; nameEn: string; color: string; 
   AUXPT: { name: 'Platin', nameEn: 'Platinum', color: '#E2E8F0', gradient: 'from-slate-300 to-slate-400' },
   AUXPD: { name: 'Paladyum', nameEn: 'Palladium', color: '#64748B', gradient: 'from-violet-400 to-purple-500' },
 };
-
-interface ReserveSummary {
-  total: number;
-  allocated: number;
-  available: number;
-  byVault: Record<string, number>;
-}
-
-interface ReservesData {
-  summary: Record<string, ReserveSummary>;
-  vaults: Record<string, { name: string; country: string; code: string }>;
-  totalBars: number;
-  lastUpdated: string;
-}
 
 interface Prices {
   AUXG: number;
@@ -127,42 +105,45 @@ interface PlatformStock {
   lastUpdated: number | null;
   utilizationPercent: string;
   notInitialized?: boolean;
+  byVault: Record<string, number>;
+  metalName?: { tr: string; en: string };
   recentHistory?: Array<{
-    type: string;
-    userId: string;
+    action: string;
     amount: number;
-    previousAvailable: number;
-    newAvailable: number;
+    vault?: string;
+    vaultName?: string;
     timestamp: number;
+    reason?: string;
   }>;
+}
+
+interface VaultInfo {
+  name: string;
+  country: string;
+  code: string;
 }
 
 export default function ReservesPage() {
   const { lang } = useLanguage();
   const t = translations[lang as keyof typeof translations] || translations.en;
-  
+
   const [loading, setLoading] = useState(true);
-  const [reserves, setReserves] = useState<ReservesData | null>(null);
   const [prices, setPrices] = useState<Prices>({ AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 });
   const [platformStock, setPlatformStock] = useState<Record<string, PlatformStock>>({});
+  const [vaults, setVaults] = useState<Record<string, VaultInfo>>({});
   const [showHistory, setShowHistory] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [reservesRes, pricesRes, stockRes] = await Promise.all([
-          fetch('/api/reserves'),
+        const [pricesRes, stockRes] = await Promise.all([
           fetch('/api/prices'),
           fetch('/api/admin/platform-stock?detailed=true'),
         ]);
 
-        const reservesData = await reservesRes.json();
         const pricesData = await pricesRes.json();
         const stockData = await stockRes.json();
-
-        if (reservesData.success) {
-          setReserves(reservesData);
-        }
 
         if (pricesData.prices) {
           setPrices({
@@ -175,6 +156,8 @@ export default function ReservesPage() {
 
         if (stockData.success && stockData.stocks) {
           setPlatformStock(stockData.stocks);
+          setVaults(stockData.vaults || {});
+          setLastUpdated(stockData.timestamp);
         }
       } catch (err) {
         console.error('Failed to fetch reserves:', err);
@@ -184,6 +167,9 @@ export default function ReservesPage() {
     };
 
     fetchData();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const formatGrams = (g: number) => {
@@ -192,18 +178,43 @@ export default function ReservesPage() {
   };
 
   const getTotalValue = () => {
-    if (!reserves?.summary) return 0;
     let total = 0;
-    for (const [metal, data] of Object.entries(reserves.summary)) {
-      total += data.total * (prices[metal as keyof Prices] || 0);
+    for (const [metal, stock] of Object.entries(platformStock)) {
+      if (!stock.notInitialized) {
+        total += stock.total * (prices[metal as keyof Prices] || 0);
+      }
     }
     return total;
+  };
+
+  const getTotalGrams = () => {
+    let total = 0;
+    for (const stock of Object.values(platformStock)) {
+      if (!stock.notInitialized) {
+        total += stock.total;
+      }
+    }
+    return total;
+  };
+
+  const getActiveVaultsCount = () => {
+    const activeVaults = new Set<string>();
+    for (const stock of Object.values(platformStock)) {
+      if (stock.byVault) {
+        for (const vault of Object.keys(stock.byVault)) {
+          if (stock.byVault[vault] > 0) {
+            activeVaults.add(vault);
+          }
+        }
+      }
+    }
+    return activeVaults.size;
   };
 
   return (
     <div className="min-h-screen bg-stone-100 dark:bg-slate-950">
       <TopNav />
-      
+
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Back Link */}
         <Link href="/trust" className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 hover:underline mb-6">
@@ -214,16 +225,30 @@ export default function ReservesPage() {
         </Link>
 
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">{t.title}</h1>
-          <p className="text-slate-600 dark:text-slate-400">{t.subtitle}</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-3">
+              {t.title}
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium rounded-full">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                {t.liveStatus}
+              </span>
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400">{t.subtitle}</p>
+          </div>
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="px-4 py-2 text-sm bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+          >
+            {showHistory ? t.hideHistory : t.showHistory}
+          </button>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
           </div>
-        ) : reserves ? (
+        ) : Object.keys(platformStock).length > 0 ? (
           <>
             {/* Hero Stats */}
             <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl p-8 mb-8 text-white">
@@ -238,14 +263,14 @@ export default function ReservesPage() {
                   <p className="text-4xl font-bold">${getTotalValue().toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-3 gap-4 mt-6">
                 <div className="bg-white/10 rounded-xl p-4 text-center">
-                  <p className="text-3xl font-bold">{reserves.totalBars?.toLocaleString()}</p>
-                  <p className="text-emerald-100 text-sm">{t.totalBars}</p>
+                  <p className="text-3xl font-bold">{formatGrams(getTotalGrams())}</p>
+                  <p className="text-emerald-100 text-sm">{t.totalMetals}</p>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 text-center">
-                  <p className="text-3xl font-bold">{Object.keys(reserves.vaults || {}).length}</p>
+                  <p className="text-3xl font-bold">{getActiveVaultsCount()}</p>
                   <p className="text-emerald-100 text-sm">{t.vaults}</p>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 text-center">
@@ -255,106 +280,29 @@ export default function ReservesPage() {
               </div>
             </div>
 
-            {/* Metal Reserves */}
+            {/* Metal Reserves - Platform Stock Based */}
             <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">{t.metalReserves}</h2>
             <div className="grid gap-4 mb-8">
-              {Object.entries(reserves.summary).map(([metal, data]) => {
+              {Object.entries(platformStock).map(([metal, stock]) => {
+                if (stock.notInitialized) return null;
+
                 const info = METAL_INFO[metal];
                 const price = prices[metal as keyof Prices] || 0;
-                const value = data.total * price;
-                const allocatedPercent = data.total > 0 ? (data.allocated / data.total * 100).toFixed(1) : '0';
-                
+                const value = stock.total * price;
+                const usagePercent = parseFloat(stock.utilizationPercent || '0');
+                const metalName = lang === 'tr' ? (stock.metalName?.tr || info?.name) : (stock.metalName?.en || info?.nameEn);
+
                 return (
                   <div key={metal} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                     <div className="p-6">
                       <div className="flex items-center gap-4 mb-4">
-                        <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${info.gradient} flex items-center justify-center`}>
+                        <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${info?.gradient || 'from-gray-300 to-gray-400'} flex items-center justify-center`}>
                           <Image src={METAL_ICONS[metal] || "/images/metals/gold.png"} alt={metal} width={32} height={32} className="drop-shadow-lg" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-lg font-bold text-slate-800 dark:text-white">{metal}</h3>
-                          <p className="text-slate-500 dark:text-slate-400 text-sm">{lang === 'tr' ? info.name : info.nameEn} • ${price.toFixed(2)}/g</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-slate-800 dark:text-white">{formatGrams(data.total)}</p>
-                          <p className="text-slate-500 dark:text-slate-400 text-sm">${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                        </div>
-                      </div>
-                      
-                      {/* Progress Bar */}
-                      <div className="mb-4">
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-slate-500 dark:text-slate-400">{t.allocated}: {formatGrams(data.allocated)}</span>
-                          <span className="text-slate-500 dark:text-slate-400">{allocatedPercent}%</span>
-                        </div>
-                        <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full bg-gradient-to-r ${info.gradient} transition-all duration-500`}
-                            style={{ width: `${allocatedPercent}%` }}
-                          />
-                        </div>
-                      </div>
-                      
-                      {/* Vault Distribution */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {Object.entries(data.byVault).map(([vaultCode, grams]) => {
-                          const vault = reserves.vaults[vaultCode];
-                          return (
-                            <div key={vaultCode} className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 text-center">
-                              <p className="text-xs text-slate-500 dark:text-slate-400">{vault?.name || vaultCode}</p>
-                              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{formatGrams(grams)}</p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Platform Stock - Live Inventory */}
-            {Object.keys(platformStock).length > 0 && (
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                      📦 {t.platformStock}
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium rounded-full">
-                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                        LIVE
-                      </span>
-                    </h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">{t.platformStockDesc}</p>
-                  </div>
-                  <button
-                    onClick={() => setShowHistory(!showHistory)}
-                    className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    {showHistory ? t.hideHistory : t.showHistory}
-                  </button>
-                </div>
-
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {Object.entries(platformStock).map(([metal, stock]) => {
-                    const info = METAL_INFO[metal];
-                    const price = prices[metal as keyof Prices] || 0;
-                    const value = stock.available * price;
-                    const usagePercent = stock.total > 0 ? parseFloat(stock.utilizationPercent) : 0;
-
-                    if (stock.notInitialized) return null;
-
-                    return (
-                      <div key={metal} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                        <div className="p-4">
-                          {/* Header */}
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${info?.gradient || 'from-gray-300 to-gray-400'} flex items-center justify-center`}>
-                                <Image src={METAL_ICONS[metal] || "/images/metals/gold.png"} alt={metal} width={20} height={20} />
-                              </div>
-                              <span className="font-bold text-slate-800 dark:text-white">{metal}</span>
-                            </div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white">{metalName}</h3>
+                            <span className="text-xs text-slate-500">({metal})</span>
                             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                               stock.isLowStock
                                 ? 'bg-red-500/10 text-red-600 dark:text-red-400'
@@ -363,96 +311,129 @@ export default function ReservesPage() {
                               {stock.isLowStock ? t.stockLow : t.stockHealthy}
                             </span>
                           </div>
+                          <p className="text-slate-500 dark:text-slate-400 text-sm">${price.toFixed(2)}/g</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-slate-800 dark:text-white">{formatGrams(stock.total)}</p>
+                          <p className="text-slate-500 dark:text-slate-400 text-sm">${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                        </div>
+                      </div>
 
-                          {/* Available Stock */}
-                          <div className="mb-3">
-                            <p className="text-2xl font-bold text-slate-800 dark:text-white">
-                              {formatGrams(stock.available)}
-                            </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {t.stockAvailable} • ${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                            </p>
-                          </div>
+                      {/* Progress Bar */}
+                      <div className="mb-4">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-slate-500 dark:text-slate-400">{t.available}: {formatGrams(stock.available)}</span>
+                          <span className="text-slate-500 dark:text-slate-400">{t.utilizationRate}: {usagePercent.toFixed(1)}%</span>
+                        </div>
+                        <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-500 ${
+                              usagePercent > 80 ? 'bg-red-500' : usagePercent > 50 ? 'bg-amber-500' : `bg-gradient-to-r ${info?.gradient || 'from-emerald-400 to-emerald-500'}`
+                            }`}
+                            style={{ width: `${usagePercent}%` }}
+                          />
+                        </div>
+                      </div>
 
-                          {/* Usage Bar */}
-                          <div className="mb-3">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span className="text-slate-500 dark:text-slate-400">{t.utilizationRate}</span>
-                              <span className="text-slate-600 dark:text-slate-300">{usagePercent.toFixed(1)}%</span>
-                            </div>
-                            <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full transition-all duration-500 ${
-                                  usagePercent > 80 ? 'bg-red-500' : usagePercent > 50 ? 'bg-amber-500' : 'bg-emerald-500'
-                                }`}
-                                style={{ width: `${usagePercent}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Stats */}
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="bg-slate-50 dark:bg-slate-800 rounded p-2">
-                              <p className="text-slate-500 dark:text-slate-400">{t.stockTotal}</p>
-                              <p className="font-medium text-slate-700 dark:text-slate-200">{formatGrams(stock.total)}</p>
-                            </div>
-                            <div className="bg-slate-50 dark:bg-slate-800 rounded p-2">
-                              <p className="text-slate-500 dark:text-slate-400">{t.stockReserved}</p>
-                              <p className="font-medium text-slate-700 dark:text-slate-200">{formatGrams(stock.reserved)}</p>
-                            </div>
+                      {/* Vault Distribution */}
+                      {stock.byVault && Object.keys(stock.byVault).length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">{t.vaultDistribution}</p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {Object.entries(stock.byVault).map(([vaultCode, grams]) => {
+                              const vault = vaults[vaultCode];
+                              const percent = stock.total > 0 ? ((grams / stock.total) * 100).toFixed(1) : '0';
+                              return (
+                                <div key={vaultCode} className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">{vault?.name || vaultCode}</span>
+                                  </div>
+                                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{formatGrams(grams)}</p>
+                                  <p className="text-xs text-slate-400">{percent}%</p>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
+                      )}
 
-                        {/* Recent History */}
-                        {showHistory && stock.recentHistory && stock.recentHistory.length > 0 && (
-                          <div className="border-t border-slate-200 dark:border-slate-800 p-3 bg-slate-50 dark:bg-slate-800/50">
-                            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">{t.stockHistory}</p>
-                            <div className="space-y-1 max-h-32 overflow-y-auto">
-                              {stock.recentHistory.slice(0, 5).map((entry, idx) => (
-                                <div key={idx} className="flex items-center justify-between text-xs">
-                                  <span className={entry.type === 'user_buy' ? 'text-red-500' : 'text-emerald-500'}>
-                                    {entry.type === 'user_buy' ? '↓' : '↑'} {entry.amount.toFixed(2)}g
+                      {/* Recent History */}
+                      {showHistory && stock.recentHistory && stock.recentHistory.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                          <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">{t.recentActivity}</p>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {stock.recentHistory.slice(0, 10).map((entry, idx) => (
+                              <div key={idx} className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800 rounded p-2">
+                                <div className="flex items-center gap-2">
+                                  <span className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                    entry.action === 'add' ? 'bg-emerald-500/20 text-emerald-500' :
+                                    entry.action === 'remove' ? 'bg-red-500/20 text-red-500' :
+                                    entry.action === 'transfer' ? 'bg-blue-500/20 text-blue-500' :
+                                    'bg-slate-500/20 text-slate-500'
+                                  }`}>
+                                    {entry.action === 'add' ? '↑' : entry.action === 'remove' ? '↓' : entry.action === 'transfer' ? '↔' : '•'}
                                   </span>
-                                  <span className="text-slate-400">
-                                    {new Date(entry.timestamp).toLocaleDateString()}
-                                  </span>
+                                  <div>
+                                    <span className="font-medium">{entry.amount?.toFixed(2)}g</span>
+                                    {entry.vaultName && <span className="text-slate-400 ml-1">• {entry.vaultName}</span>}
+                                  </div>
                                 </div>
-                              ))}
-                            </div>
+                                <span className="text-slate-400">
+                                  {new Date(entry.timestamp).toLocaleDateString()}
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
             {/* Vault Locations */}
             <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">{t.vaultLocations}</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              {Object.entries(reserves.vaults).map(([code, vault]) => (
-                <div key={code} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 text-center">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
+              {Object.entries(vaults).map(([code, vault]) => {
+                // Calculate total for this vault across all metals
+                let vaultTotal = 0;
+                for (const stock of Object.values(platformStock)) {
+                  if (stock.byVault && stock.byVault[code]) {
+                    vaultTotal += stock.byVault[code];
+                  }
+                }
+
+                return (
+                  <div key={code} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 text-center">
+                    <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                    <p className="font-semibold text-slate-800 dark:text-white">{vault.name}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{vault.country}</p>
+                    {vaultTotal > 0 && (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2 font-medium">
+                        {formatGrams(vaultTotal)}
+                      </p>
+                    )}
                   </div>
-                  <p className="font-semibold text-slate-800 dark:text-white">{vault.name}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{vault.country}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Last Updated */}
-            <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 flex items-center gap-3">
-              <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
-                {t.lastUpdated}: {new Date(reserves.lastUpdated).toLocaleString()}
-              </p>
-            </div>
+            {lastUpdated && (
+              <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 flex items-center gap-3">
+                <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-slate-600 dark:text-slate-400 text-sm">
+                  {t.lastUpdated}: {new Date(lastUpdated).toLocaleString()}
+                </p>
+              </div>
+            )}
           </>
         ) : (
           <div className="bg-white dark:bg-slate-900 rounded-xl p-8 text-center">

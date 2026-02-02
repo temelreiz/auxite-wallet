@@ -494,11 +494,20 @@ export default function AdminDashboard() {
   const [stockData, setStockData] = useState({
     metal: "AUXG",
     amount: "",
-    action: "add" as "add" | "remove" | "set" | "initialize",
+    action: "add" as "add" | "remove" | "set" | "initialize" | "transfer",
     reason: "",
+    vault: "IST" as string,
+    fromVault: "" as string,
+    toVault: "" as string,
   });
   const [platformStock, setPlatformStock] = useState<Record<string, any>>({});
   const [stockLoading, setStockLoading] = useState(false);
+  const [availableVaults] = useState<Record<string, { name: string; country: string; code: string }>>({
+    DXB: { name: 'Dubai Vault', country: 'UAE', code: 'DXB' },
+    IST: { name: 'Istanbul Vault', country: 'Turkey', code: 'IST' },
+    ZRH: { name: 'Zurich Vault', country: 'Switzerland', code: 'ZRH' },
+    LDN: { name: 'London Vault', country: 'UK', code: 'LDN' },
+  });
 
   // Mobile Config
   const [mobileAppConfig, setMobileAppConfig] = useState<MobileAppConfig>({
@@ -1487,30 +1496,47 @@ export default function AdminDashboard() {
   };
 
   const handleStockOperation = async () => {
-    if (!stockData.amount && stockData.action !== "initialize") return;
+    if (!stockData.amount && stockData.action !== "initialize" && stockData.action !== "transfer") return;
+    if (stockData.action === "transfer" && (!stockData.fromVault || !stockData.toVault)) {
+      setMessage({ type: "error", text: "Transfer için kaynak ve hedef kasa seçilmeli" });
+      return;
+    }
     setMessage({ type: "", text: "" });
 
     try {
+      const bodyData: any = {
+        metal: stockData.metal,
+        amount: parseFloat(stockData.amount) || 0,
+        action: stockData.action,
+        reason: stockData.reason,
+      };
+
+      // Vault info for add/remove operations
+      if (["add", "remove", "initialize", "set"].includes(stockData.action) && stockData.vault) {
+        bodyData.vault = stockData.vault;
+      }
+
+      // Transfer specific fields
+      if (stockData.action === "transfer") {
+        bodyData.fromVault = stockData.fromVault;
+        bodyData.toVault = stockData.toVault;
+        bodyData.transferAmount = parseFloat(stockData.amount) || 0;
+      }
+
       const res = await fetch("/api/admin/platform-stock", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-admin-key": process.env.NEXT_PUBLIC_ADMIN_API_KEY || localStorage.getItem("admin_api_key") || "",
         },
-        body: JSON.stringify({
-          metal: stockData.metal,
-          amount: parseFloat(stockData.amount) || 0,
-          action: stockData.action,
-          reason: stockData.reason,
-        }),
+        body: JSON.stringify(bodyData),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        const actionText = stockData.action === "add" ? "eklendi" : stockData.action === "remove" ? "çıkarıldı" : stockData.action === "set" ? "ayarlandı" : "başlatıldı";
-        setMessage({ type: "success", text: `${stockData.amount}g ${stockData.metal} stoğa ${actionText}` });
-        setStockData({ ...stockData, amount: "", reason: "" });
+        setMessage({ type: "success", text: data.message || "İşlem başarılı" });
+        setStockData({ ...stockData, amount: "", reason: "", fromVault: "", toVault: "" });
         loadPlatformStock(); // Refresh stock data
       } else {
         setMessage({ type: "error", text: data.error || "Stok işlemi başarısız" });
@@ -3668,6 +3694,12 @@ export default function AdminDashboard() {
                   const stock = platformStock[metal];
                   const isLow = stock?.isLowStock;
                   const notInit = stock?.notInitialized;
+                  const metalNames: Record<string, string> = {
+                    AUXG: "🥇 Altın",
+                    AUXS: "🥈 Gümüş",
+                    AUXPT: "⚪ Platin",
+                    AUXPD: "🔘 Paladyum"
+                  };
 
                   return (
                     <div
@@ -3678,7 +3710,10 @@ export default function AdminDashboard() {
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-bold">{metal}</span>
+                        <div>
+                          <span className="font-bold">{metalNames[metal]}</span>
+                          <span className="text-xs text-slate-500 ml-1">({metal})</span>
+                        </div>
                         {notInit ? (
                           <span className="text-xs bg-slate-700 px-2 py-1 rounded">Başlatılmadı</span>
                         ) : isLow ? (
@@ -3701,6 +3736,20 @@ export default function AdminDashboard() {
                           />
                         </div>
                       )}
+                      {/* Vault Breakdown */}
+                      {stock?.byVault && Object.keys(stock.byVault).length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-slate-700">
+                          <div className="text-xs text-slate-400 mb-2">Kasa Dağılımı:</div>
+                          <div className="space-y-1">
+                            {Object.entries(stock.byVault).map(([vaultCode, amount]: [string, any]) => (
+                              <div key={vaultCode} className="flex justify-between text-xs">
+                                <span className="text-slate-300">{availableVaults[vaultCode]?.name || vaultCode}</span>
+                                <span className="font-medium">{amount.toFixed(2)}g</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -3709,7 +3758,7 @@ export default function AdminDashboard() {
               {/* Stock Operation Form */}
               <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
                 <h3 className="font-semibold mb-4">Stok İşlemi</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   <div>
                     <label className="block text-sm text-slate-400 mb-2">Metal</label>
                     <select
@@ -3717,10 +3766,10 @@ export default function AdminDashboard() {
                       onChange={(e) => setStockData({ ...stockData, metal: e.target.value })}
                       className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
                     >
-                      <option value="AUXG">🥇 Altın (AUXG)</option>
-                      <option value="AUXS">🥈 Gümüş (AUXS)</option>
-                      <option value="AUXPT">⚪ Platin (AUXPT)</option>
-                      <option value="AUXPD">🔘 Paladyum (AUXPD)</option>
+                      <option value="AUXG">🥇 Altın</option>
+                      <option value="AUXS">🥈 Gümüş</option>
+                      <option value="AUXPT">⚪ Platin</option>
+                      <option value="AUXPD">🔘 Paladyum</option>
                     </select>
                   </div>
                   <div>
@@ -3730,12 +3779,70 @@ export default function AdminDashboard() {
                       onChange={(e) => setStockData({ ...stockData, action: e.target.value as any })}
                       className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
                     >
-                      <option value="initialize">🆕 Başlat (İlk Kurulum)</option>
+                      <option value="initialize">🆕 Başlat</option>
                       <option value="add">➕ Stok Ekle</option>
                       <option value="remove">➖ Stok Çıkar</option>
                       <option value="set">📝 Stoku Ayarla</option>
+                      <option value="transfer">🔄 Kasalar Arası Transfer</option>
                     </select>
                   </div>
+
+                  {/* Vault Selection - for add/remove/initialize/set */}
+                  {["add", "remove", "initialize", "set"].includes(stockData.action) && (
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-2">Kasa</label>
+                      <select
+                        value={stockData.vault}
+                        onChange={(e) => setStockData({ ...stockData, vault: e.target.value })}
+                        className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                      >
+                        {Object.entries(availableVaults).map(([code, vault]) => (
+                          <option key={code} value={code}>
+                            {vault.name} ({vault.country})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Transfer Vaults */}
+                  {stockData.action === "transfer" && (
+                    <>
+                      <div>
+                        <label className="block text-sm text-slate-400 mb-2">Kaynak Kasa</label>
+                        <select
+                          value={stockData.fromVault}
+                          onChange={(e) => setStockData({ ...stockData, fromVault: e.target.value })}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                        >
+                          <option value="">Seçin...</option>
+                          {Object.entries(availableVaults).map(([code, vault]) => (
+                            <option key={code} value={code}>
+                              {vault.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-slate-400 mb-2">Hedef Kasa</label>
+                        <select
+                          value={stockData.toVault}
+                          onChange={(e) => setStockData({ ...stockData, toVault: e.target.value })}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                        >
+                          <option value="">Seçin...</option>
+                          {Object.entries(availableVaults)
+                            .filter(([code]) => code !== stockData.fromVault)
+                            .map(([code, vault]) => (
+                              <option key={code} value={code}>
+                                {vault.name}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    </>
+                  )}
+
                   <div>
                     <label className="block text-sm text-slate-400 mb-2">Miktar (gram)</label>
                     <input
@@ -3770,11 +3877,22 @@ export default function AdminDashboard() {
                 <div className="font-semibold text-blue-400 mb-2">ℹ️ Platform Stok Sistemi</div>
                 <ul className="text-slate-300 space-y-1">
                   <li>• <strong>Başlat:</strong> Yeni metal stoğu oluşturur (ilk kurulum)</li>
-                  <li>• <strong>Stok Ekle:</strong> Fiziksel metal alımında stoğa ekler</li>
-                  <li>• <strong>Stok Çıkar:</strong> Fiziksel teslimat yapıldığında stoktan düşer</li>
+                  <li>• <strong>Stok Ekle:</strong> Fiziksel metal alımında belirli kasaya ekler</li>
+                  <li>• <strong>Stok Çıkar:</strong> Fiziksel teslimat yapıldığında kasadan düşer</li>
                   <li>• <strong>Stoku Ayarla:</strong> Fiziksel sayım sonrası stoğu düzeltir</li>
+                  <li>• <strong>Kasalar Arası Transfer:</strong> Bir kasadan diğerine metal transferi</li>
                   <li className="text-amber-400">• Stok %20 altına düşünce otomatik uyarı gönderilir</li>
                 </ul>
+                <div className="mt-3 pt-3 border-t border-blue-800">
+                  <div className="font-semibold text-blue-400 mb-2">🏛️ Kasalar</div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {Object.entries(availableVaults).map(([code, vault]) => (
+                      <div key={code} className="text-xs">
+                        <span className="font-medium">{code}:</span> {vault.name} ({vault.country})
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )}
