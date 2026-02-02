@@ -417,8 +417,11 @@ export default function WalletPage() {
   const [selectedCrypto, setSelectedCrypto] = useState<"ETH" | "BTC" | "XRP" | "SOL" | null>(null);
   
   // Get prices for modals
-  const { prices: cryptoPrices } = useCryptoPrices();
-  const { prices: metalAskPrices, bidPrices } = useMetalsPrices();
+  const { prices: cryptoPrices, loading: cryptoPricesLoading } = useCryptoPrices();
+  const { prices: metalAskPrices, bidPrices, loading: metalPricesLoading } = useMetalsPrices();
+
+  // Only show portfolio values when real prices are loaded
+  const pricesLoaded = !cryptoPricesLoading && !metalPricesLoading;
   
   // USDT/USD fiyatı
   const [usdtPrice, setUsdtPrice] = useState<number>(1);
@@ -776,7 +779,9 @@ export default function WalletPage() {
                   {wx.totalAssetValue}
                 </p>
                 <h2 className="text-xl sm:text-4xl font-bold text-slate-800 dark:text-white">
-                  ${totalEstimatedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                  {pricesLoaded
+                    ? `$${totalEstimatedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                    : "..."}
                 </h2>
               </div>
               <div className="flex flex-wrap justify-center gap-3 sm:gap-8 pt-2 sm:pt-4 border-t border-stone-300 dark:border-slate-700">
@@ -784,13 +789,21 @@ export default function WalletPage() {
                   <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-500 mb-0.5 sm:mb-1">
                     {wx.auxiteAndCrypto}
                   </p>
-                  <p className="text-sm sm:text-lg font-semibold text-emerald-400">${auxiteAndCryptoValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                  <p className="text-sm sm:text-lg font-semibold text-emerald-400">
+                    {pricesLoaded
+                      ? `$${auxiteAndCryptoValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                      : "..."}
+                  </p>
                 </div>
                 <div className="text-center min-w-[70px] sm:min-w-0">
                   <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-500 mb-0.5 sm:mb-1">
                     {wx.allocatedAndStaked}
                   </p>
-                  <p className="text-sm sm:text-lg font-semibold text-amber-400">${allocatedAndStakedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                  <p className="text-sm sm:text-lg font-semibold text-amber-400">
+                    {pricesLoaded
+                      ? `$${allocatedAndStakedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                      : "..."}
+                  </p>
                 </div>
                 <button 
                   onClick={() => setShowPendingOrders(true)}
@@ -1082,7 +1095,7 @@ export default function WalletPage() {
                   });
                 });
                 
-                const isLoadingLocked = allocLoading || stakingLoading;
+                const isLoadingLocked = allocLoading || stakingLoading || !pricesLoaded;
                 
                 return (
                   <button
