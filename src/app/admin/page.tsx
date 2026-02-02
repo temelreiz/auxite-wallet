@@ -3699,7 +3699,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-right">
                       <a
-                        href={`https://etherscan.io/address/0x3B76632FF2d382d5f0186B4Cc294392DF431edcA`}
+                        href={`https://etherscan.io/address/0xaE4d3eb67558423f74E8D80F56fbdfc1F91F3213`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-mono text-sm text-blue-400 hover:text-blue-300"
@@ -3720,7 +3720,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-right">
                       <a
-                        href={`https://etherscan.io/address/0x3B76632FF2d382d5f0186B4Cc294392DF431edcA`}
+                        href={`https://etherscan.io/address/0xaE4d3eb67558423f74E8D80F56fbdfc1F91F3213`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-mono text-sm text-green-400 hover:text-green-300"

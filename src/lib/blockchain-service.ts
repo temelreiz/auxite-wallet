@@ -6,9 +6,13 @@ import * as xrpl from 'xrpl';
 import { Connection, Keypair, PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
 
-// ETH Mainnet RPC with fallback
+// Base Mainnet RPC with fallback
+const BASE_RPC = process.env.NEXT_PUBLIC_BASE_RPC_URL ||
+  process.env.NEXT_PUBLIC_RPC_URL ||
+  "https://mainnet.base.org";
+
+// ETH Mainnet RPC (for ETH transfers)
 const ETH_MAINNET_RPC = process.env.ETH_MAINNET_RPC ||
-  process.env.ETH_RPC_URL ||
   "https://mainnet.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
 
 // ERC20 ABI (sadece transfer fonksiyonu)
@@ -18,12 +22,12 @@ const ERC20_ABI = [
   "function decimals() view returns (uint8)"
 ];
 
-// Metal Token Contract Addresses (Sepolia V8 - will be updated to Mainnet after deploy)
+// Metal Token Contract Addresses (BASE MAINNET V8 - Deployed 2026-02-02)
 const METAL_TOKEN_CONTRACTS: Record<string, string> = {
-  AUXG: process.env.NEXT_PUBLIC_AUXG_ADDRESS || '0xD14D32B1e03B3027D1f8381EeeC567e147De9CCe',
-  AUXS: process.env.NEXT_PUBLIC_AUXS_ADDRESS || '0xc924EE950BF5A5Fbe3c26eECB27D99031B441caD',
-  AUXPT: process.env.NEXT_PUBLIC_AUXPT_ADDRESS || '0x37402EA435a91567223C132414C3A50C6bBc7200',
-  AUXPD: process.env.NEXT_PUBLIC_AUXPD_ADDRESS || '0x6026338B9Bfd94fed07EA61cbE60b15e300911DC',
+  AUXG: process.env.NEXT_PUBLIC_AUXG_ADDRESS || '0x390164702040B509A3D752243F92C2Ac0318989D',
+  AUXS: process.env.NEXT_PUBLIC_AUXS_ADDRESS || '0x82F6EB8Ba5C84c8Fd395b25a7A40ade08F0868aa',
+  AUXPT: process.env.NEXT_PUBLIC_AUXPT_ADDRESS || '0x119de594170b68561b1761ae1246C5154F94705d',
+  AUXPD: process.env.NEXT_PUBLIC_AUXPD_ADDRESS || '0xe051B2603617277Ab50C509F5A38C16056C1C908',
 };
 
 interface WithdrawResult {
@@ -105,10 +109,11 @@ export async function withdrawETH(
       return { success: false, error: "ETH private key not configured" };
     }
 
-    const provider = new ethers.JsonRpcProvider(ETH_MAINNET_RPC);
+    // Use Base network for ETH withdrawals (hot wallet has ETH on Base)
+    const provider = new ethers.JsonRpcProvider(BASE_RPC);
     const wallet = new ethers.Wallet(privateKey, provider);
 
-    console.log(`🔷 ETH Withdraw: ${amount} ETH to ${toAddress}`);
+    console.log(`🔷 ETH Withdraw (Base): ${amount} ETH to ${toAddress}`);
     console.log(`   Hot Wallet: ${wallet.address}`);
 
     const balance = await provider.getBalance(wallet.address);

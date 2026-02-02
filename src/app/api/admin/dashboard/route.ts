@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     // HOT WALLET BALANCES
     // ═══════════════════════════════════════════════════════════════════════
     
-    const hotWalletEth = process.env.HOT_WALLET_ETH_ADDRESS || "0x3B76632FF2d382d5f0186B4Cc294392DF431edcA";
+    const hotWalletEth = process.env.HOT_WALLET_ETH_ADDRESS || "0xaE4d3eb67558423f74E8D80F56fbdfc1F91F3213";
     
     // Get hot wallet ETH balance via API (simplified)
     let hotWalletBalance = "Check Etherscan";

@@ -7,7 +7,7 @@ async function main() {
   );
   
   const ORACLE_ROLE = "0x68e79a7bf1e0bc45d0a330c573bc367f9cf464fd326078812f301165fbda4ef1";
-  const HOT_WALLET = "0x3B76632FF2d382d5f0186B4Cc294392DF431edcA";
+  const HOT_WALLET = "0xaE4d3eb67558423f74E8D80F56fbdfc1F91F3213";
   
   console.log("Granting ORACLE_ROLE to hot wallet...");
   const tx = await oracle.grantRole(ORACLE_ROLE, HOT_WALLET);

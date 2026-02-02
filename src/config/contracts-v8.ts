@@ -13,6 +13,12 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const NETWORK = {
+  BASE: {
+    chainId: 8453,
+    name: "Base",
+    rpcUrl: process.env.NEXT_PUBLIC_BASE_RPC_URL || "https://mainnet.base.org",
+    explorer: "https://basescan.org",
+  },
   SEPOLIA: {
     chainId: 11155111,
     name: "Sepolia",
@@ -27,17 +33,27 @@ export const NETWORK = {
   },
 } as const;
 
-// Aktif network
-export const ACTIVE_NETWORK = 
-  Number(process.env.NEXT_PUBLIC_APP_CHAIN_ID) === 1 
-    ? NETWORK.MAINNET 
-    : NETWORK.SEPOLIA;
+// Aktif network (Base Mainnet)
+export const ACTIVE_NETWORK =
+  Number(process.env.NEXT_PUBLIC_CHAIN_ID) === 8453
+    ? NETWORK.BASE
+    : Number(process.env.NEXT_PUBLIC_CHAIN_ID) === 1
+      ? NETWORK.MAINNET
+      : NETWORK.SEPOLIA;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // METAL TOKEN ADRESLERİ (V8)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Sepolia Fallback Adresleri (V8)
+// BASE MAINNET Adresleri (V8) - Deployed 2026-02-02
+const BASE_V8_TOKENS = {
+  AUXG: "0x390164702040B509A3D752243F92C2Ac0318989D",
+  AUXS: "0x82F6EB8Ba5C84c8Fd395b25a7A40ade08F0868aa",
+  AUXPT: "0x119de594170b68561b1761ae1246C5154F94705d",
+  AUXPD: "0xe051B2603617277Ab50C509F5A38C16056C1C908",
+} as const;
+
+// Sepolia Testnet Adresleri (V8)
 const SEPOLIA_V8_TOKENS = {
   AUXG: "0xD14D32B1e03B3027D1f8381EeeC567e147De9CCe",
   AUXS: "0xc924EE950BF5A5Fbe3c26eECB27D99031B441caD",
@@ -45,20 +61,12 @@ const SEPOLIA_V8_TOKENS = {
   AUXPD: "0x6026338B9Bfd94fed07EA61cbE60b15e300911DC",
 } as const;
 
-// Mainnet Adresleri (Production için ayarlanacak)
-const MAINNET_V8_TOKENS = {
-  AUXG: process.env.NEXT_PUBLIC_MAINNET_AUXG || "",
-  AUXS: process.env.NEXT_PUBLIC_MAINNET_AUXS || "",
-  AUXPT: process.env.NEXT_PUBLIC_MAINNET_AUXPT || "",
-  AUXPD: process.env.NEXT_PUBLIC_MAINNET_AUXPD || "",
-} as const;
-
-// ENV'den veya fallback'ten al
+// ENV'den veya Base mainnet fallback'ten al
 export const METAL_TOKENS_V8 = {
-  AUXG: (process.env.NEXT_PUBLIC_AUXG_V8 || SEPOLIA_V8_TOKENS.AUXG) as `0x${string}`,
-  AUXS: (process.env.NEXT_PUBLIC_AUXS_V8 || SEPOLIA_V8_TOKENS.AUXS) as `0x${string}`,
-  AUXPT: (process.env.NEXT_PUBLIC_AUXPT_V8 || SEPOLIA_V8_TOKENS.AUXPT) as `0x${string}`,
-  AUXPD: (process.env.NEXT_PUBLIC_AUXPD_V8 || SEPOLIA_V8_TOKENS.AUXPD) as `0x${string}`,
+  AUXG: (process.env.NEXT_PUBLIC_AUXG_ADDRESS || BASE_V8_TOKENS.AUXG) as `0x${string}`,
+  AUXS: (process.env.NEXT_PUBLIC_AUXS_ADDRESS || BASE_V8_TOKENS.AUXS) as `0x${string}`,
+  AUXPT: (process.env.NEXT_PUBLIC_AUXPT_ADDRESS || BASE_V8_TOKENS.AUXPT) as `0x${string}`,
+  AUXPD: (process.env.NEXT_PUBLIC_AUXPD_ADDRESS || BASE_V8_TOKENS.AUXPD) as `0x${string}`,
 } as const;
 
 // Eski V6 adresleri (geriye uyumluluk için)
@@ -85,9 +93,8 @@ export const METAL_TOKENS = METAL_TOKENS_V8;
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const ORACLE_ADDRESS = (
-  process.env.NEXT_PUBLIC_ORACLE_V2 ||
   process.env.NEXT_PUBLIC_ORACLE_ADDRESS ||
-  "0x68C5C98DB68284A0211a1FDCA668Ee66ef15b08d"
+  "0xbB109166062D718756D0389F4bA2aB02A36F296c" // Base Mainnet
 ) as `0x${string}`;
 
 export const EXCHANGE_ADDRESS = (
@@ -100,9 +107,8 @@ export const EXCHANGE_ADDRESS = (
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const STAKING_CONTRACT = (
-  process.env.NEXT_PUBLIC_STAKING_CONTRACT || 
-  process.env.NEXT_PUBLIC_STAKING_V2 ||
-  ""
+  process.env.NEXT_PUBLIC_STAKING_ADDRESS ||
+  "0x1656DcCC8277bC7D6aF93F71464D64ebBC15574d" // Base Mainnet
 ) as `0x${string}`;
 
 // ═══════════════════════════════════════════════════════════════════════════════
