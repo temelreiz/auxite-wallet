@@ -15,9 +15,11 @@ const MOCK_BALANCE = {
   auxg: 15.75, auxs: 500, auxpt: 2.5, auxpd: 1.25, eth: 0.5, btc: 0.01, xrp: 100, sol: 2.5, usdt: 0,
 };
 
-// Blockchain RPC - Ethereum Mainnet
+// Blockchain RPC - Base Mainnet (primary for ETH and tokens)
+const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || "https://mainnet.base.org";
+// Legacy - Ethereum Mainnet (fallback)
 const ETH_RPC_URL = process.env.ETH_RPC_URL || process.env.BLOCKCHAIN_RPC_URL || "https://eth-mainnet.g.alchemy.com/v2/demo";
-// Sepolia for tokens
+// Legacy - Sepolia for old tokens
 const SEPOLIA_RPC_URL = process.env.BLOCKCHAIN_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
 
 // Token Contracts from central config
@@ -43,10 +45,10 @@ const ERC20_ABI = [
 // BLOCKCHAIN BALANCE HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Get native ETH balance from Ethereum Mainnet
+// Get native ETH balance from Base Mainnet
 async function getEthBalance(address: string): Promise<number> {
   try {
-    const provider = new ethers.JsonRpcProvider(ETH_RPC_URL);
+    const provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
     const balance = await provider.getBalance(address);
     return parseFloat(ethers.formatEther(balance));
   } catch (error) {
@@ -62,12 +64,13 @@ async function getBlockchainBalance(address: string, token: string): Promise<num
       return 0;
     }
 
-    const provider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+    // Use Base Mainnet for all token balances
+    const provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
     const contract = new ethers.Contract(tokenConfig.address, ERC20_ABI, provider);
-    
+
     const balance = await contract.balanceOf(address);
     const decimals = tokenConfig.decimals;
-    
+
     return parseFloat(ethers.formatUnits(balance, decimals));
   } catch (error) {
     console.error(`Blockchain balance error for ${token}:`, error);
@@ -189,16 +192,14 @@ async function getHybridBalance(address: string): Promise<{
   // 2. Check if custodial wallet - custodial users use off-chain balances
   const isCustodial = await isCustodialWallet(address);
 
-  // 3. Get Blockchain balances (only for external wallets)
-  // For custodial wallets, skip blockchain calls to improve performance
-  const blockchainBalances = isCustodial
-    ? { eth: 0, usdt: 0, auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 }
-    : await getAllBlockchainBalances(address);
+  // 3. Get Blockchain balances from Base Mainnet for ALL wallet types
+  // Custodial wallets now also need on-chain balance (ETH sent directly to custodial address)
+  const blockchainBalances = await getAllBlockchainBalances(address);
 
   // 4. Get staked amounts
   const stakedAmounts = await getStakedAmounts(address);
 
-  // 5. Merge balances based on wallet type
+  // 5. Merge balances - ALL wallets now use blockchain for ETH and tokens on Base
   const redisEth = parseFloat(String(redisBalance.eth || 0));
   const redisUsdt = parseFloat(String(redisBalance.usdt || 0));
   const redisAuxg = parseFloat(String(redisBalance.auxg || 0));
@@ -215,42 +216,34 @@ async function getHybridBalance(address: string): Promise<{
     sol: parseFloat(String(redisBalance.sol || 0)),
     usd: parseFloat(String(redisBalance.usd || 0)),
 
-    // ETH: Custodial uses Redis, External uses Blockchain
-    eth: isCustodial ? redisEth : (blockchainBalances.eth || 0),
+    // ETH: Always from Base Mainnet blockchain (both custodial and external)
+    eth: blockchainBalances.eth || 0,
 
-    // ERC20 tokens: Custodial uses Redis, External uses Blockchain + Redis
-    usdt: isCustodial ? redisUsdt : ((blockchainBalances.usdt || 0) + redisUsdt),
-    auxg: isCustodial
-      ? Math.max(0, redisAuxg - (stakedAmounts.auxg || 0))
-      : Math.max(0, (blockchainBalances.auxg || 0) + redisAuxg - (stakedAmounts.auxg || 0)),
-    auxs: isCustodial
-      ? Math.max(0, redisAuxs - (stakedAmounts.auxs || 0))
-      : Math.max(0, (blockchainBalances.auxs || 0) + redisAuxs - (stakedAmounts.auxs || 0)),
-    auxpt: isCustodial
-      ? Math.max(0, redisAuxpt - (stakedAmounts.auxpt || 0))
-      : Math.max(0, (blockchainBalances.auxpt || 0) + redisAuxpt - (stakedAmounts.auxpt || 0)),
-    auxpd: isCustodial
-      ? Math.max(0, redisAuxpd - (stakedAmounts.auxpd || 0))
-      : Math.max(0, (blockchainBalances.auxpd || 0) + redisAuxpd - (stakedAmounts.auxpd || 0)),
+    // ERC20 tokens: Blockchain (Base) + Redis off-chain balance
+    usdt: (blockchainBalances.usdt || 0) + redisUsdt,
+    auxg: Math.max(0, (blockchainBalances.auxg || 0) + redisAuxg - (stakedAmounts.auxg || 0)),
+    auxs: Math.max(0, (blockchainBalances.auxs || 0) + redisAuxs - (stakedAmounts.auxs || 0)),
+    auxpt: Math.max(0, (blockchainBalances.auxpt || 0) + redisAuxpt - (stakedAmounts.auxpt || 0)),
+    auxpd: Math.max(0, (blockchainBalances.auxpd || 0) + redisAuxpd - (stakedAmounts.auxpd || 0)),
   };
 
   // Calculate totalAuxm
   balances.totalAuxm = balances.auxm + balances.bonusAuxm;
 
-  // Track sources for debugging
+  // Track sources for debugging - all on-chain assets now from Base blockchain
   const sources: Record<string, "blockchain" | "redis"> = {
     auxm: "redis",
     bonusAuxm: "redis",
-    eth: isCustodial ? "redis" : "blockchain",
+    eth: "blockchain", // Always from Base Mainnet
     btc: "redis",
     xrp: "redis",
     sol: "redis",
     usd: "redis",
-    usdt: isCustodial ? "redis" : "blockchain",
-    auxg: isCustodial ? "redis" : "blockchain",
-    auxs: isCustodial ? "redis" : "blockchain",
-    auxpt: isCustodial ? "redis" : "blockchain",
-    auxpd: isCustodial ? "redis" : "blockchain",
+    usdt: "blockchain", // From Base Mainnet
+    auxg: "blockchain", // From Base Mainnet
+    auxs: "blockchain", // From Base Mainnet
+    auxpt: "blockchain", // From Base Mainnet
+    auxpd: "blockchain", // From Base Mainnet
   };
 
   return {
