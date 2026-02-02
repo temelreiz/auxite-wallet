@@ -145,11 +145,47 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// POST: Convert user to custodial wallet OR transfer balances
+// POST: Convert user to custodial wallet OR transfer balances OR add balance
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { action, userId, fromUserId, toUserId } = body;
+
+    // Add balance to user wallet (for testing)
+    if (action === 'addBalance') {
+      const { address, token, amount } = body;
+      if (!address || !token || amount === undefined) {
+        return NextResponse.json({ error: "address, token, and amount required" }, { status: 400 });
+      }
+
+      const balanceKey = `user:${address.toLowerCase()}:balance`;
+      const tokenLower = token.toLowerCase();
+
+      // Get current balance
+      const currentBalance = parseFloat(await redis.hget(balanceKey, tokenLower) as string || "0");
+      const newBalance = currentBalance + parseFloat(amount);
+
+      // Update balance
+      await redis.hset(balanceKey, { [tokenLower]: newBalance.toString() });
+
+      // Record transaction
+      const tx = {
+        type: "deposit",
+        token: token.toUpperCase(),
+        amount: parseFloat(amount),
+        source: "debug_add_balance",
+        timestamp: Date.now(),
+        date: new Date().toISOString(),
+      };
+      await redis.lpush(`user:${address.toLowerCase()}:transactions`, JSON.stringify(tx));
+
+      return NextResponse.json({
+        success: true,
+        message: `Added ${amount} ${token.toUpperCase()} to ${address}`,
+        previousBalance: currentBalance,
+        newBalance,
+      });
+    }
 
     // Transfer balances between users (by userId)
     if (action === 'transferBalances') {
