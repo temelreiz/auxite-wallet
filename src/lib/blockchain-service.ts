@@ -6,6 +6,11 @@ import * as xrpl from 'xrpl';
 import { Connection, Keypair, PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
 
+// ETH Mainnet RPC with fallback
+const ETH_MAINNET_RPC = process.env.ETH_MAINNET_RPC ||
+  process.env.ETH_RPC_URL ||
+  "https://eth-mainnet.g.alchemy.com/v2/demo";
+
 // ERC20 ABI (sadece transfer fonksiyonu)
 const ERC20_ABI = [
   "function transfer(address to, uint256 amount) returns (bool)",
@@ -92,7 +97,7 @@ export async function withdrawETH(
       return { success: false, error: "ETH private key not configured" };
     }
 
-    const provider = new ethers.JsonRpcProvider(process.env.ETH_MAINNET_RPC);
+    const provider = new ethers.JsonRpcProvider(ETH_MAINNET_RPC);
     const wallet = new ethers.Wallet(privateKey, provider);
 
     console.log(`🔷 ETH Withdraw: ${amount} ETH to ${toAddress}`);
@@ -154,7 +159,7 @@ export async function withdrawUSDT(
       return { success: false, error: "ETH private key not configured" };
     }
 
-    const provider = new ethers.JsonRpcProvider(process.env.ETH_MAINNET_RPC);
+    const provider = new ethers.JsonRpcProvider(ETH_MAINNET_RPC);
     const wallet = new ethers.Wallet(privateKey, provider);
     
     const USDT_CONTRACT = process.env.USDT_CONTRACT_ADDRESS || '0xdAC17F958D2ee523a2206206994597C13D831ec7';
@@ -444,7 +449,7 @@ export async function getHotWalletBalances(): Promise<Record<string, number>> {
   const balances: Record<string, number> = {};
 
   try {
-    const ethProvider = new ethers.JsonRpcProvider(process.env.ETH_MAINNET_RPC);
+    const ethProvider = new ethers.JsonRpcProvider(ETH_MAINNET_RPC);
     const ethAddress = process.env.HOT_WALLET_ETH_ADDRESS!;
     
     const ethBalance = await ethProvider.getBalance(ethAddress);
