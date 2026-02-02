@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { processWithdraw } from "@/lib/blockchain-service";
+import { sendWithdrawConfirmedEmail } from "@/lib/email-service";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
 
@@ -261,6 +262,30 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(`✅ Withdraw completed: ${withdrawResult.txHash}`);
+
+      // Send email notification (non-blocking)
+      (async () => {
+        try {
+          const userId = await redis.get(`user:address:${normalizedAddress}`);
+          if (userId) {
+            const userData = await redis.hgetall(`user:${userId}`);
+            if (userData?.email) {
+              await sendWithdrawConfirmedEmail(
+                userData.email as string,
+                userData.name as string || 'User',
+                amount.toString(),
+                coin,
+                withdrawAddress,
+                withdrawResult.txHash,
+                networkFee.toString() + ' ' + coin,
+                'tr'
+              );
+            }
+          }
+        } catch (e) {
+          console.error('Failed to send withdraw email:', e);
+        }
+      })();
 
       const updatedBalance = await redis.hgetall(balanceKey);
 

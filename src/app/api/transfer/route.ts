@@ -5,6 +5,7 @@ import { METAL_TOKENS } from "@/config/contracts-v8";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
 import { getUserIdFromAddress, sendETH, sendERC20 } from "@/lib/kms-wallet";
+import { sendTransferSentEmail, sendTransferReceivedEmail } from "@/lib/email-service";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -115,6 +116,49 @@ const ON_CHAIN_TOKENS = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
 // ETH is handled directly in frontend via wallet signing
 const OFF_CHAIN_TOKENS = ["AUXM", "USDT", "BTC", "XRP", "SOL"];
 
+// Helper: Get user email from address
+async function getUserEmail(address: string): Promise<{ email?: string; name?: string }> {
+  const normalizedAddress = address.toLowerCase();
+  const userId = await redis.get(`user:address:${normalizedAddress}`);
+  if (userId) {
+    const userData = await redis.hgetall(`user:${userId}`);
+    return { email: userData?.email as string, name: userData?.name as string || 'User' };
+  }
+  // Fallback for legacy format
+  const directUserData = await redis.hgetall(`user:${normalizedAddress}`);
+  return { email: directUserData?.email as string, name: directUserData?.name as string || 'User' };
+}
+
+// Helper: Send transfer emails (non-blocking)
+async function sendTransferEmails(fromAddress: string, toAddress: string, amount: number, token: string) {
+  try {
+    const [sender, receiver] = await Promise.all([
+      getUserEmail(fromAddress),
+      getUserEmail(toAddress)
+    ]);
+
+    const promises = [];
+
+    if (sender.email) {
+      promises.push(
+        sendTransferSentEmail(sender.email, sender.name || 'User', amount.toString(), token, toAddress, 'tr')
+          .catch(e => console.error('Failed to send transfer-sent email:', e))
+      );
+    }
+
+    if (receiver.email) {
+      promises.push(
+        sendTransferReceivedEmail(receiver.email, receiver.name || 'User', amount.toString(), token, fromAddress, 'tr')
+          .catch(e => console.error('Failed to send transfer-received email:', e))
+      );
+    }
+
+    await Promise.all(promises);
+  } catch (e) {
+    console.error('sendTransferEmails error:', e);
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { fromAddress, toAddress, token, amount, twoFactorCode } = await request.json();
@@ -194,6 +238,9 @@ export async function POST(request: NextRequest) {
         timestamp: Date.now(),
       };
       await redis.lpush(`user:${normalizedTo}:transactions`, JSON.stringify(receiverTx));
+
+      // Send email notifications (non-blocking)
+      sendTransferEmails(normalizedFrom, normalizedTo, amount, "ETH");
 
       return NextResponse.json({
         success: true,
@@ -281,6 +328,9 @@ export async function POST(request: NextRequest) {
       };
       await redis.lpush(`user:${normalizedTo}:transactions`, JSON.stringify(receiverTransaction));
 
+      // Send email notifications (non-blocking)
+      sendTransferEmails(normalizedFrom, normalizedTo, amount, tokenUpper);
+
       return NextResponse.json({
         success: true,
         onChain: true,
@@ -356,6 +406,9 @@ export async function POST(request: NextRequest) {
 
       // Get updated balance
       const updatedFromBalance = await redis.hgetall(fromBalanceKey);
+
+      // Send email notifications (non-blocking)
+      sendTransferEmails(normalizedFrom, normalizedTo, amount, tokenUpper);
 
       return NextResponse.json({
         success: true,
