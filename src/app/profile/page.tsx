@@ -12,6 +12,7 @@ import FAQModal from "@/components/FAQModal";
 import LegalModal from "@/components/LegalModal";
 import { QRLoginModal } from "@/components/auth/QRLoginModal";
 import OpenInMobileModal from "@/components/auth/OpenInMobileModal";
+import { TwoFactorGate } from "@/components/TwoFactorGate";
 
 type MenuSection = "personal" | "security" | "notifications" | "referral" | "preferences" | "danger";
 
@@ -111,6 +112,7 @@ export default function ProfilePage() {
   const [showLegalModal, setShowLegalModal] = useState(false);
   const [showMobilePairModal, setShowMobilePairModal] = useState(false);
   const [showOpenInMobileModal, setShowOpenInMobileModal] = useState(false);
+  const [show2FASetup, setShow2FASetup] = useState(false);
 
   // User UID - fetched from API
   const [userUID, setUserUID] = useState("------");
@@ -453,17 +455,17 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* 2FA Status Card - No Toggle, Just Status */}
+            {/* 2FA Status Card */}
             <div className={`p-3 sm:p-5 rounded-xl sm:rounded-2xl border ${
-              twoFactorEnabled 
-                ? "bg-gradient-to-br from-emerald-500/10 via-green-500/5 to-transparent border-emerald-500/20" 
+              twoFactorEnabled
+                ? "bg-gradient-to-br from-emerald-500/10 via-green-500/5 to-transparent border-emerald-500/20"
                 : "bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border-amber-500/20"
             }`}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
                   <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 ${
-                    twoFactorEnabled 
-                      ? "bg-gradient-to-br from-emerald-500 to-green-500 shadow-emerald-500/20" 
+                    twoFactorEnabled
+                      ? "bg-gradient-to-br from-emerald-500 to-green-500 shadow-emerald-500/20"
                       : "bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-500/20"
                   }`}>
                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -473,34 +475,37 @@ export default function ProfilePage() {
                   <div className="min-w-0">
                     <p className="font-medium text-xs sm:text-base text-slate-800 dark:text-white">{t("twoFactorAuth")}</p>
                     <p className={`text-[10px] sm:text-sm ${twoFactorEnabled ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
-                      {twoFactorEnabled 
+                      {twoFactorEnabled
                         ? (lang === "tr" ? "✓ Aktif - Hesabınız korunuyor" : "✓ Active - Your account is protected")
                         : (lang === "tr" ? "○ Kurulmamış" : "○ Not set up")}
                     </p>
                   </div>
                 </div>
-                {/* Status Badge */}
-                <div className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
-                  twoFactorEnabled 
-                    ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300" 
-                    : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300"
-                }`}>
-                  {twoFactorEnabled 
-                    ? (lang === "tr" ? "Aktif" : "Active") 
-                    : (lang === "tr" ? "Pasif" : "Inactive")}
-                </div>
+                {/* Setup Button or Status Badge */}
+                {twoFactorEnabled ? (
+                  <div className="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+                    {lang === "tr" ? "Aktif" : "Active"}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShow2FASetup(true)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white transition-all shadow-lg shadow-amber-500/20"
+                  >
+                    {lang === "tr" ? "Şimdi Kur" : "Setup Now"}
+                  </button>
+                )}
               </div>
-              
+
               {/* Info text */}
               <div className={`mt-3 pt-3 border-t ${twoFactorEnabled ? "border-emerald-500/20" : "border-amber-500/20"}`}>
                 <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400">
-                  {twoFactorEnabled 
-                    ? (lang === "tr" 
-                        ? "2FA, para çekme ve transfer işlemlerinde otomatik olarak istenir." 
+                  {twoFactorEnabled
+                    ? (lang === "tr"
+                        ? "2FA, para çekme ve transfer işlemlerinde otomatik olarak istenir."
                         : "2FA is automatically required for withdrawals and transfers.")
-                    : (lang === "tr" 
-                        ? "2FA, ilk para çekme veya transfer işleminizde otomatik olarak kurulacaktır." 
-                        : "2FA will be set up automatically on your first withdrawal or transfer.")}
+                    : (lang === "tr"
+                        ? "Hesabınızı korumak için 2FA'yı şimdi kurun."
+                        : "Set up 2FA now to protect your account.")}
                 </p>
               </div>
             </div>
@@ -858,6 +863,19 @@ export default function ProfilePage() {
           setShowMobilePairModal(false);
         }} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
       {isConnected && address && <OpenInMobileModal walletAddress={address} isOpen={showOpenInMobileModal} onClose={() => setShowOpenInMobileModal(false)} action="open_app" lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />}
+      {/* 2FA Setup Modal */}
+      {isConnected && address && (
+        <TwoFactorGate
+          walletAddress={address}
+          isOpen={show2FASetup}
+          onClose={() => setShow2FASetup(false)}
+          onVerified={() => {
+            setShow2FASetup(false);
+            setTwoFactorEnabled(true);
+          }}
+          lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
+        />
+      )}
     </main>
   );
 }
