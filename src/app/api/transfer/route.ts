@@ -113,7 +113,7 @@ const ERC20_ABI = [
 const ON_CHAIN_TOKENS = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
 
 // Off-chain tokens (Redis balance transfers)
-// ETH is handled directly in frontend via wallet signing
+// ETH is handled specially: custodial-to-custodial is off-chain, custodial-to-external is on-chain
 const OFF_CHAIN_TOKENS = ["AUXM", "USDT", "BTC", "XRP", "SOL"];
 
 // Helper: Get user email from address
@@ -188,9 +188,9 @@ export async function POST(request: NextRequest) {
     // ETH transfer - check if user has custodial wallet
     if (tokenUpper === "ETH") {
       // Check if sender has a custodial wallet
-      const userId = await getUserIdFromAddress(fromAddress);
+      const senderId = await getUserIdFromAddress(fromAddress);
 
-      if (!userId) {
+      if (!senderId) {
         // Not a custodial user - they need to sign via their own wallet (frontend)
         return NextResponse.json({
           error: "ETH transfers must be signed via your wallet. Use the web app to transfer ETH.",
@@ -198,63 +198,131 @@ export async function POST(request: NextRequest) {
         }, { status: 400 });
       }
 
-      // Custodial user - we can sign on their behalf
-      console.log(`🔐 Custodial ETH transfer: ${amount} ETH from ${fromAddress} (user: ${userId}) to ${toAddress}`);
+      // Check if receiver is also custodial
+      const receiverId = await getUserIdFromAddress(toAddress);
 
-      const provider = new ethers.JsonRpcProvider(
-        process.env.EXPO_PUBLIC_ETH_RPC_URL || 'https://mainnet.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680'
-      );
+      // Custodial sender - check Redis balance first
+      const fromBalanceKey = `user:${normalizedFrom}:balance`;
+      const fromBalance = await redis.hgetall(fromBalanceKey);
+      const senderEthBalance = parseFloat(fromBalance?.eth as string || "0");
 
-      const result = await sendETH(userId, toAddress, amount, provider);
-
-      if (!result.success) {
+      if (senderEthBalance < amount) {
         return NextResponse.json({
-          error: result.error || "ETH transfer failed",
+          error: "Insufficient ETH balance",
+          required: amount,
+          available: senderEthBalance,
         }, { status: 400 });
       }
 
-      // Log transaction
       const txId = `eth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const senderTx = {
-        id: txId,
-        type: "send",
-        token: "ETH",
-        amount: -amount,
-        toAddress: normalizedTo,
-        txHash: result.txHash,
-        status: "completed",
-        timestamp: Date.now(),
-      };
-      await redis.lpush(`user:${normalizedFrom}:transactions`, JSON.stringify(senderTx));
 
-      const receiverTx = {
-        id: txId,
-        type: "receive",
-        token: "ETH",
-        amount: amount,
-        fromAddress: normalizedFrom,
-        txHash: result.txHash,
-        status: "completed",
-        timestamp: Date.now(),
-      };
-      await redis.lpush(`user:${normalizedTo}:transactions`, JSON.stringify(receiverTx));
+      if (receiverId) {
+        // Both sender and receiver are custodial - do off-chain Redis transfer
+        console.log(`📦 Off-chain ETH transfer: ${amount} ETH from ${fromAddress} to ${toAddress} (both custodial)`);
 
-      // Send email notifications (non-blocking)
-      sendTransferEmails(normalizedFrom, normalizedTo, amount, "ETH");
+        const toBalanceKey = `user:${normalizedTo}:balance`;
 
-      return NextResponse.json({
-        success: true,
-        onChain: true,
-        transfer: {
+        // Execute Redis transfer
+        const multi = redis.multi();
+        multi.hincrbyfloat(fromBalanceKey, "eth", -amount);
+        multi.hincrbyfloat(toBalanceKey, "eth", amount);
+        await multi.exec();
+
+        // Log transactions
+        const senderTx = {
           id: txId,
-          from: normalizedFrom,
-          to: normalizedTo,
+          type: "send",
           token: "ETH",
-          amount,
+          amount: -amount,
+          toAddress: normalizedTo,
+          status: "completed",
+          timestamp: Date.now(),
+        };
+        await redis.lpush(`user:${normalizedFrom}:transactions`, JSON.stringify(senderTx));
+
+        const receiverTx = {
+          id: txId,
+          type: "receive",
+          token: "ETH",
+          amount: amount,
+          fromAddress: normalizedFrom,
+          status: "completed",
+          timestamp: Date.now(),
+        };
+        await redis.lpush(`user:${normalizedTo}:transactions`, JSON.stringify(receiverTx));
+
+        // Send email notifications (non-blocking)
+        sendTransferEmails(normalizedFrom, normalizedTo, amount, "ETH");
+
+        // Get updated balance
+        const updatedFromBalance = await redis.hgetall(fromBalanceKey);
+
+        return NextResponse.json({
+          success: true,
+          onChain: false,
+          transfer: {
+            id: txId,
+            from: normalizedFrom,
+            to: normalizedTo,
+            token: "ETH",
+            amount,
+          },
+          balance: {
+            eth: parseFloat(updatedFromBalance?.eth as string || "0"),
+          },
+        });
+      } else {
+        // Receiver is external - need on-chain transfer
+        // First deduct from Redis, then send on-chain
+        console.log(`🔐 Custodial to external ETH transfer: ${amount} ETH from ${fromAddress} (user: ${senderId}) to ${toAddress}`);
+
+        // Deduct from sender's Redis balance first
+        await redis.hincrbyfloat(fromBalanceKey, "eth", -amount);
+
+        const provider = new ethers.JsonRpcProvider(
+          process.env.EXPO_PUBLIC_ETH_RPC_URL || 'https://mainnet.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680'
+        );
+
+        const result = await sendETH(senderId, toAddress, amount, provider);
+
+        if (!result.success) {
+          // Refund the Redis balance on failure
+          await redis.hincrbyfloat(fromBalanceKey, "eth", amount);
+          return NextResponse.json({
+            error: result.error || "ETH transfer failed",
+          }, { status: 400 });
+        }
+
+        // Log transaction
+        const senderTx = {
+          id: txId,
+          type: "send",
+          token: "ETH",
+          amount: -amount,
+          toAddress: normalizedTo,
           txHash: result.txHash,
-          explorerUrl: `https://etherscan.io/tx/${result.txHash}`,
-        },
-      });
+          status: "completed",
+          timestamp: Date.now(),
+        };
+        await redis.lpush(`user:${normalizedFrom}:transactions`, JSON.stringify(senderTx));
+
+        // Send email notifications (non-blocking)
+        sendTransferEmails(normalizedFrom, normalizedTo, amount, "ETH");
+
+        return NextResponse.json({
+          success: true,
+          onChain: true,
+          transfer: {
+            id: txId,
+            from: normalizedFrom,
+            to: normalizedTo,
+            token: "ETH",
+            amount,
+            txHash: result.txHash,
+            explorerUrl: `https://etherscan.io/tx/${result.txHash}`,
+          },
+        });
+      }
     }
 
     // Check if on-chain or off-chain transfer
