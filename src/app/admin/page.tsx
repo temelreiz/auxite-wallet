@@ -381,7 +381,7 @@ const TABS = [
   { id: "users", label: "Kullanıcı", icon: "👥" },
   { id: "withdraws", label: "Çekim", icon: "📤" },
   { id: "mobile", label: "Mobil", icon: "📱" },
-  { id: "mint", label: "Mint", icon: "🏭" },
+  { id: "mint", label: "Platform Stok", icon: "📦" },
   { id: "website", label: "Website", icon: "🌐" },
   { id: "siteRoadmap", label: "Roadmap", icon: "🗺️" },
   { id: "siteTeam", label: "Site Ekip", icon: "👨‍👩‍👧‍👦" },
@@ -490,13 +490,15 @@ export default function AdminDashboard() {
   // Pending Withdraws
   const [pendingWithdraws, setPendingWithdraws] = useState<PendingWithdraw[]>([]);
 
-  // Mint
-  const [mintData, setMintData] = useState({
-    address: "",
+  // Platform Stock Management
+  const [stockData, setStockData] = useState({
+    metal: "AUXG",
     amount: "",
-    metal: "AUXG" as keyof typeof V7_CONTRACTS,
-    custodian: "Zurich Vault",
+    action: "add" as "add" | "remove" | "set" | "initialize",
+    reason: "",
   });
+  const [platformStock, setPlatformStock] = useState<Record<string, any>>({});
+  const [stockLoading, setStockLoading] = useState(false);
 
   // Mobile Config
   const [mobileAppConfig, setMobileAppConfig] = useState<MobileAppConfig>({
@@ -1464,23 +1466,50 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleMint = async () => {
-    if (!mintData.address || !mintData.amount) return;
+  // Load platform stock data
+  const loadPlatformStock = async () => {
+    setStockLoading(true);
+    try {
+      const res = await fetch("/api/admin/platform-stock?detailed=true");
+      if (res.ok) {
+        const data = await res.json();
+        setPlatformStock(data.stocks || {});
+      }
+    } catch (err) {
+      console.error("Failed to load platform stock:", err);
+    } finally {
+      setStockLoading(false);
+    }
+  };
+
+  const handleStockOperation = async () => {
+    if (!stockData.amount && stockData.action !== "initialize") return;
     setMessage({ type: "", text: "" });
 
     try {
-      const res = await fetch("/api/admin/mint", {
+      const res = await fetch("/api/admin/platform-stock", {
         method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(mintData),
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": process.env.NEXT_PUBLIC_ADMIN_API_KEY || localStorage.getItem("admin_api_key") || "",
+        },
+        body: JSON.stringify({
+          metal: stockData.metal,
+          amount: parseFloat(stockData.amount) || 0,
+          action: stockData.action,
+          reason: stockData.reason,
+        }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        setMessage({ type: "success", text: `${mintData.amount}g ${mintData.metal} mint edildi` });
-        setMintData({ ...mintData, address: "", amount: "" });
+        const actionText = stockData.action === "add" ? "eklendi" : stockData.action === "remove" ? "çıkarıldı" : stockData.action === "set" ? "ayarlandı" : "başlatıldı";
+        setMessage({ type: "success", text: `${stockData.amount}g ${stockData.metal} stoğa ${actionText}` });
+        setStockData({ ...stockData, amount: "", reason: "" });
+        loadPlatformStock(); // Refresh stock data
       } else {
-        const data = await res.json();
-        setMessage({ type: "error", text: data.error || "Mint başarısız" });
+        setMessage({ type: "error", text: data.error || "Stok işlemi başarısız" });
       }
     } catch {
       setMessage({ type: "error", text: "Bağlantı hatası" });
@@ -3615,61 +3644,133 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* Mint Tab */}
+          {/* Platform Stock Tab */}
           {activeTab === "mint" && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold">🏭 Token Mint</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">📦 Platform Stok Yönetimi</h2>
+                <button
+                  onClick={loadPlatformStock}
+                  disabled={stockLoading}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm"
+                >
+                  {stockLoading ? "Yükleniyor..." : "🔄 Yenile"}
+                </button>
+              </div>
+
+              {/* Current Stock Display */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {["AUXG", "AUXS", "AUXPT", "AUXPD"].map((metal) => {
+                  const stock = platformStock[metal];
+                  const isLow = stock?.isLowStock;
+                  const notInit = stock?.notInitialized;
+
+                  return (
+                    <div
+                      key={metal}
+                      className={`p-4 rounded-xl border ${
+                        notInit ? "bg-slate-900/50 border-slate-700" :
+                        isLow ? "bg-red-900/30 border-red-700" : "bg-emerald-900/30 border-emerald-700"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold">{metal}</span>
+                        {notInit ? (
+                          <span className="text-xs bg-slate-700 px-2 py-1 rounded">Başlatılmadı</span>
+                        ) : isLow ? (
+                          <span className="text-xs bg-red-600 px-2 py-1 rounded animate-pulse">Düşük Stok!</span>
+                        ) : (
+                          <span className="text-xs bg-emerald-600 px-2 py-1 rounded">OK</span>
+                        )}
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {stock?.available?.toFixed(2) || "0"} <span className="text-sm text-slate-400">g</span>
+                      </div>
+                      <div className="text-xs text-slate-400 mt-1">
+                        Toplam: {stock?.total?.toFixed(2) || "0"}g | Rezerve: {stock?.reserved?.toFixed(2) || "0"}g
+                      </div>
+                      {stock?.utilizationPercent && (
+                        <div className="mt-2 bg-slate-800 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full ${isLow ? "bg-red-500" : "bg-emerald-500"}`}
+                            style={{ width: `${Math.min(100, parseFloat(stock.utilizationPercent))}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Stock Operation Form */}
               <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="font-semibold mb-4">Stok İşlemi</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
-                    <label className="block text-sm text-slate-400 mb-2">Alıcı Adresi</label>
-                    <input
-                      type="text"
-                      value={mintData.address}
-                      onChange={(e) => setMintData({ ...mintData, address: e.target.value })}
-                      placeholder="0x..."
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white font-mono"
-                    />
+                    <label className="block text-sm text-slate-400 mb-2">Metal</label>
+                    <select
+                      value={stockData.metal}
+                      onChange={(e) => setStockData({ ...stockData, metal: e.target.value })}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                    >
+                      <option value="AUXG">🥇 Altın (AUXG)</option>
+                      <option value="AUXS">🥈 Gümüş (AUXS)</option>
+                      <option value="AUXPT">⚪ Platin (AUXPT)</option>
+                      <option value="AUXPD">🔘 Paladyum (AUXPD)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">İşlem</label>
+                    <select
+                      value={stockData.action}
+                      onChange={(e) => setStockData({ ...stockData, action: e.target.value as any })}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
+                    >
+                      <option value="initialize">🆕 Başlat (İlk Kurulum)</option>
+                      <option value="add">➕ Stok Ekle</option>
+                      <option value="remove">➖ Stok Çıkar</option>
+                      <option value="set">📝 Stoku Ayarla</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm text-slate-400 mb-2">Miktar (gram)</label>
                     <input
                       type="number"
-                      value={mintData.amount}
-                      onChange={(e) => setMintData({ ...mintData, amount: e.target.value })}
-                      placeholder="100"
+                      value={stockData.amount}
+                      onChange={(e) => setStockData({ ...stockData, amount: e.target.value })}
+                      placeholder="1000"
                       className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-slate-400 mb-2">Metal</label>
-                    <select
-                      value={mintData.metal}
-                      onChange={(e) => setMintData({ ...mintData, metal: e.target.value as any })}
+                    <label className="block text-sm text-slate-400 mb-2">Açıklama</label>
+                    <input
+                      type="text"
+                      value={stockData.reason}
+                      onChange={(e) => setStockData({ ...stockData, reason: e.target.value })}
+                      placeholder="Fiziksel alım..."
                       className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
-                    >
-                      {METALS.filter(m => m.symbol !== 'AUXM').map((metal) => (
-                        <option key={metal.symbol} value={metal.symbol}>{metal.icon} {metal.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-slate-400 mb-2">Custodian</label>
-                    <select
-                      value={mintData.custodian}
-                      onChange={(e) => setMintData({ ...mintData, custodian: e.target.value })}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white"
-                    >
-                      <option>Zurich Vault</option>
-                      <option>London Vault</option>
-                      <option>Istanbul Vault</option>
-                      <option>Dubai Vault</option>
-                    </select>
+                    />
                   </div>
                 </div>
-                <button onClick={handleMint} className="mt-4 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white font-medium">
-                  Mint Et
+                <button
+                  onClick={handleStockOperation}
+                  className="mt-4 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white font-medium"
+                >
+                  İşlemi Uygula
                 </button>
+              </div>
+
+              {/* Info Box */}
+              <div className="bg-blue-900/20 border border-blue-700 rounded-xl p-4 text-sm">
+                <div className="font-semibold text-blue-400 mb-2">ℹ️ Platform Stok Sistemi</div>
+                <ul className="text-slate-300 space-y-1">
+                  <li>• <strong>Başlat:</strong> Yeni metal stoğu oluşturur (ilk kurulum)</li>
+                  <li>• <strong>Stok Ekle:</strong> Fiziksel metal alımında stoğa ekler</li>
+                  <li>• <strong>Stok Çıkar:</strong> Fiziksel teslimat yapıldığında stoktan düşer</li>
+                  <li>• <strong>Stoku Ayarla:</strong> Fiziksel sayım sonrası stoğu düzeltir</li>
+                  <li className="text-amber-400">• Stok %20 altına düşünce otomatik uyarı gönderilir</li>
+                </ul>
               </div>
             </div>
           )}

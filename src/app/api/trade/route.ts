@@ -88,6 +88,66 @@ const VALID_TOKENS = [...METALS, "auxm", ...CRYPTOS];
 // Tokens that require on-chain transfer FROM user (non-custodial)
 const ON_CHAIN_FROM_TOKENS = ["eth"]; // User sends ETH to hot wallet
 
+// ═══════════════════════════════════════════════════════════════════════════
+// PLATFORM STOCK MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+const DEFAULT_WARNING_THRESHOLD = 0.2; // %20
+
+interface PlatformStock {
+  total: number;
+  available: number;
+  reserved: number;
+  warningThreshold: number;
+  isLowStock: boolean;
+}
+
+async function getPlatformStock(metal: string): Promise<PlatformStock | null> {
+  const stockKey = `platform:stock:${metal.toUpperCase()}`;
+  const data = await redis.hgetall(stockKey);
+
+  if (!data || Object.keys(data).length === 0) {
+    return null; // Stock not initialized
+  }
+
+  const total = parseFloat(data.total as string || '0');
+  const available = parseFloat(data.available as string || '0');
+  const threshold = parseFloat(data.warningThreshold as string || String(DEFAULT_WARNING_THRESHOLD));
+
+  return {
+    total,
+    available,
+    reserved: parseFloat(data.reserved as string || '0'),
+    warningThreshold: threshold,
+    isLowStock: available <= (total * threshold),
+  };
+}
+
+async function checkAndAlertLowStock(metal: string, newAvailable: number, total: number, threshold: number): Promise<void> {
+  const stockKey = `platform:stock:${metal.toUpperCase()}`;
+  const thresholdAmount = total * threshold;
+
+  if (newAvailable <= thresholdAmount) {
+    // Check if alert already sent
+    const alertSent = await redis.hget(stockKey, 'lowStockAlertSent');
+
+    if (alertSent !== 'true') {
+      // Log alert (in production, send email/notification)
+      console.log(`🚨 LOW STOCK ALERT: ${metal.toUpperCase()} - ${newAvailable.toFixed(2)}g available (${((newAvailable/total)*100).toFixed(1)}%)`);
+
+      // Mark alert as sent
+      await redis.hset(stockKey, { lowStockAlertSent: 'true' });
+
+      // Add to active alerts
+      await redis.sadd('platform:alerts:low-stock', metal.toUpperCase());
+    }
+  } else {
+    // Stock recovered, clear alert
+    await redis.hset(stockKey, { lowStockAlertSent: 'false' });
+    await redis.srem('platform:alerts:low-stock', metal.toUpperCase());
+  }
+}
+
 // Feature flag: Enable/disable blockchain execution
 const BLOCKCHAIN_ENABLED = process.env.ENABLE_BLOCKCHAIN_TRADES === "true";
 
@@ -731,25 +791,45 @@ export async function POST(request: NextRequest) {
       const prices = await getTokenPrices(toToken);
       spreadPercent = prices.spreadPercent;
       price = lockedPrice || prices.askPerGram;
-      
+
       // 🔍 DEBUG: Hesaplama değerlerini logla
       console.log(`🔍 BUY CALCULATION DEBUG:`);
       console.log(`   fromAmount: ${fromAmount}`);
       console.log(`   lockedPrice: ${lockedPrice}`);
       console.log(`   prices.askPerGram: ${prices.askPerGram}`);
       console.log(`   FINAL price: ${price}`);
-      
+
       // ✅ TIER BAZLI FEE
       fee = calculateTierFee(fromAmount, tierFeePercent);
       const netAmount = fromAmount - fee;
       toAmount = netAmount / price;
-      
+
       console.log(`   fee: ${fee}`);
       console.log(`   netAmount: ${netAmount}`);
       console.log(`   toAmount (grams): ${toAmount}`);
 
+      // ═══════════════════════════════════════════════════════════════════════
+      // 📦 PLATFORM STOCK CHECK - Stokta yeterli metal var mı?
+      // ═══════════════════════════════════════════════════════════════════════
+      const platformStock = await getPlatformStock(toTokenLower);
+
+      if (!platformStock) {
+        console.log(`⚠️ Platform stock not initialized for ${toTokenLower.toUpperCase()}`);
+        // Stok henüz oluşturulmamış - işleme izin ver (geliştirme aşamasında)
+      } else if (toAmount > platformStock.available) {
+        console.log(`❌ Insufficient platform stock: requested ${toAmount}g, available ${platformStock.available}g`);
+        return NextResponse.json({
+          error: `Yeterli stok yok. Satılabilir: ${platformStock.available.toFixed(2)}g ${toTokenLower.toUpperCase()}`,
+          available: platformStock.available,
+          requested: toAmount,
+          code: "INSUFFICIENT_STOCK",
+        }, { status: 400 });
+      } else {
+        console.log(`✅ Platform stock OK: ${platformStock.available}g available, requesting ${toAmount}g`);
+      }
+
       const reserveCheck = await checkReserveLimit(toToken, toAmount);
-      if (false) { // TEMP: reserve check disabled
+      if (false) { // TEMP: reserve check disabled (using platform stock instead)
         return NextResponse.json({
           error: `Rezerv limiti aşıldı. Maksimum alınabilir: ${reserveCheck.maxMintable.toFixed(2)}g`,
         }, { status: 400 });
@@ -1030,6 +1110,80 @@ export async function POST(request: NextRequest) {
       multi.hincrby("platform:fees:count", feeToken, 1); // Transaction count
       
       console.log(`💰 Fee collected: ${feeAmount.toFixed(4)} ${feeToken.toUpperCase()}`);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 📦 PLATFORM STOCK UPDATE
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // METAL BUY: Stoktan düş
+    if (type === "buy" && METALS.includes(toTokenLower)) {
+      const stockKey = `platform:stock:${toTokenLower.toUpperCase()}`;
+      const currentStock = await getPlatformStock(toTokenLower);
+
+      if (currentStock) {
+        // Stoktan düş
+        multi.hincrbyfloat(stockKey, "available", -toAmount);
+        multi.hincrbyfloat(stockKey, "reserved", toAmount);
+        multi.hset(stockKey, { lastUpdated: Date.now().toString() });
+
+        // Stok geçmişi
+        const stockHistoryEntry = {
+          type: "user_buy",
+          userId: normalizedAddress,
+          amount: toAmount,
+          previousAvailable: currentStock.available,
+          newAvailable: currentStock.available - toAmount,
+          timestamp: Date.now(),
+        };
+        multi.lpush(`${stockKey}:history`, JSON.stringify(stockHistoryEntry));
+        multi.ltrim(`${stockKey}:history`, 0, 999);
+
+        console.log(`📦 Platform stock ${toTokenLower.toUpperCase()}: ${currentStock.available}g → ${(currentStock.available - toAmount).toFixed(2)}g`);
+
+        // Low stock alert check (async, don't block)
+        checkAndAlertLowStock(
+          toTokenLower,
+          currentStock.available - toAmount,
+          currentStock.total,
+          currentStock.warningThreshold
+        ).catch(err => console.error("Low stock alert error:", err));
+      }
+    }
+
+    // METAL SELL: Stoğa ekle (kullanıcı metal satıyor = platform stoğu artıyor)
+    if ((type === "sell" || type === "swap") && METALS.includes(fromTokenLower)) {
+      const stockKey = `platform:stock:${fromTokenLower.toUpperCase()}`;
+      const currentStock = await getPlatformStock(fromTokenLower);
+
+      if (currentStock) {
+        // Stoğa geri ekle
+        multi.hincrbyfloat(stockKey, "available", fromAmount);
+        multi.hincrbyfloat(stockKey, "reserved", -fromAmount);
+        multi.hset(stockKey, { lastUpdated: Date.now().toString() });
+
+        // Stok geçmişi
+        const stockHistoryEntry = {
+          type: "user_sell",
+          userId: normalizedAddress,
+          amount: fromAmount,
+          previousAvailable: currentStock.available,
+          newAvailable: currentStock.available + fromAmount,
+          timestamp: Date.now(),
+        };
+        multi.lpush(`${stockKey}:history`, JSON.stringify(stockHistoryEntry));
+        multi.ltrim(`${stockKey}:history`, 0, 999);
+
+        console.log(`📦 Platform stock ${fromTokenLower.toUpperCase()}: ${currentStock.available}g → ${(currentStock.available + fromAmount).toFixed(2)}g (user sold)`);
+
+        // Clear low stock alert if stock recovered
+        checkAndAlertLowStock(
+          fromTokenLower,
+          currentStock.available + fromAmount,
+          currentStock.total,
+          currentStock.warningThreshold
+        ).catch(err => console.error("Low stock alert error:", err));
+      }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
