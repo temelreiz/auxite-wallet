@@ -272,18 +272,16 @@ export async function POST(request: NextRequest) {
           },
         });
       } else {
-        // Receiver is external - need on-chain transfer
-        // First deduct from Redis, then send on-chain
-        console.log(`🔐 Custodial to external ETH transfer: ${amount} ETH from ${fromAddress} (user: ${senderId}) to ${toAddress}`);
+        // Receiver is external - need on-chain transfer from HOT WALLET
+        // Custodial users' ETH is held in hot wallet, not in their KMS wallet
+        console.log(`🔐 Custodial to external ETH transfer: ${amount} ETH to ${toAddress} (via hot wallet)`);
 
         // Deduct from sender's Redis balance first
         await redis.hincrbyfloat(fromBalanceKey, "eth", -amount);
 
-        const provider = new ethers.JsonRpcProvider(
-          process.env.EXPO_PUBLIC_ETH_RPC_URL || 'https://mainnet.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680'
-        );
-
-        const result = await sendETH(senderId, toAddress, amount, provider);
+        // Use processWithdraw to send from hot wallet
+        const { processWithdraw } = await import("@/lib/blockchain-service");
+        const result = await processWithdraw("ETH", toAddress, amount);
 
         if (!result.success) {
           // Refund the Redis balance on failure
