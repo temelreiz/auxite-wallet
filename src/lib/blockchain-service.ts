@@ -18,6 +18,14 @@ const ERC20_ABI = [
   "function decimals() view returns (uint8)"
 ];
 
+// Metal Token Contract Addresses (Ethereum Mainnet)
+const METAL_TOKEN_CONTRACTS: Record<string, string> = {
+  AUXG: process.env.NEXT_PUBLIC_AUXG_ADDRESS || '0x28e0938457c5bf02Fe35208b7b1098af7Ec20d91',
+  AUXS: process.env.NEXT_PUBLIC_AUXS_ADDRESS || '0x21583fa6D61Ecbad51C092c4A433511255D29A4E',
+  AUXPT: process.env.NEXT_PUBLIC_AUXPT_ADDRESS || '0x0023aBB9822AC52012542278e6E862EF4Ea12616',
+  AUXPD: process.env.NEXT_PUBLIC_AUXPD_ADDRESS || '0x3d2F416A30BAcd28D93ACCc1Ee1DB69C27ff9223',
+};
+
 interface WithdrawResult {
   success: boolean;
   txHash?: string;
@@ -215,6 +223,90 @@ export async function withdrawUSDT(
   } catch (error: any) {
     console.error('USDT withdraw error:', error);
     return { success: false, error: error.message || 'USDT transfer failed' };
+  }
+}
+
+// =====================
+// METAL TOKEN (ERC20) WITHDRAW
+// AUXG, AUXS, AUXPT, AUXPD
+// =====================
+export async function withdrawMetalToken(
+  token: string,
+  toAddress: string,
+  amount: number
+): Promise<WithdrawResult> {
+  const tokenUpper = token.toUpperCase();
+
+  try {
+    const secrets = await getSecrets();
+    const privateKey = secrets.HOT_WALLET_ETH_PRIVATE_KEY;
+
+    if (!privateKey) {
+      return { success: false, error: "ETH private key not configured" };
+    }
+
+    const contractAddress = METAL_TOKEN_CONTRACTS[tokenUpper];
+    if (!contractAddress) {
+      return { success: false, error: `Unknown metal token: ${tokenUpper}` };
+    }
+
+    const provider = new ethers.JsonRpcProvider(ETH_MAINNET_RPC);
+    const wallet = new ethers.Wallet(privateKey, provider);
+
+    const tokenContract = new ethers.Contract(contractAddress, ERC20_ABI, wallet);
+
+    console.log(`🪙 ${tokenUpper} Withdraw: ${amount} ${tokenUpper} to ${toAddress}`);
+    console.log(`   Contract: ${contractAddress}`);
+    console.log(`   Hot Wallet: ${wallet.address}`);
+
+    const decimals = await tokenContract.decimals();
+    const tokenBalance = await tokenContract.balanceOf(wallet.address);
+    const amountInUnits = ethers.parseUnits(amount.toString(), decimals);
+
+    console.log(`   ${tokenUpper} Balance: ${ethers.formatUnits(tokenBalance, decimals)} ${tokenUpper}`);
+
+    if (tokenBalance < amountInUnits) {
+      return {
+        success: false,
+        error: `Insufficient ${tokenUpper} balance in hot wallet. Available: ${ethers.formatUnits(tokenBalance, decimals)} ${tokenUpper}`
+      };
+    }
+
+    // Check ETH for gas
+    const ethBalance = await provider.getBalance(wallet.address);
+    const feeData = await provider.getFeeData();
+    const gasLimit = 100000n;
+    const maxFeePerGas = feeData.maxFeePerGas || ethers.parseUnits('50', 'gwei');
+    const estimatedGasCost = gasLimit * maxFeePerGas;
+
+    console.log(`   ETH for gas: ${ethers.formatEther(ethBalance)} ETH`);
+    console.log(`   Gas needed: ${ethers.formatEther(estimatedGasCost)} ETH`);
+
+    if (ethBalance < estimatedGasCost) {
+      return {
+        success: false,
+        error: `Insufficient ETH for gas. Required: ${ethers.formatEther(estimatedGasCost)} ETH, Available: ${ethers.formatEther(ethBalance)} ETH`
+      };
+    }
+
+    const tx = await tokenContract.transfer(toAddress.trim(), amountInUnits, {
+      maxFeePerGas,
+      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas || ethers.parseUnits('2', 'gwei'),
+      gasLimit,
+    });
+
+    console.log(`   TX Hash: ${tx.hash}`);
+    const receipt = await tx.wait(1);
+    console.log(`   ✅ ${tokenUpper} transfer confirmed in block ${receipt?.blockNumber}`);
+
+    return {
+      success: true,
+      txHash: receipt?.hash || tx.hash,
+      fee: parseFloat(ethers.formatEther(estimatedGasCost)),
+    };
+  } catch (error: any) {
+    console.error(`${tokenUpper} withdraw error:`, error);
+    return { success: false, error: error.message || `${tokenUpper} transfer failed` };
   }
 }
 
@@ -437,6 +529,12 @@ export async function processWithdraw(
       return withdrawSOL(toAddress, amount);
     case 'BTC':
       return withdrawBTC(toAddress, amount);
+    // Metal Tokens (ERC-20)
+    case 'AUXG':
+    case 'AUXS':
+    case 'AUXPT':
+    case 'AUXPD':
+      return withdrawMetalToken(coin, toAddress, amount);
     default:
       return { success: false, error: `Unsupported coin: ${coin}` };
   }
@@ -451,7 +549,7 @@ export async function getHotWalletBalances(): Promise<Record<string, number>> {
   try {
     const ethProvider = new ethers.JsonRpcProvider(ETH_MAINNET_RPC);
     const ethAddress = process.env.HOT_WALLET_ETH_ADDRESS!;
-    
+
     const ethBalance = await ethProvider.getBalance(ethAddress);
     balances.ETH = parseFloat(ethers.formatEther(ethBalance));
 
@@ -460,10 +558,27 @@ export async function getHotWalletBalances(): Promise<Record<string, number>> {
     const usdtBalance = await usdtContract.balanceOf(ethAddress);
     const decimals = await usdtContract.decimals();
     balances.USDT = parseFloat(ethers.formatUnits(usdtBalance, decimals));
+
+    // Metal Tokens (AUXG, AUXS, AUXPT, AUXPD)
+    for (const [token, contractAddress] of Object.entries(METAL_TOKEN_CONTRACTS)) {
+      try {
+        const tokenContract = new ethers.Contract(contractAddress, ERC20_ABI, ethProvider);
+        const tokenBalance = await tokenContract.balanceOf(ethAddress);
+        const tokenDecimals = await tokenContract.decimals();
+        balances[token] = parseFloat(ethers.formatUnits(tokenBalance, tokenDecimals));
+      } catch (tokenError) {
+        console.error(`Error fetching ${token} balance:`, tokenError);
+        balances[token] = 0;
+      }
+    }
   } catch (e) {
     console.error('Error fetching ETH/USDT balance:', e);
     balances.ETH = 0;
     balances.USDT = 0;
+    balances.AUXG = 0;
+    balances.AUXS = 0;
+    balances.AUXPT = 0;
+    balances.AUXPD = 0;
   }
 
   try {
