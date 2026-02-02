@@ -45,25 +45,33 @@ export async function GET(request: NextRequest) {
 
   // Generate new QR session
   if (action === "generate") {
+    const walletAddress = searchParams.get("walletAddress");
     const newSessionId = generateSessionId();
     const sessionKey = `qr_login:${newSessionId}`;
+    const pairingCode = newSessionId.slice(0, 6).toUpperCase();
 
     await redis.hset(sessionKey, {
       status: "pending",
       createdAt: Date.now().toString(),
+      walletAddress: walletAddress?.toLowerCase() || "",
     });
     await redis.expire(sessionKey, QR_SESSION_TTL);
 
-    // QR code contains this URL that mobile will call
-    const qrData = JSON.stringify({
-      type: "auxite_login",
-      sessionId: newSessionId,
-      expiresAt: Date.now() + (QR_SESSION_TTL * 1000),
-    });
+    // QR code in auxite:// URI format for mobile parsing
+    // Format: auxite://auth?session=xxx&code=xxx&address=xxx
+    const qrData = walletAddress
+      ? `auxite://auth?session=${newSessionId}&code=${pairingCode}&address=${walletAddress.toLowerCase()}`
+      : JSON.stringify({
+          type: "auxite_login",
+          sessionId: newSessionId,
+          code: pairingCode,
+          expiresAt: Date.now() + (QR_SESSION_TTL * 1000),
+        });
 
     return NextResponse.json({
       success: true,
       sessionId: newSessionId,
+      pairingCode,
       qrData,
       expiresIn: QR_SESSION_TTL,
     });

@@ -140,32 +140,43 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
 
   // Create new pairing session
   const createSession = useCallback(async () => {
-    console.log('🔵 createSession called');
+    console.log('🔵 createSession called, walletAddress:', walletAddress);
     setStatus('loading');
     setSession(null);
 
     try {
-      const response = await fetch('/api/auth/qr-login?action=generate');
+      // Include wallet address if available for direct mobile pairing
+      const url = walletAddress
+        ? `/api/auth/qr-login?action=generate&walletAddress=${encodeURIComponent(walletAddress)}`
+        : '/api/auth/qr-login?action=generate';
+      const response = await fetch(url);
 
       if (!response.ok) throw new Error('Failed to create session');
 
       const data = await response.json();
       console.log('🔵 Session created:', data);
-      
+
       if (!data.success) throw new Error('Failed to create session');
-      
-      // Parse qrData if it's a string
-      const qrDataObj = typeof data.qrData === 'string' ? JSON.parse(data.qrData) : data.qrData;
-      
+
+      // qrData might be URI format (auxite://...) or JSON
+      let expiresAt = Date.now() + (data.expiresIn || 300) * 1000;
+      if (typeof data.qrData === 'string' && data.qrData.startsWith('{')) {
+        try {
+          const qrDataObj = JSON.parse(data.qrData);
+          expiresAt = qrDataObj.expiresAt || expiresAt;
+        } catch {}
+      }
+
       setSession({
         sessionId: data.sessionId,
-        pairingCode: data.sessionId.slice(0, 6).toUpperCase(),
+        pairingCode: data.pairingCode || data.sessionId.slice(0, 6).toUpperCase(),
         qrData: data.qrData,
-        expiresAt: qrDataObj.expiresAt || (Date.now() + data.expiresIn * 1000),
+        expiresAt,
         status: 'pending',
+        walletAddress: walletAddress || undefined,
       });
       setStatus('pending');
-      console.log('🔵 Status set to pending');
+      console.log('🔵 Status set to pending, QR:', data.qrData);
       setTimeLeft(data.expiresIn || 300);
     } catch (error) {
       console.error('Create session error:', error);
