@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
     // ═══════════════════════════════════════════════════════════════════════
     // ACTION: Send REAL on-chain crypto from hot wallet to any address
     // Supports: ETH, USDT, XRP, SOL, BTC
+    // For custodial wallets: Updates Redis balance instead of on-chain transfer
     // ═══════════════════════════════════════════════════════════════════════
     if (action === 'sendOnChain' || action === 'sendReal') {
       if (!toAddress || !token || !amount || amount <= 0) {
@@ -161,23 +162,62 @@ export async function POST(request: NextRequest) {
         }, { status: 400 });
       }
 
+      // Check if target is a custodial wallet
+      const normalizedTo = toAddress.toLowerCase();
+      const userId = await redis.get(`user:address:${normalizedTo}`);
+      let isCustodialTarget = false;
+
+      if (userId) {
+        const userData = await redis.hgetall(`user:${userId}`);
+        isCustodialTarget = userData?.walletType === 'custodial';
+      }
+
       try {
-        // Import blockchain service
-        const { processWithdraw } = await import("@/lib/blockchain-service");
+        let txHash = '';
+        let networkFee = 0;
 
-        console.log(`🚀 Admin sending REAL ${tokenUpper}: ${amount} to ${toAddress}`);
+        if (isCustodialTarget) {
+          // Custodial wallet: Just update Redis balance (no on-chain needed)
+          console.log(`📦 Custodial transfer: Adding ${amount} ${tokenUpper} to ${normalizedTo} Redis balance`);
 
-        // Process the actual blockchain transfer
-        const result = await processWithdraw(tokenUpper, toAddress, parseFloat(amount.toString()));
+          const userBalanceKey = `user:${normalizedTo}:balance`;
+          await redis.hincrbyfloat(userBalanceKey, tokenLower, amount);
 
-        if (!result.success) {
-          return NextResponse.json({
-            success: false,
-            error: result.error || "On-chain transfer failed",
+          // Record in user's transaction history
+          const userTx = {
+            id: `admin_deposit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            type: "deposit",
             token: tokenUpper,
-            amount,
-            toAddress
-          }, { status: 500 });
+            amount: amount,
+            source: "admin_transfer",
+            status: "completed",
+            note: note || "Admin transfer",
+            timestamp: Date.now(),
+            date: new Date().toISOString(),
+          };
+          await redis.lpush(`user:${normalizedTo}:transactions`, JSON.stringify(userTx));
+          await redis.ltrim(`user:${normalizedTo}:transactions`, 0, 99);
+
+          txHash = `custodial_${Date.now()}`;
+        } else {
+          // External wallet: Send real on-chain transfer
+          const { processWithdraw } = await import("@/lib/blockchain-service");
+          console.log(`🚀 Admin sending REAL ${tokenUpper}: ${amount} to ${toAddress}`);
+
+          const result = await processWithdraw(tokenUpper, toAddress, parseFloat(amount.toString()));
+
+          if (!result.success) {
+            return NextResponse.json({
+              success: false,
+              error: result.error || "On-chain transfer failed",
+              token: tokenUpper,
+              amount,
+              toAddress
+            }, { status: 500 });
+          }
+
+          txHash = result.txHash || '';
+          networkFee = result.fee || 0;
         }
 
         // Deduct from fee balance (pending -> transferred)
@@ -187,13 +227,13 @@ export async function POST(request: NextRequest) {
         // Record transfer in history
         const transfer = {
           id: `onchain_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          type: "onChainTransfer",
+          type: isCustodialTarget ? "custodialTransfer" : "onChainTransfer",
           token: tokenUpper,
           amount,
           toAddress,
-          txHash: result.txHash,
-          fee: result.fee || 0,
-          note: note || "Admin on-chain transfer from hot wallet",
+          txHash,
+          fee: networkFee,
+          note: note || (isCustodialTarget ? "Admin custodial transfer" : "Admin on-chain transfer from hot wallet"),
           timestamp: Date.now(),
           date: new Date().toISOString(),
         };
@@ -203,17 +243,20 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
           success: true,
-          message: `Successfully sent ${amount} ${tokenUpper} on-chain to ${toAddress}`,
+          message: isCustodialTarget
+            ? `Successfully added ${amount} ${tokenUpper} to custodial wallet ${toAddress}`
+            : `Successfully sent ${amount} ${tokenUpper} on-chain to ${toAddress}`,
           transfer,
-          txHash: result.txHash,
-          networkFee: result.fee,
+          txHash,
+          networkFee,
           remainingPending: pending - amount,
+          isCustodial: isCustodialTarget,
         });
       } catch (error: any) {
-        console.error("On-chain transfer error:", error);
+        console.error("Transfer error:", error);
         return NextResponse.json({
           success: false,
-          error: error.message || "On-chain transfer failed",
+          error: error.message || "Transfer failed",
           token: tokenUpper,
           amount,
           toAddress
