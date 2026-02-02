@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// POST - Mark fees as transferred to Ledger OR transfer to user wallet
+// POST - Mark fees as transferred to Ledger OR transfer to user wallet OR mint
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function POST(request: NextRequest) {
@@ -130,6 +130,63 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, token, amount, ledgerAddress, txHash, note, toAddress } = body;
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // ACTION: Mint/Add balance to any wallet (no fee source required)
+    // ═══════════════════════════════════════════════════════════════════════
+    if (action === 'mintToWallet' || action === 'addBalance') {
+      if (!toAddress || !token || !amount || amount <= 0) {
+        return NextResponse.json({ error: "toAddress, token, and positive amount required" }, { status: 400 });
+      }
+
+      const tokenLower = token.toLowerCase();
+      const userBalanceKey = `user:${toAddress.toLowerCase()}:balance`;
+
+      // Get current balance
+      const currentBalance = parseFloat(await redis.hget(userBalanceKey, tokenLower) as string || "0");
+
+      // Add to user's balance
+      await redis.hincrbyfloat(userBalanceKey, tokenLower, amount);
+
+      // Record transfer
+      const transfer = {
+        id: `admin_mint_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        type: "adminMint",
+        token: token.toUpperCase(),
+        amount,
+        toAddress: toAddress.toLowerCase(),
+        note: note || "Admin mint/transfer",
+        timestamp: Date.now(),
+        date: new Date().toISOString(),
+      };
+
+      await redis.lpush("platform:fees:transfers", JSON.stringify(transfer));
+      await redis.ltrim("platform:fees:transfers", 0, 99);
+
+      // Also record in user's transaction history
+      const userTx = {
+        type: "deposit",
+        token: token.toUpperCase(),
+        amount,
+        source: "admin_mint",
+        note: note || "Admin transfer",
+        timestamp: Date.now(),
+        date: new Date().toISOString(),
+      };
+      await redis.lpush(`user:${toAddress.toLowerCase()}:transactions`, JSON.stringify(userTx));
+      await redis.ltrim(`user:${toAddress.toLowerCase()}:transactions`, 0, 99);
+
+      const newBalance = currentBalance + amount;
+
+      return NextResponse.json({
+        success: true,
+        message: `Added ${amount} ${token.toUpperCase()} to ${toAddress}`,
+        transfer,
+        previousBalance: currentBalance,
+        newBalance,
+      });
+    }
+
+    // Validate token and amount for fee-based operations
     if (!token || !amount || amount <= 0) {
       return NextResponse.json({ error: "Token and positive amount required" }, { status: 400 });
     }
@@ -148,7 +205,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // ACTION: Transfer to User Wallet (off-chain Redis balance)
+    // ACTION: Transfer from fee wallet to User Wallet (off-chain Redis balance)
     // ═══════════════════════════════════════════════════════════════════════
     if (action === 'transferToUser') {
       if (!toAddress) {
