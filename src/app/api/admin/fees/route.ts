@@ -166,13 +166,34 @@ export async function POST(request: NextRequest) {
 
       // Check if target is a custodial wallet
       const normalizedTo = toAddress.toLowerCase();
-      const userId = await redis.get(`user:address:${normalizedTo}`);
       let isCustodialTarget = false;
 
-      if (userId) {
+      // Check multiple Redis patterns for custodial detection
+      const [custodialKey, userId] = await Promise.all([
+        redis.get(`custodial:wallet:${normalizedTo}`),
+        redis.get(`user:address:${normalizedTo}`)
+      ]);
+
+      if (custodialKey) {
+        // Direct custodial wallet key exists
+        isCustodialTarget = true;
+      } else if (userId) {
+        // Check user data for walletType
         const userData = await redis.hgetall(`user:${userId}`);
         isCustodialTarget = userData?.walletType === 'custodial';
       }
+
+      // Also check if balance key exists (another custodial indicator)
+      if (!isCustodialTarget) {
+        const balanceExists = await redis.exists(`user:${normalizedTo}:balance`);
+        if (balanceExists) {
+          isCustodialTarget = true;
+        }
+      }
+
+      console.log(`🔍 Custodial check for ${normalizedTo}: ${isCustodialTarget ? 'CUSTODIAL' : 'EXTERNAL'}`);
+      console.log(`   - custodial:wallet key: ${custodialKey ? 'exists' : 'not found'}`);
+      console.log(`   - user:address key: ${userId ? userId : 'not found'}`);
 
       try {
         let txHash = '';
