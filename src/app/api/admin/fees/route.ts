@@ -141,11 +141,23 @@ export async function POST(request: NextRequest) {
 
       const supportedTokens = ['ETH', 'USDT', 'XRP', 'SOL', 'BTC'];
       const tokenUpper = token.toUpperCase();
+      const tokenLower = token.toLowerCase();
 
       if (!supportedTokens.includes(tokenUpper)) {
         return NextResponse.json({
           error: `Token not supported for on-chain transfer. Supported: ${supportedTokens.join(', ')}`,
           supported: supportedTokens
+        }, { status: 400 });
+      }
+
+      // Check if we have enough pending fees
+      const feeKey = `platform:fees:${tokenLower}`;
+      const pending = parseFloat(await redis.hget(feeKey, "pending") as string || "0");
+
+      if (amount > pending) {
+        return NextResponse.json({
+          error: `Insufficient pending fees. Available: ${pending} ${tokenUpper}`,
+          available: pending,
         }, { status: 400 });
       }
 
@@ -167,6 +179,10 @@ export async function POST(request: NextRequest) {
             toAddress
           }, { status: 500 });
         }
+
+        // Deduct from fee balance (pending -> transferred)
+        await redis.hincrbyfloat(feeKey, "pending", -amount);
+        await redis.hincrbyfloat(feeKey, "transferred", amount);
 
         // Record transfer in history
         const transfer = {
@@ -191,6 +207,7 @@ export async function POST(request: NextRequest) {
           transfer,
           txHash: result.txHash,
           networkFee: result.fee,
+          remainingPending: pending - amount,
         });
       } catch (error: any) {
         console.error("On-chain transfer error:", error);
