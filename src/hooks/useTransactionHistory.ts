@@ -20,12 +20,25 @@ export interface Transaction {
 }
 
 export function useTransactionHistory(limit: number = 20) {
-  const { address } = useAccount();
+  const { address: wagmiAddress } = useAccount();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
+
+  // Get address from wagmi OR localStorage (for custodial wallets)
+  const [localAddress, setLocalAddress] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedAddress = localStorage.getItem("auxite_wallet_address");
+      setLocalAddress(savedAddress);
+    }
+  }, []);
+
+  // Use wagmi address first, then fall back to localStorage
+  const address = wagmiAddress || localAddress;
 
   const fetchTransactions = useCallback(async (walletAddress: string, currentOffset: number = 0) => {
     try {
@@ -52,7 +65,7 @@ export function useTransactionHistory(limit: number = 20) {
         setTransactions(prev => [...prev, ...(data.transactions || [])]);
       }
 
-      setHasMore(data.hasMore || false);
+      setHasMore(data.pagination?.hasMore || data.hasMore || false);
       setOffset(currentOffset + (data.transactions?.length || 0));
     } catch (err) {
       console.error("Failed to fetch transactions:", err);
