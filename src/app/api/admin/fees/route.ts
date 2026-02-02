@@ -77,7 +77,8 @@ export async function GET(request: NextRequest) {
         const total = parseFloat(feeData.total as string || "0");
         const pending = parseFloat(feeData.pending as string || "0");
         const transferred = parseFloat(feeData.transferred as string || "0");
-        const valueUsd = total * (prices[t] || 1);
+        // Use pending (available balance) for USD value, not total (historical)
+        const valueUsd = pending * (prices[t] || 1);
 
         fees[t.toUpperCase()] = {
           total,
@@ -87,6 +88,7 @@ export async function GET(request: NextRequest) {
           valueUsd: parseFloat(valueUsd.toFixed(2)),
         };
 
+        // totalValueUsd should reflect available balance (pending), not historical total
         totalValueUsd += valueUsd;
       }
     }
