@@ -18,12 +18,12 @@ const ERC20_ABI = [
   "function decimals() view returns (uint8)"
 ];
 
-// Metal Token Contract Addresses (Ethereum Mainnet)
+// Metal Token Contract Addresses (Sepolia V8 - will be updated to Mainnet after deploy)
 const METAL_TOKEN_CONTRACTS: Record<string, string> = {
-  AUXG: process.env.NEXT_PUBLIC_AUXG_ADDRESS || '0x28e0938457c5bf02Fe35208b7b1098af7Ec20d91',
-  AUXS: process.env.NEXT_PUBLIC_AUXS_ADDRESS || '0x21583fa6D61Ecbad51C092c4A433511255D29A4E',
-  AUXPT: process.env.NEXT_PUBLIC_AUXPT_ADDRESS || '0x0023aBB9822AC52012542278e6E862EF4Ea12616',
-  AUXPD: process.env.NEXT_PUBLIC_AUXPD_ADDRESS || '0x3d2F416A30BAcd28D93ACCc1Ee1DB69C27ff9223',
+  AUXG: process.env.NEXT_PUBLIC_AUXG_ADDRESS || '0xD14D32B1e03B3027D1f8381EeeC567e147De9CCe',
+  AUXS: process.env.NEXT_PUBLIC_AUXS_ADDRESS || '0xc924EE950BF5A5Fbe3c26eECB27D99031B441caD',
+  AUXPT: process.env.NEXT_PUBLIC_AUXPT_ADDRESS || '0x37402EA435a91567223C132414C3A50C6bBc7200',
+  AUXPD: process.env.NEXT_PUBLIC_AUXPD_ADDRESS || '0x6026338B9Bfd94fed07EA61cbE60b15e300911DC',
 };
 
 interface WithdrawResult {

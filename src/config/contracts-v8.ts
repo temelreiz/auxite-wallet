@@ -85,8 +85,9 @@ export const METAL_TOKENS = METAL_TOKENS_V8;
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const ORACLE_ADDRESS = (
-  process.env.NEXT_PUBLIC_ORACLE_V2 || 
-  "0x45677fc1bE2F59937Fd6A93145Db76beB38a7CcA"
+  process.env.NEXT_PUBLIC_ORACLE_V2 ||
+  process.env.NEXT_PUBLIC_ORACLE_ADDRESS ||
+  "0x68C5C98DB68284A0211a1FDCA668Ee66ef15b08d"
 ) as `0x${string}`;
 
 export const EXCHANGE_ADDRESS = (
