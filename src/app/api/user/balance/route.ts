@@ -150,10 +150,28 @@ async function getStakedAmounts(address: string): Promise<Record<string, number>
 // Check if user is custodial wallet (AWS KMS managed)
 async function isCustodialWallet(address: string): Promise<boolean> {
   try {
-    const userKey = `user:${address.toLowerCase()}`;
-    const userData = await redisClient.hgetall(userKey);
-    return userData?.walletType === 'custodial';
-  } catch {
+    const normalizedAddress = address.toLowerCase();
+
+    // First, get userId from address mapping
+    const userId = await redisClient.get(`user:address:${normalizedAddress}`);
+
+    if (userId) {
+      // Get user data using userId
+      const userData = await redisClient.hgetall(`user:${userId}`);
+      if (userData?.walletType === 'custodial') {
+        return true;
+      }
+    }
+
+    // Fallback: check direct address key (legacy format)
+    const directUserData = await redisClient.hgetall(`user:${normalizedAddress}`);
+    if (directUserData?.walletType === 'custodial') {
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Error checking wallet type:', error);
     return false;
   }
 }

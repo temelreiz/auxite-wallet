@@ -37,11 +37,12 @@ const DEPOSIT_ADDRESSES = {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { walletAddress, email, referralCode, createCustodial } = await request.json();
+    const { walletAddress, email, referralCode, createCustodial, walletType: requestedWalletType } = await request.json();
 
     // walletAddress is now optional - if not provided, we create a custodial wallet
     // createCustodial flag can force custodial wallet creation
-    const wantsCustodial = createCustodial === true || !walletAddress;
+    // walletType can be explicitly set to "custodial" for existing addresses
+    const wantsCustodial = createCustodial === true || requestedWalletType === 'custodial' || !walletAddress;
 
     const normalizedAddress = walletAddress ? walletAddress.toLowerCase() : null;
     const redis = await getRedis();
@@ -71,15 +72,20 @@ export async function POST(request: NextRequest) {
 
     // Create custodial wallet with KMS encryption
     let custodialWalletAddress = normalizedAddress;
-    let walletType = "external"; // Default: user provided external wallet
+    let walletType = requestedWalletType || "external"; // Default: user provided external wallet
 
     try {
-      // If no wallet provided or explicit custodial request, create custodial wallet
+      // If no wallet provided, create new custodial wallet
+      // But if address is provided with walletType=custodial, use that address (existing custodial)
       if (!walletAddress || walletAddress === "custodial") {
         const { address, created } = await createCustodialWallet(userId);
         custodialWalletAddress = address;
         walletType = "custodial";
         console.log(`🔐 Created custodial wallet for ${userId}: ${address}`);
+      } else if (requestedWalletType === 'custodial') {
+        // Use provided address but mark as custodial
+        walletType = "custodial";
+        console.log(`🔐 Registering existing address as custodial: ${normalizedAddress}`);
       }
     } catch (kmsError) {
       console.error("KMS wallet creation failed:", kmsError);
