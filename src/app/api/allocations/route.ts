@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
 
     let userUid = uid;
     if (address && !uid) {
-      userUid = await redis.get(`user:address:${address.toLowerCase()}:uid`) as string;
+      userUid = await redis.get(`user:address:${address.toLowerCase()}`) as string;
     }
 
     if (!userUid) {
@@ -174,11 +174,11 @@ export async function POST(request: NextRequest) {
     }
     
     // Kullanıcı UID'sini bul veya oluştur
-    let userUid = await redis.get(`user:address:${address.toLowerCase()}:uid`) as string;
+    let userUid = await redis.get(`user:address:${address.toLowerCase()}`) as string;
     
     if (!userUid) {
       userUid = generateUID();
-      await redis.set(`user:address:${address.toLowerCase()}:uid`, userUid);
+      await redis.set(`user:address:${address.toLowerCase()}`, userUid);
       await redis.set(`uid:${userUid}:address`, address.toLowerCase());
       console.log(`✅ New UID created: ${userUid} for ${address}`);
     }
@@ -386,7 +386,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Kullanıcı UID'sini bul
-    const userUid = await redis.get(`user:address:${address.toLowerCase()}:uid`) as string;
+    const userUid = await redis.get(`user:address:${address.toLowerCase()}`) as string;
     if (!userUid) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -477,13 +477,13 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Gönderen UID'sini bul
-    const fromUid = await redis.get(`user:address:${fromAddress.toLowerCase()}:uid`) as string;
+    const fromUid = await redis.get(`user:address:${fromAddress.toLowerCase()}`) as string;
     if (!fromUid) {
       return NextResponse.json({ error: 'Sender not found' }, { status: 404 });
     }
 
     // Alıcı UID'sini bul - Auxite kullanıcısı olmalı
-    let toUid = await redis.get(`user:address:${toAddress.toLowerCase()}:uid`) as string;
+    let toUid = await redis.get(`user:address:${toAddress.toLowerCase()}`) as string;
     if (!toUid) {
       return NextResponse.json({ 
         error: 'Recipient is not an Auxite user. Metals can only be transferred to registered Auxite users.',
