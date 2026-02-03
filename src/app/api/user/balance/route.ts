@@ -352,6 +352,7 @@ export async function GET(request: NextRequest) {
     let responseSource: string;
     let onChainBalances: Record<string, number> | undefined;
     let stakedAmounts: Record<string, number> | undefined;
+    let allocationAmounts: Record<string, number> | undefined;
 
     if (source === "redis") {
       // Only Redis
@@ -394,6 +395,7 @@ export async function GET(request: NextRequest) {
       balances = result.balances;
       sources = result.sources;
       stakedAmounts = result.stakedAmounts;
+      allocationAmounts = result.allocationAmounts;
       responseSource = result.walletType === 'custodial' ? 'custodial' : 'hybrid';
 
       // Debug log
@@ -447,6 +449,7 @@ export async function GET(request: NextRequest) {
       source: responseSource,
       ...(sources && { sources }),
       ...(onChainBalances && { onChainBalances }),
+      ...(allocationAmounts && { allocationAmounts }),
     });
   } catch (error) {
     console.error("Balance API error:", error);
