@@ -215,15 +215,23 @@ async function getHybridBalance(address: string): Promise<{
     sol: parseFloat(String(redisBalance.sol || 0)),
     usd: parseFloat(String(redisBalance.usd || 0)),
 
-    // ETH: Always from Base Mainnet blockchain (both custodial and external)
-    eth: blockchainBalances.eth || 0,
+    // ETH: Custodial users use Redis balance, external wallets use blockchain
+    eth: isCustodial ? redisEth : (blockchainBalances.eth || 0),
 
-    // ERC20 tokens: Blockchain (Base) + Redis off-chain balance
-    usdt: (blockchainBalances.usdt || 0) + redisUsdt,
-    auxg: Math.max(0, (blockchainBalances.auxg || 0) + redisAuxg - (stakedAmounts.auxg || 0)),
-    auxs: Math.max(0, (blockchainBalances.auxs || 0) + redisAuxs - (stakedAmounts.auxs || 0)),
-    auxpt: Math.max(0, (blockchainBalances.auxpt || 0) + redisAuxpt - (stakedAmounts.auxpt || 0)),
-    auxpd: Math.max(0, (blockchainBalances.auxpd || 0) + redisAuxpd - (stakedAmounts.auxpd || 0)),
+    // ERC20 tokens: Custodial uses Redis, external uses blockchain + Redis
+    usdt: isCustodial ? redisUsdt : ((blockchainBalances.usdt || 0) + redisUsdt),
+    auxg: isCustodial
+      ? Math.max(0, redisAuxg - (stakedAmounts.auxg || 0))
+      : Math.max(0, (blockchainBalances.auxg || 0) + redisAuxg - (stakedAmounts.auxg || 0)),
+    auxs: isCustodial
+      ? Math.max(0, redisAuxs - (stakedAmounts.auxs || 0))
+      : Math.max(0, (blockchainBalances.auxs || 0) + redisAuxs - (stakedAmounts.auxs || 0)),
+    auxpt: isCustodial
+      ? Math.max(0, redisAuxpt - (stakedAmounts.auxpt || 0))
+      : Math.max(0, (blockchainBalances.auxpt || 0) + redisAuxpt - (stakedAmounts.auxpt || 0)),
+    auxpd: isCustodial
+      ? Math.max(0, redisAuxpd - (stakedAmounts.auxpd || 0))
+      : Math.max(0, (blockchainBalances.auxpd || 0) + redisAuxpd - (stakedAmounts.auxpd || 0)),
   };
 
   // Calculate totalAuxm
