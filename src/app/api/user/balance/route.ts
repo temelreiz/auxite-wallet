@@ -107,6 +107,44 @@ const redisClient = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
+// Get allocation amounts from active allocations (physical metal)
+async function getAllocationAmounts(address: string): Promise<Record<string, number>> {
+  const allocations: Record<string, number> = {
+    auxg: 0,
+    auxs: 0,
+    auxpt: 0,
+    auxpd: 0,
+  };
+
+  try {
+    // Get user UID
+    const userUid = await redisClient.get(`user:address:${address.toLowerCase()}`);
+    if (!userUid) return allocations;
+
+    // Get allocation list
+    const allocDataRaw = await redisClient.get(`allocation:user:${userUid}:list`);
+    if (!allocDataRaw) return allocations;
+
+    const allocList = typeof allocDataRaw === 'string' ? JSON.parse(allocDataRaw) : allocDataRaw;
+
+    for (const alloc of allocList) {
+      if (alloc.status === 'active') {
+        const metal = alloc.metal?.toLowerCase();
+        const grams = parseFloat(alloc.grams) || 0;
+        if (metal && allocations.hasOwnProperty(metal)) {
+          allocations[metal] += grams;
+        }
+      }
+    }
+
+    console.log(`📦 Allocation balances for ${address}:`, allocations);
+  } catch (e) {
+    console.error('Error getting allocation amounts:', e);
+  }
+
+  return allocations;
+}
+
 // Get staked amounts from active staking positions
 async function getStakedAmounts(address: string): Promise<Record<string, number>> {
   const staked: Record<string, number> = {
@@ -182,6 +220,7 @@ async function getHybridBalance(address: string): Promise<{
   balances: Record<string, number>;
   sources: Record<string, "blockchain" | "redis">;
   stakedAmounts?: Record<string, number>;
+  allocationAmounts?: Record<string, number>;
   onChainBalances?: Record<string, number>;
   walletType?: string;
 }> {
@@ -198,13 +237,22 @@ async function getHybridBalance(address: string): Promise<{
   // 4. Get staked amounts
   const stakedAmounts = await getStakedAmounts(address);
 
-  // 5. Merge balances - ALL wallets now use blockchain for ETH and tokens on Base
+  // 5. Get allocation amounts (physical metal allocations)
+  const allocationAmounts = await getAllocationAmounts(address);
+
+  // 6. Merge balances - ALL wallets now use blockchain for ETH and tokens on Base
   const redisEth = parseFloat(String(redisBalance.eth || 0));
   const redisUsdt = parseFloat(String(redisBalance.usdt || 0));
   const redisAuxg = parseFloat(String(redisBalance.auxg || 0));
   const redisAuxs = parseFloat(String(redisBalance.auxs || 0));
   const redisAuxpt = parseFloat(String(redisBalance.auxpt || 0));
   const redisAuxpd = parseFloat(String(redisBalance.auxpd || 0));
+
+  // Allocation'dan gelen metal bakiyeleri
+  const allocAuxg = allocationAmounts.auxg || 0;
+  const allocAuxs = allocationAmounts.auxs || 0;
+  const allocAuxpt = allocationAmounts.auxpt || 0;
+  const allocAuxpd = allocationAmounts.auxpd || 0;
 
   const balances: Record<string, number> = {
     // Off-chain from Redis (always)
@@ -218,20 +266,22 @@ async function getHybridBalance(address: string): Promise<{
     // ETH: Custodial users use Redis balance, external wallets use blockchain
     eth: isCustodial ? redisEth : (blockchainBalances.eth || 0),
 
-    // ERC20 tokens: Custodial uses Redis, external uses blockchain + Redis
+    // ERC20 tokens: Custodial uses Redis + Allocation, external uses blockchain + Redis + Allocation
     usdt: isCustodial ? redisUsdt : ((blockchainBalances.usdt || 0) + redisUsdt),
+
+    // Metal tokens: Redis (küsurat) + Allocation (tam gram) - Staked
     auxg: isCustodial
-      ? Math.max(0, redisAuxg - (stakedAmounts.auxg || 0))
-      : Math.max(0, (blockchainBalances.auxg || 0) + redisAuxg - (stakedAmounts.auxg || 0)),
+      ? Math.max(0, redisAuxg + allocAuxg - (stakedAmounts.auxg || 0))
+      : Math.max(0, (blockchainBalances.auxg || 0) + redisAuxg + allocAuxg - (stakedAmounts.auxg || 0)),
     auxs: isCustodial
-      ? Math.max(0, redisAuxs - (stakedAmounts.auxs || 0))
-      : Math.max(0, (blockchainBalances.auxs || 0) + redisAuxs - (stakedAmounts.auxs || 0)),
+      ? Math.max(0, redisAuxs + allocAuxs - (stakedAmounts.auxs || 0))
+      : Math.max(0, (blockchainBalances.auxs || 0) + redisAuxs + allocAuxs - (stakedAmounts.auxs || 0)),
     auxpt: isCustodial
-      ? Math.max(0, redisAuxpt - (stakedAmounts.auxpt || 0))
-      : Math.max(0, (blockchainBalances.auxpt || 0) + redisAuxpt - (stakedAmounts.auxpt || 0)),
+      ? Math.max(0, redisAuxpt + allocAuxpt - (stakedAmounts.auxpt || 0))
+      : Math.max(0, (blockchainBalances.auxpt || 0) + redisAuxpt + allocAuxpt - (stakedAmounts.auxpt || 0)),
     auxpd: isCustodial
-      ? Math.max(0, redisAuxpd - (stakedAmounts.auxpd || 0))
-      : Math.max(0, (blockchainBalances.auxpd || 0) + redisAuxpd - (stakedAmounts.auxpd || 0)),
+      ? Math.max(0, redisAuxpd + allocAuxpd - (stakedAmounts.auxpd || 0))
+      : Math.max(0, (blockchainBalances.auxpd || 0) + redisAuxpd + allocAuxpd - (stakedAmounts.auxpd || 0)),
   };
 
   // Calculate totalAuxm
@@ -257,6 +307,7 @@ async function getHybridBalance(address: string): Promise<{
     balances,
     sources,
     stakedAmounts,
+    allocationAmounts,
     onChainBalances: blockchainBalances,
     walletType: isCustodial ? 'custodial' : 'external'
   };
