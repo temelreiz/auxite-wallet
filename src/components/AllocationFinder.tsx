@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { useAccount } from "wagmi";
+import { useWallet } from "@/components/WalletContext";
 import Image from "next/image";
 
 interface AllocationFinderProps {
@@ -213,7 +213,7 @@ const translations: Record<string, Record<string, string>> = {
 
 export default function AllocationFinder({ lang = "en" }: AllocationFinderProps) {
   const t = translations[lang] || translations.en;
-  const { address } = useAccount();
+  const { address } = useWallet();
 
   // Allocation state
   const [allocations, setAllocations] = useState<any[]>([]);
