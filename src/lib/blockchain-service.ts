@@ -550,40 +550,46 @@ export async function processWithdraw(
 // =====================
 export async function getHotWalletBalances(): Promise<Record<string, number>> {
   const balances: Record<string, number> = {};
+  const hotWalletAddress = process.env.HOT_WALLET_ETH_ADDRESS!;
+
+  // Base Mainnet provider for ETH and Metal tokens
+  const baseProvider = new ethers.JsonRpcProvider(BASE_RPC);
+
+  // ETH Mainnet provider for USDT (if needed)
+  const ethProvider = new ethers.JsonRpcProvider(ETH_MAINNET_RPC);
 
   try {
-    const ethProvider = new ethers.JsonRpcProvider(ETH_MAINNET_RPC);
-    const ethAddress = process.env.HOT_WALLET_ETH_ADDRESS!;
-
-    const ethBalance = await ethProvider.getBalance(ethAddress);
+    // ETH balance on Base (where hot wallet operates)
+    const ethBalance = await baseProvider.getBalance(hotWalletAddress);
     balances.ETH = parseFloat(ethers.formatEther(ethBalance));
 
-    const USDT_CONTRACT = process.env.USDT_CONTRACT_ADDRESS || '0xdAC17F958D2ee523a2206206994597C13D831ec7';
-    const usdtContract = new ethers.Contract(USDT_CONTRACT, ERC20_ABI, ethProvider);
-    const usdtBalance = await usdtContract.balanceOf(ethAddress);
-    const decimals = await usdtContract.decimals();
-    balances.USDT = parseFloat(ethers.formatUnits(usdtBalance, decimals));
-
-    // Metal Tokens (AUXG, AUXS, AUXPT, AUXPD)
+    // Metal Tokens on Base Mainnet (AUXG, AUXS, AUXPT, AUXPD)
     for (const [token, contractAddress] of Object.entries(METAL_TOKEN_CONTRACTS)) {
       try {
-        const tokenContract = new ethers.Contract(contractAddress, ERC20_ABI, ethProvider);
-        const tokenBalance = await tokenContract.balanceOf(ethAddress);
+        const tokenContract = new ethers.Contract(contractAddress, ERC20_ABI, baseProvider);
+        const tokenBalance = await tokenContract.balanceOf(hotWalletAddress);
         const tokenDecimals = await tokenContract.decimals();
         balances[token] = parseFloat(ethers.formatUnits(tokenBalance, tokenDecimals));
       } catch (tokenError) {
-        console.error(`Error fetching ${token} balance:`, tokenError);
+        console.error(`Error fetching ${token} balance on Base:`, tokenError);
         balances[token] = 0;
       }
     }
   } catch (e) {
-    console.error('Error fetching ETH/USDT balance:', e);
+    console.error('Error fetching Base balances:', e);
     balances.ETH = 0;
-    balances.USDT = 0;
     balances.AUXG = 0;
     balances.AUXS = 0;
     balances.AUXPT = 0;
     balances.AUXPD = 0;
+  }
+
+  // USDT on ETH Mainnet (off-chain tracked, placeholder)
+  try {
+    // USDT is tracked off-chain for now (no official USDT on Base)
+    balances.USDT = 0;
+  } catch (e) {
+    balances.USDT = 0;
   }
 
   try {
