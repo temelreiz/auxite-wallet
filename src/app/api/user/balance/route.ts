@@ -237,20 +237,20 @@ async function getHybridBalance(address: string): Promise<{
   // Calculate totalAuxm
   balances.totalAuxm = balances.auxm + balances.bonusAuxm;
 
-  // Track sources for debugging - all on-chain assets now from Base blockchain
+  // Track sources for debugging
   const sources: Record<string, "blockchain" | "redis"> = {
     auxm: "redis",
     bonusAuxm: "redis",
-    eth: "blockchain", // Always from Base Mainnet
+    eth: isCustodial ? "redis" : "blockchain",
     btc: "redis",
     xrp: "redis",
     sol: "redis",
     usd: "redis",
-    usdt: "blockchain", // From Base Mainnet
-    auxg: "blockchain", // From Base Mainnet
-    auxs: "blockchain", // From Base Mainnet
-    auxpt: "blockchain", // From Base Mainnet
-    auxpd: "blockchain", // From Base Mainnet
+    usdt: isCustodial ? "redis" : "blockchain",
+    auxg: isCustodial ? "redis" : "blockchain",
+    auxs: isCustodial ? "redis" : "blockchain",
+    auxpt: isCustodial ? "redis" : "blockchain",
+    auxpd: isCustodial ? "redis" : "blockchain",
   };
 
   return {
