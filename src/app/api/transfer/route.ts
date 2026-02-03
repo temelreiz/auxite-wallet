@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
         // Log transactions
         const senderTx = {
           id: txId,
-          type: "send",
+          type: "transfer",
           token: "ETH",
           amount: -amount,
           toAddress: normalizedTo,
@@ -294,7 +294,7 @@ export async function POST(request: NextRequest) {
         // Log transaction
         const senderTx = {
           id: txId,
-          type: "send",
+          type: "transfer",
           token: "ETH",
           amount: -amount,
           toAddress: normalizedTo,
@@ -386,7 +386,7 @@ export async function POST(request: NextRequest) {
       const txId = `transfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const senderTransaction = {
         id: txId,
-        type: "send",
+        type: "transfer",
         token: tokenUpper,
         amount: -amount,
         toAddress: normalizedTo,
@@ -464,7 +464,7 @@ export async function POST(request: NextRequest) {
       // Gönderen için - eksi miktar
       const senderTx = {
         id: txId,
-        type: "send",
+        type: "transfer",
         token: tokenUpper,
         amount: -amount,
         toAddress: normalizedTo,
