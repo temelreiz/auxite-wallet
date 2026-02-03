@@ -38,7 +38,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Invalid metal: ${metal}` }, { status: 400 });
     }
 
-    const rpcUrl = process.env.SEPOLIA_RPC_URL || process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL;
+    // Base Mainnet for metal token minting
+    const rpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || 'https://mainnet.base.org';
     const privateKey = process.env.PRIVATE_KEY;
 
     if (!rpcUrl || !privateKey) {

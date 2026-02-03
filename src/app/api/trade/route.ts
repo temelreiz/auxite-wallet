@@ -14,7 +14,7 @@ import { getMetalSpread } from "@/lib/spread-config";
 import { getUserTier, calculateTierFee, getDefaultTier } from "@/lib/auxiteer-service";
 import { createPublicClient, createWalletClient, http, formatUnits, formatEther, parseEther } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { sepolia, mainnet } from "viem/chains";
+import { base, mainnet } from "viem/chains";
 import {
   updateOraclePrices,
   buyMetalToken,
@@ -152,11 +152,11 @@ async function checkAndAlertLowStock(metal: string, newAvailable: number, total:
 const BLOCKCHAIN_ENABLED = process.env.ENABLE_BLOCKCHAIN_TRADES === "true";
 
 // Blockchain clients
-// Sepolia for ERC-20 tokens (metals, USDT)
-const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
-const sepoliaClient = createPublicClient({
-  chain: sepolia,
-  transport: http(SEPOLIA_RPC_URL, { timeout: 10000 }),
+// Base Mainnet for ERC-20 tokens (metals)
+const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || "https://mainnet.base.org";
+const baseClient = createPublicClient({
+  chain: base,
+  transport: http(BASE_RPC_URL, { timeout: 10000 }),
 });
 
 // Mainnet for native ETH
@@ -167,7 +167,7 @@ const mainnetClient = createPublicClient({
 });
 
 // Keep publicClient for backward compatibility
-const publicClient = sepoliaClient;
+const publicClient = baseClient;
 
 // Hot wallet for ETH transfers (Mainnet)
 const HOT_WALLET_PRIVATE_KEY = process.env.HOT_WALLET_ETH_PRIVATE_KEY;
@@ -293,7 +293,7 @@ async function getErc20Balance(address: string, token: string): Promise<number> 
       decimals = 3; // Metal tokens use 3 decimals
     }
     
-    const balance = await sepoliaClient.readContract({
+    const balance = await baseClient.readContract({
       address: tokenAddress,
       abi: ERC20_ABI,
       functionName: "balanceOf",

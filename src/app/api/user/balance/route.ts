@@ -17,10 +17,10 @@ const MOCK_BALANCE = {
 
 // Blockchain RPC - Base Mainnet (primary for ETH and tokens)
 const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || "https://mainnet.base.org";
-// Legacy - Ethereum Mainnet (fallback)
+// Ethereum Mainnet for ETH
 const ETH_RPC_URL = process.env.ETH_RPC_URL || process.env.BLOCKCHAIN_RPC_URL || "https://eth-mainnet.g.alchemy.com/v2/demo";
-// Legacy - Sepolia for old tokens
-const SEPOLIA_RPC_URL = process.env.BLOCKCHAIN_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
+// Base Mainnet for metal tokens
+const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || "https://mainnet.base.org";
 
 // Token Contracts from central config
 const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {

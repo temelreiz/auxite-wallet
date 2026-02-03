@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPublicClient, http, formatUnits } from "viem";
-import { sepolia } from "viem/chains";
+import { base } from "viem/chains";
 import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
 
-const RPC_URL = process.env.SEPOLIA_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
+// Base Mainnet for metal tokens
+const RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || "https://mainnet.base.org";
 
 const client = createPublicClient({
-  chain: sepolia,
+  chain: base,
   transport: http(RPC_URL, { timeout: 10000 }),
 });
 

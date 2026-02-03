@@ -106,8 +106,8 @@ export async function updateOraclePrices(): Promise<{
     console.log('Base prices ($/g):', basePrices);
     console.log('Ask prices with spread ($/g):', askPrices);
 
-    // 5. Setup blockchain connection
-    const rpcUrl = process.env.SEPOLIA_RPC_URL || process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL;
+    // 5. Setup blockchain connection (Base Mainnet)
+    const rpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || 'https://mainnet.base.org';
     const privateKey = process.env.PRIVATE_KEY;
     
     if (!rpcUrl || !privateKey) {
@@ -165,7 +165,8 @@ export async function getOraclePrices(): Promise<{
   palladium: number;
   ethUsd: number;
 }> {
-  const rpcUrl = process.env.SEPOLIA_RPC_URL || process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL;
+  // Use Base Mainnet
+  const rpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || 'https://mainnet.base.org';
   const provider = new ethers.JsonRpcProvider(rpcUrl);
   const oracle = new ethers.Contract(ORACLE_ADDRESS, ORACLE_ABI, provider);
 

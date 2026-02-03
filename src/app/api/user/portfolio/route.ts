@@ -15,7 +15,8 @@ const redis = new Redis({
 
 // Blockchain RPC
 const ETH_RPC_URL = process.env.ETH_RPC_URL || "https://eth-mainnet.g.alchemy.com/v2/demo";
-const SEPOLIA_RPC_URL = process.env.BLOCKCHAIN_RPC_URL || "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
+// Base Mainnet for metal tokens
+const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || "https://mainnet.base.org";
 
 // Token Contracts
 const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
@@ -72,14 +73,14 @@ async function getBlockchainBalances(address: string) {
     const ethBalance = await ethProvider.getBalance(address);
     balances.eth = parseFloat(ethers.formatEther(ethBalance));
 
-    // Token balances from Sepolia
-    const sepoliaProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+    // Token balances from Base Mainnet
+    const baseProvider = new ethers.JsonRpcProvider(BASE_RPC_URL);
 
     await Promise.all(
       Object.entries(TOKEN_CONTRACTS).map(async ([symbol, config]) => {
         try {
           if (!config.address || config.address === "0x0000000000000000000000000000000000000000") return;
-          const contract = new ethers.Contract(config.address, ERC20_ABI, sepoliaProvider);
+          const contract = new ethers.Contract(config.address, ERC20_ABI, baseProvider);
           const balance = await contract.balanceOf(address);
           balances[symbol] = parseFloat(ethers.formatUnits(balance, config.decimals));
         } catch (e) {
