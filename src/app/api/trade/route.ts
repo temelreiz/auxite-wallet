@@ -1252,15 +1252,61 @@ export async function POST(request: NextRequest) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // AUTO ALLOCATION FOR METALS (before Redis update)
+    // ─────────────────────────────────────────────────────────────────────────
+    let certificateNumber: string | undefined;
+    let allocationInfo: { allocatedGrams?: number; nonAllocatedGrams?: number } = {};
+
+    if (type === "buy" && METALS.includes(toTokenLower) && toAmount > 0) {
+      console.log("🔍 Allocation check:", { type, toTokenLower, toAmount });
+      try {
+        const allocRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://auxite-wallet.vercel.app"}/api/allocations`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            address: normalizedAddress,
+            metal: toToken.toUpperCase(),
+            grams: toAmount,
+            txHash,
+            email,
+            holderName,
+          }),
+        });
+        const allocData = await allocRes.json();
+        if (allocData.success) {
+          console.log("📦 Allocation response:", JSON.stringify(allocData));
+          allocationInfo = {
+            allocatedGrams: allocData.allocatedGrams,
+            nonAllocatedGrams: allocData.nonAllocatedGrams,
+          };
+          certificateNumber = allocData.certificateNumber;
+          console.log(`📜 Certificate issued: ${certificateNumber}`);
+        }
+      } catch (allocErr: any) {
+        console.error("Auto-allocation failed:", allocErr.message);
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // ADD TO USER BALANCE
     // ─────────────────────────────────────────────────────────────────────────
-    // Add to token
     // For ETH: Don't add to Redis if sent via blockchain
     const ON_CHAIN_TO_TOKENS = ["eth"];
     if (ON_CHAIN_TO_TOKENS.includes(toTokenLower) && blockchainResult?.executed && blockchainResult?.ethTransferTxHash) {
       console.log(`   Skipping Redis credit for ${toTokenLower} - sent via blockchain`);
+    } else if (METALS.includes(toTokenLower) && allocationInfo.allocatedGrams) {
+      // Metal with allocation: only add nonAllocatedGrams (fractional) to Redis
+      const fractionalGrams = allocationInfo.nonAllocatedGrams || 0;
+      if (fractionalGrams > 0) {
+        multi.hincrbyfloat(balanceKey, toTokenLower, fractionalGrams);
+        console.log(`   Adding ${fractionalGrams} ${toTokenLower} (fractional) to Redis, ${allocationInfo.allocatedGrams}g allocated`);
+      } else {
+        console.log(`   No fractional grams to add, ${allocationInfo.allocatedGrams}g fully allocated`);
+      }
     } else {
+      // Non-metal or allocation failed: add full amount to Redis
       multi.hincrbyfloat(balanceKey, toTokenLower, toAmount);
+      console.log(`   Adding ${toAmount} ${toTokenLower} to Redis`);
     }
 
     // Transaction record
@@ -1325,41 +1371,6 @@ export async function POST(request: NextRequest) {
     );
 
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // 9.5 AUTO ALLOCATION & CERTIFICATE EMAIL (Metal Buy Only)
-    // ═══════════════════════════════════════════════════════════════════════
-    let certificateNumber: string | undefined;
-    let allocationInfo: { allocatedGrams?: number; nonAllocatedGrams?: number } = {};
-    if (type === "buy" && METALS.includes(toTokenLower) && toAmount > 0) {
-      console.log("🔍 Allocation check:", { type, toTokenLower, toAmount, metalsIncludes: METALS.includes(toTokenLower) });
-      try {
-        // Create allocation via internal API call
-        const allocRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://auxite-wallet.vercel.app"}/api/allocations`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            address: normalizedAddress,
-            metal: toToken.toUpperCase(),
-            grams: toAmount,
-            txHash,
-            email,
-            holderName,
-          }),
-        });
-        const allocData = await allocRes.json();
-        if (allocData.success) {
-        console.log("📦 Allocation response:", JSON.stringify(allocData));
-          allocationInfo = {
-            allocatedGrams: allocData.allocatedGrams,
-            nonAllocatedGrams: allocData.nonAllocatedGrams,
-          };
-          certificateNumber = allocData.certificateNumber;
-          console.log(`📜 Certificate issued: ${certificateNumber}`);
-        }
-      } catch (allocErr: any) {
-        console.error("Auto-allocation failed:", allocErr.message);
-      }
-    }
     // 10. Get updated balance
     const updatedBalance = await redis.hgetall(balanceKey);
 
