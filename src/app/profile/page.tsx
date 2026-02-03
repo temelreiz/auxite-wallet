@@ -58,6 +58,7 @@ export default function ProfilePage() {
   });
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Fetch user profile from API
   useEffect(() => {
@@ -227,9 +228,6 @@ export default function ProfilePage() {
       await handleCopy(`https://auxite.com/register?ref=${userData.referralCode}`, "referral");
     }
   };
-
-  // Export data state
-  const [isExporting, setIsExporting] = useState(false);
 
   // Export data - fetch all user data from API
   const handleExportData = async (format: "csv" | "json") => {
