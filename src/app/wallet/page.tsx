@@ -518,19 +518,19 @@ export default function WalletPage() {
     ((stakedAmounts?.auxpt || 0) * (metalAskPrices?.AUXPT || 0)) +
     ((stakedAmounts?.auxpd || 0) * (metalAskPrices?.AUXPD || 0));
 
-  // Allocation değeri (fiziksel metal)
+  // Allocation değeri (fiziksel metal - locked value olarak gösterilir)
   const allocatedValueCalc =
     ((allocationAmounts?.auxg || 0) * (metalAskPrices?.AUXG || 0)) +
     ((allocationAmounts?.auxs || 0) * (metalAskPrices?.AUXS || 0)) +
     ((allocationAmounts?.auxpt || 0) * (metalAskPrices?.AUXPT || 0)) +
     ((allocationAmounts?.auxpd || 0) * (metalAskPrices?.AUXPD || 0));
 
-  // Metals değeri (balance + allocation)
+  // Metals değeri - balance zaten allocation dahil (API'den geliyor)
   const metalsValueCalc =
-    ((auxgBalance + (allocationAmounts?.auxg || 0)) * (metalAskPrices?.AUXG || 0)) +
-    ((auxsBalance + (allocationAmounts?.auxs || 0)) * (metalAskPrices?.AUXS || 0)) +
-    ((auxptBalance + (allocationAmounts?.auxpt || 0)) * (metalAskPrices?.AUXPT || 0)) +
-    ((auxpdBalance + (allocationAmounts?.auxpd || 0)) * (metalAskPrices?.AUXPD || 0));
+    (auxgBalance * (metalAskPrices?.AUXG || 0)) +
+    (auxsBalance * (metalAskPrices?.AUXS || 0)) +
+    (auxptBalance * (metalAskPrices?.AUXPT || 0)) +
+    (auxpdBalance * (metalAskPrices?.AUXPD || 0));
 
   // Crypto değeri
   const cryptoValueCalc =
@@ -903,14 +903,14 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <p className="text-base sm:text-lg font-bold text-yellow-500">
-                    {(auxgBalance + (allocationAmounts?.auxg || 0)).toFixed(3)} AUXG
+                    {auxgBalance.toFixed(3)} AUXG
                   </p>
                   {(allocationAmounts?.auxg || 0) > 0 && (
                     <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      <span className="text-emerald-500">{(allocationAmounts?.auxg || 0).toFixed(0)}g</span> allocated · {auxgBalance.toFixed(3)} balance
+                      <span className="text-emerald-500">{(allocationAmounts?.auxg || 0).toFixed(0)}g</span> allocated · {Math.max(0, auxgBalance - (allocationAmounts?.auxg || 0)).toFixed(3)} balance
                     </div>
                   )}
-                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">≈ ${((auxgBalance + (allocationAmounts?.auxg || 0)) * (metalAskPrices?.AUXG || 0)).toFixed(2)}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">≈ ${(auxgBalance * (metalAskPrices?.AUXG || 0)).toFixed(2)}</p>
                 </button>
 
                 {/* AUXS */}
@@ -926,14 +926,14 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <p className="text-base sm:text-lg font-bold text-gray-400">
-                    {(auxsBalance + (allocationAmounts?.auxs || 0)).toFixed(3)} AUXS
+                    {auxsBalance.toFixed(3)} AUXS
                   </p>
                   {(allocationAmounts?.auxs || 0) > 0 && (
                     <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      <span className="text-emerald-500">{(allocationAmounts?.auxs || 0).toFixed(0)}g</span> allocated · {auxsBalance.toFixed(3)} balance
+                      <span className="text-emerald-500">{(allocationAmounts?.auxs || 0).toFixed(0)}g</span> allocated · {Math.max(0, auxsBalance - (allocationAmounts?.auxs || 0)).toFixed(3)} balance
                     </div>
                   )}
-                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">≈ ${((auxsBalance + (allocationAmounts?.auxs || 0)) * (metalAskPrices?.AUXS || 0)).toFixed(2)}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">≈ ${(auxsBalance * (metalAskPrices?.AUXS || 0)).toFixed(2)}</p>
                 </button>
 
                 {/* AUXPT */}
@@ -949,14 +949,14 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <p className="text-base sm:text-lg font-bold text-cyan-400">
-                    {(auxptBalance + (allocationAmounts?.auxpt || 0)).toFixed(3)} AUXPT
+                    {auxptBalance.toFixed(3)} AUXPT
                   </p>
                   {(allocationAmounts?.auxpt || 0) > 0 && (
                     <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      <span className="text-emerald-500">{(allocationAmounts?.auxpt || 0).toFixed(0)}g</span> allocated · {auxptBalance.toFixed(3)} balance
+                      <span className="text-emerald-500">{(allocationAmounts?.auxpt || 0).toFixed(0)}g</span> allocated · {Math.max(0, auxptBalance - (allocationAmounts?.auxpt || 0)).toFixed(3)} balance
                     </div>
                   )}
-                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">≈ ${((auxptBalance + (allocationAmounts?.auxpt || 0)) * (metalAskPrices?.AUXPT || 0)).toFixed(2)}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">≈ ${(auxptBalance * (metalAskPrices?.AUXPT || 0)).toFixed(2)}</p>
                 </button>
 
                 {/* AUXPD */}
@@ -972,14 +972,14 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <p className="text-base sm:text-lg font-bold text-orange-400">
-                    {(auxpdBalance + (allocationAmounts?.auxpd || 0)).toFixed(3)} AUXPD
+                    {auxpdBalance.toFixed(3)} AUXPD
                   </p>
                   {(allocationAmounts?.auxpd || 0) > 0 && (
                     <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      <span className="text-emerald-500">{(allocationAmounts?.auxpd || 0).toFixed(0)}g</span> allocated · {auxpdBalance.toFixed(3)} balance
+                      <span className="text-emerald-500">{(allocationAmounts?.auxpd || 0).toFixed(0)}g</span> allocated · {Math.max(0, auxpdBalance - (allocationAmounts?.auxpd || 0)).toFixed(3)} balance
                     </div>
                   )}
-                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">≈ ${((auxpdBalance + (allocationAmounts?.auxpd || 0)) * (metalAskPrices?.AUXPD || 0)).toFixed(2)}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">≈ ${(auxpdBalance * (metalAskPrices?.AUXPD || 0)).toFixed(2)}</p>
                 </button>
               </div>
 
