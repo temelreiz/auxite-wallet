@@ -228,45 +228,113 @@ export default function ProfilePage() {
     }
   };
 
-  // Export data
-  const handleExportData = (format: "csv" | "json") => {
-    const exportData = {
-      email: userData.email,
-      phone: userData.phone,
-      country: userData.country,
-      timezone: userData.timezone,
-      referralCode: userData.referralCode,
-      totalReferrals: userData.totalReferrals,
-      totalEarnings: userData.totalEarnings,
-      walletAddress: address || "Not connected",
-      exportDate: new Date().toISOString(),
-    };
+  // Export data state
+  const [isExporting, setIsExporting] = useState(false);
 
-    let content: string;
-    let mimeType: string;
-    let filename: string;
+  // Export data - fetch all user data from API
+  const handleExportData = async (format: "csv" | "json") => {
+    if (!address || isExporting) return;
 
-    if (format === "json") {
-      content = JSON.stringify(exportData, null, 2);
-      mimeType = "application/json";
-      filename = "auxite-profile-data.json";
-    } else {
-      const headers = Object.keys(exportData).join(",");
-      const values = Object.values(exportData).join(",");
-      content = `${headers}\n${values}`;
-      mimeType = "text/csv";
-      filename = "auxite-profile-data.csv";
+    setIsExporting(true);
+    try {
+      const response = await fetch(`/api/user/export?address=${address}`);
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Export failed");
+      }
+
+      const exportData = result.data;
+      let content: string;
+      let mimeType: string;
+      let filename: string;
+      const timestamp = new Date().toISOString().split("T")[0];
+
+      if (format === "json") {
+        content = JSON.stringify(exportData, null, 2);
+        mimeType = "application/json";
+        filename = `auxite-complete-export-${timestamp}.json`;
+      } else {
+        // CSV format - create multiple sections
+        const lines: string[] = [];
+
+        // Profile section
+        lines.push("=== PROFILE ===");
+        lines.push("Field,Value");
+        lines.push(`Wallet Address,${exportData.exportInfo.walletAddress}`);
+        lines.push(`Email,${exportData.profile.email || ""}`);
+        lines.push(`Phone,${exportData.profile.phone || ""}`);
+        lines.push(`Country,${exportData.profile.country || ""}`);
+        lines.push(`Timezone,${exportData.profile.timezone || ""}`);
+        lines.push(`Wallet Type,${exportData.profile.walletType}`);
+        lines.push(`Export Date,${exportData.exportInfo.exportDate}`);
+        lines.push("");
+
+        // Balances section
+        lines.push("=== BALANCES ===");
+        lines.push("Token,Amount");
+        Object.entries(exportData.balances).forEach(([token, amount]) => {
+          if (amount as number > 0) {
+            lines.push(`${token.toUpperCase()},${amount}`);
+          }
+        });
+        lines.push("");
+
+        // Allocations section
+        lines.push("=== ALLOCATIONS ===");
+        lines.push(`Total: ${exportData.allocations.summary.totalAllocations}, Active: ${exportData.allocations.summary.activeAllocations}`);
+        if (exportData.allocations.details.length > 0) {
+          lines.push("Metal,Grams,Status,Serial Number,Certificate,Vault,Date");
+          exportData.allocations.details.forEach((alloc: any) => {
+            lines.push(`${alloc.metal},${alloc.grams},${alloc.status},${alloc.serialNumber || ""},${alloc.certificateNumber || ""},${alloc.vaultId || ""},${alloc.createdAt || ""}`);
+          });
+        }
+        lines.push("");
+
+        // Stakes section
+        lines.push("=== STAKES ===");
+        lines.push(`Total: ${exportData.stakes.summary.totalStakes}, Active: ${exportData.stakes.summary.activeStakes}`);
+        if (exportData.stakes.details.length > 0) {
+          lines.push("Metal,Amount,APY%,Start Date,End Date,Expected Reward,Active");
+          exportData.stakes.details.forEach((stake: any) => {
+            const startDate = stake.startTime ? new Date(stake.startTime).toISOString() : "";
+            const endDate = stake.endTime ? new Date(stake.endTime).toISOString() : "";
+            lines.push(`${stake.metal},${stake.amount},${stake.apyPercent || 0},${startDate},${endDate},${stake.expectedReward || 0},${stake.active}`);
+          });
+        }
+        lines.push("");
+
+        // Transactions section
+        lines.push("=== TRANSACTIONS ===");
+        lines.push(`Total: ${exportData.transactions.summary.totalTransactions}`);
+        if (exportData.transactions.details.length > 0) {
+          lines.push("Date,Type,Token,Amount,From Token,To Token,From Amount,To Amount,Status,TX Hash");
+          exportData.transactions.details.forEach((tx: any) => {
+            lines.push(`${tx.date || ""},${tx.type},${tx.token || ""},${tx.amount || ""},${tx.fromToken || ""},${tx.toToken || ""},${tx.fromAmount || ""},${tx.toAmount || ""},${tx.status},${tx.txHash || ""}`);
+          });
+        }
+
+        content = lines.join("\n");
+        mimeType = "text/csv";
+        filename = `auxite-complete-export-${timestamp}.csv`;
+      }
+
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Export failed. Please try again.");
+    } finally {
+      setIsExporting(false);
     }
-
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   // Save edit - API'ye kaydet
@@ -647,12 +715,24 @@ export default function ProfilePage() {
                     <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-700/50 flex items-center justify-center flex-shrink-0"><span className="text-base sm:text-lg">📊</span></div>
                     <div className="min-w-0">
                       <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500 mb-0.5">{t("exportData")}</p>
-                      <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">CSV, JSON</p>
+                      <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">{isExporting ? t("loading") || "Loading..." : "CSV, JSON"}</p>
                     </div>
                   </div>
                   <div className="flex gap-1.5 sm:gap-2">
-                    <button onClick={() => handleExportData("csv")} className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-stone-100 dark:bg-zinc-700/50 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors">CSV</button>
-                    <button onClick={() => handleExportData("json")} className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-stone-100 dark:bg-zinc-700/50 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors">JSON</button>
+                    <button
+                      onClick={() => handleExportData("csv")}
+                      disabled={isExporting}
+                      className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-stone-100 dark:bg-zinc-700/50 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isExporting ? "..." : "CSV"}
+                    </button>
+                    <button
+                      onClick={() => handleExportData("json")}
+                      disabled={isExporting}
+                      className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-stone-100 dark:bg-zinc-700/50 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isExporting ? "..." : "JSON"}
+                    </button>
                   </div>
                 </div>
               </div>
