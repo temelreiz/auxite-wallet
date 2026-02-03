@@ -325,8 +325,24 @@ export async function POST(request: NextRequest) {
 
     // Check if on-chain or off-chain transfer
     if (ON_CHAIN_TOKENS.includes(tokenUpper)) {
-      // ============= ON-CHAIN TRANSFER (Metal Tokens on Sepolia) =============
-      const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL);
+      // ============= ON-CHAIN TRANSFER (Metal Tokens on Base) =============
+
+      // First check sender's Redis balance (custodial balance)
+      const fromBalanceKey = `user:${normalizedFrom}:balance`;
+      const fromBalance = await redis.hgetall(fromBalanceKey);
+      const senderBalance = parseFloat(fromBalance?.[tokenKey] as string || "0");
+
+      if (senderBalance < amount) {
+        return NextResponse.json({
+          error: "Insufficient balance",
+          available: senderBalance,
+          required: amount,
+        }, { status: 400 });
+      }
+
+      // Use Base network for metal tokens
+      const baseRpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || "https://mainnet.base.org";
+      const provider = new ethers.JsonRpcProvider(baseRpcUrl);
       const wallet = new ethers.Wallet(process.env.HOT_WALLET_ETH_PRIVATE_KEY!, provider);
 
       const contractAddress = TOKEN_CONTRACTS[tokenUpper];
@@ -340,32 +356,25 @@ export async function POST(request: NextRequest) {
       const decimals = await contract.decimals();
       const amountInUnits = ethers.parseUnits(amount.toString(), decimals);
 
-      // Check hot wallet balance
+      // Check hot wallet balance (where tokens are actually held)
       const hotWalletBalance = await contract.balanceOf(wallet.address);
       if (hotWalletBalance < amountInUnits) {
+        console.error(`❌ Hot wallet insufficient: has ${ethers.formatUnits(hotWalletBalance, decimals)}, need ${amount}`);
         return NextResponse.json({
-          error: "Insufficient hot wallet balance for on-chain transfer",
-          available: ethers.formatUnits(hotWalletBalance, decimals),
-          required: amount,
+          error: "Sistem bakiyesi yetersiz, lütfen destek ile iletişime geçin",
+          code: "HOT_WALLET_INSUFFICIENT",
         }, { status: 400 });
       }
 
-      // Execute on-chain transfer
-      console.log(`🚀 On-chain transfer: ${amount} ${tokenUpper} to ${toAddress}`);
+      // Execute on-chain transfer from hot wallet to recipient
+      console.log(`🚀 On-chain transfer: ${amount} ${tokenUpper} to ${toAddress} (from hot wallet on Base)`);
       const tx = await contract.transfer(toAddress, amountInUnits);
       const receipt = await tx.wait();
 
       console.log(`✅ Transfer completed: ${receipt.hash}`);
 
-      // Update Redis balances (deduct from sender's platform balance)
-      const fromBalanceKey = `user:${normalizedFrom}:balance`;
-      const fromBalance = await redis.hgetall(fromBalanceKey);
-      if (fromBalance) {
-        const currentBalance = parseFloat(fromBalance[tokenKey] as string || "0");
-        if (currentBalance >= amount) {
-          await redis.hincrbyfloat(fromBalanceKey, tokenKey, -amount);
-        }
-      }
+      // Deduct from sender's Redis balance
+      await redis.hincrbyfloat(fromBalanceKey, tokenKey, -amount);
 
       // Log transaction - Gönderen için
       const txId = `transfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -407,7 +416,7 @@ export async function POST(request: NextRequest) {
           token: tokenUpper,
           amount,
           txHash: receipt.hash,
-          explorerUrl: `https://sepolia.etherscan.io/tx/${receipt.hash}`,
+          explorerUrl: `https://basescan.org/tx/${receipt.hash}`,
         },
       });
 

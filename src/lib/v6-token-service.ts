@@ -35,8 +35,8 @@ const ORACLE_ABI = [
 // ═══════════════════════════════════════════════════════════════════════════
 
 function getProvider(): ethers.JsonRpcProvider {
-  const rpcUrl = process.env.SEPOLIA_RPC_URL || process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL;
-  if (!rpcUrl) throw new Error('SEPOLIA_RPC_URL not configured');
+  // Use Base Mainnet for all token operations
+  const rpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || 'https://mainnet.base.org';
   return new ethers.JsonRpcProvider(rpcUrl);
 }
 
