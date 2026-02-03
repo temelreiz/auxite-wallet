@@ -1234,10 +1234,17 @@ export async function POST(request: NextRequest) {
         multi.hincrbyfloat(balanceKey, "auxm", -usedRegular);
       }
     } else {
-      // For ETH buy: Skip Redis deduction (user transferred ETH on-chain)
-      // For metals: Always deduct from Redis (we track metal balances in Redis)
-      if (fromTokenLower === "eth" && type === "buy" && blockchainResult?.executed) {
-        console.log(`   Skipping Redis deduction for ETH - transferred on-chain`);
+      // For ETH: Custodial wallets use Redis, external wallets use blockchain
+      // For metals and other tokens: Always deduct from Redis
+      if (fromTokenLower === "eth" && type === "buy") {
+        if (isCustodial) {
+          // Custodial wallet: ETH is managed in Redis, always deduct
+          multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
+          console.log(`   Deducting ${fromAmount} ETH from Redis (custodial wallet)`);
+        } else {
+          // External wallet: ETH should be transferred on-chain, skip Redis
+          console.log(`   Skipping Redis deduction for ETH - external wallet uses blockchain`);
+        }
       } else {
         multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
         console.log(`   Deducting ${fromAmount} ${fromTokenLower} from Redis`);
