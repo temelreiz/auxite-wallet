@@ -32,26 +32,44 @@ async function isCustodialWallet(address: string): Promise<boolean> {
   }
 }
 
-// Allocation'dan metal bakiyesini al
-async function getAllocationBalance(address: string, metal: string): Promise<number> {
+// Metal bakiyesini al - önce allocation, sonra Redis fallback
+async function getMetalBalance(address: string, metal: string): Promise<number> {
   try {
-    const userUid = await redis.get(`user:address:${address.toLowerCase()}:uid`) as string;
-    if (!userUid) return 0;
-    
-    const allocDataRaw = await redis.get(`allocation:user:${userUid}:list`);
-    if (!allocDataRaw) return 0;
-    
-    const allocations = typeof allocDataRaw === 'string' ? JSON.parse(allocDataRaw) : allocDataRaw;
-    
-    let total = 0;
-    for (const alloc of allocations) {
-      if (alloc.status === 'active' && alloc.metal?.toUpperCase() === metal.toUpperCase()) {
-        total += parseFloat(alloc.grams) || 0;
+    const normalizedAddress = address.toLowerCase();
+    const metalKey = metal.toLowerCase();
+
+    // 1. Try to get UID (correct key format: user:address:{address})
+    const userUid = await redis.get(`user:address:${normalizedAddress}`) as string;
+
+    // 2. Check allocation if UID exists
+    if (userUid) {
+      const allocDataRaw = await redis.get(`allocation:user:${userUid}:list`);
+      if (allocDataRaw) {
+        const allocations = typeof allocDataRaw === 'string' ? JSON.parse(allocDataRaw) : allocDataRaw;
+
+        let allocationTotal = 0;
+        for (const alloc of allocations) {
+          if (alloc.status === 'active' && alloc.metal?.toUpperCase() === metal.toUpperCase()) {
+            allocationTotal += parseFloat(alloc.grams) || 0;
+          }
+        }
+
+        if (allocationTotal > 0) {
+          console.log(`📦 Metal balance from allocation: ${allocationTotal}g ${metal}`);
+          return allocationTotal;
+        }
       }
     }
-    return total;
+
+    // 3. Fallback to Redis balance
+    const balanceKey = `user:${normalizedAddress}:balance`;
+    const redisBalance = await redis.hget(balanceKey, metalKey) as string;
+    const balance = parseFloat(redisBalance || "0");
+    console.log(`📦 Metal balance from Redis: ${balance}g ${metal}`);
+    return balance;
+
   } catch (error) {
-    console.error('Error getting allocation balance:', error);
+    console.error('Error getting metal balance:', error);
     return 0;
   }
 }
@@ -88,9 +106,8 @@ export async function POST(request: NextRequest) {
     const isSellingCrypto = CRYPTOS.includes(fromKey);
 
     if (isSellingMetal) {
-      // Metal satışı - allocation'dan bakiye kontrol et
-      currentFromBalance = await getAllocationBalance(normalizedAddress, fromAsset);
-      console.log(`📊 Metal balance from allocation: ${currentFromBalance}g ${fromAsset}`);
+      // Metal satışı - önce allocation, sonra Redis'ten bakiye kontrol et
+      currentFromBalance = await getMetalBalance(normalizedAddress, fromAsset);
     } else {
       // Crypto/AUXM - Redis'ten bakiye kontrol et (custodial için her zaman Redis)
       currentFromBalance = parseFloat(currentBalance[fromKey] as string || "0");
@@ -113,11 +130,12 @@ export async function POST(request: NextRequest) {
     let allocationInfo: { allocatedGrams?: number; nonAllocatedGrams?: number; certificateNumber?: string } = {};
     let releaseInfo: { releasedGrams?: number; metal?: string } = {};
 
-    // If SELLING metal, release allocation
+    // If SELLING metal, release allocation or deduct from Redis
     if (isSellingMetal && fromAmount > 0) {
+      let deductedFromAllocation = false;
       try {
-        // Get user's allocations to find one to release
-        const userUid = await redis.get(`user:address:${normalizedAddress}:uid`) as string;
+        // Get user's allocations to find one to release (correct key format)
+        const userUid = await redis.get(`user:address:${normalizedAddress}`) as string;
         if (userUid) {
           const allocDataRaw = await redis.get(`allocation:user:${userUid}:list`);
           if (allocDataRaw) {
@@ -167,11 +185,20 @@ export async function POST(request: NextRequest) {
             // Save updated allocations
             await redis.set(`allocation:user:${userUid}:list`, JSON.stringify(updatedAllocations));
             releaseInfo = { releasedGrams: fromAmount, metal: fromAsset };
+            deductedFromAllocation = true;
           }
+        }
+
+        // If no allocation found or allocation was empty, deduct from Redis balance
+        if (!deductedFromAllocation) {
+          await redis.hincrbyfloat(balanceKey, fromKey, -fromAmount);
+          console.log(`📉 Deducted ${fromAmount} ${fromAsset} from Redis (no allocation)`);
         }
       } catch (releaseErr: any) {
         console.error("Allocation release failed:", releaseErr.message);
-        return NextResponse.json({ error: "Failed to release allocation" }, { status: 500 });
+        // Fallback: deduct from Redis
+        await redis.hincrbyfloat(balanceKey, fromKey, -fromAmount);
+        console.log(`📉 Deducted ${fromAmount} ${fromAsset} from Redis (fallback)`);
       }
     } else if (!isSellingMetal) {
       // Deduct crypto/AUXM from Redis
