@@ -30,8 +30,9 @@ const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
 };
 
 // Which tokens are on-chain vs off-chain
-const ON_CHAIN_TOKENS = ["usdt", "auxg", "auxs", "auxpt", "auxpd"];
-const OFF_CHAIN_TOKENS = ["auxm", "bonusauxm", "btc", "xrp", "sol"];
+// Metal tokens are on Base Mainnet, USDT is off-chain (no official USDT on Base)
+const ON_CHAIN_TOKENS = ["auxg", "auxs", "auxpt", "auxpd"];
+const OFF_CHAIN_TOKENS = ["auxm", "bonusauxm", "btc", "xrp", "sol", "usdt"];
 
 // ERC20 ABI (minimal)
 const ERC20_ABI = [
@@ -71,7 +72,7 @@ async function getBlockchainBalance(address: string, token: string): Promise<num
 
     return parseFloat(ethers.formatUnits(balance, decimals));
   } catch (error) {
-    console.error(`Blockchain balance error for ${token}:`, error);
+    // Silent fail - user may not have tokens on-chain, use Redis balance instead
     return 0;
   }
 }
