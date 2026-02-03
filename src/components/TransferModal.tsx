@@ -241,7 +241,36 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     
     try {
       if (isMetal) {
-        // Metal token transfer (ERC20 on Sepolia)
+        // Custodial wallet için API transfer
+        if (!isConnected) {
+          console.log(`📡 Custodial metal transfer: ${amountNum} ${selectedToken} to ${recipientAddress}`);
+          const response = await fetch("/api/transfer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fromAddress: address,
+              toAddress: recipientAddress,
+              token: selectedToken,
+              amount: amountNum,
+            }),
+          });
+          const data = await response.json();
+
+          if (data.success) {
+            console.log(`✅ Metal transfer successful: ${data.transfer?.txHash}`);
+            setTxHash(data.transfer?.txHash);
+            setResult("success");
+            setFlowStep("result");
+            if (refreshBalances) await refreshBalances();
+            if (refreshAllocations) await refreshAllocations();
+          } else {
+            throw new Error(data.error || "Metal transfer failed");
+          }
+          setIsProcessing(false);
+          return;
+        }
+
+        // External wallet için wagmi transfer
         const metalAllocations = allocations.filter(a => a.metalSymbol === selectedToken && a.active);
         if (metalAllocations.length > 0) {
           const allocResponse = await fetch("/api/allocations", {
