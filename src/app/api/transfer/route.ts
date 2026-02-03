@@ -342,10 +342,14 @@ export async function POST(request: NextRequest) {
 
       // Use Base network for metal tokens
       const baseRpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || "https://mainnet.base.org";
+      console.log(`🔗 Using Base RPC: ${baseRpcUrl}`);
+
       const provider = new ethers.JsonRpcProvider(baseRpcUrl);
       const wallet = new ethers.Wallet(process.env.HOT_WALLET_ETH_PRIVATE_KEY!, provider);
 
       const contractAddress = TOKEN_CONTRACTS[tokenUpper];
+      console.log(`📋 Contract address for ${tokenUpper}: ${contractAddress}`);
+
       if (!contractAddress) {
         return NextResponse.json({ error: "Token contract not found" }, { status: 400 });
       }
@@ -353,7 +357,9 @@ export async function POST(request: NextRequest) {
       const contract = new ethers.Contract(contractAddress, ERC20_ABI, wallet);
 
       // Get decimals
+      console.log(`🔍 Fetching decimals for ${tokenUpper}...`);
       const decimals = await contract.decimals();
+      console.log(`✅ Decimals: ${decimals}`);
       const amountInUnits = ethers.parseUnits(amount.toString(), decimals);
 
       // Check hot wallet balance (where tokens are actually held)
