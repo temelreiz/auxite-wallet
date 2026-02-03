@@ -707,36 +707,57 @@ export default function TradePanel({
     if (showConfirmation && quote) {
       try {
         if (mode === "buy") {
-          if (selectedCurrency === "AUXM") {
-            // AUXM ile alım - API kullan
-            setIsAuxmTrading(true);
-            console.log("🟣 AUXM Buy via API", { amountNum, metalSymbol, address });
-            const res = await fetch("/api/trade", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                type: "buy",
-                fromToken: "AUXM",
-                toToken: metalSymbol,
-                fromAmount: amountNum * quote.pricePerGram,
-                address,
-                executeOnChain: true,
-              }),
-            });
-            const data = await res.json();
-            console.log("🟣 API Response:", data);
-            if (!data.success) throw new Error(data.error || "Trade failed");
-            toast.success(t.tradeSuccess || "Trade successful!");
-            setShowConfirmation(false);
-            setQuote(null);
-            setIsAuxmTrading(false);
-          } else {
-            // USDT/ETH/BTC ile alım - on-chain
-            await buy(amountNum, quote.pricePerGram);
-          }
+          // All buy operations use API for custodial wallets
+          setIsAuxmTrading(true);
+          console.log(`🟣 ${selectedCurrency} Buy via API`, { amountNum, metalSymbol, address, selectedCurrency });
+
+          // Calculate fromAmount based on currency
+          const fromAmount = selectedCurrency === "AUXM"
+            ? amountNum * quote.pricePerGram
+            : convertToCurrency(amountNum * quote.pricePerGram, cryptoPrices, selectedCurrency);
+
+          const res = await fetch("/api/trade", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "buy",
+              fromToken: selectedCurrency,
+              toToken: metalSymbol,
+              fromAmount,
+              address,
+              executeOnChain: true,
+            }),
+          });
+          const data = await res.json();
+          console.log("🟣 API Response:", data);
+          if (!data.success) throw new Error(data.error || "Trade failed");
+          toast.success(t.tradeSuccess || "Trade successful!");
+          setShowConfirmation(false);
+          setQuote(null);
+          setIsAuxmTrading(false);
         } else {
-          // Sell mode - always on-chain (user must sign with Metamask)
-          await sell(amountNum);
+          // Sell mode - use API for custodial wallets
+          setIsAuxmTrading(true);
+          console.log("🟣 Sell via API", { amountNum, metalSymbol, address });
+          const res = await fetch("/api/trade", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "sell",
+              fromToken: metalSymbol,
+              toToken: "AUXM",
+              fromAmount: amountNum,
+              address,
+              executeOnChain: true,
+            }),
+          });
+          const data = await res.json();
+          console.log("🟣 Sell API Response:", data);
+          if (!data.success) throw new Error(data.error || "Trade failed");
+          toast.success(t.tradeSuccess || "Trade successful!");
+          setShowConfirmation(false);
+          setQuote(null);
+          setIsAuxmTrading(false);
         }
         await refreshBalances();
       } catch (error: any) {
