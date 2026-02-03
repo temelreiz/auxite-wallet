@@ -230,6 +230,12 @@ export async function POST(request: NextRequest) {
             certificateNumber: allocData.certificateNumber,
           };
           console.log(`📜 Certificate issued: ${allocData.certificateNumber}`);
+
+          // nonAllocatedGrams (küsurat) Redis balance'a eklenmeli
+          if (allocData.nonAllocatedGrams && allocData.nonAllocatedGrams > 0) {
+            await redis.hincrbyfloat(balanceKey, toKey, allocData.nonAllocatedGrams);
+            console.log(`📊 Added ${allocData.nonAllocatedGrams}g ${toAsset} (fractional) to Redis balance`);
+          }
         } else {
           console.error("Allocation failed:", allocData.error);
           // Fallback: Add to Redis if allocation fails
