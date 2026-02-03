@@ -1341,31 +1341,6 @@ export default function WalletPage() {
                 </svg>
               </button>
 
-              {/* Deposit Fiat - USD */}
-              <button
-                onClick={() => {
-                  setShowDeposit(false);
-                  setShowUsdDeposit(true);
-                }}
-                className="w-full p-4 rounded-xl border border-green-500/30 hover:border-green-500/50 bg-green-50 dark:bg-transparent hover:bg-green-100 dark:hover:bg-green-500/5 transition-all text-left flex items-start gap-4"
-              >
-                <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-green-600 dark:text-green-400 font-bold text-lg">$</span>
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-slate-800 dark:text-white font-semibold mb-1">
-                    {lang === "tr" ? "USD Yatır" : "Deposit USD"}
-                  </h4>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {lang === "tr" 
-                      ? "Kredi kartı ile USD yatırın (MoonPay)" 
-                      : "Deposit USD via credit card (MoonPay)"}
-                  </p>
-                </div>
-                <svg className="w-5 h-5 text-slate-500 dark:text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
             </div>
           </div>
         </div>
