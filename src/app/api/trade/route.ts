@@ -89,6 +89,29 @@ const VALID_TOKENS = [...METALS, "auxm", ...CRYPTOS];
 const ON_CHAIN_FROM_TOKENS = ["eth"]; // User sends ETH to hot wallet
 
 // ═══════════════════════════════════════════════════════════════════════════
+// CUSTODIAL WALLET CHECK
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function isCustodialWallet(address: string): Promise<boolean> {
+  try {
+    const normalizedAddress = address.toLowerCase();
+    // First, get userId from address mapping
+    const userId = await redis.get(`user:address:${normalizedAddress}`);
+    if (userId) {
+      const userData = await redis.hgetall(`user:${userId}`);
+      if (userData?.walletType === 'custodial') return true;
+    }
+    // Fallback: check direct address key (legacy format)
+    const directUserData = await redis.hgetall(`user:${normalizedAddress}`);
+    if (directUserData?.walletType === 'custodial') return true;
+    return false;
+  } catch (error) {
+    console.error('Error checking wallet type:', error);
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // PLATFORM STOCK MANAGEMENT
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -708,36 +731,49 @@ export async function POST(request: NextRequest) {
     // ═══════════════════════════════════════════════════════════════════════
     // CHECK BALANCE FOR TOKENS
     // ═══════════════════════════════════════════════════════════════════════
-    
-    // ETH: Use blockchain balance only (non-custodial)
+
+    // Check if user has custodial wallet
+    const isCustodial = await isCustodialWallet(normalizedAddress);
+    console.log(`   Wallet type: ${isCustodial ? 'custodial' : 'external'}`);
+
+    // ETH: Custodial uses Redis, external uses blockchain
     if (fromTokenLower === "eth") {
-      const blockchainBalance = await getBlockchainBalance(normalizedAddress, fromTokenLower);
-      console.log(`   Blockchain ${fromTokenLower}: ${blockchainBalance}`);
-      fromBalance = blockchainBalance;
+      if (isCustodial) {
+        fromBalance = parseFloat(currentBalance.eth as string || "0");
+        console.log(`   ETH from Redis (custodial): ${fromBalance}`);
+      } else {
+        const blockchainBalance = await getBlockchainBalance(normalizedAddress, fromTokenLower);
+        console.log(`   ETH from Blockchain: ${blockchainBalance}`);
+        fromBalance = blockchainBalance;
+      }
     }
-    
-    // Metals (AUXG, AUXS, AUXPT, AUXPD): Use Redis balance (custodial for trading)
-    // Actual blockchain balance is for physical delivery/withdraw only
+
+    // Metals (AUXG, AUXS, AUXPT, AUXPD): Always use Redis balance (custodial for trading)
     const METALS_REDIS = ["auxg", "auxs", "auxpt", "auxpd"];
     if (METALS_REDIS.includes(fromTokenLower)) {
       fromBalance = parseFloat(currentBalance[fromTokenLower] as string || "0");
       console.log(`   Metal ${fromTokenLower} from Redis: ${fromBalance}`);
     }
-    
-    // USDT: Use blockchain balance
+
+    // USDT: Custodial uses Redis, external uses blockchain
     if (fromTokenLower === "usdt") {
-      const blockchainBalance = await getBlockchainBalance(normalizedAddress, fromTokenLower);
-      console.log(`   Blockchain ${fromTokenLower}: ${blockchainBalance}`);
-      fromBalance = blockchainBalance;
+      if (isCustodial) {
+        fromBalance = parseFloat(currentBalance.usdt as string || "0");
+        console.log(`   USDT from Redis (custodial): ${fromBalance}`);
+      } else {
+        const blockchainBalance = await getBlockchainBalance(normalizedAddress, fromTokenLower);
+        console.log(`   USDT from Blockchain: ${blockchainBalance}`);
+        fromBalance = blockchainBalance;
+      }
     }
-    
+
     // AUXM: Use Redis balance (off-chain token)
     if (fromTokenLower === "auxm") {
       const auxmBalance = parseFloat(currentBalance.auxm as string || currentBalance.AUXM as string || "0");
       console.log(`   AUXM from Redis: ${auxmBalance}`);
       fromBalance = auxmBalance;
     }
-    
+
     // Custodial cryptos (BTC, XRP, SOL): Use Redis balance
     const CUSTODIAL_CRYPTOS = ["btc", "xrp", "sol"];
     if (CUSTODIAL_CRYPTOS.includes(fromTokenLower)) {
