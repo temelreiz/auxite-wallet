@@ -65,6 +65,14 @@ export interface StakedAmounts {
   auxpd: number;
 }
 
+// Allocation amounts (physical metal allocations)
+export interface AllocationAmounts {
+  auxg: number;
+  auxs: number;
+  auxpt: number;
+  auxpd: number;
+}
+
 export interface WalletContextType {
   // wallet
   isConnected: boolean;
@@ -85,6 +93,7 @@ export interface WalletContextType {
   // balances
   balances: UserBalances | null;
   stakedAmounts: StakedAmounts | null;
+  allocationAmounts: AllocationAmounts | null;
   summary: BalanceSummary | null;
   balancesLoading: boolean;
   balancesError: string | null;
@@ -190,6 +199,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const [balances, setBalances] = useState<UserBalances | null>(null);
   const [stakedAmounts, setStakedAmounts] = useState<StakedAmounts | null>(null);
+  const [allocationAmounts, setAllocationAmounts] = useState<AllocationAmounts | null>(null);
   const [summary, setSummary] = useState<BalanceSummary | null>(null);
   const [balancesLoading, setBalancesLoading] = useState(false);
   const [balancesError, setBalancesError] = useState<string | null>(null);
@@ -256,6 +266,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         auxpd: redisData.stakedAmounts?.auxpd ?? 0,
       });
 
+      // Set allocation amounts (from /api/allocations response)
+      setAllocationAmounts(allocTotals);
+
       setSummary({
         ...redisData.summary,
         metals: allocTotals,
@@ -263,6 +276,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } catch {
       setBalances(DEFAULT_BALANCES);
       setStakedAmounts({ auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 });
+      setAllocationAmounts({ auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 });
       setBalancesError("Balances could not be loaded");
     } finally {
       setBalancesLoading(false);
@@ -300,6 +314,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
         balances,
         stakedAmounts,
+        allocationAmounts,
         summary,
         balancesLoading,
         balancesError,
