@@ -238,7 +238,19 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     setFlowStep("form");
     setIsProcessing(true);
     setErrorMessage("");
-    
+
+    // Debug log - hangi yol kullanılacak?
+    console.log(`🔐 Transfer başlatılıyor:`, {
+      selectedToken,
+      isMetal,
+      isConnected,
+      willUseCustodialAPI: isMetal && !isConnected,
+      willUseWagmi: isMetal && isConnected,
+      amountNum,
+      recipientAddress,
+      fromAddress: address,
+    });
+
     try {
       if (isMetal) {
         // Custodial wallet için API transfer
