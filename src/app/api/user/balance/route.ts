@@ -15,8 +15,6 @@ const MOCK_BALANCE = {
   auxg: 15.75, auxs: 500, auxpt: 2.5, auxpd: 1.25, eth: 0.5, btc: 0.01, xrp: 100, sol: 2.5, usdt: 0,
 };
 
-// Blockchain RPC - Base Mainnet (primary for ETH and tokens)
-const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || "https://mainnet.base.org";
 // Ethereum Mainnet for ETH
 const ETH_RPC_URL = process.env.ETH_RPC_URL || process.env.BLOCKCHAIN_RPC_URL || "https://eth-mainnet.g.alchemy.com/v2/demo";
 // Base Mainnet for metal tokens
