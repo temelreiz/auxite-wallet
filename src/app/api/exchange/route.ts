@@ -7,6 +7,30 @@ const redis = new Redis({
 });
 
 const METALS = ["auxg", "auxs", "auxpt", "auxpd"];
+const CRYPTOS = ["eth", "btc", "xrp", "sol", "usdt"];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CUSTODIAL WALLET CHECK
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function isCustodialWallet(address: string): Promise<boolean> {
+  try {
+    const normalizedAddress = address.toLowerCase();
+    // First, get userId from address mapping
+    const userId = await redis.get(`user:address:${normalizedAddress}`);
+    if (userId) {
+      const userData = await redis.hgetall(`user:${userId}`);
+      if (userData?.walletType === 'custodial') return true;
+    }
+    // Fallback: check direct address key (legacy format)
+    const directUserData = await redis.hgetall(`user:${normalizedAddress}`);
+    if (directUserData?.walletType === 'custodial') return true;
+    return false;
+  } catch (error) {
+    console.error('Error checking wallet type:', error);
+    return false;
+  }
+}
 
 // Allocation'dan metal bakiyesini al
 async function getAllocationBalance(address: string, metal: string): Promise<number> {
@@ -54,18 +78,23 @@ export async function POST(request: NextRequest) {
     const fromKey = fromAsset.toLowerCase();
     const toKey = toAsset.toLowerCase();
 
+    // Check if custodial wallet
+    const isCustodial = await isCustodialWallet(normalizedAddress);
+    console.log(`📊 Exchange: ${fromAsset} → ${toAsset}, custodial: ${isCustodial}`);
+
     // Get balance based on asset type
     let currentFromBalance: number;
     const isSellingMetal = METALS.includes(fromKey);
-    
+    const isSellingCrypto = CRYPTOS.includes(fromKey);
+
     if (isSellingMetal) {
       // Metal satışı - allocation'dan bakiye kontrol et
       currentFromBalance = await getAllocationBalance(normalizedAddress, fromAsset);
       console.log(`📊 Metal balance from allocation: ${currentFromBalance}g ${fromAsset}`);
     } else {
-      // Crypto/AUXM - Redis'ten bakiye kontrol et
+      // Crypto/AUXM - Redis'ten bakiye kontrol et (custodial için her zaman Redis)
       currentFromBalance = parseFloat(currentBalance[fromKey] as string || "0");
-      console.log(`📊 Crypto balance from Redis: ${currentFromBalance} ${fromAsset}`);
+      console.log(`📊 ${fromAsset} balance from Redis: ${currentFromBalance}`);
     }
 
     // Check balance
@@ -146,7 +175,10 @@ export async function POST(request: NextRequest) {
       }
     } else if (!isSellingMetal) {
       // Deduct crypto/AUXM from Redis
+      // For custodial wallets: always deduct from Redis
+      // For external wallets with ETH: skip (should be on-chain) - but we'll deduct anyway for exchange
       await redis.hincrbyfloat(balanceKey, fromKey, -fromAmount);
+      console.log(`📉 Deducted ${fromAmount} ${fromAsset} from Redis`);
     }
 
     // If BUYING metal, create allocation
