@@ -13,6 +13,7 @@ import { CryptoConvertModal } from "./CryptoConvertModal";
 import { DynamicBanner } from "./DynamicBanner";
 import { TransferModal } from "@/components/TransferModal";
 import { useLanguage } from "@/components/LanguageContext";
+import { AddFundsModal } from "@/components/AddFundsModal";
 
 // Metal icon mapping
 const metalIcons: Record<string, string> = {
@@ -100,6 +101,9 @@ export default function MetalPriceGrid() {
   const { basePrices, prices, bidPrices, directions, changes, loading } = useMetalsPrices();
   const { prices: cryptoPrices, changes: cryptoChanges, directions: cryptoDirections, loading: cryptoLoading } = useCryptoPrices();
   const [showExchange, setShowExchange] = useState(false);
+  const [showAddFunds, setShowAddFunds] = useState(false);
+  const [addFundsDefaultTab, setAddFundsDefaultTab] = useState<"crypto" | "card">("crypto");
+  // Keep old states for backward compatibility - will be removed later
   const [showDeposit, setShowDeposit] = useState(false);
   const [showOnChainDeposit, setShowOnChainDeposit] = useState(false);
   const [showFiatDeposit, setShowFiatDeposit] = useState(false);
@@ -361,7 +365,10 @@ export default function MetalPriceGrid() {
       <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
         {/* Yatır / Add Funds */}
         <button
-          onClick={() => setShowDeposit(true)}
+          onClick={() => {
+            setAddFundsDefaultTab("crypto");
+            setShowAddFunds(true);
+          }}
           className="flex flex-col items-center gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-emerald-500 transition-all group"
         >
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
@@ -462,110 +469,15 @@ export default function MetalPriceGrid() {
         />
       )}
 
-      {/* Deposit Modal - Select Method */}
-      {showDeposit && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-end sm:items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl border-t sm:border border-stone-300 dark:border-slate-700 w-full sm:max-w-md p-6 max-h-[80vh] overflow-y-auto shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-                {lang === "tr" ? "Yatırma Yöntemi Seçin" : "Select Deposit Method"}
-              </h3>
-              <button
-                onClick={() => setShowDeposit(false)}
-                className="p-2 hover:bg-stone-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="space-y-3">
-              {/* Kripto ile Yatır - Önerilen */}
-              <button
-                onClick={() => {
-                  setShowDeposit(false);
-                  setShowOnChainDeposit(true);
-                }}
-                className="w-full p-4 rounded-xl border-2 border-blue-500/50 hover:border-blue-500 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all text-left flex items-start gap-4 relative overflow-hidden"
-              >
-                <div className="absolute top-2 right-2 px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded">
-                  {lang === "tr" ? "ÖNERİLEN" : "RECOMMENDED"}
-                </div>
-                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 dark:text-blue-400 font-bold text-lg">₿</span>
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-slate-800 dark:text-white font-semibold mb-1">
-                    {lang === "tr" ? "Kripto ile Yatır" : "Deposit with Crypto"}
-                  </h4>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {lang === "tr" 
-                      ? "BTC, ETH, USDT, SOL, XRP • +%15'e kadar bonus" 
-                      : "BTC, ETH, USDT, SOL, XRP • Up to +15% bonus"}
-                  </p>
-                </div>
-                <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-
-              {/* Deposit Fiat */}
-              <button
-                onClick={() => {
-                  setShowDeposit(false);
-                  setShowFiatDeposit(true);
-                }}
-                className="w-full p-4 rounded-xl border border-green-500/30 hover:border-green-500/50 bg-green-50 dark:bg-transparent hover:bg-green-100 dark:hover:bg-green-500/5 transition-all text-left flex items-start gap-4"
-              >
-                <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-green-600 dark:text-green-400 font-bold text-lg">$</span>
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-slate-800 dark:text-white font-semibold mb-1">
-                    {lang === "tr" ? "Fiat Yatır" : "Deposit Fiat"}
-                  </h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {lang === "tr" 
-                      ? "Kredi kartı, Apple/Google Pay ile USD/TRY yatırın" 
-                      : "Deposit USD/TRY via card, Apple/Google Pay"}
-                  </p>
-                </div>
-                <svg className="w-5 h-5 text-slate-500 dark:text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-
-              {/* On-Chain Deposit - Manuel */}
-              <button
-                onClick={() => {
-                  setShowDeposit(false);
-                  setShowOnChainDeposit(true);
-                }}
-                className="w-full p-4 rounded-xl border border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600 bg-stone-50 dark:bg-transparent hover:bg-stone-100 dark:hover:bg-slate-800/50 transition-all text-left flex items-start gap-4"
-              >
-                <div className="w-10 h-10 rounded-lg bg-stone-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-slate-800 dark:text-white font-semibold mb-1">
-                    {lang === "tr" ? "Manuel Transfer" : "Manual Transfer"}
-                  </h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {lang === "tr" 
-                      ? "Deposit adresine direkt transfer" 
-                      : "Direct transfer to deposit address"}
-                  </p>
-                </div>
-                <svg className="w-5 h-5 text-slate-400 dark:text-slate-500 flex-shrink-0 mt-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Add Funds Modal - Unified Crypto + Card */}
+      {showAddFunds && (
+        <AddFundsModal
+          isOpen={showAddFunds}
+          onClose={() => setShowAddFunds(false)}
+          lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
+          walletAddress={walletAddress}
+          defaultTab={addFundsDefaultTab}
+        />
       )}
 
       {/* Fiat Deposit Modal */}
