@@ -114,6 +114,45 @@ async function isCustodialWallet(address: string): Promise<boolean> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// ALLOCATION AMOUNTS (Physical Metal)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function getAllocationAmounts(address: string): Promise<Record<string, number>> {
+  const allocations: Record<string, number> = {
+    auxg: 0,
+    auxs: 0,
+    auxpt: 0,
+    auxpd: 0,
+  };
+
+  try {
+    const userUid = await redis.get(`user:address:${address.toLowerCase()}`);
+    if (!userUid) return allocations;
+
+    const allocDataRaw = await redis.get(`allocation:user:${userUid}:list`);
+    if (!allocDataRaw) return allocations;
+
+    const allocList = typeof allocDataRaw === 'string' ? JSON.parse(allocDataRaw) : allocDataRaw;
+
+    for (const alloc of allocList) {
+      if (alloc.status === 'active') {
+        const metal = alloc.metal?.toLowerCase();
+        const grams = parseFloat(alloc.grams) || 0;
+        if (metal && allocations.hasOwnProperty(metal)) {
+          allocations[metal] += grams;
+        }
+      }
+    }
+
+    console.log(`📦 Trade - Allocation balances for ${address}:`, allocations);
+  } catch (e) {
+    console.error('Error getting allocation amounts:', e);
+  }
+
+  return allocations;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // PLATFORM STOCK MANAGEMENT
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -752,11 +791,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Metals (AUXG, AUXS, AUXPT, AUXPD): Always use Redis balance (custodial for trading)
+    // Metals (AUXG, AUXS, AUXPT, AUXPD): Redis + Allocation (consistent with balance endpoint)
     const METALS_REDIS = ["auxg", "auxs", "auxpt", "auxpd"];
     if (METALS_REDIS.includes(fromTokenLower)) {
-      fromBalance = parseFloat(currentBalance[fromTokenLower] as string || "0");
-      console.log(`   Metal ${fromTokenLower} from Redis: ${fromBalance}`);
+      const redisBalance = parseFloat(currentBalance[fromTokenLower] as string || "0");
+      // Get allocation amounts for physical metal
+      const allocationAmounts = await getAllocationAmounts(normalizedAddress);
+      const allocBalance = allocationAmounts[fromTokenLower] || 0;
+      fromBalance = redisBalance + allocBalance;
+      console.log(`   Metal ${fromTokenLower} from Redis: ${redisBalance}, Allocation: ${allocBalance}, Total: ${fromBalance}`);
     }
 
     // USDT: Custodial uses Redis, external uses blockchain
