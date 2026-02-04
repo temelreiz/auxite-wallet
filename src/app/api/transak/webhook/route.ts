@@ -271,6 +271,9 @@ export async function POST(request: NextRequest) {
       );
 
       if (creditSuccess) {
+        const normalizedAddress = walletAddress.toLowerCase();
+        const now = Date.now();
+
         // Log transaction for user history
         const userTx = {
           id: `transak_${transakOrderId}`,
@@ -282,15 +285,37 @@ export async function POST(request: NextRequest) {
           source: "transak",
           txHash: transactionHash,
           status: "completed",
-          timestamp: Date.now(),
+          timestamp: now,
         };
 
-        const uid = await redis.get(`user:address:${walletAddress.toLowerCase()}`);
+        const uid = await redis.get(`user:address:${normalizedAddress}`);
         const userTxKey = uid
           ? `user:${uid}:transactions`
-          : `user:${walletAddress.toLowerCase()}:transactions`;
+          : `user:${normalizedAddress}:transactions`;
 
         await redis.lpush(userTxKey, JSON.stringify(userTx));
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // TRANSAK DEPOSIT TRACKING - 7 gün holding period için kaydet
+        // Kullanıcı Transak ile aldığı kriptoyu hemen dış cüzdana transfer edemez
+        // ═══════════════════════════════════════════════════════════════════════
+        const transakDepositRecord = {
+          transakOrderId,
+          cryptoCurrency,
+          cryptoAmount,
+          fiatAmount,
+          fiatCurrency,
+          timestamp: now,
+          txHash: transactionHash,
+        };
+
+        const transakDepositsKey = `user:${normalizedAddress}:transak:deposits`;
+        await redis.lpush(transakDepositsKey, JSON.stringify(transakDepositRecord));
+
+        // 90 gün sonra otomatik sil (holding period'dan çok sonra)
+        await redis.expire(transakDepositsKey, 90 * 24 * 60 * 60);
+
+        console.log(`📝 Transak deposit tracked for holding period: ${cryptoAmount} ${cryptoCurrency} for ${normalizedAddress}`);
       }
     } else if (newStatus === "REFUNDED") {
       // Reverse the credit on refund

@@ -44,6 +44,8 @@ const walletTranslations: Record<string, Record<string, string>> = {
   tr: {
     myAssets: "Auxite ve Crypto Varlıklarım",
     allocatedAndStaked: "Tahsisli & Stake",
+    allocated: "Tahsisli",
+    staked: "Stake",
     totalLocked: "Toplam",
     estValue: "Tahmini Değer",
     estimatedTotalValue: "Tahmini Toplam Değer",
@@ -95,6 +97,8 @@ const walletTranslations: Record<string, Record<string, string>> = {
   en: {
     myAssets: "My Auxite and Crypto Assets",
     allocatedAndStaked: "Allocated & Staked",
+    allocated: "Allocated",
+    staked: "Staked",
     totalLocked: "Total",
     estValue: "Est. Value",
     estimatedTotalValue: "Estimated Total Value",
@@ -146,6 +150,8 @@ const walletTranslations: Record<string, Record<string, string>> = {
   de: {
     myAssets: "Meine Auxite und Crypto Vermögenswerte",
     allocatedAndStaked: "Zugewiesen & Gestaked",
+    allocated: "Zugewiesen",
+    staked: "Gestaked",
     totalLocked: "Gesamt",
     estValue: "Gesch. Wert",
     estimatedTotalValue: "Geschätzter Gesamtwert",
@@ -197,6 +203,8 @@ const walletTranslations: Record<string, Record<string, string>> = {
   fr: {
     myAssets: "Mes Actifs Auxite et Crypto",
     allocatedAndStaked: "Alloué & Staké",
+    allocated: "Alloué",
+    staked: "Staké",
     totalLocked: "Total",
     estValue: "Valeur Est.",
     estimatedTotalValue: "Valeur Totale Estimée",
@@ -248,6 +256,8 @@ const walletTranslations: Record<string, Record<string, string>> = {
   ar: {
     myAssets: "أصولي من Auxite والعملات المشفرة",
     allocatedAndStaked: "مخصص ومرهون",
+    allocated: "مخصص",
+    staked: "مرهون",
     totalLocked: "الإجمالي",
     estValue: "القيمة التقديرية",
     estimatedTotalValue: "إجمالي القيمة المقدرة",
@@ -299,6 +309,8 @@ const walletTranslations: Record<string, Record<string, string>> = {
   ru: {
     myAssets: "Мои Auxite и Крипто Активы",
     allocatedAndStaked: "Распределено и Застейкано",
+    allocated: "Распределено",
+    staked: "Застейкано",
     totalLocked: "Всего",
     estValue: "Оц. Стоимость",
     estimatedTotalValue: "Оценочная общая стоимость",
@@ -801,8 +813,8 @@ export default function WalletPage() {
                     : "..."}
                 </h2>
               </div>
-              <div className="flex flex-wrap justify-center gap-3 sm:gap-8 pt-2 sm:pt-4 border-t border-stone-300 dark:border-slate-700">
-                <div className="text-center min-w-[70px] sm:min-w-0">
+              <div className="flex flex-wrap justify-center gap-2 sm:gap-6 pt-2 sm:pt-4 border-t border-stone-300 dark:border-slate-700">
+                <div className="text-center min-w-[60px] sm:min-w-0">
                   <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-500 mb-0.5 sm:mb-1">
                     {wx.auxiteAndCrypto}
                   </p>
@@ -812,19 +824,29 @@ export default function WalletPage() {
                       : "..."}
                   </p>
                 </div>
-                <div className="text-center min-w-[70px] sm:min-w-0">
+                <div className="text-center min-w-[60px] sm:min-w-0">
                   <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-500 mb-0.5 sm:mb-1">
-                    {wx.allocatedAndStaked}
+                    {wx.allocated}
                   </p>
                   <p className="text-sm sm:text-lg font-semibold text-amber-400">
                     {pricesLoaded
-                      ? `$${allocatedAndStakedValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                      ? `$${allocatedValueCalc.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
                       : "..."}
                   </p>
                 </div>
-                <button 
+                <div className="text-center min-w-[60px] sm:min-w-0">
+                  <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-500 mb-0.5 sm:mb-1">
+                    {wx.staked}
+                  </p>
+                  <p className="text-sm sm:text-lg font-semibold text-purple-400">
+                    {pricesLoaded
+                      ? `$${stakedValueCalc.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                      : "..."}
+                  </p>
+                </div>
+                <button
                   onClick={() => setShowPendingOrders(true)}
-                  className="text-center hover:bg-stone-300 dark:hover:bg-slate-700/50 px-2 sm:px-4 py-1 sm:py-2 -my-1 sm:-my-2 rounded-lg transition-colors cursor-pointer min-w-[70px] sm:min-w-0"
+                  className="text-center hover:bg-stone-300 dark:hover:bg-slate-700/50 px-2 sm:px-3 py-1 sm:py-2 -my-1 sm:-my-2 rounded-lg transition-colors cursor-pointer min-w-[60px] sm:min-w-0"
                 >
                   <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-500 mb-0.5 sm:mb-1">
                     {wx.pendingOrders}

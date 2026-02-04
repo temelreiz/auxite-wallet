@@ -159,6 +159,92 @@ async function sendTransferEmails(fromAddress: string, toAddress: string, amount
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// TRANSAK HOLDING PERIOD CHECK
+// Kullanıcı Transak ile kripto aldıysa, belirli süre dış cüzdana transfer edemez
+// ═══════════════════════════════════════════════════════════════════════════
+const HOLDING_PERIOD_DAYS = 7; // 7 gün bekleme süresi
+const HOLDING_PERIOD_MS = HOLDING_PERIOD_DAYS * 24 * 60 * 60 * 1000;
+
+async function checkTransakHoldingPeriod(
+  address: string,
+  token: string,
+  amount: number,
+  toAddress: string
+): Promise<{ blocked: boolean; reason?: string; remainingDays?: number }> {
+  const normalizedAddress = address.toLowerCase();
+  const normalizedTo = toAddress.toLowerCase();
+
+  // Eğer alıcı platform içi bir kullanıcıysa (custodial), kısıtlama yok
+  const receiverId = await redis.get(`user:address:${normalizedTo}`);
+  if (receiverId) {
+    // Platform içi transfer - sorun yok
+    return { blocked: false };
+  }
+
+  // Dış cüzdana transfer - Transak geçmişini kontrol et
+  const transakKey = `user:${normalizedAddress}:transak:deposits`;
+  const deposits = await redis.lrange(transakKey, 0, -1);
+
+  if (!deposits || deposits.length === 0) {
+    // Transak ile alım yok - sorun yok
+    return { blocked: false };
+  }
+
+  const now = Date.now();
+  const tokenUpper = token.toUpperCase();
+
+  // Son 7 gün içindeki Transak alımlarını kontrol et
+  let totalLockedAmount = 0;
+  let latestDepositTime = 0;
+
+  for (const depositStr of deposits) {
+    try {
+      const deposit = typeof depositStr === 'string' ? JSON.parse(depositStr) : depositStr;
+      const depositAge = now - (deposit.timestamp || 0);
+
+      // Sadece ilgili token ve holding period içindeki alımlar
+      if (deposit.cryptoCurrency?.toUpperCase() === tokenUpper && depositAge < HOLDING_PERIOD_MS) {
+        totalLockedAmount += parseFloat(deposit.cryptoAmount || 0);
+        if (deposit.timestamp > latestDepositTime) {
+          latestDepositTime = deposit.timestamp;
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing transak deposit:", e);
+    }
+  }
+
+  if (totalLockedAmount <= 0) {
+    // Holding period'u geçmiş veya bu token için alım yok
+    return { blocked: false };
+  }
+
+  // Transfer miktarı kilitli miktardan fazlaysa izin ver (eski bakiyeden transfer)
+  // Kullanıcının mevcut bakiyesini al
+  const balanceKey = `user:${normalizedAddress}:balance`;
+  const balances = await redis.hgetall(balanceKey);
+  const currentBalance = parseFloat(balances?.[token.toLowerCase()] as string || "0");
+
+  // Kilitli olmayan miktar = mevcut bakiye - kilitli miktar
+  const unlockedBalance = Math.max(0, currentBalance - totalLockedAmount);
+
+  if (amount <= unlockedBalance) {
+    // Transfer miktarı kilitsiz bakiyeden karşılanabilir
+    return { blocked: false };
+  }
+
+  // Transfer engellendi
+  const remainingMs = HOLDING_PERIOD_MS - (now - latestDepositTime);
+  const remainingDays = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
+
+  return {
+    blocked: true,
+    reason: `Transak ile satın alınan ${tokenUpper} için ${HOLDING_PERIOD_DAYS} günlük bekleme süresi gereklidir. Platform içi işlemler (metal alımı, stake vb.) yapabilirsiniz.`,
+    remainingDays,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { fromAddress, toAddress, token, amount, twoFactorCode } = await request.json();
@@ -175,6 +261,18 @@ export async function POST(request: NextRequest) {
 
     if (fromAddress.toLowerCase() === toAddress.toLowerCase()) {
       return NextResponse.json({ error: "Cannot transfer to yourself" }, { status: 400 });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // TRANSAK HOLDING PERIOD CHECK - Dış cüzdana transfer kısıtlaması
+    // ═══════════════════════════════════════════════════════════════════════════
+    const holdingCheck = await checkTransakHoldingPeriod(fromAddress, token, amount, toAddress);
+    if (holdingCheck.blocked) {
+      return NextResponse.json({
+        error: holdingCheck.reason,
+        code: "TRANSAK_HOLDING_PERIOD",
+        remainingDays: holdingCheck.remainingDays,
+      }, { status: 403 });
     }
 
     // 2FA Kontrolü artık frontend'de TwoFactorGate ile yapılıyor
