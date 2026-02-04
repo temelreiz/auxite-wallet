@@ -14,7 +14,7 @@ const translations: Record<string, Record<string, string>> = {
   tr: {
     markets: "Piyasalar",
     stake: "Biriktir",
-    wallet: "Cüzdan",
+    wallet: "Kasa",
     profile: "Profil",
     trust: "Güven",
     trustCenter: "Güven Merkezi",
@@ -37,7 +37,7 @@ const translations: Record<string, Record<string, string>> = {
   en: {
     markets: "Markets",
     stake: "Stake",
-    wallet: "Wallet",
+    wallet: "Vault",
     profile: "Profile",
     trust: "Trust",
     trustCenter: "Trust Center",
@@ -60,7 +60,7 @@ const translations: Record<string, Record<string, string>> = {
   de: {
     markets: "Märkte",
     stake: "Staken",
-    wallet: "Geldbörse",
+    wallet: "Tresor",
     profile: "Profil",
     trust: "Vertrauen",
     trustCenter: "Vertrauenszentrum",
@@ -83,7 +83,7 @@ const translations: Record<string, Record<string, string>> = {
   fr: {
     markets: "Marchés",
     stake: "Staker",
-    wallet: "Portefeuille",
+    wallet: "Coffre",
     profile: "Profil",
     trust: "Confiance",
     trustCenter: "Centre de Confiance",
@@ -106,7 +106,7 @@ const translations: Record<string, Record<string, string>> = {
   ar: {
     markets: "الأسواق",
     stake: "الإيداع",
-    wallet: "المحفظة",
+    wallet: "الخزنة",
     profile: "الملف الشخصي",
     trust: "الثقة",
     trustCenter: "مركز الثقة",
@@ -129,7 +129,7 @@ const translations: Record<string, Record<string, string>> = {
   ru: {
     markets: "Рынки",
     stake: "Стейкинг",
-    wallet: "Кошелек",
+    wallet: "Хранилище",
     profile: "Профиль",
     trust: "Доверие",
     trustCenter: "Центр Доверия",
