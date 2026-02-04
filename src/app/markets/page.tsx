@@ -247,8 +247,8 @@ export default function MarketsPage() {
                     <div className="font-medium text-white">
                       ${asset.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </div>
-                    <div className={`text-xs ${asset.change >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                      {asset.change >= 0 ? "+" : ""}{asset.change}%
+                    <div className="text-xs text-slate-400">
+                      per {assetType === "metals" ? "gram" : "unit"}
                     </div>
                   </div>
                 </div>

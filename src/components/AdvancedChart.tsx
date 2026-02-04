@@ -648,11 +648,6 @@ export default function AdvancedChart({
               {displayPrice && (
                 <div className="flex items-center gap-2">
                   <span className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>${displayPrice.toFixed(2)}</span>
-                  {priceChange !== undefined && (
-                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${isPositive ? "bg-emerald-500/20 text-emerald-500" : "bg-red-500/20 text-red-500"}`}>
-                      {isPositive ? "+" : ""}{priceChange.toFixed(2)}%
-                    </span>
-                  )}
                 </div>
               )}
             </div>
