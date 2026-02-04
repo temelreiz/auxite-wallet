@@ -549,13 +549,21 @@ export default function WalletPage() {
   // const usePortfolioAPI = portfolio.totalValue > 0;
   const usePortfolioAPI = false; // Force fallback calculation until API is fixed
 
-  const totalAvailable = usePortfolioAPI ? portfolio.availableValue : (metalsValueCalc + cryptoValueCalc);
-  const totalLocked = usePortfolioAPI ? portfolio.lockedValue : (allocatedValueCalc + stakedValueCalc);
-  const totalEstimatedValue = usePortfolioAPI ? portfolio.totalValue : (totalAvailable + totalLocked);
+  // IMPORTANT: Metal balances (auxgBalance etc.) already INCLUDE allocated amounts from API
+  // So we should NOT add allocatedValueCalc again - that would be double counting!
+  // Staked amounts are also part of user's total holdings, shown separately for info only
 
-  // Kart değerleri
-  const auxiteAndCryptoValue = totalAvailable;
-  const allocatedAndStakedValue = totalLocked;
+  // Total value = metals + crypto (metals already include allocations)
+  const totalEstimatedValue = usePortfolioAPI
+    ? portfolio.totalValue
+    : (metalsValueCalc + cryptoValueCalc);
+
+  // "Tahsisli & Stake" is shown for information only - these are PART OF the total, not additional
+  const allocatedAndStakedValue = allocatedValueCalc + stakedValueCalc;
+
+  // "Auxite & Kripto" shows the breakdown: total minus locked portions
+  // But since metals already include allocations, we show total minus what's locked
+  const auxiteAndCryptoValue = totalEstimatedValue - allocatedAndStakedValue;
 
   // USD cinsinden toplam değer
   const totalEstimatedUsd = totalEstimatedValue;
@@ -563,13 +571,14 @@ export default function WalletPage() {
   // DEBUG
   console.log('📊 ASSET VALUE DEBUG:', {
     usePortfolioAPI,
-    portfolioTotal: portfolio.totalValue,
-    fallbackTotal: metalsValueCalc + cryptoValueCalc + allocatedValueCalc + stakedValueCalc,
     metalsValueCalc,
     cryptoValueCalc,
     allocatedValueCalc,
     stakedValueCalc,
+    allocatedAndStakedValue,
+    auxiteAndCryptoValue,
     FINAL_TOTAL: totalEstimatedValue,
+    note: 'Metals already include allocations - no double counting'
   });
 
   // Fetch pending orders count
