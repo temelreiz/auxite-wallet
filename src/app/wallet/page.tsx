@@ -612,6 +612,24 @@ export default function WalletPage() {
   // USD cinsinden toplam değer
   const totalEstimatedUsd = totalEstimatedValue;
 
+  // Get unique vault locations from allocations
+  const vaultLocations = Array.from(
+    new Set(
+      allocations
+        .filter(a => a.active && a.custodian)
+        .map(a => a.custodian)
+    )
+  );
+
+  // Map location names to flags
+  const locationFlags: Record<string, string> = {
+    "Zurich": "🇨🇭",
+    "Dubai": "🇦🇪",
+    "Singapore": "🇸🇬",
+    "London": "🇬🇧",
+    "New York": "🇺🇸",
+  };
+
   // DEBUG
   console.log('📊 ASSET VALUE DEBUG:', {
     usePortfolioAPI,
@@ -865,9 +883,18 @@ export default function WalletPage() {
                   </svg>
                   {wx.insured || "Insured"}
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] sm:text-xs font-medium">
-                  🇨🇭 {wx.vaultLocation || "Stored in Zurich"}
-                </span>
+                {/* Dynamic Vault Locations */}
+                {vaultLocations.length > 0 ? (
+                  vaultLocations.map((loc, idx) => (
+                    <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] sm:text-xs font-medium">
+                      {locationFlags[loc] || "📍"} {lang === "tr" ? `${loc}'de Saklanıyor` : lang === "de" ? `Gelagert in ${loc}` : lang === "fr" ? `Stocké à ${loc}` : lang === "ar" ? `مخزنة في ${loc}` : lang === "ru" ? `Хранится в ${loc}` : `Stored in ${loc}`}
+                    </span>
+                  ))
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] sm:text-xs font-medium">
+                    🏦 {lang === "tr" ? "Küresel Kasalar" : lang === "de" ? "Globale Tresore" : lang === "fr" ? "Coffres Mondiaux" : lang === "ar" ? "خزائن عالمية" : lang === "ru" ? "Глобальные Хранилища" : "Global Vaults"}
+                  </span>
+                )}
               </div>
             </div>
 

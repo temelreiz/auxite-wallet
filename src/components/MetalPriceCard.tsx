@@ -79,12 +79,12 @@ export default function MetalPriceCard({
   };
 
   const translations: Record<string, { buy: string; sell: string }> = {
-    tr: { buy: "Al", sell: "Sat" },
-    en: { buy: "Buy", sell: "Sell" },
-    de: { buy: "Kaufen", sell: "Verkaufen" },
-    fr: { buy: "Acheter", sell: "Vendre" },
-    ar: { buy: "شراء", sell: "بيع" },
-    ru: { buy: "Купить", sell: "Продать" },
+    tr: { buy: "Edin", sell: "İade Et" },
+    en: { buy: "Acquire", sell: "Redeem" },
+    de: { buy: "Erwerben", sell: "Einlösen" },
+    fr: { buy: "Acquérir", sell: "Racheter" },
+    ar: { buy: "اقتناء", sell: "استرداد" },
+    ru: { buy: "Приобрести", sell: "Выкупить" },
   };
   const t = translations[lang] || translations.en;
 
