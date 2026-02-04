@@ -56,22 +56,15 @@ const CRYPTO_OPTIONS = [
   { value: "SOL", label: "Solana", icon: "◎" },
 ];
 
-// Banka transferi için kripto seçenekleri
-const BANK_CRYPTO_OPTIONS = [
-  { value: "USDT", label: "Tether (USDT)", icon: "₮" },
-  { value: "USDC", label: "USD Coin", icon: "◯" },
-  { value: "ETH", label: "Ethereum", icon: "⟠" },
-  { value: "BTC", label: "Bitcoin", icon: "₿" },
-];
-
-// Banka transferi için fiat seçenekleri
-const BANK_FIAT_OPTIONS = [
-  { value: "EUR", label: "Euro (SEPA)", symbol: "€" },
-  { value: "USD", label: "US Dollar", symbol: "$" },
-  { value: "GBP", label: "British Pound", symbol: "£" },
-];
-
-const BANK_AMOUNT_PRESETS = [500, 1000, 2500, 5000, 10000];
+// Bizim banka hesap bilgileri - SEPA transferi için
+const COMPANY_BANK_ACCOUNT = {
+  bankName: "Wise (TransferWise)",
+  accountName: "Auxite Trading Ltd",
+  iban: "BE12 3456 7890 1234",
+  bic: "TRWIBEB1XXX",
+  currency: "EUR",
+  country: "Belgium",
+};
 
 const FIAT_OPTIONS = [
   { value: "USD", label: "US Dollar", symbol: "$" },
@@ -112,10 +105,15 @@ const texts: Record<string, Record<string, string>> = {
     continue: "Devam Et",
     back: "Geri",
     holdingNotice: "Not: Transak ile satın alınan kriptolar 30 gün boyunca sadece platform içi işlemlerde kullanılabilir.",
-    bankInfo: "SEPA/Banka transferi ile kripto satın alın. İşlem 1-3 iş günü sürebilir.",
-    bankTransfer: "Banka Transferi ile Al",
-    selectBankCrypto: "Almak istediğiniz kripto",
-    bankNote: "Banka transferi daha yüksek limitler ve düşük komisyon sunar.",
+    bankInfo: "Aşağıdaki hesaba SEPA transferi yapın. Transfer açıklamasına referans kodunuzu eklemeyi unutmayın.",
+    bankNote: "Transfer 1-2 iş günü içinde hesabınıza yansır.",
+    bankName: "Banka",
+    accountHolder: "Hesap Sahibi",
+    iban: "IBAN",
+    bic: "BIC/SWIFT",
+    reference: "Referans Kodu",
+    referenceWarning: "Bu kodu transfer açıklamasına eklemeyi unutmayın!",
+    bankCountry: "Ülke",
   },
   en: {
     title: "Add Funds",
@@ -145,10 +143,15 @@ const texts: Record<string, Record<string, string>> = {
     continue: "Continue",
     back: "Back",
     holdingNotice: "Note: Crypto purchased via Transak can only be used for platform transactions for 30 days.",
-    bankInfo: "Buy crypto with SEPA/Bank transfer. Transaction may take 1-3 business days.",
-    bankTransfer: "Buy with Bank Transfer",
-    selectBankCrypto: "Select crypto to buy",
-    bankNote: "Bank transfer offers higher limits and lower fees.",
+    bankInfo: "Make a SEPA transfer to the account below. Don't forget to include your reference code in the transfer description.",
+    bankNote: "Transfer will be credited within 1-2 business days.",
+    bankName: "Bank",
+    accountHolder: "Account Holder",
+    iban: "IBAN",
+    bic: "BIC/SWIFT",
+    reference: "Reference Code",
+    referenceWarning: "Don't forget to include this code in the transfer description!",
+    bankCountry: "Country",
   },
   de: {
     title: "Geld Einzahlen",
@@ -178,10 +181,15 @@ const texts: Record<string, Record<string, string>> = {
     continue: "Weiter",
     back: "Zurück",
     holdingNotice: "Hinweis: Über Transak gekaufte Krypto kann 30 Tage lang nur für Plattformtransaktionen verwendet werden.",
-    bankInfo: "Kaufen Sie Krypto per SEPA/Banküberweisung. Die Transaktion kann 1-3 Werktage dauern.",
-    bankTransfer: "Per Banküberweisung kaufen",
-    selectBankCrypto: "Krypto zum Kaufen wählen",
-    bankNote: "Banküberweisung bietet höhere Limits und niedrigere Gebühren.",
+    bankInfo: "Überweisen Sie per SEPA auf das unten stehende Konto. Vergessen Sie nicht, Ihren Referenzcode in der Überweisungsbeschreibung anzugeben.",
+    bankNote: "Die Überweisung wird innerhalb von 1-2 Werktagen gutgeschrieben.",
+    bankName: "Bank",
+    accountHolder: "Kontoinhaber",
+    iban: "IBAN",
+    bic: "BIC/SWIFT",
+    reference: "Referenzcode",
+    referenceWarning: "Vergessen Sie nicht, diesen Code in der Überweisungsbeschreibung anzugeben!",
+    bankCountry: "Land",
   },
   fr: {
     title: "Ajouter des Fonds",
@@ -211,10 +219,15 @@ const texts: Record<string, Record<string, string>> = {
     continue: "Continuer",
     back: "Retour",
     holdingNotice: "Note: Les cryptos achetées via Transak ne peuvent être utilisées que pour les transactions de la plateforme pendant 30 jours.",
-    bankInfo: "Achetez des cryptos par virement SEPA/bancaire. La transaction peut prendre 1 à 3 jours ouvrables.",
-    bankTransfer: "Acheter par Virement",
-    selectBankCrypto: "Sélectionner la crypto à acheter",
-    bankNote: "Le virement bancaire offre des limites plus élevées et des frais réduits.",
+    bankInfo: "Effectuez un virement SEPA sur le compte ci-dessous. N'oubliez pas d'inclure votre code de référence dans la description du virement.",
+    bankNote: "Le virement sera crédité dans un délai de 1 à 2 jours ouvrables.",
+    bankName: "Banque",
+    accountHolder: "Titulaire du compte",
+    iban: "IBAN",
+    bic: "BIC/SWIFT",
+    reference: "Code de référence",
+    referenceWarning: "N'oubliez pas d'inclure ce code dans la description du virement!",
+    bankCountry: "Pays",
   },
   ar: {
     title: "إضافة أموال",
@@ -244,10 +257,15 @@ const texts: Record<string, Record<string, string>> = {
     continue: "متابعة",
     back: "رجوع",
     holdingNotice: "ملاحظة: يمكن استخدام العملات المشفرة المشتراة عبر Transak فقط لمعاملات المنصة لمدة 30 يومًا.",
-    bankInfo: "اشترِ العملات المشفرة عبر التحويل البنكي/SEPA. قد تستغرق المعاملة 1-3 أيام عمل.",
-    bankTransfer: "شراء بالتحويل البنكي",
-    selectBankCrypto: "اختر العملة المشفرة للشراء",
-    bankNote: "يوفر التحويل البنكي حدودًا أعلى ورسومًا أقل.",
+    bankInfo: "قم بإجراء تحويل SEPA إلى الحساب أدناه. لا تنسَ تضمين رمز المرجع الخاص بك في وصف التحويل.",
+    bankNote: "سيتم إضافة التحويل خلال 1-2 أيام عمل.",
+    bankName: "البنك",
+    accountHolder: "صاحب الحساب",
+    iban: "IBAN",
+    bic: "BIC/SWIFT",
+    reference: "رمز المرجع",
+    referenceWarning: "لا تنسَ تضمين هذا الرمز في وصف التحويل!",
+    bankCountry: "الدولة",
   },
   ru: {
     title: "Пополнить",
@@ -277,10 +295,15 @@ const texts: Record<string, Record<string, string>> = {
     continue: "Продолжить",
     back: "Назад",
     holdingNotice: "Примечание: Криптовалюта, купленная через Transak, может использоваться только для платформенных транзакций в течение 30 дней.",
-    bankInfo: "Покупайте криптовалюту через SEPA/банковский перевод. Транзакция может занять 1-3 рабочих дня.",
-    bankTransfer: "Купить через Банк",
-    selectBankCrypto: "Выберите криптовалюту для покупки",
-    bankNote: "Банковский перевод предлагает более высокие лимиты и низкие комиссии.",
+    bankInfo: "Сделайте SEPA-перевод на счет ниже. Не забудьте указать свой референс-код в описании перевода.",
+    bankNote: "Перевод будет зачислен в течение 1-2 рабочих дней.",
+    bankName: "Банк",
+    accountHolder: "Владелец счета",
+    iban: "IBAN",
+    bic: "BIC/SWIFT",
+    reference: "Референс-код",
+    referenceWarning: "Не забудьте указать этот код в описании перевода!",
+    bankCountry: "Страна",
   },
 };
 
@@ -305,15 +328,13 @@ export function AddFundsModal({
   const [isLoading, setIsLoading] = useState(false);
 
   // Bank transfer states
-  const [bankCryptoCurrency, setBankCryptoCurrency] = useState("USDT");
-  const [bankFiatCurrency, setBankFiatCurrency] = useState("EUR");
-  const [bankAmount, setBankAmount] = useState("1000");
-  const [bankEmail, setBankEmail] = useState("");
-  const [isBankLoading, setIsBankLoading] = useState(false);
+  const [copiedBankField, setCopiedBankField] = useState<string | null>(null);
 
   const t = texts[lang] || texts.en;
   const fiatSymbol = FIAT_OPTIONS.find(f => f.value === fiatCurrency)?.symbol || "$";
-  const bankFiatSymbol = BANK_FIAT_OPTIONS.find(f => f.value === bankFiatCurrency)?.symbol || "€";
+
+  // Kullanıcının referans kodu (wallet address'in ilk 8 karakteri)
+  const userReference = `AUX-${walletAddress.slice(0, 8).toUpperCase()}`;
 
   // Reset states when modal closes
   useEffect(() => {
@@ -369,37 +390,15 @@ export function AddFundsModal({
     }, 1000);
   };
 
-  // Banka transferi ile kripto al (Transak - sadece SEPA/banka transferi)
-  const handleBuyWithBank = () => {
-    if (!walletAddress) return;
-
-    setIsBankLoading(true);
-
-    const transakApiKey = process.env.NEXT_PUBLIC_TRANSAK_API_KEY || "5911d9ec-46b5-48fa-a755-d59a3f4b4039";
-
-    const params = new URLSearchParams({
-      apiKey: transakApiKey,
-      environment: "PRODUCTION",
-      cryptoCurrencyCode: bankCryptoCurrency,
-      fiatCurrency: bankFiatCurrency,
-      fiatAmount: bankAmount,
-      walletAddress: walletAddress,
-      disableWalletAddressForm: "true",
-      hideMenu: "true",
-      themeColor: "f59e0b",
-      // Sadece banka transferi - SEPA, vs. (kart yok)
-      paymentMethod: "sepa_bank_transfer,gbp_bank_transfer",
-      disablePaymentMethods: "credit_debit_card,apple_pay,google_pay",
-      ...(bankEmail && { email: bankEmail }),
-    });
-
-    const transakUrl = `https://global.transak.com/?${params.toString()}`;
-    window.open(transakUrl, "_blank");
-
-    setTimeout(() => {
-      setIsBankLoading(false);
-      onClose();
-    }, 1000);
+  // Banka bilgisi kopyalama
+  const handleCopyBankField = async (text: string, fieldName: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedBankField(fieldName);
+      setTimeout(() => setCopiedBankField(null), 2000);
+    } catch (err) {
+      console.error("Copy failed:", err);
+    }
   };
 
   if (!isOpen) return null;
@@ -703,167 +702,16 @@ export function AddFundsModal({
           )}
 
           {/* ═══════════════════════════════════════════════════════════════════════ */}
-          {/* TAB 3: Banka Transferi - Transak SEPA Widget */}
+          {/* TAB 3: Banka Transferi - Transak SEPA Widget (iframe) */}
           {/* ═══════════════════════════════════════════════════════════════════════ */}
           {activeTab === "bank" && (
-            <div>
-              {/* Bank Info Banner */}
-              <div className="mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                <div className="flex items-start gap-2">
-                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                  <div>
-                    <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 font-medium">
-                      {t.bankInfo}
-                    </p>
-                    <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400 mt-1">
-                      {t.bankNote}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Crypto Selection for Bank */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  {t.selectBankCrypto}
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {BANK_CRYPTO_OPTIONS.map((crypto) => (
-                    <button
-                      key={crypto.value}
-                      onClick={() => setBankCryptoCurrency(crypto.value)}
-                      className={`p-2 sm:p-3 rounded-lg border transition-all text-center ${
-                        bankCryptoCurrency === crypto.value
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                          : "border-stone-200 dark:border-slate-700 hover:border-blue-300"
-                      }`}
-                    >
-                      <span className="text-lg sm:text-xl">{crypto.icon}</span>
-                      <p className="text-[10px] sm:text-xs font-medium text-slate-700 dark:text-slate-300 mt-1">
-                        {crypto.value}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Amount Input for Bank */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  {t.amount}
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 font-medium">
-                    {bankFiatSymbol}
-                  </span>
-                  <input
-                    type="number"
-                    value={bankAmount}
-                    onChange={(e) => setBankAmount(e.target.value)}
-                    min={100}
-                    max={50000}
-                    className="w-full pl-8 sm:pl-10 pr-16 sm:pr-20 py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="1000"
-                  />
-                  <select
-                    value={bankFiatCurrency}
-                    onChange={(e) => setBankFiatCurrency(e.target.value)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-stone-100 dark:bg-slate-700 border-none rounded px-2 py-1 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300"
-                  >
-                    {BANK_FIAT_OPTIONS.map((fiat) => (
-                      <option key={fiat.value} value={fiat.value}>
-                        {fiat.value}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 mt-1">{t.minMaxBank}</p>
-
-                {/* Bank Amount Presets */}
-                <div className="flex gap-1.5 sm:gap-2 mt-2">
-                  {BANK_AMOUNT_PRESETS.map((preset) => (
-                    <button
-                      key={preset}
-                      onClick={() => setBankAmount(preset.toString())}
-                      className={`flex-1 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded border transition-all ${
-                        bankAmount === preset.toString()
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
-                          : "border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-blue-300"
-                      }`}
-                    >
-                      {bankFiatSymbol}{preset >= 1000 ? `${preset / 1000}k` : preset}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Email for Bank */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  {t.email}
-                </label>
-                <input
-                  type="email"
-                  value={bankEmail}
-                  onChange={(e) => setBankEmail(e.target.value)}
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={t.emailPlaceholder}
-                />
-              </div>
-
-              {/* Holding Period Notice */}
-              <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                <p className="text-xs text-amber-700 dark:text-amber-400">
-                  {t.holdingNotice}
-                </p>
-              </div>
-
-              {/* Bank Transfer Button */}
-              <button
-                onClick={handleBuyWithBank}
-                disabled={isBankLoading}
-                className="w-full py-3 sm:py-4 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isBankLoading ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    {t.buying}
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                    {t.bankTransfer} {bankCryptoCurrency}
-                  </>
-                )}
-              </button>
-
-              {/* Receiving Wallet */}
-              <div className="mt-4 p-2.5 sm:p-3 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
-                <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mb-1">{t.receivingWallet}</p>
-                <p className="text-xs sm:text-sm font-mono text-slate-700 dark:text-slate-300 truncate">
-                  {walletAddress}
-                </p>
-              </div>
-
-              {/* Security Note */}
-              <div className="mt-4 flex flex-col items-center gap-2">
-                <p className="text-[10px] sm:text-xs text-center text-slate-500 dark:text-slate-500">
-                  {t.securityNote}
-                </p>
-                <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  <span className="text-xs font-medium">{t.poweredBy}</span>
-                </div>
-              </div>
+            <div className="h-[500px] -m-4">
+              <iframe
+                src={`https://global.transak.com/?apiKey=${process.env.NEXT_PUBLIC_TRANSAK_API_KEY || "5911d9ec-46b5-48fa-a755-d59a3f4b4039"}&environment=PRODUCTION&cryptoCurrencyCode=USDT&fiatCurrency=EUR&fiatAmount=500&walletAddress=${walletAddress}&disableWalletAddressForm=true&hideMenu=true&themeColor=3b82f6&paymentMethod=sepa_bank_transfer&disablePaymentMethods=credit_debit_card,apple_pay,google_pay`}
+                allow="camera;microphone;payment"
+                className="w-full h-full border-0 rounded-b-xl"
+                title="Transak Bank Transfer"
+              />
             </div>
           )}
         </div>
