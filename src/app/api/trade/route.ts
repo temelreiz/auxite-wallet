@@ -3,6 +3,7 @@ import { sendCertificateEmail } from "@/lib/email";
 export const maxDuration = 60;
 // V6 BLOCKCHAIN ENTEGRASYONLU - Gerçek token mint/burn işlemleri
 // ✅ AUXITEER TIER BAZLI FEE ENTEGRASYONU
+// ✅ TELEGRAM BOT BİLDİRİMLERİ
 import { NextRequest, NextResponse } from "next/server";
 import { executeQuote } from "@/lib/quote-service";
 import { Redis } from "@upstash/redis";
@@ -25,6 +26,7 @@ import {
   checkReserveLimit,
 } from "@/lib/v6-token-service";
 import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
+import { notifyTrade } from "@/lib/telegram";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CRYPTO PRICE HELPER - Direkt Binance'den fiyat al
@@ -1373,6 +1375,32 @@ export async function POST(request: NextRequest) {
 
     // 10. Get updated balance
     const updatedBalance = await redis.hgetall(balanceKey);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 11. TELEGRAM BİLDİRİMİ - Metal alımlarında admin'e bildirim gönder
+    // ═══════════════════════════════════════════════════════════════════════
+    if (type === "buy" && METALS.includes(toTokenLower)) {
+      // Async olarak gönder, response'u bekletme
+      notifyTrade({
+        type: "buy",
+        userAddress: normalizedAddress,
+        fromToken: fromToken.toUpperCase(),
+        toToken: toToken.toUpperCase(),
+        fromAmount,
+        toAmount,
+        txHash,
+        certificateNumber,
+        email,
+      }).then((success) => {
+        if (success) {
+          console.log(`📱 Telegram bildirimi gönderildi: ${toAmount.toFixed(4)}g ${toToken.toUpperCase()}`);
+        } else {
+          console.error(`❌ Telegram bildirimi gönderilemedi`);
+        }
+      }).catch((err) => {
+        console.error(`❌ Telegram bildirim hatası:`, err);
+      });
+    }
 
     return NextResponse.json({
       success: true,

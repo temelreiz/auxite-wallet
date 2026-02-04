@@ -4,6 +4,9 @@
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8392512425:AAG5ixJeJnG-rE9UEW4HJ75qAtrMCcQ37n0";
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "1611619602";
 
+// Debug: Log config on module load
+console.log(`📱 Telegram Bot Config: Token=${TELEGRAM_BOT_TOKEN ? "SET" : "MISSING"}, ChatID=${TELEGRAM_CHAT_ID}`);
+
 interface TradeNotification {
   type: "buy" | "sell" | "swap";
   userAddress: string;
@@ -31,29 +34,36 @@ interface OperationNotification {
  */
 export async function sendTelegramMessage(message: string): Promise<boolean> {
   try {
+    console.log(`📤 Sending Telegram message to chat ${TELEGRAM_CHAT_ID}...`);
+
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    
+
+    const body = {
+      chat_id: TELEGRAM_CHAT_ID,
+      text: message,
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+    };
+
+    console.log(`📤 Telegram request URL: ${url.replace(TELEGRAM_BOT_TOKEN, "***TOKEN***")}`);
+
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      }),
+      body: JSON.stringify(body),
     });
 
     const data = await response.json();
-    
+
     if (!data.ok) {
-      console.error("Telegram API error:", data);
+      console.error("❌ Telegram API error:", JSON.stringify(data));
       return false;
     }
 
+    console.log(`✅ Telegram message sent successfully! Message ID: ${data.result?.message_id}`);
     return true;
-  } catch (error) {
-    console.error("Telegram send error:", error);
+  } catch (error: any) {
+    console.error("❌ Telegram send error:", error.message);
     return false;
   }
 }
