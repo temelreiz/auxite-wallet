@@ -702,16 +702,134 @@ export function AddFundsModal({
           )}
 
           {/* ═══════════════════════════════════════════════════════════════════════ */}
-          {/* TAB 3: Banka Transferi - Transak SEPA Widget (iframe) */}
+          {/* TAB 3: Banka Transferi - Kendi iç modalımız */}
           {/* ═══════════════════════════════════════════════════════════════════════ */}
           {activeTab === "bank" && (
-            <div className="h-[500px] -m-4">
-              <iframe
-                src={`https://global.transak.com/?apiKey=${process.env.NEXT_PUBLIC_TRANSAK_API_KEY || "5911d9ec-46b5-48fa-a755-d59a3f4b4039"}&environment=PRODUCTION&cryptoCurrencyCode=USDT&fiatCurrency=EUR&fiatAmount=500&walletAddress=${walletAddress}&disableWalletAddressForm=true&hideMenu=true&themeColor=3b82f6&paymentMethod=sepa_bank_transfer&disablePaymentMethods=credit_debit_card,apple_pay,google_pay`}
-                allow="camera;microphone;payment"
-                className="w-full h-full border-0 rounded-b-xl"
-                title="Transak Bank Transfer"
-              />
+            <div>
+              {/* Bank Info Banner */}
+              <div className="mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                <div className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  <div>
+                    <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 font-medium">
+                      {t.bankInfo}
+                    </p>
+                    <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      {t.bankNote}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bank Name */}
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  {t.bankName}
+                </label>
+                <div className="bg-stone-100 dark:bg-slate-800 rounded-lg p-3 flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {COMPANY_BANK_ACCOUNT.bankName}
+                  </p>
+                  <button
+                    onClick={() => handleCopyBankField(COMPANY_BANK_ACCOUNT.bankName, "bankName")}
+                    className="flex-shrink-0 px-2 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium transition-colors"
+                  >
+                    {copiedBankField === "bankName" ? t.copied : t.copy}
+                  </button>
+                </div>
+              </div>
+
+              {/* Account Holder */}
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  {t.accountHolder}
+                </label>
+                <div className="bg-stone-100 dark:bg-slate-800 rounded-lg p-3 flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {COMPANY_BANK_ACCOUNT.accountName}
+                  </p>
+                  <button
+                    onClick={() => handleCopyBankField(COMPANY_BANK_ACCOUNT.accountName, "accountName")}
+                    className="flex-shrink-0 px-2 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium transition-colors"
+                  >
+                    {copiedBankField === "accountName" ? t.copied : t.copy}
+                  </button>
+                </div>
+              </div>
+
+              {/* IBAN */}
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  {t.iban}
+                </label>
+                <div className="bg-stone-100 dark:bg-slate-800 rounded-lg p-3 flex items-center justify-between gap-2">
+                  <p className="text-sm font-mono text-slate-700 dark:text-slate-300">
+                    {COMPANY_BANK_ACCOUNT.iban}
+                  </p>
+                  <button
+                    onClick={() => handleCopyBankField(COMPANY_BANK_ACCOUNT.iban, "iban")}
+                    className="flex-shrink-0 px-2 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium transition-colors"
+                  >
+                    {copiedBankField === "iban" ? t.copied : t.copy}
+                  </button>
+                </div>
+              </div>
+
+              {/* BIC/SWIFT */}
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  {t.bic}
+                </label>
+                <div className="bg-stone-100 dark:bg-slate-800 rounded-lg p-3 flex items-center justify-between gap-2">
+                  <p className="text-sm font-mono text-slate-700 dark:text-slate-300">
+                    {COMPANY_BANK_ACCOUNT.bic}
+                  </p>
+                  <button
+                    onClick={() => handleCopyBankField(COMPANY_BANK_ACCOUNT.bic, "bic")}
+                    className="flex-shrink-0 px-2 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium transition-colors"
+                  >
+                    {copiedBankField === "bic" ? t.copied : t.copy}
+                  </button>
+                </div>
+              </div>
+
+              {/* Country */}
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  {t.bankCountry}
+                </label>
+                <div className="bg-stone-100 dark:bg-slate-800 rounded-lg p-3">
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {COMPANY_BANK_ACCOUNT.country}
+                  </p>
+                </div>
+              </div>
+
+              {/* Reference Code - IMPORTANT */}
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  {t.reference}
+                </label>
+                <div className="bg-amber-50 dark:bg-amber-900/30 rounded-lg p-3 flex items-center justify-between gap-2 border border-amber-200 dark:border-amber-800">
+                  <p className="text-lg font-mono font-bold text-amber-700 dark:text-amber-400">
+                    {userReference}
+                  </p>
+                  <button
+                    onClick={() => handleCopyBankField(userReference, "reference")}
+                    className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium transition-colors"
+                  >
+                    {copiedBankField === "reference" ? t.copied : t.copy}
+                  </button>
+                </div>
+                <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  {t.referenceWarning}
+                </p>
+              </div>
             </div>
           )}
         </div>
