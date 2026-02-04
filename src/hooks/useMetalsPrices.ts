@@ -25,10 +25,11 @@ interface MetalChanges {
 }
 
 export function useMetalsPrices() {
-  // Realistic default prices (January 2026) - prevents $0 or $1 bugs
-  const DEFAULT_BASE = { AUXG: 165, AUXS: 3.20, AUXPT: 75, AUXPD: 58 };
-  const DEFAULT_ASK = { AUXG: 170, AUXS: 3.50, AUXPT: 82, AUXPD: 60 };
-  const DEFAULT_BID = { AUXG: 160, AUXS: 2.90, AUXPT: 68, AUXPD: 56 };
+  // Realistic default prices (February 2026) - prevents $0 or $1 bugs
+  // Updated based on current market: Gold ~$5050/oz, Silver ~$89/oz, Platinum ~$2280/oz, Palladium ~$1820/oz
+  const DEFAULT_BASE = { AUXG: 162.5, AUXS: 2.87, AUXPT: 73.3, AUXPD: 58.6 };
+  const DEFAULT_ASK = { AUXG: 165.8, AUXS: 2.96, AUXPT: 75.1, AUXPD: 60.0 };
+  const DEFAULT_BID = { AUXG: 160.9, AUXS: 2.84, AUXPT: 72.4, AUXPD: 58.0 };
 
   // Base prices (spread'siz ham fiyat - kartlarda gösterilecek)
   const [basePrices, setBasePrices] = useState<MetalPrices>(DEFAULT_BASE);

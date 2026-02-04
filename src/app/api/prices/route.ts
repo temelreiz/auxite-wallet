@@ -23,11 +23,12 @@ const GOLDAPI_SYMBOLS: Record<string, string> = {
   AUXPD: "XPD",
 };
 
+// Updated fallback prices - February 2026 market rates
 const FALLBACK_PRICES: Record<string, { oz: number; gram: number }> = {
-  AUXG: { oz: 2750, gram: 88.42 },
-  AUXS: { oz: 31, gram: 1.00 },
-  AUXPT: { oz: 1000, gram: 32.15 },
-  AUXPD: { oz: 1000, gram: 32.15 },
+  AUXG: { oz: 5050, gram: 162.4 },
+  AUXS: { oz: 89, gram: 2.86 },
+  AUXPT: { oz: 2280, gram: 73.3 },
+  AUXPD: { oz: 1820, gram: 58.5 },
 };
 
 // Redis'ten spread ayarlarını al
@@ -111,10 +112,14 @@ async function fetchGoldApiPrices(): Promise<Record<string, { price: number; cha
     }
   }
 
-  // Tüm 4 metal başarılı olmalı, yoksa null dön (cache kullanılacak)
-  if (successCount < 4) {
-    console.warn(`⚠️ Only ${successCount}/4 metals fetched, using cache`);
+  // En az 1 metal başarılı olduysa, kısmi veri dön (fallback ile birleştirilecek)
+  if (successCount === 0) {
+    console.warn(`⚠️ No metals fetched from GoldAPI`);
     return null;
+  }
+
+  if (successCount < 4) {
+    console.warn(`⚠️ Partial data: ${successCount}/4 metals fetched`);
   }
 
   return results;
