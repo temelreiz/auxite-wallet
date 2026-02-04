@@ -162,8 +162,9 @@ async function sendTransferEmails(fromAddress: string, toAddress: string, amount
 // ═══════════════════════════════════════════════════════════════════════════
 // TRANSAK HOLDING PERIOD CHECK
 // Kullanıcı Transak ile kripto aldıysa, belirli süre dış cüzdana transfer edemez
+// Bu süre chargeback (ters ibraz) riskini minimize etmek içindir
 // ═══════════════════════════════════════════════════════════════════════════
-const HOLDING_PERIOD_DAYS = 7; // 7 gün bekleme süresi
+const HOLDING_PERIOD_DAYS = 30; // 30 gün bekleme süresi (chargeback koruması)
 const HOLDING_PERIOD_MS = HOLDING_PERIOD_DAYS * 24 * 60 * 60 * 1000;
 
 async function checkTransakHoldingPeriod(
