@@ -108,7 +108,7 @@ const walletTranslations: Record<string, Record<string, string>> = {
     addFunds: "Fon Ekle",
     withdraw: "Çek",
     acquire: "Edin",
-    redeem: "İade Et",
+    redeem: "Bozdur",
   },
   en: {
     // Vault terminology - Institutional language

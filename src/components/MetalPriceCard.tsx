@@ -79,7 +79,7 @@ export default function MetalPriceCard({
   };
 
   const translations: Record<string, { buy: string; sell: string }> = {
-    tr: { buy: "Edin", sell: "İade Et" },
+    tr: { buy: "Edin", sell: "Bozdur" },
     en: { buy: "Acquire", sell: "Redeem" },
     de: { buy: "Erwerben", sell: "Einlösen" },
     fr: { buy: "Acquérir", sell: "Racheter" },

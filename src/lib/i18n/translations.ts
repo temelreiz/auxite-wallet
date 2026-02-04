@@ -89,9 +89,9 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Trade (Acquire/Redeem instead of Buy/Sell)
     "trade.buy": "Edin",
-    "trade.sell": "İade Et",
+    "trade.sell": "Bozdur",
     "trade.acquire": "Edin",
-    "trade.redeem": "İade Et",
+    "trade.redeem": "Bozdur",
     "trade.market": "Piyasa",
     "trade.limit": "Limit",
     "trade.amount": "Miktar",
