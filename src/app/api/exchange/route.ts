@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { getTokenPrices } from "@/lib/v6-token-service";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -8,6 +9,88 @@ const redis = new Redis({
 
 const METALS = ["auxg", "auxs", "auxpt", "auxpd"];
 const CRYPTOS = ["eth", "btc", "xrp", "sol", "usdt"];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SERVER-SIDE PRICE CALCULATION - Frontend manipulation önleme
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function getServerPrice(asset: string): Promise<{ ask: number; bid: number }> {
+  const assetLower = asset.toLowerCase();
+  const assetUpper = asset.toUpperCase();
+
+  // USD, AUXM, USDT = 1:1
+  if (assetLower === "usd" || assetLower === "auxm" || assetLower === "usdt") {
+    return { ask: 1, bid: 1 };
+  }
+
+  // Metals - get from API/Oracle
+  if (METALS.includes(assetLower)) {
+    try {
+      const prices = await getTokenPrices(asset);
+      return { ask: prices.askPerGram, bid: prices.bidPerGram };
+    } catch (e) {
+      console.error(`Failed to get ${asset} price:`, e);
+      // Fallback prices (should never be used in production)
+      const fallbacks: Record<string, { ask: number; bid: number }> = {
+        auxg: { ask: 170, bid: 160 },
+        auxs: { ask: 3.5, bid: 2.9 },
+        auxpt: { ask: 82, bid: 68 },
+        auxpd: { ask: 60, bid: 56 },
+      };
+      return fallbacks[assetLower] || { ask: 100, bid: 100 };
+    }
+  }
+
+  // Cryptos - fetch from Binance
+  if (CRYPTOS.includes(assetLower)) {
+    try {
+      const symbols: Record<string, string> = {
+        eth: "ETHUSDT", btc: "BTCUSDT", xrp: "XRPUSDT", sol: "SOLUSDT"
+      };
+      const symbol = symbols[assetLower];
+      if (symbol) {
+        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+        const data = await res.json();
+        const price = parseFloat(data.price);
+        return { ask: price, bid: price };
+      }
+    } catch (e) {
+      console.error(`Failed to get ${asset} crypto price:`, e);
+    }
+    // Fallback
+    const fallbacks: Record<string, number> = { eth: 3500, btc: 97000, xrp: 2.2, sol: 235 };
+    const p = fallbacks[assetLower] || 1;
+    return { ask: p, bid: p };
+  }
+
+  return { ask: 1, bid: 1 };
+}
+
+// Calculate server-side toAmount
+async function calculateServerToAmount(
+  fromAsset: string,
+  toAsset: string,
+  fromAmount: number
+): Promise<{ toAmount: number; fromPrice: number; toPrice: number }> {
+  const fromPrices = await getServerPrice(fromAsset);
+  const toPrices = await getServerPrice(toAsset);
+
+  // User is SELLING fromAsset (we use bid price - we buy low)
+  // User is BUYING toAsset (we use ask price - we sell high)
+  const fromPrice = fromPrices.bid;
+  const toPrice = toPrices.ask;
+
+  // Convert fromAmount to USD value
+  const fromValueUSD = fromAmount * fromPrice;
+
+  // Calculate toAmount
+  const toAmount = fromValueUSD / toPrice;
+
+  console.log(`📊 Server calculation: ${fromAmount} ${fromAsset} (@ $${fromPrice}) = $${fromValueUSD.toFixed(2)} USD`);
+  console.log(`📊 Server calculation: $${fromValueUSD.toFixed(2)} / $${toPrice} = ${toAmount.toFixed(6)} ${toAsset}`);
+
+  return { toAmount, fromPrice, toPrice };
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CUSTODIAL WALLET CHECK
@@ -76,9 +159,9 @@ async function getMetalBalance(address: string, metal: string): Promise<number> 
 
 export async function POST(request: NextRequest) {
   try {
-    const { fromAsset, toAsset, fromAmount, toAmount, address } = await request.json();
+    const { fromAsset, toAsset, fromAmount, toAmount: clientToAmount, address } = await request.json();
 
-    if (!fromAsset || !toAsset || !fromAmount || !toAmount) {
+    if (!fromAsset || !toAsset || !fromAmount) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -88,6 +171,29 @@ export async function POST(request: NextRequest) {
 
     const normalizedAddress = address.toLowerCase();
     const balanceKey = `user:${normalizedAddress}:balance`;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 🔒 SERVER-SIDE PRICE CALCULATION - Frontend manipulation önleme
+    // ═══════════════════════════════════════════════════════════════════════════
+    const { toAmount, fromPrice, toPrice } = await calculateServerToAmount(fromAsset, toAsset, fromAmount);
+
+    // Validate: server calculation vs client request (max 5% tolerance for timing differences)
+    if (clientToAmount) {
+      const diff = Math.abs(toAmount - clientToAmount) / toAmount;
+      if (diff > 0.05) {
+        console.error(`⚠️ PRICE MANIPULATION DETECTED!`);
+        console.error(`   Client requested: ${clientToAmount} ${toAsset}`);
+        console.error(`   Server calculated: ${toAmount} ${toAsset}`);
+        console.error(`   Difference: ${(diff * 100).toFixed(2)}%`);
+        return NextResponse.json({
+          error: "Price changed. Please refresh and try again.",
+          serverToAmount: toAmount,
+          clientToAmount,
+        }, { status: 400 });
+      }
+    }
+
+    console.log(`✅ Exchange validated: ${fromAmount} ${fromAsset} → ${toAmount.toFixed(6)} ${toAsset}`);
 
     // Get current Redis balance
     const currentBalance = await redis.hgetall(balanceKey) || {};
