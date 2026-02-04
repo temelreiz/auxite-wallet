@@ -10,6 +10,7 @@ interface AddFundsModalProps {
   lang: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   walletAddress: string;
   defaultTab?: "crypto" | "card" | "bank";
+  bankOnly?: boolean; // Sadece Bank Transfer göster (Deposit USD için)
 }
 
 // Deposit adresleri
@@ -288,6 +289,7 @@ export function AddFundsModal({
   lang,
   walletAddress,
   defaultTab = "crypto",
+  bankOnly = false,
 }: AddFundsModalProps) {
   const [activeTab, setActiveTab] = useState<"crypto" | "card" | "bank">(defaultTab);
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
@@ -417,39 +419,41 @@ export function AddFundsModal({
           </button>
         </div>
 
-        {/* Tabs - 3 seçenek */}
-        <div className="flex border-b border-stone-200 dark:border-slate-700 flex-shrink-0">
-          <button
-            onClick={() => { setActiveTab("crypto"); setSelectedCoin(null); }}
-            className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
-              activeTab === "crypto"
-                ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
-          >
-            {t.tabCrypto}
-          </button>
-          <button
-            onClick={() => { setActiveTab("card"); setSelectedCoin(null); }}
-            className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
-              activeTab === "card"
-                ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
-          >
-            {t.tabCard}
-          </button>
-          <button
-            onClick={() => { setActiveTab("bank"); setSelectedCoin(null); }}
-            className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
-              activeTab === "bank"
-                ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
-          >
-            {t.tabBank}
-          </button>
-        </div>
+        {/* Tabs - 3 seçenek (bankOnly modunda gizle) */}
+        {!bankOnly && (
+          <div className="flex border-b border-stone-200 dark:border-slate-700 flex-shrink-0">
+            <button
+              onClick={() => { setActiveTab("crypto"); setSelectedCoin(null); }}
+              className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
+                activeTab === "crypto"
+                  ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+              }`}
+            >
+              {t.tabCrypto}
+            </button>
+            <button
+              onClick={() => { setActiveTab("card"); setSelectedCoin(null); }}
+              className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
+                activeTab === "card"
+                  ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+              }`}
+            >
+              {t.tabCard}
+            </button>
+            <button
+              onClick={() => { setActiveTab("bank"); setSelectedCoin(null); }}
+              className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
+                activeTab === "bank"
+                  ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+              }`}
+            >
+              {t.tabBank}
+            </button>
+          </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">

@@ -477,6 +477,7 @@ export default function MetalPriceGrid() {
           lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
           walletAddress={walletAddress}
           defaultTab={addFundsDefaultTab}
+          bankOnly={addFundsDefaultTab === "bank"}
         />
       )}
 

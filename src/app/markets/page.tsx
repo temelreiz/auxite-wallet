@@ -300,6 +300,7 @@ export default function MarketsPage() {
           lang={lang}
           walletAddress={address || ""}
           defaultTab={addFundsDefaultTab}
+          bankOnly={addFundsDefaultTab === "bank"}
         />
       )}
     </main>

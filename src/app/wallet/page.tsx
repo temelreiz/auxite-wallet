@@ -1722,6 +1722,7 @@ export default function WalletPage() {
           lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
           walletAddress={currentAddress || ""}
           defaultTab={addFundsDefaultTab}
+          bankOnly={addFundsDefaultTab === "bank"}
         />
       )}
     </main>
