@@ -16,6 +16,7 @@ import { MetalConvertModal } from "@/components/MetalConvertModal";
 import { WithdrawModal } from "@/components/WithdrawModal";
 import { TransferModal } from "@/components/TransferModal";
 import { UsdDepositModal } from "@/components/UsdDepositModal";
+import { AddFundsModal } from "@/components/AddFundsModal";
 import { BuyWithUsdModal } from "@/components/BuyWithUsdModal";
 import { UsdConvertModal } from "@/components/UsdConvertModal";
 import { SecuritySettings } from "@/components/Security/SecuritySettings";
@@ -393,6 +394,8 @@ export default function WalletPage() {
   const [showExchange, setShowExchange] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
   const [showOnChainDeposit, setShowOnChainDeposit] = useState(false);
+  const [showAddFunds, setShowAddFunds] = useState(false);
+  const [addFundsDefaultTab, setAddFundsDefaultTab] = useState<"crypto" | "card">("crypto");
   const [showFiatDeposit, setShowFiatDeposit] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [showReceive, setShowReceive] = useState(false);
@@ -685,7 +688,10 @@ export default function WalletPage() {
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
               {/* Yatır / Add Funds */}
               <button
-                onClick={() => setShowDeposit(true)}
+                onClick={() => {
+                  setAddFundsDefaultTab("crypto");
+                  setShowAddFunds(true);
+                }}
                 className="flex flex-col items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-emerald-500 transition-all group"
               >
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
@@ -846,7 +852,10 @@ export default function WalletPage() {
                   {/* USD Actions */}
                   <div className="flex flex-col gap-1.5 sm:gap-2">
                     <button
-                      onClick={() => setShowUsdDeposit(true)}
+                      onClick={() => {
+                        setAddFundsDefaultTab("card");
+                        setShowAddFunds(true);
+                      }}
                       className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-green-500/20 text-green-500 dark:text-green-400 hover:bg-green-500/30 transition-colors"
                     >
                       {wx.depositUsd}
@@ -1671,6 +1680,17 @@ export default function WalletPage() {
             AUXPT: bidPrices?.AUXPT || 32,
             AUXPD: bidPrices?.AUXPD || 35,
           }}
+        />
+      )}
+
+      {/* Add Funds Modal - Unified Crypto + Card */}
+      {showAddFunds && (
+        <AddFundsModal
+          isOpen={showAddFunds}
+          onClose={() => setShowAddFunds(false)}
+          lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
+          walletAddress={currentAddress || ""}
+          defaultTab={addFundsDefaultTab}
         />
       )}
     </main>
