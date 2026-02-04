@@ -42,7 +42,19 @@ import { APP_CHAIN, isAllowedChain } from "@/config/chains";
 // ============================================
 const walletTranslations: Record<string, Record<string, string>> = {
   tr: {
-    myAssets: "Auxite ve Crypto Varlıklarım",
+    // Vault terminology
+    vaultTitle: "Kasam",
+    vaultOverview: "Kasa Özeti",
+    trustMessage: "Varlıklarınız bağımsız saklama yapılarında tam tahsisli kasalarda güvenle muhafaza edilmektedir.",
+    totalAuc: "Saklama Altındaki Toplam Varlıklar",
+    allocatedMetals: "Tahsisli Metaller",
+    digitalAssets: "Dijital Varlıklar",
+    vaultLocation: "Zürih'te Saklanıyor",
+    fullyAllocated: "Tam Tahsisli",
+    audited: "Denetlenmiş",
+    insured: "Sigortalı",
+    netAssets: "Toplam Net Varlıklar",
+    myAssets: "Auxite ve Kripto Varlıklarım",
     allocatedAndStaked: "Tahsisli & Stake",
     allocated: "Tahsisli",
     staked: "Stake",
@@ -57,15 +69,15 @@ const walletTranslations: Record<string, Record<string, string>> = {
     platinum: "Platin",
     palladium: "Paladyum",
     ecosystemDesc: "Auxite ekosistemindeki tüm tokenlar, temsil ettikleri metal türüne karşılık gelen fiziksel değer üzerine yapılandırılmıştır; ilgili varlıklar, dünya genelindeki yetkili ve denetimli depolama tesisleri üzerinden muhafaza edilir.",
-    walletRequired: "Cüzdan Bağlantısı Gerekli",
-    connectWallet: "Varlıklarınızı görüntülemek ve işlem yapmak için cüzdanınızı bağlayın.",
+    walletRequired: "Kasa Bağlantısı Gerekli",
+    connectWallet: "Varlıklarınızı görüntülemek ve işlem yapmak için kasanızı bağlayın.",
     selectDeposit: "Yatırma Yöntemi Seçin",
     depositCrypto: "Kripto Yatır",
     depositCryptoDesc: "BTC, ETH veya diğer desteklenen coinleri yatırın",
     depositUsd: "+ USD Yatır",
     depositUsdDesc: "Banka transferi veya kart ile USD yatırın",
     selectCoin: "Yatırılacak Coin Seç",
-    transfer: "Gönder",
+    transfer: "Transfer",
     token: "Token",
     recipientAddress: "Alıcı Adresi",
     amount: "Miktar",
@@ -73,14 +85,14 @@ const walletTranslations: Record<string, Record<string, string>> = {
     networkFee: "Ağ Ücreti",
     send: "Gönder",
     receive: "Al",
-    walletAddress: "Cüzdan Adresi",
+    walletAddress: "Kasa Adresi",
     copy: "Kopyala",
     share: "Paylaş",
     close: "Kapat",
     securitySettings: "Güvenlik Ayarları",
     markets: "Piyasalar",
     stake: "Biriktir",
-    wallet: "Cüzdan",
+    wallet: "Kasa",
     profile: "Profil",
     language: "Dil Seçimi",
     lightMode: "Aydınlık Mod",
@@ -88,13 +100,29 @@ const walletTranslations: Record<string, Record<string, string>> = {
     priceAlerts: "Fiyat Uyarıları",
     recurringBuy: "Düzenli Yatırım",
     pendingOrders: "Bekleyen Emirler",
-    buyWithUsd: "USD ile Al",
-    totalAssetValue: "Toplam Varlık Değeri",
+    buyWithUsd: "USD ile Edin",
+    totalAssetValue: "Saklama Altındaki Toplam Varlıklar",
     auxiteAndCrypto: "Auxite & Kripto",
     whereAreAssets: "Varlıklarım Nerede?",
     viewDetails: "Detayları Gör",
+    addFunds: "Fon Ekle",
+    withdraw: "Çek",
+    acquire: "Edin",
+    redeem: "İade Et",
   },
   en: {
+    // Vault terminology - Institutional language
+    vaultTitle: "My Vault",
+    vaultOverview: "Vault Overview",
+    trustMessage: "Your assets are securely held in fully allocated vaults under independent custody structures.",
+    totalAuc: "Total Assets Under Custody",
+    allocatedMetals: "Allocated Metals",
+    digitalAssets: "Digital Assets",
+    vaultLocation: "Stored in Zurich",
+    fullyAllocated: "Fully Allocated",
+    audited: "Audited",
+    insured: "Insured",
+    netAssets: "Total Net Assets",
     myAssets: "My Auxite and Crypto Assets",
     allocatedAndStaked: "Allocated & Staked",
     allocated: "Allocated",
@@ -110,8 +138,8 @@ const walletTranslations: Record<string, Record<string, string>> = {
     platinum: "Platinum",
     palladium: "Palladium",
     ecosystemDesc: "All tokens in the Auxite ecosystem are structured on physical value corresponding to the metal type they represent; related assets are stored through authorized and audited storage facilities worldwide.",
-    walletRequired: "Wallet Connection Required",
-    connectWallet: "Connect your wallet to view your assets and make transactions.",
+    walletRequired: "Vault Connection Required",
+    connectWallet: "Connect your vault to view your assets and manage your holdings.",
     selectDeposit: "Select Deposit Method",
     depositCrypto: "Deposit Crypto",
     depositCryptoDesc: "Deposit BTC, ETH or other supported coins",
@@ -126,14 +154,14 @@ const walletTranslations: Record<string, Record<string, string>> = {
     networkFee: "Network Fee",
     send: "Send",
     receive: "Receive",
-    walletAddress: "Wallet Address",
+    walletAddress: "Vault Address",
     copy: "Copy",
     share: "Share",
     close: "Close",
     securitySettings: "Security Settings",
     markets: "Markets",
     stake: "Stake",
-    wallet: "Wallet",
+    wallet: "Vault",
     profile: "Profile",
     language: "Language",
     lightMode: "Light Mode",
@@ -141,11 +169,15 @@ const walletTranslations: Record<string, Record<string, string>> = {
     priceAlerts: "Price Alerts",
     recurringBuy: "Auto-Invest",
     pendingOrders: "Pending Orders",
-    buyWithUsd: "Buy with USD",
-    totalAssetValue: "Total Asset Value",
+    buyWithUsd: "Acquire with USD",
+    totalAssetValue: "Total Assets Under Custody",
     auxiteAndCrypto: "Auxite & Crypto",
     whereAreAssets: "Where are my Assets?",
     viewDetails: "View Details",
+    addFunds: "Add Funds",
+    withdraw: "Withdraw",
+    acquire: "Acquire",
+    redeem: "Redeem",
   },
   de: {
     myAssets: "Meine Auxite und Crypto Vermögenswerte",
@@ -801,11 +833,49 @@ export default function WalletPage() {
               </button>
             </div>
 
-            {/* Total Asset Value Card */}
+            {/* Trust Message Banner */}
+            <div className="rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 dark:from-emerald-900/20 dark:to-teal-900/20 p-3 sm:p-4">
+              <div className="flex items-center gap-3">
+                <div className="hidden sm:flex w-10 h-10 rounded-full bg-emerald-500/20 items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  {wx.trustMessage || "Your assets are securely held in fully allocated vaults under independent custody structures."}
+                </p>
+              </div>
+              {/* Allocation Badges */}
+              <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-emerald-500/20">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] sm:text-xs font-medium">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  {wx.fullyAllocated || "Fully Allocated"}
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] sm:text-xs font-medium">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  {wx.audited || "Audited"}
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] sm:text-xs font-medium">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  {wx.insured || "Insured"}
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] sm:text-xs font-medium">
+                  🇨🇭 {wx.vaultLocation || "Stored in Zurich"}
+                </span>
+              </div>
+            </div>
+
+            {/* Total Assets Under Custody Card */}
             <div className="rounded-xl sm:rounded-2xl border border-stone-300 dark:border-slate-700 bg-gradient-to-br from-white to-stone-50 dark:from-slate-800 dark:to-slate-900 p-3 sm:p-6">
               <div className="text-center mb-2 sm:mb-4">
                 <p className="text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-0.5 sm:mb-1">
-                  {wx.totalAssetValue}
+                  {wx.totalAssetValue || wx.totalAuc || "Total Assets Under Custody"}
                 </p>
                 <h2 className="text-xl sm:text-4xl font-bold text-slate-800 dark:text-white">
                   {pricesLoaded
@@ -922,14 +992,15 @@ export default function WalletPage() {
                 </div>
               </div>
             </div>
-            {/* Auxite ve Crypto Varlıklarım Section */}
-            <div>
-              <h3 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-white mb-3 sm:mb-4">
-                {wx.myAssets}
+            {/* Allocated Metals Section - GOLD FIRST */}
+            <div className="mb-6">
+              <h3 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                {wx.allocatedMetals || "Allocated Metals"}
               </h3>
-              
-              {/* Metal Assets */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4">
+
+              {/* Metal Assets - Gold First */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
                 {/* AUXG */}
                 <button
                   onClick={() => setSelectedMetal("AUXG")}
@@ -943,14 +1014,16 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <p className="text-base sm:text-lg font-bold text-yellow-500">
-                    {auxgBalance.toFixed(3)} AUXG
+                    {auxgBalance.toFixed(2)}g
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                    ${(auxgBalance * (metalAskPrices?.AUXG || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                   </p>
                   {(allocationAmounts?.auxg || 0) > 0 && (
-                    <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      <span className="text-emerald-500">{(allocationAmounts?.auxg || 0).toFixed(0)}g</span> allocated · {Math.max(0, auxgBalance - (allocationAmounts?.auxg || 0)).toFixed(3)} balance
+                    <div className="text-[9px] text-emerald-500 dark:text-emerald-400 mt-1">
+                      ✓ {(allocationAmounts?.auxg || 0).toFixed(2)}g allocated
                     </div>
                   )}
-                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">≈ ${(auxgBalance * (metalAskPrices?.AUXG || 0)).toFixed(2)}</p>
                 </button>
 
                 {/* AUXS */}
@@ -966,14 +1039,16 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <p className="text-base sm:text-lg font-bold text-gray-400">
-                    {auxsBalance.toFixed(3)} AUXS
+                    {auxsBalance.toFixed(2)}g
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                    ${(auxsBalance * (metalAskPrices?.AUXS || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                   </p>
                   {(allocationAmounts?.auxs || 0) > 0 && (
-                    <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      <span className="text-emerald-500">{(allocationAmounts?.auxs || 0).toFixed(0)}g</span> allocated · {Math.max(0, auxsBalance - (allocationAmounts?.auxs || 0)).toFixed(3)} balance
+                    <div className="text-[9px] text-emerald-500 dark:text-emerald-400 mt-1">
+                      ✓ {(allocationAmounts?.auxs || 0).toFixed(2)}g allocated
                     </div>
                   )}
-                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">≈ ${(auxsBalance * (metalAskPrices?.AUXS || 0)).toFixed(2)}</p>
                 </button>
 
                 {/* AUXPT */}
@@ -989,14 +1064,16 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <p className="text-base sm:text-lg font-bold text-cyan-400">
-                    {auxptBalance.toFixed(3)} AUXPT
+                    {auxptBalance.toFixed(2)}g
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                    ${(auxptBalance * (metalAskPrices?.AUXPT || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                   </p>
                   {(allocationAmounts?.auxpt || 0) > 0 && (
-                    <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      <span className="text-emerald-500">{(allocationAmounts?.auxpt || 0).toFixed(0)}g</span> allocated · {Math.max(0, auxptBalance - (allocationAmounts?.auxpt || 0)).toFixed(3)} balance
+                    <div className="text-[9px] text-emerald-500 dark:text-emerald-400 mt-1">
+                      ✓ {(allocationAmounts?.auxpt || 0).toFixed(2)}g allocated
                     </div>
                   )}
-                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">≈ ${(auxptBalance * (metalAskPrices?.AUXPT || 0)).toFixed(2)}</p>
                 </button>
 
                 {/* AUXPD */}
@@ -1012,18 +1089,26 @@ export default function WalletPage() {
                     </div>
                   </div>
                   <p className="text-base sm:text-lg font-bold text-orange-400">
-                    {auxpdBalance.toFixed(3)} AUXPD
+                    {auxpdBalance.toFixed(2)}g
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                    ${(auxpdBalance * (metalAskPrices?.AUXPD || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                   </p>
                   {(allocationAmounts?.auxpd || 0) > 0 && (
-                    <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      <span className="text-emerald-500">{(allocationAmounts?.auxpd || 0).toFixed(0)}g</span> allocated · {Math.max(0, auxpdBalance - (allocationAmounts?.auxpd || 0)).toFixed(3)} balance
+                    <div className="text-[9px] text-emerald-500 dark:text-emerald-400 mt-1">
+                      ✓ {(allocationAmounts?.auxpd || 0).toFixed(2)}g allocated
                     </div>
                   )}
-                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">≈ ${(auxpdBalance * (metalAskPrices?.AUXPD || 0)).toFixed(2)}</p>
                 </button>
               </div>
+            </div>
 
-              {/* Crypto Assets */}
+            {/* Digital Assets Section */}
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                {wx.digitalAssets || "Digital Assets"}
+              </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
                 {/* ETH */}
                 <button
