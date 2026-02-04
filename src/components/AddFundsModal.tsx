@@ -1,22 +1,15 @@
 // src/components/AddFundsModal.tsx
-// Birleştirilmiş Add Funds Modal - Kripto Yatır + Kart ile Al
+// Birleştirilmiş Add Funds Modal - Kripto Yatır + Kart ile Kripto Al + Banka Transferi (Transak)
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 interface AddFundsModalProps {
   isOpen: boolean;
   onClose: () => void;
   lang: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   walletAddress: string;
-  defaultTab?: "crypto" | "card";
-}
-
-interface TransakOrder {
-  success: boolean;
-  orderRef: string;
-  widgetUrl: string;
-  error?: string;
+  defaultTab?: "crypto" | "card" | "bank";
 }
 
 // Deposit adresleri
@@ -54,10 +47,19 @@ const DEPOSIT_ADDRESSES: Record<string, { address: string; network: string; memo
   },
 };
 
+// Transak ile satın alınabilecek kriptolar (Kart ile)
 const CRYPTO_OPTIONS = [
+  { value: "BTC", label: "Bitcoin", icon: "₿" },
   { value: "ETH", label: "Ethereum", icon: "⟠" },
   { value: "USDT", label: "Tether", icon: "₮" },
-  { value: "USDC", label: "USD Coin", icon: "$" },
+  { value: "SOL", label: "Solana", icon: "◎" },
+];
+
+// Banka transferi için kripto seçenekleri
+const BANK_CRYPTO_OPTIONS = [
+  { value: "USDT", label: "Tether (USDT)", icon: "₮" },
+  { value: "USDC", label: "USD Coin", icon: "◯" },
+  { value: "ETH", label: "Ethereum", icon: "⟠" },
   { value: "BTC", label: "Bitcoin", icon: "₿" },
 ];
 
@@ -68,13 +70,23 @@ const FIAT_OPTIONS = [
   { value: "TRY", label: "Turkish Lira", symbol: "₺" },
 ];
 
+// Banka transferi için fiat seçenekleri (SEPA için EUR önemli)
+const BANK_FIAT_OPTIONS = [
+  { value: "EUR", label: "Euro (SEPA)", symbol: "€" },
+  { value: "USD", label: "US Dollar", symbol: "$" },
+  { value: "GBP", label: "British Pound", symbol: "£" },
+  { value: "TRY", label: "Turkish Lira", symbol: "₺" },
+];
+
 const AMOUNT_PRESETS = [50, 100, 250, 500, 1000];
+const BANK_AMOUNT_PRESETS = [100, 500, 1000, 2500, 5000];
 
 const texts: Record<string, Record<string, string>> = {
   tr: {
     title: "Para Yatır",
     tabCrypto: "Kripto Yatır",
     tabCard: "Kart ile Al",
+    tabBank: "Banka Transferi",
     selectCoin: "Yatırmak istediğiniz coin",
     depositAddress: "Yatırma Adresi",
     network: "Ağ",
@@ -89,20 +101,25 @@ const texts: Record<string, Record<string, string>> = {
     email: "E-posta (isteğe bağlı)",
     emailPlaceholder: "ornek@email.com",
     buy: "Satın Al",
-    buying: "İşleniyor...",
+    buying: "Yönlendiriliyor...",
     poweredBy: "Transak ile güvenli ödeme",
     receivingWallet: "Alıcı Cüzdan",
     minMax: "Min $30 - Max $10,000",
-    securityNote: "Ödemeniz Transak tarafından güvenli şekilde işlenir.",
+    minMaxBank: "Min $100 - Max $50,000",
+    securityNote: "Ödemeniz Transak tarafından güvenli şekilde işlenir. Satın alınan kripto cüzdanınıza aktarılır.",
     continue: "Devam Et",
     back: "Geri",
-    processing: "İşlem devam ediyor...",
-    completePayment: "Ödemeyi Tamamla",
+    holdingNotice: "Not: Transak ile satın alınan kriptolar 30 gün boyunca sadece platform içi işlemlerde kullanılabilir.",
+    bankInfo: "SEPA/Banka transferi ile kripto satın alın. İşlem 1-3 iş günü sürebilir.",
+    bankTransfer: "Banka Transferi ile Al",
+    selectBankCrypto: "Almak istediğiniz kripto",
+    bankNote: "Banka transferi daha yüksek limitler ve düşük komisyon sunar.",
   },
   en: {
     title: "Add Funds",
     tabCrypto: "Deposit Crypto",
     tabCard: "Buy with Card",
+    tabBank: "Bank Transfer",
     selectCoin: "Select coin to deposit",
     depositAddress: "Deposit Address",
     network: "Network",
@@ -116,21 +133,26 @@ const texts: Record<string, Record<string, string>> = {
     amount: "Amount",
     email: "Email (optional)",
     emailPlaceholder: "example@email.com",
-    buy: "Buy Now",
-    buying: "Processing...",
+    buy: "Buy",
+    buying: "Redirecting...",
     poweredBy: "Secure payment via Transak",
     receivingWallet: "Receiving Wallet",
     minMax: "Min $30 - Max $10,000",
-    securityNote: "Your payment is securely processed by Transak.",
+    minMaxBank: "Min $100 - Max $50,000",
+    securityNote: "Your payment is securely processed by Transak. Purchased crypto will be transferred to your wallet.",
     continue: "Continue",
     back: "Back",
-    processing: "Transaction in progress...",
-    completePayment: "Complete Payment",
+    holdingNotice: "Note: Crypto purchased via Transak can only be used for platform transactions for 30 days.",
+    bankInfo: "Buy crypto with SEPA/Bank transfer. Transaction may take 1-3 business days.",
+    bankTransfer: "Buy with Bank Transfer",
+    selectBankCrypto: "Select crypto to buy",
+    bankNote: "Bank transfer offers higher limits and lower fees.",
   },
   de: {
     title: "Geld Einzahlen",
     tabCrypto: "Krypto Einzahlen",
     tabCard: "Mit Karte Kaufen",
+    tabBank: "Banküberweisung",
     selectCoin: "Coin zum Einzahlen wählen",
     depositAddress: "Einzahlungsadresse",
     network: "Netzwerk",
@@ -140,25 +162,30 @@ const texts: Record<string, Record<string, string>> = {
     copy: "Kopieren",
     qrCode: "QR-Code",
     warning: "Nur über {network} senden. Über andere Netzwerke gesendete Gelder können verloren gehen.",
-    selectCrypto: "Krypto zum Kaufen auswählen",
+    selectCrypto: "Krypto zum Kaufen wählen",
     amount: "Betrag",
     email: "E-Mail (optional)",
     emailPlaceholder: "beispiel@email.com",
-    buy: "Jetzt Kaufen",
-    buying: "Verarbeitung...",
+    buy: "Kaufen",
+    buying: "Weiterleitung...",
     poweredBy: "Sichere Zahlung über Transak",
-    receivingWallet: "Empfänger-Wallet",
+    receivingWallet: "Empfangs-Wallet",
     minMax: "Min $30 - Max $10.000",
-    securityNote: "Ihre Zahlung wird sicher von Transak verarbeitet.",
+    minMaxBank: "Min $100 - Max $50.000",
+    securityNote: "Ihre Zahlung wird sicher von Transak verarbeitet. Gekaufte Krypto wird in Ihr Wallet übertragen.",
     continue: "Weiter",
     back: "Zurück",
-    processing: "Transaktion läuft...",
-    completePayment: "Zahlung Abschließen",
+    holdingNotice: "Hinweis: Über Transak gekaufte Krypto kann 30 Tage lang nur für Plattformtransaktionen verwendet werden.",
+    bankInfo: "Kaufen Sie Krypto per SEPA/Banküberweisung. Die Transaktion kann 1-3 Werktage dauern.",
+    bankTransfer: "Per Banküberweisung kaufen",
+    selectBankCrypto: "Krypto zum Kaufen wählen",
+    bankNote: "Banküberweisung bietet höhere Limits und niedrigere Gebühren.",
   },
   fr: {
     title: "Ajouter des Fonds",
     tabCrypto: "Déposer Crypto",
     tabCard: "Acheter par Carte",
+    tabBank: "Virement Bancaire",
     selectCoin: "Sélectionner la crypto à déposer",
     depositAddress: "Adresse de Dépôt",
     network: "Réseau",
@@ -173,20 +200,25 @@ const texts: Record<string, Record<string, string>> = {
     email: "E-mail (optionnel)",
     emailPlaceholder: "exemple@email.com",
     buy: "Acheter",
-    buying: "Traitement...",
+    buying: "Redirection...",
     poweredBy: "Paiement sécurisé via Transak",
-    receivingWallet: "Portefeuille Destinataire",
+    receivingWallet: "Portefeuille de Réception",
     minMax: "Min $30 - Max $10,000",
-    securityNote: "Votre paiement est traité en toute sécurité par Transak.",
+    minMaxBank: "Min $100 - Max $50,000",
+    securityNote: "Votre paiement est traité en toute sécurité par Transak. La crypto achetée sera transférée dans votre portefeuille.",
     continue: "Continuer",
     back: "Retour",
-    processing: "Transaction en cours...",
-    completePayment: "Terminer le Paiement",
+    holdingNotice: "Note: Les cryptos achetées via Transak ne peuvent être utilisées que pour les transactions de la plateforme pendant 30 jours.",
+    bankInfo: "Achetez des cryptos par virement SEPA/bancaire. La transaction peut prendre 1 à 3 jours ouvrables.",
+    bankTransfer: "Acheter par Virement",
+    selectBankCrypto: "Sélectionner la crypto à acheter",
+    bankNote: "Le virement bancaire offre des limites plus élevées et des frais réduits.",
   },
   ar: {
     title: "إضافة أموال",
     tabCrypto: "إيداع العملات المشفرة",
     tabCard: "شراء بالبطاقة",
+    tabBank: "تحويل بنكي",
     selectCoin: "اختر العملة للإيداع",
     depositAddress: "عنوان الإيداع",
     network: "الشبكة",
@@ -200,21 +232,26 @@ const texts: Record<string, Record<string, string>> = {
     amount: "المبلغ",
     email: "البريد الإلكتروني (اختياري)",
     emailPlaceholder: "example@email.com",
-    buy: "اشتر الآن",
-    buying: "جاري المعالجة...",
+    buy: "شراء",
+    buying: "جاري التحويل...",
     poweredBy: "دفع آمن عبر Transak",
     receivingWallet: "محفظة الاستلام",
     minMax: "الحد الأدنى $30 - الحد الأقصى $10,000",
-    securityNote: "تتم معالجة دفعتك بشكل آمن بواسطة Transak.",
+    minMaxBank: "الحد الأدنى $100 - الحد الأقصى $50,000",
+    securityNote: "تتم معالجة دفعتك بشكل آمن بواسطة Transak. سيتم تحويل العملة المشفرة المشتراة إلى محفظتك.",
     continue: "متابعة",
     back: "رجوع",
-    processing: "العملية جارية...",
-    completePayment: "إتمام الدفع",
+    holdingNotice: "ملاحظة: يمكن استخدام العملات المشفرة المشتراة عبر Transak فقط لمعاملات المنصة لمدة 30 يومًا.",
+    bankInfo: "اشترِ العملات المشفرة عبر التحويل البنكي/SEPA. قد تستغرق المعاملة 1-3 أيام عمل.",
+    bankTransfer: "شراء بالتحويل البنكي",
+    selectBankCrypto: "اختر العملة المشفرة للشراء",
+    bankNote: "يوفر التحويل البنكي حدودًا أعلى ورسومًا أقل.",
   },
   ru: {
     title: "Пополнить",
     tabCrypto: "Депозит Крипто",
     tabCard: "Купить Картой",
+    tabBank: "Банковский Перевод",
     selectCoin: "Выберите криптовалюту для депозита",
     depositAddress: "Адрес для Депозита",
     network: "Сеть",
@@ -229,15 +266,19 @@ const texts: Record<string, Record<string, string>> = {
     email: "Email (необязательно)",
     emailPlaceholder: "example@email.com",
     buy: "Купить",
-    buying: "Обработка...",
+    buying: "Перенаправление...",
     poweredBy: "Безопасная оплата через Transak",
-    receivingWallet: "Кошелек Получателя",
+    receivingWallet: "Кошелек Получения",
     minMax: "Мин $30 - Макс $10,000",
-    securityNote: "Ваш платеж безопасно обрабатывается Transak.",
+    minMaxBank: "Мин $100 - Макс $50,000",
+    securityNote: "Ваш платеж безопасно обрабатывается Transak. Купленная крипта будет переведена в ваш кошелек.",
     continue: "Продолжить",
     back: "Назад",
-    processing: "Транзакция выполняется...",
-    completePayment: "Завершить Оплату",
+    holdingNotice: "Примечание: Криптовалюта, купленная через Transak, может использоваться только для платформенных транзакций в течение 30 дней.",
+    bankInfo: "Покупайте криптовалюту через SEPA/банковский перевод. Транзакция может занять 1-3 рабочих дня.",
+    bankTransfer: "Купить через Банк",
+    selectBankCrypto: "Выберите криптовалюту для покупки",
+    bankNote: "Банковский перевод предлагает более высокие лимиты и низкие комиссии.",
   },
 };
 
@@ -248,31 +289,33 @@ export function AddFundsModal({
   walletAddress,
   defaultTab = "crypto",
 }: AddFundsModalProps) {
-  const [activeTab, setActiveTab] = useState<"crypto" | "card">(defaultTab);
+  const [activeTab, setActiveTab] = useState<"crypto" | "card" | "bank">(defaultTab);
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [copiedMemo, setCopiedMemo] = useState(false);
 
-  // Card purchase states
-  const [cryptoCurrency, setCryptoCurrency] = useState("ETH");
+  // Card purchase states (Transak)
+  const [cryptoCurrency, setCryptoCurrency] = useState("BTC");
   const [fiatCurrency, setFiatCurrency] = useState("USD");
   const [amount, setAmount] = useState("100");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showTransakWidget, setShowTransakWidget] = useState(false);
-  const [widgetUrl, setWidgetUrl] = useState<string | null>(null);
+
+  // Bank transfer states
+  const [bankCryptoCurrency, setBankCryptoCurrency] = useState("USDT");
+  const [bankFiatCurrency, setBankFiatCurrency] = useState("EUR");
+  const [bankAmount, setBankAmount] = useState("500");
+  const [bankEmail, setBankEmail] = useState("");
+  const [isBankLoading, setIsBankLoading] = useState(false);
 
   const t = texts[lang] || texts.en;
   const fiatSymbol = FIAT_OPTIONS.find(f => f.value === fiatCurrency)?.symbol || "$";
+  const bankFiatSymbol = BANK_FIAT_OPTIONS.find(f => f.value === bankFiatCurrency)?.symbol || "€";
 
   // Reset states when modal closes
   useEffect(() => {
     if (!isOpen) {
       setSelectedCoin(null);
-      setShowTransakWidget(false);
-      setWidgetUrl(null);
-      setError(null);
     }
   }, [isOpen]);
 
@@ -291,100 +334,72 @@ export function AddFundsModal({
     }
   };
 
-  const handleBuyWithCard = useCallback(async () => {
-    if (!walletAddress) {
-      setError("Wallet not connected");
-      return;
-    }
-
-    const amountNum = parseFloat(amount);
-    if (isNaN(amountNum) || amountNum < 30 || amountNum > 10000) {
-      setError(t.minMax);
-      return;
-    }
+  // Kart ile kripto al (Transak - tüm ödeme yöntemleri)
+  const handleBuyWithCard = () => {
+    if (!walletAddress) return;
 
     setIsLoading(true);
-    setError(null);
 
-    try {
-      const response = await fetch("/api/transak/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          walletAddress,
-          cryptoCurrency,
-          fiatCurrency,
-          fiatAmount: amountNum,
-          email: email || undefined,
-        }),
-      });
+    const transakApiKey = process.env.NEXT_PUBLIC_TRANSAK_API_KEY || "5911d9ec-46b5-48fa-a755-d59a3f4b4039";
 
-      const data: TransakOrder = await response.json();
+    const params = new URLSearchParams({
+      apiKey: transakApiKey,
+      environment: "PRODUCTION",
+      cryptoCurrencyCode: cryptoCurrency,
+      fiatCurrency: fiatCurrency,
+      fiatAmount: amount,
+      walletAddress: walletAddress,
+      disableWalletAddressForm: "true",
+      hideMenu: "true",
+      themeColor: "f59e0b",
+      // Kart ile al - sadece kart ödemesi
+      paymentMethod: "credit_debit_card",
+      ...(email && { email }),
+    });
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || "Failed to create order");
-      }
+    const transakUrl = `https://global.transak.com/?${params.toString()}`;
+    window.open(transakUrl, "_blank");
 
-      // Show Transak widget in modal (not popup)
-      setWidgetUrl(data.widgetUrl);
-      setShowTransakWidget(true);
-
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
-    } finally {
+    setTimeout(() => {
       setIsLoading(false);
-    }
-  }, [walletAddress, amount, cryptoCurrency, fiatCurrency, email, t]);
+      onClose();
+    }, 1000);
+  };
 
-  const handleBackFromWidget = () => {
-    setShowTransakWidget(false);
-    setWidgetUrl(null);
+  // Banka transferi ile kripto al (Transak - sadece banka transferi)
+  const handleBuyWithBank = () => {
+    if (!walletAddress) return;
+
+    setIsBankLoading(true);
+
+    const transakApiKey = process.env.NEXT_PUBLIC_TRANSAK_API_KEY || "5911d9ec-46b5-48fa-a755-d59a3f4b4039";
+
+    const params = new URLSearchParams({
+      apiKey: transakApiKey,
+      environment: "PRODUCTION",
+      cryptoCurrencyCode: bankCryptoCurrency,
+      fiatCurrency: bankFiatCurrency,
+      fiatAmount: bankAmount,
+      walletAddress: walletAddress,
+      disableWalletAddressForm: "true",
+      hideMenu: "true",
+      themeColor: "f59e0b",
+      // Sadece banka transferi - SEPA, ACH, vs.
+      paymentMethod: "sepa_bank_transfer,gbp_bank_transfer,neft_bank_transfer",
+      disablePaymentMethods: "credit_debit_card,apple_pay,google_pay",
+      ...(bankEmail && { email: bankEmail }),
+    });
+
+    const transakUrl = `https://global.transak.com/?${params.toString()}`;
+    window.open(transakUrl, "_blank");
+
+    setTimeout(() => {
+      setIsBankLoading(false);
+      onClose();
+    }, 1000);
   };
 
   if (!isOpen) return null;
-
-  // Show Transak iframe widget
-  if (showTransakWidget && widgetUrl) {
-    return (
-      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-2 sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-stone-200 dark:border-slate-700 w-full max-w-lg overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between p-3 sm:p-4 border-b border-stone-200 dark:border-slate-700">
-            <button
-              onClick={handleBackFromWidget}
-              className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="text-sm font-medium">{t.back}</span>
-            </button>
-            <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">{t.completePayment}</h3>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-            >
-              <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Transak iframe */}
-          <iframe
-            src={widgetUrl}
-            className="w-full h-[550px] sm:h-[600px] border-none"
-            allow="camera;microphone;payment"
-          />
-
-          {/* Footer */}
-          <div className="p-3 border-t border-stone-200 dark:border-slate-700 text-center">
-            <p className="text-xs text-slate-500 dark:text-slate-500">{t.poweredBy}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-2 sm:p-4">
@@ -402,11 +417,11 @@ export function AddFundsModal({
           </button>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - 3 seçenek */}
         <div className="flex border-b border-stone-200 dark:border-slate-700 flex-shrink-0">
           <button
             onClick={() => { setActiveTab("crypto"); setSelectedCoin(null); }}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${
+            className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
               activeTab === "crypto"
                 ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
@@ -416,7 +431,7 @@ export function AddFundsModal({
           </button>
           <button
             onClick={() => { setActiveTab("card"); setSelectedCoin(null); }}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${
+            className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
               activeTab === "card"
                 ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
@@ -424,12 +439,24 @@ export function AddFundsModal({
           >
             {t.tabCard}
           </button>
+          <button
+            onClick={() => { setActiveTab("bank"); setSelectedCoin(null); }}
+            className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
+              activeTab === "bank"
+                ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+            }`}
+          >
+            {t.tabBank}
+          </button>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {/* TAB 1: Kripto Yatır */}
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
           {activeTab === "crypto" && !selectedCoin && (
-            /* Crypto Coin Selection */
             <div>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{t.selectCoin}</p>
               <div className="grid grid-cols-2 gap-3">
@@ -456,7 +483,6 @@ export function AddFundsModal({
           )}
 
           {activeTab === "crypto" && selectedCoin && (
-            /* Crypto Deposit Address */
             <div>
               <button
                 onClick={() => setSelectedCoin(null)}
@@ -481,7 +507,6 @@ export function AddFundsModal({
                 </div>
               </div>
 
-              {/* Deposit Address */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                   {t.depositAddress}
@@ -499,7 +524,6 @@ export function AddFundsModal({
                 </div>
               </div>
 
-              {/* Memo if exists */}
               {DEPOSIT_ADDRESSES[selectedCoin].memo && (
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
@@ -525,7 +549,6 @@ export function AddFundsModal({
                 </div>
               )}
 
-              {/* Warning */}
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                 <p className="text-xs text-amber-700 dark:text-amber-400">
                   {t.warning.replace("{network}", DEPOSIT_ADDRESSES[selectedCoin].network)}
@@ -534,10 +557,11 @@ export function AddFundsModal({
             </div>
           )}
 
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {/* TAB 2: Kart ile Al */}
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
           {activeTab === "card" && (
-            /* Card Purchase Form */
             <div>
-              {/* Crypto Selection */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                   {t.selectCrypto}
@@ -562,7 +586,6 @@ export function AddFundsModal({
                 </div>
               </div>
 
-              {/* Amount Input */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                   {t.amount}
@@ -594,7 +617,6 @@ export function AddFundsModal({
                 </div>
                 <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 mt-1">{t.minMax}</p>
 
-                {/* Amount Presets */}
                 <div className="flex gap-1.5 sm:gap-2 mt-2">
                   {AMOUNT_PRESETS.map((preset) => (
                     <button
@@ -612,7 +634,6 @@ export function AddFundsModal({
                 </div>
               </div>
 
-              {/* Email */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                   {t.email}
@@ -626,14 +647,12 @@ export function AddFundsModal({
                 />
               </div>
 
-              {/* Error */}
-              {error && (
-                <div className="mb-4 p-2.5 sm:p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                  <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">{error}</p>
-                </div>
-              )}
+              <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  {t.holdingNotice}
+                </p>
+              </div>
 
-              {/* Buy Button */}
               <button
                 onClick={handleBuyWithCard}
                 disabled={isLoading}
@@ -649,7 +668,173 @@ export function AddFundsModal({
                   </>
                 ) : (
                   <>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
                     {t.buy} {cryptoCurrency}
+                  </>
+                )}
+              </button>
+
+              <div className="mt-4 p-2.5 sm:p-3 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
+                <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mb-1">{t.receivingWallet}</p>
+                <p className="text-xs sm:text-sm font-mono text-slate-700 dark:text-slate-300 truncate">
+                  {walletAddress}
+                </p>
+              </div>
+
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <p className="text-[10px] sm:text-xs text-center text-slate-500 dark:text-slate-500">
+                  {t.securityNote}
+                </p>
+                <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span className="text-xs font-medium">{t.poweredBy}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {/* TAB 3: Banka Transferi */}
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {activeTab === "bank" && (
+            <div>
+              {/* Bank Info Banner */}
+              <div className="mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                <div className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  <div>
+                    <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 font-medium">
+                      {t.bankInfo}
+                    </p>
+                    <p className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      {t.bankNote}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Crypto Selection for Bank */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  {t.selectBankCrypto}
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {BANK_CRYPTO_OPTIONS.map((crypto) => (
+                    <button
+                      key={crypto.value}
+                      onClick={() => setBankCryptoCurrency(crypto.value)}
+                      className={`p-2 sm:p-3 rounded-lg border transition-all text-center ${
+                        bankCryptoCurrency === crypto.value
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                          : "border-stone-200 dark:border-slate-700 hover:border-blue-300"
+                      }`}
+                    >
+                      <span className="text-lg sm:text-xl">{crypto.icon}</span>
+                      <p className="text-[10px] sm:text-xs font-medium text-slate-700 dark:text-slate-300 mt-1">
+                        {crypto.value}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Amount Input for Bank */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  {t.amount}
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 font-medium">
+                    {bankFiatSymbol}
+                  </span>
+                  <input
+                    type="number"
+                    value={bankAmount}
+                    onChange={(e) => setBankAmount(e.target.value)}
+                    min={100}
+                    max={50000}
+                    className="w-full pl-8 sm:pl-10 pr-16 sm:pr-20 py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="500"
+                  />
+                  <select
+                    value={bankFiatCurrency}
+                    onChange={(e) => setBankFiatCurrency(e.target.value)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-stone-100 dark:bg-slate-700 border-none rounded px-2 py-1 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300"
+                  >
+                    {BANK_FIAT_OPTIONS.map((fiat) => (
+                      <option key={fiat.value} value={fiat.value}>
+                        {fiat.value}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 mt-1">{t.minMaxBank}</p>
+
+                {/* Bank Amount Presets */}
+                <div className="flex gap-1.5 sm:gap-2 mt-2">
+                  {BANK_AMOUNT_PRESETS.map((preset) => (
+                    <button
+                      key={preset}
+                      onClick={() => setBankAmount(preset.toString())}
+                      className={`flex-1 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded border transition-all ${
+                        bankAmount === preset.toString()
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
+                          : "border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-blue-300"
+                      }`}
+                    >
+                      {bankFiatSymbol}{preset >= 1000 ? `${preset / 1000}k` : preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Email for Bank */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  {t.email}
+                </label>
+                <input
+                  type="email"
+                  value={bankEmail}
+                  onChange={(e) => setBankEmail(e.target.value)}
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder={t.emailPlaceholder}
+                />
+              </div>
+
+              {/* Holding Period Notice */}
+              <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  {t.holdingNotice}
+                </p>
+              </div>
+
+              {/* Bank Transfer Button */}
+              <button
+                onClick={handleBuyWithBank}
+                disabled={isBankLoading}
+                className="w-full py-3 sm:py-4 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isBankLoading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    {t.buying}
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    {t.bankTransfer} {bankCryptoCurrency}
                   </>
                 )}
               </button>
@@ -663,9 +848,17 @@ export function AddFundsModal({
               </div>
 
               {/* Security Note */}
-              <p className="mt-3 text-[10px] sm:text-xs text-center text-slate-500 dark:text-slate-500">
-                {t.securityNote}
-              </p>
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <p className="text-[10px] sm:text-xs text-center text-slate-500 dark:text-slate-500">
+                  {t.securityNote}
+                </p>
+                <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span className="text-xs font-medium">{t.poweredBy}</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
