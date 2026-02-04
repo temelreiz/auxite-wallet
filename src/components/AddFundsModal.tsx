@@ -348,7 +348,7 @@ export function AddFundsModal({
 
     const params = new URLSearchParams({
       apiKey: transakApiKey,
-      environment: "PRODUCTION",
+      environment: "STAGING",
       cryptoCurrencyCode: cryptoCurrency,
       fiatCurrency: fiatCurrency,
       fiatAmount: amount,
@@ -359,7 +359,7 @@ export function AddFundsModal({
       ...(email && { email }),
     });
 
-    const widgetUrl = `https://global.transak.com/?${params.toString()}`;
+    const widgetUrl = `https://global-stg.transak.com/?${params.toString()}`;
 
     try {
       const transak = new Transak({
@@ -407,7 +407,7 @@ export function AddFundsModal({
 
     const params = new URLSearchParams({
       apiKey: transakApiKey,
-      environment: "PRODUCTION",
+      environment: "STAGING",
       cryptoCurrencyCode: bankCryptoCurrency,
       fiatCurrency: bankFiatCurrency,
       fiatAmount: bankAmount,
@@ -419,7 +419,7 @@ export function AddFundsModal({
       ...(bankEmail && { email: bankEmail }),
     });
 
-    const widgetUrl = `https://global.transak.com/?${params.toString()}`;
+    const widgetUrl = `https://global-stg.transak.com/?${params.toString()}`;
 
     try {
       const transak = new Transak({
