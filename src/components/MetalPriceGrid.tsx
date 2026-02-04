@@ -102,7 +102,7 @@ export default function MetalPriceGrid() {
   const { prices: cryptoPrices, changes: cryptoChanges, directions: cryptoDirections, loading: cryptoLoading } = useCryptoPrices();
   const [showExchange, setShowExchange] = useState(false);
   const [showAddFunds, setShowAddFunds] = useState(false);
-  const [addFundsDefaultTab, setAddFundsDefaultTab] = useState<"crypto" | "card">("crypto");
+  const [addFundsDefaultTab, setAddFundsDefaultTab] = useState<"crypto" | "card" | "bank">("crypto");
   // Keep old states for backward compatibility - will be removed later
   const [showDeposit, setShowDeposit] = useState(false);
   const [showOnChainDeposit, setShowOnChainDeposit] = useState(false);

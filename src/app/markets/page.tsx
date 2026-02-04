@@ -76,7 +76,7 @@ export default function MarketsPage() {
   const [chartData, setChartData] = useState<any[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showAddFunds, setShowAddFunds] = useState(false);
-  const [addFundsDefaultTab, setAddFundsDefaultTab] = useState<"crypto" | "card">("crypto");
+  const [addFundsDefaultTab, setAddFundsDefaultTab] = useState<"crypto" | "card" | "bank">("crypto");
   const { address } = useAccount();
 
   useEffect(() => {

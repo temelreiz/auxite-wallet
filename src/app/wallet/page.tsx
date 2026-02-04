@@ -407,7 +407,7 @@ export default function WalletPage() {
   const [showDeposit, setShowDeposit] = useState(false);
   const [showOnChainDeposit, setShowOnChainDeposit] = useState(false);
   const [showAddFunds, setShowAddFunds] = useState(false);
-  const [addFundsDefaultTab, setAddFundsDefaultTab] = useState<"crypto" | "card">("crypto");
+  const [addFundsDefaultTab, setAddFundsDefaultTab] = useState<"crypto" | "card" | "bank">("crypto");
   const [showFiatDeposit, setShowFiatDeposit] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [showReceive, setShowReceive] = useState(false);
@@ -884,7 +884,7 @@ export default function WalletPage() {
                   <div className="flex flex-col gap-1.5 sm:gap-2">
                     <button
                       onClick={() => {
-                        setAddFundsDefaultTab("card");
+                        setAddFundsDefaultTab("bank");
                         setShowAddFunds(true);
                       }}
                       className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-green-500/20 text-green-500 dark:text-green-400 hover:bg-green-500/30 transition-colors"
