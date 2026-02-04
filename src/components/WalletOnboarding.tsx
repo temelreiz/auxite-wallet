@@ -55,6 +55,32 @@ const translations = {
     logout: "Çıkış Yap",
     qrLogin: "Mobil ile QR Giriş",
     qrLoginDesc: "Mobil uygulamadan QR okutarak giriş yapın",
+    // Email Login
+    emailLogin: "E-posta ile Giriş",
+    emailLoginDesc: "E-posta ve şifre ile giriş yapın",
+    email: "E-posta",
+    loginButton: "Giriş Yap",
+    registerButton: "Kayıt Ol",
+    noAccount: "Hesabınız yok mu?",
+    hasAccount: "Zaten hesabınız var mı?",
+    registerTitle: "Hesap Oluştur",
+    loginTitle: "Giriş Yap",
+    name: "Ad Soyad",
+    phone: "Telefon",
+    passwordRequirements: "En az 8 karakter, 1 büyük harf, 1 küçük harf, 1 rakam",
+    invalidEmail: "Geçersiz e-posta adresi",
+    invalidPassword: "Şifre en az 8 karakter, 1 büyük harf, 1 küçük harf ve 1 rakam içermelidir",
+    loginError: "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.",
+    registerError: "Kayıt başarısız. Lütfen tekrar deneyin.",
+    registerSuccess: "Kayıt başarılı! E-postanızı doğrulayın.",
+    verifyEmail: "E-posta Doğrulama",
+    verifyEmailDesc: "E-posta adresinize gönderilen 6 haneli kodu girin",
+    verificationCode: "Doğrulama Kodu",
+    verifyButton: "Doğrula",
+    resendCode: "Kodu Tekrar Gönder",
+    codeSent: "Kod gönderildi!",
+    invalidCode: "Geçersiz kod",
+    or: "veya",
   },
   en: {
     welcomeTitle: "Welcome to Auxite Wallet",
@@ -98,6 +124,32 @@ const translations = {
     logout: "Log Out",
     qrLogin: "QR Login with Mobile",
     qrLoginDesc: "Scan QR code from mobile app to login",
+    // Email Login
+    emailLogin: "Login with Email",
+    emailLoginDesc: "Sign in with your email and password",
+    email: "Email",
+    loginButton: "Sign In",
+    registerButton: "Sign Up",
+    noAccount: "Don't have an account?",
+    hasAccount: "Already have an account?",
+    registerTitle: "Create Account",
+    loginTitle: "Sign In",
+    name: "Full Name",
+    phone: "Phone",
+    passwordRequirements: "Min 8 chars, 1 uppercase, 1 lowercase, 1 number",
+    invalidEmail: "Invalid email address",
+    invalidPassword: "Password must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number",
+    loginError: "Login failed. Please check your credentials.",
+    registerError: "Registration failed. Please try again.",
+    registerSuccess: "Registration successful! Please verify your email.",
+    verifyEmail: "Email Verification",
+    verifyEmailDesc: "Enter the 6-digit code sent to your email",
+    verificationCode: "Verification Code",
+    verifyButton: "Verify",
+    resendCode: "Resend Code",
+    codeSent: "Code sent!",
+    invalidCode: "Invalid code",
+    or: "or",
   },
   de: {
     welcomeTitle: "Willkommen bei Auxite Wallet",
@@ -141,6 +193,32 @@ const translations = {
     logout: "Abmelden",
     qrLogin: "QR-Anmeldung mit Handy",
     qrLoginDesc: "QR-Code mit der Mobile-App scannen",
+    // Email Login
+    emailLogin: "Mit E-Mail anmelden",
+    emailLoginDesc: "Mit E-Mail und Passwort anmelden",
+    email: "E-Mail",
+    loginButton: "Anmelden",
+    registerButton: "Registrieren",
+    noAccount: "Noch kein Konto?",
+    hasAccount: "Bereits ein Konto?",
+    registerTitle: "Konto erstellen",
+    loginTitle: "Anmelden",
+    name: "Vollständiger Name",
+    phone: "Telefon",
+    passwordRequirements: "Min. 8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl",
+    invalidEmail: "Ungültige E-Mail-Adresse",
+    invalidPassword: "Passwort muss mindestens 8 Zeichen mit 1 Großbuchstaben, 1 Kleinbuchstaben und 1 Zahl enthalten",
+    loginError: "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Angaben.",
+    registerError: "Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    registerSuccess: "Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail.",
+    verifyEmail: "E-Mail-Bestätigung",
+    verifyEmailDesc: "Geben Sie den 6-stelligen Code ein, der an Ihre E-Mail gesendet wurde",
+    verificationCode: "Bestätigungscode",
+    verifyButton: "Bestätigen",
+    resendCode: "Code erneut senden",
+    codeSent: "Code gesendet!",
+    invalidCode: "Ungültiger Code",
+    or: "oder",
   },
   fr: {
     welcomeTitle: "Bienvenue sur Auxite Wallet",
@@ -184,6 +262,32 @@ const translations = {
     logout: "Déconnexion",
     qrLogin: "Connexion QR Mobile",
     qrLoginDesc: "Scannez le code QR depuis l'application mobile",
+    // Email Login
+    emailLogin: "Connexion par e-mail",
+    emailLoginDesc: "Connectez-vous avec votre e-mail et mot de passe",
+    email: "E-mail",
+    loginButton: "Se connecter",
+    registerButton: "S'inscrire",
+    noAccount: "Pas de compte?",
+    hasAccount: "Déjà un compte?",
+    registerTitle: "Créer un compte",
+    loginTitle: "Se connecter",
+    name: "Nom complet",
+    phone: "Téléphone",
+    passwordRequirements: "Min 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre",
+    invalidEmail: "Adresse e-mail invalide",
+    invalidPassword: "Le mot de passe doit contenir au moins 8 caractères avec 1 majuscule, 1 minuscule et 1 chiffre",
+    loginError: "Échec de la connexion. Veuillez vérifier vos identifiants.",
+    registerError: "Échec de l'inscription. Veuillez réessayer.",
+    registerSuccess: "Inscription réussie! Veuillez vérifier votre e-mail.",
+    verifyEmail: "Vérification de l'e-mail",
+    verifyEmailDesc: "Entrez le code à 6 chiffres envoyé à votre e-mail",
+    verificationCode: "Code de vérification",
+    verifyButton: "Vérifier",
+    resendCode: "Renvoyer le code",
+    codeSent: "Code envoyé!",
+    invalidCode: "Code invalide",
+    or: "ou",
   },
   ar: {
     welcomeTitle: "مرحباً بك في محفظة Auxite",
@@ -227,6 +331,32 @@ const translations = {
     logout: "تسجيل الخروج",
     qrLogin: "تسجيل الدخول بـ QR",
     qrLoginDesc: "امسح رمز QR من تطبيق الهاتف",
+    // Email Login
+    emailLogin: "تسجيل الدخول بالبريد الإلكتروني",
+    emailLoginDesc: "سجل الدخول باستخدام بريدك الإلكتروني وكلمة المرور",
+    email: "البريد الإلكتروني",
+    loginButton: "تسجيل الدخول",
+    registerButton: "إنشاء حساب",
+    noAccount: "ليس لديك حساب؟",
+    hasAccount: "لديك حساب بالفعل؟",
+    registerTitle: "إنشاء حساب",
+    loginTitle: "تسجيل الدخول",
+    name: "الاسم الكامل",
+    phone: "الهاتف",
+    passwordRequirements: "8 أحرف على الأقل، 1 حرف كبير، 1 حرف صغير، 1 رقم",
+    invalidEmail: "عنوان بريد إلكتروني غير صالح",
+    invalidPassword: "يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل مع 1 حرف كبير و 1 حرف صغير و 1 رقم",
+    loginError: "فشل تسجيل الدخول. يرجى التحقق من بياناتك.",
+    registerError: "فشل التسجيل. يرجى المحاولة مرة أخرى.",
+    registerSuccess: "تم التسجيل بنجاح! يرجى التحقق من بريدك الإلكتروني.",
+    verifyEmail: "التحقق من البريد الإلكتروني",
+    verifyEmailDesc: "أدخل الرمز المكون من 6 أرقام المرسل إلى بريدك الإلكتروني",
+    verificationCode: "رمز التحقق",
+    verifyButton: "تحقق",
+    resendCode: "إعادة إرسال الرمز",
+    codeSent: "تم إرسال الرمز!",
+    invalidCode: "رمز غير صالح",
+    or: "أو",
   },
   ru: {
     welcomeTitle: "Добро пожаловать в Auxite Wallet",
@@ -270,6 +400,32 @@ const translations = {
     logout: "Выйти",
     qrLogin: "QR Вход с мобильного",
     qrLoginDesc: "Отсканируйте QR-код в мобильном приложении",
+    // Email Login
+    emailLogin: "Вход по электронной почте",
+    emailLoginDesc: "Войдите с помощью электронной почты и пароля",
+    email: "Электронная почта",
+    loginButton: "Войти",
+    registerButton: "Регистрация",
+    noAccount: "Нет аккаунта?",
+    hasAccount: "Уже есть аккаунт?",
+    registerTitle: "Создать аккаунт",
+    loginTitle: "Войти",
+    name: "Полное имя",
+    phone: "Телефон",
+    passwordRequirements: "Мин. 8 символов, 1 заглавная, 1 строчная, 1 цифра",
+    invalidEmail: "Неверный адрес электронной почты",
+    invalidPassword: "Пароль должен содержать не менее 8 символов с 1 заглавной, 1 строчной буквой и 1 цифрой",
+    loginError: "Ошибка входа. Проверьте свои данные.",
+    registerError: "Ошибка регистрации. Попробуйте снова.",
+    registerSuccess: "Регистрация успешна! Подтвердите свою почту.",
+    verifyEmail: "Подтверждение почты",
+    verifyEmailDesc: "Введите 6-значный код, отправленный на вашу почту",
+    verificationCode: "Код подтверждения",
+    verifyButton: "Подтвердить",
+    resendCode: "Отправить код снова",
+    codeSent: "Код отправлен!",
+    invalidCode: "Неверный код",
+    or: "или",
   },
 };
 
@@ -342,7 +498,10 @@ type WalletStep =
   | "confirm-password"
   | "import"
   | "unlock"
-  | "ready";
+  | "ready"
+  | "email-login"
+  | "email-register"
+  | "email-verify";
 
 interface WalletOnboardingProps {
   lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
@@ -371,6 +530,19 @@ export default function WalletOnboarding({
   const [unlockError, setUnlockError] = useState("");
   const [copied, setCopied] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+
+  // Email login states
+  const [emailInput, setEmailInput] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
+  const [emailConfirmPassword, setEmailConfirmPassword] = useState("");
+  const [emailName, setEmailName] = useState("");
+  const [emailPhone, setEmailPhone] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [authToken, setAuthToken] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const t = (key: string) => (translations[lang] as Record<string, string>)[key] || key;
 
@@ -532,6 +704,189 @@ export default function WalletOnboarding({
   };
 
   // ============================================
+  // EMAIL LOGIN FUNCTIONS
+  // ============================================
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+  const handleEmailLogin = async () => {
+    setEmailError("");
+
+    if (!EMAIL_REGEX.test(emailInput)) {
+      setEmailError(t("invalidEmail"));
+      return;
+    }
+
+    setIsEmailLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailInput, password: emailPassword }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setEmailError(data.error || t("loginError"));
+        return;
+      }
+
+      // Store auth token
+      localStorage.setItem("auxite_auth_token", data.token);
+      setAuthToken(data.token);
+
+      // Check if email needs verification
+      if (data.requiresEmailVerification) {
+        setPendingEmail(emailInput);
+        setStep("email-verify");
+        return;
+      }
+
+      // Check if wallet needs setup
+      if (data.requiresWalletSetup || !data.user.walletAddress) {
+        // User logged in but has no wallet - go to wallet creation
+        localStorage.setItem("auxite_auth_email", emailInput);
+        localStorage.setItem("auxite_auth_user_id", data.user.id);
+        setStep("onboarding");
+        return;
+      }
+
+      // User has wallet - complete login
+      const walletAddr = data.user.walletAddress;
+      localStorage.setItem("auxite_wallet_mode", "custodial");
+      localStorage.setItem("auxite_wallet_address", walletAddr);
+      localStorage.setItem("auxite_has_wallet", "true");
+      localStorage.setItem("auxite_auth_email", emailInput);
+      sessionStorage.setItem("auxite_session_unlocked", "true");
+
+      window.dispatchEvent(new Event("walletChanged"));
+      onWalletReady(walletAddr);
+
+    } catch (err) {
+      console.error("Login error:", err);
+      setEmailError(t("loginError"));
+    } finally {
+      setIsEmailLoading(false);
+    }
+  };
+
+  const handleEmailRegister = async () => {
+    setEmailError("");
+
+    if (!EMAIL_REGEX.test(emailInput)) {
+      setEmailError(t("invalidEmail"));
+      return;
+    }
+
+    if (!PASSWORD_REGEX.test(emailPassword)) {
+      setEmailError(t("invalidPassword"));
+      return;
+    }
+
+    if (emailPassword !== emailConfirmPassword) {
+      setEmailError(t("pinMismatch"));
+      return;
+    }
+
+    setIsEmailLoading(true);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: emailInput,
+          password: emailPassword,
+          name: emailName,
+          phone: emailPhone,
+          language: lang,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setEmailError(data.error || t("registerError"));
+        return;
+      }
+
+      // Store auth token
+      localStorage.setItem("auxite_auth_token", data.token);
+      setAuthToken(data.token);
+      setPendingEmail(emailInput);
+      setStep("email-verify");
+
+    } catch (err) {
+      console.error("Register error:", err);
+      setEmailError(t("registerError"));
+    } finally {
+      setIsEmailLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    setEmailError("");
+    setIsEmailLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: pendingEmail,
+          code: verificationCode,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setEmailError(data.error || t("invalidCode"));
+        return;
+      }
+
+      // Email verified - now setup wallet
+      localStorage.setItem("auxite_auth_email", pendingEmail);
+      localStorage.setItem("auxite_auth_user_id", data.user?.id || "");
+
+      // Go back to onboarding to create wallet
+      setStep("onboarding");
+
+    } catch (err) {
+      console.error("Verify error:", err);
+      setEmailError(t("invalidCode"));
+    } finally {
+      setIsEmailLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (resendCooldown > 0) return;
+
+    try {
+      await fetch("/api/auth/resend-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: pendingEmail }),
+      });
+
+      setResendCooldown(60);
+      const interval = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+    } catch (err) {
+      console.error("Resend error:", err);
+    }
+  };
+
+  // ============================================
   // RENDER
   // ============================================
 
@@ -619,10 +974,21 @@ export default function WalletOnboarding({
             {t("importWallet")}
           </button>
 
+          {/* Email Login Option */}
+          <button
+            onClick={() => setStep("email-login")}
+            className="w-full py-4 border border-amber-500 text-amber-500 hover:bg-amber-500/10 font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors mt-3"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            {t("emailLogin")}
+          </button>
+
           {/* QR Login Option */}
           <button
             onClick={() => setShowQRModal(true)}
-            className="w-full py-4 border border-blue-500 text-blue-500 hover:bg-blue-500/10 font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+            className="w-full py-4 border border-blue-500 text-blue-500 hover:bg-blue-500/10 font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors mt-3"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -992,6 +1358,319 @@ export default function WalletOnboarding({
             className="text-emerald-500 hover:text-emerald-400 text-sm"
           >
             {t("forgotPin")}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Email Login
+  if (step === "email-login") {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
+        <div className="max-w-md w-full">
+          {/* Back */}
+          <button
+            onClick={() => {
+              setEmailError("");
+              setEmailInput("");
+              setEmailPassword("");
+              setStep("onboarding");
+            }}
+            className="text-slate-400 hover:text-white mb-6 flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            {t("back")}
+          </button>
+
+          {/* Icon */}
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-amber-500/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+
+          <h1 className="text-2xl font-bold text-white text-center mb-2">{t("loginTitle")}</h1>
+          <p className="text-slate-400 text-center mb-8">{t("emailLoginDesc")}</p>
+
+          {/* Email Input */}
+          <div className="mb-4">
+            <label className="block text-slate-400 text-sm mb-2">{t("email")}</label>
+            <input
+              type="email"
+              value={emailInput}
+              onChange={(e) => {
+                setEmailInput(e.target.value);
+                setEmailError("");
+              }}
+              placeholder="name@example.com"
+              className="w-full py-4 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+              autoFocus
+            />
+          </div>
+
+          {/* Password Input */}
+          <div className="mb-4">
+            <label className="block text-slate-400 text-sm mb-2">{t("password")}</label>
+            <input
+              type="password"
+              value={emailPassword}
+              onChange={(e) => {
+                setEmailPassword(e.target.value);
+                setEmailError("");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleEmailLogin()}
+              placeholder="••••••••"
+              className="w-full py-4 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+            />
+          </div>
+
+          {/* Error */}
+          {emailError && (
+            <p className="text-red-400 text-sm text-center mb-4">{emailError}</p>
+          )}
+
+          {/* Login Button */}
+          <button
+            onClick={handleEmailLogin}
+            disabled={!emailInput || !emailPassword || isEmailLoading}
+            className="w-full py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors mb-4 flex items-center justify-center gap-2"
+          >
+            {isEmailLoading ? (
+              <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                {t("loginButton")}
+              </>
+            )}
+          </button>
+
+          {/* Register Link */}
+          <p className="text-center text-slate-400">
+            {t("noAccount")}{" "}
+            <button
+              onClick={() => {
+                setEmailError("");
+                setStep("email-register");
+              }}
+              className="text-amber-500 hover:text-amber-400 font-medium"
+            >
+              {t("registerButton")}
+            </button>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Email Register
+  if (step === "email-register") {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
+        <div className="max-w-md w-full">
+          {/* Back */}
+          <button
+            onClick={() => {
+              setEmailError("");
+              setStep("email-login");
+            }}
+            className="text-slate-400 hover:text-white mb-6 flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            {t("back")}
+          </button>
+
+          {/* Icon */}
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-amber-500/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+          </div>
+
+          <h1 className="text-2xl font-bold text-white text-center mb-2">{t("registerTitle")}</h1>
+          <p className="text-slate-400 text-center mb-8">{t("emailLoginDesc")}</p>
+
+          {/* Name Input */}
+          <div className="mb-4">
+            <label className="block text-slate-400 text-sm mb-2">{t("name")}</label>
+            <input
+              type="text"
+              value={emailName}
+              onChange={(e) => setEmailName(e.target.value)}
+              placeholder="John Doe"
+              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+              autoFocus
+            />
+          </div>
+
+          {/* Email Input */}
+          <div className="mb-4">
+            <label className="block text-slate-400 text-sm mb-2">{t("email")} *</label>
+            <input
+              type="email"
+              value={emailInput}
+              onChange={(e) => {
+                setEmailInput(e.target.value);
+                setEmailError("");
+              }}
+              placeholder="name@example.com"
+              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+            />
+          </div>
+
+          {/* Phone Input */}
+          <div className="mb-4">
+            <label className="block text-slate-400 text-sm mb-2">{t("phone")}</label>
+            <input
+              type="tel"
+              value={emailPhone}
+              onChange={(e) => setEmailPhone(e.target.value)}
+              placeholder="+90 555 123 4567"
+              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+            />
+          </div>
+
+          {/* Password Input */}
+          <div className="mb-4">
+            <label className="block text-slate-400 text-sm mb-2">{t("password")} *</label>
+            <input
+              type="password"
+              value={emailPassword}
+              onChange={(e) => {
+                setEmailPassword(e.target.value);
+                setEmailError("");
+              }}
+              placeholder="••••••••"
+              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+            />
+            <p className="text-xs text-slate-500 mt-1">{t("passwordRequirements")}</p>
+          </div>
+
+          {/* Confirm Password Input */}
+          <div className="mb-4">
+            <label className="block text-slate-400 text-sm mb-2">{t("confirmPassword")} *</label>
+            <input
+              type="password"
+              value={emailConfirmPassword}
+              onChange={(e) => {
+                setEmailConfirmPassword(e.target.value);
+                setEmailError("");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleEmailRegister()}
+              placeholder="••••••••"
+              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+            />
+          </div>
+
+          {/* Error */}
+          {emailError && (
+            <p className="text-red-400 text-sm text-center mb-4">{emailError}</p>
+          )}
+
+          {/* Register Button */}
+          <button
+            onClick={handleEmailRegister}
+            disabled={!emailInput || !emailPassword || !emailConfirmPassword || isEmailLoading}
+            className="w-full py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors mb-4 flex items-center justify-center gap-2"
+          >
+            {isEmailLoading ? (
+              <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                {t("registerButton")}
+              </>
+            )}
+          </button>
+
+          {/* Login Link */}
+          <p className="text-center text-slate-400">
+            {t("hasAccount")}{" "}
+            <button
+              onClick={() => {
+                setEmailError("");
+                setStep("email-login");
+              }}
+              className="text-amber-500 hover:text-amber-400 font-medium"
+            >
+              {t("loginButton")}
+            </button>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Email Verify
+  if (step === "email-verify") {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center">
+          {/* Icon */}
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-amber-500/20 flex items-center justify-center">
+            <svg className="w-10 h-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
+            </svg>
+          </div>
+
+          <h1 className="text-2xl font-bold text-white mb-2">{t("verifyEmail")}</h1>
+          <p className="text-slate-400 mb-2">{t("verifyEmailDesc")}</p>
+          <p className="text-amber-500 font-medium mb-8">{pendingEmail}</p>
+
+          {/* Code Input */}
+          <input
+            type="text"
+            value={verificationCode}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+              setVerificationCode(val);
+              setEmailError("");
+            }}
+            placeholder="000000"
+            maxLength={6}
+            className="w-full py-4 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white text-center text-2xl tracking-widest font-mono focus:outline-none focus:border-amber-500 mb-4"
+            autoFocus
+          />
+
+          {/* Error */}
+          {emailError && (
+            <p className="text-red-400 text-sm mb-4">{emailError}</p>
+          )}
+
+          {/* Verify Button */}
+          <button
+            onClick={handleVerifyCode}
+            disabled={verificationCode.length !== 6 || isEmailLoading}
+            className="w-full py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors mb-4 flex items-center justify-center gap-2"
+          >
+            {isEmailLoading ? (
+              <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                {t("verifyButton")}
+              </>
+            )}
+          </button>
+
+          {/* Resend Code */}
+          <button
+            onClick={handleResendCode}
+            disabled={resendCooldown > 0}
+            className="text-amber-500 hover:text-amber-400 text-sm disabled:text-slate-500"
+          >
+            {resendCooldown > 0 ? `${t("resendCode")} (${resendCooldown}s)` : t("resendCode")}
           </button>
         </div>
       </div>
