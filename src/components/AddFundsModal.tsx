@@ -3,6 +3,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Transak } from "@transak/transak-sdk";
 
 interface AddFundsModalProps {
   isOpen: boolean;
@@ -337,7 +338,7 @@ export function AddFundsModal({
     }
   };
 
-  // Kart ile kripto al (Transak - tüm ödeme yöntemleri)
+  // Kart ile kripto al (Transak SDK Modal)
   const handleBuyWithCard = () => {
     if (!walletAddress) return;
 
@@ -354,22 +355,39 @@ export function AddFundsModal({
       walletAddress: walletAddress,
       disableWalletAddressForm: "true",
       hideMenu: "true",
-      themeColor: "f59e0b",
-      // Kart ile al - sadece kart ödemesi
       paymentMethod: "credit_debit_card",
       ...(email && { email }),
     });
 
-    const transakUrl = `https://global.transak.com/?${params.toString()}`;
-    window.open(transakUrl, "_blank");
+    const widgetUrl = `https://global.transak.com/?${params.toString()}`;
 
-    setTimeout(() => {
+    const transak = new Transak({
+      widgetUrl: widgetUrl,
+      referrer: window.location.origin,
+      themeColor: "f59e0b",
+    });
+
+    transak.init();
+
+    // Event listeners
+    Transak.on("TRANSAK_WIDGET_CLOSE", () => {
       setIsLoading(false);
+      transak.close();
+    });
+
+    Transak.on("TRANSAK_ORDER_SUCCESSFUL", () => {
+      setIsLoading(false);
+      transak.close();
       onClose();
-    }, 1000);
+    });
+
+    Transak.on("TRANSAK_ORDER_FAILED", () => {
+      setIsLoading(false);
+      transak.close();
+    });
   };
 
-  // Banka transferi ile kripto al (Transak - sadece SEPA)
+  // Banka transferi ile kripto al (Transak SDK Modal - sadece SEPA)
   const handleBuyWithBank = () => {
     if (!walletAddress) return;
 
@@ -386,20 +404,37 @@ export function AddFundsModal({
       walletAddress: walletAddress,
       disableWalletAddressForm: "true",
       hideMenu: "true",
-      themeColor: "3b82f6",
-      // Sadece banka transferi - SEPA
-      paymentMethod: "sepa_bank_transfer,gbp_bank_transfer",
+      paymentMethod: "sepa_bank_transfer",
       disablePaymentMethods: "credit_debit_card,apple_pay,google_pay",
       ...(bankEmail && { email: bankEmail }),
     });
 
-    const transakUrl = `https://global.transak.com/?${params.toString()}`;
-    window.open(transakUrl, "_blank");
+    const widgetUrl = `https://global.transak.com/?${params.toString()}`;
 
-    setTimeout(() => {
+    const transak = new Transak({
+      widgetUrl: widgetUrl,
+      referrer: window.location.origin,
+      themeColor: "3b82f6",
+    });
+
+    transak.init();
+
+    // Event listeners
+    Transak.on("TRANSAK_WIDGET_CLOSE", () => {
       setIsBankLoading(false);
+      transak.close();
+    });
+
+    Transak.on("TRANSAK_ORDER_SUCCESSFUL", () => {
+      setIsBankLoading(false);
+      transak.close();
       onClose();
-    }, 1000);
+    });
+
+    Transak.on("TRANSAK_ORDER_FAILED", () => {
+      setIsBankLoading(false);
+      transak.close();
+    });
   };
 
   if (!isOpen) return null;
