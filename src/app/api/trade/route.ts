@@ -366,6 +366,7 @@ const tradeExecuteSchema = z.object({
   fromToken: z.string().min(1).max(10),
   toToken: z.string().min(1).max(10),
   fromAmount: z.number().positive().max(1000000000),
+  expectedToAmount: z.number().positive().optional(), // For server-side validation
   price: z.number().positive().optional(),
   slippage: z.number().min(0).max(10).default(1),
   executeOnChain: z.boolean().default(true),
@@ -637,12 +638,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { 
-      address, 
-      type, 
-      fromToken, 
-      toToken, 
-      fromAmount, 
+    const {
+      address,
+      type,
+      fromToken,
+      toToken,
+      fromAmount,
+      expectedToAmount,
       slippage,
       executeOnChain,
       quoteId,
@@ -845,6 +847,25 @@ export async function POST(request: NextRequest) {
       console.log(`   fee: ${fee}`);
       console.log(`   netAmount: ${netAmount}`);
       console.log(`   toAmount (grams): ${toAmount}`);
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // 🔒 SERVER-SIDE VALIDATION - Frontend manipulation önleme
+      // ═══════════════════════════════════════════════════════════════════════
+      if (expectedToAmount) {
+        const diff = Math.abs(toAmount - expectedToAmount) / toAmount;
+        if (diff > 0.05) {
+          console.error(`⚠️ PRICE MANIPULATION DETECTED in Trade API!`);
+          console.error(`   Client expected: ${expectedToAmount} ${toToken}`);
+          console.error(`   Server calculated: ${toAmount} ${toToken}`);
+          console.error(`   Difference: ${(diff * 100).toFixed(2)}%`);
+          return NextResponse.json({
+            error: "Price changed. Please refresh and try again.",
+            serverToAmount: toAmount,
+            clientToAmount: expectedToAmount,
+          }, { status: 400 });
+        }
+      }
+      console.log(`✅ Trade validated: ${fromAmount} ${fromToken} → ${toAmount.toFixed(6)} ${toToken}`);
 
       // ═══════════════════════════════════════════════════════════════════════
       // 📦 PLATFORM STOCK CHECK - Stokta yeterli metal var mı?

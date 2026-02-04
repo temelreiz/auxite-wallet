@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { getTokenPrices } from "@/lib/v6-token-service";
+import { notifyTrade } from "@/lib/telegram";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -375,6 +376,43 @@ export async function POST(request: NextRequest) {
       timestamp: Date.now(),
     };
     await redis.lpush(txKey, JSON.stringify(transaction));
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // TELEGRAM BİLDİRİMİ - Metal alımlarında admin'e bildirim gönder
+    // ═══════════════════════════════════════════════════════════════════════════
+    if (METALS.includes(toKey)) {
+      // Get user email if available
+      let userEmail = "";
+      try {
+        const userUid = await redis.get(`user:address:${normalizedAddress}`) as string;
+        if (userUid) {
+          const userData = await redis.hgetall(`user:${userUid}`);
+          userEmail = (userData?.email as string) || "";
+        }
+      } catch (e) {
+        console.warn("Could not fetch user email:", e);
+      }
+
+      // Async olarak gönder, response'u bekletme
+      notifyTrade({
+        type: "buy",
+        userAddress: normalizedAddress,
+        fromToken: fromAsset.toUpperCase(),
+        toToken: toAsset.toUpperCase(),
+        fromAmount,
+        toAmount,
+        certificateNumber: allocationInfo.certificateNumber,
+        email: userEmail,
+      }).then((success) => {
+        if (success) {
+          console.log(`📱 Exchange Telegram bildirimi gönderildi: ${toAmount.toFixed(4)}g ${toAsset.toUpperCase()}`);
+        } else {
+          console.error(`❌ Exchange Telegram bildirimi gönderilemedi`);
+        }
+      }).catch((err) => {
+        console.error(`❌ Exchange Telegram bildirim hatası:`, err);
+      });
+    }
 
     return NextResponse.json({
       success: true,
