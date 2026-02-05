@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useLanguage, LANGUAGES, getLanguageData } from "@/components/LanguageContext";
+import { GlobalTrustBar } from "@/components/GlobalTrustBar";
 
 // ============================================
 // 6-LANGUAGE TRANSLATIONS
@@ -322,6 +323,9 @@ export default function TopNav({
 
   return (
     <>
+      {/* Global Trust Bar - PRIORITY 3 */}
+      <GlobalTrustBar />
+
       <header className="border-b border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14 sm:h-16">

@@ -31,7 +31,13 @@ export interface AuxiteerTier {
 // ============================================
 // TIER STYLING CONFIG
 // ============================================
+// INSTITUTIONAL TIER NAMING (Standard, Prime, Private, Institutional)
 const TIER_STYLES: Record<string, { color: string; bgColor: string; borderColor: string }> = {
+  standard: { color: "#64748b", bgColor: "rgba(100, 116, 139, 0.1)", borderColor: "rgba(100, 116, 139, 0.3)" },
+  prime: { color: "#10b981", bgColor: "rgba(16, 185, 129, 0.1)", borderColor: "rgba(16, 185, 129, 0.3)" },
+  private: { color: "#fbbf24", bgColor: "rgba(251, 191, 36, 0.1)", borderColor: "rgba(251, 191, 36, 0.3)" },
+  institutional: { color: "#8b5cf6", bgColor: "rgba(139, 92, 246, 0.1)", borderColor: "rgba(139, 92, 246, 0.3)" },
+  // Legacy mappings
   regular: { color: "#64748b", bgColor: "rgba(100, 116, 139, 0.1)", borderColor: "rgba(100, 116, 139, 0.3)" },
   core: { color: "#10b981", bgColor: "rgba(16, 185, 129, 0.1)", borderColor: "rgba(16, 185, 129, 0.3)" },
   reserve: { color: "#3b82f6", bgColor: "rgba(59, 130, 246, 0.1)", borderColor: "rgba(59, 130, 246, 0.3)" },

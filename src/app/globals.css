@@ -581,3 +581,307 @@ select:focus-visible {
   backdrop-filter: blur(4px);
 }
 
+/* ============================================
+   GLOBAL TRUST BAR - PRIORITY 3
+   Trust First UX
+   ============================================ */
+
+.global-trust-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.625rem 1rem;
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.03) 100%);
+  border-bottom: 1px solid rgba(16, 185, 129, 0.12);
+  font-size: 0.75rem;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+  .global-trust-bar {
+    gap: 1.5rem;
+  }
+}
+
+.trust-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: rgb(52, 211, 153);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.trust-signal-icon {
+  width: 14px;
+  height: 14px;
+  color: rgb(16, 185, 129);
+}
+
+/* ============================================
+   STRUCTURE DIAGRAM - TRUST CENTER
+   ============================================ */
+
+.structure-diagram {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(71, 85, 105, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.structure-node {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  color: rgb(248, 250, 252);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.structure-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 0;
+  color: rgb(100, 116, 139);
+}
+
+.structure-arrow::before {
+  content: '↓';
+  font-size: 1.25rem;
+}
+
+/* ============================================
+   VAULT SELECTOR - PRIORITY 4
+   ============================================ */
+
+.vault-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(71, 85, 105, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vault-option:hover {
+  border-color: rgba(71, 85, 105, 0.4);
+}
+
+.vault-option.selected {
+  border-color: rgb(16, 185, 129);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.vault-flag {
+  width: 24px;
+  height: 18px;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.vault-name {
+  font-weight: 500;
+  color: rgb(248, 250, 252);
+}
+
+.vault-location {
+  font-size: 0.75rem;
+  color: rgb(148, 163, 184);
+}
+
+/* ============================================
+   STRUCTURED YIELD BADGES - PRIORITY 5
+   ============================================ */
+
+.yield-positioning-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgb(251, 191, 36);
+}
+
+.yield-benchmark-tag {
+  font-size: 0.625rem;
+  color: rgb(148, 163, 184);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ============================================
+   APY TOOLTIP - PRIORITY 5
+   ============================================ */
+
+.apy-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.apy-tooltip-content {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.75rem 1rem;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(71, 85, 105, 0.3);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: rgb(203, 213, 225);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 50;
+  margin-bottom: 0.5rem;
+}
+
+.apy-tooltip:hover .apy-tooltip-content {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ============================================
+   TIER SYSTEM - PRIORITY 9
+   ============================================ */
+
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tier-standard {
+  background: rgba(100, 116, 139, 0.15);
+  color: rgb(148, 163, 184);
+}
+
+.tier-prime {
+  background: rgba(16, 185, 129, 0.15);
+  color: rgb(52, 211, 153);
+}
+
+.tier-private {
+  background: rgba(251, 191, 36, 0.15);
+  color: rgb(251, 191, 36);
+}
+
+.tier-institutional {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(212, 175, 55, 0.2) 100%);
+  color: rgb(251, 191, 36);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+/* ============================================
+   MICROCOPY HIGHLIGHT TAGS - PRIORITY 10
+   ============================================ */
+
+.tag-institutional {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  color: rgb(148, 163, 184);
+  font-weight: 500;
+}
+
+.tag-custody {
+  color: rgb(52, 211, 153);
+}
+
+.tag-allocated {
+  color: rgb(251, 191, 36);
+}
+
+.tag-audited {
+  color: rgb(96, 165, 250);
+}
+
+/* ============================================
+   EXECUTION SPREAD DISPLAY - PRIORITY 8
+   ============================================ */
+
+.execution-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(30, 41, 59, 0.4);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: rgb(148, 163, 184);
+}
+
+.execution-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  color: rgb(52, 211, 153);
+}
+
+/* ============================================
+   WHAT AUXITE IS / IS NOT - PRIORITY 3
+   ============================================ */
+
+.auxite-identity-section {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(14, 165, 233, 0.03) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.identity-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.identity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.identity-item.positive {
+  color: rgb(52, 211, 153);
+}
+
+.identity-item.negative {
+  color: rgb(148, 163, 184);
+}
+
+.identity-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+

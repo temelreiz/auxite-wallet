@@ -18,226 +18,232 @@ interface LeasingDashboardProps {
 // ============================================
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    metalStaking: "Metal Biriktir",
-    stakeAndEarn: "Metallerinizi stake edin ve getiri kazanın",
-    totalLocked: "Toplam Kilitli",
+    metalStaking: "Yapılandırılmış Getiri",
+    stakeAndEarn: "Metal varlıklarınızdan kurumsal seviyede getiri elde edin",
+    totalLocked: "Toplam Taahhüt",
     activePositions: "Aktif Pozisyonlar",
-    annualEarnings: "Yıllık Kazanç",
-    averageAPY: "Ortalama APY",
+    annualEarnings: "Yıllık Getiri",
+    averageAPY: "Ortalama Getiri",
     thisWeek: "bu hafta",
-    earn: "Biriktir",
+    earn: "Getiri",
     myPositions: "Pozisyonlarım",
-    autoInvest: "Otomatik Biriktir",
-    availableOffers: "Mevcut Teklifler",
-    selectMetalTokens: "Metal tokenlerinizi seçin ve kazanmaya başlayın",
-    stakeEarn: "Biriktir & Kazan",
-    minAmount: "Min. Miktar",
+    autoInvest: "Otomatik Tahsis",
+    availableOffers: "Getiri Programları",
+    selectMetalTokens: "Fiziksel destekli metal varlıklarınızı seçin ve getiri kazanmaya başlayın",
+    stakeEarn: "Getiri Başlat",
+    minAmount: "Esnek Tahsis",
     months: "Ay",
     gold: "Altın",
     silver: "Gümüş",
     platinum: "Platin",
     palladium: "Paladyum",
-    dcaTitle: "Düzenli Yatırım Planları",
-    dcaDesc: "Otomatik periyodik alımlar oluşturun",
-    noDcaPlans: "Henüz düzenli yatırım planınız yok",
+    dcaTitle: "Düzenli Tahsis Planları",
+    dcaDesc: "Otomatik periyodik tahsisler oluşturun",
+    noDcaPlans: "Henüz düzenli tahsis planınız yok",
     createDca: "Yeni Plan Oluştur",
     howItWorks: "Nasıl Çalışır",
-    step1: "Metal tokenlerinizi seçin",
-    step2: "3, 6 veya 12 ay seçin",
-    step3: "APY'ye göre getiri kazanın",
-    step4: "Süre sonunda otomatik iade",
-    features: "Özellikler",
-    insured: "Sigortalı",
-    institutional: "Kurumsal",
-    transparent: "Şeffaf",
-    physical: "Fiziksel",
-    metalYield: "Metal Getiri",
+    step1: "Tahsis edilmiş metal varlıklarınızı seçin",
+    step2: "3, 6 veya 12 aylık vade seçin",
+    step3: "SOFR + GOFO bazlı getiri kazanın",
+    step4: "Vade sonunda otomatik geri alma",
+    features: "Kurumsal Özellikler",
+    insured: "Sigortalı Saklama",
+    institutional: "Kurumsal Seviye",
+    transparent: "Denetlenmiş",
+    physical: "Fiziksel Destekli",
+    metalYield: "Metal Cinsinden Getiri",
     onChain: "Zincir Üstü",
+    yieldBenchmark: "Getiri oranları kurumsal metal kiralama pazarlarından türetilmiştir",
   },
   en: {
-    metalStaking: "Metal Staking",
-    stakeAndEarn: "Stake your metals and earn yield",
-    totalLocked: "Total Locked",
+    metalStaking: "Structured Yield",
+    stakeAndEarn: "Earn institutional-grade yield on your metal holdings",
+    totalLocked: "Total Committed",
     activePositions: "Active Positions",
-    annualEarnings: "Annual Earnings",
-    averageAPY: "Average APY",
+    annualEarnings: "Annual Yield",
+    averageAPY: "Average Yield",
     thisWeek: "this week",
-    earn: "Earn",
+    earn: "Yield",
     myPositions: "My Positions",
-    autoInvest: "Auto-Staking",
-    availableOffers: "Available Offers",
-    selectMetalTokens: "Select your metal tokens and start earning",
-    stakeEarn: "Stake & Earn",
-    minAmount: "Min. Amount",
+    autoInvest: "Auto-Allocate",
+    availableOffers: "Yield Programs",
+    selectMetalTokens: "Select your physically-backed metal holdings and start earning",
+    stakeEarn: "Start Earning",
+    minAmount: "Flexible Allocation",
     months: "Mo",
     gold: "Gold",
     silver: "Silver",
     platinum: "Platinum",
     palladium: "Palladium",
-    dcaTitle: "Auto-Invest Plans",
-    dcaDesc: "Create automatic recurring purchases",
-    noDcaPlans: "No auto-invest plans yet",
+    dcaTitle: "Recurring Allocation Plans",
+    dcaDesc: "Create automatic periodic allocations",
+    noDcaPlans: "No recurring allocation plans yet",
     createDca: "Create New Plan",
     howItWorks: "How It Works",
-    step1: "Select your metal tokens",
-    step2: "Choose 3, 6 or 12 months",
-    step3: "Earn yield based on APY",
-    step4: "Auto-return after period",
-    features: "Features",
-    insured: "Insured",
-    institutional: "Institutional",
-    transparent: "Transparent",
-    physical: "Physical",
-    metalYield: "Metal Yield",
+    step1: "Select your allocated metal holdings",
+    step2: "Choose 3, 6 or 12 month term",
+    step3: "Earn yield based on SOFR + GOFO benchmarks",
+    step4: "Automatic redemption at term end",
+    features: "Institutional Features",
+    insured: "Insured Custody",
+    institutional: "Institutional-Grade",
+    transparent: "Audited",
+    physical: "Physically Backed",
+    metalYield: "Yield in Metal",
     onChain: "On-Chain",
+    yieldBenchmark: "Yield rates derived from institutional metal leasing markets",
   },
   de: {
-    metalStaking: "Metall-Staking",
-    stakeAndEarn: "Staken Sie Ihre Metalle und verdienen Sie Rendite",
-    totalLocked: "Gesamt Gesperrt",
+    metalStaking: "Strukturierte Rendite",
+    stakeAndEarn: "Verdienen Sie institutionelle Rendite auf Ihre Metallbestände",
+    totalLocked: "Gesamt Gebunden",
     activePositions: "Aktive Positionen",
-    annualEarnings: "Jährliche Einnahmen",
-    averageAPY: "Durchschn. APY",
+    annualEarnings: "Jährliche Rendite",
+    averageAPY: "Durchschn. Rendite",
     thisWeek: "diese Woche",
-    earn: "Verdienen",
+    earn: "Rendite",
     myPositions: "Meine Positionen",
-    autoInvest: "Auto-Staking",
-    availableOffers: "Verfügbare Angebote",
-    selectMetalTokens: "Wählen Sie Ihre Metall-Token und beginnen Sie zu verdienen",
-    stakeEarn: "Staken & Verdienen",
-    minAmount: "Min. Betrag",
+    autoInvest: "Auto-Allokation",
+    availableOffers: "Rendite-Programme",
+    selectMetalTokens: "Wählen Sie Ihre physisch gedeckten Metallbestände",
+    stakeEarn: "Rendite Starten",
+    minAmount: "Flexible Allokation",
     months: "Mo",
     gold: "Gold",
     silver: "Silber",
     platinum: "Platin",
     palladium: "Palladium",
-    dcaTitle: "Auto-Invest Pläne",
-    dcaDesc: "Erstellen Sie automatische wiederkehrende Käufe",
-    noDcaPlans: "Noch keine Auto-Invest Pläne",
+    dcaTitle: "Wiederkehrende Allokationspläne",
+    dcaDesc: "Erstellen Sie automatische periodische Allokationen",
+    noDcaPlans: "Noch keine wiederkehrenden Allokationspläne",
     createDca: "Neuen Plan erstellen",
     howItWorks: "So funktioniert's",
-    step1: "Wählen Sie Ihre Metall-Token",
-    step2: "Wählen Sie 3, 6 oder 12 Monate",
-    step3: "Verdienen Sie Rendite basierend auf APY",
-    step4: "Automatische Rückgabe nach Ablauf",
-    features: "Funktionen",
-    insured: "Versichert",
-    institutional: "Institutionell",
-    transparent: "Transparent",
-    physical: "Physisch",
-    metalYield: "Metall-Rendite",
+    step1: "Wählen Sie Ihre allokierten Metallbestände",
+    step2: "Wählen Sie 3, 6 oder 12 Monate Laufzeit",
+    step3: "Verdienen Sie Rendite basierend auf SOFR + GOFO",
+    step4: "Automatische Rücknahme am Laufzeitende",
+    features: "Institutionelle Merkmale",
+    insured: "Versicherte Verwahrung",
+    institutional: "Institutioneller Standard",
+    transparent: "Geprüft",
+    physical: "Physisch Gedeckt",
+    metalYield: "Rendite in Metall",
     onChain: "On-Chain",
+    yieldBenchmark: "Renditen abgeleitet aus institutionellen Metallleasing-Märkten",
   },
   fr: {
-    metalStaking: "Staking de Métaux",
-    stakeAndEarn: "Stakez vos métaux et gagnez des rendements",
-    totalLocked: "Total Verrouillé",
+    metalStaking: "Rendement Structuré",
+    stakeAndEarn: "Gagnez un rendement institutionnel sur vos métaux",
+    totalLocked: "Total Engagé",
     activePositions: "Positions Actives",
-    annualEarnings: "Gains Annuels",
-    averageAPY: "APY Moyen",
+    annualEarnings: "Rendement Annuel",
+    averageAPY: "Rendement Moyen",
     thisWeek: "cette semaine",
-    earn: "Gagner",
+    earn: "Rendement",
     myPositions: "Mes Positions",
-    autoInvest: "Auto-Staking",
-    availableOffers: "Offres Disponibles",
-    selectMetalTokens: "Sélectionnez vos tokens métalliques et commencez à gagner",
-    stakeEarn: "Staker & Gagner",
-    minAmount: "Montant Min.",
+    autoInvest: "Auto-Allocation",
+    availableOffers: "Programmes de Rendement",
+    selectMetalTokens: "Sélectionnez vos avoirs métalliques adossés physiquement",
+    stakeEarn: "Commencer à Gagner",
+    minAmount: "Allocation Flexible",
     months: "Mois",
     gold: "Or",
     silver: "Argent",
     platinum: "Platine",
     palladium: "Palladium",
-    dcaTitle: "Plans d'Auto-Invest",
-    dcaDesc: "Créez des achats récurrents automatiques",
-    noDcaPlans: "Pas encore de plans d'auto-invest",
+    dcaTitle: "Plans d'Allocation Récurrents",
+    dcaDesc: "Créez des allocations périodiques automatiques",
+    noDcaPlans: "Pas encore de plans d'allocation récurrents",
     createDca: "Créer un nouveau plan",
     howItWorks: "Comment ça marche",
-    step1: "Sélectionnez vos tokens métalliques",
-    step2: "Choisissez 3, 6 ou 12 mois",
-    step3: "Gagnez des rendements basés sur l'APY",
-    step4: "Retour automatique après la période",
-    features: "Caractéristiques",
-    insured: "Assuré",
-    institutional: "Institutionnel",
-    transparent: "Transparent",
-    physical: "Physique",
-    metalYield: "Rendement Métal",
+    step1: "Sélectionnez vos avoirs métalliques alloués",
+    step2: "Choisissez une durée de 3, 6 ou 12 mois",
+    step3: "Gagnez des rendements basés sur SOFR + GOFO",
+    step4: "Rachat automatique à la fin du terme",
+    features: "Caractéristiques Institutionnelles",
+    insured: "Garde Assurée",
+    institutional: "Niveau Institutionnel",
+    transparent: "Audité",
+    physical: "Adossé Physiquement",
+    metalYield: "Rendement en Métal",
     onChain: "On-Chain",
+    yieldBenchmark: "Taux de rendement dérivés des marchés de crédit-bail institutionnels",
   },
   ar: {
-    metalStaking: "تخزين المعادن",
-    stakeAndEarn: "خزّن معادنك واكسب عائدًا",
-    totalLocked: "إجمالي المقفل",
+    metalStaking: "العائد المهيكل",
+    stakeAndEarn: "احصل على عوائد مؤسسية على حيازاتك المعدنية",
+    totalLocked: "إجمالي الالتزام",
     activePositions: "المراكز النشطة",
-    annualEarnings: "الأرباح السنوية",
-    averageAPY: "متوسط APY",
+    annualEarnings: "العائد السنوي",
+    averageAPY: "متوسط العائد",
     thisWeek: "هذا الأسبوع",
-    earn: "اكسب",
+    earn: "العائد",
     myPositions: "مراكزي",
-    autoInvest: "التخزين التلقائي",
-    availableOffers: "العروض المتاحة",
-    selectMetalTokens: "اختر رموز المعادن وابدأ في الكسب",
-    stakeEarn: "خزّن واكسب",
-    minAmount: "الحد الأدنى",
+    autoInvest: "التخصيص التلقائي",
+    availableOffers: "برامج العائد",
+    selectMetalTokens: "اختر حيازاتك المعدنية المدعومة فعلياً",
+    stakeEarn: "ابدأ الكسب",
+    minAmount: "تخصيص مرن",
     months: "شهر",
     gold: "ذهب",
     silver: "فضة",
     platinum: "بلاتين",
     palladium: "بالاديوم",
-    dcaTitle: "خطط الاستثمار التلقائي",
-    dcaDesc: "أنشئ عمليات شراء متكررة تلقائية",
-    noDcaPlans: "لا توجد خطط استثمار تلقائي بعد",
+    dcaTitle: "خطط التخصيص المتكررة",
+    dcaDesc: "أنشئ تخصيصات دورية تلقائية",
+    noDcaPlans: "لا توجد خطط تخصيص متكررة بعد",
     createDca: "إنشاء خطة جديدة",
     howItWorks: "كيف يعمل",
-    step1: "اختر رموز المعادن الخاصة بك",
-    step2: "اختر 3 أو 6 أو 12 شهرًا",
-    step3: "اكسب عائدًا بناءً على APY",
-    step4: "إرجاع تلقائي بعد الفترة",
-    features: "المميزات",
-    insured: "مؤمّن",
-    institutional: "مؤسسي",
-    transparent: "شفاف",
-    physical: "فعلي",
-    metalYield: "عائد المعدن",
+    step1: "اختر حيازاتك المعدنية المخصصة",
+    step2: "اختر مدة 3 أو 6 أو 12 شهراً",
+    step3: "اكسب عائداً بناءً على SOFR + GOFO",
+    step4: "استرداد تلقائي في نهاية المدة",
+    features: "الميزات المؤسسية",
+    insured: "حفظ مؤمّن",
+    institutional: "مستوى مؤسسي",
+    transparent: "مدقق",
+    physical: "مدعوم فعلياً",
+    metalYield: "عائد بالمعدن",
     onChain: "على السلسلة",
+    yieldBenchmark: "معدلات العائد مشتقة من أسواق تأجير المعادن المؤسسية",
   },
   ru: {
-    metalStaking: "Стейкинг Металлов",
-    stakeAndEarn: "Стейкайте ваши металлы и зарабатывайте",
-    totalLocked: "Всего Заблокировано",
+    metalStaking: "Структурированный Доход",
+    stakeAndEarn: "Получайте институциональный доход на металлические активы",
+    totalLocked: "Всего Обязательств",
     activePositions: "Активные Позиции",
     annualEarnings: "Годовой Доход",
-    averageAPY: "Средний APY",
+    averageAPY: "Средний Доход",
     thisWeek: "на этой неделе",
-    earn: "Заработать",
+    earn: "Доход",
     myPositions: "Мои Позиции",
-    autoInvest: "Авто-стейкинг",
-    availableOffers: "Доступные Предложения",
-    selectMetalTokens: "Выберите токены металлов и начните зарабатывать",
-    stakeEarn: "Стейк & Заработок",
-    minAmount: "Мин. Сумма",
+    autoInvest: "Авто-аллокация",
+    availableOffers: "Программы Дохода",
+    selectMetalTokens: "Выберите ваши физически обеспеченные металлические активы",
+    stakeEarn: "Начать Зарабатывать",
+    minAmount: "Гибкая Аллокация",
     months: "Мес",
     gold: "Золото",
     silver: "Серебро",
     platinum: "Платина",
     palladium: "Палладий",
-    dcaTitle: "Планы авто-инвестирования",
-    dcaDesc: "Создавайте автоматические повторяющиеся покупки",
-    noDcaPlans: "Пока нет планов авто-инвестирования",
+    dcaTitle: "Планы Периодической Аллокации",
+    dcaDesc: "Создавайте автоматические периодические аллокации",
+    noDcaPlans: "Пока нет планов периодической аллокации",
     createDca: "Создать новый план",
     howItWorks: "Как это работает",
-    step1: "Выберите токены металлов",
-    step2: "Выберите 3, 6 или 12 месяцев",
-    step3: "Зарабатывайте доход на основе APY",
-    step4: "Автовозврат после периода",
-    features: "Особенности",
-    insured: "Застраховано",
-    institutional: "Институциональный",
-    transparent: "Прозрачный",
-    physical: "Физический",
+    step1: "Выберите ваши аллоцированные металлические активы",
+    step2: "Выберите срок 3, 6 или 12 месяцев",
+    step3: "Зарабатывайте доход на основе SOFR + GOFO",
+    step4: "Автоматическое погашение в конце срока",
+    features: "Институциональные Особенности",
+    insured: "Застрахованное Хранение",
+    institutional: "Институциональный Уровень",
+    transparent: "Проверенный",
+    physical: "Физически Обеспеченный",
     metalYield: "Доход в Металле",
     onChain: "В Сети",
+    yieldBenchmark: "Ставки дохода получены из институциональных рынков лизинга металлов",
   },
 };
 
@@ -282,26 +288,36 @@ function StatsCard({ label, value, suffix, color, icon, trend, t }: { label: str
 
 function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; formatAPYRange: (offer: any) => string; onAllocate: () => void; t: Record<string, string> }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   const metalGradients: Record<string, string> = { AUXG: "from-amber-500/10 via-transparent to-transparent", AUXS: "from-slate-400/10 via-transparent to-transparent", AUXPT: "from-cyan-400/10 via-transparent to-transparent", AUXPD: "from-rose-400/10 via-transparent to-transparent" };
-  
+
   // Metal icon mapping for high quality icons
   const metalIcons: Record<string, string> = {
     AUXG: "/gold-favicon-32x32.png",
-    AUXS: "/silver-favicon-32x32.png", 
+    AUXS: "/silver-favicon-32x32.png",
     AUXPT: "/platinum-favicon-32x32.png",
     AUXPD: "/palladium-favicon-32x32.png"
   };
 
   return (
     <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} className={`rounded-lg sm:rounded-xl border backdrop-blur-sm p-4 sm:p-6 transition-all duration-300 ${isHovered ? "border-emerald-500/50 shadow-lg shadow-emerald-500/10 -translate-y-1" : "border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm dark:shadow-none"}`}>
+
+      {/* PRIORITY 5: Structured Metal Yield Badge */}
+      <div className="mb-3 flex items-center justify-between">
+        <div className="yield-positioning-badge">
+          <span>Structured Metal Yield</span>
+        </div>
+        <span className="yield-benchmark-tag">SOFR + GOFO</span>
+      </div>
+
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="relative">
-            <img 
-              src={metalIcons[offer.metal] || offer.icon} 
-              alt={offer.name} 
-              width={48} 
-              height={48} 
+            <img
+              src={metalIcons[offer.metal] || offer.icon}
+              alt={offer.name}
+              width={48}
+              height={48}
               className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
               style={{ imageRendering: 'crisp-edges' }}
             />
@@ -314,9 +330,25 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
             <div className="text-[10px] sm:text-xs text-slate-500">{offer.name}</div>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-xl sm:text-2xl font-bold text-emerald-500 dark:text-emerald-400">{formatAPYRange(offer)}</div>
-          <div className="text-[10px] sm:text-xs text-slate-500">APY</div>
+
+        {/* PRIORITY 5: APY with Tooltip */}
+        <div className="text-right relative">
+          <div
+            className="text-xl sm:text-2xl font-bold text-emerald-500 dark:text-emerald-400 cursor-help"
+            onMouseEnter={() => setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+          >
+            {formatAPYRange(offer)}
+            <span className="ml-1 text-slate-400 text-sm">ⓘ</span>
+          </div>
+          <div className="text-[10px] sm:text-xs text-slate-500">Annual Yield</div>
+
+          {/* APY Tooltip */}
+          {showTooltip && (
+            <div className="apy-tooltip-content" style={{ opacity: 1, visibility: 'visible' }}>
+              {t.yieldBenchmark || "Yield rates derived from institutional metal leasing markets and short-term benchmark rates."}
+            </div>
+          )}
         </div>
       </div>
       <div className="flex gap-1.5 sm:gap-2 mb-3 sm:mb-4">
@@ -330,15 +362,17 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
       <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
         <div className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-stone-100 dark:bg-slate-800/30">
           <div className="text-[10px] sm:text-xs text-slate-500">{t.minAmount}</div>
-          <div className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">{offer.minAmount}g</div>
+          <div className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">Flexible</div>
         </div>
         <div className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-stone-100 dark:bg-slate-800/30">
           <div className="text-[10px] sm:text-xs text-slate-500">TVL</div>
           <div className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">${offer.tvl.toLocaleString()}</div>
         </div>
       </div>
-      <button onClick={onAllocate} className="w-full px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-semibold text-sm sm:text-base transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-1.5 sm:gap-2">
-        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+
+      {/* PRIORITY 5: Button Rename - "Start Earning" instead of "Stake & Earn" */}
+      <button onClick={onAllocate} className="w-full px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm sm:text-base transition-colors flex items-center justify-center gap-1.5 sm:gap-2">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
         {t.stakeEarn}
       </button>
     </div>
