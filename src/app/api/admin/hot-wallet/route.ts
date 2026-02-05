@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { getHotWalletBalances } from "@/lib/blockchain-service";
+import * as OTPAuth from "otpauth";
+import * as crypto from "crypto";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -12,6 +14,72 @@ const redis = new Redis({
 const ADMIN_ADDRESSES = [
   process.env.ADMIN_ADDRESS?.toLowerCase(),
 ].filter(Boolean);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ADMIN 2FA VERIFICATION
+// ═══════════════════════════════════════════════════════════════════════════
+function get2FAKey(address: string): string {
+  return `user:2fa:${address.toLowerCase()}`;
+}
+
+function hashCode(code: string): string {
+  return crypto.createHash("sha256").update(code).digest("hex");
+}
+
+async function verifyAdmin2FA(address: string, code: string): Promise<{ valid: boolean; error?: string }> {
+  const key = get2FAKey(address);
+  const data = await redis.hgetall(key);
+
+  // Admin için 2FA zorunlu
+  if (!data || Object.keys(data).length === 0) {
+    return { valid: false, error: "Admin hesabında 2FA etkinleştirilmemiş. Lütfen önce 2FA'yı aktif edin." };
+  }
+
+  const isEnabled = data.enabled === true || data.enabled === "true";
+  if (!isEnabled || !data.secret) {
+    return { valid: false, error: "Admin hesabında 2FA etkinleştirilmemiş. Lütfen önce 2FA'yı aktif edin." };
+  }
+
+  if (!code) {
+    return { valid: false, error: "Admin işlemleri için 2FA kodu gerekli" };
+  }
+
+  // TOTP doğrula
+  try {
+    const totp = new OTPAuth.TOTP({
+      issuer: "Auxite",
+      label: "user",
+      algorithm: "SHA1",
+      digits: 6,
+      period: 30,
+      secret: data.secret as string,
+    });
+    const delta = totp.validate({ token: code, window: 1 });
+    if (delta !== null) {
+      return { valid: true };
+    }
+  } catch (e) {
+    console.error("Admin TOTP verify error:", e);
+  }
+
+  // Backup kodu dene
+  let backupCodes: string[] = [];
+  if (data.backupCodes) {
+    try {
+      backupCodes = typeof data.backupCodes === "string" ? JSON.parse(data.backupCodes) : data.backupCodes as string[];
+    } catch {}
+  }
+
+  const hashedInput = hashCode(code.toUpperCase());
+  if (backupCodes.includes(hashedInput)) {
+    // Backup kodu kullanıldı - sil
+    const newCodes = backupCodes.filter(c => c !== hashedInput);
+    await redis.hset(key, { backupCodes: JSON.stringify(newCodes), backupCodesRemaining: newCodes.length });
+    return { valid: true };
+  }
+
+  return { valid: false, error: "Geçersiz 2FA kodu" };
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ADMIN AUTHENTICATION - Bearer token + Address verification
@@ -186,7 +254,39 @@ export async function POST(request: NextRequest) {
     const adminAddress = auth.adminAddress;
 
     const body = await request.json();
-    const { action, token, toAddress, amount, withdrawId } = body;
+    const { action, token, toAddress, amount, withdrawId, twoFactorCode } = body;
+
+    // ═══════════════════════════════════════════════════════════════
+    // ADMIN 2FA DOĞRULAMASI - Tüm POST işlemleri için zorunlu
+    // ═══════════════════════════════════════════════════════════════
+    if (!adminAddress) {
+      return NextResponse.json({ error: "Admin address required" }, { status: 400 });
+    }
+
+    const twoFAResult = await verifyAdmin2FA(adminAddress, twoFactorCode || "");
+    if (!twoFAResult.valid) {
+      return NextResponse.json({
+        error: twoFAResult.error || "Admin 2FA doğrulaması başarısız",
+        code: "ADMIN_2FA_REQUIRED",
+        requires2FA: true,
+      }, { status: 401 });
+    }
+
+    // Rate limiting for admin operations
+    const rateLimitKey = `ratelimit:admin_send:${adminAddress}`;
+    const now = Math.floor(Date.now() / 1000);
+    await redis.zremrangebyscore(rateLimitKey, 0, now - 3600); // 1 saat
+    const requestCount = await redis.zcard(rateLimitKey);
+
+    if (requestCount >= 10) { // Saatte max 10 admin gönderim
+      return NextResponse.json({
+        error: "Admin gönderim limiti aşıldı. Lütfen 1 saat bekleyin.",
+        code: "ADMIN_RATE_LIMIT",
+      }, { status: 429 });
+    }
+
+    await redis.zadd(rateLimitKey, { score: now, member: `${now}-${Math.random()}` });
+    await redis.expire(rateLimitKey, 7200);
 
     // ═══════════════════════════════════════════════════════════════
     // SEND - Kripto gönder

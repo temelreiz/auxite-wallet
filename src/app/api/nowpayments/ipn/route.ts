@@ -6,7 +6,12 @@ import { incrementBalance, addTransaction, addBonusAuxm } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
-const IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET || "";
+const IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET;
+
+// IPN_SECRET zorunlu - yoksa başlatmada uyar
+if (!IPN_SECRET) {
+  console.error("⚠️ CRITICAL: NOWPAYMENTS_IPN_SECRET is not configured! IPN webhook will reject all requests.");
+}
 
 // Redis bağlantısı
 async function getRedis() {

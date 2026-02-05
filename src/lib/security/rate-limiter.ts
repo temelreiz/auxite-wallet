@@ -287,10 +287,10 @@ export async function checkSuspiciousActivity(
   action: 'login' | 'withdraw' | 'trade'
 ): Promise<{ suspicious: boolean; reason?: string }> {
   const key = `suspicious:${userId}`;
-  
+
   // Son 1 saatteki işlemleri kontrol et
   const recentActions = await redis.lrange(key, 0, 100);
-  
+
   // Farklı IP'lerden çok fazla istek?
   const ips = new Set(recentActions.map((a: any) => { try { return typeof a === "string" ? JSON.parse(a).ip : a.ip; } catch { return null; } }).filter(Boolean));
   if (ips.size > 5 && action === 'withdraw') {
@@ -299,7 +299,7 @@ export async function checkSuspiciousActivity(
       reason: 'Son 1 saatte 5+ farklı IP adresinden işlem',
     };
   }
-  
+
   // Çok hızlı withdraw denemeleri?
   if (action === 'withdraw') {
     const withdraws = recentActions.filter(
@@ -312,7 +312,7 @@ export async function checkSuspiciousActivity(
       };
     }
   }
-  
+
   // Aktiviteyi kaydet
   await redis.lpush(
     key,
@@ -320,6 +320,72 @@ export async function checkSuspiciousActivity(
   );
   await redis.ltrim(key, 0, 99); // Son 100 işlem
   await redis.expire(key, 3600); // 1 saat TTL
-  
+
   return { suspicious: false };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// IP + ADDRESS COMBINED RATE LIMITING
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * IP + Address kombinasyonu ile daha sıkı rate limiting
+ * Hem IP hem de address bazlı limitleri kontrol eder
+ */
+export async function checkCombinedRateLimit(
+  address: string,
+  ip: string,
+  action: 'transfer' | 'withdraw' | 'trade',
+  limits: { addressLimit: number; ipLimit: number; windowSec: number }
+): Promise<{ allowed: boolean; reason?: string }> {
+  const now = Math.floor(Date.now() / 1000);
+  const windowStart = now - limits.windowSec;
+
+  const addressKey = `ratelimit:${action}:addr:${address.toLowerCase()}`;
+  const ipKey = `ratelimit:${action}:ip:${ip}`;
+
+  // Temizle ve say
+  await Promise.all([
+    redis.zremrangebyscore(addressKey, 0, windowStart),
+    redis.zremrangebyscore(ipKey, 0, windowStart),
+  ]);
+
+  const [addressCount, ipCount] = await Promise.all([
+    redis.zcard(addressKey),
+    redis.zcard(ipKey),
+  ]);
+
+  // Address limiti kontrolü
+  if (addressCount >= limits.addressLimit) {
+    return {
+      allowed: false,
+      reason: `Bu adres için ${action} limiti aşıldı. Lütfen ${Math.ceil(limits.windowSec / 60)} dakika bekleyin.`,
+    };
+  }
+
+  // IP limiti kontrolü
+  if (ipCount >= limits.ipLimit) {
+    return {
+      allowed: false,
+      reason: `Bu IP için ${action} limiti aşıldı. Lütfen ${Math.ceil(limits.windowSec / 60)} dakika bekleyin.`,
+    };
+  }
+
+  // Her iki key'e de ekle
+  const member = `${now}-${Math.random()}`;
+  await Promise.all([
+    redis.zadd(addressKey, { score: now, member }),
+    redis.zadd(ipKey, { score: now, member }),
+    redis.expire(addressKey, limits.windowSec * 2),
+    redis.expire(ipKey, limits.windowSec * 2),
+  ]);
+
+  return { allowed: true };
+}
+
+// Önerilen limitler
+export const COMBINED_LIMITS = {
+  transfer: { addressLimit: 5, ipLimit: 10, windowSec: 60 },     // 1 dakika
+  withdraw: { addressLimit: 3, ipLimit: 5, windowSec: 300 },     // 5 dakika
+  trade: { addressLimit: 30, ipLimit: 60, windowSec: 60 },       // 1 dakika
+};
