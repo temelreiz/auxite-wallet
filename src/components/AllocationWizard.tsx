@@ -69,6 +69,7 @@ const translations = {
     checkSegregated: "Havuzlanmış varlıklardan ayrılmış",
     checkAudited: "Üçüncü taraf denetimli rezervler",
     checkInsured: "Fiziksel varlık sigortası",
+    checkBlockchainAnchored: "Blockchain'de kayıtlı mülkiyet sertifikası",
     confirmAllocation: "Tahsisi Onayla",
     viewCertificate: "Sertifikayı Görüntüle",
     downloadCertificate: "Sertifikayı İndir",
@@ -142,6 +143,7 @@ const translations = {
     checkSegregated: "Segregated from pooled assets",
     checkAudited: "Third-party audited reserves",
     checkInsured: "Physical asset insurance coverage",
+    checkBlockchainAnchored: "Blockchain-anchored ownership certificate",
     confirmAllocation: "Confirm Allocation",
     viewCertificate: "View Certificate",
     downloadCertificate: "Download Certificate",
@@ -206,6 +208,7 @@ const translations = {
     checkSegregated: "Von gepoolten Vermögenswerten getrennt",
     checkAudited: "Drittanbieter-geprüfte Reserven",
     checkInsured: "Physische Vermögensversicherung",
+    checkBlockchainAnchored: "Blockchain-verankertes Eigentumszertifikat",
     confirmAllocation: "Allokation Bestätigen",
     viewCertificate: "Zertifikat Anzeigen",
     downloadCertificate: "Zertifikat Herunterladen",
@@ -262,6 +265,7 @@ const translations = {
     checkSegregated: "Séparé des actifs mutualisés",
     checkAudited: "Réserves auditées par tiers",
     checkInsured: "Couverture d'assurance des actifs physiques",
+    checkBlockchainAnchored: "Certificat de propriété ancré blockchain",
     confirmAllocation: "Confirmer l'Allocation",
     viewCertificate: "Voir le Certificat",
     downloadCertificate: "Télécharger le Certificat",
@@ -318,6 +322,7 @@ const translations = {
     checkSegregated: "منفصل عن الأصول المجمعة",
     checkAudited: "احتياطيات مدققة من طرف ثالث",
     checkInsured: "تغطية تأمين الأصول المادية",
+    checkBlockchainAnchored: "شهادة ملكية مرتبطة بالبلوكتشين",
     confirmAllocation: "تأكيد التخصيص",
     viewCertificate: "عرض الشهادة",
     downloadCertificate: "تحميل الشهادة",
@@ -374,6 +379,7 @@ const translations = {
     checkSegregated: "Отделен от объединенных активов",
     checkAudited: "Резервы проверены третьей стороной",
     checkInsured: "Страхование физических активов",
+    checkBlockchainAnchored: "Сертификат собственности в блокчейне",
     confirmAllocation: "Подтвердить Распределение",
     viewCertificate: "Просмотр Сертификата",
     downloadCertificate: "Скачать Сертификат",
@@ -487,7 +493,7 @@ export function AllocationWizard({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [result, setResult] = useState<AllocationResult | null>(null);
-  const [trustChecks, setTrustChecks] = useState<boolean[]>([false, false, false, false, false, false]);
+  const [trustChecks, setTrustChecks] = useState<boolean[]>([false, false, false, false, false, false, false]);
 
   // Calculations
   const amountNum = parseFloat(amount) || 0;
@@ -619,7 +625,7 @@ export function AllocationWizard({
     }).format(value);
   };
 
-  // Trust Checklist Items
+  // Trust Checklist Items - 7 Trust Signals (Capital Gravity Blueprint)
   const trustChecklistItems = [
     t.checkFullyAllocated,
     t.checkIndependentCustody,
@@ -627,6 +633,7 @@ export function AllocationWizard({
     t.checkSegregated,
     t.checkAudited,
     t.checkInsured,
+    t.checkBlockchainAnchored,
   ];
 
   return (

@@ -13,7 +13,7 @@ import { useLanguage, LANGUAGES, getLanguageData } from "@/components/LanguageCo
 const translations: Record<string, Record<string, string>> = {
   tr: {
     markets: "Piyasalar",
-    stake: "Biriktir",
+    stake: "Yapılandırılmış Getiri",
     wallet: "Kasa",
     profile: "Profil",
     trust: "Güven",
@@ -36,7 +36,7 @@ const translations: Record<string, Record<string, string>> = {
   },
   en: {
     markets: "Markets",
-    stake: "Stake",
+    stake: "Structured Yield",
     wallet: "Vault",
     profile: "Profile",
     trust: "Trust",
@@ -59,7 +59,7 @@ const translations: Record<string, Record<string, string>> = {
   },
   de: {
     markets: "Märkte",
-    stake: "Staken",
+    stake: "Strukturierte Rendite",
     wallet: "Tresor",
     profile: "Profil",
     trust: "Vertrauen",
@@ -82,7 +82,7 @@ const translations: Record<string, Record<string, string>> = {
   },
   fr: {
     markets: "Marchés",
-    stake: "Staker",
+    stake: "Rendement Structuré",
     wallet: "Coffre",
     profile: "Profil",
     trust: "Confiance",
@@ -105,7 +105,7 @@ const translations: Record<string, Record<string, string>> = {
   },
   ar: {
     markets: "الأسواق",
-    stake: "الإيداع",
+    stake: "العائد المنظم",
     wallet: "الخزنة",
     profile: "الملف الشخصي",
     trust: "الثقة",
@@ -128,7 +128,7 @@ const translations: Record<string, Record<string, string>> = {
   },
   ru: {
     markets: "Рынки",
-    stake: "Стейкинг",
+    stake: "Структурированная Доходность",
     wallet: "Хранилище",
     profile: "Профиль",
     trust: "Доверие",
@@ -257,9 +257,9 @@ export default function TopNav({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Stake removed from main nav - moved to wallet page as "Structured Yield"
   const navLinks = [
     { href: "/", label: t.markets, key: "markets" },
-    { href: "/stake", label: t.stake, key: "stake" },
     { href: "/wallet", label: t.wallet, key: "wallet" },
     { href: "/profile", label: t.profile, key: "profile" },
   ];

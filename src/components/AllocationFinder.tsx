@@ -395,27 +395,47 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
             ) : (
               <div className="space-y-2">
                 {filteredAllocations.slice(0, 10).map((a: any, idx: number) => (
-                  <div 
-                    key={a.id || idx} 
-                    className={`flex items-center justify-between rounded-xl border px-3 py-2 transition-colors ${
-                      selectedMetal === a.metal 
-                        ? `${metalBorders[a.metal]} border-opacity-50` 
+                  <div
+                    key={a.id || idx}
+                    className={`rounded-xl border px-3 py-2 transition-colors ${
+                      selectedMetal === a.metal
+                        ? `${metalBorders[a.metal]} border-opacity-50`
                         : "border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60"
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <Image src={metalIcons[a.metal] || metalIcons.AUXG} alt={a.metal} width={20} height={20} />
-                      <div>
-                        <span className={`text-xs font-semibold ${metalColors[a.metal] || "text-slate-800 dark:text-white"}`}>
-                          {a.metal}
-                        </span>
-                        <p className="text-[10px] text-slate-500">{parseFloat(a.grams).toFixed(2)}{t.grams} · {a.vaultName || a.vault || "-"}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Image src={metalIcons[a.metal] || metalIcons.AUXG} alt={a.metal} width={20} height={20} />
+                        <div>
+                          <span className={`text-xs font-semibold ${metalColors[a.metal] || "text-slate-800 dark:text-white"}`}>
+                            {a.metal}
+                          </span>
+                          <p className="text-[10px] text-slate-500">{parseFloat(a.grams).toFixed(2)}{t.grams} · {a.vaultName || a.vault || "-"}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[9px] text-slate-400 truncate max-w-[100px]">{a.serialNumber || "-"}</p>
+                        <p className="text-[9px] text-slate-500">{formatDate(a.allocatedAt)}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[9px] text-slate-400 truncate max-w-[100px]">{a.serialNumber || "-"}</p>
-                      <p className="text-[9px] text-slate-500">{formatDate(a.allocatedAt)}</p>
-                    </div>
+                    {/* Certificate Quick Access */}
+                    {a.certificateNumber && (
+                      <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <span className="text-[9px] text-slate-400 font-mono">{a.certificateNumber}</span>
+                        <a
+                          href={getPdfUrl(a.certificateNumber)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-500/10 text-[9px] font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          {t.viewPdf}
+                        </a>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
