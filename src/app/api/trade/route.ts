@@ -27,6 +27,7 @@ import {
 } from "@/lib/v6-token-service";
 import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
 import { notifyTrade } from "@/lib/telegram";
+import { createCryptoPayout, checkPayoutBalance } from "@/lib/nowpayments-service";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CRYPTO PRICE HELPER - Direkt Binance'den fiyat al
@@ -1145,12 +1146,77 @@ export async function POST(request: NextRequest) {
           note: "Metal deducted from Redis, ETH sent to user wallet"
         };
         console.log(`✅ ETH sent to user: ${ethTransfer.txHash}`);
+      } else if ((toTokenLower === "btc" || toTokenLower === "xrp" || toTokenLower === "sol") && BLOCKCHAIN_ENABLED) {
+        // For BTC/XRP/SOL: Use NOWPayments for payout
+        console.log(`💸 Processing ${toAmount.toFixed(8)} ${toToken.toUpperCase()} payout via NOWPayments...`);
+
+        // Check if user has external wallet address
+        const userInfo = await redis.hgetall(`user:${normalizedAddress}:info`);
+        const externalWallet = userInfo?.[`${toTokenLower}Wallet`] as string;
+
+        if (externalWallet) {
+          // User has external wallet - send via NOWPayments
+          console.log(`📤 External ${toToken.toUpperCase()} wallet found: ${externalWallet}`);
+
+          // Check NOWPayments balance first
+          const balanceCheck = await checkPayoutBalance(toTokenLower as 'btc' | 'xrp' | 'sol', toAmount);
+
+          if (!balanceCheck.sufficient) {
+            console.warn(`⚠️ NOWPayments ${toToken.toUpperCase()} balance insufficient. Available: ${balanceCheck.available}, Required: ${toAmount}`);
+            // Fall back to custodial (credit to Redis)
+            blockchainResult = {
+              executed: false,
+              reason: `NOWPayments ${toToken.toUpperCase()} balance insufficient. Credited to custodial balance.`,
+              payoutUSD: netValueUsd,
+              custodial: true,
+            };
+          } else {
+            // Proceed with NOWPayments payout
+            const payoutResult = await createCryptoPayout(
+              toTokenLower as 'btc' | 'xrp' | 'sol',
+              externalWallet,
+              toAmount
+            );
+
+            if (payoutResult.success) {
+              txHash = payoutResult.payoutId;
+              blockchainResult = {
+                executed: true,
+                nowpaymentsPayoutId: payoutResult.payoutId,
+                payoutCrypto: toAmount,
+                payoutUSD: netValueUsd,
+                externalWallet: externalWallet,
+                note: `Metal sold, ${toToken.toUpperCase()} sent to external wallet via NOWPayments`
+              };
+              console.log(`✅ ${toToken.toUpperCase()} payout initiated: ${payoutResult.payoutId}`);
+            } else {
+              console.error(`❌ NOWPayments payout failed: ${payoutResult.error}`);
+              // Fall back to custodial
+              blockchainResult = {
+                executed: false,
+                reason: `NOWPayments payout failed: ${payoutResult.error}. Credited to custodial balance.`,
+                payoutUSD: netValueUsd,
+                custodial: true,
+              };
+            }
+          }
+        } else {
+          // No external wallet - credit to Redis (custodial)
+          console.log(`📥 No external ${toToken.toUpperCase()} wallet - crediting to custodial balance`);
+          blockchainResult = {
+            executed: false,
+            reason: "No external wallet configured - credited to custodial balance",
+            payoutUSD: netValueUsd,
+            custodial: true,
+          };
+        }
       } else {
-        // For other cryptos (BTC, XRP, SOL) - credit to Redis (custodial)
-        blockchainResult = { 
-          executed: false, 
+        // Blockchain disabled or unknown crypto - credit to Redis (custodial)
+        blockchainResult = {
+          executed: false,
           reason: "Custodial crypto - credited to Redis balance",
           payoutUSD: netValueUsd,
+          custodial: true,
         };
       }
     }
@@ -1164,13 +1230,105 @@ export async function POST(request: NextRequest) {
       blockchainResult = { executed: false, reason: "Off-chain AUXM conversion" };
     }
     // ───────────────────────────────────────────────────────────────────────
-    // AUXM → CRYPTO - TIER BAZLI FEE
+    // AUXM → CRYPTO - TIER BAZLI FEE + NOWPayments for BTC/XRP/SOL
     // ───────────────────────────────────────────────────────────────────────
     else if (fromTokenLower === "auxm" && CRYPTOS.includes(toTokenLower)) {
-      price = 1;
+      // Get crypto price for conversion
+      const cryptoPrice = await getCryptoPrice(toTokenLower);
+      if (cryptoPrice === 0) {
+        return NextResponse.json({ error: `${toToken} fiyatı alınamadı` }, { status: 400 });
+      }
+
+      // AUXM is 1:1 with USD
       fee = calculateTierFee(fromAmount, tierFeePercent);
-      toAmount = fromAmount - fee;
-      blockchainResult = { executed: false, reason: "Off-chain AUXM conversion" };
+      const netAuxm = fromAmount - fee;
+      toAmount = netAuxm / cryptoPrice; // Convert USD value to crypto
+      price = 1 / cryptoPrice;
+
+      console.log(`📊 AUXM → ${toToken.toUpperCase()} Calculation:`);
+      console.log(`   From: ${fromAmount} AUXM`);
+      console.log(`   Fee: ${fee.toFixed(2)} AUXM (${tierFeePercent}%)`);
+      console.log(`   Net: ${netAuxm.toFixed(2)} AUXM = $${netAuxm.toFixed(2)}`);
+      console.log(`   To: ${toAmount.toFixed(8)} ${toToken.toUpperCase()} @ $${cryptoPrice}`);
+
+      // For ETH: Transfer from hot wallet
+      if (toTokenLower === "eth" && BLOCKCHAIN_ENABLED) {
+        console.log(`💸 Sending ${toAmount.toFixed(6)} ETH to ${address}...`);
+        const ethTransfer = await sendEthToUser(address, toAmount);
+        if (!ethTransfer.success) {
+          console.error(`❌ ETH transfer failed: ${ethTransfer.error}`);
+          return NextResponse.json({
+            error: `ETH transferi başarısız: ${ethTransfer.error}`,
+          }, { status: 500 });
+        }
+
+        txHash = ethTransfer.txHash;
+        blockchainResult = {
+          executed: true,
+          ethTransferTxHash: ethTransfer.txHash,
+          payoutETH: toAmount,
+          payoutUSD: netAuxm,
+          note: "AUXM converted, ETH sent to user wallet"
+        };
+        console.log(`✅ ETH sent to user: ${ethTransfer.txHash}`);
+      }
+      // For BTC/XRP/SOL: Use NOWPayments
+      else if ((toTokenLower === "btc" || toTokenLower === "xrp" || toTokenLower === "sol") && BLOCKCHAIN_ENABLED) {
+        console.log(`💸 Processing ${toAmount.toFixed(8)} ${toToken.toUpperCase()} payout via NOWPayments...`);
+
+        const userInfo = await redis.hgetall(`user:${normalizedAddress}:info`);
+        const externalWallet = userInfo?.[`${toTokenLower}Wallet`] as string;
+
+        if (externalWallet) {
+          const balanceCheck = await checkPayoutBalance(toTokenLower as 'btc' | 'xrp' | 'sol', toAmount);
+
+          if (!balanceCheck.sufficient) {
+            console.warn(`⚠️ NOWPayments ${toToken.toUpperCase()} balance insufficient`);
+            blockchainResult = {
+              executed: false,
+              reason: `NOWPayments balance insufficient. Credited to custodial balance.`,
+              payoutUSD: netAuxm,
+              custodial: true,
+            };
+          } else {
+            const payoutResult = await createCryptoPayout(
+              toTokenLower as 'btc' | 'xrp' | 'sol',
+              externalWallet,
+              toAmount
+            );
+
+            if (payoutResult.success) {
+              txHash = payoutResult.payoutId;
+              blockchainResult = {
+                executed: true,
+                nowpaymentsPayoutId: payoutResult.payoutId,
+                payoutCrypto: toAmount,
+                payoutUSD: netAuxm,
+                externalWallet: externalWallet,
+                note: `AUXM converted, ${toToken.toUpperCase()} sent via NOWPayments`
+              };
+              console.log(`✅ ${toToken.toUpperCase()} payout initiated: ${payoutResult.payoutId}`);
+            } else {
+              console.error(`❌ NOWPayments payout failed: ${payoutResult.error}`);
+              blockchainResult = {
+                executed: false,
+                reason: `NOWPayments payout failed. Credited to custodial balance.`,
+                payoutUSD: netAuxm,
+                custodial: true,
+              };
+            }
+          }
+        } else {
+          blockchainResult = {
+            executed: false,
+            reason: "No external wallet - credited to custodial balance",
+            payoutUSD: netAuxm,
+            custodial: true,
+          };
+        }
+      } else {
+        blockchainResult = { executed: false, reason: "Off-chain AUXM conversion", custodial: true };
+      }
     }
     // ───────────────────────────────────────────────────────────────────────
     // CRYPTO → CRYPTO (YASAK)

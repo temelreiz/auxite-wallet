@@ -2646,22 +2646,26 @@ export default function AdminDashboard() {
               </div>
 
               {/* Users Table */}
-              <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
-                <table className="w-full">
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-x-auto">
+                <table className="w-full min-w-[1200px]">
                   <thead className="bg-slate-800">
                     <tr>
                       <th className="text-left p-3 text-slate-300">Adres</th>
                       <th className="text-left p-3 text-slate-300">AUXM</th>
-                      <th className="text-left p-3 text-slate-300">ETH</th>
-                      <th className="text-left p-3 text-slate-300">AUXG</th>
-                      <th className="text-left p-3 text-slate-300">Toplam USD</th>
+                      <th className="text-left p-3 text-blue-400">ETH</th>
+                      <th className="text-left p-3 text-orange-400">BTC</th>
+                      <th className="text-left p-3 text-amber-400">AUXG</th>
+                      <th className="text-left p-3 text-slate-400">AUXS</th>
+                      <th className="text-left p-3 text-slate-400">AUXPT</th>
+                      <th className="text-left p-3 text-slate-400">AUXPD</th>
+                      <th className="text-left p-3 text-green-400">Toplam USD</th>
                       <th className="text-left p-3 text-slate-300">İşlem</th>
                     </tr>
                   </thead>
                   <tbody>
                     {users.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-8 text-center text-slate-400">
+                        <td colSpan={10} className="p-8 text-center text-slate-400">
                           Kullanıcı yükleniyor...
                         </td>
                       </tr>
@@ -2676,11 +2680,23 @@ export default function AdminDashboard() {
                           <td className="p-3 text-slate-300">
                             {((user as any).auxmBalance || 0).toFixed(2)}
                           </td>
-                          <td className="p-3 text-slate-300">
+                          <td className="p-3 text-blue-400">
                             {((user as any).ethBalance || 0).toFixed(4)}
                           </td>
-                          <td className="p-3 text-amber-400">
+                          <td className="p-3 text-orange-400">
+                            {((user as any).btcBalance || 0).toFixed(8)}
+                          </td>
+                          <td className="p-3 text-amber-400 font-medium">
                             {((user as any).auxgBalance || 0).toFixed(4)}
+                          </td>
+                          <td className="p-3 text-slate-400">
+                            {((user as any).auxsBalance || 0).toFixed(2)}
+                          </td>
+                          <td className="p-3 text-slate-400">
+                            {((user as any).auxptBalance || 0).toFixed(4)}
+                          </td>
+                          <td className="p-3 text-slate-400">
+                            {((user as any).auxpdBalance || 0).toFixed(4)}
                           </td>
                           <td className="p-3 text-green-400 font-semibold">
                             ${((user as any).totalValueUsd || 0).toFixed(2)}

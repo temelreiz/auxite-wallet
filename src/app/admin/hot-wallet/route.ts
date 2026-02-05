@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { getHotWalletBalances } from "@/lib/blockchain-service";
+import { getNOWPaymentsBalance } from "@/lib/nowpayments-service";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -81,24 +82,49 @@ export async function GET(request: NextRequest) {
 
       // Blockchain'den canlı bakiyeleri al
       const liveBalances = await getHotWalletBalances();
-      
+
+      // NOWPayments bakiyelerini al (BTC, XRP, SOL için)
+      let nowPaymentsBalances: Record<string, number> = {};
+      try {
+        nowPaymentsBalances = await getNOWPaymentsBalance();
+        console.log('NOWPayments balances:', nowPaymentsBalances);
+      } catch (e) {
+        console.error('NOWPayments balance fetch error:', e);
+      }
+
       // Formatla
       const balances: Record<string, any> = {};
-      
+
       for (const [coin, wallet] of Object.entries(HOT_WALLETS)) {
+        // BTC, XRP, SOL için NOWPayments bakiyesini kullan
+        let balance = liveBalances[coin] || 0;
+        if (['BTC', 'XRP', 'SOL'].includes(coin) && nowPaymentsBalances[coin]) {
+          balance = nowPaymentsBalances[coin];
+        }
+
         balances[coin] = {
-          balance: liveBalances[coin]?.toFixed(coin === 'BTC' ? 8 : 6) || '0',
+          balance: balance.toFixed(coin === 'BTC' ? 8 : 6),
           address: wallet.address,
           network: wallet.network,
           explorerUrl: wallet.address ? `${wallet.explorer}${wallet.address}` : null,
+          source: ['BTC', 'XRP', 'SOL'].includes(coin) ? 'NOWPayments' : 'blockchain',
         };
       }
+
+      // NOWPayments ek bilgisi
+      const nowPaymentsInfo = {
+        btc: nowPaymentsBalances.BTC || 0,
+        xrp: nowPaymentsBalances.XRP || 0,
+        sol: nowPaymentsBalances.SOL || 0,
+        usdt: nowPaymentsBalances.USDT || 0,
+      };
 
       // 5 dakika cache'le
       await redis.set(cacheKey, balances, { ex: 300 });
 
-      return NextResponse.json({ 
-        balances, 
+      return NextResponse.json({
+        balances,
+        nowPaymentsBalances: nowPaymentsInfo,
         cached: false,
         wallets: HOT_WALLETS,
         timestamp: new Date().toISOString()
