@@ -101,15 +101,15 @@ const walletTranslations: Record<string, Record<string, string>> = {
     priceAlerts: "Fiyat Uyarıları",
     recurringBuy: "Düzenli Yatırım",
     pendingOrders: "Bekleyen Emirler",
-    buyWithUsd: "USD ile Edin",
+    buyWithUsd: "USD ile Tahsis Et",
     totalAssetValue: "Saklama Altındaki Toplam Varlıklar",
     auxiteAndCrypto: "Auxite & Kripto",
     whereAreAssets: "Varlıklarım Nerede?",
     viewDetails: "Detayları Gör",
     addFunds: "Fon Ekle",
     withdraw: "Çek",
-    acquire: "Edin",
-    redeem: "Bozdur",
+    acquire: "Tahsis Et",
+    redeem: "Geri Al",
   },
   en: {
     // Vault terminology - Institutional language
@@ -1395,7 +1395,7 @@ export default function WalletPage() {
         />
       )}
 
-      {/* Buy Metal Modal (Hızlı Al) */}
+      {/* Buy Metal Modal (Legacy - replaced by AllocationWizard) */}
       {showBuyMetal && (
         <BuyMetalModal
           isOpen={showBuyMetal}

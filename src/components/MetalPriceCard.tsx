@@ -78,13 +78,14 @@ export default function MetalPriceCard({
     setShowTradePanel(true);
   };
 
+  // Institutional terminology: Allocate/Redeem (not Buy/Sell)
   const translations: Record<string, { buy: string; sell: string }> = {
-    tr: { buy: "Edin", sell: "Bozdur" },
-    en: { buy: "Acquire", sell: "Redeem" },
-    de: { buy: "Erwerben", sell: "Einlösen" },
-    fr: { buy: "Acquérir", sell: "Racheter" },
-    ar: { buy: "اقتناء", sell: "استرداد" },
-    ru: { buy: "Приобрести", sell: "Выкупить" },
+    tr: { buy: "Tahsis Et", sell: "Geri Al" },
+    en: { buy: "Allocate", sell: "Redeem" },
+    de: { buy: "Zuweisen", sell: "Einlösen" },
+    fr: { buy: "Allouer", sell: "Racheter" },
+    ar: { buy: "تخصيص", sell: "استرداد" },
+    ru: { buy: "Распределить", sell: "Выкупить" },
   };
   const t = translations[lang] || translations.en;
 
@@ -167,17 +168,17 @@ export default function MetalPriceCard({
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons - Institutional styling: no shadows, calm colors */}
         <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           <button
             onClick={handleBuy}
-            className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white text-xs sm:text-sm font-semibold transition-all duration-150 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
+            className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-medium transition-colors"
           >
             {t.buy}
           </button>
           <button
             onClick={handleSell}
-            className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-red-500 hover:bg-red-400 active:bg-red-600 text-white text-xs sm:text-sm font-semibold transition-all duration-150 shadow-lg shadow-red-500/20 hover:shadow-red-500/30"
+            className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs sm:text-sm font-medium transition-colors"
           >
             {t.sell}
           </button>
