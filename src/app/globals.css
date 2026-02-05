@@ -286,3 +286,298 @@ select:focus-visible {
   display: none !important;
 }
 
+/* ============================================
+   CAPITAL GRAVITY - INSTITUTIONAL DESIGN SYSTEM
+   Calm, confident, weightful UI
+   ============================================ */
+
+/* Reduce all glow effects */
+.institutional-glow {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Reduce gradient intensity for institutional feel */
+.institutional-gradient {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+}
+
+/* Institutional card style - subtle, confident */
+.institutional-card {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(71, 85, 105, 0.2);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s ease;
+}
+
+.institutional-card:hover {
+  border-color: rgba(71, 85, 105, 0.4);
+}
+
+/* Reduced animation intensity */
+.institutional-calm * {
+  animation-duration: 0.5s !important;
+}
+
+/* Remove pulsing/glowing for serious money */
+.no-glow {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Institutional typography - clean, confident */
+.institutional-heading {
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: rgb(248, 250, 252);
+}
+
+.institutional-subheading {
+  font-weight: 400;
+  letter-spacing: 0;
+  color: rgb(148, 163, 184);
+}
+
+/* Trust badge styling - subtle, professional */
+.trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgb(52, 211, 153);
+}
+
+/* Vault info styling */
+.vault-info {
+  background: rgba(30, 41, 59, 0.3);
+  border: 1px solid rgba(71, 85, 105, 0.15);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+/* Clean separator */
+.institutional-divider {
+  border-top: 1px solid rgba(71, 85, 105, 0.2);
+  margin: 1.5rem 0;
+}
+
+/* Button hierarchy - Primary (Confirm Allocation) */
+.btn-institutional-primary {
+  background: rgb(16, 185, 129);
+  color: white;
+  font-weight: 600;
+  padding: 0.875rem 1.5rem;
+  border-radius: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-institutional-primary:hover {
+  background: rgb(5, 150, 105);
+}
+
+.btn-institutional-primary:disabled {
+  background: rgb(71, 85, 105);
+  cursor: not-allowed;
+}
+
+/* Button hierarchy - Secondary */
+.btn-institutional-secondary {
+  background: rgba(51, 65, 85, 0.5);
+  border: 1px solid rgba(71, 85, 105, 0.3);
+  color: rgb(203, 213, 225);
+  font-weight: 500;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.btn-institutional-secondary:hover {
+  background: rgba(51, 65, 85, 0.7);
+  border-color: rgba(71, 85, 105, 0.5);
+}
+
+/* Input styling - clean, professional */
+.input-institutional {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(71, 85, 105, 0.3);
+  border-radius: 12px;
+  padding: 0.875rem 1rem;
+  color: rgb(248, 250, 252);
+  transition: border-color 0.2s ease;
+}
+
+.input-institutional:focus {
+  outline: none;
+  border-color: rgb(16, 185, 129);
+}
+
+.input-institutional::placeholder {
+  color: rgb(100, 116, 139);
+}
+
+/* Pricing display - clear hierarchy */
+.pricing-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.625rem 0;
+}
+
+.pricing-label {
+  font-size: 0.875rem;
+  color: rgb(148, 163, 184);
+}
+
+.pricing-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(248, 250, 252);
+}
+
+.pricing-highlight {
+  color: rgb(52, 211, 153);
+  font-weight: 600;
+}
+
+/* Certificate styling */
+.certificate-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: rgb(251, 191, 36);
+}
+
+/* Whitespace utilities for institutional feel */
+.space-institutional {
+  padding: 2rem;
+}
+
+@media (min-width: 640px) {
+  .space-institutional {
+    padding: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .space-institutional {
+    padding: 3rem;
+  }
+}
+
+/* Progress indicator - clean steps */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(71, 85, 105, 0.5);
+  transition: all 0.2s ease;
+}
+
+.step-dot.active {
+  background: rgb(16, 185, 129);
+  width: 24px;
+  border-radius: 4px;
+}
+
+.step-dot.completed {
+  background: rgb(16, 185, 129);
+}
+
+/* Reduce visual noise - subtle borders */
+.subtle-border {
+  border-color: rgba(71, 85, 105, 0.15);
+}
+
+/* Ownership display - premium feel */
+.ownership-display {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(20, 184, 166, 0.05) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+/* Amount display - large, confident numbers */
+.amount-large {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: rgb(248, 250, 252);
+}
+
+@media (min-width: 640px) {
+  .amount-large {
+    font-size: 2.5rem;
+  }
+}
+
+/* Review screen checklist */
+.trust-checklist {
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: 12px;
+}
+
+.trust-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.trust-checklist-item:last-child {
+  border-bottom: none;
+}
+
+/* Loading states - calm, not flashy */
+.loading-calm {
+  animation: pulse-calm 2s ease-in-out infinite;
+}
+
+@keyframes pulse-calm {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Success state - confident, not celebratory */
+.success-institutional {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+}
+
+/* Reduce all shadows for cleaner look */
+.shadow-institutional {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Modal backdrop - subtle */
+.backdrop-institutional {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+

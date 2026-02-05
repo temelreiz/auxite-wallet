@@ -9,6 +9,7 @@ import AllocationFinder from "@/components/AllocationFinder";
 import { TransactionHistory } from "@/components/TransactionHistory";
 import { ExchangeModal } from "@/components/ExchangeModal";
 import { BuyMetalModal } from "@/components/BuyMetalModal";
+import { AllocationWizard } from "@/components/AllocationWizard";
 import { DepositAddressModal } from "@/components/DepositAddressModal";
 import { PriceAlertsPanel } from "@/components/PriceAlertsPanel";
 import { CryptoConvertModal } from "@/components/CryptoConvertModal";
@@ -444,6 +445,7 @@ export default function WalletPage() {
   const [showTransfer, setShowTransfer] = useState(false);
   const [showReceive, setShowReceive] = useState(false);
   const [showBuyMetal, setShowBuyMetal] = useState(false);
+  const [showAllocationWizard, setShowAllocationWizard] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [depositSearchQuery, setDepositSearchQuery] = useState("");
   const [showUsdDeposit, setShowUsdDeposit] = useState(false);
@@ -790,18 +792,18 @@ export default function WalletPage() {
                 </span>
               </button>
 
-              {/* Hızlı Al / Quick Buy */}
+              {/* Allocate / Sermaye Tahsisi */}
               <button
-                onClick={() => setShowBuyMetal(true)}
-                className="flex flex-col items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-purple-500 transition-all group"
+                onClick={() => setShowAllocationWizard(true)}
+                className="flex flex-col items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-emerald-500 transition-all group"
               >
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
                 <span className="text-[10px] sm:text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-white transition-colors text-center">
-                  {t("quickBuy")}
+                  {lang === "tr" ? "Tahsis Et" : "Allocate"}
                 </span>
               </button>
 
@@ -1399,7 +1401,21 @@ export default function WalletPage() {
           isOpen={showBuyMetal}
           onClose={() => setShowBuyMetal(false)}
           lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
-         
+
+        />
+      )}
+
+      {/* Allocation Wizard - 3-Step Institutional Flow */}
+      {showAllocationWizard && (
+        <AllocationWizard
+          lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
+          onClose={() => setShowAllocationWizard(false)}
+          prices={{
+            XAUt: metalAskPrices?.AUXG || 92,
+            XAGt: metalAskPrices?.AUXS || 1.05,
+            XPTt: metalAskPrices?.AUXPT || 32,
+            XPDt: metalAskPrices?.AUXPD || 32,
+          }}
         />
       )}
 

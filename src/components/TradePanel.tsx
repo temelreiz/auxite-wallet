@@ -943,7 +943,7 @@ export default function TradePanel({
                 )}
                 <button
                   onClick={handleAllocationConfirm}
-                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold hover:from-amber-600 hover:to-yellow-600 transition-colors text-sm"
+                  className="px-4 py-3 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition-colors text-sm"
                 >
                   {lang === "tr" ? "Devam Et" : "Continue"}
                 </button>
@@ -1377,16 +1377,14 @@ export default function TradePanel({
                 </button>
                 
                 {orderType === "market" ? (
-                  // Market Order Button
+                  // Market Order Button - Institutional solid color, no gradient
                   <button
                     onClick={handleTrade}
                     disabled={isProcessing || amountNum <= 0 || (mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm)}
-                    className={`px-3 py-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 ${
+                    className={`px-3 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 ${
                       mode === "buy"
-                        ? selectedCurrency === "AUXM"
-                          ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
-                          : "bg-emerald-500 text-white hover:bg-emerald-600"
-                        : "bg-red-500 text-white hover:bg-red-600"
+                        ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                        : "bg-slate-600 text-white hover:bg-slate-500"
                     }`}
                   >
                     {isProcessing ? (
@@ -1406,11 +1404,11 @@ export default function TradePanel({
                     )}
                   </button>
                 ) : (
-                  // Limit Order Button
+                  // Limit Order Button - Institutional styling
                   <button
                     onClick={handleTrade}
                     disabled={isProcessing || amountNum <= 0 || limitPriceNum <= 0 || (mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm)}
-                    className="px-3 py-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 bg-blue-500 text-white hover:bg-blue-600"
+                    className="px-3 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 bg-slate-600 text-white hover:bg-slate-500"
                   >
                     {isProcessing ? (
                       <span className="flex items-center justify-center gap-2">
