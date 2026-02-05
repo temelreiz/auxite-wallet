@@ -94,6 +94,35 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
   return { valid: false, error: "Geçersiz 2FA kodu", enabled: true };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// RATE LIMITING - Transfer saldırılarını önle
+// ═══════════════════════════════════════════════════════════════════════════
+const RATE_LIMIT_WINDOW = 60; // 60 saniye
+const RATE_LIMIT_MAX_REQUESTS = 5; // Dakikada max 5 transfer
+
+async function checkRateLimit(address: string): Promise<{ allowed: boolean; remaining: number; retryAfter?: number }> {
+  const key = `ratelimit:transfer:${address.toLowerCase()}`;
+  const now = Math.floor(Date.now() / 1000);
+  const windowStart = now - RATE_LIMIT_WINDOW;
+
+  // Eski kayıtları temizle ve mevcut sayıyı al
+  await redis.zremrangebyscore(key, 0, windowStart);
+  const requestCount = await redis.zcard(key);
+
+  if (requestCount >= RATE_LIMIT_MAX_REQUESTS) {
+    // En eski kaydı al ve ne zaman sona ereceğini hesapla
+    const oldest = await redis.zrange(key, 0, 0, { withScores: true }) as { score: number; member: string }[];
+    const retryAfter = oldest.length > 0 ? Math.ceil(RATE_LIMIT_WINDOW - (now - oldest[0].score)) : RATE_LIMIT_WINDOW;
+    return { allowed: false, remaining: 0, retryAfter };
+  }
+
+  // Yeni istek kaydet
+  await redis.zadd(key, { score: now, member: `${now}-${Math.random()}` });
+  await redis.expire(key, RATE_LIMIT_WINDOW * 2);
+
+  return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - requestCount - 1 };
+}
+
 // Token contract addresses from central config
 const TOKEN_CONTRACTS: Record<string, string> = {
   AUXG: METAL_TOKENS.AUXG,
@@ -265,6 +294,18 @@ export async function POST(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // RATE LIMITING - Brute force ve spam saldırılarını önle
+    // ═══════════════════════════════════════════════════════════════════════════
+    const rateLimitCheck = await checkRateLimit(fromAddress);
+    if (!rateLimitCheck.allowed) {
+      return NextResponse.json({
+        error: "Çok fazla transfer denemesi. Lütfen biraz bekleyin.",
+        code: "RATE_LIMIT_EXCEEDED",
+        retryAfter: rateLimitCheck.retryAfter,
+      }, { status: 429 });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // TRANSAK HOLDING PERIOD CHECK - Dış cüzdana transfer kısıtlaması
     // ═══════════════════════════════════════════════════════════════════════════
     const holdingCheck = await checkTransakHoldingPeriod(fromAddress, token, amount, toAddress);
@@ -276,8 +317,23 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
-    // 2FA Kontrolü artık frontend'de TwoFactorGate ile yapılıyor
-    // API'ye gelene kadar kullanıcı zaten doğrulanmış oluyor
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 2FA DOĞRULAMASI - KRİTİK GÜVENLİK KONTROLÜ
+    // Frontend kontrolü yeterli değil, backend'de de doğrulanmalı!
+    // ═══════════════════════════════════════════════════════════════════════════
+    const twoFAResult = await verify2FA(fromAddress, twoFactorCode);
+
+    // 2FA etkinse kod gerekli
+    if (twoFAResult.enabled) {
+      if (!twoFAResult.valid) {
+        return NextResponse.json({
+          error: twoFAResult.error || "Geçersiz 2FA kodu",
+          code: "2FA_REQUIRED",
+          requires2FA: true,
+        }, { status: 401 });
+      }
+    }
+    // 2FA etkin değilse işleme devam et (kullanıcı henüz 2FA kurmamış)
 
     const normalizedFrom = fromAddress.toLowerCase();
     const normalizedTo = toAddress.toLowerCase();
