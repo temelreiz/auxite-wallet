@@ -65,7 +65,7 @@ function VerifyContent() {
           <button 
             onClick={handleVerify} 
             disabled={loading || !certNumber.trim()} 
-            className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-400 text-white font-semibold rounded-xl transition-colors"
+            className="px-6 py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-400 text-white font-semibold rounded-xl transition-colors"
           >
             {loading ? "Verifying..." : "Verify"}
           </button>

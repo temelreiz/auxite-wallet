@@ -253,7 +253,7 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
             className={`w-full py-4 rounded-xl font-semibold text-white transition-colors ${
               !isConnected || amountNum <= 0 || hasInsufficientBalance || isProcessing
                 ? "bg-slate-300 dark:bg-slate-700 cursor-not-allowed"
-                : mode === "buy" ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"
+                : mode === "buy" ? "bg-amber-500 hover:bg-amber-600" : "bg-red-500 hover:bg-red-600"
             }`}
           >
             {isProcessing ? (

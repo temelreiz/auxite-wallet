@@ -829,7 +829,7 @@ export function AllocationWizard({
                 <button
                   onClick={handleContinueToReview}
                   disabled={amountNum <= 0 || !canAfford}
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   {t.continue}
                   <ChevronRight className="w-4 h-4" />
@@ -928,7 +928,7 @@ export function AllocationWizard({
                 <button
                   onClick={handleConfirmAllocation}
                   disabled={!allTrustChecked || isProcessing}
-                  className="flex-1 px-4 py-3 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 px-4 py-3 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isProcessing ? (
                     <span className="flex items-center justify-center gap-2">
@@ -990,7 +990,7 @@ export function AllocationWizard({
                   {t.cancel}
                 </button>
                 {result.certificateNumber && (
-                  <button className="px-6 py-2.5 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition-colors flex items-center gap-2">
+                  <button className="px-6 py-2.5 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-colors flex items-center gap-2">
                     <FileText className="w-4 h-4" />
                     {t.viewCertificate}
                   </button>

@@ -494,7 +494,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
 
               <button
                 onClick={handleBackupCodesSaved}
-                className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold transition-colors"
+                className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-colors"
               >
                 {t.saveBackupCodes}
               </button>

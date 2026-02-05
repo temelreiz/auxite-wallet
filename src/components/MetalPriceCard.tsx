@@ -168,11 +168,11 @@ export default function MetalPriceCard({
           </div>
         </div>
 
-        {/* Action Buttons - Institutional styling: no shadows, calm colors */}
+        {/* Action Buttons - Institutional styling: Gold primary, calm colors */}
         <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           <button
             onClick={handleBuy}
-            className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-medium transition-colors"
+            className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-medium transition-colors"
           >
             {t.buy}
           </button>

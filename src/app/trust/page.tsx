@@ -247,7 +247,7 @@ export default function TrustPage() {
           </p>
           <Link
             href="/verify"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl transition-colors"
           >
             {isTr ? 'Doğrulama Sayfasına Git' : 'Go to Verification Page'}
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

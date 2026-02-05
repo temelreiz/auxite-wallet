@@ -428,7 +428,7 @@ export default function AdminSettingsPage() {
             <button
               type="submit"
               disabled={authLoading || !password}
-              className="w-full px-4 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold transition-colors flex items-center justify-center gap-2"
+              className="w-full px-4 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-semibold transition-colors flex items-center justify-center gap-2"
             >
               {authLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
               Giriş Yap
@@ -1105,7 +1105,7 @@ export default function AdminSettingsPage() {
                     className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 px-4 text-white font-mono text-sm"
                   />
                 </div>
-                <button className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-white font-medium">
+                <button className="px-6 py-2 bg-amber-500 hover:bg-amber-600 rounded-xl text-white font-medium">
                   Kaydet
                 </button>
               </div>

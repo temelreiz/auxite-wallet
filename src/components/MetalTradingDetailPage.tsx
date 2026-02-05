@@ -499,7 +499,7 @@ export function MetalTradingDetailPage({
                 disabled={!canTrade || isProcessing}
                 className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
                   tradeMode === "buy"
-                    ? "bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50"
+                    ? "bg-amber-500 hover:bg-amber-600 disabled:bg-emerald-500/50"
                     : "bg-red-500 hover:bg-red-600 disabled:bg-red-500/50"
                 } text-white disabled:cursor-not-allowed`}
               >

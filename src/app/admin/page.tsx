@@ -2934,7 +2934,7 @@ export default function AdminDashboard() {
                     {newBanner.actionType !== 'none' && <span className="text-xl">→</span>}
                   </div>
                 </div>
-                <button onClick={handleAddBanner} disabled={bannerSaving} className="mt-4 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white font-medium disabled:opacity-50">
+                <button onClick={handleAddBanner} disabled={bannerSaving} className="mt-4 px-6 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-white font-medium disabled:opacity-50">
                   {bannerSaving ? "Ekleniyor..." : "Banner Ekle"}
                 </button>
               </div>
@@ -3339,7 +3339,7 @@ export default function AdminDashboard() {
                       <option value="alert">Uyarı</option>
                       <option value="promo">Promosyon</option>
                     </select>
-                    <button onClick={handleAddNews} className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white font-medium">
+                    <button onClick={handleAddNews} className="px-6 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-white font-medium">
                       Ekle
                     </button>
                   </div>
@@ -3511,7 +3511,7 @@ export default function AdminDashboard() {
                 <button
                   onClick={saveAuxiteerConfig}
                   disabled={auxiteerSaving}
-                  className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-medium disabled:opacity-50"
+                  className="px-6 py-2 bg-amber-500 hover:bg-amber-600 rounded-xl font-medium disabled:opacity-50"
                 >
                   {auxiteerSaving ? 'Kaydediliyor...' : '💾 Kaydet'}
                 </button>
@@ -3984,7 +3984,7 @@ export default function AdminDashboard() {
                 </div>
                 <button
                   onClick={handleStockOperation}
-                  className="mt-4 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white font-medium"
+                  className="mt-4 px-6 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-white font-medium"
                 >
                   İşlemi Uygula
                 </button>
@@ -4224,7 +4224,7 @@ export default function AdminDashboard() {
                           <button 
                             onClick={() => handleApproveWithdraw(w.id)} 
                             disabled={walletProcessing === w.id} 
-                            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white text-sm disabled:opacity-50"
+                            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-white text-sm disabled:opacity-50"
                           >
                             {walletProcessing === w.id ? "..." : "✅ Onayla"}
                           </button>

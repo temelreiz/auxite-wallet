@@ -283,7 +283,7 @@ export default function MarketsPage() {
               </button>
               <Link
                 href={`/wallet?trade=${selectedAsset.symbol}`}
-                className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-semibold transition-colors"
+                className="px-6 py-3 bg-amber-500 hover:bg-amber-600 rounded-xl font-semibold transition-colors"
               >
                 {labels.trade} {selectedAsset.symbol}
               </Link>

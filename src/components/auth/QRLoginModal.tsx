@@ -349,7 +349,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
                 </p>
                 <button
                   onClick={createSession}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors"
                 >
                   <RefreshCw className="w-4 h-4" />
                   {t.refresh}

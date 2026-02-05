@@ -766,7 +766,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
             <button
               onClick={handleStake}
               disabled={!amount || amountNum < offer.minAmount || isApproving || isStaking || needsApproval}
-              className="w-full px-3 sm:px-4 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold text-sm sm:text-base transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+              className="w-full px-3 sm:px-4 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-emerald-400 hover:to-emerald-500 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold text-sm sm:text-base transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
             >
               {isStaking ? (
                 <>
