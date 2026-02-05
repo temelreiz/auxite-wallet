@@ -136,6 +136,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
   const [xrpMemo, setXrpMemo] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<{ type: "success" | "error"; message?: string; txHash?: string } | null>(null);
+  const [verified2FACode, setVerified2FACode] = useState<string | undefined>();
 
   const getCryptoBalance = (crypto: WithdrawCrypto): number => {
     const key = BALANCE_KEYS[crypto];
@@ -190,7 +191,8 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
   };
 
   // 2FA doğrulandı, işlemi gerçekleştir
-  const handle2FAVerified = async () => {
+  const handle2FAVerified = async (verifiedCode?: string) => {
+    setVerified2FACode(verifiedCode); // Store for API call
     setFlowStep("result");
     setIsProcessing(true);
     setResult(null);
@@ -205,6 +207,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
           amount: amountNum,
           withdrawAddress,
           memo: selectedCrypto === "XRP" ? xrpMemo : undefined,
+          twoFactorCode: verifiedCode, // Include 2FA code for backend verification
         }),
       });
       

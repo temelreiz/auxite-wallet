@@ -112,7 +112,7 @@ interface TwoFactorGateProps {
   walletAddress: string;
   isOpen: boolean;
   onClose: () => void;
-  onVerified: () => void;
+  onVerified: (verifiedCode?: string) => void; // Now passes the verified code
   lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
@@ -304,7 +304,8 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
         throw new Error(data.error || t.invalidCode);
       }
 
-      onVerified();
+      // Pass the verified code back so it can be sent to backend APIs
+      onVerified(useBackupCode ? code.toUpperCase() : code);
     } catch (err: any) {
       setError(err.message || t.invalidCode);
     } finally {
@@ -313,6 +314,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
   };
 
   const handleBackupCodesSaved = () => {
+    // For new setup, we don't have a code to pass - user just completed setup
     onVerified();
   };
 

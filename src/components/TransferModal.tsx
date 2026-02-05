@@ -82,6 +82,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   const [onChainBalances, setOnChainBalances] = useState<Record<string, number>>({});
   const [isCheckingRecipient, setIsCheckingRecipient] = useState(false);
   const [recipientValid, setRecipientValid] = useState<boolean | null>(null);
+  const [verified2FACode, setVerified2FACode] = useState<string | undefined>();
 
   const { writeContract, data: writeData, error: writeError, isPending: isWritePending } = useWriteContract();
   const { sendTransaction, data: sendTxData, error: sendError, isPending: isSendPending } = useSendTransaction();
@@ -234,7 +235,8 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
   };
 
   // 2FA doğrulandı - transfer işlemini yap
-  const handle2FAVerified = async () => {
+  const handle2FAVerified = async (verifiedCode?: string) => {
+    setVerified2FACode(verifiedCode); // Store for API calls
     setFlowStep("form");
     setIsProcessing(true);
     setErrorMessage("");
@@ -264,6 +266,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
               toAddress: recipientAddress,
               token: selectedToken,
               amount: amountNum,
+              twoFactorCode: verified2FACode, // Include 2FA code for backend verification
             }),
           });
           const data = await response.json();
@@ -314,6 +317,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
               toAddress: recipientAddress,
               token: "ETH",
               amount: amountNum,
+              twoFactorCode: verified2FACode, // Include 2FA code for backend verification
             }),
           });
           const data = await response.json();
@@ -348,7 +352,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         writeContract({ address: tokenInfo.address as `0x${string}`, abi: ERC20_ABI, functionName: "transfer", args: [recipientAddress as `0x${string}`, amountInUnits], gas: BigInt(200000) });
       } else {
         // Off-chain transfer via API
-        const response = await fetch("/api/transfer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fromAddress: address, toAddress: recipientAddress, token: selectedToken, amount: amountNum }) });
+        const response = await fetch("/api/transfer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fromAddress: address, toAddress: recipientAddress, token: selectedToken, amount: amountNum, twoFactorCode: verified2FACode }) });
         const data = await response.json();
         if (data.success) {
           setResult("success");
