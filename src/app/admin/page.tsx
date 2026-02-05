@@ -2612,6 +2612,108 @@ export default function AdminDashboard() {
               )}
             </div>
           )}
+
+          {/* Users Tab */}
+          {activeTab === "users" && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold">👥 Kullanıcı Yönetimi</h2>
+
+              {/* Search */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+                <div className="flex gap-4">
+                  <input
+                    type="text"
+                    placeholder="Adres ile ara (0x...)"
+                    className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500"
+                    onChange={(e) => {
+                      const search = e.target.value.toLowerCase();
+                      if (search.length > 2) {
+                        fetch(`/api/admin/users?search=${search}`, { headers: getAuthHeaders() })
+                          .then(r => r.json())
+                          .then(d => d.users && setUsers(d.users));
+                      } else if (search.length === 0) {
+                        loadUsers();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={loadUsers}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white"
+                  >
+                    🔄 Yenile
+                  </button>
+                </div>
+              </div>
+
+              {/* Users Table */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-slate-800">
+                    <tr>
+                      <th className="text-left p-3 text-slate-300">Adres</th>
+                      <th className="text-left p-3 text-slate-300">AUXM</th>
+                      <th className="text-left p-3 text-slate-300">ETH</th>
+                      <th className="text-left p-3 text-slate-300">AUXG</th>
+                      <th className="text-left p-3 text-slate-300">Toplam USD</th>
+                      <th className="text-left p-3 text-slate-300">İşlem</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-slate-400">
+                          Kullanıcı yükleniyor...
+                        </td>
+                      </tr>
+                    ) : (
+                      users.map((user, i) => (
+                        <tr key={user.address || i} className="border-t border-slate-800 hover:bg-slate-800/50">
+                          <td className="p-3">
+                            <span className="font-mono text-sm text-slate-300">
+                              {user.address?.slice(0, 8)}...{user.address?.slice(-6)}
+                            </span>
+                          </td>
+                          <td className="p-3 text-slate-300">
+                            {((user as any).auxmBalance || 0).toFixed(2)}
+                          </td>
+                          <td className="p-3 text-slate-300">
+                            {((user as any).ethBalance || 0).toFixed(4)}
+                          </td>
+                          <td className="p-3 text-amber-400">
+                            {((user as any).auxgBalance || 0).toFixed(4)}
+                          </td>
+                          <td className="p-3 text-green-400 font-semibold">
+                            ${((user as any).totalValueUsd || 0).toFixed(2)}
+                          </td>
+                          <td className="p-3">
+                            <button
+                              onClick={() => {
+                                fetch(`/api/admin/users?address=${user.address}`, { headers: getAuthHeaders() })
+                                  .then(r => r.json())
+                                  .then(d => {
+                                    if (d.user) {
+                                      alert(JSON.stringify(d.user.balance, null, 2));
+                                    }
+                                  });
+                              }}
+                              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-xs text-slate-300"
+                            >
+                              Detay
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <p className="text-slate-500 text-sm text-center">
+                Toplam {users.length} kullanıcı
+              </p>
+            </div>
+          )}
+
           {/* Banners Tab */}
           {activeTab === "banners" && (
             <div className="space-y-6">

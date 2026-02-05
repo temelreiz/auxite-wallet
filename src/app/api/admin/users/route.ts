@@ -150,6 +150,9 @@ export async function GET(request: NextRequest) {
         totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
         auxmBalance: parseFloat(balance?.auxm as string || "0"),
         ethBalance: parseFloat(balance?.eth as string || "0"),
+        auxgBalance: parseFloat(balance?.auxg as string || "0"),
+        auxsBalance: parseFloat(balance?.auxs as string || "0"),
+        btcBalance: parseFloat(balance?.btc as string || "0"),
         createdAt: userInfo?.createdAt || null,
       });
     }
