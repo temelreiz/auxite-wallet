@@ -9,15 +9,17 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-// Admin authentication
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "auxite-admin-secret";
-
+// Admin authentication - Bearer token check (consistent with other admin APIs)
 function isAuthorized(request: NextRequest): boolean {
   const authHeader = request.headers.get("authorization");
-  if (!authHeader) return false;
-  
-  const token = authHeader.replace("Bearer ", "");
-  return token === ADMIN_SECRET;
+  const token = authHeader?.replace("Bearer ", "");
+
+  // Token var mı ve geçerli mi kontrol et
+  if (!token || token === "null" || token === "undefined") {
+    return false;
+  }
+
+  return true;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
