@@ -9,13 +9,26 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-// Admin authentication - Bearer token check (consistent with other admin APIs)
+// Admin addresses (environment'tan al)
+const ADMIN_ADDRESSES = [
+  process.env.ADMIN_ADDRESS?.toLowerCase(),
+].filter(Boolean);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ADMIN AUTHENTICATION - Bearer token + Admin address verification
+// ═══════════════════════════════════════════════════════════════════════════
 function isAuthorized(request: NextRequest): boolean {
+  // 1. Bearer token kontrolü
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
 
-  // Token var mı ve geçerli mi kontrol et
   if (!token || token === "null" || token === "undefined") {
+    return false;
+  }
+
+  // 2. Admin address kontrolü (opsiyonel ama önerilir)
+  const adminAddress = request.headers.get("x-admin-address");
+  if (adminAddress && !ADMIN_ADDRESSES.includes(adminAddress.toLowerCase())) {
     return false;
   }
 

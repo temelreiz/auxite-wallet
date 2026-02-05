@@ -46,6 +46,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Doğrulama kodu gerekli" }, { status: 400 });
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // RATE LIMITING - Brute force koruması (2FA devre dışı bırakma kritik işlem)
+    // ═══════════════════════════════════════════════════════════════════════════
+    const rateLimitKey = `ratelimit:2fa_disable:${address.toLowerCase()}`;
+    const rateLimitWindow = 3600; // 1 saat
+    const rateLimitMax = 5; // Saatte max 5 deneme
+    const now = Math.floor(Date.now() / 1000);
+
+    await redis.zremrangebyscore(rateLimitKey, 0, now - rateLimitWindow);
+    const requestCount = await redis.zcard(rateLimitKey);
+
+    if (requestCount >= rateLimitMax) {
+      // Şüpheli aktivite - audit log
+      await redis.lpush(`user:${address.toLowerCase()}:security_logs`, JSON.stringify({
+        action: "2fa_disable_blocked",
+        reason: "rate_limit_exceeded",
+        ip,
+        timestamp: Date.now(),
+      }));
+
+      return NextResponse.json({
+        error: "Çok fazla deneme. Lütfen 1 saat sonra tekrar deneyin.",
+        code: "RATE_LIMIT_EXCEEDED",
+      }, { status: 429 });
+    }
+
+    await redis.zadd(rateLimitKey, { score: now, member: `${now}-${Math.random()}` });
+    await redis.expire(rateLimitKey, rateLimitWindow * 2);
+
     const key = get2FAKey(address);
     const normalizedAddress = address.toLowerCase();
 

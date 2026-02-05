@@ -10,7 +10,8 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'auxite-jwt-secret-change-in-production';
+// JWT Secret - MUST be set in environment, no fallback for security
+const JWT_SECRET = process.env.JWT_SECRET!;
 
 // Verify JWT and get user info
 function verifyToken(authHeader: string | null): { userId: string; email: string } | null {

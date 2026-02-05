@@ -11,7 +11,8 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'auxite-jwt-secret-change-in-production';
+// JWT Secret - MUST be set in environment, no fallback for security
+const JWT_SECRET = process.env.JWT_SECRET!;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 const REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL 

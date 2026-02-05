@@ -11,8 +11,33 @@ const redis = new Redis({
 // Admin wallet addresses (kontrol için)
 const ADMIN_ADDRESSES = [
   process.env.ADMIN_ADDRESS?.toLowerCase(),
-  "0x7bb286a8c876ac6283dd0b95d8ec853bbdb20378", // Burak
 ].filter(Boolean);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ADMIN AUTHENTICATION - Bearer token + Address verification
+// ═══════════════════════════════════════════════════════════════════════════
+function isAuthorized(request: NextRequest): { authorized: boolean; adminAddress?: string } {
+  // 1. Bearer token kontrolü
+  const authHeader = request.headers.get("authorization");
+  const token = authHeader?.replace("Bearer ", "");
+
+  if (!token || token === "null" || token === "undefined") {
+    return { authorized: false };
+  }
+
+  // 2. Admin address kontrolü
+  const adminAddress = request.headers.get("x-admin-address");
+  if (!adminAddress) {
+    return { authorized: false };
+  }
+
+  // 3. Admin listesinde mi kontrol et
+  if (!ADMIN_ADDRESSES.includes(adminAddress.toLowerCase())) {
+    return { authorized: false };
+  }
+
+  return { authorized: true, adminAddress: adminAddress.toLowerCase() };
+}
 
 // Hot Wallet adresleri
 const HOT_WALLETS = {
@@ -44,18 +69,13 @@ const HOT_WALLETS = {
   },
 };
 
-function isAdmin(address: string | null): boolean {
-  if (!address) return false;
-  return ADMIN_ADDRESSES.includes(address.toLowerCase());
-}
-
 export async function GET(request: NextRequest) {
   try {
-    const adminAddress = request.headers.get("x-admin-address");
-    
-    if (!isAdmin(adminAddress)) {
+    const auth = isAuthorized(request);
+    if (!auth.authorized) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const adminAddress = auth.adminAddress;
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "balances";
@@ -159,11 +179,11 @@ export async function GET(request: NextRequest) {
 // ═══════════════════════════════════════════════════════════════════════════
 export async function POST(request: NextRequest) {
   try {
-    const adminAddress = request.headers.get("x-admin-address");
-    
-    if (!isAdmin(adminAddress)) {
+    const auth = isAuthorized(request);
+    if (!auth.authorized) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const adminAddress = auth.adminAddress;
 
     const body = await request.json();
     const { action, token, toAddress, amount, withdrawId } = body;

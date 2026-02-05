@@ -154,13 +154,49 @@ export async function POST(request: NextRequest) {
     // Minimum çekim kontrolü
     const minAmount = MIN_WITHDRAW[coin] || 0;
     if (amount < minAmount) {
-      return NextResponse.json({ 
-        error: `Minimum withdrawal is ${minAmount} ${coin}` 
+      return NextResponse.json({
+        error: `Minimum withdrawal is ${minAmount} ${coin}`
       }, { status: 400 });
     }
 
-    // 2FA Kontrolü artık frontend'de TwoFactorGate ile yapılıyor
-    // API'ye gelene kadar kullanıcı zaten doğrulanmış oluyor
+    // ═══════════════════════════════════════════════════════════════════════════
+    // RATE LIMITING - Brute force ve spam saldırılarını önle
+    // ═══════════════════════════════════════════════════════════════════════════
+    const rateLimitKey = `ratelimit:withdraw:${address.toLowerCase()}`;
+    const rateLimitWindow = 300; // 5 dakika
+    const rateLimitMax = 3; // 5 dakikada max 3 çekim denemesi
+    const now = Math.floor(Date.now() / 1000);
+
+    await redis.zremrangebyscore(rateLimitKey, 0, now - rateLimitWindow);
+    const requestCount = await redis.zcard(rateLimitKey);
+
+    if (requestCount >= rateLimitMax) {
+      return NextResponse.json({
+        error: "Çok fazla çekim denemesi. Lütfen 5 dakika bekleyin.",
+        code: "RATE_LIMIT_EXCEEDED",
+      }, { status: 429 });
+    }
+
+    await redis.zadd(rateLimitKey, { score: now, member: `${now}-${Math.random()}` });
+    await redis.expire(rateLimitKey, rateLimitWindow * 2);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 2FA DOĞRULAMASI - KRİTİK GÜVENLİK KONTROLÜ
+    // Frontend kontrolü yeterli değil, backend'de de doğrulanmalı!
+    // ═══════════════════════════════════════════════════════════════════════════
+    const twoFAResult = await verify2FA(address, twoFactorCode || "");
+
+    // 2FA etkinse kod gerekli
+    if (twoFAResult.enabled) {
+      if (!twoFAResult.valid) {
+        return NextResponse.json({
+          error: twoFAResult.error || "Geçersiz 2FA kodu",
+          code: "2FA_REQUIRED",
+          requires2FA: true,
+        }, { status: 401 });
+      }
+    }
+    // 2FA etkin değilse işleme devam et (kullanıcı henüz 2FA kurmamış)
 
     // BTC henüz desteklenmiyor
     if (coin === "BTC") {

@@ -11,7 +11,8 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'auxite-jwt-secret-change-in-production';
+// JWT Secret - MUST be set in environment, no fallback for security
+const JWT_SECRET = process.env.JWT_SECRET!;
 
 // Password requirements: min 8 chars, 1 uppercase, 1 lowercase, 1 number
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
