@@ -404,7 +404,7 @@ export function MetalTradeModalV6({
                     disabled={isLoading || isConfirming}
                     className={`p-3 rounded-xl border-2 transition-all ${
                       orderType === "market"
-                        ? "border-amber-500 bg-amber-500/10"
+                        ? "border-emerald-500 bg-emerald-500/10"
                         : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
                     }`}
                   >

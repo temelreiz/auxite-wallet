@@ -534,7 +534,7 @@ function PositionCard({
               </button>
               <button
                 onClick={confirmWithdraw}
-                className="flex-1 py-2.5 px-4 rounded-lg bg-amber-500 hover:bg-amber-400 text-white font-medium transition-colors"
+                className="flex-1 py-2.5 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-colors"
               >
                 {t.confirmWithdraw}
               </button>

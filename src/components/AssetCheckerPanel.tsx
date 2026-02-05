@@ -355,7 +355,7 @@ export default function AssetCheckerPanel({ lang: propLang }: Props) {
             <button
               onClick={handleCertVerify}
               disabled={!isValidCert || certLoading}
-              className={"rounded-xl px-4 py-2 text-xs font-semibold transition whitespace-nowrap " + (isValidCert && !certLoading ? "bg-amber-500 text-white hover:bg-amber-400" : "cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-400")}
+              className={"rounded-xl px-4 py-2 text-xs font-semibold transition whitespace-nowrap " + (isValidCert && !certLoading ? "bg-emerald-500 text-white hover:bg-emerald-400" : "cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-400")}
             >
               {certLoading ? t.verifying : t.verify}
             </button>

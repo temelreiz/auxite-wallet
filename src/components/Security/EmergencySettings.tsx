@@ -489,7 +489,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
               </button>
               <button
                 onClick={handleFreeze}
-                className="flex-1 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+                className="flex-1 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
               >
                 {labels.confirm}
               </button>

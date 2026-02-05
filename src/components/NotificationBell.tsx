@@ -63,7 +63,7 @@ export function NotificationBell({ lang }: NotificationBellProps) {
         {/* Badge */}
         {totalCount > 0 && (
           <span className={`absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center text-xs font-bold rounded-full ${
-            unlockedCount > 0 ? "bg-emerald-500 text-white" : "bg-amber-500 text-white"
+            unlockedCount > 0 ? "bg-emerald-500 text-white" : "bg-emerald-500 text-white"
           }`}>
             {totalCount}
           </span>

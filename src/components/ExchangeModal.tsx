@@ -628,7 +628,7 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
                   </p>
                   <div className="flex gap-2">
                     <button onClick={() => setShowAllocationWarning(false)} className="flex-1 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium">{lang === "tr" ? "İptal" : "Cancel"}</button>
-                    <button onClick={() => { setShowAllocationWarning(false); handleExchange(); }} disabled={isProcessing} className="flex-1 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium">{lang === "tr" ? "Devam Et" : "Continue"}</button>
+                    <button onClick={() => { setShowAllocationWarning(false); handleExchange(); }} disabled={isProcessing} className="flex-1 py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium">{lang === "tr" ? "Devam Et" : "Continue"}</button>
                   </div>
                 </div>
               )}

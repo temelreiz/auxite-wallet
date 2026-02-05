@@ -553,7 +553,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
                       key={metal.symbol}
                       onClick={() => setSelectedMetal(metal.symbol)}
                       className={`p-2.5 sm:p-3 rounded-xl border transition-colors ${
-                        selectedMetal === metal.symbol ? "border-amber-500 bg-amber-500/10" : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
+                        selectedMetal === metal.symbol ? "border-emerald-500 bg-emerald-500/10" : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                       }`}
                     >
                       <div className="flex items-center gap-2 sm:gap-3">
@@ -613,7 +613,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
               <button
                 onClick={handleSubmitRequest}
                 disabled={submitting || !amount || !selectedAddressId || parseFloat(amount) < (selectedMetalInfo?.minAmount || 0)}
-                className="w-full py-2.5 sm:py-3 bg-amber-500 text-slate-800 dark:text-white rounded-xl font-medium hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                className="w-full py-2.5 sm:py-3 bg-amber-500 text-slate-800 dark:text-white rounded-xl font-medium hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
                 {submitting ? "..." : t.submit}
               </button>

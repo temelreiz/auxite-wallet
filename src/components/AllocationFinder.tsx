@@ -22,7 +22,7 @@ const metalColors: Record<string, string> = {
 };
 
 const metalBorders: Record<string, string> = {
-  AUXG: "border-amber-500 bg-amber-500/10",
+  AUXG: "border-emerald-500 bg-emerald-500/10",
   AUXS: "border-slate-400 bg-slate-400/10",
   AUXPT: "border-blue-400 bg-blue-400/10",
   AUXPD: "border-purple-400 bg-purple-400/10",
@@ -469,7 +469,7 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
             <button
               onClick={handleCertVerify}
               disabled={!isValidCert || certLoading}
-              className={"rounded-xl px-4 py-2.5 text-xs font-semibold transition whitespace-nowrap " + (isValidCert && !certLoading ? "bg-amber-500 text-white hover:bg-amber-400" : "cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-400")}
+              className={"rounded-xl px-4 py-2.5 text-xs font-semibold transition whitespace-nowrap " + (isValidCert && !certLoading ? "bg-emerald-500 text-white hover:bg-emerald-400" : "cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-400")}
             >
               {certLoading ? t.verifying : t.verify}
             </button>

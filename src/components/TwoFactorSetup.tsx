@@ -334,7 +334,7 @@ export function TwoFactorSetup({ lang = "tr", onClose, walletAddress }: TwoFacto
                 <button
                   onClick={handleRegenerateBackup}
                   disabled={loading}
-                  className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 text-sm font-medium disabled:opacity-50"
+                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 text-sm font-medium disabled:opacity-50"
                 >
                   {t.regenerateBackup}
                 </button>

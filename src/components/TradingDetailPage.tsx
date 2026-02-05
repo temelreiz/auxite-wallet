@@ -433,7 +433,7 @@ export default function TradingDetailPage({
             <button onClick={onSell} className="flex-1 px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg bg-red-500 hover:bg-red-400 text-white font-semibold text-sm sm:text-base transition-colors">
               {t("sell")}
             </button>
-            <button onClick={() => setShowLeaseModal(true)} className="flex-1 px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-white font-semibold text-sm sm:text-base transition-colors">
+            <button onClick={() => setShowLeaseModal(true)} className="flex-1 px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm sm:text-base transition-colors">
               {t("stake")}
             </button>
           </div>

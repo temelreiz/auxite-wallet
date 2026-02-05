@@ -390,7 +390,7 @@ export function RecurringStakeManager({
         {!showCreate && (
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600"
           >
             <span>📅</span> {labels.createPlan}
           </button>
@@ -410,7 +410,7 @@ export function RecurringStakeManager({
                   onClick={() => setSelectedToken(token.symbol)}
                   className={`p-3 rounded-xl border transition-colors ${
                     selectedToken === token.symbol
-                      ? "border-amber-500 bg-amber-500/10"
+                      ? "border-emerald-500 bg-emerald-500/10"
                       : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                   }`}
                 >
@@ -459,7 +459,7 @@ export function RecurringStakeManager({
                   onClick={() => setStakeDuration(months)}
                   className={`p-3 rounded-xl border transition-colors ${
                     stakeDuration === months
-                      ? "border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                      ? "border-emerald-500 bg-emerald-500/10 text-amber-600 dark:text-amber-400"
                       : "border-stone-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-stone-400 dark:hover:border-slate-600"
                   }`}
                 >
@@ -480,7 +480,7 @@ export function RecurringStakeManager({
                   onClick={() => setFrequency(freq)}
                   className={`p-3 rounded-xl border transition-colors ${
                     frequency === freq
-                      ? "border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                      ? "border-emerald-500 bg-emerald-500/10 text-amber-600 dark:text-amber-400"
                       : "border-stone-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-stone-400 dark:hover:border-slate-600"
                   }`}
                 >
@@ -530,7 +530,7 @@ export function RecurringStakeManager({
                 onClick={() => setPaymentSource("metal_balance")}
                 className={`p-3 rounded-xl border transition-colors ${
                   paymentSource === "metal_balance"
-                    ? "border-amber-500 bg-amber-500/10"
+                    ? "border-emerald-500 bg-emerald-500/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
@@ -541,7 +541,7 @@ export function RecurringStakeManager({
                 onClick={() => setPaymentSource("usd_balance")}
                 className={`p-3 rounded-xl border transition-colors ${
                   paymentSource === "usd_balance"
-                    ? "border-amber-500 bg-amber-500/10"
+                    ? "border-emerald-500 bg-emerald-500/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
@@ -552,7 +552,7 @@ export function RecurringStakeManager({
                 onClick={() => setPaymentSource("usdt_balance")}
                 className={`p-3 rounded-xl border transition-colors ${
                   paymentSource === "usdt_balance"
-                    ? "border-amber-500 bg-amber-500/10"
+                    ? "border-emerald-500 bg-emerald-500/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
@@ -563,7 +563,7 @@ export function RecurringStakeManager({
                 onClick={() => setPaymentSource("eth_balance")}
                 className={`p-3 rounded-xl border transition-colors ${
                   paymentSource === "eth_balance"
-                    ? "border-amber-500 bg-amber-500/10"
+                    ? "border-emerald-500 bg-emerald-500/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
@@ -574,7 +574,7 @@ export function RecurringStakeManager({
                 onClick={() => setPaymentSource("btc_balance")}
                 className={`p-3 rounded-xl border transition-colors ${
                   paymentSource === "btc_balance"
-                    ? "border-amber-500 bg-amber-500/10"
+                    ? "border-emerald-500 bg-emerald-500/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
@@ -585,7 +585,7 @@ export function RecurringStakeManager({
                 onClick={() => setPaymentSource("xrp_balance")}
                 className={`p-3 rounded-xl border transition-colors ${
                   paymentSource === "xrp_balance"
-                    ? "border-amber-500 bg-amber-500/10"
+                    ? "border-emerald-500 bg-emerald-500/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
@@ -606,7 +606,7 @@ export function RecurringStakeManager({
             <button
               onClick={handleCreate}
               disabled={creating || !amount || parseFloat(amount) <= 0}
-              className="flex-1 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 disabled:opacity-50"
+              className="flex-1 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 disabled:opacity-50"
             >
               {creating ? "..." : labels.create}
             </button>
