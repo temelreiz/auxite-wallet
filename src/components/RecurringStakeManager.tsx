@@ -712,7 +712,7 @@ export function RecurringStakeManager({
                 className={`flex-1 py-3 rounded-xl text-white ${
                   confirmModal.type === "delete"
                     ? "bg-red-500 hover:bg-red-600"
-                    : "bg-amber-500 hover:bg-amber-600"
+                    : "bg-emerald-500 hover:bg-emerald-600"
                 }`}
               >
                 {labels.confirm}

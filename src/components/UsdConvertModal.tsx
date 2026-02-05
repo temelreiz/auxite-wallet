@@ -344,7 +344,7 @@ export function UsdConvertModal({
           className={`w-full py-3 sm:py-3.5 rounded-xl font-semibold text-sm sm:text-base transition-colors touch-manipulation ${
             isLoading || !parsedAmount || parsedAmount > fromBalance
               ? "bg-slate-700 text-slate-400 cursor-not-allowed"
-              : "bg-amber-500 hover:bg-amber-600 active:bg-emerald-700 text-white"
+              : "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white"
           }`}
         >
           {isLoading ? t.processing : t.convert}

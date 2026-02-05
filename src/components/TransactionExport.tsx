@@ -318,7 +318,7 @@ export function TransactionExport({ walletAddress, lang: propLang }: Transaction
               <button
                 onClick={handleExport}
                 disabled={loading}
-                className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>

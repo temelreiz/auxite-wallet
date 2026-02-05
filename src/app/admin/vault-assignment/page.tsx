@@ -223,7 +223,7 @@ export default function VaultAssignmentPage() {
           <p className="text-slate-400 mb-6">Bu sayfaya erişim yetkiniz yok</p>
           <Link
             href="/admin"
-            className="px-6 py-3 bg-amber-500 hover:bg-amber-600 rounded-xl text-black font-semibold"
+            className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-black font-semibold"
           >
             Admin Paneline Git
           </Link>

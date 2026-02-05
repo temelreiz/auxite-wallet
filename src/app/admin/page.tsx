@@ -1872,7 +1872,7 @@ export default function AdminDashboard() {
             <button
               type="submit"
               disabled={authLoading || !password}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold py-3 rounded-xl disabled:opacity-50 transition-colors"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-semibold py-3 rounded-xl disabled:opacity-50 transition-colors"
             >
               {authLoading ? "Kontrol ediliyor..." : "Giriş Yap"}
             </button>
@@ -2082,7 +2082,7 @@ export default function AdminDashboard() {
                                   setTransferModal({ token, pending: data.pending });
                                   setTransferForm({ amount: data.pending, ledgerAddress: '', txHash: '', note: '' });
                                 }}
-                                className="px-3 py-1 bg-amber-500 hover:bg-amber-600 rounded text-black text-sm font-medium"
+                                className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 rounded text-black text-sm font-medium"
                               >
                                 Transfer
                               </button>
@@ -2196,7 +2196,7 @@ export default function AdminDashboard() {
                       </button>
                       <button
                         onClick={transferFeesToLedger}
-                        className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 rounded-xl text-black font-semibold"
+                        className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-black font-semibold"
                       >
                         ✅ Transfer Kaydet
                       </button>
@@ -2934,7 +2934,7 @@ export default function AdminDashboard() {
                     {newBanner.actionType !== 'none' && <span className="text-xl">→</span>}
                   </div>
                 </div>
-                <button onClick={handleAddBanner} disabled={bannerSaving} className="mt-4 px-6 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-white font-medium disabled:opacity-50">
+                <button onClick={handleAddBanner} disabled={bannerSaving} className="mt-4 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white font-medium disabled:opacity-50">
                   {bannerSaving ? "Ekleniyor..." : "Banner Ekle"}
                 </button>
               </div>
@@ -3055,7 +3055,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <button onClick={handleAddCampaign} disabled={campaignSaving} className="mt-4 px-6 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-black font-medium disabled:opacity-50">
+                <button onClick={handleAddCampaign} disabled={campaignSaving} className="mt-4 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-black font-medium disabled:opacity-50">
                   {campaignSaving ? "Oluşturuluyor..." : "Kampanya Oluştur"}
                 </button>
               </div>
@@ -3339,7 +3339,7 @@ export default function AdminDashboard() {
                       <option value="alert">Uyarı</option>
                       <option value="promo">Promosyon</option>
                     </select>
-                    <button onClick={handleAddNews} className="px-6 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-white font-medium">
+                    <button onClick={handleAddNews} className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white font-medium">
                       Ekle
                     </button>
                   </div>
@@ -3511,7 +3511,7 @@ export default function AdminDashboard() {
                 <button
                   onClick={saveAuxiteerConfig}
                   disabled={auxiteerSaving}
-                  className="px-6 py-2 bg-amber-500 hover:bg-amber-600 rounded-xl font-medium disabled:opacity-50"
+                  className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-medium disabled:opacity-50"
                 >
                   {auxiteerSaving ? 'Kaydediliyor...' : '💾 Kaydet'}
                 </button>
@@ -3710,7 +3710,7 @@ export default function AdminDashboard() {
                   <button
                     onClick={inviteToSovereign}
                     disabled={sovereignLoading || !newSovereignAddress}
-                    className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-black font-medium rounded-xl disabled:opacity-50"
+                    className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-black font-medium rounded-xl disabled:opacity-50"
                   >
                     {sovereignLoading ? 'Gönderiliyor...' : '⭐ Davet Et'}
                   </button>
@@ -3984,7 +3984,7 @@ export default function AdminDashboard() {
                 </div>
                 <button
                   onClick={handleStockOperation}
-                  className="mt-4 px-6 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-white font-medium"
+                  className="mt-4 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white font-medium"
                 >
                   İşlemi Uygula
                 </button>
@@ -4198,7 +4198,7 @@ export default function AdminDashboard() {
                   <button 
                     onClick={handleSendCrypto} 
                     disabled={walletProcessing === 'send'} 
-                    className="bg-amber-500 hover:bg-amber-600 text-black font-medium rounded-lg disabled:opacity-50"
+                    className="bg-emerald-500 hover:bg-emerald-600 text-black font-medium rounded-lg disabled:opacity-50"
                   >
                     {walletProcessing === 'send' ? "Gönderiliyor..." : "🚀 Gönder"}
                   </button>
@@ -4224,7 +4224,7 @@ export default function AdminDashboard() {
                           <button 
                             onClick={() => handleApproveWithdraw(w.id)} 
                             disabled={walletProcessing === w.id} 
-                            className="px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-white text-sm disabled:opacity-50"
+                            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white text-sm disabled:opacity-50"
                           >
                             {walletProcessing === w.id ? "..." : "✅ Onayla"}
                           </button>
@@ -4380,7 +4380,7 @@ export default function AdminDashboard() {
               <button
                 onClick={saveWebsiteSettings}
                 disabled={websiteSaving}
-                className="w-full py-3 bg-amber-500 hover:bg-amber-600 rounded-xl text-black font-semibold disabled:opacity-50"
+                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-black font-semibold disabled:opacity-50"
               >
                 {websiteSaving ? 'Kaydediliyor...' : '💾 Ayarları Kaydet'}
               </button>
@@ -4403,7 +4403,7 @@ export default function AdminDashboard() {
                     });
                     setShowWebsiteModal('roadmap');
                   }}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-black font-medium"
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-black font-medium"
                 >
                   + Yeni Faz Ekle
                 </button>
@@ -4486,7 +4486,7 @@ export default function AdminDashboard() {
                     });
                     setShowWebsiteModal('team');
                   }}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-black font-medium"
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-black font-medium"
                 >
                   + Yeni Üye Ekle
                 </button>
@@ -4580,7 +4580,7 @@ export default function AdminDashboard() {
                     });
                     setShowWebsiteModal('vault');
                   }}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-black font-medium"
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-black font-medium"
                 >
                   + Yeni Kasa Ekle
                 </button>
@@ -4932,7 +4932,7 @@ export default function AdminDashboard() {
                       if (showWebsiteModal === 'team') saveTeamMember(editingItem);
                       if (showWebsiteModal === 'vault') saveVaultLocation(editingItem);
                     }}
-                    className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 rounded-xl text-black font-semibold"
+                    className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-black font-semibold"
                   >
                     💾 Kaydet
                   </button>

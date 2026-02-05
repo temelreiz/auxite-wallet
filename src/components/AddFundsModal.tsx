@@ -577,7 +577,7 @@ export function AddFundsModal({
                   </p>
                   <button
                     onClick={() => handleCopyAddress(DEPOSIT_ADDRESSES[selectedCoin].address, "address")}
-                    className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium transition-colors"
+                    className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-colors"
                   >
                     {copiedAddress ? t.copied : t.copy}
                   </button>
@@ -595,7 +595,7 @@ export function AddFundsModal({
                     </p>
                     <button
                       onClick={() => handleCopyAddress(DEPOSIT_ADDRESSES[selectedCoin].memo!, "memo")}
-                      className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-colors"
                     >
                       {copiedMemo ? t.copied : t.copy}
                     </button>
@@ -716,7 +716,7 @@ export function AddFundsModal({
               <button
                 onClick={handleBuyWithCard}
                 disabled={isLoading}
-                className="w-full py-3 sm:py-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 sm:py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>

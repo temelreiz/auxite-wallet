@@ -580,7 +580,7 @@ export function MetalTradeModal({
               )}
               <button
                 onClick={onClose}
-                className="px-6 py-2 bg-amber-500 hover:bg-amber-600 rounded-xl text-white font-medium"
+                className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-white font-medium"
               >
                 {t.close}
               </button>

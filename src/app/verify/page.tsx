@@ -65,7 +65,7 @@ function VerifyContent() {
           <button 
             onClick={handleVerify} 
             disabled={loading || !certNumber.trim()} 
-            className="px-6 py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-400 text-white font-semibold rounded-xl transition-colors"
+            className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-400 text-white font-semibold rounded-xl transition-colors"
           >
             {loading ? "Verifying..." : "Verify"}
           </button>
@@ -112,7 +112,7 @@ function VerifyContent() {
           {result.verified && result.certificate && (
             <>
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-4">
+                <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 p-4">
                   <h3 className="text-white font-bold text-lg">Certificate Details</h3>
                 </div>
                 <div className="p-6 space-y-4">

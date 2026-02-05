@@ -101,7 +101,7 @@ export function PWAInstallBanner({ lang = "tr" }: Props) {
       <div className="bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl shadow-black/50 overflow-hidden">
         <div className="p-4">
           <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
               <span className="text-2xl">💎</span>
             </div>
             <div className="flex-1 min-w-0">
@@ -130,7 +130,7 @@ export function PWAInstallBanner({ lang = "tr" }: Props) {
               </button>
               <button
                 onClick={handleInstall}
-                className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors"
+                className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-medium transition-colors"
               >
                 {labels.install}
               </button>

@@ -688,7 +688,7 @@ export function RecurringBuyManager({
                 className={`flex-1 py-2.5 sm:py-3 rounded-xl text-white text-sm sm:text-base font-medium touch-manipulation ${
                   confirmModal.type === "delete" 
                     ? "bg-red-500 hover:bg-red-600 active:bg-red-700" 
-                    : "bg-amber-500 hover:bg-amber-600 active:bg-emerald-700"
+                    : "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700"
                 }`}
               >
                 {labels.confirm}

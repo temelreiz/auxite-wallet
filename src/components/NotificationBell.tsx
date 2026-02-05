@@ -140,7 +140,7 @@ export function NotificationBell({ lang }: NotificationBellProps) {
                             // Navigate to positions tab
                             window.location.href = "/leasing?tab=positions";
                           }}
-                          className="mt-2 w-full px-3 py-1.5 rounded bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium transition-colors"
+                          className="mt-2 w-full px-3 py-1.5 rounded bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-colors"
                         >
                           {lang === "tr" ? "Geri Çek" : "Withdraw"}
                         </button>

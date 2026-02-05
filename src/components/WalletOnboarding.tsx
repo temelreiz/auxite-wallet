@@ -1029,7 +1029,7 @@ export default function WalletOnboarding({
             {/* Email Login/Signup */}
             <button
               onClick={() => setStep("email-login")}
-              className="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -1064,7 +1064,7 @@ export default function WalletOnboarding({
             {/* Create New Wallet */}
             <button
               onClick={handleCreateWallet}
-              className="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-xl mb-3 flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-xl mb-3 flex items-center justify-center gap-2 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -1217,7 +1217,7 @@ export default function WalletOnboarding({
           <button
             onClick={handleSeedContinue}
             disabled={!seedRevealed}
-            className="w-full py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors"
+            className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors"
           >
             {t("iWroteItDown")}
           </button>
@@ -1346,7 +1346,7 @@ export default function WalletOnboarding({
           <button
             onClick={isConfirm ? handleConfirmPassword : handleSetPassword}
             disabled={isConfirm ? confirmPassword.length < 6 : password.length < 6}
-            className="w-full py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors"
+            className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors"
           >
             {t("continue")}
           </button>
@@ -1394,7 +1394,7 @@ export default function WalletOnboarding({
           <button
             onClick={handleImportSubmit}
             disabled={!importSeedInput.trim()}
-            className="w-full py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+            className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -1446,7 +1446,7 @@ export default function WalletOnboarding({
           <button
             onClick={handleUnlock}
             disabled={unlockPassword.length < 6}
-            className="w-full py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors mb-4"
+            className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors mb-4"
           >
             {t("unlock")}
           </button>
@@ -1535,7 +1535,7 @@ export default function WalletOnboarding({
           <button
             onClick={handleEmailLogin}
             disabled={!emailInput || !emailPassword || isEmailLoading}
-            className="w-full py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors mb-4 flex items-center justify-center gap-2"
+            className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors mb-4 flex items-center justify-center gap-2"
           >
             {isEmailLoading ? (
               <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
@@ -1677,7 +1677,7 @@ export default function WalletOnboarding({
           <button
             onClick={handleEmailRegister}
             disabled={!emailInput || !emailPassword || !emailConfirmPassword || isEmailLoading}
-            className="w-full py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors mb-4 flex items-center justify-center gap-2"
+            className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors mb-4 flex items-center justify-center gap-2"
           >
             {isEmailLoading ? (
               <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
@@ -1749,7 +1749,7 @@ export default function WalletOnboarding({
           <button
             onClick={handleVerifyCode}
             disabled={verificationCode.length !== 6 || isEmailLoading}
-            className="w-full py-4 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors mb-4 flex items-center justify-center gap-2"
+            className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold rounded-xl transition-colors mb-4 flex items-center justify-center gap-2"
           >
             {isEmailLoading ? (
               <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />

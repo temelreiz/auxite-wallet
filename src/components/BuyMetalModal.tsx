@@ -394,7 +394,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
                     +{allocationPreview.suggestion.gramsToAdd.toFixed(4)}g → {allocationPreview.suggestion.targetGrams}g
                   </button>
                 )}
-                <button onClick={handleConfirmWithAllocation} className="py-2.5 px-3 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium transition-colors">
+                <button onClick={handleConfirmWithAllocation} className="py-2.5 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors">
                   {t.continueAnyway || "Continue"}
                 </button>
               </div>
@@ -406,7 +406,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
         </div>
 
         <div className="p-4 border-t border-stone-200 dark:border-slate-800">
-          <button onClick={executeTrade} disabled={!canTrade} className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-emerald-400 hover:to-emerald-500 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-700 dark:disabled:to-slate-700 text-white disabled:text-slate-500 font-semibold text-base transition-all flex items-center justify-center gap-2">
+          <button onClick={executeTrade} disabled={!canTrade} className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-700 dark:disabled:to-slate-700 text-white disabled:text-slate-500 font-semibold text-base transition-all flex items-center justify-center gap-2">
             {isProcessing ? (<><svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /></svg>{t.processing}</>) : success ? (<><span>✅</span>{t.success}</>) : (<><span>🔒</span>{t.confirm}</>)}
           </button>
         </div>

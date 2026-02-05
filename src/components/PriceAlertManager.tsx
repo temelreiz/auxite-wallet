@@ -310,7 +310,7 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-amber-500 hover:bg-amber-600 active:bg-emerald-700 text-white text-xs sm:text-sm rounded-lg transition-colors touch-manipulation w-full sm:w-auto"
+          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-xs sm:text-sm rounded-lg transition-colors touch-manipulation w-full sm:w-auto"
         >
           + {labels.createAlert}
         </button>
@@ -489,7 +489,7 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
               <button
                 onClick={handleCreate}
                 disabled={creating || !targetPrice}
-                className="flex-1 py-2 sm:py-3 bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-base rounded-lg sm:rounded-xl transition-colors disabled:opacity-50 touch-manipulation"
+                className="flex-1 py-2 sm:py-3 bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-base rounded-lg sm:rounded-xl transition-colors disabled:opacity-50 touch-manipulation"
               >
                 {creating ? "..." : labels.create}
               </button>

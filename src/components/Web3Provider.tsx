@@ -88,7 +88,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
           </ul>
           <button 
             onClick={() => window.location.reload()} 
-            className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition"
+            className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition"
           >
             Retry
           </button>
