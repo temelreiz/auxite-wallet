@@ -268,3 +268,32 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'İşlem başarısız' }, { status: 500 });
   }
 }
+
+// DELETE: Reset KYC data (development only)
+export async function DELETE(request: NextRequest) {
+  try {
+    const walletAddress = request.headers.get('x-wallet-address');
+    const adminKey = request.headers.get('x-admin-key');
+
+    // Only allow in development or with admin key
+    if (process.env.NODE_ENV === 'production' && adminKey !== process.env.ADMIN_SECRET_KEY) {
+      return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
+    }
+
+    if (!walletAddress) {
+      return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
+    }
+
+    // Delete KYC data
+    await redis.del(`kyc:${walletAddress}`);
+
+    return NextResponse.json({
+      success: true,
+      message: 'KYC verisi silindi',
+    });
+
+  } catch (error) {
+    console.error('KYC DELETE error:', error);
+    return NextResponse.json({ error: 'İşlem başarısız' }, { status: 500 });
+  }
+}
