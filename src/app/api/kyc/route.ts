@@ -276,7 +276,7 @@ export async function DELETE(request: NextRequest) {
     const adminKey = request.headers.get('x-admin-key');
 
     // Only allow in development or with admin key
-    if (process.env.NODE_ENV === 'production' && adminKey !== process.env.ADMIN_SECRET_KEY) {
+    if (process.env.NODE_ENV === 'production' && adminKey !== process.env.ADMIN_API_KEY) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
     }
 
