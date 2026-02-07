@@ -1,22 +1,41 @@
-const { ethers } = require("ethers");
-const SEPOLIA_RPC = "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
+const { ethers } = require('ethers');
 
-async function main() {
-  const provider = new ethers.JsonRpcProvider(SEPOLIA_RPC);
-  const txHash = "0x25432d70775c7c054a1bc9318961251b837e2b9753dce720b331eb02d7aea581";
+async function checkTx() {
+  const TX_HASH = '0x39e196ec32f43777e3a469a4e635025ae93dac5b993446a0506b394633ab156f';
   
-  const receipt = await provider.getTransactionReceipt(txHash);
-  if (receipt) {
-    console.log("Status:", receipt.status === 1 ? "✅ Success" : "❌ Failed");
-    console.log("Block:", receipt.blockNumber);
-    console.log("Gas used:", receipt.gasUsed.toString());
-  } else {
-    console.log("TX still pending...");
-    const tx = await provider.getTransaction(txHash);
-    if (tx) {
-      console.log("Nonce:", tx.nonce);
-      console.log("Gas price:", ethers.formatUnits(tx.gasPrice || tx.maxFeePerGas, "gwei"), "gwei");
+  // Try Base first
+  const baseProvider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+  const ethProvider = new ethers.JsonRpcProvider('https://eth.llamarpc.com');
+  
+  console.log('Checking Base...');
+  try {
+    const baseTx = await baseProvider.getTransaction(TX_HASH);
+    if (baseTx) {
+      console.log('Found on Base!');
+      console.log('From:', baseTx.from);
+      console.log('To:', baseTx.to);
+      console.log('Value:', ethers.formatEther(baseTx.value), 'ETH');
+      return;
     }
+  } catch (e) {
+    console.log('Not on Base');
   }
+  
+  console.log('\nChecking Ethereum Mainnet...');
+  try {
+    const ethTx = await ethProvider.getTransaction(TX_HASH);
+    if (ethTx) {
+      console.log('Found on Ethereum!');
+      console.log('From:', ethTx.from);
+      console.log('To:', ethTx.to);
+      console.log('Value:', ethers.formatEther(ethTx.value), 'ETH');
+      return;
+    }
+  } catch (e) {
+    console.log('Not on Ethereum');
+  }
+  
+  console.log('\nTransaction not found on either network');
 }
-main().catch(console.error);
+
+checkTx().catch(console.error);

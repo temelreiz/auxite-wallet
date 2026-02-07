@@ -11,60 +11,99 @@ import { GlobalTrustBar } from "@/components/GlobalTrustBar";
 // ============================================
 // 6-LANGUAGE TRANSLATIONS
 // ============================================
+// ============================================
+// INSTITUTIONAL NAVIGATION - MASTER BLUEPRINT
+// Menu: Vault | Allocate | Yield | Transfers | Ledger | Documents | Trust Center | Client Center
+// ============================================
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    markets: "Piyasalar",
-    stake: "Yapılandırılmış Getiri",
-    wallet: "Kasa",
-    profile: "Profil",
-    trust: "Güven",
+    // Core Navigation - Institutional
+    vault: "Kasa",
+    allocate: "Tahsis",
+    yield: "Getiri",
+    transfers: "Transferler",
+    ledger: "Sermaye Defteri",
+    documents: "Belgeler",
     trustCenter: "Güven Merkezi",
+    clientCenter: "Müşteri Merkezi",
+
+    // Trust dropdown
+    trust: "Güven",
     verify: "Sertifika Doğrula",
     legal: "Yasal",
     reserves: "Rezervler",
     audits: "Denetimler",
     custody: "Saklama",
     supply: "Arz",
+
+    // Actions
     actions: "İşlemler",
     autoInvest: "Otomatik Yatırım",
     physicalDelivery: "Fiziksel Teslimat",
     priceAlerts: "Fiyat Uyarıları",
     security: "Güvenlik",
     advancedSecurity: "Gelişmiş Güvenlik",
+
+    // UI
     lightMode: "Aydınlık Mod",
     darkMode: "Karanlık Mod",
     backed: "Destekli",
+
+    // Deprecated
+    markets: "Piyasalar",
+    stake: "Yapılandırılmış Getiri",
+    wallet: "Kasa",
+    profile: "Profil",
   },
   en: {
-    markets: "Markets",
-    stake: "Structured Yield",
-    wallet: "Vault",
-    profile: "Profile",
-    trust: "Trust",
+    // Core Navigation - Institutional
+    vault: "Vault",
+    allocate: "Allocate",
+    yield: "Yield",
+    transfers: "Transfers",
+    ledger: "Capital Ledger",
+    documents: "Documents",
     trustCenter: "Trust Center",
+    clientCenter: "Client Center",
+
+    // Trust dropdown
+    trust: "Trust",
     verify: "Verify Certificate",
     legal: "Legal",
     reserves: "Reserves",
     audits: "Audits",
     custody: "Custody",
     supply: "Supply",
+
+    // Actions
     actions: "Actions",
     autoInvest: "Auto-Invest",
     physicalDelivery: "Physical Delivery",
     priceAlerts: "Price Alerts",
     security: "Security",
     advancedSecurity: "Advanced Security",
+
+    // UI
     lightMode: "Light Mode",
     darkMode: "Dark Mode",
     backed: "Backed",
+
+    // Deprecated
+    markets: "Markets",
+    stake: "Structured Yield",
+    wallet: "Vault",
+    profile: "Profile",
   },
   de: {
-    markets: "Märkte",
-    stake: "Strukturierte Rendite",
-    wallet: "Tresor",
-    profile: "Profil",
-    trust: "Vertrauen",
+    vault: "Tresor",
+    allocate: "Zuweisung",
+    yield: "Rendite",
+    transfers: "Überweisungen",
+    ledger: "Kapitalhauptbuch",
+    documents: "Dokumente",
     trustCenter: "Vertrauenszentrum",
+    clientCenter: "Kundenzentrum",
+    trust: "Vertrauen",
     verify: "Zertifikat Prüfen",
     legal: "Rechtliches",
     reserves: "Reserven",
@@ -80,14 +119,21 @@ const translations: Record<string, Record<string, string>> = {
     lightMode: "Heller Modus",
     darkMode: "Dunkler Modus",
     backed: "Gedeckt",
+    markets: "Märkte",
+    stake: "Strukturierte Rendite",
+    wallet: "Tresor",
+    profile: "Profil",
   },
   fr: {
-    markets: "Marchés",
-    stake: "Rendement Structuré",
-    wallet: "Coffre",
-    profile: "Profil",
-    trust: "Confiance",
+    vault: "Coffre",
+    allocate: "Allouer",
+    yield: "Rendement",
+    transfers: "Transferts",
+    ledger: "Grand Livre Capital",
+    documents: "Documents",
     trustCenter: "Centre de Confiance",
+    clientCenter: "Centre Client",
+    trust: "Confiance",
     verify: "Vérifier Certificat",
     legal: "Juridique",
     reserves: "Réserves",
@@ -103,14 +149,21 @@ const translations: Record<string, Record<string, string>> = {
     lightMode: "Mode Clair",
     darkMode: "Mode Sombre",
     backed: "Soutenu",
+    markets: "Marchés",
+    stake: "Rendement Structuré",
+    wallet: "Coffre",
+    profile: "Profil",
   },
   ar: {
-    markets: "الأسواق",
-    stake: "العائد المنظم",
-    wallet: "الخزنة",
-    profile: "الملف الشخصي",
-    trust: "الثقة",
+    vault: "الخزنة",
+    allocate: "تخصيص",
+    yield: "العائد",
+    transfers: "التحويلات",
+    ledger: "دفتر رأس المال",
+    documents: "المستندات",
     trustCenter: "مركز الثقة",
+    clientCenter: "مركز العملاء",
+    trust: "الثقة",
     verify: "تحقق من الشهادة",
     legal: "قانوني",
     reserves: "الاحتياطيات",
@@ -126,14 +179,21 @@ const translations: Record<string, Record<string, string>> = {
     lightMode: "الوضع الفاتح",
     darkMode: "الوضع الداكن",
     backed: "مدعوم",
+    markets: "الأسواق",
+    stake: "العائد المنظم",
+    wallet: "الخزنة",
+    profile: "الملف الشخصي",
   },
   ru: {
-    markets: "Рынки",
-    stake: "Структурированная Доходность",
-    wallet: "Хранилище",
-    profile: "Профиль",
-    trust: "Доверие",
+    vault: "Хранилище",
+    allocate: "Распределить",
+    yield: "Доходность",
+    transfers: "Переводы",
+    ledger: "Книга Капитала",
+    documents: "Документы",
     trustCenter: "Центр Доверия",
+    clientCenter: "Клиентский Центр",
+    trust: "Доверие",
     verify: "Проверить Сертификат",
     legal: "Правовая",
     reserves: "Резервы",
@@ -149,6 +209,10 @@ const translations: Record<string, Record<string, string>> = {
     lightMode: "Светлый режим",
     darkMode: "Темный режим",
     backed: "Обеспечено",
+    markets: "Рынки",
+    stake: "Структурированная Доходность",
+    wallet: "Хранилище",
+    profile: "Профиль",
   },
 };
 
@@ -258,16 +322,20 @@ export default function TopNav({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Stake removed from main nav - moved to wallet page as "Structured Yield"
+  // INSTITUTIONAL NAVIGATION - Digital Asset Custody Console
+  // No "wallet" word anywhere - only institutional terminology
   const navLinks = [
-    { href: "/", label: t.markets, key: "markets" },
-    { href: "/wallet", label: t.wallet, key: "wallet" },
-    { href: "/profile", label: t.profile, key: "profile" },
+    { href: "/wallet", label: t.vault, key: "vault" },
+    { href: "/allocate", label: t.allocate, key: "allocate" },
+    { href: "/stake", label: t.yield, key: "yield" },
+    { href: "/transfers", label: t.transfers, key: "transfers" },
+    { href: "/ledger", label: t.ledger, key: "ledger" },
+    { href: "/documents", label: t.documents, key: "documents" },
   ];
 
-  // Trust dropdown items
+  // Trust Center dropdown items
   const trustLinks = [
-    { href: "/trust", label: t.trustCenter, icon: "shield" },
+    { href: "/trust-center", label: t.trustCenter, icon: "shield" },
     { href: "/trust/reserves", label: t.reserves, icon: "chart" },
     { href: "/trust/audits", label: t.audits, icon: "document" },
     { href: "/trust/custody", label: t.custody, icon: "lock" },
@@ -275,6 +343,9 @@ export default function TopNav({
     { href: "/verify", label: t.verify, icon: "checkmark" },
     { href: "/legal", label: t.legal, icon: "document-text" },
   ];
+
+  // Client Center link (Profile replacement)
+  const clientCenterLink = { href: "/client-center", label: t.clientCenter, key: "clientCenter" };
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -433,6 +504,18 @@ export default function TopNav({
                     </div>
                   )}
                 </div>
+
+                {/* Client Center Link - Profile replacement */}
+                <Link
+                  href={clientCenterLink.href}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    pathname === clientCenterLink.href || pathname?.startsWith('/profile')
+                      ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  {clientCenterLink.label}
+                </Link>
               </nav>
             </div>
 
