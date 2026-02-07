@@ -30,6 +30,17 @@ const translations: Record<string, Record<string, string>> = {
     bankruptcyRemote: "İflastan Korumalı",
     independentCustody: "Bağımsız Saklama",
 
+    // Client Verification - Institutional KYC Flow
+    clientVerification: "MÜŞTERİ DOĞRULAMA",
+    verificationRequired: "Doğrulama Gerekli",
+    verifiedCustodyEnabled: "Doğrulanmış — Saklama Etkin",
+    verificationPending: "Doğrulama Beklemede — Sınırlı Erişim",
+    beginVerification: "Doğrulamayı Başlat",
+    verificationDesc: "Saklama yeteneklerini etkinleştirmek için kimlik doğrulaması gereklidir.",
+    verificationTime: "Genellikle birkaç dakika sürer",
+    secureHandling: "Güvenli belge işleme",
+    custodyActivation: "Saklama etkinleştirme için gerekli",
+
     // Identity Section
     identity: "KİMLİK",
     legalName: "Yasal İsim",
@@ -37,7 +48,7 @@ const translations: Record<string, Record<string, string>> = {
     individual: "Bireysel",
     institutional: "Kurumsal",
     jurisdiction: "Yetki Alanı",
-    kycStatus: "KYC Durumu",
+    kycStatus: "Müşteri Durumu",
     verified: "Doğrulanmış",
     pending: "Beklemede",
 
@@ -84,6 +95,17 @@ const translations: Record<string, Record<string, string>> = {
     bankruptcyRemote: "Bankruptcy Remote",
     independentCustody: "Independent Custody",
 
+    // Client Verification - Institutional KYC Flow
+    clientVerification: "CLIENT VERIFICATION",
+    verificationRequired: "Verification Required",
+    verifiedCustodyEnabled: "Verified — Custody Enabled",
+    verificationPending: "Verification Pending — Limited Access",
+    beginVerification: "Begin Verification",
+    verificationDesc: "Identity verification is required to activate custody capabilities.",
+    verificationTime: "Typically takes a few minutes",
+    secureHandling: "Secure document handling",
+    custodyActivation: "Required for custody activation",
+
     // Identity Section
     identity: "IDENTITY",
     legalName: "Legal Name",
@@ -91,7 +113,7 @@ const translations: Record<string, Record<string, string>> = {
     individual: "Individual",
     institutional: "Institutional",
     jurisdiction: "Jurisdiction",
-    kycStatus: "KYC Status",
+    kycStatus: "Client Status",
     verified: "Verified",
     pending: "Pending",
 
@@ -306,19 +328,29 @@ export default function ClientCenterPage() {
   const { address } = useAccount();
 
   const [copied, setCopied] = useState(false);
+  const [showKycModal, setShowKycModal] = useState(false);
 
   // Mock user data - same structure as mobile
+  // kycStatus: 'none' | 'pending' | 'verified'
   const userData = {
     legalName: "John Smith",
     accountType: "individual",
     jurisdiction: "United States",
-    kycVerified: true,
+    kycStatus: "none" as "none" | "pending" | "verified", // Change to test different states
     email: "j***@example.com",
     phone: "+1 *** *** 4567",
     whitelistedAddresses: [
       { label: "Primary Wallet", address: "0x1234...5678" },
       { label: "Cold Storage", address: "0xabcd...efgh" },
     ],
+  };
+
+  // Start Sumsub verification
+  const handleStartVerification = () => {
+    // TODO: Integrate Sumsub SDK
+    // For now, open in new window - full screen, not modal
+    // window.open('https://sumsub.com/verification', '_blank');
+    setShowKycModal(true);
   };
 
   const copyToClipboard = (text: string) => {
@@ -422,25 +454,108 @@ export default function ClientCenterPage() {
           </button>
         </div>
 
-        {/* Account Safeguards Banner */}
-        <div className="bg-emerald-500/10 border border-emerald-500 rounded-xl p-4 mb-4">
-          <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 tracking-wider mb-3">
-            {t.accountSafeguards}
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {[t.fullyAllocated, t.segregated, t.bankruptcyRemote, t.independentCustody].map(
-              (item, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                    {item}
-                  </span>
-                </div>
-              )
-            )}
+        {/* Account Safeguards Banner - Only show when verified */}
+        {userData.kycStatus === "verified" && (
+          <div className="bg-emerald-500/10 border border-emerald-500 rounded-xl p-4 mb-4">
+            <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 tracking-wider mb-3">
+              {t.accountSafeguards}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {[t.fullyAllocated, t.segregated, t.bankruptcyRemote, t.independentCustody].map(
+                (item, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                      {item}
+                    </span>
+                  </div>
+                )
+              )}
+            </div>
           </div>
+        )}
+
+        {/* ============================================ */}
+        {/* CLIENT VERIFICATION - Institutional KYC Flow */}
+        {/* Status + Action + Progress */}
+        {/* ============================================ */}
+        <div className={`rounded-xl p-5 mb-4 border ${
+          userData.kycStatus === "verified"
+            ? "bg-emerald-500/10 border-emerald-500"
+            : userData.kycStatus === "pending"
+            ? "bg-amber-500/10 border-amber-500"
+            : "bg-white dark:bg-slate-900 border-amber-500"
+        }`}>
+          <p className="text-[11px] font-semibold text-slate-500 tracking-wider mb-4">
+            {t.clientVerification}
+          </p>
+
+          {/* Status Display */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+              userData.kycStatus === "verified"
+                ? "bg-emerald-500/20"
+                : userData.kycStatus === "pending"
+                ? "bg-amber-500/20"
+                : "bg-amber-500/20"
+            }`}>
+              {userData.kycStatus === "verified" ? (
+                <svg className="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              ) : userData.kycStatus === "pending" ? (
+                <svg className="w-6 h-6 text-amber-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              )}
+            </div>
+            <div>
+              <p className={`text-sm font-semibold ${
+                userData.kycStatus === "verified"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-amber-600 dark:text-amber-400"
+              }`}>
+                {userData.kycStatus === "verified"
+                  ? t.verifiedCustodyEnabled
+                  : userData.kycStatus === "pending"
+                  ? t.verificationPending
+                  : t.verificationRequired}
+              </p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {t.verificationDesc}
+              </p>
+            </div>
+          </div>
+
+          {/* Action Button - Only show if not verified */}
+          {userData.kycStatus !== "verified" && (
+            <>
+              <button
+                onClick={handleStartVerification}
+                className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-base transition-colors mb-4"
+              >
+                {t.beginVerification}
+              </button>
+
+              {/* Trust Points */}
+              <div className="space-y-2">
+                {[t.verificationTime, t.secureHandling, t.custodyActivation].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-xs text-slate-600 dark:text-slate-400">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Identity Section */}
@@ -475,17 +590,21 @@ export default function ClientCenterPage() {
               <span className="text-sm text-slate-500">{t.kycStatus}</span>
               <span
                 className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md ${
-                  userData.kycVerified
+                  userData.kycStatus === "verified"
                     ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                     : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                 }`}
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
-                    userData.kycVerified ? "bg-emerald-500" : "bg-amber-500"
+                    userData.kycStatus === "verified" ? "bg-emerald-500" : "bg-amber-500"
                   }`}
                 />
-                {userData.kycVerified ? t.verified : t.pending}
+                {userData.kycStatus === "verified"
+                  ? t.verifiedCustodyEnabled
+                  : userData.kycStatus === "pending"
+                  ? t.verificationPending
+                  : t.verificationRequired}
               </span>
             </div>
           </div>
@@ -660,6 +779,76 @@ export default function ClientCenterPage() {
       {copied && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 px-4 py-2 bg-slate-800 text-white rounded-lg text-sm shadow-lg">
           Copied!
+        </div>
+      )}
+
+      {/* KYC Verification Modal - Full Screen Sumsub Integration */}
+      {showKycModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-stone-200 dark:border-slate-700">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {t.clientVerification}
+                </h3>
+                <p className="text-xs text-slate-500">{t.verificationDesc}</p>
+              </div>
+              <button
+                onClick={() => setShowKycModal(false)}
+                className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-slate-800"
+              >
+                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Sumsub Container - Placeholder */}
+            <div className="p-6 min-h-[400px] flex flex-col items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-amber-500/20 flex items-center justify-center mb-6">
+                <svg className="w-10 h-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                </svg>
+              </div>
+              <h4 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
+                Sumsub Integration
+              </h4>
+              <p className="text-sm text-slate-500 text-center mb-6 max-w-md">
+                The Sumsub verification widget will be loaded here. This provides secure identity verification for custody activation.
+              </p>
+
+              {/* Trust indicators */}
+              <div className="flex flex-wrap gap-4 justify-center">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full">
+                  <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">256-bit Encryption</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full">
+                  <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">GDPR Compliant</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full">
+                  <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">~2 min process</span>
+                </div>
+              </div>
+
+              {/* TODO: Replace with Sumsub SDK */}
+              <div className="mt-8 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                <code className="text-xs text-slate-600 dark:text-slate-400">
+                  {`// TODO: Initialize Sumsub SDK here`}<br/>
+                  {`// import SumsubWebSdk from '@sumsub/websdk';`}
+                </code>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
