@@ -4,10 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import Image from "next/image";
-import MetalPriceGrid from "@/components/MetalPriceGrid";
-import { RiskCorrelation } from "@/components/RiskCorrelation";
 import WalletOnboarding from "@/components/WalletOnboarding";
-import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
 
 // ============================================
@@ -328,32 +325,25 @@ export default function Home() {
     );
   }
 
-  // Main Dashboard - Piyasalar
-  return (
-    <main className="min-h-screen bg-stone-100 dark:bg-zinc-950 text-slate-900 dark:text-white">
-      {/* TopNav */}
-      <TopNav />
-
-      {/* Markets Description */}
-      <div className="border-b border-stone-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/30">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-zinc-100 mb-1">
-            {t("auxiteMarkets")}
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-zinc-400">
-            {t("marketsDesc")}
-          </p>
+  // Wallet connected - redirect to Vault
+  if (isWalletConnected) {
+    router.push('/vault');
+    return (
+      <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-6 h-6 border-2 border-stone-300 dark:border-zinc-600 border-t-emerald-500 rounded-full mx-auto"></div>
+          <p className="text-slate-500 dark:text-zinc-400 mt-4">Redirecting to Vault...</p>
         </div>
       </div>
+    );
+  }
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        {/* Metal Prices Grid */}
-        <MetalPriceGrid />
-
-        {/* Risk & Correlation - Show if wallet connected */}
-        {isWalletConnected && <RiskCorrelation lang={lang} />}
+  // Fallback - shouldn't reach here normally
+  return (
+    <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin w-6 h-6 border-2 border-stone-300 dark:border-zinc-600 border-t-emerald-500 rounded-full mx-auto"></div>
       </div>
-    </main>
+    </div>
   );
 }
