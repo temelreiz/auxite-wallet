@@ -109,6 +109,11 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
         throw new Error(tokenData.error || "Token alınamadı");
       }
 
+      // Check if token is a test token (starts with test_)
+      if (tokenData.accessToken?.startsWith("test_")) {
+        throw new Error("Sumsub is in test mode. Please configure SUMSUB_APP_TOKEN and SUMSUB_SECRET_KEY environment variables.");
+      }
+
       // SDK'yı dinamik olarak yükle
       const snsWebSdk = (await import("@sumsub/websdk")).default;
       console.log("SDK loaded:", snsWebSdk);

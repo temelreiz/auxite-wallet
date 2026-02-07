@@ -26,6 +26,11 @@ function KYCContent() {
 
     const initSDK = async () => {
       try {
+        // Check if token is a test token (starts with test_)
+        if (token?.startsWith("test_")) {
+          throw new Error("Sumsub is in test mode. Please configure environment variables on the server.");
+        }
+
         // Dynamically import Sumsub SDK
         const snsWebSdk = (await import("@sumsub/websdk")).default;
 
