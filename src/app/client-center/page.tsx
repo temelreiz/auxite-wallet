@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
 import { useAccount } from "wagmi";
+import { KYCVerification } from "@/components/KYCVerification";
 
 // ============================================
 // CLIENT CENTER - Institutional Client Management
@@ -329,14 +330,52 @@ export default function ClientCenterPage() {
 
   const [copied, setCopied] = useState(false);
   const [showKycModal, setShowKycModal] = useState(false);
+  const [kycData, setKycData] = useState<{
+    level: "none" | "basic" | "verified" | "enhanced";
+    status: "not_started" | "pending" | "under_review" | "approved" | "rejected" | "expired";
+  } | null>(null);
+  const [kycLoading, setKycLoading] = useState(true);
 
-  // Mock user data - same structure as mobile
-  // kycStatus: 'none' | 'pending' | 'verified'
+  // Fetch KYC status from API
+  useEffect(() => {
+    const fetchKYC = async () => {
+      if (!address) {
+        setKycLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch("/api/kyc", {
+          headers: { "x-wallet-address": address }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setKycData(data.kyc);
+        }
+      } catch (err) {
+        console.error("Fetch KYC error:", err);
+      } finally {
+        setKycLoading(false);
+      }
+    };
+    fetchKYC();
+  }, [address]);
+
+  // Map KYC status to our display format
+  const getKycStatus = (): "none" | "pending" | "verified" => {
+    if (!kycData) return "none";
+    if (kycData.status === "approved") return "verified";
+    if (kycData.status === "pending" || kycData.status === "under_review") return "pending";
+    return "none";
+  };
+
+  const kycStatus = getKycStatus();
+
+  // User data with real KYC status
   const userData = {
     legalName: "John Smith",
     accountType: "individual",
     jurisdiction: "United States",
-    kycStatus: "none" as "none" | "pending" | "verified", // Change to test different states
+    kycStatus: kycStatus,
     email: "j***@example.com",
     phone: "+1 *** *** 4567",
     whitelistedAddresses: [
@@ -347,10 +386,28 @@ export default function ClientCenterPage() {
 
   // Start Sumsub verification
   const handleStartVerification = () => {
-    // TODO: Integrate Sumsub SDK
-    // For now, open in new window - full screen, not modal
-    // window.open('https://sumsub.com/verification', '_blank');
     setShowKycModal(true);
+  };
+
+  // Refresh KYC status when modal closes
+  const handleKycClose = async () => {
+    setShowKycModal(false);
+    if (address) {
+      setKycLoading(true);
+      try {
+        const res = await fetch("/api/kyc", {
+          headers: { "x-wallet-address": address }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setKycData(data.kyc);
+        }
+      } catch (err) {
+        console.error("Fetch KYC error:", err);
+      } finally {
+        setKycLoading(false);
+      }
+    }
   };
 
   const copyToClipboard = (text: string) => {
@@ -495,7 +552,9 @@ export default function ClientCenterPage() {
           {/* Status Display */}
           <div className="flex items-center gap-3 mb-4">
             <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              userData.kycStatus === "verified"
+              kycLoading
+                ? "bg-slate-500/20"
+                : userData.kycStatus === "verified"
                 ? "bg-emerald-500/20"
                 : userData.kycStatus === "pending"
                 ? "bg-amber-500/20"
@@ -534,11 +593,12 @@ export default function ClientCenterPage() {
           </div>
 
           {/* Action Button - Only show if not verified */}
-          {userData.kycStatus !== "verified" && (
+          {userData.kycStatus !== "verified" && !kycLoading && (
             <>
               <button
                 onClick={handleStartVerification}
-                className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-base transition-colors mb-4"
+                disabled={!address}
+                className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-base transition-colors mb-4"
               >
                 {t.beginVerification}
               </button>
@@ -782,74 +842,13 @@ export default function ClientCenterPage() {
         </div>
       )}
 
-      {/* KYC Verification Modal - Full Screen Sumsub Integration */}
-      {showKycModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-stone-200 dark:border-slate-700">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-800 dark:text-white">
-                  {t.clientVerification}
-                </h3>
-                <p className="text-xs text-slate-500">{t.verificationDesc}</p>
-              </div>
-              <button
-                onClick={() => setShowKycModal(false)}
-                className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-slate-800"
-              >
-                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Sumsub Container - Placeholder */}
-            <div className="p-6 min-h-[400px] flex flex-col items-center justify-center">
-              <div className="w-20 h-20 rounded-full bg-amber-500/20 flex items-center justify-center mb-6">
-                <svg className="w-10 h-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
-                </svg>
-              </div>
-              <h4 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
-                Sumsub Integration
-              </h4>
-              <p className="text-sm text-slate-500 text-center mb-6 max-w-md">
-                The Sumsub verification widget will be loaded here. This provides secure identity verification for custody activation.
-              </p>
-
-              {/* Trust indicators */}
-              <div className="flex flex-wrap gap-4 justify-center">
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full">
-                  <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">256-bit Encryption</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full">
-                  <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">GDPR Compliant</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full">
-                  <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">~2 min process</span>
-                </div>
-              </div>
-
-              {/* TODO: Replace with Sumsub SDK */}
-              <div className="mt-8 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                <code className="text-xs text-slate-600 dark:text-slate-400">
-                  {`// TODO: Initialize Sumsub SDK here`}<br/>
-                  {`// import SumsubWebSdk from '@sumsub/websdk';`}
-                </code>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* KYC Verification Modal - Real Sumsub Integration */}
+      {showKycModal && address && (
+        <KYCVerification
+          walletAddress={address}
+          lang={lang === "tr" ? "tr" : "en"}
+          onClose={handleKycClose}
+        />
       )}
     </div>
   );
