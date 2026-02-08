@@ -138,8 +138,8 @@ export async function POST(request: NextRequest) {
           // Vault exists, get the address from it
           vaultId = existingVault.id;
           // Check if we have addresses stored
-          const { getVaultDepositAddresses } = await import('@/lib/custody');
-          const addresses = await getVaultDepositAddresses(vaultId);
+          const { storage } = await import('@/lib/custody');
+          const addresses = await storage.getVaultDepositAddresses(vaultId);
           const ethAddress = addresses.find(a => a.asset === 'ETH');
           if (ethAddress) {
             walletAddress = ethAddress.address;
