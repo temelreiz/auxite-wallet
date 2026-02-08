@@ -149,9 +149,17 @@ export default function LoginPage() {
         return;
       }
 
-      // Store token
+      // Store token and user data
       localStorage.setItem('authToken', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Store wallet address for TopNav display
+      if (data.user.walletAddress) {
+        localStorage.setItem('auxite_wallet_address', data.user.walletAddress);
+        localStorage.setItem('auxite_wallet_mode', 'local');
+        // Dispatch event to notify TopNav
+        window.dispatchEvent(new Event('walletChanged'));
+      }
 
       // Redirect to main app
       router.push('/');

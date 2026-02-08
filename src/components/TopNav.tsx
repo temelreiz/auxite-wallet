@@ -375,14 +375,14 @@ export default function TopNav({
 
                 {/* Client Center Link - Profile replacement */}
                 <Link
-                  href={clientCenterLink.href}
+                  href="/client-center"
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    pathname === clientCenterLink.href || pathname?.startsWith('/profile')
+                    pathname === "/client-center" || pathname?.startsWith('/profile')
                       ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                       : "text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
-                  {clientCenterLink.label}
+                  {t.clientCenter}
                 </Link>
               </nav>
             </div>
@@ -472,21 +472,21 @@ export default function TopNav({
               {localWalletAddress ? (
                 <Link
                   href="/client-center"
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 dark:bg-amber-500/10 hover:bg-amber-500/20 dark:hover:bg-amber-500/20 border border-amber-500/30 transition-all"
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#d4a574]/10 hover:bg-[#d4a574]/20 border border-[#d4a574]/30 transition-all"
                 >
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-full bg-[#d4a574] flex items-center justify-center">
                     <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
-                  <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                  <span className="text-sm font-medium text-[#d4a574]">
                     {`${localWalletAddress.slice(0, 6)}...${localWalletAddress.slice(-4)}`}
                   </span>
                 </Link>
               ) : (
                 <Link
                   href="/auth/login"
-                  className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-medium text-sm transition-all shadow-lg shadow-amber-500/20"
+                  className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-[#d4a574] hover:bg-[#c49464] text-white font-medium text-sm transition-all shadow-lg shadow-[#d4a574]/30"
                 >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
