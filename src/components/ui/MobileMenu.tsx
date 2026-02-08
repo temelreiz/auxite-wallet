@@ -17,14 +17,14 @@ const t = {
   tr: {
     markets: "Piyasalar",
     earn: "Kazan",
-    wallet: "Cüzdan",
+    vault: "Kasa",
     security: "Güvenlik",
     advancedSecurity: "Gelişmiş Güvenlik",
   },
   en: {
     markets: "Markets",
     earn: "Earn",
-    wallet: "Wallet",
+    vault: "Vault",
     security: "Security",
     advancedSecurity: "Advanced Security",
   },
@@ -54,7 +54,7 @@ export function MobileMenu({ lang, currentPath = "/" }: MobileMenuProps) {
   const navItems = [
     { href: "/", label: labels.markets, icon: "📊" },
     { href: "/earn", label: labels.earn, icon: "💰" },
-    { href: "/vault", label: labels.vault || labels.wallet, icon: "🏦" },
+    { href: "/vault", label: labels.vault, icon: "🏦" },
   ];
 
   return (
@@ -187,7 +187,7 @@ export function MobileBottomNav({ lang, currentPath = "/", onSecurityClick }: Mo
   const navItems = [
     { href: "/", label: labels.markets, icon: "📊" },
     { href: "/earn", label: labels.earn, icon: "💰" },
-    { href: "/vault", label: labels.vault || labels.wallet, icon: "🏦" },
+    { href: "/vault", label: labels.vault, icon: "🏦" },
   ];
 
   return (
