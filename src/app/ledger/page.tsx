@@ -66,45 +66,48 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
-// Mock ledger data
-const mockLedgerData = [
-  {
-    id: "AUX-2026-001234",
-    type: "allocation",
-    asset: "AUXG",
-    amount: "2.5000g",
-    amountUsd: "$5,125.00",
-    status: "settled",
-    timestamp: "2026-02-07T14:32:00Z",
-  },
-  {
-    id: "AUX-2026-001233",
-    type: "settlement",
-    asset: "AUXM",
-    amount: "10,000.00",
-    amountUsd: "$10,000.00",
-    status: "settled",
-    timestamp: "2026-02-07T10:15:00Z",
-  },
-  {
-    id: "AUX-2026-001232",
-    type: "yield",
-    asset: "AUXG",
-    amount: "0.0125g",
-    amountUsd: "$25.62",
-    status: "settled",
-    timestamp: "2026-02-06T00:00:00Z",
-  },
-  {
-    id: "AUX-2026-001231",
-    type: "allocation",
-    asset: "AUXS",
-    amount: "50.0000g",
-    amountUsd: "$1,500.00",
-    status: "pending",
-    timestamp: "2026-02-05T16:45:00Z",
-  },
-];
+// Ledger entry type from API
+interface LedgerEntry {
+  id: string;
+  event: string;
+  asset: string;
+  network?: string;
+  amount: string;
+  amountUsd?: string;
+  status: string;
+  fromAddress?: string;
+  toAddress?: string;
+  txHash?: string;
+  confirmations?: number;
+  requiredConfirmations?: number;
+  timestamp: number;
+  settledAt?: number;
+  referenceId?: string;
+}
+
+// Map custody transaction types to ledger event types
+function mapEventType(event: string): string {
+  switch (event) {
+    case 'DEPOSIT': return 'settlement';
+    case 'WITHDRAWAL': return 'redemption';
+    case 'INTERNAL': return 'transfer';
+    default: return event.toLowerCase();
+  }
+}
+
+// Map custody status to ledger status
+function mapStatus(status: string): string {
+  switch (status) {
+    case 'COMPLETED': return 'settled';
+    case 'PENDING_AML':
+    case 'PENDING_CONFIRMATION':
+    case 'CONFIRMING': return 'pending';
+    case 'BLOCKED': return 'inReview';
+    case 'FAILED':
+    case 'CANCELLED': return 'failed';
+    default: return status.toLowerCase();
+  }
+}
 
 export default function LedgerPage() {
   const { lang } = useLanguage();
@@ -112,17 +115,53 @@ export default function LedgerPage() {
 
   const [filter, setFilter] = useState("all");
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [ledgerData, setLedgerData] = useState<LedgerEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load transactions from API
+  useEffect(() => {
+    const loadTransactions = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch("/api/custody/transactions", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.transactions) {
+          setLedgerData(data.transactions);
+        }
+      } catch (error) {
+        console.error("Failed to load transactions:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTransactions();
+  }, []);
 
   const filteredData = filter === "all"
-    ? mockLedgerData
-    : mockLedgerData.filter((item) => item.type === filter.slice(0, -1));
+    ? ledgerData
+    : ledgerData.filter((item) => mapEventType(item.event) === filter.slice(0, -1));
 
   const getEventLabel = (type: string) => {
-    switch (type) {
+    const mapped = mapEventType(type);
+    switch (mapped) {
       case "allocation": return t.allocationEvent;
       case "settlement": return t.settlementEvent;
       case "yield": return t.yieldEvent;
       case "redemption": return t.redemptionEvent;
+      case "deposit": return t.settlementEvent;
+      case "withdrawal": return t.redemptionEvent;
       default: return type;
     }
   };
@@ -155,8 +194,8 @@ export default function LedgerPage() {
     }
   };
 
-  const formatTimestamp = (ts: string) => {
-    const date = new Date(ts);
+  const formatTimestamp = (ts: string | number) => {
+    const date = typeof ts === 'number' ? new Date(ts) : new Date(ts);
     return date.toLocaleString(lang === "tr" ? "tr-TR" : "en-US", {
       year: "numeric",
       month: "short",
@@ -164,6 +203,28 @@ export default function LedgerPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // Export functions
+  const exportToCsv = () => {
+    const headers = ['Reference ID', 'Event', 'Asset', 'Amount', 'Status', 'Timestamp'];
+    const rows = filteredData.map(item => [
+      item.referenceId || item.id,
+      getEventLabel(item.event),
+      item.asset,
+      item.amount,
+      mapStatus(item.status),
+      formatTimestamp(item.timestamp)
+    ]);
+
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `auxite-capital-ledger-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    setShowExportMenu(false);
   };
 
   return (
@@ -192,10 +253,16 @@ export default function LedgerPage() {
 
             {showExportMenu && (
               <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg shadow-xl z-10">
-                <button className="w-full px-4 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-700 rounded-t-lg">
+                <button
+                  onClick={() => setShowExportMenu(false)}
+                  className="w-full px-4 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-700 rounded-t-lg"
+                >
                   {t.exportPdf}
                 </button>
-                <button className="w-full px-4 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-700 rounded-b-lg">
+                <button
+                  onClick={exportToCsv}
+                  className="w-full px-4 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-700 rounded-b-lg"
+                >
                   {t.exportCsv}
                 </button>
               </div>
@@ -241,8 +308,13 @@ export default function LedgerPage() {
             <div className="text-xs font-semibold text-slate-500 uppercase">{t.referenceId}</div>
           </div>
 
-          {/* Table Body */}
-          {filteredData.length === 0 ? (
+          {/* Loading State */}
+          {loading ? (
+            <div className="px-6 py-12 text-center">
+              <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-slate-500 dark:text-slate-400">Loading...</p>
+            </div>
+          ) : filteredData.length === 0 ? (
             <div className="px-6 py-12 text-center">
               <svg className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -250,57 +322,66 @@ export default function LedgerPage() {
               <p className="text-slate-500 dark:text-slate-400">{t.noRecords}</p>
             </div>
           ) : (
-            filteredData.map((item, index) => (
-              <div
-                key={item.id}
-                className={`grid grid-cols-6 gap-4 px-6 py-4 ${
-                  index !== filteredData.length - 1 ? "border-b border-stone-100 dark:border-slate-800" : ""
-                } hover:bg-stone-50 dark:hover:bg-slate-800/30 transition-colors`}
-              >
-                <div className="flex items-center gap-2">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                    item.type === "allocation" ? "bg-amber-500/20" :
-                    item.type === "settlement" ? "bg-emerald-500/20" :
-                    item.type === "yield" ? "bg-blue-500/20" : "bg-purple-500/20"
-                  }`}>
-                    {item.type === "allocation" && (
-                      <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
-                    )}
-                    {item.type === "settlement" && (
-                      <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                    {item.type === "yield" && (
-                      <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                      </svg>
-                    )}
+            filteredData.map((item, index) => {
+              const eventType = mapEventType(item.event);
+              const status = mapStatus(item.status);
+              return (
+                <div
+                  key={item.id}
+                  className={`grid grid-cols-6 gap-4 px-6 py-4 ${
+                    index !== filteredData.length - 1 ? "border-b border-stone-100 dark:border-slate-800" : ""
+                  } hover:bg-stone-50 dark:hover:bg-slate-800/30 transition-colors`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      eventType === "allocation" ? "bg-amber-500/20" :
+                      eventType === "settlement" || eventType === "deposit" ? "bg-emerald-500/20" :
+                      eventType === "yield" ? "bg-blue-500/20" : "bg-purple-500/20"
+                    }`}>
+                      {eventType === "allocation" && (
+                        <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                      )}
+                      {(eventType === "settlement" || eventType === "deposit") && (
+                        <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                      {eventType === "yield" && (
+                        <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                      )}
+                      {(eventType === "redemption" || eventType === "withdrawal") && (
+                        <svg className="w-4 h-4 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-sm font-medium text-slate-800 dark:text-white">{getEventLabel(item.event)}</span>
                   </div>
-                  <span className="text-sm font-medium text-slate-800 dark:text-white">{getEventLabel(item.type)}</span>
+                  <div className="flex items-center">
+                    <span className="text-sm font-semibold text-slate-800 dark:text-white">{item.asset}</span>
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <span className="text-sm font-medium text-slate-800 dark:text-white">{item.amount}</span>
+                    {item.amountUsd && <span className="text-xs text-slate-500">${item.amountUsd}</span>}
+                  </div>
+                  <div className="flex items-center">
+                    {getStatusBadge(status)}
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-sm text-slate-600 dark:text-slate-400">{formatTimestamp(item.timestamp)}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-xs font-mono text-slate-500 bg-stone-100 dark:bg-slate-800 px-2 py-1 rounded truncate max-w-[150px]" title={item.referenceId || item.id}>
+                      {(item.referenceId || item.id).slice(0, 16)}...
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <span className="text-sm font-semibold text-slate-800 dark:text-white">{item.asset}</span>
-                </div>
-                <div className="flex flex-col justify-center">
-                  <span className="text-sm font-medium text-slate-800 dark:text-white">{item.amount}</span>
-                  <span className="text-xs text-slate-500">{item.amountUsd}</span>
-                </div>
-                <div className="flex items-center">
-                  {getStatusBadge(item.status)}
-                </div>
-                <div className="flex items-center">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">{formatTimestamp(item.timestamp)}</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-xs font-mono text-slate-500 bg-stone-100 dark:bg-slate-800 px-2 py-1 rounded">
-                    {item.id}
-                  </span>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

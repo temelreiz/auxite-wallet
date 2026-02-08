@@ -1,5 +1,5 @@
 // src/app/api/auth/register/route.ts
-// Email/Password Registration API
+// Email/Password Registration API with Vault Creation
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/email-service';
+import { initializeCustody, createVault } from '@/lib/custody';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -97,9 +98,41 @@ export async function POST(request: NextRequest) {
 
     // Save user
     await redis.hset(`auth:user:${normalizedEmail}`, userData);
-    
+
     // Create email index for lookup
     await redis.set(`auth:email:${normalizedEmail}`, userId);
+
+    // ══════════════════════════════════════════════════════════════
+    // CREATE CUSTODY VAULT
+    // ══════════════════════════════════════════════════════════════
+    let vaultId = '';
+    let vaultAddress = '';
+
+    try {
+      await initializeCustody();
+      const { vault, addresses } = await createVault({
+        userId,
+        name: 'Client Vault',
+      });
+
+      vaultId = vault.id;
+
+      // Use ETH address as primary wallet address for display
+      const ethAddress = addresses.find(a => a.asset === 'ETH');
+      if (ethAddress) {
+        vaultAddress = ethAddress.address;
+        // Update user with vault wallet address
+        await redis.hset(`auth:user:${normalizedEmail}`, {
+          walletAddress: vaultAddress,
+          vaultId: vaultId,
+        });
+      }
+
+      console.log(`[Register] Vault created for user ${userId}: ${vaultId}`);
+    } catch (vaultError) {
+      // Log but don't fail registration if vault creation fails
+      console.error('[Register] Vault creation failed:', vaultError);
+    }
 
     // ══════════════════════════════════════════════════════════════
     // SEND VERIFICATION EMAIL WITH CODE
@@ -136,17 +169,19 @@ export async function POST(request: NextRequest) {
     // ══════════════════════════════════════════════════════════════
     return NextResponse.json({
       success: true,
-      message: 'Registration successful. Please verify your email.',
+      message: 'Registration successful. Your vault has been created.',
       user: {
         id: userId,
         email: normalizedEmail,
         name: name || '',
         emailVerified: false,
-        walletAddress: '',
+        walletAddress: vaultAddress,
+        vaultId: vaultId,
       },
       token,
       requiresEmailVerification: true,
-      requiresWalletSetup: true,
+      requiresWalletSetup: false, // Vault is auto-created
+      vaultCreated: !!vaultId,
     });
 
   } catch (error: any) {

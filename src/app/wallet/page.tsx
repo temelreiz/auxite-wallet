@@ -185,9 +185,38 @@ export default function VaultPage() {
   const [holdings, setHoldings] = useState<MetalHolding[]>([]);
   const [settlementBalance, setSettlementBalance] = useState(0);
   const [trustBadgeModal, setTrustBadgeModal] = useState<string | null>(null);
+  const [custodyStatus, setCustodyStatus] = useState<'active' | 'pending' | 'offline'>('offline');
+  const [custodyProvider, setCustodyProvider] = useState<string>('');
+  const [realVaultId, setRealVaultId] = useState<string | null>(null);
 
-  const vaultId = address ? `AUX-${address.slice(2, 8).toUpperCase()}` : null;
-  const protectionLevel = 85;
+  const vaultId = realVaultId || (address ? `AUX-${address.slice(2, 8).toUpperCase()}` : null);
+  const protectionLevel = custodyStatus === 'active' ? 85 : 50;
+
+  // Fetch custody vault data
+  useEffect(() => {
+    const fetchCustodyData = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) return;
+
+        const response = await fetch("/api/custody/vault", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.vault) {
+          setCustodyStatus(data.vault.status === 'active' ? 'active' : 'pending');
+          setCustodyProvider(data.vault.provider || 'fireblocks');
+          setRealVaultId(data.vault.id?.slice(0, 16));
+        }
+      } catch (error) {
+        console.error("Failed to fetch custody data:", error);
+      }
+    };
+
+    fetchCustodyData();
+  }, []);
 
   // Fetch vault data
   const fetchVaultData = useCallback(async () => {
@@ -375,9 +404,25 @@ export default function VaultPage() {
         {/* Protection Status Widget */}
         <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-stone-200 dark:border-slate-800">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">
-              {t.protectionStatus}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">
+                {t.protectionStatus}
+              </p>
+              {/* Custody Status Indicator */}
+              <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold ${
+                custodyStatus === 'active'
+                  ? 'bg-emerald-500/15 text-emerald-500'
+                  : custodyStatus === 'pending'
+                  ? 'bg-amber-500/15 text-amber-500'
+                  : 'bg-slate-500/15 text-slate-500'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  custodyStatus === 'active' ? 'bg-emerald-500' :
+                  custodyStatus === 'pending' ? 'bg-amber-500' : 'bg-slate-500'
+                }`} />
+                {custodyStatus === 'active' ? 'Active' : custodyStatus === 'pending' ? 'Pending' : 'Offline'}
+              </span>
+            </div>
             {vaultId && (
               <span className="px-2 py-1 bg-amber-500/15 rounded text-[10px] font-semibold text-amber-500">
                 {vaultId}
