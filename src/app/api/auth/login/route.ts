@@ -98,17 +98,25 @@ export async function POST(request: NextRequest) {
     let walletAddress = userData.walletAddress || '';
     let vaultId = userData.vaultId || '';
 
-    if (!walletAddress && userData.id) {
+    // Ensure user has an ID (for legacy users without ID)
+    let userId = userData.id;
+    if (!userId) {
+      userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      await redis.hset(`auth:user:${normalizedEmail}`, { id: userId });
+      console.log(`[Login] Generated ID for legacy user: ${userId}`);
+    }
+
+    if (!walletAddress) {
       try {
         await initializeCustody();
 
         // Check if vault already exists
-        const existingVault = await getVaultByUserId(userData.id);
+        const existingVault = await getVaultByUserId(userId);
 
         if (!existingVault) {
           // Create new vault
           const { vault, addresses } = await createVault({
-            userId: userData.id,
+            userId: userId,
             name: 'Client Vault',
           });
 
@@ -125,7 +133,23 @@ export async function POST(request: NextRequest) {
             });
           }
 
-          console.log(`[Login] Vault created for user ${userData.id}: ${vaultId}`);
+          console.log(`[Login] Vault created for user ${userId}: ${vaultId}`);
+        } else {
+          // Vault exists, get the address from it
+          vaultId = existingVault.id;
+          // Check if we have addresses stored
+          const { getVaultDepositAddresses } = await import('@/lib/custody');
+          const addresses = await getVaultDepositAddresses(vaultId);
+          const ethAddress = addresses.find(a => a.asset === 'ETH');
+          if (ethAddress) {
+            walletAddress = ethAddress.address;
+            // Update user with wallet info
+            await redis.hset(`auth:user:${normalizedEmail}`, {
+              walletAddress,
+              vaultId,
+            });
+          }
+          console.log(`[Login] Existing vault found for user ${userId}: ${vaultId}`);
         }
       } catch (vaultError) {
         console.error('[Login] Vault creation failed:', vaultError);
@@ -137,7 +161,7 @@ export async function POST(request: NextRequest) {
     // ══════════════════════════════════════════════════════════════
     const token = jwt.sign(
       {
-        userId: userData.id,
+        userId: userId,
         email: normalizedEmail,
         emailVerified: userData.emailVerified === 'true' || userData.emailVerified === true,
         walletAddress: walletAddress,  // Use the updated walletAddress (may be newly created)
@@ -155,7 +179,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Login successful',
       user: {
-        id: userData.id,
+        id: userId,
         email: normalizedEmail,
         name: userData.name || '',
         phone: userData.phone || '',
