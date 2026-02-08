@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
         userId: userData.id,
         email: normalizedEmail,
         emailVerified: userData.emailVerified === 'true' || userData.emailVerified === true,
-        walletAddress: userData.walletAddress || '',
+        walletAddress: walletAddress,  // Use the updated walletAddress (may be newly created)
       },
       JWT_SECRET,
       { expiresIn: '7d' }
