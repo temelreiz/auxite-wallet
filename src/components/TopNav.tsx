@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useLanguage, LANGUAGES, getLanguageData } from "@/components/LanguageContext";
 import { GlobalTrustBar } from "@/components/GlobalTrustBar";
 
@@ -594,92 +593,32 @@ export default function TopNav({
               </div>
 
 
-              {/* Connect Button - Responsive */}
-              <ConnectButton.Custom>
-                {({
-                  account,
-                  chain,
-                  openAccountModal,
-                  openChainModal,
-                  openConnectModal,
-                  mounted,
-                }) => {
-                  const ready = mounted;
-                  const externalConnected = ready && account && chain;
-                  // Check for QR login (local wallet)
-                  const isLocalWallet = walletMode === "local" && localWalletAddress;
-                  const connected = externalConnected || isLocalWallet;
-
-                  return (
-                    <div
-                      {...(!ready && {
-                        'aria-hidden': true,
-                        style: {
-                          opacity: 0,
-                          pointerEvents: 'none',
-                          userSelect: 'none',
-                        },
-                      })}
-                    >
-                      {(() => {
-                        // Show local wallet if QR logged in
-                        if (isLocalWallet) {
-                          const shortAddress = `${localWalletAddress.slice(0, 6)}...${localWalletAddress.slice(-4)}`;
-                          return (
-                            <Link
-                              href="/profile"
-                              className="flex items-center gap-1.5 md:gap-2 p-1.5 md:px-3 md:py-2 rounded-full md:rounded-lg bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 border border-emerald-500/50 transition-all"
-                            >
-                              <div className="w-6 h-6 md:w-6 md:h-6 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                </svg>
-                              </div>
-                              <span className="hidden md:inline text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {shortAddress}
-                              </span>
-                            </Link>
-                          );
-                        }
-
-                        if (!connected) {
-                          return (
-                            <button
-                              onClick={openConnectModal}
-                              className="flex items-center gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-medium text-xs sm:text-sm transition-all"
-                            >
-                              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                              </svg>
-                              <span className="hidden xs:inline">{lang === "tr" ? "Bağlan" : "Connect"}</span>
-                            </button>
-                          );
-                        }
-
-                        return (
-                          <button
-                            onClick={openAccountModal}
-                            className="flex items-center gap-1.5 md:gap-2 p-1.5 md:px-3 md:py-2 rounded-full md:rounded-lg bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 transition-all"
-                          >
-                            {account?.ensAvatar ? (
-                              <img
-                                src={account.ensAvatar}
-                                alt=""
-                                className="w-6 h-6 md:w-6 md:h-6 rounded-full"
-                              />
-                            ) : (
-                              <div className="w-6 h-6 md:w-6 md:h-6 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500" />
-                            )}
-                            <span className="hidden md:inline text-sm font-medium text-slate-700 dark:text-slate-300">
-                              {account?.displayName}
-                            </span>
-                          </button>
-                        );
-                      })()}
-                    </div>
-                  );
-                }}
-              </ConnectButton.Custom>
+              {/* Vault Wallet Display - Auxite Custody Model */}
+              {localWalletAddress ? (
+                <Link
+                  href="/client-center"
+                  className="flex items-center gap-1.5 md:gap-2 p-1.5 md:px-3 md:py-2 rounded-full md:rounded-lg bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 border border-emerald-500/50 transition-all"
+                >
+                  <div className="w-6 h-6 md:w-6 md:h-6 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <span className="hidden md:inline text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {`${localWalletAddress.slice(0, 6)}...${localWalletAddress.slice(-4)}`}
+                  </span>
+                </Link>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-medium text-xs sm:text-sm transition-all"
+                >
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span className="hidden xs:inline">{lang === "tr" ? "Giriş Yap" : "Sign In"}</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>

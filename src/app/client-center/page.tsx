@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
-import { useAccount } from "wagmi";
 import { KYCVerification } from "@/components/KYCVerification";
 
 // ============================================
@@ -326,8 +325,9 @@ const languageNames: Record<string, string> = {
 export default function ClientCenterPage() {
   const { lang, setLang } = useLanguage();
   const t = translations[lang] || translations.en;
-  const { address } = useAccount();
 
+  // Auxite Vault Wallet - no external wallet connect
+  const [address, setAddress] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showKycModal, setShowKycModal] = useState(false);
   const [kycData, setKycData] = useState<{
@@ -335,6 +335,14 @@ export default function ClientCenterPage() {
     status: "not_started" | "pending" | "under_review" | "approved" | "rejected" | "expired";
   } | null>(null);
   const [kycLoading, setKycLoading] = useState(true);
+
+  // Load wallet address from localStorage
+  useEffect(() => {
+    const savedAddress = localStorage.getItem("auxite_wallet_address");
+    if (savedAddress) {
+      setAddress(savedAddress);
+    }
+  }, []);
 
   // Fetch KYC status from API
   useEffect(() => {

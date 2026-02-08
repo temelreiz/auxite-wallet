@@ -11,7 +11,6 @@ import Link from "next/link";
 import Image from "next/image";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
-import { useAccount } from "wagmi";
 
 // Metal icons
 const metalIcons: Record<string, string> = {
@@ -167,9 +166,18 @@ const translations: Record<string, Record<string, string>> = {
 export default function VaultPage() {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
-  const { address, isConnected } = useAccount();
 
+  // Auxite Vault Wallet - no external wallet connect
+  const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Load wallet address from localStorage
+  useEffect(() => {
+    const savedAddress = localStorage.getItem("auxite_wallet_address");
+    if (savedAddress) {
+      setAddress(savedAddress);
+    }
+  }, []);
   const [totalVaultValue, setTotalVaultValue] = useState(0);
   const [unallocatedBalance, setUnallocatedBalance] = useState(0);
   const [allocatedHoldings, setAllocatedHoldings] = useState(0);
