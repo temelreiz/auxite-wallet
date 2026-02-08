@@ -150,7 +150,7 @@ export default function MarketsPage() {
                 {[
                   { href: "/markets", label: lang === "tr" ? "Piyasalar" : "Markets" },
                   { href: "/earn", label: lang === "tr" ? "Kazan" : "Earn" },
-                  { href: "/wallet", label: lang === "tr" ? "Cüzdan" : "Wallet" },
+                  { href: "/vault", label: lang === "tr" ? "Kasa" : "Vault" },
                   { href: "/profile", label: lang === "tr" ? "Profil" : "Profile" },
                 ].map((item) => (
                   <Link
@@ -282,7 +282,7 @@ export default function MarketsPage() {
                 {labels.addFunds}
               </button>
               <Link
-                href={`/wallet?trade=${selectedAsset.symbol}`}
+                href={`/vault?trade=${selectedAsset.symbol}`}
                 className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-semibold transition-colors"
               >
                 {labels.trade} {selectedAsset.symbol}

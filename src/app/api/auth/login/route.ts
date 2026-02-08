@@ -1,10 +1,11 @@
 // src/app/api/auth/login/route.ts
-// Email/Password Login API
+// Email/Password Login API with Vault Auto-Creation
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { initializeCustody, createVault, getVaultByUserId } from '@/lib/custody';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -92,6 +93,46 @@ export async function POST(request: NextRequest) {
     });
 
     // ══════════════════════════════════════════════════════════════
+    // CHECK/CREATE VAULT (for users without vault)
+    // ══════════════════════════════════════════════════════════════
+    let walletAddress = userData.walletAddress || '';
+    let vaultId = userData.vaultId || '';
+
+    if (!walletAddress && userData.id) {
+      try {
+        await initializeCustody();
+
+        // Check if vault already exists
+        const existingVault = await getVaultByUserId(userData.id);
+
+        if (!existingVault) {
+          // Create new vault
+          const { vault, addresses } = await createVault({
+            userId: userData.id,
+            name: 'Client Vault',
+          });
+
+          vaultId = vault.id;
+
+          // Use ETH address as primary wallet address
+          const ethAddress = addresses.find(a => a.asset === 'ETH');
+          if (ethAddress) {
+            walletAddress = ethAddress.address;
+            // Update user with vault info
+            await redis.hset(`auth:user:${normalizedEmail}`, {
+              walletAddress,
+              vaultId,
+            });
+          }
+
+          console.log(`[Login] Vault created for user ${userData.id}: ${vaultId}`);
+        }
+      } catch (vaultError) {
+        console.error('[Login] Vault creation failed:', vaultError);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
     // GENERATE JWT TOKEN
     // ══════════════════════════════════════════════════════════════
     const token = jwt.sign(
@@ -108,7 +149,7 @@ export async function POST(request: NextRequest) {
     // ══════════════════════════════════════════════════════════════
     // RESPONSE
     // ══════════════════════════════════════════════════════════════
-    const hasWallet = userData.walletAddress && userData.walletAddress.length > 0;
+    const hasWallet = walletAddress && walletAddress.length > 0;
 
     return NextResponse.json({
       success: true,
@@ -119,7 +160,8 @@ export async function POST(request: NextRequest) {
         name: userData.name || '',
         phone: userData.phone || '',
         emailVerified: userData.emailVerified === 'true' || userData.emailVerified === true,
-        walletAddress: userData.walletAddress || '',
+        walletAddress: walletAddress,
+        vaultId: vaultId,
         authProvider: userData.authProvider || 'email',
       },
       token,

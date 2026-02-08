@@ -7,8 +7,8 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to wallet (vault) page
-    router.replace("/wallet");
+    // Redirect to vault page
+    router.replace("/vault");
   }, [router]);
 
   // Loading while redirecting

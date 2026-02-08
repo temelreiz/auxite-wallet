@@ -54,7 +54,7 @@ export function MobileMenu({ lang, currentPath = "/" }: MobileMenuProps) {
   const navItems = [
     { href: "/", label: labels.markets, icon: "📊" },
     { href: "/earn", label: labels.earn, icon: "💰" },
-    { href: "/wallet", label: labels.wallet, icon: "👛" },
+    { href: "/vault", label: labels.vault || labels.wallet, icon: "🏦" },
   ];
 
   return (
@@ -187,7 +187,7 @@ export function MobileBottomNav({ lang, currentPath = "/", onSecurityClick }: Mo
   const navItems = [
     { href: "/", label: labels.markets, icon: "📊" },
     { href: "/earn", label: labels.earn, icon: "💰" },
-    { href: "/wallet", label: labels.wallet, icon: "👛" },
+    { href: "/vault", label: labels.vault || labels.wallet, icon: "🏦" },
   ];
 
   return (

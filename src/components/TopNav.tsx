@@ -308,7 +308,7 @@ export default function TopNav({
   // INSTITUTIONAL NAVIGATION - Digital Asset Custody Console
   // No "wallet" word anywhere - only institutional terminology
   const navLinks = [
-    { href: "/wallet", label: t.vault, key: "vault" },
+    { href: "/vault", label: t.vault, key: "vault" },
     { href: "/allocate", label: t.allocate, key: "allocate" },
     { href: "/stake", label: t.yield, key: "yield" },
     { href: "/transfers", label: t.transfers, key: "transfers" },
