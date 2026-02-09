@@ -85,7 +85,13 @@ async function fetchPricesFromAPI(): Promise<{ prices: any; bidPrices: any }> {
 
   try {
     // Server-side'da çalıştığımız için full URL gerekli
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io';
+    // Vercel'de VERCEL_URL kullanılır, local'de localhost
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : (process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io');
+
+    console.log('📡 Fetching prices from:', `${baseUrl}/api/prices`);
+
     const response = await fetch(`${baseUrl}/api/prices`, {
       cache: 'no-store',
     });
@@ -119,32 +125,42 @@ async function fetchPricesFromAPI(): Promise<{ prices: any; bidPrices: any }> {
   }
 }
 
-export async function getTokenPrices(token: string): Promise<{ 
-  askUSD: number; 
-  bidUSD: number; 
+export async function getTokenPrices(token: string): Promise<{
+  askUSD: number;
+  bidUSD: number;
   askPerGram: number;
   bidPerGram: number;
   spreadPercent: { buy: number; sell: number };
 }> {
   try {
-    // /api/prices'dan fiyat çek (GoldAPI + spread)
-    const { prices, bidPrices } = await fetchPricesFromAPI();
-    
+    // Import spread functions
+    const { getMetalPrice } = await import('./price-cache');
+    const { getMetalSpread, applySpread } = await import('./spread-config');
+
     const tokenUpper = token.toUpperCase();
-    const askUSD = prices[tokenUpper] || 0;
-    const bidUSD = bidPrices[tokenUpper] || 0;
-    
-    const spread = askUSD > 0 ? ((askUSD - bidUSD) / askUSD) * 100 : 0;
-    const spreadPercent = { buy: spread, sell: spread };
-    
-    console.log(`📊 ${tokenUpper} prices from API: ask=$${askUSD}, bid=$${bidUSD}`);
-    
+
+    // Get base price (without spread)
+    const basePrice = await getMetalPrice(tokenUpper);
+
+    // Get spread config for this metal
+    const spreadConfig = await getMetalSpread(tokenUpper);
+
+    // Apply spread: askPrice = base + spread%, bidPrice = base - spread%
+    const askUSD = applySpread(basePrice, 'buy', spreadConfig.buy);
+    const bidUSD = applySpread(basePrice, 'sell', spreadConfig.sell);
+
+    console.log(`📊 ${tokenUpper} PRICES WITH SPREAD:`);
+    console.log(`   Base: $${basePrice.toFixed(2)}`);
+    console.log(`   Spread: buy=${spreadConfig.buy}%, sell=${spreadConfig.sell}%`);
+    console.log(`   Ask (buy): $${askUSD.toFixed(2)}`);
+    console.log(`   Bid (sell): $${bidUSD.toFixed(2)}`);
+
     return {
       askUSD,
       bidUSD,
       askPerGram: askUSD,
       bidPerGram: bidUSD,
-      spreadPercent,
+      spreadPercent: spreadConfig,
     };
   } catch (error) {
     console.error('Failed to get ' + token + ' prices:', error);
