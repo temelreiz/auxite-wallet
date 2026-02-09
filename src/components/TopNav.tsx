@@ -353,7 +353,7 @@ export default function TopNav({
                     href={link.href}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isActive(link.href)
-                        ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                        ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574]"
                         : "text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
@@ -366,7 +366,7 @@ export default function TopNav({
                   href="/trust-center"
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     pathname?.startsWith("/trust")
-                      ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                      ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574]"
                       : "text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
@@ -378,7 +378,7 @@ export default function TopNav({
                   href="/client-center"
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     pathname === "/client-center" || pathname?.startsWith('/profile')
-                      ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                      ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574]"
                       : "text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
@@ -450,7 +450,7 @@ export default function TopNav({
                         onClick={() => handleLanguageSelect(language.code)}
                         className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
                           lang === language.code
-                            ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                            ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574]"
                             : "text-slate-600 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-700"
                         }`}
                       >
@@ -510,7 +510,7 @@ export default function TopNav({
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block px-4 py-3 rounded-lg font-medium text-sm ${
                   isActive(link.href)
-                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                    ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574] border border-emerald-500/30"
                     : "bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
                 }`}
               >
@@ -524,7 +524,7 @@ export default function TopNav({
               onClick={() => setMobileMenuOpen(false)}
               className={`block px-4 py-3 rounded-lg font-medium text-sm ${
                 pathname?.startsWith("/trust")
-                  ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                  ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574] border border-emerald-500/30"
                   : "bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
               }`}
             >
@@ -537,7 +537,7 @@ export default function TopNav({
               onClick={() => setMobileMenuOpen(false)}
               className={`block px-4 py-3 rounded-lg font-medium text-sm ${
                 pathname === "/client-center"
-                  ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                  ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574] border border-emerald-500/30"
                   : "bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
               }`}
             >
