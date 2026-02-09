@@ -77,37 +77,44 @@ const PRICE_CACHE_DURATION = 5000; // 5 saniye cache
 
 async function fetchPricesFromAPI(): Promise<{ prices: any; bidPrices: any }> {
   const now = Date.now();
-  
+
   // Cache kontrolü
   if (priceCache && now - priceCache.timestamp < PRICE_CACHE_DURATION) {
     return { prices: priceCache.prices, bidPrices: priceCache.bidPrices };
   }
-  
+
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io';
+    // Server-side'da çalıştığımız için full URL gerekli
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io';
     const response = await fetch(`${baseUrl}/api/prices`, {
       cache: 'no-store',
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch prices');
     }
-    
+
     const data = await response.json();
-    
+
+    console.log('📊 Fetched prices from API:', {
+      source: data.source,
+      AUXG_ask: data.prices?.AUXG,
+      AUXG_bid: data.bidPrices?.AUXG,
+    });
+
     priceCache = {
       prices: data.prices,
       bidPrices: data.bidPrices,
       timestamp: now,
     };
-    
+
     return { prices: data.prices, bidPrices: data.bidPrices };
   } catch (error) {
     console.error('Failed to fetch prices from API:', error);
-    // Fallback prices
+    // Fallback prices - with spread applied
     return {
-      prices: { AUXG: 160, AUXS: 3.3, AUXPT: 87, AUXPD: 61 },
-      bidPrices: { AUXG: 150, AUXS: 2.7, AUXPT: 72, AUXPD: 58 },
+      prices: { AUXG: 166, AUXS: 3.4, AUXPT: 90, AUXPD: 63 },
+      bidPrices: { AUXG: 156, AUXS: 3.1, AUXPT: 82, AUXPD: 57 },
     };
   }
 }
