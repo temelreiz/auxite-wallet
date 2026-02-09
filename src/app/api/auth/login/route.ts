@@ -195,8 +195,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Login error:', error);
+    console.error('Login error stack:', error?.stack);
     return NextResponse.json(
-      { success: false, error: 'Login failed. Please try again.' },
+      { success: false, error: 'Login failed. Please try again.', details: error?.message },
       { status: 500 }
     );
   }
