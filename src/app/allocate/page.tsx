@@ -165,22 +165,31 @@ export default function AllocatePage() {
       try {
         const res = await fetch("/api/prices?chain=84532");
         const data = await res.json();
-        if (data.success && data.basePrices) {
-          setPrices(data.basePrices);
+        if (data.success && data.prices) {
+          // Use ask prices (with spread) for allocation calculations
+          setPrices(data.prices);
         }
       } catch (e) {
         console.warn("Valuation temporarily unavailable");
       }
     };
+
+    // Initial fetch
     fetchPrices();
+
+    // Update prices every 2 seconds for real-time feel
+    const interval = setInterval(fetchPrices, 2000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const calculateEstimatedAllocation = () => {
     const amountNum = parseFloat(amount) || 0;
     const metalPrice = prices[selectedTo] || 0;
     if (amountNum <= 0 || metalPrice <= 0) return null;
-    const netAmount = amountNum * (1 - 0.0035);
-    const grams = netAmount / metalPrice;
+    // Price already includes spread from API (ask price)
+    // No additional spread needed here
+    const grams = amountNum / metalPrice;
     return grams;
   };
 
