@@ -522,7 +522,7 @@ function AlertRow({
 
   const statusColors = {
     active: "text-[#2F6F62] bg-[#2F6F62]/10",
-    triggered: "text-amber-400 bg-amber-500/10",
+    triggered: "text-[#BFA181] bg-[#BFA181]/10",
     expired: "text-slate-500 bg-slate-500/10",
     cancelled: "text-slate-500 bg-slate-500/10",
   };

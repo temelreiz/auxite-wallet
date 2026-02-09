@@ -30,7 +30,7 @@ export default function TermsPage() {
             <p>Certificates and Tokens represent an allocation of physical metal. They are NOT securities, investment contracts, deposit accounts, or electronic money.</p>
 
             <h2 className="text-xl font-bold text-slate-800 dark:text-white mt-8">3. Certificate Validity & Allocation Records</h2>
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <div className="bg-[#BFA181]/10 dark:bg-[#BFA181]/20 border border-[#BFA181]/30 dark:border-[#BFA181]/30 rounded-lg p-4">
               <p className="text-sm">Digital Certificates are informational records evidencing allocation. The authoritative record is the Auxite internal ledger and custodian records.</p>
               <p className="text-sm mt-2">Auxite may replace, consolidate, or void certificates in the event of reallocation, consolidation, redemption, or custody changes.</p>
             </div>

@@ -444,12 +444,12 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
 
               {/* Extra ID / Memo (XRP etc) */}
               {extraId && (
-                <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
+                <div className="bg-[#BFA181]/10 dark:bg-[#BFA181]/10 border border-[#BFA181]/30 dark:border-[#BFA181]/30 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
                   <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                    <span className="text-amber-600 dark:text-amber-500 text-[10px] sm:text-xs font-medium">⚠️ {t.destinationTag}</span>
+                    <span className="text-[#BFA181] dark:text-[#BFA181] text-[10px] sm:text-xs font-medium">⚠️ {t.destinationTag}</span>
                     <button
                       onClick={() => copyToClipboard(extraId, "memo")}
-                      className={`text-[10px] sm:text-xs font-medium ${copiedMemo ? "text-amber-500" : "text-amber-600 dark:text-amber-500"}`}
+                      className={`text-[10px] sm:text-xs font-medium ${copiedMemo ? "text-[#BFA181]" : "text-[#BFA181] dark:text-[#BFA181]"}`}
                     >
                       {copiedMemo ? "✓" : t.copy}
                     </button>

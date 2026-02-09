@@ -80,7 +80,7 @@ const METAL_ICONS: Record<string, string> = {
 };
 
 const METAL_INFO: Record<string, { name: string; nameEn: string; color: string; gradient: string }> = {
-  AUXG: { name: 'Altın', nameEn: 'Gold', color: '#EAB308', gradient: 'from-yellow-400 to-amber-500' },
+  AUXG: { name: 'Altın', nameEn: 'Gold', color: '#EAB308', gradient: 'from-yellow-400 to-[#BFA181]' },
   AUXS: { name: 'Gümüş', nameEn: 'Silver', color: '#94A3B8', gradient: 'from-gray-300 to-gray-400' },
   AUXPT: { name: 'Platin', nameEn: 'Platinum', color: '#E2E8F0', gradient: 'from-slate-300 to-slate-400' },
   AUXPD: { name: 'Paladyum', nameEn: 'Palladium', color: '#64748B', gradient: 'from-violet-400 to-purple-500' },
@@ -328,7 +328,7 @@ export default function ReservesPage() {
                         <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                           <div
                             className={`h-full transition-all duration-500 ${
-                              usagePercent > 80 ? 'bg-red-500' : usagePercent > 50 ? 'bg-amber-500' : `bg-gradient-to-r ${info?.gradient || 'from-[#BFA181] to-[#2F6F62]'}`
+                              usagePercent > 80 ? 'bg-red-500' : usagePercent > 50 ? 'bg-[#BFA181]' : `bg-gradient-to-r ${info?.gradient || 'from-[#BFA181] to-[#2F6F62]'}`
                             }`}
                             style={{ width: `${usagePercent}%` }}
                           />

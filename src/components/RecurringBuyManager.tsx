@@ -624,7 +624,7 @@ export function RecurringBuyManager({
                   <div className="flex items-center gap-2">
                     <span className={`text-[10px] sm:text-xs px-2 py-1 rounded-full ${
                       plan.status === "active" ? "bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]" :
-                      plan.status === "paused" ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400" :
+                      plan.status === "paused" ? "bg-[#BFA181]/15 dark:bg-[#BFA181]/20 text-[#BFA181] dark:text-[#BFA181]" :
                       "bg-slate-200 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400"
                     }`}>
                       {labels.status[plan.status]}
@@ -635,7 +635,7 @@ export function RecurringBuyManager({
                   {plan.status === "active" && (
                     <button
                       onClick={() => setConfirmModal({ show: true, type: "pause", planId: plan.id, planToken: plan.token })}
-                      className="flex-1 py-2 bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg text-xs sm:text-sm font-medium hover:bg-amber-200 dark:hover:bg-amber-500/20 transition-colors touch-manipulation"
+                      className="flex-1 py-2 bg-[#BFA181]/15 dark:bg-[#BFA181]/10 text-[#BFA181] dark:text-[#BFA181] rounded-lg text-xs sm:text-sm font-medium hover:bg-[#BFA181]/20 dark:hover:bg-[#BFA181]/20 transition-colors touch-manipulation"
                     >
                       {labels.pause}
                     </button>

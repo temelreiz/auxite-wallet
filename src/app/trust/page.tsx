@@ -38,7 +38,7 @@ const trustSections = [
     descriptionTr: "Dolaşımdaki arz ve tahsis istatistikleri",
     href: "/trust/supply",
     icon: "🪙",
-    color: "amber",
+    color: "gold",
   },
 ];
 
@@ -146,7 +146,7 @@ export default function TrustPage() {
           </div>
 
           <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-            <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
+            <div className="w-12 h-12 rounded-full bg-[#BFA181]/15 dark:bg-[#BFA181]/20 flex items-center justify-center mb-4">
               <span className="text-2xl">🧾</span>
             </div>
             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">

@@ -177,8 +177,8 @@ export default function LedgerPage() {
         );
       case "pending":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#BFA181]/20 text-[#BFA181] dark:text-[#BFA181] text-xs font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#BFA181]" />
             {t.pending}
           </span>
         );
@@ -243,7 +243,7 @@ export default function LedgerPage() {
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg hover:border-amber-500 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg hover:border-[#BFA181] transition-colors"
             >
               <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -286,7 +286,7 @@ export default function LedgerPage() {
                 onClick={() => setFilter(f.key)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   filter === f.key
-                    ? "bg-amber-500 text-white"
+                    ? "bg-[#BFA181] text-white"
                     : "bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-700"
                 }`}
               >
@@ -311,7 +311,7 @@ export default function LedgerPage() {
           {/* Loading State */}
           {loading ? (
             <div className="px-6 py-12 text-center">
-              <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <div className="w-8 h-8 border-2 border-[#BFA181] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
               <p className="text-slate-500 dark:text-slate-400">Loading...</p>
             </div>
           ) : filteredData.length === 0 ? (
@@ -334,12 +334,12 @@ export default function LedgerPage() {
                 >
                   <div className="flex items-center gap-2">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      eventType === "allocation" ? "bg-amber-500/20" :
+                      eventType === "allocation" ? "bg-[#BFA181]/20" :
                       eventType === "settlement" || eventType === "deposit" ? "bg-[#2F6F62]/20" :
                       eventType === "yield" ? "bg-blue-500/20" : "bg-purple-500/20"
                     }`}>
                       {eventType === "allocation" && (
-                        <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-4 h-4 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
                       )}

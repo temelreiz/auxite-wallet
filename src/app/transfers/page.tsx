@@ -229,18 +229,18 @@ export default function TransfersPage() {
           </div>
 
           {/* Network Warning */}
-          <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+          <div className="mb-4 p-3 rounded-lg bg-[#BFA181]/10 border border-[#BFA181]/30">
             <div className="flex items-start gap-2">
-              <svg className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-[#BFA181] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              <p className="text-xs text-amber-600 dark:text-amber-400">{t.networkWarning}</p>
+              <p className="text-xs text-[#BFA181] dark:text-[#BFA181]">{t.networkWarning}</p>
             </div>
           </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-[#BFA181] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : !hasVault ? (
             <div className="text-center py-8">
@@ -248,7 +248,7 @@ export default function TransfersPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
               <p className="text-slate-500 dark:text-slate-400 mb-4">{t.noVault}</p>
-              <button className="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors">
+              <button className="px-6 py-2 bg-[#BFA181] hover:bg-[#BFA181] text-white rounded-lg font-medium transition-colors">
                 {t.createVault}
               </button>
             </div>
@@ -259,7 +259,7 @@ export default function TransfersPage() {
                 return (
                   <div
                     key={addr.asset}
-                    className="p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:border-amber-500/50 transition-all"
+                    className="p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:border-[#BFA181]/50 transition-all"
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <div className={`w-10 h-10 rounded-full ${info.color} flex items-center justify-center text-white font-bold`}>
@@ -286,7 +286,7 @@ export default function TransfersPage() {
                         className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                           copiedAddress === addr.address
                             ? "bg-[#2F6F62] text-white"
-                            : "bg-stone-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-500 hover:text-white"
+                            : "bg-stone-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-[#BFA181] hover:text-white"
                         }`}
                       >
                         {copiedAddress === addr.address ? t.copied : t.copyAddress}
@@ -322,8 +322,8 @@ export default function TransfersPage() {
                 onClick={() => setSelectedType(type.id)}
                 className={`p-4 rounded-xl border-2 text-left transition-all ${
                   selectedType === type.id
-                    ? "border-amber-500 bg-amber-500/10"
-                    : "border-stone-200 dark:border-slate-700 hover:border-amber-500/50"
+                    ? "border-[#BFA181] bg-[#BFA181]/10"
+                    : "border-stone-200 dark:border-slate-700 hover:border-[#BFA181]/50"
                 }`}
               >
                 <div className="text-2xl mb-2">{type.icon}</div>
@@ -338,7 +338,7 @@ export default function TransfersPage() {
                     </span>
                   )}
                   {type.security.includes("cooling") && (
-                    <span className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                    <span className="px-2 py-0.5 text-xs rounded-full bg-[#BFA181]/20 text-[#BFA181] dark:text-[#BFA181]">
                       {t.coolingPeriod}
                     </span>
                   )}
@@ -366,8 +366,8 @@ export default function TransfersPage() {
                     onClick={() => setSelectedAsset(asset.symbol)}
                     className={`p-3 rounded-lg border transition-all text-left ${
                       selectedAsset === asset.symbol
-                        ? "border-amber-500 bg-amber-500/10"
-                        : "border-stone-200 dark:border-slate-700 hover:border-amber-500/50"
+                        ? "border-[#BFA181] bg-[#BFA181]/10"
+                        : "border-stone-200 dark:border-slate-700 hover:border-[#BFA181]/50"
                     }`}
                   >
                     <p className="font-semibold text-slate-800 dark:text-white">{asset.symbol}</p>
@@ -385,7 +385,7 @@ export default function TransfersPage() {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder={t.enterAmount}
-                className="w-full px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-amber-500"
+                className="w-full px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#BFA181]"
               />
             </div>
 
@@ -398,7 +398,7 @@ export default function TransfersPage() {
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder={t.enterAddress}
-                  className="w-full px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-amber-500 font-mono text-sm"
+                  className="w-full px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#BFA181] font-mono text-sm"
                 />
               </div>
             )}
@@ -437,7 +437,7 @@ export default function TransfersPage() {
             </div>
 
             {/* Continue Button */}
-            <button className="w-full py-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-colors">
+            <button className="w-full py-4 rounded-xl bg-[#BFA181] hover:bg-[#BFA181] text-white font-semibold transition-colors">
               {t.continue}
             </button>
           </div>

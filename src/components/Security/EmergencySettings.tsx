@@ -281,7 +281,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
 
   const getStatusColor = () => {
     if (config?.panicMode) return "bg-red-500";
-    if (config?.frozen) return "bg-amber-500";
+    if (config?.frozen) return "bg-[#BFA181]";
     return "bg-[#2F6F62]";
   };
 
@@ -302,7 +302,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
         config?.panicMode 
           ? "bg-red-900/30 border-red-500/50" 
           : config?.frozen 
-            ? "bg-amber-900/30 border-amber-500/50"
+            ? "bg-[#BFA181]/20 border-[#BFA181]/50"
             : "bg-slate-800/50 border-slate-700"
       }`}>
         <div className="flex items-center justify-between">
@@ -313,7 +313,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
             <div>
               <h3 className="text-lg font-semibold text-white">{labels.accountStatus}</h3>
               <p className={`text-sm ${
-                config?.panicMode ? "text-red-400" : config?.frozen ? "text-amber-400" : "text-[#2F6F62]"
+                config?.panicMode ? "text-red-400" : config?.frozen ? "text-[#BFA181]" : "text-[#2F6F62]"
               }`}>
                 {getStatusLabel()}
               </p>
@@ -330,7 +330,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
           ) : !config?.frozen ? (
             <button
               onClick={() => setShowFreeze(true)}
-              className="px-4 py-2 bg-amber-500/20 text-amber-400 rounded-lg hover:bg-amber-500/30 transition-colors"
+              className="px-4 py-2 bg-[#BFA181]/20 text-[#BFA181] rounded-lg hover:bg-[#BFA181]/30 transition-colors"
             >
               {labels.freezeAccount}
             </button>
@@ -386,7 +386,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
                   ? level === "maximum"
                     ? "bg-red-500/20 border-red-500 text-red-400"
                     : level === "high"
-                      ? "bg-amber-500/20 border-amber-500 text-amber-400"
+                      ? "bg-[#BFA181]/20 border-[#BFA181] text-[#BFA181]"
                       : "bg-[#2F6F62]/20 border-[#2F6F62] text-[#2F6F62]"
                   : "bg-slate-900/50 border-slate-700 text-slate-400 hover:border-slate-600"
               }`}
@@ -442,7 +442,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
                 <div className="flex items-center gap-3">
                   <div className="flex gap-2">
                     {contact.canUnfreeze && (
-                      <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-xs">
+                      <span className="px-2 py-1 bg-[#BFA181]/20 text-[#BFA181] rounded text-xs">
                         {labels.canUnfreeze}
                       </span>
                     )}
@@ -477,7 +477,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
               value={freezeReason}
               onChange={(e) => setFreezeReason(e.target.value)}
               placeholder={labels.freezeReason}
-              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-amber-500 mb-4"
+              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-[#BFA181] mb-4"
             />
 
             <div className="flex gap-3">

@@ -443,7 +443,7 @@ export function AuxiteerTierModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-stone-200 dark:border-zinc-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#BFA181] to-[#BFA181]/80 flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -471,7 +471,7 @@ export function AuxiteerTierModal({
           <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-stone-200 dark:border-zinc-800 p-4 overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <svg className="animate-spin h-6 w-6 text-amber-500" viewBox="0 0 24 24">
+                <svg className="animate-spin h-6 w-6 text-[#BFA181]" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
@@ -484,7 +484,7 @@ export function AuxiteerTierModal({
                     onClick={() => setSelectedTier(tier)}
                     className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
                       selectedTier.id === tier.id
-                        ? "border-amber-500 bg-amber-50 dark:bg-amber-500/10"
+                        ? "border-[#BFA181] bg-[#BFA181]/10 dark:bg-[#BFA181]/10"
                         : "border-transparent bg-stone-50 dark:bg-zinc-800/50 hover:bg-stone-100 dark:hover:bg-zinc-800"
                     }`}
                   >
@@ -499,7 +499,7 @@ export function AuxiteerTierModal({
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-slate-800 dark:text-white">{tier.name}</span>
                           {currentTier.id === tier.id && (
-                            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                            <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-[#BFA181]/15 dark:bg-[#BFA181]/20 text-[#BFA181] dark:text-[#BFA181]">
                               {t.yourTier}
                             </span>
                           )}
@@ -605,9 +605,9 @@ export function AuxiteerTierModal({
                   </div>
                 )}
                 {selectedTier.requirements.invitation && (
-                  <div className="p-3 rounded-lg border bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30">
+                  <div className="p-3 rounded-lg border bg-[#BFA181]/10 dark:bg-[#BFA181]/10 border-[#BFA181]/30 dark:border-[#BFA181]/30">
                     <p className="text-xs text-slate-500 dark:text-zinc-400">{t.invitationOnly}</p>
-                    <p className="text-sm font-medium text-amber-600 dark:text-amber-400">★</p>
+                    <p className="text-sm font-medium text-[#BFA181] dark:text-[#BFA181]">★</p>
                   </div>
                 )}
               </div>
@@ -663,8 +663,8 @@ export function AuxiteerTierModal({
             </div>
 
             {/* Note */}
-            <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
-              <p className="text-xs text-amber-700 dark:text-amber-300">
+            <div className="p-4 rounded-xl bg-[#BFA181]/10 dark:bg-[#BFA181]/10 border border-[#BFA181]/30 dark:border-[#BFA181]/20">
+              <p className="text-xs text-[#BFA181] dark:text-[#BFA181]">
                 ⚠️ {t.auxiteerNote}
               </p>
             </div>

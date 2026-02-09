@@ -183,8 +183,8 @@ function VerifyContent() {
                   </div>
                   <div className="p-6 space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${result.blockchain.anchored ? 'bg-[#2F6F62]' : 'bg-amber-500'}`} />
-                      <span className={`font-medium ${result.blockchain.anchored ? 'text-[#2F6F62] dark:text-[#2F6F62]' : 'text-amber-600 dark:text-amber-400'}`}>
+                      <div className={`w-3 h-3 rounded-full ${result.blockchain.anchored ? 'bg-[#2F6F62]' : 'bg-[#BFA181]'}`} />
+                      <span className={`font-medium ${result.blockchain.anchored ? 'text-[#2F6F62] dark:text-[#2F6F62]' : 'text-[#BFA181] dark:text-[#BFA181]'}`}>
                         {result.blockchain.anchored ? 'Anchored on-chain' : 'Pending on-chain anchor'}
                       </span>
                     </div>

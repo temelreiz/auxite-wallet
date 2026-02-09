@@ -273,8 +273,8 @@ export function UsdDepositModal({
                 onClick={() => setCryptoCurrency(crypto.value)}
                 className={`p-2 sm:p-3 rounded-lg border transition-all text-center ${
                   cryptoCurrency === crypto.value
-                    ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
-                    : "border-stone-200 dark:border-slate-700 hover:border-amber-300"
+                    ? "border-[#BFA181] bg-[#BFA181]/10 dark:bg-[#BFA181]/20"
+                    : "border-stone-200 dark:border-slate-700 hover:border-[#BFA181]/50"
                 }`}
               >
                 <span className="text-lg sm:text-xl">{crypto.icon}</span>
@@ -301,7 +301,7 @@ export function UsdDepositModal({
               onChange={(e) => setAmount(e.target.value)}
               min={30}
               max={10000}
-              className="w-full pl-8 sm:pl-10 pr-16 sm:pr-20 py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm sm:text-base focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="w-full pl-8 sm:pl-10 pr-16 sm:pr-20 py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm sm:text-base focus:ring-2 focus:ring-[#BFA181] focus:border-transparent"
               placeholder="100"
             />
             <select
@@ -326,8 +326,8 @@ export function UsdDepositModal({
                 onClick={() => setAmount(preset.toString())}
                 className={`flex-1 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded border transition-all ${
                   amount === preset.toString()
-                    ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400"
-                    : "border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-amber-300"
+                    ? "border-[#BFA181] bg-[#BFA181]/10 dark:bg-[#BFA181]/20 text-[#BFA181] dark:text-[#BFA181]"
+                    : "border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-[#BFA181]/50"
                 }`}
               >
                 {fiatSymbol}{preset}
@@ -345,7 +345,7 @@ export function UsdDepositModal({
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm sm:text-base focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm sm:text-base focus:ring-2 focus:ring-[#BFA181] focus:border-transparent"
             placeholder={t.emailPlaceholder}
           />
         </div>
@@ -361,7 +361,7 @@ export function UsdDepositModal({
         <button
           onClick={handleBuy}
           disabled={isLoading}
-          className="w-full py-3 sm:py-4 rounded-xl bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3 sm:py-4 rounded-xl bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-[#BFA181] hover:to-[#BFA181]/80 text-white font-semibold text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <>

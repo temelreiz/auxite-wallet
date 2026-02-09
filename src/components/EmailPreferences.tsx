@@ -288,7 +288,7 @@ function PreferenceToggle({
         <div className="flex items-center gap-2">
           <span className="text-white text-sm">{label}</span>
           {important && (
-            <span className="text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-400 rounded">
+            <span className="text-xs px-1.5 py-0.5 bg-[#BFA181]/20 text-[#BFA181] rounded">
               Recommended
             </span>
           )}

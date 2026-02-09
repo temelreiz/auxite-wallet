@@ -375,7 +375,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
                           ✓ {t.verified}
                         </span>
                       ) : (
-                        <span className="text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded flex-shrink-0">
+                        <span className="text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-[#BFA181]/20 text-[#BFA181] dark:text-[#BFA181] rounded flex-shrink-0">
                           ⏳ {t.pending}
                         </span>
                       )}

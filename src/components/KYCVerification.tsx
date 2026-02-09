@@ -211,7 +211,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
         <>
           <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
             <div><div className="text-xs text-slate-500">{labels.currentLevel}</div><div className="text-white font-medium">{labels.levels[kyc?.level || "none"]}</div></div>
-            <span className={`px-3 py-1 rounded-full text-xs ${isApproved ? "bg-[#2F6F62]/20 text-[#2F6F62]" : isRejected ? "bg-red-500/20 text-red-400" : isPending ? "bg-amber-500/20 text-amber-400" : "bg-slate-500/20 text-slate-400"}`}>
+            <span className={`px-3 py-1 rounded-full text-xs ${isApproved ? "bg-[#2F6F62]/20 text-[#2F6F62]" : isRejected ? "bg-red-500/20 text-red-400" : isPending ? "bg-[#BFA181]/20 text-[#BFA181]" : "bg-slate-500/20 text-slate-400"}`}>
               {labels.status[kyc?.status || "not_started"]}
             </span>
           </div>
@@ -235,7 +235,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
       )}
 
       {isPending && !sdkActive && (
-        <div className="p-4 bg-amber-500/20 border border-amber-500/50 rounded-xl text-amber-400 text-center">
+        <div className="p-4 bg-[#BFA181]/20 border border-[#BFA181]/50 rounded-xl text-[#BFA181] text-center">
           ⏳ {labels.pending}
         </div>
       )}

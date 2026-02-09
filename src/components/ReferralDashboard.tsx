@@ -31,7 +31,7 @@ interface ReferralDashboardProps {
 }
 
 const TIER_COLORS = {
-  bronze: { bg: "bg-amber-700/20", text: "text-amber-600", border: "border-amber-700/30" },
+  bronze: { bg: "bg-[#BFA181]/20", text: "text-[#BFA181]", border: "border-[#BFA181]/30" },
   silver: { bg: "bg-slate-400/20", text: "text-slate-300", border: "border-slate-400/30" },
   gold: { bg: "bg-yellow-500/20", text: "text-yellow-400", border: "border-yellow-500/30" },
   platinum: { bg: "bg-cyan-400/20", text: "text-cyan-300", border: "border-cyan-400/30" },
@@ -269,7 +269,7 @@ export function ReferralDashboard({ walletAddress, lang = "en" }: ReferralDashbo
           <p className="text-xs text-slate-400">{t.qualified}</p>
         </div>
         <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-xl text-center">
-          <p className="text-2xl font-bold text-amber-400">{stats?.pendingReferrals || 0}</p>
+          <p className="text-2xl font-bold text-[#BFA181]">{stats?.pendingReferrals || 0}</p>
           <p className="text-xs text-slate-400">{t.pending}</p>
         </div>
         <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-xl text-center">
@@ -370,7 +370,7 @@ export function ReferralDashboard({ walletAddress, lang = "en" }: ReferralDashbo
                 <div className="flex items-center gap-3">
                   <div className={`w-2 h-2 rounded-full ${
                     ref.status === "rewarded" ? "bg-[#2F6F62]" :
-                    ref.status === "qualified" ? "bg-amber-500" : "bg-slate-500"
+                    ref.status === "qualified" ? "bg-[#BFA181]" : "bg-slate-500"
                   }`} />
                   <div>
                     <p className="text-white font-mono text-sm">{formatAddress(ref.referredAddress)}</p>
@@ -380,7 +380,7 @@ export function ReferralDashboard({ walletAddress, lang = "en" }: ReferralDashbo
                 <div className="text-right">
                   <span className={`text-xs px-2 py-1 rounded ${
                     ref.status === "rewarded" ? "bg-[#2F6F62]/20 text-[#2F6F62]" :
-                    ref.status === "qualified" ? "bg-amber-500/20 text-amber-400" : "bg-slate-500/20 text-slate-400"
+                    ref.status === "qualified" ? "bg-[#BFA181]/20 text-[#BFA181]" : "bg-slate-500/20 text-slate-400"
                   }`}>
                     {ref.status === "rewarded" ? "✓ Rewarded" :
                      ref.status === "qualified" ? "Ready" : "Pending"}

@@ -219,7 +219,7 @@ export function MetalExchangeModal({
             </div>
             <div className="text-right">
               <div className="text-xs text-slate-500">Spread</div>
-              <div className="text-sm text-amber-400">{spread}%</div>
+              <div className="text-sm text-[#BFA181]">{spread}%</div>
             </div>
           </div>
 

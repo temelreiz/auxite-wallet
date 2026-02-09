@@ -90,7 +90,7 @@ const METAL_ICONS: Record<string, string> = {
 };
 
 const metalBgColors: Record<string, string> = {
-  AUXG: "bg-amber-500/20",
+  AUXG: "bg-[#BFA181]/20",
   AUXS: "bg-slate-400/20",
   AUXPT: "bg-slate-300/20",
   AUXPD: "bg-zinc-400/20",
@@ -185,7 +185,7 @@ export default function TradingDetailPage({
   const low24h = currentPrice * 0.988;
 
   const metalIcon = METAL_ICONS[symbol];
-  const metalBg = metalBgColors[symbol] || "bg-amber-500/20";
+  const metalBg = metalBgColors[symbol] || "bg-[#BFA181]/20";
 
   const tabs = [
     { id: "price", label: t("price") },

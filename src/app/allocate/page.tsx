@@ -205,7 +205,7 @@ export default function AllocatePage() {
         {/* Allocation Framework */}
         <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-stone-200 dark:border-slate-800">
           <div className="flex items-center gap-2 mb-4">
-            <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <span className="font-semibold text-slate-800 dark:text-white">{t.framework}</span>
@@ -248,7 +248,7 @@ export default function AllocatePage() {
           </p>
 
           {/* Primary - AUXM */}
-          <p className="text-[10px] font-bold text-amber-500 tracking-wider mb-2">{t.primaryFunding}</p>
+          <p className="text-[10px] font-bold text-[#BFA181] tracking-wider mb-2">{t.primaryFunding}</p>
           <div className="mb-2">
             {primarySources.map((source) => (
               <button
@@ -256,19 +256,19 @@ export default function AllocatePage() {
                 onClick={() => setSelectedFrom(source.symbol)}
                 className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
                   selectedFrom === source.symbol
-                    ? "bg-amber-500/10 border-amber-500"
-                    : "bg-stone-50 dark:bg-slate-800 border-amber-500/30 hover:border-amber-500/50"
+                    ? "bg-[#BFA181]/10 border-[#BFA181]"
+                    : "bg-stone-50 dark:bg-slate-800 border-[#BFA181]/30 hover:border-[#BFA181]/50"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl text-amber-500">{source.icon}</span>
+                  <span className="text-xl text-[#BFA181]">{source.icon}</span>
                   <div className="text-left">
                     <p className="font-semibold text-slate-800 dark:text-white">{source.symbol}</p>
                     <p className="text-xs text-slate-500">{source.name}</p>
                   </div>
                 </div>
                 {selectedFrom === source.symbol && (
-                  <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 )}
@@ -286,11 +286,11 @@ export default function AllocatePage() {
                 onClick={() => setSelectedFrom(source.symbol)}
                 className={`flex flex-col items-center p-3 rounded-xl border transition-all ${
                   selectedFrom === source.symbol
-                    ? "bg-amber-500/10 border-amber-500"
-                    : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700 hover:border-amber-500/50"
+                    ? "bg-[#BFA181]/10 border-[#BFA181]"
+                    : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700 hover:border-[#BFA181]/50"
                 }`}
               >
-                <span className={`text-lg ${selectedFrom === source.symbol ? "text-amber-500" : "text-slate-600 dark:text-slate-300"}`}>
+                <span className={`text-lg ${selectedFrom === source.symbol ? "text-[#BFA181]" : "text-slate-600 dark:text-slate-300"}`}>
                   {source.icon}
                 </span>
                 <span className="text-sm font-semibold text-slate-800 dark:text-white mt-1">{source.symbol}</span>
@@ -307,11 +307,11 @@ export default function AllocatePage() {
                 onClick={() => setSelectedFrom(source.symbol)}
                 className={`flex flex-col items-center p-3 rounded-xl border transition-all ${
                   selectedFrom === source.symbol
-                    ? "bg-amber-500/10 border-amber-500"
-                    : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700 hover:border-amber-500/50"
+                    ? "bg-[#BFA181]/10 border-[#BFA181]"
+                    : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700 hover:border-[#BFA181]/50"
                 }`}
               >
-                <span className={`text-lg ${selectedFrom === source.symbol ? "text-amber-500" : "text-slate-600 dark:text-slate-300"}`}>
+                <span className={`text-lg ${selectedFrom === source.symbol ? "text-[#BFA181]" : "text-slate-600 dark:text-slate-300"}`}>
                   {source.icon}
                 </span>
                 <span className="text-sm font-semibold text-slate-800 dark:text-white mt-1">{source.symbol}</span>
@@ -321,11 +321,11 @@ export default function AllocatePage() {
 
           {/* Conversion Notice */}
           {selectedFrom && selectedFrom !== "AUXM" && (
-            <div className="flex items-center gap-2 mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-              <svg className="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex items-center gap-2 mt-4 p-3 bg-[#BFA181]/10 border border-[#BFA181]/30 rounded-xl">
+              <svg className="w-4 h-4 text-[#BFA181] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="text-xs text-amber-600 dark:text-amber-400">{t.digitalConversionNote}</span>
+              <span className="text-xs text-[#BFA181] dark:text-[#BFA181]">{t.digitalConversionNote}</span>
             </div>
           )}
         </div>
@@ -338,8 +338,8 @@ export default function AllocatePage() {
           <div className="flex items-center justify-center gap-2">
             {/* Step 1 - Funding Asset */}
             <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center mb-2">
-                <span className="text-lg text-amber-500">{getSourceIcon(selectedFrom)}</span>
+              <div className="w-12 h-12 rounded-full bg-[#BFA181]/20 border-2 border-[#BFA181] flex items-center justify-center mb-2">
+                <span className="text-lg text-[#BFA181]">{getSourceIcon(selectedFrom)}</span>
               </div>
               <p className="text-[9px] text-slate-500">{t.fundingAsset}</p>
               <p className="text-xs font-semibold text-slate-800 dark:text-white">{selectedFrom}</p>
@@ -355,8 +355,8 @@ export default function AllocatePage() {
 
             {/* Step 2 - AUXM Settlement */}
             <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center mb-2">
-                <span className="text-lg text-amber-500">◈</span>
+              <div className="w-12 h-12 rounded-full bg-[#BFA181]/20 border-2 border-[#BFA181] flex items-center justify-center mb-2">
+                <span className="text-lg text-[#BFA181]">◈</span>
               </div>
               <p className="text-[9px] text-slate-500">{t.auxmSettlement}</p>
               <p className="text-xs font-semibold text-slate-800 dark:text-white">AUXM</p>
@@ -395,8 +395,8 @@ export default function AllocatePage() {
                 onClick={() => setSelectedTo(metal.symbol)}
                 className={`flex flex-col items-center p-4 rounded-xl border transition-all ${
                   selectedTo === metal.symbol
-                    ? "bg-amber-500/10 border-amber-500"
-                    : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700 hover:border-amber-500/50"
+                    ? "bg-[#BFA181]/10 border-[#BFA181]"
+                    : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700 hover:border-[#BFA181]/50"
                 }`}
               >
                 <div className="w-10 h-10 mb-2">
@@ -442,9 +442,9 @@ export default function AllocatePage() {
 
           {/* Estimated Allocation */}
           {estimatedGrams && estimatedGrams > 0 && (
-            <div className="p-4 bg-amber-500/10 border border-amber-500 rounded-xl text-center">
+            <div className="p-4 bg-[#BFA181]/10 border border-[#BFA181] rounded-xl text-center">
               <p className="text-xs text-slate-500 mb-1">{t.estimatedAllocation}</p>
-              <p className="text-xl font-bold text-amber-500">
+              <p className="text-xl font-bold text-[#BFA181]">
                 ≈ {estimatedGrams.toFixed(4)}g {selectedTo}
               </p>
             </div>
@@ -473,7 +473,7 @@ export default function AllocatePage() {
         {/* Confirm Allocation Button */}
         <button
           onClick={() => setShowExecutionSummary(true)}
-          className="w-full flex items-center justify-center gap-2 py-4 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-4 bg-[#BFA181] hover:bg-[#BFA181] text-white font-semibold rounded-xl transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -515,7 +515,7 @@ export default function AllocatePage() {
                 </div>
                 <div className="flex justify-between py-2 border-b border-stone-200 dark:border-slate-700">
                   <span className="text-sm text-slate-500">{t.allocationAmount}</span>
-                  <span className="text-sm font-semibold text-amber-500">
+                  <span className="text-sm font-semibold text-[#BFA181]">
                     {estimatedGrams?.toFixed(4) || "0.0000"}g {selectedTo}
                   </span>
                 </div>
@@ -549,7 +549,7 @@ export default function AllocatePage() {
 
             {/* Action Buttons */}
             <div className="flex gap-3 px-5 pb-8">
-              <button className="flex-1 flex items-center justify-center gap-2 py-3 border border-stone-200 dark:border-slate-700 rounded-xl text-amber-500 font-semibold hover:bg-amber-500/10 transition-colors">
+              <button className="flex-1 flex items-center justify-center gap-2 py-3 border border-stone-200 dark:border-slate-700 rounded-xl text-[#BFA181] font-semibold hover:bg-[#BFA181]/10 transition-colors">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -557,7 +557,7 @@ export default function AllocatePage() {
               </button>
               <button
                 onClick={() => setShowExecutionSummary(false)}
-                className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl transition-colors"
+                className="flex-1 py-3 bg-[#BFA181] hover:bg-[#BFA181] text-white font-semibold rounded-xl transition-colors"
               >
                 {t.done}
               </button>

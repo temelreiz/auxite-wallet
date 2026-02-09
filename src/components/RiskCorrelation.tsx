@@ -328,7 +328,7 @@ export function RiskCorrelation({ lang = "en" }: RiskCorrelationProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white dark:bg-slate-700/50 rounded-lg p-3 border border-stone-200 dark:border-slate-600">
                   <div className="text-[10px] uppercase text-slate-500 dark:text-slate-400">{t.volShort} ({t.days})</div>
-                  <div className={`text-lg font-bold font-mono ${selectedAsset.volatility > 2 ? "text-amber-600 dark:text-amber-400" : "text-[#2F6F62] dark:text-[#2F6F62]"}`}>
+                  <div className={`text-lg font-bold font-mono ${selectedAsset.volatility > 2 ? "text-[#BFA181] dark:text-[#BFA181]" : "text-[#2F6F62] dark:text-[#2F6F62]"}`}>
                     {selectedAsset.volatility.toFixed(2)}%
                   </div>
                 </div>
@@ -362,7 +362,7 @@ export function RiskCorrelation({ lang = "en" }: RiskCorrelationProps) {
 
                 <div className="col-span-2 bg-white dark:bg-slate-700/50 rounded-lg p-3 border border-stone-200 dark:border-slate-600">
                   <div className="text-[10px] uppercase text-slate-500 dark:text-slate-400">{t.range} ({t.days})</div>
-                  <div className="text-lg font-bold font-mono text-amber-600 dark:text-amber-400">{selectedAsset.drawdown}%</div>
+                  <div className="text-lg font-bold font-mono text-[#BFA181] dark:text-[#BFA181]">{selectedAsset.drawdown}%</div>
                 </div>
               </div>
             </div>
@@ -419,7 +419,7 @@ export function RiskCorrelation({ lang = "en" }: RiskCorrelationProps) {
                     <td className="py-3 text-right">
                       <span
                         className={`font-mono text-sm ${
-                          asset.volatility > 2 ? "text-amber-600 dark:text-amber-400" : "text-[#2F6F62] dark:text-[#2F6F62]"
+                          asset.volatility > 2 ? "text-[#BFA181] dark:text-[#BFA181]" : "text-[#2F6F62] dark:text-[#2F6F62]"
                         }`}
                       >
                         {asset.volatility.toFixed(2)}%
@@ -456,7 +456,7 @@ export function RiskCorrelation({ lang = "en" }: RiskCorrelationProps) {
                       </span>
                     </td>
                     <td className="py-3 text-right">
-                      <span className="font-mono text-sm text-amber-600 dark:text-amber-400">
+                      <span className="font-mono text-sm text-[#BFA181] dark:text-[#BFA181]">
                         {asset.drawdown}%
                       </span>
                     </td>

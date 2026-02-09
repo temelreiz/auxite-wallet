@@ -532,7 +532,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex-1 min-w-0 py-2.5 sm:py-3 px-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
-                activeTab === tab.id ? "text-amber-400 border-b-2 border-amber-400" : "text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                activeTab === tab.id ? "text-[#BFA181] border-b-2 border-[#BFA181]" : "text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
               }`}
             >
               {tab.label}
@@ -613,7 +613,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
               <button
                 onClick={handleSubmitRequest}
                 disabled={submitting || !amount || !selectedAddressId || parseFloat(amount) < (selectedMetalInfo?.minAmount || 0)}
-                className="w-full py-2.5 sm:py-3 bg-amber-500 text-slate-800 dark:text-white rounded-xl font-medium hover:bg-[#2F6F62] disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                className="w-full py-2.5 sm:py-3 bg-[#BFA181] text-slate-800 dark:text-white rounded-xl font-medium hover:bg-[#2F6F62] disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
                 {submitting ? "..." : t.submit}
               </button>
@@ -625,7 +625,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
             <div className="space-y-2 sm:space-y-3">
               {loading ? (
                 <div className="flex justify-center py-6 sm:py-8">
-                  <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-2 border-stone-400 dark:border-slate-600 border-t-amber-500 rounded-full"></div>
+                  <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-2 border-stone-400 dark:border-slate-600 border-t-[#BFA181] rounded-full"></div>
                 </div>
               ) : requests.length === 0 ? (
                 <div className="text-center py-6 sm:py-8 text-slate-500 dark:text-slate-500">
@@ -649,7 +649,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
                           req.status === "delivered" ? "bg-[#2F6F62]/20 text-[#2F6F62]" :
                           req.status === "cancelled" ? "bg-red-500/20 text-red-400" :
                           req.status === "shipped" ? "bg-blue-500/20 text-blue-400" :
-                          "bg-amber-500/20 text-amber-400"
+                          "bg-[#BFA181]/20 text-[#BFA181]"
                         }`}>
                           {t.status[req.status]}
                         </span>
@@ -671,7 +671,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
             <div className="space-y-2 sm:space-y-3">
               {!showAddressForm ? (
                 <>
-                  <button onClick={() => setShowAddressForm(true)} className="w-full p-2.5 sm:p-3 border border-dashed border-stone-400 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-400 hover:border-amber-500 hover:text-amber-400 text-sm">
+                  <button onClick={() => setShowAddressForm(true)} className="w-full p-2.5 sm:p-3 border border-dashed border-stone-400 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-400 hover:border-[#BFA181] hover:text-[#BFA181] text-sm">
                     + {t.addAddress}
                   </button>
                   {addresses.length === 0 ? (
@@ -684,7 +684,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
                       <div key={addr.id} className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-stone-300 dark:border-slate-700">
                         <div className="flex items-center justify-between mb-2 gap-2">
                           <div className="font-medium text-slate-800 dark:text-white text-sm sm:text-base truncate">{addr.label}</div>
-                          {addr.isDefault && <span className="text-[10px] sm:text-xs bg-amber-500/20 text-amber-400 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded flex-shrink-0">{t.default}</span>}
+                          {addr.isDefault && <span className="text-[10px] sm:text-xs bg-[#BFA181]/20 text-[#BFA181] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded flex-shrink-0">{t.default}</span>}
                         </div>
                         <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 space-y-0.5">
                           <p>{addr.fullName}</p>
@@ -717,7 +717,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
                   </label>
                   <div className="flex gap-2">
                     <button onClick={() => setShowAddressForm(false)} className="flex-1 py-2 bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm">{t.cancel}</button>
-                    <button onClick={handleAddAddress} disabled={submitting || !addressForm.label || !addressForm.fullName || !addressForm.phone || !addressForm.city || !addressForm.addressLine1 || !addressForm.postalCode} className="flex-1 py-2 bg-amber-500 text-slate-800 dark:text-white rounded-lg disabled:opacity-50 text-sm">
+                    <button onClick={handleAddAddress} disabled={submitting || !addressForm.label || !addressForm.fullName || !addressForm.phone || !addressForm.city || !addressForm.addressLine1 || !addressForm.postalCode} className="flex-1 py-2 bg-[#BFA181] text-slate-800 dark:text-white rounded-lg disabled:opacity-50 text-sm">
                       {submitting ? "..." : t.addressForm.save}
                     </button>
                   </div>

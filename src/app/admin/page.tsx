@@ -279,7 +279,7 @@ const ADMIN_ADDRESSES = (process.env.NEXT_PUBLIC_ADMIN_ADDRESSES || "0x101bD0821
   .map(a => a.trim().toLowerCase());
 
 const METALS = [
-  { key: "gold", symbol: "AUXG", name: "Altın", icon: "🥇", color: "text-amber-500" },
+  { key: "gold", symbol: "AUXG", name: "Altın", icon: "🥇", color: "text-[#BFA181]" },
   { key: "silver", symbol: "AUXS", name: "Gümüş", icon: "🥈", color: "text-slate-400" },
   { key: "platinum", symbol: "AUXPT", name: "Platin", icon: "💎", color: "text-cyan-400" },
   { key: "palladium", symbol: "AUXPD", name: "Paladyum", icon: "💜", color: "text-purple-400" },
@@ -1852,7 +1852,7 @@ export default function AdminDashboard() {
       <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
         <div className="w-full max-w-sm p-8 bg-slate-900 rounded-2xl border border-slate-800">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-500/20 flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#BFA181]/20 flex items-center justify-center">
               <span className="text-3xl">🔐</span>
             </div>
             <h1 className="text-xl font-bold">Auxite Admin</h1>
@@ -1865,7 +1865,7 @@ export default function AdminDashboard() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Admin Şifresi"
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white mb-4 focus:outline-none focus:border-amber-500"
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 px-4 text-white mb-4 focus:outline-none focus:border-[#BFA181]"
               autoFocus
             />
             {authError && <p className="text-red-400 text-sm mb-4">{authError}</p>}
@@ -1896,7 +1896,7 @@ export default function AdminDashboard() {
               <Image src="/logo.svg" alt="Auxite" width={32} height={32} />
               <span className="font-bold text-lg">Admin</span>
             </Link>
-            <span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs font-medium rounded">
+            <span className="px-2 py-1 bg-[#BFA181]/20 text-[#BFA181] text-xs font-medium rounded">
               v2.0
             </span>
           </div>
@@ -1938,7 +1938,7 @@ export default function AdminDashboard() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
                   activeTab === tab.id
-                    ? "bg-amber-500/20 text-amber-400"
+                    ? "bg-[#BFA181]/20 text-[#BFA181]"
                     : "text-slate-400 hover:bg-slate-800 hover:text-white"
                 }`}
               >
@@ -1971,7 +1971,7 @@ export default function AdminDashboard() {
                 {[
                   { label: "Toplam Kullanıcı", value: formatNumber(stats.totalUsers), icon: "👥", color: "text-blue-400" },
                   { label: "Toplam İşlem", value: formatNumber(stats.totalTrades), icon: "📊", color: "text-[#2F6F62]" },
-                  { label: "Toplam Hacim", value: stats.totalVolume, icon: "💰", color: "text-amber-400" },
+                  { label: "Toplam Hacim", value: stats.totalVolume, icon: "💰", color: "text-[#BFA181]" },
                   { label: "Bekleyen Çekim", value: stats.pendingWithdraws, icon: "⏳", color: "text-orange-400" },
                   { label: "Bekleyen KYC", value: stats.pendingKYC, icon: "📋", color: "text-purple-400" },
                   { label: "Aktif Uyarı", value: stats.activeAlerts, icon: "🔔", color: "text-red-400" },
@@ -2037,8 +2037,8 @@ export default function AdminDashboard() {
                     <div className="text-[#2F6F62] text-sm mb-1">Toplam Fee (USD)</div>
                     <div className="text-3xl font-bold text-white">${platformFees.summary.totalValueUsd.toFixed(2)}</div>
                   </div>
-                  <div className="bg-gradient-to-r from-amber-900/50 to-amber-800/30 border border-amber-700/50 rounded-xl p-6">
-                    <div className="text-amber-400 text-sm mb-1">Bekleyen (Ledger'a aktarılmamış)</div>
+                  <div className="bg-gradient-to-r from-[#BFA181]/30 to-[#BFA181]/20 border border-[#BFA181]/30 rounded-xl p-6">
+                    <div className="text-[#BFA181] text-sm mb-1">Bekleyen (Ledger'a aktarılmamış)</div>
                     <div className="text-3xl font-bold text-white">${platformFees.summary.totalValueUsd.toFixed(2)}</div>
                   </div>
                   <div className="bg-gradient-to-r from-blue-900/50 to-blue-800/30 border border-blue-700/50 rounded-xl p-6">
@@ -2071,7 +2071,7 @@ export default function AdminDashboard() {
                         <tr key={token} className="border-t border-slate-800 hover:bg-slate-800/30">
                           <td className="p-4 font-medium">{token}</td>
                           <td className="p-4 text-right font-mono">{data.total.toFixed(6)}</td>
-                          <td className="p-4 text-right font-mono text-amber-400">{data.pending.toFixed(6)}</td>
+                          <td className="p-4 text-right font-mono text-[#BFA181]">{data.pending.toFixed(6)}</td>
                           <td className="p-4 text-right font-mono text-[#2F6F62]">{data.transferred.toFixed(6)}</td>
                           <td className="p-4 text-right">{data.transactionCount}</td>
                           <td className="p-4 text-right font-semibold">${data.valueUsd.toFixed(2)}</td>
@@ -2211,10 +2211,10 @@ export default function AdminDashboard() {
                   <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md">
                     <div className="p-6 border-b border-slate-800">
                       <h3 className="text-xl font-bold">🚀 Gerçek Kripto Gönder</h3>
-                      <p className="text-amber-400 text-sm mt-1">Hot wallet'tan blockchain üzerinden transfer</p>
+                      <p className="text-[#BFA181] text-sm mt-1">Hot wallet'tan blockchain üzerinden transfer</p>
                     </div>
                     <div className="p-6 space-y-4">
-                      <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg p-3 text-amber-300 text-sm">
+                      <div className="bg-[#BFA181]/20 border border-[#BFA181]/30 rounded-lg p-3 text-[#BFA181] text-sm">
                         ⚠️ DİKKAT: Bu işlem gerçek kripto gönderir ve geri alınamaz!
                       </div>
 
@@ -2311,7 +2311,7 @@ export default function AdminDashboard() {
                   <button
                     onClick={verifyPendingTransactions}
                     disabled={verifyingTx === 'all'}
-                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-500 disabled:opacity-50"
+                    className="px-4 py-2 bg-[#BFA181] text-white rounded-lg hover:bg-[#BFA181] disabled:opacity-50"
                   >
                     {verifyingTx === 'all' ? "Doğrulanıyor..." : "✅ Tümünü Doğrula"}
                   </button>
@@ -2322,7 +2322,7 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-slate-800 rounded-xl p-4">
                   <div className="text-slate-400 text-sm mb-1">Bekleyen</div>
-                  <div className="text-2xl font-bold text-amber-400">
+                  <div className="text-2xl font-bold text-[#BFA181]">
                     {pendingTransactions.filter(t => t.status === 'pending_confirmation').length}
                   </div>
                 </div>
@@ -2390,7 +2390,7 @@ export default function AdminDashboard() {
                               </span>
                             </td>
                             <td className="p-3">
-                              <span className="text-amber-400">{tx.fromToken}</span>
+                              <span className="text-[#BFA181]">{tx.fromToken}</span>
                               <span className="text-slate-500 mx-1">→</span>
                               <span className="text-green-400">{tx.toToken}</span>
                             </td>
@@ -2416,7 +2416,7 @@ export default function AdminDashboard() {
                               <span className={`px-2 py-1 rounded text-xs font-medium ${
                                 tx.status === 'completed' ? 'bg-green-500/20 text-green-400' :
                                 tx.status === 'failed' ? 'bg-red-500/20 text-red-400' :
-                                'bg-amber-500/20 text-amber-400'
+                                'bg-[#BFA181]/20 text-[#BFA181]'
                               }`}>
                                 {tx.status === 'completed' ? '✅ Onaylı' :
                                  tx.status === 'failed' ? '❌ Başarısız' :
@@ -2463,7 +2463,7 @@ export default function AdminDashboard() {
                       onClick={() => setAnalyticsRange(range)}
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                         analyticsRange === range
-                          ? "bg-amber-500 text-black"
+                          ? "bg-[#BFA181] text-black"
                           : "bg-slate-800 text-slate-400 hover:text-white"
                       }`}
                     >
@@ -2494,8 +2494,8 @@ export default function AdminDashboard() {
                       <p className="text-2xl font-bold">{formatNumber(analyticsOverview.activeUsers24h)}</p>
                       <p className="text-xs text-slate-400 mt-1">{((analyticsOverview.activeUsers24h / analyticsOverview.totalUsers) * 100).toFixed(1)}% aktif</p>
                     </div>
-                    <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 rounded-xl p-4">
-                      <p className="text-amber-400 text-sm mb-1">Toplam Hacim</p>
+                    <div className="bg-gradient-to-br from-[#BFA181]/20 to-[#BFA181]/80/10 border border-[#BFA181]/30 rounded-xl p-4">
+                      <p className="text-[#BFA181] text-sm mb-1">Toplam Hacim</p>
                       <p className="text-2xl font-bold">{formatCurrency(analyticsOverview.totalVolume)}</p>
                       <p className="text-xs text-[#2F6F62] mt-1">{formatCurrency(analyticsOverview.volume24h)} bugün</p>
                     </div>
@@ -2654,7 +2654,7 @@ export default function AdminDashboard() {
                       <th className="text-left p-3 text-slate-300">AUXM</th>
                       <th className="text-left p-3 text-blue-400">ETH</th>
                       <th className="text-left p-3 text-orange-400">BTC</th>
-                      <th className="text-left p-3 text-amber-400">AUXG</th>
+                      <th className="text-left p-3 text-[#BFA181]">AUXG</th>
                       <th className="text-left p-3 text-slate-400">AUXS</th>
                       <th className="text-left p-3 text-slate-400">AUXPT</th>
                       <th className="text-left p-3 text-slate-400">AUXPD</th>
@@ -2686,7 +2686,7 @@ export default function AdminDashboard() {
                           <td className="p-3 text-orange-400">
                             {((user as any).btcBalance || 0).toFixed(8)}
                           </td>
-                          <td className="p-3 text-amber-400 font-medium">
+                          <td className="p-3 text-[#BFA181] font-medium">
                             {((user as any).auxgBalance || 0).toFixed(4)}
                           </td>
                           <td className="p-3 text-slate-400">
@@ -2966,7 +2966,7 @@ export default function AdminDashboard() {
                               <span className={`px-2 py-0.5 rounded text-xs ${
                                 campaign.type === 'discount' ? 'bg-red-500/20 text-red-400' :
                                 campaign.type === 'bonus' ? 'bg-[#2F6F62]/20 text-[#2F6F62]' :
-                                campaign.type === 'cashback' ? 'bg-amber-500/20 text-amber-400' :
+                                campaign.type === 'cashback' ? 'bg-[#BFA181]/20 text-[#BFA181]' :
                                 'bg-purple-500/20 text-purple-400'
                               }`}>
                                 {campaign.type}
@@ -2974,7 +2974,7 @@ export default function AdminDashboard() {
                             </div>
                             <p className="text-sm text-slate-400 mb-2">{campaign.description.tr}</p>
                             <div className="flex flex-wrap items-center gap-3 text-xs">
-                              <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded font-bold">
+                              <span className="px-2 py-1 bg-[#BFA181]/20 text-[#BFA181] rounded font-bold">
                                 {campaign.valueType === 'percentage' ? `%${campaign.value}` : `$${campaign.value}`}
                               </span>
                               {campaign.code && <span className="px-2 py-1 bg-slate-700 rounded font-mono">{campaign.code}</span>}
@@ -3078,7 +3078,7 @@ export default function AdminDashboard() {
                     {announcements.map((announcement) => (
                       <div key={announcement.id} className={`p-4 rounded-xl border-l-4 ${
                         announcement.type === 'error' ? 'border-l-red-500 bg-red-500/10' :
-                        announcement.type === 'warning' ? 'border-l-amber-500 bg-amber-500/10' :
+                        announcement.type === 'warning' ? 'border-l-[#BFA181] bg-[#BFA181]/10' :
                         announcement.type === 'success' ? 'border-l-[#2F6F62] bg-[#2F6F62]/10' :
                         announcement.type === 'maintenance' ? 'border-l-purple-500 bg-purple-500/10' :
                         'border-l-blue-500 bg-blue-500/10'
@@ -3093,7 +3093,7 @@ export default function AdminDashboard() {
                               <span className={`px-2 py-0.5 rounded text-xs ${
                                 announcement.priority === 'critical' ? 'bg-red-500/30 text-red-400' :
                                 announcement.priority === 'high' ? 'bg-orange-500/30 text-orange-400' :
-                                announcement.priority === 'medium' ? 'bg-amber-500/30 text-amber-400' :
+                                announcement.priority === 'medium' ? 'bg-[#BFA181]/30 text-[#BFA181]' :
                                 'bg-slate-600 text-slate-300'
                               }`}>
                                 {announcement.priority}
@@ -3246,7 +3246,7 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => handleSpreadUpdate('metal', metal.key)}
                         disabled={spreadSaving === `metal-${metal.key}`}
-                        className="mt-3 w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-lg text-sm font-medium disabled:opacity-50"
+                        className="mt-3 w-full py-2 bg-[#BFA181]/20 hover:bg-[#BFA181]/30 text-[#BFA181] rounded-lg text-sm font-medium disabled:opacity-50"
                       >
                         {spreadSaving === `metal-${metal.key}` ? "Kaydediliyor..." : "Kaydet"}
                       </button>
@@ -3593,7 +3593,7 @@ export default function AdminDashboard() {
                         </span>
                       )}
                       {tier.requirements.metalAsset && (
-                        <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-sm">
+                        <span className="px-3 py-1 bg-[#BFA181]/20 text-[#BFA181] rounded-full text-sm">
                           Metal Varlık
                         </span>
                       )}
@@ -3680,7 +3680,7 @@ export default function AdminDashboard() {
                                 type="checkbox"
                                 checked={tier.requirements[key as keyof typeof tier.requirements] as boolean}
                                 onChange={(e) => updateAuxiteerTierValue(tier.id, `req_${key}`, e.target.checked)}
-                                className="w-5 h-5 rounded border-slate-600 bg-slate-700 text-amber-500 focus:ring-amber-500"
+                                className="w-5 h-5 rounded border-slate-600 bg-slate-700 text-[#BFA181] focus:ring-[#BFA181]"
                               />
                               <span className="text-sm">{label}</span>
                             </label>
@@ -3725,7 +3725,7 @@ export default function AdminDashboard() {
                       <div
                         key={inv.walletAddress}
                         className={`p-4 rounded-xl flex items-center justify-between ${
-                          inv.status === 'active' ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-slate-800/50'
+                          inv.status === 'active' ? 'bg-[#BFA181]/10 border border-[#BFA181]/30' : 'bg-slate-800/50'
                         }`}
                       >
                         <div>
@@ -3738,7 +3738,7 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex items-center gap-3">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            inv.status === 'active' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-600 text-slate-400'
+                            inv.status === 'active' ? 'bg-[#BFA181]/20 text-[#BFA181]' : 'bg-slate-600 text-slate-400'
                           }`}>
                             {inv.status === 'active' ? 'Aktif' : 'İptal'}
                           </span>
@@ -3999,7 +3999,7 @@ export default function AdminDashboard() {
                   <li>• <strong>Stok Çıkar:</strong> Fiziksel teslimat yapıldığında kasadan düşer</li>
                   <li>• <strong>Stoku Ayarla:</strong> Fiziksel sayım sonrası stoğu düzeltir</li>
                   <li>• <strong>Kasalar Arası Transfer:</strong> Bir kasadan diğerine metal transferi</li>
-                  <li className="text-amber-400">• Stok %20 altına düşünce otomatik uyarı gönderilir</li>
+                  <li className="text-[#BFA181]">• Stok %20 altına düşünce otomatik uyarı gönderilir</li>
                 </ul>
                 <div className="mt-3 pt-3 border-t border-blue-800">
                   <div className="font-semibold text-blue-400 mb-2">🏛️ Kasalar</div>
@@ -4027,7 +4027,7 @@ export default function AdminDashboard() {
 
               {/* Wallet Adresleri */}
               <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                <h3 className="font-semibold mb-4 text-amber-400">📍 Hot Wallet Adresleri</h3>
+                <h3 className="font-semibold mb-4 text-[#BFA181]">📍 Hot Wallet Adresleri</h3>
                 <div className="space-y-3">
                   {/* ETH */}
                   <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
@@ -4172,7 +4172,7 @@ export default function AdminDashboard() {
 
               {/* Send Form */}
               <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                <h3 className="font-semibold mb-4 text-amber-400">📤 Kripto Gönder</h3>
+                <h3 className="font-semibold mb-4 text-[#BFA181]">📤 Kripto Gönder</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <select value={sendToken} onChange={(e) => setSendToken(e.target.value)} className="bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white">
                     <option value="ETH">🔷 ETH</option>
@@ -4210,8 +4210,8 @@ export default function AdminDashboard() {
 
               {/* Pending Withdraws */}
               {pendingUserWithdraws.length > 0 && (
-                <div className="bg-slate-900/50 border border-amber-800/50 rounded-xl p-6">
-                  <h3 className="font-semibold mb-4 text-amber-400">⏳ Bekleyen Çekimler ({pendingUserWithdraws.length})</h3>
+                <div className="bg-slate-900/50 border border-[#BFA181]/30 rounded-xl p-6">
+                  <h3 className="font-semibold mb-4 text-[#BFA181]">⏳ Bekleyen Çekimler ({pendingUserWithdraws.length})</h3>
                   <div className="space-y-3">
                     {pendingUserWithdraws.map((w: any) => (
                       <div key={w.id} className="p-4 bg-slate-800/50 rounded-xl flex items-center justify-between">
@@ -4414,7 +4414,7 @@ export default function AdminDashboard() {
                   <div
                     key={phase.id}
                     className={`bg-slate-900/50 border rounded-xl p-6 ${
-                      phase.status === 'current' ? 'border-amber-500/50' : 
+                      phase.status === 'current' ? 'border-[#BFA181]/50' : 
                       phase.status === 'completed' ? 'border-green-500/30' : 'border-slate-800'
                     }`}
                   >
@@ -4422,7 +4422,7 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-3">
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                           phase.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                          phase.status === 'current' ? 'bg-amber-500/20 text-amber-400' :
+                          phase.status === 'current' ? 'bg-[#BFA181]/20 text-[#BFA181]' :
                           'bg-slate-700 text-slate-400'
                         }`}>
                           {phase.phase}
@@ -4498,7 +4498,7 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {teamMembers.filter((m: any) => m.type === 'team').map((member: any) => (
                     <div key={member.id} className="p-4 bg-slate-800/50 rounded-xl flex gap-4">
-                      <div className="w-16 h-16 bg-gradient-to-br from-amber-500/20 to-amber-500/10 rounded-xl flex items-center justify-center text-2xl">
+                      <div className="w-16 h-16 bg-gradient-to-br from-[#BFA181]/20 to-[#BFA181]/10 rounded-xl flex items-center justify-center text-2xl">
                         👤
                       </div>
                       <div className="flex-1">
@@ -4515,7 +4515,7 @@ export default function AdminDashboard() {
                             >🗑️</button>
                           </div>
                         </div>
-                        <p className="text-sm text-amber-400">{member.role?.tr || member.role?.en}</p>
+                        <p className="text-sm text-[#BFA181]">{member.role?.tr || member.role?.en}</p>
                         <p className="text-xs text-slate-400 mt-1 line-clamp-2">{member.bio?.tr || member.bio?.en}</p>
                       </div>
                     </div>
@@ -4529,9 +4529,9 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {teamMembers.filter((m: any) => m.type === 'advisor').map((member: any) => (
                     <div key={member.id} className="p-4 bg-slate-800/50 rounded-xl text-center">
-                      <div className="w-12 h-12 bg-amber-500/10 rounded-full mx-auto mb-3 flex items-center justify-center text-xl">👤</div>
+                      <div className="w-12 h-12 bg-[#BFA181]/10 rounded-full mx-auto mb-3 flex items-center justify-center text-xl">👤</div>
                       <h4 className="font-semibold text-sm">{member.name}</h4>
-                      <p className="text-xs text-amber-400">{member.role?.tr || member.role?.en}</p>
+                      <p className="text-xs text-[#BFA181]">{member.role?.tr || member.role?.en}</p>
                       <div className="flex justify-center gap-2 mt-2">
                         <button onClick={() => { setEditingItem(member); setShowWebsiteModal('team'); }} className="text-xs text-slate-400 hover:text-white">✏️</button>
                         <button onClick={() => deleteWebsiteItem('team', member.id)} className="text-xs text-red-400">🗑️</button>
@@ -4606,7 +4606,7 @@ export default function AdminDashboard() {
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                         vault.status === 'active' ? 'bg-green-500/20 text-green-400' :
                         vault.status === 'maintenance' ? 'bg-red-500/20 text-red-400' :
-                        'bg-amber-500/20 text-amber-400'
+                        'bg-[#BFA181]/20 text-[#BFA181]'
                       }`}>
                         {vault.status === 'active' ? 'Aktif' : vault.status === 'maintenance' ? 'Bakımda' : 'Yakında'}
                       </span>
@@ -4625,7 +4625,7 @@ export default function AdminDashboard() {
                     
                     <div className="flex flex-wrap gap-2 mb-4">
                       {vault.metals?.map((metal: string) => (
-                        <span key={metal} className="px-2 py-1 bg-amber-500/10 rounded text-amber-400 text-xs">
+                        <span key={metal} className="px-2 py-1 bg-[#BFA181]/10 rounded text-[#BFA181] text-xs">
                           {metal}
                         </span>
                       ))}

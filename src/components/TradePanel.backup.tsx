@@ -478,8 +478,8 @@ export default function TradePanel({
 
             {/* Insufficient Balance Warning */}
             {mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm && amountNum > 0 && (
-              <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                <p className="text-sm text-amber-400">
+              <div className="mb-4 p-3 rounded-lg bg-[#BFA181]/10 border border-[#BFA181]/30">
+                <p className="text-sm text-[#BFA181]">
                   ⚠️ {lang === "tr" ? "Yetersiz AUXM bakiyesi" : "Insufficient AUXM balance"}
                 </p>
               </div>

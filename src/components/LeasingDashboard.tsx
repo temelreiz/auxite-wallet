@@ -289,7 +289,7 @@ function StatsCard({ label, value, suffix, color, icon, trend, t }: { label: str
 function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; formatAPYRange: (offer: any) => string; onAllocate: () => void; t: Record<string, string> }) {
   const [isHovered, setIsHovered] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
-  const metalGradients: Record<string, string> = { AUXG: "from-amber-500/10 via-transparent to-transparent", AUXS: "from-slate-400/10 via-transparent to-transparent", AUXPT: "from-cyan-400/10 via-transparent to-transparent", AUXPD: "from-rose-400/10 via-transparent to-transparent" };
+  const metalGradients: Record<string, string> = { AUXG: "from-[#BFA181]/10 via-transparent to-transparent", AUXS: "from-slate-400/10 via-transparent to-transparent", AUXPT: "from-cyan-400/10 via-transparent to-transparent", AUXPD: "from-rose-400/10 via-transparent to-transparent" };
 
   // Metal icon mapping for high quality icons
   const metalIcons: Record<string, string> = {

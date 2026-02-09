@@ -77,8 +77,8 @@ export default function ForgotPasswordPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/20 mb-4">
-            <Mail className="w-8 h-8 text-amber-500" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#BFA181]/20 mb-4">
+            <Mail className="w-8 h-8 text-[#BFA181]" />
           </div>
           <h1 className="text-2xl font-bold text-white">Forgot Password?</h1>
           <p className="text-slate-400 mt-2">

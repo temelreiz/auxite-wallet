@@ -400,8 +400,8 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                   </div>
                 )}
                 {!meetsMinimum && amountNum > 0 && canAfford && (
-                  <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
-                    <p className="text-xs sm:text-sm text-amber-600 dark:text-amber-400">⚠️ {t.minimum}: {crypto.minWithdraw} {selectedCrypto}</p>
+                  <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-[#BFA181]/10 dark:bg-[#BFA181]/10 border border-[#BFA181]/30 dark:border-[#BFA181]/30">
+                    <p className="text-xs sm:text-sm text-[#BFA181] dark:text-[#BFA181]">⚠️ {t.minimum}: {crypto.minWithdraw} {selectedCrypto}</p>
                   </div>
                 )}
               </>
@@ -437,8 +437,8 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                   </div>
                 </div>
 
-                <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
-                  <p className="text-xs sm:text-sm text-amber-700 dark:text-amber-300">⚠️ {t.verifyAddress}</p>
+                <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-[#BFA181]/10 dark:bg-[#BFA181]/10 border border-[#BFA181]/30 dark:border-[#BFA181]/30">
+                  <p className="text-xs sm:text-sm text-[#BFA181] dark:text-[#BFA181]">⚠️ {t.verifyAddress}</p>
                 </div>
               </>
             )}

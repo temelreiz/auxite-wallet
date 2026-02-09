@@ -226,7 +226,7 @@ const translations: Record<string, Record<string, string>> = {
 };
 
 const METAL_INFO: Record<string, { nameKey: string; icon: string; color: string }> = {
-  AUXG: { nameKey: "gold", icon: "/gold-favicon-32x32.png", color: "text-amber-500" },
+  AUXG: { nameKey: "gold", icon: "/gold-favicon-32x32.png", color: "text-[#BFA181]" },
   AUXS: { nameKey: "silver", icon: "/silver-favicon-32x32.png", color: "text-slate-400" },
   AUXPT: { nameKey: "platinum", icon: "/platinum-favicon-32x32.png", color: "text-cyan-400" },
   AUXPD: { nameKey: "palladium", icon: "/palladium-favicon-32x32.png", color: "text-rose-400" },
@@ -295,8 +295,8 @@ export function LockedAssetsModal({
         {/* Header - Responsive */}
         <div className="p-2.5 sm:p-4 border-b border-stone-200 dark:border-slate-800 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-              <svg className="w-4 h-4 sm:w-6 sm:h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-[#BFA181]/20 flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 sm:w-6 sm:h-6 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
@@ -316,7 +316,7 @@ export function LockedAssetsModal({
         </div>
 
         {/* Summary Card - Responsive */}
-        <div className="p-2.5 sm:p-4 border-b border-stone-200 dark:border-slate-800 bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20 flex-shrink-0">
+        <div className="p-2.5 sm:p-4 border-b border-stone-200 dark:border-slate-800 bg-gradient-to-r from-[#BFA181]/10 to-orange-500/10 dark:from-[#BFA181]/20 dark:to-orange-500/20 flex-shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
             <div className="min-w-0">
               <p className="text-[10px] sm:text-sm text-slate-600 dark:text-slate-400">{t.totalLocked}</p>
@@ -344,7 +344,7 @@ export function LockedAssetsModal({
             </div>
             <div className="text-left sm:text-right flex-shrink-0">
               <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400">{t.estValue}</p>
-              <p className="text-lg sm:text-2xl font-bold text-amber-500">${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-lg sm:text-2xl font-bold text-[#BFA181]">${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
           </div>
         </div>
@@ -355,7 +355,7 @@ export function LockedAssetsModal({
             onClick={() => setActiveTab("allocations")}
             className={`flex-1 px-1.5 sm:px-4 py-2 sm:py-3 text-[10px] sm:text-sm font-medium transition-colors relative ${
               activeTab === "allocations"
-                ? "text-amber-600 dark:text-amber-400"
+                ? "text-[#BFA181] dark:text-[#BFA181]"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
@@ -366,14 +366,14 @@ export function LockedAssetsModal({
               <span className="truncate">{t.allocations}</span>
             </span>
             {activeTab === "allocations" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#BFA181]"></div>
             )}
           </button>
           <button
             onClick={() => setActiveTab("staking")}
             className={`flex-1 px-1.5 sm:px-4 py-2 sm:py-3 text-[10px] sm:text-sm font-medium transition-colors relative ${
               activeTab === "staking"
-                ? "text-amber-600 dark:text-amber-400"
+                ? "text-[#BFA181] dark:text-[#BFA181]"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
@@ -387,7 +387,7 @@ export function LockedAssetsModal({
               )}
             </span>
             {activeTab === "staking" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#BFA181]"></div>
             )}
           </button>
         </div>
@@ -400,7 +400,7 @@ export function LockedAssetsModal({
               
               {isLoading ? (
                 <div className="flex items-center justify-center py-6 sm:py-12">
-                  <div className="animate-spin rounded-full h-5 w-5 sm:h-8 sm:w-8 border-b-2 border-amber-500"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 sm:h-8 sm:w-8 border-b-2 border-[#BFA181]"></div>
                 </div>
               ) : allocations.length === 0 ? (
                 <div className="text-center py-6 sm:py-12">
@@ -414,7 +414,7 @@ export function LockedAssetsModal({
               ) : (
                 <div className="space-y-2 sm:space-y-3">
                   {allocations.map((allocation) => {
-                    const metalInfo = METAL_INFO[allocation.metalSymbol] || { icon: "/gold-favicon-32x32.png", color: "text-amber-500" };
+                    const metalInfo = METAL_INFO[allocation.metalSymbol] || { icon: "/gold-favicon-32x32.png", color: "text-[#BFA181]" };
                     const grams = Number(allocation.grams);
                     const price = metalPrices[allocation.metalSymbol as keyof typeof metalPrices] || 0;
                     const value = grams * price;
@@ -422,7 +422,7 @@ export function LockedAssetsModal({
                     return (
                       <div
                         key={`${allocation.metal}-${allocation.id.toString()}`}
-                        className="p-2.5 sm:p-4 rounded-lg sm:rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50 hover:border-amber-500/50 transition-colors"
+                        className="p-2.5 sm:p-4 rounded-lg sm:rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50 hover:border-[#BFA181]/50 transition-colors"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -458,7 +458,7 @@ export function LockedAssetsModal({
                             href={`https://basescan.org/tx/${allocation.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
+                            className="text-[#BFA181] dark:text-[#BFA181] hover:underline flex items-center gap-1"
                           >
                             {t.viewOnChain}
                             <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -480,7 +480,7 @@ export function LockedAssetsModal({
               
               {stakingLoading ? (
                 <div className="flex items-center justify-center py-6 sm:py-12">
-                  <div className="animate-spin rounded-full h-5 w-5 sm:h-8 sm:w-8 border-b-2 border-amber-500"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 sm:h-8 sm:w-8 border-b-2 border-[#BFA181]"></div>
                 </div>
               ) : activeStakes.length === 0 ? (
                 <div className="text-center py-6 sm:py-12">
@@ -511,7 +511,7 @@ export function LockedAssetsModal({
                             <img src={metalInfo?.icon || "/gold-favicon-32x32.png"} alt={stake.metalSymbol} className="w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
                             <div className="min-w-0">
                               <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                                <span className={`font-semibold text-xs sm:text-base ${metalInfo?.color || "text-amber-500"}`}>{stake.metalSymbol}</span>
+                                <span className={`font-semibold text-xs sm:text-base ${metalInfo?.color || "text-[#BFA181]"}`}>{stake.metalSymbol}</span>
                                 <span className={`text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full ${stake.isMatured ? "bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]" : "bg-blue-500/20 text-blue-600 dark:text-blue-400"}`}>
                                   {stake.isMatured ? t.completed : t.active}
                                 </span>
@@ -559,7 +559,7 @@ export function LockedAssetsModal({
                             href={`https://sepolia.etherscan.io/address/${process.env.NEXT_PUBLIC_STAKING_CONTRACT}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
+                            className="text-[#BFA181] dark:text-[#BFA181] hover:underline flex items-center gap-1"
                           >
                             {t.viewOnChain}
                             <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

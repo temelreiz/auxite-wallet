@@ -391,7 +391,7 @@ export default function ProfilePage() {
 
   const menuItems = [
     { id: "personal" as const, label: t("personalInfo"), color: "emerald", icon: <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> },
-    { id: "security" as const, label: t("securitySettings"), color: "amber", icon: <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg> },
+    { id: "security" as const, label: t("securitySettings"), color: "gold", icon: <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg> },
     { id: "notifications" as const, label: t("notifications"), color: "blue", icon: <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg> },
     { id: "referral" as const, label: t("referralProgram"), color: "purple", icon: <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
     { id: "preferences" as const, label: t("preferences"), color: "teal", icon: <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
@@ -512,7 +512,7 @@ export default function ProfilePage() {
         return (
           <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-500/20 flex items-center justify-center">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#BFA181]/20 flex items-center justify-center">
                 <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F6F62] dark:text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
               </div>
               <div>
@@ -525,14 +525,14 @@ export default function ProfilePage() {
             <div className={`p-3 sm:p-5 rounded-xl sm:rounded-2xl border ${
               twoFactorEnabled
                 ? "bg-gradient-to-br from-[#2F6F62]/10 via-green-500/5 to-transparent border-[#2F6F62]/20"
-                : "bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border-amber-500/20"
+                : "bg-gradient-to-br from-[#BFA181]/10 via-orange-500/5 to-transparent border-[#BFA181]/20"
             }`}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
                   <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 ${
                     twoFactorEnabled
                       ? "bg-gradient-to-br from-[#2F6F62] to-[#2F6F62] shadow-[#2F6F62]/20"
-                      : "bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-500/20"
+                      : "bg-gradient-to-br from-[#BFA181] to-orange-500 shadow-[#BFA181]/20"
                   }`}>
                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -540,7 +540,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="min-w-0">
                     <p className="font-medium text-xs sm:text-base text-slate-800 dark:text-white">{t("twoFactorAuth")}</p>
-                    <p className={`text-[10px] sm:text-sm ${twoFactorEnabled ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-amber-600 dark:text-amber-400"}`}>
+                    <p className={`text-[10px] sm:text-sm ${twoFactorEnabled ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-[#BFA181] dark:text-[#BFA181]"}`}>
                       {twoFactorEnabled
                         ? (lang === "tr" ? "✓ Aktif - Hesabınız korunuyor" : "✓ Active - Your account is protected")
                         : (lang === "tr" ? "○ Kurulmamış" : "○ Not set up")}
@@ -555,7 +555,7 @@ export default function ProfilePage() {
                 ) : (
                   <button
                     onClick={() => setShow2FASetup(true)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white transition-all shadow-lg shadow-amber-500/20"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-[#BFA181] to-orange-500 hover:from-[#BFA181] hover:to-orange-600 text-white transition-all shadow-lg shadow-[#BFA181]/20"
                   >
                     {lang === "tr" ? "Şimdi Kur" : "Setup Now"}
                   </button>
@@ -563,7 +563,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Info text */}
-              <div className={`mt-3 pt-3 border-t ${twoFactorEnabled ? "border-[#2F6F62]/20" : "border-amber-500/20"}`}>
+              <div className={`mt-3 pt-3 border-t ${twoFactorEnabled ? "border-[#2F6F62]/20" : "border-[#BFA181]/20"}`}>
                 <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400">
                   {twoFactorEnabled
                     ? (lang === "tr"
@@ -758,8 +758,8 @@ export default function ProfilePage() {
               <div onClick={() => setShowFAQModal(true)} className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50 cursor-pointer hover:border-stone-300 dark:hover:border-zinc-600 transition-all">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#BFA181]/15 dark:bg-[#BFA181]/20 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#BFA181] dark:text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200">{lang === "tr" ? "Sıkça Sorulan Sorular" : "FAQ"}</p>
@@ -819,7 +819,7 @@ export default function ProfilePage() {
     if (isActive) {
       const colorMap: Record<string, string> = {
         emerald: "bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62] border border-[#2F6F62]/30",
-        amber: "bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30",
+        gold: "bg-[#BFA181]/20 text-[#BFA181] dark:text-[#BFA181] border border-[#BFA181]/30",
         blue: "bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30",
         purple: "bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30",
         teal: "bg-teal-500/20 text-teal-600 dark:text-teal-400 border border-teal-500/30",

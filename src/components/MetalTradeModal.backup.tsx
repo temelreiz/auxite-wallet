@@ -449,8 +449,8 @@ export function MetalTradeModal({
 
             {/* Insufficient Balance Warning */}
             {!canAfford && amountNum > 0 && (
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                <p className="text-sm text-amber-400">
+              <div className="p-3 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/30">
+                <p className="text-sm text-[#BFA181]">
                   {mode === "buy" 
                     ? (lang === "tr" ? `Yetersiz ${paymentMethod} bakiyesi` : `Insufficient ${paymentMethod} balance`)
                     : (lang === "tr" ? `Yetersiz ${metal} bakiyesi` : `Insufficient ${metal} balance`)}

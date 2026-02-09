@@ -459,7 +459,7 @@ export function RecurringStakeManager({
                   onClick={() => setStakeDuration(months)}
                   className={`p-3 rounded-xl border transition-colors ${
                     stakeDuration === months
-                      ? "border-[#2F6F62] bg-[#2F6F62]/10 text-amber-600 dark:text-amber-400"
+                      ? "border-[#2F6F62] bg-[#2F6F62]/10 text-[#BFA181] dark:text-[#BFA181]"
                       : "border-stone-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-stone-400 dark:hover:border-slate-600"
                   }`}
                 >
@@ -480,7 +480,7 @@ export function RecurringStakeManager({
                   onClick={() => setFrequency(freq)}
                   className={`p-3 rounded-xl border transition-colors ${
                     frequency === freq
-                      ? "border-[#2F6F62] bg-[#2F6F62]/10 text-amber-600 dark:text-amber-400"
+                      ? "border-[#2F6F62] bg-[#2F6F62]/10 text-[#BFA181] dark:text-[#BFA181]"
                       : "border-stone-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-stone-400 dark:hover:border-slate-600"
                   }`}
                 >
@@ -617,7 +617,7 @@ export function RecurringStakeManager({
       {/* Plans List */}
       {loading ? (
         <div className="flex justify-center py-8">
-          <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-slate-600 border-t-amber-500 rounded-full"></div>
+          <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-slate-600 border-t-[#BFA181] rounded-full"></div>
         </div>
       ) : plans.length === 0 ? (
         <div className="text-center py-8 text-slate-600 dark:text-slate-500">
@@ -649,7 +649,7 @@ export function RecurringStakeManager({
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-full ${
                     plan.status === "active" ? "bg-[#2F6F62]/20 text-[#2F6F62]" :
-                    plan.status === "paused" ? "bg-amber-500/20 text-amber-400" :
+                    plan.status === "paused" ? "bg-[#BFA181]/20 text-[#BFA181]" :
                     "bg-slate-500/20 text-slate-400"
                   }`}>
                     {labels.status[plan.status]}
@@ -659,7 +659,7 @@ export function RecurringStakeManager({
                   {plan.status === "active" && (
                     <button
                       onClick={() => setConfirmModal({ show: true, type: "pause", planId: plan.id, planToken: plan.token })}
-                      className="flex-1 py-2 bg-amber-500/10 text-amber-400 rounded-lg text-sm hover:bg-amber-500/20"
+                      className="flex-1 py-2 bg-[#BFA181]/10 text-[#BFA181] rounded-lg text-sm hover:bg-[#BFA181]/20"
                     >
                       {labels.pause}
                     </button>

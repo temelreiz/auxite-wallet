@@ -270,11 +270,11 @@ export function SessionManager({ walletAddress, lang = "en" }: SessionManagerPro
       )}
 
       {/* Info */}
-      <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/20">
+      <div className="bg-[#BFA181]/10 rounded-xl p-4 border border-[#BFA181]/20">
         <div className="flex gap-3">
-          <span className="text-amber-400">⚠️</span>
+          <span className="text-[#BFA181]">⚠️</span>
           <div>
-            <p className="text-sm text-amber-400 font-medium mb-1">
+            <p className="text-sm text-[#BFA181] font-medium mb-1">
               {lang === "tr" ? "Güvenlik İpucu" : "Security Tip"}
             </p>
             <p className="text-xs text-slate-400">

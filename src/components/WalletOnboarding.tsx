@@ -994,8 +994,8 @@ export default function WalletOnboarding({
           {/* ═══════════════════════════════════════════════════════════════════ */}
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-8 h-8 rounded-lg bg-[#BFA181]/20 flex items-center justify-center">
+                <svg className="w-4 h-4 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
@@ -1154,8 +1154,8 @@ export default function WalletOnboarding({
           <h1 className="text-2xl font-bold text-white mb-2 text-center">{t("seedPhraseTitle")}</h1>
 
           {/* Warning */}
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-6">
-            <p className="text-amber-400 text-sm">{t("seedPhraseWarning")}</p>
+          <div className="bg-[#BFA181]/10 border border-[#BFA181]/30 rounded-xl p-4 mb-6">
+            <p className="text-[#BFA181] text-sm">{t("seedPhraseWarning")}</p>
           </div>
 
           {/* Seed Grid */}
@@ -1485,8 +1485,8 @@ export default function WalletOnboarding({
           </button>
 
           {/* Icon */}
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-amber-500/20 flex items-center justify-center">
-            <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#BFA181]/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
@@ -1505,7 +1505,7 @@ export default function WalletOnboarding({
                 setEmailError("");
               }}
               placeholder="name@example.com"
-              className="w-full py-4 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+              className="w-full py-4 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-[#BFA181]"
               autoFocus
             />
           </div>
@@ -1522,7 +1522,7 @@ export default function WalletOnboarding({
               }}
               onKeyDown={(e) => e.key === "Enter" && handleEmailLogin()}
               placeholder="••••••••"
-              className="w-full py-4 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+              className="w-full py-4 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-[#BFA181]"
             />
           </div>
 
@@ -1557,7 +1557,7 @@ export default function WalletOnboarding({
                 setEmailError("");
                 setStep("email-register");
               }}
-              className="text-amber-500 hover:text-amber-400 font-medium"
+              className="text-[#BFA181] hover:text-[#BFA181] font-medium"
             >
               {t("registerButton")}
             </button>
@@ -1587,8 +1587,8 @@ export default function WalletOnboarding({
           </button>
 
           {/* Icon */}
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-amber-500/20 flex items-center justify-center">
-            <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#BFA181]/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
             </svg>
           </div>
@@ -1604,7 +1604,7 @@ export default function WalletOnboarding({
               value={emailName}
               onChange={(e) => setEmailName(e.target.value)}
               placeholder="John Doe"
-              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-[#BFA181]"
               autoFocus
             />
           </div>
@@ -1620,7 +1620,7 @@ export default function WalletOnboarding({
                 setEmailError("");
               }}
               placeholder="name@example.com"
-              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-[#BFA181]"
             />
           </div>
 
@@ -1632,7 +1632,7 @@ export default function WalletOnboarding({
               value={emailPhone}
               onChange={(e) => setEmailPhone(e.target.value)}
               placeholder="+90 555 123 4567"
-              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-[#BFA181]"
             />
           </div>
 
@@ -1647,7 +1647,7 @@ export default function WalletOnboarding({
                 setEmailError("");
               }}
               placeholder="••••••••"
-              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-[#BFA181]"
             />
             <p className="text-xs text-slate-500 mt-1">{t("passwordRequirements")}</p>
           </div>
@@ -1664,7 +1664,7 @@ export default function WalletOnboarding({
               }}
               onKeyDown={(e) => e.key === "Enter" && handleEmailRegister()}
               placeholder="••••••••"
-              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-amber-500"
+              className="w-full py-3 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-[#BFA181]"
             />
           </div>
 
@@ -1699,7 +1699,7 @@ export default function WalletOnboarding({
                 setEmailError("");
                 setStep("email-login");
               }}
-              className="text-amber-500 hover:text-amber-400 font-medium"
+              className="text-[#BFA181] hover:text-[#BFA181] font-medium"
             >
               {t("loginButton")}
             </button>
@@ -1715,15 +1715,15 @@ export default function WalletOnboarding({
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center">
           {/* Icon */}
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-amber-500/20 flex items-center justify-center">
-            <svg className="w-10 h-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#BFA181]/20 flex items-center justify-center">
+            <svg className="w-10 h-10 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
             </svg>
           </div>
 
           <h1 className="text-2xl font-bold text-white mb-2">{t("verifyEmail")}</h1>
           <p className="text-slate-400 mb-2">{t("verifyEmailDesc")}</p>
-          <p className="text-amber-500 font-medium mb-8">{pendingEmail}</p>
+          <p className="text-[#BFA181] font-medium mb-8">{pendingEmail}</p>
 
           {/* Code Input */}
           <input
@@ -1736,7 +1736,7 @@ export default function WalletOnboarding({
             }}
             placeholder="000000"
             maxLength={6}
-            className="w-full py-4 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white text-center text-2xl tracking-widest font-mono focus:outline-none focus:border-amber-500 mb-4"
+            className="w-full py-4 px-4 bg-slate-800 border border-slate-700 rounded-xl text-white text-center text-2xl tracking-widest font-mono focus:outline-none focus:border-[#BFA181] mb-4"
             autoFocus
           />
 
@@ -1767,7 +1767,7 @@ export default function WalletOnboarding({
           <button
             onClick={handleResendCode}
             disabled={resendCooldown > 0}
-            className="text-amber-500 hover:text-amber-400 text-sm disabled:text-slate-500"
+            className="text-[#BFA181] hover:text-[#BFA181] text-sm disabled:text-slate-500"
           >
             {resendCooldown > 0 ? `${t("resendCode")} (${resendCooldown}s)` : t("resendCode")}
           </button>

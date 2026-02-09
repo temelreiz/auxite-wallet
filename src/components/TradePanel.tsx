@@ -874,8 +874,8 @@ export default function TradePanel({
           {showAllocationWarning && allocationPreview && (
             <div className="py-4">
               <div className="flex items-center justify-center mb-4">
-                <div className="w-14 h-14 bg-amber-500/20 rounded-full flex items-center justify-center">
-                  <svg className="w-7 h-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-14 h-14 bg-[#BFA181]/20 rounded-full flex items-center justify-center">
+                  <svg className="w-7 h-7 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
@@ -910,14 +910,14 @@ export default function TradePanel({
                 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center">
-                      <span className="text-amber-500 text-xs">○</span>
+                    <div className="w-5 h-5 rounded-full bg-[#BFA181]/20 flex items-center justify-center">
+                      <span className="text-[#BFA181] text-xs">○</span>
                     </div>
                     <span className="text-sm text-slate-600 dark:text-slate-300">
                       {lang === "tr" ? "Non-Allocated" : "Non-Allocated"}
                     </span>
                   </div>
-                  <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                  <span className="text-sm font-medium text-[#BFA181] dark:text-[#BFA181]">
                     {allocationPreview.nonAllocatedGrams.toFixed(4)}g
                   </span>
                 </div>
@@ -1332,8 +1332,8 @@ export default function TradePanel({
 
               {/* Insufficient Balance Warning */}
               {mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm && amountNum > 0 && (
-                <div className="mb-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                  <p className="text-xs text-amber-400">⚠️ {t.insufficientAuxm}</p>
+                <div className="mb-2 p-2 rounded-lg bg-[#BFA181]/10 border border-[#BFA181]/30">
+                  <p className="text-xs text-[#BFA181]">⚠️ {t.insufficientAuxm}</p>
                 </div>
               )}
 

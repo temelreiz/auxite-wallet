@@ -233,9 +233,9 @@ export function BiometricSetup({
 
   if (!supported) {
     return (
-      <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-6 text-center">
+      <div className="bg-[#BFA181]/10 border border-[#BFA181]/20 rounded-xl p-6 text-center">
         <span className="text-4xl mb-4 block">🚫</span>
-        <h3 className="text-lg font-semibold text-amber-400 mb-2">
+        <h3 className="text-lg font-semibold text-[#BFA181] mb-2">
           {lang === "tr" ? "Desteklenmiyor" : "Not Supported"}
         </h3>
         <p className="text-sm text-slate-400">

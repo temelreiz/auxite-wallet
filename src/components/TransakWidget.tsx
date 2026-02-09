@@ -128,8 +128,8 @@ export function TransakWidget({
     return (
       <div className={`p-6 bg-white dark:bg-zinc-800 rounded-xl border border-stone-200 dark:border-zinc-700 ${className}`}>
         <div className="text-center py-8">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-            <svg className="w-8 h-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#BFA181]/15 dark:bg-[#BFA181]/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
@@ -168,8 +168,8 @@ export function TransakWidget({
               onClick={() => setCryptoCurrency(crypto.value)}
               className={`p-3 rounded-lg border transition-all ${
                 cryptoCurrency === crypto.value
-                  ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
-                  : "border-stone-200 dark:border-zinc-700 hover:border-amber-300"
+                  ? "border-[#BFA181] bg-[#BFA181]/10 dark:bg-[#BFA181]/20"
+                  : "border-stone-200 dark:border-zinc-700 hover:border-[#BFA181]/50"
               }`}
             >
               <span className="text-sm font-medium text-slate-700 dark:text-zinc-300">
@@ -195,7 +195,7 @@ export function TransakWidget({
             onChange={(e) => setAmount(e.target.value)}
             min={30}
             max={10000}
-            className="w-full pl-10 pr-20 py-3 rounded-lg border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            className="w-full pl-10 pr-20 py-3 rounded-lg border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:ring-2 focus:ring-[#BFA181] focus:border-transparent"
             placeholder="100"
           />
           <select
@@ -219,8 +219,8 @@ export function TransakWidget({
               onClick={() => setAmount(preset.toString())}
               className={`flex-1 py-1.5 text-xs font-medium rounded border transition-all ${
                 amount === preset.toString()
-                  ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400"
-                  : "border-stone-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:border-amber-300"
+                  ? "border-[#BFA181] bg-[#BFA181]/10 dark:bg-[#BFA181]/20 text-[#BFA181] dark:text-[#BFA181]"
+                  : "border-stone-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:border-[#BFA181]/50"
               }`}
             >
               {fiatSymbol}{preset}
@@ -238,7 +238,7 @@ export function TransakWidget({
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-4 py-3 rounded-lg border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+          className="w-full px-4 py-3 rounded-lg border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:ring-2 focus:ring-[#BFA181] focus:border-transparent"
           placeholder="your@email.com"
         />
       </div>
@@ -254,7 +254,7 @@ export function TransakWidget({
       <button
         onClick={handleCreateOrder}
         disabled={isLoading}
-        className="w-full py-4 rounded-xl bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full py-4 rounded-xl bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-[#BFA181] hover:to-[#BFA181]/80 text-white font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {isLoading ? (
           <>

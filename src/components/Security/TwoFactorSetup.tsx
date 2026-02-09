@@ -214,7 +214,7 @@ export function TwoFactorSetup({
                     {lang === "tr" ? "Kalan yedek kod" : "Backup codes remaining"}
                   </span>
                   <span className={`font-medium ${
-                    (status.backupCodesRemaining || 0) <= 2 ? "text-amber-400" : "text-slate-300"
+                    (status.backupCodesRemaining || 0) <= 2 ? "text-[#BFA181]" : "text-slate-300"
                   }`}>
                     {status.backupCodesRemaining || 0}
                   </span>
@@ -361,10 +361,10 @@ export function TwoFactorSetup({
             </div>
           </div>
 
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+          <div className="bg-[#BFA181]/10 border border-[#BFA181]/20 rounded-lg p-3">
             <div className="flex gap-2">
-              <span className="text-amber-500">⚠️</span>
-              <p className="text-xs text-amber-400">
+              <span className="text-[#BFA181]">⚠️</span>
+              <p className="text-xs text-[#BFA181]">
                 {lang === "tr" 
                   ? "Bu kodları bir daha göremeyeceksiniz. Güvenli bir yere kaydedin!"
                   : "You won't see these codes again. Save them somewhere safe!"}

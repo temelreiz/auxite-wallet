@@ -39,7 +39,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     switch (type) {
       case "success": return "bg-[#2F6F62]";
       case "error": return "bg-red-500";
-      case "warning": return "bg-amber-500";
+      case "warning": return "bg-[#BFA181]";
       default: return "bg-blue-500";
     }
   };
@@ -101,7 +101,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <h3 className={`text-xl font-bold mb-2 ${
                 toast.type === "success" ? "text-[#2F6F62]" : 
                 toast.type === "error" ? "text-red-500" : 
-                toast.type === "warning" ? "text-amber-500" : "text-blue-500"
+                toast.type === "warning" ? "text-[#BFA181]" : "text-blue-500"
               }`}>
                 {getTitle(toast.type, toast.title)}
               </h3>

@@ -230,15 +230,15 @@ export default function TrustCenterPage() {
               </div>
 
               <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6">
-                <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-12 h-12 rounded-xl bg-[#BFA181]/20 flex items-center justify-center mb-4">
+                  <svg className="w-6 h-6 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                   </svg>
                 </div>
                 <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">{t.fullAllocation}</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400">{t.fullAllocationDesc}</p>
-                <div className="mt-4 p-3 bg-amber-500/10 rounded-lg border border-amber-500/30">
-                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                <div className="mt-4 p-3 bg-[#BFA181]/10 rounded-lg border border-[#BFA181]/30">
+                  <p className="text-xs text-[#BFA181] dark:text-[#BFA181] font-medium">
                     ✓ 100% physically allocated
                   </p>
                 </div>
@@ -357,10 +357,10 @@ export default function TrustCenterPage() {
                   <svg className="w-6 h-6 text-[#2F6F62] rotate-90 md:rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
-                  <div className="px-4 py-3 bg-amber-500/20 border border-amber-500/30 rounded-lg text-center">
-                    <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">Step 3</p>
-                    <p className="font-semibold text-amber-600 dark:text-amber-400">Metal Allocation</p>
-                    <p className="text-xs text-amber-600/70">AUXG/AUXS/AUXPT</p>
+                  <div className="px-4 py-3 bg-[#BFA181]/20 border border-[#BFA181]/30 rounded-lg text-center">
+                    <p className="text-xs text-[#BFA181] dark:text-[#BFA181] mb-1">Step 3</p>
+                    <p className="font-semibold text-[#BFA181] dark:text-[#BFA181]">Metal Allocation</p>
+                    <p className="text-xs text-[#BFA181]/70">AUXG/AUXS/AUXPT</p>
                   </div>
                 </div>
 

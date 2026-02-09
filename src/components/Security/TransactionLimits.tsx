@@ -215,7 +215,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
 
   const getProgressColor = (percentage: number) => {
     if (percentage >= 90) return "bg-red-500";
-    if (percentage >= 70) return "bg-amber-500";
+    if (percentage >= 70) return "bg-[#BFA181]";
     return "bg-[#2F6F62]";
   };
 
@@ -293,7 +293,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
             <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-slate-400">{labels.perTx}</span>
-                <span className="text-amber-400 text-sm">Multi-sig</span>
+                <span className="text-[#BFA181] text-sm">Multi-sig</span>
               </div>
               {editing ? (
                 <input

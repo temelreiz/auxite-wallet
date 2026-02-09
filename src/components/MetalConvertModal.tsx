@@ -527,7 +527,7 @@ export function MetalConvertModal({
                   </div>
                   <div className="flex items-center justify-between text-sm mt-2">
                     <span className="text-slate-500 dark:text-slate-400">Spread</span>
-                    <span className="text-amber-600 dark:text-amber-400">{spreadPercent}%</span>
+                    <span className="text-[#BFA181] dark:text-[#BFA181]">{spreadPercent}%</span>
                   </div>
                 </div>
               )}

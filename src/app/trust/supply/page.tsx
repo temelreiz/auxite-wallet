@@ -74,7 +74,7 @@ const tokenData = [
     holders: 0,
     transactions: 0,
     contract: "0x...",
-    color: "from-yellow-400 to-amber-500",
+    color: "from-yellow-400 to-[#BFA181]",
     bgColor: "bg-yellow-500/10"
   },
   { 
@@ -139,16 +139,16 @@ export default function SupplyPage() {
         </div>
 
         {/* Launch Phase Notice */}
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-6 mb-8">
+        <div className="bg-[#BFA181]/10 border border-[#BFA181]/30 rounded-xl p-6 mb-8">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-              <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-12 h-12 rounded-full bg-[#BFA181]/20 flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
-              <h3 className="font-semibold text-amber-700 dark:text-amber-400 mb-1">{t.launchPhaseNotice}</h3>
-              <p className="text-amber-600 dark:text-amber-300 text-sm">{t.launchPhaseDesc}</p>
+              <h3 className="font-semibold text-[#BFA181] dark:text-[#BFA181] mb-1">{t.launchPhaseNotice}</h3>
+              <p className="text-[#BFA181] dark:text-[#BFA181] text-sm">{t.launchPhaseDesc}</p>
             </div>
           </div>
         </div>

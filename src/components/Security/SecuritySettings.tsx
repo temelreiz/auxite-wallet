@@ -88,7 +88,7 @@ export function SecuritySettings({
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-[#2F6F62]";
-    if (score >= 50) return "text-amber-400";
+    if (score >= 50) return "text-[#BFA181]";
     return "text-red-400";
   };
 
@@ -180,7 +180,7 @@ export function SecuritySettings({
                           status.securityScore >= 80
                             ? "bg-[#2F6F62]"
                             : status.securityScore >= 50
-                            ? "bg-amber-500"
+                            ? "bg-[#BFA181]"
                             : "bg-red-500"
                         }`}
                         style={{ width: `${status.securityScore}%` }}
@@ -278,10 +278,10 @@ export function SecuritySettings({
                     </h3>
                     <div className="space-y-2 sm:space-y-3">
                       {!status.twoFactorEnabled && (
-                        <div className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
-                          <span className="text-amber-500 text-sm sm:text-base flex-shrink-0">⚠️</span>
+                        <div className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-[#BFA181]/10 rounded-lg border border-[#BFA181]/20">
+                          <span className="text-[#BFA181] text-sm sm:text-base flex-shrink-0">⚠️</span>
                           <div className="min-w-0">
-                            <p className="text-xs sm:text-sm text-amber-400 font-medium">
+                            <p className="text-xs sm:text-sm text-[#BFA181] font-medium">
                               {lang === "tr" ? "2FA'yı Aktifleştirin" : "Enable 2FA"}
                             </p>
                             <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5">

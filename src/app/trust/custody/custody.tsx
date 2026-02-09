@@ -113,7 +113,7 @@ export default function CustodyPage() {
             { label: 'Vault Locations', value: '3', icon: Globe },
           ].map((stat, i) => (
             <div key={i} className="p-4 rounded-xl bg-slate-900/50 border border-slate-800">
-              <stat.icon className="w-5 h-5 text-amber-400 mb-2" />
+              <stat.icon className="w-5 h-5 text-[#BFA181] mb-2" />
               <p className="text-2xl font-bold text-white">{stat.value}</p>
               <p className="text-sm text-slate-400">{stat.label}</p>
             </div>
@@ -128,7 +128,7 @@ export default function CustodyPage() {
           {VAULTS.map((vault) => (
             <div
               key={vault.id}
-              className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-amber-500/50 transition-all cursor-pointer"
+              className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-[#BFA181]/50 transition-all cursor-pointer"
               onClick={() => setSelectedVault(vault)}
             >
               <div className="flex items-center gap-3 mb-4">
@@ -156,7 +156,7 @@ export default function CustodyPage() {
 
               <div className="flex flex-wrap gap-2">
                 {vault.certification.slice(0, 2).map((cert, i) => (
-                  <span key={i} className="px-2 py-1 text-xs bg-amber-500/10 text-amber-400 rounded">
+                  <span key={i} className="px-2 py-1 text-xs bg-[#BFA181]/10 text-[#BFA181] rounded">
                     {cert}
                   </span>
                 ))}
@@ -209,16 +209,16 @@ export default function CustodyPage() {
             </ul>
           </div>
 
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/20">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center mb-4">
-              <Building className="w-6 h-6 text-amber-400" />
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-[#BFA181]/10 to-[#BFA181]/80/5 border border-[#BFA181]/20">
+            <div className="w-12 h-12 rounded-xl bg-[#BFA181]/20 flex items-center justify-center mb-4">
+              <Building className="w-6 h-6 text-[#BFA181]" />
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">Insurance & Compliance</h3>
             <ul className="space-y-2 text-sm text-slate-400">
-              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-amber-400" /> $1B total insurance coverage</li>
-              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-amber-400" /> LBMA certified facilities</li>
-              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-amber-400" /> SOC 2 Type II compliant</li>
-              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-amber-400" /> Regular third-party audits</li>
+              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-[#BFA181]" /> $1B total insurance coverage</li>
+              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-[#BFA181]" /> LBMA certified facilities</li>
+              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-[#BFA181]" /> SOC 2 Type II compliant</li>
+              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-[#BFA181]" /> Regular third-party audits</li>
             </ul>
           </div>
         </div>

@@ -159,7 +159,7 @@ export default function StakePage() {
   if (isLoading) {
     return (
       <main className="min-h-screen bg-stone-100 dark:bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-slate-600 border-t-amber-500 rounded-full"></div>
+        <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-slate-600 border-t-[#BFA181] rounded-full"></div>
       </main>
     );
   }
@@ -181,9 +181,9 @@ export default function StakePage() {
               </p>
             </div>
             {/* SOFR + GOFO Badge */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-              <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-              <span className="text-xs font-medium text-amber-600 dark:text-amber-400">{t.yieldBadge}</span>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#BFA181]/10 border border-[#BFA181]/20">
+              <div className="w-2 h-2 rounded-full bg-[#BFA181] animate-pulse"></div>
+              <span className="text-xs font-medium text-[#BFA181] dark:text-[#BFA181]">{t.yieldBadge}</span>
             </div>
           </div>
         </div>
@@ -197,8 +197,8 @@ export default function StakePage() {
           <div className="space-y-6">
             {/* Sign In Card - Mobile First */}
             <div className="rounded-2xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 sm:p-8 text-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center">
-                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-2xl bg-gradient-to-br from-[#BFA181]/20 to-[#BFA181]/80/20 flex items-center justify-center">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
               </div>
@@ -214,7 +214,7 @@ export default function StakePage() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-sm mx-auto">
                 <Link
                   href="/auth/login"
-                  className="flex-1 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3 rounded-xl bg-[#BFA181] hover:bg-[#BFA181] text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
@@ -249,11 +249,11 @@ export default function StakePage() {
                   { num: 3, title: t.step3Title, desc: t.step3Desc, icon: "💰" },
                 ].map((step) => (
                   <div key={step.num} className="flex sm:flex-col items-start sm:items-center gap-3 sm:gap-2 p-3 sm:p-4 rounded-xl bg-stone-50 dark:bg-slate-800/50">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#BFA181]/10 flex items-center justify-center text-xl sm:text-2xl shrink-0">
                       {step.icon}
                     </div>
                     <div className="sm:text-center">
-                      <div className="text-xs text-amber-500 font-semibold mb-0.5">Step {step.num}</div>
+                      <div className="text-xs text-[#BFA181] font-semibold mb-0.5">Step {step.num}</div>
                       <div className="text-sm font-medium text-slate-800 dark:text-white mb-1">{step.title}</div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">{step.desc}</div>
                     </div>
@@ -285,25 +285,25 @@ export default function StakePage() {
             </div>
 
             {/* SOFR + GOFO Live Display */}
-            <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/5 dark:to-orange-500/5 p-5 sm:p-6">
+            <div className="rounded-2xl border border-[#BFA181]/20 bg-gradient-to-r from-[#BFA181]/10 to-orange-50 dark:from-[#BFA181]/5 dark:to-orange-500/5 p-5 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="w-10 h-10 rounded-xl bg-[#BFA181]/20 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-amber-700 dark:text-amber-300">{t.realTimeRates}</div>
-                    <div className="text-xs text-amber-600 dark:text-amber-400">{source || "NY Fed + Calculated"}</div>
+                    <div className="text-sm font-semibold text-[#BFA181] dark:text-[#BFA181]">{t.realTimeRates}</div>
+                    <div className="text-xs text-[#BFA181] dark:text-[#BFA181]">{source || "NY Fed + Calculated"}</div>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <div className="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-500/20">
+                  <div className="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-[#BFA181]/20">
                     <div className="text-[10px] text-slate-500 uppercase tracking-wide">SOFR</div>
-                    <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{sofr?.toFixed(2) || "4.33"}%</div>
+                    <div className="text-lg font-bold text-[#BFA181] dark:text-[#BFA181]">{sofr?.toFixed(2) || "4.33"}%</div>
                   </div>
-                  <div className="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-500/20">
+                  <div className="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-[#BFA181]/20">
                     <div className="text-[10px] text-slate-500 uppercase tracking-wide">GOFO</div>
                     <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{gofo?.toFixed(2) || "1.50"}%</div>
                   </div>
@@ -311,7 +311,7 @@ export default function StakePage() {
               </div>
 
               {/* APY Formula Display */}
-              <div className="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-amber-500/10 mb-4">
+              <div className="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-[#BFA181]/10 mb-4">
                 <code className="text-xs sm:text-sm font-mono text-slate-600 dark:text-slate-400">
                   Base Rate = {sofr?.toFixed(2) || "4.33"}% (SOFR) - {gofo?.toFixed(2) || "1.50"}% (GOFO) = <span className="text-[#D4B47A] font-bold">{((sofr || 4.33) - (gofo || 1.5)).toFixed(2)}%</span>
                 </code>

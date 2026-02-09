@@ -267,8 +267,8 @@ export function OpenInMobileModal({
 
           {status === 'waiting' && (
             <>
-              <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4 animate-pulse">
-                <Bell className="w-10 h-10 text-amber-500" />
+              <div className="w-20 h-20 rounded-full bg-[#BFA181]/15 dark:bg-[#BFA181]/20 flex items-center justify-center mb-4 animate-pulse">
+                <Bell className="w-10 h-10 text-[#BFA181]" />
               </div>
               <p className="text-slate-600 dark:text-slate-300 text-center mb-2">
                 {t.waiting}

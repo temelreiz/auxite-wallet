@@ -29,7 +29,7 @@ const VAULT_LOCATIONS = [
 
 // Metal info
 const METAL_INFO: Record<string, { name: string; icon: string; color: string }> = {
-  AUXG: { name: "Gold", icon: "🥇", color: "text-amber-400" },
+  AUXG: { name: "Gold", icon: "🥇", color: "text-[#BFA181]" },
   AUXS: { name: "Silver", icon: "🥈", color: "text-slate-300" },
   AUXPT: { name: "Platinum", icon: "💎", color: "text-cyan-400" },
   AUXPD: { name: "Palladium", icon: "💜", color: "text-purple-400" },
@@ -277,7 +277,7 @@ export default function VaultAssignmentPage() {
           </div>
           <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
             <p className="text-xs text-slate-400">Toplam Gram</p>
-            <p className="text-2xl font-bold text-amber-400">{stats.totalGrams.toLocaleString()}g</p>
+            <p className="text-2xl font-bold text-[#BFA181]">{stats.totalGrams.toLocaleString()}g</p>
           </div>
         </div>
 
@@ -352,7 +352,7 @@ export default function VaultAssignmentPage() {
         <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
           {loading ? (
             <div className="p-8 text-center text-slate-400">
-              <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <div className="animate-spin w-8 h-8 border-2 border-[#BFA181] border-t-transparent rounded-full mx-auto mb-4"></div>
               Yükleniyor...
             </div>
           ) : filteredAllocations.length === 0 ? (

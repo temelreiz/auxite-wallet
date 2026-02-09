@@ -486,8 +486,8 @@ export function MetalTradeModal({
           {showAllocationWarning && allocationPreview && (
             <div className="py-4">
               <div className="flex items-center justify-center mb-4">
-                <div className="w-14 h-14 bg-amber-500/20 rounded-full flex items-center justify-center">
-                  <svg className="w-7 h-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-14 h-14 bg-[#BFA181]/20 rounded-full flex items-center justify-center">
+                  <svg className="w-7 h-7 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
@@ -524,14 +524,14 @@ export function MetalTradeModal({
                 {/* Non-Allocated */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center">
-                      <span className="text-amber-500 text-xs">○</span>
+                    <div className="w-5 h-5 rounded-full bg-[#BFA181]/20 flex items-center justify-center">
+                      <span className="text-[#BFA181] text-xs">○</span>
                     </div>
                     <span className="text-sm text-slate-300">
                       {lang === "tr" ? "Non-Allocated" : "Non-Allocated"}
                     </span>
                   </div>
-                  <span className="text-sm font-medium text-amber-400">
+                  <span className="text-sm font-medium text-[#BFA181]">
                     {allocationPreview.nonAllocatedGrams.toFixed(4)}g
                   </span>
                 </div>
@@ -557,7 +557,7 @@ export function MetalTradeModal({
                 )}
                 <button
                   onClick={handleAllocationConfirm}
-                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-semibold hover:from-amber-600 hover:to-yellow-600 transition-colors text-sm"
+                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-[#BFA181] to-yellow-500 text-black font-semibold hover:from-[#BFA181] hover:to-yellow-600 transition-colors text-sm"
                 >
                   {lang === "tr" ? "Devam Et" : "Continue"}
                 </button>
@@ -623,7 +623,7 @@ export function MetalTradeModal({
                         : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
                     }`}
                   >
-                    <div className={`font-semibold ${orderType === "market" ? "text-amber-400" : "text-slate-300"}`}>
+                    <div className={`font-semibold ${orderType === "market" ? "text-[#BFA181]" : "text-slate-300"}`}>
                       {t.market}
                     </div>
                     <div className="text-xs text-slate-500 mt-1">{t.marketDesc}</div>
@@ -680,7 +680,7 @@ export function MetalTradeModal({
                 {quote && (
                   <div className="flex justify-between text-sm mt-1">
                     <span className="text-slate-400">{t.spread}</span>
-                    <span className="text-amber-400 font-mono">{quote.spreadPercent.toFixed(2)}%</span>
+                    <span className="text-[#BFA181] font-mono">{quote.spreadPercent.toFixed(2)}%</span>
                   </div>
                 )}
               </div>

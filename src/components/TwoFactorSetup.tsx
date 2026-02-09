@@ -317,8 +317,8 @@ export function TwoFactorSetup({ lang = "tr", onClose, walletAddress }: TwoFacto
 
           {/* Regenerate backup codes */}
           {isEnabled && backupCodesRemaining < 5 && (
-            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-              <p className="text-amber-400 text-sm mb-3">
+            <div className="p-4 bg-[#BFA181]/10 border border-[#BFA181]/30 rounded-xl">
+              <p className="text-[#BFA181] text-sm mb-3">
                 ⚠️ {lang === "tr" 
                   ? "Backup kodlarınız azaldı. Yeni kodlar oluşturun." 
                   : "Your backup codes are running low. Generate new codes."}
@@ -420,8 +420,8 @@ export function TwoFactorSetup({ lang = "tr", onClose, walletAddress }: TwoFacto
             <h4 className="text-xl font-semibold text-[#2F6F62]">{t.success}</h4>
           </div>
 
-          <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-            <p className="text-amber-400 text-sm font-medium mb-2">⚠️ {t.backupCodesTitle}</p>
+          <div className="p-4 bg-[#BFA181]/10 border border-[#BFA181]/30 rounded-xl">
+            <p className="text-[#BFA181] text-sm font-medium mb-2">⚠️ {t.backupCodesTitle}</p>
             <p className="text-slate-400 text-xs mb-4">{t.backupCodesWarning}</p>
             
             <div className="grid grid-cols-2 gap-2">

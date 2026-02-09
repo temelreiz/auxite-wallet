@@ -33,7 +33,7 @@ export function NotificationBell({ lang }: NotificationBellProps) {
       case "unlocked":
         return "border-[#2F6F62]/50 bg-[#2F6F62]/10";
       case "unlock_soon":
-        return "border-amber-500/50 bg-amber-500/10";
+        return "border-[#BFA181]/50 bg-[#BFA181]/10";
       default:
         return "border-blue-500/50 bg-blue-500/10";
     }

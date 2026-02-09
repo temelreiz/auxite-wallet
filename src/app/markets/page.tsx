@@ -23,7 +23,7 @@ interface Asset {
 }
 
 const metals: Asset[] = [
-  { symbol: "AUXG", name: "Altın", nameEn: "Gold", price: 2648.50, change: 1.24, volume: "2.4B", icon: "🥇", color: "from-amber-500 to-yellow-600" },
+  { symbol: "AUXG", name: "Altın", nameEn: "Gold", price: 2648.50, change: 1.24, volume: "2.4B", icon: "🥇", color: "from-[#BFA181] to-yellow-600" },
   { symbol: "AUXS", name: "Gümüş", nameEn: "Silver", price: 31.25, change: -0.58, volume: "890M", icon: "🥈", color: "from-slate-400 to-slate-500" },
   { symbol: "AUXPT", name: "Platin", nameEn: "Platinum", price: 985.00, change: 0.82, volume: "320M", icon: "💎", color: "from-cyan-400 to-cyan-600" },
   { symbol: "AUXPD", name: "Paladyum", nameEn: "Palladium", price: 1025.00, change: -1.15, volume: "180M", icon: "⚪", color: "from-indigo-400 to-indigo-600" },

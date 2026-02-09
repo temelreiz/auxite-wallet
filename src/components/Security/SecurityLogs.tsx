@@ -73,10 +73,10 @@ export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) 
         };
       case "warning":
         return {
-          bg: "bg-amber-500/10",
-          border: "border-amber-500/20",
+          bg: "bg-[#BFA181]/10",
+          border: "border-[#BFA181]/20",
           icon: "🟡",
-          text: "text-amber-400",
+          text: "text-[#BFA181]",
         };
       default:
         return {
@@ -244,7 +244,7 @@ export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) 
             <span className="text-slate-400">{lang === "tr" ? "Bilgi" : "Info"}</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="text-amber-400">🟡</span>
+            <span className="text-[#BFA181]">🟡</span>
             <span className="text-slate-400">{lang === "tr" ? "Uyarı" : "Warning"}</span>
           </span>
           <span className="flex items-center gap-1">

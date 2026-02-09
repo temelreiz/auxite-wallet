@@ -129,7 +129,7 @@ export function BonusTierInfo({ lang: propLang, showTitle = true, showUsageNote 
             key={tier.name}
             className={`flex items-center justify-between p-2 rounded-lg ${
               index === tiers.length - 1 
-                ? "bg-amber-500/10 border border-amber-500/30" 
+                ? "bg-[#BFA181]/10 border border-[#BFA181]/30" 
                 : "bg-slate-700/50"
             }`}
           >
@@ -143,7 +143,7 @@ export function BonusTierInfo({ lang: propLang, showTitle = true, showUsageNote 
               <span className="text-slate-300 text-sm">{getTierName(tier.name)}</span>
             </div>
             <span className={`font-bold text-sm ${
-              tier.name === "Platinum" ? "text-amber-400" : "text-[#2F6F62]"
+              tier.name === "Platinum" ? "text-[#BFA181]" : "text-[#2F6F62]"
             }`}>
               +%{tier.bonusPercent}
             </span>

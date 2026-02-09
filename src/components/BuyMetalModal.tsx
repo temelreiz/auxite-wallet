@@ -351,23 +351,23 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
               <span className="text-slate-700 dark:text-slate-300 font-medium">{preview?.spread || `${selectedMetal?.spread || 0}%`}</span>
             </div>
             {preview?.tier && (
-              <div className="flex justify-between text-sm p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
-                <span className="text-amber-600 dark:text-amber-400">Auxiteer Tier:</span>
-                <span className="text-amber-700 dark:text-amber-300 font-medium">{preview.tier.name}</span>
+              <div className="flex justify-between text-sm p-3 rounded-lg bg-[#BFA181]/10 dark:bg-[#BFA181]/10 border border-[#BFA181]/30 dark:border-[#BFA181]/30">
+                <span className="text-[#BFA181] dark:text-[#BFA181]">Auxiteer Tier:</span>
+                <span className="text-[#BFA181] dark:text-[#BFA181] font-medium">{preview.tier.name}</span>
               </div>
             )}
           </div>
 
           {/* Allocation Warning */}
           {showAllocationWarning && allocationPreview && (
-            <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border-2 border-amber-300 dark:border-amber-500/40">
+            <div className="p-4 rounded-xl bg-[#BFA181]/10 dark:bg-[#BFA181]/10 border-2 border-[#BFA181]/50 dark:border-[#BFA181]/40">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-8 h-8 rounded-full bg-[#BFA181]/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
-                <h4 className="font-bold text-amber-700 dark:text-amber-400">{t.partialAllocation || "Partial Allocation"}</h4>
+                <h4 className="font-bold text-[#BFA181] dark:text-[#BFA181]">{t.partialAllocation || "Partial Allocation"}</h4>
               </div>
               
               <div className="space-y-2 mb-3">
@@ -379,9 +379,9 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                    <span className="text-amber-500">○</span> {t.nonAllocated || "Non-Allocated"}
+                    <span className="text-[#BFA181]">○</span> {t.nonAllocated || "Non-Allocated"}
                   </span>
-                  <span className="font-semibold text-amber-600 dark:text-amber-400">{allocationPreview.nonAllocatedGrams.toFixed(4)}g</span>
+                  <span className="font-semibold text-[#BFA181] dark:text-[#BFA181]">{allocationPreview.nonAllocatedGrams.toFixed(4)}g</span>
                 </div>
               </div>
               

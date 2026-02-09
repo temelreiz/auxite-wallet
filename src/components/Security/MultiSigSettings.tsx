@@ -269,7 +269,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
       case "approved": return "text-[#2F6F62]";
       case "rejected": return "text-red-400";
       case "expired": return "text-slate-500";
-      default: return "text-amber-400";
+      default: return "text-[#BFA181]";
     }
   };
 
@@ -315,7 +315,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
                 <p className="text-sm text-slate-400">{labels.thresholdDesc}</p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold text-amber-400">
+                <p className="text-2xl font-bold text-[#BFA181]">
                   ${config.thresholdAmount.toLocaleString()}
                 </p>
                 <p className="text-sm text-slate-500">
@@ -348,10 +348,10 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        signer.role === "owner" ? "bg-amber-500/20" : "bg-slate-700"
+                        signer.role === "owner" ? "bg-[#BFA181]/20" : "bg-slate-700"
                       }`}>
                         <span className={`text-lg ${
-                          signer.role === "owner" ? "text-amber-400" : "text-slate-400"
+                          signer.role === "owner" ? "text-[#BFA181]" : "text-slate-400"
                         }`}>
                           {signer.name.charAt(0).toUpperCase()}
                         </span>
@@ -364,7 +364,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
                     <div className="flex items-center gap-3">
                       <span className={`px-2 py-1 rounded text-xs ${
                         signer.role === "owner" 
-                          ? "bg-amber-500/20 text-amber-400"
+                          ? "bg-[#BFA181]/20 text-[#BFA181]"
                           : "bg-slate-700 text-slate-400"
                       }`}>
                         {getRoleLabel(signer.role)}

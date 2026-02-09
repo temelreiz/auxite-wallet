@@ -300,7 +300,7 @@ export default function VaultPage() {
           </p>
           {loading ? (
             <div className="h-12 flex items-center">
-              <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-[#BFA181] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <p className="text-4xl font-bold text-slate-800 dark:text-white mb-1">
@@ -324,7 +324,7 @@ export default function VaultPage() {
               <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.availableCapital}</p>
             </div>
             <div className="text-center border-x border-stone-200 dark:border-slate-700">
-              <p className="text-lg font-semibold text-amber-500">{formatCurrency(allocatedHoldings)}</p>
+              <p className="text-lg font-semibold text-[#BFA181]">{formatCurrency(allocatedHoldings)}</p>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.allocatedMetalHoldings}</p>
             </div>
             <div className="text-center">
@@ -335,11 +335,11 @@ export default function VaultPage() {
         </div>
 
         {/* Institutional Architecture Message */}
-        <div className="flex items-center justify-center gap-3 py-3 px-4 bg-white dark:bg-slate-900 rounded-xl border border-amber-500/30">
-          <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="flex items-center justify-center gap-3 py-3 px-4 bg-white dark:bg-slate-900 rounded-xl border border-[#BFA181]/30">
+          <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
-          <span className="text-sm font-semibold text-amber-500">{t.institutionalArchitecture}</span>
+          <span className="text-sm font-semibold text-[#BFA181]">{t.institutionalArchitecture}</span>
         </div>
 
         {/* Capital Clarity Bar */}
@@ -356,7 +356,7 @@ export default function VaultPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-amber-500" />
+              <div className="w-2 h-2 rounded-full bg-[#BFA181]" />
               <div>
                 <p className="text-sm font-bold text-slate-800 dark:text-white">{formatCurrency(allocatedHoldings)}</p>
                 <p className="text-[10px] text-slate-500">{t.allocatedMetals}</p>
@@ -379,7 +379,7 @@ export default function VaultPage() {
               {t.protectionStatus}
             </p>
             {vaultId && (
-              <span className="px-2 py-1 bg-amber-500/15 rounded text-[10px] font-semibold text-amber-500">
+              <span className="px-2 py-1 bg-[#BFA181]/15 rounded text-[10px] font-semibold text-[#BFA181]">
                 {vaultId}
               </span>
             )}
@@ -389,13 +389,13 @@ export default function VaultPage() {
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-slate-800 dark:text-white">{t.protectionLevel}</span>
-              <span className={`text-sm font-bold ${protectionLevel >= 80 ? "text-[#2F6F62]" : "text-amber-500"}`}>
+              <span className={`text-sm font-bold ${protectionLevel >= 80 ? "text-[#2F6F62]" : "text-[#BFA181]"}`}>
                 {protectionLevel >= 80 ? t.elite : `${protectionLevel}%`}
               </span>
             </div>
             <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all ${protectionLevel >= 80 ? "bg-[#2F6F62]" : "bg-amber-500"}`}
+                className={`h-full rounded-full transition-all ${protectionLevel >= 80 ? "bg-[#2F6F62]" : "bg-[#BFA181]"}`}
                 style={{ width: `${protectionLevel}%` }}
               />
             </div>
@@ -485,7 +485,7 @@ export default function VaultPage() {
               </svg>
               {t.offBalanceSheet}
             </span>
-            <span className="flex items-center gap-1 px-2 py-1 bg-amber-500/15 rounded text-[9px] font-semibold text-amber-500">
+            <span className="flex items-center gap-1 px-2 py-1 bg-[#BFA181]/15 rounded text-[9px] font-semibold text-[#BFA181]">
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
@@ -516,11 +516,11 @@ export default function VaultPage() {
             </svg>
             <span className="text-xs font-semibold text-[#2F6F62] dark:text-[#2F6F62]">{t.custodySeparation}</span>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-800/50">
-            <svg className="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex items-center gap-3 p-3 bg-[#BFA181]/10 dark:bg-[#BFA181]/10 rounded-xl border border-[#BFA181]/30 dark:border-[#BFA181]/30">
+            <svg className="w-4 h-4 text-[#BFA181] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{t.notRehypothecated}</span>
+            <span className="text-xs font-semibold text-[#BFA181] dark:text-[#BFA181]">{t.notRehypothecated}</span>
           </div>
         </div>
 
@@ -539,26 +539,26 @@ export default function VaultPage() {
               <Link
                 key={action.label}
                 href={action.href}
-                className="flex flex-col items-center p-3 bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 hover:border-amber-500 transition-colors"
+                className="flex flex-col items-center p-3 bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 hover:border-[#BFA181] transition-colors"
               >
-                <div className="w-10 h-10 rounded-full bg-amber-500/15 flex items-center justify-center mb-2">
+                <div className="w-10 h-10 rounded-full bg-[#BFA181]/15 flex items-center justify-center mb-2">
                   {action.icon === "wallet" && (
-                    <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                     </svg>
                   )}
                   {action.icon === "cube" && (
-                    <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   )}
                   {action.icon === "trending-up" && (
-                    <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                   )}
                   {action.icon === "arrows" && (
-                    <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
                   )}
@@ -574,7 +574,7 @@ export default function VaultPage() {
           <h3 className="text-base font-semibold text-slate-800 dark:text-white mb-4">{t.holdings}</h3>
           {loading ? (
             <div className="flex justify-center py-8">
-              <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-[#BFA181] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : holdings.length === 0 ? (
             <p className="text-center py-8 text-slate-500 dark:text-slate-400">{t.noHoldings}</p>
@@ -587,7 +587,7 @@ export default function VaultPage() {
                   className="flex items-center justify-between p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-amber-500/10 flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-full bg-[#BFA181]/10 flex items-center justify-center">
                       {metalIcons[holding.symbol] ? (
                         <Image
                           src={metalIcons[holding.symbol]}
@@ -597,7 +597,7 @@ export default function VaultPage() {
                           className="object-contain"
                         />
                       ) : (
-                        <span className="text-amber-500 font-bold">{holding.symbol[0]}</span>
+                        <span className="text-[#BFA181] font-bold">{holding.symbol[0]}</span>
                       )}
                     </div>
                     <div>
@@ -620,11 +620,11 @@ export default function VaultPage() {
         {/* Physical Redemption Card */}
         <Link
           href="/physical-delivery"
-          className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 hover:border-amber-500 transition-colors"
+          className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 hover:border-[#BFA181] transition-colors"
         >
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-amber-500/15 flex items-center justify-center">
-              <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-12 h-12 rounded-full bg-[#BFA181]/15 flex items-center justify-center">
+              <svg className="w-6 h-6 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
             </div>

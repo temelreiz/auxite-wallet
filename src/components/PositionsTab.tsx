@@ -17,14 +17,14 @@ const metalIcons: Record<string, string> = {
 };
 
 const metalColors: Record<string, string> = {
-  AUXG: "text-amber-500",
+  AUXG: "text-[#BFA181]",
   AUXS: "text-slate-400",
   AUXPT: "text-cyan-400",
   AUXPD: "text-rose-400",
 };
 
 const metalBgColors: Record<string, string> = {
-  AUXG: "from-amber-500/20 to-amber-600/10",
+  AUXG: "from-[#BFA181]/20 to-[#BFA181]/80/10",
   AUXS: "from-slate-400/20 to-slate-500/10",
   AUXPT: "from-cyan-400/20 to-cyan-500/10",
   AUXPD: "from-rose-400/20 to-rose-500/10",
@@ -508,8 +508,8 @@ function PositionCard({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
             <div className="p-6">
-              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-amber-500/20 flex items-center justify-center">
-                <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[#BFA181]/20 flex items-center justify-center">
+                <svg className="w-6 h-6 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
@@ -519,8 +519,8 @@ function PositionCard({
               <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-4">
                 {t.withdrawWarning}
               </p>
-              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
-                <span className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+              <div className="p-3 rounded-lg bg-[#BFA181]/10 border border-[#BFA181]/20 text-center">
+                <span className="text-sm text-[#BFA181] dark:text-[#BFA181] font-medium">
                   {t.penalty}: 5% ({(stake.amountGrams * 0.05).toFixed(4)}g)
                 </span>
               </div>

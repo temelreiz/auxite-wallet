@@ -192,10 +192,10 @@ export function DepositConfirmation({
 
       {/* Metal Purchase CTA */}
       {bonus.bonusAmount > 0 && (
-        <div className="bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/30 rounded-xl p-3 mb-4">
+        <div className="bg-gradient-to-r from-[#BFA181]/10 to-yellow-500/10 border border-[#BFA181]/30 rounded-xl p-3 mb-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">✨</span>
-            <p className="text-sm text-amber-300">
+            <p className="text-sm text-[#BFA181]">
               {lang === "tr" 
                 ? "Bonus AUXM'inizi kullanarak hemen altın veya gümüş satın alabilirsiniz!"
                 : "Use your Bonus AUXM to buy gold or silver right now!"}
@@ -219,7 +219,7 @@ export function DepositConfirmation({
             onClick={onConfirm}
             className={`flex-1 py-3 rounded-xl text-white font-semibold transition-colors ${
               bonus.bonusAmount > 0
-                ? "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400"
+                ? "bg-gradient-to-r from-[#BFA181] to-yellow-500 hover:from-[#BFA181] hover:to-[#D4B47A]"
                 : "bg-[#2F6F62] hover:bg-[#2F6F62]"
             }`}
           >

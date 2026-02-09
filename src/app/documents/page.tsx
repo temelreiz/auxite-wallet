@@ -137,13 +137,13 @@ export default function DocumentsPage() {
                     onClick={() => setFilter(cat.key)}
                     className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                       filter === cat.key
-                        ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                        ? "bg-[#BFA181]/20 text-[#BFA181] dark:text-[#BFA181]"
                         : "text-slate-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800"
                     }`}
                   >
                     <span>{cat.icon}</span>
                     <span>{cat.label}</span>
-                    <span className={`ml-auto text-xs ${filter === cat.key ? "text-amber-500" : "text-slate-400"}`}>
+                    <span className={`ml-auto text-xs ${filter === cat.key ? "text-[#BFA181]" : "text-slate-400"}`}>
                       {cat.key === "all"
                         ? mockDocuments.length
                         : mockDocuments.filter((d) => d.type === cat.key).length}
@@ -168,7 +168,7 @@ export default function DocumentsPage() {
                 {filteredDocs.map((doc) => (
                   <div
                     key={doc.id}
-                    className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-4 hover:border-amber-500/50 transition-colors"
+                    className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-4 hover:border-[#BFA181]/50 transition-colors"
                   >
                     <div className="flex items-center gap-4">
                       {/* Document Icon */}
@@ -196,7 +196,7 @@ export default function DocumentsPage() {
                         >
                           {t.preview}
                         </button>
-                        <button className="px-3 py-2 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors flex items-center gap-1">
+                        <button className="px-3 py-2 text-sm font-medium text-white bg-[#BFA181] rounded-lg hover:bg-[#BFA181] transition-colors flex items-center gap-1">
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                           </svg>

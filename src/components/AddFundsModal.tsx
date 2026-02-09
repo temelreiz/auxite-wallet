@@ -482,7 +482,7 @@ export function AddFundsModal({
               onClick={() => { setActiveTab("crypto"); setSelectedCoin(null); }}
               className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
                 activeTab === "crypto"
-                  ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500"
+                  ? "text-[#BFA181] dark:text-[#BFA181] border-b-2 border-[#BFA181]"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
               }`}
             >
@@ -492,7 +492,7 @@ export function AddFundsModal({
               onClick={() => { setActiveTab("card"); setSelectedCoin(null); }}
               className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
                 activeTab === "card"
-                  ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500"
+                  ? "text-[#BFA181] dark:text-[#BFA181] border-b-2 border-[#BFA181]"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
               }`}
             >
@@ -502,7 +502,7 @@ export function AddFundsModal({
               onClick={() => { setActiveTab("bank"); setSelectedCoin(null); }}
               className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
                 activeTab === "bank"
-                  ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500"
+                  ? "text-[#BFA181] dark:text-[#BFA181] border-b-2 border-[#BFA181]"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
               }`}
             >
@@ -524,7 +524,7 @@ export function AddFundsModal({
                   <button
                     key={coin}
                     onClick={() => setSelectedCoin(coin)}
-                    className="p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:border-amber-500/50 transition-all flex items-center gap-3 text-left"
+                    className="p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:border-[#BFA181]/50 transition-all flex items-center gap-3 text-left"
                   >
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg"
@@ -609,8 +609,8 @@ export function AddFundsModal({
                 </div>
               )}
 
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-                <p className="text-xs text-amber-700 dark:text-amber-400">
+              <div className="bg-[#BFA181]/10 dark:bg-[#BFA181]/20 border border-[#BFA181]/30 dark:border-[#BFA181]/30 rounded-lg p-3">
+                <p className="text-xs text-[#BFA181] dark:text-[#BFA181]">
                   {t.warning.replace("{network}", DEPOSIT_ADDRESSES[selectedCoin].network)}
                 </p>
               </div>
@@ -633,8 +633,8 @@ export function AddFundsModal({
                       onClick={() => setCryptoCurrency(crypto.value)}
                       className={`p-2 sm:p-3 rounded-lg border transition-all text-center ${
                         cryptoCurrency === crypto.value
-                          ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
-                          : "border-stone-200 dark:border-slate-700 hover:border-amber-300"
+                          ? "border-[#BFA181] bg-[#BFA181]/10 dark:bg-[#BFA181]/20"
+                          : "border-stone-200 dark:border-slate-700 hover:border-[#BFA181]/50"
                       }`}
                     >
                       <span className="text-lg sm:text-xl">{crypto.icon}</span>
@@ -660,7 +660,7 @@ export function AddFundsModal({
                     onChange={(e) => setAmount(e.target.value)}
                     min={30}
                     max={10000}
-                    className="w-full pl-8 sm:pl-10 pr-16 sm:pr-20 py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm sm:text-base focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    className="w-full pl-8 sm:pl-10 pr-16 sm:pr-20 py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm sm:text-base focus:ring-2 focus:ring-[#BFA181] focus:border-transparent"
                     placeholder="100"
                   />
                   <select
@@ -684,8 +684,8 @@ export function AddFundsModal({
                       onClick={() => setAmount(preset.toString())}
                       className={`flex-1 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded border transition-all ${
                         amount === preset.toString()
-                          ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400"
-                          : "border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-amber-300"
+                          ? "border-[#BFA181] bg-[#BFA181]/10 dark:bg-[#BFA181]/20 text-[#BFA181] dark:text-[#BFA181]"
+                          : "border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-[#BFA181]/50"
                       }`}
                     >
                       {fiatSymbol}{preset}
@@ -702,13 +702,13 @@ export function AddFundsModal({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm focus:ring-2 focus:ring-[#BFA181] focus:border-transparent"
                   placeholder={t.emailPlaceholder}
                 />
               </div>
 
-              <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                <p className="text-xs text-amber-700 dark:text-amber-400">
+              <div className="mb-4 p-3 rounded-lg bg-[#BFA181]/10 dark:bg-[#BFA181]/20 border border-[#BFA181]/30 dark:border-[#BFA181]/30">
+                <p className="text-xs text-[#BFA181] dark:text-[#BFA181]">
                   {t.holdingNotice}
                 </p>
               </div>
@@ -716,7 +716,7 @@ export function AddFundsModal({
               <button
                 onClick={handleBuyWithCard}
                 disabled={isLoading}
-                className="w-full py-3 sm:py-4 rounded-xl bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 sm:py-4 rounded-xl bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-[#BFA181] hover:to-[#BFA181]/80 text-white font-semibold text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -869,8 +869,8 @@ export function AddFundsModal({
               </div>
 
               {/* Holding Period Notice */}
-              <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                <p className="text-xs text-amber-700 dark:text-amber-400">
+              <div className="mb-4 p-3 rounded-lg bg-[#BFA181]/10 dark:bg-[#BFA181]/20 border border-[#BFA181]/30 dark:border-[#BFA181]/30">
+                <p className="text-xs text-[#BFA181] dark:text-[#BFA181]">
                   {t.holdingNotice}
                 </p>
               </div>

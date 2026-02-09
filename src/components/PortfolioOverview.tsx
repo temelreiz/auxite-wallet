@@ -227,7 +227,7 @@ export function PortfolioOverview({
             </div>
             <button 
               onClick={onExchangeClick}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-sm font-medium transition-all shadow-lg shadow-orange-500/20"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-[#BFA181] hover:from-orange-400 hover:to-[#BFA181] text-white text-sm font-medium transition-all shadow-lg shadow-orange-500/20"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -325,7 +325,7 @@ export function PortfolioOverview({
               <div className="text-sm text-slate-400 mb-1">
                 {lang === "tr" ? "Metal Varlıklar" : "Metal Assets"}
               </div>
-              <div className="text-xl font-bold text-amber-400">
+              <div className="text-xl font-bold text-[#BFA181]">
                 ${metalTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
               <div className="text-xs text-slate-500 mt-1">

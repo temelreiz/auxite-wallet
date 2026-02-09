@@ -408,7 +408,7 @@ export function MetalTradeModalV6({
                         : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
                     }`}
                   >
-                    <div className={`font-semibold ${orderType === "market" ? "text-amber-400" : "text-slate-300"}`}>
+                    <div className={`font-semibold ${orderType === "market" ? "text-[#BFA181]" : "text-slate-300"}`}>
                       {t.market}
                     </div>
                     <div className="text-xs text-slate-500 mt-1">{t.marketDesc}</div>
@@ -442,13 +442,13 @@ export function MetalTradeModalV6({
                 </div>
                 {pendingRefund > 0 && (
                   <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-700">
-                    <span className="text-amber-400">💰 {t.pendingRefund}</span>
+                    <span className="text-[#BFA181]">💰 {t.pendingRefund}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-amber-400 font-mono">{formatEth(pendingRefund)} ETH</span>
+                      <span className="text-[#BFA181] font-mono">{formatEth(pendingRefund)} ETH</span>
                       <button
                         onClick={withdrawRefund}
                         disabled={isLoading || isConfirming}
-                        className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded hover:bg-amber-500/30 disabled:opacity-50"
+                        className="px-2 py-1 bg-[#BFA181]/20 text-[#BFA181] text-xs rounded hover:bg-[#BFA181]/30 disabled:opacity-50"
                       >
                         {t.withdraw}
                       </button>
@@ -641,8 +641,8 @@ export function MetalTradeModalV6({
 
               {/* Insufficient Balance Warning */}
               {!canAfford && amountNum > 0 && (
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                  <p className="text-sm text-amber-400">
+                <div className="p-3 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/30">
+                  <p className="text-sm text-[#BFA181]">
                     {mode === "buy" ? t.insufficientEth : t.insufficientMetal.replace("metal", metal)}
                   </p>
                 </div>

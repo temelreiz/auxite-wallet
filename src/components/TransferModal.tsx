@@ -448,8 +448,8 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
 
         {/* Notices */}
         {isMetal && (
-          <div className="mb-4 p-2 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg">
-            <p className="text-xs text-amber-700 dark:text-amber-400">⚠️ {t.metalNote}</p>
+          <div className="mb-4 p-2 bg-[#BFA181]/10 dark:bg-[#BFA181]/10 border border-[#BFA181]/30 dark:border-[#BFA181]/30 rounded-lg">
+            <p className="text-xs text-[#BFA181] dark:text-[#BFA181]">⚠️ {t.metalNote}</p>
           </div>
         )}
         {tokenInfo.onChain && !isMetal && (

@@ -191,12 +191,12 @@ export default function LoginPage() {
     <div className="min-h-screen bg-stone-100 dark:bg-slate-950 flex flex-col">
       {/* Logo Area - Synced with Mobile */}
       <div className="pt-16 pb-10 text-center">
-        <div className="w-24 h-24 rounded-3xl bg-amber-500/15 flex items-center justify-center mx-auto mb-4">
-          <svg className="w-12 h-12 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="w-24 h-24 rounded-3xl bg-[#BFA181]/15 flex items-center justify-center mx-auto mb-4">
+          <svg className="w-12 h-12 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-amber-500 tracking-widest">AUXITE</h1>
+        <h1 className="text-2xl font-bold text-[#BFA181] tracking-widest">AUXITE</h1>
         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mt-1">
           {t.brandTagline}
         </p>
@@ -227,7 +227,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="client@example.com"
-                  className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#BFA181] focus:border-transparent transition-all"
                   required
                 />
               </div>
@@ -247,7 +247,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-12 py-4 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-12 py-4 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#BFA181] focus:border-transparent transition-all"
                   required
                 />
                 <button
@@ -273,7 +273,7 @@ export default function LoginPage() {
             <div className="flex justify-end">
               <Link
                 href="/auth/forgot-password"
-                className="text-sm font-semibold text-amber-500 hover:text-amber-600 transition-colors"
+                className="text-sm font-semibold text-[#BFA181] hover:text-[#BFA181] transition-colors"
               >
                 {t.forgotPassword}
               </Link>
@@ -295,8 +295,8 @@ export default function LoginPage() {
               disabled={!canSignIn || isLoading}
               className={`w-full py-4 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-2 ${
                 canSignIn
-                  ? 'bg-amber-500 hover:bg-amber-600 text-black'
-                  : 'bg-amber-500/40 text-black/50 cursor-not-allowed'
+                  ? 'bg-[#BFA181] hover:bg-[#BFA181] text-black'
+                  : 'bg-[#BFA181]/40 text-black/50 cursor-not-allowed'
               }`}
             >
               {isLoading ? t.signingIn : t.signIn}
@@ -347,7 +347,7 @@ export default function LoginPage() {
             <span className="text-slate-500 dark:text-slate-400">{t.newClient}</span>
             <Link
               href="/auth/register"
-              className="text-amber-500 font-semibold hover:text-amber-600 transition-colors"
+              className="text-[#BFA181] font-semibold hover:text-[#BFA181] transition-colors"
             >
               {t.establishVault}
             </Link>

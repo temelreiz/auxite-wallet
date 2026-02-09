@@ -156,7 +156,7 @@ function KYCContent() {
         {loading && (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
-              <div className="animate-spin w-10 h-10 border-2 border-slate-600 border-t-amber-500 rounded-full mx-auto mb-4"></div>
+              <div className="animate-spin w-10 h-10 border-2 border-slate-600 border-t-[#BFA181] rounded-full mx-auto mb-4"></div>
               <p className="text-slate-400">Loading verification...</p>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function KYCPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin w-10 h-10 border-2 border-slate-600 border-t-amber-500 rounded-full"></div>
+        <div className="animate-spin w-10 h-10 border-2 border-slate-600 border-t-[#BFA181] rounded-full"></div>
       </div>
     }>
       <KYCContent />

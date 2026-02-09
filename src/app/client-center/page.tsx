@@ -445,7 +445,7 @@ export default function ClientCenterPage() {
       <div className="flex items-center gap-3">
         <div
           className={`w-9 h-9 rounded-full flex items-center justify-center ${
-            danger ? "bg-red-500/15" : "bg-amber-500/15"
+            danger ? "bg-red-500/15" : "bg-[#BFA181]/15"
           }`}
         >
           {icon}
@@ -488,10 +488,10 @@ export default function ClientCenterPage() {
         </div>
 
         {/* Relationship Manager Card - Private Bank Feel */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-amber-500/50 p-4 mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-[#BFA181]/50 p-4 mb-4">
           <div className="flex items-start gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full bg-amber-500/15 flex items-center justify-center flex-shrink-0">
-              <svg className="w-7 h-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-12 h-12 rounded-full bg-[#BFA181]/15 flex items-center justify-center flex-shrink-0">
+              <svg className="w-7 h-7 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -511,7 +511,7 @@ export default function ClientCenterPage() {
               </span>
             </div>
           </div>
-          <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 font-medium text-sm hover:bg-amber-500/25 transition-colors">
+          <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#BFA181]/15 text-[#BFA181] dark:text-[#BFA181] font-medium text-sm hover:bg-[#BFA181]/25 transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
@@ -550,8 +550,8 @@ export default function ClientCenterPage() {
           userData.kycStatus === "verified"
             ? "bg-[#2F6F62]/10 border-[#2F6F62]"
             : userData.kycStatus === "pending"
-            ? "bg-amber-500/10 border-amber-500"
-            : "bg-white dark:bg-slate-900 border-amber-500"
+            ? "bg-[#BFA181]/10 border-[#BFA181]"
+            : "bg-white dark:bg-slate-900 border-[#BFA181]"
         }`}>
           <p className="text-[11px] font-semibold text-slate-500 tracking-wider mb-4">
             {t.clientVerification}
@@ -565,19 +565,19 @@ export default function ClientCenterPage() {
                 : userData.kycStatus === "verified"
                 ? "bg-[#2F6F62]/20"
                 : userData.kycStatus === "pending"
-                ? "bg-amber-500/20"
-                : "bg-amber-500/20"
+                ? "bg-[#BFA181]/20"
+                : "bg-[#BFA181]/20"
             }`}>
               {userData.kycStatus === "verified" ? (
                 <svg className="w-6 h-6 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               ) : userData.kycStatus === "pending" ? (
-                <svg className="w-6 h-6 text-amber-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6 text-[#BFA181] animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               ) : (
-                <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               )}
@@ -586,7 +586,7 @@ export default function ClientCenterPage() {
               <p className={`text-sm font-semibold ${
                 userData.kycStatus === "verified"
                   ? "text-[#2F6F62] dark:text-[#2F6F62]"
-                  : "text-amber-600 dark:text-amber-400"
+                  : "text-[#BFA181] dark:text-[#BFA181]"
               }`}>
                 {userData.kycStatus === "verified"
                   ? t.verifiedCustodyEnabled
@@ -606,7 +606,7 @@ export default function ClientCenterPage() {
               <button
                 onClick={handleStartVerification}
                 disabled={!address}
-                className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-base transition-colors mb-4"
+                className="w-full py-3.5 rounded-xl bg-[#BFA181] hover:bg-[#BFA181] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-base transition-colors mb-4"
               >
                 {t.beginVerification}
               </button>
@@ -642,7 +642,7 @@ export default function ClientCenterPage() {
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-500">{t.accountType}</span>
-              <span className="px-2.5 py-1 text-xs font-semibold rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400">
+              <span className="px-2.5 py-1 text-xs font-semibold rounded-md bg-[#BFA181]/15 text-[#BFA181] dark:text-[#BFA181]">
                 {userData.accountType === "individual" ? t.individual : t.institutional}
               </span>
             </div>
@@ -660,12 +660,12 @@ export default function ClientCenterPage() {
                 className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md ${
                   userData.kycStatus === "verified"
                     ? "bg-[#2F6F62]/15 text-[#2F6F62] dark:text-[#2F6F62]"
-                    : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                    : "bg-[#BFA181]/15 text-[#BFA181] dark:text-[#BFA181]"
                 }`}
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
-                    userData.kycStatus === "verified" ? "bg-[#2F6F62]" : "bg-amber-500"
+                    userData.kycStatus === "verified" ? "bg-[#2F6F62]" : "bg-[#BFA181]"
                   }`}
                 />
                 {userData.kycStatus === "verified"
@@ -749,7 +749,7 @@ export default function ClientCenterPage() {
               ))}
             </div>
 
-            <button className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-dashed border-amber-500/50 text-amber-600 dark:text-amber-400 font-medium text-sm hover:bg-amber-500/10 transition-colors">
+            <button className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-dashed border-[#BFA181]/50 text-[#BFA181] dark:text-[#BFA181] font-medium text-sm hover:bg-[#BFA181]/10 transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
@@ -761,44 +761,44 @@ export default function ClientCenterPage() {
         {/* Menu Section */}
         <div className="bg-white dark:bg-slate-900 rounded-xl p-4 mb-4">
           <MenuItem
-            icon={<svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>}
+            icon={<svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>}
             label={t.securityCenter}
             href="/security"
           />
           <MenuItem
-            icon={<svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+            icon={<svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
             label={t.documentVault}
             href="/documents"
             badge="3"
           />
           <MenuItem
-            icon={<svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>}
+            icon={<svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>}
             label={t.capitalLedger}
             href="/ledger"
           />
           <MenuItem
-            icon={<svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>}
+            icon={<svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>}
             label={t.notifications}
             href="/notifications"
             badge="2"
           />
           <MenuItem
-            icon={<svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
+            icon={<svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
             label={t.statements}
             href="/statements"
           />
           <MenuItem
-            icon={<svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
+            icon={<svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
             label={t.trustedContact}
             href="/trusted-contact"
           />
           <MenuItem
-            icon={<svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>}
+            icon={<svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>}
             label={t.trustCenter}
             href="/trust-center"
           />
           <MenuItem
-            icon={<svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
+            icon={<svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
             label={t.support}
             href="/support"
           />
@@ -811,8 +811,8 @@ export default function ClientCenterPage() {
           </p>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-amber-500/15 flex items-center justify-center">
-                <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-9 h-9 rounded-full bg-[#BFA181]/15 flex items-center justify-center">
+                <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                 </svg>
               </div>
@@ -821,7 +821,7 @@ export default function ClientCenterPage() {
             <select
               value={lang}
               onChange={(e) => setLang(e.target.value as typeof lang)}
-              className="px-3 py-1.5 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg text-sm text-amber-600 dark:text-amber-400 font-medium focus:outline-none focus:border-amber-500"
+              className="px-3 py-1.5 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg text-sm text-[#BFA181] dark:text-[#BFA181] font-medium focus:outline-none focus:border-[#BFA181]"
             >
               {Object.entries(languageNames).map(([code, name]) => (
                 <option key={code} value={code}>

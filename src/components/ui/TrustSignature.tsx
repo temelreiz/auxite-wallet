@@ -392,7 +392,7 @@ export function PricingDisplay({
         </div>
         <div className="flex justify-between items-center">
           <span className="text-sm text-slate-400">{t.executionSpread}</span>
-          <span className="text-sm text-amber-400 font-medium">+{executionSpread.toFixed(2)}%</span>
+          <span className="text-sm text-[#BFA181] font-medium">+{executionSpread.toFixed(2)}%</span>
         </div>
         <div className="h-px bg-slate-700/50" />
         <div className="flex justify-between items-center">

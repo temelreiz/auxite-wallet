@@ -341,7 +341,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
         <div className="p-4 sm:p-6 border-b border-stone-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-              step === "verify" ? "bg-amber-100 dark:bg-amber-500/20" : 
+              step === "verify" ? "bg-[#BFA181]/15 dark:bg-[#BFA181]/20" : 
               step === "error" ? "bg-red-100 dark:bg-red-500/20" :
               "bg-blue-100 dark:bg-blue-500/20"
             }`}>
@@ -376,7 +376,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
           {/* Checking */}
           {step === "checking" && (
             <div className="flex flex-col items-center py-8">
-              <div className="w-12 h-12 border-4 border-amber-200 border-t-amber-500 rounded-full animate-spin mb-4" />
+              <div className="w-12 h-12 border-4 border-[#BFA181]/30 border-t-[#BFA181] rounded-full animate-spin mb-4" />
               <p className="text-slate-500 dark:text-slate-400">{t.loading}</p>
             </div>
           )}
@@ -418,7 +418,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
               </div>
 
               <div className="pt-2">
-                <button onClick={() => setShowManualKey(!showManualKey)} className="text-sm text-amber-600 dark:text-amber-400 hover:underline">
+                <button onClick={() => setShowManualKey(!showManualKey)} className="text-sm text-[#BFA181] dark:text-[#BFA181] hover:underline">
                   {showManualKey ? "Hide" : t.manualEntry} →
                 </button>
                 {showManualKey && secret && (
@@ -442,7 +442,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   placeholder="000000"
-                  className="w-full px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl text-center text-2xl font-mono text-slate-800 dark:text-white tracking-widest focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl text-center text-2xl font-mono text-slate-800 dark:text-white tracking-widest focus:outline-none focus:ring-2 focus:ring-[#BFA181]"
                   maxLength={6}
                   autoFocus
                 />
@@ -472,14 +472,14 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
           {/* Setup - Backup Codes */}
           {step === "setup-backup" && (
             <div className="space-y-4">
-              <div className="p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl">
-                <p className="text-sm text-amber-800 dark:text-amber-200">⚠️ {t.backupCodesDesc}</p>
+              <div className="p-4 bg-[#BFA181]/10 dark:bg-[#BFA181]/10 border border-[#BFA181]/30 dark:border-[#BFA181]/30 rounded-xl">
+                <p className="text-sm text-[#BFA181] dark:text-[#D4B47A]">⚠️ {t.backupCodesDesc}</p>
               </div>
 
               <div className="bg-stone-100 dark:bg-slate-800 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.backupCodes}</span>
-                  <button onClick={copyAllBackupCodes} className="text-xs text-amber-600 dark:text-amber-400 hover:underline">
+                  <button onClick={copyAllBackupCodes} className="text-xs text-[#BFA181] dark:text-[#BFA181] hover:underline">
                     {copied ? t.codeCopied : "Copy all"}
                   </button>
                 </div>
@@ -519,7 +519,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
                     setCode(val);
                   }}
                   placeholder={useBackupCode ? "XXXXXXXX" : "000000"}
-                  className="w-full px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl text-center text-2xl font-mono text-slate-800 dark:text-white tracking-widest focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl text-center text-2xl font-mono text-slate-800 dark:text-white tracking-widest focus:outline-none focus:ring-2 focus:ring-[#BFA181]"
                   maxLength={useBackupCode ? 8 : 6}
                   autoFocus
                 />
@@ -527,7 +527,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
 
               <button
                 onClick={() => { setUseBackupCode(!useBackupCode); setCode(""); setError(null); }}
-                className="text-sm text-amber-600 dark:text-amber-400 hover:underline"
+                className="text-sm text-[#BFA181] dark:text-[#BFA181] hover:underline"
               >
                 {useBackupCode ? t.useAuthenticator : t.useBackupCode} →
               </button>

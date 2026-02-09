@@ -225,7 +225,7 @@ const TARGET_INFO: Record<TargetType, {
   borderColor: string;
 }> = {
   AUXM: { nameKey: "auxiteMoney", icon: "◈", iconType: "symbol", bgColor: "bg-purple-500/20", borderColor: "border-purple-500/30" },
-  AUXG: { nameKey: "gold", icon: "/gold-favicon-32x32.png", iconType: "image", bgColor: "bg-amber-500/10", borderColor: "border-amber-500/30" },
+  AUXG: { nameKey: "gold", icon: "/gold-favicon-32x32.png", iconType: "image", bgColor: "bg-[#BFA181]/10", borderColor: "border-[#BFA181]/30" },
   AUXS: { nameKey: "silver", icon: "/silver-favicon-32x32.png", iconType: "image", bgColor: "bg-slate-400/10", borderColor: "border-slate-400/30" },
   AUXPT: { nameKey: "platinum", icon: "/platinum-favicon-32x32.png", iconType: "image", bgColor: "bg-cyan-400/10", borderColor: "border-cyan-400/30" },
   AUXPD: { nameKey: "palladium", icon: "/palladium-favicon-32x32.png", iconType: "image", bgColor: "bg-purple-400/10", borderColor: "border-purple-400/30" },
