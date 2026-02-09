@@ -13,6 +13,8 @@ interface AddFundsModalProps {
   vaultId?: string;
   auxmBalance?: number;
   onAuxmTransfer?: (amount: number) => boolean;
+  defaultTab?: "crypto" | "card" | "bank";
+  bankOnly?: boolean;
 }
 
 // Crypto sources for funding
@@ -350,8 +352,18 @@ export function AddFundsModal({
   vaultId,
   auxmBalance = 0,
   onAuxmTransfer,
+  defaultTab,
+  bankOnly = false,
 }: AddFundsModalProps) {
-  const [activeModal, setActiveModal] = useState<"main" | "bank" | "auxm" | "crypto">("main");
+  // Map old tab names to new modal names
+  const getInitialModal = () => {
+    if (bankOnly) return "bank";
+    if (defaultTab === "bank") return "bank";
+    if (defaultTab === "crypto") return "main"; // crypto tab shows main with crypto options
+    return "main";
+  };
+
+  const [activeModal, setActiveModal] = useState<"main" | "bank" | "auxm" | "crypto">(getInitialModal());
   const [selectedCrypto, setSelectedCrypto] = useState<typeof CRYPTO_SOURCES[0] | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [auxmAmount, setAuxmAmount] = useState("");
@@ -372,12 +384,12 @@ export function AddFundsModal({
   // Reset states when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setActiveModal("main");
+      setActiveModal(getInitialModal());
       setSelectedCrypto(null);
       setDepositAddress(null);
       setAuxmAmount("");
     }
-  }, [isOpen]);
+  }, [isOpen, bankOnly, defaultTab]);
 
   const copyToClipboard = async (text: string, field: string) => {
     try {
