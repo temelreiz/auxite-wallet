@@ -140,7 +140,9 @@ export default function AllocatePage() {
   const [selectedFrom, setSelectedFrom] = useState<string>("AUXM");
   const [selectedTo, setSelectedTo] = useState<string>("AUXG");
   const [amount, setAmount] = useState("");
-  const [prices, setPrices] = useState<Record<string, number>>({});
+  // basePrices for display (spread-free), askPrices for calculations (with spread)
+  const [basePrices, setBasePrices] = useState<Record<string, number>>({});
+  const [askPrices, setAskPrices] = useState<Record<string, number>>({});
   const [showExecutionSummary, setShowExecutionSummary] = useState(false);
 
   const metals = [
@@ -165,9 +167,11 @@ export default function AllocatePage() {
       try {
         const res = await fetch("/api/prices?chain=84532");
         const data = await res.json();
-        if (data.success && data.prices) {
-          // Use ask prices (with spread) for allocation calculations
-          setPrices(data.prices);
+        if (data.success) {
+          // basePrices for display (spread-free)
+          if (data.basePrices) setBasePrices(data.basePrices);
+          // ask prices for calculations (with spread)
+          if (data.prices) setAskPrices(data.prices);
         }
       } catch (e) {
         console.warn("Valuation temporarily unavailable");
@@ -185,10 +189,10 @@ export default function AllocatePage() {
 
   const calculateEstimatedAllocation = () => {
     const amountNum = parseFloat(amount) || 0;
-    const metalPrice = prices[selectedTo] || 0;
+    // Use ask price (with spread) for calculations
+    const metalPrice = askPrices[selectedTo] || basePrices[selectedTo] || 0;
     if (amountNum <= 0 || metalPrice <= 0) return null;
     // Price already includes spread from API (ask price)
-    // No additional spread needed here
     const grams = amountNum / metalPrice;
     return grams;
   };
@@ -420,7 +424,7 @@ export default function AllocatePage() {
                 <p className="font-bold text-slate-800 dark:text-white">{metal.symbol}</p>
                 <p className="text-[10px] text-slate-500">{metal.fullName}</p>
                 <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                  ${prices[metal.symbol]?.toFixed(2) || "--"}/g
+                  ${basePrices[metal.symbol]?.toFixed(2) || "--"}/g
                 </p>
               </button>
             ))}
@@ -516,7 +520,7 @@ export default function AllocatePage() {
                 </div>
                 <div className="flex justify-between py-2 border-b border-stone-200 dark:border-slate-700">
                   <span className="text-sm text-slate-500">{t.referencePrice}</span>
-                  <span className="text-sm font-semibold text-slate-800 dark:text-white">${prices[selectedTo]?.toFixed(2) || "--"}/g</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-white">${basePrices[selectedTo]?.toFixed(2) || "--"}/g</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-stone-200 dark:border-slate-700">
                   <span className="text-sm text-slate-500">{t.spread}</span>
