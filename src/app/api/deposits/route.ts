@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Redis } from "@upstash/redis";
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
 // ===========================================
 // AUXM BONUS CALCULATION (inline for API)
@@ -73,47 +79,51 @@ interface Deposit {
   confirmedAt?: string;
 }
 
-// Mock deposits (test için)
-const MOCK_DEPOSITS: Deposit[] = [
-  {
-    id: "dep_001",
-    chain: "BASE",
-    coin: "ETH",
-    amount: 0.1,
-    amountUsd: 300,
-    auxmAmount: 300,
-    bonusAmount: 6,
-    bonusPercent: 2,
-    totalAuxm: 306,
-    txHash: "0x2eb99ad0b38f9613d7c422674cae82af96543bd98aebe2070a8559754deaa5c7",
-    fromAddress: "0xC7AF91293dC7dF3DdF0bF0dDD14AaA96aE63BD4E",
-    toAddress: "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6",
-    status: "confirmed",
-    confirmations: 50,
-    requiredConfirmations: 12,
-    createdAt: "2024-12-01T10:30:00Z",
-    confirmedAt: "2024-12-01T10:35:00Z",
-  },
-  {
-    id: "dep_002",
-    chain: "ETH",
-    coin: "ETH",
-    amount: 0.5,
-    amountUsd: 1500,
-    auxmAmount: 1500,
-    bonusAmount: 30,
-    bonusPercent: 2,
-    totalAuxm: 1530,
-    txHash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-    fromAddress: "0xABC123...",
-    toAddress: "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6",
-    status: "confirmed",
-    confirmations: 100,
-    requiredConfirmations: 12,
-    createdAt: "2024-11-30T15:20:00Z",
-    confirmedAt: "2024-11-30T15:25:00Z",
-  },
-];
+// Helper function to get deposits from Redis
+async function getUserDeposits(address: string): Promise<Deposit[]> {
+  try {
+    const normalizedAddress = address.toLowerCase();
+    const depositIds = await redis.lrange(`user:${normalizedAddress}:deposits`, 0, -1);
+
+    if (!depositIds || depositIds.length === 0) {
+      return [];
+    }
+
+    const deposits: Deposit[] = [];
+    for (const id of depositIds) {
+      const depositData = await redis.hgetall(`deposit:${id}`);
+      if (depositData && Object.keys(depositData).length > 0) {
+        deposits.push({
+          id: String(id),
+          chain: String(depositData.chain || 'ETH'),
+          coin: String(depositData.coin || 'ETH'),
+          amount: parseFloat(String(depositData.amount || 0)),
+          amountUsd: parseFloat(String(depositData.amountUsd || 0)),
+          auxmAmount: parseFloat(String(depositData.auxmAmount || 0)),
+          bonusAmount: parseFloat(String(depositData.bonusAmount || 0)),
+          bonusPercent: parseFloat(String(depositData.bonusPercent || 0)),
+          totalAuxm: parseFloat(String(depositData.totalAuxm || 0)),
+          txHash: String(depositData.txHash || ''),
+          fromAddress: String(depositData.fromAddress || ''),
+          toAddress: String(depositData.toAddress || ''),
+          status: (depositData.status as "pending" | "confirmed" | "failed") || 'pending',
+          confirmations: parseInt(String(depositData.confirmations || 0)),
+          requiredConfirmations: parseInt(String(depositData.requiredConfirmations || 12)),
+          createdAt: String(depositData.createdAt || new Date().toISOString()),
+          confirmedAt: depositData.confirmedAt ? String(depositData.confirmedAt) : undefined,
+        });
+      }
+    }
+
+    // Sort by creation date (newest first)
+    deposits.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return deposits;
+  } catch (error) {
+    console.error('Error fetching deposits from Redis:', error);
+    return [];
+  }
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -130,7 +140,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    let deposits = [...MOCK_DEPOSITS];
+    // Get real deposits from Redis
+    let deposits = await getUserDeposits(address);
 
     if (status) {
       deposits = deposits.filter(d => d.status === status);
@@ -234,13 +245,52 @@ export async function POST(request: NextRequest) {
       deposit.confirmedAt = new Date().toISOString();
     }
 
-    // TODO: Redis'e kaydet
-    // await redis.hset(`deposit:${depositId}`, deposit);
-    // await redis.lpush(`user:${userAddress.toLowerCase()}:deposits`, depositId);
-    // 
-    // if (deposit.status === "confirmed") {
-    //   await redis.hincrbyfloat(`user:${userAddress.toLowerCase()}`, "AUXM", totalAuxm);
-    // }
+    // Save deposit to Redis
+    const normalizedUserAddress = userAddress.toLowerCase();
+
+    await redis.hset(`deposit:${depositId}`, {
+      ...deposit,
+      userAddress: normalizedUserAddress,
+    });
+    await redis.lpush(`user:${normalizedUserAddress}:deposits`, depositId);
+
+    // If deposit is confirmed, credit AUXM to user balance
+    if (deposit.status === "confirmed") {
+      // Credit base AUXM amount
+      await redis.hincrbyfloat(`user:${normalizedUserAddress}`, "auxm", amountUsd);
+
+      // Credit bonus AUXM if applicable
+      if (bonusAmount > 0) {
+        await redis.hincrbyfloat(`user:${normalizedUserAddress}`, "bonusauxm", bonusAmount);
+      }
+
+      // Update totalAuxm
+      const currentAuxm = parseFloat(String(await redis.hget(`user:${normalizedUserAddress}`, "auxm") || 0));
+      const currentBonus = parseFloat(String(await redis.hget(`user:${normalizedUserAddress}`, "bonusauxm") || 0));
+      await redis.hset(`user:${normalizedUserAddress}`, { totalAuxm: currentAuxm + currentBonus });
+
+      // Record transaction
+      const transaction = {
+        id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        type: "deposit",
+        coin: coin,
+        amount: amount,
+        amountUsd: amountUsd,
+        status: "completed",
+        txHash: txHash,
+        fromAddress: fromAddress,
+        toAddress: toAddress,
+        metadata: {
+          chain,
+          bonusAmount,
+          bonusPercent,
+          depositId,
+        },
+        createdAt: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
+      };
+      await redis.lpush(`user:${normalizedUserAddress}:transactions`, JSON.stringify(transaction));
+    }
 
     console.log("Deposit recorded with bonus:", deposit);
 
