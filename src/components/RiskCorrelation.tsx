@@ -304,7 +304,7 @@ export function RiskCorrelation({ lang = "en" }: RiskCorrelationProps) {
                   onClick={() => setSelectedMetal(asset.symbol)}
                   className={`flex flex-col items-center gap-1 px-1.5 py-2 rounded-lg transition-all ${
                     selectedMetal === asset.symbol
-                      ? "bg-emerald-500 text-white shadow-lg"
+                      ? "bg-[#2F6F62] text-white shadow-lg"
                       : "bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-stone-200 dark:hover:bg-slate-700"
                   }`}
                 >
@@ -328,7 +328,7 @@ export function RiskCorrelation({ lang = "en" }: RiskCorrelationProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white dark:bg-slate-700/50 rounded-lg p-3 border border-stone-200 dark:border-slate-600">
                   <div className="text-[10px] uppercase text-slate-500 dark:text-slate-400">{t.volShort} ({t.days})</div>
-                  <div className={`text-lg font-bold font-mono ${selectedAsset.volatility > 2 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                  <div className={`text-lg font-bold font-mono ${selectedAsset.volatility > 2 ? "text-amber-600 dark:text-amber-400" : "text-[#2F6F62] dark:text-[#2F6F62]"}`}>
                     {selectedAsset.volatility.toFixed(2)}%
                   </div>
                 </div>
@@ -355,7 +355,7 @@ export function RiskCorrelation({ lang = "en" }: RiskCorrelationProps) {
 
                 <div className="bg-white dark:bg-slate-700/50 rounded-lg p-3 border border-stone-200 dark:border-slate-600">
                   <div className="text-[10px] uppercase text-slate-500 dark:text-slate-400">{t.avgRetShort}</div>
-                  <div className={`text-lg font-bold font-mono ${selectedAsset.avgReturn >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                  <div className={`text-lg font-bold font-mono ${selectedAsset.avgReturn >= 0 ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-red-600 dark:text-red-400"}`}>
                     {selectedAsset.avgReturn >= 0 ? "+" : ""}{selectedAsset.avgReturn.toFixed(2)}%
                   </div>
                 </div>
@@ -419,7 +419,7 @@ export function RiskCorrelation({ lang = "en" }: RiskCorrelationProps) {
                     <td className="py-3 text-right">
                       <span
                         className={`font-mono text-sm ${
-                          asset.volatility > 2 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
+                          asset.volatility > 2 ? "text-amber-600 dark:text-amber-400" : "text-[#2F6F62] dark:text-[#2F6F62]"
                         }`}
                       >
                         {asset.volatility.toFixed(2)}%
@@ -448,7 +448,7 @@ export function RiskCorrelation({ lang = "en" }: RiskCorrelationProps) {
                     <td className="py-3 text-right">
                       <span
                         className={`font-mono text-sm ${
-                          asset.avgReturn >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                          asset.avgReturn >= 0 ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-red-600 dark:text-red-400"
                         }`}
                       >
                         {asset.avgReturn >= 0 ? "+" : ""}

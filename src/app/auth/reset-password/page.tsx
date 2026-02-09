@@ -85,8 +85,8 @@ export default function ResetPasswordPage() {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500/20 mb-6">
-            <CheckCircle className="w-10 h-10 text-emerald-500" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#2F6F62]/20 mb-6">
+            <CheckCircle className="w-10 h-10 text-[#2F6F62]" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-3">Password Changed!</h1>
           <p className="text-slate-400 mb-8">
@@ -94,7 +94,7 @@ export default function ResetPasswordPage() {
           </p>
           <Link
             href="/auth/login"
-            className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all"
+            className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] text-white font-semibold rounded-xl hover:from-[#2F6F62] hover:to-[#2F6F62]/80 transition-all"
           >
             Sign In
           </Link>
@@ -117,7 +117,7 @@ export default function ResetPasswordPage() {
           </p>
           <Link
             href="/auth/forgot-password"
-            className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all"
+            className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] text-white font-semibold rounded-xl hover:from-[#2F6F62] hover:to-[#2F6F62]/80 transition-all"
           >
             Request New Link
           </Link>
@@ -131,8 +131,8 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/20 mb-4">
-            <Lock className="w-8 h-8 text-emerald-500" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#2F6F62]/20 mb-4">
+            <Lock className="w-8 h-8 text-[#2F6F62]" />
           </div>
           <h1 className="text-2xl font-bold text-white">Set New Password</h1>
           <p className="text-slate-400 mt-2">
@@ -154,7 +154,7 @@ export default function ResetPasswordPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-12 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                className="w-full pl-10 pr-12 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#BFA181] focus:border-transparent transition-all"
                 required
               />
               <button
@@ -168,19 +168,19 @@ export default function ResetPasswordPage() {
 
             {/* Password Requirements */}
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div className={`flex items-center gap-1.5 text-xs ${hasMinLength ? 'text-emerald-500' : 'text-slate-500'}`}>
+              <div className={`flex items-center gap-1.5 text-xs ${hasMinLength ? 'text-[#2F6F62]' : 'text-slate-500'}`}>
                 <CheckCircle className="w-3.5 h-3.5" />
                 8+ characters
               </div>
-              <div className={`flex items-center gap-1.5 text-xs ${hasUppercase ? 'text-emerald-500' : 'text-slate-500'}`}>
+              <div className={`flex items-center gap-1.5 text-xs ${hasUppercase ? 'text-[#2F6F62]' : 'text-slate-500'}`}>
                 <CheckCircle className="w-3.5 h-3.5" />
                 Uppercase
               </div>
-              <div className={`flex items-center gap-1.5 text-xs ${hasLowercase ? 'text-emerald-500' : 'text-slate-500'}`}>
+              <div className={`flex items-center gap-1.5 text-xs ${hasLowercase ? 'text-[#2F6F62]' : 'text-slate-500'}`}>
                 <CheckCircle className="w-3.5 h-3.5" />
                 Lowercase
               </div>
-              <div className={`flex items-center gap-1.5 text-xs ${hasNumber ? 'text-emerald-500' : 'text-slate-500'}`}>
+              <div className={`flex items-center gap-1.5 text-xs ${hasNumber ? 'text-[#2F6F62]' : 'text-slate-500'}`}>
                 <CheckCircle className="w-3.5 h-3.5" />
                 Number
               </div>
@@ -199,7 +199,7 @@ export default function ResetPasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className={`w-full pl-10 pr-12 py-3 bg-slate-800 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all ${
+                className={`w-full pl-10 pr-12 py-3 bg-slate-800 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#BFA181] focus:border-transparent transition-all ${
                   confirmPassword && !passwordsMatch ? 'border-red-500' : 'border-slate-700'
                 }`}
                 required
@@ -207,7 +207,7 @@ export default function ResetPasswordPage() {
               {confirmPassword && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {passwordsMatch ? (
-                    <CheckCircle className="w-5 h-5 text-emerald-500" />
+                    <CheckCircle className="w-5 h-5 text-[#2F6F62]" />
                   ) : (
                     <AlertCircle className="w-5 h-5 text-red-500" />
                   )}
@@ -228,7 +228,7 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] text-white font-semibold rounded-xl hover:from-[#2F6F62] hover:to-[#2F6F62]/80 focus:outline-none focus:ring-2 focus:ring-[#BFA181] focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>

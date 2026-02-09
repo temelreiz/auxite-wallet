@@ -148,10 +148,10 @@ export default function ProfilePage() {
     if (!address) return { bg: "#64748b", text: "#ffffff" };
     const hash = parseInt(address.slice(2, 8), 16);
     const colors = [
-      { bg: "#10b981", text: "#ffffff" }, // Emerald
+      { bg: "#BFA181", text: "#ffffff" }, // Gold
       { bg: "#3b82f6", text: "#ffffff" }, // Blue
       { bg: "#8b5cf6", text: "#ffffff" }, // Purple
-      { bg: "#f59e0b", text: "#ffffff" }, // Amber
+      { bg: "#2F6F62", text: "#ffffff" }, // TrustGreen
       { bg: "#ef4444", text: "#ffffff" }, // Red
       { bg: "#06b6d4", text: "#ffffff" }, // Cyan
       { bg: "#ec4899", text: "#ffffff" }, // Pink
@@ -190,7 +190,7 @@ export default function ProfilePage() {
   if (!mounted) {
     return (
       <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-zinc-600 border-t-emerald-500 rounded-full"></div>
+        <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-zinc-600 border-t-[#BFA181] rounded-full"></div>
       </div>
     );
   }
@@ -382,7 +382,7 @@ export default function ProfilePage() {
     <button
       onClick={onChange}
       className={`relative w-10 sm:w-12 h-6 sm:h-7 rounded-full transition-all duration-300 flex-shrink-0 ${
-        enabled ? "bg-emerald-500 shadow-lg shadow-emerald-500/30" : "bg-stone-300 dark:bg-zinc-700"
+        enabled ? "bg-[#2F6F62] shadow-lg shadow-[#2F6F62]/30" : "bg-stone-300 dark:bg-zinc-700"
       }`}
     >
       <span className={`absolute top-0.5 sm:top-1 left-0.5 sm:left-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${enabled ? "translate-x-4 sm:translate-x-5" : "translate-x-0"}`} />
@@ -419,8 +419,8 @@ export default function ProfilePage() {
         return (
           <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#2F6F62]/20 flex items-center justify-center">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F6F62] dark:text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
               </div>
               <div>
                 <h3 className="text-sm sm:text-lg font-semibold text-slate-800 dark:text-white">{t("personalInfo")}</h3>
@@ -440,7 +440,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                      <span className="text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]">
                         {lang === "tr" ? "Doğrulanmış" : "Verified"}
                       </span>
                     </div>
@@ -448,25 +448,25 @@ export default function ProfilePage() {
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 truncate">{address}</p>
                   </div>
                   <button onClick={() => handleCopy(userUID, "wallet")} className="p-2 sm:p-3 rounded-xl bg-stone-100 dark:bg-zinc-700 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors flex-shrink-0">
-                    {copySuccess ? <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> : <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>}
+                    {copySuccess ? <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> : <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>}
                   </button>
                 </div>
               </div>
             )}
 
             {isConnected && address && (
-              <div className="p-3 sm:p-5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-500/20">
+              <div className="p-3 sm:p-5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#2F6F62]/10 via-teal-500/5 to-transparent border border-[#2F6F62]/20">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 flex-shrink-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#2F6F62] to-teal-500 flex items-center justify-center shadow-lg shadow-[#2F6F62]/20 flex-shrink-0">
                       <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400/80 font-medium mb-0.5 sm:mb-1">{lang === "tr" ? "Bağlı Cüzdan" : "Connected Wallet"}</p>
+                      <p className="text-[10px] sm:text-xs text-[#2F6F62] dark:text-[#2F6F62]/80 font-medium mb-0.5 sm:mb-1">{lang === "tr" ? "Bağlı Cüzdan" : "Connected Wallet"}</p>
                       <p className="font-mono text-sm sm:text-lg text-slate-800 dark:text-white truncate">{address.slice(0, 6)}····{address.slice(-4)}</p>
                     </div>
                   </div>
-                  <button onClick={() => handleCopy(address, "wallet")} className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[10px] sm:text-sm font-medium transition-colors flex-shrink-0">
+                  <button onClick={() => handleCopy(address, "wallet")} className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-[#2F6F62]/20 hover:bg-[#2F6F62]/30 text-[#2F6F62] dark:text-[#2F6F62] text-[10px] sm:text-sm font-medium transition-colors flex-shrink-0">
                     {copySuccess ? "✓" : t("copy")}
                   </button>
                 </div>
@@ -513,7 +513,7 @@ export default function ProfilePage() {
           <div className="space-y-4 sm:space-y-6">
             <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-500/20 flex items-center justify-center">
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F6F62] dark:text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
               </div>
               <div>
                 <h3 className="text-sm sm:text-lg font-semibold text-slate-800 dark:text-white">{t("securitySettings")}</h3>
@@ -524,14 +524,14 @@ export default function ProfilePage() {
             {/* 2FA Status Card */}
             <div className={`p-3 sm:p-5 rounded-xl sm:rounded-2xl border ${
               twoFactorEnabled
-                ? "bg-gradient-to-br from-emerald-500/10 via-green-500/5 to-transparent border-emerald-500/20"
+                ? "bg-gradient-to-br from-[#2F6F62]/10 via-green-500/5 to-transparent border-[#2F6F62]/20"
                 : "bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border-amber-500/20"
             }`}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
                   <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 ${
                     twoFactorEnabled
-                      ? "bg-gradient-to-br from-emerald-500 to-green-500 shadow-emerald-500/20"
+                      ? "bg-gradient-to-br from-[#2F6F62] to-[#2F6F62] shadow-[#2F6F62]/20"
                       : "bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-500/20"
                   }`}>
                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -540,7 +540,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="min-w-0">
                     <p className="font-medium text-xs sm:text-base text-slate-800 dark:text-white">{t("twoFactorAuth")}</p>
-                    <p className={`text-[10px] sm:text-sm ${twoFactorEnabled ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                    <p className={`text-[10px] sm:text-sm ${twoFactorEnabled ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-amber-600 dark:text-amber-400"}`}>
                       {twoFactorEnabled
                         ? (lang === "tr" ? "✓ Aktif - Hesabınız korunuyor" : "✓ Active - Your account is protected")
                         : (lang === "tr" ? "○ Kurulmamış" : "○ Not set up")}
@@ -549,7 +549,7 @@ export default function ProfilePage() {
                 </div>
                 {/* Setup Button or Status Badge */}
                 {twoFactorEnabled ? (
-                  <div className="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+                  <div className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]">
                     {lang === "tr" ? "Aktif" : "Active"}
                   </div>
                 ) : (
@@ -563,7 +563,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Info text */}
-              <div className={`mt-3 pt-3 border-t ${twoFactorEnabled ? "border-emerald-500/20" : "border-amber-500/20"}`}>
+              <div className={`mt-3 pt-3 border-t ${twoFactorEnabled ? "border-[#2F6F62]/20" : "border-amber-500/20"}`}>
                 <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400">
                   {twoFactorEnabled
                     ? (lang === "tr"
@@ -654,7 +654,7 @@ export default function ProfilePage() {
               <code className="block w-full px-3 sm:px-5 py-3 sm:py-4 bg-white/50 dark:bg-zinc-800/80 rounded-lg sm:rounded-xl font-mono text-lg sm:text-2xl text-purple-600 dark:text-purple-400 tracking-wider text-center border border-purple-200 dark:border-transparent mb-3 sm:mb-4">{userData.referralCode}</code>
               <div className="flex gap-2 sm:gap-3">
                 <button onClick={() => handleCopy(userData.referralCode, "referral")} className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white/50 dark:bg-zinc-700/50 hover:bg-white dark:hover:bg-zinc-600 text-slate-700 dark:text-zinc-300 font-medium transition-colors border border-stone-200 dark:border-transparent flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-                  {copySuccess ? <><svg className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>{lang === "tr" ? "Kopyalandı!" : "Copied!"}</> : <><svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>{t("copy")}</>}
+                  {copySuccess ? <><svg className="w-3 h-3 sm:w-4 sm:h-4 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>{lang === "tr" ? "Kopyalandı!" : "Copied!"}</> : <><svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>{t("copy")}</>}
                 </button>
                 <button onClick={handleShare} className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-medium shadow-lg shadow-purple-500/20 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
                   {shareSuccess ? <><svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>{lang === "tr" ? "Paylaşıldı!" : "Shared!"}</> : <><svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>{t("share")}</>}
@@ -668,7 +668,7 @@ export default function ProfilePage() {
               </div>
               <div className="p-3 sm:p-5 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50">
                 <p className="text-[10px] sm:text-sm text-slate-500 dark:text-zinc-500 mb-0.5 sm:mb-1">{t("totalEarnings")}</p>
-                <p className="text-xl sm:text-3xl font-bold text-emerald-500 dark:text-emerald-400">${userData.totalEarnings}</p>
+                <p className="text-xl sm:text-3xl font-bold text-[#2F6F62] dark:text-[#2F6F62]">${userData.totalEarnings}</p>
               </div>
             </div>
           </div>
@@ -818,7 +818,7 @@ export default function ProfilePage() {
   const getMenuItemStyle = (item: typeof menuItems[0], isActive: boolean) => {
     if (isActive) {
       const colorMap: Record<string, string> = {
-        emerald: "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30",
+        emerald: "bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62] border border-[#2F6F62]/30",
         amber: "bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30",
         blue: "bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30",
         purple: "bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30",
@@ -878,19 +878,19 @@ export default function ProfilePage() {
               <div className="space-y-3 sm:space-y-4">
                 <div>
                   <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-zinc-400 mb-1.5 sm:mb-2">{lang === "tr" ? "Mevcut Şifre" : "Current Password"}</label>
-                  <input type="password" className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="••••••••" />
+                  <input type="password" className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#BFA181]" placeholder="••••••••" />
                 </div>
                 <div>
                   <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-zinc-400 mb-1.5 sm:mb-2">{lang === "tr" ? "Yeni Şifre" : "New Password"}</label>
-                  <input type="password" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="••••••••" />
+                  <input type="password" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#BFA181]" placeholder="••••••••" />
                 </div>
                 <div>
                   <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-zinc-400 mb-1.5 sm:mb-2">{lang === "tr" ? "Yeni Şifre (Tekrar)" : "Confirm New Password"}</label>
-                  <input type="password" className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="••••••••" />
+                  <input type="password" className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#BFA181]" placeholder="••••••••" />
                 </div>
               </div>
             ) : editModal === "timezone" ? (
-              <select value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <select value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#BFA181]">
                 <option value="Europe/Istanbul">Europe/Istanbul (GMT+3)</option>
                 <option value="Europe/London">Europe/London (GMT+0)</option>
                 <option value="Europe/Berlin">Europe/Berlin (GMT+1)</option>
@@ -901,7 +901,7 @@ export default function ProfilePage() {
                 <option value="Asia/Tokyo">Asia/Tokyo (GMT+9)</option>
               </select>
             ) : editModal === "country" ? (
-              <select value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <select value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#BFA181]">
                 <option value="Turkey">🇹🇷 Turkey</option>
                 <option value="United States">🇺🇸 United States</option>
                 <option value="United Kingdom">🇬🇧 United Kingdom</option>
@@ -912,12 +912,12 @@ export default function ProfilePage() {
                 <option value="Singapore">🇸🇬 Singapore</option>
               </select>
             ) : (
-              <input type={editModal === "email" ? "email" : "text"} value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder={editModal === "email" ? "email@example.com" : editModal === "phone" ? "+90 555 123 4567" : ""} />
+              <input type={editModal === "email" ? "email" : "text"} value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-sm sm:text-base text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#BFA181]" placeholder={editModal === "email" ? "email@example.com" : editModal === "phone" ? "+90 555 123 4567" : ""} />
             )}
 
             <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6">
               <button onClick={() => { setEditModal(null); setEditValue(""); }} className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-medium hover:bg-stone-300 dark:hover:bg-zinc-600 transition-colors text-sm sm:text-base">{t("cancel")}</button>
-              <button onClick={handleSaveEdit} className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors text-sm sm:text-base">{t("save")}</button>
+              <button onClick={handleSaveEdit} className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-[#2F6F62] text-white font-medium hover:bg-[#2F6F62]/80 transition-colors text-sm sm:text-base">{t("save")}</button>
             </div>
           </div>
         </div>

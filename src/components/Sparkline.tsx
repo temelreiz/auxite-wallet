@@ -52,7 +52,7 @@ export default function Sparkline({ points, theme, direction }: Props) {
   // Renkler: yukarı yeşil, aşağı kırmızı, sabit gri
   const strokeColor =
     direction === "UP"
-      ? "#22c55e" // emerald-500
+      ? "#2F6F62" // trustGreen
       : direction === "DOWN"
       ? "#f97373" // red-400
       : isDark

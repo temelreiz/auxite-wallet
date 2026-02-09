@@ -432,7 +432,7 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
                   </span>
                   <button
                     onClick={() => copyToClipboard(depositAddress, "address")}
-                    className={`text-[10px] sm:text-xs font-medium ${copied ? "text-emerald-500" : "text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400"}`}
+                    className={`text-[10px] sm:text-xs font-medium ${copied ? "text-[#2F6F62]" : "text-[#2F6F62] dark:text-[#2F6F62] hover:text-[#2F6F62] dark:hover:text-[#2F6F62]"}`}
                   >
                     {copied ? `✓ ${t.copied}` : t.copy}
                   </button>
@@ -459,21 +459,21 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
               )}
 
               {/* Bonus Info */}
-              <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
-                <p className="text-emerald-700 dark:text-emerald-400 text-xs font-medium mb-2">
+              <div className="bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 border border-[#2F6F62]/30 dark:border-[#2F6F62]/30 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
+                <p className="text-[#2F6F62] dark:text-[#2F6F62] text-xs font-medium mb-2">
                   🎁 {lang === "tr" ? "AUXM Bonus Oranları" : "AUXM Bonus Rates"}
                 </p>
                 <div className="grid grid-cols-2 gap-1 text-[10px]">
                   <span className="text-slate-600 dark:text-slate-400">$10-99:</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">+15%</span>
+                  <span className="text-[#2F6F62] dark:text-[#2F6F62] font-bold">+15%</span>
                   <span className="text-slate-600 dark:text-slate-400">$100-499:</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">+10%</span>
+                  <span className="text-[#2F6F62] dark:text-[#2F6F62] font-bold">+10%</span>
                   <span className="text-slate-600 dark:text-slate-400">$500-999:</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">+7%</span>
+                  <span className="text-[#2F6F62] dark:text-[#2F6F62] font-bold">+7%</span>
                   <span className="text-slate-600 dark:text-slate-400">$1,000-4,999:</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">+5%</span>
+                  <span className="text-[#2F6F62] dark:text-[#2F6F62] font-bold">+5%</span>
                   <span className="text-slate-600 dark:text-slate-400">$5,000+:</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">+3%</span>
+                  <span className="text-[#2F6F62] dark:text-[#2F6F62] font-bold">+3%</span>
                 </div>
               </div>
 

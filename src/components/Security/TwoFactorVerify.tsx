@@ -228,7 +228,7 @@ export function TwoFactorVerify({
               }}
               onKeyDown={handleKeyDown}
               placeholder={useBackupCode ? "00000000" : "000000"}
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-center text-2xl font-mono text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-center text-2xl font-mono text-white placeholder-slate-600 focus:outline-none focus:border-[#2F6F62]"
               maxLength={useBackupCode ? 8 : 6}
               disabled={processing}
             />
@@ -276,7 +276,7 @@ export function TwoFactorVerify({
               processing || 
               (useBackupCode ? code.length !== 8 : code.length !== 6)
             }
-            className="flex-1 py-3 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-medium disabled:opacity-50"
+            className="flex-1 py-3 rounded-xl bg-[#2F6F62] text-white hover:bg-[#2F6F62] transition-colors font-medium disabled:opacity-50"
           >
             {processing 
               ? (lang === "tr" ? "Doğrulanıyor..." : "Verifying...")

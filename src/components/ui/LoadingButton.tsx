@@ -30,7 +30,7 @@ export function LoadingButton({
   const baseStyles = "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
-    primary: "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20",
+    primary: "bg-[#2F6F62] hover:bg-[#2F6F62] text-white shadow-lg shadow-[#2F6F62]/20",
     secondary: "bg-slate-700 hover:bg-slate-600 text-white",
     danger: "bg-red-500 hover:bg-red-600 text-white",
     ghost: "bg-transparent hover:bg-slate-800 text-slate-300",
@@ -90,7 +90,7 @@ export function IconButton({
   const baseStyles = "inline-flex items-center justify-center rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
-    primary: "bg-emerald-500 hover:bg-emerald-600 text-white",
+    primary: "bg-[#2F6F62] hover:bg-[#2F6F62] text-white",
     secondary: "bg-slate-700 hover:bg-slate-600 text-white",
     danger: "bg-red-500 hover:bg-red-600 text-white",
     ghost: "bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700",

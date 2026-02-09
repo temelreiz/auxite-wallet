@@ -160,8 +160,8 @@ export default function TrustCenterPage() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-6">
-            <svg className="w-10 h-10 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-20 h-20 rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center mx-auto mb-6">
+            <svg className="w-10 h-10 text-[#2F6F62] dark:text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
@@ -183,7 +183,7 @@ export default function TrustCenterPage() {
                 onClick={() => setActiveTab(tab.key as typeof activeTab)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                   activeTab === tab.key
-                    ? "bg-emerald-500 text-white"
+                    ? "bg-[#2F6F62] text-white"
                     : "text-slate-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800"
                 }`}
               >
@@ -200,15 +200,15 @@ export default function TrustCenterPage() {
           {activeTab === "architecture" && (
             <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-12 h-12 rounded-xl bg-[#2F6F62]/20 flex items-center justify-center mb-4">
+                  <svg className="w-6 h-6 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </div>
                 <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">{t.segregatedCustody}</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400">{t.segregatedCustodyDesc}</p>
-                <div className="mt-4 p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/30">
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                <div className="mt-4 p-3 bg-[#2F6F62]/10 rounded-lg border border-[#2F6F62]/30">
+                  <p className="text-xs text-[#2F6F62] dark:text-[#2F6F62] font-medium">
                     ✓ Assets never commingled with corporate funds
                   </p>
                 </div>
@@ -260,7 +260,7 @@ export default function TrustCenterPage() {
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{t.zurichVaultDesc}</p>
                   <div className="flex flex-wrap gap-2">
-                    <span className="px-2 py-1 text-xs rounded-full bg-emerald-500/20 text-emerald-600">LBMA Approved</span>
+                    <span className="px-2 py-1 text-xs rounded-full bg-[#2F6F62]/20 text-[#2F6F62]">LBMA Approved</span>
                     <span className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-600">ISO 9001</span>
                   </div>
                 </div>
@@ -275,7 +275,7 @@ export default function TrustCenterPage() {
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{t.singaporeVaultDesc}</p>
                   <div className="flex flex-wrap gap-2">
-                    <span className="px-2 py-1 text-xs rounded-full bg-emerald-500/20 text-emerald-600">MAS Regulated</span>
+                    <span className="px-2 py-1 text-xs rounded-full bg-[#2F6F62]/20 text-[#2F6F62]">MAS Regulated</span>
                     <span className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-600">Freeport Zone</span>
                   </div>
                 </div>
@@ -290,7 +290,7 @@ export default function TrustCenterPage() {
                   </div>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{t.dubaiVaultDesc}</p>
                   <div className="flex flex-wrap gap-2">
-                    <span className="px-2 py-1 text-xs rounded-full bg-emerald-500/20 text-emerald-600">DMCC Licensed</span>
+                    <span className="px-2 py-1 text-xs rounded-full bg-[#2F6F62]/20 text-[#2F6F62]">DMCC Licensed</span>
                     <span className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-600">Sharia Compliant</span>
                   </div>
                 </div>
@@ -300,29 +300,29 @@ export default function TrustCenterPage() {
               <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6">
                 <h3 className="font-semibold text-slate-800 dark:text-white mb-4">{t.verification}</h3>
                 <div className="grid md:grid-cols-3 gap-4">
-                  <Link href="/trust/reserves" className="p-4 rounded-lg border border-stone-200 dark:border-slate-700 hover:border-emerald-500 transition-colors group">
+                  <Link href="/trust/reserves" className="p-4 rounded-lg border border-stone-200 dark:border-slate-700 hover:border-[#2F6F62] transition-colors group">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">📊</span>
                       <div>
-                        <p className="font-medium text-slate-800 dark:text-white group-hover:text-emerald-500">{t.proofOfReserves}</p>
+                        <p className="font-medium text-slate-800 dark:text-white group-hover:text-[#2F6F62]">{t.proofOfReserves}</p>
                         <p className="text-xs text-slate-500">{t.proofOfReservesDesc}</p>
                       </div>
                     </div>
                   </Link>
-                  <Link href="/trust/audits" className="p-4 rounded-lg border border-stone-200 dark:border-slate-700 hover:border-emerald-500 transition-colors group">
+                  <Link href="/trust/audits" className="p-4 rounded-lg border border-stone-200 dark:border-slate-700 hover:border-[#2F6F62] transition-colors group">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">🧾</span>
                       <div>
-                        <p className="font-medium text-slate-800 dark:text-white group-hover:text-emerald-500">{t.auditReports}</p>
+                        <p className="font-medium text-slate-800 dark:text-white group-hover:text-[#2F6F62]">{t.auditReports}</p>
                         <p className="text-xs text-slate-500">{t.auditReportsDesc}</p>
                       </div>
                     </div>
                   </Link>
-                  <Link href="/verify" className="p-4 rounded-lg border border-stone-200 dark:border-slate-700 hover:border-emerald-500 transition-colors group">
+                  <Link href="/verify" className="p-4 rounded-lg border border-stone-200 dark:border-slate-700 hover:border-[#2F6F62] transition-colors group">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">🔍</span>
                       <div>
-                        <p className="font-medium text-slate-800 dark:text-white group-hover:text-emerald-500">{t.certificateVerify}</p>
+                        <p className="font-medium text-slate-800 dark:text-white group-hover:text-[#2F6F62]">{t.certificateVerify}</p>
                         <p className="text-xs text-slate-500">{t.certificateVerifyDesc}</p>
                       </div>
                     </div>
@@ -346,15 +346,15 @@ export default function TrustCenterPage() {
                     <p className="font-medium text-slate-800 dark:text-white">Fund Deposit</p>
                     <p className="text-xs text-slate-500">USDC/USDT/BTC/ETH</p>
                   </div>
-                  <svg className="w-6 h-6 text-emerald-500 rotate-90 md:rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-6 h-6 text-[#2F6F62] rotate-90 md:rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
-                  <div className="px-4 py-3 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-center">
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">Step 2</p>
-                    <p className="font-semibold text-emerald-600 dark:text-emerald-400">AUXM Credit</p>
-                    <p className="text-xs text-emerald-600/70">Settled Capital</p>
+                  <div className="px-4 py-3 bg-[#2F6F62]/20 border border-[#2F6F62]/30 rounded-lg text-center">
+                    <p className="text-xs text-[#2F6F62] dark:text-[#2F6F62] mb-1">Step 2</p>
+                    <p className="font-semibold text-[#2F6F62] dark:text-[#2F6F62]">AUXM Credit</p>
+                    <p className="text-xs text-[#2F6F62]/70">Settled Capital</p>
                   </div>
-                  <svg className="w-6 h-6 text-emerald-500 rotate-90 md:rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-6 h-6 text-[#2F6F62] rotate-90 md:rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
                   <div className="px-4 py-3 bg-amber-500/20 border border-amber-500/30 rounded-lg text-center">
@@ -422,8 +422,8 @@ export default function TrustCenterPage() {
                 </div>
 
                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="w-12 h-12 rounded-xl bg-[#2F6F62]/20 flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
@@ -452,28 +452,28 @@ export default function TrustCenterPage() {
         </div>
 
         {/* What Auxite Is / Is Not */}
-        <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl p-8 text-white mb-8">
+        <div className="bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] rounded-2xl p-8 text-white mb-8">
           <h2 className="text-2xl font-bold mb-6">⚖️ {t.whatIsAuxite}</h2>
           <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h3 className="font-semibold mb-3 text-emerald-100">{t.auxiteIs}</h3>
+              <h3 className="font-semibold mb-3 text-white">{t.auxiteIs}</h3>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-200">✓</span>
+                  <span className="text-white/80">✓</span>
                   <span>{t.isDigitalPlatform}</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-200">✓</span>
+                  <span className="text-white/80">✓</span>
                   <span>{t.isRwaInfrastructure}</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-200">✓</span>
+                  <span className="text-white/80">✓</span>
                   <span>{t.isCustodyTech}</span>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-3 text-emerald-100">{t.auxiteIsNot}</h3>
+              <h3 className="font-semibold mb-3 text-white">{t.auxiteIsNot}</h3>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
                   <span className="text-red-300">✗</span>
@@ -502,7 +502,7 @@ export default function TrustCenterPage() {
           <p className="text-slate-600 dark:text-slate-400 mb-6">{t.verifyCertificateDesc}</p>
           <Link
             href="/verify"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#2F6F62] hover:bg-[#2F6F62] text-white font-semibold rounded-xl transition-colors"
           >
             {t.goToVerification}
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

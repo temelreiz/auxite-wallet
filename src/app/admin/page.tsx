@@ -290,7 +290,7 @@ const CRYPTOS = [
   { key: "eth", symbol: "ETH", name: "Ethereum", icon: "Ξ", color: "text-blue-400" },
   { key: "xrp", symbol: "XRP", name: "Ripple", icon: "✕", color: "text-slate-300" },
   { key: "sol", symbol: "SOL", name: "Solana", icon: "◎", color: "text-purple-500" },
-  { key: "usdt", symbol: "USDT", name: "Tether", icon: "₮", color: "text-emerald-400" },
+  { key: "usdt", symbol: "USDT", name: "Tether", icon: "₮", color: "text-[#2F6F62]" },
 ];
 
 const FEATURE_LABELS: Record<string, { tr: string; en: string; icon: string }> = {
@@ -1872,7 +1872,7 @@ export default function AdminDashboard() {
             <button
               type="submit"
               disabled={authLoading || !password}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-semibold py-3 rounded-xl disabled:opacity-50 transition-colors"
+              className="w-full bg-[#2F6F62] hover:bg-[#2F6F62] text-black font-semibold py-3 rounded-xl disabled:opacity-50 transition-colors"
             >
               {authLoading ? "Kontrol ediliyor..." : "Giriş Yap"}
             </button>
@@ -1902,7 +1902,7 @@ export default function AdminDashboard() {
           </div>
           
           <div className="flex items-center gap-4">
-            <span className="text-sm text-emerald-400 font-medium">
+            <span className="text-sm text-[#2F6F62] font-medium">
               ● Admin Oturumu Aktif
             </span>
             <button
@@ -1918,7 +1918,7 @@ export default function AdminDashboard() {
       {/* Message Toast */}
       {message.text && (
         <div className={`fixed top-20 right-4 z-50 px-4 py-3 rounded-xl shadow-lg ${
-          message.type === "success" ? "bg-emerald-500/90" : "bg-red-500/90"
+          message.type === "success" ? "bg-[#2F6F62]/90" : "bg-red-500/90"
         }`}>
           <div className="flex items-center gap-2">
             <span>{message.type === "success" ? "✓" : "✕"}</span>
@@ -1970,7 +1970,7 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {[
                   { label: "Toplam Kullanıcı", value: formatNumber(stats.totalUsers), icon: "👥", color: "text-blue-400" },
-                  { label: "Toplam İşlem", value: formatNumber(stats.totalTrades), icon: "📊", color: "text-emerald-400" },
+                  { label: "Toplam İşlem", value: formatNumber(stats.totalTrades), icon: "📊", color: "text-[#2F6F62]" },
                   { label: "Toplam Hacim", value: stats.totalVolume, icon: "💰", color: "text-amber-400" },
                   { label: "Bekleyen Çekim", value: stats.pendingWithdraws, icon: "⏳", color: "text-orange-400" },
                   { label: "Bekleyen KYC", value: stats.pendingKYC, icon: "📋", color: "text-purple-400" },
@@ -2015,7 +2015,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setSendCryptoModal(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 rounded-lg text-sm font-semibold flex items-center gap-2"
+                    className="px-4 py-2 bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-[#2F6F62] hover:to-[#D4B47A] rounded-lg text-sm font-semibold flex items-center gap-2"
                   >
                     🚀 Gerçek Kripto Gönder
                   </button>
@@ -2033,8 +2033,8 @@ export default function AdminDashboard() {
               {/* Summary Cards */}
               {platformFees && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-gradient-to-r from-emerald-900/50 to-emerald-800/30 border border-emerald-700/50 rounded-xl p-6">
-                    <div className="text-emerald-400 text-sm mb-1">Toplam Fee (USD)</div>
+                  <div className="bg-gradient-to-r from-[#2F6F62]/30 to-[#2F6F62]/20 border border-[#2F6F62]/50 rounded-xl p-6">
+                    <div className="text-[#2F6F62] text-sm mb-1">Toplam Fee (USD)</div>
                     <div className="text-3xl font-bold text-white">${platformFees.summary.totalValueUsd.toFixed(2)}</div>
                   </div>
                   <div className="bg-gradient-to-r from-amber-900/50 to-amber-800/30 border border-amber-700/50 rounded-xl p-6">
@@ -2072,7 +2072,7 @@ export default function AdminDashboard() {
                           <td className="p-4 font-medium">{token}</td>
                           <td className="p-4 text-right font-mono">{data.total.toFixed(6)}</td>
                           <td className="p-4 text-right font-mono text-amber-400">{data.pending.toFixed(6)}</td>
-                          <td className="p-4 text-right font-mono text-emerald-400">{data.transferred.toFixed(6)}</td>
+                          <td className="p-4 text-right font-mono text-[#2F6F62]">{data.transferred.toFixed(6)}</td>
                           <td className="p-4 text-right">{data.transactionCount}</td>
                           <td className="p-4 text-right font-semibold">${data.valueUsd.toFixed(2)}</td>
                           <td className="p-4 text-center">
@@ -2082,7 +2082,7 @@ export default function AdminDashboard() {
                                   setTransferModal({ token, pending: data.pending });
                                   setTransferForm({ amount: data.pending, ledgerAddress: '', txHash: '', note: '' });
                                 }}
-                                className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 rounded text-black text-sm font-medium"
+                                className="px-3 py-1 bg-[#2F6F62] hover:bg-[#2F6F62] rounded text-black text-sm font-medium"
                               >
                                 Transfer
                               </button>
@@ -2196,7 +2196,7 @@ export default function AdminDashboard() {
                       </button>
                       <button
                         onClick={transferFeesToLedger}
-                        className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-black font-semibold"
+                        className="flex-1 py-3 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-xl text-black font-semibold"
                       >
                         ✅ Transfer Kaydet
                       </button>
@@ -2281,7 +2281,7 @@ export default function AdminDashboard() {
                       <button
                         onClick={sendRealCrypto}
                         disabled={sendCryptoLoading || !sendCryptoForm.amount || !sendCryptoForm.toAddress}
-                        className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 py-3 bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-[#2F6F62] hover:to-[#D4B47A] rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {sendCryptoLoading ? "Gönderiliyor..." : "🚀 Gönder"}
                       </button>
@@ -2487,17 +2487,17 @@ export default function AdminDashboard() {
                     <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30 rounded-xl p-4">
                       <p className="text-blue-400 text-sm mb-1">Toplam Kullanıcı</p>
                       <p className="text-2xl font-bold">{formatNumber(analyticsOverview.totalUsers)}</p>
-                      <p className="text-xs text-emerald-400 mt-1">+{formatNumber(analyticsOverview.newUsers7d)} bu hafta</p>
+                      <p className="text-xs text-[#2F6F62] mt-1">+{formatNumber(analyticsOverview.newUsers7d)} bu hafta</p>
                     </div>
-                    <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30 rounded-xl p-4">
-                      <p className="text-emerald-400 text-sm mb-1">Aktif Kullanıcı (24s)</p>
+                    <div className="bg-gradient-to-br from-[#2F6F62]/20 to-[#2F6F62]/10 border border-[#2F6F62]/30 rounded-xl p-4">
+                      <p className="text-[#2F6F62] text-sm mb-1">Aktif Kullanıcı (24s)</p>
                       <p className="text-2xl font-bold">{formatNumber(analyticsOverview.activeUsers24h)}</p>
                       <p className="text-xs text-slate-400 mt-1">{((analyticsOverview.activeUsers24h / analyticsOverview.totalUsers) * 100).toFixed(1)}% aktif</p>
                     </div>
                     <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 rounded-xl p-4">
                       <p className="text-amber-400 text-sm mb-1">Toplam Hacim</p>
                       <p className="text-2xl font-bold">{formatCurrency(analyticsOverview.totalVolume)}</p>
-                      <p className="text-xs text-emerald-400 mt-1">{formatCurrency(analyticsOverview.volume24h)} bugün</p>
+                      <p className="text-xs text-[#2F6F62] mt-1">{formatCurrency(analyticsOverview.volume24h)} bugün</p>
                     </div>
                     <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/30 rounded-xl p-4">
                       <p className="text-purple-400 text-sm mb-1">Toplam İşlem</p>
@@ -2544,7 +2544,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="text-right">
                               <p className="font-medium">{formatCurrency(asset.volume)}</p>
-                              <p className={`text-xs ${asset.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                              <p className={`text-xs ${asset.change >= 0 ? 'text-[#2F6F62]' : 'text-red-400'}`}>
                                 {formatPercentage(asset.change)}
                               </p>
                             </div>
@@ -2786,7 +2786,7 @@ export default function AdminDashboard() {
                               onClick={() => handleToggleBanner(banner.id)}
                               className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
                                 banner.active
-                                  ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                                  ? "bg-[#2F6F62]/20 text-[#2F6F62] hover:bg-[#2F6F62]/30"
                                   : "bg-slate-700 text-slate-400 hover:bg-slate-600"
                               }`}
                             >
@@ -2818,7 +2818,7 @@ export default function AdminDashboard() {
                       onClick={() => setBannerLangTab(lang.toLowerCase())}
                       className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
                         bannerLangTab === lang.toLowerCase()
-                          ? 'bg-emerald-500 text-white'
+                          ? 'bg-[#2F6F62] text-white'
                           : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                       }`}
                     >
@@ -2872,7 +2872,7 @@ export default function AdminDashboard() {
                           key={lang}
                           className={`px-2 py-0.5 rounded text-xs ${
                             (newBanner.title as any)?.[lang] 
-                              ? 'bg-emerald-500/20 text-emerald-400' 
+                              ? 'bg-[#2F6F62]/20 text-[#2F6F62]' 
                               : 'bg-slate-700 text-slate-500'
                           }`}
                         >
@@ -2934,7 +2934,7 @@ export default function AdminDashboard() {
                     {newBanner.actionType !== 'none' && <span className="text-xl">→</span>}
                   </div>
                 </div>
-                <button onClick={handleAddBanner} disabled={bannerSaving} className="mt-4 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white font-medium disabled:opacity-50">
+                <button onClick={handleAddBanner} disabled={bannerSaving} className="mt-4 px-6 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-lg text-white font-medium disabled:opacity-50">
                   {bannerSaving ? "Ekleniyor..." : "Banner Ekle"}
                 </button>
               </div>
@@ -2965,7 +2965,7 @@ export default function AdminDashboard() {
                               <p className="font-semibold">{campaign.name.tr}</p>
                               <span className={`px-2 py-0.5 rounded text-xs ${
                                 campaign.type === 'discount' ? 'bg-red-500/20 text-red-400' :
-                                campaign.type === 'bonus' ? 'bg-emerald-500/20 text-emerald-400' :
+                                campaign.type === 'bonus' ? 'bg-[#2F6F62]/20 text-[#2F6F62]' :
                                 campaign.type === 'cashback' ? 'bg-amber-500/20 text-amber-400' :
                                 'bg-purple-500/20 text-purple-400'
                               }`}>
@@ -2985,7 +2985,7 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <button onClick={() => handleToggleCampaign(campaign.id)} className={`w-10 h-10 rounded-lg flex items-center justify-center ${campaign.active ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-700 text-slate-400"}`}>
+                            <button onClick={() => handleToggleCampaign(campaign.id)} className={`w-10 h-10 rounded-lg flex items-center justify-center ${campaign.active ? "bg-[#2F6F62]/20 text-[#2F6F62]" : "bg-slate-700 text-slate-400"}`}>
                               {campaign.active ? "✓" : "○"}
                             </button>
                             <button onClick={() => handleDeleteCampaign(campaign.id)} className="w-10 h-10 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 flex items-center justify-center">
@@ -3055,7 +3055,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <button onClick={handleAddCampaign} disabled={campaignSaving} className="mt-4 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-black font-medium disabled:opacity-50">
+                <button onClick={handleAddCampaign} disabled={campaignSaving} className="mt-4 px-6 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-lg text-black font-medium disabled:opacity-50">
                   {campaignSaving ? "Oluşturuluyor..." : "Kampanya Oluştur"}
                 </button>
               </div>
@@ -3079,7 +3079,7 @@ export default function AdminDashboard() {
                       <div key={announcement.id} className={`p-4 rounded-xl border-l-4 ${
                         announcement.type === 'error' ? 'border-l-red-500 bg-red-500/10' :
                         announcement.type === 'warning' ? 'border-l-amber-500 bg-amber-500/10' :
-                        announcement.type === 'success' ? 'border-l-emerald-500 bg-emerald-500/10' :
+                        announcement.type === 'success' ? 'border-l-[#2F6F62] bg-[#2F6F62]/10' :
                         announcement.type === 'maintenance' ? 'border-l-purple-500 bg-purple-500/10' :
                         'border-l-blue-500 bg-blue-500/10'
                       } ${!announcement.active && 'opacity-50'}`}>
@@ -3114,7 +3114,7 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <button onClick={() => handleToggleAnnouncement(announcement.id)} className={`w-10 h-10 rounded-lg flex items-center justify-center ${announcement.active ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-700 text-slate-400"}`}>
+                            <button onClick={() => handleToggleAnnouncement(announcement.id)} className={`w-10 h-10 rounded-lg flex items-center justify-center ${announcement.active ? "bg-[#2F6F62]/20 text-[#2F6F62]" : "bg-slate-700 text-slate-400"}`}>
                               {announcement.active ? "✓" : "○"}
                             </button>
                             <button onClick={() => handleDeleteAnnouncement(announcement.id)} className="w-10 h-10 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 flex items-center justify-center">
@@ -3339,7 +3339,7 @@ export default function AdminDashboard() {
                       <option value="alert">Uyarı</option>
                       <option value="promo">Promosyon</option>
                     </select>
-                    <button onClick={handleAddNews} className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white font-medium">
+                    <button onClick={handleAddNews} className="px-6 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-lg text-white font-medium">
                       Ekle
                     </button>
                   </div>
@@ -3467,13 +3467,13 @@ export default function AdminDashboard() {
                         onClick={() => handleFeatureToggle(key as keyof FeatureFlags)}
                         className={`p-3 rounded-xl border transition-all text-left ${
                           value
-                            ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
+                            ? "bg-[#2F6F62]/20 border-[#2F6F62]/50 text-[#2F6F62]"
                             : "bg-slate-800/50 border-slate-700 text-slate-400"
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-lg">{label.icon}</span>
-                          <span className={`w-2 h-2 rounded-full ${value ? "bg-emerald-400" : "bg-slate-600"}`} />
+                          <span className={`w-2 h-2 rounded-full ${value ? "bg-[#2F6F62]" : "bg-slate-600"}`} />
                         </div>
                         <p className="text-sm font-medium mt-2">{label.tr}</p>
                       </button>
@@ -3511,7 +3511,7 @@ export default function AdminDashboard() {
                 <button
                   onClick={saveAuxiteerConfig}
                   disabled={auxiteerSaving}
-                  className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl font-medium disabled:opacity-50"
+                  className="px-6 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-xl font-medium disabled:opacity-50"
                 >
                   {auxiteerSaving ? 'Kaydediliyor...' : '💾 Kaydet'}
                 </button>
@@ -3520,7 +3520,7 @@ export default function AdminDashboard() {
               {/* Success/Error Message */}
               {auxiteerMessage && (
                 <div className={`p-4 rounded-xl ${
-                  auxiteerMessage.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                  auxiteerMessage.type === 'success' ? 'bg-[#2F6F62]/20 text-[#2F6F62]' : 'bg-red-500/20 text-red-400'
                 }`}>
                   {auxiteerMessage.text}
                 </div>
@@ -3710,7 +3710,7 @@ export default function AdminDashboard() {
                   <button
                     onClick={inviteToSovereign}
                     disabled={sovereignLoading || !newSovereignAddress}
-                    className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-black font-medium rounded-xl disabled:opacity-50"
+                    className="px-6 py-3 bg-[#2F6F62] hover:bg-[#2F6F62] text-black font-medium rounded-xl disabled:opacity-50"
                   >
                     {sovereignLoading ? 'Gönderiliyor...' : '⭐ Davet Et'}
                   </button>
@@ -3824,7 +3824,7 @@ export default function AdminDashboard() {
                       key={metal}
                       className={`p-4 rounded-xl border ${
                         notInit ? "bg-slate-900/50 border-slate-700" :
-                        isLow ? "bg-red-900/30 border-red-700" : "bg-emerald-900/30 border-emerald-700"
+                        isLow ? "bg-red-900/30 border-red-700" : "bg-[#2F6F62]/30 border-[#2F6F62]"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -3837,7 +3837,7 @@ export default function AdminDashboard() {
                         ) : isLow ? (
                           <span className="text-xs bg-red-600 px-2 py-1 rounded animate-pulse">Düşük Stok!</span>
                         ) : (
-                          <span className="text-xs bg-emerald-600 px-2 py-1 rounded">OK</span>
+                          <span className="text-xs bg-[#2F6F62] px-2 py-1 rounded">OK</span>
                         )}
                       </div>
                       <div className="text-2xl font-bold">
@@ -3849,7 +3849,7 @@ export default function AdminDashboard() {
                       {stock?.utilizationPercent && (
                         <div className="mt-2 bg-slate-800 rounded-full h-2">
                           <div
-                            className={`h-2 rounded-full ${isLow ? "bg-red-500" : "bg-emerald-500"}`}
+                            className={`h-2 rounded-full ${isLow ? "bg-red-500" : "bg-[#2F6F62]"}`}
                             style={{ width: `${Math.min(100, parseFloat(stock.utilizationPercent))}%` }}
                           />
                         </div>
@@ -3984,7 +3984,7 @@ export default function AdminDashboard() {
                 </div>
                 <button
                   onClick={handleStockOperation}
-                  className="mt-4 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white font-medium"
+                  className="mt-4 px-6 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-lg text-white font-medium"
                 >
                   İşlemi Uygula
                 </button>
@@ -4139,7 +4139,7 @@ export default function AdminDashboard() {
               {/* Bakiyeler */}
               {walletBalances && (
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                  <h3 className="font-semibold mb-4 text-emerald-400">💎 Bakiyeler</h3>
+                  <h3 className="font-semibold mb-4 text-[#2F6F62]">💎 Bakiyeler</h3>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     {Object.entries(walletBalances).map(([token, data]: [string, any]) => {
                       const icons: Record<string, string> = {
@@ -4198,7 +4198,7 @@ export default function AdminDashboard() {
                   <button 
                     onClick={handleSendCrypto} 
                     disabled={walletProcessing === 'send'} 
-                    className="bg-emerald-500 hover:bg-emerald-600 text-black font-medium rounded-lg disabled:opacity-50"
+                    className="bg-[#2F6F62] hover:bg-[#2F6F62] text-black font-medium rounded-lg disabled:opacity-50"
                   >
                     {walletProcessing === 'send' ? "Gönderiliyor..." : "🚀 Gönder"}
                   </button>
@@ -4224,7 +4224,7 @@ export default function AdminDashboard() {
                           <button 
                             onClick={() => handleApproveWithdraw(w.id)} 
                             disabled={walletProcessing === w.id} 
-                            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-white text-sm disabled:opacity-50"
+                            className="px-4 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-lg text-white text-sm disabled:opacity-50"
                           >
                             {walletProcessing === w.id ? "..." : "✅ Onayla"}
                           </button>
@@ -4380,7 +4380,7 @@ export default function AdminDashboard() {
               <button
                 onClick={saveWebsiteSettings}
                 disabled={websiteSaving}
-                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-black font-semibold disabled:opacity-50"
+                className="w-full py-3 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-xl text-black font-semibold disabled:opacity-50"
               >
                 {websiteSaving ? 'Kaydediliyor...' : '💾 Ayarları Kaydet'}
               </button>
@@ -4403,7 +4403,7 @@ export default function AdminDashboard() {
                     });
                     setShowWebsiteModal('roadmap');
                   }}
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-black font-medium"
+                  className="px-4 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-lg text-black font-medium"
                 >
                   + Yeni Faz Ekle
                 </button>
@@ -4486,7 +4486,7 @@ export default function AdminDashboard() {
                     });
                     setShowWebsiteModal('team');
                   }}
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-black font-medium"
+                  className="px-4 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-lg text-black font-medium"
                 >
                   + Yeni Üye Ekle
                 </button>
@@ -4580,7 +4580,7 @@ export default function AdminDashboard() {
                     });
                     setShowWebsiteModal('vault');
                   }}
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-black font-medium"
+                  className="px-4 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-lg text-black font-medium"
                 >
                   + Yeni Kasa Ekle
                 </button>
@@ -4932,7 +4932,7 @@ export default function AdminDashboard() {
                       if (showWebsiteModal === 'team') saveTeamMember(editingItem);
                       if (showWebsiteModal === 'vault') saveVaultLocation(editingItem);
                     }}
-                    className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-black font-semibold"
+                    className="flex-1 py-3 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-xl text-black font-semibold"
                   >
                     💾 Kaydet
                   </button>

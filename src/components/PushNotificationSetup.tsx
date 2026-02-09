@@ -350,25 +350,25 @@ export function PushNotificationSetup({ walletAddress, lang: propLang }: PushNot
         </div>
       )}
       {success && (
-        <div className="mb-4 p-3 bg-emerald-500/20 border border-emerald-500/50 rounded-lg text-emerald-400 text-sm">
+        <div className="mb-4 p-3 bg-[#2F6F62]/20 border border-[#2F6F62]/50 rounded-lg text-[#2F6F62] text-sm">
           {success}
         </div>
       )}
 
       <div className={`p-4 rounded-xl border mb-6 ${
         isSubscribed 
-          ? "bg-emerald-500/10 border-emerald-500/30" 
+          ? "bg-[#2F6F62]/10 border-[#2F6F62]/30" 
           : "bg-slate-800 border-slate-700"
       }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-              isSubscribed ? "bg-emerald-500/20" : "bg-slate-700"
+              isSubscribed ? "bg-[#2F6F62]/20" : "bg-slate-700"
             }`}>
               {isSubscribed ? "🔔" : "🔕"}
             </div>
             <div>
-              <p className={`font-medium ${isSubscribed ? "text-emerald-400" : "text-slate-300"}`}>
+              <p className={`font-medium ${isSubscribed ? "text-[#2F6F62]" : "text-slate-300"}`}>
                 {isSubscribed ? t.enabled : t.disabled}
               </p>
               {permission === "denied" && (
@@ -389,7 +389,7 @@ export function PushNotificationSetup({ walletAddress, lang: propLang }: PushNot
             <button
               onClick={handleSubscribe}
               disabled={loading || permission === "denied"}
-              className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 text-sm font-medium disabled:opacity-50"
+              className="px-4 py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] text-sm font-medium disabled:opacity-50"
             >
               {loading ? "..." : t.enable}
             </button>
@@ -416,7 +416,7 @@ export function PushNotificationSetup({ walletAddress, lang: propLang }: PushNot
                 onClick={() => updatePreference(item.key, !preferences[item.key as keyof typeof preferences])}
                 className={`w-12 h-6 rounded-full transition-colors ${
                   preferences[item.key as keyof typeof preferences]
-                    ? "bg-emerald-500"
+                    ? "bg-[#2F6F62]"
                     : "bg-slate-600"
                 }`}
               >

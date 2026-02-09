@@ -275,11 +275,11 @@ export function OpenInMobileModal({
               </p>
               <div className="space-y-2 text-sm text-slate-500 dark:text-slate-400">
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-xs text-emerald-600">1</span>
+                  <span className="w-5 h-5 rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center text-xs text-[#2F6F62]">1</span>
                   <span>{t.checkPhone}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-xs text-emerald-600">2</span>
+                  <span className="w-5 h-5 rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center text-xs text-[#2F6F62]">2</span>
                   <span>{t.tapNotification}</span>
                 </div>
               </div>
@@ -288,10 +288,10 @@ export function OpenInMobileModal({
 
           {status === 'success' && (
             <>
-              <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
-                <CheckCircle className="w-10 h-10 text-emerald-500" />
+              <div className="w-20 h-20 rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center mb-4">
+                <CheckCircle className="w-10 h-10 text-[#2F6F62]" />
               </div>
-              <p className="text-emerald-600 dark:text-emerald-400 font-medium">
+              <p className="text-[#2F6F62] dark:text-[#2F6F62] font-medium">
                 {t.success}
               </p>
             </>

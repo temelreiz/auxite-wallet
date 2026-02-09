@@ -321,7 +321,7 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
               className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
               style={{ imageRendering: 'crisp-edges' }}
             />
-            <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-emerald-500 rounded-full flex items-center justify-center">
+            <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-[#2F6F62] rounded-full flex items-center justify-center">
               <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
             </div>
           </div>

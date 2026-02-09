@@ -7,7 +7,7 @@ export default function TermsPage() {
     <div className="min-h-screen bg-stone-100 dark:bg-slate-950">
       <TopNav />
       <main className="max-w-4xl mx-auto px-4 py-8">
-        <Link href="/legal" className="inline-flex items-center gap-2 text-emerald-600 hover:underline mb-6">
+        <Link href="/legal" className="inline-flex items-center gap-2 text-[#2F6F62] hover:underline mb-6">
           ← Back to Legal
         </Link>
         <article className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 md:p-12">

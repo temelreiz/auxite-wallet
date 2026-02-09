@@ -53,15 +53,15 @@ export default function TrustPage() {
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Hero Section */}
         <header className="text-center mb-12">
-          <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-6">
-            <svg className="w-10 h-10 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-20 h-20 rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center mx-auto mb-6">
+            <svg className="w-10 h-10 text-[#2F6F62] dark:text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
           <h1 className="text-4xl font-bold text-slate-800 dark:text-white mb-4">
             🔐 Trust Center
           </h1>
-          <p className="text-xl text-emerald-600 dark:text-emerald-400 font-medium mb-4">
+          <p className="text-xl text-[#2F6F62] dark:text-[#2F6F62] font-medium mb-4">
             Transparency. Allocation. Verification.
           </p>
           <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
@@ -78,19 +78,19 @@ export default function TrustPage() {
             <Link
               key={section.href}
               href={section.href}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 hover:border-emerald-500 hover:shadow-xl transition-all group"
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 hover:border-[#2F6F62] hover:shadow-xl transition-all group"
             >
               <div className="flex items-start gap-4">
                 <span className="text-4xl">{section.icon}</span>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-slate-800 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                  <h2 className="text-xl font-bold text-slate-800 dark:text-white group-hover:text-[#2F6F62] dark:group-hover:text-[#2F6F62] transition-colors">
                     {isTr ? section.titleTr : section.title}
                   </h2>
                   <p className="text-slate-600 dark:text-slate-400 mt-2">
                     {isTr ? section.descriptionTr : section.description}
                   </p>
                 </div>
-                <svg className="w-6 h-6 text-slate-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6 text-slate-400 group-hover:text-[#2F6F62] group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
@@ -101,7 +101,7 @@ export default function TrustPage() {
         {/* Key Principles */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-            <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
+            <div className="w-12 h-12 rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center mb-4">
               <span className="text-2xl">🏦</span>
             </div>
             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
@@ -192,26 +192,26 @@ export default function TrustPage() {
         </div>
 
         {/* What Auxite Is */}
-        <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl p-8 text-white mb-12">
+        <div className="bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] rounded-2xl p-8 text-white mb-12">
           <h2 className="text-2xl font-bold mb-6">
             ⚖️ {isTr ? 'Auxite Nedir — ve Ne Değildir' : 'What Auxite Is — and Is Not'}
           </h2>
           <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h3 className="font-semibold mb-3 text-emerald-100">Auxite {isTr ? 'şudur' : 'is'}:</h3>
+              <h3 className="font-semibold mb-3 text-white">Auxite {isTr ? 'şudur' : 'is'}:</h3>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-200">✓</span>
+                  <span className="text-white/80">✓</span>
                   <span>{isTr ? 'Tahsisli değerli metalleri yönetmek için dijital bir platform' : 'A digital platform for administering allocated precious metals'}</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-emerald-200">✓</span>
+                  <span className="text-white/80">✓</span>
                   <span>{isTr ? 'Şeffaflık öncelikli bir RWA altyapısı' : 'A transparency-first RWA infrastructure'}</span>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-3 text-emerald-100">Auxite {isTr ? 'değildir' : 'is not'}:</h3>
+              <h3 className="font-semibold mb-3 text-white">Auxite {isTr ? 'değildir' : 'is not'}:</h3>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
                   <span className="text-red-300">✗</span>
@@ -247,7 +247,7 @@ export default function TrustPage() {
           </p>
           <Link
             href="/verify"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#2F6F62] hover:bg-[#2F6F62] text-white font-semibold rounded-xl transition-colors"
           >
             {isTr ? 'Doğrulama Sayfasına Git' : 'Go to Verification Page'}
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -260,11 +260,11 @@ export default function TrustPage() {
         <div className="mt-8 text-center">
           <p className="text-slate-500 dark:text-slate-400 text-sm">
             {isTr ? 'Yasal belgeler için:' : 'For legal documentation:'}
-            <Link href="/legal/terms" className="text-emerald-600 dark:text-emerald-400 hover:underline mx-2">
+            <Link href="/legal/terms" className="text-[#2F6F62] dark:text-[#2F6F62] hover:underline mx-2">
               {isTr ? 'Kullanım Koşulları' : 'Terms of Service'}
             </Link>
             •
-            <Link href="/legal/redemption" className="text-emerald-600 dark:text-emerald-400 hover:underline mx-2">
+            <Link href="/legal/redemption" className="text-[#2F6F62] dark:text-[#2F6F62] hover:underline mx-2">
               {isTr ? 'Geri Ödeme Politikası' : 'Redemption Policy'}
             </Link>
           </p>

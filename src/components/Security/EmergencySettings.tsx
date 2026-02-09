@@ -282,7 +282,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
   const getStatusColor = () => {
     if (config?.panicMode) return "bg-red-500";
     if (config?.frozen) return "bg-amber-500";
-    return "bg-emerald-500";
+    return "bg-[#2F6F62]";
   };
 
   const getStatusLabel = () => {
@@ -313,7 +313,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
             <div>
               <h3 className="text-lg font-semibold text-white">{labels.accountStatus}</h3>
               <p className={`text-sm ${
-                config?.panicMode ? "text-red-400" : config?.frozen ? "text-amber-400" : "text-emerald-400"
+                config?.panicMode ? "text-red-400" : config?.frozen ? "text-amber-400" : "text-[#2F6F62]"
               }`}>
                 {getStatusLabel()}
               </p>
@@ -323,7 +323,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
           {config?.frozen && !config?.panicMode ? (
             <button
               onClick={handleUnfreeze}
-              className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+              className="px-4 py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] transition-colors"
             >
               {labels.unfreezeAccount}
             </button>
@@ -387,7 +387,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
                     ? "bg-red-500/20 border-red-500 text-red-400"
                     : level === "high"
                       ? "bg-amber-500/20 border-amber-500 text-amber-400"
-                      : "bg-emerald-500/20 border-emerald-500 text-emerald-400"
+                      : "bg-[#2F6F62]/20 border-[#2F6F62] text-[#2F6F62]"
                   : "bg-slate-900/50 border-slate-700 text-slate-400 hover:border-slate-600"
               }`}
             >
@@ -411,7 +411,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
           </div>
           <button
             onClick={() => setShowAddContact(true)}
-            className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg text-sm hover:bg-emerald-500/30 transition-colors"
+            className="px-3 py-1.5 bg-[#2F6F62]/20 text-[#2F6F62] rounded-lg text-sm hover:bg-[#2F6F62]/30 transition-colors"
           >
             + {labels.addContact}
           </button>
@@ -447,7 +447,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
                       </span>
                     )}
                     {contact.canRecover && (
-                      <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded text-xs">
+                      <span className="px-2 py-1 bg-[#2F6F62]/20 text-[#2F6F62] rounded text-xs">
                         {labels.canRecover}
                       </span>
                     )}
@@ -489,7 +489,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
               </button>
               <button
                 onClick={handleFreeze}
-                className="flex-1 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+                className="flex-1 py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] transition-colors"
               >
                 {labels.confirm}
               </button>
@@ -521,7 +521,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
                 onClick={() => handlePanic(!config?.panicMode)}
                 className={`flex-1 py-3 rounded-lg font-bold transition-colors ${
                   config?.panicMode
-                    ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                    ? "bg-[#2F6F62] text-white hover:bg-[#2F6F62]"
                     : "bg-red-600 text-white hover:bg-red-700"
                 }`}
               >
@@ -544,21 +544,21 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
                 value={newContact.name}
                 onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
                 placeholder={labels.name}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-[#2F6F62]"
               />
               <input
                 type="email"
                 value={newContact.email}
                 onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
                 placeholder={labels.email}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-[#2F6F62]"
               />
               <input
                 type="tel"
                 value={newContact.phone}
                 onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
                 placeholder={labels.phone}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-[#2F6F62]"
               />
 
               <div className="flex gap-4">
@@ -593,7 +593,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
               <button
                 onClick={handleAddContact}
                 disabled={!newContact.name}
-                className="flex-1 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                className="flex-1 py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] transition-colors disabled:opacity-50"
               >
                 {labels.save}
               </button>

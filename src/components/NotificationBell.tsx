@@ -31,7 +31,7 @@ export function NotificationBell({ lang }: NotificationBellProps) {
   const getNotificationColor = (type: string) => {
     switch (type) {
       case "unlocked":
-        return "border-emerald-500/50 bg-emerald-500/10";
+        return "border-[#2F6F62]/50 bg-[#2F6F62]/10";
       case "unlock_soon":
         return "border-amber-500/50 bg-amber-500/10";
       default:
@@ -63,7 +63,7 @@ export function NotificationBell({ lang }: NotificationBellProps) {
         {/* Badge */}
         {totalCount > 0 && (
           <span className={`absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center text-xs font-bold rounded-full ${
-            unlockedCount > 0 ? "bg-emerald-500 text-white" : "bg-emerald-500 text-white"
+            unlockedCount > 0 ? "bg-[#2F6F62] text-white" : "bg-[#2F6F62] text-white"
           }`}>
             {totalCount}
           </span>
@@ -140,7 +140,7 @@ export function NotificationBell({ lang }: NotificationBellProps) {
                             // Navigate to positions tab
                             window.location.href = "/leasing?tab=positions";
                           }}
-                          className="mt-2 w-full px-3 py-1.5 rounded bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition-colors"
+                          className="mt-2 w-full px-3 py-1.5 rounded bg-[#2F6F62] hover:bg-[#2F6F62] text-white text-xs font-medium transition-colors"
                         >
                           {lang === "tr" ? "Geri Çek" : "Withdraw"}
                         </button>

@@ -50,7 +50,7 @@ export function UsdBalanceCard({
   const t = texts[lang];
 
   return (
-    <div className="bg-gradient-to-br from-green-900/30 to-emerald-900/20 border border-green-700/30 rounded-2xl p-5">
+    <div className="bg-gradient-to-br from-[#2F6F62]/30 to-[#2F6F62]/20 border border-[#2F6F62]/30 rounded-2xl p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">

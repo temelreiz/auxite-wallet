@@ -218,7 +218,7 @@ export function LimitOrdersList({
   if (loading && orders.length === 0) {
     return (
       <div className={`${compact ? 'p-2 sm:p-3' : 'p-3 sm:p-4'} text-center text-slate-500 dark:text-slate-400`}>
-        <div className="animate-spin w-4 h-4 sm:w-5 sm:h-5 border-2 border-stone-300 dark:border-slate-600 border-t-emerald-500 rounded-full mx-auto mb-2"></div>
+        <div className="animate-spin w-4 h-4 sm:w-5 sm:h-5 border-2 border-stone-300 dark:border-slate-600 border-t-[#BFA181] rounded-full mx-auto mb-2"></div>
         <span className="text-xs sm:text-sm">{t.loading}</span>
       </div>
     );
@@ -242,7 +242,7 @@ export function LimitOrdersList({
           <button
             onClick={refresh}
             disabled={loading}
-            className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300"
+            className="text-[10px] sm:text-xs text-[#2F6F62] dark:text-[#2F6F62] hover:text-[#2F6F62] dark:hover:text-[#BFA181]"
           >
             {t.refresh}
           </button>
@@ -258,7 +258,7 @@ export function LimitOrdersList({
                 {renderMetalIcon(order.metal, 'sm')}
                 <span className={`px-1 sm:px-1.5 py-0.5 rounded text-[8px] sm:text-[10px] font-bold ${
                   order.type === 'buy' 
-                    ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' 
+                    ? 'bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]' 
                     : 'bg-red-500/20 text-red-600 dark:text-red-400'
                 }`}>
                   {order.type === 'buy' ? t.buy : t.sell}
@@ -290,7 +290,7 @@ export function LimitOrdersList({
         <button
           onClick={refresh}
           disabled={loading}
-          className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 disabled:opacity-50"
+          className="text-[10px] sm:text-xs text-[#2F6F62] dark:text-[#2F6F62] hover:text-[#2F6F62] dark:hover:text-[#BFA181] disabled:opacity-50"
         >
           {loading ? '...' : t.refresh}
         </button>
@@ -311,7 +311,7 @@ export function LimitOrdersList({
                   {renderMetalIcon(order.metal)}
                   <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold ${
                     order.type === 'buy' 
-                      ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' 
+                      ? 'bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]' 
                       : 'bg-red-500/20 text-red-600 dark:text-red-400'
                   }`}>
                     {order.type === 'buy' ? t.buy : t.sell}

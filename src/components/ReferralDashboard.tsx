@@ -200,7 +200,7 @@ export function ReferralDashboard({ walletAddress, lang = "en" }: ReferralDashbo
 
       {/* Success/Error Messages */}
       {applySuccess && (
-        <div className="p-3 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-emerald-400 text-sm">
+        <div className="p-3 bg-[#2F6F62]/20 border border-[#2F6F62]/30 rounded-lg text-[#2F6F62] text-sm">
           ✓ {applySuccess}
         </div>
       )}
@@ -216,7 +216,7 @@ export function ReferralDashboard({ walletAddress, lang = "en" }: ReferralDashbo
               className="p-2 bg-purple-500/30 hover:bg-purple-500/50 rounded-lg transition-colors"
             >
               {copied ? (
-                <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               ) : (
@@ -265,7 +265,7 @@ export function ReferralDashboard({ walletAddress, lang = "en" }: ReferralDashbo
           <p className="text-xs text-slate-400">{t.totalReferrals}</p>
         </div>
         <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-xl text-center">
-          <p className="text-2xl font-bold text-emerald-400">{stats?.qualifiedReferrals || 0}</p>
+          <p className="text-2xl font-bold text-[#2F6F62]">{stats?.qualifiedReferrals || 0}</p>
           <p className="text-xs text-slate-400">{t.qualified}</p>
         </div>
         <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-xl text-center">
@@ -280,15 +280,15 @@ export function ReferralDashboard({ walletAddress, lang = "en" }: ReferralDashbo
 
       {/* Pending Earnings */}
       {(stats?.pendingEarnings || 0) > 0 && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between">
+        <div className="p-4 bg-[#2F6F62]/10 border border-[#2F6F62]/30 rounded-xl flex items-center justify-between">
           <div>
             <p className="text-sm text-slate-400">{t.pendingEarnings}</p>
-            <p className="text-2xl font-bold text-emerald-400">${stats?.pendingEarnings.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-[#2F6F62]">${stats?.pendingEarnings.toFixed(2)}</p>
           </div>
           <button
             onClick={handleWithdraw}
             disabled={withdrawing}
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-medium rounded-lg transition-colors"
+            className="px-4 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] disabled:opacity-50 text-white font-medium rounded-lg transition-colors"
           >
             {withdrawing ? "..." : t.withdraw}
           </button>
@@ -369,7 +369,7 @@ export function ReferralDashboard({ walletAddress, lang = "en" }: ReferralDashbo
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-2 h-2 rounded-full ${
-                    ref.status === "rewarded" ? "bg-emerald-500" :
+                    ref.status === "rewarded" ? "bg-[#2F6F62]" :
                     ref.status === "qualified" ? "bg-amber-500" : "bg-slate-500"
                   }`} />
                   <div>
@@ -379,14 +379,14 @@ export function ReferralDashboard({ walletAddress, lang = "en" }: ReferralDashbo
                 </div>
                 <div className="text-right">
                   <span className={`text-xs px-2 py-1 rounded ${
-                    ref.status === "rewarded" ? "bg-emerald-500/20 text-emerald-400" :
+                    ref.status === "rewarded" ? "bg-[#2F6F62]/20 text-[#2F6F62]" :
                     ref.status === "qualified" ? "bg-amber-500/20 text-amber-400" : "bg-slate-500/20 text-slate-400"
                   }`}>
                     {ref.status === "rewarded" ? "✓ Rewarded" :
                      ref.status === "qualified" ? "Ready" : "Pending"}
                   </span>
                   {ref.rewardAmount && (
-                    <p className="text-xs text-emerald-400 mt-1">+${ref.rewardAmount.toFixed(2)}</p>
+                    <p className="text-xs text-[#2F6F62] mt-1">+${ref.rewardAmount.toFixed(2)}</p>
                   )}
                 </div>
               </div>

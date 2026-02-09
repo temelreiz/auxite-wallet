@@ -147,7 +147,7 @@ export function SessionManager({ walletAddress, lang = "en" }: SessionManagerPro
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full" />
+        <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-[#BFA181] rounded-full" />
       </div>
     );
   }
@@ -186,24 +186,24 @@ export function SessionManager({ walletAddress, lang = "en" }: SessionManagerPro
         </div>
       )}
       {success && (
-        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-emerald-400 text-sm">
+        <div className="bg-[#2F6F62]/10 border border-[#2F6F62]/20 rounded-lg p-3 text-[#2F6F62] text-sm">
           {success}
         </div>
       )}
 
       {/* Current Session */}
       {sessions.find(s => s.isCurrent) && (
-        <div className="bg-emerald-500/10 rounded-xl p-4 border border-emerald-500/30">
+        <div className="bg-[#2F6F62]/10 rounded-xl p-4 border border-[#2F6F62]/30">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[#2F6F62]/20 flex items-center justify-center">
               <span className="text-xl">{getDeviceIcon(sessions.find(s => s.isCurrent)?.deviceType || "")}</span>
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <p className="text-emerald-400 font-medium">
+                <p className="text-[#2F6F62] font-medium">
                   {sessions.find(s => s.isCurrent)?.deviceName}
                 </p>
-                <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">
+                <span className="text-xs bg-[#2F6F62] text-white px-2 py-0.5 rounded-full">
                   {lang === "tr" ? "Mevcut" : "Current"}
                 </span>
               </div>

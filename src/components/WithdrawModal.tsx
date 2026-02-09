@@ -276,10 +276,10 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
               </div>
             ) : result ? (
               <>
-                <div className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full flex items-center justify-center ${result.type === "success" ? "bg-emerald-100 dark:bg-emerald-500/20" : "bg-red-100 dark:bg-red-500/20"}`}>
+                <div className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full flex items-center justify-center ${result.type === "success" ? "bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20" : "bg-red-100 dark:bg-red-500/20"}`}>
                   <span className="text-2xl sm:text-3xl">{result.type === "success" ? "✓" : "✕"}</span>
                 </div>
-                <h3 className={`text-lg sm:text-xl font-bold mb-1.5 sm:mb-2 ${result.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                <h3 className={`text-lg sm:text-xl font-bold mb-1.5 sm:mb-2 ${result.type === "success" ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-red-600 dark:text-red-400"}`}>
                   {result.type === "success" ? t.withdrawalStarted : t.error}
                 </h3>
                 {result.message && <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base mb-2">{result.message}</p>}

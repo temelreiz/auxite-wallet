@@ -143,7 +143,7 @@ export function BonusTierInfo({ lang: propLang, showTitle = true, showUsageNote 
               <span className="text-slate-300 text-sm">{getTierName(tier.name)}</span>
             </div>
             <span className={`font-bold text-sm ${
-              tier.name === "Platinum" ? "text-amber-400" : "text-emerald-400"
+              tier.name === "Platinum" ? "text-amber-400" : "text-[#2F6F62]"
             }`}>
               +%{tier.bonusPercent}
             </span>

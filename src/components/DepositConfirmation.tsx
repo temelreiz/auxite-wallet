@@ -26,8 +26,8 @@ export function DepositConfirmation({
     <div className="bg-slate-900 rounded-2xl border border-slate-700 p-6 max-w-sm w-full">
       {/* Header */}
       <div className="flex items-center justify-center mb-4">
-        <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
-          <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="w-16 h-16 rounded-full bg-[#2F6F62]/20 flex items-center justify-center">
+          <svg className="w-8 h-8 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
@@ -71,7 +71,7 @@ export function DepositConfirmation({
         {/* Base AUXM */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <div className="w-2 h-2 rounded-full bg-[#2F6F62]" />
             <span className="text-slate-400 text-sm">AUXM</span>
           </div>
           <span className="text-white font-mono">
@@ -106,7 +106,7 @@ export function DepositConfirmation({
           <span className="text-white font-semibold">
             {lang === "tr" ? "Toplam" : "Total"}
           </span>
-          <span className="text-emerald-400 font-bold text-lg font-mono">
+          <span className="text-[#2F6F62] font-bold text-lg font-mono">
             {bonus.totalAuxm.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} AUXM
           </span>
         </div>
@@ -145,10 +145,10 @@ export function DepositConfirmation({
         <div className={`rounded-xl p-3 mb-4 text-center ${
           isLaunchActive 
             ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30"
-            : "bg-emerald-500/10 border border-emerald-500/30"
+            : "bg-[#2F6F62]/10 border border-[#2F6F62]/30"
         }`}>
           <p className={`text-sm font-medium ${
-            isLaunchActive ? "text-purple-300" : "text-emerald-400"
+            isLaunchActive ? "text-purple-300" : "text-[#2F6F62]"
           }`}>
             {bonus.message[lang]}
           </p>
@@ -172,7 +172,7 @@ export function DepositConfirmation({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              <div className="w-2 h-2 rounded-full bg-[#2F6F62]" />
               <span className="text-xs text-slate-300">
                 {bonus.auxmAmount.toFixed(2)} AUXM
               </span>
@@ -220,7 +220,7 @@ export function DepositConfirmation({
             className={`flex-1 py-3 rounded-xl text-white font-semibold transition-colors ${
               bonus.bonusAmount > 0
                 ? "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400"
-                : "bg-emerald-500 hover:bg-emerald-400"
+                : "bg-[#2F6F62] hover:bg-[#2F6F62]"
             }`}
           >
             {bonus.bonusAmount > 0

@@ -182,7 +182,7 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
                   onClick={() => setSelectedCurrency(pm.id)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedCurrency === pm.id
-                      ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500"
+                      ? "bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62] border border-[#2F6F62]"
                       : "bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-stone-200 dark:border-slate-700"
                   }`}
                 >
@@ -253,7 +253,7 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
             className={`w-full py-4 rounded-xl font-semibold text-white transition-colors ${
               !isConnected || amountNum <= 0 || hasInsufficientBalance || isProcessing
                 ? "bg-slate-300 dark:bg-slate-700 cursor-not-allowed"
-                : mode === "buy" ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"
+                : mode === "buy" ? "bg-[#2F6F62] hover:bg-[#2F6F62]" : "bg-red-500 hover:bg-red-600"
             }`}
           >
             {isProcessing ? (

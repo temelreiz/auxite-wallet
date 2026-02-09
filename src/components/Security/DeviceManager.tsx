@@ -158,7 +158,7 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full" />
+        <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-[#BFA181] rounded-full" />
       </div>
     );
   }
@@ -201,7 +201,7 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
             key={device.id}
             className={`bg-slate-800/50 rounded-xl p-4 border transition-colors ${
               device.isCurrent 
-                ? "border-emerald-500/50" 
+                ? "border-[#2F6F62]/50" 
                 : device.trusted 
                 ? "border-blue-500/30" 
                 : "border-slate-700"
@@ -212,7 +212,7 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
                 {/* Device Icon */}
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                   device.isCurrent 
-                    ? "bg-emerald-500/20" 
+                    ? "bg-[#2F6F62]/20" 
                     : device.trusted 
                     ? "bg-blue-500/20" 
                     : "bg-slate-700"
@@ -225,7 +225,7 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
                   <div className="flex items-center gap-2">
                     <p className="text-white font-medium">{device.name}</p>
                     {device.isCurrent && (
-                      <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
+                      <span className="text-xs bg-[#2F6F62]/20 text-[#2F6F62] px-2 py-0.5 rounded-full">
                         {lang === "tr" ? "Bu cihaz" : "This device"}
                       </span>
                     )}
@@ -277,7 +277,7 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
                       : (lang === "tr" ? "Güvenilir Yap" : "Mark Trusted")}
                   >
                     {processing === device.id ? (
-                      <div className="w-4 h-4 border-2 border-slate-600 border-t-emerald-500 rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-slate-600 border-t-[#BFA181] rounded-full animate-spin" />
                     ) : (
                       <svg className="w-4 h-4" fill={device.trusted ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />

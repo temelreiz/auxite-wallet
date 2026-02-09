@@ -670,15 +670,15 @@ export function AllocationWizard({
                   <div
                     key={step}
                     className={`h-1.5 flex-1 rounded-full transition-colors ${
-                      step <= currentStep ? "bg-emerald-500" : "bg-slate-700"
+                      step <= currentStep ? "bg-[#2F6F62]" : "bg-slate-700"
                     }`}
                   />
                 ))}
               </div>
               <div className="flex justify-between mt-2 text-xs text-slate-500">
-                <span className={currentStep >= 1 ? "text-emerald-400" : ""}>{t.selectAsset}</span>
-                <span className={currentStep >= 2 ? "text-emerald-400" : ""}>{t.defineAllocation}</span>
-                <span className={currentStep >= 3 ? "text-emerald-400" : ""}>{t.reviewConfirm}</span>
+                <span className={currentStep >= 1 ? "text-[#2F6F62]" : ""}>{t.selectAsset}</span>
+                <span className={currentStep >= 2 ? "text-[#2F6F62]" : ""}>{t.defineAllocation}</span>
+                <span className={currentStep >= 3 ? "text-[#2F6F62]" : ""}>{t.reviewConfirm}</span>
               </div>
             </div>
           )}
@@ -715,7 +715,7 @@ export function AllocationWizard({
                           <span className="text-sm font-medium text-white">
                             {formatCurrency(prices[asset.symbol] || 0)}/g
                           </span>
-                          <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                          <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-[#2F6F62] transition-colors" />
                         </div>
                       </div>
                     </div>
@@ -749,7 +749,7 @@ export function AllocationWizard({
                     placeholder="1"
                     min="0.01"
                     step="0.01"
-                    className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white text-lg font-mono focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white text-lg font-mono focus:outline-none focus:border-[#2F6F62] transition-colors"
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
                     {t.grams}
@@ -765,8 +765,8 @@ export function AllocationWizard({
 
               {/* Ownership Preview */}
               {amountNum > 0 && (
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                  <div className="text-sm text-emerald-400 mb-1">{t.youWillOwn}</div>
+                <div className="p-4 rounded-xl bg-[#2F6F62]/10 border border-[#2F6F62]/20">
+                  <div className="text-sm text-[#2F6F62] mb-1">{t.youWillOwn}</div>
                   <div className="text-2xl font-bold text-white">
                     {amountNum.toLocaleString()} {t.gramsOf} {getAssetName(selectedAsset.id)}
                   </div>
@@ -791,7 +791,7 @@ export function AllocationWizard({
                   <div className="h-px bg-slate-700/50" />
                   <div className="flex justify-between text-sm">
                     <span className="text-white font-medium">{t.finalPrice}</span>
-                    <span className="text-emerald-400 font-mono">{formatCurrency(finalPrice)}/g</span>
+                    <span className="text-[#2F6F62] font-mono">{formatCurrency(finalPrice)}/g</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-slate-700/50">
                     <span className="text-white font-semibold">{t.totalValue}</span>
@@ -829,7 +829,7 @@ export function AllocationWizard({
                 <button
                   onClick={handleContinueToReview}
                   disabled={amountNum <= 0 || !canAfford}
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-[#2F6F62] text-white font-semibold hover:bg-[#2F6F62] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   {t.continue}
                   <ChevronRight className="w-4 h-4" />
@@ -870,7 +870,7 @@ export function AllocationWizard({
                   <div className="h-px bg-slate-700/50" />
                   <div className="flex justify-between">
                     <span className="text-white font-semibold">{t.value}</span>
-                    <span className="text-xl font-bold text-emerald-400">{formatCurrency(totalValue)}</span>
+                    <span className="text-xl font-bold text-[#2F6F62]">{formatCurrency(totalValue)}</span>
                   </div>
                 </div>
               </div>
@@ -886,9 +886,9 @@ export function AllocationWizard({
               </div>
 
               {/* Trust Checklist */}
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5">
-                <div className="px-4 py-3 border-b border-emerald-500/20">
-                  <h4 className="text-sm font-medium text-emerald-400 flex items-center gap-2">
+              <div className="rounded-xl border border-[#2F6F62]/20 bg-[#2F6F62]/5">
+                <div className="px-4 py-3 border-b border-[#2F6F62]/20">
+                  <h4 className="text-sm font-medium text-[#2F6F62] flex items-center gap-2">
                     <Shield className="w-4 h-4" />
                     {t.trustChecklist}
                   </h4>
@@ -902,7 +902,7 @@ export function AllocationWizard({
                     >
                       <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                         trustChecks[index]
-                          ? "bg-emerald-500 border-emerald-500"
+                          ? "bg-[#2F6F62] border-[#2F6F62]"
                           : "border-slate-600 group-hover:border-slate-500"
                       }`}>
                         {trustChecks[index] && <Check className="w-3 h-3 text-white" />}
@@ -928,7 +928,7 @@ export function AllocationWizard({
                 <button
                   onClick={handleConfirmAllocation}
                   disabled={!allTrustChecked || isProcessing}
-                  className="flex-1 px-4 py-3 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 px-4 py-3 rounded-xl bg-[#2F6F62] text-white font-semibold hover:bg-[#2F6F62] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isProcessing ? (
                     <span className="flex items-center justify-center gap-2">
@@ -949,8 +949,8 @@ export function AllocationWizard({
           {/* Success State */}
           {isComplete && result && (
             <div className="text-center py-8">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <Check className="w-10 h-10 text-emerald-500" />
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#2F6F62]/20 flex items-center justify-center">
+                <Check className="w-10 h-10 text-[#2F6F62]" />
               </div>
 
               <h3 className="text-2xl font-bold text-white mb-2">{t.success}</h3>
@@ -990,7 +990,7 @@ export function AllocationWizard({
                   {t.cancel}
                 </button>
                 {result.certificateNumber && (
-                  <button className="px-6 py-2.5 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition-colors flex items-center gap-2">
+                  <button className="px-6 py-2.5 rounded-xl bg-[#2F6F62] text-white font-semibold hover:bg-[#2F6F62] transition-colors flex items-center gap-2">
                     <FileText className="w-4 h-4" />
                     {t.viewCertificate}
                   </button>

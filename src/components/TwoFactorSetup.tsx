@@ -258,7 +258,7 @@ export function TwoFactorSetup({ lang = "tr", onClose, walletAddress }: TwoFacto
       {/* Loading */}
       {loading && step === "status" && (
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full"></div>
+          <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-[#BFA181] rounded-full"></div>
         </div>
       )}
 
@@ -274,18 +274,18 @@ export function TwoFactorSetup({ lang = "tr", onClose, walletAddress }: TwoFacto
         <div className="space-y-4">
           <div className={`p-4 rounded-xl border ${
             isEnabled 
-              ? "bg-emerald-500/10 border-emerald-500/30" 
+              ? "bg-[#2F6F62]/10 border-[#2F6F62]/30" 
               : "bg-slate-800 border-slate-700"
           }`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  isEnabled ? "bg-emerald-500/20" : "bg-slate-700"
+                  isEnabled ? "bg-[#2F6F62]/20" : "bg-slate-700"
                 }`}>
                   {isEnabled ? "✅" : "🔓"}
                 </div>
                 <div>
-                  <p className={`font-medium ${isEnabled ? "text-emerald-400" : "text-slate-300"}`}>
+                  <p className={`font-medium ${isEnabled ? "text-[#2F6F62]" : "text-slate-300"}`}>
                     {isEnabled ? t.enabled : t.disabled}
                   </p>
                   {isEnabled && (
@@ -307,7 +307,7 @@ export function TwoFactorSetup({ lang = "tr", onClose, walletAddress }: TwoFacto
                 <button
                   onClick={handleSetup}
                   disabled={loading}
-                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 text-sm font-medium disabled:opacity-50"
+                  className="px-4 py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] text-sm font-medium disabled:opacity-50"
                 >
                   {t.enable}
                 </button>
@@ -334,7 +334,7 @@ export function TwoFactorSetup({ lang = "tr", onClose, walletAddress }: TwoFacto
                 <button
                   onClick={handleRegenerateBackup}
                   disabled={loading}
-                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 text-sm font-medium disabled:opacity-50"
+                  className="px-4 py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] text-sm font-medium disabled:opacity-50"
                 >
                   {t.regenerateBackup}
                 </button>
@@ -364,7 +364,7 @@ export function TwoFactorSetup({ lang = "tr", onClose, walletAddress }: TwoFacto
           <div className="p-4 bg-slate-800 rounded-xl">
             <p className="text-xs text-slate-400 mb-2">{t.secretKey}</p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 text-emerald-400 font-mono text-sm break-all">
+              <code className="flex-1 text-[#2F6F62] font-mono text-sm break-all">
                 {secret}
               </code>
               <button
@@ -384,7 +384,7 @@ export function TwoFactorSetup({ lang = "tr", onClose, walletAddress }: TwoFacto
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder="000000"
-              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-center text-2xl font-mono tracking-widest focus:outline-none focus:border-emerald-500"
+              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-center text-2xl font-mono tracking-widest focus:outline-none focus:border-[#2F6F62]"
               maxLength={6}
             />
           </div>
@@ -404,7 +404,7 @@ export function TwoFactorSetup({ lang = "tr", onClose, walletAddress }: TwoFacto
             <button
               onClick={handleVerify}
               disabled={loading || verificationCode.length !== 6}
-              className="flex-1 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="flex-1 py-3 bg-[#2F6F62] text-white rounded-xl hover:bg-[#2F6F62] disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {loading ? "..." : t.verify}
             </button>
@@ -417,7 +417,7 @@ export function TwoFactorSetup({ lang = "tr", onClose, walletAddress }: TwoFacto
         <div className="space-y-6">
           <div className="text-center">
             <div className="text-5xl mb-4">✅</div>
-            <h4 className="text-xl font-semibold text-emerald-400">{t.success}</h4>
+            <h4 className="text-xl font-semibold text-[#2F6F62]">{t.success}</h4>
           </div>
 
           <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
@@ -446,7 +446,7 @@ export function TwoFactorSetup({ lang = "tr", onClose, walletAddress }: TwoFacto
               setBackupCodes([]);
               setVerificationCode("");
             }}
-            className="w-full py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 font-medium"
+            className="w-full py-3 bg-[#2F6F62] text-white rounded-xl hover:bg-[#2F6F62] font-medium"
           >
             {t.close}
           </button>
@@ -496,8 +496,8 @@ export function TwoFactorSetup({ lang = "tr", onClose, walletAddress }: TwoFacto
 
       {/* Show new backup codes if regenerated */}
       {backupCodes.length > 0 && step === "status" && (
-        <div className="mt-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-          <p className="text-emerald-400 text-sm font-medium mb-2">✅ {t.backupCodesTitle}</p>
+        <div className="mt-4 p-4 bg-[#2F6F62]/10 border border-[#2F6F62]/30 rounded-xl">
+          <p className="text-[#2F6F62] text-sm font-medium mb-2">✅ {t.backupCodesTitle}</p>
           <div className="grid grid-cols-2 gap-2">
             {backupCodes.map((code, i) => (
               <div key={i} className="px-3 py-2 bg-slate-800 rounded-lg text-center font-mono text-sm text-white">

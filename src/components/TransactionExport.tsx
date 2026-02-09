@@ -228,8 +228,8 @@ export function TransactionExport({ walletAddress, lang: propLang }: Transaction
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-10 h-10 rounded-full bg-[#2F6F62]/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
                 </div>
@@ -253,7 +253,7 @@ export function TransactionExport({ walletAddress, lang: propLang }: Transaction
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-emerald-500 focus:outline-none"
+                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-[#2F6F62] focus:outline-none"
                     />
                     <span className="text-xs text-slate-500">{t.startDate}</span>
                   </div>
@@ -262,7 +262,7 @@ export function TransactionExport({ walletAddress, lang: propLang }: Transaction
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-emerald-500 focus:outline-none"
+                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-[#2F6F62] focus:outline-none"
                     />
                     <span className="text-xs text-slate-500">{t.endDate}</span>
                   </div>
@@ -277,7 +277,7 @@ export function TransactionExport({ walletAddress, lang: propLang }: Transaction
                     onClick={() => setSelectedTypes([])}
                     className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                       selectedTypes.length === 0
-                        ? "bg-emerald-500 text-white"
+                        ? "bg-[#2F6F62] text-white"
                         : "bg-slate-800 text-slate-400 hover:bg-slate-700"
                     }`}
                   >
@@ -289,7 +289,7 @@ export function TransactionExport({ walletAddress, lang: propLang }: Transaction
                       onClick={() => toggleType(type.value)}
                       className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                         selectedTypes.includes(type.value)
-                          ? "bg-emerald-500 text-white"
+                          ? "bg-[#2F6F62] text-white"
                           : "bg-slate-800 text-slate-400 hover:bg-slate-700"
                       }`}
                     >
@@ -318,7 +318,7 @@ export function TransactionExport({ walletAddress, lang: propLang }: Transaction
               <button
                 onClick={handleExport}
                 disabled={loading}
-                className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 bg-[#2F6F62] hover:bg-[#2F6F62] disabled:opacity-50 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>

@@ -212,8 +212,8 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
       )}
 
       {activeWallet && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-          <div className="text-xs text-emerald-400 mb-2">{labels.activeWallet}</div>
+        <div className="p-4 bg-[#2F6F62]/10 border border-[#2F6F62]/30 rounded-xl">
+          <div className="text-xs text-[#2F6F62] mb-2">{labels.activeWallet}</div>
           <div className="flex items-center justify-between">
             <div>
               <div className="text-white font-medium">Main Wallet</div>
@@ -241,7 +241,7 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
                 key={wallet.address}
                 className={`p-3 rounded-xl border transition-all ${
                   wallet.address === activeWallet
-                    ? "bg-slate-800/80 border-emerald-500/50"
+                    ? "bg-slate-800/80 border-[#2F6F62]/50"
                     : "bg-slate-800/50 border-slate-700 hover:border-slate-600"
                 }`}
               >
@@ -256,7 +256,7 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
                       <div className="text-white font-medium flex items-center gap-2">
                         {wallet.name}
                         {wallet.address === activeWallet && (
-                          <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                          <span className="w-2 h-2 bg-[#2F6F62] rounded-full"></span>
                         )}
                       </div>
                       <div className="text-xs text-slate-500 font-mono">{formatAddress(wallet.address)}</div>
@@ -268,7 +268,7 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
                     {wallet.address !== activeWallet && (
                       <button
                         onClick={() => switchWallet(wallet.address)}
-                        className="px-3 py-1.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/30"
+                        className="px-3 py-1.5 text-xs bg-[#2F6F62]/20 text-[#2F6F62] rounded-lg hover:bg-[#2F6F62]/30"
                       >
                         {labels.switch}
                       </button>
@@ -313,7 +313,7 @@ export function MultiWalletManager({ lang: propLang, onClose }: Props) {
               <button onClick={() => setShowRenameModal(false)} className="flex-1 py-2 bg-slate-700 text-slate-300 rounded-lg">
                 {labels.cancel}
               </button>
-              <button onClick={confirmRename} className="flex-1 py-2 bg-emerald-500 text-white rounded-lg">
+              <button onClick={confirmRename} className="flex-1 py-2 bg-[#2F6F62] text-white rounded-lg">
                 {labels.save}
               </button>
             </div>

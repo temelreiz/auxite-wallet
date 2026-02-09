@@ -486,7 +486,7 @@ export function BuyWithUsdModal({
                 onClick={() => setSelectedToken(token)}
                 className={`flex flex-col items-center gap-1 p-2.5 sm:p-3 rounded-xl border transition-all flex-shrink-0 min-w-[72px] sm:min-w-0 touch-manipulation ${
                   selectedToken.id === token.id
-                    ? "bg-emerald-500/20 border-emerald-500"
+                    ? "bg-[#2F6F62]/20 border-[#2F6F62]"
                     : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700 hover:border-stone-300 dark:hover:border-slate-600"
                 }`}
               >
@@ -509,7 +509,7 @@ export function BuyWithUsdModal({
             {paymentMethod === "balance" && (
               <button
                 onClick={handleMaxClick}
-                className="text-xs text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 touch-manipulation"
+                className="text-xs text-[#2F6F62] dark:text-[#2F6F62] hover:text-[#2F6F62] dark:hover:text-[#2F6F62] touch-manipulation"
               >
                 MAX
               </button>
@@ -563,7 +563,7 @@ export function BuyWithUsdModal({
             {bonusPercent > 0 && (
               <div className="flex items-center justify-between pt-2 border-t border-stone-200 dark:border-slate-700">
                 <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">{t.totalReceive}</span>
-                <span className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="text-base sm:text-lg font-bold text-[#2F6F62] dark:text-[#2F6F62]">
                   {totalTokenAmount.toFixed(2)} {selectedToken.symbol}
                 </span>
               </div>

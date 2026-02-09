@@ -218,10 +218,10 @@ export default function AllocatePage() {
           <div className="space-y-2 mb-4">
             {[t.fiatToMetals, t.auxmToMetals, t.digitalToAuxmToMetals, t.metalToAuxm, t.metalToMetal].map((rule) => (
               <div key={rule} className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="text-sm text-emerald-600 dark:text-emerald-400">{rule}</span>
+                <span className="text-sm text-[#2F6F62]">{rule}</span>
               </div>
             ))}
           </div>
@@ -372,8 +372,8 @@ export default function AllocatePage() {
 
             {/* Step 3 - Metal Allocation */}
             <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center mb-2">
-                <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-12 h-12 rounded-full bg-[#2F6F62]/20 border-2 border-[#2F6F62] flex items-center justify-center mb-2">
+                <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
@@ -436,7 +436,7 @@ export default function AllocatePage() {
 
           <div className="flex justify-between mb-1">
             <span className="text-xs text-slate-500">{t.executionSpread}</span>
-            <span className="text-xs font-semibold text-emerald-500">0.35%</span>
+            <span className="text-xs font-semibold text-[#2F6F62]">0.35%</span>
           </div>
           <p className="text-[10px] text-slate-500 italic mb-4">{t.spreadIncludes}</p>
 
@@ -452,11 +452,11 @@ export default function AllocatePage() {
         </div>
 
         {/* Legal Segregation Notice */}
-        <div className="flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
-          <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="flex items-center gap-3 p-4 bg-[#2F6F62]/10 rounded-xl border border-[#2F6F62]/30">
+          <svg className="w-5 h-5 text-[#2F6F62] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
-          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{t.legalSegregation}</span>
+          <span className="text-sm font-semibold text-[#2F6F62]">{t.legalSegregation}</span>
         </div>
 
         {/* Settlement Infrastructure Notice */}
@@ -487,13 +487,13 @@ export default function AllocatePage() {
         <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-3xl">
             {/* Success Header */}
-            <div className="flex flex-col items-center py-6 bg-emerald-500/10 rounded-t-3xl">
-              <div className="w-14 h-14 rounded-full bg-emerald-500 flex items-center justify-center mb-3">
+            <div className="flex flex-col items-center py-6 bg-[#2F6F62]/10 rounded-t-3xl">
+              <div className="w-14 h-14 rounded-full bg-[#2F6F62] flex items-center justify-center mb-3">
                 <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <p className="text-lg font-bold text-emerald-600">{t.allocationExecuted}</p>
+              <p className="text-lg font-bold text-[#2F6F62]">{t.allocationExecuted}</p>
             </div>
 
             {/* Execution Details */}
@@ -511,7 +511,7 @@ export default function AllocatePage() {
                 </div>
                 <div className="flex justify-between py-2 border-b border-stone-200 dark:border-slate-700">
                   <span className="text-sm text-slate-500">{t.spread}</span>
-                  <span className="text-sm font-semibold text-emerald-500">0.35%</span>
+                  <span className="text-sm font-semibold text-[#2F6F62]">0.35%</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-stone-200 dark:border-slate-700">
                   <span className="text-sm text-slate-500">{t.allocationAmount}</span>
@@ -540,11 +540,11 @@ export default function AllocatePage() {
             </div>
 
             {/* Allocation Finality Message */}
-            <div className="mx-5 flex items-center gap-2 p-3 bg-emerald-500/10 rounded-xl mb-4">
-              <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="mx-5 flex items-center gap-2 p-3 bg-[#2F6F62]/10 rounded-xl mb-4">
+              <svg className="w-4 h-4 text-[#2F6F62] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              <span className="text-sm font-semibold text-emerald-600">{t.allocationFinality}</span>
+              <span className="text-sm font-semibold text-[#2F6F62]">{t.allocationFinality}</span>
             </div>
 
             {/* Action Buttons */}

@@ -67,7 +67,7 @@ export default function MarketOverview({ lang = "en" }: MarketOverviewProps) {
             onClick={() => setSelectedMetal(metal)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               selectedMetal === metal
-                ? "bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400"
+                ? "bg-[#2F6F62]/20 border-2 border-[#2F6F62] text-[#2F6F62]"
                 : "border border-slate-700 text-slate-400 hover:text-slate-200"
             }`}
           >

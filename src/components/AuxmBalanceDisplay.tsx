@@ -37,7 +37,7 @@ export function AuxmBalanceDisplay({
           <span className="text-slate-400 text-sm">AUXM</span>
         </div>
         {bonusAuxm > 0 && (
-          <span className="text-xs text-emerald-400 bg-emerald-500/20 px-1.5 py-0.5 rounded">
+          <span className="text-xs text-[#2F6F62] bg-[#2F6F62]/20 px-1.5 py-0.5 rounded">
             +{bonusAuxm.toFixed(2)} bonus
           </span>
         )}
@@ -90,8 +90,8 @@ export function AuxmBalanceDisplay({
         </div>
         {bonusAuxm > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-emerald-400">{t.bonus}</span>
-            <span className="text-emerald-400 font-mono">+{bonusAuxm.toFixed(2)}</span>
+            <span className="text-[#2F6F62]">{t.bonus}</span>
+            <span className="text-[#2F6F62] font-mono">+{bonusAuxm.toFixed(2)}</span>
           </div>
         )}
       </div>

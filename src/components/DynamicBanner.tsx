@@ -137,7 +137,7 @@ export function DynamicBanner() {
             <div
               key={index}
               className={`h-1.5 rounded-full transition-all ${
-                activeIndex === index ? 'w-4 bg-emerald-500' : 'w-1.5 bg-slate-600'
+                activeIndex === index ? 'w-4 bg-[#2F6F62]' : 'w-1.5 bg-slate-600'
               }`}
             />
           ))}

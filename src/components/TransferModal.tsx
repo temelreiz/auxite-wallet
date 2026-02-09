@@ -395,12 +395,12 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 max-w-md w-full p-6 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center">
             <span className="text-3xl">✅</span>
           </div>
-          <h3 className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">{t.success}</h3>
+          <h3 className="text-xl font-bold text-[#2F6F62] dark:text-[#2F6F62] mb-2">{t.success}</h3>
           <p className="text-slate-500 mb-4">{amountNum} {selectedToken} sent</p>
-          <button onClick={onClose} className="px-6 py-2 bg-emerald-500 text-white rounded-xl font-medium">{t.cancel}</button>
+          <button onClick={onClose} className="px-6 py-2 bg-[#2F6F62] text-white rounded-xl font-medium">{t.cancel}</button>
         </div>
       </div>
     );
@@ -465,7 +465,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           {recipientAddress && !isValidAddress && <p className="text-xs text-red-500 mt-1">{t.invalidAddress}</p>}
           {isMetal && isValidAddress && (
             <div className="mt-2">
-              {isCheckingRecipient ? <p className="text-xs text-slate-500">⏳ {t.checkingRecipient}</p> : recipientValid === true ? <p className="text-xs text-emerald-500">✓ {t.auxiteUser}</p> : recipientValid === false ? <p className="text-xs text-red-500">✕ {t.notAuxiteUser}</p> : null}
+              {isCheckingRecipient ? <p className="text-xs text-slate-500">⏳ {t.checkingRecipient}</p> : recipientValid === true ? <p className="text-xs text-[#2F6F62]">✓ {t.auxiteUser}</p> : recipientValid === false ? <p className="text-xs text-red-500">✕ {t.notAuxiteUser}</p> : null}
             </div>
           )}
         </div>
@@ -478,7 +478,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           </div>
           <div className="flex gap-2">
             <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="flex-1 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white" />
-            <button onClick={() => setAmount(availableBalance.toString())} className="px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl text-emerald-600 dark:text-emerald-500 font-medium">MAX</button>
+            <button onClick={() => setAmount(availableBalance.toString())} className="px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl text-[#2F6F62] dark:text-[#2F6F62] font-medium">MAX</button>
           </div>
           {amountNum > 0 && !canAfford && <p className="text-xs text-red-500 mt-1">{t.insufficientBalance}</p>}
         </div>

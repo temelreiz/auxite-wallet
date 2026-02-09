@@ -333,10 +333,10 @@ export function LockedAssetsModal({
                 {/* Staking totals */}
                 {Object.entries(stakingTotalGrams).map(([metal, grams]) => (
                   grams > 0 && (
-                    <div key={`stake-${metal}`} className="flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 rounded-full bg-emerald-500/20">
+                    <div key={`stake-${metal}`} className="flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 rounded-full bg-[#2F6F62]/20">
                       <img src={METAL_INFO[metal]?.icon} alt={metal} className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className={`font-semibold text-emerald-600 dark:text-emerald-400 text-[9px] sm:text-sm`}>{grams.toFixed(2)}g</span>
-                      <span className="text-[8px] sm:text-xs text-emerald-500 hidden sm:inline">staked</span>
+                      <span className={`font-semibold text-[#2F6F62] dark:text-[#2F6F62] text-[9px] sm:text-sm`}>{grams.toFixed(2)}g</span>
+                      <span className="text-[8px] sm:text-xs text-[#2F6F62] hidden sm:inline">staked</span>
                     </div>
                   )
                 ))}
@@ -383,7 +383,7 @@ export function LockedAssetsModal({
               </svg>
               <span className="truncate">{t.stakingPositions}</span>
               {activeStakes.length > 0 && (
-                <span className="px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-xs rounded-full bg-emerald-500 text-white ml-0.5">{activeStakes.length}</span>
+                <span className="px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-xs rounded-full bg-[#2F6F62] text-white ml-0.5">{activeStakes.length}</span>
               )}
             </span>
             {activeTab === "staking" && (
@@ -430,7 +430,7 @@ export function LockedAssetsModal({
                             <div className="min-w-0">
                               <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                                 <span className={`font-semibold text-xs sm:text-base ${metalInfo.color}`}>{allocation.metal}</span>
-                                <span className="text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                                <span className="text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]">
                                   {t.allocated}
                                 </span>
                               </div>
@@ -504,7 +504,7 @@ export function LockedAssetsModal({
                     return (
                       <div
                         key={stake.id}
-                        className="p-2.5 sm:p-4 rounded-lg sm:rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50 hover:border-emerald-500/50 transition-colors"
+                        className="p-2.5 sm:p-4 rounded-lg sm:rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50 hover:border-[#2F6F62]/50 transition-colors"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -512,7 +512,7 @@ export function LockedAssetsModal({
                             <div className="min-w-0">
                               <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                                 <span className={`font-semibold text-xs sm:text-base ${metalInfo?.color || "text-amber-500"}`}>{stake.metalSymbol}</span>
-                                <span className={`text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full ${stake.isMatured ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-blue-500/20 text-blue-600 dark:text-blue-400"}`}>
+                                <span className={`text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full ${stake.isMatured ? "bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]" : "bg-blue-500/20 text-blue-600 dark:text-blue-400"}`}>
                                   {stake.isMatured ? t.completed : t.active}
                                 </span>
                               </div>
@@ -539,7 +539,7 @@ export function LockedAssetsModal({
                           </div>
                           <div className="h-1 sm:h-1.5 bg-stone-200 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div 
-                              className={`h-full rounded-full ${stake.isMatured ? "bg-emerald-500" : "bg-blue-500"}`}
+                              className={`h-full rounded-full ${stake.isMatured ? "bg-[#2F6F62]" : "bg-blue-500"}`}
                               style={{ width: `${Math.min(100, stake.progress)}%` }}
                             />
                           </div>
@@ -553,7 +553,7 @@ export function LockedAssetsModal({
                         <div className="mt-2 sm:mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 text-[9px] sm:text-xs">
                           <div className="flex items-center gap-2 sm:gap-3 text-slate-500 dark:text-slate-400 flex-wrap">
                             <span>Code: {stake.shortCode}</span>
-                            <span className="text-emerald-500">+{stake.expectedRewardGrams.toFixed(4)}g {lang === "tr" ? "ödül" : "reward"}</span>
+                            <span className="text-[#2F6F62]">+{stake.expectedRewardGrams.toFixed(4)}g {lang === "tr" ? "ödül" : "reward"}</span>
                           </div>
                           <a
                             href={`https://sepolia.etherscan.io/address/${process.env.NEXT_PUBLIC_STAKING_CONTRACT}`}

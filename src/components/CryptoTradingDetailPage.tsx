@@ -150,7 +150,7 @@ export default function CryptoTradingDetailPage({
               <div className="font-semibold text-sm sm:text-base text-slate-800 dark:text-white">{cryptoId}/USDT</div>
               <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{cryptoInfo.name}</div>
             </div>
-            <span className={`text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded ${isPositive ? "bg-emerald-500/20 text-emerald-500" : "bg-red-500/20 text-red-500"}`}>
+            <span className={`text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded ${isPositive ? "bg-[#2F6F62]/20 text-[#2F6F62]" : "bg-red-500/20 text-red-500"}`}>
               {isPositive ? "↑" : "↓"} {Math.abs(change24h).toFixed(2)}%
             </span>
           </div>
@@ -238,7 +238,7 @@ export default function CryptoTradingDetailPage({
               <div className="grid grid-cols-3 gap-4">
                 <div className="p-3 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
                   <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t.bidPrice}</div>
-                  <div className="text-lg font-bold text-emerald-500">${formatPrice(bidPrice)}</div>
+                  <div className="text-lg font-bold text-[#2F6F62]">${formatPrice(bidPrice)}</div>
                 </div>
                 <div className="p-3 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
                   <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t.askPrice}</div>

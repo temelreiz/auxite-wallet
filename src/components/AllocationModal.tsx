@@ -226,7 +226,7 @@ function APYVisual({ periods, selectedPeriod, onSelect, lang }: {
             onClick={() => onSelect(period.months)}
             className={`relative p-2 sm:p-3 rounded-lg border-2 transition-all ${
               isSelected 
-                ? "border-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/20" 
+                ? "border-[#2F6F62] bg-[#2F6F62]/10 dark:bg-[#2F6F62]/20" 
                 : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/50"
             }`}
           >
@@ -234,26 +234,26 @@ function APYVisual({ periods, selectedPeriod, onSelect, lang }: {
               <div 
                 className={`w-5 sm:w-6 rounded-t-md sm:rounded-t-lg transition-all ${
                   isSelected 
-                    ? "bg-gradient-to-t from-emerald-500 to-emerald-400" 
+                    ? "bg-gradient-to-t from-[#2F6F62] to-[#BFA181]" 
                     : "bg-gradient-to-t from-slate-300 to-slate-200 dark:from-slate-600 dark:to-slate-500"
                 }`}
                 style={{ height: `${barHeight}%` }}
               />
             </div>
             
-            <div className={`text-xs sm:text-sm font-bold whitespace-nowrap ${isSelected ? "text-emerald-500 dark:text-emerald-400" : "text-slate-700 dark:text-slate-300"}`}>
+            <div className={`text-xs sm:text-sm font-bold whitespace-nowrap ${isSelected ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-700 dark:text-slate-300"}`}>
               {period.months} {t.month}
             </div>
             <div className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400">
               {periodDays} {t.days}
             </div>
             
-            <div className={`mt-1 text-[11px] sm:text-xs font-semibold ${isSelected ? "text-emerald-600 dark:text-emerald-400" : "text-slate-600 dark:text-slate-400"}`}>
+            <div className={`mt-1 text-[11px] sm:text-xs font-semibold ${isSelected ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-600 dark:text-slate-400"}`}>
               {period.apy.toFixed(2)}%
             </div>
 
             {isSelected && (
-              <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+              <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#2F6F62] flex items-center justify-center">
                 <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
@@ -281,12 +281,12 @@ function EarningsCalculator({ amount, apy, days, metalSymbol, lang }: {
   if (amount <= 0) return null;
   
   return (
-    <div className="rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 dark:from-emerald-500/20 dark:to-cyan-500/20 border border-emerald-500/20 p-3 sm:p-4">
+    <div className="rounded-lg sm:rounded-xl bg-gradient-to-br from-[#2F6F62]/10 to-cyan-500/10 dark:from-[#2F6F62]/20 dark:to-cyan-500/20 border border-[#2F6F62]/20 p-3 sm:p-4">
       <div className="flex items-center gap-2 mb-2 sm:mb-3">
-        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
-        <span className="text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-400">
+        <span className="text-xs sm:text-sm font-medium text-[#2F6F62] dark:text-[#2F6F62]">
           {t.estimatedEarnings}
         </span>
       </div>
@@ -294,7 +294,7 @@ function EarningsCalculator({ amount, apy, days, metalSymbol, lang }: {
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <div>
           <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{t.afterPeriod}</div>
-          <div className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400">
+          <div className="text-base sm:text-lg font-bold text-[#2F6F62] dark:text-[#2F6F62]">
             +{earnings.toFixed(4)}g
           </div>
         </div>
@@ -330,18 +330,18 @@ function StakeCodeDisplay({ stakeCode, shortCode, txHash, lang }: {
     : `https://etherscan.io/address/${process.env.NEXT_PUBLIC_STAKING_CONTRACT}`;
 
   return (
-    <div className="rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 p-3 sm:p-4 space-y-2 sm:space-y-3">
+    <div className="rounded-lg sm:rounded-xl bg-gradient-to-br from-[#2F6F62]/20 to-cyan-500/20 border border-[#2F6F62]/30 p-3 sm:p-4 space-y-2 sm:space-y-3">
       <div>
-        <div className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 mb-1 font-medium">
+        <div className="text-[10px] sm:text-xs text-[#2F6F62] dark:text-[#2F6F62] mb-1 font-medium">
           {t.stakeCode}
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <code className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-slate-900/50 text-emerald-400 font-mono text-xs sm:text-sm truncate">
+          <code className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-slate-900/50 text-[#2F6F62] font-mono text-xs sm:text-sm truncate">
             {shortCode}
           </code>
           <button
             onClick={handleCopy}
-            className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-xs sm:text-sm font-medium transition-colors flex items-center gap-1"
+            className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-[#2F6F62]/20 hover:bg-[#2F6F62]/30 text-[#2F6F62] text-xs sm:text-sm font-medium transition-colors flex items-center gap-1"
           >
             {copied ? (
               <>
@@ -588,14 +588,14 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder={`Min. ${offer.minAmount}g`}
                 disabled={isApproving || isStaking}
-                className="w-full px-3 sm:px-4 py-3 sm:py-4 pr-16 sm:pr-20 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50 text-base sm:text-lg font-medium"
+                className="w-full px-3 sm:px-4 py-3 sm:py-4 pr-16 sm:pr-20 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#2F6F62] transition-colors disabled:opacity-50 text-base sm:text-lg font-medium"
               />
               <button
                 onClick={() => {
                   setAmount(balanceNum.toString());
                 }}
                 disabled={isApproving || isStaking}
-                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30 text-xs sm:text-sm font-medium transition-colors disabled:opacity-50"
+                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62] hover:bg-[#2F6F62]/30 text-xs sm:text-sm font-medium transition-colors disabled:opacity-50"
               >
                 MAX
               </button>
@@ -652,18 +652,18 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
           {/* Success Message with Stake Code */}
           {isStakeSuccess && resultShortCode && (
             <div className="space-y-3 sm:space-y-4">
-              <div className="rounded-lg sm:rounded-xl bg-emerald-500/20 border border-emerald-500/30 p-3 sm:p-4">
+              <div className="rounded-lg sm:rounded-xl bg-[#2F6F62]/20 border border-[#2F6F62]/30 p-3 sm:p-4">
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-500/30 flex items-center justify-center">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#2F6F62]/30 flex items-center justify-center">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
                   <div>
-                    <div className="text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-300">
+                    <div className="text-xs sm:text-sm font-medium text-[#2F6F62] dark:text-[#2F6F62]">
                       {t.lockSuccess}
                     </div>
-                    <div className="text-[10px] sm:text-xs text-emerald-500 dark:text-emerald-400/70">
+                    <div className="text-[10px] sm:text-xs text-[#2F6F62] dark:text-[#2F6F62]/70">
                       {t.positionCreated}
                     </div>
                   </div>
@@ -766,7 +766,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
             <button
               onClick={handleStake}
               disabled={!amount || amountNum < offer.minAmount || isApproving || isStaking || needsApproval}
-              className="w-full px-3 sm:px-4 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold text-sm sm:text-base transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+              className="w-full px-3 sm:px-4 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-[#BFA181] hover:to-[#2F6F62] disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold text-sm sm:text-base transition-all shadow-lg shadow-[#2F6F62]/20 flex items-center justify-center gap-2"
             >
               {isStaking ? (
                 <>
@@ -800,7 +800,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
           {isStakeSuccess && (
             <button
               onClick={onClose}
-              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-medium text-sm sm:text-base transition-colors"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-[#2F6F62] hover:bg-[#2F6F62] text-white font-medium text-sm sm:text-base transition-colors"
             >
               {t.done}
             </button>

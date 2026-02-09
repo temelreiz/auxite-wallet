@@ -463,7 +463,7 @@ export function CryptoConvertModal({
                 </div>
               </div>
               {asset === target && (
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               )}
@@ -525,7 +525,7 @@ export function CryptoConvertModal({
                   <span>{t.bonusEarnedLabel}</span>
                   <span>+${bonusUSD.toFixed(2)} AUXM</span>
                 </div>
-                <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold pt-1 border-t border-stone-200 dark:border-slate-700/50">
+                <div className="flex justify-between text-[#2F6F62] dark:text-[#2F6F62] font-semibold pt-1 border-t border-stone-200 dark:border-slate-700/50">
                   <span>{t.totalValue}</span>
                   <span>${totalValueUSD.toFixed(2)}</span>
                 </div>
@@ -546,12 +546,12 @@ export function CryptoConvertModal({
           {/* Success State */}
           {result === "success" ? (
             <div className="text-center py-6 sm:py-8">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-[#2F6F62]/20 flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-[#2F6F62] dark:text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">
+              <h3 className="text-lg sm:text-xl font-bold text-[#2F6F62] dark:text-[#2F6F62] mb-2">
                 {t.conversionSuccess}
               </h3>
               <p className="text-sm sm:text-base text-slate-700 dark:text-slate-400">
@@ -591,7 +591,7 @@ export function CryptoConvertModal({
                   </span>
                   <button
                     onClick={handleMaxClick}
-                    className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 font-semibold"
+                    className="text-[10px] sm:text-xs text-[#2F6F62] dark:text-[#2F6F62] hover:text-[#2F6F62] font-semibold"
                   >
                     MAX
                   </button>

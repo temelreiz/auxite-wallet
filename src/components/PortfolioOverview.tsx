@@ -223,7 +223,7 @@ export function PortfolioOverview({
           <div className="flex items-center gap-3">
             <div className="text-right">
               <div className="text-sm text-slate-300">≈ $5,000</div>
-              <div className="text-xs text-emerald-400">1 AUXM = 1 USD</div>
+              <div className="text-xs text-[#2F6F62]">1 AUXM = 1 USD</div>
             </div>
             <button 
               onClick={onExchangeClick}
@@ -253,7 +253,7 @@ export function PortfolioOverview({
               </div>
               <span className={`text-xs px-2 py-0.5 rounded ${
                 holding.change >= 0 
-                  ? "bg-emerald-500/20 text-emerald-400" 
+                  ? "bg-[#2F6F62]/20 text-[#2F6F62]" 
                   : "bg-red-500/20 text-red-400"
               }`}>
                 {holding.change >= 0 ? "↑" : "↓"} {Math.abs(holding.change).toFixed(2)}%
@@ -291,7 +291,7 @@ export function PortfolioOverview({
               </div>
               <span className={`text-xs px-2 py-0.5 rounded ${
                 holding.change >= 0 
-                  ? "bg-emerald-500/20 text-emerald-400" 
+                  ? "bg-[#2F6F62]/20 text-[#2F6F62]" 
                   : "bg-red-500/20 text-red-400"
               }`}>
                 {holding.change >= 0 ? "↑" : "↓"} {Math.abs(holding.change).toFixed(2)}%
@@ -352,7 +352,7 @@ export function PortfolioOverview({
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={onExchangeClick}
-            className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold transition-colors"
+            className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#2F6F62] hover:bg-[#2F6F62] text-white font-semibold transition-colors"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />

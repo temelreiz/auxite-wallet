@@ -397,7 +397,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
                 </button>
                 <button 
                   onClick={check2FAStatus}
-                  className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-medium"
+                  className="px-4 py-2 rounded-lg bg-[#2F6F62] hover:bg-[#2F6F62] text-white font-medium"
                 >
                   {t.retry}
                 </button>
@@ -461,7 +461,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
                 <button
                   onClick={handleVerifySetup}
                   disabled={code.length !== 6 || isProcessing}
-                  className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-[#2F6F62] hover:bg-[#2F6F62] disabled:opacity-50 text-white font-semibold transition-colors"
                 >
                   {isProcessing ? t.verifying : t.continue}
                 </button>
@@ -494,7 +494,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
 
               <button
                 onClick={handleBackupCodesSaved}
-                className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold transition-colors"
+                className="w-full py-3 rounded-xl bg-[#2F6F62] hover:bg-[#2F6F62] text-white font-semibold transition-colors"
               >
                 {t.saveBackupCodes}
               </button>
@@ -545,7 +545,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
                 <button
                   onClick={handleVerify}
                   disabled={(useBackupCode ? code.length !== 8 : code.length !== 6) || isProcessing}
-                  className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-[#2F6F62] hover:bg-[#2F6F62] disabled:opacity-50 text-white font-semibold transition-colors"
                 >
                   {isProcessing ? t.verifying : t.verify}
                 </button>

@@ -258,7 +258,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
         {!showAddForm && (
           <button
             onClick={() => setShowAddForm(true)}
-            className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] sm:text-sm font-medium rounded-lg transition-colors flex items-center gap-1 sm:gap-2 flex-shrink-0"
+            className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#2F6F62] hover:bg-[#2F6F62] text-white text-[10px] sm:text-sm font-medium rounded-lg transition-colors flex items-center gap-1 sm:gap-2 flex-shrink-0"
           >
             <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -271,7 +271,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
 
       {/* Success/Error Messages */}
       {success && (
-        <div className="p-2.5 sm:p-3 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
+        <div className="p-2.5 sm:p-3 bg-[#2F6F62]/20 border border-[#2F6F62]/30 rounded-lg text-[#2F6F62] dark:text-[#2F6F62] text-xs sm:text-sm">
           ✓ {success}
         </div>
       )}
@@ -292,7 +292,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
                 value={newAddress.address}
                 onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
                 placeholder="0x... / bc1... / r..."
-                className="w-full px-2.5 sm:px-3 py-2 sm:py-2 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg text-xs sm:text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                className="w-full px-2.5 sm:px-3 py-2 sm:py-2 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg text-xs sm:text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#2F6F62] focus:outline-none"
               />
             </div>
             <div>
@@ -300,7 +300,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
               <select
                 value={newAddress.network}
                 onChange={(e) => setNewAddress({ ...newAddress, network: e.target.value as any })}
-                className="w-full px-2.5 sm:px-3 py-2 sm:py-2 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg text-xs sm:text-sm text-slate-800 dark:text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full px-2.5 sm:px-3 py-2 sm:py-2 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg text-xs sm:text-sm text-slate-800 dark:text-white focus:border-[#2F6F62] focus:outline-none"
               >
                 <option value="ETH">Ethereum (ETH)</option>
                 <option value="BTC">Bitcoin (BTC)</option>
@@ -316,14 +316,14 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
               value={newAddress.label}
               onChange={(e) => setNewAddress({ ...newAddress, label: e.target.value })}
               placeholder={t.labelPlaceholder}
-              className="w-full px-2.5 sm:px-3 py-2 sm:py-2 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg text-xs sm:text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+              className="w-full px-2.5 sm:px-3 py-2 sm:py-2 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg text-xs sm:text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#2F6F62] focus:outline-none"
             />
           </div>
           <div className="flex gap-2 sm:gap-3">
             <button
               onClick={handleAdd}
               disabled={submitting}
-              className="px-3 sm:px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-medium rounded-lg transition-colors text-xs sm:text-sm"
+              className="px-3 sm:px-4 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] disabled:opacity-50 text-white font-medium rounded-lg transition-colors text-xs sm:text-sm"
             >
               {submitting ? "..." : t.add}
             </button>
@@ -371,7 +371,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
                     <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                       <span className="text-xs sm:text-sm text-slate-800 dark:text-white font-medium truncate">{addr.label || networkInfo.name}</span>
                       {addr.isVerified ? (
-                        <span className="text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded flex-shrink-0">
+                        <span className="text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62] rounded flex-shrink-0">
                           ✓ {t.verified}
                         </span>
                       ) : (

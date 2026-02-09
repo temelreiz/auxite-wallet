@@ -119,7 +119,7 @@ export function WalletConnectModal({ isOpen, onClose, lang = "en" }: WalletConne
                 disabled={connecting}
                 className={`w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border transition-all ${
                   connecting && selectedWallet === wallet.id
-                    ? "bg-emerald-500/20 border-emerald-500"
+                    ? "bg-[#2F6F62]/20 border-[#2F6F62]"
                     : "bg-slate-800 hover:bg-slate-700 border-slate-700"
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >

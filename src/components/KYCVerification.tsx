@@ -186,7 +186,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
   if (loading) {
     return (
       <div className={onClose ? "fixed inset-0 bg-black/70 flex items-center justify-center z-50" : "flex justify-center py-8"}>
-        <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full"></div>
+        <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-[#BFA181] rounded-full"></div>
       </div>
     );
   }
@@ -211,7 +211,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
         <>
           <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
             <div><div className="text-xs text-slate-500">{labels.currentLevel}</div><div className="text-white font-medium">{labels.levels[kyc?.level || "none"]}</div></div>
-            <span className={`px-3 py-1 rounded-full text-xs ${isApproved ? "bg-emerald-500/20 text-emerald-400" : isRejected ? "bg-red-500/20 text-red-400" : isPending ? "bg-amber-500/20 text-amber-400" : "bg-slate-500/20 text-slate-400"}`}>
+            <span className={`px-3 py-1 rounded-full text-xs ${isApproved ? "bg-[#2F6F62]/20 text-[#2F6F62]" : isRejected ? "bg-red-500/20 text-red-400" : isPending ? "bg-amber-500/20 text-amber-400" : "bg-slate-500/20 text-slate-400"}`}>
               {labels.status[kyc?.status || "not_started"]}
             </span>
           </div>
@@ -229,7 +229,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
 
       {/* Status Messages */}
       {isApproved && !sdkActive && (
-        <div className="p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-emerald-400 text-center">
+        <div className="p-4 bg-[#2F6F62]/20 border border-[#2F6F62]/50 rounded-xl text-[#2F6F62] text-center">
           ✅ {labels.approved}
         </div>
       )}
@@ -263,7 +263,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
         <button
           onClick={launchSumsubSDK}
           disabled={sdkLoading}
-          className="w-full py-4 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-4 bg-[#2F6F62] text-white rounded-xl font-medium hover:bg-[#2F6F62] disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {sdkLoading ? (
             <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
@@ -296,7 +296,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
           </div>
           {sdkLoading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full"></div>
+              <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-[#BFA181] rounded-full"></div>
               <span className="ml-3 text-slate-400">{labels.loading}</span>
             </div>
           )}

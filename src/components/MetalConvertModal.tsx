@@ -372,10 +372,10 @@ export function MetalConvertModal({
         <div className="p-4 space-y-4">
           {result && (
             <div className={`p-4 rounded-xl text-center ${
-              result.type === "success" ? "bg-emerald-500/20 border border-emerald-500/50" : "bg-red-500/20 border border-red-500/50"
+              result.type === "success" ? "bg-[#2F6F62]/20 border border-[#2F6F62]/50" : "bg-red-500/20 border border-red-500/50"
             }`}>
               <div className="text-3xl mb-2">{result.type === "success" ? "✅" : "❌"}</div>
-              <p className={result.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
+              <p className={result.type === "success" ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-red-600 dark:text-red-400"}>
                 {result.type === "success" ? t.success : result.message}
               </p>
             </div>
@@ -410,13 +410,13 @@ export function MetalConvertModal({
                       value={fromAmount}
                       onChange={(e) => setFromAmount(e.target.value)}
                       placeholder="0.0000"
-                      className={`flex-1 bg-white/50 dark:bg-slate-800/50 border rounded-lg px-4 py-3 text-slate-800 dark:text-white text-lg font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
+                      className={`flex-1 bg-white/50 dark:bg-slate-800/50 border rounded-lg px-4 py-3 text-slate-800 dark:text-white text-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#BFA181] ${
                         insufficientBalance ? "border-red-500" : "border-stone-300 dark:border-slate-700"
                       }`}
                     />
                     <button
                       onClick={() => setFromAmount(fromBalance.toString())}
-                      className="px-4 py-2 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg font-semibold hover:bg-emerald-500/30"
+                      className="px-4 py-2 bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62] rounded-lg font-semibold hover:bg-[#2F6F62]/30"
                     >
                       MAX
                     </button>
@@ -431,7 +431,7 @@ export function MetalConvertModal({
 
               {/* Arrow */}
               <div className="flex justify-center">
-                <div className="p-2 rounded-full bg-stone-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 text-xl">↓</div>
+                <div className="p-2 rounded-full bg-stone-100 dark:bg-slate-800 text-[#2F6F62] dark:text-[#2F6F62] text-xl">↓</div>
               </div>
 
               {/* To Section */}
@@ -466,7 +466,7 @@ export function MetalConvertModal({
                                 <div className="text-slate-800 dark:text-white font-medium">{target}</div>
                                 <div className="text-xs text-slate-500 dark:text-slate-400">{getTargetName(target)}</div>
                               </div>
-                              {toAsset === target && <span className="text-emerald-500">✓</span>}
+                              {toAsset === target && <span className="text-[#2F6F62]">✓</span>}
                             </button>
                           ))}
                         </>
@@ -482,7 +482,7 @@ export function MetalConvertModal({
                                 <div className="text-slate-800 dark:text-white font-medium">{target}</div>
                                 <div className="text-xs text-slate-500 dark:text-slate-400">{getTargetName(target)}</div>
                               </div>
-                              {toAsset === target && <span className="text-emerald-500">✓</span>}
+                              {toAsset === target && <span className="text-[#2F6F62]">✓</span>}
                             </button>
                           ))}
                         </>
@@ -498,7 +498,7 @@ export function MetalConvertModal({
                                 <div className="text-slate-800 dark:text-white font-medium">{target}</div>
                                 <div className="text-xs text-slate-500 dark:text-slate-400">{getTargetName(target)}</div>
                               </div>
-                              {toAsset === target && <span className="text-emerald-500">✓</span>}
+                              {toAsset === target && <span className="text-[#2F6F62]">✓</span>}
                             </button>
                           ))}
                         </>

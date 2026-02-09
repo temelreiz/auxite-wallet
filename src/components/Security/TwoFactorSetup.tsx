@@ -157,7 +157,7 @@ export function TwoFactorSetup({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full" />
+        <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-[#BFA181] rounded-full" />
       </div>
     );
   }
@@ -171,7 +171,7 @@ export function TwoFactorSetup({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                  status?.enabled ? "bg-emerald-500/20" : "bg-slate-700"
+                  status?.enabled ? "bg-[#2F6F62]/20" : "bg-slate-700"
                 }`}>
                   <span className="text-2xl">🔐</span>
                 </div>
@@ -179,7 +179,7 @@ export function TwoFactorSetup({
                   <h3 className="text-lg font-semibold text-white">
                     {lang === "tr" ? "İki Faktörlü Doğrulama" : "Two-Factor Authentication"}
                   </h3>
-                  <p className={`text-sm ${status?.enabled ? "text-emerald-400" : "text-slate-400"}`}>
+                  <p className={`text-sm ${status?.enabled ? "text-[#2F6F62]" : "text-slate-400"}`}>
                     {status?.enabled 
                       ? (lang === "tr" ? "Aktif" : "Enabled")
                       : (lang === "tr" ? "Kapalı" : "Disabled")}
@@ -198,7 +198,7 @@ export function TwoFactorSetup({
                 <button
                   onClick={startSetup}
                   disabled={processing}
-                  className="px-4 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors text-sm font-medium disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg bg-[#2F6F62] text-white hover:bg-[#2F6F62] transition-colors text-sm font-medium disabled:opacity-50"
                 >
                   {processing 
                     ? (lang === "tr" ? "Yükleniyor..." : "Loading...")
@@ -283,7 +283,7 @@ export function TwoFactorSetup({
               value={verifyCode}
               onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder="000000"
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-center text-2xl font-mono text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-center text-2xl font-mono text-white placeholder-slate-600 focus:outline-none focus:border-[#2F6F62]"
               maxLength={6}
             />
           </div>
@@ -310,7 +310,7 @@ export function TwoFactorSetup({
             <button
               onClick={verifyAndEnable}
               disabled={verifyCode.length !== 6 || processing}
-              className="flex-1 py-3 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-medium disabled:opacity-50"
+              className="flex-1 py-3 rounded-xl bg-[#2F6F62] text-white hover:bg-[#2F6F62] transition-colors font-medium disabled:opacity-50"
             >
               {processing 
                 ? (lang === "tr" ? "Doğrulanıyor..." : "Verifying...")
@@ -324,7 +324,7 @@ export function TwoFactorSetup({
       {step === "backup" && (
         <div className="space-y-6">
           <div className="text-center">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-full bg-[#2F6F62]/20 flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">✅</span>
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">
@@ -345,7 +345,7 @@ export function TwoFactorSetup({
               </span>
               <button
                 onClick={copyBackupCodes}
-                className="text-xs text-emerald-400 hover:text-emerald-300"
+                className="text-xs text-[#2F6F62] hover:text-[#BFA181]"
               >
                 {copiedBackup 
                   ? (lang === "tr" ? "✓ Kopyalandı" : "✓ Copied")
@@ -377,7 +377,7 @@ export function TwoFactorSetup({
               setStep("status");
               fetchStatus();
             }}
-            className="w-full py-3 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-medium"
+            className="w-full py-3 rounded-xl bg-[#2F6F62] text-white hover:bg-[#2F6F62] transition-colors font-medium"
           >
             {lang === "tr" ? "Tamamla" : "Done"}
           </button>

@@ -122,7 +122,7 @@ export default function CustodyPage() {
       
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Back Link */}
-        <Link href="/trust" className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 hover:underline mb-6">
+        <Link href="/trust" className="inline-flex items-center gap-2 text-[#2F6F62] dark:text-[#2F6F62] hover:underline mb-6">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
@@ -187,7 +187,7 @@ export default function CustodyPage() {
                     </div>
                     <div>
                       <p className="text-slate-500 dark:text-slate-400">{t.securityLevel}</p>
-                      <p className="font-medium text-emerald-500">{t[vault.security as keyof typeof t]}</p>
+                      <p className="font-medium text-[#2F6F62]">{t[vault.security as keyof typeof t]}</p>
                     </div>
                     <div>
                       <p className="text-slate-500 dark:text-slate-400">{t.certification}</p>
@@ -201,10 +201,10 @@ export default function CustodyPage() {
         </div>
 
         {/* Insurance Info */}
-        <div className="bg-gradient-to-r from-emerald-500/10 to-blue-500/10 rounded-xl p-8 border border-emerald-500/20">
+        <div className="bg-gradient-to-r from-[#2F6F62]/10 to-blue-500/10 rounded-xl p-8 border border-[#2F6F62]/20">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-              <svg className="w-7 h-7 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-14 h-14 rounded-full bg-[#2F6F62]/20 flex items-center justify-center flex-shrink-0">
+              <svg className="w-7 h-7 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>

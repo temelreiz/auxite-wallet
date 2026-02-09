@@ -58,7 +58,7 @@ export default function VerifyEmailPage() {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
-          <Loader2 className="w-12 h-12 text-emerald-500 animate-spin mx-auto mb-6" />
+          <Loader2 className="w-12 h-12 text-[#2F6F62] animate-spin mx-auto mb-6" />
           <h1 className="text-2xl font-bold text-white mb-3">Verifying Email...</h1>
           <p className="text-slate-400">Please wait while we verify your email address.</p>
         </div>
@@ -71,8 +71,8 @@ export default function VerifyEmailPage() {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500/20 mb-6">
-            <CheckCircle className="w-10 h-10 text-emerald-500" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#2F6F62]/20 mb-6">
+            <CheckCircle className="w-10 h-10 text-[#2F6F62]" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-3">Email Verified!</h1>
           <p className="text-slate-400 mb-8">
@@ -80,7 +80,7 @@ export default function VerifyEmailPage() {
           </p>
           <Link
             href="/dashboard"
-            className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all"
+            className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] text-white font-semibold rounded-xl hover:from-[#2F6F62] hover:to-[#2F6F62]/80 transition-all"
           >
             Go to Dashboard
           </Link>
@@ -103,7 +103,7 @@ export default function VerifyEmailPage() {
           </p>
           <Link
             href="/auth/login"
-            className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all"
+            className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] text-white font-semibold rounded-xl hover:from-[#2F6F62] hover:to-[#2F6F62]/80 transition-all"
           >
             Sign In
           </Link>
@@ -133,7 +133,7 @@ export default function VerifyEmailPage() {
           </Link>
           <button
             onClick={() => router.push('/auth/register')}
-            className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all"
+            className="px-6 py-3 bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] text-white font-semibold rounded-xl hover:from-[#2F6F62] hover:to-[#2F6F62]/80 transition-all"
           >
             Create Account
           </button>

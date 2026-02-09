@@ -124,7 +124,7 @@ export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) 
   if (loading && logs.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full" />
+        <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-[#BFA181] rounded-full" />
       </div>
     );
   }

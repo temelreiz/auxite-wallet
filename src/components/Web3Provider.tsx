@@ -64,7 +64,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   if (!mounted) {
     return (
       <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-zinc-600 border-t-emerald-500 rounded-full"></div>
+        <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-zinc-600 border-t-[#BFA181] rounded-full"></div>
       </div>
     );
   }
@@ -88,7 +88,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
           </ul>
           <button 
             onClick={() => window.location.reload()} 
-            className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition"
+            className="bg-[#2F6F62] hover:bg-[#2F6F62] text-white px-4 py-2 rounded-lg transition"
           >
             Retry
           </button>

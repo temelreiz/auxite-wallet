@@ -300,8 +300,8 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-              <Smartphone className="w-5 h-5 text-emerald-600" />
+            <div className="w-10 h-10 rounded-xl bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center">
+              <Smartphone className="w-5 h-5 text-[#2F6F62]" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -326,12 +326,12 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
           <div className="flex flex-col items-center">
             {status === 'loading' ? (
               <div className="w-64 h-64 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-2xl">
-                <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+                <Loader2 className="w-8 h-8 text-[#2F6F62] animate-spin" />
               </div>
             ) : status === 'success' ? (
-              <div className="w-64 h-64 flex flex-col items-center justify-center bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl">
-                <CheckCircle className="w-16 h-16 text-emerald-500 mb-4" />
-                <p className="text-emerald-600 dark:text-emerald-400 font-medium">
+              <div className="w-64 h-64 flex flex-col items-center justify-center bg-[#2F6F62]/10 dark:bg-[#2F6F62]/20 rounded-2xl">
+                <CheckCircle className="w-16 h-16 text-[#2F6F62] mb-4" />
+                <p className="text-[#2F6F62] dark:text-[#2F6F62] font-medium">
                   {t.success}
                 </p>
               </div>
@@ -349,7 +349,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
                 </p>
                 <button
                   onClick={createSession}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] text-white rounded-lg transition-colors"
                 >
                   <RefreshCw className="w-4 h-4" />
                   {t.refresh}
@@ -372,7 +372,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
                 {status === 'verified' && (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/90 dark:bg-slate-900/90 rounded-2xl">
                     <div className="text-center">
-                      <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto mb-2" />
+                      <Loader2 className="w-8 h-8 text-[#2F6F62] animate-spin mx-auto mb-2" />
                       <p className="text-sm text-slate-600 dark:text-slate-300">
                         {t.verified}
                       </p>
@@ -423,7 +423,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
                   key={index}
                   className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300"
                 >
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-xs font-medium text-emerald-600">
+                  <div className="w-6 h-6 rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center text-xs font-medium text-[#2F6F62]">
                     {index + 1}
                   </div>
                   <span>{step}</span>

@@ -105,14 +105,14 @@ function ToastModal({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   };
 
   const iconBg = {
-    success: "bg-emerald-500",
+    success: "bg-[#2F6F62]",
     error: "bg-red-500",
     warning: "bg-amber-500",
     info: "bg-blue-500",
   };
 
   const titleColor = {
-    success: "text-emerald-500",
+    success: "text-[#2F6F62]",
     error: "text-red-500",
     warning: "text-amber-500",
     info: "text-blue-500",

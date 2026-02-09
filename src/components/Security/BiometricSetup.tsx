@@ -226,7 +226,7 @@ export function BiometricSetup({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full" />
+        <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-[#BFA181] rounded-full" />
       </div>
     );
   }
@@ -254,7 +254,7 @@ export function BiometricSetup({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              passkeys.length > 0 ? "bg-emerald-500/20" : "bg-slate-700"
+              passkeys.length > 0 ? "bg-[#2F6F62]/20" : "bg-slate-700"
             }`}>
               <span className="text-2xl">👆</span>
             </div>
@@ -262,7 +262,7 @@ export function BiometricSetup({
               <h3 className="text-lg font-semibold text-white">
                 {lang === "tr" ? "Biyometrik Doğrulama" : "Biometric Authentication"}
               </h3>
-              <p className={`text-sm ${passkeys.length > 0 ? "text-emerald-400" : "text-slate-400"}`}>
+              <p className={`text-sm ${passkeys.length > 0 ? "text-[#2F6F62]" : "text-slate-400"}`}>
                 {passkeys.length > 0
                   ? `${passkeys.length} ${lang === "tr" ? "passkey kayıtlı" : "passkey(s) registered"}`
                   : (lang === "tr" ? "Kayıtlı passkey yok" : "No passkeys registered")}
@@ -273,7 +273,7 @@ export function BiometricSetup({
           <button
             onClick={registerPasskey}
             disabled={processing}
-            className="px-4 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors text-sm font-medium disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-[#2F6F62] text-white hover:bg-[#2F6F62] transition-colors text-sm font-medium disabled:opacity-50"
           >
             {processing 
               ? (lang === "tr" ? "Bekleniyor..." : "Waiting...")
@@ -289,7 +289,7 @@ export function BiometricSetup({
         </div>
       )}
       {success && (
-        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-emerald-400 text-sm">
+        <div className="bg-[#2F6F62]/10 border border-[#2F6F62]/20 rounded-lg p-3 text-[#2F6F62] text-sm">
           {success}
         </div>
       )}
@@ -332,7 +332,7 @@ export function BiometricSetup({
                         />
                         <button
                           onClick={() => renamePasskey(passkey.id)}
-                          className="text-emerald-400 text-xs"
+                          className="text-[#2F6F62] text-xs"
                         >
                           ✓
                         </button>
@@ -351,7 +351,7 @@ export function BiometricSetup({
                         {lang === "tr" ? "Eklendi" : "Added"}: {new Date(passkey.createdAt).toLocaleDateString()}
                       </span>
                       {passkey.backedUp && (
-                        <span className="text-emerald-500">• Synced</span>
+                        <span className="text-[#2F6F62]">• Synced</span>
                       )}
                     </div>
                   </div>

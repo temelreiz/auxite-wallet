@@ -87,7 +87,7 @@ export function SecuritySettings({
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-emerald-400";
+    if (score >= 80) return "text-[#2F6F62]";
     if (score >= 50) return "text-amber-400";
     return "text-red-400";
   };
@@ -113,7 +113,7 @@ export function SecuritySettings({
         {/* Header */}
         <div className="flex items-center justify-between p-3 sm:p-4 lg:p-6 border-b border-slate-800">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#2F6F62]/20 flex items-center justify-center flex-shrink-0">
               <span className="text-base sm:text-xl">🛡️</span>
             </div>
             <div className="min-w-0">
@@ -143,7 +143,7 @@ export function SecuritySettings({
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 touch-manipulation ${
                 activeTab === tab.id
-                  ? "bg-emerald-500/20 text-emerald-400"
+                  ? "bg-[#2F6F62]/20 text-[#2F6F62]"
                   : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >
@@ -157,7 +157,7 @@ export function SecuritySettings({
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
           {loading ? (
             <div className="flex items-center justify-center h-48 sm:h-64">
-              <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full" />
+              <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-2 border-slate-600 border-t-[#BFA181] rounded-full" />
             </div>
           ) : (
             <>
@@ -178,7 +178,7 @@ export function SecuritySettings({
                       <div
                         className={`h-2 sm:h-3 rounded-full transition-all duration-500 ${
                           status.securityScore >= 80
-                            ? "bg-emerald-500"
+                            ? "bg-[#2F6F62]"
                             : status.securityScore >= 50
                             ? "bg-amber-500"
                             : "bg-red-500"
@@ -202,7 +202,7 @@ export function SecuritySettings({
                         <span className="text-base sm:text-xl">🔐</span>
                         <span className="text-[10px] sm:text-sm text-slate-400">2FA</span>
                       </div>
-                      <div className={`text-sm sm:text-lg font-semibold ${status.twoFactorEnabled ? "text-emerald-400" : "text-red-400"}`}>
+                      <div className={`text-sm sm:text-lg font-semibold ${status.twoFactorEnabled ? "text-[#2F6F62]" : "text-red-400"}`}>
                         {status.twoFactorEnabled 
                           ? (lang === "tr" ? "Aktif" : "Active") 
                           : (lang === "tr" ? "Kapalı" : "Off")}
@@ -225,7 +225,7 @@ export function SecuritySettings({
                           {lang === "tr" ? "Bio" : "Bio"}
                         </span>
                       </div>
-                      <div className={`text-sm sm:text-lg font-semibold ${status.biometricEnabled ? "text-emerald-400" : "text-slate-400"}`}>
+                      <div className={`text-sm sm:text-lg font-semibold ${status.biometricEnabled ? "text-[#2F6F62]" : "text-slate-400"}`}>
                         {status.biometricEnabled 
                           ? (lang === "tr" ? "Aktif" : "Active") 
                           : (lang === "tr" ? "Kapalı" : "Off")}
@@ -308,10 +308,10 @@ export function SecuritySettings({
                         </div>
                       )}
                       {status.securityScore >= 80 && (
-                        <div className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                          <span className="text-emerald-500 text-sm sm:text-base flex-shrink-0">✅</span>
+                        <div className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 bg-[#2F6F62]/10 rounded-lg border border-[#2F6F62]/20">
+                          <span className="text-[#2F6F62] text-sm sm:text-base flex-shrink-0">✅</span>
                           <div className="min-w-0">
-                            <p className="text-xs sm:text-sm text-emerald-400 font-medium">
+                            <p className="text-xs sm:text-sm text-[#2F6F62] font-medium">
                               {lang === "tr" ? "Harika!" : "Great!"}
                             </p>
                             <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5">

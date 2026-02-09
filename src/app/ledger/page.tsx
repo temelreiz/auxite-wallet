@@ -170,8 +170,8 @@ export default function LedgerPage() {
     switch (status) {
       case "settled":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#2F6F62]/20 text-[#2F6F62] text-xs font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2F6F62]" />
             {t.settled}
           </span>
         );
@@ -335,7 +335,7 @@ export default function LedgerPage() {
                   <div className="flex items-center gap-2">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                       eventType === "allocation" ? "bg-amber-500/20" :
-                      eventType === "settlement" || eventType === "deposit" ? "bg-emerald-500/20" :
+                      eventType === "settlement" || eventType === "deposit" ? "bg-[#2F6F62]/20" :
                       eventType === "yield" ? "bg-blue-500/20" : "bg-purple-500/20"
                     }`}>
                       {eventType === "allocation" && (
@@ -344,7 +344,7 @@ export default function LedgerPage() {
                         </svg>
                       )}
                       {(eventType === "settlement" || eventType === "deposit") && (
-                        <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-4 h-4 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       )}

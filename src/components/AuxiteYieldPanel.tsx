@@ -168,7 +168,7 @@ export default function AuxiteYieldPanel() {
           step="0.01"
           value={amountGrams}
           onChange={(e) => setAmountGrams(e.target.value)}
-          className="w-full rounded-lg sm:rounded-xl border border-slate-700 bg-slate-950 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full rounded-lg sm:rounded-xl border border-slate-700 bg-slate-950 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#BFA181]"
         />
       </div>
 
@@ -184,7 +184,7 @@ export default function AuxiteYieldPanel() {
               className={
                 "px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold rounded-full " +
                 (duration === m
-                  ? "bg-emerald-500 text-white"
+                  ? "bg-[#2F6F62] text-white"
                   : "text-slate-200 hover:bg-slate-700")
               }
             >

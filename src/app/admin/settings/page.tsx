@@ -390,8 +390,8 @@ export default function AdminSettingsPage() {
       <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
         <div className="w-full max-w-md p-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
-              <Settings className="w-8 h-8 text-emerald-500" />
+            <div className="w-16 h-16 rounded-full bg-[#2F6F62]/10 flex items-center justify-center mx-auto mb-4">
+              <Settings className="w-8 h-8 text-[#2F6F62]" />
             </div>
             <h1 className="text-2xl font-bold text-slate-100">Admin Ayarları</h1>
             <p className="text-slate-400 mt-2">Güvenlik ve sistem ayarları</p>
@@ -405,7 +405,7 @@ export default function AdminSettingsPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-10 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-3 pr-10 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-[#2F6F62]"
                   placeholder="Admin şifresi"
                 />
                 <button
@@ -428,7 +428,7 @@ export default function AdminSettingsPage() {
             <button
               type="submit"
               disabled={authLoading || !password}
-              className="w-full px-4 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold transition-colors flex items-center justify-center gap-2"
+              className="w-full px-4 py-3 rounded-xl bg-[#2F6F62] hover:bg-[#2F6F62] disabled:opacity-50 text-white font-semibold transition-colors flex items-center justify-center gap-2"
             >
               {authLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
               Giriş Yap
@@ -460,8 +460,8 @@ export default function AdminSettingsPage() {
                 <ChevronLeft className="w-5 h-5 text-slate-400" />
               </Link>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                  <Settings className="w-5 h-5 text-emerald-500" />
+                <div className="w-10 h-10 rounded-full bg-[#2F6F62]/10 flex items-center justify-center">
+                  <Settings className="w-5 h-5 text-[#2F6F62]" />
                 </div>
                 <div>
                   <h1 className="text-lg font-semibold">Admin Ayarları</h1>
@@ -486,7 +486,7 @@ export default function AdminSettingsPage() {
           <div
             className={`p-4 rounded-xl flex items-center gap-3 ${
               message.type === "success"
-                ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+                ? "bg-[#2F6F62]/10 border border-[#2F6F62]/30 text-[#2F6F62]"
                 : "bg-red-500/10 border border-red-500/30 text-red-400"
             }`}
           >
@@ -510,7 +510,7 @@ export default function AdminSettingsPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                  ? "bg-[#2F6F62]/10 text-[#2F6F62] border border-[#2F6F62]/30"
                   : "bg-slate-800 text-slate-400 hover:bg-slate-700"
               }`}
             >
@@ -699,7 +699,7 @@ export default function AdminSettingsPage() {
                       setTwoFAStep("idle");
                       setTwoFACode("");
                     }}
-                    className="w-full bg-emerald-500 text-white font-semibold py-3 rounded-xl hover:bg-emerald-400"
+                    className="w-full bg-[#2F6F62] text-white font-semibold py-3 rounded-xl hover:bg-[#2F6F62]"
                   >
                     Tamam
                   </button>
@@ -752,8 +752,8 @@ export default function AdminSettingsPage() {
             {/* Security Overview Card */}
             <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-emerald-500" />
+                <div className="w-12 h-12 rounded-full bg-[#2F6F62]/10 flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-[#2F6F62]" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold">Güvenlik Durumu</h2>
@@ -792,13 +792,13 @@ export default function AdminSettingsPage() {
               <div className="mt-6 p-4 bg-slate-800/50 rounded-xl">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-slate-400">Güvenlik Skoru</span>
-                  <span className="text-lg font-bold text-emerald-400">
+                  <span className="text-lg font-bold text-[#2F6F62]">
                     {Object.values(securityStatus).filter(Boolean).length - 1}/4
                   </span>
                 </div>
                 <div className="w-full bg-slate-700 rounded-full h-2">
                   <div
-                    className="bg-emerald-500 h-2 rounded-full transition-all"
+                    className="bg-[#2F6F62] h-2 rounded-full transition-all"
                     style={{
                       width: `${((Object.values(securityStatus).filter(Boolean).length - 1) / 4) * 100}%`,
                     }}
@@ -877,7 +877,7 @@ export default function AdminSettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <Database className="w-5 h-5 text-emerald-400" />
+                    <Database className="w-5 h-5 text-[#2F6F62]" />
                     <span>Redis</span>
                   </div>
                   <span
@@ -958,7 +958,7 @@ export default function AdminSettingsPage() {
                     onClick={() => setLogsFilter(filter.id as any)}
                     className={`px-4 py-2 rounded-lg text-sm ${
                       logsFilter === filter.id
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                        ? "bg-[#2F6F62]/10 text-[#2F6F62] border border-[#2F6F62]/30"
                         : "bg-slate-800 text-slate-400 hover:bg-slate-700"
                     }`}
                   >
@@ -994,7 +994,7 @@ export default function AdminSettingsPage() {
                     {logsLoading ? (
                       <tr>
                         <td colSpan={6} className="px-4 py-12 text-center">
-                          <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mx-auto" />
+                          <Loader2 className="w-8 h-8 animate-spin text-[#2F6F62] mx-auto" />
                         </td>
                       </tr>
                     ) : auditLogs.length === 0 ? (
@@ -1105,7 +1105,7 @@ export default function AdminSettingsPage() {
                     className="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 px-4 text-white font-mono text-sm"
                   />
                 </div>
-                <button className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-white font-medium">
+                <button className="px-6 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-xl text-white font-medium">
                   Kaydet
                 </button>
               </div>
@@ -1123,7 +1123,7 @@ export default function AdminSettingsPage() {
                 ].map((item) => (
                   <div key={item.endpoint} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl">
                     <span className="text-slate-300">{item.endpoint}</span>
-                    <span className="text-sm text-emerald-400 font-mono">{item.limit}</span>
+                    <span className="text-sm text-[#2F6F62] font-mono">{item.limit}</span>
                   </div>
                 ))}
               </div>

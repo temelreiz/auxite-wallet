@@ -154,7 +154,7 @@ export function EmailPreferences({ walletAddress, lang = "en" }: EmailPreference
 
       {/* Success/Error */}
       {success && (
-        <div className="p-3 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-emerald-400 text-sm">
+        <div className="p-3 bg-[#2F6F62]/20 border border-[#2F6F62]/30 rounded-lg text-[#2F6F62] text-sm">
           ✓ {success}
         </div>
       )}
@@ -175,12 +175,12 @@ export function EmailPreferences({ walletAddress, lang = "en" }: EmailPreference
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t.emailPlaceholder}
-              className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+              className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-[#2F6F62] focus:outline-none"
             />
             <button
               onClick={handleSaveEmail}
               disabled={saving}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-medium rounded-lg transition-colors"
+              className="px-4 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] disabled:opacity-50 text-white font-medium rounded-lg transition-colors"
             >
               {saving ? "..." : t.save}
             </button>
@@ -202,7 +202,7 @@ export function EmailPreferences({ walletAddress, lang = "en" }: EmailPreference
             <span className="text-white">{maskedEmail}</span>
             <button
               onClick={() => setEditingEmail(true)}
-              className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+              className="text-sm text-[#2F6F62] hover:text-[#BFA181] transition-colors"
             >
               {t.changeEmail}
             </button>
@@ -298,7 +298,7 @@ function PreferenceToggle({
       <button
         onClick={onChange}
         className={`relative w-11 h-6 rounded-full transition-colors ${
-          checked ? "bg-emerald-500" : "bg-slate-600"
+          checked ? "bg-[#2F6F62]" : "bg-slate-600"
         }`}
       >
         <span

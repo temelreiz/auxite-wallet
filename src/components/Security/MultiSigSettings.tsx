@@ -266,7 +266,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "approved": return "text-emerald-400";
+      case "approved": return "text-[#2F6F62]";
       case "rejected": return "text-red-400";
       case "expired": return "text-slate-500";
       default: return "text-amber-400";
@@ -297,7 +297,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
           onClick={handleToggle}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             config?.enabled
-              ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+              ? "bg-[#2F6F62]/20 text-[#2F6F62] hover:bg-[#2F6F62]/30"
               : "bg-slate-700 text-slate-300 hover:bg-slate-600"
           }`}
         >
@@ -331,7 +331,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
               <h4 className="font-medium text-white">{labels.signers}</h4>
               <button
                 onClick={() => setShowAddSigner(true)}
-                className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg text-sm hover:bg-emerald-500/30 transition-colors"
+                className="px-3 py-1.5 bg-[#2F6F62]/20 text-[#2F6F62] rounded-lg text-sm hover:bg-[#2F6F62]/30 transition-colors"
               >
                 + {labels.addSigner}
               </button>
@@ -415,7 +415,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleApprove(tx.id)}
-                          className="flex-1 py-2 bg-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition-colors"
+                          className="flex-1 py-2 bg-[#2F6F62]/20 text-[#2F6F62] rounded-lg hover:bg-[#2F6F62]/30 transition-colors"
                         >
                           {labels.approve}
                         </button>
@@ -448,7 +448,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
                   type="text"
                   value={newSigner.name}
                   onChange={(e) => setNewSigner({ ...newSigner, name: e.target.value })}
-                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-[#2F6F62]"
                 />
               </div>
 
@@ -459,7 +459,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
                   value={newSigner.address}
                   onChange={(e) => setNewSigner({ ...newSigner, address: e.target.value })}
                   placeholder="0x..."
-                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white font-mono focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white font-mono focus:outline-none focus:border-[#2F6F62]"
                 />
               </div>
 
@@ -469,7 +469,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
                   type="email"
                   value={newSigner.email}
                   onChange={(e) => setNewSigner({ ...newSigner, email: e.target.value })}
-                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-[#2F6F62]"
                 />
               </div>
 
@@ -478,7 +478,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
                 <select
                   value={newSigner.role}
                   onChange={(e) => setNewSigner({ ...newSigner, role: e.target.value })}
-                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-emerald-500"
+                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-[#2F6F62]"
                 >
                   <option value="approver">{labels.approver}</option>
                   <option value="viewer">{labels.viewer}</option>
@@ -496,7 +496,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
               <button
                 onClick={handleAddSigner}
                 disabled={!newSigner.name || !newSigner.address}
-                className="flex-1 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {labels.save}
               </button>

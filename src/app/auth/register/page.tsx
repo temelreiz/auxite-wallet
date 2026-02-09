@@ -76,14 +76,14 @@ export default function RegisterPage() {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500/20 mb-6">
-            <Mail className="w-10 h-10 text-emerald-500" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#2F6F62]/20 mb-6">
+            <Mail className="w-10 h-10 text-[#2F6F62]" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-3">Check Your Email</h1>
           <p className="text-slate-400 mb-2">
             We've sent a verification link to
           </p>
-          <p className="text-emerald-500 font-medium mb-8">{email}</p>
+          <p className="text-[#2F6F62] font-medium mb-8">{email}</p>
           <p className="text-sm text-slate-500 mb-6">
             Click the link in the email to verify your account and get started.
           </p>
@@ -103,8 +103,8 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/20 mb-3">
-            <svg className="w-7 h-7 text-emerald-500" fill="currentColor" viewBox="0 0 24 24">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#2F6F62]/20 mb-3">
+            <svg className="w-7 h-7 text-[#2F6F62]" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
@@ -126,7 +126,7 @@ export default function RegisterPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#BFA181] focus:border-transparent transition-all"
                 required
               />
             </div>
@@ -144,7 +144,7 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#BFA181] focus:border-transparent transition-all"
                 required
               />
             </div>
@@ -162,7 +162,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-12 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                className="w-full pl-10 pr-12 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#BFA181] focus:border-transparent transition-all"
                 required
               />
               <button
@@ -176,19 +176,19 @@ export default function RegisterPage() {
             
             {/* Password Requirements */}
             <div className="grid grid-cols-2 gap-2 mt-2">
-              <div className={`flex items-center gap-1.5 text-xs ${hasMinLength ? 'text-emerald-500' : 'text-slate-500'}`}>
+              <div className={`flex items-center gap-1.5 text-xs ${hasMinLength ? 'text-[#2F6F62]' : 'text-slate-500'}`}>
                 <CheckCircle className="w-3.5 h-3.5" />
                 8+ characters
               </div>
-              <div className={`flex items-center gap-1.5 text-xs ${hasUppercase ? 'text-emerald-500' : 'text-slate-500'}`}>
+              <div className={`flex items-center gap-1.5 text-xs ${hasUppercase ? 'text-[#2F6F62]' : 'text-slate-500'}`}>
                 <CheckCircle className="w-3.5 h-3.5" />
                 Uppercase
               </div>
-              <div className={`flex items-center gap-1.5 text-xs ${hasLowercase ? 'text-emerald-500' : 'text-slate-500'}`}>
+              <div className={`flex items-center gap-1.5 text-xs ${hasLowercase ? 'text-[#2F6F62]' : 'text-slate-500'}`}>
                 <CheckCircle className="w-3.5 h-3.5" />
                 Lowercase
               </div>
-              <div className={`flex items-center gap-1.5 text-xs ${hasNumber ? 'text-emerald-500' : 'text-slate-500'}`}>
+              <div className={`flex items-center gap-1.5 text-xs ${hasNumber ? 'text-[#2F6F62]' : 'text-slate-500'}`}>
                 <CheckCircle className="w-3.5 h-3.5" />
                 Number
               </div>
@@ -207,7 +207,7 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className={`w-full pl-10 pr-4 py-2.5 bg-slate-800 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all ${
+                className={`w-full pl-10 pr-4 py-2.5 bg-slate-800 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#BFA181] focus:border-transparent transition-all ${
                   confirmPassword && !passwordsMatch ? 'border-red-500' : 'border-slate-700'
                 }`}
                 required
@@ -215,7 +215,7 @@ export default function RegisterPage() {
               {confirmPassword && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {passwordsMatch ? (
-                    <CheckCircle className="w-5 h-5 text-emerald-500" />
+                    <CheckCircle className="w-5 h-5 text-[#2F6F62]" />
                   ) : (
                     <AlertCircle className="w-5 h-5 text-red-500" />
                   )}
@@ -235,16 +235,16 @@ export default function RegisterPage() {
           {/* Terms */}
           <p className="text-xs text-slate-500 text-center">
             By signing up, you agree to our{' '}
-            <Link href="/terms" className="text-emerald-500 hover:underline">Terms of Service</Link>
+            <Link href="/terms" className="text-[#2F6F62] hover:underline">Terms of Service</Link>
             {' '}and{' '}
-            <Link href="/privacy" className="text-emerald-500 hover:underline">Privacy Policy</Link>
+            <Link href="/privacy" className="text-[#2F6F62] hover:underline">Privacy Policy</Link>
           </p>
 
           {/* Submit */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] text-white font-semibold rounded-xl hover:from-[#2F6F62] hover:to-[#2F6F62]/80 focus:outline-none focus:ring-2 focus:ring-[#BFA181] focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -281,7 +281,7 @@ export default function RegisterPage() {
         {/* Login Link */}
         <p className="text-center text-slate-400 mt-6">
           Already have an account?{' '}
-          <Link href="/auth/login" className="text-emerald-500 hover:text-emerald-400 font-medium transition-colors">
+          <Link href="/auth/login" className="text-[#2F6F62] hover:text-[#2F6F62] font-medium transition-colors">
             Sign in
           </Link>
         </p>

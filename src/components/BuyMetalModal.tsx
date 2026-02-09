@@ -286,13 +286,13 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
           <div>
             <label className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2 block">{t.selectMetal}</label>
             {isLoadingPrices ? (
-              <div className="flex justify-center py-4"><svg className="animate-spin h-6 w-6 text-emerald-500" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg></div>
+              <div className="flex justify-center py-4"><svg className="animate-spin h-6 w-6 text-[#2F6F62]" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg></div>
             ) : (
               <div className="grid grid-cols-4 gap-2">
                 {metals.map((metal) => (
-                  <button key={metal.symbol} onClick={() => setSelectedMetal(metal)} className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${selectedMetal?.symbol === metal.symbol ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/20" : "border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50"}`}>
+                  <button key={metal.symbol} onClick={() => setSelectedMetal(metal)} className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${selectedMetal?.symbol === metal.symbol ? "border-[#2F6F62] bg-[#2F6F62]/10 dark:bg-[#2F6F62]/20" : "border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50"}`}>
                     <img src={metal.icon} alt={metal.symbol} className="w-8 h-8" />
-                    <span className={`text-xs font-semibold ${selectedMetal?.symbol === metal.symbol ? "text-emerald-600 dark:text-emerald-400" : "text-slate-700 dark:text-slate-300"}`}>{metal.symbol}</span>
+                    <span className={`text-xs font-semibold ${selectedMetal?.symbol === metal.symbol ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-700 dark:text-slate-300"}`}>{metal.symbol}</span>
                     <span className="text-[10px] text-slate-500">${metal.price.toFixed(2)}/g</span>
                   </button>
                 ))}
@@ -315,7 +315,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
               <span className={`font-medium ${isInsufficientBalance ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>{balance.toFixed(['BTC', 'ETH', 'SOL'].includes(selectedPayment.symbol) ? 6 : 2)} {selectedPayment.symbol}</span>
             </div>
             <div className="relative">
-              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full px-4 py-4 pr-20 rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500 text-lg font-medium" />
+              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full px-4 py-4 pr-20 rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#2F6F62] text-lg font-medium" />
               <button onClick={() => setAmount(balance.toString())} className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-stone-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium">MAX</button>
             </div>
             {isInsufficientBalance && <p className="text-red-500 text-xs mt-1">{t.insufficientBalance}</p>}
@@ -323,7 +323,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
 
           <div className="flex justify-center">
             <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 flex items-center justify-center">
-              {isLoadingPreview ? <svg className="animate-spin h-4 w-4 text-emerald-500" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /></svg> : <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>}
+              {isLoadingPreview ? <svg className="animate-spin h-4 w-4 text-[#2F6F62]" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /></svg> : <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>}
             </div>
           </div>
 
@@ -373,9 +373,9 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
               <div className="space-y-2 mb-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                    <span className="text-emerald-500">✓</span> {t.vaultAllocated || "Vault Allocated"}
+                    <span className="text-[#2F6F62]">✓</span> {t.vaultAllocated || "Vault Allocated"}
                   </span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">{allocationPreview.allocatedGrams}g</span>
+                  <span className="font-semibold text-[#2F6F62] dark:text-[#2F6F62]">{allocationPreview.allocatedGrams}g</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1">
@@ -394,7 +394,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
                     +{allocationPreview.suggestion.gramsToAdd.toFixed(4)}g → {allocationPreview.suggestion.targetGrams}g
                   </button>
                 )}
-                <button onClick={handleConfirmWithAllocation} className="py-2.5 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors">
+                <button onClick={handleConfirmWithAllocation} className="py-2.5 px-3 rounded-lg bg-[#2F6F62] hover:bg-[#2F6F62] text-white text-sm font-medium transition-colors">
                   {t.continueAnyway || "Continue"}
                 </button>
               </div>
@@ -402,11 +402,11 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
           )}
 
           {error && <div className="p-3 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30"><p className="text-red-600 dark:text-red-400 text-sm">{error}</p></div>}
-          {success && <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30"><p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium text-center">✅ {t.success}</p></div>}
+          {success && <div className="p-3 rounded-lg bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 border border-[#2F6F62]/30 dark:border-[#2F6F62]/30"><p className="text-[#2F6F62] dark:text-[#2F6F62] text-sm font-medium text-center">✅ {t.success}</p></div>}
         </div>
 
         <div className="p-4 border-t border-stone-200 dark:border-slate-800">
-          <button onClick={executeTrade} disabled={!canTrade} className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-700 dark:disabled:to-slate-700 text-white disabled:text-slate-500 font-semibold text-base transition-all flex items-center justify-center gap-2">
+          <button onClick={executeTrade} disabled={!canTrade} className="w-full py-4 rounded-xl bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-[#BFA181] hover:to-[#2F6F62] disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-700 dark:disabled:to-slate-700 text-white disabled:text-slate-500 font-semibold text-base transition-all flex items-center justify-center gap-2">
             {isProcessing ? (<><svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /></svg>{t.processing}</>) : success ? (<><span>✅</span>{t.success}</>) : (<><span>🔒</span>{t.confirm}</>)}
           </button>
         </div>

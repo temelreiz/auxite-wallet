@@ -361,7 +361,7 @@ export function UsdDepositModal({
         <button
           onClick={handleBuy}
           disabled={isLoading}
-          className="w-full py-3 sm:py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3 sm:py-4 rounded-xl bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <>
@@ -394,7 +394,7 @@ export function UsdDepositModal({
           <div className="flex items-center justify-center gap-1.5">
             <span className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-600">{t.poweredBy}</span>
             <svg className="w-14 sm:w-16 h-4 sm:h-5" viewBox="0 0 100 24" fill="none">
-              <text x="0" y="17" className="text-xs font-bold fill-emerald-500">TRANSAK</text>
+              <text x="0" y="17" className="text-xs font-bold fill-[#2F6F62]">TRANSAK</text>
             </svg>
           </div>
         </div>

@@ -460,7 +460,7 @@ export default function ClientCenterPage() {
       </div>
       <div className="flex items-center gap-2">
         {badge && (
-          <span className="px-2 py-0.5 text-xs rounded-full bg-emerald-500 text-white font-semibold">
+          <span className="px-2 py-0.5 text-xs rounded-full bg-[#2F6F62] text-white font-semibold">
             {badge}
           </span>
         )}
@@ -505,8 +505,8 @@ export default function ClientCenterPage() {
               <p className="text-xs text-slate-500">{t.relationshipManagerDesc}</p>
             </div>
             <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+              <span className="w-2 h-2 rounded-full bg-[#2F6F62] animate-pulse" />
+              <span className="text-[10px] font-medium text-[#2F6F62] dark:text-[#2F6F62]">
                 {t.available}
               </span>
             </div>
@@ -521,18 +521,18 @@ export default function ClientCenterPage() {
 
         {/* Account Safeguards Banner - Only show when verified */}
         {userData.kycStatus === "verified" && (
-          <div className="bg-emerald-500/10 border border-emerald-500 rounded-xl p-4 mb-4">
-            <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 tracking-wider mb-3">
+          <div className="bg-[#2F6F62]/10 border border-[#2F6F62] rounded-xl p-4 mb-4">
+            <p className="text-[11px] font-semibold text-[#2F6F62] dark:text-[#2F6F62] tracking-wider mb-3">
               {t.accountSafeguards}
             </p>
             <div className="grid grid-cols-2 gap-2">
               {[t.fullyAllocated, t.segregated, t.bankruptcyRemote, t.independentCustody].map(
                 (item, idx) => (
                   <div key={idx} className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-[#2F6F62] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    <span className="text-xs font-medium text-[#2F6F62] dark:text-[#2F6F62]">
                       {item}
                     </span>
                   </div>
@@ -548,7 +548,7 @@ export default function ClientCenterPage() {
         {/* ============================================ */}
         <div className={`rounded-xl p-5 mb-4 border ${
           userData.kycStatus === "verified"
-            ? "bg-emerald-500/10 border-emerald-500"
+            ? "bg-[#2F6F62]/10 border-[#2F6F62]"
             : userData.kycStatus === "pending"
             ? "bg-amber-500/10 border-amber-500"
             : "bg-white dark:bg-slate-900 border-amber-500"
@@ -563,13 +563,13 @@ export default function ClientCenterPage() {
               kycLoading
                 ? "bg-slate-500/20"
                 : userData.kycStatus === "verified"
-                ? "bg-emerald-500/20"
+                ? "bg-[#2F6F62]/20"
                 : userData.kycStatus === "pending"
                 ? "bg-amber-500/20"
                 : "bg-amber-500/20"
             }`}>
               {userData.kycStatus === "verified" ? (
-                <svg className="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               ) : userData.kycStatus === "pending" ? (
@@ -585,7 +585,7 @@ export default function ClientCenterPage() {
             <div>
               <p className={`text-sm font-semibold ${
                 userData.kycStatus === "verified"
-                  ? "text-emerald-600 dark:text-emerald-400"
+                  ? "text-[#2F6F62] dark:text-[#2F6F62]"
                   : "text-amber-600 dark:text-amber-400"
               }`}>
                 {userData.kycStatus === "verified"
@@ -615,7 +615,7 @@ export default function ClientCenterPage() {
               <div className="space-y-2">
                 {[t.verificationTime, t.secureHandling, t.custodyActivation].map((item, idx) => (
                   <div key={idx} className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-[#2F6F62] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <span className="text-xs text-slate-600 dark:text-slate-400">{item}</span>
@@ -659,13 +659,13 @@ export default function ClientCenterPage() {
               <span
                 className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md ${
                   userData.kycStatus === "verified"
-                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                    ? "bg-[#2F6F62]/15 text-[#2F6F62] dark:text-[#2F6F62]"
                     : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                 }`}
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
-                    userData.kycStatus === "verified" ? "bg-emerald-500" : "bg-amber-500"
+                    userData.kycStatus === "verified" ? "bg-[#2F6F62]" : "bg-amber-500"
                   }`}
                 />
                 {userData.kycStatus === "verified"
@@ -742,7 +742,7 @@ export default function ClientCenterPage() {
                     </p>
                     <p className="text-xs font-mono text-slate-500">{addr.address}</p>
                   </div>
-                  <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>

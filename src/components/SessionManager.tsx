@@ -186,7 +186,7 @@ export function SessionManager({ walletAddress, lang = "en" }: SessionManagerPro
               key={session.id}
               className={`p-4 rounded-xl border ${
                 session.isCurrent
-                  ? "bg-emerald-500/10 border-emerald-500/30"
+                  ? "bg-[#2F6F62]/10 border-[#2F6F62]/30"
                   : "bg-slate-800/50 border-slate-700"
               }`}
             >
@@ -201,7 +201,7 @@ export function SessionManager({ walletAddress, lang = "en" }: SessionManagerPro
                         {session.deviceInfo.browser} on {session.deviceInfo.os}
                       </span>
                       {session.isCurrent && (
-                        <span className="text-xs px-2 py-0.5 bg-emerald-500 text-white rounded">
+                        <span className="text-xs px-2 py-0.5 bg-[#2F6F62] text-white rounded">
                           {t.current}
                         </span>
                       )}

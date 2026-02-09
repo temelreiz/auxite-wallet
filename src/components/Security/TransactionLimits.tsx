@@ -216,7 +216,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
   const getProgressColor = (percentage: number) => {
     if (percentage >= 90) return "bg-red-500";
     if (percentage >= 70) return "bg-amber-500";
-    return "bg-emerald-500";
+    return "bg-[#2F6F62]";
   };
 
   if (loading) {
@@ -235,7 +235,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
           onClick={handleToggle}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
             limits?.enabled
-              ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+              ? "bg-[#2F6F62]/20 text-[#2F6F62] hover:bg-[#2F6F62]/30"
               : "bg-slate-700 text-slate-300 hover:bg-slate-600"
           }`}
         >
@@ -325,7 +325,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
                 </button>
                 <button
                   onClick={handleSave}
-                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+                  className="px-4 py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] transition-colors"
                 >
                   {labels.save}
                 </button>
@@ -349,7 +349,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
               </div>
               <button
                 onClick={() => setShowAddAddress(true)}
-                className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg text-sm hover:bg-emerald-500/30 transition-colors"
+                className="px-3 py-1.5 bg-[#2F6F62]/20 text-[#2F6F62] rounded-lg text-sm hover:bg-[#2F6F62]/30 transition-colors"
               >
                 + {labels.addAddress}
               </button>
@@ -392,7 +392,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
               value={newAddress}
               onChange={(e) => setNewAddress(e.target.value)}
               placeholder="0x..."
-              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white font-mono focus:outline-none focus:border-emerald-500"
+              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white font-mono focus:outline-none focus:border-[#2F6F62]"
             />
 
             <div className="flex gap-3 mt-6">
@@ -405,7 +405,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
               <button
                 onClick={handleAddWhitelist}
                 disabled={!newAddress}
-                className="flex-1 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                className="flex-1 py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] transition-colors disabled:opacity-50"
               >
                 {labels.save}
               </button>
@@ -475,7 +475,7 @@ function LimitCard({
         <span className="text-slate-500">
           {labels.used}: ${used.toLocaleString()}
         </span>
-        <span className="text-emerald-400">
+        <span className="text-[#2F6F62]">
           {labels.remaining}: ${remaining.toLocaleString()}
         </span>
       </div>

@@ -183,7 +183,7 @@ export function MetalExchangeModal({
               onClick={() => { setMode("buy"); setAmount(""); }}
               className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 mode === "buy"
-                  ? "bg-emerald-500 text-white shadow-lg"
+                  ? "bg-[#2F6F62] text-white shadow-lg"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -273,7 +273,7 @@ export function MetalExchangeModal({
                 </div>
                 <button
                   onClick={() => setAmount(fromBalance.toString())}
-                  className="px-3 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl text-emerald-500 text-sm font-medium hover:bg-stone-200 dark:hover:bg-slate-700"
+                  className="px-3 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl text-[#2F6F62] text-sm font-medium hover:bg-stone-200 dark:hover:bg-slate-700"
                 >
                   MAX
                 </button>
@@ -358,7 +358,7 @@ export function MetalExchangeModal({
               </div>
               <div className="flex items-center justify-between text-sm mt-2">
                 <span className="text-slate-400">{lang === "tr" ? "İşlem Ücreti" : "Fee"}</span>
-                <span className="text-emerald-400">
+                <span className="text-[#2F6F62]">
                   {lang === "tr" ? "Ücretsiz" : "Free"}
                 </span>
               </div>
@@ -373,11 +373,11 @@ export function MetalExchangeModal({
               isProcessing
                 ? "bg-stone-300 dark:bg-slate-700 cursor-wait"
                 : result === "success"
-                ? "bg-emerald-500"
+                ? "bg-[#2F6F62]"
                 : amountNum <= 0 || insufficientBalance
                 ? "bg-stone-300 dark:bg-slate-700 cursor-not-allowed opacity-50"
                 : mode === "buy"
-                ? "bg-emerald-500 hover:bg-emerald-400"
+                ? "bg-[#2F6F62] hover:bg-[#2F6F62]"
                 : "bg-red-500 hover:bg-red-400"
             }`}
           >

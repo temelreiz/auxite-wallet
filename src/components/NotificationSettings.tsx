@@ -185,8 +185,8 @@ export function NotificationSettings({ walletAddress, lang }: Props) {
       <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-10 h-10 rounded-full bg-[#2F6F62]/20 flex items-center justify-center">
+              <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
             </div>
@@ -207,7 +207,7 @@ export function NotificationSettings({ walletAddress, lang }: Props) {
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 isSubscribed
                   ? "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                  : "bg-emerald-500 text-white hover:bg-emerald-600"
+                  : "bg-[#2F6F62] text-white hover:bg-[#2F6F62]"
               } disabled:opacity-50`}
             >
               {pushLoading ? (
@@ -323,7 +323,7 @@ function ToggleRow({
         onClick={() => onChange(!checked)}
         disabled={disabled}
         className={`relative w-12 h-6 rounded-full transition-colors ${
-          checked ? "bg-emerald-500" : "bg-slate-600"
+          checked ? "bg-[#2F6F62]" : "bg-slate-600"
         } disabled:opacity-50`}
       >
         <div

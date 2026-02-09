@@ -217,7 +217,7 @@ export default function ReservesPage() {
 
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Back Link */}
-        <Link href="/trust" className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 hover:underline mb-6">
+        <Link href="/trust" className="inline-flex items-center gap-2 text-[#2F6F62] dark:text-[#2F6F62] hover:underline mb-6">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
@@ -229,8 +229,8 @@ export default function ReservesPage() {
           <div>
             <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-3">
               {t.title}
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium rounded-full">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#2F6F62]/10 text-[#2F6F62] dark:text-[#2F6F62] text-xs font-medium rounded-full">
+                <span className="w-1.5 h-1.5 bg-[#2F6F62] rounded-full animate-pulse"></span>
                 {t.liveStatus}
               </span>
             </h1>
@@ -246,12 +246,12 @@ export default function ReservesPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2F6F62]"></div>
           </div>
         ) : Object.keys(platformStock).length > 0 ? (
           <>
             {/* Hero Stats */}
-            <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl p-8 mb-8 text-white">
+            <div className="bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] rounded-2xl p-8 mb-8 text-white">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -259,7 +259,7 @@ export default function ReservesPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-emerald-100 text-sm">{t.totalValue}</p>
+                  <p className="text-white text-sm">{t.totalValue}</p>
                   <p className="text-4xl font-bold">${getTotalValue().toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                 </div>
               </div>
@@ -267,15 +267,15 @@ export default function ReservesPage() {
               <div className="grid grid-cols-3 gap-4 mt-6">
                 <div className="bg-white/10 rounded-xl p-4 text-center">
                   <p className="text-3xl font-bold">{formatGrams(getTotalGrams())}</p>
-                  <p className="text-emerald-100 text-sm">{t.totalMetals}</p>
+                  <p className="text-white text-sm">{t.totalMetals}</p>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 text-center">
                   <p className="text-3xl font-bold">{getActiveVaultsCount()}</p>
-                  <p className="text-emerald-100 text-sm">{t.vaults}</p>
+                  <p className="text-white text-sm">{t.vaults}</p>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 text-center">
                   <p className="text-3xl font-bold">1:1</p>
-                  <p className="text-emerald-100 text-sm">{t.backing}</p>
+                  <p className="text-white text-sm">{t.backing}</p>
                 </div>
               </div>
             </div>
@@ -306,7 +306,7 @@ export default function ReservesPage() {
                             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                               stock.isLowStock
                                 ? 'bg-red-500/10 text-red-600 dark:text-red-400'
-                                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                : 'bg-[#2F6F62]/10 text-[#2F6F62] dark:text-[#2F6F62]'
                             }`}>
                               {stock.isLowStock ? t.stockLow : t.stockHealthy}
                             </span>
@@ -328,7 +328,7 @@ export default function ReservesPage() {
                         <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                           <div
                             className={`h-full transition-all duration-500 ${
-                              usagePercent > 80 ? 'bg-red-500' : usagePercent > 50 ? 'bg-amber-500' : `bg-gradient-to-r ${info?.gradient || 'from-emerald-400 to-emerald-500'}`
+                              usagePercent > 80 ? 'bg-red-500' : usagePercent > 50 ? 'bg-amber-500' : `bg-gradient-to-r ${info?.gradient || 'from-[#BFA181] to-[#2F6F62]'}`
                             }`}
                             style={{ width: `${usagePercent}%` }}
                           />
@@ -366,7 +366,7 @@ export default function ReservesPage() {
                               <div key={idx} className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800 rounded p-2">
                                 <div className="flex items-center gap-2">
                                   <span className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                                    entry.action === 'add' ? 'bg-emerald-500/20 text-emerald-500' :
+                                    entry.action === 'add' ? 'bg-[#2F6F62]/20 text-[#2F6F62]' :
                                     entry.action === 'remove' ? 'bg-red-500/20 text-red-500' :
                                     entry.action === 'transfer' ? 'bg-blue-500/20 text-blue-500' :
                                     'bg-slate-500/20 text-slate-500'
@@ -406,15 +406,15 @@ export default function ReservesPage() {
 
                 return (
                   <div key={code} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 text-center">
-                    <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-3">
-                      <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-12 h-12 rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-[#2F6F62] dark:text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
                     </div>
                     <p className="font-semibold text-slate-800 dark:text-white">{vault.name}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400">{vault.country}</p>
                     {vaultTotal > 0 && (
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2 font-medium">
+                      <p className="text-xs text-[#2F6F62] dark:text-[#2F6F62] mt-2 font-medium">
                         {formatGrams(vaultTotal)}
                       </p>
                     )}

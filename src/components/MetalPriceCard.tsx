@@ -92,8 +92,8 @@ export default function MetalPriceCard({
   const getDirectionStyles = () => {
     let badgeBg, badgeText, arrow;
     if (change24h > 0.01) {
-      badgeBg = "bg-emerald-500/20";
-      badgeText = "text-emerald-600 dark:text-emerald-400";
+      badgeBg = "bg-[#2F6F62]/20";
+      badgeText = "text-[#2F6F62] dark:text-[#2F6F62]";
       arrow = "↑";
     } else if (change24h < -0.01) {
       badgeBg = "bg-red-500/20";
@@ -107,12 +107,12 @@ export default function MetalPriceCard({
     
     let priceColor;
     if (priceDirection === "up") {
-      priceColor = "text-emerald-600 dark:text-emerald-400";
+      priceColor = "text-[#2F6F62] dark:text-[#2F6F62]";
     } else if (priceDirection === "down") {
       priceColor = "text-red-600 dark:text-red-400";
     } else {
       if (change24h > 0.01) {
-        priceColor = "text-emerald-600 dark:text-emerald-400";
+        priceColor = "text-[#2F6F62] dark:text-[#2F6F62]";
       } else if (change24h < -0.01) {
         priceColor = "text-red-600 dark:text-red-400";
       } else {

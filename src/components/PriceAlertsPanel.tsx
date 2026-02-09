@@ -362,7 +362,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
   // Get status color
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active": return "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400";
+      case "active": return "bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]";
       case "triggered": return "bg-blue-500/20 text-blue-600 dark:text-blue-400";
       case "expired": return "bg-slate-500/20 text-slate-600 dark:text-slate-400";
       case "cancelled": return "bg-red-500/20 text-red-600 dark:text-red-400";
@@ -410,7 +410,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 text-[10px] sm:text-sm font-medium flex-shrink-0 ml-2"
+            className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] text-[10px] sm:text-sm font-medium flex-shrink-0 ml-2"
           >
             + {t.newAlert}
           </button>
@@ -424,7 +424,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
         </div>
       )}
       {success && (
-        <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 bg-emerald-500/20 border border-emerald-500/50 rounded-lg text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
+        <div className="mb-3 sm:mb-4 p-2.5 sm:p-3 bg-[#2F6F62]/20 border border-[#2F6F62]/50 rounded-lg text-[#2F6F62] dark:text-[#2F6F62] text-xs sm:text-sm">
           {success}
         </div>
       )}
@@ -442,7 +442,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
                   onClick={() => setSelectedToken(token.symbol)}
                   className={`p-2 sm:p-3 rounded-lg border text-center transition-colors flex flex-col items-center gap-0.5 sm:gap-1 ${
                     selectedToken === token.symbol
-                      ? "border-emerald-500 bg-emerald-500/10"
+                      ? "border-[#2F6F62] bg-[#2F6F62]/10"
                       : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-stone-400 dark:hover:border-slate-600"
                   }`}
                 >
@@ -461,7 +461,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
               value={targetPrice}
               onChange={(e) => setTargetPrice(e.target.value)}
               placeholder="0.00"
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg sm:rounded-xl text-xs sm:text-base text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg sm:rounded-xl text-xs sm:text-base text-slate-800 dark:text-white focus:outline-none focus:border-[#2F6F62]"
             />
             {currentPrices[selectedToken.toLowerCase()] && (
               <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -478,7 +478,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
                 onClick={() => setDirection("above")}
                 className={`p-2 sm:p-3 rounded-lg border text-[10px] sm:text-sm font-medium transition-colors ${
                   direction === "above"
-                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    ? "border-[#2F6F62] bg-[#2F6F62]/10 text-[#2F6F62] dark:text-[#2F6F62]"
                     : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
@@ -504,7 +504,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
               <select
                 value={expiresInDays}
                 onChange={(e) => setExpiresInDays(parseInt(e.target.value))}
-                className="w-full px-2 sm:px-4 py-2 sm:py-3 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg sm:rounded-xl text-xs sm:text-base text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-2 sm:px-4 py-2 sm:py-3 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg sm:rounded-xl text-xs sm:text-base text-slate-800 dark:text-white focus:outline-none focus:border-[#2F6F62]"
               >
                 <option value={7}>7 {t.days}</option>
                 <option value={14}>14 {t.days}</option>
@@ -519,7 +519,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
                 onClick={() => setRepeat(!repeat)}
                 className={`w-full p-2 sm:p-3 rounded-lg border text-[10px] sm:text-sm font-medium transition-colors ${
                   repeat
-                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    ? "border-[#2F6F62] bg-[#2F6F62]/10 text-[#2F6F62] dark:text-[#2F6F62]"
                     : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
@@ -542,7 +542,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
             <button
               onClick={handleCreate}
               disabled={loading || !targetPrice}
-              className="flex-1 py-2 sm:py-3 bg-emerald-500 text-white rounded-lg sm:rounded-xl hover:bg-emerald-600 disabled:opacity-50 font-medium text-xs sm:text-base"
+              className="flex-1 py-2 sm:py-3 bg-[#2F6F62] text-white rounded-lg sm:rounded-xl hover:bg-[#2F6F62] disabled:opacity-50 font-medium text-xs sm:text-base"
             >
               {loading ? "..." : t.create}
             </button>
@@ -553,7 +553,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
       {/* Alerts List */}
       {loading && !showForm ? (
         <div className="flex items-center justify-center py-6 sm:py-8">
-          <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-2 border-stone-300 dark:border-slate-600 border-t-emerald-500 rounded-full"></div>
+          <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-2 border-stone-300 dark:border-slate-600 border-t-[#BFA181] rounded-full"></div>
         </div>
       ) : alerts.length === 0 ? (
         <div className="text-center py-6 sm:py-8 text-slate-500 dark:text-slate-400">
@@ -596,7 +596,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
                       <p className="text-[10px] sm:text-sm text-slate-600 dark:text-slate-400">
                         {alert.direction === "above" ? "📈" : "📉"} ${alert.targetPrice.toLocaleString()}
                         {distance !== null && alert.status === "active" && (
-                          <span className={`ml-1 sm:ml-2 ${distance > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                          <span className={`ml-1 sm:ml-2 ${distance > 0 ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-red-600 dark:text-red-400"}`}>
                             ({distance > 0 ? "+" : ""}{distance.toFixed(2)}%)
                           </span>
                         )}

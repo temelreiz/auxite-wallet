@@ -276,7 +276,7 @@ export function UsdConvertModal({
           </div>
           <button
             onClick={() => setAmount(fromBalance.toString())}
-            className="text-xs text-emerald-500 hover:text-emerald-400 mt-2 touch-manipulation"
+            className="text-xs text-[#2F6F62] hover:text-[#2F6F62] mt-2 touch-manipulation"
           >
             MAX
           </button>
@@ -289,7 +289,7 @@ export function UsdConvertModal({
             className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all touch-manipulation"
             title={t.swap}
           >
-            <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
             </svg>
           </button>
@@ -344,7 +344,7 @@ export function UsdConvertModal({
           className={`w-full py-3 sm:py-3.5 rounded-xl font-semibold text-sm sm:text-base transition-colors touch-manipulation ${
             isLoading || !parsedAmount || parsedAmount > fromBalance
               ? "bg-slate-700 text-slate-400 cursor-not-allowed"
-              : "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white"
+              : "bg-[#2F6F62] hover:bg-[#2F6F62] active:bg-[#2F6F62]/80 text-white"
           }`}
         >
           {isLoading ? t.processing : t.convert}

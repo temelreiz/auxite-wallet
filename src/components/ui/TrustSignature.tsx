@@ -117,15 +117,15 @@ export function TrustStrip({ lang = "en", className = "" }: TrustStripProps) {
       <div className="max-w-7xl mx-auto px-4 py-2">
         <div className="flex items-center justify-center gap-6 text-xs text-slate-400">
           <div className="flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-emerald-500" />
+            <Shield className="w-3.5 h-3.5 text-[#2F6F62]" />
             <span>{t.fullyAllocated}</span>
           </div>
           <div className="hidden sm:flex items-center gap-1.5">
-            <Building className="w-3.5 h-3.5 text-emerald-500" />
+            <Building className="w-3.5 h-3.5 text-[#2F6F62]" />
             <span>{t.independentCustody}</span>
           </div>
           <div className="hidden md:flex items-center gap-1.5">
-            <Lock className="w-3.5 h-3.5 text-emerald-500" />
+            <Lock className="w-3.5 h-3.5 text-[#2F6F62]" />
             <span>{t.bankruptcyRemote}</span>
           </div>
         </div>
@@ -178,8 +178,8 @@ export function TrustBadges({
           key={index}
           className="flex items-center gap-2 text-slate-300"
         >
-          <div className="p-1.5 rounded-full bg-emerald-500/10">
-            <Icon className={`${iconSize[size]} text-emerald-500`} />
+          <div className="p-1.5 rounded-full bg-[#2F6F62]/10">
+            <Icon className={`${iconSize[size]} text-[#2F6F62]`} />
           </div>
           <span className="font-medium">{label}</span>
         </div>
@@ -205,15 +205,15 @@ export function VaultVisibility({ lang = "en", className = "", compact = false }
     return (
       <div className={`flex flex-wrap gap-3 text-xs ${className}`}>
         <div className="flex items-center gap-1.5 text-slate-400">
-          <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+          <MapPin className="w-3.5 h-3.5 text-[#2F6F62]" />
           <span>{t.vaultRegion}: <span className="text-white">{t.zurich}</span></span>
         </div>
         <div className="flex items-center gap-1.5 text-slate-400">
-          <Building className="w-3.5 h-3.5 text-emerald-500" />
+          <Building className="w-3.5 h-3.5 text-[#2F6F62]" />
           <span>{t.custodian}: <span className="text-white">{t.independent}</span></span>
         </div>
         <div className="flex items-center gap-1.5 text-slate-400">
-          <Shield className="w-3.5 h-3.5 text-emerald-500" />
+          <Shield className="w-3.5 h-3.5 text-[#2F6F62]" />
           <span>{t.structure}: <span className="text-white">{t.segregated}</span></span>
         </div>
       </div>
@@ -225,21 +225,21 @@ export function VaultVisibility({ lang = "en", className = "", compact = false }
       <div className="grid grid-cols-3 gap-4">
         <div className="text-center">
           <div className="flex items-center justify-center mb-2">
-            <MapPin className="w-5 h-5 text-emerald-500" />
+            <MapPin className="w-5 h-5 text-[#2F6F62]" />
           </div>
           <div className="text-xs text-slate-400 mb-1">{t.vaultRegion}</div>
           <div className="text-sm font-semibold text-white">{t.zurich}</div>
         </div>
         <div className="text-center border-x border-slate-700/50">
           <div className="flex items-center justify-center mb-2">
-            <Building className="w-5 h-5 text-emerald-500" />
+            <Building className="w-5 h-5 text-[#2F6F62]" />
           </div>
           <div className="text-xs text-slate-400 mb-1">{t.custodian}</div>
           <div className="text-sm font-semibold text-white">{t.independent}</div>
         </div>
         <div className="text-center">
           <div className="flex items-center justify-center mb-2">
-            <Shield className="w-5 h-5 text-emerald-500" />
+            <Shield className="w-5 h-5 text-[#2F6F62]" />
           </div>
           <div className="text-xs text-slate-400 mb-1">{t.structure}</div>
           <div className="text-sm font-semibold text-white">{t.segregated}</div>
@@ -263,7 +263,7 @@ export function AllocationMessage({ lang = "en", className = "" }: AllocationMes
 
   return (
     <div className={`flex items-center gap-2 text-sm text-slate-400 ${className}`}>
-      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+      <CheckCircle className="w-4 h-4 text-[#2F6F62] flex-shrink-0" />
       <span>{t.preciselyAllocated}</span>
     </div>
   );
@@ -284,8 +284,8 @@ export function TrustCard({ lang = "en", className = "" }: TrustCardProps) {
   return (
     <div className={`rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 ${className}`}>
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 rounded-xl bg-emerald-500/10">
-          <Shield className="w-6 h-6 text-emerald-500" />
+        <div className="p-2 rounded-xl bg-[#2F6F62]/10">
+          <Shield className="w-6 h-6 text-[#2F6F62]" />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-white">Capital Protection</h3>
@@ -397,7 +397,7 @@ export function PricingDisplay({
         <div className="h-px bg-slate-700/50" />
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium text-white">{t.finalPrice}</span>
-          <span className="text-base font-semibold text-emerald-400">{formatPrice(finalPrice)}</span>
+          <span className="text-base font-semibold text-[#2F6F62]">{formatPrice(finalPrice)}</span>
         </div>
       </div>
 

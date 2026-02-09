@@ -146,7 +146,7 @@ export default function CustodyPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-400">Holdings</span>
-                  <span className="text-sm text-emerald-400 font-semibold">{vault.currentHoldings}</span>
+                  <span className="text-sm text-[#2F6F62] font-semibold">{vault.currentHoldings}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-400">Insurance</span>
@@ -170,16 +170,16 @@ export default function CustodyPage() {
       <div className="max-w-6xl mx-auto px-4 pb-20">
         <h2 className="text-xl font-semibold text-white mb-6">Security Standards</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
-              <Shield className="w-6 h-6 text-emerald-400" />
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-[#2F6F62]/10 to-[#2F6F62]/5 border border-[#2F6F62]/20">
+            <div className="w-12 h-12 rounded-xl bg-[#2F6F62]/20 flex items-center justify-center mb-4">
+              <Shield className="w-6 h-6 text-[#2F6F62]" />
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">Physical Security</h3>
             <ul className="space-y-2 text-sm text-slate-400">
-              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-400" /> 24/7 armed security personnel</li>
-              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-400" /> Biometric access control</li>
-              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-400" /> Blast-proof vault doors</li>
-              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-400" /> Underground storage facilities</li>
+              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-[#2F6F62]" /> 24/7 armed security personnel</li>
+              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-[#2F6F62]" /> Biometric access control</li>
+              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-[#2F6F62]" /> Blast-proof vault doors</li>
+              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-[#2F6F62]" /> Underground storage facilities</li>
             </ul>
           </div>
 
@@ -247,7 +247,7 @@ export default function CustodyPage() {
                 <p className="text-sm text-slate-400 mb-1">Certifications</p>
                 <div className="flex flex-wrap gap-2">
                   {selectedVault.certification.map((cert, i) => (
-                    <span key={i} className="px-2 py-1 text-xs bg-emerald-500/10 text-emerald-400 rounded">{cert}</span>
+                    <span key={i} className="px-2 py-1 text-xs bg-[#2F6F62]/10 text-[#2F6F62] rounded">{cert}</span>
                   ))}
                 </div>
               </div>
@@ -256,7 +256,7 @@ export default function CustodyPage() {
                 <ul className="space-y-1">
                   {selectedVault.securityFeatures.map((feature, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm text-white">
-                      <CheckCircle className="w-3 h-3 text-emerald-400" />
+                      <CheckCircle className="w-3 h-3 text-[#2F6F62]" />
                       {feature}
                     </li>
                   ))}
@@ -269,7 +269,7 @@ export default function CustodyPage() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-400 mb-1">Current Holdings</p>
-                  <p className="text-emerald-400 font-semibold">{selectedVault.currentHoldings}</p>
+                  <p className="text-[#2F6F62] font-semibold">{selectedVault.currentHoldings}</p>
                 </div>
               </div>
               <div>

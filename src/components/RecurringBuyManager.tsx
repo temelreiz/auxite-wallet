@@ -341,7 +341,7 @@ export function RecurringBuyManager({
     <div className="space-y-4">
       {/* Success Message */}
       {successMessage && (
-        <div className="p-3 sm:p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-emerald-400 flex items-center gap-2 sm:gap-3 text-sm">
+        <div className="p-3 sm:p-4 bg-[#2F6F62]/20 border border-[#2F6F62]/50 rounded-xl text-[#2F6F62] flex items-center gap-2 sm:gap-3 text-sm">
           <span className="text-lg sm:text-xl">✅</span>
           <span className="flex-1">{successMessage}</span>
         </div>
@@ -365,7 +365,7 @@ export function RecurringBuyManager({
         {!showCreate && (
           <button
             onClick={() => setShowCreate(true)}
-            className="px-4 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600 active:bg-emerald-700 touch-manipulation w-full sm:w-auto"
+            className="px-4 py-2 bg-[#2F6F62] text-white text-sm rounded-lg hover:bg-[#2F6F62] active:bg-[#2F6F62]/80 touch-manipulation w-full sm:w-auto"
           >
             + {labels.createPlan}
           </button>
@@ -385,7 +385,7 @@ export function RecurringBuyManager({
                   onClick={() => setSelectedToken(token.symbol)}
                   className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                     selectedToken === token.symbol
-                      ? "border-emerald-500 bg-emerald-500/10"
+                      ? "border-[#2F6F62] bg-[#2F6F62]/10"
                       : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                   }`}
                 >
@@ -437,7 +437,7 @@ export function RecurringBuyManager({
                   onClick={() => setFrequency(freq)}
                   className={`p-2 sm:p-3 rounded-xl border transition-colors text-xs sm:text-sm touch-manipulation ${
                     frequency === freq
-                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
+                      ? "border-[#2F6F62] bg-[#2F6F62]/10 text-[#2F6F62]"
                       : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600 text-slate-600 dark:text-slate-300"
                   }`}
                 >
@@ -471,7 +471,7 @@ export function RecurringBuyManager({
                 onClick={() => setPaymentSource("usd_balance")}
                 className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                   paymentSource === "usd_balance"
-                    ? "border-emerald-500 bg-emerald-500/10"
+                    ? "border-[#2F6F62] bg-[#2F6F62]/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
@@ -482,7 +482,7 @@ export function RecurringBuyManager({
                 onClick={() => setPaymentSource("usdt_balance")}
                 className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                   paymentSource === "usdt_balance"
-                    ? "border-emerald-500 bg-emerald-500/10"
+                    ? "border-[#2F6F62] bg-[#2F6F62]/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
@@ -493,7 +493,7 @@ export function RecurringBuyManager({
                 onClick={() => setPaymentSource("eth_balance")}
                 className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                   paymentSource === "eth_balance"
-                    ? "border-emerald-500 bg-emerald-500/10"
+                    ? "border-[#2F6F62] bg-[#2F6F62]/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
@@ -504,7 +504,7 @@ export function RecurringBuyManager({
                 onClick={() => setPaymentSource("btc_balance")}
                 className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                   paymentSource === "btc_balance"
-                    ? "border-emerald-500 bg-emerald-500/10"
+                    ? "border-[#2F6F62] bg-[#2F6F62]/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
@@ -515,7 +515,7 @@ export function RecurringBuyManager({
                 onClick={() => setPaymentSource("xrp_balance")}
                 className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                   paymentSource === "xrp_balance"
-                    ? "border-emerald-500 bg-emerald-500/10"
+                    ? "border-[#2F6F62] bg-[#2F6F62]/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
@@ -526,7 +526,7 @@ export function RecurringBuyManager({
                 onClick={() => setPaymentSource("sol_balance")}
                 className={`p-2 sm:p-3 rounded-xl border transition-colors touch-manipulation ${
                   paymentSource === "sol_balance"
-                    ? "border-emerald-500 bg-emerald-500/10"
+                    ? "border-[#2F6F62] bg-[#2F6F62]/10"
                     : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                 }`}
               >
@@ -549,7 +549,7 @@ export function RecurringBuyManager({
               </div>
               <button
                 onClick={() => setAutoStake(!autoStake)}
-                className={`w-11 sm:w-12 h-6 rounded-full transition-colors flex-shrink-0 ml-3 touch-manipulation ${autoStake ? "bg-emerald-500" : "bg-stone-300 dark:bg-slate-600"}`}
+                className={`w-11 sm:w-12 h-6 rounded-full transition-colors flex-shrink-0 ml-3 touch-manipulation ${autoStake ? "bg-[#2F6F62]" : "bg-stone-300 dark:bg-slate-600"}`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transform transition-transform ${autoStake ? "translate-x-5 sm:translate-x-6" : "translate-x-1"}`} />
               </button>
@@ -560,7 +560,7 @@ export function RecurringBuyManager({
                   <button
                     key={months}
                     onClick={() => setStakeDuration(months)}
-                    className={`p-2 sm:p-3 rounded-xl border transition-colors text-xs sm:text-sm touch-manipulation ${stakeDuration === months ? "border-emerald-500 bg-emerald-500/10 text-emerald-400" : "border-stone-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-stone-400 dark:hover:border-slate-600"}`}
+                    className={`p-2 sm:p-3 rounded-xl border transition-colors text-xs sm:text-sm touch-manipulation ${stakeDuration === months ? "border-[#2F6F62] bg-[#2F6F62]/10 text-[#2F6F62]" : "border-stone-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-stone-400 dark:hover:border-slate-600"}`}
                   >
                     <div className="font-medium">{months} {labels.month}</div>
                     <div className="text-[10px] sm:text-xs opacity-70">{months === 3 ? "5%" : months === 6 ? "8%" : "12%"} APY</div>
@@ -581,7 +581,7 @@ export function RecurringBuyManager({
             <button
               onClick={handleCreate}
               disabled={creating || !amount || parseFloat(amount) < 10}
-              className="flex-1 py-2.5 sm:py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 active:bg-emerald-700 disabled:opacity-50 text-sm sm:text-base touch-manipulation"
+              className="flex-1 py-2.5 sm:py-3 bg-[#2F6F62] text-white rounded-xl hover:bg-[#2F6F62] active:bg-[#2F6F62]/80 disabled:opacity-50 text-sm sm:text-base touch-manipulation"
             >
               {creating ? "..." : labels.create}
             </button>
@@ -592,7 +592,7 @@ export function RecurringBuyManager({
       {/* Plans List */}
       {loading ? (
         <div className="flex justify-center py-8">
-          <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-2 border-slate-600 border-t-emerald-500 rounded-full"></div>
+          <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-2 border-slate-600 border-t-[#BFA181] rounded-full"></div>
         </div>
       ) : plans.length === 0 ? (
         <div className="text-center py-6 sm:py-8 text-slate-500">
@@ -623,7 +623,7 @@ export function RecurringBuyManager({
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-[10px] sm:text-xs px-2 py-1 rounded-full ${
-                      plan.status === "active" ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" :
+                      plan.status === "active" ? "bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]" :
                       plan.status === "paused" ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400" :
                       "bg-slate-200 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400"
                     }`}>
@@ -643,7 +643,7 @@ export function RecurringBuyManager({
                   {plan.status === "paused" && (
                     <button
                       onClick={() => setConfirmModal({ show: true, type: "resume", planId: plan.id, planToken: plan.token })}
-                      className="flex-1 py-2 bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs sm:text-sm font-medium hover:bg-emerald-200 dark:hover:bg-emerald-500/20 transition-colors touch-manipulation"
+                      className="flex-1 py-2 bg-[#2F6F62]/20 dark:bg-[#2F6F62]/10 text-[#2F6F62] dark:text-[#2F6F62] rounded-lg text-xs sm:text-sm font-medium hover:bg-[#BFA181]/20 dark:hover:bg-[#2F6F62]/20 transition-colors touch-manipulation"
                     >
                       {labels.resume}
                     </button>
@@ -688,7 +688,7 @@ export function RecurringBuyManager({
                 className={`flex-1 py-2.5 sm:py-3 rounded-xl text-white text-sm sm:text-base font-medium touch-manipulation ${
                   confirmModal.type === "delete" 
                     ? "bg-red-500 hover:bg-red-600 active:bg-red-700" 
-                    : "bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700"
+                    : "bg-[#2F6F62] hover:bg-[#2F6F62] active:bg-[#2F6F62]/80"
                 }`}
               >
                 {labels.confirm}

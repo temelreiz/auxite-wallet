@@ -195,7 +195,7 @@ export function ReceiveModal({ isOpen, onClose, lang: propLang, walletAddress }:
               <button
                 onClick={copyToClipboard}
                 className={`text-xs font-medium transition-colors flex items-center gap-1 ${
-                  copied ? "text-emerald-400" : "text-emerald-500 hover:text-emerald-400"
+                  copied ? "text-[#2F6F62]" : "text-[#2F6F62] hover:text-[#2F6F62]"
                 }`}
               >
                 {copied ? (
@@ -245,7 +245,7 @@ export function ReceiveModal({ isOpen, onClose, lang: propLang, walletAddress }:
             <button
               onClick={copyToClipboard}
               className={`py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
-                copied ? "bg-emerald-500 text-white" : "bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white"
+                copied ? "bg-[#2F6F62] text-white" : "bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white"
               }`}
             >
               {copied ? (

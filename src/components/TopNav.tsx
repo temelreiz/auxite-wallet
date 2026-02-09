@@ -457,7 +457,7 @@ export default function TopNav({
                         <span className="text-lg">{language.flag}</span>
                         <span>{language.name}</span>
                         {lang === language.code && (
-                          <svg className="w-4 h-4 ml-auto text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-4 h-4 ml-auto text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         )}
@@ -510,7 +510,7 @@ export default function TopNav({
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block px-4 py-3 rounded-lg font-medium text-sm ${
                   isActive(link.href)
-                    ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574] border border-emerald-500/30"
+                    ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574] border border-[#2F6F62]/30"
                     : "bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
                 }`}
               >
@@ -524,7 +524,7 @@ export default function TopNav({
               onClick={() => setMobileMenuOpen(false)}
               className={`block px-4 py-3 rounded-lg font-medium text-sm ${
                 pathname?.startsWith("/trust")
-                  ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574] border border-emerald-500/30"
+                  ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574] border border-[#2F6F62]/30"
                   : "bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
               }`}
             >
@@ -537,7 +537,7 @@ export default function TopNav({
               onClick={() => setMobileMenuOpen(false)}
               className={`block px-4 py-3 rounded-lg font-medium text-sm ${
                 pathname === "/client-center"
-                  ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574] border border-emerald-500/30"
+                  ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574] border border-[#2F6F62]/30"
                   : "bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
               }`}
             >
@@ -557,7 +557,7 @@ export default function TopNav({
                     }}
                     className={`flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg transition-colors ${
                       lang === language.code
-                        ? "bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                        ? "bg-[#2F6F62]/20 border border-[#2F6F62]/30 text-[#2F6F62] dark:text-[#2F6F62]"
                         : "bg-stone-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-stone-300 dark:hover:bg-slate-700"
                     }`}
                   >

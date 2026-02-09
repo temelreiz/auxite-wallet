@@ -75,8 +75,8 @@ const DEPOSIT_ADDRESSES: Record<string, { address: string; network: string; memo
 function getDirectionStyles(change: number): { badgeBg: string; badgeText: string; arrow: string } {
   if (change > 0.01) {
     return {
-      badgeBg: "bg-emerald-500/20",
-      badgeText: "text-emerald-400",
+      badgeBg: "bg-[#2F6F62]/20",
+      badgeText: "text-[#2F6F62]",
       arrow: "↑"
     };
   } else if (change < -0.01) {
@@ -249,7 +249,7 @@ export default function MetalPriceGrid() {
             </span>
           </div>
           <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1">Ethereum</div>
-          <div className={`text-base sm:text-xl font-bold font-mono mb-2 sm:mb-3 transition-colors duration-300 ${cryptoDirections.eth === "up" ? "text-emerald-400" : cryptoDirections.eth === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
+          <div className={`text-base sm:text-xl font-bold font-mono mb-2 sm:mb-3 transition-colors duration-300 ${cryptoDirections.eth === "up" ? "text-[#2F6F62]" : cryptoDirections.eth === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
             ${cryptoPrices.eth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
@@ -280,7 +280,7 @@ export default function MetalPriceGrid() {
             </span>
           </div>
           <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1">Bitcoin</div>
-          <div className={`text-base sm:text-xl font-bold font-mono mb-2 sm:mb-3 transition-colors duration-300 ${cryptoDirections.btc === "up" ? "text-emerald-400" : cryptoDirections.btc === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
+          <div className={`text-base sm:text-xl font-bold font-mono mb-2 sm:mb-3 transition-colors duration-300 ${cryptoDirections.btc === "up" ? "text-[#2F6F62]" : cryptoDirections.btc === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
             ${cryptoPrices.btc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
@@ -313,7 +313,7 @@ export default function MetalPriceGrid() {
             </span>
           </div>
           <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1">Ripple</div>
-          <div className={`text-base sm:text-xl font-bold font-mono mb-2 sm:mb-3 transition-colors duration-300 ${cryptoDirections.xrp === "up" ? "text-emerald-400" : cryptoDirections.xrp === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
+          <div className={`text-base sm:text-xl font-bold font-mono mb-2 sm:mb-3 transition-colors duration-300 ${cryptoDirections.xrp === "up" ? "text-[#2F6F62]" : cryptoDirections.xrp === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
             ${(cryptoPrices.xrp || 2.20).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
@@ -346,7 +346,7 @@ export default function MetalPriceGrid() {
             </span>
           </div>
           <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1">Solana</div>
-          <div className={`text-base sm:text-xl font-bold font-mono mb-2 sm:mb-3 transition-colors duration-300 ${cryptoDirections.sol === "up" ? "text-emerald-400" : cryptoDirections.sol === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
+          <div className={`text-base sm:text-xl font-bold font-mono mb-2 sm:mb-3 transition-colors duration-300 ${cryptoDirections.sol === "up" ? "text-[#2F6F62]" : cryptoDirections.sol === "down" ? "text-red-400" : "text-slate-800 dark:text-slate-100"}`}>
             ${(cryptoPrices.sol || 235).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <button 
@@ -369,10 +369,10 @@ export default function MetalPriceGrid() {
             setAddFundsDefaultTab("crypto");
             setShowAddFunds(true);
           }}
-          className="flex flex-col items-center gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-emerald-500 transition-all group"
+          className="flex flex-col items-center gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 hover:border-[#2F6F62] transition-all group"
         >
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
-            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#2F6F62]/20 flex items-center justify-center group-hover:bg-[#2F6F62]/30 transition-colors">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </div>

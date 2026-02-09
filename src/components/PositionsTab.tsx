@@ -317,7 +317,7 @@ function PositionCard({
                     {stake.metalSymbol}
                   </span>
                   {stake.isMatured ? (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-500 dark:text-emerald-400">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]">
                       {t.matured}
                     </span>
                   ) : (
@@ -338,7 +338,7 @@ function PositionCard({
             </div>
 
             <div className="text-right">
-              <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+              <div className="text-xl font-bold text-[#2F6F62] dark:text-[#2F6F62]">
                 {stake.apyPercent.toFixed(2)}% {t.apy}
               </div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
@@ -385,7 +385,7 @@ function PositionCard({
             </div>
             <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
               <div 
-                className={`h-full rounded-full transition-all ${stake.isMatured ? "bg-emerald-500" : "bg-blue-500"}`}
+                className={`h-full rounded-full transition-all ${stake.isMatured ? "bg-[#2F6F62]" : "bg-blue-500"}`}
                 style={{ width: `${Math.min(100, stake.progress)}%` }}
               />
             </div>
@@ -405,7 +405,7 @@ function PositionCard({
           </div>
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">{t.reward}</div>
-            <div className="font-semibold text-emerald-600 dark:text-emerald-400">+{stake.expectedRewardGrams.toFixed(4)}g</div>
+            <div className="font-semibold text-[#2F6F62] dark:text-[#2F6F62]">+{stake.expectedRewardGrams.toFixed(4)}g</div>
           </div>
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">{t.claimable}</div>
@@ -421,7 +421,7 @@ function PositionCard({
                 <button
                   onClick={handleWithdraw}
                   disabled={isUnstaking}
-                  className="flex-1 py-2.5 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white font-medium transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 px-4 rounded-lg bg-[#2F6F62] hover:bg-[#2F6F62] disabled:opacity-50 text-white font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   {isUnstaking ? (
                     <>
@@ -534,7 +534,7 @@ function PositionCard({
               </button>
               <button
                 onClick={confirmWithdraw}
-                className="flex-1 py-2.5 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-colors"
+                className="flex-1 py-2.5 px-4 rounded-lg bg-[#2F6F62] hover:bg-[#2F6F62] text-white font-medium transition-colors"
               >
                 {t.confirmWithdraw}
               </button>
@@ -593,7 +593,7 @@ export function PositionsTab({ address: propAddress, lang = "en" }: PositionsTab
     return (
       <div className="flex items-center justify-center py-12">
         <div className="flex items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2F6F62]"></div>
           <span className="text-slate-500 dark:text-slate-400">{t.loading}</span>
         </div>
       </div>

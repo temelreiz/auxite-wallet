@@ -125,7 +125,7 @@ export default function SupplyPage() {
       
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Back Link */}
-        <Link href="/trust" className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 hover:underline mb-6">
+        <Link href="/trust" className="inline-flex items-center gap-2 text-[#2F6F62] dark:text-[#2F6F62] hover:underline mb-6">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
@@ -169,7 +169,7 @@ export default function SupplyPage() {
           </div>
           <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-stone-200 dark:border-slate-800">
             <p className="text-sm text-slate-500 dark:text-slate-400">{t.maxSupply}</p>
-            <p className="text-lg font-semibold text-emerald-500">{t.unlimited}*</p>
+            <p className="text-lg font-semibold text-[#2F6F62]">{t.unlimited}*</p>
           </div>
         </div>
 
@@ -194,7 +194,7 @@ export default function SupplyPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-slate-500 dark:text-slate-400">{t.backedBy}</p>
-                      <p className="text-sm font-medium text-emerald-500">{t.physicalMetal}</p>
+                      <p className="text-sm font-medium text-[#2F6F62]">{t.physicalMetal}</p>
                     </div>
                   </div>
                   
@@ -228,7 +228,7 @@ export default function SupplyPage() {
                         <p className="text-xs text-slate-500 dark:text-slate-400">{t.contractAddress}</p>
                         <code className="text-sm text-slate-600 dark:text-slate-400 font-mono">{token.contract}</code>
                       </div>
-                      <button className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+                      <button className="text-sm text-[#2F6F62] dark:text-[#2F6F62] hover:underline flex items-center gap-1">
                         {t.viewOnExplorer}
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

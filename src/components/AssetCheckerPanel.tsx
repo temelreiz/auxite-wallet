@@ -279,8 +279,8 @@ export default function AssetCheckerPanel({ lang: propLang }: Props) {
         {/* LEFT: Allocation Finder */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-              <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-10 h-10 rounded-xl bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center">
+              <svg className="w-5 h-5 text-[#2F6F62] dark:text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -292,7 +292,7 @@ export default function AssetCheckerPanel({ lang: propLang }: Props) {
 
           <div className="flex gap-2 mb-3">
             <input
-              className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+              className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#BFA181]/60"
               placeholder={t.placeholder}
               value={addressInput}
               onChange={(e) => setAddressInput(e.target.value)}
@@ -301,7 +301,7 @@ export default function AssetCheckerPanel({ lang: propLang }: Props) {
             <button
               onClick={handleAddressSearch}
               disabled={!isValidAddress || allocLoading}
-              className={"rounded-xl px-4 py-2 text-xs font-semibold transition whitespace-nowrap " + (isValidAddress && !allocLoading ? "bg-emerald-500 text-white hover:bg-emerald-400" : "cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-400")}
+              className={"rounded-xl px-4 py-2 text-xs font-semibold transition whitespace-nowrap " + (isValidAddress && !allocLoading ? "bg-[#2F6F62] text-white hover:bg-[#2F6F62]" : "cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-400")}
             >
               {allocLoading ? t.checking : t.check}
             </button>
@@ -355,7 +355,7 @@ export default function AssetCheckerPanel({ lang: propLang }: Props) {
             <button
               onClick={handleCertVerify}
               disabled={!isValidCert || certLoading}
-              className={"rounded-xl px-4 py-2 text-xs font-semibold transition whitespace-nowrap " + (isValidCert && !certLoading ? "bg-emerald-500 text-white hover:bg-emerald-400" : "cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-400")}
+              className={"rounded-xl px-4 py-2 text-xs font-semibold transition whitespace-nowrap " + (isValidCert && !certLoading ? "bg-[#2F6F62] text-white hover:bg-[#2F6F62]" : "cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-400")}
             >
               {certLoading ? t.verifying : t.verify}
             </button>
@@ -367,8 +367,8 @@ export default function AssetCheckerPanel({ lang: propLang }: Props) {
             {certResult && certResult.verified && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-semibold ${certResult.blockchain?.anchored ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"}`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${certResult.blockchain?.anchored ? "bg-emerald-500" : "bg-amber-500"}`} />
+                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-semibold ${certResult.blockchain?.anchored ? "bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]" : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${certResult.blockchain?.anchored ? "bg-[#2F6F62]" : "bg-amber-500"}`} />
                     {certResult.blockchain?.anchored ? t.anchored : t.pending}
                   </div>
                 </div>

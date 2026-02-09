@@ -40,7 +40,7 @@ export default function LegalPage() {
         </header>
         <div className="grid gap-4">
           {legalDocs.map((doc) => (
-            <Link key={doc.href} href={doc.href} className="block bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 hover:border-emerald-500 hover:shadow-lg transition-all">
+            <Link key={doc.href} href={doc.href} className="block bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 hover:border-[#2F6F62] hover:shadow-lg transition-all">
               <div className="flex items-start gap-4">
                 <span className="text-3xl">{doc.icon}</span>
                 <div className="flex-1">

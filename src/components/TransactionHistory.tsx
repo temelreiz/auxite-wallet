@@ -15,15 +15,15 @@ const metalIcons: Record<string, string> = {
 };
 
 const typeIcons: Record<string, { icon: string; color: string }> = {
-  deposit: { icon: "↓", color: "text-emerald-600 dark:text-emerald-400" },
+  deposit: { icon: "↓", color: "text-[#2F6F62] dark:text-[#2F6F62]" },
   withdraw: { icon: "↑", color: "text-red-600 dark:text-red-400" },
   swap: { icon: "⇄", color: "text-blue-600 dark:text-blue-400" },
   exchange: { icon: "⇄", color: "text-blue-600 dark:text-blue-400" },
   transfer: { icon: "→", color: "text-purple-600 dark:text-purple-400" },
   send: { icon: "→", color: "text-purple-600 dark:text-purple-400" }, // Legacy - same as transfer
-  receive: { icon: "←", color: "text-emerald-600 dark:text-emerald-400" },
+  receive: { icon: "←", color: "text-[#2F6F62] dark:text-[#2F6F62]" },
   bonus: { icon: "🎁", color: "text-yellow-600 dark:text-yellow-400" },
-  buy: { icon: "🛒", color: "text-emerald-600 dark:text-emerald-400" },
+  buy: { icon: "🛒", color: "text-[#2F6F62] dark:text-[#2F6F62]" },
   sell: { icon: "💰", color: "text-orange-600 dark:text-orange-400" },
 };
 
@@ -313,7 +313,7 @@ export function TransactionHistory({ lang = "en" }: TransactionHistoryProps) {
             onClick={() => { setFilter(tab.id); setShowAll(false); }}
             className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
               filter === tab.id
-                ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/50"
+                ? "bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62] border border-[#2F6F62]/50"
                 : "bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-stone-200 dark:border-slate-700 hover:border-stone-300 dark:hover:border-slate-600"
             }`}
           >
@@ -330,7 +330,7 @@ export function TransactionHistory({ lang = "en" }: TransactionHistoryProps) {
 
       {loading && transactions.length === 0 ? (
         <div className="py-6 sm:py-8 text-center">
-          <div className="h-5 w-5 sm:h-6 sm:w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent mx-auto mb-2 sm:mb-3"></div>
+          <div className="h-5 w-5 sm:h-6 sm:w-6 animate-spin rounded-full border-2 border-[#2F6F62] border-t-transparent mx-auto mb-2 sm:mb-3"></div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{t.loading}</p>
         </div>
       ) : filteredTransactions.length === 0 ? (
@@ -354,7 +354,7 @@ export function TransactionHistory({ lang = "en" }: TransactionHistoryProps) {
                       <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
                         <span className={`text-xs sm:text-sm font-medium ${typeInfo.color}`}>{typeLabel}</span>
                         <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${
-                          tx.status === "completed" ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" 
+                          tx.status === "completed" ? "bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]" 
                           : tx.status === "pending" ? "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400"
                           : "bg-red-500/20 text-red-600 dark:text-red-400"
                         }`}>
@@ -368,19 +368,19 @@ export function TransactionHistory({ lang = "en" }: TransactionHistoryProps) {
                           <>
                             <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{getTokenIcon(tx.fromToken)} {parseFloat(tx.fromAmount || "0").toFixed(4)} {tx.fromToken}</span>
                             <span className="text-slate-400 dark:text-slate-500">→</span>
-                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">{getTokenIcon(tx.toToken)} {parseFloat(tx.toAmount || "0").toFixed(4)} {tx.toToken}</span>
+                            <span className="flex items-center gap-1 text-[#2F6F62] dark:text-[#2F6F62]">{getTokenIcon(tx.toToken)} {parseFloat(tx.toAmount || "0").toFixed(4)} {tx.toToken}</span>
                           </>
                         ) : (tx.type as string) === "buy" && tx.fromToken && tx.toToken ? (
                           <>
                             <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{getTokenIcon(tx.fromToken)} {parseFloat(tx.fromAmount || "0").toFixed(2)} {tx.fromToken}</span>
                             <span className="text-slate-400 dark:text-slate-500">→</span>
-                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">{getTokenIcon(tx.toToken)} {parseFloat(tx.toAmount || "0").toFixed(4)}g {tx.toToken}</span>
+                            <span className="flex items-center gap-1 text-[#2F6F62] dark:text-[#2F6F62]">{getTokenIcon(tx.toToken)} {parseFloat(tx.toAmount || "0").toFixed(4)}g {tx.toToken}</span>
                           </>
                         ) : (tx.type as string) === "sell" && tx.fromToken && tx.toToken ? (
                           <>
                             <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{getTokenIcon(tx.fromToken)} {parseFloat(tx.fromAmount || "0").toFixed(4)}g {tx.fromToken}</span>
                             <span className="text-slate-400 dark:text-slate-500">→</span>
-                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">{getTokenIcon(tx.toToken)} {parseFloat(tx.toAmount || "0").toFixed(4)} {tx.toToken}</span>
+                            <span className="flex items-center gap-1 text-[#2F6F62] dark:text-[#2F6F62]">{getTokenIcon(tx.toToken)} {parseFloat(tx.toAmount || "0").toFixed(4)} {tx.toToken}</span>
                           </>
                         ) : (
                           <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{tx.token && getTokenIcon(tx.token)} {parseFloat(tx.amount || "0").toFixed(4)} {tx.token}</span>
@@ -398,7 +398,7 @@ export function TransactionHistory({ lang = "en" }: TransactionHistoryProps) {
           })}
 
           {hiddenCount > 0 && (
-            <button onClick={() => setShowAll(!showAll)} className="w-full py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/30 text-xs sm:text-sm text-slate-600 dark:text-slate-300 transition-colors hover:bg-stone-100 dark:hover:bg-slate-700/50 hover:border-emerald-500/50 flex items-center justify-center gap-1.5 sm:gap-2">
+            <button onClick={() => setShowAll(!showAll)} className="w-full py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/30 text-xs sm:text-sm text-slate-600 dark:text-slate-300 transition-colors hover:bg-stone-100 dark:hover:bg-slate-700/50 hover:border-[#2F6F62]/50 flex items-center justify-center gap-1.5 sm:gap-2">
               {showAll ? (
                 <><svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>{t.viewLess}</>
               ) : (

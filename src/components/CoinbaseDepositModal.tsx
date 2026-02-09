@@ -332,7 +332,7 @@ export function CoinbaseDepositModal({
               )}
               <div className="border-t border-stone-200 dark:border-slate-700 pt-2 flex justify-between">
                 <span className="font-semibold text-slate-800 dark:text-white">{t.total}</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="font-bold text-[#2F6F62] dark:text-[#2F6F62]">
                   {totalReceive.toFixed(2)} AUXM
                 </span>
               </div>

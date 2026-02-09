@@ -507,8 +507,8 @@ export function MetalTradeModal({
                 {/* Allocated */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                      <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-5 h-5 rounded-full bg-[#2F6F62]/20 flex items-center justify-center">
+                      <svg className="w-3 h-3 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
@@ -516,7 +516,7 @@ export function MetalTradeModal({
                       {lang === "tr" ? "Kasada Allocate" : "Vault Allocated"}
                     </span>
                   </div>
-                  <span className="text-sm font-medium text-emerald-400">
+                  <span className="text-sm font-medium text-[#2F6F62]">
                     {allocationPreview.allocatedGrams}g
                   </span>
                 </div>
@@ -567,8 +567,8 @@ export function MetalTradeModal({
           
           {result === "success" ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-16 h-16 bg-[#2F6F62]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
@@ -580,7 +580,7 @@ export function MetalTradeModal({
               )}
               <button
                 onClick={onClose}
-                className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-white font-medium"
+                className="px-6 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-xl text-white font-medium"
               >
                 {t.close}
               </button>
@@ -593,7 +593,7 @@ export function MetalTradeModal({
                   onClick={() => { setMode("buy"); setQuote(null); setShowConfirmation(false); }}
                   className={`py-2.5 rounded-lg font-semibold transition-all ${
                     mode === "buy"
-                      ? "bg-emerald-500 text-white shadow-lg"
+                      ? "bg-[#2F6F62] text-white shadow-lg"
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
@@ -619,7 +619,7 @@ export function MetalTradeModal({
                     onClick={() => { setOrderType("market"); setQuote(null); setShowConfirmation(false); }}
                     className={`p-3 rounded-xl border-2 transition-all ${
                       orderType === "market"
-                        ? "border-emerald-500 bg-emerald-500/10"
+                        ? "border-[#2F6F62] bg-[#2F6F62]/10"
                         : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
                     }`}
                   >
@@ -675,7 +675,7 @@ export function MetalTradeModal({
               <div className="p-3 bg-slate-800/50 rounded-xl">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">{mode === "buy" ? t.askPrice : t.bidPrice}</span>
-                  <span className="text-emerald-400 font-mono">${displayPrice.toFixed(2)}/g</span>
+                  <span className="text-[#2F6F62] font-mono">${displayPrice.toFixed(2)}/g</span>
                 </div>
                 {quote && (
                   <div className="flex justify-between text-sm mt-1">
@@ -696,7 +696,7 @@ export function MetalTradeModal({
                     placeholder="0.00"
                     min="0"
                     step="0.01"
-                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-lg font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-20"
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#BFA181] pr-20"
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
                     <span className="text-slate-500">{metal}</span>
@@ -710,7 +710,7 @@ export function MetalTradeModal({
                         setQuote(null);
                         setShowConfirmation(false);
                       }}
-                      className="px-2 py-1 text-xs bg-emerald-500/20 text-emerald-400 rounded hover:bg-emerald-500/30"
+                      className="px-2 py-1 text-xs bg-[#2F6F62]/20 text-[#2F6F62] rounded hover:bg-[#2F6F62]/30"
                     >
                       MAX
                     </button>
@@ -747,7 +747,7 @@ export function MetalTradeModal({
                             percent === 0 
                               ? "bg-slate-700 text-white" 
                               : percent < 0 
-                                ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                                ? "bg-[#2F6F62]/20 text-[#2F6F62] hover:bg-[#2F6F62]/30"
                                 : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
                           }`}
                         >
@@ -867,7 +867,7 @@ export function MetalTradeModal({
                       isProcessing || amountNum <= 0 || hasInsufficientBalance || !walletAddress
                         ? "bg-slate-600 cursor-not-allowed"
                         : mode === "buy"
-                          ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                          ? "bg-gradient-to-r from-[#2F6F62] to-teal-500 hover:from-[#2F6F62] hover:to-teal-600"
                           : "bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600"
                     }`}
                   >
@@ -880,7 +880,7 @@ export function MetalTradeModal({
                     className={`flex-1 py-3 rounded-xl font-semibold text-white transition-all ${
                       isProcessing || countdown <= 0
                         ? "bg-slate-600 cursor-not-allowed"
-                        : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 animate-pulse"
+                        : "bg-gradient-to-r from-[#2F6F62] to-teal-500 hover:from-[#2F6F62] hover:to-teal-600 animate-pulse"
                     }`}
                   >
                     {isProcessing ? t.processing : countdown <= 0 ? t.newPrice : `✓ ${t.confirm} (${countdown}s)`}

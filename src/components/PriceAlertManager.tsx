@@ -310,7 +310,7 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-xs sm:text-sm rounded-lg transition-colors touch-manipulation w-full sm:w-auto"
+          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-[#2F6F62] hover:bg-[#2F6F62] active:bg-[#2F6F62]/80 text-white text-xs sm:text-sm rounded-lg transition-colors touch-manipulation w-full sm:w-auto"
         >
           + {labels.createAlert}
         </button>
@@ -384,7 +384,7 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
                       onClick={() => setSelectedToken(token.symbol)}
                       className={`p-1.5 sm:p-3 rounded-lg sm:rounded-xl border transition-colors touch-manipulation ${
                         selectedToken === token.symbol
-                          ? "border-emerald-500 bg-emerald-500/10"
+                          ? "border-[#2F6F62] bg-[#2F6F62]/10"
                           : "border-slate-700 hover:border-slate-600"
                       }`}
                     >
@@ -408,7 +408,7 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
                     onClick={() => setDirection("above")}
                     className={`p-2 sm:p-3 rounded-lg sm:rounded-xl border transition-colors text-[10px] sm:text-sm touch-manipulation ${
                       direction === "above"
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
+                        ? "border-[#2F6F62] bg-[#2F6F62]/10 text-[#2F6F62]"
                         : "border-slate-700 text-slate-400 hover:border-slate-600"
                     }`}
                   >
@@ -438,7 +438,7 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
                     value={targetPrice}
                     onChange={(e) => setTargetPrice(e.target.value)}
                     placeholder="0.00"
-                    className="w-full pl-6 sm:pl-8 pr-3 sm:pr-4 py-2 sm:py-3 bg-slate-800 border border-slate-700 rounded-lg sm:rounded-xl text-xs sm:text-base text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full pl-6 sm:pl-8 pr-3 sm:pr-4 py-2 sm:py-3 bg-slate-800 border border-slate-700 rounded-lg sm:rounded-xl text-xs sm:text-base text-white focus:outline-none focus:border-[#2F6F62]"
                   />
                 </div>
 
@@ -466,7 +466,7 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
                 <button
                   onClick={() => setRepeat(!repeat)}
                   className={`w-10 sm:w-12 h-5 sm:h-6 rounded-full transition-colors touch-manipulation ${
-                    repeat ? "bg-emerald-500" : "bg-slate-600"
+                    repeat ? "bg-[#2F6F62]" : "bg-slate-600"
                   }`}
                 >
                   <div
@@ -489,7 +489,7 @@ export function PriceAlertManager({ walletAddress, currentPrices = {} }: Props) 
               <button
                 onClick={handleCreate}
                 disabled={creating || !targetPrice}
-                className="flex-1 py-2 sm:py-3 bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-base rounded-lg sm:rounded-xl transition-colors disabled:opacity-50 touch-manipulation"
+                className="flex-1 py-2 sm:py-3 bg-[#2F6F62] hover:bg-[#2F6F62] text-white text-xs sm:text-base rounded-lg sm:rounded-xl transition-colors disabled:opacity-50 touch-manipulation"
               >
                 {creating ? "..." : labels.create}
               </button>
@@ -521,7 +521,7 @@ function AlertRow({
     : 0;
 
   const statusColors = {
-    active: "text-emerald-400 bg-emerald-500/10",
+    active: "text-[#2F6F62] bg-[#2F6F62]/10",
     triggered: "text-amber-400 bg-amber-500/10",
     expired: "text-slate-500 bg-slate-500/10",
     cancelled: "text-slate-500 bg-slate-500/10",
@@ -534,7 +534,7 @@ function AlertRow({
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <span className="font-medium text-xs sm:text-base text-white">{alert.token}</span>
-            <span className={`text-[10px] sm:text-sm ${alert.direction === "above" ? "text-emerald-400" : "text-red-400"}`}>
+            <span className={`text-[10px] sm:text-sm ${alert.direction === "above" ? "text-[#2F6F62]" : "text-red-400"}`}>
               {alert.direction === "above" ? "▲" : "▼"} ${alert.targetPrice.toLocaleString()}
             </span>
             {alert.repeat && <span className="text-[10px] sm:text-xs text-slate-500">🔄</span>}
@@ -560,7 +560,7 @@ function AlertRow({
         {alert.status !== "active" && onReactivate && (
           <button
             onClick={onReactivate}
-            className="text-[10px] sm:text-sm text-emerald-400 hover:text-emerald-300 touch-manipulation"
+            className="text-[10px] sm:text-sm text-[#2F6F62] hover:text-[#BFA181] touch-manipulation"
           >
             {labels.reactivate}
           </button>

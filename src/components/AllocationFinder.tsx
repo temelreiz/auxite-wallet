@@ -22,7 +22,7 @@ const metalColors: Record<string, string> = {
 };
 
 const metalBorders: Record<string, string> = {
-  AUXG: "border-emerald-500 bg-emerald-500/10",
+  AUXG: "border-[#2F6F62] bg-[#2F6F62]/10",
   AUXS: "border-slate-400 bg-slate-400/10",
   AUXPT: "border-blue-400 bg-blue-400/10",
   AUXPD: "border-purple-400 bg-purple-400/10",
@@ -329,8 +329,8 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
         {/* LEFT: Allocation Finder */}
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-              <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-10 h-10 rounded-xl bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center">
+              <svg className="w-5 h-5 text-[#2F6F62] dark:text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
@@ -363,7 +363,7 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
                     isSelected
                       ? metalBorders[metal]
                       : hasRecords
-                      ? "border-emerald-500/50 bg-emerald-500/5 hover:border-emerald-500 hover:bg-emerald-500/10"
+                      ? "border-[#2F6F62]/50 bg-[#2F6F62]/5 hover:border-[#2F6F62] hover:bg-[#2F6F62]/10"
                       : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:border-slate-300 dark:hover:border-slate-600"
                   } ${hasRecords ? "" : "opacity-70"}`}
                   
@@ -426,7 +426,7 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
                           href={getPdfUrl(a.certificateNumber)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-500/10 text-[9px] font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#2F6F62]/10 text-[9px] font-medium text-[#2F6F62] dark:text-[#2F6F62] hover:bg-[#2F6F62]/20 transition-colors"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -469,7 +469,7 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
             <button
               onClick={handleCertVerify}
               disabled={!isValidCert || certLoading}
-              className={"rounded-xl px-4 py-2.5 text-xs font-semibold transition whitespace-nowrap " + (isValidCert && !certLoading ? "bg-emerald-500 text-white hover:bg-emerald-400" : "cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-400")}
+              className={"rounded-xl px-4 py-2.5 text-xs font-semibold transition whitespace-nowrap " + (isValidCert && !certLoading ? "bg-[#2F6F62] text-white hover:bg-[#2F6F62]" : "cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-400")}
             >
               {certLoading ? t.verifying : t.verify}
             </button>
@@ -494,8 +494,8 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
               <div className="space-y-3">
                 {/* Status Badge */}
                 <div className="flex items-center justify-center">
-                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold ${certResult.blockchain?.anchored ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"}`}>
-                    <div className={`w-2 h-2 rounded-full ${certResult.blockchain?.anchored ? "bg-emerald-500" : "bg-amber-500"}`} />
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold ${certResult.blockchain?.anchored ? "bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]" : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"}`}>
+                    <div className={`w-2 h-2 rounded-full ${certResult.blockchain?.anchored ? "bg-[#2F6F62]" : "bg-amber-500"}`} />
                     {certResult.blockchain?.anchored ? t.anchored : t.pending}
                   </div>
                 </div>

@@ -218,7 +218,7 @@ export default function TradingDetailPage({
               <div>
                 <div className="flex items-center gap-1 sm:gap-2">
                   <span className="font-bold text-slate-900 dark:text-white text-base sm:text-lg">{symbol}/USDT</span>
-                  <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded ${isPositive ? "bg-emerald-500/20 text-emerald-500" : "bg-red-500/20 text-red-500"}`}>
+                  <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded ${isPositive ? "bg-[#2F6F62]/20 text-[#2F6F62]" : "bg-red-500/20 text-red-500"}`}>
                     {isPositive ? "↑" : "↓"} {Math.abs(change24h ?? 0).toFixed(2)}%
                   </span>
                 </div>
@@ -240,7 +240,7 @@ export default function TradingDetailPage({
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
                   activeTab === tab.id
-                    ? "text-emerald-500 border-b-2 border-emerald-500"
+                    ? "text-[#2F6F62] border-b-2 border-[#2F6F62]"
                     : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                 }`}
               >
@@ -258,16 +258,16 @@ export default function TradingDetailPage({
                 <div className="flex items-center justify-between mb-2 sm:mb-4">
                   <div>
                     <div className="flex items-baseline gap-1 sm:gap-2">
-                      <span className={`text-xl sm:text-2xl font-bold ${isPositive ? "text-emerald-500" : "text-red-500"}`}>
+                      <span className={`text-xl sm:text-2xl font-bold ${isPositive ? "text-[#2F6F62]" : "text-red-500"}`}>
                         ${currentPrice.toFixed(2)}
                       </span>
-                      <span className="text-emerald-500 text-xs sm:text-sm font-medium animate-pulse">● LIVE</span>
+                      <span className="text-[#2F6F62] text-xs sm:text-sm font-medium animate-pulse">● LIVE</span>
                     </div>
                   </div>
                   <div className="text-right space-y-0.5 sm:space-y-1">
                     <div className="text-[10px] sm:text-xs">
                       <span className="text-slate-500 dark:text-slate-400">{t("high24h")} </span>
-                      <span className="text-emerald-500 font-medium">${high24h.toFixed(2)}</span>
+                      <span className="text-[#2F6F62] font-medium">${high24h.toFixed(2)}</span>
                     </div>
                     <div className="text-[10px] sm:text-xs">
                       <span className="text-slate-500 dark:text-slate-400">{t("low24h")} </span>
@@ -349,7 +349,7 @@ export default function TradingDetailPage({
                     </div>
                     <div className="flex justify-between py-2">
                       <span className="text-slate-500 dark:text-slate-400">{t("audited")}</span>
-                      <span className="text-emerald-500 font-medium">✓ {t("yes")}</span>
+                      <span className="text-[#2F6F62] font-medium">✓ {t("yes")}</span>
                     </div>
                   </div>
                 </div>
@@ -368,7 +368,7 @@ export default function TradingDetailPage({
                     </div>
                     <div className="text-center p-3 bg-stone-200 dark:bg-slate-800/50 rounded-lg">
                       <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("askPrice")}</div>
-                      <div className="text-lg font-bold text-emerald-500">${liveAskPrice.toFixed(2)}</div>
+                      <div className="text-lg font-bold text-[#2F6F62]">${liveAskPrice.toFixed(2)}</div>
                     </div>
                     <div className="text-center p-3 bg-stone-200 dark:bg-slate-800/50 rounded-lg">
                       <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("volume24h")}</div>
@@ -427,13 +427,13 @@ export default function TradingDetailPage({
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 border-t border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            <button onClick={onBuy} className="flex-1 px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm sm:text-base transition-colors">
+            <button onClick={onBuy} className="flex-1 px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg bg-[#2F6F62] hover:bg-[#2F6F62] text-white font-semibold text-sm sm:text-base transition-colors">
               {t("buy")}
             </button>
             <button onClick={onSell} className="flex-1 px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg bg-red-500 hover:bg-red-400 text-white font-semibold text-sm sm:text-base transition-colors">
               {t("sell")}
             </button>
-            <button onClick={() => setShowLeaseModal(true)} className="flex-1 px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm sm:text-base transition-colors">
+            <button onClick={() => setShowLeaseModal(true)} className="flex-1 px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg bg-[#2F6F62] hover:bg-[#2F6F62] text-white font-semibold text-sm sm:text-base transition-colors">
               {t("stake")}
             </button>
           </div>

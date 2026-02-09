@@ -894,8 +894,8 @@ export default function TradePanel({
               <div className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-4 space-y-3 mb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                      <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-5 h-5 rounded-full bg-[#2F6F62]/20 flex items-center justify-center">
+                      <svg className="w-3 h-3 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
@@ -903,7 +903,7 @@ export default function TradePanel({
                       {lang === "tr" ? "Kasada Allocate" : "Vault Allocated"}
                     </span>
                   </div>
-                  <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                  <span className="text-sm font-medium text-[#2F6F62] dark:text-[#2F6F62]">
                     {allocationPreview.allocatedGrams}g
                   </span>
                 </div>
@@ -943,7 +943,7 @@ export default function TradePanel({
                 )}
                 <button
                   onClick={handleAllocationConfirm}
-                  className="px-4 py-3 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition-colors text-sm"
+                  className="px-4 py-3 rounded-xl bg-[#2F6F62] text-white font-semibold hover:bg-[#2F6F62] transition-colors text-sm"
                 >
                   {lang === "tr" ? "Devam Et" : "Continue"}
                 </button>
@@ -954,8 +954,8 @@ export default function TradePanel({
           {/* Success State - Market */}
           {isSuccess && orderType === "market" && (
             <div className="text-center py-6">
-              <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <svg className="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-[#2F6F62]/20 flex items-center justify-center">
+                <svg className="w-7 h-7 text-[#2F6F62]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
@@ -967,7 +967,7 @@ export default function TradePanel({
                   href={`https://sepolia.etherscan.io/tx/${tradeHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-emerald-400 hover:underline"
+                  className="text-sm text-[#2F6F62] hover:underline"
                 >
                   {t.viewTransaction} ↗
                 </a>
@@ -1037,7 +1037,7 @@ export default function TradePanel({
                   disabled={isProcessing}
                   className={`py-2 rounded-md font-semibold text-sm transition-all ${
                     mode === "buy"
-                      ? "bg-emerald-500 text-white shadow-lg"
+                      ? "bg-[#2F6F62] text-white shadow-lg"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
@@ -1065,11 +1065,11 @@ export default function TradePanel({
                     disabled={isProcessing}
                     className={`p-2 rounded-lg border transition-all ${
                       orderType === "market"
-                        ? "border-emerald-500 bg-emerald-500/10"
+                        ? "border-[#2F6F62] bg-[#2F6F62]/10"
                         : "border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/50 hover:border-stone-300 dark:hover:border-slate-600"
                     }`}
                   >
-                    <div className={`text-sm font-semibold ${orderType === "market" ? "text-emerald-500 dark:text-emerald-400" : "text-slate-600 dark:text-slate-300"}`}>
+                    <div className={`text-sm font-semibold ${orderType === "market" ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-600 dark:text-slate-300"}`}>
                       {t.market}
                     </div>
                     <div className="text-[10px] text-slate-600 dark:text-slate-500">{t.marketDesc}</div>
@@ -1142,13 +1142,13 @@ export default function TradePanel({
 
               {/* Quote Timer (Market Orders Only) */}
               {orderType === "market" && quote && countdown > 0 && (
-                <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg mb-2">
+                <div className="p-2 bg-[#2F6F62]/10 border border-[#2F6F62]/30 rounded-lg mb-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-emerald-400">🔒</span>
-                      <span className="text-emerald-300 text-xs font-medium">{t.priceLocked}</span>
+                      <span className="text-[#2F6F62]">🔒</span>
+                      <span className="text-[#BFA181] text-xs font-medium">{t.priceLocked}</span>
                     </div>
-                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded ${countdown <= 5 ? "bg-red-500/20 text-red-400 animate-pulse" : "bg-emerald-500/20 text-emerald-400"}`}>
+                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded ${countdown <= 5 ? "bg-red-500/20 text-red-400 animate-pulse" : "bg-[#2F6F62]/20 text-[#2F6F62]"}`}>
                       <span className="text-lg font-bold font-mono">{countdown}</span>
                       <span className="text-[10px]">{t.sec}</span>
                     </div>
@@ -1168,7 +1168,7 @@ export default function TradePanel({
                     min="0"
                     step="0.01"
                     disabled={isProcessing}
-                    className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+                    className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono text-sm focus:outline-none focus:border-[#2F6F62] disabled:opacity-50"
                   />
                   <button
                     onClick={() => {
@@ -1178,7 +1178,7 @@ export default function TradePanel({
                       setShowConfirmation(false);
                     }}
                     disabled={isProcessing}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 text-[10px] bg-stone-200 dark:bg-slate-700 hover:bg-stone-300 dark:hover:bg-slate-600 rounded text-emerald-600 dark:text-emerald-400 font-semibold"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 text-[10px] bg-stone-200 dark:bg-slate-700 hover:bg-stone-300 dark:hover:bg-slate-600 rounded text-[#2F6F62] dark:text-[#2F6F62] font-semibold"
                   >
                     MAX
                   </button>
@@ -1217,7 +1217,7 @@ export default function TradePanel({
                             percent === 0 
                               ? "bg-stone-200 dark:bg-slate-700 text-slate-900 dark:text-white" 
                               : percent < 0 
-                                ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                                ? "bg-[#2F6F62]/20 text-[#2F6F62] hover:bg-[#2F6F62]/30"
                                 : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
                           }`}
                         >
@@ -1269,14 +1269,14 @@ export default function TradePanel({
                   : mode === "buy" 
                     ? selectedCurrency === "AUXM" 
                       ? "bg-purple-500/10 border-purple-500/30"
-                      : "bg-emerald-500/10 border-emerald-500/30" 
+                      : "bg-[#2F6F62]/10 border-[#2F6F62]/30" 
                     : "bg-red-500/10 border-red-500/30"
               }`}>
                 <div className={`text-xs ${
                   orderType === "limit"
                     ? "text-blue-600 dark:text-blue-300"
                     : mode === "buy" 
-                      ? selectedCurrency === "AUXM" ? "text-purple-600 dark:text-purple-300" : "text-emerald-600 dark:text-emerald-300" 
+                      ? selectedCurrency === "AUXM" ? "text-purple-600 dark:text-purple-300" : "text-[#2F6F62] dark:text-[#2F6F62]" 
                       : "text-red-600 dark:text-red-300"
                 }`}>
                   {mode === "buy" ? t.totalPayment : t.totalReceive}
@@ -1285,7 +1285,7 @@ export default function TradePanel({
                   orderType === "limit"
                     ? "text-blue-400"
                     : mode === "buy" 
-                      ? selectedCurrency === "AUXM" ? "text-purple-400" : "text-emerald-400" 
+                      ? selectedCurrency === "AUXM" ? "text-purple-400" : "text-[#2F6F62]" 
                       : "text-red-400"
                 }`}>
                   {pricesLoading && selectedCurrency !== "AUXM" ? (
@@ -1304,7 +1304,7 @@ export default function TradePanel({
                   orderType === "limit"
                     ? "text-blue-600 dark:text-blue-300"
                     : mode === "buy" 
-                      ? selectedCurrency === "AUXM" ? "text-purple-600 dark:text-purple-300" : "text-emerald-600 dark:text-emerald-300" 
+                      ? selectedCurrency === "AUXM" ? "text-purple-600 dark:text-purple-300" : "text-[#2F6F62] dark:text-[#2F6F62]" 
                       : "text-red-600 dark:text-red-300"
                 }`}>
                   ≈ ${totalUSD.toFixed(2)} USD
@@ -1383,7 +1383,7 @@ export default function TradePanel({
                     disabled={isProcessing || amountNum <= 0 || (mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm)}
                     className={`px-3 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 ${
                       mode === "buy"
-                        ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                        ? "bg-[#2F6F62] text-white hover:bg-[#2F6F62]"
                         : "bg-slate-600 text-white hover:bg-slate-500"
                     }`}
                   >

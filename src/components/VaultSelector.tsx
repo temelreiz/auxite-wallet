@@ -129,13 +129,13 @@ export function VaultSelector({ selectedVault, onSelect, compact = false }: Vaul
             onClick={() => onSelect(vault.id)}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${
               selectedVault === vault.id
-                ? "border-emerald-500 bg-emerald-500/10"
+                ? "border-[#2F6F62] bg-[#2F6F62]/10"
                 : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
             }`}
           >
             <span className="text-lg">{vault.flag}</span>
             <span className={`text-sm font-medium ${
-              selectedVault === vault.id ? "text-emerald-400" : "text-slate-300"
+              selectedVault === vault.id ? "text-[#2F6F62]" : "text-slate-300"
             }`}>
               {vault.name}
             </span>
@@ -176,7 +176,7 @@ export function VaultSelector({ selectedVault, onSelect, compact = false }: Vaul
             </div>
 
             {selectedVault === vault.id && (
-              <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+              <div className="w-5 h-5 rounded-full bg-[#2F6F62] flex items-center justify-center">
                 <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
@@ -189,13 +189,13 @@ export function VaultSelector({ selectedVault, onSelect, compact = false }: Vaul
       {/* Trust signals for selected vault */}
       {selectedVault && (
         <div className="flex flex-wrap gap-2 pt-2">
-          <span className="px-2 py-1 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="px-2 py-1 rounded-full text-[10px] font-medium bg-[#2F6F62]/10 text-[#2F6F62] border border-[#2F6F62]/20">
             ✓ {t.insuredCustody}
           </span>
-          <span className="px-2 py-1 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="px-2 py-1 rounded-full text-[10px] font-medium bg-[#2F6F62]/10 text-[#2F6F62] border border-[#2F6F62]/20">
             ✓ {t.segregatedStorage}
           </span>
-          <span className="px-2 py-1 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="px-2 py-1 rounded-full text-[10px] font-medium bg-[#2F6F62]/10 text-[#2F6F62] border border-[#2F6F62]/20">
             ✓ {t.independentAudit}
           </span>
         </div>

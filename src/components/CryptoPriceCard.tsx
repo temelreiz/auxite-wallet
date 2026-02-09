@@ -135,16 +135,16 @@ export default function CryptoPriceCard({
   const getDirectionStyles = () => {
     if (change24h > 0) {
       return {
-        badgeBg: "bg-emerald-500/20",
-        badgeText: "text-emerald-400",
-        priceColor: priceDirection === "up" ? "text-emerald-400" : priceDirection === "down" ? "text-red-400" : "text-slate-100",
+        badgeBg: "bg-[#2F6F62]/20",
+        badgeText: "text-[#2F6F62]",
+        priceColor: priceDirection === "up" ? "text-[#2F6F62]" : priceDirection === "down" ? "text-red-400" : "text-slate-100",
         arrow: "↑",
       };
     } else if (change24h < 0) {
       return {
         badgeBg: "bg-red-500/20",
         badgeText: "text-red-400",
-        priceColor: priceDirection === "up" ? "text-emerald-400" : priceDirection === "down" ? "text-red-400" : "text-slate-100",
+        priceColor: priceDirection === "up" ? "text-[#2F6F62]" : priceDirection === "down" ? "text-red-400" : "text-slate-100",
         arrow: "↓",
       };
     } else {

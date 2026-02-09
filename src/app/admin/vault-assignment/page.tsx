@@ -223,7 +223,7 @@ export default function VaultAssignmentPage() {
           <p className="text-slate-400 mb-6">Bu sayfaya erişim yetkiniz yok</p>
           <Link
             href="/admin"
-            className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-black font-semibold"
+            className="px-6 py-3 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-xl text-black font-semibold"
           >
             Admin Paneline Git
           </Link>
@@ -273,7 +273,7 @@ export default function VaultAssignmentPage() {
           </div>
           <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
             <p className="text-xs text-slate-400">Atanmış</p>
-            <p className="text-2xl font-bold text-emerald-400">{stats.assigned}</p>
+            <p className="text-2xl font-bold text-[#2F6F62]">{stats.assigned}</p>
           </div>
           <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
             <p className="text-xs text-slate-400">Toplam Gram</p>
@@ -285,7 +285,7 @@ export default function VaultAssignmentPage() {
         {message.text && (
           <div className={`mb-6 p-4 rounded-xl ${
             message.type === "success"
-              ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-400"
+              ? "bg-[#2F6F62]/20 border border-[#2F6F62]/50 text-[#2F6F62]"
               : "bg-red-500/20 border border-red-500/50 text-red-400"
           }`}>
             {message.text}
@@ -409,7 +409,7 @@ export default function VaultAssignmentPage() {
                             allocation.status === "pending"
                               ? "bg-orange-500/20 text-orange-400"
                               : allocation.status === "assigned"
-                              ? "bg-emerald-500/20 text-emerald-400"
+                              ? "bg-[#2F6F62]/20 text-[#2F6F62]"
                               : "bg-blue-500/20 text-blue-400"
                           }`}>
                             {allocation.status}

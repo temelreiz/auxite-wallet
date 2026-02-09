@@ -558,10 +558,10 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
 
           {result === "success" ? (
             <div className="text-center py-6 sm:py-8">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-[#2F6F62]/20 flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-[#2F6F62] dark:text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 mb-1.5 sm:mb-2">{t.success}</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-[#2F6F62] dark:text-[#2F6F62] mb-1.5 sm:mb-2">{t.success}</h3>
               <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{fromAsset === "USD" ? "$" : ""}{formatAmount(fromAmountNum, fromAsset)} {getAssetUnit(fromAsset)} → {formatAmount(toAmount, toAsset)} {getAssetUnit(toAsset)}</p>
             </div>
           ) : (
@@ -573,7 +573,7 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
                 </div>
                 <div className="flex items-center justify-between mt-2.5 sm:mt-3 mb-0.5 sm:mb-1">
                   <span className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500">{t.balance}: {fromAsset === "USD" ? "$" : ""}{formatBalance(fromAsset)} {fromAsset !== "USD" ? getAssetUnit(fromAsset) : ""}</span>
-                  <button onClick={() => setFromAmount(fromBalance.toString())} className="text-[10px] sm:text-xs text-emerald-500 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 font-semibold">MAX</button>
+                  <button onClick={() => setFromAmount(fromBalance.toString())} className="text-[10px] sm:text-xs text-[#2F6F62] dark:text-[#2F6F62] hover:text-[#2F6F62] dark:hover:text-[#BFA181] font-semibold">MAX</button>
                 </div>
                 <div className="relative">
                   <input type="number" value={fromAmount} onChange={(e) => setFromAmount(e.target.value)} placeholder="0.00" disabled={isProcessing} className="w-full bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg px-2.5 sm:px-3 py-2.5 sm:py-3 pr-14 sm:pr-16 text-base sm:text-lg font-mono text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50" />
@@ -628,7 +628,7 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
                   </p>
                   <div className="flex gap-2">
                     <button onClick={() => setShowAllocationWarning(false)} className="flex-1 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium">{lang === "tr" ? "İptal" : "Cancel"}</button>
-                    <button onClick={() => { setShowAllocationWarning(false); handleExchange(); }} disabled={isProcessing} className="flex-1 py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium">{lang === "tr" ? "Devam Et" : "Continue"}</button>
+                    <button onClick={() => { setShowAllocationWarning(false); handleExchange(); }} disabled={isProcessing} className="flex-1 py-2 rounded-lg bg-[#2F6F62] text-white text-sm font-medium">{lang === "tr" ? "Devam Et" : "Continue"}</button>
                   </div>
                 </div>
               )}

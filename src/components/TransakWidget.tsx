@@ -151,7 +151,7 @@ export function TransakWidget({
         <h3 className="text-lg font-semibold text-slate-800 dark:text-zinc-200">
           Buy Crypto
         </h3>
-        <span className="px-2 py-1 text-xs font-medium rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+        <span className="px-2 py-1 text-xs font-medium rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]">
           Powered by Transak
         </span>
       </div>
@@ -254,7 +254,7 @@ export function TransakWidget({
       <button
         onClick={handleCreateOrder}
         disabled={isLoading}
-        className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full py-4 rounded-xl bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {isLoading ? (
           <>

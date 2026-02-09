@@ -340,16 +340,16 @@ export default function VaultPage() {
 
           {/* Statement Indicator */}
           <div className="flex items-center gap-2 mb-6">
-            <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <span className="text-xs text-emerald-500 font-medium">{t.lastStatement}: February 2026</span>
+            <span className="text-xs text-[#2F6F62] font-medium">{t.lastStatement}: February 2026</span>
           </div>
 
           {/* Stats Row */}
           <div className="grid grid-cols-3 gap-4 pt-4 border-t border-stone-200 dark:border-slate-700">
             <div className="text-center">
-              <p className="text-lg font-semibold text-emerald-500">{formatCurrency(unallocatedBalance)}</p>
+              <p className="text-lg font-semibold text-[#2F6F62]">{formatCurrency(unallocatedBalance)}</p>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.availableCapital}</p>
             </div>
             <div className="text-center border-x border-stone-200 dark:border-slate-700">
@@ -378,7 +378,7 @@ export default function VaultPage() {
           </p>
           <div className="grid grid-cols-3 gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              <div className="w-2 h-2 rounded-full bg-[#2F6F62]" />
               <div>
                 <p className="text-sm font-bold text-slate-800 dark:text-white">{formatCurrency(settlementBalance)}</p>
                 <p className="text-[10px] text-slate-500">{t.settledCapital}</p>
@@ -411,13 +411,13 @@ export default function VaultPage() {
               {/* Custody Status Indicator */}
               <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold ${
                 custodyStatus === 'active'
-                  ? 'bg-emerald-500/15 text-emerald-500'
+                  ? 'bg-[#2F6F62]/15 text-[#2F6F62]'
                   : custodyStatus === 'pending'
                   ? 'bg-amber-500/15 text-amber-500'
                   : 'bg-slate-500/15 text-slate-500'
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${
-                  custodyStatus === 'active' ? 'bg-emerald-500' :
+                  custodyStatus === 'active' ? 'bg-[#2F6F62]' :
                   custodyStatus === 'pending' ? 'bg-amber-500' : 'bg-slate-500'
                 }`} />
                 {custodyStatus === 'active' ? 'Active' : custodyStatus === 'pending' ? 'Pending' : 'Offline'}
@@ -434,13 +434,13 @@ export default function VaultPage() {
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-slate-800 dark:text-white">{t.protectionLevel}</span>
-              <span className={`text-sm font-bold ${protectionLevel >= 80 ? "text-emerald-500" : "text-amber-500"}`}>
+              <span className={`text-sm font-bold ${protectionLevel >= 80 ? "text-[#2F6F62]" : "text-amber-500"}`}>
                 {protectionLevel >= 80 ? t.elite : `${protectionLevel}%`}
               </span>
             </div>
             <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all ${protectionLevel >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}
+                className={`h-full rounded-full transition-all ${protectionLevel >= 80 ? "bg-[#2F6F62]" : "bg-amber-500"}`}
                 style={{ width: `${protectionLevel}%` }}
               />
             </div>
@@ -454,7 +454,7 @@ export default function VaultPage() {
               { key: "segregated", label: t.segregated },
             ].map((item) => (
               <div key={item.key} className="flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{item.label}</span>
@@ -464,7 +464,7 @@ export default function VaultPage() {
         </div>
 
         {/* Trust Strip - 4 Badges */}
-        <div className="flex items-center justify-center gap-2 py-3 px-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
+        <div className="flex items-center justify-center gap-2 py-3 px-4 bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 rounded-xl border border-[#2F6F62]/30 dark:border-[#2F6F62]/30">
           {[
             { key: "fullyAllocated", label: t.fullyAllocated },
             { key: "segregated", label: t.segregated },
@@ -474,9 +474,9 @@ export default function VaultPage() {
             <button
               key={badge.key}
               onClick={() => setTrustBadgeModal(badge.key)}
-              className="flex items-center gap-1 px-2 py-1 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded transition-colors"
+              className="flex items-center gap-1 px-2 py-1 hover:bg-[#2F6F62]/20 dark:hover:bg-[#2F6F62]/20 rounded transition-colors"
             >
-              <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-3 h-3 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">{badge.label}</span>
@@ -491,7 +491,7 @@ export default function VaultPage() {
             <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">
               {t.unallocatedCapital}
             </p>
-            <span className="px-2 py-1 bg-emerald-500/15 rounded text-[10px] font-semibold text-emerald-500">
+            <span className="px-2 py-1 bg-[#2F6F62]/15 rounded text-[10px] font-semibold text-[#2F6F62]">
               {t.availableForAllocation}
             </span>
           </div>
@@ -518,7 +518,7 @@ export default function VaultPage() {
 
           {/* AUXM Badges */}
           <div className="flex flex-wrap gap-2 mb-3">
-            <span className="flex items-center gap-1 px-2 py-1 bg-emerald-500/15 rounded text-[9px] font-semibold text-emerald-500">
+            <span className="flex items-center gap-1 px-2 py-1 bg-[#2F6F62]/15 rounded text-[9px] font-semibold text-[#2F6F62]">
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
@@ -555,11 +555,11 @@ export default function VaultPage() {
 
         {/* Trust Messages */}
         <div className="space-y-2">
-          <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
-            <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex items-center gap-3 p-3 bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 rounded-xl border border-[#2F6F62]/30 dark:border-[#2F6F62]/30">
+            <svg className="w-4 h-4 text-[#2F6F62] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
-            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{t.custodySeparation}</span>
+            <span className="text-xs font-semibold text-[#2F6F62] dark:text-[#2F6F62]">{t.custodySeparation}</span>
           </div>
           <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-800/50">
             <svg className="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -652,7 +652,7 @@ export default function VaultPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatCurrency(holding.value)}</p>
-                    <p className="text-xs text-emerald-500 font-medium">
+                    <p className="text-xs text-[#2F6F62] font-medium">
                       {formatGrams(holding.allocated)} {t.allocated}
                     </p>
                   </div>
@@ -694,8 +694,8 @@ export default function VaultPage() {
             className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-16 h-16 rounded-full bg-[#2F6F62]/15 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
@@ -713,7 +713,7 @@ export default function VaultPage() {
             </p>
             <button
               onClick={() => setTrustBadgeModal(null)}
-              className="px-6 py-2.5 bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-600 transition-colors"
+              className="px-6 py-2.5 bg-[#2F6F62] text-white font-semibold rounded-xl hover:bg-[#2F6F62]/80 transition-colors"
             >
               {t.close}
             </button>

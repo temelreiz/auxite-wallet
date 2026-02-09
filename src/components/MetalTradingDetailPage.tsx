@@ -285,7 +285,7 @@ export function MetalTradingDetailPage({
             </div>
             <div className="ml-4">
               <p className="text-2xl font-bold text-slate-900 dark:text-white">${currentPrice.toFixed(2)}</p>
-              <p className={`text-sm ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
+              <p className={`text-sm ${isPositive ? "text-[#2F6F62]" : "text-red-400"}`}>
                 {isPositive ? "+" : ""}{change24h.toFixed(2)}%
               </p>
             </div>
@@ -317,7 +317,7 @@ export function MetalTradingDetailPage({
                     onClick={() => setActiveTab(tab.id as any)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       activeTab === tab.id
-                        ? "bg-emerald-500 text-white"
+                        ? "bg-[#2F6F62] text-white"
                         : "bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
@@ -344,10 +344,10 @@ export function MetalTradingDetailPage({
                   <h3 className="font-semibold text-slate-900 dark:text-white">{labels.marketInfo}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     {[
-                      { label: labels.askPrice, value: `$${askPrice.toFixed(2)}`, color: "text-emerald-400" },
+                      { label: labels.askPrice, value: `$${askPrice.toFixed(2)}`, color: "text-[#2F6F62]" },
                       { label: labels.bidPrice, value: `$${actualBidPrice.toFixed(2)}`, color: "text-red-400" },
                       { label: labels.spread, value: "0.1%", color: "text-slate-900 dark:text-white" },
-                      { label: labels.high24, value: `$${(currentPrice * 1.02).toFixed(2)}`, color: "text-emerald-400" },
+                      { label: labels.high24, value: `$${(currentPrice * 1.02).toFixed(2)}`, color: "text-[#2F6F62]" },
                       { label: labels.low24, value: `$${(currentPrice * 0.98).toFixed(2)}`, color: "text-red-400" },
                       { label: labels.volume24, value: "$2.4B", color: "text-slate-900 dark:text-white" },
                       { label: labels.minOrder, value: "0.001", color: "text-slate-900 dark:text-white" },
@@ -376,7 +376,7 @@ export function MetalTradingDetailPage({
                     {recentTrades.map((trade, i) => (
                       <div key={i} className="grid grid-cols-4 text-sm">
                         <span className="text-slate-400">{trade.time}</span>
-                        <span className={trade.type === "buy" ? "text-emerald-400" : "text-red-400"}>
+                        <span className={trade.type === "buy" ? "text-[#2F6F62]" : "text-red-400"}>
                           {trade.type === "buy" ? labels.buy : labels.sell}
                         </span>
                         <span className="text-slate-900 dark:text-white">${trade.price.toFixed(2)}</span>
@@ -396,7 +396,7 @@ export function MetalTradingDetailPage({
                   onClick={() => setTradeMode("buy")}
                   className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
                     tradeMode === "buy"
-                      ? "bg-emerald-500 text-white"
+                      ? "bg-[#2F6F62] text-white"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
@@ -458,7 +458,7 @@ export function MetalTradingDetailPage({
               <div className="bg-stone-50 dark:bg-slate-800/50 rounded-xl p-4 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">{labels.price}</span>
-                  <span className={tradeMode === "buy" ? "text-emerald-400" : "text-red-400"}>
+                  <span className={tradeMode === "buy" ? "text-[#2F6F62]" : "text-red-400"}>
                     ${tradePrice.toFixed(2)}
                   </span>
                 </div>
@@ -476,10 +476,10 @@ export function MetalTradingDetailPage({
               {tradeResult && (
                 <div className={`p-4 rounded-xl text-center ${
                   tradeResult === "success" 
-                    ? "bg-emerald-500/20 border border-emerald-500/50" 
+                    ? "bg-[#2F6F62]/20 border border-[#2F6F62]/50" 
                     : "bg-red-500/20 border border-red-500/50"
                 }`}>
-                  <p className={tradeResult === "success" ? "text-emerald-400" : "text-red-400"}>
+                  <p className={tradeResult === "success" ? "text-[#2F6F62]" : "text-red-400"}>
                     {tradeResult === "success" ? labels.success : labels.error}
                   </p>
                   {tradeResult === "error" && (
@@ -499,7 +499,7 @@ export function MetalTradingDetailPage({
                 disabled={!canTrade || isProcessing}
                 className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
                   tradeMode === "buy"
-                    ? "bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50"
+                    ? "bg-[#2F6F62] hover:bg-[#2F6F62] disabled:bg-[#2F6F62]/50"
                     : "bg-red-500 hover:bg-red-600 disabled:bg-red-500/50"
                 } text-white disabled:cursor-not-allowed`}
               >

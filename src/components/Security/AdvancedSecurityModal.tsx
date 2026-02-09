@@ -234,11 +234,11 @@ export function AdvancedSecurityModal({ walletAddress, lang, onClose }: Props) {
 
           {activeTab === "insurance" && (
             <div className="text-center py-6 sm:py-12">
-              <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-6 rounded-full bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center">
+              <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-6 rounded-full bg-gradient-to-br from-[#2F6F62]/20 to-blue-500/20 flex items-center justify-center">
                 <span className="text-3xl sm:text-5xl">🛡️</span>
               </div>
               
-              <span className="inline-block px-3 sm:px-4 py-1 sm:py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full text-xs sm:text-sm font-medium mb-3 sm:mb-4">
+              <span className="inline-block px-3 sm:px-4 py-1 sm:py-1.5 bg-[#2F6F62]/20 text-[#2F6F62] rounded-full text-xs sm:text-sm font-medium mb-3 sm:mb-4">
                 {labels.insurance.comingSoon}
               </span>
               
@@ -254,7 +254,7 @@ export function AdvancedSecurityModal({ walletAddress, lang, onClose }: Props) {
                 <ul className="space-y-2 sm:space-y-3">
                   {labels.insurance.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-2 sm:gap-3 text-xs sm:text-sm text-slate-400">
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F6F62] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       <span>{feature}</span>
@@ -268,8 +268,8 @@ export function AdvancedSecurityModal({ walletAddress, lang, onClose }: Props) {
                 disabled={insuranceNotified}
                 className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-medium transition-all touch-manipulation ${
                   insuranceNotified
-                    ? "bg-emerald-500/20 text-emerald-400 cursor-default"
-                    : "bg-gradient-to-r from-emerald-500 to-blue-500 text-white hover:opacity-90 active:scale-95"
+                    ? "bg-[#2F6F62]/20 text-[#2F6F62] cursor-default"
+                    : "bg-gradient-to-r from-[#2F6F62] to-blue-500 text-white hover:opacity-90 active:scale-95"
                 }`}
               >
                 {insuranceNotified ? (

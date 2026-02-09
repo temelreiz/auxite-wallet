@@ -141,11 +141,11 @@ function KYCContent() {
             <p className="text-xs text-slate-400">Secure verification powered by Sumsub</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/20 rounded-full">
-              <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#2F6F62]/20 rounded-full">
+              <svg className="w-3.5 h-3.5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              <span className="text-[10px] font-medium text-emerald-400">256-bit</span>
+              <span className="text-[10px] font-medium text-[#2F6F62]">256-bit</span>
             </div>
           </div>
         </div>

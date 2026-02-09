@@ -565,41 +565,41 @@ export function AuxiteerTierModal({
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {selectedTier.requirements.kyc && (
-                  <div className={`p-3 rounded-lg border ${isKycVerified ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30" : "bg-stone-50 dark:bg-zinc-800 border-stone-200 dark:border-zinc-700"}`}>
+                  <div className={`p-3 rounded-lg border ${isKycVerified ? "bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 border-[#2F6F62]/30 dark:border-[#2F6F62]/30" : "bg-stone-50 dark:bg-zinc-800 border-stone-200 dark:border-zinc-700"}`}>
                     <p className="text-xs text-slate-500 dark:text-zinc-400">{t.kycRequired}</p>
-                    <p className={`text-sm font-medium ${isKycVerified ? "text-emerald-600 dark:text-emerald-400" : "text-slate-700 dark:text-zinc-300"}`}>
+                    <p className={`text-sm font-medium ${isKycVerified ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-700 dark:text-zinc-300"}`}>
                       {isKycVerified ? "✓" : "Required"}
                     </p>
                   </div>
                 )}
                 {selectedTier.requirements.minBalance > 0 && (
-                  <div className={`p-3 rounded-lg border ${userBalance >= selectedTier.requirements.minBalance ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30" : "bg-stone-50 dark:bg-zinc-800 border-stone-200 dark:border-zinc-700"}`}>
+                  <div className={`p-3 rounded-lg border ${userBalance >= selectedTier.requirements.minBalance ? "bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 border-[#2F6F62]/30 dark:border-[#2F6F62]/30" : "bg-stone-50 dark:bg-zinc-800 border-stone-200 dark:border-zinc-700"}`}>
                     <p className="text-xs text-slate-500 dark:text-zinc-400">{t.minBalance}</p>
-                    <p className={`text-sm font-medium ${userBalance >= selectedTier.requirements.minBalance ? "text-emerald-600 dark:text-emerald-400" : "text-slate-700 dark:text-zinc-300"}`}>
+                    <p className={`text-sm font-medium ${userBalance >= selectedTier.requirements.minBalance ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-700 dark:text-zinc-300"}`}>
                       {formatBalance(selectedTier.requirements.minBalance)}
                     </p>
                   </div>
                 )}
                 {selectedTier.requirements.minDays > 0 && (
-                  <div className={`p-3 rounded-lg border ${userDays >= selectedTier.requirements.minDays ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30" : "bg-stone-50 dark:bg-zinc-800 border-stone-200 dark:border-zinc-700"}`}>
+                  <div className={`p-3 rounded-lg border ${userDays >= selectedTier.requirements.minDays ? "bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 border-[#2F6F62]/30 dark:border-[#2F6F62]/30" : "bg-stone-50 dark:bg-zinc-800 border-stone-200 dark:border-zinc-700"}`}>
                     <p className="text-xs text-slate-500 dark:text-zinc-400">{t.minDays}</p>
-                    <p className={`text-sm font-medium ${userDays >= selectedTier.requirements.minDays ? "text-emerald-600 dark:text-emerald-400" : "text-slate-700 dark:text-zinc-300"}`}>
+                    <p className={`text-sm font-medium ${userDays >= selectedTier.requirements.minDays ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-700 dark:text-zinc-300"}`}>
                       {selectedTier.requirements.minDays}
                     </p>
                   </div>
                 )}
                 {selectedTier.requirements.metalAsset && (
-                  <div className={`p-3 rounded-lg border ${hasMetalAsset ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30" : "bg-stone-50 dark:bg-zinc-800 border-stone-200 dark:border-zinc-700"}`}>
+                  <div className={`p-3 rounded-lg border ${hasMetalAsset ? "bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 border-[#2F6F62]/30 dark:border-[#2F6F62]/30" : "bg-stone-50 dark:bg-zinc-800 border-stone-200 dark:border-zinc-700"}`}>
                     <p className="text-xs text-slate-500 dark:text-zinc-400">{t.metalAsset}</p>
-                    <p className={`text-sm font-medium ${hasMetalAsset ? "text-emerald-600 dark:text-emerald-400" : "text-slate-700 dark:text-zinc-300"}`}>
+                    <p className={`text-sm font-medium ${hasMetalAsset ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-700 dark:text-zinc-300"}`}>
                       {hasMetalAsset ? "✓" : "Required"}
                     </p>
                   </div>
                 )}
                 {selectedTier.requirements.activeEarnLease && (
-                  <div className={`p-3 rounded-lg border ${hasActiveEarnLease ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30" : "bg-stone-50 dark:bg-zinc-800 border-stone-200 dark:border-zinc-700"}`}>
+                  <div className={`p-3 rounded-lg border ${hasActiveEarnLease ? "bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 border-[#2F6F62]/30 dark:border-[#2F6F62]/30" : "bg-stone-50 dark:bg-zinc-800 border-stone-200 dark:border-zinc-700"}`}>
                     <p className="text-xs text-slate-500 dark:text-zinc-400">{t.activeEarnLease}</p>
-                    <p className={`text-sm font-medium ${hasActiveEarnLease ? "text-emerald-600 dark:text-emerald-400" : "text-slate-700 dark:text-zinc-300"}`}>
+                    <p className={`text-sm font-medium ${hasActiveEarnLease ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-700 dark:text-zinc-300"}`}>
                       {hasActiveEarnLease ? "✓" : "Required"}
                     </p>
                   </div>

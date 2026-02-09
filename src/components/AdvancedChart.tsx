@@ -656,7 +656,7 @@ export default function AdvancedChart({
             {crosshairData ? (
               <>
                 <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{labels.open}: <span className={isDark ? 'text-white' : 'text-slate-900'}>{formatPrice(crosshairData.open)}</span></span>
-                <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{labels.high}: <span className="text-emerald-500">{formatPrice(crosshairData.high)}</span></span>
+                <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{labels.high}: <span className="text-[#2F6F62]">{formatPrice(crosshairData.high)}</span></span>
                 <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{labels.low}: <span className="text-red-500">{formatPrice(crosshairData.low)}</span></span>
                 <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{labels.close}: <span className={isDark ? 'text-white' : 'text-slate-900'}>{formatPrice(crosshairData.close)}</span></span>
               </>
@@ -675,7 +675,7 @@ export default function AdvancedChart({
               onClick={() => handleTimeframeChange(tf)}
               className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded transition-colors ${
                 timeframe === tf
-                  ? "bg-emerald-500 text-white"
+                  ? "bg-[#2F6F62] text-white"
                   : isDark
                     ? "text-slate-400 hover:text-white hover:bg-slate-800"
                     : "text-slate-600 hover:text-slate-900 hover:bg-stone-100"
@@ -730,7 +730,7 @@ export default function AdvancedChart({
                 onClick={() => togglePanel(ind)}
                 className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-[9px] sm:text-[10px] rounded transition-colors ${
                   panelIndicator === ind
-                    ? "bg-emerald-500 text-white"
+                    ? "bg-[#2F6F62] text-white"
                     : isDark
                       ? "bg-slate-800 text-slate-400 hover:text-white"
                       : "bg-stone-100 text-slate-600 hover:text-slate-900"

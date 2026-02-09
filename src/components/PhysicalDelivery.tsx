@@ -515,7 +515,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
 
         {/* Success/Error Messages */}
         {successMessage && (
-          <div className="mx-3 sm:mx-4 mt-3 sm:mt-4 p-2.5 sm:p-3 bg-emerald-500/20 border border-emerald-500/50 rounded-xl text-emerald-400 text-xs sm:text-sm">✅ {successMessage}</div>
+          <div className="mx-3 sm:mx-4 mt-3 sm:mt-4 p-2.5 sm:p-3 bg-[#2F6F62]/20 border border-[#2F6F62]/50 rounded-xl text-[#2F6F62] text-xs sm:text-sm">✅ {successMessage}</div>
         )}
         {errorMessage && (
           <div className="mx-3 sm:mx-4 mt-3 sm:mt-4 p-2.5 sm:p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-400 text-xs sm:text-sm">❌ {errorMessage}</div>
@@ -553,7 +553,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
                       key={metal.symbol}
                       onClick={() => setSelectedMetal(metal.symbol)}
                       className={`p-2.5 sm:p-3 rounded-xl border transition-colors ${
-                        selectedMetal === metal.symbol ? "border-emerald-500 bg-emerald-500/10" : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
+                        selectedMetal === metal.symbol ? "border-[#2F6F62] bg-[#2F6F62]/10" : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
                       }`}
                     >
                       <div className="flex items-center gap-2 sm:gap-3">
@@ -613,7 +613,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
               <button
                 onClick={handleSubmitRequest}
                 disabled={submitting || !amount || !selectedAddressId || parseFloat(amount) < (selectedMetalInfo?.minAmount || 0)}
-                className="w-full py-2.5 sm:py-3 bg-amber-500 text-slate-800 dark:text-white rounded-xl font-medium hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                className="w-full py-2.5 sm:py-3 bg-amber-500 text-slate-800 dark:text-white rounded-xl font-medium hover:bg-[#2F6F62] disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
                 {submitting ? "..." : t.submit}
               </button>
@@ -646,7 +646,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
                           </div>
                         </div>
                         <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap flex-shrink-0 ${
-                          req.status === "delivered" ? "bg-emerald-500/20 text-emerald-400" :
+                          req.status === "delivered" ? "bg-[#2F6F62]/20 text-[#2F6F62]" :
                           req.status === "cancelled" ? "bg-red-500/20 text-red-400" :
                           req.status === "shipped" ? "bg-blue-500/20 text-blue-400" :
                           "bg-amber-500/20 text-amber-400"
