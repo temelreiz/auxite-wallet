@@ -33,8 +33,10 @@ const translations: Record<string, Record<string, string>> = {
     fundingSource: "FONLAMA KAYNAĞI",
     targetMetal: "HEDEF METAL",
     amount: "TUTAR",
-    executionSpread: "İşlem Spreadi",
-    spreadIncludes: "Tedarik, işlem ve saklama lojistiğini içerir",
+    executionCost: "İşlem Maliyeti",
+    executionCostRange: "~%0.25 – %0.40",
+    executionCostNote: "Piyasa tedariki, likidite erişimi, kasa tahsisi, sigorta ve operasyonel işlem maliyetlerini yansıtır.",
+    finalCostNote: "Nihai maliyet işlem anında belirlenir.",
     estimatedAllocation: "Tahmini Tahsis",
     confirmAllocation: "Tahsisi Onayla",
     allocationsFinal: "Onaylandıktan sonra tahsisler kesindir.",
@@ -52,7 +54,7 @@ const translations: Record<string, Record<string, string>> = {
     executionSummary: "İşlem Özeti",
     executionVenue: "İşlem Yeri",
     executionTime: "İşlem Zamanı",
-    spread: "Spread",
+    executionCostLabel: "İşlem Maliyeti",
     custodyDestination: "Saklama Hedefi",
     referencePrice: "Referans Fiyat",
     allocationAmount: "Tahsis Tutarı",
@@ -86,8 +88,10 @@ const translations: Record<string, Record<string, string>> = {
     fundingSource: "FUNDING SOURCE",
     targetMetal: "TARGET METAL",
     amount: "AMOUNT",
-    executionSpread: "Execution Spread",
-    spreadIncludes: "Includes sourcing, execution and custody logistics",
+    executionCost: "Indicative Execution Cost",
+    executionCostRange: "~0.25% – 0.40%",
+    executionCostNote: "Reflects market sourcing, liquidity access, vault allocation, insurance, and operational processing.",
+    finalCostNote: "Final cost determined at execution.",
     estimatedAllocation: "Estimated Allocation",
     confirmAllocation: "Confirm Allocation",
     allocationsFinal: "Allocations are final once confirmed.",
@@ -105,7 +109,7 @@ const translations: Record<string, Record<string, string>> = {
     executionSummary: "Execution Summary",
     executionVenue: "Execution Venue",
     executionTime: "Execution Time",
-    spread: "Spread",
+    executionCostLabel: "Execution Cost",
     custodyDestination: "Custody Destination",
     referencePrice: "Reference Price",
     allocationAmount: "Allocation Amount",
@@ -448,10 +452,11 @@ export default function AllocatePage() {
           </div>
 
           <div className="flex justify-between mb-1">
-            <span className="text-xs text-slate-500">{t.executionSpread}</span>
-            <span className="text-xs font-semibold text-[#2F6F62]">0.35%</span>
+            <span className="text-xs text-slate-500">{t.executionCost}</span>
+            <span className="text-xs font-semibold text-[#2F6F62]">{t.executionCostRange}</span>
           </div>
-          <p className="text-[10px] text-slate-500 italic mb-4">{t.spreadIncludes}</p>
+          <p className="text-[10px] text-slate-500 italic mb-1">{t.executionCostNote}</p>
+          <p className="text-[10px] text-slate-400 mb-4">{t.finalCostNote}</p>
 
           {/* Estimated Allocation */}
           {estimatedGrams && estimatedGrams > 0 && (
@@ -523,8 +528,8 @@ export default function AllocatePage() {
                   <span className="text-sm font-semibold text-slate-800 dark:text-white">${basePrices[selectedTo]?.toFixed(2) || "--"}/g</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-stone-200 dark:border-slate-700">
-                  <span className="text-sm text-slate-500">{t.spread}</span>
-                  <span className="text-sm font-semibold text-[#2F6F62]">0.35%</span>
+                  <span className="text-sm text-slate-500">{t.executionCostLabel}</span>
+                  <span className="text-sm font-semibold text-[#2F6F62]">{t.executionCostRange}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-stone-200 dark:border-slate-700">
                   <span className="text-sm text-slate-500">{t.allocationAmount}</span>
