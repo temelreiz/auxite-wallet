@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
-import { getUserBalance, setBalance, incrementBalance, addBonusAuxm, ensureUser } from "@/lib/redis";
+import { getUserBalance, setBalance, incrementBalance, ensureUser } from "@/lib/redis";
 import { ethers } from "ethers";
 import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
 
@@ -11,7 +11,7 @@ import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
 const USE_MOCK = !process.env.UPSTASH_REDIS_REST_URL;
 
 const MOCK_BALANCE = {
-  auxm: 1250.5, bonusAuxm: 25, totalAuxm: 1275.5, bonusExpiresAt: "2025-03-01T00:00:00Z",
+  auxm: 1250.5, totalAuxm: 1250.5,
   auxg: 15.75, auxs: 500, auxpt: 2.5, auxpd: 1.25, eth: 0.5, btc: 0.01, xrp: 100, sol: 2.5, usdt: 0,
 };
 
@@ -31,7 +31,7 @@ const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
 
 // Which tokens are on-chain vs off-chain
 const ON_CHAIN_TOKENS = ["usdt", "auxg", "auxs", "auxpt", "auxpd"];
-const OFF_CHAIN_TOKENS = ["auxm", "bonusauxm", "btc", "xrp", "sol"];
+const OFF_CHAIN_TOKENS = ["auxm", "btc", "xrp", "sol"];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CUSTODIAL WALLET CHECK
@@ -193,7 +193,6 @@ async function getHybridBalance(address: string): Promise<{
   const balances: Record<string, number> = {
     // Off-chain from Redis
     auxm: parseFloat(String(redisBalance.auxm || 0)),
-    bonusAuxm: parseFloat(String((redisBalance as any).bonusauxm || redisBalance.bonusAuxm || 0)),
     btc: parseFloat(String(redisBalance.btc || 0)),
     xrp: parseFloat(String(redisBalance.xrp || 0)),
     sol: parseFloat(String(redisBalance.sol || 0)),
@@ -217,12 +216,11 @@ async function getHybridBalance(address: string): Promise<{
   };
 
   // Calculate totalAuxm
-  balances.totalAuxm = balances.auxm + balances.bonusAuxm;
+  balances.totalAuxm = balances.auxm;
 
   // Track sources for debugging
   const sources: Record<string, "blockchain" | "redis"> = {
     auxm: "redis",
-    bonusAuxm: "redis",
     eth: isCustodial ? "redis" : "blockchain",
     btc: "redis",
     xrp: "redis",
@@ -263,8 +261,6 @@ export async function GET(request: NextRequest) {
       summary: {
         totalAuxm: MOCK_BALANCE.totalAuxm,
         withdrawableAuxm: MOCK_BALANCE.auxm,
-        lockedBonusAuxm: MOCK_BALANCE.bonusAuxm,
-        bonusStatus: MOCK_BALANCE.bonusAuxm > 0 ? { amount: MOCK_BALANCE.bonusAuxm, expiresAt: MOCK_BALANCE.bonusExpiresAt } : null,
         metals: { auxg: MOCK_BALANCE.auxg, auxs: MOCK_BALANCE.auxs, auxpt: MOCK_BALANCE.auxpt, auxpd: MOCK_BALANCE.auxpd },
         crypto: { eth: MOCK_BALANCE.eth, btc: MOCK_BALANCE.btc, xrp: MOCK_BALANCE.xrp, sol: MOCK_BALANCE.sol, usdt: MOCK_BALANCE.usdt },
       },
@@ -285,8 +281,7 @@ export async function GET(request: NextRequest) {
       const redisBalance = await getUserBalance(address);
       balances = {
         auxm: parseFloat(String(redisBalance.auxm || 0)),
-        bonusAuxm: parseFloat(String((redisBalance as any).bonusauxm || redisBalance.bonusAuxm || 0)),
-        totalAuxm: parseFloat(String(redisBalance.totalAuxm || 0)),
+        totalAuxm: parseFloat(String(redisBalance.auxm || 0)),
         auxg: parseFloat(String(redisBalance.auxg || 0)),
         auxs: parseFloat(String(redisBalance.auxs || 0)),
         auxpt: parseFloat(String(redisBalance.auxpt || 0)),
@@ -304,7 +299,6 @@ export async function GET(request: NextRequest) {
       const blockchainBalances = await getAllBlockchainBalances(address);
       balances = {
         auxm: 0,
-        bonusAuxm: 0,
         totalAuxm: 0,
         eth: blockchainBalances.eth || 0,
         ...blockchainBalances,
@@ -349,22 +343,20 @@ export async function GET(request: NextRequest) {
       stakedAmounts,
       transactions,
       summary: {
-        totalAuxm: balances.totalAuxm || (balances.auxm + balances.bonusAuxm),
+        totalAuxm: balances.totalAuxm || balances.auxm,
         withdrawableAuxm: balances.auxm,
-        lockedBonusAuxm: balances.bonusAuxm,
-        bonusStatus: balances.bonusAuxm > 0 ? { amount: balances.bonusAuxm, expiresAt: null } : null,
-        metals: { 
-          auxg: balances.auxg, 
-          auxs: balances.auxs, 
-          auxpt: balances.auxpt, 
-          auxpd: balances.auxpd 
+        metals: {
+          auxg: balances.auxg,
+          auxs: balances.auxs,
+          auxpt: balances.auxpt,
+          auxpd: balances.auxpd
         },
-        crypto: { 
-          eth: balances.eth, 
-          btc: balances.btc, 
-          xrp: balances.xrp, 
-          sol: balances.sol, 
-          usdt: balances.usdt 
+        crypto: {
+          eth: balances.eth,
+          btc: balances.btc,
+          xrp: balances.xrp,
+          sol: balances.sol,
+          usdt: balances.usdt
         },
         totalValueUsd: balances.totalAuxm || 0,
       },
@@ -411,25 +403,4 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ success, newBalance: balances, source: "hybrid" });
 }
 
-export async function PUT(request: NextRequest) {
-  const apiKey = request.headers.get("x-api-key");
-  if (apiKey !== process.env.INTERNAL_API_KEY) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { address, amount, expiresInDays = 30 } = await request.json();
-  if (!address || !amount) {
-    return NextResponse.json({ error: "Missing address or amount" }, { status: 400 });
-  }
-
-  if (USE_MOCK) {
-    return NextResponse.json({ success: true, message: "[MOCK] Bonus added", source: "mock" });
-  }
-
-  const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
-  await addBonusAuxm(address, amount, expiresAt);
-  
-  // Return hybrid balance after update
-  const { balances } = await getHybridBalance(address);
-  return NextResponse.json({ success: true, newBalance: balances, expiresAt: expiresAt.toISOString(), source: "hybrid" });
-}
+// PUT endpoint removed - bonus system disabled

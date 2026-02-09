@@ -764,12 +764,10 @@ export async function POST(request: NextRequest) {
     }
 
     let fromBalance = parseFloat(currentBalance[fromTokenLower] as string || "0");
-    const bonusAuxm = parseFloat(currentBalance.bonusauxm as string || currentBalance.bonusAuxm as string || "0");
 
     // Debug: Log all balances
     console.log(`📊 Balance Debug for ${normalizedAddress}:`);
     console.log(`   Redis ${fromTokenLower}: ${fromBalance}`);
-    console.log(`   Redis bonusAuxm: ${bonusAuxm}`);
     console.log(`   Redis all:`, currentBalance);
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -830,22 +828,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. Balance check
-    let availableBalance = fromBalance;
-    let usedBonus = 0;
-    let usedRegular = fromAmount;
+    const availableBalance = fromBalance;
 
-    if (type === "buy" && fromTokenLower === "auxm" && METALS.includes(toTokenLower)) {
-      availableBalance = fromBalance + bonusAuxm;
-      if (bonusAuxm >= fromAmount) {
-        usedBonus = fromAmount;
-        usedRegular = 0;
-      } else {
-        usedBonus = bonusAuxm;
-        usedRegular = fromAmount - bonusAuxm;
-      }
-    }
-
-    console.log(`📊 Balance Check: required=${fromAmount}, available=${availableBalance}, fromBalance=${fromBalance}, bonusAuxm=${bonusAuxm}`);
+    console.log(`📊 Balance Check: required=${fromAmount}, available=${availableBalance}`);
 
     // Bakiye kontrolü - TÜM tokenlar için geçerli
     if (fromAmount > availableBalance) {
@@ -1449,30 +1434,20 @@ export async function POST(request: NextRequest) {
     // ─────────────────────────────────────────────────────────────────────────
     // DEDUCT FROM USER BALANCE
     // ─────────────────────────────────────────────────────────────────────────
-    // Deduct from token
-    if (type === "buy" && fromTokenLower === "auxm" && usedBonus > 0) {
-      if (usedBonus > 0) {
-        multi.hincrbyfloat(balanceKey, "bonusAuxm", -usedBonus);
-      }
-      if (usedRegular > 0) {
-        multi.hincrbyfloat(balanceKey, "auxm", -usedRegular);
+    // For ETH: Custodial wallets use Redis, external wallets use blockchain
+    // For metals and other tokens: Always deduct from Redis
+    if (fromTokenLower === "eth" && type === "buy") {
+      if (isCustodial) {
+        // Custodial wallet: ETH is managed in Redis, always deduct
+        multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
+        console.log(`   Deducting ${fromAmount} ETH from Redis (custodial wallet)`);
+      } else {
+        // External wallet: ETH should be transferred on-chain, skip Redis
+        console.log(`   Skipping Redis deduction for ETH - external wallet uses blockchain`);
       }
     } else {
-      // For ETH: Custodial wallets use Redis, external wallets use blockchain
-      // For metals and other tokens: Always deduct from Redis
-      if (fromTokenLower === "eth" && type === "buy") {
-        if (isCustodial) {
-          // Custodial wallet: ETH is managed in Redis, always deduct
-          multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
-          console.log(`   Deducting ${fromAmount} ETH from Redis (custodial wallet)`);
-        } else {
-          // External wallet: ETH should be transferred on-chain, skip Redis
-          console.log(`   Skipping Redis deduction for ETH - external wallet uses blockchain`);
-        }
-      } else {
-        multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
-        console.log(`   Deducting ${fromAmount} ${fromTokenLower} from Redis`);
-      }
+      multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
+      console.log(`   Deducting ${fromAmount} ${fromTokenLower} from Redis`);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -1551,7 +1526,6 @@ export async function POST(request: NextRequest) {
       fee: fee.toFixed(4),
       feePercent: tierFeePercent,
       price: price.toString(),
-      usedBonus: usedBonus.toString(),
       status: txStatus,
       timestamp: Date.now(),
       blockchain: blockchainResult,
@@ -1636,7 +1610,6 @@ export async function POST(request: NextRequest) {
         fee: parseFloat(fee.toFixed(4)),
         feePercent: tierFeePercent,
         price: parseFloat(price.toFixed(4)),
-        usedBonus,
         status: "completed",
         txHash,
         blockchain: blockchainResult,
@@ -1644,17 +1617,14 @@ export async function POST(request: NextRequest) {
           id: userTier.id,
           name: userTier.name,
         },
-
         allocation: allocationInfo.allocatedGrams ? {
           certificateNumber,
           allocatedGrams: allocationInfo.allocatedGrams,
           nonAllocatedGrams: allocationInfo.nonAllocatedGrams,
         } : undefined,
-
       },
       balances: {
         auxm: parseFloat(updatedBalance?.auxm as string || "0"),
-        bonusAuxm: parseFloat(updatedBalance?.bonusauxm as string || "0"),
         [toTokenLower]: parseFloat(updatedBalance?.[toTokenLower] as string || "0"),
       },
     });

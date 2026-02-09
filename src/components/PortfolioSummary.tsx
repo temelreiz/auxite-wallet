@@ -20,8 +20,7 @@ export function PortfolioSummary({
   const { address, isConnected, balances, balancesLoading, refreshBalances } = useWallet();
   
   const auxmBalance = balances?.auxm ?? 0;
-  const bonusAuxm = balances?.bonusAuxm ?? 0;
-  const totalAuxm = auxmBalance + bonusAuxm;
+  const totalAuxm = auxmBalance;
   
   const auxg = balances?.auxg ?? 0;
   const auxs = balances?.auxs ?? 0;
@@ -97,9 +96,6 @@ export function PortfolioSummary({
         </div>
         <div className="flex items-center gap-2">
           <span className="text-lg font-semibold text-white">{auxmBalance.toFixed(2)} AUXM</span>
-          {bonusAuxm > 0 && (
-            <span className="text-purple-400 text-sm">+{bonusAuxm.toFixed(2)} bonus</span>
-          )}
         </div>
       </div>
 

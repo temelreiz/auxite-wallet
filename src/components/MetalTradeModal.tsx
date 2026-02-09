@@ -13,7 +13,6 @@ interface MetalTradeModalProps {
   lang?: "tr" | "en";
   userBalance?: {
     auxm: number;
-    bonusAuxm: number;
     metals: Record<string, number>;
     crypto?: {
       USDT: number;
@@ -83,7 +82,6 @@ export function MetalTradeModal({
   const [mode, setMode] = useState<"buy" | "sell">(initialMode);
   const userBalance = {
     auxm: walletBalances?.auxm || 0,
-    bonusAuxm: walletBalances?.bonusAuxm || 0,
     metals: {
       AUXG: walletBalances?.auxg || 0,
       AUXS: walletBalances?.auxs || 0,
@@ -250,7 +248,7 @@ export function MetalTradeModal({
   
   const getAvailableBalance = (pm: PaymentMethod): number => {
     if (pm === "AUXM") {
-      return (userBalance?.auxm || 0) + (userBalance?.bonusAuxm || 0);
+      return userBalance?.auxm || 0;
     }
     return userBalance?.crypto?.[pm] || 0;
   };
@@ -275,18 +273,6 @@ export function MetalTradeModal({
     ? total > availableBalance 
     : amountNum > (userBalance?.metals?.[metal] || 0);
 
-  const calculateBonusUsage = () => {
-    if (mode !== "buy" || paymentMethod !== "AUXM") {
-      return { usedBonus: 0, usedRegular: total };
-    }
-    const bonus = userBalance?.bonusAuxm || 0;
-    if (bonus >= total) {
-      return { usedBonus: total, usedRegular: 0 };
-    }
-    return { usedBonus: bonus, usedRegular: total - bonus };
-  };
-
-  const bonusUsage = calculateBonusUsage();
 
   const handleMarketOrder = async () => {
     if (!walletAddress || amountNum <= 0 || hasInsufficientBalance) return;
@@ -657,18 +643,6 @@ export function MetalTradeModal({
                     }
                   </span>
                 </div>
-                {mode === "buy" && paymentMethod === "AUXM" && userBalance?.bonusAuxm && userBalance.bonusAuxm > 0 && (
-                  <>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-purple-400">🎁 {t.bonus} AUXM</span>
-                      <span className="text-purple-400 font-mono">+{userBalance.bonusAuxm.toFixed(2)} AUXM</span>
-                    </div>
-                    <div className="flex justify-between text-sm border-t border-slate-700 pt-1">
-                      <span className="text-slate-400">{t.total}</span>
-                      <span className="text-white font-mono">{((userBalance?.auxm || 0) + (userBalance?.bonusAuxm || 0)).toFixed(2)} AUXM</span>
-                    </div>
-                  </>
-                )}
               </div>
 
               {/* Price Display */}
@@ -808,21 +782,6 @@ export function MetalTradeModal({
                 )}
               </div>
 
-              {/* Bonus Usage */}
-              {mode === "buy" && paymentMethod === "AUXM" && bonusUsage.usedBonus > 0 && (
-                <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-xl text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-purple-300">🎁 {t.bonusUsage}:</span>
-                    <span className="text-purple-400 font-mono">{bonusUsage.usedBonus.toFixed(2)} AUXM</span>
-                  </div>
-                  {bonusUsage.usedRegular > 0 && (
-                    <div className="flex justify-between mt-1">
-                      <span className="text-slate-400">{t.normalAuxm}:</span>
-                      <span className="text-white font-mono">{bonusUsage.usedRegular.toFixed(2)} AUXM</span>
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* Insufficient Balance Warning */}
               {hasInsufficientBalance && (

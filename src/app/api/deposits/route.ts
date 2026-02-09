@@ -7,55 +7,6 @@ const redis = new Redis({
 });
 
 // ===========================================
-// AUXM BONUS CALCULATION (inline for API)
-// ===========================================
-
-const CAMPAIGN_CONFIG = {
-  launch: {
-    enabled: true,
-    bonusPercent: 2.0,
-    startDate: new Date("2024-12-01T00:00:00Z"),
-    endDate: new Date("2025-01-01T00:00:00Z"),
-  },
-  tiers: [
-    { minAmount: 0,     maxAmount: 99.99,   bonusPercent: 0 },
-    { minAmount: 100,   maxAmount: 999.99,  bonusPercent: 0.5 },
-    { minAmount: 1000,  maxAmount: 4999.99, bonusPercent: 0.8 },
-    { minAmount: 5000,  maxAmount: 9999.99, bonusPercent: 1.0 },
-    { minAmount: 10000, maxAmount: Infinity, bonusPercent: 1.5 },
-  ],
-  minDepositForBonus: 100,
-};
-
-function isLaunchCampaignActive(): boolean {
-  if (!CAMPAIGN_CONFIG.launch.enabled) return false;
-  const now = new Date();
-  return now >= CAMPAIGN_CONFIG.launch.startDate && now <= CAMPAIGN_CONFIG.launch.endDate;
-}
-
-function calculateBonus(amountUsd: number): { bonusPercent: number; bonusAmount: number; totalAuxm: number } {
-  if (amountUsd < CAMPAIGN_CONFIG.minDepositForBonus) {
-    return { bonusPercent: 0, bonusAmount: 0, totalAuxm: amountUsd };
-  }
-
-  let bonusPercent: number;
-
-  if (isLaunchCampaignActive()) {
-    bonusPercent = CAMPAIGN_CONFIG.launch.bonusPercent;
-  } else {
-    const tier = CAMPAIGN_CONFIG.tiers.find(
-      t => amountUsd >= t.minAmount && amountUsd <= t.maxAmount
-    );
-    bonusPercent = tier?.bonusPercent || 0;
-  }
-
-  const bonusAmount = (amountUsd * bonusPercent) / 100;
-  const totalAuxm = amountUsd + bonusAmount;
-
-  return { bonusPercent, bonusAmount, totalAuxm };
-}
-
-// ===========================================
 // API ROUTES
 // ===========================================
 
@@ -66,9 +17,6 @@ interface Deposit {
   amount: number;
   amountUsd: number;
   auxmAmount: number;
-  bonusAmount: number;
-  bonusPercent: number;
-  totalAuxm: number;
   txHash: string;
   fromAddress: string;
   toAddress: string;
@@ -100,9 +48,6 @@ async function getUserDeposits(address: string): Promise<Deposit[]> {
           amount: parseFloat(String(depositData.amount || 0)),
           amountUsd: parseFloat(String(depositData.amountUsd || 0)),
           auxmAmount: parseFloat(String(depositData.auxmAmount || 0)),
-          bonusAmount: parseFloat(String(depositData.bonusAmount || 0)),
-          bonusPercent: parseFloat(String(depositData.bonusPercent || 0)),
-          totalAuxm: parseFloat(String(depositData.totalAuxm || 0)),
           txHash: String(depositData.txHash || ''),
           fromAddress: String(depositData.fromAddress || ''),
           toAddress: String(depositData.toAddress || ''),
@@ -151,8 +96,7 @@ export async function GET(request: NextRequest) {
 
     // Toplam hesaplamalar
     const confirmedDeposits = deposits.filter(d => d.status === "confirmed");
-    const totalAuxm = confirmedDeposits.reduce((sum, d) => sum + d.totalAuxm, 0);
-    const totalBonus = confirmedDeposits.reduce((sum, d) => sum + d.bonusAmount, 0);
+    const totalAuxm = confirmedDeposits.reduce((sum, d) => sum + d.auxmAmount, 0);
 
     return NextResponse.json({
       address: address.toLowerCase(),
@@ -168,11 +112,6 @@ export async function GET(request: NextRequest) {
         confirmedDeposits: confirmedDeposits.length,
         pendingDeposits: deposits.filter(d => d.status === "pending").length,
         totalAuxmReceived: totalAuxm,
-        totalBonusReceived: totalBonus,
-      },
-      campaign: {
-        isLaunchActive: isLaunchCampaignActive(),
-        currentBonusPercent: isLaunchCampaignActive() ? CAMPAIGN_CONFIG.launch.bonusPercent : null,
       },
     });
 
@@ -217,21 +156,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Bonus hesapla
-    const { bonusPercent, bonusAmount, totalAuxm } = calculateBonus(amountUsd);
-
     const depositId = `dep_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+    const auxmAmount = amountUsd || amount * 3000;
+
     const deposit: Deposit = {
       id: depositId,
       chain,
       coin,
       amount,
-      amountUsd: amountUsd || amount * 3000,
-      auxmAmount: amountUsd,
-      bonusAmount,
-      bonusPercent,
-      totalAuxm,
+      amountUsd: auxmAmount,
+      auxmAmount: auxmAmount,
       txHash,
       fromAddress,
       toAddress,
@@ -256,18 +190,12 @@ export async function POST(request: NextRequest) {
 
     // If deposit is confirmed, credit AUXM to user balance
     if (deposit.status === "confirmed") {
-      // Credit base AUXM amount
-      await redis.hincrbyfloat(`user:${normalizedUserAddress}`, "auxm", amountUsd);
-
-      // Credit bonus AUXM if applicable
-      if (bonusAmount > 0) {
-        await redis.hincrbyfloat(`user:${normalizedUserAddress}`, "bonusauxm", bonusAmount);
-      }
+      // Credit AUXM amount (1:1 with USD)
+      await redis.hincrbyfloat(`user:${normalizedUserAddress}`, "auxm", auxmAmount);
 
       // Update totalAuxm
       const currentAuxm = parseFloat(String(await redis.hget(`user:${normalizedUserAddress}`, "auxm") || 0));
-      const currentBonus = parseFloat(String(await redis.hget(`user:${normalizedUserAddress}`, "bonusauxm") || 0));
-      await redis.hset(`user:${normalizedUserAddress}`, { totalAuxm: currentAuxm + currentBonus });
+      await redis.hset(`user:${normalizedUserAddress}`, { totalAuxm: currentAuxm });
 
       // Record transaction
       const transaction = {
@@ -275,15 +203,13 @@ export async function POST(request: NextRequest) {
         type: "deposit",
         coin: coin,
         amount: amount,
-        amountUsd: amountUsd,
+        amountUsd: auxmAmount,
         status: "completed",
         txHash: txHash,
         fromAddress: fromAddress,
         toAddress: toAddress,
         metadata: {
           chain,
-          bonusAmount,
-          bonusPercent,
           depositId,
         },
         createdAt: new Date().toISOString(),
@@ -292,18 +218,13 @@ export async function POST(request: NextRequest) {
       await redis.lpush(`user:${normalizedUserAddress}:transactions`, JSON.stringify(transaction));
     }
 
-    console.log("Deposit recorded with bonus:", deposit);
+    console.log("Deposit recorded:", deposit);
 
     return NextResponse.json({
       success: true,
       deposit,
-      bonus: {
-        percent: bonusPercent,
-        amount: bonusAmount,
-        isLaunchCampaign: isLaunchCampaignActive(),
-      },
-      message: deposit.status === "confirmed" 
-        ? `Deposit confirmed! ${totalAuxm.toFixed(2)} AUXM credited (including ${bonusAmount.toFixed(2)} bonus).`
+      message: deposit.status === "confirmed"
+        ? `Deposit confirmed! ${auxmAmount.toFixed(2)} AUXM credited.`
         : `Deposit pending. ${confirmations}/${requiredConfirmations} confirmations.`,
     });
 

@@ -501,7 +501,7 @@ export function AllocationWizard({
   const executionSpread = 0.5; // 0.5% spread
   const finalPrice = assetPrice * (1 + executionSpread / 100);
   const totalValue = amountNum * finalPrice;
-  const auxmBalance = (balances?.auxm || 0) + (balances?.bonusAuxm || 0);
+  const auxmBalance = balances?.auxm || 0;
   const canAfford = totalValue <= auxmBalance;
   const isWhaleThreshold = totalValue >= 100000;
   const allTrustChecked = trustChecks.every(Boolean);

@@ -23,9 +23,7 @@ export type WalletType =
 
 interface UserBalances {
   auxm: number;
-  bonusAuxm: number;
   totalAuxm: number;
-  bonusExpiresAt: string | null;
   auxg: number;
   auxs: number;
   auxpt: number;
@@ -41,13 +39,6 @@ interface UserBalances {
 interface BalanceSummary {
   totalAuxm: number;
   withdrawableAuxm: number;
-  lockedBonusAuxm: number;
-  bonusStatus: {
-    amount: number;
-    expiresAt: string | null;
-    usableFor: string[];
-    note: string;
-  } | null;
   totalValueUsd: number;
   metals?: {
     auxg: number;
@@ -104,9 +95,7 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 const DEFAULT_BALANCES: UserBalances = {
   auxm: 0,
-  bonusAuxm: 0,
   totalAuxm: 0,
-  bonusExpiresAt: null,
   auxg: 0,
   auxs: 0,
   auxpt: 0,
@@ -238,10 +227,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
       const merged: UserBalances = {
         auxm: redisData.balances?.auxm ?? 0,
-        bonusAuxm: redisData.balances?.bonusAuxm ?? 0,
-        totalAuxm:
-          (redisData.balances?.auxm ?? 0) + (redisData.balances?.bonusAuxm ?? 0),
-        bonusExpiresAt: redisData.balances?.bonusExpiresAt ?? null,
+        totalAuxm: redisData.balances?.auxm ?? 0,
         // Metaller: Sadece Redis balance (allocations ayrı gösteriliyor)
         auxg: redisData.balances?.auxg ?? 0,
         auxs: redisData.balances?.auxs ?? 0,

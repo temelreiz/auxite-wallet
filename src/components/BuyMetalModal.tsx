@@ -78,7 +78,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
     
     switch (selectedPayment.symbol) {
       case 'AUXM':
-        return (walletBalances.auxm || 0) + (walletBalances.bonusAuxm || 0);
+        return walletBalances.auxm || 0;
       case 'ETH':
         return walletBalances.eth || 0;
       case 'BTC':

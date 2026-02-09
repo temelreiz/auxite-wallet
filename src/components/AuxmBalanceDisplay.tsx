@@ -16,8 +16,7 @@ export function AuxmBalanceDisplay({
   const { balances, refreshBalances, balancesLoading } = useWallet();
   
   const auxm = balances?.auxm ?? 0;
-  const bonusAuxm = balances?.bonusAuxm ?? 0;
-  const totalAuxm = auxm + bonusAuxm;
+  const totalAuxm = auxm;
 
   const t = {
     balance: lang === "tr" ? "Bakiye" : "Balance",
@@ -36,11 +35,6 @@ export function AuxmBalanceDisplay({
           <span className="text-white font-semibold">{totalAuxm.toFixed(2)}</span>
           <span className="text-slate-400 text-sm">AUXM</span>
         </div>
-        {bonusAuxm > 0 && (
-          <span className="text-xs text-[#2F6F62] bg-[#2F6F62]/20 px-1.5 py-0.5 rounded">
-            +{bonusAuxm.toFixed(2)} bonus
-          </span>
-        )}
         {showRefresh && (
           <button 
             onClick={refreshBalances}
@@ -88,12 +82,6 @@ export function AuxmBalanceDisplay({
           <span className="text-slate-400">{t.available}</span>
           <span className="text-white font-mono">{auxm.toFixed(2)}</span>
         </div>
-        {bonusAuxm > 0 && (
-          <div className="flex justify-between text-sm">
-            <span className="text-[#2F6F62]">{t.bonus}</span>
-            <span className="text-[#2F6F62] font-mono">+{bonusAuxm.toFixed(2)}</span>
-          </div>
-        )}
       </div>
     </div>
   );

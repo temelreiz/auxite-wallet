@@ -99,7 +99,7 @@ export default function TradePanel({
   // Use WalletContext balance instead of mock data
   const auxmBalance = { 
     auxm: balances?.auxm || 0, 
-    bonusAuxm: balances?.bonusAuxm || 0 
+    bonusAuxm: 0 || 0 
   };
   const totalAuxm = auxmBalance.auxm + auxmBalance.bonusAuxm;
 

@@ -8,9 +8,7 @@ export type WalletType = "metamask" | "walletconnect" | "coinbase" | "ledger" | 
 
 interface UserBalances {
   auxm: number;
-  bonusAuxm: number;
   totalAuxm: number;
-  bonusExpiresAt: string | null;
   auxg: number;
   auxs: number;
   auxpt: number;
@@ -26,13 +24,6 @@ interface UserBalances {
 interface BalanceSummary {
   totalAuxm: number;
   withdrawableAuxm: number;
-  lockedBonusAuxm: number;
-  bonusStatus: {
-    amount: number;
-    expiresAt: string | null;
-    usableFor: string[];
-    note: string;
-  } | null;
   totalValueUsd: number;
 }
 
@@ -51,9 +42,7 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 const DEFAULT_BALANCES: UserBalances = {
   auxm: 0,
-  bonusAuxm: 0,
   totalAuxm: 0,
-  bonusExpiresAt: null,
   auxg: 0,
   auxs: 0,
   auxpt: 0,
@@ -191,7 +180,5 @@ export function useAuxmBalance() {
   return {
     total: balances?.totalAuxm ?? 0,
     available: summary?.withdrawableAuxm ?? 0,
-    bonus: balances?.bonusAuxm ?? 0,
-    bonusExpiresAt: balances?.bonusExpiresAt ?? null,
   };
 }
