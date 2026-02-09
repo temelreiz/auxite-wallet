@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useAccount } from "wagmi";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { LeasingDashboard } from "@/components/LeasingDashboard";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
+import { useLeaseRates } from "@/hooks/useLeaseRates";
+import Link from "next/link";
 
 const STORAGE_KEYS = {
   HAS_WALLET: "auxite_has_wallet",
@@ -17,161 +17,334 @@ const translations: Record<string, Record<string, string>> = {
   tr: {
     pageTitle: "Yapılandırılmış Getiri",
     pageDesc: "Metal varlıklarınızdan kurumsal seviyede getiri elde edin",
-    walletRequired: "Cüzdan Gerekli",
-    connectWalletDesc: "Getiri özelliğini kullanmak için cüzdanınızı bağlayın",
+    walletRequired: "Giriş Gerekli",
+    connectWalletDesc: "Getiri özelliğini kullanmak için hesabınıza giriş yapın",
     yieldBadge: "SOFR + GOFO Tabanlı",
+    signIn: "Giriş Yap",
+    createAccount: "Hesap Oluştur",
+    yieldFormula: "Getiri = SOFR - GOFO + Platform Marjı",
+    institutionalGrade: "Kurumsal Seviye Getiri",
+    howItWorks: "Nasıl Çalışır?",
+    step1Title: "Varlık Tahsis Et",
+    step1Desc: "Metal tokenlarınızı getiri programına tahsis edin",
+    step2Title: "Vade Seçin",
+    step2Desc: "3, 6 veya 12 aylık vade seçeneklerinden birini seçin",
+    step3Title: "Getiri Kazanın",
+    step3Desc: "SOFR + GOFO bazlı kurumsal getiri elde edin",
+    securedBy: "NY Fed SOFR ile Desteklenir",
+    realTimeRates: "Gerçek Zamanlı Oranlar",
   },
   en: {
     pageTitle: "Structured Yield",
     pageDesc: "Earn institutional-grade yield on your metal holdings",
-    walletRequired: "Wallet Required",
-    connectWalletDesc: "Connect your wallet to access structured yield",
+    walletRequired: "Sign In Required",
+    connectWalletDesc: "Sign in to your account to access structured yield",
     yieldBadge: "SOFR + GOFO Based",
+    signIn: "Sign In",
+    createAccount: "Create Account",
+    yieldFormula: "Yield = SOFR - GOFO + Platform Margin",
+    institutionalGrade: "Institutional-Grade Yield",
+    howItWorks: "How It Works",
+    step1Title: "Allocate Assets",
+    step1Desc: "Allocate your metal tokens to the yield program",
+    step2Title: "Choose Term",
+    step2Desc: "Select from 3, 6, or 12 month term options",
+    step3Title: "Earn Yield",
+    step3Desc: "Earn institutional yield based on SOFR + GOFO",
+    securedBy: "Secured by NY Fed SOFR",
+    realTimeRates: "Real-Time Rates",
   },
   de: {
     pageTitle: "Strukturierte Rendite",
     pageDesc: "Verdienen Sie institutionelle Rendite auf Ihre Metallbestände",
-    walletRequired: "Wallet erforderlich",
-    connectWalletDesc: "Verbinden Sie Ihre Wallet für strukturierte Rendite",
+    walletRequired: "Anmeldung erforderlich",
+    connectWalletDesc: "Melden Sie sich an, um auf strukturierte Rendite zuzugreifen",
     yieldBadge: "SOFR + GOFO Basiert",
+    signIn: "Anmelden",
+    createAccount: "Konto erstellen",
+    yieldFormula: "Rendite = SOFR - GOFO + Plattformmarge",
+    institutionalGrade: "Institutionelle Rendite",
+    howItWorks: "So funktioniert es",
+    step1Title: "Vermögen zuweisen",
+    step1Desc: "Weisen Sie Ihre Metalltoken dem Renditeprogramm zu",
+    step2Title: "Laufzeit wählen",
+    step2Desc: "Wählen Sie aus 3, 6 oder 12 Monaten Laufzeit",
+    step3Title: "Rendite verdienen",
+    step3Desc: "Verdienen Sie institutionelle Rendite basierend auf SOFR + GOFO",
+    securedBy: "Gesichert durch NY Fed SOFR",
+    realTimeRates: "Echtzeit-Kurse",
   },
   fr: {
     pageTitle: "Rendement Structuré",
     pageDesc: "Gagnez un rendement institutionnel sur vos métaux",
-    walletRequired: "Portefeuille requis",
-    connectWalletDesc: "Connectez votre portefeuille pour accéder au rendement structuré",
+    walletRequired: "Connexion requise",
+    connectWalletDesc: "Connectez-vous pour accéder au rendement structuré",
     yieldBadge: "Basé sur SOFR + GOFO",
+    signIn: "Se connecter",
+    createAccount: "Créer un compte",
+    yieldFormula: "Rendement = SOFR - GOFO + Marge Plateforme",
+    institutionalGrade: "Rendement Institutionnel",
+    howItWorks: "Comment ça marche",
+    step1Title: "Allouer des actifs",
+    step1Desc: "Allouez vos tokens métalliques au programme de rendement",
+    step2Title: "Choisir la durée",
+    step2Desc: "Sélectionnez parmi les options de 3, 6 ou 12 mois",
+    step3Title: "Gagner du rendement",
+    step3Desc: "Gagnez un rendement institutionnel basé sur SOFR + GOFO",
+    securedBy: "Sécurisé par NY Fed SOFR",
+    realTimeRates: "Taux en temps réel",
   },
   ar: {
     pageTitle: "العائد المهيكل",
     pageDesc: "احصل على عوائد مؤسسية على حيازاتك المعدنية",
-    walletRequired: "المحفظة مطلوبة",
-    connectWalletDesc: "قم بتوصيل محفظتك للوصول إلى العائد المهيكل",
+    walletRequired: "تسجيل الدخول مطلوب",
+    connectWalletDesc: "سجل دخولك للوصول إلى العائد المهيكل",
     yieldBadge: "مبني على SOFR + GOFO",
+    signIn: "تسجيل الدخول",
+    createAccount: "إنشاء حساب",
+    yieldFormula: "العائد = SOFR - GOFO + هامش المنصة",
+    institutionalGrade: "عائد مؤسسي",
+    howItWorks: "كيف يعمل",
+    step1Title: "تخصيص الأصول",
+    step1Desc: "خصص رموز المعادن الخاصة بك لبرنامج العائد",
+    step2Title: "اختر المدة",
+    step2Desc: "اختر من خيارات 3 أو 6 أو 12 شهرًا",
+    step3Title: "اكسب العائد",
+    step3Desc: "اكسب عائدًا مؤسسيًا بناءً على SOFR + GOFO",
+    securedBy: "مؤمن بواسطة NY Fed SOFR",
+    realTimeRates: "أسعار في الوقت الفعلي",
   },
   ru: {
     pageTitle: "Структурированный Доход",
     pageDesc: "Получайте институциональный доход на металлические активы",
-    walletRequired: "Требуется кошелек",
-    connectWalletDesc: "Подключите кошелек для доступа к структурированному доходу",
+    walletRequired: "Требуется вход",
+    connectWalletDesc: "Войдите в аккаунт для доступа к структурированному доходу",
     yieldBadge: "На базе SOFR + GOFO",
+    signIn: "Войти",
+    createAccount: "Создать аккаунт",
+    yieldFormula: "Доход = SOFR - GOFO + Маржа Платформы",
+    institutionalGrade: "Институциональный Доход",
+    howItWorks: "Как это работает",
+    step1Title: "Распределить активы",
+    step1Desc: "Распределите ваши металлические токены в программу дохода",
+    step2Title: "Выбрать срок",
+    step2Desc: "Выберите из вариантов на 3, 6 или 12 месяцев",
+    step3Title: "Получить доход",
+    step3Desc: "Получайте институциональный доход на основе SOFR + GOFO",
+    securedBy: "Обеспечено NY Fed SOFR",
+    realTimeRates: "Котировки в реальном времени",
   },
 };
 
-export default function EarnPage() {
+export default function StakePage() {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
-  
-  const { isConnected: isExternalConnected, address: externalAddress } = useAccount();
-  
+
   const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
-  const [walletMode, setWalletMode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSessionUnlocked, setIsSessionUnlocked] = useState(false);
+
+  // Fetch real-time SOFR + GOFO rates
+  const { sofr, gofo, leaseOffers, isLoading: ratesLoading, lastUpdated, source, formatAPYRange } = useLeaseRates({ lang: lang as "tr" | "en" });
 
   useEffect(() => {
-    const savedMode = localStorage.getItem(STORAGE_KEYS.WALLET_MODE);
-    const hasLocalWallet = localStorage.getItem(STORAGE_KEYS.HAS_WALLET);
     const localAddress = localStorage.getItem(STORAGE_KEYS.WALLET_ADDRESS);
-    const sessionUnlocked = sessionStorage.getItem(STORAGE_KEYS.SESSION_UNLOCKED);
-
-    setWalletMode(savedMode);
-    
-    if (savedMode === "local" && hasLocalWallet === "true" && localAddress) {
+    if (localAddress) {
       setLocalWalletAddress(localAddress);
-      if (sessionUnlocked === "true") {
-        setIsSessionUnlocked(true);
-      }
     }
-    
     setIsLoading(false);
   }, []);
 
-  const isWalletConnected = 
-    (walletMode === "local" && !!localWalletAddress && isSessionUnlocked) || 
-    (walletMode === "external" && isExternalConnected);
-
-  const currentAddress = walletMode === "local" ? localWalletAddress : externalAddress;
+  const isWalletConnected = !!localWalletAddress;
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-zinc-600 border-t-emerald-500 rounded-full"></div>
+      <main className="min-h-screen bg-stone-100 dark:bg-slate-950 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-slate-600 border-t-amber-500 rounded-full"></div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-stone-100 dark:bg-zinc-950 text-zinc-900 dark:text-white">
+    <main className="min-h-screen bg-stone-100 dark:bg-slate-950 text-slate-900 dark:text-white pb-20 sm:pb-0">
       <TopNav />
 
-      {/* Page Header */}
-      <div className="border-b border-stone-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/30">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <h2 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-0.5 sm:mb-1">
-            {t.pageTitle}
-          </h2>
-          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
-            {t.pageDesc}
-          </p>
+      {/* Page Header - Mobile Optimized */}
+      <div className="border-b border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/30">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:py-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-1">
+                {t.pageTitle}
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                {t.pageDesc}
+              </p>
+            </div>
+            {/* SOFR + GOFO Badge */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+              <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+              <span className="text-xs font-medium text-amber-600 dark:text-amber-400">{t.yieldBadge}</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        {isWalletConnected && currentAddress ? (
-          <LeasingDashboard walletAddress={currentAddress} />
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
+        {isWalletConnected && localWalletAddress ? (
+          <LeasingDashboard walletAddress={localWalletAddress} />
         ) : (
-          <div className="text-center py-10 sm:py-16">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-full bg-stone-200 dark:bg-zinc-800/50 flex items-center justify-center">
-              <svg className="w-8 h-8 sm:w-10 sm:h-10 text-stone-400 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
-              </svg>
-            </div>
-            <h3 className="text-lg sm:text-xl font-semibold text-zinc-800 dark:text-zinc-200 mb-1.5 sm:mb-2">
-              {t.walletRequired}
-            </h3>
-            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mb-4 sm:mb-6 max-w-md mx-auto px-4">
-              {t.connectWalletDesc}
-            </p>
-            <ConnectButton.Custom>
-              {({
-                account,
-                chain,
-                openAccountModal,
-                openChainModal,
-                openConnectModal,
-                mounted,
-              }) => {
-                const ready = mounted;
-                const connected = ready && account && chain;
+          <div className="space-y-6">
+            {/* Sign In Card - Mobile First */}
+            <div className="rounded-2xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-6 sm:p-8 text-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 flex items-center justify-center">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
 
-                return (
-                  <div
-                    {...(!ready && {
-                      'aria-hidden': true,
-                      style: {
-                        opacity: 0,
-                        pointerEvents: 'none',
-                        userSelect: 'none',
-                      },
-                    })}
-                  >
-                    {!connected && (
-                      <button
-                        onClick={openConnectModal}
-                        className="inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm sm:text-base transition-all shadow-lg shadow-emerald-500/20"
-                      >
-                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                        </svg>
-                        {lang === "tr" ? "Cüzdan Bağla" : "Connect Wallet"}
-                      </button>
-                    )}
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white mb-2">
+                {t.walletRequired}
+              </h2>
+              <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
+                {t.connectWalletDesc}
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-sm mx-auto">
+                <Link
+                  href="/auth/login"
+                  className="flex-1 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                  {t.signIn}
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="flex-1 px-6 py-3 rounded-xl bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-colors flex items-center justify-center gap-2 border border-stone-200 dark:border-slate-700"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                  {t.createAccount}
+                </Link>
+              </div>
+            </div>
+
+            {/* How It Works - Mobile Optimized */}
+            <div className="rounded-2xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 sm:p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <span className="text-sm">💡</span>
+                </div>
+                <h3 className="text-sm sm:text-base font-semibold text-slate-800 dark:text-white">{t.howItWorks}</h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  { num: 1, title: t.step1Title, desc: t.step1Desc, icon: "📦" },
+                  { num: 2, title: t.step2Title, desc: t.step2Desc, icon: "📅" },
+                  { num: 3, title: t.step3Title, desc: t.step3Desc, icon: "💰" },
+                ].map((step) => (
+                  <div key={step.num} className="flex sm:flex-col items-start sm:items-center gap-3 sm:gap-2 p-3 sm:p-4 rounded-xl bg-stone-50 dark:bg-slate-800/50">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                      {step.icon}
+                    </div>
+                    <div className="sm:text-center">
+                      <div className="text-xs text-amber-500 font-semibold mb-0.5">Step {step.num}</div>
+                      <div className="text-sm font-medium text-slate-800 dark:text-white mb-1">{step.title}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">{step.desc}</div>
+                    </div>
                   </div>
-                );
-              }}
-            </ConnectButton.Custom>
+                ))}
+              </div>
+            </div>
+
+            {/* Yield Formula Info */}
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/5 p-5 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{t.institutionalGrade}</div>
+                    <div className="text-xs text-emerald-600 dark:text-emerald-400">{t.securedBy}</div>
+                  </div>
+                </div>
+                <div className="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-emerald-500/20">
+                  <code className="text-xs sm:text-sm font-mono text-emerald-600 dark:text-emerald-400">
+                    APY = SOFR - GOFO + Margin
+                  </code>
+                </div>
+              </div>
+            </div>
+
+            {/* SOFR + GOFO Live Display */}
+            <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/5 dark:to-orange-500/5 p-5 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-amber-700 dark:text-amber-300">{t.realTimeRates}</div>
+                    <div className="text-xs text-amber-600 dark:text-amber-400">{source || "NY Fed + Calculated"}</div>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <div className="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-500/20">
+                    <div className="text-[10px] text-slate-500 uppercase tracking-wide">SOFR</div>
+                    <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{sofr?.toFixed(2) || "4.33"}%</div>
+                  </div>
+                  <div className="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-amber-500/20">
+                    <div className="text-[10px] text-slate-500 uppercase tracking-wide">GOFO</div>
+                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{gofo?.toFixed(2) || "1.50"}%</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* APY Formula Display */}
+              <div className="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-amber-500/10 mb-4">
+                <code className="text-xs sm:text-sm font-mono text-slate-600 dark:text-slate-400">
+                  Base Rate = {sofr?.toFixed(2) || "4.33"}% (SOFR) - {gofo?.toFixed(2) || "1.50"}% (GOFO) = <span className="text-emerald-600 dark:text-emerald-400 font-bold">{((sofr || 4.33) - (gofo || 1.5)).toFixed(2)}%</span>
+                </code>
+              </div>
+            </div>
+
+            {/* Live Rates Preview */}
+            <div className="rounded-2xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{lang === "tr" ? "Metal APY Oranları" : "Metal APY Rates"}</span>
+                </div>
+                {lastUpdated && (
+                  <span className="text-xs text-slate-500">
+                    {lang === "tr" ? "Son güncelleme: " : "Updated: "}{new Date(lastUpdated).toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {leaseOffers.map((offer) => (
+                  <div key={offer.metal} className="p-3 rounded-xl bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
+                    <div className="flex items-center gap-2 mb-2">
+                      <img src={offer.icon} alt={offer.name} className="w-6 h-6" />
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{offer.symbol}</span>
+                    </div>
+                    <div className="text-lg font-bold text-emerald-500">{formatAPYRange(offer)}</div>
+                    <div className="text-xs text-slate-500">{offer.name}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
