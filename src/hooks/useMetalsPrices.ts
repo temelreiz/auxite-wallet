@@ -127,7 +127,8 @@ export function useMetalsPrices() {
 
   useEffect(() => {
     fetchPrices();
-    const interval = setInterval(fetchPrices, 3000);
+    // Update prices every 2 seconds for real-time trading feel
+    const interval = setInterval(fetchPrices, 2000);
     return () => clearInterval(interval);
   }, []);
 
