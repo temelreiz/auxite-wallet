@@ -262,22 +262,22 @@ export default function StakePage() {
               </div>
             </div>
 
-            {/* Yield Formula Info */}
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/5 p-5 sm:p-6">
+            {/* Yield Formula Info - Institutional Navy + Gold */}
+            <div className="rounded-2xl border border-slate-700/30 bg-slate-900/50 dark:bg-slate-900/80 p-5 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="w-10 h-10 rounded-xl bg-[#d4a574]/20 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-[#d4a574]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                     </svg>
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{t.institutionalGrade}</div>
-                    <div className="text-xs text-emerald-600 dark:text-emerald-400">{t.securedBy}</div>
+                    <div className="text-sm font-semibold text-slate-200">{t.institutionalGrade}</div>
+                    <div className="text-xs text-slate-400">{t.securedBy}</div>
                   </div>
                 </div>
-                <div className="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-emerald-500/20">
-                  <code className="text-xs sm:text-sm font-mono text-emerald-600 dark:text-emerald-400">
+                <div className="px-4 py-2 rounded-lg bg-slate-800 border border-[#d4a574]/20">
+                  <code className="text-xs sm:text-sm font-mono text-[#E7D2A8]">
                     APY = SOFR - GOFO + Margin
                   </code>
                 </div>
@@ -313,7 +313,7 @@ export default function StakePage() {
               {/* APY Formula Display */}
               <div className="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-amber-500/10 mb-4">
                 <code className="text-xs sm:text-sm font-mono text-slate-600 dark:text-slate-400">
-                  Base Rate = {sofr?.toFixed(2) || "4.33"}% (SOFR) - {gofo?.toFixed(2) || "1.50"}% (GOFO) = <span className="text-emerald-600 dark:text-emerald-400 font-bold">{((sofr || 4.33) - (gofo || 1.5)).toFixed(2)}%</span>
+                  Base Rate = {sofr?.toFixed(2) || "4.33"}% (SOFR) - {gofo?.toFixed(2) || "1.50"}% (GOFO) = <span className="text-[#D4B47A] font-bold">{((sofr || 4.33) - (gofo || 1.5)).toFixed(2)}%</span>
                 </code>
               </div>
             </div>
@@ -322,7 +322,7 @@ export default function StakePage() {
             <div className="rounded-2xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-5 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                  <div className="w-2 h-2 rounded-full bg-[#d4a574] animate-pulse"></div>
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{lang === "tr" ? "Metal APY Oranları" : "Metal APY Rates"}</span>
                 </div>
                 {lastUpdated && (
@@ -339,7 +339,7 @@ export default function StakePage() {
                       <img src={offer.icon} alt={offer.name} className="w-6 h-6" />
                       <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{offer.symbol}</span>
                     </div>
-                    <div className="text-lg font-bold text-emerald-500">{formatAPYRange(offer)}</div>
+                    <div className="text-lg font-bold text-[#D4B47A]">{formatAPYRange(offer)}</div>
                     <div className="text-xs text-slate-500">{offer.name}</div>
                   </div>
                 ))}

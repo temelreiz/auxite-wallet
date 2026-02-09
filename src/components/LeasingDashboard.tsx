@@ -275,7 +275,7 @@ function StatsCard({ label, value, suffix, color, icon, trend, t }: { label: str
             {suffix !== "USD" && suffix !== "" && <span className="text-xs sm:text-sm ml-1 font-normal text-slate-500">{suffix}</span>}
           </div>
           {trend && (
-            <div className={`flex items-center gap-1 mt-0.5 sm:mt-1 text-[10px] sm:text-xs ${trend.isUp ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+            <div className={`flex items-center gap-1 mt-0.5 sm:mt-1 text-[10px] sm:text-xs ${trend.isUp ? 'text-[#d4a574]' : 'text-red-500 dark:text-red-400'}`}>
               <span>{trend.isUp ? '↑' : '↓'}</span><span>{trend.value}%</span><span className="text-slate-500 hidden sm:inline">{t.thisWeek}</span>
             </div>
           )}
@@ -300,7 +300,7 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
   };
 
   return (
-    <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} className={`rounded-lg sm:rounded-xl border backdrop-blur-sm p-4 sm:p-6 transition-all duration-300 ${isHovered ? "border-emerald-500/50 shadow-lg shadow-emerald-500/10 -translate-y-1" : "border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm dark:shadow-none"}`}>
+    <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} className={`rounded-lg sm:rounded-xl border backdrop-blur-sm p-4 sm:p-6 transition-all duration-300 ${isHovered ? "border-[#d4a574]/50 shadow-lg shadow-[#d4a574]/10 -translate-y-1" : "border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm dark:shadow-none"}`}>
 
       {/* PRIORITY 5: Structured Metal Yield Badge */}
       <div className="mb-3 flex items-center justify-between">
@@ -334,7 +334,7 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
         {/* PRIORITY 5: APY with Tooltip */}
         <div className="text-right relative">
           <div
-            className="text-xl sm:text-2xl font-bold text-emerald-500 dark:text-emerald-400 cursor-help"
+            className="text-xl sm:text-2xl font-bold text-[#D4B47A] cursor-help"
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
           >
@@ -355,7 +355,7 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
         {offer.periods.map((period: any) => (
           <div key={period.months} className="flex-1 text-center px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-lg bg-stone-100 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
             <div className="text-[10px] sm:text-xs text-slate-500">{period.months} {t.months}</div>
-            <div className="text-xs sm:text-sm font-semibold text-emerald-500 dark:text-emerald-400">{period.apy}%</div>
+            <div className="text-xs sm:text-sm font-semibold text-[#D4B47A]">{period.apy}%</div>
           </div>
         ))}
       </div>
@@ -416,46 +416,46 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
   return (
     <>
       <div className="space-y-4 sm:space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 dark:from-emerald-500/20 dark:to-cyan-500/20 border border-emerald-500/20">
+        {/* Header - Institutional Navy + Gold Border */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-slate-900/80 dark:bg-slate-900 border border-[#d4a574]/30">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#d4a574] to-[#b8956a] flex items-center justify-center shadow-lg shadow-[#d4a574]/25">
               <svg className="w-5 h-5 sm:w-7 sm:h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
             </div>
             <div>
-              <h2 className="text-base sm:text-xl font-bold text-slate-800 dark:text-white">{t.metalStaking}</h2>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">{t.stakeAndEarn}</p>
+              <h2 className="text-base sm:text-xl font-bold text-white">{t.metalStaking}</h2>
+              <p className="text-xs sm:text-sm text-slate-400">{t.stakeAndEarn}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-white/50 dark:bg-slate-800/50 border border-emerald-500/20 self-start md:self-auto">
-            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">NY Fed + Calculated</span>
-            <span className="text-sm sm:text-lg font-bold text-emerald-500 dark:text-emerald-400">SOFR: {(safeRates?.sofr || 3.66).toFixed(2)}%</span>
+          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-slate-800/50 border border-[#d4a574]/20 self-start md:self-auto">
+            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#d4a574] animate-pulse"></div>
+            <span className="text-xs sm:text-sm text-slate-400">NY Fed + Calculated</span>
+            <span className="text-sm sm:text-lg font-bold text-[#E7D2A8]">SOFR: {(safeRates?.sofr || 3.66).toFixed(2)}%</span>
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats Grid - Neutral/Gold for yield metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
-          <StatsCard label={t.totalLocked} value={stats.totalLocked} suffix="USD" color="text-emerald-500 dark:text-emerald-400" icon={<svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>} trend={{ value: 12.5, isUp: true }} t={t} />
-          <StatsCard label={t.activePositions} value={stats.activePositions} suffix="pos" color="text-blue-500 dark:text-blue-400" icon={<svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>} t={t} />
-          <StatsCard label={t.annualEarnings} value={stats.annualEarnings} suffix="USD" color="text-emerald-500 dark:text-emerald-400" icon={<svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} t={t} />
-          <StatsCard label={t.averageAPY} value={stats.avgAPY > 0 ? `${stats.avgAPY}%` : "-"} suffix="" color="text-purple-500 dark:text-purple-400" icon={<svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>} t={t} />
+          <StatsCard label={t.totalLocked} value={stats.totalLocked} suffix="USD" color="text-[#d4a574]" icon={<svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#d4a574]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>} trend={{ value: 12.5, isUp: true }} t={t} />
+          <StatsCard label={t.activePositions} value={stats.activePositions} suffix="pos" color="text-slate-400" icon={<svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>} t={t} />
+          <StatsCard label={t.annualEarnings} value={stats.annualEarnings} suffix="USD" color="text-[#D4B47A]" icon={<svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#D4B47A]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} t={t} />
+          <StatsCard label={t.averageAPY} value={stats.avgAPY > 0 ? `${stats.avgAPY}%` : "-"} suffix="" color="text-[#D4B47A]" icon={<svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#D4B47A]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>} t={t} />
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - Gold active state */}
         <div className="border-b border-stone-200 dark:border-slate-800 overflow-x-auto">
           <div className="flex gap-0.5 sm:gap-1 min-w-max">
-            <button onClick={() => setActiveTab("allocate")} className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all relative ${activeTab === "allocate" ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}>
+            <button onClick={() => setActiveTab("allocate")} className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all relative ${activeTab === "allocate" ? "text-[#d4a574]" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}>
               <span className="flex items-center gap-1.5 sm:gap-2"><svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>{t.earn}</span>
-              {activeTab === "allocate" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 dark:bg-emerald-400 rounded-full"></div>}
+              {activeTab === "allocate" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#d4a574] rounded-full"></div>}
             </button>
-            <button onClick={() => setActiveTab("positions")} className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all relative ${activeTab === "positions" ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}>
-              <span className="flex items-center gap-1.5 sm:gap-2"><svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>{t.myPositions}{stats.activePositions > 0 && <span className="ml-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs rounded-full bg-emerald-500/20">{stats.activePositions}</span>}</span>
-              {activeTab === "positions" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 dark:bg-emerald-400 rounded-full"></div>}
+            <button onClick={() => setActiveTab("positions")} className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all relative ${activeTab === "positions" ? "text-[#d4a574]" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}>
+              <span className="flex items-center gap-1.5 sm:gap-2"><svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>{t.myPositions}{stats.activePositions > 0 && <span className="ml-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs rounded-full bg-[#d4a574]/20">{stats.activePositions}</span>}</span>
+              {activeTab === "positions" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#d4a574] rounded-full"></div>}
             </button>
-            <button onClick={() => setActiveTab("dca")} className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all relative ${activeTab === "dca" ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}>
+            <button onClick={() => setActiveTab("dca")} className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all relative ${activeTab === "dca" ? "text-[#d4a574]" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}>
               <span className="flex items-center gap-1.5 sm:gap-2"><svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>{t.autoInvest}</span>
-              {activeTab === "dca" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 dark:bg-emerald-400 rounded-full"></div>}
+              {activeTab === "dca" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#d4a574] rounded-full"></div>}
             </button>
           </div>
         </div>
@@ -486,9 +486,9 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
               </div>
               <h3 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-slate-200 mb-1.5 sm:mb-2">{t.dcaTitle}</h3>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-4 sm:mb-6">{t.noDcaPlans}</p>
-              <button 
+              <button
                 onClick={() => setShowRecurringStake(true)}
-                className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm sm:text-base transition-colors"
+                className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-[#d4a574] hover:bg-[#c49464] text-white font-semibold text-sm sm:text-base transition-colors"
               >
                 {t.createDca}
               </button>
@@ -510,10 +510,10 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
               <li className="flex items-start gap-1.5 sm:gap-2"><span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[10px] sm:text-xs shrink-0">4</span><span>{t.step4}</span></li>
             </ul>
           </div>
-          <div className="rounded-lg sm:rounded-xl border border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/5 p-3 sm:p-5">
+          <div className="rounded-lg sm:rounded-xl border border-[#d4a574]/20 bg-[#d4a574]/5 dark:bg-[#d4a574]/5 p-3 sm:p-5">
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center"><span className="text-xs sm:text-sm">✓</span></div>
-              <span className="text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-300">{t.features}</span>
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-[#d4a574]/20 flex items-center justify-center"><span className="text-xs sm:text-sm">✓</span></div>
+              <span className="text-xs sm:text-sm font-medium text-[#d4a574]">{t.features}</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
               {[{ icon: "🔒", key: "insured" }, { icon: "🏢", key: "institutional" }, { icon: "📊", key: "transparent" }, { icon: "📦", key: "physical" }, { icon: "💰", key: "metalYield" }, { icon: "⛓️", key: "onChain" }].map((item, i) => (
