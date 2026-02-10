@@ -289,7 +289,9 @@ function StatsCard({ label, value, suffix, color, icon, trend, t }: { label: str
 function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; formatAPYRange: (offer: any) => string; onAllocate: () => void; t: Record<string, string> }) {
   const [isHovered, setIsHovered] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
-  const metalGradients: Record<string, string> = { AUXG: "from-[#C6A46C]/10 via-transparent to-transparent", AUXS: "from-[#B7C0C8]/10 via-transparent to-transparent", AUXPT: "from-[#8FA3B0]/10 via-transparent to-transparent", AUXPD: "from-[#7E8A93]/10 via-transparent to-transparent" };
+  const metalGradients: Record<string, string> = { AUXG: "from-[#C6A15B]/10 via-transparent to-transparent", AUXS: "from-[#A6B0BF]/10 via-transparent to-transparent", AUXPT: "from-[#8FA3B8]/10 via-transparent to-transparent", AUXPD: "from-[#6E7C8A]/10 via-transparent to-transparent" };
+  const metalColors: Record<string, string> = { AUXG: "#C6A15B", AUXS: "#A6B0BF", AUXPT: "#8FA3B8", AUXPD: "#6E7C8A" };
+  const metalCertifications: Record<string, string> = { AUXG: "LBMA Good Delivery", AUXS: "LBMA Good Delivery", AUXPT: "LPPM Approved", AUXPD: "LPPM Approved" };
 
   // Metal icon mapping for high quality icons
   const metalIcons: Record<string, string> = {
@@ -300,7 +302,7 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
   };
 
   return (
-    <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} className={`rounded-lg sm:rounded-xl border backdrop-blur-sm p-4 sm:p-6 transition-all duration-300 ${isHovered ? "border-[#d4a574]/50 shadow-lg shadow-[#d4a574]/10 -translate-y-1" : "border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm dark:shadow-none"}`}>
+    <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} className={`rounded-lg sm:rounded-xl border backdrop-blur-sm p-4 sm:p-6 transition-all duration-300 ${isHovered ? "-translate-y-0.5" : "border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm dark:shadow-none"}`} style={isHovered ? { borderColor: `${metalColors[offer.metal] || '#d4a574'}80`, boxShadow: `0 4px 12px ${metalColors[offer.metal] || '#d4a574'}15` } : {}}>
 
       {/* PRIORITY 5: Structured Metal Yield Badge */}
       <div className="mb-3 flex items-center justify-between">
@@ -312,22 +314,20 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
 
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="relative">
-            <img
-              src={metalIcons[offer.metal] || offer.icon}
-              alt={offer.name}
-              width={48}
-              height={48}
-              className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
-              style={{ imageRendering: 'crisp-edges' }}
-            />
-            <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-[#2F6F62] rounded-full flex items-center justify-center">
-              <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-            </div>
-          </div>
+          {/* Icon: 20-24px, no shadow/glow/gradient, transparent BG */}
+          <img
+            src={metalIcons[offer.metal] || offer.icon}
+            alt={offer.name}
+            className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+            style={{ opacity: isHovered ? 1 : 0.55 }}
+          />
           <div>
-            <div className="font-semibold text-slate-800 dark:text-slate-200 text-base sm:text-lg">{offer.metal}</div>
-            <div className="text-[10px] sm:text-xs text-slate-500">{offer.name}</div>
+            <div className="font-semibold text-slate-800 dark:text-slate-200 text-base sm:text-lg">{offer.name}</div>
+            <div className="text-[10px] sm:text-xs text-slate-500">{offer.metal}</div>
+            {/* LBMA / LPPM certification badge */}
+            <div className="text-[10px] sm:text-[11px] text-slate-400" style={{ opacity: 0.6 }}>
+              {metalCertifications[offer.metal] || ''}
+            </div>
           </div>
         </div>
 

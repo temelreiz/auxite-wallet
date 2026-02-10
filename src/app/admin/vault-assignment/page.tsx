@@ -29,10 +29,10 @@ const VAULT_LOCATIONS = [
 
 // Metal info
 const METAL_INFO: Record<string, { name: string; icon: string; color: string }> = {
-  AUXG: { name: "Auxite Gold", icon: "🥇", color: "text-[#C6A46C]" },
-  AUXS: { name: "Auxite Silver", icon: "🥈", color: "text-[#B7C0C8]" },
-  AUXPT: { name: "Auxite Platinum", icon: "⚪", color: "text-[#8FA3B0]" },
-  AUXPD: { name: "Auxite Palladium", icon: "🔘", color: "text-[#7E8A93]" },
+  AUXG: { name: "Auxite Gold", icon: "🥇", color: "text-[#C6A15B]" },
+  AUXS: { name: "Auxite Silver", icon: "🥈", color: "text-[#A6B0BF]" },
+  AUXPT: { name: "Auxite Platinum", icon: "⚪", color: "text-[#8FA3B8]" },
+  AUXPD: { name: "Auxite Palladium", icon: "🔘", color: "text-[#6E7C8A]" },
 };
 
 // Admin addresses

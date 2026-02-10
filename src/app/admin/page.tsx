@@ -279,10 +279,10 @@ const ADMIN_ADDRESSES = (process.env.NEXT_PUBLIC_ADMIN_ADDRESSES || "0x101bD0821
   .map(a => a.trim().toLowerCase());
 
 const METALS = [
-  { key: "gold", symbol: "AUXG", name: "Auxite Altın", icon: "🥇", color: "text-[#C6A46C]" },
-  { key: "silver", symbol: "AUXS", name: "Auxite Gümüş", icon: "🥈", color: "text-[#B7C0C8]" },
-  { key: "platinum", symbol: "AUXPT", name: "Auxite Platin", icon: "💎", color: "text-[#8FA3B0]" },
-  { key: "palladium", symbol: "AUXPD", name: "Auxite Paladyum", icon: "💜", color: "text-[#7E8A93]" },
+  { key: "gold", symbol: "AUXG", name: "Auxite Altın", icon: "🥇", color: "text-[#C6A15B]" },
+  { key: "silver", symbol: "AUXS", name: "Auxite Gümüş", icon: "🥈", color: "text-[#A6B0BF]" },
+  { key: "platinum", symbol: "AUXPT", name: "Auxite Platin", icon: "💎", color: "text-[#8FA3B8]" },
+  { key: "palladium", symbol: "AUXPD", name: "Auxite Paladyum", icon: "💜", color: "text-[#6E7C8A]" },
 ];
 
 const CRYPTOS = [

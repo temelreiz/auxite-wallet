@@ -28,10 +28,10 @@ interface AuditReport {
 
 // Mock data for demonstration
 const DEFAULT_SUPPLY: SupplyData[] = [
-  { symbol: 'AUXG', name: 'Auxite Gold', totalSupply: 125847.52, circulatingSupply: 118234.18, reservesBacked: 100, lastAudit: '2024-12-15', icon: '🥇', color: '#C6A46C' },
-  { symbol: 'AUXS', name: 'Auxite Silver', totalSupply: 2847562.75, circulatingSupply: 2456123.50, reservesBacked: 100, lastAudit: '2024-12-15', icon: '🥈', color: '#B7C0C8' },
-  { symbol: 'AUXPT', name: 'Auxite Platinum', totalSupply: 8547.25, circulatingSupply: 7823.80, reservesBacked: 100, lastAudit: '2024-12-15', icon: '⚪', color: '#8FA3B0' },
-  { symbol: 'AUXPD', name: 'Auxite Palladium', totalSupply: 4523.10, circulatingSupply: 4102.75, reservesBacked: 100, lastAudit: '2024-12-15', icon: '🔘', color: '#7E8A93' },
+  { symbol: 'AUXG', name: 'Auxite Gold', totalSupply: 125847.52, circulatingSupply: 118234.18, reservesBacked: 100, lastAudit: '2024-12-15', icon: '🥇', color: '#C6A15B' },
+  { symbol: 'AUXS', name: 'Auxite Silver', totalSupply: 2847562.75, circulatingSupply: 2456123.50, reservesBacked: 100, lastAudit: '2024-12-15', icon: '🥈', color: '#A6B0BF' },
+  { symbol: 'AUXPT', name: 'Auxite Platinum', totalSupply: 8547.25, circulatingSupply: 7823.80, reservesBacked: 100, lastAudit: '2024-12-15', icon: '⚪', color: '#8FA3B8' },
+  { symbol: 'AUXPD', name: 'Auxite Palladium', totalSupply: 4523.10, circulatingSupply: 4102.75, reservesBacked: 100, lastAudit: '2024-12-15', icon: '🔘', color: '#6E7C8A' },
 ];
 
 const DEFAULT_REPORTS: AuditReport[] = [

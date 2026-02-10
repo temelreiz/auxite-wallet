@@ -171,7 +171,7 @@ export const TOKEN_CONFIG = {
       nameTr: "Auxite Altın",
       symbol: "AUXG",
       icon: "🥇",
-      color: "#C6A46C",
+      color: "#C6A15B",
       address: METAL_TOKENS.AUXG,
     },
     AUXS: {
@@ -179,7 +179,7 @@ export const TOKEN_CONFIG = {
       nameTr: "Auxite Gümüş",
       symbol: "AUXS",
       icon: "🥈",
-      color: "#B7C0C8",
+      color: "#A6B0BF",
       address: METAL_TOKENS.AUXS,
     },
     AUXPT: {
@@ -187,7 +187,7 @@ export const TOKEN_CONFIG = {
       nameTr: "Auxite Platin",
       symbol: "AUXPT",
       icon: "⚪",
-      color: "#8FA3B0",
+      color: "#8FA3B8",
       address: METAL_TOKENS.AUXPT,
     },
     AUXPD: {
@@ -195,7 +195,7 @@ export const TOKEN_CONFIG = {
       nameTr: "Auxite Paladyum",
       symbol: "AUXPD",
       icon: "🔘",
-      color: "#7E8A93",
+      color: "#6E7C8A",
       address: METAL_TOKENS.AUXPD,
     },
   },

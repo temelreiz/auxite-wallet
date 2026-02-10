@@ -108,21 +108,33 @@ const METALS = [
     symbol: "AUXG",
     name: "Auxite Gold",
     descKey: "goldDesc" as const,
+    icon: "/auxg_icon.png",
+    color: "#C6A15B",
+    certification: "LBMA Good Delivery",
   },
   {
     symbol: "AUXS",
     name: "Auxite Silver",
     descKey: "silverDesc" as const,
+    icon: "/auxs_icon.png",
+    color: "#A6B0BF",
+    certification: "LBMA Good Delivery",
   },
   {
     symbol: "AUXPT",
     name: "Auxite Platinum",
     descKey: "platinumDesc" as const,
+    icon: "/auxpt_icon.png",
+    color: "#8FA3B8",
+    certification: "LPPM Approved",
   },
   {
     symbol: "AUXPD",
     name: "Auxite Palladium",
     descKey: "palladiumDesc" as const,
+    icon: "/auxpd_icon.png",
+    color: "#6E7C8A",
+    certification: "LPPM Approved",
   },
 ];
 
@@ -507,37 +519,55 @@ export default function AllocatePage() {
             {t.selectMetal}
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {METALS.map((metal) => (
-              <button
-                key={metal.symbol}
-                onClick={() => setSelectedMetal(metal.symbol)}
-                className={`flex flex-col items-start p-4 rounded-xl border transition-all text-left ${
-                  selectedMetal === metal.symbol
-                    ? "bg-[#BFA181]/10 border-[#BFA181]"
-                    : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700 hover:border-[#BFA181]/50"
-                }`}
-              >
-                <p className="font-bold text-slate-800 dark:text-white text-sm">{metal.name}</p>
-                <p className="text-[9px] text-slate-500 mt-0.5">{t[metal.descKey]}</p>
-                <p className="text-[9px] text-[#2F6F62] mt-0.5">{t.allocatedSegregated}</p>
+            {METALS.map((metal) => {
+              const isSelected = selectedMetal === metal.symbol;
+              return (
+                <button
+                  key={metal.symbol}
+                  onClick={() => setSelectedMetal(metal.symbol)}
+                  className={`flex flex-col items-start p-4 rounded-xl border transition-all text-left ${
+                    isSelected
+                      ? `border-[${metal.color}]`
+                      : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700"
+                  }`}
+                  style={isSelected ? { borderColor: metal.color, backgroundColor: `${metal.color}0D` } : {}}
+                >
+                  {/* Icon LEFT of metal name — 20-24px, opacity states */}
+                  <div className="flex items-center gap-2 mb-1">
+                    <img
+                      src={metal.icon}
+                      alt={metal.name}
+                      className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+                      style={{ opacity: isSelected ? 1 : 0.55 }}
+                    />
+                    <p className="font-bold text-slate-800 dark:text-white text-sm">{metal.name}</p>
+                  </div>
+                  <p className="text-[9px] text-slate-500 mt-0.5">{t[metal.descKey]}</p>
+                  <p className="text-[9px] mt-0.5" style={{ color: isSelected ? metal.color : '#2F6F62' }}>{t.allocatedSegregated}</p>
+                  {/* LBMA / LPPM certification badge */}
+                  <p className="text-[10px] sm:text-[11px] mt-0.5" style={{ opacity: 0.6 }}>{metal.certification}</p>
 
-                {/* Pricing: Market Reference + Execution Price */}
-                <div className="w-full mt-3 pt-2 border-t border-stone-200 dark:border-slate-700">
-                  <div className="flex justify-between items-baseline">
-                    <span className="text-[9px] text-slate-400">{lang === "tr" ? "Referans" : "Reference"}</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      {metalBasePrice ? formatPricePerGram(basePrices[metal.symbol]) : "--"}/g
-                    </span>
+                  {/* Pricing: Market Reference + Execution Price */}
+                  <div className="w-full mt-3 pt-2 border-t border-stone-200 dark:border-slate-700">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-[9px] text-slate-400">{lang === "tr" ? "Referans" : "Reference"}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {metalBasePrice ? formatPricePerGram(basePrices[metal.symbol]) : "--"}/g
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-baseline mt-1">
+                      <span className="text-[9px] text-slate-400">{lang === "tr" ? "İşlem" : "Execution"}</span>
+                      <span
+                        className="text-xs font-bold text-slate-800 dark:text-white"
+                        style={isSelected ? { backgroundColor: `${metal.color}0D`, padding: '0 4px', borderRadius: '4px' } : {}}
+                      >
+                        {executionPrices[metal.symbol] ? formatPricePerGram(executionPrices[metal.symbol]) : "--"}/g
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-baseline mt-1">
-                    <span className="text-[9px] text-slate-400">{lang === "tr" ? "İşlem" : "Execution"}</span>
-                    <span className="text-xs font-bold text-slate-800 dark:text-white">
-                      {executionPrices[metal.symbol] ? formatPricePerGram(executionPrices[metal.symbol]) : "--"}/g
-                    </span>
-                  </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </div>
 
