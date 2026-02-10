@@ -293,18 +293,12 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
   const metalColors: Record<string, string> = { AUXG: "#C6A15B", AUXS: "#A6B0BF", AUXPT: "#8FA3B8", AUXPD: "#6E7C8A" };
   const metalCertifications: Record<string, string> = { AUXG: "LBMA Good Delivery", AUXS: "LBMA Good Delivery", AUXPT: "LPPM Approved", AUXPD: "LPPM Approved" };
 
-  // Inline SVG metal icons — institutional, clean stroke, no coin/token vibe
-  const MetalIcon = ({ metal, size = 22 }: { metal: string; size?: number }) => {
-    const color = metalColors[metal] || '#C6A15B';
-    const op = isHovered ? 1 : 0.55;
-    return (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: op, flexShrink: 0 }}>
-        {metal === 'AUXG' && <><rect x="3" y="7" width="18" height="10" rx="2" /><line x1="7" y1="7" x2="7" y2="17" /><line x1="17" y1="7" x2="17" y2="17" /><line x1="3" y1="12" x2="21" y2="12" /></>}
-        {metal === 'AUXS' && <><circle cx="12" cy="12" r="8" /><path d="M12 4v16" /><path d="M4 12h16" /></>}
-        {metal === 'AUXPT' && <><polygon points="12,3 21,9 21,15 12,21 3,15 3,9" /><line x1="12" y1="3" x2="12" y2="21" /></>}
-        {metal === 'AUXPD' && <><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M4 12h16" /><path d="M12 4v16" /></>}
-      </svg>
-    );
+  // Metal icon mapping
+  const metalIcons: Record<string, string> = {
+    AUXG: "/auxg_icon.png",
+    AUXS: "/auxs_icon.png",
+    AUXPT: "/auxpt_icon.png",
+    AUXPD: "/auxpd_icon.png"
   };
 
   return (
@@ -320,8 +314,13 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
 
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Icon: 20-24px, clean SVG stroke, no shadow/glow/gradient, transparent BG */}
-          <MetalIcon metal={offer.metal} size={22} />
+          {/* Icon: 36px PNG, clean render, no shadow/glow/gradient */}
+          <img
+            src={metalIcons[offer.metal] || offer.icon}
+            alt={offer.name}
+            className="w-9 h-9 object-contain"
+            style={{ opacity: isHovered ? 1 : 0.55 }}
+          />
           <div>
             <div className="font-semibold text-slate-800 dark:text-slate-200 text-base sm:text-lg">{offer.name}</div>
             <div className="text-[10px] sm:text-xs text-slate-500">{offer.metal}</div>
