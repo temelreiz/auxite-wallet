@@ -6,181 +6,217 @@ import { parseUnits, erc20Abi } from "viem";
 import { useStaking, METAL_IDS } from "@/hooks/useStaking";
 import { useWallet } from "@/components/WalletContext";
 
-// 6-language translations
+// 6-language translations — Institutional Language Bible compliant
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    lockEarn: "Biriktir & Kazan",
-    lockPeriod: "Biriktirme Süresi",
+    lockEarn: "Getiri Programına Gir",
+    lockPeriod: "Vade Süresi",
     month: "Ay",
     days: "gün",
-    amount: "Miktar",
-    balance: "Bakiye",
-    lockSuccess: "Biriktirme Başarılı!",
+    amount: "Tahsis Miktarı",
+    amountSub: "Tahsis Edilmiş Metal",
+    balance: "Tahsis İçin Müsait",
+    lockSuccess: "Tahsis Başarılı!",
     positionCreated: "Pozisyonunuz oluşturuldu.",
     approved: "Onaylandı",
-    canLockNow: "Şimdi biriktirebilirsiniz.",
-    infoNotice: "gün boyunca tokenleriniz biriktirilecektir. Süre sonunda anaparanız ve kazancınız otomatik olarak iade edilecektir.",
+    canLockNow: "Şimdi tahsis edebilirsiniz.",
+    infoNotice: "gün boyunca tahsis edilen metal, kurumsal likidite programlarına yönlendirilecektir. Vade sonunda anapara ve getiri otomatik olarak iade edilecektir.",
     approving: "Onaylanıyor...",
     approveToken: "Onayla",
-    locking: "Biriktiriliyor...",
+    locking: "Tahsis Ediliyor...",
     cancel: "İptal",
-    estimatedEarnings: "Tahmini Kazanç",
-    afterPeriod: "Süre sonunda",
-    apy: "APY",
-    stakeCode: "Stake Kodu",
+    estimatedEarnings: "Tahmini Getiri",
+    afterPeriod: "Vade sonunda",
+    apy: "Yıllık Getiri",
+    stakeCode: "Tahsis Kodu",
     copyCode: "Kopyala",
     copied: "Kopyalandı!",
     viewOnChain: "Blockchain'de Görüntüle",
-    compounding: "Bileşik Faiz",
-    compoundingDesc: "Kazançlar otomatik olarak anaparaya eklenir",
+    compounding: "Otomatik Yeniden Tahsis",
+    compoundingDesc: "Kazançlar otomatik olarak programa yeniden tahsis edilir",
     txPending: "İşlem Onay Bekliyor...",
     txConfirming: "Blockchain'de Doğrulanıyor...",
     done: "Tamam",
+    termLength: "Vade",
+    minAllocation: "Minimum Tahsis",
+    headerSub: "Tahsis edilmiş metali kurumsal getiri stratejilerine yönlendirin.",
+    yieldDisclaimer: "Getiri, kurumsal piyasa faaliyetleri aracılığıyla üretilir. Getiriler garanti değildir.",
+    custodyNotice: "Müşteri metalleri tamamen tahsis edilmiş ve bağımsız saklama altındadır.",
   },
   en: {
-    lockEarn: "Stake & Earn",
-    lockPeriod: "Stake Period",
-    month: "Mo",
+    lockEarn: "Enter Yield Program",
+    lockPeriod: "Term Length",
+    month: "Month Term",
     days: "days",
-    amount: "Amount",
-    balance: "Balance",
-    lockSuccess: "Stake Successful!",
+    amount: "Allocation Amount",
+    amountSub: "Allocated Metal",
+    balance: "Available for Deployment",
+    lockSuccess: "Allocation Successful!",
     positionCreated: "Your position has been created.",
     approved: "Approved",
-    canLockNow: "You can now stake.",
-    infoNotice: "days your tokens will be staked. Principal and earnings will be automatically returned after the period ends.",
+    canLockNow: "You can now proceed with allocation.",
+    infoNotice: "days your allocated metal will be deployed into institutional liquidity programs for the selected term. Principal and yield will be automatically returned after the period ends.",
     approving: "Approving...",
     approveToken: "Approve",
-    locking: "Staking...",
+    locking: "Deploying Capital...",
     cancel: "Cancel",
-    estimatedEarnings: "Estimated Earnings",
-    afterPeriod: "After period",
-    apy: "APY",
-    stakeCode: "Stake Code",
+    estimatedEarnings: "Projected Returns",
+    afterPeriod: "At maturity",
+    apy: "Annual Yield",
+    stakeCode: "Allocation Reference",
     copyCode: "Copy",
     copied: "Copied!",
     viewOnChain: "View on Blockchain",
-    compounding: "Auto-Compound",
-    compoundingDesc: "Earnings automatically added to principal",
+    compounding: "Reinvest Yield",
+    compoundingDesc: "Earnings are automatically redeployed into the program",
     txPending: "Transaction Pending...",
     txConfirming: "Confirming on Blockchain...",
     done: "Done",
+    termLength: "Term",
+    minAllocation: "Minimum Allocation",
+    headerSub: "Deploy allocated metal into institutional yield strategies.",
+    yieldDisclaimer: "Yield is generated through institutional market activities. Returns are not guaranteed.",
+    custodyNotice: "Client metals remain fully allocated and under independent custody.",
   },
   de: {
-    lockEarn: "Stake & Verdienen",
-    lockPeriod: "Stake-Zeitraum",
-    month: "Mo",
+    lockEarn: "Renditeprogramm Beitreten",
+    lockPeriod: "Laufzeit",
+    month: "Monate",
     days: "Tage",
-    amount: "Betrag",
-    balance: "Guthaben",
-    lockSuccess: "Stake Erfolgreich!",
+    amount: "Allokationsbetrag",
+    amountSub: "Allokiertes Metall",
+    balance: "Verfügbar für Einsatz",
+    lockSuccess: "Allokation Erfolgreich!",
     positionCreated: "Ihre Position wurde erstellt.",
     approved: "Genehmigt",
-    canLockNow: "Sie können jetzt staken.",
-    infoNotice: "Tage werden Ihre Token gestaked. Kapital und Erträge werden nach Ablauf automatisch zurückgegeben.",
+    canLockNow: "Sie können jetzt allokieren.",
+    infoNotice: "Tage wird Ihr allokiertes Metall in institutionelle Liquiditätsprogramme eingesetzt. Kapital und Erträge werden nach Ablauf automatisch zurückgegeben.",
     approving: "Genehmigung...",
     approveToken: "Genehmigen",
-    locking: "Staking...",
+    locking: "Kapital wird eingesetzt...",
     cancel: "Abbrechen",
-    estimatedEarnings: "Geschätzte Erträge",
-    afterPeriod: "Nach der Periode",
-    apy: "APY",
-    stakeCode: "Stake-Code",
+    estimatedEarnings: "Prognostizierte Erträge",
+    afterPeriod: "Bei Fälligkeit",
+    apy: "Jahresrendite",
+    stakeCode: "Allokationsreferenz",
     copyCode: "Kopieren",
     copied: "Kopiert!",
     viewOnChain: "Auf Blockchain anzeigen",
-    compounding: "Auto-Zinseszins",
-    compoundingDesc: "Erträge werden automatisch zum Kapital hinzugefügt",
+    compounding: "Erträge Reinvestieren",
+    compoundingDesc: "Erträge werden automatisch in das Programm reinvestiert",
     txPending: "Transaktion ausstehend...",
     txConfirming: "Wird auf Blockchain bestätigt...",
     done: "Fertig",
+    termLength: "Laufzeit",
+    minAllocation: "Mindestallokation",
+    headerSub: "Allokiertes Metall in institutionelle Renditestrategien einsetzen.",
+    yieldDisclaimer: "Renditen werden durch institutionelle Marktaktivitäten generiert. Erträge sind nicht garantiert.",
+    custodyNotice: "Kundenmetalle bleiben vollständig allokiert und unter unabhängiger Verwahrung.",
   },
   fr: {
-    lockEarn: "Stake & Gagner",
-    lockPeriod: "Période de Stake",
+    lockEarn: "Entrer dans le Programme",
+    lockPeriod: "Durée du Terme",
     month: "Mois",
     days: "jours",
-    amount: "Montant",
-    balance: "Solde",
-    lockSuccess: "Stake Réussi!",
+    amount: "Montant d'Allocation",
+    amountSub: "Métal Alloué",
+    balance: "Disponible pour Déploiement",
+    lockSuccess: "Allocation Réussie!",
     positionCreated: "Votre position a été créée.",
     approved: "Approuvé",
-    canLockNow: "Vous pouvez maintenant staker.",
-    infoNotice: "jours vos tokens seront stakés. Le capital et les gains seront automatiquement retournés après la période.",
+    canLockNow: "Vous pouvez maintenant procéder à l'allocation.",
+    infoNotice: "jours votre métal alloué sera déployé dans des programmes de liquidité institutionnels. Le capital et le rendement seront automatiquement retournés après la période.",
     approving: "Approbation...",
     approveToken: "Approuver",
-    locking: "Staking...",
+    locking: "Déploiement du Capital...",
     cancel: "Annuler",
-    estimatedEarnings: "Gains Estimés",
-    afterPeriod: "Après la période",
-    apy: "APY",
-    stakeCode: "Code de Stake",
+    estimatedEarnings: "Rendements Projetés",
+    afterPeriod: "À maturité",
+    apy: "Rendement Annuel",
+    stakeCode: "Référence d'Allocation",
     copyCode: "Copier",
     copied: "Copié!",
     viewOnChain: "Voir sur Blockchain",
-    compounding: "Auto-Composition",
-    compoundingDesc: "Les gains sont automatiquement ajoutés au capital",
+    compounding: "Réinvestir le Rendement",
+    compoundingDesc: "Les gains sont automatiquement redéployés dans le programme",
     txPending: "Transaction en attente...",
     txConfirming: "Confirmation sur Blockchain...",
     done: "Terminé",
+    termLength: "Terme",
+    minAllocation: "Allocation Minimum",
+    headerSub: "Déployer le métal alloué dans des stratégies de rendement institutionnel.",
+    yieldDisclaimer: "Le rendement est généré par des activités de marché institutionnelles. Les retours ne sont pas garantis.",
+    custodyNotice: "Les métaux des clients restent entièrement alloués et sous garde indépendante.",
   },
   ar: {
-    lockEarn: "تخزين واربح",
-    lockPeriod: "فترة التخزين",
+    lockEarn: "الدخول في برنامج العائد",
+    lockPeriod: "مدة الاستثمار",
     month: "شهر",
     days: "يوم",
-    amount: "المبلغ",
-    balance: "الرصيد",
-    lockSuccess: "تم التخزين بنجاح!",
+    amount: "مبلغ التخصيص",
+    amountSub: "المعدن المخصص",
+    balance: "متاح للنشر",
+    lockSuccess: "تم التخصيص بنجاح!",
     positionCreated: "تم إنشاء موقعك.",
     approved: "تمت الموافقة",
-    canLockNow: "يمكنك الآن التخزين.",
-    infoNotice: "يوم سيتم تخزين رموزك. سيتم إرجاع رأس المال والأرباح تلقائياً بعد انتهاء الفترة.",
+    canLockNow: "يمكنك الآن المتابعة بالتخصيص.",
+    infoNotice: "يوم سيتم نشر المعدن المخصص في برامج السيولة المؤسسية. سيتم إرجاع رأس المال والعائد تلقائياً بعد انتهاء الفترة.",
     approving: "جاري الموافقة...",
     approveToken: "يتأكد",
-    locking: "جاري التخزين...",
+    locking: "جاري نشر رأس المال...",
     cancel: "إلغاء",
-    estimatedEarnings: "الأرباح المتوقعة",
-    afterPeriod: "بعد الفترة",
+    estimatedEarnings: "العوائد المتوقعة",
+    afterPeriod: "عند الاستحقاق",
     apy: "العائد السنوي",
-    stakeCode: "رمز التخزين",
+    stakeCode: "مرجع التخصيص",
     copyCode: "نسخ",
     copied: "تم النسخ!",
     viewOnChain: "عرض على البلوكتشين",
-    compounding: "فائدة مركبة تلقائية",
-    compoundingDesc: "تضاف الأرباح تلقائياً إلى رأس المال",
+    compounding: "إعادة استثمار العائد",
+    compoundingDesc: "تُعاد الأرباح تلقائياً للنشر في البرنامج",
     txPending: "المعاملة معلقة...",
     txConfirming: "جاري التأكيد على البلوكتشين...",
     done: "تم",
+    termLength: "المدة",
+    minAllocation: "الحد الأدنى للتخصيص",
+    headerSub: "نشر المعدن المخصص في استراتيجيات العائد المؤسسية.",
+    yieldDisclaimer: "يتم توليد العائد من خلال أنشطة السوق المؤسسية. العوائد غير مضمونة.",
+    custodyNotice: "تبقى معادن العملاء مخصصة بالكامل وتحت حفظ مستقل.",
   },
   ru: {
-    lockEarn: "Стейкинг и Заработок",
-    lockPeriod: "Период Стейкинга",
+    lockEarn: "Войти в Программу Дохода",
+    lockPeriod: "Срок Инвестирования",
     month: "Мес",
     days: "дней",
-    amount: "Сумма",
-    balance: "Баланс",
-    lockSuccess: "Стейкинг Успешен!",
+    amount: "Сумма Аллокации",
+    amountSub: "Аллоцированный Металл",
+    balance: "Доступно для Размещения",
+    lockSuccess: "Аллокация Успешна!",
     positionCreated: "Ваша позиция создана.",
     approved: "Одобрено",
-    canLockNow: "Теперь вы можете сделать стейкинг.",
-    infoNotice: "дней ваши токены будут в стейкинге. Основная сумма и заработок будут автоматически возвращены после окончания периода.",
+    canLockNow: "Теперь вы можете выполнить аллокацию.",
+    infoNotice: "дней ваш аллоцированный металл будет размещён в институциональных программах ликвидности. Основная сумма и доход будут автоматически возвращены после окончания периода.",
     approving: "Одобрение...",
     approveToken: "Одобрить",
-    locking: "Стейкинг...",
+    locking: "Размещение Капитала...",
     cancel: "Отмена",
-    estimatedEarnings: "Расчетный Заработок",
-    afterPeriod: "После периода",
-    apy: "APY",
-    stakeCode: "Код Стейкинга",
+    estimatedEarnings: "Прогнозируемый Доход",
+    afterPeriod: "При погашении",
+    apy: "Годовой Доход",
+    stakeCode: "Ссылка Аллокации",
     copyCode: "Копировать",
     copied: "Скопировано!",
     viewOnChain: "Посмотреть в Блокчейне",
-    compounding: "Автокомпаундинг",
-    compoundingDesc: "Заработок автоматически добавляется к основной сумме",
+    compounding: "Реинвестировать Доход",
+    compoundingDesc: "Доход автоматически реинвестируется в программу",
     txPending: "Транзакция ожидает...",
     txConfirming: "Подтверждение в блокчейне...",
     done: "Готово",
+    termLength: "Срок",
+    minAllocation: "Минимальная Аллокация",
+    headerSub: "Размещение аллоцированного металла в институциональные стратегии дохода.",
+    yieldDisclaimer: "Доход генерируется через институциональную рыночную деятельность. Доходность не гарантирована.",
+    custodyNotice: "Металлы клиентов остаются полностью аллоцированными и под независимым хранением.",
   },
 };
 
@@ -244,8 +280,11 @@ function APYVisual({ periods, selectedPeriod, onSelect, lang }: {
             <div className={`text-xs sm:text-sm font-bold whitespace-nowrap ${isSelected ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-700 dark:text-slate-300"}`}>
               {period.months} {t.month}
             </div>
-            <div className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400">
+            <div className="text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400">
               {periodDays} {t.days}
+            </div>
+            <div className="text-[7px] sm:text-[8px] text-slate-400 dark:text-slate-500 mt-0.5">
+              {lang === 'tr' ? 'Sabit vadeli program' : 'Fixed-duration program'}
             </div>
             
             <div className={`mt-1 text-[11px] sm:text-xs font-semibold ${isSelected ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-600 dark:text-slate-400"}`}>
@@ -517,7 +556,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
 
       // Generate display stake code
       const timestamp = Date.now().toString(16).toUpperCase();
-      const shortCode = `STK-${timestamp.slice(-8)}`;
+      const shortCode = `ALC-${timestamp.slice(-8)}`;
       setResultShortCode(shortCode);
       setResultStakeCode(`0x${timestamp}${Math.random().toString(16).slice(2, 10)}`);
 
@@ -538,10 +577,10 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
             <img src={offer.icon} alt={offer.metal} className="w-10 h-10 sm:w-12 sm:h-12" />
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">
-                {offer.name}
+                {offer.name} {lang === 'tr' ? 'Getiri Programı' : 'Yield Program'}
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                {t.lockEarn}
+                {t.headerSub}
               </p>
             </div>
           </div>
@@ -575,18 +614,21 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
 
           {/* Amount Input */}
           <div>
-            <label className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 sm:mb-2 block flex items-center gap-2">
+            <label className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-0.5 block flex items-center gap-2">
               <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
               </svg>
-              {t.amount} ({offer.metal})
+              {t.amount}
             </label>
+            <div className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mb-1.5 sm:mb-2 ml-5 sm:ml-6">
+              {t.amountSub} ({offer.metal})
+            </div>
             <div className="relative">
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder={`Min. ${offer.minAmount}g`}
+                placeholder={`${t.minAllocation}: ${offer.minAmount}g`}
                 disabled={isApproving || isStaking}
                 className="w-full px-3 sm:px-4 py-3 sm:py-4 pr-16 sm:pr-20 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#2F6F62] transition-colors disabled:opacity-50 text-base sm:text-lg font-medium"
               />
@@ -609,7 +651,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
               </span>
               {amountNum > 0 && amountNum < offer.minAmount && (
                 <span className="text-[10px] sm:text-xs text-red-400">
-                  Min. {offer.minAmount} {offer.metal}
+                  {t.minAllocation}: {offer.minAmount}g {offer.metal}
                 </span>
               )}
             </div>
@@ -724,13 +766,23 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
 
           {/* Info Notice */}
           {!isStakeSuccess && !isApproveSuccess && !isStaking && !isApproving && (
-            <div className="rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 p-3 sm:p-4">
-              <div className="flex items-start gap-2 sm:gap-3">
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
-                  {periodDays} {t.infoNotice}
+            <div className="space-y-2">
+              <div className="rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 p-3 sm:p-4">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
+                    {periodDays} {t.infoNotice}
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-lg sm:rounded-xl bg-stone-50 dark:bg-slate-800/30 border border-stone-200 dark:border-slate-700/50 p-2.5 sm:p-3">
+                <p className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-500 leading-relaxed">
+                  {t.yieldDisclaimer}
+                </p>
+                <p className="text-[9px] sm:text-[10px] text-[#2F6F62] dark:text-[#2F6F62] mt-1">
+                  {t.custodyNotice}
                 </p>
               </div>
             </div>
@@ -786,6 +838,13 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
               )}
             </button>
           ) : null}
+
+          {/* Regulatory Shield */}
+          {!isStakeSuccess && (
+            <p className="text-[8px] sm:text-[9px] text-center text-slate-400 dark:text-slate-500 px-2">
+              {t.custodyNotice}
+            </p>
+          )}
 
           {!isStakeSuccess && (
             <button
