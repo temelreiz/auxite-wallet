@@ -30,7 +30,7 @@ const translations: Record<string, Record<string, string>> = {
     autoInvest: "Otomatik Tahsis",
     availableOffers: "Getiri Programları",
     selectMetalTokens: "Fiziksel destekli metal varlıklarınızı seçin ve getiri kazanmaya başlayın",
-    stakeEarn: "Getiri Başlat",
+    stakeEarn: "Sermaye Tahsis Et",
     minAmount: "Esnek Tahsis",
     months: "Ay",
     gold: "Auxite Altın",
@@ -68,7 +68,7 @@ const translations: Record<string, Record<string, string>> = {
     autoInvest: "Auto-Allocate",
     availableOffers: "Yield Programs",
     selectMetalTokens: "Select your physically-backed metal holdings and start earning",
-    stakeEarn: "Start Earning",
+    stakeEarn: "Deploy Capital",
     minAmount: "Flexible Allocation",
     months: "Mo",
     gold: "Auxite Gold",
@@ -106,7 +106,7 @@ const translations: Record<string, Record<string, string>> = {
     autoInvest: "Auto-Allokation",
     availableOffers: "Rendite-Programme",
     selectMetalTokens: "Wählen Sie Ihre physisch gedeckten Metallbestände",
-    stakeEarn: "Rendite Starten",
+    stakeEarn: "Kapital Einsetzen",
     minAmount: "Flexible Allokation",
     months: "Mo",
     gold: "Auxite Gold",
@@ -144,7 +144,7 @@ const translations: Record<string, Record<string, string>> = {
     autoInvest: "Auto-Allocation",
     availableOffers: "Programmes de Rendement",
     selectMetalTokens: "Sélectionnez vos avoirs métalliques adossés physiquement",
-    stakeEarn: "Commencer à Gagner",
+    stakeEarn: "Déployer le Capital",
     minAmount: "Allocation Flexible",
     months: "Mois",
     gold: "Auxite Or",
@@ -182,7 +182,7 @@ const translations: Record<string, Record<string, string>> = {
     autoInvest: "التخصيص التلقائي",
     availableOffers: "برامج العائد",
     selectMetalTokens: "اختر حيازاتك المعدنية المدعومة فعلياً",
-    stakeEarn: "ابدأ الكسب",
+    stakeEarn: "نشر رأس المال",
     minAmount: "تخصيص مرن",
     months: "شهر",
     gold: "Auxite ذهب",
@@ -220,7 +220,7 @@ const translations: Record<string, Record<string, string>> = {
     autoInvest: "Авто-аллокация",
     availableOffers: "Программы Дохода",
     selectMetalTokens: "Выберите ваши физически обеспеченные металлические активы",
-    stakeEarn: "Начать Зарабатывать",
+    stakeEarn: "Разместить Капитал",
     minAmount: "Гибкая Аллокация",
     months: "Мес",
     gold: "Auxite Золото",
@@ -341,7 +341,7 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
             {formatAPYRange(offer)}
             <span className="ml-1 text-slate-400 text-sm">ⓘ</span>
           </div>
-          <div className="text-[10px] sm:text-xs text-slate-500">Annual Yield</div>
+          <div className="text-[10px] sm:text-xs text-slate-500">Projected Income Rate</div>
 
           {/* APY Tooltip */}
           {showTooltip && (
@@ -471,6 +471,25 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">{availableOffers.map((offer) => <MetalOfferCard key={offer.metal} offer={offer} formatAPYRange={formatAPYRange} onAllocate={() => handleOpenModal(offer)} t={t} />)}</div>
             )}
+
+            {/* Counterparty Trust & Risk Disclosure */}
+            <div className="mt-4 space-y-2">
+              <p className="text-[10px] sm:text-xs text-center text-slate-400 dark:text-slate-500">
+                {lang === 'tr'
+                  ? 'Kurumsal karşı taraflar, kıymetli maden bankaları ve metal finansman masalarını içermektedir.'
+                  : 'Institutional counterparties include bullion banks and metal financing desks.'}
+              </p>
+              <p className="text-[9px] sm:text-[10px] text-center text-slate-400 dark:text-slate-500 italic">
+                {lang === 'tr'
+                  ? 'Gelir programlarına tahsis edilen sermaye, karşı taraf riskine tabi olabilir.'
+                  : 'Capital deployed into income programs may be subject to counterparty risk.'}
+              </p>
+              <p className="text-[9px] sm:text-[10px] text-center text-slate-500 dark:text-slate-400 font-medium">
+                {lang === 'tr'
+                  ? 'Oranlar kurumsal metal finansman piyasalarından türetilmiştir ve değişkenlik gösterebilir.'
+                  : 'Rates are derived from institutional metal financing markets and may vary.'}
+              </p>
+            </div>
           </div>
         )}
 

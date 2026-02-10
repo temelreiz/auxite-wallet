@@ -26,7 +26,7 @@ const translations: Record<string, Record<string, string>> = {
     palladiumDesc: "LPPM Good Delivery",
     allocatedSegregated: "Tahsisli & Ayrılmış",
     capitalDeployed: "Sermaye Tahsisi",
-    fundingSource: "FONLAMA KAYNAĞI",
+    fundingSource: "TAKAS VARLIĞI",
     marketReference: "Piyasa Referansı (LBMA)",
     executionPrice: "İşlem Fiyatı",
     estimatedAllocation: "Tahmini Tahsis",
@@ -67,7 +67,7 @@ const translations: Record<string, Record<string, string>> = {
     palladiumDesc: "LPPM Good Delivery",
     allocatedSegregated: "Allocated & Segregated",
     capitalDeployed: "Capital Deployed",
-    fundingSource: "FUNDING SOURCE",
+    fundingSource: "SETTLEMENT ASSET",
     marketReference: "Market Reference (LBMA)",
     executionPrice: "Execution Price",
     estimatedAllocation: "Estimated Allocation",
@@ -559,6 +559,11 @@ export default function AllocatePage() {
               >
                 <span className="text-sm font-semibold text-slate-800 dark:text-white">{source.symbol}</span>
                 <span className="text-[9px] text-slate-500 mt-0.5">{source.name}</span>
+                {source.symbol === "AUXM" && (
+                  <span className="text-[8px] text-[#C6A15B] mt-0.5 font-medium">
+                    {lang === 'tr' ? 'Tahsis için gerekli' : 'Required for allocation'}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -598,6 +603,9 @@ export default function AllocatePage() {
                 {metalExecPrice ? formatPricePerGram(metalExecPrice) : "--"}/g
               </span>
             </div>
+            <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-1 italic">
+              {lang === 'tr' ? 'Tedarik ve kurumsal işlem maliyetlerini içerir.' : 'Includes sourcing and institutional execution.'}
+            </p>
           </div>
 
           {/* Estimated Allocation */}

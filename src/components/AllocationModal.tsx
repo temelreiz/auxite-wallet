@@ -9,214 +9,226 @@ import { useWallet } from "@/components/WalletContext";
 // 6-language translations — Institutional Language Bible compliant
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    lockEarn: "Getiri Programına Gir",
+    lockEarn: "Sermaye Tahsis Et",
     lockPeriod: "Vade Süresi",
     month: "Ay",
     days: "gün",
     amount: "Tahsis Miktarı",
     amountSub: "Tahsis Edilmiş Metal",
-    balance: "Tahsis İçin Müsait",
+    balance: "Mevcut Tahsisli Bakiye",
     lockSuccess: "Tahsis Başarılı!",
     positionCreated: "Pozisyonunuz oluşturuldu.",
     approved: "Onaylandı",
     canLockNow: "Şimdi tahsis edebilirsiniz.",
-    infoNotice: "gün boyunca tahsis edilen metal, kurumsal likidite programlarına yönlendirilecektir. Vade sonunda anapara ve getiri otomatik olarak iade edilecektir.",
+    infoNotice: "gün boyunca tahsis edilen metal, kurumsal gelir programlarına yönlendirilecektir. Vade sonunda anapara ve getiri otomatik olarak iade edilecektir.",
     approving: "Onaylanıyor...",
     approveToken: "Onayla",
-    locking: "Tahsis Ediliyor...",
+    locking: "Sermaye Tahsis Ediliyor...",
     cancel: "İptal",
     estimatedEarnings: "Tahmini Getiri",
     afterPeriod: "Vade sonunda",
-    apy: "Yıllık Getiri",
-    stakeCode: "Tahsis Kodu",
+    apy: "Öngörülen Gelir Oranı",
+    stakeCode: "Tahsis Referansı",
     copyCode: "Kopyala",
     copied: "Kopyalandı!",
     viewOnChain: "Blockchain'de Görüntüle",
-    compounding: "Otomatik Yeniden Tahsis",
-    compoundingDesc: "Kazançlar otomatik olarak programa yeniden tahsis edilir",
+    compounding: "Otomatik Vade Yenileme",
+    compoundingDesc: "Kazançlar vade sonunda aksi belirtilmedikçe yeniden tahsis edilir",
     txPending: "İşlem Onay Bekliyor...",
     txConfirming: "Blockchain'de Doğrulanıyor...",
     done: "Tamam",
     termLength: "Vade",
-    minAllocation: "Minimum Tahsis",
-    headerSub: "Tahsis edilmiş metali kurumsal getiri stratejilerine yönlendirin.",
-    yieldDisclaimer: "Getiri, kurumsal piyasa faaliyetleri aracılığıyla üretilir. Getiriler garanti değildir.",
+    minAllocation: "Minimum Tahsis Edilebilir Tutar",
+    headerSub: "Tahsis edilmiş metali kurumsal gelir stratejilerine yönlendirin.",
+    yieldDisclaimer: "Gelir, kurumsal piyasa faaliyetleri aracılığıyla üretilir. Getiriler garanti değildir.",
     custodyNotice: "Müşteri metalleri tamamen tahsis edilmiş ve bağımsız saklama altındadır.",
+    counterpartyNotice: "Gelir, kurumsal karşı taraflar aracılığıyla üretilmektedir.",
+    riskDisclosure: "Gelir programlarına tahsis edilen sermaye, karşı taraf riskine tabi olabilir.",
   },
   en: {
-    lockEarn: "Enter Yield Program",
+    lockEarn: "Deploy Capital",
     lockPeriod: "Term Length",
     month: "Month Term",
     days: "days",
     amount: "Allocation Amount",
     amountSub: "Allocated Metal",
-    balance: "Available for Deployment",
+    balance: "Available Allocated Balance",
     lockSuccess: "Allocation Successful!",
     positionCreated: "Your position has been created.",
     approved: "Approved",
     canLockNow: "You can now proceed with allocation.",
-    infoNotice: "days your allocated metal will be deployed into institutional liquidity programs for the selected term. Principal and yield will be automatically returned after the period ends.",
+    infoNotice: "days your allocated metal will be deployed into institutional income programs for the selected term. Principal and income will be automatically returned after the period ends.",
     approving: "Approving...",
     approveToken: "Approve",
     locking: "Deploying Capital...",
     cancel: "Cancel",
     estimatedEarnings: "Projected Returns",
     afterPeriod: "At maturity",
-    apy: "Annual Yield",
+    apy: "Projected Income Rate",
     stakeCode: "Allocation Reference",
     copyCode: "Copy",
     copied: "Copied!",
     viewOnChain: "View on Blockchain",
-    compounding: "Reinvest Yield",
-    compoundingDesc: "Earnings are automatically redeployed into the program",
+    compounding: "Auto-Renew Term",
+    compoundingDesc: "Earnings are reinvested at maturity unless instructed otherwise.",
     txPending: "Transaction Pending...",
     txConfirming: "Confirming on Blockchain...",
     done: "Done",
     termLength: "Term",
-    minAllocation: "Minimum Allocation",
-    headerSub: "Deploy allocated metal into institutional yield strategies.",
-    yieldDisclaimer: "Yield is generated through institutional market activities. Returns are not guaranteed.",
+    minAllocation: "Minimum Deployable Amount",
+    headerSub: "Deploy allocated metal into institutional income strategies.",
+    yieldDisclaimer: "Income is generated through institutional market activities. Returns are not guaranteed.",
     custodyNotice: "Client metals remain fully allocated and under independent custody.",
+    counterpartyNotice: "Income generated through institutional counterparties.",
+    riskDisclosure: "Capital deployed into income programs may be subject to counterparty risk.",
   },
   de: {
-    lockEarn: "Renditeprogramm Beitreten",
+    lockEarn: "Kapital Einsetzen",
     lockPeriod: "Laufzeit",
     month: "Monate",
     days: "Tage",
     amount: "Allokationsbetrag",
     amountSub: "Allokiertes Metall",
-    balance: "Verfügbar für Einsatz",
+    balance: "Verfügbares Allokiertes Guthaben",
     lockSuccess: "Allokation Erfolgreich!",
     positionCreated: "Ihre Position wurde erstellt.",
     approved: "Genehmigt",
     canLockNow: "Sie können jetzt allokieren.",
-    infoNotice: "Tage wird Ihr allokiertes Metall in institutionelle Liquiditätsprogramme eingesetzt. Kapital und Erträge werden nach Ablauf automatisch zurückgegeben.",
+    infoNotice: "Tage wird Ihr allokiertes Metall in institutionelle Einkommensprogramme eingesetzt. Kapital und Erträge werden nach Ablauf automatisch zurückgegeben.",
     approving: "Genehmigung...",
     approveToken: "Genehmigen",
     locking: "Kapital wird eingesetzt...",
     cancel: "Abbrechen",
     estimatedEarnings: "Prognostizierte Erträge",
     afterPeriod: "Bei Fälligkeit",
-    apy: "Jahresrendite",
+    apy: "Prognostizierter Einkommenssatz",
     stakeCode: "Allokationsreferenz",
     copyCode: "Kopieren",
     copied: "Kopiert!",
     viewOnChain: "Auf Blockchain anzeigen",
-    compounding: "Erträge Reinvestieren",
-    compoundingDesc: "Erträge werden automatisch in das Programm reinvestiert",
+    compounding: "Automatische Laufzeitverlängerung",
+    compoundingDesc: "Erträge werden bei Fälligkeit reinvestiert, sofern nicht anders angewiesen.",
     txPending: "Transaktion ausstehend...",
     txConfirming: "Wird auf Blockchain bestätigt...",
     done: "Fertig",
     termLength: "Laufzeit",
-    minAllocation: "Mindestallokation",
-    headerSub: "Allokiertes Metall in institutionelle Renditestrategien einsetzen.",
-    yieldDisclaimer: "Renditen werden durch institutionelle Marktaktivitäten generiert. Erträge sind nicht garantiert.",
+    minAllocation: "Mindesteinsatzbetrag",
+    headerSub: "Allokiertes Metall in institutionelle Einkommensstrategien einsetzen.",
+    yieldDisclaimer: "Einkommen wird durch institutionelle Marktaktivitäten generiert. Erträge sind nicht garantiert.",
     custodyNotice: "Kundenmetalle bleiben vollständig allokiert und unter unabhängiger Verwahrung.",
+    counterpartyNotice: "Einkommen wird durch institutionelle Gegenparteien generiert.",
+    riskDisclosure: "In Einkommensprogramme eingesetztes Kapital kann dem Gegenparteirisiko unterliegen.",
   },
   fr: {
-    lockEarn: "Entrer dans le Programme",
+    lockEarn: "Déployer le Capital",
     lockPeriod: "Durée du Terme",
     month: "Mois",
     days: "jours",
     amount: "Montant d'Allocation",
     amountSub: "Métal Alloué",
-    balance: "Disponible pour Déploiement",
+    balance: "Solde Alloué Disponible",
     lockSuccess: "Allocation Réussie!",
     positionCreated: "Votre position a été créée.",
     approved: "Approuvé",
     canLockNow: "Vous pouvez maintenant procéder à l'allocation.",
-    infoNotice: "jours votre métal alloué sera déployé dans des programmes de liquidité institutionnels. Le capital et le rendement seront automatiquement retournés après la période.",
+    infoNotice: "jours votre métal alloué sera déployé dans des programmes de revenu institutionnels. Le capital et les revenus seront automatiquement retournés après la période.",
     approving: "Approbation...",
     approveToken: "Approuver",
     locking: "Déploiement du Capital...",
     cancel: "Annuler",
     estimatedEarnings: "Rendements Projetés",
     afterPeriod: "À maturité",
-    apy: "Rendement Annuel",
+    apy: "Taux de Revenu Projeté",
     stakeCode: "Référence d'Allocation",
     copyCode: "Copier",
     copied: "Copié!",
     viewOnChain: "Voir sur Blockchain",
-    compounding: "Réinvestir le Rendement",
-    compoundingDesc: "Les gains sont automatiquement redéployés dans le programme",
+    compounding: "Renouvellement Automatique",
+    compoundingDesc: "Les gains sont réinvestis à maturité sauf instruction contraire.",
     txPending: "Transaction en attente...",
     txConfirming: "Confirmation sur Blockchain...",
     done: "Terminé",
     termLength: "Terme",
-    minAllocation: "Allocation Minimum",
-    headerSub: "Déployer le métal alloué dans des stratégies de rendement institutionnel.",
-    yieldDisclaimer: "Le rendement est généré par des activités de marché institutionnelles. Les retours ne sont pas garantis.",
+    minAllocation: "Montant Minimum Déployable",
+    headerSub: "Déployer le métal alloué dans des stratégies de revenu institutionnel.",
+    yieldDisclaimer: "Le revenu est généré par des activités de marché institutionnelles. Les retours ne sont pas garantis.",
     custodyNotice: "Les métaux des clients restent entièrement alloués et sous garde indépendante.",
+    counterpartyNotice: "Revenu généré par des contreparties institutionnelles.",
+    riskDisclosure: "Le capital déployé dans les programmes de revenu peut être soumis au risque de contrepartie.",
   },
   ar: {
-    lockEarn: "الدخول في برنامج العائد",
+    lockEarn: "نشر رأس المال",
     lockPeriod: "مدة الاستثمار",
     month: "شهر",
     days: "يوم",
     amount: "مبلغ التخصيص",
     amountSub: "المعدن المخصص",
-    balance: "متاح للنشر",
+    balance: "الرصيد المخصص المتاح",
     lockSuccess: "تم التخصيص بنجاح!",
     positionCreated: "تم إنشاء موقعك.",
     approved: "تمت الموافقة",
     canLockNow: "يمكنك الآن المتابعة بالتخصيص.",
-    infoNotice: "يوم سيتم نشر المعدن المخصص في برامج السيولة المؤسسية. سيتم إرجاع رأس المال والعائد تلقائياً بعد انتهاء الفترة.",
+    infoNotice: "يوم سيتم نشر المعدن المخصص في برامج الدخل المؤسسية. سيتم إرجاع رأس المال والدخل تلقائياً بعد انتهاء الفترة.",
     approving: "جاري الموافقة...",
     approveToken: "يتأكد",
     locking: "جاري نشر رأس المال...",
     cancel: "إلغاء",
     estimatedEarnings: "العوائد المتوقعة",
     afterPeriod: "عند الاستحقاق",
-    apy: "العائد السنوي",
+    apy: "معدل الدخل المتوقع",
     stakeCode: "مرجع التخصيص",
     copyCode: "نسخ",
     copied: "تم النسخ!",
     viewOnChain: "عرض على البلوكتشين",
-    compounding: "إعادة استثمار العائد",
-    compoundingDesc: "تُعاد الأرباح تلقائياً للنشر في البرنامج",
+    compounding: "تجديد تلقائي للمدة",
+    compoundingDesc: "تُعاد الأرباح للاستثمار عند الاستحقاق ما لم يُطلب خلاف ذلك.",
     txPending: "المعاملة معلقة...",
     txConfirming: "جاري التأكيد على البلوكتشين...",
     done: "تم",
     termLength: "المدة",
-    minAllocation: "الحد الأدنى للتخصيص",
-    headerSub: "نشر المعدن المخصص في استراتيجيات العائد المؤسسية.",
-    yieldDisclaimer: "يتم توليد العائد من خلال أنشطة السوق المؤسسية. العوائد غير مضمونة.",
+    minAllocation: "الحد الأدنى للمبلغ القابل للنشر",
+    headerSub: "نشر المعدن المخصص في استراتيجيات الدخل المؤسسية.",
+    yieldDisclaimer: "يتم توليد الدخل من خلال أنشطة السوق المؤسسية. العوائد غير مضمونة.",
     custodyNotice: "تبقى معادن العملاء مخصصة بالكامل وتحت حفظ مستقل.",
+    counterpartyNotice: "الدخل المولّد عبر أطراف مقابلة مؤسسية.",
+    riskDisclosure: "رأس المال المنشور في برامج الدخل قد يخضع لمخاطر الطرف المقابل.",
   },
   ru: {
-    lockEarn: "Войти в Программу Дохода",
+    lockEarn: "Разместить Капитал",
     lockPeriod: "Срок Инвестирования",
     month: "Мес",
     days: "дней",
     amount: "Сумма Аллокации",
     amountSub: "Аллоцированный Металл",
-    balance: "Доступно для Размещения",
+    balance: "Доступный Аллоцированный Баланс",
     lockSuccess: "Аллокация Успешна!",
     positionCreated: "Ваша позиция создана.",
     approved: "Одобрено",
     canLockNow: "Теперь вы можете выполнить аллокацию.",
-    infoNotice: "дней ваш аллоцированный металл будет размещён в институциональных программах ликвидности. Основная сумма и доход будут автоматически возвращены после окончания периода.",
+    infoNotice: "дней ваш аллоцированный металл будет размещён в институциональных программах дохода. Основная сумма и доход будут автоматически возвращены после окончания периода.",
     approving: "Одобрение...",
     approveToken: "Одобрить",
     locking: "Размещение Капитала...",
     cancel: "Отмена",
     estimatedEarnings: "Прогнозируемый Доход",
     afterPeriod: "При погашении",
-    apy: "Годовой Доход",
+    apy: "Прогнозируемая Ставка Дохода",
     stakeCode: "Ссылка Аллокации",
     copyCode: "Копировать",
     copied: "Скопировано!",
     viewOnChain: "Посмотреть в Блокчейне",
-    compounding: "Реинвестировать Доход",
-    compoundingDesc: "Доход автоматически реинвестируется в программу",
+    compounding: "Автопродление Срока",
+    compoundingDesc: "Доход реинвестируется при погашении, если не указано иное.",
     txPending: "Транзакция ожидает...",
     txConfirming: "Подтверждение в блокчейне...",
     done: "Готово",
     termLength: "Срок",
-    minAllocation: "Минимальная Аллокация",
+    minAllocation: "Минимальная Размещаемая Сумма",
     headerSub: "Размещение аллоцированного металла в институциональные стратегии дохода.",
     yieldDisclaimer: "Доход генерируется через институциональную рыночную деятельность. Доходность не гарантирована.",
     custodyNotice: "Металлы клиентов остаются полностью аллоцированными и под независимым хранением.",
+    counterpartyNotice: "Доход генерируется через институциональных контрагентов.",
+    riskDisclosure: "Капитал, размещённый в программах дохода, может быть подвержен контрагентному риску.",
   },
 };
 
@@ -262,7 +274,7 @@ function APYVisual({ periods, selectedPeriod, onSelect, lang }: {
             onClick={() => onSelect(period.months)}
             className={`relative p-2 sm:p-3 rounded-lg border-2 transition-all ${
               isSelected 
-                ? "border-[#2F6F62] bg-[#2F6F62]/10 dark:bg-[#2F6F62]/20" 
+                ? "border-[#C6A15B] bg-[#C6A15B]/10 dark:bg-[#C6A15B]/20" 
                 : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/50"
             }`}
           >
@@ -270,29 +282,29 @@ function APYVisual({ periods, selectedPeriod, onSelect, lang }: {
               <div 
                 className={`w-5 sm:w-6 rounded-t-md sm:rounded-t-lg transition-all ${
                   isSelected 
-                    ? "bg-gradient-to-t from-[#2F6F62] to-[#BFA181]" 
+                    ? "bg-gradient-to-t from-[#C6A15B] to-[#BFA181]" 
                     : "bg-gradient-to-t from-slate-300 to-slate-200 dark:from-slate-600 dark:to-slate-500"
                 }`}
                 style={{ height: `${barHeight}%` }}
               />
             </div>
             
-            <div className={`text-xs sm:text-sm font-bold whitespace-nowrap ${isSelected ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-700 dark:text-slate-300"}`}>
+            <div className={`text-xs sm:text-sm font-bold whitespace-nowrap ${isSelected ? "text-[#C6A15B] dark:text-[#C6A15B]" : "text-slate-700 dark:text-slate-300"}`}>
               {period.months} {t.month}
             </div>
             <div className="text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400">
               {periodDays} {t.days}
             </div>
             <div className="text-[7px] sm:text-[8px] text-slate-400 dark:text-slate-500 mt-0.5">
-              {lang === 'tr' ? 'Sabit vadeli program' : 'Fixed-duration program'}
+              {lang === 'tr' ? 'Sabit Vadeli Tahsis' : 'Fixed-Term Allocation'}
             </div>
             
-            <div className={`mt-1 text-[11px] sm:text-xs font-semibold ${isSelected ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-600 dark:text-slate-400"}`}>
+            <div className={`mt-1 text-[11px] sm:text-xs font-semibold ${isSelected ? "text-[#C6A15B] dark:text-[#C6A15B]" : "text-slate-600 dark:text-slate-400"}`}>
               {period.apy.toFixed(2)}%
             </div>
 
             {isSelected && (
-              <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#2F6F62] flex items-center justify-center">
+              <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#C6A15B] flex items-center justify-center">
                 <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
@@ -320,12 +332,12 @@ function EarningsCalculator({ amount, apy, days, metalSymbol, lang }: {
   if (amount <= 0) return null;
   
   return (
-    <div className="rounded-lg sm:rounded-xl bg-gradient-to-br from-[#2F6F62]/10 to-cyan-500/10 dark:from-[#2F6F62]/20 dark:to-cyan-500/20 border border-[#2F6F62]/20 p-3 sm:p-4">
+    <div className="rounded-lg sm:rounded-xl bg-gradient-to-br from-[#C6A15B]/10 to-cyan-500/10 dark:from-[#C6A15B]/20 dark:to-cyan-500/20 border border-[#C6A15B]/20 p-3 sm:p-4">
       <div className="flex items-center gap-2 mb-2 sm:mb-3">
-        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#C6A15B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
-        <span className="text-xs sm:text-sm font-medium text-[#2F6F62] dark:text-[#2F6F62]">
+        <span className="text-xs sm:text-sm font-medium text-[#C6A15B] dark:text-[#C6A15B]">
           {t.estimatedEarnings}
         </span>
       </div>
@@ -333,7 +345,7 @@ function EarningsCalculator({ amount, apy, days, metalSymbol, lang }: {
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <div>
           <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{t.afterPeriod}</div>
-          <div className="text-base sm:text-lg font-bold text-[#2F6F62] dark:text-[#2F6F62]">
+          <div className="text-base sm:text-lg font-bold text-[#C6A15B] dark:text-[#C6A15B]">
             +{earnings.toFixed(4)}g
           </div>
         </div>
@@ -369,18 +381,18 @@ function StakeCodeDisplay({ stakeCode, shortCode, txHash, lang }: {
     : `https://etherscan.io/address/${process.env.NEXT_PUBLIC_STAKING_CONTRACT}`;
 
   return (
-    <div className="rounded-lg sm:rounded-xl bg-gradient-to-br from-[#2F6F62]/20 to-cyan-500/20 border border-[#2F6F62]/30 p-3 sm:p-4 space-y-2 sm:space-y-3">
+    <div className="rounded-lg sm:rounded-xl bg-gradient-to-br from-[#C6A15B]/20 to-cyan-500/20 border border-[#C6A15B]/30 p-3 sm:p-4 space-y-2 sm:space-y-3">
       <div>
-        <div className="text-[10px] sm:text-xs text-[#2F6F62] dark:text-[#2F6F62] mb-1 font-medium">
+        <div className="text-[10px] sm:text-xs text-[#C6A15B] dark:text-[#C6A15B] mb-1 font-medium">
           {t.stakeCode}
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <code className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-slate-900/50 text-[#2F6F62] font-mono text-xs sm:text-sm truncate">
+          <code className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-slate-900/50 text-[#C6A15B] font-mono text-xs sm:text-sm truncate">
             {shortCode}
           </code>
           <button
             onClick={handleCopy}
-            className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-[#2F6F62]/20 hover:bg-[#2F6F62]/30 text-[#2F6F62] text-xs sm:text-sm font-medium transition-colors flex items-center gap-1"
+            className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-[#C6A15B]/20 hover:bg-[#C6A15B]/30 text-[#C6A15B] text-xs sm:text-sm font-medium transition-colors flex items-center gap-1"
           >
             {copied ? (
               <>
@@ -577,7 +589,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
             <img src={offer.icon} alt={offer.metal} className="w-10 h-10 sm:w-12 sm:h-12" />
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">
-                {offer.name} {lang === 'tr' ? 'Getiri Programı' : 'Yield Program'}
+                {offer.name} {lang === 'tr' ? 'Gelir Programı' : 'Income Program'}
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                 {t.headerSub}
@@ -630,14 +642,14 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder={`${t.minAllocation}: ${offer.minAmount}g`}
                 disabled={isApproving || isStaking}
-                className="w-full px-3 sm:px-4 py-3 sm:py-4 pr-16 sm:pr-20 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#2F6F62] transition-colors disabled:opacity-50 text-base sm:text-lg font-medium"
+                className="w-full px-3 sm:px-4 py-3 sm:py-4 pr-16 sm:pr-20 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#C6A15B] transition-colors disabled:opacity-50 text-base sm:text-lg font-medium"
               />
               <button
                 onClick={() => {
                   setAmount(balanceNum.toString());
                 }}
                 disabled={isApproving || isStaking}
-                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62] hover:bg-[#2F6F62]/30 text-xs sm:text-sm font-medium transition-colors disabled:opacity-50"
+                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-[#C6A15B]/20 text-[#C6A15B] dark:text-[#C6A15B] hover:bg-[#C6A15B]/30 text-xs sm:text-sm font-medium transition-colors disabled:opacity-50"
               >
                 MAX
               </button>
@@ -694,18 +706,18 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
           {/* Success Message with Stake Code */}
           {isStakeSuccess && resultShortCode && (
             <div className="space-y-3 sm:space-y-4">
-              <div className="rounded-lg sm:rounded-xl bg-[#2F6F62]/20 border border-[#2F6F62]/30 p-3 sm:p-4">
+              <div className="rounded-lg sm:rounded-xl bg-[#C6A15B]/20 border border-[#C6A15B]/30 p-3 sm:p-4">
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#2F6F62]/30 flex items-center justify-center">
-                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#C6A15B]/30 flex items-center justify-center">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#C6A15B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
                   <div>
-                    <div className="text-xs sm:text-sm font-medium text-[#2F6F62] dark:text-[#2F6F62]">
+                    <div className="text-xs sm:text-sm font-medium text-[#C6A15B] dark:text-[#C6A15B]">
                       {t.lockSuccess}
                     </div>
-                    <div className="text-[10px] sm:text-xs text-[#2F6F62] dark:text-[#2F6F62]/70">
+                    <div className="text-[10px] sm:text-xs text-[#C6A15B] dark:text-[#C6A15B]/70">
                       {t.positionCreated}
                     </div>
                   </div>
@@ -781,7 +793,13 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                 <p className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-500 leading-relaxed">
                   {t.yieldDisclaimer}
                 </p>
-                <p className="text-[9px] sm:text-[10px] text-[#2F6F62] dark:text-[#2F6F62] mt-1">
+                <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 mt-1 leading-relaxed">
+                  {t.counterpartyNotice}
+                </p>
+                <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 mt-1 leading-relaxed italic">
+                  {t.riskDisclosure}
+                </p>
+                <p className="text-[9px] sm:text-[10px] text-[#C6A15B] dark:text-[#C6A15B] mt-1.5 font-medium">
                   {t.custodyNotice}
                 </p>
               </div>
@@ -818,7 +836,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
             <button
               onClick={handleStake}
               disabled={!amount || amountNum < offer.minAmount || isApproving || isStaking || needsApproval}
-              className="w-full px-3 sm:px-4 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-[#BFA181] hover:to-[#2F6F62] disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold text-sm sm:text-base transition-all shadow-lg shadow-[#2F6F62]/20 flex items-center justify-center gap-2"
+              className="w-full px-3 sm:px-4 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#C6A15B] to-[#BFA181] hover:from-[#BFA181] hover:to-[#C6A15B] disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold text-sm sm:text-base transition-all shadow-lg shadow-[#C6A15B]/20 flex items-center justify-center gap-2"
             >
               {isStaking ? (
                 <>
@@ -859,7 +877,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
           {isStakeSuccess && (
             <button
               onClick={onClose}
-              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-[#2F6F62] hover:bg-[#2F6F62] text-white font-medium text-sm sm:text-base transition-colors"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-[#C6A15B] hover:bg-[#C6A15B] text-white font-medium text-sm sm:text-base transition-colors"
             >
               {t.done}
             </button>
