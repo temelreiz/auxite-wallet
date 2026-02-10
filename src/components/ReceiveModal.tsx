@@ -168,7 +168,7 @@ export function ReceiveModal({ isOpen, onClose, lang: propLang, walletAddress }:
               level="H"
               includeMargin={true}
               imageSettings={{
-                src: "/gold-favicon-32x32.png",
+                src: "/auxg_icon.png",
                 x: undefined,
                 y: undefined,
                 height: 30,

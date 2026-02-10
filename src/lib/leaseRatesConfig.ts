@@ -28,7 +28,7 @@ export const LEASE_RATES_CONFIG: MetalLeaseConfig[] = [
     name: "Gold",
     nameEn: "Gold",
     nameTr: "Altın",
-    icon: "/gold-favicon-32x32.png",
+    icon: "/auxg_icon.png",
     metalTokenAddress: "0xE425A9923250E94Fe2F4cB99cbc0896Aea24933a",
     contractAddress: "0xe63050b6d0497a970d3fB44EBF428742631d1006",
     periods: [
@@ -48,7 +48,7 @@ export const LEASE_RATES_CONFIG: MetalLeaseConfig[] = [
     name: "Silver",
     nameEn: "Silver",
     nameTr: "Gümüş",
-    icon: "/silver-favicon-32x32.png",
+    icon: "/auxs_icon.png",
     metalTokenAddress: "0xaE583c98c833a0B4b1B23e58209E697d95F05D23",
     contractAddress: "0x6396163f0CeA0EdC639c353f6D1EbCd7C5427945",
     periods: [
@@ -68,7 +68,7 @@ export const LEASE_RATES_CONFIG: MetalLeaseConfig[] = [
     name: "Platinum",
     nameEn: "Platinum",
     nameTr: "Platin",
-    icon: "/platinum-favicon-32x32.png",
+    icon: "/auxpt_icon.png",
     metalTokenAddress: "0xeCfD88bE4f93C9379644B303444943e636A35F66",
     contractAddress: "0xeB95c1C459506F6265c800C64D3423005499C3Ea",
     periods: [
@@ -88,7 +88,7 @@ export const LEASE_RATES_CONFIG: MetalLeaseConfig[] = [
     name: "Palladium",
     nameEn: "Palladium",
     nameTr: "Paladyum",
-    icon: "/palladium-favicon-32x32.png",
+    icon: "/auxpd_icon.png",
     metalTokenAddress: "0x6F4E027B42E14e06f3eaeA39d574122188eab1D4",
     contractAddress: "0x587706Bf9A907288145cfFc35b57818Df4db68A4",
     periods: [

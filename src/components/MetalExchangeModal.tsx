@@ -34,10 +34,10 @@ const METAL_INFO: Record<MetalType, {
   bgColor: string;
   borderColor: string;
 }> = {
-  AUXG: { name: "Gold", nameTr: "Altın", icon: "/gold-favicon-32x32.png", color: "#FFD700", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500/50" },
-  AUXS: { name: "Silver", nameTr: "Gümüş", icon: "/silver-favicon-32x32.png", color: "#C0C0C0", bgColor: "bg-slate-400/20", borderColor: "border-slate-400/50" },
-  AUXPT: { name: "Platinum", nameTr: "Platin", icon: "/platinum-favicon-32x32.png", color: "#E5E4E2", bgColor: "bg-slate-300/20", borderColor: "border-slate-300/50" },
-  AUXPD: { name: "Palladium", nameTr: "Paladyum", icon: "/palladium-favicon-32x32.png", color: "#CED0DD", bgColor: "bg-slate-500/20", borderColor: "border-slate-500/50" },
+  AUXG: { name: "Gold", nameTr: "Altın", icon: "/auxg_icon.png", color: "#FFD700", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500/50" },
+  AUXS: { name: "Silver", nameTr: "Gümüş", icon: "/auxs_icon.png", color: "#C0C0C0", bgColor: "bg-slate-400/20", borderColor: "border-slate-400/50" },
+  AUXPT: { name: "Platinum", nameTr: "Platin", icon: "/auxpt_icon.png", color: "#E5E4E2", bgColor: "bg-slate-300/20", borderColor: "border-slate-300/50" },
+  AUXPD: { name: "Palladium", nameTr: "Paladyum", icon: "/auxpd_icon.png", color: "#CED0DD", bgColor: "bg-slate-500/20", borderColor: "border-slate-500/50" },
 };
 
 const TARGET_INFO: Record<TargetType, { 

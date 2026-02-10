@@ -226,10 +226,10 @@ const translations: Record<string, Record<string, string>> = {
 };
 
 const METAL_INFO: Record<string, { nameKey: string; icon: string; color: string }> = {
-  AUXG: { nameKey: "gold", icon: "/gold-favicon-32x32.png", color: "text-[#BFA181]" },
-  AUXS: { nameKey: "silver", icon: "/silver-favicon-32x32.png", color: "text-slate-400" },
-  AUXPT: { nameKey: "platinum", icon: "/platinum-favicon-32x32.png", color: "text-cyan-400" },
-  AUXPD: { nameKey: "palladium", icon: "/palladium-favicon-32x32.png", color: "text-rose-400" },
+  AUXG: { nameKey: "gold", icon: "/auxg_icon.png", color: "text-[#BFA181]" },
+  AUXS: { nameKey: "silver", icon: "/auxs_icon.png", color: "text-slate-400" },
+  AUXPT: { nameKey: "platinum", icon: "/auxpt_icon.png", color: "text-cyan-400" },
+  AUXPD: { nameKey: "palladium", icon: "/auxpd_icon.png", color: "text-rose-400" },
 };
 
 const CUSTODIAN_MAP: Record<string, string> = {
@@ -414,7 +414,7 @@ export function LockedAssetsModal({
               ) : (
                 <div className="space-y-2 sm:space-y-3">
                   {allocations.map((allocation) => {
-                    const metalInfo = METAL_INFO[allocation.metalSymbol] || { icon: "/gold-favicon-32x32.png", color: "text-[#BFA181]" };
+                    const metalInfo = METAL_INFO[allocation.metalSymbol] || { icon: "/auxg_icon.png", color: "text-[#BFA181]" };
                     const grams = Number(allocation.grams);
                     const price = metalPrices[allocation.metalSymbol as keyof typeof metalPrices] || 0;
                     const value = grams * price;
@@ -508,7 +508,7 @@ export function LockedAssetsModal({
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                            <img src={metalInfo?.icon || "/gold-favicon-32x32.png"} alt={stake.metalSymbol} className="w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
+                            <img src={metalInfo?.icon || "/auxg_icon.png"} alt={stake.metalSymbol} className="w-7 h-7 sm:w-10 sm:h-10 flex-shrink-0" />
                             <div className="min-w-0">
                               <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                                 <span className={`font-semibold text-xs sm:text-base ${metalInfo?.color || "text-[#BFA181]"}`}>{stake.metalSymbol}</span>

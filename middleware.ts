@@ -17,10 +17,10 @@ const ALLOWED_PATHS = [
   "/apple-touch-icon.png",
   "/icon-192.png",
   "/icon-512.png",
-  "/gold-favicon-32x32.png",
-  "/silver-favicon-32x32.png",
-  "/platinum-favicon-32x32.png",
-  "/palladium-favicon-32x32.png",
+  "/auxg_icon.png",
+  "/auxs_icon.png",
+  "/auxpt_icon.png",
+  "/auxpd_icon.png",
   "/auxite-wallet-logo.png",
 ];
 

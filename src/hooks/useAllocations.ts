@@ -6,10 +6,10 @@ import { useWallet } from '@/components/WalletContext';
 
 // Metal info
 const METAL_INFO: Record<string, { name: string; icon: string; color: string }> = {
-  AUXG: { name: 'Gold', icon: '/gold-favicon-32x32.png', color: '#FFD700' },
-  AUXS: { name: 'Silver', icon: '/silver-favicon-32x32.png', color: '#C0C0C0' },
-  AUXPT: { name: 'Platinum', icon: '/platinum-favicon-32x32.png', color: '#E5E4E2' },
-  AUXPD: { name: 'Palladium', icon: '/palladium-favicon-32x32.png', color: '#CED0DD' },
+  AUXG: { name: 'Gold', icon: '/auxg_icon.png', color: '#FFD700' },
+  AUXS: { name: 'Silver', icon: '/auxs_icon.png', color: '#C0C0C0' },
+  AUXPT: { name: 'Platinum', icon: '/auxpt_icon.png', color: '#E5E4E2' },
+  AUXPD: { name: 'Palladium', icon: '/auxpd_icon.png', color: '#CED0DD' },
 };
 
 // Types

@@ -23,10 +23,10 @@ interface PriceAlertsPanelProps {
 
 // Token bilgileri - gerçek ikonlar ile
 const TOKENS = [
-  { symbol: "AUXG", nameKey: "gold", icon: "/gold-favicon-32x32.png", isImage: true, color: "#FFD700" },
-  { symbol: "AUXS", nameKey: "silver", icon: "/silver-favicon-32x32.png", isImage: true, color: "#C0C0C0" },
-  { symbol: "AUXPT", nameKey: "platinum", icon: "/platinum-favicon-32x32.png", isImage: true, color: "#E5E4E2" },
-  { symbol: "AUXPD", nameKey: "palladium", icon: "/palladium-favicon-32x32.png", isImage: true, color: "#CED0DD" },
+  { symbol: "AUXG", nameKey: "gold", icon: "/auxg_icon.png", isImage: true, color: "#FFD700" },
+  { symbol: "AUXS", nameKey: "silver", icon: "/auxs_icon.png", isImage: true, color: "#C0C0C0" },
+  { symbol: "AUXPT", nameKey: "platinum", icon: "/auxpt_icon.png", isImage: true, color: "#E5E4E2" },
+  { symbol: "AUXPD", nameKey: "palladium", icon: "/auxpd_icon.png", isImage: true, color: "#CED0DD" },
   { symbol: "BTC", nameKey: "bitcoin", icon: "₿", isImage: false, color: "#F7931A" },
   { symbol: "ETH", nameKey: "ethereum", icon: "Ξ", isImage: false, color: "#627EEA" },
   { symbol: "XRP", nameKey: "ripple", icon: "✕", isImage: false, color: "#23292F" },

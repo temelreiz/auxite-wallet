@@ -20,10 +20,10 @@ const TOKEN_INFO: Record<TokenType, {
   name: string; icon: string; iconType: "image" | "symbol"; color: string; 
   onChain: boolean; decimals: number; address?: string; isMetal?: boolean;
 }> = {
-  AUXG: { name: "Gold", icon: "/gold-favicon-32x32.png", iconType: "image", color: "#F59E0B", onChain: true, decimals: 3, address: METAL_TOKEN_ADDRESSES.AUXG, isMetal: true },
-  AUXS: { name: "Silver", icon: "/silver-favicon-32x32.png", iconType: "image", color: "#94A3B8", onChain: true, decimals: 3, address: METAL_TOKEN_ADDRESSES.AUXS, isMetal: true },
-  AUXPT: { name: "Platinum", icon: "/platinum-favicon-32x32.png", iconType: "image", color: "#CBD5E1", onChain: true, decimals: 3, address: METAL_TOKEN_ADDRESSES.AUXPT, isMetal: true },
-  AUXPD: { name: "Palladium", icon: "/palladium-favicon-32x32.png", iconType: "image", color: "#64748B", onChain: true, decimals: 3, address: METAL_TOKEN_ADDRESSES.AUXPD, isMetal: true },
+  AUXG: { name: "Gold", icon: "/auxg_icon.png", iconType: "image", color: "#F59E0B", onChain: true, decimals: 3, address: METAL_TOKEN_ADDRESSES.AUXG, isMetal: true },
+  AUXS: { name: "Silver", icon: "/auxs_icon.png", iconType: "image", color: "#94A3B8", onChain: true, decimals: 3, address: METAL_TOKEN_ADDRESSES.AUXS, isMetal: true },
+  AUXPT: { name: "Platinum", icon: "/auxpt_icon.png", iconType: "image", color: "#CBD5E1", onChain: true, decimals: 3, address: METAL_TOKEN_ADDRESSES.AUXPT, isMetal: true },
+  AUXPD: { name: "Palladium", icon: "/auxpd_icon.png", iconType: "image", color: "#64748B", onChain: true, decimals: 3, address: METAL_TOKEN_ADDRESSES.AUXPD, isMetal: true },
   ETH: { name: "Ethereum", icon: "Ξ", iconType: "symbol", color: "#627EEA", onChain: true, decimals: 18 },
   USDT: { name: "Tether", icon: "₮", iconType: "symbol", color: "#26A17B", onChain: true, decimals: 6, address: USDT_ADDRESS },
   BTC: { name: "Bitcoin", icon: "₿", iconType: "symbol", color: "#F7931A", onChain: false, decimals: 8 },

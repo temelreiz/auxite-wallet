@@ -17,10 +17,10 @@ import { AddFundsModal } from "@/components/AddFundsModal";
 
 // Metal icon mapping
 const metalIcons: Record<string, string> = {
-  AUXG: "/gold-favicon-32x32.png",
-  AUXS: "/silver-favicon-32x32.png",
-  AUXPT: "/platinum-favicon-32x32.png",
-  AUXPD: "/palladium-favicon-32x32.png",
+  AUXG: "/auxg_icon.png",
+  AUXS: "/auxs_icon.png",
+  AUXPT: "/auxpt_icon.png",
+  AUXPD: "/auxpd_icon.png",
 };
 
 const metals = [

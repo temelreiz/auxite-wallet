@@ -190,10 +190,10 @@ const t: Record<string, any> = {
 };
 
 const TOKENS = [
-  { symbol: "AUXG", name: "Gold", icon: "/gold-favicon-32x32.png", isImage: true },
-  { symbol: "AUXS", name: "Silver", icon: "/silver-favicon-32x32.png", isImage: true },
-  { symbol: "AUXPT", name: "Platinum", icon: "/platinum-favicon-32x32.png", isImage: true },
-  { symbol: "AUXPD", name: "Palladium", icon: "/palladium-favicon-32x32.png", isImage: true },
+  { symbol: "AUXG", name: "Gold", icon: "/auxg_icon.png", isImage: true },
+  { symbol: "AUXS", name: "Silver", icon: "/auxs_icon.png", isImage: true },
+  { symbol: "AUXPT", name: "Platinum", icon: "/auxpt_icon.png", isImage: true },
+  { symbol: "AUXPD", name: "Palladium", icon: "/auxpd_icon.png", isImage: true },
 ];
 
 export function RecurringBuyManager({ 

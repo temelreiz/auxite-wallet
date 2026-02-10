@@ -22,10 +22,10 @@ interface MetalInfo { symbol: string; name: string; icon: string; price: number;
 interface TradePreview { toAmount: number; price: number; fee: number; feePercent: number; spread: string; tier?: { id: string; name: string; }; allocationPreview?: { totalGrams: number; allocatedGrams: number; nonAllocatedGrams: number; hasPartialAllocation: boolean; suggestion?: { gramsToAdd: number; auxmToAdd: number; targetGrams: number; }; }; }
 
 const METALS_BASE = [
-  { symbol: "AUXG", name: "gold", icon: "/gold-favicon-32x32.png" },
-  { symbol: "AUXS", name: "silver", icon: "/silver-favicon-32x32.png" },
-  { symbol: "AUXPT", name: "platinum", icon: "/platinum-favicon-32x32.png" },
-  { symbol: "AUXPD", name: "palladium", icon: "/palladium-favicon-32x32.png" },
+  { symbol: "AUXG", name: "gold", icon: "/auxg_icon.png" },
+  { symbol: "AUXS", name: "silver", icon: "/auxs_icon.png" },
+  { symbol: "AUXPT", name: "platinum", icon: "/auxpt_icon.png" },
+  { symbol: "AUXPD", name: "palladium", icon: "/auxpd_icon.png" },
 ];
 
 const PAYMENT_METHODS = [

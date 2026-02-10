@@ -213,7 +213,7 @@ const t: Record<string, any> = {
 };
 
 const TOKENS = [
-  { symbol: "AUXG", name: "Gold", icon: "/gold-favicon-32x32.png" },
+  { symbol: "AUXG", name: "Gold", icon: "/auxg_icon.png" },
   { symbol: "AUXS", name: "Silver", icon: "/silver-icon.png" },
   { symbol: "AUXPT", name: "Platinum", icon: "/platinum-icon.png" },
   { symbol: "AUXPD", name: "Palladium", icon: "/palladium-icon.png" },

@@ -240,7 +240,7 @@ export default function VaultAssignmentPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/admin">
-                <Image src="/gold-favicon-32x32.png" alt="Auxite" width={32} height={32} />
+                <Image src="/auxg_icon.png" alt="Auxite" width={32} height={32} />
               </Link>
               <div>
                 <h1 className="text-xl font-bold">🏦 Vault Assignment</h1>

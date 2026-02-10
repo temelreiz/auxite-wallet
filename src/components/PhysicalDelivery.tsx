@@ -347,10 +347,10 @@ const translations: Record<string, Record<string, any>> = {
 
 // FIXED: Correct icon paths for all metals
 const METALS = [
-  { symbol: "AUXG", name: { tr: "Altın", en: "Gold", de: "Gold", fr: "Or", ar: "ذهب", ru: "Золото" }, icon: "/gold-favicon-32x32.png", minAmount: 80 },
-  { symbol: "AUXS", name: { tr: "Gümüş", en: "Silver", de: "Silber", fr: "Argent", ar: "فضة", ru: "Серебро" }, icon: "/silver-favicon-32x32.png", minAmount: 5000 },
-  { symbol: "AUXPT", name: { tr: "Platin", en: "Platinum", de: "Platin", fr: "Platine", ar: "بلاتين", ru: "Платина" }, icon: "/platinum-favicon-32x32.png", minAmount: 200 },
-  { symbol: "AUXPD", name: { tr: "Paladyum", en: "Palladium", de: "Palladium", fr: "Palladium", ar: "بلاديوم", ru: "Палладий" }, icon: "/palladium-favicon-32x32.png", minAmount: 200 },
+  { symbol: "AUXG", name: { tr: "Altın", en: "Gold", de: "Gold", fr: "Or", ar: "ذهب", ru: "Золото" }, icon: "/auxg_icon.png", minAmount: 80 },
+  { symbol: "AUXS", name: { tr: "Gümüş", en: "Silver", de: "Silber", fr: "Argent", ar: "فضة", ru: "Серебро" }, icon: "/auxs_icon.png", minAmount: 5000 },
+  { symbol: "AUXPT", name: { tr: "Platin", en: "Platinum", de: "Platin", fr: "Platine", ar: "بلاتين", ru: "Платина" }, icon: "/auxpt_icon.png", minAmount: 200 },
+  { symbol: "AUXPD", name: { tr: "Paladyum", en: "Palladium", de: "Palladium", fr: "Palladium", ar: "بلاديوم", ru: "Палладий" }, icon: "/auxpd_icon.png", minAmount: 200 },
 ];
 
 const DELIVERY_FEES: Record<string, number> = {

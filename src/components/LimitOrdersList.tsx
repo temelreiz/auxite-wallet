@@ -18,22 +18,22 @@ interface LimitOrdersListProps {
 // Metal bilgileri - gerçek ikonlar ile
 const METAL_INFO: Record<string, { icon: string; name: Record<string, string>; color: string }> = {
   AUXG: { 
-    icon: '/gold-favicon-32x32.png', 
+    icon: '/auxg_icon.png', 
     name: { tr: 'Altın', en: 'Gold', de: 'Gold', fr: 'Or', ar: 'ذهب', ru: 'Золото' },
     color: '#FFD700' 
   },
   AUXS: { 
-    icon: '/silver-favicon-32x32.png', 
+    icon: '/auxs_icon.png', 
     name: { tr: 'Gümüş', en: 'Silver', de: 'Silber', fr: 'Argent', ar: 'فضة', ru: 'Серебро' },
     color: '#C0C0C0' 
   },
   AUXPT: { 
-    icon: '/platinum-favicon-32x32.png', 
+    icon: '/auxpt_icon.png', 
     name: { tr: 'Platin', en: 'Platinum', de: 'Platin', fr: 'Platine', ar: 'بلاتين', ru: 'Платина' },
     color: '#E5E4E2' 
   },
   AUXPD: { 
-    icon: '/palladium-favicon-32x32.png', 
+    icon: '/auxpd_icon.png', 
     name: { tr: 'Paladyum', en: 'Palladium', de: 'Palladium', fr: 'Palladium', ar: 'بالاديوم', ru: 'Палладий' },
     color: '#CED0DD' 
   },

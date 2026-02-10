@@ -293,10 +293,10 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
 
   // Metal icon mapping for high quality icons
   const metalIcons: Record<string, string> = {
-    AUXG: "/gold-favicon-32x32.png",
-    AUXS: "/silver-favicon-32x32.png",
-    AUXPT: "/platinum-favicon-32x32.png",
-    AUXPD: "/palladium-favicon-32x32.png"
+    AUXG: "/auxg_icon.png",
+    AUXS: "/auxs_icon.png",
+    AUXPT: "/auxpt_icon.png",
+    AUXPD: "/auxpd_icon.png"
   };
 
   return (
@@ -399,10 +399,10 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
   const safeRates = { sofr: sofr || 3.66, AUXG: { "3": 1.53, "6": 2.03, "12": 2.53 }, AUXS: { "3": 1.23, "6": 1.73, "12": 2.23 }, AUXPT: { "3": 2.03, "6": 2.53, "12": 3.03 }, AUXPD: { "3": 1.83, "6": 2.33, "12": 2.83 } };
 
   const availableOffers = [
-    { metal: "AUXG", name: t.gold, icon: "/gold-favicon-32x32.png", metalTokenAddress: "0xE425A9923250E94Fe2F4cB99cbc0896Aea24933a", minAmount: 10, tvl: 500000, periods: [{ months: 3, apy: safeRates?.AUXG?.["3"] || 1.53 }, { months: 6, apy: safeRates?.AUXG?.["6"] || 2.03 }, { months: 12, apy: safeRates?.AUXG?.["12"] || 2.53 }] },
-    { metal: "AUXS", name: t.silver, icon: "/silver-favicon-32x32.png", metalTokenAddress: "0xaE583c98c833a0B4b1B23e58209E697d95F05D23", minAmount: 100, tvl: 250000, periods: [{ months: 3, apy: safeRates?.AUXS?.["3"] || 1.23 }, { months: 6, apy: safeRates?.AUXS?.["6"] || 1.73 }, { months: 12, apy: safeRates?.AUXS?.["12"] || 2.23 }] },
-    { metal: "AUXPT", name: t.platinum, icon: "/platinum-favicon-32x32.png", metalTokenAddress: "0xeCfD88bE4f93C9379644B303444943e636A35F66", minAmount: 5, tvl: 350000, periods: [{ months: 3, apy: safeRates?.AUXPT?.["3"] || 2.03 }, { months: 6, apy: safeRates?.AUXPT?.["6"] || 2.53 }, { months: 12, apy: safeRates?.AUXPT?.["12"] || 3.03 }] },
-    { metal: "AUXPD", name: t.palladium, icon: "/palladium-favicon-32x32.png", metalTokenAddress: "0x6F4E027B42E14e06f3eaeA39d574122188eab1D4", minAmount: 5, tvl: 150000, periods: [{ months: 3, apy: safeRates?.AUXPD?.["3"] || 1.83 }, { months: 6, apy: safeRates?.AUXPD?.["6"] || 2.33 }, { months: 12, apy: safeRates?.AUXPD?.["12"] || 2.83 }] },
+    { metal: "AUXG", name: t.gold, icon: "/auxg_icon.png", metalTokenAddress: "0xE425A9923250E94Fe2F4cB99cbc0896Aea24933a", minAmount: 10, tvl: 500000, periods: [{ months: 3, apy: safeRates?.AUXG?.["3"] || 1.53 }, { months: 6, apy: safeRates?.AUXG?.["6"] || 2.03 }, { months: 12, apy: safeRates?.AUXG?.["12"] || 2.53 }] },
+    { metal: "AUXS", name: t.silver, icon: "/auxs_icon.png", metalTokenAddress: "0xaE583c98c833a0B4b1B23e58209E697d95F05D23", minAmount: 100, tvl: 250000, periods: [{ months: 3, apy: safeRates?.AUXS?.["3"] || 1.23 }, { months: 6, apy: safeRates?.AUXS?.["6"] || 1.73 }, { months: 12, apy: safeRates?.AUXS?.["12"] || 2.23 }] },
+    { metal: "AUXPT", name: t.platinum, icon: "/auxpt_icon.png", metalTokenAddress: "0xeCfD88bE4f93C9379644B303444943e636A35F66", minAmount: 5, tvl: 350000, periods: [{ months: 3, apy: safeRates?.AUXPT?.["3"] || 2.03 }, { months: 6, apy: safeRates?.AUXPT?.["6"] || 2.53 }, { months: 12, apy: safeRates?.AUXPT?.["12"] || 3.03 }] },
+    { metal: "AUXPD", name: t.palladium, icon: "/auxpd_icon.png", metalTokenAddress: "0x6F4E027B42E14e06f3eaeA39d574122188eab1D4", minAmount: 5, tvl: 150000, periods: [{ months: 3, apy: safeRates?.AUXPD?.["3"] || 1.83 }, { months: 6, apy: safeRates?.AUXPD?.["6"] || 2.33 }, { months: 12, apy: safeRates?.AUXPD?.["12"] || 2.83 }] },
   ];
 
   const formatAPYRange = (offer: any) => {

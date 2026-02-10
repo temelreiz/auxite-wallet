@@ -165,10 +165,10 @@ const METAL_INFO: Record<MetalType, {
   bgColor: string;
   borderColor: string;
 }> = {
-  AUXG: { nameKey: "gold", icon: "/gold-favicon-32x32.png", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500/50" },
-  AUXS: { nameKey: "silver", icon: "/silver-favicon-32x32.png", bgColor: "bg-slate-400/20", borderColor: "border-slate-400/50" },
-  AUXPT: { nameKey: "platinum", icon: "/platinum-favicon-32x32.png", bgColor: "bg-slate-300/20", borderColor: "border-slate-300/50" },
-  AUXPD: { nameKey: "palladium", icon: "/palladium-favicon-32x32.png", bgColor: "bg-slate-500/20", borderColor: "border-slate-500/50" },
+  AUXG: { nameKey: "gold", icon: "/auxg_icon.png", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500/50" },
+  AUXS: { nameKey: "silver", icon: "/auxs_icon.png", bgColor: "bg-slate-400/20", borderColor: "border-slate-400/50" },
+  AUXPT: { nameKey: "platinum", icon: "/auxpt_icon.png", bgColor: "bg-slate-300/20", borderColor: "border-slate-300/50" },
+  AUXPD: { nameKey: "palladium", icon: "/auxpd_icon.png", bgColor: "bg-slate-500/20", borderColor: "border-slate-500/50" },
 };
 
 const TARGET_INFO: Record<TargetType, { 
@@ -180,10 +180,10 @@ const TARGET_INFO: Record<TargetType, {
   category: "fiat" | "metal" | "crypto";
 }> = {
   AUXM: { nameKey: "auxiteMoney", emoji: "◈", bgColor: "bg-purple-500/20", borderColor: "border-purple-500/30", category: "fiat" },
-  AUXG: { nameKey: "gold", icon: "/gold-favicon-32x32.png", bgColor: "bg-yellow-500/10", borderColor: "border-yellow-500/30", category: "metal" },
-  AUXS: { nameKey: "silver", icon: "/silver-favicon-32x32.png", bgColor: "bg-slate-400/10", borderColor: "border-slate-400/30", category: "metal" },
-  AUXPT: { nameKey: "platinum", icon: "/platinum-favicon-32x32.png", bgColor: "bg-slate-300/10", borderColor: "border-slate-300/30", category: "metal" },
-  AUXPD: { nameKey: "palladium", icon: "/palladium-favicon-32x32.png", bgColor: "bg-slate-500/10", borderColor: "border-slate-500/30", category: "metal" },
+  AUXG: { nameKey: "gold", icon: "/auxg_icon.png", bgColor: "bg-yellow-500/10", borderColor: "border-yellow-500/30", category: "metal" },
+  AUXS: { nameKey: "silver", icon: "/auxs_icon.png", bgColor: "bg-slate-400/10", borderColor: "border-slate-400/30", category: "metal" },
+  AUXPT: { nameKey: "platinum", icon: "/auxpt_icon.png", bgColor: "bg-slate-300/10", borderColor: "border-slate-300/30", category: "metal" },
+  AUXPD: { nameKey: "palladium", icon: "/auxpd_icon.png", bgColor: "bg-slate-500/10", borderColor: "border-slate-500/30", category: "metal" },
   ETH: { nameKey: "Ethereum", emoji: "Ξ", bgColor: "bg-blue-500/10", borderColor: "border-blue-500/30", category: "crypto" },
   BTC: { nameKey: "Bitcoin", emoji: "₿", bgColor: "bg-orange-500/10", borderColor: "border-orange-500/30", category: "crypto" },
   XRP: { nameKey: "Ripple", emoji: "✕", bgColor: "bg-slate-500/10", borderColor: "border-slate-500/30", category: "crypto" },
