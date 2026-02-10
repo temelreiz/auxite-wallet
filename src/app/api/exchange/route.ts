@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { getTokenPrices } from "@/lib/v6-token-service";
 import { notifyTrade } from "@/lib/telegram";
+import { submitForMatching } from "@/lib/matching-engine";
+import { recordExposure, closeHedge } from "@/lib/hedge-engine";
+import { checkOrderAllowed, recordClientAllocation, recordClientDeallocation } from "@/lib/inventory-manager";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -196,6 +199,59 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Exchange validated: ${fromAmount} ${fromAsset} → ${toAmount.toFixed(6)} ${toAsset}`);
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 🏛️ MATCHED PRINCIPAL INFRASTRUCTURE
+    // Layer 1: Inventory check — would this create forbidden directional exposure?
+    // Layer 2: Internal matching — find counterparty before going to LP
+    // Layer 3: Hedge — cover unmatched exposure immediately
+    // ═══════════════════════════════════════════════════════════════════════════
+    const isBuyingMetal = METALS.includes(toAsset.toLowerCase());
+    const isSellingMetal_check = METALS.includes(fromAsset.toLowerCase());
+    let matchResult: any = null;
+    let hedgeResult: any = null;
+
+    if (isBuyingMetal || isSellingMetal_check) {
+      const metal = isBuyingMetal ? toAsset.toUpperCase() : fromAsset.toUpperCase();
+      const side = isBuyingMetal ? 'buy' : 'sell';
+      const grams = isBuyingMetal ? toAmount : fromAmount;
+      const price = isBuyingMetal ? toPrice : fromPrice;
+
+      // ── L1: INVENTORY CHECK ──
+      const inventoryCheck = await checkOrderAllowed(metal, grams, side);
+      if (!inventoryCheck.allowed) {
+        console.warn(`🚨 INVENTORY BLOCK: ${inventoryCheck.reason}`);
+        // Don't hard-block user — log and continue (inventory manager tracks it)
+      }
+
+      // ── L2: INTERNAL MATCHING ──
+      try {
+        matchResult = await submitForMatching(side, metal, grams, price, normalizedAddress, fromAsset);
+        if (matchResult.matched) {
+          console.log(`🔄 INTERNAL MATCH: ${matchResult.matchedGrams.toFixed(4)}g ${metal} (${matchResult.matchType})`);
+          console.log(`💰 Spread captured: $${matchResult.spreadCaptured.toFixed(2)}`);
+        }
+      } catch (matchErr) {
+        console.warn('Matching engine error (non-blocking):', matchErr);
+      }
+
+      // ── L3: HEDGE UNMATCHED PORTION ──
+      const unmatched = matchResult?.requiresLP ? matchResult.lpGrams : grams;
+      if (unmatched > 0) {
+        try {
+          hedgeResult = await recordExposure(
+            metal, unmatched, side, price,
+            matchResult?.matched ? 'partial_unmatched' : 'no_match_lp_required',
+            matchResult?.buyOrder?.id,
+          );
+          if (hedgeResult.needsHedge) {
+            console.log(`📊 HEDGE OPENED: ${hedgeResult.hedgeId} — ${unmatched.toFixed(4)}g ${metal}`);
+          }
+        } catch (hedgeErr) {
+          console.warn('Hedge engine error (non-blocking):', hedgeErr);
+        }
+      }
+    }
+
     // Get current Redis balance
     const currentBalance = await redis.hgetall(balanceKey) || {};
 
@@ -293,6 +349,19 @@ export async function POST(request: NextRequest) {
             await redis.set(`allocation:user:${userUid}:list`, JSON.stringify(updatedAllocations));
             releaseInfo = { releasedGrams: fromAmount, metal: fromAsset };
             deductedFromAllocation = true;
+
+            // ── INVENTORY: Record client de-allocation ──
+            try {
+              await recordClientDeallocation(fromAsset.toUpperCase(), fromAmount);
+            } catch (e) { console.warn('Inventory dealloc track error:', e); }
+
+            // ── HEDGE: Close hedge for sell side ──
+            if (hedgeResult?.hedgeId) {
+              try {
+                const closeResult = await closeHedge(hedgeResult.hedgeId, fromPrice);
+                console.log(`📊 SELL HEDGE CLOSED: ${hedgeResult.hedgeId} — P&L: $${closeResult.pnl.toFixed(2)}`);
+              } catch (e) { console.warn('Sell hedge close error:', e); }
+            }
           }
         }
 
@@ -337,6 +406,19 @@ export async function POST(request: NextRequest) {
             certificateNumber: allocData.certificateNumber,
           };
           console.log(`📜 Certificate issued: ${allocData.certificateNumber}`);
+
+          // ── INVENTORY: Record client allocation ──
+          try {
+            await recordClientAllocation(toAsset.toUpperCase(), toAmount);
+          } catch (e) { console.warn('Inventory track error:', e); }
+
+          // ── HEDGE: Close hedge now that physical is allocated ──
+          if (hedgeResult?.hedgeId) {
+            try {
+              const closeResult = await closeHedge(hedgeResult.hedgeId, toPrice);
+              console.log(`📊 HEDGE CLOSED: ${hedgeResult.hedgeId} — P&L: $${closeResult.pnl.toFixed(2)}`);
+            } catch (e) { console.warn('Hedge close error:', e); }
+          }
 
           // nonAllocatedGrams (küsurat) Redis balance'a eklenmeli
           if (allocData.nonAllocatedGrams && allocData.nonAllocatedGrams > 0) {
@@ -427,6 +509,15 @@ export async function POST(request: NextRequest) {
       balances: {
         [fromKey]: parseFloat(updatedBalance?.[fromKey] as string || "0"),
         [toKey]: parseFloat(updatedBalance?.[toKey] as string || "0"),
+      },
+      // ── MATCHED PRINCIPAL METADATA ──
+      infrastructure: {
+        internalMatch: matchResult?.matched || false,
+        matchType: matchResult?.matchType || 'none',
+        matchedGrams: matchResult?.matchedGrams || 0,
+        spreadCaptured: matchResult?.spreadCaptured || 0,
+        hedgeOpened: hedgeResult?.needsHedge || false,
+        hedgeId: hedgeResult?.hedgeId || null,
       },
     });
 

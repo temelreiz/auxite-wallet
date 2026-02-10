@@ -386,6 +386,7 @@ const TABS = [
   { id: "siteRoadmap", label: "Roadmap", icon: "🗺️" },
   { id: "siteTeam", label: "Site Ekip", icon: "👨‍👩‍👧‍👦" },
   { id: "siteVaults", label: "Kasalar", icon: "🏛️" },
+  { id: "risk", label: "Risk", icon: "🛡️" },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -4779,6 +4780,13 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {/* RISK DASHBOARD TAB */}
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {activeTab === "risk" && (
+            <RiskDashboardTab />
+          )}
+
           {/* Website Edit Modal */}
           {showWebsiteModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -5071,5 +5079,220 @@ export default function AdminDashboard() {
         </div>
       </div>
     </main>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RISK DASHBOARD COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function RiskDashboardTab() {
+  const [riskData, setRiskData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRisk = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/risk', {
+        headers: { Authorization: 'Bearer auxite-admin-2024' },
+      });
+      const data = await res.json();
+      if (data.success) setRiskData(data);
+    } catch (e) {
+      console.error('Risk fetch error:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRisk();
+    const interval = setInterval(fetchRisk, 10000);
+    return () => clearInterval(interval);
+  }, [fetchRisk]);
+
+  if (loading) return <div className="text-center py-12 text-slate-400">Loading risk data...</div>;
+  if (!riskData) return <div className="text-center py-12 text-red-400">Failed to load risk data</div>;
+
+  const { matching, hedging, inventory, health } = riskData;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Risk Dashboard</h2>
+        <div className="flex items-center gap-3">
+          <span className={`px-3 py-1 rounded-full text-xs font-bold ${health?.isHealthy ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+            {health?.isHealthy ? 'HEALTHY' : 'ALERT'}
+          </span>
+          <button onClick={fetchRisk} className="px-3 py-1 bg-slate-800 rounded-lg text-sm text-slate-300 hover:bg-slate-700">
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Health Alerts */}
+      {health?.alerts?.length > 0 && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+          <h3 className="text-sm font-bold text-red-400 mb-2">Active Alerts</h3>
+          {health.alerts.map((a: string, i: number) => (
+            <p key={i} className="text-xs text-red-300 mb-1">• {a}</p>
+          ))}
+        </div>
+      )}
+
+      {/* Top Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+          <p className="text-xs text-slate-400 mb-1">Match Ratio</p>
+          <p className="text-2xl font-bold text-blue-400">{matching?.stats?.matchRatio || 0}%</p>
+          <p className="text-xs text-slate-500 mt-1">Target: 30-60%</p>
+        </div>
+        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+          <p className="text-xs text-slate-400 mb-1">Net Exposure</p>
+          <p className="text-2xl font-bold text-white">${Math.abs(health?.totalNetExposureUSD || 0).toFixed(0)}</p>
+          <p className="text-xs text-slate-500 mt-1">Target: ~$0</p>
+        </div>
+        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+          <p className="text-xs text-slate-400 mb-1">Open Hedges</p>
+          <p className="text-2xl font-bold text-amber-400">{hedging?.stats?.openPositionCount || 0}</p>
+        </div>
+        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+          <p className="text-xs text-slate-400 mb-1">Match Revenue</p>
+          <p className="text-2xl font-bold text-green-400">${(matching?.stats?.revenueFromMatching || 0).toFixed(2)}</p>
+        </div>
+      </div>
+
+      {/* Matching Stats */}
+      <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+        <h3 className="text-sm font-bold text-slate-300 mb-4">Internal Matching Engine</h3>
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <p className="text-xs text-slate-500">Total Orders</p>
+            <p className="text-lg font-bold text-white">{matching?.stats?.totalOrders || 0}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">Matched</p>
+            <p className="text-lg font-bold text-green-400">{matching?.stats?.matchedOrders || 0}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">Sent to LP</p>
+            <p className="text-lg font-bold text-amber-400">{(matching?.stats?.totalOrders || 0) - (matching?.stats?.matchedOrders || 0)}</p>
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-4 text-center">
+          <div>
+            <p className="text-xs text-slate-500">Total Volume</p>
+            <p className="text-sm font-bold text-white">${(matching?.stats?.totalVolumeUSD || 0).toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">LP Volume</p>
+            <p className="text-sm font-bold text-white">${(matching?.stats?.lpVolumeUSD || 0).toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Exposure by Metal */}
+      <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+        <h3 className="text-sm font-bold text-slate-300 mb-4">Metal Exposure (must be ~0)</h3>
+        <div className="space-y-3">
+          {(hedging?.exposure || []).map((exp: any) => (
+            <div key={exp.metal} className="flex items-center justify-between bg-slate-900/50 rounded-lg p-3">
+              <div className="flex items-center gap-3">
+                <span className={`w-2 h-2 rounded-full ${
+                  exp.riskLevel === 'flat' ? 'bg-green-400' :
+                  exp.riskLevel === 'hedged' ? 'bg-blue-400' :
+                  exp.riskLevel === 'exposed' ? 'bg-amber-400' : 'bg-red-400'
+                }`} />
+                <span className="text-sm font-bold text-white">{exp.metal}</span>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-mono text-white">{exp.netExposureGrams?.toFixed(4)}g</p>
+                <p className="text-xs text-slate-500">${Math.abs(exp.netExposureUSD || 0).toFixed(2)}</p>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded ${
+                exp.riskLevel === 'flat' ? 'bg-green-500/20 text-green-400' :
+                exp.riskLevel === 'hedged' ? 'bg-blue-500/20 text-blue-400' :
+                exp.riskLevel === 'exposed' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'
+              }`}>
+                {exp.riskLevel?.toUpperCase()}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Inventory Positions */}
+      <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+        <h3 className="text-sm font-bold text-slate-300 mb-4">Inventory Positions (Zero-Inventory Policy)</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-slate-500 border-b border-slate-700">
+                <th className="text-left py-2">Metal</th>
+                <th className="text-right py-2">Total</th>
+                <th className="text-right py-2">Client</th>
+                <th className="text-right py-2">Leased</th>
+                <th className="text-right py-2">Net Dir.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(inventory?.positions || []).map((pos: any) => (
+                <tr key={pos.metal} className="border-b border-slate-800">
+                  <td className="py-2 text-white font-bold">{pos.metal}</td>
+                  <td className="py-2 text-right text-slate-300">{pos.totalGrams?.toFixed(2)}g</td>
+                  <td className="py-2 text-right text-slate-300">{pos.allocatedToClients?.toFixed(2)}g</td>
+                  <td className="py-2 text-right text-slate-300">{pos.leasedOut?.toFixed(2)}g</td>
+                  <td className={`py-2 text-right font-bold ${Math.abs(pos.netDirectional) < 0.01 ? 'text-green-400' : 'text-red-400'}`}>
+                    {pos.netDirectional?.toFixed(4)}g
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Open Hedge Positions */}
+      {hedging?.openPositions?.length > 0 && (
+        <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+          <h3 className="text-sm font-bold text-slate-300 mb-4">Open Hedge Positions</h3>
+          <div className="space-y-2">
+            {hedging.openPositions.map((pos: any) => (
+              <div key={pos.id} className="flex items-center justify-between bg-slate-900/50 rounded-lg p-3 text-xs">
+                <div>
+                  <span className="text-white font-bold">{pos.metal}</span>
+                  <span className="text-slate-500 ml-2">{pos.side} {pos.instrument}</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-white">{pos.grams?.toFixed(4)}g</span>
+                  <span className="text-slate-500 ml-2">${pos.notionalUSD?.toFixed(0)}</span>
+                </div>
+                <span className="text-amber-400">{pos.reason}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recent Violations */}
+      {inventory?.violations?.length > 0 && (
+        <div className="bg-red-500/10 rounded-xl p-5 border border-red-500/30">
+          <h3 className="text-sm font-bold text-red-400 mb-4">Inventory Violations (Blocked)</h3>
+          <div className="space-y-2">
+            {inventory.violations.map((v: any, i: number) => (
+              <div key={i} className="text-xs text-red-300">
+                {new Date(v.timestamp).toLocaleString()} — {v.metal} {v.side} {v.grams}g blocked (would create {v.wouldBeNet?.toFixed(2)}g net, max: {v.maxAllowed}g)
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Master Strategy Reminder */}
+      <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700 text-center">
+        <p className="text-sm text-slate-400 font-mono">
+          Match first. Hedge immediately. Allocate physically. Lease what is idle. Never bet on price.
+        </p>
+      </div>
+    </div>
   );
 }
