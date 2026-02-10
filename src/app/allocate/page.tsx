@@ -101,6 +101,20 @@ const translations: Record<string, Record<string, string>> = {
 };
 
 // ============================================
+// INLINE SVG METAL ICONS — Institutional, clean stroke, no coin/token vibe
+// ============================================
+function MetalSvgIcon({ metal, color, size = 22, opacity = 0.55 }: { metal: string; color: string; size?: number; opacity?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity, flexShrink: 0 }}>
+      {metal === 'AUXG' && <><rect x="3" y="7" width="18" height="10" rx="2" /><line x1="7" y1="7" x2="7" y2="17" /><line x1="17" y1="7" x2="17" y2="17" /><line x1="3" y1="12" x2="21" y2="12" /></>}
+      {metal === 'AUXS' && <><circle cx="12" cy="12" r="8" /><path d="M12 4v16" /><path d="M4 12h16" /></>}
+      {metal === 'AUXPT' && <><polygon points="12,3 21,9 21,15 12,21 3,15 3,9" /><line x1="12" y1="3" x2="12" y2="21" /></>}
+      {metal === 'AUXPD' && <><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M4 12h16" /><path d="M12 4v16" /></>}
+    </svg>
+  );
+}
+
+// ============================================
 // METAL DEFINITIONS
 // ============================================
 const METALS = [
@@ -108,7 +122,6 @@ const METALS = [
     symbol: "AUXG",
     name: "Auxite Gold",
     descKey: "goldDesc" as const,
-    icon: "/auxg_icon.png",
     color: "#C6A15B",
     certification: "LBMA Good Delivery",
   },
@@ -116,7 +129,6 @@ const METALS = [
     symbol: "AUXS",
     name: "Auxite Silver",
     descKey: "silverDesc" as const,
-    icon: "/auxs_icon.png",
     color: "#A6B0BF",
     certification: "LBMA Good Delivery",
   },
@@ -124,7 +136,6 @@ const METALS = [
     symbol: "AUXPT",
     name: "Auxite Platinum",
     descKey: "platinumDesc" as const,
-    icon: "/auxpt_icon.png",
     color: "#8FA3B8",
     certification: "LPPM Approved",
   },
@@ -132,7 +143,6 @@ const METALS = [
     symbol: "AUXPD",
     name: "Auxite Palladium",
     descKey: "palladiumDesc" as const,
-    icon: "/auxpd_icon.png",
     color: "#6E7C8A",
     certification: "LPPM Approved",
   },
@@ -532,14 +542,9 @@ export default function AllocatePage() {
                   }`}
                   style={isSelected ? { borderColor: metal.color, backgroundColor: `${metal.color}0D` } : {}}
                 >
-                  {/* Icon LEFT of metal name — 20-24px, opacity states */}
+                  {/* Icon LEFT of metal name — 22px SVG, opacity states */}
                   <div className="flex items-center gap-2 mb-1">
-                    <img
-                      src={metal.icon}
-                      alt={metal.name}
-                      className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
-                      style={{ opacity: isSelected ? 1 : 0.55 }}
-                    />
+                    <MetalSvgIcon metal={metal.symbol} color={metal.color} size={22} opacity={isSelected ? 1 : 0.55} />
                     <p className="font-bold text-slate-800 dark:text-white text-sm">{metal.name}</p>
                   </div>
                   <p className="text-[9px] text-slate-500 mt-0.5">{t[metal.descKey]}</p>

@@ -232,6 +232,20 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
+// Inline SVG metal icons — institutional, clean stroke, no coin/token vibe
+const metalColorMap: Record<string, string> = { AUXG: "#C6A15B", AUXS: "#A6B0BF", AUXPT: "#8FA3B8", AUXPD: "#6E7C8A" };
+function MetalSvgIcon({ metal, size = 22, opacity = 1 }: { metal: string; size?: number; opacity?: number }) {
+  const color = metalColorMap[metal] || '#C6A15B';
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity, flexShrink: 0 }}>
+      {metal === 'AUXG' && <><rect x="3" y="7" width="18" height="10" rx="2" /><line x1="7" y1="7" x2="7" y2="17" /><line x1="17" y1="7" x2="17" y2="17" /><line x1="3" y1="12" x2="21" y2="12" /></>}
+      {metal === 'AUXS' && <><circle cx="12" cy="12" r="8" /><path d="M12 4v16" /><path d="M4 12h16" /></>}
+      {metal === 'AUXPT' && <><polygon points="12,3 21,9 21,15 12,21 3,15 3,9" /><line x1="12" y1="3" x2="12" y2="21" /></>}
+      {metal === 'AUXPD' && <><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M4 12h16" /><path d="M12 4v16" /></>}
+    </svg>
+  );
+}
+
 interface AllocationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -586,7 +600,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
         {/* Header */}
         <div className="relative p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3 sm:gap-4">
-            <img src={offer.icon} alt={offer.metal} className="w-5 h-5 sm:w-6 sm:h-6 object-contain" style={{ opacity: 1 }} />
+            <MetalSvgIcon metal={offer.metal} size={22} opacity={1} />
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">
                 {offer.name} {lang === 'tr' ? 'Gelir Programı' : 'Income Program'}
