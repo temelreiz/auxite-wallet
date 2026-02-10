@@ -6,12 +6,24 @@ interface LeaseRatePeriod {
   months: number;
   days: number;
   apy: number;
+  apyLow?: number;
+  apyHigh?: number;
+  isRange: boolean;
 }
 
 interface MetalLeaseRates {
   "3m": number;
   "6m": number;
   "12m": number;
+  "3m_low"?: number;
+  "3m_high"?: number;
+  "6m_low"?: number;
+  "6m_high"?: number;
+  "12m_low"?: number;
+  "12m_high"?: number;
+  "3m_range"?: boolean;
+  "6m_range"?: boolean;
+  "12m_range"?: boolean;
 }
 
 interface LeaseRatesResponse {
@@ -21,8 +33,9 @@ interface LeaseRatesResponse {
   palladium: MetalLeaseRates;
   lastUpdated: string;
   sofr: number;
-  gofo: number;
+  gofo?: number;
   source: string;
+  [key: string]: any;
 }
 
 interface LeaseOffer {
@@ -92,10 +105,10 @@ const METAL_CONFIGS = {
 };
 
 const FALLBACK_RATES: LeaseRatesResponse = {
-  gold: { "3m": 2.5, "6m": 3.0, "12m": 3.5 },
-  silver: { "3m": 2.0, "6m": 2.5, "12m": 3.0 },
-  platinum: { "3m": 3.0, "6m": 3.5, "12m": 4.0 },
-  palladium: { "3m": 2.8, "6m": 3.3, "12m": 3.8 },
+  gold: { "3m": 1.53, "6m": 2.03, "12m": 2.53 },
+  silver: { "3m": 1.23, "6m": 1.73, "12m": 2.23 },
+  platinum: { "3m": 2.03, "6m": 2.53, "12m": 3.03 },
+  palladium: { "3m": 1.83, "6m": 2.33, "12m": 2.83 },
   lastUpdated: "2025-01-20",
   sofr: 4.33,
   gofo: 1.5,
@@ -109,40 +122,37 @@ interface UseLeaseRatesOptions {
 
 export function useLeaseRates(options: UseLeaseRatesOptions = {}) {
   const { lang = "en", refreshInterval = 5 * 60 * 1000 } = options;
-  
+
   const [rates, setRates] = useState<LeaseRatesResponse>(FALLBACK_RATES);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
+  const [engine, setEngine] = useState<string>('unknown');
 
   const fetchRates = useCallback(async () => {
-    console.log("🔍 Fetching lease rates from API...");
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await fetch("/api/lease-rates", {
         cache: "no-store",
       });
-      
-      console.log("📡 API Response status:", response.status);
-      
+
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      console.log("✅ API Data received:", data);
-      
+
       if (data.success && data.rates) {
-        console.log("💾 Setting rates:", data.rates);
         setRates(data.rates);
         setLastFetch(new Date());
+        if (data.engine) setEngine(data.engine);
       } else {
         throw new Error(data.error || "Invalid response");
       }
     } catch (err) {
-      console.error("❌ Failed to fetch lease rates:", err);
+      console.error("Failed to fetch lease rates:", err);
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsLoading(false);
@@ -150,7 +160,6 @@ export function useLeaseRates(options: UseLeaseRatesOptions = {}) {
   }, []);
 
   useEffect(() => {
-    console.log("🚀 useLeaseRates mounted");
     fetchRates();
   }, [fetchRates]);
 
@@ -162,8 +171,8 @@ export function useLeaseRates(options: UseLeaseRatesOptions = {}) {
   }, [fetchRates, refreshInterval]);
 
   const leaseOffers: LeaseOffer[] = Object.entries(METAL_CONFIGS).map(([key, config]) => {
-    const metalRates = rates[config.rateKey];
-    
+    const metalRates = rates[config.rateKey] as MetalLeaseRates;
+
     return {
       metal: key,
       symbol: config.symbol,
@@ -172,9 +181,30 @@ export function useLeaseRates(options: UseLeaseRatesOptions = {}) {
       metalTokenAddress: config.metalTokenAddress,
       contractAddress: config.contractAddress,
       periods: [
-        { months: 3, days: 90, apy: metalRates["3m"] },
-        { months: 6, days: 180, apy: metalRates["6m"] },
-        { months: 12, days: 365, apy: metalRates["12m"] },
+        {
+          months: 3,
+          days: 90,
+          apy: metalRates["3m"],
+          apyLow: metalRates["3m_low"],
+          apyHigh: metalRates["3m_high"],
+          isRange: metalRates["3m_range"] || false,
+        },
+        {
+          months: 6,
+          days: 180,
+          apy: metalRates["6m"],
+          apyLow: metalRates["6m_low"],
+          apyHigh: metalRates["6m_high"],
+          isRange: metalRates["6m_range"] || false,
+        },
+        {
+          months: 12,
+          days: 365,
+          apy: metalRates["12m"],
+          apyLow: metalRates["12m_low"],
+          apyHigh: metalRates["12m_high"],
+          isRange: metalRates["12m_range"] || false,
+        },
       ],
       minAmount: config.minAmount,
       maxAmount: config.maxAmount,
@@ -193,15 +223,24 @@ export function useLeaseRates(options: UseLeaseRatesOptions = {}) {
     return `${Math.min(...apys)}% - ${Math.max(...apys)}%`;
   }, []);
 
+  const formatPeriodAPY = useCallback((period: LeaseRatePeriod): string => {
+    if (period.isRange && period.apyLow !== undefined && period.apyHigh !== undefined) {
+      return `${period.apyLow}% - ${period.apyHigh}%`;
+    }
+    return `${period.apy}%`;
+  }, []);
+
   return {
     leaseOffers,
     getOfferBySymbol,
     formatAPYRange,
+    formatPeriodAPY,
     isLoading,
     error,
     lastFetch,
     lastUpdated: rates.lastUpdated,
     source: rates.source,
+    engine,
     sofr: rates.sofr,
     gofo: rates.gofo,
     refresh: fetchRates,

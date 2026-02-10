@@ -387,6 +387,7 @@ const TABS = [
   { id: "siteTeam", label: "Site Ekip", icon: "👨‍👩‍👧‍👦" },
   { id: "siteVaults", label: "Kasalar", icon: "🏛️" },
   { id: "risk", label: "Risk", icon: "🛡️" },
+  { id: "leasing", label: "Leasing", icon: "🏦" },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -4787,6 +4788,10 @@ export default function AdminDashboard() {
             <RiskDashboardTab />
           )}
 
+          {activeTab === "leasing" && (
+            <LeasingEngineTab />
+          )}
+
           {/* Website Edit Modal */}
           {showWebsiteModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -5293,6 +5298,326 @@ function RiskDashboardTab() {
           Match first. Hedge immediately. Allocate physically. Lease what is idle. Never bet on price.
         </p>
       </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LEASING ENGINE TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+function LeasingEngineTab() {
+  const [activeSection, setActiveSection] = useState<string>('overview');
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [actionMsg, setActionMsg] = useState('');
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/admin/leasing?section=${activeSection === 'overview' ? '' : activeSection}`);
+      const json = await res.json();
+      if (json.success) setData(json);
+    } catch (e) {
+      console.error('Leasing data fetch error:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeSection]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const doAction = async (section: string, action: string, extra: any = {}) => {
+    try {
+      setActionMsg('Processing...');
+      const res = await fetch('/api/admin/leasing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section, action, ...extra }),
+      });
+      const json = await res.json();
+      setActionMsg(json.success ? '✅ Done' : `❌ ${json.error || 'Failed'}`);
+      fetchData();
+      setTimeout(() => setActionMsg(''), 3000);
+    } catch (e) {
+      setActionMsg('❌ Error');
+    }
+  };
+
+  const sections = [
+    { id: 'overview', label: 'Overview', icon: '📊' },
+    { id: 'counterparties', label: 'Counterparties', icon: '🏦' },
+    { id: 'yield', label: 'Yield Engine', icon: '📈' },
+    { id: 'risk', label: 'Risk & Buffer', icon: '🛡️' },
+    { id: 'rfq', label: 'RFQ', icon: '📋' },
+    { id: 'encumbrance', label: 'Encumbrance', icon: '🔒' },
+    { id: 'config', label: 'Config', icon: '⚙️' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-white">🏦 Leasing Engine</h2>
+        {actionMsg && <span className="text-sm px-3 py-1 rounded bg-slate-800 text-slate-300">{actionMsg}</span>}
+      </div>
+
+      {/* Section Tabs */}
+      <div className="flex gap-1 flex-wrap">
+        {sections.map(s => (
+          <button key={s.id} onClick={() => setActiveSection(s.id)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeSection === s.id ? 'bg-[#d4a574] text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
+            {s.icon} {s.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12 text-slate-500">Loading...</div>
+      ) : (
+        <div className="space-y-4">
+          {/* OVERVIEW */}
+          {activeSection === 'overview' && data?.overview && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                <div className="text-xs text-slate-500">Counterparties</div>
+                <div className="text-2xl font-bold text-white">{data.overview.counterparties?.active || 0}</div>
+                <div className="text-xs text-slate-500">of {data.overview.counterparties?.total || 0} total</div>
+              </div>
+              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                <div className="text-xs text-slate-500">Total Exposure</div>
+                <div className="text-2xl font-bold text-[#d4a574]">${(data.overview.risk?.totalExposure || 0).toLocaleString()}</div>
+              </div>
+              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                <div className="text-xs text-slate-500">Active Alerts</div>
+                <div className="text-2xl font-bold text-red-400">{data.overview.risk?.activeAlerts || 0}</div>
+              </div>
+              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                <div className="text-xs text-slate-500">Buffer Pool</div>
+                <div className="text-2xl font-bold text-green-400">${(data.overview.bufferPool?.totalAccrued || 0).toLocaleString()}</div>
+                <div className="text-xs text-slate-500">target: ${(data.overview.bufferPool?.target || 0).toLocaleString()}</div>
+              </div>
+              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                <div className="text-xs text-slate-500">Yield Source</div>
+                <div className="text-lg font-bold text-slate-300">{data.overview.yield?.source || 'N/A'}</div>
+              </div>
+              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                <div className="text-xs text-slate-500">Active RFQs</div>
+                <div className="text-2xl font-bold text-blue-400">{data.overview.rfq?.active || 0}</div>
+              </div>
+            </div>
+          )}
+
+          {/* COUNTERPARTIES */}
+          {activeSection === 'counterparties' && (
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-white">Counterparty Registry</h3>
+                <button onClick={() => doAction('counterparty', 'register', { data: { name: 'New Counterparty', shortName: 'NEW', tier: 'otc_dealer', active: true, metals: ['AUXG','AUXS','AUXPT','AUXPD'], minLotSizeOz: 10, maxExposureUSD: 10000000, collateralTypes: ['metal_for_metal'], haircut: 5, creditRating: 'A', contactEmail: '', notes: '' } })} className="px-3 py-1.5 rounded-lg bg-[#d4a574] text-white text-xs">+ Add Counterparty</button>
+              </div>
+              {data?.counterparties?.length > 0 ? data.counterparties.map((cp: any) => (
+                <div key={cp.id} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-white">{cp.name} <span className="text-xs text-slate-500">({cp.shortName})</span></div>
+                    <div className="text-xs text-slate-400">Tier: {cp.tier} | Score: {cp.riskScore}/100 | Metals: {cp.metals?.join(', ')}</div>
+                    <div className="text-xs text-slate-500">Exposure: ${(cp.currentExposureUSD || 0).toLocaleString()} / ${(cp.maxExposureUSD || 0).toLocaleString()}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className={`px-2 py-0.5 rounded text-xs ${cp.active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>{cp.active ? 'Active' : 'Inactive'}</span>
+                    {cp.active && <button onClick={() => doAction('counterparty', 'deactivate', { cpId: cp.id })} className="text-xs text-red-400 hover:text-red-300">Deactivate</button>}
+                  </div>
+                </div>
+              )) : <div className="text-slate-500 text-center py-8">No counterparties registered</div>}
+            </div>
+          )}
+
+          {/* YIELD ENGINE */}
+          {activeSection === 'yield' && (
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <button onClick={() => doAction('yield', 'compute')} className="px-3 py-1.5 rounded-lg bg-[#d4a574] text-white text-xs">Compute All Yields</button>
+                <button onClick={() => doAction('yield', 'reset_smoother')} className="px-3 py-1.5 rounded-lg bg-slate-700 text-white text-xs">Reset Smoother</button>
+              </div>
+
+              {data?.yieldConfig && (
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <h4 className="text-sm font-semibold text-white mb-2">Yield Config</h4>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div><span className="text-slate-500">Auxite Spread:</span> <span className="text-white">{data.yieldConfig.auxiteSpreadBps} bps</span></div>
+                    <div><span className="text-slate-500">Risk Buffer:</span> <span className="text-white">{data.yieldConfig.riskBufferBps} bps</span></div>
+                    <div><span className="text-slate-500">Range Width:</span> <span className="text-white">{data.yieldConfig.rangeWidthBps} bps</span></div>
+                    <div><span className="text-slate-500">Min Quotes:</span> <span className="text-white">{data.yieldConfig.minQuotesForBlend}</span></div>
+                    <div><span className="text-slate-500">Display Range:</span> <span className="text-white">{data.yieldConfig.displayAsRange ? 'Yes' : 'No'}</span></div>
+                    <div><span className="text-slate-500">Fallback:</span> <span className="text-white">{data.yieldConfig.fallbackEnabled ? 'Enabled' : 'Disabled'}</span></div>
+                  </div>
+                </div>
+              )}
+
+              {data?.snapshot && (
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <h4 className="text-sm font-semibold text-white mb-2">Current Yield Snapshot <span className="text-xs text-slate-500">({data.snapshot.source})</span></h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead><tr className="text-slate-500"><th className="text-left p-1">Metal</th><th className="p-1">3M</th><th className="p-1">6M</th><th className="p-1">12M</th></tr></thead>
+                      <tbody>
+                        {Object.entries(data.snapshot.metals || {}).map(([metal, tenors]: [string, any]) => (
+                          <tr key={metal} className="border-t border-slate-700">
+                            <td className="p-1 text-white font-medium">{metal}</td>
+                            {['3M', '6M', '12M'].map(t => {
+                              const y = tenors?.[t];
+                              return <td key={t} className="p-1 text-center text-[#d4a574]">{y ? `${y.displayRateLow}% - ${y.displayRateHigh}%` : '-'}</td>;
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* RISK & BUFFER */}
+          {activeSection === 'risk' && data?.dashboard && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <div className="text-xs text-slate-500">Platform Exposure</div>
+                  <div className="text-xl font-bold text-white">${(data.dashboard.totalPlatformExposureUSD || 0).toLocaleString()}</div>
+                </div>
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <div className="text-xs text-slate-500">Active CPs</div>
+                  <div className="text-xl font-bold text-white">{data.dashboard.activeCounterparties}</div>
+                </div>
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <div className="text-xs text-slate-500">Active Alerts</div>
+                  <div className="text-xl font-bold text-red-400">{data.dashboard.activeAlerts?.length || 0}</div>
+                </div>
+              </div>
+
+              {/* Alerts */}
+              {data.dashboard.activeAlerts?.length > 0 && (
+                <div className="bg-red-500/10 rounded-xl p-4 border border-red-500/30 space-y-2">
+                  <h4 className="text-sm font-semibold text-red-400">Active Alerts</h4>
+                  {data.dashboard.activeAlerts.map((alert: any) => (
+                    <div key={alert.id} className="flex items-center justify-between bg-slate-800/50 rounded-lg p-2">
+                      <div className="text-xs text-slate-300">{alert.message}</div>
+                      <button onClick={() => doAction('risk', 'acknowledge_alert', { alertId: alert.id })} className="text-xs text-slate-500 hover:text-white">Dismiss</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Top Exposures */}
+              {data.dashboard.topExposures?.length > 0 && (
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <h4 className="text-sm font-semibold text-white mb-2">Top Exposures</h4>
+                  {data.dashboard.topExposures.map((exp: any) => (
+                    <div key={exp.counterpartyId} className="flex items-center justify-between py-1.5 border-b border-slate-700 last:border-0 text-xs">
+                      <span className="text-white">{exp.counterpartyName}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-slate-400">{exp.utilizationPercent}%</span>
+                        <span className={`px-1.5 py-0.5 rounded ${exp.alertLevel === 'normal' ? 'bg-green-500/20 text-green-400' : exp.alertLevel === 'warning' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}`}>{exp.alertLevel}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Buffer Pool */}
+              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                <h4 className="text-sm font-semibold text-white mb-2">Buffer Pool</h4>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div><span className="text-slate-500">Accrued:</span> <span className="text-green-400">${(data.dashboard.bufferPool?.totalAccruedUSD || 0).toLocaleString()}</span></div>
+                  <div><span className="text-slate-500">Target:</span> <span className="text-white">${(data.dashboard.bufferPool?.targetUSD || 0).toLocaleString()}</span></div>
+                  <div><span className="text-slate-500">Utilization:</span> <span className="text-white">{data.dashboard.bufferPool?.utilizationPercent || 0}%</span></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* RFQ */}
+          {activeSection === 'rfq' && (
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <button onClick={() => doAction('rfq', 'expire_stale')} className="px-3 py-1.5 rounded-lg bg-slate-700 text-white text-xs">Expire Stale RFQs</button>
+              </div>
+              {data?.summary && (
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                    <div className="text-xs text-slate-500">Active RFQs</div>
+                    <div className="text-xl font-bold text-blue-400">{data.summary.active}</div>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                    <div className="text-xs text-slate-500">Awarded</div>
+                    <div className="text-xl font-bold text-green-400">{data.summary.awarded}</div>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                    <div className="text-xs text-slate-500">Avg Response Rate</div>
+                    <div className="text-xl font-bold text-white">{data.summary.avgResponseRate}%</div>
+                  </div>
+                </div>
+              )}
+              {data?.rfqs?.length > 0 ? data.rfqs.map((rfq: any) => (
+                <div key={rfq.id} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="text-white font-medium">{rfq.metal}/{rfq.tenor}</span>
+                      <span className="text-xs text-slate-500 ml-2">{rfq.targetSizeOz} oz</span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-xs ${rfq.status === 'open' ? 'bg-blue-500/20 text-blue-400' : rfq.status === 'awarded' ? 'bg-green-500/20 text-green-400' : 'bg-slate-600/20 text-slate-400'}`}>{rfq.status}</span>
+                  </div>
+                </div>
+              )) : <div className="text-slate-500 text-center py-8">No RFQs created yet</div>}
+            </div>
+          )}
+
+          {/* ENCUMBRANCE */}
+          {activeSection === 'encumbrance' && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Platform Metal State</h3>
+              {data?.platform && Object.entries(data.platform).map(([metal, state]: [string, any]) => (
+                <div key={metal} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <div className="text-white font-medium mb-2">{metal}</div>
+                  <div className="grid grid-cols-4 gap-2 text-xs">
+                    <div><span className="text-slate-500">Allocated:</span> <span className="text-white">{state.totalAllocatedOz} oz</span></div>
+                    <div><span className="text-slate-500">Encumbered:</span> <span className="text-[#d4a574]">{state.totalEncumberedOz} oz</span></div>
+                    <div><span className="text-slate-500">Pending:</span> <span className="text-yellow-400">{state.totalPendingOz} oz</span></div>
+                    <div><span className="text-slate-500">Utilization:</span> <span className="text-white">{state.utilizationPercent}%</span></div>
+                  </div>
+                </div>
+              ))}
+              {data?.recentLog?.length > 0 && (
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <h4 className="text-sm font-semibold text-white mb-2">Recent Ledger Activity</h4>
+                  {data.recentLog.map((log: any, i: number) => (
+                    <div key={i} className="text-xs text-slate-400 py-1 border-b border-slate-700 last:border-0">
+                      <span className="text-slate-500">{new Date(log.timestamp).toLocaleString()}</span> — {log.note}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* CONFIG */}
+          {activeSection === 'config' && data?.configs && (
+            <div className="space-y-4">
+              {Object.entries(data.configs).map(([section, config]: [string, any]) => (
+                <div key={section} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                  <h4 className="text-sm font-semibold text-white mb-2 capitalize">{section} Config</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                    {Object.entries(config).map(([key, value]: [string, any]) => (
+                      <div key={key}>
+                        <span className="text-slate-500">{key}:</span>{' '}
+                        <span className="text-white">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

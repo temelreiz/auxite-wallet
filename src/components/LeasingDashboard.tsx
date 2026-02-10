@@ -357,7 +357,12 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
         {offer.periods.map((period: any) => (
           <div key={period.months} className="flex-1 text-center px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-lg bg-stone-100 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
             <div className="text-[10px] sm:text-xs text-slate-500">{period.months} {t.months}</div>
-            <div className="text-xs sm:text-sm font-semibold text-[#D4B47A]">{period.apy}%</div>
+            <div className="text-xs sm:text-sm font-semibold text-[#D4B47A]">
+              {period.isRange && period.apyLow !== undefined && period.apyHigh !== undefined
+                ? `${period.apyLow}% - ${period.apyHigh}%`
+                : `${period.apy}%`
+              }
+            </div>
           </div>
         ))}
       </div>
@@ -393,19 +398,20 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
   const [showRecurringStake, setShowRecurringStake] = useState(false);
 
   const { stats: rawStats, loading: statsLoading } = useDashboardStats(effectiveAddress);
-  const { sofr, leaseOffers, isLoading: ratesLoading } = useLeaseRates();
+  const { sofr, leaseOffers, isLoading: ratesLoading, engine, formatPeriodAPY } = useLeaseRates();
   
   const t = getT(lang);
   
   const stats = rawStats || { totalLocked: 0, activePositions: 0, annualEarnings: 0, avgAPY: 0 };
   const safeRates = { sofr: sofr || 3.66, AUXG: { "3": 1.53, "6": 2.03, "12": 2.53 }, AUXS: { "3": 1.23, "6": 1.73, "12": 2.23 }, AUXPT: { "3": 2.03, "6": 2.53, "12": 3.03 }, AUXPD: { "3": 1.83, "6": 2.33, "12": 2.83 } };
 
-  const availableOffers = [
-    { metal: "AUXG", name: t.gold, icon: "/auxg_icon.png", metalTokenAddress: "0xE425A9923250E94Fe2F4cB99cbc0896Aea24933a", minAmount: 10, tvl: 500000, periods: [{ months: 3, apy: safeRates?.AUXG?.["3"] || 1.53 }, { months: 6, apy: safeRates?.AUXG?.["6"] || 2.03 }, { months: 12, apy: safeRates?.AUXG?.["12"] || 2.53 }] },
-    { metal: "AUXS", name: t.silver, icon: "/auxs_icon.png", metalTokenAddress: "0xaE583c98c833a0B4b1B23e58209E697d95F05D23", minAmount: 100, tvl: 250000, periods: [{ months: 3, apy: safeRates?.AUXS?.["3"] || 1.23 }, { months: 6, apy: safeRates?.AUXS?.["6"] || 1.73 }, { months: 12, apy: safeRates?.AUXS?.["12"] || 2.23 }] },
-    { metal: "AUXPT", name: t.platinum, icon: "/auxpt_icon.png", metalTokenAddress: "0xeCfD88bE4f93C9379644B303444943e636A35F66", minAmount: 5, tvl: 350000, periods: [{ months: 3, apy: safeRates?.AUXPT?.["3"] || 2.03 }, { months: 6, apy: safeRates?.AUXPT?.["6"] || 2.53 }, { months: 12, apy: safeRates?.AUXPT?.["12"] || 3.03 }] },
-    { metal: "AUXPD", name: t.palladium, icon: "/auxpd_icon.png", metalTokenAddress: "0x6F4E027B42E14e06f3eaeA39d574122188eab1D4", minAmount: 5, tvl: 150000, periods: [{ months: 3, apy: safeRates?.AUXPD?.["3"] || 1.83 }, { months: 6, apy: safeRates?.AUXPD?.["6"] || 2.33 }, { months: 12, apy: safeRates?.AUXPD?.["12"] || 2.83 }] },
-  ];
+  // Use leaseOffers from the hook (yield builder → blended rates with range support)
+  // Apply translated names
+  const metalNameMap: Record<string, string> = { AUXG: t.gold, AUXS: t.silver, AUXPT: t.platinum, AUXPD: t.palladium };
+  const availableOffers = leaseOffers.map(offer => ({
+    ...offer,
+    name: metalNameMap[offer.metal] || offer.name,
+  }));
 
   const formatAPYRange = (offer: any) => {
     const min = Math.min(...offer.periods.map((p: any) => p.apy));
@@ -431,7 +437,7 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
           </div>
           <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-slate-800/50 border border-[#d4a574]/20 self-start md:self-auto">
             <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#d4a574] animate-pulse"></div>
-            <span className="text-xs sm:text-sm text-slate-400">NY Fed + Calculated</span>
+            <span className="text-xs sm:text-sm text-slate-400">{engine === 'yield_builder' ? 'Counterparty Blend' : 'NY Fed + Calculated'}</span>
             <span className="text-sm sm:text-lg font-bold text-[#E7D2A8]">SOFR: {(safeRates?.sofr || 3.66).toFixed(2)}%</span>
           </div>
         </div>
