@@ -3199,16 +3199,119 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
-          {/* Spreads Tab */}
+          {/* Spreads Tab - Institutional Pricing Engine v2 */}
           {activeTab === "spreads" && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold">💹 Spread Ayarları</h2>
-              
-              {/* Metals */}
+              <h2 className="text-2xl font-bold">⚡ Institutional Pricing Engine</h2>
+              <p className="text-slate-400 text-sm">Execution = Spot × (1 + base margin) + floor + volatility + market hours + optimization</p>
+              <p className="text-[10px] text-slate-600">Execution price = risk engine. Spread değil, komisyon değil, risk sigortası.</p>
+
+              {/* Volatility Mode — ADDITIVE */}
               <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                <h3 className="font-semibold mb-4">🥇 Değerli Metaller</h3>
+                <h3 className="font-semibold mb-2">🌊 Volatility Mode (Additive)</h3>
+                <p className="text-xs text-slate-500 mb-4">Base margin&apos;a EKLENİR. Extreme günlerde liquidity pahalanır — genişletmek normal.</p>
+                <div className="grid grid-cols-4 gap-3">
+                  {[
+                    { mode: 'calm', label: 'Calm', add: '+0.00%', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
+                    { mode: 'elevated', label: 'Elevated', add: '+0.20%', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+                    { mode: 'high', label: 'High', add: '+0.40%', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+                    { mode: 'extreme', label: 'Extreme', add: '+0.80%', color: 'bg-red-500/20 text-red-400 border-red-500/30' },
+                  ].map((v) => (
+                    <button
+                      key={v.mode}
+                      onClick={async () => {
+                        try {
+                          await fetch('/api/admin/pricing', {
+                            method: 'POST',
+                            headers: getAuthHeaders(),
+                            body: JSON.stringify({ volatilityMode: v.mode }),
+                          });
+                          setMessage({ type: 'success', text: `Volatility → ${v.label} (${v.add})` });
+                        } catch { setMessage({ type: 'error', text: 'Failed' }); }
+                      }}
+                      className={`p-3 rounded-xl border text-center ${v.color}`}
+                    >
+                      <p className="font-bold text-sm">{v.label}</p>
+                      <p className="text-xs opacity-75">{v.add}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Market Hours — ADDITIVE */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-2">🕐 Market Hours (Additive)</h3>
+                <p className="text-xs text-slate-500 mb-4">Metals liquidity 24/7 değildir. Asia/weekend = thinner book.</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { mode: 'london_ny', label: 'London/NY', add: '+0.00%', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
+                    { mode: 'asia', label: 'Asia Hours', add: '+0.15%', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+                    { mode: 'weekend', label: 'Weekend', add: '+0.30%', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+                  ].map((h) => (
+                    <button
+                      key={h.mode}
+                      onClick={async () => {
+                        try {
+                          await fetch('/api/admin/pricing', {
+                            method: 'POST',
+                            headers: getAuthHeaders(),
+                            body: JSON.stringify({ marketHoursMode: h.mode }),
+                          });
+                          setMessage({ type: 'success', text: `Market hours → ${h.label} (${h.add})` });
+                        } catch { setMessage({ type: 'error', text: 'Failed' }); }
+                      }}
+                      className={`p-3 rounded-xl border text-center ${h.color}`}
+                    >
+                      <p className="font-bold text-sm">{h.label}</p>
+                      <p className="text-xs opacity-75">{h.add}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Depth Multiplier */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-2">📊 Market Depth (Additive)</h3>
+                <p className="text-xs text-slate-500 mb-4">Flash move&apos;larda hayat kurtarır. Thin liquidity = daha geniş execution.</p>
+                <div className="grid grid-cols-4 gap-3">
+                  {[
+                    { mode: 'deep', label: 'Deep', add: '+0.00%', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
+                    { mode: 'normal', label: 'Normal', add: '+0.00%', color: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
+                    { mode: 'thin', label: 'Thin', add: '+0.25%', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+                    { mode: 'shock', label: 'Shock', add: '+0.45%', color: 'bg-red-500/20 text-red-400 border-red-500/30' },
+                  ].map((dp) => (
+                    <button
+                      key={dp.mode}
+                      onClick={async () => {
+                        try {
+                          await fetch('/api/admin/pricing', {
+                            method: 'POST',
+                            headers: getAuthHeaders(),
+                            body: JSON.stringify({ depthMode: dp.mode }),
+                          });
+                          setMessage({ type: 'success', text: `Depth → ${dp.label} (${dp.add})` });
+                        } catch { setMessage({ type: 'error', text: 'Failed' }); }
+                      }}
+                      className={`p-3 rounded-xl border text-center ${dp.color}`}
+                    >
+                      <p className="font-bold text-sm">{dp.label}</p>
+                      <p className="text-xs opacity-75">{dp.add}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Metal Base Margin + Absolute Floor */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-2">🥇 Base Margin + Absolute Floor</h3>
+                <p className="text-xs text-slate-500 mb-4">Floor yoksa tek trade zarar yazdırır. Floor = hedge slippage + liquidity gap + fill risk koruması.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {METALS.map((metal) => (
+                  {[
+                    { key: 'gold', symbol: 'AUXG', name: 'Gold', icon: '🥇', defBase: 0.95, defFloor: 1.25 },
+                    { key: 'silver', symbol: 'AUXS', name: 'Silver', icon: '🥈', defBase: 1.45, defFloor: 0.04 },
+                    { key: 'platinum', symbol: 'AUXPT', name: 'Platinum', icon: '⬜', defBase: 1.85, defFloor: 1.80 },
+                    { key: 'palladium', symbol: 'AUXPD', name: 'Palladium', icon: '🔶', defBase: 2.40, defFloor: 4.20 },
+                  ].map((metal) => (
                     <div key={metal.key} className="p-4 bg-slate-800/50 rounded-xl">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-xl">{metal.icon}</span>
@@ -3217,47 +3320,72 @@ export default function AdminDashboard() {
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs text-slate-400 mb-1">Alış Spread %</label>
+                          <label className="block text-xs text-slate-400 mb-1">Base Margin %</label>
                           <input
                             type="number"
-                            step="0.1"
-                            value={spreadConfig.metals[metal.key as keyof MetalSpreadSettings].buy}
-                            onChange={(e) => setSpreadConfigState({
-                              ...spreadConfig,
-                              metals: { ...spreadConfig.metals, [metal.key]: { ...spreadConfig.metals[metal.key as keyof MetalSpreadSettings], buy: parseFloat(e.target.value) } }
-                            })}
+                            step="0.01"
+                            defaultValue={metal.defBase}
+                            id={`margin-base-${metal.key}`}
                             className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white text-sm"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-slate-400 mb-1">Satış Spread %</label>
+                          <label className="block text-xs text-slate-400 mb-1">Absolute Floor $/g</label>
                           <input
                             type="number"
-                            step="0.1"
-                            value={spreadConfig.metals[metal.key as keyof MetalSpreadSettings].sell}
-                            onChange={(e) => setSpreadConfigState({
-                              ...spreadConfig,
-                              metals: { ...spreadConfig.metals, [metal.key]: { ...spreadConfig.metals[metal.key as keyof MetalSpreadSettings], sell: parseFloat(e.target.value) } }
-                            })}
+                            step="0.01"
+                            defaultValue={metal.defFloor}
+                            id={`margin-floor-${metal.key}`}
                             className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white text-sm"
                           />
                         </div>
                       </div>
                       <button
-                        onClick={() => handleSpreadUpdate('metal', metal.key)}
-                        disabled={spreadSaving === `metal-${metal.key}`}
-                        className="mt-3 w-full py-2 bg-[#BFA181]/20 hover:bg-[#BFA181]/30 text-[#BFA181] rounded-lg text-sm font-medium disabled:opacity-50"
+                        onClick={async () => {
+                          const base = parseFloat((document.getElementById(`margin-base-${metal.key}`) as HTMLInputElement)?.value || '0');
+                          const floor = parseFloat((document.getElementById(`margin-floor-${metal.key}`) as HTMLInputElement)?.value || '0');
+                          try {
+                            await fetch('/api/admin/pricing', {
+                              method: 'POST',
+                              headers: getAuthHeaders(),
+                              body: JSON.stringify({ metal: metal.symbol, baseMargin: base, absoluteFloor: floor }),
+                            });
+                            setMessage({ type: 'success', text: `${metal.name}: base ${base}%, floor $${floor}/g` });
+                          } catch { setMessage({ type: 'error', text: 'Failed' }); }
+                        }}
+                        className="mt-3 w-full py-2 bg-[#BFA181]/20 hover:bg-[#BFA181]/30 text-[#BFA181] rounded-lg text-sm font-medium"
                       >
-                        {spreadSaving === `metal-${metal.key}` ? "Kaydediliyor..." : "Kaydet"}
+                        Kaydet
                       </button>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Cryptos */}
+              {/* Ticket Curve */}
               <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                <h3 className="font-semibold mb-4">₿ Kripto Paralar</h3>
+                <h3 className="font-semibold mb-2">📊 Ticket Curve</h3>
+                <p className="text-xs text-slate-500 mb-4">Küçük müşteri operasyonu fonlar. Whale volume getirir.</p>
+                <div className="space-y-2">
+                  {[
+                    { range: '< $50K', adj: 'Base + 0.20%', desc: 'Micro — operations funded', color: 'text-orange-400' },
+                    { range: '$50K – $250K', adj: 'Base', desc: 'Standard execution', color: 'text-slate-300' },
+                    { range: '$250K – $1M', adj: 'Base − 0.10%', desc: 'Preferred client', color: 'text-green-400' },
+                    { range: '$1M – $1.5M', adj: 'Base − 0.15%', desc: 'Institutional', color: 'text-emerald-400' },
+                    { range: '$1.5M+', adj: 'RFQ', desc: 'Desk-priced — LP quote, hedge, tighter', color: 'text-[#BFA181]' },
+                  ].map((tier) => (
+                    <div key={tier.range} className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+                      <span className="text-sm text-slate-300 w-32">{tier.range}</span>
+                      <span className={`text-sm font-bold w-28 text-center ${tier.color}`}>{tier.adj}</span>
+                      <span className="text-xs text-slate-500 flex-1 text-right">{tier.desc}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Legacy Spread Config - Crypto */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-4">₿ Kripto Spread (Legacy)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {CRYPTOS.map((crypto) => (
                     <div key={crypto.key} className="p-4 bg-slate-800/50 rounded-xl">
