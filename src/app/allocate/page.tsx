@@ -106,22 +106,22 @@ const translations: Record<string, Record<string, string>> = {
 const METALS = [
   {
     symbol: "AUXG",
-    name: "Gold",
+    name: "Auxite Gold",
     descKey: "goldDesc" as const,
   },
   {
     symbol: "AUXS",
-    name: "Silver",
+    name: "Auxite Silver",
     descKey: "silverDesc" as const,
   },
   {
     symbol: "AUXPT",
-    name: "Platinum",
+    name: "Auxite Platinum",
     descKey: "platinumDesc" as const,
   },
   {
     symbol: "AUXPD",
-    name: "Palladium",
+    name: "Auxite Palladium",
     descKey: "palladiumDesc" as const,
   },
 ];

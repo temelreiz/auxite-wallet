@@ -32,10 +32,10 @@ export const TOKEN_CONFIG = {
   
   // Metal bilgileri
   METALS: {
-    AUXG: { name: "Gold", nameTr: "Altın", icon: "🥇", color: "#FFD700" },
-    AUXS: { name: "Silver", nameTr: "Gümüş", icon: "🥈", color: "#C0C0C0" },
-    AUXPT: { name: "Platinum", nameTr: "Platin", icon: "⚪", color: "#E5E4E2" },
-    AUXPD: { name: "Palladium", nameTr: "Paladyum", icon: "🔘", color: "#CED0DD" },
+    AUXG: { name: "Auxite Gold", nameTr: "Auxite Altın", icon: "🥇", color: "#C6A46C" },
+    AUXS: { name: "Auxite Silver", nameTr: "Auxite Gümüş", icon: "🥈", color: "#B7C0C8" },
+    AUXPT: { name: "Auxite Platinum", nameTr: "Auxite Platin", icon: "⚪", color: "#8FA3B0" },
+    AUXPD: { name: "Auxite Palladium", nameTr: "Auxite Paladyum", icon: "🔘", color: "#7E8A93" },
   },
 } as const;
 

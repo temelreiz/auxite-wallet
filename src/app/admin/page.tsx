@@ -279,10 +279,10 @@ const ADMIN_ADDRESSES = (process.env.NEXT_PUBLIC_ADMIN_ADDRESSES || "0x101bD0821
   .map(a => a.trim().toLowerCase());
 
 const METALS = [
-  { key: "gold", symbol: "AUXG", name: "Altın", icon: "🥇", color: "text-[#BFA181]" },
-  { key: "silver", symbol: "AUXS", name: "Gümüş", icon: "🥈", color: "text-slate-400" },
-  { key: "platinum", symbol: "AUXPT", name: "Platin", icon: "💎", color: "text-cyan-400" },
-  { key: "palladium", symbol: "AUXPD", name: "Paladyum", icon: "💜", color: "text-purple-400" },
+  { key: "gold", symbol: "AUXG", name: "Auxite Altın", icon: "🥇", color: "text-[#C6A46C]" },
+  { key: "silver", symbol: "AUXS", name: "Auxite Gümüş", icon: "🥈", color: "text-[#B7C0C8]" },
+  { key: "platinum", symbol: "AUXPT", name: "Auxite Platin", icon: "💎", color: "text-[#8FA3B0]" },
+  { key: "palladium", symbol: "AUXPD", name: "Auxite Paladyum", icon: "💜", color: "text-[#7E8A93]" },
 ];
 
 const CRYPTOS = [
@@ -3308,10 +3308,10 @@ export default function AdminDashboard() {
                 <p className="text-xs text-slate-500 mb-4">Floor yoksa tek trade zarar yazdırır. Floor = hedge slippage + liquidity gap + fill risk koruması.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    { key: 'gold', symbol: 'AUXG', name: 'Gold', icon: '🥇', defBase: 0.95, defFloor: 1.25 },
-                    { key: 'silver', symbol: 'AUXS', name: 'Silver', icon: '🥈', defBase: 1.45, defFloor: 0.04 },
-                    { key: 'platinum', symbol: 'AUXPT', name: 'Platinum', icon: '⬜', defBase: 1.85, defFloor: 1.80 },
-                    { key: 'palladium', symbol: 'AUXPD', name: 'Palladium', icon: '🔶', defBase: 2.40, defFloor: 4.20 },
+                    { key: 'gold', symbol: 'AUXG', name: 'Auxite Gold', icon: '🥇', defBase: 0.95, defFloor: 1.25 },
+                    { key: 'silver', symbol: 'AUXS', name: 'Auxite Silver', icon: '🥈', defBase: 1.45, defFloor: 0.04 },
+                    { key: 'platinum', symbol: 'AUXPT', name: 'Auxite Platinum', icon: '⬜', defBase: 1.85, defFloor: 1.80 },
+                    { key: 'palladium', symbol: 'AUXPD', name: 'Auxite Palladium', icon: '🔶', defBase: 2.40, defFloor: 4.20 },
                   ].map((metal) => (
                     <div key={metal.key} className="p-4 bg-slate-800/50 rounded-xl">
                       <div className="flex items-center gap-2 mb-3">

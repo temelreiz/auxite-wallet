@@ -15,10 +15,10 @@ export default function UnderConstruction() {
   }, []);
 
   const tokens = [
-    { icon: "/gold-favicon-32x32.png", label: "AUXG", name: "Gold" },
-    { icon: "/silver-favicon-32x32.png", label: "AUXS", name: "Silver" },
-    { icon: "/platinum-favicon-32x32.png", label: "AUXPT", name: "Platinum" },
-    { icon: "/palladium-favicon-32x32.png", label: "AUXPD", name: "Palladium" },
+    { icon: "/gold-favicon-32x32.png", label: "AUXG", name: "Auxite Gold" },
+    { icon: "/silver-favicon-32x32.png", label: "AUXS", name: "Auxite Silver" },
+    { icon: "/platinum-favicon-32x32.png", label: "AUXPT", name: "Auxite Platinum" },
+    { icon: "/palladium-favicon-32x32.png", label: "AUXPD", name: "Auxite Palladium" },
   ];
 
   return (

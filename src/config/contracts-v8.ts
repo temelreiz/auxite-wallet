@@ -166,36 +166,36 @@ export const TOKEN_CONFIG = {
   DECIMALS: 3, // V8 token'ları 3 decimal kullanıyor (1 token = 1 gram)
   
   METALS: {
-    AUXG: { 
-      name: "Gold", 
-      nameTr: "Altın", 
+    AUXG: {
+      name: "Auxite Gold",
+      nameTr: "Auxite Altın",
       symbol: "AUXG",
-      icon: "🥇", 
-      color: "#FFD700",
+      icon: "🥇",
+      color: "#C6A46C",
       address: METAL_TOKENS.AUXG,
     },
-    AUXS: { 
-      name: "Silver", 
-      nameTr: "Gümüş", 
+    AUXS: {
+      name: "Auxite Silver",
+      nameTr: "Auxite Gümüş",
       symbol: "AUXS",
-      icon: "🥈", 
-      color: "#C0C0C0",
+      icon: "🥈",
+      color: "#B7C0C8",
       address: METAL_TOKENS.AUXS,
     },
-    AUXPT: { 
-      name: "Platinum", 
-      nameTr: "Platin", 
+    AUXPT: {
+      name: "Auxite Platinum",
+      nameTr: "Auxite Platin",
       symbol: "AUXPT",
-      icon: "⚪", 
-      color: "#E5E4E2",
+      icon: "⚪",
+      color: "#8FA3B0",
       address: METAL_TOKENS.AUXPT,
     },
-    AUXPD: { 
-      name: "Palladium", 
-      nameTr: "Paladyum", 
+    AUXPD: {
+      name: "Auxite Palladium",
+      nameTr: "Auxite Paladyum",
       symbol: "AUXPD",
-      icon: "🔘", 
-      color: "#CED0DD",
+      icon: "🔘",
+      color: "#7E8A93",
       address: METAL_TOKENS.AUXPD,
     },
   },

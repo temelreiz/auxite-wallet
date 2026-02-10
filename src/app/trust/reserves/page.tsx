@@ -80,10 +80,10 @@ const METAL_ICONS: Record<string, string> = {
 };
 
 const METAL_INFO: Record<string, { name: string; nameEn: string; color: string; gradient: string }> = {
-  AUXG: { name: 'Altın', nameEn: 'Gold', color: '#EAB308', gradient: 'from-yellow-400 to-[#BFA181]' },
-  AUXS: { name: 'Gümüş', nameEn: 'Silver', color: '#94A3B8', gradient: 'from-gray-300 to-gray-400' },
-  AUXPT: { name: 'Platin', nameEn: 'Platinum', color: '#E2E8F0', gradient: 'from-slate-300 to-slate-400' },
-  AUXPD: { name: 'Paladyum', nameEn: 'Palladium', color: '#64748B', gradient: 'from-violet-400 to-purple-500' },
+  AUXG: { name: 'Altın', nameEn: 'Auxite Gold', color: '#C6A46C', gradient: 'from-[#C6A46C] to-[#E0C79A]' },
+  AUXS: { name: 'Gümüş', nameEn: 'Auxite Silver', color: '#B7C0C8', gradient: 'from-[#B7C0C8] to-[#D1D7DD]' },
+  AUXPT: { name: 'Platin', nameEn: 'Auxite Platinum', color: '#8FA3B0', gradient: 'from-[#8FA3B0] to-[#A7BAC6]' },
+  AUXPD: { name: 'Paladyum', nameEn: 'Auxite Palladium', color: '#7E8A93', gradient: 'from-[#7E8A93] to-[#98A4AD]' },
 };
 
 interface Prices {

@@ -23,10 +23,10 @@ interface Asset {
 }
 
 const metals: Asset[] = [
-  { symbol: "AUXG", name: "Altın", nameEn: "Gold", price: 2648.50, change: 1.24, volume: "2.4B", icon: "🥇", color: "from-[#BFA181] to-yellow-600" },
-  { symbol: "AUXS", name: "Gümüş", nameEn: "Silver", price: 31.25, change: -0.58, volume: "890M", icon: "🥈", color: "from-slate-400 to-slate-500" },
-  { symbol: "AUXPT", name: "Platin", nameEn: "Platinum", price: 985.00, change: 0.82, volume: "320M", icon: "💎", color: "from-cyan-400 to-cyan-600" },
-  { symbol: "AUXPD", name: "Paladyum", nameEn: "Palladium", price: 1025.00, change: -1.15, volume: "180M", icon: "⚪", color: "from-indigo-400 to-indigo-600" },
+  { symbol: "AUXG", name: "Altın", nameEn: "Auxite Gold", price: 2648.50, change: 1.24, volume: "2.4B", icon: "🥇", color: "from-[#C6A46C] to-[#E0C79A]" },
+  { symbol: "AUXS", name: "Gümüş", nameEn: "Auxite Silver", price: 31.25, change: -0.58, volume: "890M", icon: "🥈", color: "from-[#B7C0C8] to-[#D1D7DD]" },
+  { symbol: "AUXPT", name: "Platin", nameEn: "Auxite Platinum", price: 985.00, change: 0.82, volume: "320M", icon: "⚪", color: "from-[#8FA3B0] to-[#A7BAC6]" },
+  { symbol: "AUXPD", name: "Paladyum", nameEn: "Auxite Palladium", price: 1025.00, change: -1.15, volume: "180M", icon: "🔘", color: "from-[#7E8A93] to-[#98A4AD]" },
 ];
 
 const cryptos: Asset[] = [

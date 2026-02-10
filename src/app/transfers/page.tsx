@@ -105,9 +105,9 @@ const transferTypes = [
 ];
 
 const assets = [
-  { symbol: "AUXG", name: "Gold", balance: "2.5000g" },
-  { symbol: "AUXS", name: "Silver", balance: "50.0000g" },
-  { symbol: "AUXPT", name: "Platinum", balance: "0.5000g" },
+  { symbol: "AUXG", name: "Auxite Gold", balance: "2.5000g" },
+  { symbol: "AUXS", name: "Auxite Silver", balance: "50.0000g" },
+  { symbol: "AUXPT", name: "Auxite Platinum", balance: "0.5000g" },
   { symbol: "AUXM", name: "Settlement Balance", balance: "5,000.00" },
 ];
 
