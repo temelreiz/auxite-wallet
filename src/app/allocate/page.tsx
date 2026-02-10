@@ -130,6 +130,8 @@ const FUNDING_SOURCES = [
   { symbol: "AUXM", name: "Settlement Balance", tier: "primary" },
   { symbol: "USDC", name: "USD Coin", tier: "secondary" },
   { symbol: "USDT", name: "Tether", tier: "secondary" },
+  { symbol: "BTC", name: "Bitcoin", tier: "tertiary" },
+  { symbol: "ETH", name: "Ethereum", tier: "tertiary" },
 ];
 
 // ============================================
