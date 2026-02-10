@@ -586,7 +586,9 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
         {/* Header */}
         <div className="relative p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3 sm:gap-4">
-            <img src={offer.icon} alt={offer.metal} className="w-9 h-9 object-contain" />
+            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/10" style={{ background: 'rgba(198,161,91,0.1)' }}>
+              <img src={offer.icon} alt={offer.metal} className="w-full h-full object-cover scale-[0.85]" style={{ filter: 'contrast(1.1)' }} />
+            </div>
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">
                 {offer.name} {lang === 'tr' ? 'Gelir Programı' : 'Income Program'}

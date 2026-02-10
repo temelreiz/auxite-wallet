@@ -532,14 +532,16 @@ export default function AllocatePage() {
                   }`}
                   style={isSelected ? { borderColor: metal.color, backgroundColor: `${metal.color}0D` } : {}}
                 >
-                  {/* Icon LEFT of metal name — 36px PNG, clean render */}
+                  {/* Icon LEFT of metal name — 36px PNG, circular mask */}
                   <div className="flex items-center gap-3 mb-1">
-                    <img
-                      src={metal.icon}
-                      alt={metal.name}
-                      className="w-9 h-9 object-contain"
-                      style={{ opacity: isSelected ? 1 : 0.55 }}
-                    />
+                    <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/10" style={{ background: `${metal.color}15` }}>
+                      <img
+                        src={metal.icon}
+                        alt={metal.name}
+                        className="w-full h-full object-cover scale-[0.85]"
+                        style={{ opacity: isSelected ? 1 : 0.65, filter: 'contrast(1.1)' }}
+                      />
+                    </div>
                     <p className="font-bold text-slate-800 dark:text-white text-sm">{metal.name}</p>
                   </div>
                   <p className="text-[9px] text-slate-500 mt-0.5">{t[metal.descKey]}</p>

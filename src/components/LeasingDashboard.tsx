@@ -314,13 +314,15 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
 
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Icon: 36px PNG, clean render, no shadow/glow/gradient */}
-          <img
-            src={metalIcons[offer.metal] || offer.icon}
-            alt={offer.name}
-            className="w-9 h-9 object-contain"
-            style={{ opacity: isHovered ? 1 : 0.55 }}
-          />
+          {/* Icon: 36px PNG, circular mask for clean edges */}
+          <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/10" style={{ background: `${metalColors[offer.metal] || '#C6A15B'}15` }}>
+            <img
+              src={metalIcons[offer.metal] || offer.icon}
+              alt={offer.name}
+              className="w-full h-full object-cover scale-[0.85]"
+              style={{ opacity: isHovered ? 1 : 0.65, filter: 'contrast(1.1)' }}
+            />
+          </div>
           <div>
             <div className="font-semibold text-slate-800 dark:text-slate-200 text-base sm:text-lg">{offer.name}</div>
             <div className="text-[10px] sm:text-xs text-slate-500">{offer.metal}</div>
