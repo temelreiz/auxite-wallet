@@ -5,9 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { randomBytes } from 'crypto';
+import crypto, { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/email-service';
-import { initializeCustody, createVault } from '@/lib/custody';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -103,36 +102,26 @@ export async function POST(request: NextRequest) {
     await redis.set(`auth:email:${normalizedEmail}`, userId);
 
     // ══════════════════════════════════════════════════════════════
-    // CREATE CUSTODY VAULT
+    // CREATE WALLET ADDRESS & VAULT ID
     // ══════════════════════════════════════════════════════════════
-    let vaultId = '';
-    let vaultAddress = '';
+    const addressHash = crypto.createHash('sha256').update(`auxite-wallet-${userId}`).digest('hex');
+    const vaultAddress = '0x' + addressHash.substring(0, 40);
 
-    try {
-      await initializeCustody();
-      const { vault, addresses } = await createVault({
-        userId,
-        name: 'Client Vault',
-      });
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const p1 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    const p2 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    const vaultId = `AX-VLT-${p1}-${p2}`;
 
-      vaultId = vault.id;
+    // Update user with wallet address and vault ID
+    await redis.hset(`auth:user:${normalizedEmail}`, {
+      walletAddress: vaultAddress,
+      vaultId: vaultId,
+    });
 
-      // Use ETH address as primary wallet address for display
-      const ethAddress = addresses.find(a => a.asset === 'ETH');
-      if (ethAddress) {
-        vaultAddress = ethAddress.address;
-        // Update user with vault wallet address
-        await redis.hset(`auth:user:${normalizedEmail}`, {
-          walletAddress: vaultAddress,
-          vaultId: vaultId,
-        });
-      }
+    // Create address-to-user mapping for deposit scanner
+    await redis.set(`user:address:${vaultAddress.toLowerCase()}`, userId);
 
-      console.log(`[Register] Vault created for user ${userId}: ${vaultId}`);
-    } catch (vaultError) {
-      // Log but don't fail registration if vault creation fails
-      console.error('[Register] Vault creation failed:', vaultError);
-    }
+    console.log(`[Register] Wallet assigned for ${userId}: ${vaultAddress}, vault: ${vaultId}`);
 
     // ══════════════════════════════════════════════════════════════
     // SEND VERIFICATION EMAIL WITH CODE

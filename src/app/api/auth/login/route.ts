@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { initializeCustody, createVault, getVaultByUserId } from '@/lib/custody';
+import crypto from 'crypto';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -107,53 +107,28 @@ export async function POST(request: NextRequest) {
     }
 
     if (!walletAddress) {
-      try {
-        await initializeCustody();
+      // Generate a deterministic wallet address from userId
+      const addressHash = crypto.createHash('sha256').update(`auxite-wallet-${userId}`).digest('hex');
+      walletAddress = '0x' + addressHash.substring(0, 40);
 
-        // Check if vault already exists
-        const existingVault = await getVaultByUserId(userId);
-
-        if (!existingVault) {
-          // Create new vault
-          const { vault, addresses } = await createVault({
-            userId: userId,
-            name: 'Client Vault',
-          });
-
-          vaultId = vault.id;
-
-          // Use ETH address as primary wallet address
-          const ethAddress = addresses.find(a => a.asset === 'ETH');
-          if (ethAddress) {
-            walletAddress = ethAddress.address;
-            // Update user with vault info
-            await redis.hset(`auth:user:${normalizedEmail}`, {
-              walletAddress,
-              vaultId,
-            });
-          }
-
-          console.log(`[Login] Vault created for user ${userId}: ${vaultId}`);
-        } else {
-          // Vault exists, get the address from it
-          vaultId = existingVault.id;
-          // Check if we have addresses stored
-          const { storage } = await import('@/lib/custody');
-          const addresses = await storage.getVaultDepositAddresses(vaultId);
-          const ethAddress = addresses.find(a => a.asset === 'ETH');
-          if (ethAddress) {
-            walletAddress = ethAddress.address;
-            // Update user with wallet info
-            await redis.hset(`auth:user:${normalizedEmail}`, {
-              walletAddress,
-              vaultId,
-            });
-          }
-          console.log(`[Login] Existing vault found for user ${userId}: ${vaultId}`);
-        }
-      } catch (vaultError) {
-        console.error('[Login] Vault creation failed:', vaultError);
+      // Generate vault ID if not present
+      if (!vaultId) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const part1 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        const part2 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        vaultId = `AX-VLT-${part1}-${part2}`;
       }
+
+      // Save to Redis
+      await redis.hset(`auth:user:${normalizedEmail}`, {
+        walletAddress,
+        vaultId,
+      });
+
+      // Create address-to-user mapping for deposit scanner
+      await redis.set(`user:address:${walletAddress.toLowerCase()}`, userId);
+
+      console.log(`[Login] Wallet assigned for ${userId}: ${walletAddress}, vault: ${vaultId}`);
     }
 
     // ══════════════════════════════════════════════════════════════
