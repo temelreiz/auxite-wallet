@@ -544,23 +544,23 @@ export default function AllocatePage() {
                     </div>
                     <p className="font-bold text-slate-800 dark:text-white text-sm">{metal.name}</p>
                   </div>
-                  <p className="text-[9px] text-slate-500 mt-0.5">{t[metal.descKey]}</p>
-                  <p className="text-[9px] mt-0.5" style={{ color: isSelected ? metal.color : '#2F6F62' }}>{t.allocatedSegregated}</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{t[metal.descKey]}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: isSelected ? metal.color : '#2F6F62' }}>{t.allocatedSegregated}</p>
                   {/* LBMA / LPPM certification badge */}
-                  <p className="text-[10px] sm:text-[11px] mt-0.5" style={{ opacity: 0.6 }}>{metal.certification}</p>
+                  <p className="text-[11px] sm:text-xs mt-0.5" style={{ opacity: 0.6 }}>{metal.certification}</p>
 
                   {/* Pricing: Market Reference + Execution Price */}
                   <div className="w-full mt-3 pt-2 border-t border-stone-200 dark:border-slate-700">
                     <div className="flex justify-between items-baseline">
-                      <span className="text-[9px] text-slate-400">{lang === "tr" ? "Referans" : "Reference"}</span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                      <span className="text-[11px] text-slate-400">{lang === "tr" ? "Referans" : "Reference"}</span>
+                      <span className="text-sm text-slate-500 dark:text-slate-400">
                         {metalBasePrice ? formatPricePerGram(basePrices[metal.symbol]) : "--"}/g
                       </span>
                     </div>
                     <div className="flex justify-between items-baseline mt-1">
-                      <span className="text-[9px] text-slate-400">{lang === "tr" ? "İşlem" : "Execution"}</span>
+                      <span className="text-[11px] text-slate-400">{lang === "tr" ? "İşlem" : "Execution"}</span>
                       <span
-                        className="text-xs font-bold text-slate-800 dark:text-white"
+                        className="text-sm font-bold text-slate-800 dark:text-white"
                         style={isSelected ? { backgroundColor: `${metal.color}0D`, padding: '0 4px', borderRadius: '4px' } : {}}
                       >
                         {executionPrices[metal.symbol] ? formatPricePerGram(executionPrices[metal.symbol]) : "--"}/g
@@ -590,9 +590,9 @@ export default function AllocatePage() {
                 }`}
               >
                 <span className="text-sm font-semibold text-slate-800 dark:text-white">{source.symbol}</span>
-                <span className="text-[9px] text-slate-500 mt-0.5">{source.name}</span>
+                <span className="text-[11px] text-slate-500 mt-0.5">{source.name}</span>
                 {source.symbol === "AUXM" && (
-                  <span className="text-[8px] text-[#C6A15B] mt-0.5 font-medium">
+                  <span className="text-[10px] text-[#C6A15B] mt-0.5 font-medium">
                     {lang === 'tr' ? 'Tahsis için gerekli' : 'Required for allocation'}
                   </span>
                 )}
@@ -621,8 +621,8 @@ export default function AllocatePage() {
           {/* Market Reference vs Execution Price */}
           <div className="space-y-2 mb-4">
             <div className="flex justify-between">
-              <span className="text-xs text-slate-500">{t.marketReference}</span>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
+              <span className="text-sm text-slate-500">{t.marketReference}</span>
+              <span className="text-sm text-slate-600 dark:text-slate-400">
                 {metalBasePrice ? formatPricePerGram(metalBasePrice) : "--"}/g
                 {metalSpotOz > 0 && (
                   <span className="text-slate-400 ml-1">({formatUSD(metalSpotOz)}/oz)</span>
@@ -630,12 +630,12 @@ export default function AllocatePage() {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-xs text-slate-500 font-semibold">{t.executionPrice}</span>
-              <span className="text-xs font-bold text-slate-800 dark:text-white">
+              <span className="text-sm text-slate-500 font-semibold">{t.executionPrice}</span>
+              <span className="text-sm font-bold text-slate-800 dark:text-white">
                 {metalExecPrice ? formatPricePerGram(metalExecPrice) : "--"}/g
               </span>
             </div>
-            <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-1 italic">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 italic">
               {lang === 'tr' ? 'Tedarik ve kurumsal işlem maliyetlerini içerir.' : 'Includes sourcing and institutional execution.'}
             </p>
           </div>
