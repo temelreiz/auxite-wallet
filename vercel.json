@@ -29,6 +29,10 @@
     {
       "path": "/api/cron/verify-pending-transfers",
       "schedule": "*/2 * * * *"
+    },
+    {
+      "path": "/api/cron/scan-deposits",
+      "schedule": "* * * * *"
     }
   ]
 }

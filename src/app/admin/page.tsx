@@ -388,6 +388,7 @@ const TABS = [
   { id: "siteVaults", label: "Kasalar", icon: "🏛️" },
   { id: "risk", label: "Risk", icon: "🛡️" },
   { id: "leasing", label: "Leasing", icon: "🏦" },
+  { id: "depositMonitor", label: "Deposit Scanner", icon: "📡" },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -4792,6 +4793,10 @@ export default function AdminDashboard() {
             <LeasingEngineTab />
           )}
 
+          {activeTab === "depositMonitor" && (
+            <DepositMonitorTab />
+          )}
+
           {/* Website Edit Modal */}
           {showWebsiteModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -5297,6 +5302,327 @@ function RiskDashboardTab() {
         <p className="text-sm text-slate-400 font-mono">
           Match first. Hedge immediately. Allocate physically. Lease what is idle. Never bet on price.
         </p>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DEPOSIT MONITOR TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+function DepositMonitorTab() {
+  const [scannerData, setScannerData] = useState<any>(null);
+  const [recentDeposits, setRecentDeposits] = useState<any[]>([]);
+  const [orphanDeposits, setOrphanDeposits] = useState<any[]>([]);
+  const [stats, setStats] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionMsg, setActionMsg] = useState('');
+  const [reconcileAddress, setReconcileAddress] = useState('');
+
+  const adminToken = typeof window !== 'undefined' ? sessionStorage.getItem('auxite_admin_token') : null;
+
+  const fetchData = useCallback(async () => {
+    if (!adminToken) return;
+    try {
+      setLoading(true);
+      const headers = { Authorization: `Bearer ${adminToken}` };
+
+      const [scannerRes, recentRes, orphanRes, statsRes] = await Promise.all([
+        fetch('/api/admin/deposit-monitor?type=scanner', { headers }),
+        fetch('/api/admin/deposit-monitor?type=recent', { headers }),
+        fetch('/api/admin/deposit-monitor?type=orphan', { headers }),
+        fetch('/api/admin/deposit-monitor?type=stats', { headers }),
+      ]);
+
+      const [scanner, recent, orphan, statsData] = await Promise.all([
+        scannerRes.json(),
+        recentRes.json(),
+        orphanRes.json(),
+        statsRes.json(),
+      ]);
+
+      setScannerData(scanner);
+      setRecentDeposits(recent.deposits || []);
+      setOrphanDeposits(orphan.orphans || []);
+      setStats(statsData.stats || []);
+    } catch (err) {
+      console.error('Deposit monitor fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [adminToken]);
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  const toggleScanner = async () => {
+    if (!adminToken) return;
+    try {
+      const res = await fetch('/api/admin/deposit-monitor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({ action: 'toggle' }),
+      });
+      const data = await res.json();
+      setActionMsg(data.message || 'Done');
+      fetchData();
+      setTimeout(() => setActionMsg(''), 3000);
+    } catch (err) {
+      setActionMsg('Error toggling scanner');
+    }
+  };
+
+  const resetChain = async (chain: string) => {
+    if (!adminToken) return;
+    try {
+      const res = await fetch('/api/admin/deposit-monitor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({ action: 'rescan', chain }),
+      });
+      const data = await res.json();
+      setActionMsg(data.message || 'Done');
+      fetchData();
+      setTimeout(() => setActionMsg(''), 3000);
+    } catch (err) {
+      setActionMsg('Error resetting chain');
+    }
+  };
+
+  const reconcileOrphan = async (txHash: string) => {
+    if (!adminToken || !reconcileAddress) {
+      setActionMsg('Enter user address');
+      return;
+    }
+    try {
+      const res = await fetch('/api/admin/deposit-monitor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({ action: 'reconcile', txHash, userAddress: reconcileAddress }),
+      });
+      const data = await res.json();
+      setActionMsg(data.message || 'Reconciled');
+      setReconcileAddress('');
+      fetchData();
+      setTimeout(() => setActionMsg(''), 5000);
+    } catch (err) {
+      setActionMsg('Error reconciling');
+    }
+  };
+
+  if (loading && !scannerData) {
+    return <div className="text-center py-20 text-slate-400">Yükleniyor...</div>;
+  }
+
+  const scannerEnabled = scannerData?.scanner?.enabled !== false;
+  const lastRun = scannerData?.scanner?.lastRun;
+  const chains = scannerData?.chains || {};
+
+  return (
+    <div className="space-y-6">
+      {/* Action Message */}
+      {actionMsg && (
+        <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-3 text-emerald-400 text-sm text-center">
+          {actionMsg}
+        </div>
+      )}
+
+      {/* Scanner Status */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            📡 Deposit Scanner
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${
+              scannerEnabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+            }`}>
+              <span className={`w-2 h-2 rounded-full ${scannerEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
+              {scannerEnabled ? 'ACTIVE' : 'PAUSED'}
+            </span>
+          </h3>
+          <button
+            onClick={toggleScanner}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              scannerEnabled
+                ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
+            }`}
+          >
+            {scannerEnabled ? '⏸ Pause' : '▶ Activate'}
+          </button>
+        </div>
+
+        {lastRun && (
+          <p className="text-xs text-slate-500 mb-4">
+            Last scan: {new Date(lastRun).toLocaleString()} —
+            Deposits: {scannerData?.scanner?.depositCount || 0} |
+            Orphan: {scannerData?.scanner?.orphanCount || 0} |
+            Errors: {scannerData?.scanner?.errorCount || 0}
+          </p>
+        )}
+
+        {/* Chain Status Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {(['eth', 'btc', 'xrp', 'sol'] as const).map((chain) => (
+            <div key={chain} className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold uppercase text-slate-400">{chain}</span>
+                <button
+                  onClick={() => resetChain(chain)}
+                  className="text-[10px] text-slate-500 hover:text-amber-400 transition-colors"
+                  title="Reset scanner state"
+                >
+                  🔄
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 truncate">
+                {chain === 'eth' && `Block: ${chains.eth?.lastBlock || '—'}`}
+                {chain === 'btc' && `TX: ${String(chains.btc?.lastTxid || '—').slice(0, 12)}...`}
+                {chain === 'xrp' && `Ledger: ${chains.xrp?.lastLedger || '—'}`}
+                {chain === 'sol' && `Sig: ${String(chains.sol?.lastSignature || '—').slice(0, 12)}...`}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Daily Stats */}
+      {stats.length > 0 && (
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+          <h3 className="text-lg font-semibold mb-4">📊 Daily Stats (7 days)</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-slate-400 text-xs uppercase">
+                  <th className="text-left py-2">Date</th>
+                  <th className="text-right py-2">Total</th>
+                  <th className="text-right py-2">ETH</th>
+                  <th className="text-right py-2">BTC</th>
+                  <th className="text-right py-2">XRP</th>
+                  <th className="text-right py-2">SOL</th>
+                  <th className="text-right py-2">AUXM</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.map((day: any) => (
+                  <tr key={day.date} className="border-t border-slate-800">
+                    <td className="py-2 text-slate-300">{day.date}</td>
+                    <td className="py-2 text-right text-white font-semibold">{day.total || 0}</td>
+                    <td className="py-2 text-right text-slate-400">{day.eth || 0}</td>
+                    <td className="py-2 text-right text-slate-400">{day.btc || 0}</td>
+                    <td className="py-2 text-right text-slate-400">{day.xrp || 0}</td>
+                    <td className="py-2 text-right text-slate-400">{day.sol || 0}</td>
+                    <td className="py-2 text-right text-[#BFA181]">{Number(day.totalAuxm || 0).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Recent Deposits */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+        <h3 className="text-lg font-semibold mb-4">📥 Recent Deposits ({recentDeposits.length})</h3>
+        {recentDeposits.length === 0 ? (
+          <p className="text-slate-500 text-sm text-center py-8">No deposits detected yet</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-slate-400 text-xs uppercase">
+                  <th className="text-left py-2">Time</th>
+                  <th className="text-left py-2">Chain</th>
+                  <th className="text-left py-2">Coin</th>
+                  <th className="text-right py-2">Amount</th>
+                  <th className="text-right py-2">USD</th>
+                  <th className="text-right py-2">AUXM</th>
+                  <th className="text-left py-2">From</th>
+                  <th className="text-left py-2">TX</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentDeposits.slice(0, 20).map((d: any, i: number) => (
+                  <tr key={i} className="border-t border-slate-800 hover:bg-slate-800/30">
+                    <td className="py-2 text-slate-400 text-xs">
+                      {d.processedAt ? new Date(d.processedAt).toLocaleString() : '—'}
+                    </td>
+                    <td className="py-2">
+                      <span className="px-1.5 py-0.5 rounded text-xs font-bold uppercase bg-slate-700">
+                        {d.chain}
+                      </span>
+                    </td>
+                    <td className="py-2 text-white font-semibold">{d.coin}</td>
+                    <td className="py-2 text-right text-slate-300">{Number(d.amount).toFixed(6)}</td>
+                    <td className="py-2 text-right text-slate-300">${Number(d.amountUsd || 0).toFixed(2)}</td>
+                    <td className="py-2 text-right text-[#BFA181] font-semibold">
+                      {Number(d.auxmCredited || 0).toFixed(2)}
+                      {d.bonusCredited > 0 && (
+                        <span className="text-emerald-400 text-xs ml-1">+{Number(d.bonusCredited).toFixed(2)}</span>
+                      )}
+                    </td>
+                    <td className="py-2 text-xs text-slate-500 font-mono truncate max-w-[100px]">
+                      {d.fromAddress?.slice(0, 8)}...
+                    </td>
+                    <td className="py-2 text-xs text-slate-500 font-mono truncate max-w-[100px]">
+                      {d.txHash?.slice(0, 10)}...
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Orphan Deposits */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+        <h3 className="text-lg font-semibold mb-4">⚠️ Orphan Deposits ({orphanDeposits.length})</h3>
+        <p className="text-xs text-slate-500 mb-4">
+          Kullanıcı ile eşleşemeyen deposit&apos;ler. Manuel olarak kullanıcıya atayabilirsiniz.
+        </p>
+        {orphanDeposits.length === 0 ? (
+          <p className="text-slate-500 text-sm text-center py-4">No orphan deposits</p>
+        ) : (
+          <div className="space-y-3">
+            {orphanDeposits.map((d: any, i: number) => (
+              <div key={i} className="bg-slate-900/50 border border-amber-500/20 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="px-1.5 py-0.5 rounded text-xs font-bold uppercase bg-slate-700">
+                      {d.chain}
+                    </span>
+                    <span className="text-white font-semibold">{d.coin}</span>
+                    <span className="text-slate-300">{Number(d.amount).toFixed(6)}</span>
+                  </div>
+                  <span className="text-xs text-slate-500">
+                    {d.receivedAt ? new Date(d.receivedAt).toLocaleString() : '—'}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-500 font-mono mb-2">
+                  From: {d.fromAddress} | TX: {d.txHash?.slice(0, 20)}...
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="User address (0x...)"
+                    value={reconcileAddress}
+                    onChange={(e) => setReconcileAddress(e.target.value)}
+                    className="flex-1 bg-slate-800 border border-slate-700 rounded-lg py-1.5 px-3 text-sm text-white"
+                  />
+                  <button
+                    onClick={() => reconcileOrphan(d.txHash)}
+                    className="px-3 py-1.5 bg-amber-500/20 text-amber-400 rounded-lg text-sm font-semibold hover:bg-amber-500/30 transition-colors"
+                  >
+                    Reconcile
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
