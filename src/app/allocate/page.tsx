@@ -515,7 +515,7 @@ export default function AllocatePage() {
 
         {/* Metal Selection — Institutional Card Style */}
         <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-stone-200 dark:border-slate-800">
-          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-4">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-4">
             {t.selectMetal}
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -575,7 +575,7 @@ export default function AllocatePage() {
 
         {/* Funding Source */}
         <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-stone-200 dark:border-slate-800">
-          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-4">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-4">
             {t.fundingSource}
           </p>
           <div className="flex gap-2">
@@ -603,7 +603,7 @@ export default function AllocatePage() {
 
         {/* Capital Deployment Input */}
         <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-stone-200 dark:border-slate-800">
-          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">
             {t.capitalDeployed}
           </p>
           <div className="flex items-center bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl px-4 h-14 mb-4">
