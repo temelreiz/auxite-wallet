@@ -746,21 +746,21 @@ export function AddFundsModal({
                 <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-2">
                   {t.auxmAmount}
                 </label>
-                <div className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                <div className="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 overflow-hidden">
                   <input
                     type="number"
                     value={auxmAmount}
                     onChange={(e) => setAuxmAmount(e.target.value)}
                     placeholder="0"
-                    className="flex-1 bg-transparent text-2xl font-bold text-slate-800 dark:text-white outline-none"
+                    className="flex-1 min-w-0 bg-transparent text-2xl font-bold text-slate-800 dark:text-white outline-none"
                   />
                   <button
                     onClick={() => setAuxmAmount(auxmBalance.toString())}
-                    className="px-3 py-1.5 rounded-lg bg-[#BFA181]/20 text-[#BFA181] text-xs font-bold hover:bg-[#BFA181]/30 transition-colors"
+                    className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-[#BFA181]/20 text-[#BFA181] text-xs font-bold hover:bg-[#BFA181]/30 transition-colors"
                   >
                     MAX
                   </button>
-                  <span className="text-lg font-semibold text-[#BFA181]">AUXM</span>
+                  <span className="flex-shrink-0 text-sm font-semibold text-[#BFA181]">AUXM</span>
                 </div>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t.auxmMin}</p>
               </div>
