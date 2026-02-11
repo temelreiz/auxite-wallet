@@ -45,23 +45,16 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
 
-        {/* Theme initialization script - runs before React hydration */}
+        {/* Theme initialization script - always dark mode */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('auxite_theme');
+                  document.documentElement.classList.add('dark');
+                  document.documentElement.classList.remove('light');
+
                   var lang = localStorage.getItem('auxite_language');
-
-                  if (theme === 'light') {
-                    document.documentElement.classList.add('light');
-                    document.documentElement.classList.remove('dark');
-                  } else {
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.classList.remove('light');
-                  }
-
                   if (lang === 'ar') {
                     document.documentElement.dir = 'rtl';
                   }

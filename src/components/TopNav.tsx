@@ -231,7 +231,6 @@ export default function TopNav({
   const t = translations[lang] || translations.en;
   const currentLangData = getLanguageData(lang);
 
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
@@ -270,22 +269,11 @@ export default function TopNav({
   const isWalletPage = pathname === "/wallet";
   const shouldShowWalletActions = showWalletActions || isWalletPage;
 
-  // Theme initialization
+  // Always dark mode
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initialTheme = savedTheme || (prefersDark ? "dark" : "light");
-    setTheme(initialTheme);
-    document.documentElement.classList.toggle("dark", initialTheme === "dark");
+    document.documentElement.classList.add("dark");
+    document.documentElement.classList.remove("light");
   }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.classList.toggle("dark", newTheme === "dark");
-    window.dispatchEvent(new Event("themeChange"));
-  };
 
   const handleLanguageSelect = (code: string) => {
     setLang(code as any);
@@ -401,23 +389,6 @@ export default function TopNav({
                 ) : (
                   <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                )}
-              </button>
-
-              {/* Theme Toggle */}
-              <button
-                onClick={toggleTheme}
-                className="hidden sm:flex p-2 rounded-lg bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 border border-stone-300 dark:border-slate-700 transition-colors"
-                title={theme === "dark" ? t.lightMode : t.darkMode}
-              >
-                {theme === "dark" ? (
-                  <svg className="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                   </svg>
                 )}
               </button>
@@ -568,32 +539,6 @@ export default function TopNav({
               </div>
             </div>
 
-            {/* Mobile Theme Toggle */}
-            <div className="pt-3 border-t border-stone-300 dark:border-slate-700">
-              <button
-                onClick={() => {
-                  toggleTheme();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-stone-200 dark:bg-slate-800 rounded-lg hover:bg-stone-300 dark:hover:bg-slate-700 transition-colors"
-              >
-                {theme === "dark" ? (
-                  <>
-                    <svg className="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    <span className="text-slate-700 dark:text-slate-300">{t.lightMode}</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
-                    <span className="text-slate-700 dark:text-slate-300">{t.darkMode}</span>
-                  </>
-                )}
-              </button>
-            </div>
           </div>
         </div>
       )}
