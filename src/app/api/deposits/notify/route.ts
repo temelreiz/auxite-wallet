@@ -1,5 +1,6 @@
 // app/api/deposits/notify/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { sendDepositConfirmedEmail } from "@/lib/email-service";
 
 export const dynamic = "force-dynamic";
 
@@ -123,6 +124,23 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Deposit processed: ${deposit.auxmAmount} AUXM → User ${userId}`);
     console.log(`   New balance: ${newBalance} AUXM`);
+
+    // Deposit Confirmation Email
+    try {
+      const userData = await redis.hgetall(`user:${userId}`) as Record<string, string> | null;
+      if (userData?.email) {
+        sendDepositConfirmedEmail(
+          userData.email,
+          userData.name || 'Client',
+          deposit.auxmAmount.toFixed(2),
+          deposit.coin || 'AUXM',
+          deposit.txHash,
+          userData.language || 'en'
+        ).catch((err: any) => console.error('Deposit email error:', err));
+      }
+    } catch (emailErr) {
+      console.error('Deposit email lookup error:', emailErr);
+    }
 
     return NextResponse.json({
       success: true,

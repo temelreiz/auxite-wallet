@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { sendDepositConfirmedEmail } from "@/lib/email-service";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -106,6 +107,25 @@ export async function POST(request: NextRequest) {
     // Transaction kaydet
     const txKey = `user:${normalizedAddress}:transactions`;
     await redis.lpush(txKey, JSON.stringify(transaction));
+
+    // Deposit Confirmation Email
+    try {
+      const userData = await redis.hgetall(`user:${normalizedAddress}`) as Record<string, string> | null;
+      if (userData?.email) {
+        const emailAmount = convertToAuxm ? amountUsd.toFixed(2) : amount.toString();
+        const emailToken = convertToAuxm ? 'AUXM' : coin.toUpperCase();
+        sendDepositConfirmedEmail(
+          userData.email,
+          userData.name || 'Client',
+          emailAmount,
+          emailToken,
+          txHash || undefined,
+          userData.language || 'en'
+        ).catch((err: any) => console.error('Deposit email error:', err));
+      }
+    } catch (emailErr) {
+      console.error('Deposit email lookup error:', emailErr);
+    }
 
     // Güncel bakiye
     const updatedBalance = await redis.hgetall(balanceKey);

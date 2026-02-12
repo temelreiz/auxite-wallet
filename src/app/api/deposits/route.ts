@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { sendDepositConfirmedEmail } from "@/lib/email-service";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -219,6 +220,25 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("Deposit recorded:", deposit);
+
+    // Deposit Confirmation Email — only for confirmed deposits
+    if (deposit.status === "confirmed") {
+      try {
+        const userData = await redis.hgetall(`user:${normalizedUserAddress}`) as Record<string, string> | null;
+        if (userData?.email) {
+          sendDepositConfirmedEmail(
+            userData.email,
+            userData.name || 'Client',
+            auxmAmount.toFixed(2),
+            coin,
+            txHash,
+            userData.language || 'en'
+          ).catch((err: any) => console.error('Deposit email error:', err));
+        }
+      } catch (emailErr) {
+        console.error('Deposit email lookup error:', emailErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,
