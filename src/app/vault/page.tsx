@@ -266,25 +266,24 @@ export default function VaultPage() {
         const allocatedGrams = allocData.summary?.[symbol] || 0;
         const price = priceData.basePrices?.[symbol] || 0;
 
-        if (balance > 0 || allocatedGrams > 0) {
-          const availableGrams = Math.max(0, balance - allocatedGrams);
-          const value = balance * price;
-          const allocValue = allocatedGrams * price;
+        // Always show all 4 metals — trust signaling (Liquidate button visible before allocation)
+        const availableGrams = Math.max(0, balance - allocatedGrams);
+        const value = balance * price;
+        const allocValue = allocatedGrams * price;
 
-          holdingsList.push({
-            symbol,
-            name: metalNames[symbol],
-            allocated: allocatedGrams,
-            available: availableGrams,
-            total: balance,
-            price,
-            value,
-          });
+        holdingsList.push({
+          symbol,
+          name: metalNames[symbol],
+          allocated: allocatedGrams,
+          available: availableGrams,
+          total: balance,
+          price,
+          value,
+        });
 
-          totalValue += value;
-          unallocatedValue += availableGrams * price;
-          allocatedValue += allocValue;
-        }
+        totalValue += value;
+        unallocatedValue += availableGrams * price;
+        allocatedValue += allocValue;
       }
 
       if (stakeData.success && stakeData.stakes) {
@@ -668,9 +667,8 @@ export default function VaultPage() {
                       </p>
                     </div>
                   </Link>
-                  {/* Capital Action Buttons */}
-                  {holding.allocated > 0 && (
-                    <div className="flex items-center gap-2 mt-3 pl-14">
+                  {/* Capital Action Buttons — always visible for trust signaling */}
+                  <div className="flex items-center gap-2 mt-3 pl-14">
                       <Link
                         href="/allocate"
                         className="flex-1 py-2 text-center text-xs font-semibold bg-[#BFA181] text-white rounded-lg hover:bg-[#BFA181]/90 transition-colors"
@@ -687,7 +685,6 @@ export default function VaultPage() {
                         {t.liquidate}
                       </button>
                     </div>
-                  )}
                 </div>
               ))}
             </div>
