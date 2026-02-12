@@ -21,11 +21,11 @@ const translations: Record<string, Record<string, string>> = {
     allocate: "Tahsis",
     yield: "Getiri",
     transfers: "Transferler",
-    fundingWithdrawals: "Fonlama & Çekim",
-    ledger: "Sermaye Defteri",
+    fundingWithdrawals: "Fonlama",
+    ledger: "Defter",
     documents: "Belgeler",
-    trustCenter: "Güven Merkezi",
-    clientCenter: "Müşteri Merkezi",
+    trustCenter: "Güven",
+    clientCenter: "Müşteri",
 
     // Trust dropdown
     trust: "Güven",
@@ -61,11 +61,11 @@ const translations: Record<string, Record<string, string>> = {
     allocate: "Allocate",
     yield: "Yield",
     transfers: "Transfers",
-    fundingWithdrawals: "Funding & Withdrawals",
-    ledger: "Capital Ledger",
+    fundingWithdrawals: "Transfers",
+    ledger: "Ledger",
     documents: "Documents",
-    trustCenter: "Trust Center",
-    clientCenter: "Client Center",
+    trustCenter: "Trust",
+    clientCenter: "Client",
 
     // Trust dropdown
     trust: "Trust",
@@ -100,11 +100,11 @@ const translations: Record<string, Record<string, string>> = {
     allocate: "Zuweisung",
     yield: "Rendite",
     transfers: "Überweisungen",
-    fundingWithdrawals: "Ein- & Auszahlung",
+    fundingWithdrawals: "Ein-/Auszahlung",
     ledger: "Kapitalbuch",
     documents: "Dokumente",
-    trustCenter: "Vertrauenszentrum",
-    clientCenter: "Kundenzentrum",
+    trustCenter: "Vertrauen",
+    clientCenter: "Kunden",
     trust: "Vertrauen",
     verify: "Zertifikat Prüfen",
     legal: "Rechtliches",
@@ -131,11 +131,11 @@ const translations: Record<string, Record<string, string>> = {
     allocate: "Allouer",
     yield: "Rendement",
     transfers: "Transferts",
-    fundingWithdrawals: "Financement & Retraits",
+    fundingWithdrawals: "Transferts",
     ledger: "Grand Livre",
     documents: "Documents",
-    trustCenter: "Centre de Confiance",
-    clientCenter: "Centre Client",
+    trustCenter: "Confiance",
+    clientCenter: "Client",
     trust: "Confiance",
     verify: "Vérifier Certificat",
     legal: "Juridique",
@@ -162,11 +162,11 @@ const translations: Record<string, Record<string, string>> = {
     allocate: "تخصيص",
     yield: "العائد",
     transfers: "التحويلات",
-    fundingWithdrawals: "التمويل والسحوبات",
-    ledger: "دفتر رأس المال",
+    fundingWithdrawals: "التمويل",
+    ledger: "الدفتر",
     documents: "المستندات",
-    trustCenter: "مركز الثقة",
-    clientCenter: "مركز العملاء",
+    trustCenter: "الثقة",
+    clientCenter: "العميل",
     trust: "الثقة",
     verify: "تحقق من الشهادة",
     legal: "قانوني",
@@ -193,11 +193,11 @@ const translations: Record<string, Record<string, string>> = {
     allocate: "Распределить",
     yield: "Доходность",
     transfers: "Переводы",
-    fundingWithdrawals: "Ввод и вывод",
-    ledger: "Книга Капитала",
+    fundingWithdrawals: "Переводы",
+    ledger: "Капитал",
     documents: "Документы",
-    trustCenter: "Центр Доверия",
-    clientCenter: "Клиентский Центр",
+    trustCenter: "Доверие",
+    clientCenter: "Клиент",
     trust: "Доверие",
     verify: "Проверить Сертификат",
     legal: "Правовая",
@@ -324,7 +324,7 @@ export default function TopNav({
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Left: Logo + Nav */}
-            <div className="flex items-center gap-1 sm:gap-6">
+            <div className="flex items-center gap-1 sm:gap-4 min-w-0 flex-1">
               {/* Logo */}
               <Link href="/" className="flex items-center gap-1.5 sm:gap-2 mr-2 sm:mr-0 flex-shrink-0">
                 <Image
@@ -340,12 +340,12 @@ export default function TopNav({
               </Link>
 
               {/* Desktop Navigation */}
-              <nav className="hidden sm:flex items-center gap-0.5">
+              <nav className="hidden sm:flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
                 {navLinks.map((link) => (
                   <Link
                     key={link.key}
                     href={link.href}
-                    className={`px-2 lg:px-3 py-2 rounded-lg text-[13px] lg:text-sm font-medium whitespace-nowrap transition-colors ${
+                    className={`px-2 lg:px-3 py-1.5 rounded-lg text-[12px] lg:text-[13px] font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
                       isActive(link.href)
                         ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574]"
                         : "text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
@@ -355,10 +355,10 @@ export default function TopNav({
                   </Link>
                 ))}
 
-                {/* Trust Center Link - Simple link like mobile */}
+                {/* Trust Center Link */}
                 <Link
                   href="/trust-center"
-                  className={`px-2 lg:px-3 py-2 rounded-lg text-[13px] lg:text-sm font-medium whitespace-nowrap transition-colors ${
+                  className={`px-2 lg:px-3 py-1.5 rounded-lg text-[12px] lg:text-[13px] font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
                     pathname?.startsWith("/trust")
                       ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574]"
                       : "text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
@@ -367,10 +367,10 @@ export default function TopNav({
                   {t.trustCenter}
                 </Link>
 
-                {/* Client Center Link - Profile replacement */}
+                {/* Client Center Link */}
                 <Link
                   href="/client-center"
-                  className={`px-2 lg:px-3 py-2 rounded-lg text-[13px] lg:text-sm font-medium whitespace-nowrap transition-colors ${
+                  className={`px-2 lg:px-3 py-1.5 rounded-lg text-[12px] lg:text-[13px] font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
                     pathname === "/client-center" || pathname?.startsWith('/profile')
                       ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574]"
                       : "text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
