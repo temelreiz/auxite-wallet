@@ -12,6 +12,7 @@ import Image from "next/image";
 import TopNav from "@/components/TopNav";
 import LiquidateModal from "@/components/LiquidateModal";
 import { useLanguage } from "@/components/LanguageContext";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 // Metal icons
 const metalIcons: Record<string, string> = {
@@ -426,9 +427,9 @@ export default function VaultPage() {
     return "$" + value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const formatGrams = (grams: number) => {
-    if (grams >= 1) return grams.toFixed(2) + "g";
-    return (grams * 1000).toFixed(1) + "mg";
+  const formatGrams = (grams: number, symbol: string = "AUXG") => {
+    if (grams < 1 && grams > 0) return (grams * 1000).toFixed(1) + "mg";
+    return formatAmount(grams, symbol) + "g";
   };
 
   const utilizationRatio = totalVaultValue > 0
@@ -934,7 +935,7 @@ export default function VaultPage() {
                             <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatCurrency(value)}</p>
                             <div className="flex items-center gap-1.5 justify-end">
                               <p className="text-xs text-[#2F6F62] font-medium">
-                                {bal < 1 ? bal.toFixed(6) : bal.toFixed(2)} {crypto.symbol}
+                                {formatAmount(bal, crypto.symbol)} {crypto.symbol}
                               </p>
                               <span className="px-1.5 py-0.5 bg-[#2F6F62]/10 rounded text-[8px] font-semibold text-[#2F6F62]">
                                 {t.available}

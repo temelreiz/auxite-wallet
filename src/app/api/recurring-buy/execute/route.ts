@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
+import { formatAmount } from '@/lib/format';
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,13 +64,13 @@ export async function POST(request: NextRequest) {
               await executeStake(walletAddress, plan.token, tradeResult.toAmount, plan.stakeDuration);
               await sendNotification(walletAddress, {
                 title: 'Duzenli Yatirim + Biriktirme',
-                body: tradeResult.toAmount.toFixed(4) + 'g ' + plan.token + ' alindi ve stake edildi.',
+                body: formatAmount(tradeResult.toAmount, plan.token) + 'g ' + plan.token + ' alindi ve stake edildi.',
                 type: 'dca_stake_success'
               });
             } else {
               await sendNotification(walletAddress, {
                 title: 'Duzenli Yatirim Basarili',
-                body: tradeResult.toAmount.toFixed(4) + 'g ' + plan.token + ' alindi.',
+                body: formatAmount(tradeResult.toAmount, plan.token) + 'g ' + plan.token + ' alindi.',
                 type: 'dca_success'
               });
             }

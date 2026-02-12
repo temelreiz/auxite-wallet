@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTransactionHistory, Transaction } from "@/hooks/useTransactionHistory";
+import { formatAmount } from "@/lib/format";
 
 interface TransactionHistoryProps {
   lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
@@ -366,24 +367,24 @@ export function TransactionHistory({ lang = "en" }: TransactionHistoryProps) {
                       <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm flex-wrap">
                         {((tx.type as string) === "swap" || (tx.type as string) === "exchange") && tx.fromToken && tx.toToken ? (
                           <>
-                            <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{getTokenIcon(tx.fromToken)} {parseFloat(tx.fromAmount || "0").toFixed(4)} {tx.fromToken}</span>
+                            <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{getTokenIcon(tx.fromToken)} {formatAmount(parseFloat(tx.fromAmount || "0"), tx.fromToken)} {tx.fromToken}</span>
                             <span className="text-slate-400 dark:text-slate-500">→</span>
-                            <span className="flex items-center gap-1 text-[#2F6F62] dark:text-[#2F6F62]">{getTokenIcon(tx.toToken)} {parseFloat(tx.toAmount || "0").toFixed(4)} {tx.toToken}</span>
+                            <span className="flex items-center gap-1 text-[#2F6F62] dark:text-[#2F6F62]">{getTokenIcon(tx.toToken)} {formatAmount(parseFloat(tx.toAmount || "0"), tx.toToken)} {tx.toToken}</span>
                           </>
                         ) : (tx.type as string) === "buy" && tx.fromToken && tx.toToken ? (
                           <>
                             <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{getTokenIcon(tx.fromToken)} {parseFloat(tx.fromAmount || "0").toFixed(2)} {tx.fromToken}</span>
                             <span className="text-slate-400 dark:text-slate-500">→</span>
-                            <span className="flex items-center gap-1 text-[#2F6F62] dark:text-[#2F6F62]">{getTokenIcon(tx.toToken)} {parseFloat(tx.toAmount || "0").toFixed(4)}g {tx.toToken}</span>
+                            <span className="flex items-center gap-1 text-[#2F6F62] dark:text-[#2F6F62]">{getTokenIcon(tx.toToken)} {formatAmount(parseFloat(tx.toAmount || "0"), tx.toToken)}g {tx.toToken}</span>
                           </>
                         ) : (tx.type as string) === "sell" && tx.fromToken && tx.toToken ? (
                           <>
-                            <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{getTokenIcon(tx.fromToken)} {parseFloat(tx.fromAmount || "0").toFixed(4)}g {tx.fromToken}</span>
+                            <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{getTokenIcon(tx.fromToken)} {formatAmount(parseFloat(tx.fromAmount || "0"), tx.fromToken)}g {tx.fromToken}</span>
                             <span className="text-slate-400 dark:text-slate-500">→</span>
-                            <span className="flex items-center gap-1 text-[#2F6F62] dark:text-[#2F6F62]">{getTokenIcon(tx.toToken)} {parseFloat(tx.toAmount || "0").toFixed(4)} {tx.toToken}</span>
+                            <span className="flex items-center gap-1 text-[#2F6F62] dark:text-[#2F6F62]">{getTokenIcon(tx.toToken)} {formatAmount(parseFloat(tx.toAmount || "0"), tx.toToken)} {tx.toToken}</span>
                           </>
                         ) : (
-                          <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{tx.token && getTokenIcon(tx.token)} {parseFloat(tx.amount || "0").toFixed(4)} {tx.token}</span>
+                          <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">{tx.token && getTokenIcon(tx.token)} {formatAmount(parseFloat(tx.amount || "0"), tx.token || 'AUXG')} {tx.token}</span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 sm:gap-3 mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-slate-500">

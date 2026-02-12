@@ -11,6 +11,7 @@ import {
 } from "wagmi";
 import { erc20Abi } from "viem";
 import { formatUnits, parseUnits, type Address } from "viem";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 export default function LeasingOfferPage() {
   const params = useParams();
@@ -98,7 +99,7 @@ export default function LeasingOfferPage() {
           <span>
             {symbol} bakiyesi:{" "}
             {metalBalance
-              ? Number(formatUnits(metalBalance as bigint, 18)).toFixed(4)
+              ? formatAmount(Number(formatUnits(metalBalance as bigint, 18)), symbol)
               : "-"}
           </span>
         </div>
@@ -252,7 +253,7 @@ function LeasingPositionRow({
     position as unknown as [bigint, bigint, bigint, boolean, boolean];
 
   const unlocked = now >= Number(endTime);
-  const amountFormatted = Number(formatUnits(amount, 18)).toFixed(4);
+  const amountFormatted = formatAmount(Number(formatUnits(amount, 18)), symbol);
 
   return (
     <div className="border border-white/10 rounded-lg p-3 flex flex-col gap-1 text-xs">

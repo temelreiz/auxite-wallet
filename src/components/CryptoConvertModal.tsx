@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 import { isLaunchCampaignActive } from "@/lib/auxm-bonus-service";
 
 // Spread Config Interface
@@ -555,7 +556,7 @@ export function CryptoConvertModal({
                 {t.conversionSuccess}
               </h3>
               <p className="text-sm sm:text-base text-slate-700 dark:text-slate-400">
-                {fromAmountNum.toFixed(6)} {fromCrypto} → {toAmount.toFixed(toAsset === "AUXM" ? 2 : 4)}{toAsset !== "AUXM" ? "g" : ""} {toAsset}
+                {formatAmount(fromAmountNum, fromCrypto)} {fromCrypto} → {formatAmount(toAmount, toAsset)}{toAsset !== "AUXM" ? "g" : ""} {toAsset}
               </p>
               {bonusUSD > 0 && (
                 <p className="text-purple-600 dark:text-purple-400 text-xs sm:text-sm mt-2">
@@ -587,7 +588,7 @@ export function CryptoConvertModal({
                 
                 <div className="flex items-center justify-between mt-2 mb-1">
                   <span className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
-                    {t.balance}: {fromBalance.toFixed(4)} {fromCrypto}
+                    {t.balance}: {formatAmount(fromBalance, fromCrypto)} {fromCrypto}
                   </span>
                   <button
                     onClick={handleMaxClick}
@@ -642,7 +643,7 @@ export function CryptoConvertModal({
                 <div className="bg-white dark:bg-slate-900 rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 border border-stone-200 dark:border-slate-700">
                   <div className="flex items-center justify-between">
                     <span className="text-base sm:text-lg font-mono text-slate-800 dark:text-white">
-                      {fromAmountNum > 0 ? toAmount.toFixed(toAsset === "AUXM" ? 2 : 4) : "0.0000"}
+                      {fromAmountNum > 0 ? formatAmount(toAmount, toAsset) : "0.00"}
                     </span>
                     <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium">
                       {toAsset !== "AUXM" ? "gram" : toAsset}
@@ -660,7 +661,7 @@ export function CryptoConvertModal({
                 <div className="flex justify-between">
                   <span className="text-slate-600 dark:text-slate-400">{t.exchangeRate}</span>
                   <span className="text-slate-800 dark:text-slate-300 font-medium text-[11px] sm:text-sm">
-                    1 {fromCrypto} = {(fromPrice / toPrice).toFixed(toAsset === "AUXM" ? 2 : 4)}{toAsset !== "AUXM" ? "g" : ""} {toAsset}
+                    1 {fromCrypto} = {formatAmount(fromPrice / toPrice, toAsset)}{toAsset !== "AUXM" ? "g" : ""} {toAsset}
                   </span>
                 </div>
                 <div className="flex justify-between">

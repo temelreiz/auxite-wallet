@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { useStaking, FormattedStake } from "@/hooks/useStaking";
+import { formatAmount } from "@/lib/format";
 
 interface PositionsTabProps {
   address?: string;
@@ -342,7 +343,7 @@ function PositionCard({
                 {stake.apyPercent.toFixed(2)}% {t.apy}
               </div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
-                +{stake.expectedRewardGrams.toFixed(4)}g {t.earned.toLowerCase()}
+                +{formatAmount(stake.expectedRewardGrams, stake.metalSymbol)}g {t.earned.toLowerCase()}
               </div>
             </div>
           </div>
@@ -401,15 +402,15 @@ function PositionCard({
         <div className="px-5 py-3 grid grid-cols-3 gap-4 border-t border-slate-200/50 dark:border-slate-700/50">
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">{t.principal}</div>
-            <div className="font-semibold text-slate-800 dark:text-white">{stake.amountGrams.toFixed(4)}g</div>
+            <div className="font-semibold text-slate-800 dark:text-white">{formatAmount(stake.amountGrams, stake.metalSymbol)}g</div>
           </div>
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">{t.reward}</div>
-            <div className="font-semibold text-[#2F6F62] dark:text-[#2F6F62]">+{stake.expectedRewardGrams.toFixed(4)}g</div>
+            <div className="font-semibold text-[#2F6F62] dark:text-[#2F6F62]">+{formatAmount(stake.expectedRewardGrams, stake.metalSymbol)}g</div>
           </div>
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">{t.claimable}</div>
-            <div className="font-semibold text-purple-600 dark:text-purple-400">{stake.claimableRewardGrams.toFixed(4)}g</div>
+            <div className="font-semibold text-purple-600 dark:text-purple-400">{formatAmount(stake.claimableRewardGrams, stake.metalSymbol)}g</div>
           </div>
         </div>
 
@@ -521,7 +522,7 @@ function PositionCard({
               </p>
               <div className="p-3 rounded-lg bg-[#BFA181]/10 border border-[#BFA181]/20 text-center">
                 <span className="text-sm text-[#BFA181] dark:text-[#BFA181] font-medium">
-                  {t.penalty}: 5% ({(stake.amountGrams * 0.05).toFixed(4)}g)
+                  {t.penalty}: 5% ({formatAmount(stake.amountGrams * 0.05, stake.metalSymbol)}g)
                 </span>
               </div>
             </div>

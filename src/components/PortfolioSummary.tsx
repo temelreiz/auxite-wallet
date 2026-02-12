@@ -1,6 +1,7 @@
 "use client";
 
 import { useWallet } from "@/components/WalletContext";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 
 interface PortfolioSummaryProps {
@@ -109,7 +110,7 @@ export function PortfolioSummary({
               <span>🥇</span>
               <span className="text-sm text-slate-300">AUXG</span>
             </div>
-            <div className="text-white font-mono">{auxg.toFixed(4)}g</div>
+            <div className="text-white font-mono">{formatAmount(auxg, 'AUXG')}g</div>
             <div className="text-xs text-slate-500">${(auxg * metalPrices.AUXG).toFixed(2)}</div>
           </div>
 
@@ -119,7 +120,7 @@ export function PortfolioSummary({
               <span>🥈</span>
               <span className="text-sm text-slate-300">AUXS</span>
             </div>
-            <div className="text-white font-mono">{auxs.toFixed(4)}g</div>
+            <div className="text-white font-mono">{formatAmount(auxs, 'AUXS')}g</div>
             <div className="text-xs text-slate-500">${(auxs * metalPrices.AUXS).toFixed(2)}</div>
           </div>
 
@@ -129,7 +130,7 @@ export function PortfolioSummary({
               <span>💎</span>
               <span className="text-sm text-slate-300">AUXPT</span>
             </div>
-            <div className="text-white font-mono">{auxpt.toFixed(4)}g</div>
+            <div className="text-white font-mono">{formatAmount(auxpt, 'AUXPT')}g</div>
             <div className="text-xs text-slate-500">${(auxpt * metalPrices.AUXPT).toFixed(2)}</div>
           </div>
 
@@ -139,7 +140,7 @@ export function PortfolioSummary({
               <span>🔷</span>
               <span className="text-sm text-slate-300">AUXPD</span>
             </div>
-            <div className="text-white font-mono">{auxpd.toFixed(4)}g</div>
+            <div className="text-white font-mono">{formatAmount(auxpd, 'AUXPD')}g</div>
             <div className="text-xs text-slate-500">${(auxpd * metalPrices.AUXPD).toFixed(2)}</div>
           </div>
         </div>

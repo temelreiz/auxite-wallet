@@ -11,6 +11,7 @@ import Link from "next/link";
 import Image from "next/image";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 // Metal icons
 const metalIcons: Record<string, string> = {
@@ -283,9 +284,9 @@ export default function VaultPage() {
     return "$" + value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const formatGrams = (grams: number) => {
-    if (grams >= 1) return grams.toFixed(2) + "g";
-    return (grams * 1000).toFixed(1) + "mg";
+  const formatGrams = (grams: number, symbol: string = "AUXG") => {
+    if (grams < 1 && grams > 0) return (grams * 1000).toFixed(1) + "mg";
+    return formatAmount(grams, symbol) + "g";
   };
 
   return (

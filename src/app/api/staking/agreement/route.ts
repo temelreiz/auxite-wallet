@@ -4,6 +4,7 @@
 // NO gradients, NO crypto vibes, NO startup aesthetics
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
+import { formatAmount } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -573,7 +574,7 @@ export async function GET(request: NextRequest) {
       metal: stake.metal,
       metalName: metalInfo.full,
       metalSymbol: metalInfo.symbol,
-      amount: parseFloat(stake.amount).toFixed(4),
+      amount: formatAmount(parseFloat(stake.amount), stake.metal),
       termLabel,
       lockDays,
       startDate: formatDateFull(startDateObj),
@@ -630,7 +631,7 @@ export async function POST(request: NextRequest) {
       metal,
       metalName: metalInfo.full,
       metalSymbol: metalInfo.symbol,
-      amount: parseFloat(amount).toFixed(4),
+      amount: formatAmount(parseFloat(amount), metal),
       termLabel,
       lockDays,
       startDate: formatDateFull(startDateObj),

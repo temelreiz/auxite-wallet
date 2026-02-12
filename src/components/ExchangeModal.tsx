@@ -4,6 +4,7 @@ import { useState, useEffect, memo } from "react";
 import { useWallet } from "@/components/WalletContext";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { formatAmount } from '@/lib/format';
 
 type AssetCategory = "metal" | "platform" | "crypto" | "fiat";
 
@@ -260,7 +261,7 @@ const AssetDropdown = memo(({
               <div className="text-sm font-medium text-slate-800 dark:text-white">{asset}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">{info.name[lang] || info.name.en}</div>
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">{getBalance(asset).toFixed(2)}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">{formatAmount(getBalance(asset), asset)}</div>
           </button>
         );
       })}
@@ -496,12 +497,6 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
     }
   };
 
-  const formatAmount = (amount: number, asset: AssetType): string => {
-    if (ASSETS[asset].category === "metal") return amount.toFixed(4);
-    if (["BTC", "ETH", "XRP", "SOL"].includes(asset)) return amount.toFixed(6);
-    return amount.toFixed(2);
-  };
-
   const formatBalance = (asset: AssetType): string => formatAmount(getBalance(asset), asset);
   const getAssetUnit = (asset: AssetType): string => ASSETS[asset].unit;
 
@@ -624,7 +619,7 @@ export function ExchangeModal({ isOpen, onClose, lang = "en" }: ExchangeModalPro
                     <span className="text-sm font-medium text-[#BFA181] dark:text-[#BFA181]">{lang === "tr" ? "Kısmi Allocation" : "Partial Allocation"}</span>
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-400">
-                    {lang === "tr" ? `${toAmount.toFixed(4)}g ${toAsset} alıyorsunuz. Sadece ${allocatedGrams}g fiziksel metale allocate edilecek, ${nonAllocatedGrams.toFixed(4)}g bakiyenizde kalacak.` : `You are buying ${toAmount.toFixed(4)}g ${toAsset}. Only ${allocatedGrams}g will be allocated to physical metal, ${nonAllocatedGrams.toFixed(4)}g will remain in your balance.`}
+                    {lang === "tr" ? `${formatAmount(toAmount, toAsset)}g ${toAsset} alıyorsunuz. Sadece ${allocatedGrams}g fiziksel metale allocate edilecek, ${formatAmount(nonAllocatedGrams, toAsset)}g bakiyenizde kalacak.` : `You are buying ${formatAmount(toAmount, toAsset)}g ${toAsset}. Only ${allocatedGrams}g will be allocated to physical metal, ${formatAmount(nonAllocatedGrams, toAsset)}g will remain in your balance.`}
                   </p>
                   <div className="flex gap-2">
                     <button onClick={() => setShowAllocationWarning(false)} className="flex-1 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium">{lang === "tr" ? "İptal" : "Cancel"}</button>

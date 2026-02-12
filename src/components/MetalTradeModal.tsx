@@ -1,6 +1,7 @@
 import { useWallet } from "./WalletContext";
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 interface MetalTradeModalProps {
   isOpen: boolean;
@@ -484,9 +485,9 @@ export function MetalTradeModal({
               </h3>
               
               <p className="text-sm text-slate-400 text-center mb-4">
-                {lang === "tr" 
-                  ? `${allocationPreview.totalGrams.toFixed(4)}g ${metal} satın alıyorsunuz:`
-                  : `You are buying ${allocationPreview.totalGrams.toFixed(4)}g ${metal}:`}
+                {lang === "tr"
+                  ? `${formatAmount(allocationPreview.totalGrams, metal)}g ${metal} satın alıyorsunuz:`
+                  : `You are buying ${formatAmount(allocationPreview.totalGrams, metal)}g ${metal}:`}
               </p>
               
               <div className="bg-slate-800/50 rounded-xl p-4 space-y-3 mb-4">
@@ -518,7 +519,7 @@ export function MetalTradeModal({
                     </span>
                   </div>
                   <span className="text-sm font-medium text-[#BFA181]">
-                    {allocationPreview.nonAllocatedGrams.toFixed(4)}g
+                    {formatAmount(allocationPreview.nonAllocatedGrams, metal)}g
                   </span>
                 </div>
               </div>
@@ -538,7 +539,7 @@ export function MetalTradeModal({
                     <span className="block text-xs text-slate-400 mb-0.5">
                       {lang === "tr" ? "Ekle" : "Add"}
                     </span>
-                    +{allocationPreview.suggestion.gramsToAdd.toFixed(4)}g → {allocationPreview.suggestion.targetGrams}g
+                    +{formatAmount(allocationPreview.suggestion.gramsToAdd, metal)}g → {allocationPreview.suggestion.targetGrams}g
                   </button>
                 )}
                 <button
@@ -637,9 +638,9 @@ export function MetalTradeModal({
                     {mode === "buy" ? `${t.balance} (${paymentMethod})` : `${t.balance} (${metal})`}
                   </span>
                   <span className="text-white font-mono">
-                    {mode === "buy" 
-                      ? `${availableBalance.toFixed(paymentMethod === "BTC" ? 6 : 2)} ${paymentMethod}`
-                      : `${userBalance?.metals?.[metal]?.toFixed(4) || "0.0000"} ${metal}`
+                    {mode === "buy"
+                      ? `${formatAmount(availableBalance, paymentMethod)} ${paymentMethod}`
+                      : `${formatAmount(userBalance?.metals?.[metal] || 0, metal)} ${metal}`
                     }
                   </span>
                 </div>
@@ -677,8 +678,8 @@ export function MetalTradeModal({
                     <button
                       onClick={() => {
                         const maxPrice = orderType === "limit" ? limitPriceNum : displayPrice;
-                        const max = mode === "buy" 
-                          ? maxPrice > 0 ? (availableBalance / maxPrice).toFixed(4) : "0"
+                        const max = mode === "buy"
+                          ? maxPrice > 0 ? (availableBalance / maxPrice).toFixed(getDecimalPlaces(metal)) : "0"
                           : (userBalance?.metals?.[metal] || 0).toString();
                         setAmount(max);
                         setQuote(null);
@@ -766,7 +767,7 @@ export function MetalTradeModal({
                     {PAYMENT_METHODS.find(p => p.id === (mode === "buy" ? paymentMethod : "AUXM"))?.icon}
                   </span>
                   <span className="text-2xl font-bold text-white">
-                    {total.toFixed(paymentMethod === "BTC" ? 6 : 2)}
+                    {formatAmount(total, paymentMethod)}
                   </span>
                   <span className="text-slate-400">{mode === "buy" ? paymentMethod : "AUXM"}</span>
                 </div>

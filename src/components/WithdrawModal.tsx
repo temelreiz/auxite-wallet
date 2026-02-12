@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 import { useWallet } from "@/components/WalletContext";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { TwoFactorGate } from "@/components/TwoFactorGate";
@@ -219,7 +220,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
 
       setResult({ 
         type: "success", 
-        message: `${data.withdrawal?.netAmount?.toFixed(6) || amountNum.toFixed(6)} ${selectedCrypto}`,
+        message: `${data.withdrawal?.netAmount ? formatAmount(data.withdrawal.netAmount, selectedCrypto) : formatAmount(amountNum, selectedCrypto)} ${selectedCrypto}`,
         txHash: data.withdrawal?.txHash
       });
       await refreshBalances();
@@ -311,7 +312,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                         >
                           <span className="text-lg sm:text-xl" style={{ color: cryptoInfo.color }}>{cryptoInfo.icon}</span>
                           <span className="text-[10px] sm:text-xs font-semibold text-slate-800 dark:text-white">{c}</span>
-                          <span className="text-[8px] sm:text-[10px] text-slate-500">{balance > 0 ? balance.toFixed(4) : "0"}</span>
+                          <span className="text-[8px] sm:text-[10px] text-slate-500">{balance > 0 ? formatAmount(balance, c) : "0"}</span>
                         </button>
                       );
                     })}
@@ -323,7 +324,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                   <div className="flex justify-between items-center">
                     <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">{t.availableBalance}</span>
                     <div className="text-right">
-                      <span className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">{currentBalance.toFixed(6)} {selectedCrypto}</span>
+                      <span className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">{formatAmount(currentBalance, selectedCrypto)} {selectedCrypto}</span>
                       <p className="text-[10px] sm:text-xs text-slate-500">≈ ${(currentBalance * realCryptoPrices[selectedCrypto]).toFixed(2)}</p>
                     </div>
                   </div>
@@ -380,7 +381,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                   <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30">
                     <div className="flex justify-between items-center mb-1.5 sm:mb-2">
                       <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">{t.youWillReceive}</span>
-                      <span className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">{amountNum.toFixed(6)} {selectedCrypto}</span>
+                      <span className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">{formatAmount(amountNum, selectedCrypto)} {selectedCrypto}</span>
                     </div>
                     <div className="flex justify-between text-xs sm:text-sm">
                       <span className="text-slate-500">{t.networkFee}</span>
@@ -388,7 +389,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                     </div>
                     <div className="flex justify-between text-xs sm:text-sm pt-1.5 sm:pt-2 mt-1.5 sm:mt-2 border-t border-red-200 dark:border-red-500/30">
                       <span className="text-red-600 dark:text-red-400 font-semibold">{t.netReceive}</span>
-                      <span className="text-red-600 dark:text-red-400 font-bold">{netReceiveAmount.toFixed(6)} {selectedCrypto}</span>
+                      <span className="text-red-600 dark:text-red-400 font-bold">{formatAmount(netReceiveAmount, selectedCrypto)} {selectedCrypto}</span>
                     </div>
                   </div>
                 )}
@@ -411,7 +412,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                 <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-slate-800/50 border border-stone-300 dark:border-slate-700 space-y-2 sm:space-y-3 text-xs sm:text-sm">
                   <div className="flex justify-between">
                     <span className="text-slate-600 dark:text-slate-400">{t.amount}</span>
-                    <span className="text-slate-800 dark:text-white font-semibold">{amountNum.toFixed(6)} {selectedCrypto}</span>
+                    <span className="text-slate-800 dark:text-white font-semibold">{formatAmount(amountNum, selectedCrypto)} {selectedCrypto}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600 dark:text-slate-400">USD Value</span>
@@ -433,7 +434,7 @@ export function WithdrawModal({ isOpen, onClose, lang = "en" }: WithdrawModalPro
                   </div>
                   <div className="flex justify-between">
                     <span className="text-red-600 dark:text-red-400 font-semibold">{t.netReceive}</span>
-                    <span className="text-red-600 dark:text-red-400 font-bold text-base sm:text-lg">{netReceiveAmount.toFixed(6)} {selectedCrypto}</span>
+                    <span className="text-red-600 dark:text-red-400 font-bold text-base sm:text-lg">{formatAmount(netReceiveAmount, selectedCrypto)} {selectedCrypto}</span>
                   </div>
                 </div>
 

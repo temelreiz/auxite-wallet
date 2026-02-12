@@ -5,6 +5,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadCont
 import { parseUnits, erc20Abi } from "viem";
 import { useStaking, METAL_IDS } from "@/hooks/useStaking";
 import { useWallet } from "@/components/WalletContext";
+import { formatAmount } from "@/lib/format";
 
 // 6-language translations — Institutional Language Bible compliant
 const translations: Record<string, Record<string, string>> = {
@@ -346,13 +347,13 @@ function EarningsCalculator({ amount, apy, days, metalSymbol, lang }: {
         <div>
           <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{t.afterPeriod}</div>
           <div className="text-base sm:text-lg font-bold text-[#C6A15B] dark:text-[#C6A15B]">
-            +{earnings.toFixed(4)}g
+            +{formatAmount(earnings, metalSymbol)}g
           </div>
         </div>
         <div>
           <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Total</div>
           <div className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
-            {total.toFixed(4)}g
+            {formatAmount(total, metalSymbol)}g
           </div>
         </div>
       </div>
@@ -661,7 +662,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                 <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
-                {t.balance}: {balanceNum.toFixed(4)} {offer.metal}
+                {t.balance}: {formatAmount(balanceNum, offer.metal)} {offer.metal}
               </span>
               {amountNum > 0 && amountNum < offer.minAmount && (
                 <span className="text-[10px] sm:text-xs text-red-400">

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "./WalletContext";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 interface BuyMetalModalProps {
   isOpen: boolean;
@@ -163,7 +164,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
       const pricePerGram = preview?.price || selectedMetal.price;
       const feePercent = preview?.feePercent || 0.35;
       const newAmount = (targetGrams * pricePerGram) / (1 - feePercent / 100);
-      setAmount(newAmount.toFixed(2));
+      setAmount(newAmount.toFixed(getDecimalPlaces(selectedPayment.symbol)));
     }
     setShowAllocationWarning(false);
   };
@@ -312,7 +313,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
             </div>
             <div className="flex justify-between text-sm mb-3">
               <span className="text-slate-500">{t.balance}:</span>
-              <span className={`font-medium ${isInsufficientBalance ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>{balance.toFixed(['BTC', 'ETH', 'SOL'].includes(selectedPayment.symbol) ? 6 : 2)} {selectedPayment.symbol}</span>
+              <span className={`font-medium ${isInsufficientBalance ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>{formatAmount(balance, selectedPayment.symbol)} {selectedPayment.symbol}</span>
             </div>
             <div className="relative">
               <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full px-4 py-4 pr-20 rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#2F6F62] text-lg font-medium" />
@@ -333,7 +334,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
               <div className="flex items-center gap-3">
                 {selectedMetal && <img src={selectedMetal.icon} alt={selectedMetal.symbol} className="w-10 h-10" />}
                 <div>
-                  <span className="text-xl font-bold text-slate-800 dark:text-white">{preview ? preview.toAmount.toFixed(4) : '0.0000'}g</span>
+                  <span className="text-xl font-bold text-slate-800 dark:text-white">{preview ? formatAmount(preview.toAmount, selectedMetal!.symbol) : formatAmount(0, selectedMetal?.symbol || 'AUXG')}g</span>
                   <span className="text-lg text-slate-600 dark:text-slate-400 ml-2">{selectedMetal?.symbol}</span>
                   <p className="text-xs text-slate-500">@ ${preview ? preview.price.toFixed(2) : selectedMetal?.price.toFixed(2)}/gram</p>
                 </div>
@@ -381,7 +382,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
                   <span className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1">
                     <span className="text-[#BFA181]">○</span> {t.nonAllocated || "Non-Allocated"}
                   </span>
-                  <span className="font-semibold text-[#BFA181] dark:text-[#BFA181]">{allocationPreview.nonAllocatedGrams.toFixed(4)}g</span>
+                  <span className="font-semibold text-[#BFA181] dark:text-[#BFA181]">{formatAmount(allocationPreview.nonAllocatedGrams, selectedMetal?.symbol || 'AUXG')}g</span>
                 </div>
               </div>
               
@@ -391,7 +392,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
                 {allocationPreview.suggestion && (
                   <button onClick={handleAddMoreForAllocation} className="py-2.5 px-3 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
                     <span className="block text-xs text-slate-500 dark:text-slate-400">{t.addMore || "Add"}</span>
-                    +{allocationPreview.suggestion.gramsToAdd.toFixed(4)}g → {allocationPreview.suggestion.targetGrams}g
+                    +{formatAmount(allocationPreview.suggestion.gramsToAdd, selectedMetal?.symbol || 'AUXG')}g → {allocationPreview.suggestion.targetGrams}g
                   </button>
                 )}
                 <button onClick={handleConfirmWithAllocation} className="py-2.5 px-3 rounded-lg bg-[#2F6F62] hover:bg-[#2F6F62] text-white text-sm font-medium transition-colors">

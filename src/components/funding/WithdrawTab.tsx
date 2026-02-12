@@ -6,6 +6,7 @@ import { useWallet } from "@/components/WalletContext";
 import { TwoFactorGate } from "@/components/TwoFactorGate";
 import { WithdrawableAssetsPanel } from "./WithdrawableAssetsPanel";
 import { FeePreviewPanel } from "./FeePreviewPanel";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 // ============================================
 // TRANSLATIONS
@@ -351,10 +352,8 @@ export function WithdrawTab() {
     : [];
 
   const formatBalance = (bal: number, symbol: string) => {
-    if (["AUXG", "AUXS", "AUXPT", "AUXPD"].includes(symbol)) return `${bal.toFixed(4)}g`;
-    if (symbol === "BTC") return bal.toFixed(6);
-    if (symbol === "ETH") return bal.toFixed(4);
-    return bal.toFixed(2);
+    if (["AUXG", "AUXS", "AUXPT", "AUXPD"].includes(symbol)) return `${formatAmount(bal, symbol)}g`;
+    return formatAmount(bal, symbol);
   };
 
   // Load withdrawal history
@@ -764,7 +763,7 @@ export function WithdrawTab() {
                       >
                         <span className="text-lg" style={{ color: info.color }}>{info.icon}</span>
                         <span className="text-xs font-semibold text-slate-800 dark:text-white">{c}</span>
-                        <span className="text-[10px] text-slate-500">{balance > 0 ? balance.toFixed(4) : "0"}</span>
+                        <span className="text-[10px] text-slate-500">{balance > 0 ? formatAmount(balance, c) : "0"}</span>
                       </button>
                     );
                   })}

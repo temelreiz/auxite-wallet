@@ -10,6 +10,7 @@ import Image from "next/image";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { METAL_TOKENS, ORACLE_ADDRESS } from "@/config/contracts-v8";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -2073,9 +2074,9 @@ export default function AdminDashboard() {
                       {platformFees && Object.entries(platformFees.fees).map(([token, data]) => (
                         <tr key={token} className="border-t border-slate-800 hover:bg-slate-800/30">
                           <td className="p-4 font-medium">{token}</td>
-                          <td className="p-4 text-right font-mono">{data.total.toFixed(6)}</td>
-                          <td className="p-4 text-right font-mono text-[#BFA181]">{data.pending.toFixed(6)}</td>
-                          <td className="p-4 text-right font-mono text-[#2F6F62]">{data.transferred.toFixed(6)}</td>
+                          <td className="p-4 text-right font-mono">{formatAmount(data.total, token)}</td>
+                          <td className="p-4 text-right font-mono text-[#BFA181]">{formatAmount(data.pending, token)}</td>
+                          <td className="p-4 text-right font-mono text-[#2F6F62]">{formatAmount(data.transferred, token)}</td>
                           <td className="p-4 text-right">{data.transactionCount}</td>
                           <td className="p-4 text-right font-semibold">${data.valueUsd.toFixed(2)}</td>
                           <td className="p-4 text-center">
@@ -2146,7 +2147,7 @@ export default function AdminDashboard() {
                   <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md">
                     <div className="p-6 border-b border-slate-800">
                       <h3 className="text-xl font-bold">💵 Fee Transfer - {transferModal.token}</h3>
-                      <p className="text-slate-400 text-sm mt-1">Bekleyen: {transferModal.pending.toFixed(6)} {transferModal.token}</p>
+                      <p className="text-slate-400 text-sm mt-1">Bekleyen: {formatAmount(transferModal.pending, transferModal.token)} {transferModal.token}</p>
                     </div>
                     <div className="p-6 space-y-4">
                       <div>
@@ -2344,7 +2345,7 @@ export default function AdminDashboard() {
                 <div className="bg-slate-800 rounded-xl p-4">
                   <div className="text-slate-400 text-sm mb-1">Toplam ETH</div>
                   <div className="text-2xl font-bold text-blue-400">
-                    {pendingTransactions.reduce((sum, t) => sum + parseFloat(t.fromAmount || 0), 0).toFixed(4)}
+                    {formatAmount(pendingTransactions.reduce((sum, t) => sum + parseFloat(t.fromAmount || 0), 0), 'ETH')}
                   </div>
                 </div>
               </div>
@@ -2398,8 +2399,8 @@ export default function AdminDashboard() {
                               <span className="text-green-400">{tx.toToken}</span>
                             </td>
                             <td className="p-3">
-                              <div className="text-white">{parseFloat(tx.fromAmount).toFixed(6)} {tx.fromToken}</div>
-                              <div className="text-slate-400 text-xs">→ {parseFloat(tx.toAmount).toFixed(4)} {tx.toToken}</div>
+                              <div className="text-white">{formatAmount(parseFloat(tx.fromAmount), tx.fromToken)} {tx.fromToken}</div>
+                              <div className="text-slate-400 text-xs">→ {formatAmount(parseFloat(tx.toAmount), tx.toToken)} {tx.toToken}</div>
                             </td>
                             <td className="p-3">
                               {tx.ethTransferTxHash || tx.txHash ? (
@@ -2681,25 +2682,25 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td className="p-3 text-slate-300">
-                            {((user as any).auxmBalance || 0).toFixed(2)}
+                            {formatAmount((user as any).auxmBalance || 0, 'AUXM')}
                           </td>
                           <td className="p-3 text-blue-400">
-                            {((user as any).ethBalance || 0).toFixed(4)}
+                            {formatAmount((user as any).ethBalance || 0, 'ETH')}
                           </td>
                           <td className="p-3 text-orange-400">
-                            {((user as any).btcBalance || 0).toFixed(8)}
+                            {formatAmount((user as any).btcBalance || 0, 'BTC')}
                           </td>
                           <td className="p-3 text-[#BFA181] font-medium">
-                            {((user as any).auxgBalance || 0).toFixed(4)}
+                            {formatAmount((user as any).auxgBalance || 0, 'AUXG')}
                           </td>
                           <td className="p-3 text-slate-400">
-                            {((user as any).auxsBalance || 0).toFixed(2)}
+                            {formatAmount((user as any).auxsBalance || 0, 'AUXS')}
                           </td>
                           <td className="p-3 text-slate-400">
-                            {((user as any).auxptBalance || 0).toFixed(4)}
+                            {formatAmount((user as any).auxptBalance || 0, 'AUXPT')}
                           </td>
                           <td className="p-3 text-slate-400">
-                            {((user as any).auxpdBalance || 0).toFixed(4)}
+                            {formatAmount((user as any).auxpdBalance || 0, 'AUXPD')}
                           </td>
                           <td className="p-3 text-green-400 font-semibold">
                             ${((user as any).totalValueUsd || 0).toFixed(2)}
@@ -5215,7 +5216,7 @@ function RiskDashboardTab() {
                 <span className="text-sm font-bold text-white">{exp.metal}</span>
               </div>
               <div className="text-right">
-                <p className="text-sm font-mono text-white">{exp.netExposureGrams?.toFixed(4)}g</p>
+                <p className="text-sm font-mono text-white">{formatAmount(exp.netExposureGrams || 0, exp.metal || 'AUXG')}g</p>
                 <p className="text-xs text-slate-500">${Math.abs(exp.netExposureUSD || 0).toFixed(2)}</p>
               </div>
               <span className={`text-xs px-2 py-0.5 rounded ${
@@ -5252,7 +5253,7 @@ function RiskDashboardTab() {
                   <td className="py-2 text-right text-slate-300">{pos.allocatedToClients?.toFixed(2)}g</td>
                   <td className="py-2 text-right text-slate-300">{pos.leasedOut?.toFixed(2)}g</td>
                   <td className={`py-2 text-right font-bold ${Math.abs(pos.netDirectional) < 0.01 ? 'text-green-400' : 'text-red-400'}`}>
-                    {pos.netDirectional?.toFixed(4)}g
+                    {formatAmount(pos.netDirectional || 0, pos.metal || 'AUXG')}g
                   </td>
                 </tr>
               ))}
@@ -5273,7 +5274,7 @@ function RiskDashboardTab() {
                   <span className="text-slate-500 ml-2">{pos.side} {pos.instrument}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-white">{pos.grams?.toFixed(4)}g</span>
+                  <span className="text-white">{formatAmount(pos.grams || 0, pos.metal || 'AUXG')}g</span>
                   <span className="text-slate-500 ml-2">${pos.notionalUSD?.toFixed(0)}</span>
                 </div>
                 <span className="text-amber-400">{pos.reason}</span>
@@ -5514,7 +5515,7 @@ function DepositMonitorTab() {
                     <td className="py-2 text-right text-slate-400">{day.btc || 0}</td>
                     <td className="py-2 text-right text-slate-400">{day.xrp || 0}</td>
                     <td className="py-2 text-right text-slate-400">{day.sol || 0}</td>
-                    <td className="py-2 text-right text-[#BFA181]">{Number(day.totalAuxm || 0).toFixed(2)}</td>
+                    <td className="py-2 text-right text-[#BFA181]">{formatAmount(Number(day.totalAuxm || 0), 'AUXM')}</td>
                   </tr>
                 ))}
               </tbody>
@@ -5555,12 +5556,12 @@ function DepositMonitorTab() {
                       </span>
                     </td>
                     <td className="py-2 text-white font-semibold">{d.coin}</td>
-                    <td className="py-2 text-right text-slate-300">{Number(d.amount).toFixed(6)}</td>
+                    <td className="py-2 text-right text-slate-300">{formatAmount(Number(d.amount), d.coin || 'ETH')}</td>
                     <td className="py-2 text-right text-slate-300">${Number(d.amountUsd || 0).toFixed(2)}</td>
                     <td className="py-2 text-right text-[#BFA181] font-semibold">
-                      {Number(d.auxmCredited || 0).toFixed(2)}
+                      {formatAmount(Number(d.auxmCredited || 0), 'AUXM')}
                       {d.bonusCredited > 0 && (
-                        <span className="text-emerald-400 text-xs ml-1">+{Number(d.bonusCredited).toFixed(2)}</span>
+                        <span className="text-emerald-400 text-xs ml-1">+{formatAmount(Number(d.bonusCredited), 'AUXM')}</span>
                       )}
                     </td>
                     <td className="py-2 text-xs text-slate-500 font-mono truncate max-w-[100px]">
@@ -5595,7 +5596,7 @@ function DepositMonitorTab() {
                       {d.chain}
                     </span>
                     <span className="text-white font-semibold">{d.coin}</span>
-                    <span className="text-slate-300">{Number(d.amount).toFixed(6)}</span>
+                    <span className="text-slate-300">{formatAmount(Number(d.amount), d.coin || 'ETH')}</span>
                   </div>
                   <span className="text-xs text-slate-500">
                     {d.receivedAt ? new Date(d.receivedAt).toLocaleString() : '—'}

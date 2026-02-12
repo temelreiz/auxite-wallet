@@ -6,6 +6,7 @@ import { useAccount, useBalance } from "wagmi";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 interface PortfolioOverviewProps {
   lang?: "tr" | "en";
@@ -261,7 +262,7 @@ export function PortfolioOverview({
             </div>
             <div className="text-xs text-slate-500 mb-2">{holding.name}</div>
             <div className="text-xl font-bold text-slate-100">
-              {holding.balance.toFixed(2)}g
+              {formatAmount(holding.balance, holding.symbol)}g
             </div>
             <div className="text-xs text-slate-500">
               {holding.balanceKg.toFixed(3)} kg
@@ -290,8 +291,8 @@ export function PortfolioOverview({
                 <span className="text-sm font-medium text-slate-200">{holding.symbol}</span>
               </div>
               <span className={`text-xs px-2 py-0.5 rounded ${
-                holding.change >= 0 
-                  ? "bg-[#2F6F62]/20 text-[#2F6F62]" 
+                holding.change >= 0
+                  ? "bg-[#2F6F62]/20 text-[#2F6F62]"
                   : "bg-red-500/20 text-red-400"
               }`}>
                 {holding.change >= 0 ? "↑" : "↓"} {Math.abs(holding.change).toFixed(2)}%
@@ -299,7 +300,7 @@ export function PortfolioOverview({
             </div>
             <div className="text-xs text-slate-500 mb-2">{holding.name}</div>
             <div className="text-xl font-bold text-slate-100">
-              {holding.balance.toFixed(4)}
+              {formatAmount(holding.balance, holding.symbol)}
             </div>
             <div className="text-xs text-slate-500">
               {holding.symbol}

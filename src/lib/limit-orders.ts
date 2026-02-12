@@ -2,6 +2,7 @@
 // Limit Order Management for Auxite
 
 import { getRedis, getUserBalance, incrementBalance, addTransaction } from './redis';
+import { formatAmount } from '@/lib/format';
 import { createPublicClient, http, formatUnits } from 'viem';
 import { base } from 'viem/chains';
 import { METAL_TOKENS, USDT_ADDRESS } from '@/config/contracts-v8';
@@ -146,7 +147,7 @@ export async function createLimitOrder(params: CreateOrderParams): Promise<{
       const metalBalance = await getBlockchainBalance(params.address, params.metal);
       
       if (metalBalance < params.grams) {
-        return { success: false, error: `Insufficient ${params.metal} balance. Need: ${params.grams}g, Have: ${metalBalance.toFixed(4)}g` };
+        return { success: false, error: `Insufficient ${params.metal} balance. Need: ${params.grams}g, Have: ${formatAmount(metalBalance, params.metal)}g` };
       }
       
       // Note: Metal will be transferred on-chain when order fills

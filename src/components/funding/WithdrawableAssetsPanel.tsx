@@ -2,6 +2,7 @@
 
 import { useLanguage } from "@/components/LanguageContext";
 import { useWallet } from "@/components/WalletContext";
+import { formatAmount, formatUSD, getDecimalPlaces } from '@/lib/format';
 
 const translations: Record<string, Record<string, string>> = {
   tr: {
@@ -81,12 +82,10 @@ const ASSET_META: Record<string, AssetInfo> = {
   SOL: { symbol: "SOL", name: "Solana", icon: "◎", color: "#9945FF", unit: "" },
 };
 
-function formatAmount(amount: number, symbol: string): string {
-  if (["AUXG", "AUXS", "AUXPT", "AUXPD"].includes(symbol)) return `${amount.toFixed(4)}g`;
-  if (symbol === "BTC") return amount.toFixed(6);
-  if (symbol === "ETH") return amount.toFixed(4);
-  if (symbol === "AUXM" || symbol === "USDT") return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  return amount.toFixed(4);
+function displayAmount(amount: number, symbol: string): string {
+  if (["AUXM", "USDT"].includes(symbol)) return formatUSD(amount);
+  if (["AUXG", "AUXS", "AUXPT", "AUXPD"].includes(symbol)) return `${formatAmount(amount, symbol)}g`;
+  return formatAmount(amount, symbol);
 }
 
 export function WithdrawableAssetsPanel() {
@@ -160,21 +159,21 @@ export function WithdrawableAssetsPanel() {
               {/* Total */}
               <div className="text-right md:flex md:flex-col md:justify-center">
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {formatAmount(asset.total, asset.symbol)}
+                  {displayAmount(asset.total, asset.symbol)}
                 </p>
               </div>
 
               {/* Available */}
               <div className="text-right md:flex md:flex-col md:justify-center">
                 <p className="text-sm font-semibold text-[#2F6F62]">
-                  {formatAmount(asset.available, asset.symbol)}
+                  {displayAmount(asset.available, asset.symbol)}
                 </p>
               </div>
 
               {/* Locked */}
               <div className="text-right md:flex md:flex-col md:justify-center">
                 <p className="text-sm text-[#BFA181]">
-                  {asset.locked > 0 ? formatAmount(asset.locked, asset.symbol) : "—"}
+                  {asset.locked > 0 ? displayAmount(asset.locked, asset.symbol) : "—"}
                 </p>
               </div>
             </div>

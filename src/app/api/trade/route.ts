@@ -1,5 +1,6 @@
 // src/app/api/trade/route.ts
 import { sendCertificateEmail, sendTradeExecutionEmail } from "@/lib/email";
+import { formatAmount } from "@/lib/format";
 export const maxDuration = 60;
 // V6 BLOCKCHAIN ENTEGRASYONLU - Gerçek token mint/burn işlemleri
 // ✅ AUXITEER TIER BAZLI FEE ENTEGRASYONU
@@ -1589,7 +1590,7 @@ export async function POST(request: NextRequest) {
         email,
       }).then((success) => {
         if (success) {
-          console.log(`📱 Telegram bildirimi gönderildi: ${toAmount.toFixed(4)}g ${toToken.toUpperCase()}`);
+          console.log(`📱 Telegram bildirimi gönderildi: ${formatAmount(toAmount, toToken)}g ${toToken.toUpperCase()}`);
         } else {
           console.error(`❌ Telegram bildirimi gönderilemedi`);
         }
@@ -1612,7 +1613,7 @@ export async function POST(request: NextRequest) {
         transactionType: type === 'buy' ? 'Buy' : 'Sell',
         metal: metalSymbol,
         metalName: metalNameMap[metalToken] || metalSymbol,
-        grams: toAmount.toFixed(4),
+        grams: formatAmount(toAmount, metalSymbol),
         executionPrice: `USD ${price.toFixed(2)} / g`,
         grossConsideration: `USD ${(fromAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
         executionTime: new Date().toISOString().replace('T', ', ').replace(/\.\d+Z/, ' UTC'),

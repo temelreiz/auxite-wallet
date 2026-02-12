@@ -1,6 +1,7 @@
 "use client";
 
 import { useWallet } from "@/components/WalletContext";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 interface AuxmBalanceDisplayProps {
   showRefresh?: boolean;
@@ -32,7 +33,7 @@ export function AuxmBalanceDisplay({
           <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center">
             <span className="text-purple-400 text-xs font-bold">A</span>
           </div>
-          <span className="text-white font-semibold">{totalAuxm.toFixed(2)}</span>
+          <span className="text-white font-semibold">{formatAmount(totalAuxm, 'AUXM')}</span>
           <span className="text-slate-400 text-sm">AUXM</span>
         </div>
         {showRefresh && (
@@ -71,7 +72,7 @@ export function AuxmBalanceDisplay({
       {/* Total Balance */}
       <div className="mb-4">
         <div className="text-3xl font-bold text-white font-mono">
-          {totalAuxm.toFixed(2)}
+          {formatAmount(totalAuxm, 'AUXM')}
           <span className="text-lg text-slate-400 ml-2">AUXM</span>
         </div>
       </div>
@@ -80,7 +81,7 @@ export function AuxmBalanceDisplay({
       <div className="space-y-2 pt-3 border-t border-slate-700">
         <div className="flex justify-between text-sm">
           <span className="text-slate-400">{t.available}</span>
-          <span className="text-white font-mono">{auxm.toFixed(2)}</span>
+          <span className="text-white font-mono">{formatAmount(auxm, 'AUXM')}</span>
         </div>
       </div>
     </div>

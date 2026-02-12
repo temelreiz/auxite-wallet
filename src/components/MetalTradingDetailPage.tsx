@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/components/LanguageContext";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 // AdvancedChart'ı client-side only yükle
 const AdvancedChart = dynamic(() => import("./AdvancedChart"), { ssr: false });
@@ -257,10 +258,10 @@ export function MetalTradingDetailPage({
   const setPercentage = (pct: number) => {
     if (tradeMode === "buy") {
       const maxAmount = (userBalance.auxm * pct) / askPrice;
-      setAmount(maxAmount.toFixed(4));
+      setAmount(maxAmount.toFixed(getDecimalPlaces(metal)));
     } else {
       const metalBalance = userBalance.metals[metal] || 0;
-      setAmount((metalBalance * pct).toFixed(4));
+      setAmount((metalBalance * pct).toFixed(getDecimalPlaces(metal)));
     }
   };
 
@@ -421,7 +422,7 @@ export function MetalTradingDetailPage({
                   <span className="text-slate-900 dark:text-white font-medium">
                     {tradeMode === "buy" 
                       ? `$${userBalance.auxm.toFixed(2)} AUXM`
-                      : `${(userBalance.metals[metal] || 0).toFixed(4)} ${metal}`
+                      : `${formatAmount(userBalance.metals[metal] || 0, metal)} ${metal}`
                     }
                   </span>
                 </div>

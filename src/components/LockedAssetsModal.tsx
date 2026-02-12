@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAllocations, FormattedAllocation as Allocation } from "@/hooks/useAllocations";
 import { useStaking, FormattedStake } from "@/hooks/useStaking";
 import { formatUnits } from "viem";
+import { formatAmount } from "@/lib/format";
 
 interface LockedAssetsModalProps {
   isOpen: boolean;
@@ -553,7 +554,7 @@ export function LockedAssetsModal({
                         <div className="mt-2 sm:mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 text-[9px] sm:text-xs">
                           <div className="flex items-center gap-2 sm:gap-3 text-slate-500 dark:text-slate-400 flex-wrap">
                             <span>Code: {stake.shortCode}</span>
-                            <span className="text-[#2F6F62]">+{stake.expectedRewardGrams.toFixed(4)}g {lang === "tr" ? "ödül" : "reward"}</span>
+                            <span className="text-[#2F6F62]">+{formatAmount(stake.expectedRewardGrams, stake.metalSymbol)}g {lang === "tr" ? "ödül" : "reward"}</span>
                           </div>
                           <a
                             href={`https://sepolia.etherscan.io/address/${process.env.NEXT_PUBLIC_STAKING_CONTRACT}`}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 import { useWallet } from "@/components/WalletContext";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
@@ -388,7 +389,7 @@ export function MetalConvertModal({
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-slate-500 dark:text-slate-400">{t.send}</span>
                   <span className="text-xs text-slate-500 dark:text-slate-500">
-                    {t.balance}: {fromBalance.toFixed(4)} {metal}
+                    {t.balance}: {formatAmount(fromBalance, metal)} {metal}
                   </span>
                 </div>
                 
@@ -511,7 +512,7 @@ export function MetalConvertModal({
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500 dark:text-slate-400 text-sm">{t.youllReceive}</span>
                     <div className="text-right">
-                      <span className="text-xl font-bold text-slate-800 dark:text-white">{toAmount.toFixed(4)}</span>
+                      <span className="text-xl font-bold text-slate-800 dark:text-white">{formatAmount(toAmount, toAsset)}</span>
                       <span className="text-slate-500 dark:text-slate-400 ml-2">{toAsset}</span>
                     </div>
                   </div>
@@ -523,7 +524,7 @@ export function MetalConvertModal({
                 <div className="p-3 rounded-xl bg-stone-100 dark:bg-slate-800/30 border border-stone-200 dark:border-slate-700/50">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-500 dark:text-slate-400">{t.rate}</span>
-                    <span className="text-slate-700 dark:text-slate-200">1 {metal} = {(metalBidPrice / targetPrice).toFixed(4)} {toAsset}</span>
+                    <span className="text-slate-700 dark:text-slate-200">1 {metal} = {formatAmount(metalBidPrice / targetPrice, toAsset)} {toAsset}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm mt-2">
                     <span className="text-slate-500 dark:text-slate-400">Spread</span>

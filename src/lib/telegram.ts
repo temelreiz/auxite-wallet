@@ -1,6 +1,8 @@
 // src/lib/telegram.ts
 // Auxite Ops Telegram Bot - Trade bildirimleri
 
+import { formatAmount } from "@/lib/format";
+
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8392512425:AAG5ixJeJnG-rE9UEW4HJ75qAtrMCcQ37n0";
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "1611619602";
 
@@ -87,7 +89,7 @@ export async function notifyMetalBuy(notification: OperationNotification): Promi
 ${emoji} <b>YENİ METAL ALIMI</b> ${emoji}
 
 <b>Metal:</b> ${notification.metal}
-<b>Miktar:</b> ${notification.amount.toFixed(4)} gram
+<b>Miktar:</b> ${formatAmount(notification.amount, notification.metal)} gram
 <b>USD Değer:</b> $${notification.usdValue.toFixed(2)}
 <b>Kullanıcı:</b> <code>${shortAddress}</code>
 <b>Zaman:</b> ${time}
@@ -130,7 +132,7 @@ export async function notifyTrade(trade: TradeNotification): Promise<boolean> {
 ${emoji} <b>YENİ METAL ALIMI</b> ${emoji}
 
 <b>Metal:</b> ${trade.toToken.toUpperCase()}
-<b>Miktar:</b> ${trade.toAmount.toFixed(4)} gram
+<b>Miktar:</b> ${formatAmount(trade.toAmount, trade.toToken.toUpperCase())} gram
 <b>Ödenen:</b> ${trade.fromAmount.toFixed(2)} ${trade.fromToken.toUpperCase()}
 <b>Kullanıcı:</b> <code>${shortAddress}</code>
 ${trade.email ? `<b>Email:</b> ${trade.email}` : ""}
@@ -166,10 +168,10 @@ export async function sendDailySummary(stats: {
 <b>Toplam Değer:</b> $${stats.totalUsdValue.toFixed(2)}
 
 <b>Metal Bazında:</b>
-🥇 AUXG: ${stats.totalGrams.AUXG?.toFixed(4) || 0} gram
-🥈 AUXS: ${stats.totalGrams.AUXS?.toFixed(4) || 0} gram
-🪙 AUXPT: ${stats.totalGrams.AUXPT?.toFixed(4) || 0} gram
-💎 AUXPD: ${stats.totalGrams.AUXPD?.toFixed(4) || 0} gram
+🥇 AUXG: ${stats.totalGrams.AUXG ? formatAmount(stats.totalGrams.AUXG, 'AUXG') : '0'} gram
+🥈 AUXS: ${stats.totalGrams.AUXS ? formatAmount(stats.totalGrams.AUXS, 'AUXS') : '0'} gram
+🪙 AUXPT: ${stats.totalGrams.AUXPT ? formatAmount(stats.totalGrams.AUXPT, 'AUXPT') : '0'} gram
+💎 AUXPD: ${stats.totalGrams.AUXPD ? formatAmount(stats.totalGrams.AUXPD, 'AUXPD') : '0'} gram
 
 ⏳ <b>Bekleyen Ops:</b> ${stats.pendingOps}
 

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 import { useWallet } from "./WalletContext";
 
 interface UsdConvertModalProps {
@@ -301,7 +302,7 @@ export function UsdConvertModal({
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 sm:p-4">
             <div className="flex items-center justify-between gap-2">
               <span className="text-lg sm:text-xl text-white truncate">
-                {finalOutput > 0 ? finalOutput.toFixed(4) : '0.00'}
+                {finalOutput > 0 ? formatAmount(finalOutput, toSymbol) : '0.00'}
               </span>
               <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-700 px-2 sm:px-3 py-1.5 rounded-lg flex-shrink-0">
                 <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center ${isUsdToUsdt ? 'bg-[#26A17B]' : 'bg-green-600'}`}>

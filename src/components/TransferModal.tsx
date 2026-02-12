@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 import { useWallet } from "@/components/WalletContext";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSendTransaction } from "wagmi";
 import { parseUnits, parseEther } from "viem";
@@ -474,7 +475,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <label className="text-sm text-slate-600 dark:text-slate-400">{t.amount}</label>
-            <span className="text-xs text-slate-500">{t.balance}: {availableBalance.toFixed(4)} {selectedToken}</span>
+            <span className="text-xs text-slate-500">{t.balance}: {formatAmount(availableBalance, selectedToken)} {selectedToken}</span>
           </div>
           <div className="flex gap-2">
             <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="flex-1 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white" />

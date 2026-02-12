@@ -8,6 +8,7 @@ import type { MetalId } from "@/lib/metals";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useTrade } from "@/hooks/useTrade";
 import { isLaunchCampaignActive, calculateAuxmBonus } from "@/lib/auxm-bonus-service";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 import { LimitOrdersList } from "./LimitOrdersList";
 
 interface TradePanelProps {
@@ -890,9 +891,9 @@ export default function TradePanel({
               </h3>
               
               <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-4">
-                {lang === "tr" 
-                  ? `${allocationPreview.totalGrams.toFixed(4)}g ${metalSymbol} satın alıyorsunuz:`
-                  : `You are buying ${allocationPreview.totalGrams.toFixed(4)}g ${metalSymbol}:`}
+                {lang === "tr"
+                  ? `${formatAmount(allocationPreview.totalGrams, metalSymbol)}g ${metalSymbol} satın alıyorsunuz:`
+                  : `You are buying ${formatAmount(allocationPreview.totalGrams, metalSymbol)}g ${metalSymbol}:`}
               </p>
               
               <div className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-4 space-y-3 mb-4">
@@ -922,7 +923,7 @@ export default function TradePanel({
                     </span>
                   </div>
                   <span className="text-sm font-medium text-[#BFA181] dark:text-[#BFA181]">
-                    {allocationPreview.nonAllocatedGrams.toFixed(4)}g
+                    {formatAmount(allocationPreview.nonAllocatedGrams, metalSymbol)}g
                   </span>
                 </div>
               </div>
@@ -942,7 +943,7 @@ export default function TradePanel({
                     <span className="block text-xs text-slate-500 dark:text-slate-400 mb-0.5">
                       {lang === "tr" ? "Ekle" : "Add"}
                     </span>
-                    +{allocationPreview.suggestion.gramsToAdd.toFixed(4)}g → {allocationPreview.suggestion.targetGrams}g
+                    +{formatAmount(allocationPreview.suggestion.gramsToAdd, metalSymbol)}g → {allocationPreview.suggestion.targetGrams}g
                   </button>
                 )}
                 <button
@@ -1116,7 +1117,7 @@ export default function TradePanel({
                       <span className="text-slate-900 dark:text-white font-mono">
                         {selectedCurrency === "AUXM" 
                           ? `${auxmBalance.auxm.toFixed(2)} AUXM`
-                          : `${(balances?.[selectedCurrency.toLowerCase() as keyof typeof balances] as number || 0).toFixed(selectedCurrency === "BTC" ? 6 : 2)} ${selectedCurrency}`
+                          : `${formatAmount((balances?.[selectedCurrency.toLowerCase() as keyof typeof balances] as number || 0), selectedCurrency)} ${selectedCurrency}`
                         }
                       </span>
                     </div>
@@ -1136,7 +1137,7 @@ export default function TradePanel({
                 ) : (
                   <div className="flex justify-between text-xs">
                     <span className="text-slate-400">{metalSymbol} {t.balance}</span>
-                    <span className="text-slate-900 dark:text-white font-mono">{walletMetalBalance.toFixed(4)} {metalSymbol}</span>
+                    <span className="text-slate-900 dark:text-white font-mono">{formatAmount(walletMetalBalance, metalSymbol)} {metalSymbol}</span>
                   </div>
                 )}
               </div>
@@ -1189,7 +1190,7 @@ export default function TradePanel({
                   <button
                     onClick={() => {
                       const maxBalance = mode === "sell" ? walletMetalBalance : (totalAuxm / effectivePrice);
-                      setAmount(maxBalance.toFixed(4));
+                      setAmount(maxBalance.toFixed(getDecimalPlaces(metalSymbol)));
                       setQuote(null);
                       setShowConfirmation(false);
                     }}
@@ -1311,7 +1312,7 @@ export default function TradePanel({
                       {getCurrencySymbol(selectedCurrency)}{" "}
                       {selectedCurrency === "AUXM" || selectedCurrency === "USDT"
                         ? totalUSD.toFixed(2)
-                        : totalInCurrency.toFixed(selectedCurrency === "BTC" || selectedCurrency === "ETH" ? 6 : 4)
+                        : formatAmount(totalInCurrency, selectedCurrency)
                       }
                     </>
                   )}

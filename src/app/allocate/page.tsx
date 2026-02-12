@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback } from "react";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
+import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 // ============================================
 // TRANSLATIONS
@@ -160,17 +161,8 @@ function formatUSD(value: number): string {
   return "$" + Math.round(value).toLocaleString("en-US");
 }
 
-function formatGrams(grams: number): string {
-  if (grams >= 1000) {
-    return grams.toFixed(2) + "g";
-  }
-  if (grams >= 100) {
-    return grams.toFixed(2) + "g";
-  }
-  if (grams >= 1) {
-    return grams.toFixed(4) + "g";
-  }
-  return grams.toFixed(4) + "g";
+function formatGrams(grams: number, symbol: string = "AUXG"): string {
+  return formatAmount(grams, symbol) + "g";
 }
 
 function formatPricePerGram(price: number): string {
@@ -505,7 +497,7 @@ export default function AllocatePage() {
               {cryptoPerGram > 0 && (
                 <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
                   <span className="text-sm text-[#BFA181]">{lang === 'tr' ? 'Gram Başına' : 'Per Gram'} ({selectedSource})</span>
-                  <span className="text-sm font-bold text-[#BFA181]">{cryptoPerGram.toFixed(selectedSource === "BTC" ? 6 : isStablecoinSource ? 2 : 4)} {selectedSource}</span>
+                  <span className="text-sm font-bold text-[#BFA181]">{formatAmount(cryptoPerGram, selectedSource)} {selectedSource}</span>
                 </div>
               )}
               <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
@@ -737,7 +729,7 @@ export default function AllocatePage() {
               <div className="flex justify-between">
                 <span className="text-sm text-[#BFA181]">{lang === 'tr' ? 'Gram Başına' : 'Per Gram'} ({selectedSource})</span>
                 <span className="text-sm font-bold text-[#BFA181]">
-                  {cryptoPerGram.toFixed(selectedSource === "BTC" ? 6 : isStablecoinSource ? 2 : 4)} {selectedSource}
+                  {formatAmount(cryptoPerGram, selectedSource)} {selectedSource}
                 </span>
               </div>
             )}
