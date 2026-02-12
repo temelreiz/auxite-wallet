@@ -45,6 +45,7 @@ export default function ProfilePage() {
   const [pushNotifications, setPushNotifications] = useState(true);
   const [priceAlertNotifications, setPriceAlertNotifications] = useState(true);
   const [transactionNotifications, setTransactionNotifications] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
   
   // Editable user data
   const [userData, setUserData] = useState({
@@ -329,7 +330,7 @@ export default function ProfilePage() {
 
     } catch (error) {
       console.error("Export error:", error);
-      alert("Export failed. Please try again.");
+      setProfileError(lang === "tr" ? "Dışa aktarma başarısız. Lütfen tekrar deneyin." : "Export failed. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -359,11 +360,11 @@ export default function ProfilePage() {
         setEditModal(null);
         setEditValue("");
       } else {
-        alert("Failed to save: " + (data.error || "Unknown error"));
+        setProfileError(lang === "tr" ? "Kaydetme başarısız: " + (data.error || "Bilinmeyen hata") : "Failed to save: " + (data.error || "Unknown error"));
       }
     } catch (err) {
       console.error("Save error:", err);
-      alert("Failed to save profile");
+      setProfileError(lang === "tr" ? "Profil kaydedilemedi" : "Failed to save profile");
     }
   };
 
@@ -418,6 +419,20 @@ export default function ProfilePage() {
       case "personal":
         return (
           <div className="space-y-4 sm:space-y-6">
+            {/* Profile Error Banner */}
+            {profileError && (
+              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <p className="text-sm font-medium text-red-700 dark:text-red-400">{profileError}</p>
+                  <button onClick={() => setProfileError(null)} className="ml-auto text-red-400 hover:text-red-300">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#2F6F62]/20 flex items-center justify-center">
                 <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F6F62] dark:text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>

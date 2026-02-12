@@ -117,6 +117,7 @@ export default function MetalPriceGrid() {
   // Deposit Address Modal State
   const [selectedDepositCoin, setSelectedDepositCoin] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [moonpayNotice, setMoonpayNotice] = useState(false);
 
   // Wallet address - from useAccount or localStorage
   const walletAddress = address || localStorage.getItem("auxite_wallet_address") || "";
@@ -510,7 +511,8 @@ export default function MetalPriceGrid() {
               {/* MoonPay */}
               <button
                 onClick={() => {
-                  alert(lang === "tr" ? "MoonPay yakında aktif olacak" : "MoonPay coming soon");
+                  setMoonpayNotice(true);
+                  setTimeout(() => setMoonpayNotice(false), 3000);
                 }}
                 className="w-full p-4 rounded-xl border border-stone-300 dark:border-slate-700 hover:border-purple-500/50 bg-stone-50 dark:bg-transparent hover:bg-purple-50 dark:hover:bg-slate-800/50 transition-all text-left flex items-start gap-4 group"
               >
@@ -538,6 +540,14 @@ export default function MetalPriceGrid() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
+              {/* MoonPay Coming Soon Notice */}
+              {moonpayNotice && (
+                <div className="mt-2 p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 text-center">
+                  <p className="text-xs font-medium text-purple-600 dark:text-purple-400">
+                    {lang === "tr" ? "MoonPay yakında aktif olacak" : "MoonPay coming soon"}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

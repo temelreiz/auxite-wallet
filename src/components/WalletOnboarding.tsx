@@ -592,6 +592,7 @@ export default function WalletOnboarding({
   const [authToken, setAuthToken] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [onboardingError, setOnboardingError] = useState<string | null>(null);
 
   const t = (key: string) => (translations[lang] as Record<string, string>)[key] || key;
 
@@ -689,15 +690,16 @@ export default function WalletOnboarding({
   // Import wallet
   const handleImportSubmit = () => {
     const words = importSeedInput.trim().toLowerCase().split(/\s+/);
+    setOnboardingError(null);
 
     if (words.length !== 12 && words.length !== 24) {
-      alert(t("invalidSeed"));
+      setOnboardingError(t("invalidSeed"));
       return;
     }
 
     const validWords = words.every((word) => BIP39_WORDLIST.includes(word));
     if (!validWords) {
-      alert(t("invalidSeed"));
+      setOnboardingError(t("invalidSeed"));
       return;
     }
 
@@ -1269,6 +1271,18 @@ export default function WalletOnboarding({
             <p className="text-3xl font-bold text-white">{currentIndex + 1}</p>
           </div>
 
+          {/* Error Banner */}
+          {onboardingError && (
+            <div className="mb-4 p-3 rounded-xl bg-red-900/20 border border-red-800">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <p className="text-sm font-medium text-red-400">{onboardingError}</p>
+              </div>
+            </div>
+          )}
+
           {/* Options */}
           <div className="grid grid-cols-2 gap-3">
             {options.map((word, index) => (
@@ -1276,7 +1290,9 @@ export default function WalletOnboarding({
                 key={index}
                 onClick={() => {
                   if (!handleVerifyWord(word, correctWord)) {
-                    alert(t("verifyError"));
+                    setOnboardingError(t("verifyError"));
+                  } else {
+                    setOnboardingError(null);
                   }
                 }}
                 className="py-4 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-xl border border-slate-700 hover:border-[#2F6F62] transition-all"
@@ -1389,6 +1405,18 @@ export default function WalletOnboarding({
               ? "Kelimeleri boşluk ile ayırarak girin" 
               : "Enter words separated by spaces"}
           </p>
+
+          {/* Error Banner */}
+          {onboardingError && (
+            <div className="mb-4 p-3 rounded-xl bg-red-900/20 border border-red-800">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <p className="text-sm font-medium text-red-400">{onboardingError}</p>
+              </div>
+            </div>
+          )}
 
           {/* Import */}
           <button

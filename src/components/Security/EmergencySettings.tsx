@@ -110,6 +110,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
   const [showPanic, setShowPanic] = useState(false);
   const [showAddContact, setShowAddContact] = useState(false);
   const [freezeReason, setFreezeReason] = useState("");
+  const [emergencyError, setEmergencyError] = useState<string | null>(null);
   const [newContact, setNewContact] = useState({
     name: "",
     email: "",
@@ -177,7 +178,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
       if (data.success) {
         fetchData();
       } else {
-        alert(data.error);
+        setEmergencyError(data.error);
       }
     } catch (error) {
       console.error("Unfreeze error:", error);
@@ -202,7 +203,7 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
         setShowPanic(false);
         fetchData();
       } else {
-        alert(data.error);
+        setEmergencyError(data.error);
       }
     } catch (error) {
       console.error("Panic error:", error);
@@ -297,6 +298,21 @@ export function EmergencySettings({ walletAddress, lang }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Emergency Error Banner */}
+      {emergencyError && (
+        <div className="p-3 rounded-xl bg-red-900/20 border border-red-800">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <p className="text-sm font-medium text-red-400">{emergencyError}</p>
+            <button onClick={() => setEmergencyError(null)} className="ml-auto text-red-400 hover:text-red-300">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Account Status */}
       <div className={`rounded-xl p-6 border ${
         config?.panicMode 

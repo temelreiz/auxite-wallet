@@ -80,6 +80,7 @@ export default function TradePanel({
   const [limitOrderSuccess, setLimitOrderSuccess] = useState(false);
   const [isPlacingLimitOrder, setIsPlacingLimitOrder] = useState(false);
   const [isAuxmTrading, setIsAuxmTrading] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const { prices: cryptoPrices, loading: pricesLoading } = useCryptoPrices();
   
   const {
@@ -629,12 +630,13 @@ export default function TradePanel({
 
   const handleMarketTrade = async () => {
     console.log("🔵 handleMarketTrade", { isConnected, address, amountNum, mode });
+    setValidationError(null);
     if (!isConnected || !address) {
-      alert(t.connectWallet);
+      setValidationError(t.connectWallet);
       return;
     }
     if (amountNum <= 0) {
-      alert(t.enterValidAmount);
+      setValidationError(t.enterValidAmount);
       return;
     }
     
@@ -667,21 +669,22 @@ export default function TradePanel({
   const proceedWithMarketTrade = async () => {
     console.log("🟢 proceedWithMarketTrade", { quote, countdown, showConfirmation, canAffordAuxm, selectedCurrency });
     setShowAllocationWarning(false);
-    
+    setValidationError(null);
+
     if (!isConnected || !address) {
-      alert(t.connectWallet);
+      setValidationError(t.connectWallet);
       return;
     }
     if (amountNum <= 0) {
-      alert(t.enterValidAmount);
+      setValidationError(t.enterValidAmount);
       return;
     }
     if (mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm) {
-      alert(t.insufficientAuxm);
+      setValidationError(t.insufficientAuxm);
       return;
     }
     if (mode === "sell" && walletMetalBalance < amountNum) {
-      alert(t.insufficientBalance);
+      setValidationError(t.insufficientBalance);
       return;
     }
 
@@ -778,20 +781,21 @@ export default function TradePanel({
   };
   // Handle Limit Order
   const handleLimitOrder = async () => {
+    setValidationError(null);
     if (!isConnected || !address) {
-      alert(t.connectWallet);
+      setValidationError(t.connectWallet);
       return;
     }
     if (amountNum <= 0 || limitPriceNum <= 0) {
-      alert(t.enterValidPrice);
+      setValidationError(t.enterValidPrice);
       return;
     }
     if (mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm) {
-      alert(t.insufficientAuxm);
+      setValidationError(t.insufficientAuxm);
       return;
     }
     if (mode === "sell" && walletMetalBalance < amountNum) {
-      alert(t.insufficientBalance);
+      setValidationError(t.insufficientBalance);
       return;
     }
 
@@ -1011,6 +1015,18 @@ export default function TradePanel({
               <button onClick={reset} className="mt-2 text-sm text-red-400 hover:text-red-300 underline">
                 {t.tryAgain}
               </button>
+            </div>
+          )}
+
+          {/* Validation Error Banner */}
+          {validationError && !isSuccess && !limitOrderSuccess && (
+            <div className="mb-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <p className="text-sm font-medium text-red-700 dark:text-red-400">{validationError}</p>
+              </div>
             </div>
           )}
 
