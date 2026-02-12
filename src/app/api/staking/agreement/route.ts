@@ -112,7 +112,7 @@ function generateParticipationNoteHTML(data: {
     .header-right {
       text-align: right;
       font-size: 11px;
-      color: #555;
+      color: #333;
       line-height: 1.7;
     }
     .header-right .note-id {
@@ -125,7 +125,7 @@ function generateParticipationNoteHTML(data: {
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: #888;
+      color: #555;
     }
 
     /* ── CONTENT ── */
@@ -138,10 +138,10 @@ function generateParticipationNoteHTML(data: {
       font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #888;
+      color: #555;
       margin-bottom: 10px;
       padding-bottom: 4px;
-      border-bottom: 1px solid #ddd;
+      border-bottom: 1px solid #ccc;
     }
 
     /* ── FIELD GRID ── */
@@ -155,12 +155,12 @@ function generateParticipationNoteHTML(data: {
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: #888;
+      color: #555;
     }
     .field-value {
-      font-size: 12px;
-      color: #1a1a1a;
-      font-weight: 500;
+      font-size: 13px;
+      color: #111;
+      font-weight: 600;
     }
     .field-value.mono {
       font-family: 'Courier New', monospace;
@@ -176,28 +176,28 @@ function generateParticipationNoteHTML(data: {
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: #888;
-      font-weight: 600;
+      color: #444;
+      font-weight: 700;
       padding: 8px 12px;
       text-align: left;
       border-bottom: 2px solid #C5A55A;
-      background: #fafafa;
+      background: #f8f7f4;
     }
     .position-table td {
-      font-size: 12px;
+      font-size: 13px;
       padding: 10px 12px;
-      border-bottom: 1px solid #eee;
-      color: #1a1a1a;
+      border-bottom: 1px solid #ddd;
+      color: #111;
     }
     .position-table td.bold { font-weight: 700; }
 
     /* ── STRUCTURE STATEMENT ── */
     .structure-statement {
       padding: 16px 18px;
-      background: #fafafa;
+      background: #f8f7f4;
       border-left: 3px solid #C5A55A;
-      font-size: 11px;
-      color: #333;
+      font-size: 12px;
+      color: #222;
       font-style: italic;
       line-height: 1.8;
       margin: 16px 0;
@@ -206,10 +206,10 @@ function generateParticipationNoteHTML(data: {
     /* ── RISK DISCLOSURE ── */
     .risk-disclosure {
       padding: 12px 16px;
-      background: #fafafa;
-      border: 1px solid #e5e5e5;
+      background: #f8f7f4;
+      border: 1px solid #ddd;
       font-size: 11px;
-      color: #555;
+      color: #333;
       line-height: 1.7;
       margin: 12px 0;
     }
@@ -264,19 +264,47 @@ function generateParticipationNoteHTML(data: {
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: #888;
+      color: #555;
     }
     .sig-entity {
       font-size: 10px;
-      color: #333;
+      color: #222;
       margin-top: 2px;
     }
+
+    /* ── PDF DOWNLOAD BAR ── */
+    .pdf-bar {
+      text-align: center;
+      padding: 12px 40px;
+      background: #f8f7f4;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .pdf-bar button {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      padding: 10px 28px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin: 0 6px;
+    }
+    .pdf-bar button:hover { background: #333; }
+    .pdf-bar button.outline {
+      background: transparent;
+      color: #1a1a1a;
+      border: 1px solid #1a1a1a;
+    }
+    .pdf-bar button.outline:hover { background: #f0f0f0; }
 
     /* ── FOOTER ── */
     .electronic-notice {
       text-align: center;
       font-size: 9px;
-      color: #888;
+      color: #555;
       padding: 8px 40px;
       font-style: italic;
     }
@@ -289,12 +317,12 @@ function generateParticipationNoteHTML(data: {
     }
     .footer-left {
       font-size: 9px;
-      color: #888;
+      color: #555;
       line-height: 1.6;
     }
     .footer-right {
       font-size: 8px;
-      color: #aaa;
+      color: #777;
       text-align: right;
     }
     .footer-gold { height: 2px; background: #C5A55A; }
@@ -302,12 +330,19 @@ function generateParticipationNoteHTML(data: {
     @media print {
       body { background: white; }
       .page { box-shadow: none; margin: 0; max-width: 100%; }
+      .pdf-bar { display: none !important; }
     }
   </style>
 </head>
 <body>
   <div class="page">
     <div class="gold-line"></div>
+
+    <!-- PDF Download Bar -->
+    <div class="pdf-bar">
+      <button onclick="window.print()">⬇ Save as PDF</button>
+      <button class="outline" onclick="window.history.back()">← Back</button>
+    </div>
 
     <!-- Header -->
     <div class="header">
@@ -327,7 +362,7 @@ function generateParticipationNoteHTML(data: {
           <div>${data.maturityDate}</div>
         </div>
         <div style="margin-top: 8px;">
-          <div class="label">Term</div>
+          <div class="label">Lease Tenor</div>
           <div>${data.termLabel}</div>
         </div>
       </div>
@@ -358,7 +393,7 @@ function generateParticipationNoteHTML(data: {
               <th>Metal</th>
               <th>Amount</th>
               <th>Lease Rate</th>
-              <th>Yield</th>
+              <th>Type</th>
             </tr>
           </thead>
           <tbody>
@@ -374,7 +409,7 @@ function generateParticipationNoteHTML(data: {
 
       <!-- Structure Statement -->
       <div class="structure-statement">
-        The client has elected to participate in a metals leasing program whereby allocated metals
+        The client has elected to participate in a metals leasing facility whereby allocated metals
         are temporarily deployed to approved institutional counterparties.
       </div>
 
@@ -389,7 +424,7 @@ function generateParticipationNoteHTML(data: {
 
       <!-- Encumbrance Statement -->
       <div class="encumbrance-statement">
-        During the lease term, the metals referenced herein are considered encumbered
+        During the lease tenor, the metals referenced herein are considered encumbered
         and may not be transferred or redeemed until maturity.
       </div>
 
@@ -398,11 +433,11 @@ function generateParticipationNoteHTML(data: {
         <div class="section-title">Return Mechanics</div>
         <div class="return-grid">
           <div class="return-item">
-            <div class="label">Yield Distribution</div>
+            <div class="label">Return Settlement</div>
             <div class="value">At Maturity</div>
           </div>
           <div class="return-item">
-            <div class="label">Return Type</div>
+            <div class="label">Settlement Method</div>
             <div class="value">Metal Credited</div>
           </div>
           <div class="return-item">
@@ -430,7 +465,7 @@ function generateParticipationNoteHTML(data: {
             <div class="field-value">${data.endDate}</div>
           </div>
           <div class="field">
-            <div class="field-label">Lock Duration</div>
+            <div class="field-label">Lease Tenor</div>
             <div class="field-value">${data.lockDays} Days</div>
           </div>
           <div class="field">
@@ -475,7 +510,7 @@ function generateParticipationNoteHTML(data: {
       <div class="footer-left">
         ${data.issuerEntity}<br>
         Zurich, Switzerland<br>
-        Custody &amp; Settlement Services
+        Treasury &amp; Leasing
       </div>
       <div class="footer-right">
         This note is governed by the Auxite Terms of Service<br>
