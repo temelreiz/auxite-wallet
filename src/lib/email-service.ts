@@ -107,12 +107,12 @@ const templates = {
           <div style="text-align: center; margin: 30px 0;">
             <p style="color: #64748b; font-size: 14px; margin-bottom: 10px;">${t.codeLabel}</p>
             <div style="background-color: #f1f5f9; border-radius: 12px; padding: 20px; display: inline-block;">
-              <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #10B981;">${code}</span>
+              <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #C5A55A;">${code}</span>
             </div>
           </div>
           <p style="color: #64748b; font-size: 14px; text-align: center;">${t.orUseLink}</p>
           <div style="text-align: center; margin: 20px 0;">
-            <a href="${verificationUrl}" style="background-color: #10B981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.buttonText}</a>
+            <a href="${verificationUrl}" style="background-color: #1a1a1a; color: #fff; padding: 12px 24px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: inline-block;">${t.buttonText}</a>
           </div>
           <p style="color: #64748b; font-size: 14px;">${t.expiry}</p>
           <p style="color: #94a3b8; font-size: 12px;">${t.ignore}</p>
@@ -158,7 +158,7 @@ const templates = {
           <p>${t.greeting}</p>
           <p>${t.message}</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${verificationUrl}" style="background-color: #10B981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.buttonText}</a>
+            <a href="${verificationUrl}" style="background-color: #1a1a1a; color: #fff; padding: 12px 24px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: inline-block;">${t.buttonText}</a>
           </div>
           <p style="color: #64748b; font-size: 14px;">${t.expiry}</p>
           <p style="color: #94a3b8; font-size: 12px;">${t.ignore}</p>
@@ -180,10 +180,10 @@ const templates = {
         greeting: `Hi ${name},`,
         message: 'Your email has been verified and your Auxite account is now active!',
         features: [
-          'Buy and sell tokenized precious metals',
-          'Trade cryptocurrencies securely',
-          'Earn staking rewards',
-          'Store your digital assets safely',
+          'Allocate and hold physical precious metals in secure custody',
+          'Settlement and execution services for precious metals',
+          'Participate in structured metals leasing programs',
+          'Independent custody with full allocation transparency',
         ],
         cta: 'Get Started',
         support: 'If you have any questions, our support team is here to help.',
@@ -194,10 +194,10 @@ const templates = {
         greeting: `Merhaba ${name},`,
         message: 'E-postanız doğrulandı ve Auxite hesabınız artık aktif!',
         features: [
-          'Tokenize edilmiş değerli metaller alın ve satın',
-          'Kripto paralarınızı güvenle işlem yapın',
-          'Staking ödülleri kazanın',
-          'Dijital varlıklarınızı güvenle saklayın',
+          'Fiziksel değerli metalleri güvenli saklamada tahsis edin',
+          'Değerli metaller için takas ve gerçekleştirme hizmetleri',
+          'Yapılandırılmış metal kiralama programlarına katılın',
+          'Tam tahsis şeffaflığı ile bağımsız saklama',
         ],
         cta: 'Başlayın',
         support: 'Sorularınız varsa, destek ekibimiz size yardımcı olmak için burada.',
@@ -220,7 +220,7 @@ const templates = {
             </ul>
           </div>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://wallet.auxite.io" style="background-color: #10B981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.cta}</a>
+            <a href="https://vault.auxite.io" style="background-color: #1a1a1a; color: #fff; padding: 12px 24px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: inline-block;">${t.cta}</a>
           </div>
           <p style="color: #64748b; font-size: 14px;">${t.support}</p>
         `,
@@ -265,7 +265,7 @@ const templates = {
           <p>${t.greeting}</p>
           <p>${t.message}</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetUrl}" style="background-color: #10B981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.buttonText}</a>
+            <a href="${resetUrl}" style="background-color: #1a1a1a; color: #fff; padding: 12px 24px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: inline-block;">${t.buttonText}</a>
           </div>
           <p style="color: #64748b; font-size: 14px;">${t.expiry}</p>
           <p style="color: #94a3b8; font-size: 12px;">${t.ignore}</p>
@@ -310,7 +310,7 @@ const templates = {
           <p>${t.message}</p>
           <div style="text-align: center; margin: 30px 0;">
             <div style="background-color: #f1f5f9; border-radius: 12px; padding: 20px; display: inline-block;">
-              <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #10B981;">${code}</span>
+              <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #C5A55A;">${code}</span>
             </div>
           </div>
           <p style="color: #64748b; font-size: 14px;">${t.expiry}</p>
@@ -334,7 +334,7 @@ const templates = {
         message: 'Your deposit has been confirmed and credited to your account.',
         amountLabel: 'Amount',
         txLabel: 'Transaction',
-        viewWallet: 'View Wallet',
+        viewWallet: 'View in Client Ledger',
       },
       tr: {
         subject: `Yatırma Onaylandı: ${amount} ${token}`,
@@ -343,7 +343,7 @@ const templates = {
         message: 'Yatırmanız onaylandı ve hesabınıza eklendi.',
         amountLabel: 'Miktar',
         txLabel: 'İşlem',
-        viewWallet: 'Cüzdanı Görüntüle',
+        viewWallet: 'Müşteri Defterinde Görüntüle',
       },
     };
 
@@ -356,12 +356,12 @@ const templates = {
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
-          <div style="background-color: #ecfdf5; border: 1px solid #10B981; border-radius: 12px; padding: 20px; margin: 20px 0;">
-            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #10B981; font-size: 20px; font-weight: bold;">${amount} ${token}</span></p>
+          <div style="background: #fafafa; border-left: 3px solid #C5A55A; padding: 16px 18px; margin: 18px 0;">
+            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #C5A55A; font-size: 18px; font-weight: 600;">${amount} ${token}</span></p>
             ${txHash ? `<p style="margin: 0; font-size: 12px; color: #64748b;"><strong>${t.txLabel}:</strong> ${txHash.substring(0, 20)}...</p>` : ''}
           </div>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://auxite.app/wallet" style="background-color: #10B981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.viewWallet}</a>
+            <a href="https://vault.auxite.io/vault" style="background-color: #1a1a1a; color: #fff; padding: 12px 24px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: inline-block;">${t.viewWallet}</a>
           </div>
         `,
       }),
@@ -384,7 +384,7 @@ const templates = {
         toLabel: 'To Address',
         feeLabel: 'Network Fee',
         txLabel: 'Transaction',
-        viewHistory: 'View History',
+        viewHistory: 'View in Client Ledger',
       },
       tr: {
         subject: `Çekim Tamamlandı: ${amount} ${token}`,
@@ -395,7 +395,7 @@ const templates = {
         toLabel: 'Hedef Adres',
         feeLabel: 'Ağ Ücreti',
         txLabel: 'İşlem',
-        viewHistory: 'Geçmişi Görüntüle',
+        viewHistory: 'Müşteri Defterinde Görüntüle',
       },
     };
 
@@ -408,14 +408,14 @@ const templates = {
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
-          <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 12px; padding: 20px; margin: 20px 0;">
-            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #d97706; font-size: 20px; font-weight: bold;">${amount} ${token}</span></p>
+          <div style="background: #fafafa; border-left: 3px solid #C5A55A; padding: 16px 18px; margin: 18px 0;">
+            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #C5A55A; font-size: 18px; font-weight: 600;">${amount} ${token}</span></p>
             <p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b;"><strong>${t.toLabel}:</strong> ${toAddress}</p>
             ${fee ? `<p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b;"><strong>${t.feeLabel}:</strong> ${fee}</p>` : ''}
             ${txHash ? `<p style="margin: 0; font-size: 12px; color: #64748b;"><strong>${t.txLabel}:</strong> ${txHash.substring(0, 20)}...</p>` : ''}
           </div>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://auxite.app/wallet" style="background-color: #f59e0b; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.viewHistory}</a>
+            <a href="https://vault.auxite.io/vault" style="background-color: #1a1a1a; color: #fff; padding: 12px 24px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: inline-block;">${t.viewHistory}</a>
           </div>
         `,
       }),
@@ -436,7 +436,7 @@ const templates = {
         message: 'Your transfer has been sent successfully.',
         amountLabel: 'Amount',
         toLabel: 'To',
-        viewWallet: 'View Wallet',
+        viewWallet: 'View in Client Ledger',
       },
       tr: {
         subject: `Transfer Gönderildi: ${amount} ${token}`,
@@ -445,7 +445,7 @@ const templates = {
         message: 'Transferiniz başarıyla gönderildi.',
         amountLabel: 'Miktar',
         toLabel: 'Alıcı',
-        viewWallet: 'Cüzdanı Görüntüle',
+        viewWallet: 'Müşteri Defterinde Görüntüle',
       },
     };
 
@@ -458,12 +458,12 @@ const templates = {
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
-          <div style="background-color: #ede9fe; border: 1px solid #8b5cf6; border-radius: 12px; padding: 20px; margin: 20px 0;">
-            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #7c3aed; font-size: 20px; font-weight: bold;">${amount} ${token}</span></p>
+          <div style="background: #fafafa; border-left: 3px solid #C5A55A; padding: 16px 18px; margin: 18px 0;">
+            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #C5A55A; font-size: 18px; font-weight: 600;">${amount} ${token}</span></p>
             <p style="margin: 0; font-size: 12px; color: #64748b;"><strong>${t.toLabel}:</strong> ${toAddress}</p>
           </div>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://auxite.app/wallet" style="background-color: #8b5cf6; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.viewWallet}</a>
+            <a href="https://vault.auxite.io/vault" style="background-color: #1a1a1a; color: #fff; padding: 12px 24px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: inline-block;">${t.viewWallet}</a>
           </div>
         `,
       }),
@@ -484,7 +484,7 @@ const templates = {
         message: 'You have received a transfer to your wallet.',
         amountLabel: 'Amount',
         fromLabel: 'From',
-        viewWallet: 'View Wallet',
+        viewWallet: 'View in Client Ledger',
       },
       tr: {
         subject: `${amount} ${token} aldınız`,
@@ -493,7 +493,7 @@ const templates = {
         message: 'Cüzdanınıza bir transfer aldınız.',
         amountLabel: 'Miktar',
         fromLabel: 'Gönderen',
-        viewWallet: 'Cüzdanı Görüntüle',
+        viewWallet: 'Müşteri Defterinde Görüntüle',
       },
     };
 
@@ -506,12 +506,12 @@ const templates = {
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
-          <div style="background-color: #ecfdf5; border: 1px solid #10B981; border-radius: 12px; padding: 20px; margin: 20px 0;">
-            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #10B981; font-size: 20px; font-weight: bold;">+${amount} ${token}</span></p>
+          <div style="background: #fafafa; border-left: 3px solid #C5A55A; padding: 16px 18px; margin: 18px 0;">
+            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #C5A55A; font-size: 18px; font-weight: 600;">+${amount} ${token}</span></p>
             ${fromAddress ? `<p style="margin: 0; font-size: 12px; color: #64748b;"><strong>${t.fromLabel}:</strong> ${fromAddress.substring(0, 10)}...${fromAddress.substring(fromAddress.length - 6)}</p>` : ''}
           </div>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://auxite.app/wallet" style="background-color: #10B981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">${t.viewWallet}</a>
+            <a href="https://vault.auxite.io/vault" style="background-color: #1a1a1a; color: #fff; padding: 12px 24px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: inline-block;">${t.viewWallet}</a>
           </div>
         `,
       }),
@@ -532,32 +532,37 @@ function generateEmailHTML({ title, content }: { title: string; content: string 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f1f5f9; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Georgia, 'Times New Roman', serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px;">
     <tr>
       <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff;">
           <tr>
-            <td style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">AUXITE</h1>
-              <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">Tokenized Precious Metals</p>
+            <td style="height: 3px; background: #C5A55A;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 30px 16px; border-bottom: 1px solid #e5e5e5;">
+              <h1 style="font-size: 13px; letter-spacing: 5px; color: #1a1a1a; font-weight: 700; text-transform: uppercase; margin: 0 0 2px 0;">Auxite</h1>
+              <p style="font-size: 11px; color: #888; margin: 0;">Custody &amp; Settlement Services</p>
             </td>
           </tr>
           <tr>
-            <td style="padding: 40px 30px;">
-              <h2 style="color: #1e293b; margin: 0 0 20px 0; font-size: 24px;">${title}</h2>
-              <div style="color: #334155; font-size: 16px; line-height: 1.6;">
+            <td style="padding: 28px 30px;">
+              <h2 style="font-size: 16px; color: #1a1a1a; font-weight: 400; margin: 0 0 16px 0;">${title}</h2>
+              <div style="color: #444; font-size: 13px; line-height: 1.7;">
                 ${content}
               </div>
+              <p style="font-size: 10px; color: #999; margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee; font-style: italic;">This message serves as an operational confirmation and should be retained for your financial records.</p>
             </td>
           </tr>
           <tr>
-            <td style="background-color: #f8fafc; padding: 24px 30px; border-top: 1px solid #e2e8f0;">
-              <p style="color: #64748b; font-size: 12px; margin: 0; text-align: center;">
-                © ${new Date().getFullYear()} Auxite. All rights reserved.<br>
-                <a href="https://wallet.auxite.io" style="color: #10B981; text-decoration: none;">wallet.auxite.io</a>
-              </p>
+            <td style="padding: 16px 30px; border-top: 1px solid #e5e5e5; text-align: center;">
+              <p style="font-size: 9px; color: #aaa; margin: 4px 0;">Auxite Precious Metals AG &middot; Zurich, Switzerland</p>
+              <p style="font-size: 9px; color: #aaa; margin: 4px 0;">This is an automated notification. Please do not reply.</p>
             </td>
+          </tr>
+          <tr>
+            <td style="height: 2px; background: #C5A55A;"></td>
           </tr>
         </table>
       </td>

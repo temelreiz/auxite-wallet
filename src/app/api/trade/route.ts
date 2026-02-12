@@ -1,5 +1,5 @@
 // src/app/api/trade/route.ts
-import { sendCertificateEmail } from "@/lib/email";
+import { sendCertificateEmail, sendTradeExecutionEmail } from "@/lib/email";
 export const maxDuration = 60;
 // V6 BLOCKCHAIN ENTEGRASYONLU - Gerçek token mint/burn işlemleri
 // ✅ AUXITEER TIER BAZLI FEE ENTEGRASYONU
@@ -1596,6 +1596,28 @@ export async function POST(request: NextRequest) {
       }).catch((err) => {
         console.error(`❌ Telegram bildirim hatası:`, err);
       });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 12. TRADE EXECUTION EMAIL — Institutional confirmation
+    // ═══════════════════════════════════════════════════════════════════════
+    if (email) {
+      const metalNameMap: Record<string, string> = {
+        auxg: 'Gold (LBMA Good Delivery)', auxs: 'Silver', auxpt: 'Platinum', auxpd: 'Palladium',
+      };
+      const metalToken = type === 'buy' ? toTokenLower : fromToken.toLowerCase();
+      const metalSymbol = type === 'buy' ? toToken.toUpperCase() : fromToken.toUpperCase();
+      sendTradeExecutionEmail(email, {
+        clientName: holderName,
+        transactionType: type === 'buy' ? 'Buy' : 'Sell',
+        metal: metalSymbol,
+        metalName: metalNameMap[metalToken] || metalSymbol,
+        grams: toAmount.toFixed(4),
+        executionPrice: `USD ${price.toFixed(2)} / g`,
+        grossConsideration: `USD ${(fromAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+        executionTime: new Date().toISOString().replace('T', ', ').replace(/\.\d+Z/, ' UTC'),
+        referenceId: txId,
+      }).catch((err: any) => console.error('Trade execution email error:', err));
     }
 
     return NextResponse.json({

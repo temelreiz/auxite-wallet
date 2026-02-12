@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { sendSecurityAlertEmail } from "@/lib/email";
 
 const redis = Redis.fromEnv();
 
@@ -98,6 +99,22 @@ export async function POST(request: NextRequest) {
     // 24 saat sonra otomatik verify için scheduled task
     const verifyKey = `whitelist-verify:${newAddress.id}`;
     await redis.set(verifyKey, walletAddress.toLowerCase(), { ex: 86400 }); // 24 saat
+
+    // Security Alert Email — Institutional hygiene
+    const userDataKey = `user:${walletAddress.toLowerCase()}`;
+    const userData = await redis.hgetall(userDataKey) as Record<string, string> | null;
+    if (userData?.email) {
+      const ipHeader = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip');
+      sendSecurityAlertEmail(userData.email, {
+        clientName: userData.name || undefined,
+        event: 'Withdrawal Address Whitelisted',
+        asset: network,
+        address: withdrawAddress,
+        network,
+        timestamp: new Date().toISOString().replace('T', ', ').replace(/\.\d+Z/, ' UTC'),
+        ipAddress: ipHeader || undefined,
+      }).catch((err: any) => console.error('Security alert email error:', err));
+    }
 
     return NextResponse.json({
       success: true,
