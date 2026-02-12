@@ -1,15 +1,17 @@
 // app/api/staking/agreement/route.ts
-// Staking Agreement PDF/HTML Generator
+// PRECIOUS METALS LEASING PARTICIPATION NOTE — Institutional Grade
+// Swiss Private Bank + Structured Note Style
+// NO gradients, NO crypto vibes, NO startup aesthetics
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 
 export const dynamic = 'force-dynamic';
 
-const METAL_NAMES: Record<string, string> = {
-  AUXG: 'Gold',
-  AUXS: 'Silver',
-  AUXPT: 'Platinum',
-  AUXPD: 'Palladium',
+const METAL_NAMES: Record<string, { full: string; symbol: string }> = {
+  AUXG: { full: 'Gold', symbol: 'Au' },
+  AUXS: { full: 'Silver', symbol: 'Ag' },
+  AUXPT: { full: 'Platinum', symbol: 'Pt' },
+  AUXPD: { full: 'Palladium', symbol: 'Pd' },
 };
 
 const TERM_LABELS: Record<number, string> = {
@@ -18,411 +20,479 @@ const TERM_LABELS: Record<number, string> = {
   366: '12 Months',
 };
 
-function generateAgreementNumber(): string {
+function generateNoteId(): string {
   const year = new Date().getFullYear();
   const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `AUX-EARN-${year}-${random}`;
+  return `YLD-${year}-${random}`;
 }
 
 function formatDate(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function formatDateFull(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
   return d.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
 }
 
-function generateAgreementHTML(data: {
-  agreementNo: string;
+// ═══════════════════════════════════════════════
+// INSTITUTIONAL PARTICIPATION NOTE HTML
+// ═══════════════════════════════════════════════
+
+function generateParticipationNoteHTML(data: {
+  noteId: string;
   stakeId: string;
   holderUid: string;
   metal: string;
   metalName: string;
+  metalSymbol: string;
   amount: string;
   termLabel: string;
   lockDays: number;
   startDate: string;
   endDate: string;
-  apyPercent: string;
+  effectiveDate: string;
+  maturityDate: string;
+  leaseRate: string;
+  yieldType: string;
   issueDate: string;
   issuerEntity: string;
 }): string {
-  return `
-<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Auxite Staking Agreement - ${data.agreementNo}</title>
+  <title>${data.noteId} — Precious Metals Leasing Participation Note</title>
   <style>
+    @page { size: A4; margin: 0; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Georgia', 'Times New Roman', serif;
-      background: #f8f9fa;
-      color: #1a1a2e;
-      line-height: 1.6;
-      padding: 20px;
+      font-family: 'Times New Roman', Georgia, serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      line-height: 1.5;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
-    .container {
-      max-width: 800px;
+    .page {
+      max-width: 210mm;
+      min-height: 297mm;
       margin: 0 auto;
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      padding: 0;
+      background: #ffffff;
     }
+
+    /* ── GOLD LINE ── */
+    .gold-line { height: 3px; background: #C5A55A; }
+
+    /* ── HEADER ── */
     .header {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      color: #fff;
-      padding: 30px 40px;
-      text-align: center;
+      padding: 28px 40px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid #e5e5e5;
     }
-    .logo {
-      font-size: 28px;
+    .header-left h1 {
+      font-size: 13px;
+      letter-spacing: 6px;
+      color: #1a1a1a;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .header-left h2 {
+      font-size: 16px;
+      font-weight: 400;
+      color: #333;
+      letter-spacing: 0.5px;
+    }
+    .header-right {
+      text-align: right;
+      font-size: 11px;
+      color: #555;
+      line-height: 1.7;
+    }
+    .header-right .note-id {
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      color: #1a1a1a;
+      font-size: 12px;
+    }
+    .label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+    }
+
+    /* ── CONTENT ── */
+    .content { padding: 24px 40px; }
+
+    /* ── SECTION ── */
+    .section { margin-bottom: 22px; }
+    .section-title {
+      font-size: 10px;
       font-weight: 700;
       letter-spacing: 2px;
-      margin-bottom: 5px;
-    }
-    .logo span { color: #10b981; }
-    .doc-title {
-      font-size: 18px;
-      font-weight: 400;
-      color: #94a3b8;
-      margin-top: 10px;
-    }
-    .meta-bar {
-      display: flex;
-      justify-content: space-between;
-      background: #f1f5f9;
-      padding: 15px 40px;
-      font-size: 12px;
-      color: #64748b;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .content {
-      padding: 40px;
-    }
-    .intro {
-      font-size: 14px;
-      color: #475569;
-      margin-bottom: 25px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .intro strong { color: #0f172a; }
-    h2 {
-      font-size: 16px;
-      color: #0f172a;
-      margin: 25px 0 15px 0;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #10b981;
-      display: inline-block;
-    }
-    h2:first-of-type { margin-top: 0; }
-    p, li {
-      font-size: 13px;
-      color: #475569;
+      text-transform: uppercase;
+      color: #888;
       margin-bottom: 10px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #ddd;
     }
-    ul {
-      margin-left: 20px;
-      margin-bottom: 15px;
+
+    /* ── FIELD GRID ── */
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 30px;
     }
-    li { margin-bottom: 6px; }
-    .params-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 15px 0 25px 0;
-      font-size: 13px;
+    .field { margin-bottom: 4px; }
+    .field-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
     }
-    .params-table th,
-    .params-table td {
-      padding: 12px 15px;
-      text-align: left;
-      border: 1px solid #e2e8f0;
-    }
-    .params-table th {
-      background: #f8fafc;
-      color: #64748b;
-      font-weight: 600;
-      width: 40%;
-    }
-    .params-table td {
-      color: #0f172a;
+    .field-value {
+      font-size: 12px;
+      color: #1a1a1a;
       font-weight: 500;
     }
-    .highlight-row td {
-      background: #f0fdf4;
-      color: #166534;
-      font-weight: 600;
-    }
-    .warning-box {
-      background: #fef3c7;
-      border-left: 4px solid #f59e0b;
-      padding: 15px 20px;
-      margin: 20px 0;
-      font-size: 12px;
-      color: #92400e;
-    }
-    .info-box {
-      background: #f0f9ff;
-      border-left: 4px solid #0ea5e9;
-      padding: 15px 20px;
-      margin: 20px 0;
-      font-size: 12px;
-      color: #0369a1;
-    }
-    .term-def {
-      background: #f8fafc;
-      padding: 15px 20px;
-      margin: 15px 0;
-      border-radius: 8px;
-      font-size: 12px;
-    }
-    .term-def strong { color: #0f172a; }
-    .signature-section {
-      margin-top: 40px;
-      padding-top: 30px;
-      border-top: 2px solid #e2e8f0;
-    }
-    .sig-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-    .sig-block {
-      width: 45%;
-    }
-    .sig-label {
-      font-size: 11px;
-      color: #64748b;
-      margin-bottom: 5px;
-    }
-    .sig-value {
-      font-size: 13px;
-      color: #0f172a;
-      font-weight: 600;
+    .field-value.mono {
       font-family: 'Courier New', monospace;
     }
-    .footer {
-      background: #f8fafc;
-      padding: 20px 40px;
-      text-align: center;
-      font-size: 11px;
-      color: #94a3b8;
-      border-top: 1px solid #e2e8f0;
+
+    /* ── POSITION TABLE ── */
+    .position-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
     }
-    .badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 11px;
+    .position-table th {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
       font-weight: 600;
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 2px solid #C5A55A;
+      background: #fafafa;
     }
-    .badge-success {
-      background: #dcfce7;
-      color: #166534;
+    .position-table td {
+      font-size: 12px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee;
+      color: #1a1a1a;
     }
-    .badge-warning {
-      background: #fef3c7;
-      color: #92400e;
+    .position-table td.bold { font-weight: 700; }
+
+    /* ── STRUCTURE STATEMENT ── */
+    .structure-statement {
+      padding: 16px 18px;
+      background: #fafafa;
+      border-left: 3px solid #C5A55A;
+      font-size: 11px;
+      color: #333;
+      font-style: italic;
+      line-height: 1.8;
+      margin: 16px 0;
     }
+
+    /* ── RISK DISCLOSURE ── */
+    .risk-disclosure {
+      padding: 12px 16px;
+      background: #fafafa;
+      border: 1px solid #e5e5e5;
+      font-size: 11px;
+      color: #555;
+      line-height: 1.7;
+      margin: 12px 0;
+    }
+
+    /* ── ENCUMBRANCE ── */
+    .encumbrance-statement {
+      padding: 14px 16px;
+      background: #fff9f0;
+      border-left: 3px solid #d4a340;
+      font-size: 11px;
+      color: #6b5420;
+      font-style: italic;
+      line-height: 1.7;
+      margin: 16px 0;
+    }
+
+    /* ── RETURN MECHANICS ── */
+    .return-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .return-item {
+      background: #fafafa;
+      padding: 10px 14px;
+      border-bottom: 2px solid #e5e5e5;
+    }
+    .return-item .label { margin-bottom: 4px; }
+    .return-item .value {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    /* ── SIGNATURE ZONE ── */
+    .signature-zone {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+    }
+    .sig-box { text-align: center; width: 45%; }
+    .sig-line {
+      border-bottom: 1px solid #1a1a1a;
+      width: 100%;
+      height: 30px;
+      margin-bottom: 6px;
+    }
+    .sig-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+    }
+    .sig-entity {
+      font-size: 10px;
+      color: #333;
+      margin-top: 2px;
+    }
+
+    /* ── FOOTER ── */
+    .electronic-notice {
+      text-align: center;
+      font-size: 9px;
+      color: #888;
+      padding: 8px 40px;
+      font-style: italic;
+    }
+    .footer {
+      padding: 14px 40px;
+      border-top: 1px solid #e5e5e5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-left {
+      font-size: 9px;
+      color: #888;
+      line-height: 1.6;
+    }
+    .footer-right {
+      font-size: 8px;
+      color: #aaa;
+      text-align: right;
+    }
+    .footer-gold { height: 2px; background: #C5A55A; }
+
     @media print {
-      body { padding: 0; background: #fff; }
-      .container { box-shadow: none; border: none; }
+      body { background: white; }
+      .page { box-shadow: none; margin: 0; max-width: 100%; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="page">
+    <div class="gold-line"></div>
+
+    <!-- Header -->
     <div class="header">
-      <div class="logo">AUX<span>ITE</span></div>
-      <div class="doc-title">STAKING (EARN) AGREEMENT</div>
+      <div class="header-left">
+        <h1>Auxite</h1>
+        <h2>Precious Metals Leasing Participation Note</h2>
+      </div>
+      <div class="header-right">
+        <div class="label">Note ID</div>
+        <div class="note-id">${data.noteId}</div>
+        <div style="margin-top: 8px;">
+          <div class="label">Effective Date</div>
+          <div>${data.effectiveDate}</div>
+        </div>
+        <div style="margin-top: 8px;">
+          <div class="label">Maturity Date</div>
+          <div>${data.maturityDate}</div>
+        </div>
+        <div style="margin-top: 8px;">
+          <div class="label">Term</div>
+          <div>${data.termLabel}</div>
+        </div>
+      </div>
     </div>
-    
-    <div class="meta-bar">
-      <div><strong>Agreement No:</strong> ${data.agreementNo}</div>
-      <div><strong>Stake ID:</strong> ${data.stakeId}</div>
-      <div><strong>Issue Date:</strong> ${data.issueDate}</div>
-    </div>
-    
+
     <div class="content">
-      <div class="intro">
-        This agreement ("<strong>Agreement</strong>") is entered into between <strong>Auxite</strong> ("Platform") and the Stake Holder ("Holder"), identified by <strong>Holder UID: ${data.holderUid}</strong>.
-        <br><br>
-        By confirming a stake on the Auxite platform, the Holder agrees to the terms below.
-      </div>
-
-      <h2>1. Stake Structure</h2>
-      <div class="warning-box">
-        <strong>⚠️ Important:</strong> This Stake is a fixed-term, non-compounding earn product based on the temporary leasing of physically allocated metal.
-      </div>
-      <ul>
-        <li>Rewards are paid <strong>only at maturity</strong></li>
-        <li>No interim or periodic reward payments are made</li>
-        <li>Early unstake is <strong>not permitted</strong> unless explicitly stated otherwise</li>
-      </ul>
-
-      <h2>2. Binding Stake Parameters</h2>
-      <table class="params-table">
-        <tr>
-          <th>Metal</th>
-          <td>${data.metalName} (${data.metal})</td>
-        </tr>
-        <tr class="highlight-row">
-          <th>Staked Amount</th>
-          <td>${data.amount} ${data.metal}</td>
-        </tr>
-        <tr>
-          <th>Term</th>
-          <td>${data.termLabel}</td>
-        </tr>
-        <tr>
-          <th>Lock Duration</th>
-          <td>${data.lockDays} days</td>
-        </tr>
-        <tr>
-          <th>Start Date / Time (UTC)</th>
-          <td>${data.startDate}</td>
-        </tr>
-        <tr>
-          <th>Maturity Date / Time (UTC)</th>
-          <td>${data.endDate}</td>
-        </tr>
-        <tr class="highlight-row">
-          <th>Displayed APY</th>
-          <td>${data.apyPercent}%</td>
-        </tr>
-        <tr>
-          <th>Reward Settlement</th>
-          <td>At Maturity Only</td>
-        </tr>
-        <tr>
-          <th>Reward Credit Time</th>
-          <td>Within 24 hours after maturity</td>
-        </tr>
-        <tr>
-          <th>Early Unstake</th>
-          <td><span class="badge badge-warning">Not Allowed</span></td>
-        </tr>
-      </table>
-
-      <div class="term-def">
-        <strong>Term Definitions:</strong><br>
-        • 3 Months: 91 days &nbsp;&nbsp; • 6 Months: 181 days &nbsp;&nbsp; • 12 Months: 366 days
-      </div>
-
-      <h2>3. Leasing of Physical Metal</h2>
-      <p><strong>3.1</strong> During the lock period, the underlying physical metal corresponding to the Stake may be leased to third parties for operational or commercial purposes.</p>
-      <p><strong>3.2</strong> The Holder acknowledges and agrees that:</p>
-      <ul>
-        <li>The metal remains physically allocated and tracked</li>
-        <li>Leasing does not transfer ownership of the metal</li>
-        <li>Leasing activity is conducted under Auxite's custody, risk, and compliance framework</li>
-      </ul>
-      <p><strong>3.3</strong> Leasing revenue forms the basis for the earn rate displayed at stake creation.</p>
-
-      <h2>4. Rewards & APY Disclosure</h2>
-      <p><strong>4.1</strong> The displayed APY is fixed for the duration of the Stake and applies only if the Stake reaches maturity.</p>
-      <p><strong>4.2</strong> Rewards are calculated based on:</p>
-      <ul>
-        <li>Staked amount</li>
-        <li>Lock duration (days)</li>
-        <li>Displayed APY at stake creation</li>
-      </ul>
-      <p><strong>4.3</strong> Rewards are credited within 24 hours after the maturity date, subject to operational settlement.</p>
-      <p><strong>4.4</strong> APY does not represent a guaranteed return and is not a promise of profit.</p>
-      <p><strong>4.5</strong> In case of discrepancy, the Auxite internal ledger record prevails.</p>
-
-      <h2>5. Settlement at Maturity</h2>
-      <div class="info-box">
-        Upon maturity:
-        <ul style="margin-top: 10px; margin-bottom: 0;">
-          <li>The original staked amount becomes unlocked</li>
-          <li>Earned rewards are credited within 24 hours</li>
-          <li>The Stake is marked as <span class="badge badge-success">Completed</span></li>
-        </ul>
-        <br>
-        <strong>No action is required from the Holder to receive rewards.</strong>
-      </div>
-
-      <h2>6. Risks & Acknowledgements</h2>
-      <p>The Holder acknowledges that:</p>
-      <ul>
-        <li>Metal prices may fluctuate</li>
-        <li>Leasing counterparties may involve operational risk</li>
-        <li>Rewards depend on successful lease settlement</li>
-        <li>Temporary delays (up to 24 hours) may occur due to reconciliation, audit, or vault settlement</li>
-      </ul>
-
-      <h2>7. Suspension / Exceptional Events</h2>
-      <p>Auxite may delay settlement due to:</p>
-      <ul>
-        <li>Custodian reconciliation</li>
-        <li>Vault or logistics confirmation</li>
-        <li>Force majeure or regulatory intervention</li>
-      </ul>
-      <p>Such delays do not constitute a breach of this Agreement.</p>
-
-      <h2>8. Legal Nature</h2>
-      <p>This Agreement:</p>
-      <ul>
-        <li>Is <strong>not</strong> a security, derivative, or investment contract</li>
-        <li>Does <strong>not</strong> constitute a deposit or savings product</li>
-        <li>Does <strong>not</strong> guarantee capital appreciation</li>
-      </ul>
-      <p>It represents a fixed-term metal leasing arrangement administered digitally.</p>
-
-      <h2>9. Governing Documents & Precedence</h2>
-      <p>This Agreement incorporates:</p>
-      <ul>
-        <li>Auxite Terms of Service</li>
-        <li>Auxite Earn / Staking Rules</li>
-        <li>Auxite Redemption Policy</li>
-        <li>Auxite Risk Disclosures</li>
-      </ul>
-      <p><strong>Order of precedence:</strong></p>
-      <ol style="margin-left: 20px;">
-        <li>Auxite Ledger Records</li>
-        <li>This Agreement</li>
-        <li>Platform Policies</li>
-      </ol>
-
-      <h2>10. Acceptance</h2>
-      <p>This Agreement is deemed accepted upon confirmation of the Stake on the Auxite platform.</p>
-
-      <div class="signature-section">
-        <div class="sig-row">
-          <div class="sig-block">
-            <div class="sig-label">Auxite Authorized Issuer</div>
-            <div class="sig-value">${data.issuerEntity}</div>
+      <!-- Participant Block -->
+      <div class="section">
+        <div class="section-title">Participant</div>
+        <div class="field-grid">
+          <div class="field">
+            <div class="field-label">Client ID</div>
+            <div class="field-value mono">${data.holderUid}</div>
           </div>
-          <div class="sig-block">
-            <div class="sig-label">Holder UID</div>
-            <div class="sig-value">${data.holderUid}</div>
+          <div class="field">
+            <div class="field-label">Account Type</div>
+            <div class="field-value">Segregated Custody</div>
           </div>
         </div>
-        <div class="sig-row">
-          <div class="sig-block">
-            <div class="sig-label">Digital Timestamp</div>
-            <div class="sig-value">${data.issueDate}</div>
+      </div>
+
+      <!-- Position Summary Table -->
+      <div class="section">
+        <div class="section-title">Position Summary</div>
+        <table class="position-table">
+          <thead>
+            <tr>
+              <th>Metal</th>
+              <th>Amount</th>
+              <th>Lease Rate</th>
+              <th>Yield</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="bold">${data.metalName} (${data.metalSymbol})</td>
+              <td class="bold">${data.amount} g</td>
+              <td>${data.leaseRate}%</td>
+              <td>${data.yieldType}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Structure Statement -->
+      <div class="structure-statement">
+        The client has elected to participate in a metals leasing program whereby allocated metals
+        are temporarily deployed to approved institutional counterparties.
+      </div>
+
+      <!-- Risk Disclosure -->
+      <div class="section">
+        <div class="section-title">Risk Disclosure</div>
+        <div class="risk-disclosure">
+          Leased metals may be subject to counterparty and settlement risk. Auxite maintains
+          strict counterparty selection and risk controls.
+        </div>
+      </div>
+
+      <!-- Encumbrance Statement -->
+      <div class="encumbrance-statement">
+        During the lease term, the metals referenced herein are considered encumbered
+        and may not be transferred or redeemed until maturity.
+      </div>
+
+      <!-- Return Mechanics -->
+      <div class="section">
+        <div class="section-title">Return Mechanics</div>
+        <div class="return-grid">
+          <div class="return-item">
+            <div class="label">Yield Distribution</div>
+            <div class="value">At Maturity</div>
           </div>
-          <div class="sig-block">
-            <div class="sig-label">Agreement Status</div>
-            <div class="sig-value"><span class="badge badge-success">ACTIVE</span></div>
+          <div class="return-item">
+            <div class="label">Return Type</div>
+            <div class="value">Metal Credited</div>
           </div>
+          <div class="return-item">
+            <div class="label">Early Exit</div>
+            <div class="value">Not Permitted</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collateral / Hedge Line -->
+      <div class="risk-disclosure" style="margin-top: 16px;">
+        Leasing activity may be supported by collateral arrangements and market hedging strategies.
+      </div>
+
+      <!-- Key Terms -->
+      <div class="section">
+        <div class="section-title">Key Terms</div>
+        <div class="field-grid">
+          <div class="field">
+            <div class="field-label">Effective Date</div>
+            <div class="field-value">${data.startDate}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Maturity Date</div>
+            <div class="field-value">${data.endDate}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Lock Duration</div>
+            <div class="field-value">${data.lockDays} Days</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Settlement</div>
+            <div class="field-value">Within 24 Hours Post-Maturity</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legal Nature -->
+      <div class="section">
+        <div class="section-title">Legal Nature</div>
+        <div class="risk-disclosure">
+          This note represents a fixed-term metals leasing arrangement administered digitally.
+          It is not a security, derivative, deposit, or investment contract. It does not guarantee
+          capital appreciation. In case of discrepancy, the Auxite internal ledger record prevails.
+        </div>
+      </div>
+
+      <!-- Signature Zone — Dual Signature -->
+      <div class="signature-zone">
+        <div class="sig-box">
+          <div class="sig-line"></div>
+          <div class="sig-label">Authorized Signatory</div>
+          <div class="sig-entity">${data.issuerEntity}</div>
+        </div>
+        <div class="sig-box">
+          <div class="sig-line"></div>
+          <div class="sig-label">Custody Oversight</div>
+          <div class="sig-entity">Independent Verification</div>
         </div>
       </div>
     </div>
-    
+
+    <!-- Electronic Notice -->
+    <div class="electronic-notice">
+      This document is electronically issued and recorded within Auxite's custody ledger.
+    </div>
+
+    <!-- Footer -->
     <div class="footer">
-      <p>This is a digitally generated agreement. No physical signature required.</p>
-      <p style="margin-top: 5px;">© ${new Date().getFullYear()} Auxite Precious Metals AG. All rights reserved.</p>
-      <p style="margin-top: 5px; font-family: monospace;">${data.agreementNo}</p>
+      <div class="footer-left">
+        ${data.issuerEntity}<br>
+        Zurich, Switzerland<br>
+        Custody &amp; Settlement Services
+      </div>
+      <div class="footer-right">
+        This note is governed by the Auxite Terms of Service<br>
+        and Leasing Program Rules. In case of discrepancy,<br>
+        the Auxite internal ledger shall prevail.
+      </div>
     </div>
+    <div class="footer-gold"></div>
   </div>
 </body>
-</html>
-`;
+</html>`;
 }
 
-// GET - Generate agreement by stakeId
+// ═══════════════════════════════════════════════
+// GET — Generate Participation Note by stakeId
+// ═══════════════════════════════════════════════
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -433,114 +503,106 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'stakeId required' }, { status: 400 });
     }
 
-    // Fetch stake from Redis
     const stake = await redis.hgetall(`stake:${stakeId}`) as any;
-    
     if (!stake || !stake.id) {
-      return NextResponse.json({ error: 'Stake not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Position not found' }, { status: 404 });
     }
 
-    // Generate agreement number if not exists
-    let agreementNo = stake.agreementNo;
-    if (!agreementNo) {
-      agreementNo = generateAgreementNumber();
-      await redis.hset(`stake:${stakeId}`, { agreementNo });
+    // Generate note ID if not exists
+    let noteId = stake.noteId || stake.agreementNo;
+    if (!noteId) {
+      noteId = generateNoteId();
+      await redis.hset(`stake:${stakeId}`, { noteId });
     }
 
     const lockDays = parseInt(stake.lockDays) || 91;
-    const termLabel = TERM_LABELS[lockDays] || `${lockDays} days`;
+    const termLabel = TERM_LABELS[lockDays] || `${lockDays} Days`;
+    const metalInfo = METAL_NAMES[stake.metal] || { full: stake.metal, symbol: '' };
+
+    const startDateObj = new Date(stake.startDate || stake.createdAt);
+    const endDateObj = new Date(stake.endDate || stake.maturityDate);
 
     const data = {
-      agreementNo,
+      noteId,
       stakeId: stake.id,
       holderUid: stake.userUid || stake.holderUid || 'N/A',
       metal: stake.metal,
-      metalName: METAL_NAMES[stake.metal] || stake.metal,
+      metalName: metalInfo.full,
+      metalSymbol: metalInfo.symbol,
       amount: parseFloat(stake.amount).toFixed(4),
       termLabel,
       lockDays,
-      startDate: formatDate(stake.startDate || stake.createdAt),
-      endDate: formatDate(stake.endDate || stake.maturityDate),
-      apyPercent: stake.apy || stake.apyPercent || '0',
-      issueDate: formatDate(stake.createdAt || new Date()),
+      startDate: formatDateFull(startDateObj),
+      endDate: formatDateFull(endDateObj),
+      effectiveDate: formatDate(startDateObj),
+      maturityDate: formatDate(endDateObj),
+      leaseRate: stake.apy || stake.apyPercent || '0',
+      yieldType: 'Fixed',
+      issueDate: formatDateFull(stake.createdAt || new Date()),
       issuerEntity: 'Auxite Precious Metals AG',
     };
 
-    const html = generateAgreementHTML(data);
-
     if (format === 'json') {
-      return NextResponse.json({
-        agreementNo: data.agreementNo,
-        stakeId: data.stakeId,
-        holderUid: data.holderUid,
-        metal: data.metal,
-        metalName: data.metalName,
-        amount: data.amount,
-        termLabel: data.termLabel,
-        lockDays: data.lockDays,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        apyPercent: data.apyPercent,
-        issueDate: data.issueDate,
-        issuerEntity: data.issuerEntity,
-      });
+      return NextResponse.json(data);
     }
 
+    const html = generateParticipationNoteHTML(data);
     return new NextResponse(html, {
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-      },
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
   } catch (error: any) {
-    console.error('Agreement generation error:', error);
+    console.error('Participation note error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-// POST - Generate agreement with custom data (for preview/testing)
+// POST — Generate participation note with custom data (preview/testing)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     const {
       stakeId = 'PREVIEW-' + Date.now(),
       holderUid = 'PREVIEW-USER',
       metal = 'AUXG',
       amount = '10',
       lockDays = 91,
-      apy = '5.5',
+      apy = '3.40',
       startDate = new Date().toISOString(),
     } = body;
 
-    const termLabel = TERM_LABELS[lockDays] || `${lockDays} days`;
+    const termLabel = TERM_LABELS[lockDays] || `${lockDays} Days`;
+    const metalInfo = METAL_NAMES[metal] || { full: metal, symbol: '' };
     const endDateObj = new Date(startDate);
     endDateObj.setDate(endDateObj.getDate() + lockDays);
+    const startDateObj = new Date(startDate);
 
     const data = {
-      agreementNo: generateAgreementNumber(),
+      noteId: generateNoteId(),
       stakeId,
       holderUid,
       metal,
-      metalName: METAL_NAMES[metal] || metal,
+      metalName: metalInfo.full,
+      metalSymbol: metalInfo.symbol,
       amount: parseFloat(amount).toFixed(4),
       termLabel,
       lockDays,
-      startDate: formatDate(startDate),
-      endDate: formatDate(endDateObj),
-      apyPercent: apy,
-      issueDate: formatDate(new Date()),
+      startDate: formatDateFull(startDateObj),
+      endDate: formatDateFull(endDateObj),
+      effectiveDate: formatDate(startDateObj),
+      maturityDate: formatDate(endDateObj),
+      leaseRate: apy,
+      yieldType: 'Fixed',
+      issueDate: formatDateFull(new Date()),
       issuerEntity: 'Auxite Precious Metals AG',
     };
 
-    const html = generateAgreementHTML(data);
-
+    const html = generateParticipationNoteHTML(data);
     return new NextResponse(html, {
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-      },
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
   } catch (error: any) {
-    console.error('Agreement preview error:', error);
+    console.error('Participation note preview error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -1,12 +1,18 @@
 // app/api/certificates/pdf/route.ts
-// Digital Allocated Metal Certificate PDF Generator
+// CERTIFICATE OF METAL ALLOCATION — Institutional Grade
+// Swiss Private Bank + LBMA Custody Statement Style
+// NO gradients, NO crypto vibes, NO startup aesthetics
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import { createHash } from 'crypto';
+import QRCode from 'qrcode';
 
 export const dynamic = 'force-dynamic';
 
-// Sertifika hash'i oluştur
+// ═══════════════════════════════════════════════
+// HASH & REFERENCE GENERATORS
+// ═══════════════════════════════════════════════
+
 function generateCertificateHash(certificate: any): string {
   const data = JSON.stringify({
     certificateNumber: certificate.certificateNumber,
@@ -18,21 +24,23 @@ function generateCertificateHash(certificate: any): string {
     purity: certificate.purity,
     issuedAt: certificate.issuedAt,
   });
-  return createHash('sha256').update(data).digest('hex');
+  return '0x' + createHash('sha256').update(data).digest('hex');
 }
 
-// Allocation Event ID oluştur
 function generateAllocationEventId(): string {
   const random = Math.random().toString(36).substring(2, 10).toUpperCase();
   return `ALLOC-EVT-${random}`;
 }
 
-// Ledger Reference oluştur
 function generateLedgerReference(): string {
   const year = new Date().getFullYear();
   const seq = Math.floor(Math.random() * 999999).toString().padStart(6, '0');
   return `AUX-LEDGER-${year}-${seq}`;
 }
+
+// ═══════════════════════════════════════════════
+// METAL & VAULT CONSTANTS
+// ═══════════════════════════════════════════════
 
 const METAL_NAMES: Record<string, { full: string; symbol: string }> = {
   AUXG: { full: 'Gold', symbol: 'Au' },
@@ -42,27 +50,37 @@ const METAL_NAMES: Record<string, { full: string; symbol: string }> = {
 };
 
 const PURITY_BY_METAL: Record<string, string> = {
-  AUXG: '.9999',
-  AUXS: '.999',
-  AUXPT: '.9995',
-  AUXPD: '.9995',
+  AUXG: '999.9',
+  AUXS: '999',
+  AUXPT: '999.5',
+  AUXPD: '999.5',
 };
 
-const REFINER_INFO: Record<string, string> = {
+const FORM_BY_METAL: Record<string, string> = {
+  AUXG: 'LBMA Good Delivery',
+  AUXS: 'LBMA Good Delivery',
+  AUXPT: 'LPPM Good Delivery',
+  AUXPD: 'LPPM Good Delivery',
+};
+
+const REFINER_BY_METAL: Record<string, string> = {
   AUXG: 'LBMA-Listed Refiner',
   AUXS: 'LBMA-Listed Refiner',
   AUXPT: 'LPPM-Listed Refiner',
   AUXPD: 'LPPM-Listed Refiner',
 };
 
-const VAULT_INFO: Record<string, { name: string; id: string; location: string }> = {
-  IST: { name: 'Vault A – Istanbul Facility', id: 'TR-IST-VAULT-01', location: 'Istanbul, Turkey' },
-  ZH: { name: 'Vault B – Zurich Facility', id: 'CH-ZRH-VAULT-01', location: 'Zurich, Switzerland' },
-  DB: { name: 'Vault C – Dubai Facility', id: 'AE-DXB-VAULT-01', location: 'Dubai, UAE' },
-  LN: { name: 'Vault D – London Facility', id: 'UK-LDN-VAULT-01', location: 'London, UK' },
+const VAULT_INFO: Record<string, { name: string; id: string; location: string; country: string }> = {
+  IST: { name: 'Vault A – Istanbul Facility', id: 'TR-IST-VAULT-01', location: 'Istanbul', country: 'Turkey' },
+  ZH: { name: 'Vault B – Zurich Facility', id: 'CH-ZRH-VAULT-01', location: 'Zurich', country: 'Switzerland' },
+  DB: { name: 'Vault C – Dubai Facility', id: 'AE-DXB-VAULT-01', location: 'Dubai', country: 'UAE' },
+  LN: { name: 'Vault D – London Facility', id: 'UK-LDN-VAULT-01', location: 'London', country: 'United Kingdom' },
 };
 
-// GET - Sertifika PDF verisi oluştur
+// ═══════════════════════════════════════════════
+// GET — Generate Certificate Data + HTML
+// ═══════════════════════════════════════════════
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -73,129 +91,123 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'certNumber required' }, { status: 400 });
     }
 
-    // Sertifikayı bul
     const certificate = await redis.hgetall(`certificate:${certNumber}`) as any;
     if (!certificate || !certificate.certificateNumber) {
       return NextResponse.json({ error: 'Certificate not found' }, { status: 404 });
     }
 
-    // Kullanıcının tüm allocation'larını bul
+    // User allocations for bar traceability
     const allocDataRaw = await redis.get(`allocation:user:${certificate.userUid}:list`);
     let allocations: any[] = [];
     if (allocDataRaw) {
       const allAllocs = typeof allocDataRaw === 'string' ? JSON.parse(allocDataRaw) : allocDataRaw;
-      allocations = allAllocs.filter((a: any) => 
-        a.certificateNumber === certNumber || 
+      allocations = allAllocs.filter((a: any) =>
+        a.certificateNumber === certNumber ||
         a.serialNumber === certificate.serialNumber
       );
     }
 
-    // Hash oluştur
     const certHash = generateCertificateHash(certificate);
-
-    // Vault bilgisi
     const vault = VAULT_INFO[certificate.vault] || {
       name: `Vault – ${certificate.vaultName || certificate.vault}`,
       id: `${certificate.vault}-VAULT-01`,
       location: certificate.vaultName || certificate.vault,
+      country: '',
     };
-
-    // Metal bilgisi
     const metalInfo = METAL_NAMES[certificate.metal] || { full: certificate.metal, symbol: '' };
     const purity = PURITY_BY_METAL[certificate.metal] || certificate.purity;
-    const refiner = REFINER_INFO[certificate.metal] || 'Listed Refiner';
+    const form = FORM_BY_METAL[certificate.metal] || 'Good Delivery';
+    const refiner = REFINER_BY_METAL[certificate.metal] || 'Listed Refiner';
 
-    // Sertifika verisi
+    const verifyUrl = `https://vault.auxite.io/verify?cert=${certificate.certificateNumber}`;
+
+    // Generate QR code as data URL
+    let qrDataUrl = '';
+    try {
+      qrDataUrl = await QRCode.toDataURL(verifyUrl, {
+        width: 120,
+        margin: 1,
+        color: { dark: '#1e293b', light: '#ffffff' },
+        errorCorrectionLevel: 'M',
+      });
+    } catch (e) {
+      console.warn('QR generation failed:', e);
+    }
+
+    // Build institutional certificate data
     const pdfData = {
       // Header
-      title: 'AUXITE GLOBAL',
-      subtitle: 'Digital Allocated Metal Certificate',
-      certificateId: certificate.certificateNumber,
+      certificateNumber: certificate.certificateNumber,
       issueDate: certificate.issuedAt,
+      statementType: 'Allocated Custody',
 
-      // Certificate Holder
-      holder: {
+      // Client block
+      client: {
         uid: certificate.userUid,
-        name: '(Redacted — stored in Auxite secure ledger)',
-        email: '(Encrypted in Ledger)',
+        jurisdiction: vault.country || 'International',
+        accountType: 'Segregated Custody',
       },
 
-      // Allocated Metal Details
+      // Metal details
       metal: {
-        type: `${metalInfo.full} (${metalInfo.symbol})`,
-        symbol: certificate.metal,
+        name: metalInfo.full,
+        symbol: metalInfo.symbol,
+        auxSymbol: certificate.metal,
+        quantity: `${certificate.grams} g`,
+        gramsNumeric: parseFloat(certificate.grams),
         purity: purity,
-        refiner: refiner,
-        certification: 'Refiner Assay Certified',
-        totalWeight: `${certificate.grams} grams`,
-        allocationDate: certificate.issuedAt,
+        form: form,
+        allocationType: 'Fully Allocated',
       },
 
-      // Bar Allocations
-      barAllocations: allocations.length > 0 
+      // Bar traceability
+      bars: allocations.length > 0
         ? allocations.map((a, i) => ({
-            allocationNo: `AL-${String(i + 1).padStart(3, '0')}`,
-            barSerialNo: a.serialNumber,
-            weight: `${a.grams}g`,
+            refiner: refiner,
+            serial: a.serialNumber,
+            grossWeight: `${parseFloat(a.grams).toFixed(1)}g`,
+            fineWeight: `${parseFloat(a.grams).toFixed(1)}g`,
           }))
         : [{
-            allocationNo: 'AL-001',
-            barSerialNo: certificate.serialNumber,
-            weight: `${certificate.grams}g`,
+            refiner: refiner,
+            serial: certificate.serialNumber,
+            grossWeight: `${parseFloat(certificate.grams).toFixed(1)}g`,
+            fineWeight: `${parseFloat(certificate.grams).toFixed(1)}g`,
           }],
 
-      // Vault & Custodian
-      vault: {
+      // Custody structure
+      custody: {
         custodian: 'Auxite Approved Custodian',
-        name: vault.name,
-        id: vault.id,
+        vaultName: vault.name,
+        vaultId: vault.id,
         location: vault.location,
-        storageType: 'Fully Allocated, Segregated',
-      },
-
-      // Certification Status
-      status: {
-        current: 'Allocated',
-        redeemable: 'Yes',
-        rehypothecation: 'No',
-        leasing: 'No (unless opted-in separately by holder)',
-      },
-
-      // Ledger & Audit
-      ledger: {
-        allocationEventId: certificate.allocationEventId || generateAllocationEventId(),
-        ledgerReference: certificate.ledgerReference || generateLedgerReference(),
+        structure: 'Bankruptcy-Remote Bailment',
+        audit: 'Independently Verified',
+        encumbrance: 'None',
       },
 
       // Verification
       verification: {
         hash: certHash,
-        url: `https://auxite-wallet.vercel.app/verify?cert=${certificate.certificateNumber}`,
-        qrData: `https://auxite-wallet.vercel.app/verify?cert=${certificate.certificateNumber}`,
+        url: verifyUrl,
+        qrDataUrl: qrDataUrl,
+      },
+
+      // Ledger
+      ledger: {
+        allocationEventId: certificate.allocationEventId || generateAllocationEventId(),
+        ledgerReference: certificate.ledgerReference || generateLedgerReference(),
       },
 
       // Issuer
       issuer: {
         name: 'Auxite Precious Metals AG',
-        declaration: 'Auxite Global confirms that the above-described physical metal is fully allocated, verified by custodian records, and is uniquely linked to the bars listed in this certificate. This certificate serves as proof of allocation, not a security or financial instrument.',
-        signature: 'Digital Signature Embedded',
-        timestamp: certificate.issuedAt,
+        address: 'Zurich, Switzerland',
       },
-
-      // Legal Disclaimers
-      disclaimers: [
-        'This certificate is governed by the Auxite Terms of Service and Redemption Policy.',
-        'In case of any discrepancy, the Auxite allocation ledger and custodian records shall prevail.',
-        'This certificate may be replaced or voided in the event of reallocation, consolidation, or redemption.',
-      ],
-
-      // Footer
-      footer: 'This document may be digitally signed and timestamped. Physical printing is for reference only; the authoritative version is available via Auxite verification service.',
     };
 
-    // HTML format
     if (format === 'html') {
-      const html = generateCertificateHTML(pdfData);
+      const html = generateInstitutionalCertificateHTML(pdfData);
       return new NextResponse(html, {
         headers: { 'Content-Type': 'text/html; charset=utf-8' },
       });
@@ -208,318 +220,520 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// HTML sertifika oluştur
-function generateCertificateHTML(data: any): string {
-  return `
-<!DOCTYPE html>
+// ═══════════════════════════════════════════════
+// INSTITUTIONAL CERTIFICATE HTML
+// Swiss Private Bank + LBMA Custody Statement
+// ═══════════════════════════════════════════════
+
+function generateInstitutionalCertificateHTML(data: any): string {
+  const issueDate = new Date(data.issueDate);
+  const formattedDate = issueDate.toLocaleDateString('en-GB', {
+    day: '2-digit', month: 'short', year: 'numeric'
+  });
+
+  const barRows = data.bars.map((bar: any) => `
+    <tr>
+      <td>${bar.refiner}</td>
+      <td class="mono">${bar.serial}</td>
+      <td>${bar.grossWeight}</td>
+      <td>${bar.fineWeight}</td>
+    </tr>
+  `).join('');
+
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${data.certificateId} - Auxite Certificate</title>
+  <title>${data.certificateNumber} — Certificate of Metal Allocation</title>
   <style>
+    @page { size: A4; margin: 0; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f8fafc;
-      color: #1e293b;
-      line-height: 1.6;
+    body {
+      font-family: 'Times New Roman', Georgia, serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      line-height: 1.5;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
-    .certificate {
-      max-width: 800px;
-      margin: 20px auto;
-      background: white;
-      border: 2px solid #d4af37;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-    .header {
-      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-      color: white;
-      padding: 30px;
-      text-align: center;
-      border-bottom: 4px solid #d4af37;
-    }
-    .header h1 { 
-      font-size: 28px; 
-      font-weight: 700;
-      letter-spacing: 4px;
-      margin-bottom: 8px;
-    }
-    .header h2 { 
-      font-size: 16px; 
-      font-weight: 400;
-      color: #d4af37;
-      letter-spacing: 2px;
-    }
-    .cert-info {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(255,255,255,0.2);
-    }
-    .cert-info div { text-align: center; }
-    .cert-info label { font-size: 10px; color: #94a3b8; text-transform: uppercase; }
-    .cert-info p { font-size: 14px; font-weight: 600; font-family: monospace; }
-    
-    .content { padding: 30px; }
-    
-    .section {
-      margin-bottom: 25px;
-      padding: 20px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border-left: 4px solid #d4af37;
-    }
-    .section-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #d4af37;
-      margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .section-title span { font-size: 18px; }
-    
-    table { width: 100%; border-collapse: collapse; }
-    table th, table td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    table th { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; }
-    table td { font-size: 13px; color: #1e293b; }
-    table td.mono { font-family: monospace; }
-    
-    .status-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .status-item { display: flex; justify-content: space-between; padding: 8px 12px; background: white; border-radius: 4px; }
-    .status-item label { color: #64748b; font-size: 12px; }
-    .status-item span { font-weight: 600; font-size: 12px; }
-    .status-item span.yes { color: #10b981; }
-    .status-item span.no { color: #ef4444; }
-    
-    .hash-box {
-      background: #1e293b;
-      color: #10b981;
-      padding: 12px;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: 11px;
-      word-break: break-all;
-      margin: 10px 0;
-    }
-    
-    .ledger-box {
-      background: #fef3c7;
-      border: 1px solid #f59e0b;
-      padding: 12px;
-      border-radius: 4px;
-      margin: 15px 0;
-    }
-    .ledger-box p { font-size: 12px; color: #92400e; margin: 4px 0; }
-    .ledger-box strong { color: #78350f; }
-    
-    .verification-url { color: #3b82f6; text-decoration: none; font-size: 12px; }
-    
-    .qr-placeholder {
-      width: 100px; height: 100px;
-      background: #f1f5f9;
-      border: 2px dashed #cbd5e1;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px; color: #64748b;
-      margin-top: 10px;
-    }
-    
-    .declaration { font-size: 12px; color: #475569; font-style: italic; line-height: 1.8; }
-    
-    .disclaimers {
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      border-radius: 6px;
-      padding: 15px;
-      margin-top: 20px;
-    }
-    .disclaimers p {
-      font-size: 11px;
-      color: #991b1b;
-      margin: 8px 0;
-      padding-left: 15px;
+    .page {
+      max-width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 0;
+      background: #ffffff;
       position: relative;
     }
-    .disclaimers p::before {
-      content: "•";
-      position: absolute;
-      left: 0;
-      color: #dc2626;
+
+    /* ── GOLD ACCENT LINE ── */
+    .gold-line {
+      height: 3px;
+      background: #C5A55A;
     }
-    
-    .signature {
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid #e2e8f0;
+
+    /* ── HEADER ── */
+    .header {
+      padding: 28px 40px 20px;
       display: flex;
       justify-content: space-between;
-      align-items: flex-end;
+      align-items: flex-start;
+      border-bottom: 1px solid #e5e5e5;
     }
-    .signature-box { text-align: center; }
-    .signature-line {
-      width: 200px;
-      border-bottom: 1px solid #1e293b;
-      margin-bottom: 5px;
-      font-family: 'Brush Script MT', cursive;
-      font-size: 24px;
-      color: #1e293b;
+    .header-left h1 {
+      font-size: 13px;
+      letter-spacing: 6px;
+      color: #1a1a1a;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 2px;
     }
-    .signature-label { font-size: 10px; color: #64748b; }
-    
-    .footer {
-      background: #f1f5f9;
-      padding: 15px 30px;
+    .header-left h2 {
+      font-size: 18px;
+      font-weight: 400;
+      color: #333;
+      letter-spacing: 1px;
+    }
+    .header-right {
+      text-align: right;
+      font-size: 11px;
+      color: #555;
+      line-height: 1.7;
+    }
+    .header-right .cert-no {
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      color: #1a1a1a;
+      font-size: 12px;
+    }
+    .header-right .label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+    }
+
+    /* ── PREAMBLE ── */
+    .preamble {
+      padding: 16px 40px;
+      font-size: 11px;
+      color: #555;
+      font-style: italic;
+      background: #fafafa;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    /* ── CONTENT ── */
+    .content { padding: 24px 40px; }
+
+    /* ── SECTION ── */
+    .section {
+      margin-bottom: 22px;
+    }
+    .section-title {
       font-size: 10px;
-      color: #64748b;
-      text-align: center;
-      border-top: 1px solid #e2e8f0;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 10px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #ddd;
     }
-    
+
+    /* ── CLIENT BLOCK ── */
+    .client-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 30px;
+    }
+    .field { margin-bottom: 4px; }
+    .field-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+    }
+    .field-value {
+      font-size: 12px;
+      color: #1a1a1a;
+      font-weight: 500;
+    }
+    .field-value.mono {
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ── METAL TABLE ── */
+    .metal-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    .metal-table th {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      font-weight: 600;
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 2px solid #C5A55A;
+      background: #fafafa;
+    }
+    .metal-table td {
+      font-size: 12px;
+      padding: 10px 10px;
+      border-bottom: 1px solid #eee;
+      color: #1a1a1a;
+    }
+    .metal-table td.mono {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+    }
+    .metal-table td.bold {
+      font-weight: 700;
+    }
+
+    /* ── BAR TRACEABILITY ── */
+    .bar-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    .bar-table th {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      font-weight: 600;
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 2px solid #1a1a1a;
+      background: #fafafa;
+    }
+    .bar-table td {
+      font-size: 11px;
+      padding: 8px 10px;
+      border-bottom: 1px solid #eee;
+      color: #1a1a1a;
+    }
+    .bar-table td.mono {
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ── LEGAL STATEMENT ── */
+    .legal-statement {
+      padding: 14px 16px;
+      background: #fafafa;
+      border-left: 3px solid #C5A55A;
+      font-size: 11px;
+      color: #333;
+      font-style: italic;
+      line-height: 1.7;
+      margin: 16px 0;
+    }
+
+    /* ── CUSTODY STRUCTURE ── */
+    .custody-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 30px;
+    }
+
+    /* ── VERIFICATION ── */
+    .verification-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-top: 8px;
+    }
+    .hash-block {
+      flex: 1;
+    }
+    .hash-box {
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      color: #555;
+      background: #f5f5f5;
+      padding: 10px 12px;
+      word-break: break-all;
+      border: 1px solid #ddd;
+      margin-top: 6px;
+    }
+    .qr-block {
+      text-align: center;
+    }
+    .qr-block img {
+      width: 100px;
+      height: 100px;
+    }
+    .qr-label {
+      font-size: 8px;
+      color: #888;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ── SIGNATURE ZONE ── */
+    .signature-zone {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+    }
+    .sig-box {
+      text-align: center;
+      width: 45%;
+    }
+    .sig-line {
+      border-bottom: 1px solid #1a1a1a;
+      width: 100%;
+      height: 30px;
+      margin-bottom: 6px;
+    }
+    .sig-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+    }
+    .sig-entity {
+      font-size: 10px;
+      color: #333;
+      margin-top: 2px;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      padding: 14px 40px;
+      border-top: 1px solid #e5e5e5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-left {
+      font-size: 9px;
+      color: #888;
+      line-height: 1.6;
+    }
+    .footer-right {
+      font-size: 8px;
+      color: #aaa;
+      text-align: right;
+    }
+    .footer-gold {
+      height: 2px;
+      background: #C5A55A;
+    }
+
+    /* ── ELECTRONIC NOTICE ── */
+    .electronic-notice {
+      text-align: center;
+      font-size: 9px;
+      color: #888;
+      padding: 8px 40px;
+      font-style: italic;
+    }
+
+    /* ── PRINT ── */
     @media print {
       body { background: white; }
-      .certificate { box-shadow: none; margin: 0; border: none; }
+      .page { box-shadow: none; margin: 0; max-width: 100%; }
     }
   </style>
 </head>
 <body>
-  <div class="certificate">
+  <div class="page">
+    <!-- Gold accent line -->
+    <div class="gold-line"></div>
+
+    <!-- Header -->
     <div class="header">
-      <h1>🏢 ${data.title}</h1>
-      <h2>${data.subtitle}</h2>
-      <div class="cert-info">
-        <div>
-          <label>Certificate ID</label>
-          <p>${data.certificateId}</p>
+      <div class="header-left">
+        <h1>Auxite</h1>
+        <h2>Certificate of Metal Allocation</h2>
+      </div>
+      <div class="header-right">
+        <div class="label">Certificate No</div>
+        <div class="cert-no">${data.certificateNumber}</div>
+        <div style="margin-top: 8px;">
+          <div class="label">Issue Date</div>
+          <div>${formattedDate}</div>
         </div>
-        <div>
-          <label>Issue Date (UTC)</label>
-          <p>${new Date(data.issueDate).toISOString()}</p>
+        <div style="margin-top: 8px;">
+          <div class="label">Statement Type</div>
+          <div>${data.statementType}</div>
         </div>
       </div>
     </div>
-    
+
+    <!-- Preamble -->
+    <div class="preamble">
+      This certificate confirms beneficial ownership of fully allocated physical precious metals
+      held within independent custody structures.
+    </div>
+
     <div class="content">
-      <!-- Certificate Holder -->
+      <!-- Client Block -->
       <div class="section">
-        <div class="section-title"><span>👤</span> Certificate Holder</div>
-        <table>
-          <tr><th>Field</th><th>Value</th></tr>
-          <tr><td>Holder UID</td><td class="mono">${data.holder.uid}</td></tr>
-          <tr><td>Holder Name</td><td>${data.holder.name}</td></tr>
-          <tr><td>Contact Email</td><td>${data.holder.email}</td></tr>
-        </table>
+        <div class="section-title">Account Holder</div>
+        <div class="client-grid">
+          <div class="field">
+            <div class="field-label">Client ID</div>
+            <div class="field-value mono">${data.client.uid}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Jurisdiction</div>
+            <div class="field-value">${data.client.jurisdiction}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Account Type</div>
+            <div class="field-value">${data.client.accountType}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Classification</div>
+            <div class="field-value">Beneficial Owner</div>
+          </div>
+        </div>
       </div>
-      
-      <!-- Allocated Metal Details -->
+
+      <!-- Metal Details Table -->
       <div class="section">
-        <div class="section-title"><span>🪙</span> Allocated Metal Details</div>
-        <table>
-          <tr><th>Field</th><th>Value</th></tr>
-          <tr><td>Metal Type</td><td><strong>${data.metal.type}</strong></td></tr>
-          <tr><td>Purity</td><td>${data.metal.purity}</td></tr>
-          <tr><td>Refiner</td><td>${data.metal.refiner}</td></tr>
-          <tr><td>Certification</td><td>${data.metal.certification}</td></tr>
-          <tr><td>Total Allocated Weight</td><td><strong>${data.metal.totalWeight}</strong></td></tr>
-          <tr><td>Allocation Effective Date</td><td>${new Date(data.metal.allocationDate).toISOString()}</td></tr>
-        </table>
-      </div>
-      
-      <!-- Bar Allocations -->
-      <div class="section">
-        <div class="section-title"><span>📦</span> Bar Allocations (Physical)</div>
-        <table>
-          <tr><th>Allocation No</th><th>Bar Serial No</th><th>Weight</th></tr>
-          ${data.barAllocations.map((bar: any) => `
+        <div class="section-title">Metal Allocation Details</div>
+        <table class="metal-table">
+          <thead>
             <tr>
-              <td>${bar.allocationNo}</td>
-              <td class="mono">${bar.barSerialNo}</td>
-              <td>${bar.weight}</td>
+              <th>Metal</th>
+              <th>Quantity</th>
+              <th>Purity</th>
+              <th>Form</th>
+              <th>Vault</th>
+              <th>Allocation Type</th>
             </tr>
-          `).join('')}
-        </table>
-        <p style="font-size: 11px; color: #64748b; margin-top: 10px; font-style: italic;">
-          Each bar is uniquely identifiable and segregated within the vault.
-        </p>
-      </div>
-      
-      <!-- Vault & Custodian -->
-      <div class="section">
-        <div class="section-title"><span>🏦</span> Vault & Custodian</div>
-        <table>
-          <tr><th>Field</th><th>Value</th></tr>
-          <tr><td>Custodian</td><td>${data.vault.custodian}</td></tr>
-          <tr><td>Vault Name</td><td>${data.vault.name}</td></tr>
-          <tr><td>Vault ID</td><td class="mono">${data.vault.id}</td></tr>
-          <tr><td>Location</td><td>${data.vault.location}</td></tr>
-          <tr><td>Storage Type</td><td>${data.vault.storageType}</td></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="bold">${data.metal.name} (${data.metal.symbol})</td>
+              <td class="bold">${data.metal.quantity}</td>
+              <td>${data.metal.purity}</td>
+              <td>${data.metal.form}</td>
+              <td>${data.custody.location}</td>
+              <td>${data.metal.allocationType}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
-      
-      <!-- Certification Status -->
+
+      <!-- Bar / Lot Traceability -->
       <div class="section">
-        <div class="section-title"><span>🔐</span> Certification Status</div>
-        <div class="status-grid">
-          <div class="status-item"><label>Status</label><span class="yes">${data.status.current}</span></div>
-          <div class="status-item"><label>Redeemable</label><span class="yes">${data.status.redeemable}</span></div>
-          <div class="status-item"><label>Rehypothecation</label><span class="no">${data.status.rehypothecation}</span></div>
-          <div class="status-item"><label>Leasing</label><span class="no">${data.status.leasing}</span></div>
+        <div class="section-title">Bar / Lot Traceability</div>
+        <table class="bar-table">
+          <thead>
+            <tr>
+              <th>Refiner</th>
+              <th>Bar Serial</th>
+              <th>Gross Weight</th>
+              <th>Fine Weight</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${barRows}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Legal Statement -->
+      <div class="legal-statement">
+        Title to the above metals is held for the benefit of the client and is not recorded
+        on the balance sheet of Auxite or any affiliated entity.
+      </div>
+
+      <!-- Custody Structure -->
+      <div class="section">
+        <div class="section-title">Custody Structure</div>
+        <div class="custody-grid">
+          <div class="field">
+            <div class="field-label">Custodian</div>
+            <div class="field-value">${data.custody.custodian}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Structure</div>
+            <div class="field-value">${data.custody.structure}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Audit</div>
+            <div class="field-value">${data.custody.audit}</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Encumbrance</div>
+            <div class="field-value">${data.custody.encumbrance}</div>
+          </div>
         </div>
       </div>
-      
-      <!-- Ledger & Audit Reference -->
-      <div class="section">
-        <div class="section-title"><span>📋</span> Ledger & Audit Reference</div>
-        <div class="ledger-box">
-          <p><strong>Allocation Event ID:</strong> ${data.ledger.allocationEventId}</p>
-          <p><strong>Ledger Reference:</strong> ${data.ledger.ledgerReference}</p>
-        </div>
-      </div>
-      
+
       <!-- Verification -->
       <div class="section">
-        <div class="section-title"><span>🔍</span> Verification</div>
-        <p style="font-size: 12px; margin-bottom: 8px;"><strong>Certificate Hash (SHA-256):</strong></p>
-        <div class="hash-box">${data.verification.hash}</div>
-        <p style="font-size: 12px; margin-bottom: 8px;"><strong>Verification URL:</strong></p>
-        <a href="${data.verification.url}" class="verification-url">${data.verification.url}</a>
-        <div class="qr-placeholder">QR Code<br>(Scan to Verify)</div>
-      </div>
-      
-      <!-- Issuer Declaration -->
-      <div class="section">
-        <div class="section-title"><span>⚖️</span> Issuer Declaration</div>
-        <p class="declaration">${data.issuer.declaration}</p>
-        
-        <!-- Legal Disclaimers -->
-        <div class="disclaimers">
-          ${data.disclaimers.map((d: string) => `<p>${d}</p>`).join('')}
+        <div class="section-title">Verification</div>
+        <div class="verification-row">
+          <div class="hash-block">
+            <div class="field-label">Certificate Hash (SHA-256)</div>
+            <div class="hash-box">${data.verification.hash}</div>
+            <div style="margin-top: 8px;">
+              <div class="field-label">Ledger References</div>
+              <div style="font-size: 11px; color: #333; margin-top: 4px;">
+                Event: <span class="mono" style="font-family: 'Courier New', monospace;">${data.ledger.allocationEventId}</span><br>
+                Ledger: <span class="mono" style="font-family: 'Courier New', monospace;">${data.ledger.ledgerReference}</span>
+              </div>
+            </div>
+          </div>
+          <div class="qr-block">
+            ${data.verification.qrDataUrl
+              ? `<img src="${data.verification.qrDataUrl}" alt="Verify Certificate" />`
+              : `<div style="width:100px;height:100px;border:2px dashed #ccc;display:flex;align-items:center;justify-content:center;font-size:10px;color:#999;">QR Code</div>`
+            }
+            <div class="qr-label">Scan to Verify</div>
+          </div>
         </div>
-        
-        <div class="signature">
-          <div class="signature-box">
-            <div class="signature-line">Auxite Global</div>
-            <div class="signature-label">${data.issuer.name}</div>
-          </div>
-          <div style="text-align: right;">
-            <p style="font-size: 11px; color: #64748b;">Digital Signature: <span style="color: #10b981;">✓ Verified</span></p>
-            <p style="font-size: 11px; color: #64748b;">Timestamp: ${new Date(data.issuer.timestamp).toISOString()}</p>
-          </div>
+      </div>
+
+      <!-- Signature Zone — Dual Signature -->
+      <div class="signature-zone">
+        <div class="sig-box">
+          <div class="sig-line"></div>
+          <div class="sig-label">Authorized Signatory</div>
+          <div class="sig-entity">${data.issuer.name}</div>
+        </div>
+        <div class="sig-box">
+          <div class="sig-line"></div>
+          <div class="sig-label">Custody Oversight</div>
+          <div class="sig-entity">Independent Verification</div>
         </div>
       </div>
     </div>
-    
-    <div class="footer">${data.footer}</div>
+
+    <!-- Electronic Notice -->
+    <div class="electronic-notice">
+      This document is electronically issued and recorded within Auxite's custody ledger.
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-left">
+        ${data.issuer.name}<br>
+        ${data.issuer.address}<br>
+        Custody &amp; Settlement Services
+      </div>
+      <div class="footer-right">
+        This certificate is governed by the Auxite Terms of Service<br>
+        and Redemption Policy. In case of discrepancy, the Auxite<br>
+        allocation ledger and custodian records shall prevail.
+      </div>
+    </div>
+    <div class="footer-gold"></div>
   </div>
 </body>
-</html>
-  `;
+</html>`;
 }
