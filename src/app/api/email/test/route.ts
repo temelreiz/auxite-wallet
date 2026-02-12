@@ -87,19 +87,45 @@ export async function POST(request: NextRequest) {
 
     // 3. Yield Enrollment (Leasing Participation)
     if (type === 'staking' || type === 'leasing') {
+      const stakeId = 'TEST-STAKE-001';
+      const noteId = `YLD-${now.getFullYear()}-TEST01`;
+      const endDate = new Date(Date.now() + 182 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      // Create temporary stake record in Redis so the "View Participation Note" link works
+      const stakeKey = `stake:${stakeId}`;
+      const stakeData: Record<string, string> = {
+        id: stakeId,
+        noteId: noteId,
+        userUid: 'TEST-CLIENT-001',
+        metal: 'AUXG',
+        amount: '5000.0000',
+        lockDays: '181',
+        apy: '3.40',
+        startDate: now.toISOString(),
+        endDate: new Date(Date.now() + 182 * 24 * 60 * 60 * 1000).toISOString(),
+        createdAt: now.toISOString(),
+        vault: 'ZH',
+        status: 'active',
+      };
+
+      for (const [field, value] of Object.entries(stakeData)) {
+        await redis.hset(stakeKey, { [field]: value });
+      }
+      await redis.expire(stakeKey, 86400); // 24 saat TTL
+
       const result = await sendStakingAgreementEmail(to, '', {
-        agreementNo: `YLD-${now.getFullYear()}-TEST01`,
-        stakeId: 'TEST-STAKE-001',
+        agreementNo: noteId,
+        stakeId,
         metal: 'AUXG',
         metalName: 'Gold',
         amount: '5000.0000',
         termLabel: '6 Months',
         apy: '3.40',
         startDate: dateStr,
-        endDate: new Date(Date.now() + 182 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        endDate,
         holderName: 'Test Client',
       });
-      return NextResponse.json({ type: 'leasing', ...result });
+      return NextResponse.json({ type: 'leasing', stakeId, noteId, ...result });
     }
 
     // 4. Yield Distribution Notice
