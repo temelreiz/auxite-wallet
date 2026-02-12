@@ -102,6 +102,9 @@ const translations: Record<string, Record<string, string>> = {
     priceRefresh: "Fiyat yenileniyor...",
     quoteTimer: "Fiyat kilidi",
     seconds: "saniye",
+    referencePrice: "Referans Fiyat",
+    indicativeNotice: "Fiyatlar icra anina kadar gostergedir.",
+    executedThroughInstitutional: "Kurumsal likidite saglayicilar uzerinden icra edildi.",
   },
   en: {
     title: "Sell",
@@ -149,6 +152,9 @@ const translations: Record<string, Record<string, string>> = {
     priceRefresh: "Refreshing price...",
     quoteTimer: "Price lock",
     seconds: "seconds",
+    referencePrice: "Reference Price",
+    indicativeNotice: "Prices are indicative until execution.",
+    executedThroughInstitutional: "Executed through institutional liquidity providers.",
   },
   de: {
     title: "Verkaufen",
@@ -196,6 +202,9 @@ const translations: Record<string, Record<string, string>> = {
     priceRefresh: "Preis wird aktualisiert...",
     quoteTimer: "Preissperre",
     seconds: "Sekunden",
+    referencePrice: "Referenzpreis",
+    indicativeNotice: "Preise sind indikativ bis zur Ausfuehrung.",
+    executedThroughInstitutional: "Ausgefuehrt ueber institutionelle Liquiditaetsanbieter.",
   },
   fr: {
     title: "Vendre",
@@ -243,6 +252,9 @@ const translations: Record<string, Record<string, string>> = {
     priceRefresh: "Actualisation du prix...",
     quoteTimer: "Verrouillage du prix",
     seconds: "secondes",
+    referencePrice: "Prix de Reference",
+    indicativeNotice: "Les prix sont indicatifs jusqu'a l'execution.",
+    executedThroughInstitutional: "Execute via des fournisseurs de liquidite institutionnels.",
   },
   ar: {
     title: "بيع",
@@ -290,6 +302,9 @@ const translations: Record<string, Record<string, string>> = {
     priceRefresh: "جاري تحديث السعر...",
     quoteTimer: "قفل السعر",
     seconds: "ثوانٍ",
+    referencePrice: "السعر المرجعي",
+    indicativeNotice: "الأسعار استرشادية حتى التنفيذ.",
+    executedThroughInstitutional: "تم التنفيذ من خلال مزودي السيولة المؤسسية.",
   },
   ru: {
     title: "Продать",
@@ -337,6 +352,9 @@ const translations: Record<string, Record<string, string>> = {
     priceRefresh: "Обновление цены...",
     quoteTimer: "Блокировка цены",
     seconds: "секунд",
+    referencePrice: "Референс-цена",
+    indicativeNotice: "Цены являются индикативными до исполнения.",
+    executedThroughInstitutional: "Исполнено через институциональных поставщиков ликвидности.",
   },
 };
 
@@ -723,8 +741,10 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">{t.spread}</span>
-                  <span className="text-xs font-semibold text-[#BFA181]">0.35%</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{t.referencePrice}</span>
+                  <span className="text-sm font-bold text-slate-800 dark:text-white">
+                    {formatCurrency(executionPrice / 0.9965)}{t.perGram}
+                  </span>
                 </div>
                 {gramsNum > 0 && (
                   <div className="flex items-center justify-between pt-2 border-t border-stone-200 dark:border-slate-600">
@@ -742,6 +762,11 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
                 </div>
               </div>
             </div>
+
+            {/* Indicative Pricing Notice */}
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 italic text-center -mt-3">
+              {t.indicativeNotice}
+            </p>
 
             {/* Settlement Method */}
             <div>
@@ -986,6 +1011,11 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
                 </span>
               </div>
             </div>
+
+            {/* Institutional Execution Footer */}
+            <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+              {t.executedThroughInstitutional}
+            </p>
 
             {/* View Activity */}
             <a

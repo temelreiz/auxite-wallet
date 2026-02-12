@@ -77,6 +77,10 @@ const translations: Record<string, Record<string, string>> = {
 
     // Buy / Sell
     sell: "Sat",
+    sellGold: "Altin Sat",
+    sellSilver: "Gumus Sat",
+    sellPlatinum: "Platin Sat",
+    sellPalladium: "Paladyum Sat",
     buyGold: "Altin Al",
     buySilver: "Gumus Al",
     buyPlatinum: "Platin Al",
@@ -152,6 +156,10 @@ const translations: Record<string, Record<string, string>> = {
     allocated: "Allocated",
     noHoldings: "No holdings yet",
     sell: "Sell",
+    sellGold: "Sell Gold",
+    sellSilver: "Sell Silver",
+    sellPlatinum: "Sell Platinum",
+    sellPalladium: "Sell Palladium",
     buyGold: "Buy Gold",
     buySilver: "Buy Silver",
     buyPlatinum: "Buy Platinum",
@@ -714,7 +722,7 @@ export default function VaultPage() {
                     <div>
                       <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.unrealizedPL}</p>
                       <p className={`text-[11px] font-semibold ${holding.total > 0 ? "text-[#2F6F62]" : "text-slate-400"}`}>
-                        {holding.total > 0 ? (holding.value >= holding.total * (holding.value / holding.total) ? "+" : "") + formatCurrency(0) : "--"}
+                        {"--"}
                       </p>
                     </div>
                   </div>
@@ -733,7 +741,7 @@ export default function VaultPage() {
                         }}
                         className="flex-1 py-2 text-center text-xs font-semibold border border-[#BFA181] text-[#BFA181] rounded-lg hover:bg-[#BFA181]/10 transition-colors"
                       >
-                        {t.sell}
+                        {holding.symbol === "AUXG" ? t.sellGold : holding.symbol === "AUXS" ? t.sellSilver : holding.symbol === "AUXPT" ? t.sellPlatinum : t.sellPalladium}
                       </button>
                     </div>
                 </div>
