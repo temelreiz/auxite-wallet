@@ -58,9 +58,9 @@ const translations: Record<string, Record<string, string>> = {
   tr: {
     title: "Varlık Likidasyonu",
     subtitle: "Tahsisli metal varlıklarınızı likide edin",
-    availableHoldings: "Kullanılabilir Varlıklar",
+    availableHoldings: "KULLANILABILIR VARLIKLAR",
     allocatedGrams: "Tahsisli",
-    currentValue: "Güncel Değer",
+    currentValue: "GUNCEL DEGER",
     amount: "Miktar",
     grams: "gram",
     max: "Maks",
@@ -101,9 +101,9 @@ const translations: Record<string, Record<string, string>> = {
   en: {
     title: "Liquidate Holdings",
     subtitle: "Liquidate your allocated metal holdings",
-    availableHoldings: "Available Holdings",
+    availableHoldings: "AVAILABLE HOLDINGS",
     allocatedGrams: "Allocated",
-    currentValue: "Current Value",
+    currentValue: "CURRENT VALUE",
     amount: "Amount",
     grams: "grams",
     max: "Max",
@@ -144,9 +144,9 @@ const translations: Record<string, Record<string, string>> = {
   de: {
     title: "Bestände Liquidieren",
     subtitle: "Liquidieren Sie Ihre zugewiesenen Metallbestände",
-    availableHoldings: "Verfügbare Bestände",
+    availableHoldings: "VERFUGBARE BESTANDE",
     allocatedGrams: "Zugewiesen",
-    currentValue: "Aktueller Wert",
+    currentValue: "AKTUELLER WERT",
     amount: "Betrag",
     grams: "Gramm",
     max: "Max",
@@ -187,9 +187,9 @@ const translations: Record<string, Record<string, string>> = {
   fr: {
     title: "Liquider les Avoirs",
     subtitle: "Liquidez vos avoirs métalliques alloués",
-    availableHoldings: "Avoirs Disponibles",
+    availableHoldings: "AVOIRS DISPONIBLES",
     allocatedGrams: "Alloué",
-    currentValue: "Valeur Actuelle",
+    currentValue: "VALEUR ACTUELLE",
     amount: "Montant",
     grams: "grammes",
     max: "Max",
@@ -230,9 +230,9 @@ const translations: Record<string, Record<string, string>> = {
   ar: {
     title: "تصفية الحيازات",
     subtitle: "قم بتصفية حيازاتك المعدنية المخصصة",
-    availableHoldings: "الحيازات المتاحة",
+    availableHoldings: "AVAILABLE HOLDINGS",
     allocatedGrams: "مخصص",
-    currentValue: "القيمة الحالية",
+    currentValue: "CURRENT VALUE",
     amount: "المبلغ",
     grams: "غرام",
     max: "الحد الأقصى",
@@ -273,9 +273,9 @@ const translations: Record<string, Record<string, string>> = {
   ru: {
     title: "Ликвидация Активов",
     subtitle: "Ликвидируйте ваши выделенные металлические активы",
-    availableHoldings: "Доступные Активы",
+    availableHoldings: "AVAILABLE HOLDINGS",
     allocatedGrams: "Выделено",
-    currentValue: "Текущая Стоимость",
+    currentValue: "CURRENT VALUE",
     amount: "Сумма",
     grams: "грамм",
     max: "Макс",
@@ -633,7 +633,7 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
             <div className="bg-stone-50 dark:bg-slate-800 rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase">
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">
                     {t.availableHoldings}
                   </p>
                   <p className="text-xl font-bold text-slate-800 dark:text-white mt-1">
@@ -642,7 +642,7 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase">
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">
                     {t.currentValue}
                   </p>
                   <p className="text-lg font-bold text-[#BFA181] mt-1">
