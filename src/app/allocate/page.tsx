@@ -652,7 +652,7 @@ export default function AllocatePage() {
             {t.capitalDeployed}
           </p>
           <div className="flex items-center bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl px-4 h-14 mb-4">
-            {isStablecoinSource && <span className="text-slate-400 mr-2 text-lg">$</span>}
+            <span className="text-slate-400 mr-3 text-sm font-semibold">{selectedSource}</span>
             <input
               type="number"
               value={amount}
@@ -660,7 +660,6 @@ export default function AllocatePage() {
               placeholder="0"
               className="flex-1 bg-transparent text-2xl font-semibold text-slate-800 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <span className="text-slate-500 text-sm">{selectedSource}</span>
           </div>
 
           {/* USD Equivalent for crypto sources */}
