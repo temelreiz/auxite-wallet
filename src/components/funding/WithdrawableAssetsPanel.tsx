@@ -6,36 +6,36 @@ import { useWallet } from "@/components/WalletContext";
 const translations: Record<string, Record<string, string>> = {
   tr: {
     availableToWithdraw: "Çekilebilir Varlıklar",
-    total: "Toplam",
-    available: "Kullanılabilir",
-    locked: "Kilitli",
+    total: "TOPLAM",
+    available: "KULLANILABİLİR",
+    locked: "KİLİTLİ",
     staked: "Staking",
     allocated: "Tahsis",
     noAssets: "Varlık bulunamadı",
   },
   en: {
     availableToWithdraw: "Available to Withdraw",
-    total: "Total",
-    available: "Available",
-    locked: "Locked",
+    total: "TOTAL",
+    available: "AVAILABLE",
+    locked: "LOCKED",
     staked: "Staked",
     allocated: "Allocated",
     noAssets: "No assets found",
   },
   de: {
     availableToWithdraw: "Verfügbar zum Abheben",
-    total: "Gesamt",
-    available: "Verfügbar",
-    locked: "Gesperrt",
+    total: "GESAMT",
+    available: "VERFÜGBAR",
+    locked: "GESPERRT",
     staked: "Gestaked",
     allocated: "Zugewiesen",
     noAssets: "Keine Vermögenswerte",
   },
   fr: {
     availableToWithdraw: "Disponible pour Retrait",
-    total: "Total",
-    available: "Disponible",
-    locked: "Verrouillé",
+    total: "TOTAL",
+    available: "DISPONIBLE",
+    locked: "VERROUILLÉ",
     staked: "En Staking",
     allocated: "Alloué",
     noAssets: "Aucun actif",
@@ -127,8 +127,8 @@ export function WithdrawableAssetsPanel() {
       </div>
 
       {/* Header Row */}
-      <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-stone-100 dark:border-slate-800">
-        <span>Asset</span>
+      <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider border-b border-stone-100 dark:border-slate-800">
+        <span>ASSET</span>
         <span className="text-right">{t.total}</span>
         <span className="text-right text-[#2F6F62]">{t.available}</span>
         <span className="text-right text-[#BFA181]">{t.locked}</span>

@@ -7,9 +7,9 @@ import { useWallet } from "@/components/WalletContext";
 const translations: Record<string, Record<string, string>> = {
   tr: {
     fundingOverview: "Fonlama Genel Bakış",
-    totalDeposited30d: "Toplam Yatırım (30g)",
-    pendingDeposits: "Bekleyen Yatırımlar",
-    lastDeposit: "Son Yatırım",
+    totalDeposited30d: "TOPLAM YATIRIM (30G)",
+    pendingDeposits: "BEKLEYEN YATIRIMLAR",
+    lastDeposit: "SON YATIRIM",
     noData: "Veri yok",
     neverDeposited: "Henüz yatırım yok",
     ago: "önce",
@@ -19,9 +19,9 @@ const translations: Record<string, Record<string, string>> = {
   },
   en: {
     fundingOverview: "Funding Overview",
-    totalDeposited30d: "Total Deposited (30d)",
-    pendingDeposits: "Pending Deposits",
-    lastDeposit: "Last Deposit",
+    totalDeposited30d: "TOTAL DEPOSITED (30D)",
+    pendingDeposits: "PENDING DEPOSITS",
+    lastDeposit: "LAST DEPOSIT",
     noData: "No data",
     neverDeposited: "No deposits yet",
     ago: "ago",
@@ -31,9 +31,9 @@ const translations: Record<string, Record<string, string>> = {
   },
   de: {
     fundingOverview: "Finanzierungsübersicht",
-    totalDeposited30d: "Gesamteinzahlung (30T)",
-    pendingDeposits: "Ausstehende Einzahlungen",
-    lastDeposit: "Letzte Einzahlung",
+    totalDeposited30d: "GESAMTEINZAHLUNG (30T)",
+    pendingDeposits: "AUSSTEHENDE EINZAHLUNGEN",
+    lastDeposit: "LETZTE EINZAHLUNG",
     noData: "Keine Daten",
     neverDeposited: "Noch keine Einzahlungen",
     ago: "vor",
@@ -43,9 +43,9 @@ const translations: Record<string, Record<string, string>> = {
   },
   fr: {
     fundingOverview: "Aperçu du Financement",
-    totalDeposited30d: "Total Déposé (30j)",
-    pendingDeposits: "Dépôts en Attente",
-    lastDeposit: "Dernier Dépôt",
+    totalDeposited30d: "TOTAL DÉPOSÉ (30J)",
+    pendingDeposits: "DÉPÔTS EN ATTENTE",
+    lastDeposit: "DERNIER DÉPÔT",
     noData: "Pas de données",
     neverDeposited: "Aucun dépôt",
     ago: "il y a",
@@ -177,7 +177,7 @@ export function FundingOverviewPanel() {
         >
           <div className="flex items-center gap-2 mb-2">
             {metric.icon}
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 tracking-wide uppercase">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 tracking-wide">
               {metric.label}
             </span>
           </div>

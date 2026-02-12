@@ -11,7 +11,7 @@ import { QRCodeSVG } from "qrcode.react";
 // ============================================
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    selectFundingRail: "Fonlama Yöntemi",
+    selectFundingRail: "FONLAMA YÖNTEMİ",
     cryptoFunding: "Dijital Varlık",
     cryptoFundingDesc: "Kripto ile fonlama",
     bankWire: "Banka Havalesi",
@@ -26,9 +26,9 @@ const translations: Record<string, Record<string, string>> = {
     copyAddress: "Kopyala",
     copied: "Kopyalandı!",
     network: "Ağ",
-    confirmations: "Onaylar",
-    minDeposit: "Min. Yatırım",
-    creditTime: "Tahmini Kredi",
+    confirmations: "ONAYLAR",
+    minDeposit: "MİN. YATIRIM",
+    creditTime: "TAHMİNİ KREDİ",
     travelRule: "Travel Rule: Eşleşen adresler gerekli olabilir.",
     // Bank Wire
     bankDetails: "Banka Bilgileri",
@@ -50,7 +50,7 @@ const translations: Record<string, Record<string, string>> = {
     received: "Alındı",
   },
   en: {
-    selectFundingRail: "Funding Rail",
+    selectFundingRail: "FUNDING RAIL",
     cryptoFunding: "Digital Asset",
     cryptoFundingDesc: "Fund via crypto",
     bankWire: "Bank Wire",
@@ -64,9 +64,9 @@ const translations: Record<string, Record<string, string>> = {
     copyAddress: "Copy",
     copied: "Copied!",
     network: "Network",
-    confirmations: "Confirmations",
-    minDeposit: "Min. Deposit",
-    creditTime: "Est. Credit",
+    confirmations: "CONFIRMATIONS",
+    minDeposit: "MIN. DEPOSIT",
+    creditTime: "EST. CREDIT",
     travelRule: "Travel Rule: Matching addresses may be required.",
     bankDetails: "Bank Details",
     beneficiary: "Beneficiary",
@@ -86,7 +86,7 @@ const translations: Record<string, Record<string, string>> = {
     received: "Received",
   },
   de: {
-    selectFundingRail: "Finanzierungsmethode",
+    selectFundingRail: "FINANZIERUNGSMETHODE",
     cryptoFunding: "Digitale Vermögenswerte",
     cryptoFundingDesc: "Krypto-Finanzierung",
     bankWire: "Banküberweisung",
@@ -100,9 +100,9 @@ const translations: Record<string, Record<string, string>> = {
     copyAddress: "Kopieren",
     copied: "Kopiert!",
     network: "Netzwerk",
-    confirmations: "Bestätigungen",
-    minDeposit: "Min. Einzahlung",
-    creditTime: "Gesch. Gutschrift",
+    confirmations: "BESTÄTIGUNGEN",
+    minDeposit: "MIN. EINZAHLUNG",
+    creditTime: "GESCH. GUTSCHRIFT",
     travelRule: "Travel Rule: Übereinstimmende Adressen können erforderlich sein.",
     bankDetails: "Bankdaten",
     beneficiary: "Empfänger",
@@ -122,7 +122,7 @@ const translations: Record<string, Record<string, string>> = {
     received: "Empfangen",
   },
   fr: {
-    selectFundingRail: "Méthode de Financement",
+    selectFundingRail: "MÉTHODE DE FINANCEMENT",
     cryptoFunding: "Actif Numérique",
     cryptoFundingDesc: "Financement crypto",
     bankWire: "Virement Bancaire",
@@ -136,9 +136,9 @@ const translations: Record<string, Record<string, string>> = {
     copyAddress: "Copier",
     copied: "Copié!",
     network: "Réseau",
-    confirmations: "Confirmations",
-    minDeposit: "Dépôt Min.",
-    creditTime: "Crédit Est.",
+    confirmations: "CONFIRMATIONS",
+    minDeposit: "DÉPÔT MIN.",
+    creditTime: "CRÉDIT EST.",
     travelRule: "Travel Rule: Des adresses correspondantes peuvent être requises.",
     bankDetails: "Coordonnées Bancaires",
     beneficiary: "Bénéficiaire",
@@ -386,7 +386,7 @@ export function FundTab() {
 
       {/* Funding Rail Selector */}
       <div className="mb-6">
-        <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mb-3">
+        <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">
           {t.selectFundingRail}
         </h3>
         <div className="grid grid-cols-3 gap-3">
@@ -499,15 +499,15 @@ export function FundTab() {
                     {/* Details Grid */}
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div className="p-2 rounded-lg bg-stone-50 dark:bg-slate-800/50">
-                        <p className="text-[10px] text-slate-500 uppercase">{t.confirmations}</p>
+                        <p className="text-[10px] text-slate-500">{t.confirmations}</p>
                         <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{meta.confirmations}</p>
                       </div>
                       <div className="p-2 rounded-lg bg-stone-50 dark:bg-slate-800/50">
-                        <p className="text-[10px] text-slate-500 uppercase">{t.minDeposit}</p>
+                        <p className="text-[10px] text-slate-500">{t.minDeposit}</p>
                         <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{meta.minDeposit}</p>
                       </div>
                       <div className="p-2 rounded-lg bg-stone-50 dark:bg-slate-800/50">
-                        <p className="text-[10px] text-slate-500 uppercase">{t.creditTime}</p>
+                        <p className="text-[10px] text-slate-500">{t.creditTime}</p>
                         <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{meta.creditTime}</p>
                       </div>
                     </div>

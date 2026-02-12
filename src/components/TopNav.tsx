@@ -100,8 +100,8 @@ const translations: Record<string, Record<string, string>> = {
     allocate: "Zuweisung",
     yield: "Rendite",
     transfers: "Überweisungen",
-    fundingWithdrawals: "Finanzierung & Abhebungen",
-    ledger: "Kapitalhauptbuch",
+    fundingWithdrawals: "Ein- & Auszahlung",
+    ledger: "Kapitalbuch",
     documents: "Dokumente",
     trustCenter: "Vertrauenszentrum",
     clientCenter: "Kundenzentrum",
@@ -132,7 +132,7 @@ const translations: Record<string, Record<string, string>> = {
     yield: "Rendement",
     transfers: "Transferts",
     fundingWithdrawals: "Financement & Retraits",
-    ledger: "Grand Livre Capital",
+    ledger: "Grand Livre",
     documents: "Documents",
     trustCenter: "Centre de Confiance",
     clientCenter: "Centre Client",
@@ -193,7 +193,7 @@ const translations: Record<string, Record<string, string>> = {
     allocate: "Распределить",
     yield: "Доходность",
     transfers: "Переводы",
-    fundingWithdrawals: "Финансирование и вывод",
+    fundingWithdrawals: "Ввод и вывод",
     ledger: "Книга Капитала",
     documents: "Документы",
     trustCenter: "Центр Доверия",
@@ -340,12 +340,12 @@ export default function TopNav({
               </Link>
 
               {/* Desktop Navigation */}
-              <nav className="hidden sm:flex items-center gap-1">
+              <nav className="hidden sm:flex items-center gap-0.5">
                 {navLinks.map((link) => (
                   <Link
                     key={link.key}
                     href={link.href}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-2 lg:px-3 py-2 rounded-lg text-[13px] lg:text-sm font-medium whitespace-nowrap transition-colors ${
                       isActive(link.href)
                         ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574]"
                         : "text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
@@ -358,7 +358,7 @@ export default function TopNav({
                 {/* Trust Center Link - Simple link like mobile */}
                 <Link
                   href="/trust-center"
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-2 lg:px-3 py-2 rounded-lg text-[13px] lg:text-sm font-medium whitespace-nowrap transition-colors ${
                     pathname?.startsWith("/trust")
                       ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574]"
                       : "text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
@@ -370,7 +370,7 @@ export default function TopNav({
                 {/* Client Center Link - Profile replacement */}
                 <Link
                   href="/client-center"
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-2 lg:px-3 py-2 rounded-lg text-[13px] lg:text-sm font-medium whitespace-nowrap transition-colors ${
                     pathname === "/client-center" || pathname?.startsWith('/profile')
                       ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574]"
                       : "text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
@@ -382,7 +382,7 @@ export default function TopNav({
             </div>
 
             {/* Right: Actions */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

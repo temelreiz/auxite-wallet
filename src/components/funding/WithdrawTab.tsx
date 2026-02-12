@@ -12,7 +12,7 @@ import { FeePreviewPanel } from "./FeePreviewPanel";
 // ============================================
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    selectWithdrawalType: "Çekim Türü",
+    selectWithdrawalType: "ÇEKİM TÜRÜ",
     internalTransfer: "Dahili Transfer",
     internalDesc: "Vault arası, anında, ücretsiz",
     externalWallet: "Harici Cüzdan",
@@ -61,7 +61,7 @@ const translations: Record<string, Record<string, string>> = {
     invalidAddress: "Geçersiz adres",
   },
   en: {
-    selectWithdrawalType: "Withdrawal Type",
+    selectWithdrawalType: "WITHDRAWAL TYPE",
     internalTransfer: "Internal Transfer",
     internalDesc: "Vault-to-vault, instant, zero fee",
     externalWallet: "External Wallet",
@@ -105,7 +105,7 @@ const translations: Record<string, Record<string, string>> = {
     invalidAddress: "Invalid address",
   },
   de: {
-    selectWithdrawalType: "Abhebungsart",
+    selectWithdrawalType: "ABHEBUNGSART",
     internalTransfer: "Interner Transfer",
     internalDesc: "Tresor-zu-Tresor, sofort, gebührenfrei",
     externalWallet: "Externes Wallet",
@@ -149,7 +149,7 @@ const translations: Record<string, Record<string, string>> = {
     invalidAddress: "Ungültige Adresse",
   },
   fr: {
-    selectWithdrawalType: "Type de Retrait",
+    selectWithdrawalType: "TYPE DE RETRAIT",
     internalTransfer: "Transfert Interne",
     internalDesc: "Coffre-à-coffre, instantané, gratuit",
     externalWallet: "Portefeuille Externe",
@@ -553,7 +553,7 @@ export function WithdrawTab() {
 
       {/* Withdrawal Type Selector */}
       <div className="mb-6">
-        <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mb-3">
+        <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">
           {t.selectWithdrawalType}
         </h3>
         <div className="grid grid-cols-3 gap-3">

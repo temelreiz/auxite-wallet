@@ -4,7 +4,7 @@ import { useLanguage } from "@/components/LanguageContext";
 
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    feeBreakdown: "Ücret Dökümü",
+    feeBreakdown: "ÜCRET DÖKÜMÜ",
     networkFee: "Ağ Ücreti",
     platformFee: "Platform Ücreti",
     totalDeducted: "Toplam Kesinti",
@@ -16,7 +16,7 @@ const translations: Record<string, Record<string, string>> = {
     instant: "Anında",
   },
   en: {
-    feeBreakdown: "Fee Breakdown",
+    feeBreakdown: "FEE BREAKDOWN",
     networkFee: "Network Fee",
     platformFee: "Platform Fee",
     totalDeducted: "Total Deducted",
@@ -28,7 +28,7 @@ const translations: Record<string, Record<string, string>> = {
     instant: "Instant",
   },
   de: {
-    feeBreakdown: "Gebührenaufschlüsselung",
+    feeBreakdown: "GEBÜHRENAUFSCHLÜSSELUNG",
     networkFee: "Netzwerkgebühr",
     platformFee: "Plattformgebühr",
     totalDeducted: "Gesamt Abgezogen",
@@ -40,7 +40,7 @@ const translations: Record<string, Record<string, string>> = {
     instant: "Sofort",
   },
   fr: {
-    feeBreakdown: "Détail des Frais",
+    feeBreakdown: "DÉTAIL DES FRAIS",
     networkFee: "Frais de Réseau",
     platformFee: "Frais de Plateforme",
     totalDeducted: "Total Déduit",
@@ -99,7 +99,7 @@ export function FeePreviewPanel({ crypto, amount, isInternal = false }: FeePrevi
   if (isInternal) {
     return (
       <div className="p-4 rounded-xl bg-[#2F6F62]/5 border border-[#2F6F62]/20">
-        <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mb-3">
+        <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">
           {t.feeBreakdown}
         </h4>
         <div className="space-y-2">
@@ -136,7 +136,7 @@ export function FeePreviewPanel({ crypto, amount, isInternal = false }: FeePrevi
 
   return (
     <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-800">
-      <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mb-3">
+      <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">
         {t.feeBreakdown}
       </h4>
       <div className="space-y-2">
