@@ -21,6 +21,15 @@ const metalIcons: Record<string, string> = {
   AUXPD: "/images/metals/palladium.png",
 };
 
+// Crypto asset definitions — institutional liquidity instruments
+const cryptoAssets = [
+  { symbol: "USDT", name: "Tether", color: "#26A17B", icon: "₮" },
+  { symbol: "BTC", name: "Bitcoin", color: "#F7931A", icon: "₿" },
+  { symbol: "ETH", name: "Ethereum", color: "#627EEA", icon: "Ξ" },
+  { symbol: "SOL", name: "Solana", color: "#9945FF", icon: "◎" },
+  { symbol: "XRP", name: "Ripple", color: "#23292F", icon: "✕" },
+];
+
 interface MetalHolding {
   symbol: string;
   name: string;
@@ -42,15 +51,19 @@ const translations: Record<string, Record<string, string>> = {
     statusOnline: "Çevrimiçi",
     connectPrompt: "Güvenli varlık altyapısını aktifleştirmek için bağlanın",
 
-    // Hero - Assets Under Custody (AUC)
-    assetsUnderCustody: "SAKLAMA ALTINDAKİ VARLIKLAR",
-    safeguardedCustody: "Bağımsız saklama yapıları altında güvence altına alınmış varlıklar",
+    // Hero - Client Assets Under Custody
+    clientAssetsUnderCustody: "SAKLAMA ALTINDAKİ MÜŞTERİ VARLIKLARI",
+    heldWithinBankruptcy: "İflastan korumalı saklama yapıları altında tutulmaktadır.",
     lastStatement: "Son Özet",
 
-    // Metrics - Bank Grade
-    availableCapital: "KULLANILABİLİR SERMAYE",
-    allocatedMetalHoldings: "TAHSİSLİ METAL VARLIKLAR",
-    encumberedPositions: "TEMİNATLI POZİSYONLAR",
+    // Mini Balance Sheet — Institutional Metrics
+    allocatedAssets: "TAHSİSLİ VARLIKLAR",
+    allocatedAssetsDesc: "Adınıza ayrılmış saklama kasalarında tutulan fiziksel metaller.",
+    availableLiquidity: "KULLANILABİLİR LİKİDİTE",
+    availableLiquidityDesc: "Transfer, tahsis veya teslimat için hemen kullanılabilir varlıklar.",
+    encumberedAssets: "TEMİNATLI VARLIKLAR",
+    encumberedAssetsDesc: "Getiri programları, takas veya teslimat yükümlülüklerine bağlı varlıklar.",
+    assetUtilization: "VARLIK KULLANIM ORANI",
 
     // Trust badges
     fullyAllocated: "Tam Tahsisli",
@@ -72,8 +85,11 @@ const translations: Record<string, Record<string, string>> = {
 
     // Holdings
     holdings: "Varlıklarınız",
+    metalsAllocated: "Metaller (Tahsisli)",
+    liquidityCashCrypto: "Likidite (Nakit & Kripto)",
     allocated: "Tahsisli",
     noHoldings: "Henüz varlık yok",
+    available: "Kullanılabilir",
 
     // Buy / Sell
     sell: "Sat",
@@ -101,7 +117,7 @@ const translations: Record<string, Record<string, string>> = {
     protectionStatus: "KORUMA DURUMU",
     protectionLevel: "Koruma Seviyesi",
     elite: "ELITE",
-    vaultFrozen: "KASA DONDURULDU",
+    vaultSuspended: "KASA ASKIYA ALINDI",
     vaultId: "Kasa ID",
 
     // Settlement Balance (AUXM)
@@ -115,9 +131,6 @@ const translations: Record<string, Record<string, string>> = {
 
     // Capital Clarity
     capitalClarity: "SERMAYE DURUMU",
-    settledCapital: "Takas Edilmiş",
-    allocatedMetals: "Tahsisli",
-    encumbered: "Teminatlı",
 
     // Trust Messages
     institutionalArchitecture: "Kurumsal saklama mimarisi üzerine inşa edilmiştir.",
@@ -126,18 +139,33 @@ const translations: Record<string, Record<string, string>> = {
     unallocatedCapital: "TAHSİS EDİLMEMİŞ SERMAYE",
     availableForAllocation: "Tahsis için kullanılabilir",
     denominatedInUsd: "Takas amaçları için USD değerinde ifade edilir.",
+
+    // Encumbered Breakdown
+    encumberedBreakdown: "Teminat Dağılımı",
+    yieldPrograms: "Getiri Programları",
+    pendingDelivery: "Bekleyen Fiziksel Teslimat",
+    tradeSettlement: "Takas İşlemleri",
   },
   en: {
     custodyStatus: "Custody Status",
     statusOffline: "Offline",
     statusOnline: "Online",
     connectPrompt: "Connect to activate safeguarded asset infrastructure",
-    assetsUnderCustody: "ASSETS UNDER CUSTODY",
-    safeguardedCustody: "Assets safeguarded under independent custody structures",
+
+    // Hero
+    clientAssetsUnderCustody: "CLIENT ASSETS UNDER CUSTODY",
+    heldWithinBankruptcy: "Held within bankruptcy-remote custody structures.",
     lastStatement: "Last Statement",
-    availableCapital: "AVAILABLE CAPITAL",
-    allocatedMetalHoldings: "ALLOCATED METAL HOLDINGS",
-    encumberedPositions: "ENCUMBERED POSITIONS",
+
+    // Mini Balance Sheet
+    allocatedAssets: "ALLOCATED ASSETS",
+    allocatedAssetsDesc: "Physical metals held in your name within segregated vault structures.",
+    availableLiquidity: "AVAILABLE LIQUIDITY",
+    availableLiquidityDesc: "Assets immediately available for transfer, allocation, or redemption.",
+    encumberedAssets: "ENCUMBERED ASSETS",
+    encumberedAssetsDesc: "Assets currently committed to yield programs, settlement, or delivery obligations.",
+    assetUtilization: "ASSET UTILIZATION",
+
     fullyAllocated: "Fully Allocated",
     fullyAllocatedDesc: "Every gram of metal corresponds to uniquely identified physical bars. No pooled assets.",
     segregated: "Segregated",
@@ -153,8 +181,11 @@ const translations: Record<string, Record<string, string>> = {
     enterYield: "Enter Yield",
     transfer: "Transfer",
     holdings: "Your Holdings",
+    metalsAllocated: "Metals (Allocated)",
+    liquidityCashCrypto: "Liquidity (Cash & Crypto)",
     allocated: "Allocated",
     noHoldings: "No holdings yet",
+    available: "Available",
     sell: "Sell",
     sellGold: "Sell Gold",
     sellSilver: "Sell Silver",
@@ -176,7 +207,7 @@ const translations: Record<string, Record<string, string>> = {
     protectionStatus: "PROTECTION STATUS",
     protectionLevel: "Protection Level",
     elite: "ELITE",
-    vaultFrozen: "VAULT FROZEN",
+    vaultSuspended: "VAULT SUSPENDED",
     vaultId: "Vault ID",
     settlementBalance: "Settlement Balance",
     auxmUnit: "AUXM",
@@ -186,15 +217,18 @@ const translations: Record<string, Record<string, string>> = {
     fundVault: "Fund Vault",
     auxmDisclaimer: "AUXM is an internal settlement unit used exclusively within the Auxite infrastructure. It is not a cryptocurrency or a transferable asset.",
     capitalClarity: "CAPITAL STATUS",
-    settledCapital: "Settled",
-    allocatedMetals: "Allocated",
-    encumbered: "Encumbered",
     institutionalArchitecture: "Built on institutional custody architecture.",
     custodySeparation: "Assets under custody are never commingled with corporate funds.",
     notRehypothecated: "Client assets are never rehypothecated.",
     unallocatedCapital: "UNALLOCATED CAPITAL",
     availableForAllocation: "Available for Allocation",
     denominatedInUsd: "Denominated in USD value for settlement purposes.",
+
+    // Encumbered Breakdown
+    encumberedBreakdown: "Encumbered Breakdown",
+    yieldPrograms: "Yield Programs",
+    pendingDelivery: "Pending Physical Delivery",
+    tradeSettlement: "Trade Settlement",
   },
 };
 
@@ -214,12 +248,16 @@ export default function VaultPage() {
     }
   }, []);
   const [totalVaultValue, setTotalVaultValue] = useState(0);
-  const [unallocatedBalance, setUnallocatedBalance] = useState(0);
   const [allocatedHoldings, setAllocatedHoldings] = useState(0);
-  const [encumberedAssets, setEncumberedAssets] = useState(0);
+  const [encumberedAssetsValue, setEncumberedAssetsValue] = useState(0);
+  const [liquidityValue, setLiquidityValue] = useState(0);
   const [holdings, setHoldings] = useState<MetalHolding[]>([]);
   const [settlementBalance, setSettlementBalance] = useState(0);
+  const [cryptoBalances, setCryptoBalances] = useState<Record<string, number>>({});
+  const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
   const [trustBadgeModal, setTrustBadgeModal] = useState<string | null>(null);
+  const [showEncumberedModal, setShowEncumberedModal] = useState(false);
+  const [encumberedBreakdown, setEncumberedBreakdown] = useState({ yieldPrograms: 0, pendingDelivery: 0, tradeSettlement: 0 });
   const [sellModal, setSellModal] = useState<{ open: boolean; metal: MetalHolding | null }>({ open: false, metal: null });
   const [custodyStatus, setCustodyStatus] = useState<'active' | 'pending' | 'offline'>('offline');
   const [custodyProvider, setCustodyProvider] = useState<string>('');
@@ -262,17 +300,19 @@ export default function VaultPage() {
     }
 
     try {
-      const [balanceRes, allocRes, priceRes, stakeRes] = await Promise.all([
+      const [balanceRes, allocRes, priceRes, stakeRes, cryptoRes] = await Promise.all([
         fetch(`/api/user/balance?address=${address}`),
         fetch(`/api/allocations?address=${address}`),
         fetch(`/api/prices?chain=84532`),
         fetch(`/api/stakes?address=${address}`),
+        fetch(`/api/crypto`),
       ]);
 
       const balanceData = await balanceRes.json().catch(() => ({ success: false, balances: {} }));
       const allocData = await allocRes.json().catch(() => ({ success: false, allocations: [], summary: {} }));
       const priceData = await priceRes.json().catch(() => ({ success: false, basePrices: {} }));
       const stakeData = await stakeRes.json().catch(() => ({ success: false, stakes: [] }));
+      const cryptoData = await cryptoRes.json().catch(() => ({}));
 
       const metalSymbols = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
       const metalNames: Record<string, string> = {
@@ -283,7 +323,6 @@ export default function VaultPage() {
       };
 
       let totalValue = 0;
-      let unallocatedValue = 0;
       let allocatedValue = 0;
       let encumberedValue = 0;
       const holdingsList: MetalHolding[] = [];
@@ -294,7 +333,6 @@ export default function VaultPage() {
         const allocatedGrams = allocData.summary?.[symbol] || 0;
         const price = priceData.basePrices?.[symbol] || 0;
 
-        // Always show all 4 metals — trust signaling (Buy/Sell buttons visible before allocation)
         const availableGrams = Math.max(0, balance - allocatedGrams);
         const value = balance * price;
         const allocValue = allocatedGrams * price;
@@ -310,26 +348,60 @@ export default function VaultPage() {
         });
 
         totalValue += value;
-        unallocatedValue += availableGrams * price;
         allocatedValue += allocValue;
       }
 
+      // Encumbered positions (yield programs)
+      let yieldProgramsValue = 0;
       if (stakeData.success && stakeData.stakes) {
         for (const stake of stakeData.stakes) {
           const amount = parseFloat(stake.amount) || 0;
           const metal = stake.metal?.toUpperCase() || "AUXG";
           const price = priceData.basePrices?.[metal] || 0;
-          encumberedValue += amount * price;
+          yieldProgramsValue += amount * price;
         }
       }
+      encumberedValue = yieldProgramsValue;
+      setEncumberedBreakdown({
+        yieldPrograms: yieldProgramsValue,
+        pendingDelivery: 0,
+        tradeSettlement: 0,
+      });
 
+      // Crypto prices
+      const cPrices: Record<string, number> = { usdt: 1.0 };
+      if (cryptoData.bitcoin?.usd) cPrices.btc = cryptoData.bitcoin.usd;
+      if (cryptoData.ethereum?.usd) cPrices.eth = cryptoData.ethereum.usd;
+      if (cryptoData.solana?.usd) cPrices.sol = cryptoData.solana.usd;
+      if (cryptoData.ripple?.usd) cPrices.xrp = cryptoData.ripple.usd;
+      setCryptoPrices(cPrices);
+
+      // Crypto balances from balance API
+      const cryptoSymbols = ["usdt", "btc", "eth", "sol", "xrp"];
+      const cBalances: Record<string, number> = {};
+      let cryptoTotalValue = 0;
+      for (const sym of cryptoSymbols) {
+        const bal = balanceData.balances?.[sym] || 0;
+        cBalances[sym] = bal;
+        cryptoTotalValue += bal * (cPrices[sym] || 0);
+      }
+      setCryptoBalances(cBalances);
+
+      // AUXM Settlement Balance
       const auxmBalance = balanceData.balances?.auxm || balanceData.balances?.AUXM || 0;
       setSettlementBalance(auxmBalance);
+
+      // Liquidity = AUXM + crypto
+      const totalLiquidity = auxmBalance + cryptoTotalValue;
+      setLiquidityValue(totalLiquidity);
+
+      // Total vault value = metals + crypto + AUXM
+      totalValue += cryptoTotalValue + auxmBalance;
+
       setHoldings(holdingsList);
       setTotalVaultValue(totalValue);
-      setUnallocatedBalance(unallocatedValue);
       setAllocatedHoldings(allocatedValue);
-      setEncumberedAssets(encumberedValue);
+      setEncumberedAssetsValue(encumberedValue);
     } catch (error) {
       console.warn("Valuation temporarily unavailable:", error);
     } finally {
@@ -352,15 +424,19 @@ export default function VaultPage() {
     return (grams * 1000).toFixed(1) + "mg";
   };
 
+  const utilizationRatio = totalVaultValue > 0
+    ? ((encumberedAssetsValue / totalVaultValue) * 100).toFixed(1)
+    : "0.0";
+
   return (
     <div className="min-h-screen bg-stone-100 dark:bg-slate-950">
       <TopNav />
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
-        {/* Hero Card - Assets Under Custody */}
+        {/* Hero Card - Client Assets Under Custody */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-stone-200 dark:border-slate-800">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-2">
-            {t.assetsUnderCustody}
+            {t.clientAssetsUnderCustody}
           </p>
           {loading ? (
             <div className="h-12 flex items-center">
@@ -371,7 +447,7 @@ export default function VaultPage() {
               {formatCurrency(totalVaultValue)}
             </p>
           )}
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{t.safeguardedCustody}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{t.heldWithinBankruptcy}</p>
 
           {/* Statement Indicator */}
           <div className="flex items-center gap-2 mb-6">
@@ -381,19 +457,25 @@ export default function VaultPage() {
             <span className="text-xs text-[#2F6F62] font-medium">{t.lastStatement}: February 2026</span>
           </div>
 
-          {/* Stats Row */}
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-stone-200 dark:border-slate-700">
+          {/* Stats Row — Mini Balance Sheet: Allocated | Liquidity | Encumbered | Utilization */}
+          <div className="grid grid-cols-4 gap-3 pt-4 border-t border-stone-200 dark:border-slate-700">
             <div className="text-center">
-              <p className="text-lg font-semibold text-[#2F6F62]">{formatCurrency(unallocatedBalance)}</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.availableCapital}</p>
+              <p className="text-lg font-semibold text-[#BFA181]">{formatCurrency(allocatedHoldings)}</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.allocatedAssets}</p>
             </div>
             <div className="text-center border-x border-stone-200 dark:border-slate-700">
-              <p className="text-lg font-semibold text-[#BFA181]">{formatCurrency(allocatedHoldings)}</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.allocatedMetalHoldings}</p>
+              <p className="text-lg font-semibold text-[#2F6F62]">{formatCurrency(liquidityValue)}</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.availableLiquidity}</p>
+            </div>
+            <div className="text-center border-r border-stone-200 dark:border-slate-700">
+              <button onClick={() => setShowEncumberedModal(true)} className="hover:opacity-80 transition-opacity">
+                <p className="text-lg font-semibold text-orange-500">{formatCurrency(encumberedAssetsValue)}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.encumberedAssets}</p>
+              </button>
             </div>
             <div className="text-center">
-              <p className="text-lg font-semibold text-orange-500">{formatCurrency(encumberedAssets)}</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.encumberedPositions}</p>
+              <p className="text-lg font-semibold text-slate-500">{utilizationRatio}%</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.assetUtilization}</p>
             </div>
           </div>
         </div>
@@ -406,31 +488,31 @@ export default function VaultPage() {
           <span className="text-sm font-semibold text-[#BFA181]">{t.institutionalArchitecture}</span>
         </div>
 
-        {/* Capital Clarity Bar */}
+        {/* Capital Clarity Bar — Allocated | Liquidity | Encumbered */}
         <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-stone-200 dark:border-slate-800">
           <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">
             {t.capitalClarity}
           </p>
           <div className="grid grid-cols-3 gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-[#2F6F62]" />
-              <div>
-                <p className="text-sm font-bold text-slate-800 dark:text-white">{formatCurrency(settlementBalance)}</p>
-                <p className="text-[10px] text-slate-500">{t.settledCapital}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-[#BFA181]" />
               <div>
                 <p className="text-sm font-bold text-slate-800 dark:text-white">{formatCurrency(allocatedHoldings)}</p>
-                <p className="text-[10px] text-slate-500">{t.allocatedMetals}</p>
+                <p className="text-[10px] text-slate-500">{t.allocatedAssets}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-[#2F6F62]" />
+              <div>
+                <p className="text-sm font-bold text-slate-800 dark:text-white">{formatCurrency(liquidityValue)}</p>
+                <p className="text-[10px] text-slate-500">{t.availableLiquidity}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-orange-500" />
               <div>
-                <p className="text-sm font-bold text-slate-800 dark:text-white">{formatCurrency(encumberedAssets)}</p>
-                <p className="text-[10px] text-slate-500">{t.encumbered}</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-white">{formatCurrency(encumberedAssetsValue)}</p>
+                <p className="text-[10px] text-slate-500">{t.encumberedAssets}</p>
               </div>
             </div>
           </div>
@@ -443,7 +525,6 @@ export default function VaultPage() {
               <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">
                 {t.protectionStatus}
               </p>
-              {/* Custody Status Indicator */}
               <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold ${
                 custodyStatus === 'active'
                   ? 'bg-[#2F6F62]/15 text-[#2F6F62]'
@@ -649,103 +730,195 @@ export default function VaultPage() {
           </div>
         </div>
 
-        {/* Holdings Section */}
+        {/* Holdings Section — Split into Metals + Liquidity */}
         <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-stone-200 dark:border-slate-800">
           <h3 className="text-base font-semibold text-slate-800 dark:text-white mb-4">{t.holdings}</h3>
+
           {loading ? (
             <div className="flex justify-center py-8">
               <div className="w-6 h-6 border-2 border-[#BFA181] border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : holdings.length === 0 ? (
-            <p className="text-center py-8 text-slate-500 dark:text-slate-400">{t.noHoldings}</p>
           ) : (
-            <div className="space-y-3">
-              {holdings.map((holding) => (
-                <div
-                  key={holding.symbol}
-                  className="p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <Link
-                    href={`/asset/${holding.symbol}`}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-full bg-[#BFA181]/10 flex items-center justify-center relative">
-                        {metalIcons[holding.symbol] ? (
-                          <Image
-                            src={metalIcons[holding.symbol]}
-                            alt={holding.name}
-                            width={28}
-                            height={28}
-                            className="object-contain"
-                          />
-                        ) : (
-                          <span className="text-[#BFA181] font-bold">{holding.symbol[0]}</span>
-                        )}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-semibold text-slate-800 dark:text-white">{holding.name}</p>
-                          {/* LIVE Pricing Dot */}
-                          <span className="flex items-center gap-1 px-1.5 py-0.5 bg-[#2F6F62]/10 rounded-full">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#2F6F62] animate-pulse" />
-                            <span className="text-[8px] font-semibold text-[#2F6F62]">{t.livePricing}</span>
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500">{holding.symbol}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatCurrency(holding.value)}</p>
-                      <p className="text-xs text-[#2F6F62] font-medium">
-                        {formatGrams(holding.allocated)} {t.allocated}
-                      </p>
-                    </div>
-                  </Link>
-
-                  {/* Holdings Detail Row */}
-                  <div className="grid grid-cols-4 gap-2 mt-3 pl-14 pr-2">
-                    <div>
-                      <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.holdingsLabel}</p>
-                      <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{formatGrams(holding.total)}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.avgCost}</p>
-                      <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                        {holding.total > 0 ? formatCurrency(holding.value / holding.total) : "--"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.market}</p>
-                      <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{formatCurrency(holding.price)}/g</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.unrealizedPL}</p>
-                      <p className={`text-[11px] font-semibold ${holding.total > 0 ? "text-[#2F6F62]" : "text-slate-400"}`}>
-                        {"--"}
-                      </p>
-                    </div>
-                  </div>
-                  {/* Buy / Sell Buttons — always visible for trust signaling */}
-                  <div className="flex items-center gap-2 mt-3 pl-14">
-                      <Link
-                        href="/allocate"
-                        className="flex-1 py-2 text-center text-xs font-semibold bg-[#BFA181] text-white rounded-lg hover:bg-[#BFA181]/90 transition-colors"
-                      >
-                        {holding.symbol === "AUXG" ? t.buyGold : holding.symbol === "AUXS" ? t.buySilver : holding.symbol === "AUXPT" ? t.buyPlatinum : t.buyPalladium}
-                      </Link>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSellModal({ open: true, metal: holding });
-                        }}
-                        className="flex-1 py-2 text-center text-xs font-semibold border border-[#BFA181] text-[#BFA181] rounded-lg hover:bg-[#BFA181]/10 transition-colors"
-                      >
-                        {holding.symbol === "AUXG" ? t.sellGold : holding.symbol === "AUXS" ? t.sellSilver : holding.symbol === "AUXPT" ? t.sellPlatinum : t.sellPalladium}
-                      </button>
-                    </div>
+            <div className="space-y-6">
+              {/* Section 1 — Metals (Allocated) */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-2 h-2 rounded-full bg-[#BFA181]" />
+                  <h4 className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">
+                    {t.metalsAllocated}
+                  </h4>
                 </div>
-              ))}
+
+                {holdings.length === 0 ? (
+                  <p className="text-center py-6 text-slate-500 dark:text-slate-400">{t.noHoldings}</p>
+                ) : (
+                  <div className="space-y-3">
+                    {holdings.map((holding) => (
+                      <div
+                        key={holding.symbol}
+                        className="p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <Link
+                          href={`/asset/${holding.symbol}`}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-full bg-[#BFA181]/10 flex items-center justify-center relative">
+                              {metalIcons[holding.symbol] ? (
+                                <Image
+                                  src={metalIcons[holding.symbol]}
+                                  alt={holding.name}
+                                  width={28}
+                                  height={28}
+                                  className="object-contain"
+                                />
+                              ) : (
+                                <span className="text-[#BFA181] font-bold">{holding.symbol[0]}</span>
+                              )}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-semibold text-slate-800 dark:text-white">{holding.name}</p>
+                                <span className="flex items-center gap-1 px-1.5 py-0.5 bg-[#2F6F62]/10 rounded-full">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#2F6F62] animate-pulse" />
+                                  <span className="text-[8px] font-semibold text-[#2F6F62]">{t.livePricing}</span>
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-500">{holding.symbol}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatCurrency(holding.value)}</p>
+                            <p className="text-xs text-[#2F6F62] font-medium">
+                              {formatGrams(holding.allocated)} {t.allocated}
+                            </p>
+                          </div>
+                        </Link>
+
+                        {/* Holdings Detail Row */}
+                        <div className="grid grid-cols-4 gap-2 mt-3 pl-14 pr-2">
+                          <div>
+                            <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.holdingsLabel}</p>
+                            <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{formatGrams(holding.total)}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.avgCost}</p>
+                            <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                              {holding.total > 0 ? formatCurrency(holding.value / holding.total) : "--"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.market}</p>
+                            <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{formatCurrency(holding.price)}/g</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.unrealizedPL}</p>
+                            <p className={`text-[11px] font-semibold ${holding.total > 0 ? "text-[#2F6F62]" : "text-slate-400"}`}>
+                              {"--"}
+                            </p>
+                          </div>
+                        </div>
+                        {/* Buy / Sell Buttons */}
+                        <div className="flex items-center gap-2 mt-3 pl-14">
+                            <Link
+                              href="/allocate"
+                              className="flex-1 py-2 text-center text-xs font-semibold bg-[#BFA181] text-white rounded-lg hover:bg-[#BFA181]/90 transition-colors"
+                            >
+                              {holding.symbol === "AUXG" ? t.buyGold : holding.symbol === "AUXS" ? t.buySilver : holding.symbol === "AUXPT" ? t.buyPlatinum : t.buyPalladium}
+                            </Link>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSellModal({ open: true, metal: holding });
+                              }}
+                              className="flex-1 py-2 text-center text-xs font-semibold border border-[#BFA181] text-[#BFA181] rounded-lg hover:bg-[#BFA181]/10 transition-colors"
+                            >
+                              {holding.symbol === "AUXG" ? t.sellGold : holding.symbol === "AUXS" ? t.sellSilver : holding.symbol === "AUXPT" ? t.sellPlatinum : t.sellPalladium}
+                            </button>
+                          </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Section 2 — Liquidity (Cash & Crypto) */}
+              {(settlementBalance > 0 || cryptoAssets.some(c => (cryptoBalances[c.symbol.toLowerCase()] || 0) > 0)) && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3 pt-4 border-t border-stone-200 dark:border-slate-700">
+                    <div className="w-2 h-2 rounded-full bg-[#2F6F62]" />
+                    <h4 className="text-[11px] font-semibold text-[#2F6F62] tracking-wider">
+                      {t.liquidityCashCrypto}
+                    </h4>
+                  </div>
+
+                  <div className="space-y-2">
+                    {/* AUXM Settlement Balance Row */}
+                    {settlementBalance > 0 && (
+                      <div className="flex items-center justify-between p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-full bg-indigo-500/15 flex items-center justify-center">
+                            <span className="text-lg font-bold text-indigo-500">◈</span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800 dark:text-white">{t.settlementBalance}</p>
+                            <p className="text-xs text-slate-500">{t.auxmUnit}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatCurrency(settlementBalance)}</p>
+                          <div className="flex items-center gap-1.5 justify-end">
+                            <p className="text-xs text-[#2F6F62] font-medium">
+                              {settlementBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {t.auxmUnit}
+                            </p>
+                            <span className="px-1.5 py-0.5 bg-[#2F6F62]/10 rounded text-[8px] font-semibold text-[#2F6F62]">
+                              {t.available}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Crypto Balance Rows */}
+                    {cryptoAssets.map((crypto) => {
+                      const bal = cryptoBalances[crypto.symbol.toLowerCase()] || 0;
+                      if (bal <= 0) return null;
+                      const price = cryptoPrices[crypto.symbol.toLowerCase()] || 0;
+                      const value = bal * price;
+                      return (
+                        <div
+                          key={crypto.symbol}
+                          className="flex items-center justify-between p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-11 h-11 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: crypto.color + "15" }}
+                            >
+                              <span className="text-lg font-bold" style={{ color: crypto.color }}>{crypto.icon}</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-slate-800 dark:text-white">{crypto.name}</p>
+                              <p className="text-xs text-slate-500">{crypto.symbol}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatCurrency(value)}</p>
+                            <div className="flex items-center gap-1.5 justify-end">
+                              <p className="text-xs text-[#2F6F62] font-medium">
+                                {bal < 1 ? bal.toFixed(6) : bal.toFixed(2)} {crypto.symbol}
+                              </p>
+                              <span className="px-1.5 py-0.5 bg-[#2F6F62]/10 rounded text-[8px] font-semibold text-[#2F6F62]">
+                                {t.available}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -818,6 +991,53 @@ export default function VaultPage() {
             <button
               onClick={() => setTrustBadgeModal(null)}
               className="px-6 py-2.5 bg-[#2F6F62] text-white font-semibold rounded-xl hover:bg-[#2F6F62]/80 transition-colors"
+            >
+              {t.close}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Encumbered Breakdown Modal */}
+      {showEncumberedModal && (
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center p-6 z-50"
+          onClick={() => setShowEncumberedModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-16 h-16 rounded-full bg-orange-500/15 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1 text-center">{t.encumberedBreakdown}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 text-center mb-6">{t.encumberedAssetsDesc}</p>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-orange-500/5 rounded-lg">
+                <span className="text-sm text-slate-700 dark:text-slate-300">{t.yieldPrograms}</span>
+                <span className="text-sm font-bold text-orange-500">{formatCurrency(encumberedBreakdown.yieldPrograms)}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-orange-500/5 rounded-lg">
+                <span className="text-sm text-slate-700 dark:text-slate-300">{t.pendingDelivery}</span>
+                <span className="text-sm font-bold text-orange-500">{formatCurrency(encumberedBreakdown.pendingDelivery)}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-orange-500/5 rounded-lg">
+                <span className="text-sm text-slate-700 dark:text-slate-300">{t.tradeSettlement}</span>
+                <span className="text-sm font-bold text-orange-500">{formatCurrency(encumberedBreakdown.tradeSettlement)}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border-t-2 border-orange-500">
+                <span className="text-sm font-semibold text-slate-800 dark:text-white">Total</span>
+                <span className="text-lg font-bold text-orange-500">{formatCurrency(encumberedAssetsValue)}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowEncumberedModal(false)}
+              className="w-full mt-6 px-6 py-2.5 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-500/80 transition-colors"
             >
               {t.close}
             </button>
