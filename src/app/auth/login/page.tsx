@@ -158,10 +158,8 @@ export default function LoginPage() {
       console.log('[Login] Wallet Address:', data.user.walletAddress);
 
       // Store wallet address for TopNav display
-      // Use walletAddress from response, or generate placeholder from vaultId
-      const displayAddress = data.user.walletAddress ||
-        (data.user.vaultId ? `0x${data.user.vaultId.slice(0, 40)}` : null) ||
-        (data.user.id ? `0x${data.user.id.replace(/[^a-f0-9]/gi, '').slice(0, 40).padEnd(40, '0')}` : null);
+      // Always use the walletAddress from backend response (SHA256-derived)
+      const displayAddress = data.user.walletAddress || null;
 
       if (displayAddress) {
         localStorage.setItem('auxite_wallet_address', displayAddress);

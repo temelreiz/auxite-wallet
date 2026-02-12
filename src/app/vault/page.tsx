@@ -780,7 +780,7 @@ export default function VaultPage() {
           metal={{
             symbol: sellModal.metal.symbol,
             name: sellModal.metal.name,
-            allocated: sellModal.metal.allocated,
+            allocated: sellModal.metal.available,
             price: sellModal.metal.price,
           }}
           address={address || ""}
