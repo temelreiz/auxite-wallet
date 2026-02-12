@@ -1,12 +1,13 @@
 "use client";
 
 // ============================================
-// LIQUIDATE HOLDINGS MODAL
-// 3-Step Institutional Liquidation Flow
-// Digital Gold Bank — NOT Trading Platform
+// SELL HOLDINGS MODAL
+// 3-Step Institutional Sell Flow
+// Digital Gold Bank — BUY / SELL Model
 // ============================================
 // Kelime Sözlüğü:
-//   Sell → Liquidate
+//   Liquidate → Sell
+//   Allocate → Buy
 //   Trade → Execution
 //   Order → Request
 //   Position → Holdings
@@ -24,17 +25,17 @@ import { useLanguage } from "@/components/LanguageContext";
 // TYPES
 // ============================================
 
-interface LiquidateMetalInfo {
+interface SellMetalInfo {
   symbol: string;
   name: string;
   allocated: number;
   price: number;
 }
 
-interface LiquidateModalProps {
+interface SellModalProps {
   isOpen: boolean;
   onClose: () => void;
-  metal: LiquidateMetalInfo;
+  metal: SellMetalInfo;
   address: string;
   onSuccess?: () => void;
 }
@@ -56,62 +57,70 @@ interface QuoteData {
 
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    title: "Varlık Likidasyonu",
-    subtitle: "Tahsisli metal varlıklarınızı likide edin",
+    title: "Sat",
+    subtitle: "Metal varlıklarınızı satın",
     availableHoldings: "KULLANILABILIR VARLIKLAR",
     allocatedGrams: "Tahsisli",
     currentValue: "GUNCEL DEGER",
     amount: "Miktar",
     grams: "gram",
     max: "Maks",
-    executionPrice: "İcra Fiyatı",
+    executionPreview: "ICRA ONIZLEMESI",
+    bidPrice: "Alis Fiyati",
+    spread: "Spread",
+    executionPrice: "Icra Fiyati",
     perGram: "/gram",
-    settlementMethod: "Takas Yöntemi",
+    settlementMethod: "Takas Yontemi",
     estimatedProceeds: "Tahmini Gelir",
-    estimatedSettlement: "Tahmini Takas: T+0 / Aynı Gün",
-    institutionalNotice: "İşlemler kurumsal likidite kanalları üzerinden gerçekleştirilir.",
+    estimatedSettlement: "Tahmini Takas: T+0 / Ayni Gun",
+    settlementTimeline: "T+0 Ayni Gun",
+    institutionalNotice: "Islemler kurumsal likidite kanallari uzerinden gerceklestirilir.",
     continue: "Devam Et",
-    cancel: "İptal",
+    cancel: "Iptal",
     back: "Geri",
-    executionSummary: "İcra Özeti",
+    executionSummary: "Icra Ozeti",
     metal: "Metal",
     quantity: "Miktar",
     price: "Fiyat",
     totalProceeds: "Toplam Gelir",
-    settlementType: "Takas Türü",
-    twoFactorRequired: "İki Faktörlü Doğrulama Gerekli",
-    enterCode: "Doğrulama kodunuzu girin",
-    confirmLiquidation: "Likidasyonu Onayla",
-    processing: "İşleniyor...",
-    liquidationComplete: "Likidasyon Tamamlandı",
-    successMessage: "Varlık likidasyonu başarıyla gerçekleştirildi.",
+    settlementType: "Takas Turu",
+    twoFactorRequired: "Iki Faktorlu Dogrulama Gerekli",
+    enterCode: "Dogrulama kodunuzu girin",
+    confirmSell: "Satisi Onayla",
+    processing: "Isleniyor...",
+    sellComplete: "Satis Tamamlandi",
+    successMessage: "Varlik satisi basariyla gerceklestirildi.",
     proceeds: "Gelir",
     settledTo: "Takas Edildi",
-    viewActivity: "İşlem Geçmişini Görüntüle",
+    viewActivity: "Islem Gecmisini Goruntule",
     close: "Kapat",
     insufficientBalance: "Yetersiz bakiye",
-    invalidAmount: "Geçersiz miktar",
-    quoteExpired: "Fiyat süresi doldu. Lütfen tekrar deneyin.",
-    executionFailed: "İcra başarısız. Lütfen tekrar deneyin.",
-    fetchingPrice: "Fiyat alınıyor...",
+    invalidAmount: "Gecersiz miktar",
+    quoteExpired: "Fiyat suresi doldu. Lutfen tekrar deneyin.",
+    executionFailed: "Icra basarisiz. Lutfen tekrar deneyin.",
+    fetchingPrice: "Fiyat aliniyor...",
     priceRefresh: "Fiyat yenileniyor...",
     quoteTimer: "Fiyat kilidi",
     seconds: "saniye",
   },
   en: {
-    title: "Liquidate Holdings",
-    subtitle: "Liquidate your allocated metal holdings",
+    title: "Sell",
+    subtitle: "Sell your metal holdings",
     availableHoldings: "AVAILABLE HOLDINGS",
     allocatedGrams: "Allocated",
     currentValue: "CURRENT VALUE",
     amount: "Amount",
     grams: "grams",
     max: "Max",
+    executionPreview: "EXECUTION PREVIEW",
+    bidPrice: "Bid Price",
+    spread: "Spread",
     executionPrice: "Execution Price",
     perGram: "/gram",
     settlementMethod: "Settlement Method",
     estimatedProceeds: "Estimated Proceeds",
     estimatedSettlement: "Estimated Settlement: T+0 / Same Day",
+    settlementTimeline: "T+0 Same Day",
     institutionalNotice: "Executions are performed through institutional liquidity venues.",
     continue: "Continue",
     cancel: "Cancel",
@@ -124,10 +133,10 @@ const translations: Record<string, Record<string, string>> = {
     settlementType: "Settlement Type",
     twoFactorRequired: "Two-Factor Authentication Required",
     enterCode: "Enter your verification code",
-    confirmLiquidation: "Confirm Liquidation",
+    confirmSell: "Confirm Sale",
     processing: "Processing...",
-    liquidationComplete: "Liquidation Complete",
-    successMessage: "Your holdings have been successfully liquidated.",
+    sellComplete: "Sale Complete",
+    successMessage: "Your holdings have been successfully sold.",
     proceeds: "Proceeds",
     settledTo: "Settled To",
     viewActivity: "View Activity",
@@ -142,105 +151,117 @@ const translations: Record<string, Record<string, string>> = {
     seconds: "seconds",
   },
   de: {
-    title: "Bestände Liquidieren",
-    subtitle: "Liquidieren Sie Ihre zugewiesenen Metallbestände",
+    title: "Verkaufen",
+    subtitle: "Verkaufen Sie Ihre Metallbestande",
     availableHoldings: "VERFUGBARE BESTANDE",
     allocatedGrams: "Zugewiesen",
     currentValue: "AKTUELLER WERT",
     amount: "Betrag",
     grams: "Gramm",
     max: "Max",
-    executionPrice: "Ausführungspreis",
+    executionPreview: "AUSFUHRUNGSVORSCHAU",
+    bidPrice: "Geldkurs",
+    spread: "Spread",
+    executionPrice: "Ausfuhrungspreis",
     perGram: "/Gramm",
     settlementMethod: "Abwicklungsmethode",
-    estimatedProceeds: "Geschätzter Erlös",
-    estimatedSettlement: "Geschätzte Abwicklung: T+0 / Gleicher Tag",
-    institutionalNotice: "Ausführungen erfolgen über institutionelle Liquiditätskanäle.",
+    estimatedProceeds: "Geschatzter Erlos",
+    estimatedSettlement: "Geschatzte Abwicklung: T+0 / Gleicher Tag",
+    settlementTimeline: "T+0 Gleicher Tag",
+    institutionalNotice: "Ausfuhrungen erfolgen uber institutionelle Liquiditatskanale.",
     continue: "Weiter",
     cancel: "Abbrechen",
-    back: "Zurück",
-    executionSummary: "Ausführungsübersicht",
+    back: "Zuruck",
+    executionSummary: "Ausfuhrungsubersicht",
     metal: "Metall",
     quantity: "Menge",
     price: "Preis",
-    totalProceeds: "Gesamterlös",
+    totalProceeds: "Gesamterlos",
     settlementType: "Abwicklungstyp",
     twoFactorRequired: "Zwei-Faktor-Authentifizierung Erforderlich",
-    enterCode: "Geben Sie Ihren Bestätigungscode ein",
-    confirmLiquidation: "Liquidation Bestätigen",
+    enterCode: "Geben Sie Ihren Bestatigungscode ein",
+    confirmSell: "Verkauf Bestatigen",
     processing: "Verarbeitung...",
-    liquidationComplete: "Liquidation Abgeschlossen",
-    successMessage: "Ihre Bestände wurden erfolgreich liquidiert.",
-    proceeds: "Erlös",
+    sellComplete: "Verkauf Abgeschlossen",
+    successMessage: "Ihre Bestande wurden erfolgreich verkauft.",
+    proceeds: "Erlos",
     settledTo: "Abgewickelt An",
-    viewActivity: "Aktivität Anzeigen",
-    close: "Schließen",
+    viewActivity: "Aktivitat Anzeigen",
+    close: "Schliessen",
     insufficientBalance: "Unzureichendes Guthaben",
-    invalidAmount: "Ungültiger Betrag",
+    invalidAmount: "Ungultiger Betrag",
     quoteExpired: "Preis abgelaufen. Bitte versuchen Sie es erneut.",
-    executionFailed: "Ausführung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    executionFailed: "Ausfuhrung fehlgeschlagen. Bitte versuchen Sie es erneut.",
     fetchingPrice: "Preis wird abgerufen...",
     priceRefresh: "Preis wird aktualisiert...",
     quoteTimer: "Preissperre",
     seconds: "Sekunden",
   },
   fr: {
-    title: "Liquider les Avoirs",
-    subtitle: "Liquidez vos avoirs métalliques alloués",
+    title: "Vendre",
+    subtitle: "Vendez vos avoirs metalliques",
     availableHoldings: "AVOIRS DISPONIBLES",
-    allocatedGrams: "Alloué",
+    allocatedGrams: "Alloue",
     currentValue: "VALEUR ACTUELLE",
     amount: "Montant",
     grams: "grammes",
     max: "Max",
-    executionPrice: "Prix d'Exécution",
+    executionPreview: "APERCU D'EXECUTION",
+    bidPrice: "Prix Acheteur",
+    spread: "Spread",
+    executionPrice: "Prix d'Execution",
     perGram: "/gramme",
-    settlementMethod: "Méthode de Règlement",
-    estimatedProceeds: "Produit Estimé",
-    estimatedSettlement: "Règlement Estimé: T+0 / Même Jour",
-    institutionalNotice: "Les exécutions sont effectuées via des canaux de liquidité institutionnels.",
+    settlementMethod: "Methode de Reglement",
+    estimatedProceeds: "Produit Estime",
+    estimatedSettlement: "Reglement Estime: T+0 / Meme Jour",
+    settlementTimeline: "T+0 Meme Jour",
+    institutionalNotice: "Les executions sont effectuees via des canaux de liquidite institutionnels.",
     continue: "Continuer",
     cancel: "Annuler",
     back: "Retour",
-    executionSummary: "Résumé d'Exécution",
-    metal: "Métal",
-    quantity: "Quantité",
+    executionSummary: "Resume d'Execution",
+    metal: "Metal",
+    quantity: "Quantite",
     price: "Prix",
     totalProceeds: "Produit Total",
-    settlementType: "Type de Règlement",
-    twoFactorRequired: "Authentification à Deux Facteurs Requise",
-    enterCode: "Entrez votre code de vérification",
-    confirmLiquidation: "Confirmer la Liquidation",
+    settlementType: "Type de Reglement",
+    twoFactorRequired: "Authentification a Deux Facteurs Requise",
+    enterCode: "Entrez votre code de verification",
+    confirmSell: "Confirmer la Vente",
     processing: "Traitement...",
-    liquidationComplete: "Liquidation Terminée",
-    successMessage: "Vos avoirs ont été liquidés avec succès.",
+    sellComplete: "Vente Terminee",
+    successMessage: "Vos avoirs ont ete vendus avec succes.",
     proceeds: "Produit",
-    settledTo: "Réglé Vers",
-    viewActivity: "Voir l'Activité",
+    settledTo: "Regle Vers",
+    viewActivity: "Voir l'Activite",
     close: "Fermer",
     insufficientBalance: "Solde insuffisant",
     invalidAmount: "Montant invalide",
-    quoteExpired: "Prix expiré. Veuillez réessayer.",
-    executionFailed: "Exécution échouée. Veuillez réessayer.",
-    fetchingPrice: "Récupération du prix...",
+    quoteExpired: "Prix expire. Veuillez reessayer.",
+    executionFailed: "Execution echouee. Veuillez reessayer.",
+    fetchingPrice: "Recuperation du prix...",
     priceRefresh: "Actualisation du prix...",
     quoteTimer: "Verrouillage du prix",
     seconds: "secondes",
   },
   ar: {
-    title: "تصفية الحيازات",
-    subtitle: "قم بتصفية حيازاتك المعدنية المخصصة",
+    title: "بيع",
+    subtitle: "قم ببيع حيازاتك المعدنية",
     availableHoldings: "AVAILABLE HOLDINGS",
     allocatedGrams: "مخصص",
     currentValue: "CURRENT VALUE",
     amount: "المبلغ",
     grams: "غرام",
     max: "الحد الأقصى",
+    executionPreview: "EXECUTION PREVIEW",
+    bidPrice: "سعر العرض",
+    spread: "Spread",
     executionPrice: "سعر التنفيذ",
     perGram: "/غرام",
     settlementMethod: "طريقة التسوية",
     estimatedProceeds: "العائدات المقدرة",
     estimatedSettlement: "التسوية المقدرة: T+0 / نفس اليوم",
+    settlementTimeline: "T+0",
     institutionalNotice: "يتم تنفيذ العمليات من خلال قنوات السيولة المؤسسية.",
     continue: "متابعة",
     cancel: "إلغاء",
@@ -253,10 +274,10 @@ const translations: Record<string, Record<string, string>> = {
     settlementType: "نوع التسوية",
     twoFactorRequired: "المصادقة الثنائية مطلوبة",
     enterCode: "أدخل رمز التحقق",
-    confirmLiquidation: "تأكيد التصفية",
+    confirmSell: "تأكيد البيع",
     processing: "جاري المعالجة...",
-    liquidationComplete: "تمت التصفية",
-    successMessage: "تم تصفية حيازاتك بنجاح.",
+    sellComplete: "تم البيع",
+    successMessage: "تم بيع حيازاتك بنجاح.",
     proceeds: "العائدات",
     settledTo: "تمت التسوية إلى",
     viewActivity: "عرض النشاط",
@@ -271,19 +292,23 @@ const translations: Record<string, Record<string, string>> = {
     seconds: "ثوانٍ",
   },
   ru: {
-    title: "Ликвидация Активов",
-    subtitle: "Ликвидируйте ваши выделенные металлические активы",
+    title: "Продать",
+    subtitle: "Продайте ваши металлические активы",
     availableHoldings: "AVAILABLE HOLDINGS",
     allocatedGrams: "Выделено",
     currentValue: "CURRENT VALUE",
     amount: "Сумма",
     grams: "грамм",
     max: "Макс",
+    executionPreview: "EXECUTION PREVIEW",
+    bidPrice: "Цена Предложения",
+    spread: "Spread",
     executionPrice: "Цена Исполнения",
     perGram: "/грамм",
     settlementMethod: "Метод Расчёта",
     estimatedProceeds: "Ожидаемая Выручка",
     estimatedSettlement: "Ожидаемый Расчёт: T+0 / В тот же день",
+    settlementTimeline: "T+0",
     institutionalNotice: "Исполнение осуществляется через институциональные каналы ликвидности.",
     continue: "Продолжить",
     cancel: "Отмена",
@@ -296,10 +321,10 @@ const translations: Record<string, Record<string, string>> = {
     settlementType: "Тип Расчёта",
     twoFactorRequired: "Требуется Двухфакторная Аутентификация",
     enterCode: "Введите код подтверждения",
-    confirmLiquidation: "Подтвердить Ликвидацию",
+    confirmSell: "Подтвердить Продажу",
     processing: "Обработка...",
-    liquidationComplete: "Ликвидация Завершена",
-    successMessage: "Ваши активы успешно ликвидированы.",
+    sellComplete: "Продажа Завершена",
+    successMessage: "Ваши активы успешно проданы.",
     proceeds: "Выручка",
     settledTo: "Рассчитано В",
     viewActivity: "Просмотр Активности",
@@ -338,7 +363,7 @@ const metalIcons: Record<string, string> = {
 // MAIN COMPONENT
 // ============================================
 
-export default function LiquidateModal({ isOpen, onClose, metal, address, onSuccess }: LiquidateModalProps) {
+export default function LiquidateModal({ isOpen, onClose, metal, address, onSuccess }: SellModalProps) {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
 
@@ -685,13 +710,37 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
               </div>
             </div>
 
-            {/* Execution Price */}
-            <div className="flex items-center justify-between py-3 border-t border-stone-200 dark:border-slate-700">
-              <span className="text-sm text-slate-600 dark:text-slate-400">{t.executionPrice}</span>
-              <span className="text-sm font-bold text-slate-800 dark:text-white">
-                {formatCurrency(executionPrice)}
-                <span className="text-xs font-normal text-slate-500">{t.perGram}</span>
-              </span>
+            {/* Execution Preview */}
+            <div className="bg-stone-50 dark:bg-slate-800 rounded-xl p-4 border border-stone-200 dark:border-slate-700">
+              <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 tracking-wider mb-3">
+                {t.executionPreview}
+              </p>
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{t.bidPrice}</span>
+                  <span className="text-sm font-bold text-slate-800 dark:text-white">
+                    {formatCurrency(executionPrice)}{t.perGram}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{t.spread}</span>
+                  <span className="text-xs font-semibold text-[#BFA181]">0.35%</span>
+                </div>
+                {gramsNum > 0 && (
+                  <div className="flex items-center justify-between pt-2 border-t border-stone-200 dark:border-slate-600">
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">{t.estimatedProceeds}</span>
+                    <span className="text-sm font-bold text-[#2F6F62]">
+                      {settlement === "AUXM"
+                        ? formatCurrency(estimatedProceeds())
+                        : `${formatAmount(estimatedProceeds(), 8)} ${proceedsUnit}`}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Settlement</span>
+                  <span className="text-xs font-semibold text-[#2F6F62]">{t.settlementTimeline}</span>
+                </div>
+              </div>
             </div>
 
             {/* Settlement Method */}
@@ -730,20 +779,7 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
               </div>
             </div>
 
-            {/* Estimated Proceeds */}
-            {gramsNum > 0 && (
-              <div className="bg-[#2F6F62]/10 rounded-xl p-4 border border-[#2F6F62]/30">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold text-[#2F6F62]">{t.estimatedProceeds}</span>
-                  <span className="text-lg font-bold text-[#2F6F62]">
-                    {settlement === "AUXM"
-                      ? formatCurrency(estimatedProceeds())
-                      : `${formatAmount(estimatedProceeds(), 8)} ${proceedsUnit}`}
-                  </span>
-                </div>
-                <p className="text-[10px] text-[#2F6F62]/70">{t.estimatedSettlement}</p>
-              </div>
-            )}
+            {/* Settlement Timeline removed — now inside Execution Preview card */}
 
             {/* Institutional Notice */}
             <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center italic">
@@ -894,7 +930,7 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
                   {t.processing}
                 </>
               ) : (
-                t.confirmLiquidation
+                t.confirmSell
               )}
             </button>
 
@@ -923,7 +959,7 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
 
             {/* Title */}
             <div>
-              <h2 className="text-xl font-bold text-slate-800 dark:text-white">{t.liquidationComplete}</h2>
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white">{t.sellComplete}</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t.successMessage}</p>
             </div>
 

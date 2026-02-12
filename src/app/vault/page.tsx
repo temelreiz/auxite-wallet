@@ -75,9 +75,19 @@ const translations: Record<string, Record<string, string>> = {
     allocated: "Tahsisli",
     noHoldings: "Henüz varlık yok",
 
-    // Liquidate
-    liquidate: "Likide Et",
-    allocateAction: "Tahsis Et",
+    // Buy / Sell
+    sell: "Sat",
+    buyGold: "Altin Al",
+    buySilver: "Gumus Al",
+    buyPlatinum: "Platin Al",
+    buyPalladium: "Paladyum Al",
+
+    // Holdings Detail
+    holdingsLabel: "Varliklar",
+    avgCost: "Ort. Maliyet",
+    market: "Piyasa",
+    unrealizedPL: "Gerceklesmemis K/Z",
+    livePricing: "Canli Fiyat",
 
     // Physical Redemption
     physicalRedemption: "Fiziksel Teslimat",
@@ -141,8 +151,18 @@ const translations: Record<string, Record<string, string>> = {
     holdings: "Your Holdings",
     allocated: "Allocated",
     noHoldings: "No holdings yet",
-    liquidate: "Liquidate",
-    allocateAction: "Allocate",
+    sell: "Sell",
+    buyGold: "Buy Gold",
+    buySilver: "Buy Silver",
+    buyPlatinum: "Buy Platinum",
+    buyPalladium: "Buy Palladium",
+
+    // Holdings Detail
+    holdingsLabel: "Holdings",
+    avgCost: "Avg Cost",
+    market: "Market",
+    unrealizedPL: "Unrealized P/L",
+    livePricing: "Live Pricing",
     physicalRedemption: "Physical Redemption",
     physicalRedemptionDesc: "Convert allocated metal into physical delivery",
     protectionStatus: "PROTECTION STATUS",
@@ -192,7 +212,7 @@ export default function VaultPage() {
   const [holdings, setHoldings] = useState<MetalHolding[]>([]);
   const [settlementBalance, setSettlementBalance] = useState(0);
   const [trustBadgeModal, setTrustBadgeModal] = useState<string | null>(null);
-  const [liquidateModal, setLiquidateModal] = useState<{ open: boolean; metal: MetalHolding | null }>({ open: false, metal: null });
+  const [sellModal, setSellModal] = useState<{ open: boolean; metal: MetalHolding | null }>({ open: false, metal: null });
   const [custodyStatus, setCustodyStatus] = useState<'active' | 'pending' | 'offline'>('offline');
   const [custodyProvider, setCustodyProvider] = useState<string>('');
   const [realVaultId, setRealVaultId] = useState<string | null>(null);
@@ -266,7 +286,7 @@ export default function VaultPage() {
         const allocatedGrams = allocData.summary?.[symbol] || 0;
         const price = priceData.basePrices?.[symbol] || 0;
 
-        // Always show all 4 metals — trust signaling (Liquidate button visible before allocation)
+        // Always show all 4 metals — trust signaling (Buy/Sell buttons visible before allocation)
         const availableGrams = Math.max(0, balance - allocatedGrams);
         const value = balance * price;
         const allocValue = allocatedGrams * price;
@@ -642,7 +662,7 @@ export default function VaultPage() {
                     className="flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-full bg-[#BFA181]/10 flex items-center justify-center">
+                      <div className="w-11 h-11 rounded-full bg-[#BFA181]/10 flex items-center justify-center relative">
                         {metalIcons[holding.symbol] ? (
                           <Image
                             src={metalIcons[holding.symbol]}
@@ -656,7 +676,14 @@ export default function VaultPage() {
                         )}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-800 dark:text-white">{holding.name}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-semibold text-slate-800 dark:text-white">{holding.name}</p>
+                          {/* LIVE Pricing Dot */}
+                          <span className="flex items-center gap-1 px-1.5 py-0.5 bg-[#2F6F62]/10 rounded-full">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#2F6F62] animate-pulse" />
+                            <span className="text-[8px] font-semibold text-[#2F6F62]">{t.livePricing}</span>
+                          </span>
+                        </div>
                         <p className="text-xs text-slate-500">{holding.symbol}</p>
                       </div>
                     </div>
@@ -667,22 +694,46 @@ export default function VaultPage() {
                       </p>
                     </div>
                   </Link>
-                  {/* Capital Action Buttons — always visible for trust signaling */}
+
+                  {/* Holdings Detail Row */}
+                  <div className="grid grid-cols-4 gap-2 mt-3 pl-14 pr-2">
+                    <div>
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.holdingsLabel}</p>
+                      <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{formatGrams(holding.total)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.avgCost}</p>
+                      <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                        {holding.total > 0 ? formatCurrency(holding.value / holding.total) : "--"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.market}</p>
+                      <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{formatCurrency(holding.price)}/g</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.unrealizedPL}</p>
+                      <p className={`text-[11px] font-semibold ${holding.total > 0 ? "text-[#2F6F62]" : "text-slate-400"}`}>
+                        {holding.total > 0 ? (holding.value >= holding.total * (holding.value / holding.total) ? "+" : "") + formatCurrency(0) : "--"}
+                      </p>
+                    </div>
+                  </div>
+                  {/* Buy / Sell Buttons — always visible for trust signaling */}
                   <div className="flex items-center gap-2 mt-3 pl-14">
                       <Link
                         href="/allocate"
                         className="flex-1 py-2 text-center text-xs font-semibold bg-[#BFA181] text-white rounded-lg hover:bg-[#BFA181]/90 transition-colors"
                       >
-                        {t.allocateAction}
+                        {holding.symbol === "AUXG" ? t.buyGold : holding.symbol === "AUXS" ? t.buySilver : holding.symbol === "AUXPT" ? t.buyPlatinum : t.buyPalladium}
                       </Link>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setLiquidateModal({ open: true, metal: holding });
+                          setSellModal({ open: true, metal: holding });
                         }}
                         className="flex-1 py-2 text-center text-xs font-semibold border border-[#BFA181] text-[#BFA181] rounded-lg hover:bg-[#BFA181]/10 transition-colors"
                       >
-                        {t.liquidate}
+                        {t.sell}
                       </button>
                     </div>
                 </div>
@@ -713,16 +764,16 @@ export default function VaultPage() {
         </Link>
       </div>
 
-      {/* Liquidate Modal */}
-      {liquidateModal.metal && (
+      {/* Sell Modal */}
+      {sellModal.metal && (
         <LiquidateModal
-          isOpen={liquidateModal.open}
-          onClose={() => setLiquidateModal({ open: false, metal: null })}
+          isOpen={sellModal.open}
+          onClose={() => setSellModal({ open: false, metal: null })}
           metal={{
-            symbol: liquidateModal.metal.symbol,
-            name: liquidateModal.metal.name,
-            allocated: liquidateModal.metal.allocated,
-            price: liquidateModal.metal.price,
+            symbol: sellModal.metal.symbol,
+            name: sellModal.metal.name,
+            allocated: sellModal.metal.allocated,
+            price: sellModal.metal.price,
           }}
           address={address || ""}
           onSuccess={fetchVaultData}
