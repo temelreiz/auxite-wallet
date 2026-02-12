@@ -121,6 +121,9 @@ export async function POST(request: NextRequest) {
     // Create address-to-user mapping for deposit scanner
     await redis.set(`user:address:${vaultAddress.toLowerCase()}`, userId);
 
+    // Create vault ID reverse lookup for internal transfers
+    await redis.set(`vault:${vaultId}`, userId);
+
     console.log(`[Register] Wallet assigned for ${userId}: ${vaultAddress}, vault: ${vaultId}`);
 
     // ══════════════════════════════════════════════════════════════
