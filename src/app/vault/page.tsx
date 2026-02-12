@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import TopNav from "@/components/TopNav";
+import LiquidateModal from "@/components/LiquidateModal";
 import { useLanguage } from "@/components/LanguageContext";
 
 // Metal icons
@@ -74,6 +75,10 @@ const translations: Record<string, Record<string, string>> = {
     allocated: "Tahsisli",
     noHoldings: "Henüz varlık yok",
 
+    // Liquidate
+    liquidate: "Likide Et",
+    allocateAction: "Tahsis Et",
+
     // Physical Redemption
     physicalRedemption: "Fiziksel Teslimat",
     physicalRedemptionDesc: "Tahsisli metali fiziksel teslimata dönüştürün",
@@ -136,6 +141,8 @@ const translations: Record<string, Record<string, string>> = {
     holdings: "Your Holdings",
     allocated: "Allocated",
     noHoldings: "No holdings yet",
+    liquidate: "Liquidate",
+    allocateAction: "Allocate",
     physicalRedemption: "Physical Redemption",
     physicalRedemptionDesc: "Convert allocated metal into physical delivery",
     protectionStatus: "PROTECTION STATUS",
@@ -185,6 +192,7 @@ export default function VaultPage() {
   const [holdings, setHoldings] = useState<MetalHolding[]>([]);
   const [settlementBalance, setSettlementBalance] = useState(0);
   const [trustBadgeModal, setTrustBadgeModal] = useState<string | null>(null);
+  const [liquidateModal, setLiquidateModal] = useState<{ open: boolean; metal: MetalHolding | null }>({ open: false, metal: null });
   const [custodyStatus, setCustodyStatus] = useState<'active' | 'pending' | 'offline'>('offline');
   const [custodyProvider, setCustodyProvider] = useState<string>('');
   const [realVaultId, setRealVaultId] = useState<string | null>(null);
@@ -626,37 +634,61 @@ export default function VaultPage() {
           ) : (
             <div className="space-y-3">
               {holdings.map((holding) => (
-                <Link
+                <div
                   key={holding.symbol}
-                  href={`/asset/${holding.symbol}`}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
+                  className="p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-[#BFA181]/10 flex items-center justify-center">
-                      {metalIcons[holding.symbol] ? (
-                        <Image
-                          src={metalIcons[holding.symbol]}
-                          alt={holding.name}
-                          width={28}
-                          height={28}
-                          className="object-contain"
-                        />
-                      ) : (
-                        <span className="text-[#BFA181] font-bold">{holding.symbol[0]}</span>
-                      )}
+                  <Link
+                    href={`/asset/${holding.symbol}`}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-full bg-[#BFA181]/10 flex items-center justify-center">
+                        {metalIcons[holding.symbol] ? (
+                          <Image
+                            src={metalIcons[holding.symbol]}
+                            alt={holding.name}
+                            width={28}
+                            height={28}
+                            className="object-contain"
+                          />
+                        ) : (
+                          <span className="text-[#BFA181] font-bold">{holding.symbol[0]}</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800 dark:text-white">{holding.name}</p>
+                        <p className="text-xs text-slate-500">{holding.symbol}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white">{holding.name}</p>
-                      <p className="text-xs text-slate-500">{holding.symbol}</p>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatCurrency(holding.value)}</p>
+                      <p className="text-xs text-[#2F6F62] font-medium">
+                        {formatGrams(holding.allocated)} {t.allocated}
+                      </p>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatCurrency(holding.value)}</p>
-                    <p className="text-xs text-[#2F6F62] font-medium">
-                      {formatGrams(holding.allocated)} {t.allocated}
-                    </p>
-                  </div>
-                </Link>
+                  </Link>
+                  {/* Capital Action Buttons */}
+                  {holding.allocated > 0 && (
+                    <div className="flex items-center gap-2 mt-3 pl-14">
+                      <Link
+                        href="/allocate"
+                        className="flex-1 py-2 text-center text-xs font-semibold bg-[#BFA181] text-white rounded-lg hover:bg-[#BFA181]/90 transition-colors"
+                      >
+                        {t.allocateAction}
+                      </Link>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLiquidateModal({ open: true, metal: holding });
+                        }}
+                        className="flex-1 py-2 text-center text-xs font-semibold border border-[#BFA181] text-[#BFA181] rounded-lg hover:bg-[#BFA181]/10 transition-colors"
+                      >
+                        {t.liquidate}
+                      </button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
@@ -683,6 +715,22 @@ export default function VaultPage() {
           </svg>
         </Link>
       </div>
+
+      {/* Liquidate Modal */}
+      {liquidateModal.metal && (
+        <LiquidateModal
+          isOpen={liquidateModal.open}
+          onClose={() => setLiquidateModal({ open: false, metal: null })}
+          metal={{
+            symbol: liquidateModal.metal.symbol,
+            name: liquidateModal.metal.name,
+            allocated: liquidateModal.metal.allocated,
+            price: liquidateModal.metal.price,
+          }}
+          address={address || ""}
+          onSuccess={fetchVaultData}
+        />
+      )}
 
       {/* Trust Badge Modal */}
       {trustBadgeModal && (
