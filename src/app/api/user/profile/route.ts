@@ -32,16 +32,24 @@ export async function GET(request: NextRequest) {
     }
 
     // user:{userId} hash'inden bilgileri al
-    const userData = await redis.hgetall(`user:${userId}`);
-    
+    const userData = await redis.hgetall(`user:${userId}`) as Record<string, string> | null;
+
+    // Eğer user:{userId} hash'ında email varsa, auth:user:{email} hash'ından da name/phone çek
+    let authData: Record<string, string> | null = null;
+    const email = userData?.email;
+    if (email) {
+      authData = await redis.hgetall(`auth:user:${email.toLowerCase()}`) as Record<string, string> | null;
+    }
+
     return NextResponse.json({
       success: true,
       profile: {
-        email: userData?.email || "",
-        phone: userData?.phone || "",
+        name: authData?.name || userData?.name || "",
+        email: authData?.email || userData?.email || "",
+        phone: authData?.phone || userData?.phone || "",
         country: userData?.country || "",
         timezone: userData?.timezone || "Europe/Istanbul",
-        createdAt: userData?.createdAt || null,
+        createdAt: authData?.createdAt || userData?.createdAt || null,
       },
       userId,
     });

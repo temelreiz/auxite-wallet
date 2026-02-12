@@ -336,6 +336,18 @@ export default function ClientCenterPage() {
   } | null>(null);
   const [kycLoading, setKycLoading] = useState(true);
 
+  // Real user data from API
+  const [userProfile, setUserProfile] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    country: string;
+    accountType: string;
+  }>({ name: "", email: "", phone: "", country: "", accountType: "individual" });
+  const [whitelistedAddresses, setWhitelistedAddresses] = useState<
+    { label: string; address: string }[]
+  >([]);
+
   // Load wallet address from localStorage
   useEffect(() => {
     const savedAddress = localStorage.getItem("auxite_wallet_address");
@@ -343,6 +355,63 @@ export default function ClientCenterPage() {
       setAddress(savedAddress);
     }
   }, []);
+
+  // Fetch user profile from API
+  useEffect(() => {
+    if (!address) return;
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`/api/user/profile?address=${address}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.profile) {
+            const maskedEmail = data.profile.email
+              ? data.profile.email.replace(/(.{2})(.*)(@.*)/, "$1***$3")
+              : "—";
+            const maskedPhone = data.profile.phone
+              ? data.profile.phone.replace(/(.{4})(.*)(.{4})/, "$1 *** $3")
+              : "—";
+            setUserProfile({
+              name: data.profile.name || data.profile.email?.split("@")[0] || "—",
+              email: maskedEmail,
+              phone: maskedPhone,
+              country: data.profile.country || "—",
+              accountType: "individual",
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Profile fetch error:", err);
+      }
+    };
+    fetchProfile();
+  }, [address]);
+
+  // Fetch whitelist addresses from API
+  useEffect(() => {
+    if (!address) return;
+    const fetchWhitelist = async () => {
+      try {
+        const res = await fetch(`/api/security/whitelist?address=${address}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.addresses && data.addresses.length > 0) {
+            setWhitelistedAddresses(
+              data.addresses.map((a: any) => ({
+                label: a.label || a.network || "Address",
+                address: a.address
+                  ? `${a.address.slice(0, 6)}...${a.address.slice(-4)}`
+                  : "—",
+              }))
+            );
+          }
+        }
+      } catch (err) {
+        console.error("Whitelist fetch error:", err);
+      }
+    };
+    fetchWhitelist();
+  }, [address]);
 
   // Fetch KYC status from API
   useEffect(() => {
@@ -378,18 +447,15 @@ export default function ClientCenterPage() {
 
   const kycStatus = getKycStatus();
 
-  // User data with real KYC status
+  // Combined user data (real profile + KYC status)
   const userData = {
-    legalName: "John Smith",
-    accountType: "individual",
-    jurisdiction: "United States",
+    legalName: userProfile.name,
+    accountType: userProfile.accountType,
+    jurisdiction: userProfile.country,
     kycStatus: kycStatus,
-    email: "j***@example.com",
-    phone: "+1 *** *** 4567",
-    whitelistedAddresses: [
-      { label: "Primary Wallet", address: "0x1234...5678" },
-      { label: "Cold Storage", address: "0xabcd...efgh" },
-    ],
+    email: userProfile.email,
+    phone: userProfile.phone,
+    whitelistedAddresses: whitelistedAddresses,
   };
 
   // Start Sumsub verification
@@ -731,22 +797,30 @@ export default function ClientCenterPage() {
             <p className="text-xs text-slate-500 italic mb-3">{t.whitelistRequired}</p>
 
             <div className="space-y-2 mb-3">
-              {userData.whitelistedAddresses.map((addr, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-3 rounded-lg bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-slate-800 dark:text-white mb-0.5">
-                      {addr.label}
-                    </p>
-                    <p className="text-xs font-mono text-slate-500">{addr.address}</p>
+              {userData.whitelistedAddresses.length > 0 ? (
+                userData.whitelistedAddresses.map((addr, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 rounded-lg bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-slate-800 dark:text-white mb-0.5">
+                        {addr.label}
+                      </p>
+                      <p className="text-xs font-mono text-slate-500">{addr.address}</p>
+                    </div>
+                    <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
                   </div>
-                  <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
+                ))
+              ) : (
+                <div className="p-3 rounded-lg bg-stone-50 dark:bg-slate-800 border border-dashed border-stone-300 dark:border-slate-600 text-center">
+                  <p className="text-xs text-slate-500">
+                    {lang === "tr" ? "Henüz beyaz liste adresi eklenmedi" : "No whitelisted addresses yet"}
+                  </p>
                 </div>
-              ))}
+              )}
             </div>
 
             <button className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-dashed border-[#BFA181]/50 text-[#BFA181] dark:text-[#BFA181] font-medium text-sm hover:bg-[#BFA181]/10 transition-colors">
