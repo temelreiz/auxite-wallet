@@ -1,6 +1,7 @@
 // app/api/email/test/route.ts
 // Institutional Email Test Endpoint — All 6 templates
 import { NextRequest, NextResponse } from 'next/server';
+import { redis } from '@/lib/redis';
 import {
   sendTradeExecutionEmail,
   sendCertificateEmail,
@@ -42,8 +43,32 @@ export async function POST(request: NextRequest) {
 
     // 2. Metal Allocation Certificate
     if (type === 'certificate') {
+      const certNumber = `AUX-CERT-${now.getFullYear()}-TEST01`;
+      const serialNumber = `BAR-${Date.now().toString().slice(-8)}`;
+
+      // Create temporary certificate record in Redis so the "View Certificate" link works
+      const certKey = `certificate:${certNumber}`;
+      const certData: Record<string, string> = {
+        certificateNumber: certNumber,
+        userUid: 'TEST-CLIENT-001',
+        metal: 'AUXG',
+        grams: '2500.0000',
+        purity: '999.9',
+        vault: 'ZH',
+        vaultName: 'Zurich',
+        serialNumber: serialNumber,
+        issuedAt: now.toISOString(),
+        holderName: 'Test Client',
+      };
+
+      // Set with 24-hour TTL — auto-cleanup for test data
+      for (const [field, value] of Object.entries(certData)) {
+        await redis.hset(certKey, { [field]: value });
+      }
+      await redis.expire(certKey, 86400); // 24 saat
+
       const result = await sendCertificateEmail(to, '', {
-        certificateNumber: `AUX-CERT-${now.getFullYear()}-TEST01`,
+        certificateNumber: certNumber,
         metal: 'AUXG',
         metalName: 'Gold',
         grams: '2500.0000',
@@ -51,7 +76,7 @@ export async function POST(request: NextRequest) {
         vaultLocation: 'Zurich',
         holderName: 'Test Client',
       });
-      return NextResponse.json({ type: 'certificate', ...result });
+      return NextResponse.json({ type: 'certificate', certNumber, ...result });
     }
 
     // 3. Yield Enrollment (Leasing Participation)
