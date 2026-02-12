@@ -55,6 +55,10 @@ const translations: Record<string, Record<string, string>> = {
     rfqSubmitted: "Talebiniz masaya iletildi. En kısa sürede dönüş yapılacaktır.",
     // Infrastructure
     institutionalExecution: "Kurumsal düzeyde işlem altyapısı.",
+    // Error messages
+    executionError: "Tahsis Hatası",
+    allocationFailed: "Tahsis başarısız. Lütfen tekrar deneyin.",
+    connectionError: "Bağlantı hatası. Lütfen tekrar deneyin.",
   },
   en: {
     title: "Metal Allocation",
@@ -96,6 +100,10 @@ const translations: Record<string, Record<string, string>> = {
     rfqSubmitted: "Your request has been forwarded to the desk. You will be contacted shortly.",
     // Infrastructure
     institutionalExecution: "Institutional-grade execution infrastructure.",
+    // Error messages
+    executionError: "Allocation Error",
+    allocationFailed: "Allocation failed. Please try again.",
+    connectionError: "Connection error. Please try again.",
   },
 };
 
@@ -197,6 +205,7 @@ export default function AllocatePage() {
   const [allocationResult, setAllocationResult] = useState<any>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [rfqSubmitted, setRfqSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch prices
   useEffect(() => {
@@ -258,6 +267,7 @@ export default function AllocatePage() {
 
   const handleReviewClick = () => {
     if (capitalAmount <= 0 || metalExecPrice <= 0) return;
+    setError(null);
     if (requiresRFQ) {
       setViewState("rfq");
     } else {
@@ -268,6 +278,7 @@ export default function AllocatePage() {
   const handleConfirmAllocation = useCallback(async () => {
     if (isExecuting) return;
     setIsExecuting(true);
+    setError(null);
 
     try {
       const res = await fetch("/api/exchange", {
@@ -294,10 +305,10 @@ export default function AllocatePage() {
         });
         setViewState("completed");
       } else {
-        alert(data.error || "Allocation failed. Please try again.");
+        setError(data.error || t.allocationFailed);
       }
     } catch (error) {
-      alert("Connection error. Please try again.");
+      setError(t.connectionError);
     } finally {
       setIsExecuting(false);
     }
@@ -519,10 +530,27 @@ export default function AllocatePage() {
             {/* Execution note */}
             <p className="text-[10px] text-slate-400 text-center px-6 mb-4">{t.executionNote}</p>
 
+            {/* Error Banner */}
+            {error && (
+              <div className="mx-6 mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-red-700 dark:text-red-400">{t.executionError}</p>
+                    <p className="text-xs text-red-600 dark:text-red-400/80 mt-0.5">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-3 px-6 pb-6">
               <button
-                onClick={() => setViewState("allocate")}
+                onClick={() => { setViewState("allocate"); setError(null); }}
                 className="flex-1 py-4 border border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl"
               >
                 {t.cancel}
