@@ -1,5 +1,5 @@
 // app/api/email/test/route.ts
-// Institutional Email Test Endpoint — All 6 templates
+// Institutional Email Test Endpoint — All templates
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import {
@@ -10,6 +10,12 @@ import {
   sendRedemptionInitiatedEmail,
   sendSecurityAlertEmail,
 } from '@/lib/email';
+import {
+  sendDepositConfirmedEmail,
+  sendWithdrawConfirmedEmail,
+  sendTransferSentEmail,
+  sendTransferReceivedEmail,
+} from '@/lib/email-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -138,8 +144,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ type: 'security', ...result });
     }
 
+    // 7. Deposit Confirmed
+    if (type === 'deposit') {
+      const result = await sendDepositConfirmedEmail(to, 'Test Client', '10,000.00', 'USDT', '0xabc123def456...', 'en');
+      return NextResponse.json({ type: 'deposit', ...result });
+    }
+
+    // 8. Withdraw Confirmed
+    if (type === 'withdraw') {
+      const result = await sendWithdrawConfirmedEmail(to, 'Test Client', '5,000.00', 'USDT', '0x742d35Cc6634C0532925a3b844Bc9e7595f2bD08', '0xdef789abc012...', '2.50 USDT', 'en');
+      return NextResponse.json({ type: 'withdraw', ...result });
+    }
+
+    // 9. Transfer Sent
+    if (type === 'transfer-sent') {
+      const result = await sendTransferSentEmail(to, 'Test Client', '1,250.00', 'USDT', '0x742d35Cc6634C0532925a3b844Bc9e7595f2bD08', 'en');
+      return NextResponse.json({ type: 'transfer-sent', ...result });
+    }
+
+    // 10. Transfer Received
+    if (type === 'transfer-received') {
+      const result = await sendTransferReceivedEmail(to, 'Test Client', '1,250.00', 'USDT', '0x912d35Cc6634C0532925a3b844Bc9e7595f2bD08', 'en');
+      return NextResponse.json({ type: 'transfer-received', ...result });
+    }
+
     return NextResponse.json({
-      error: 'Invalid type. Available: trade, certificate, staking/leasing, yield, redemption, security',
+      error: 'Invalid type. Available: trade, certificate, staking/leasing, yield, redemption, security, deposit, withdraw, transfer-sent, transfer-received',
     }, { status: 400 });
   } catch (error: any) {
     console.error('Email test error:', error);
