@@ -10,7 +10,7 @@
 import { useState, useEffect, useCallback } from "react";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
-import { useAccount } from "wagmi";
+import { useWallet } from "@/components/WalletContext";
 
 // ============================================
 // TRANSLATIONS
@@ -178,7 +178,7 @@ type ViewState = "allocate" | "preview" | "completed" | "rfq";
 export default function AllocatePage() {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
-  const { address } = useAccount();
+  const { address } = useWallet();
 
   // State
   const [selectedMetal, setSelectedMetal] = useState("AUXG");
