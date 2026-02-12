@@ -335,7 +335,6 @@ export default function VaultPage() {
 
         const availableGrams = Math.max(0, balance - allocatedGrams);
         const value = balance * price;
-        const allocValue = allocatedGrams * price;
 
         holdingsList.push({
           symbol,
@@ -348,7 +347,7 @@ export default function VaultPage() {
         });
 
         totalValue += value;
-        allocatedValue += allocValue;
+        allocatedValue += value; // Total metal value = Allocated Assets
       }
 
       // Encumbered positions (yield programs)
