@@ -1,0 +1,19 @@
+# Auxite Vault — Web Application
+# This is a private authenticated application.
+# Only the landing/login page should be indexed.
+
+User-agent: *
+Allow: /auth/login
+Allow: /auth/register
+Disallow: /vault
+Disallow: /allocate
+Disallow: /stake
+Disallow: /transfers
+Disallow: /profile
+Disallow: /security
+Disallow: /notifications
+Disallow: /statements
+Disallow: /api/
+Disallow: /_next/
+
+# Sitemap not needed — authenticated app
