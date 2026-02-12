@@ -77,6 +77,14 @@ const VAULT_INFO: Record<string, { name: string; id: string; location: string; c
   LN: { name: 'Vault D – London Facility', id: 'UK-LDN-VAULT-01', location: 'London', country: 'United Kingdom' },
 };
 
+// Vault-based issuer entities — jurisdiction-specific legal entities
+const ISSUER_BY_VAULT: Record<string, { name: string; address: string }> = {
+  IST: { name: 'Auxite Kıymetli Madenler Ticaret A.Ş.', address: 'Istanbul, Turkey' },
+  ZH:  { name: 'Auxite Precious Metals AG', address: 'Zurich, Switzerland' },
+  DB:  { name: 'Auxite Precious Metals Trading LLC', address: 'Dubai, UAE' },
+  LN:  { name: 'Auxite Kıymetli Madenler Ticaret A.Ş.', address: 'Istanbul, Turkey' },
+};
+
 // ═══════════════════════════════════════════════
 // GET — Generate Certificate Data + HTML
 // ═══════════════════════════════════════════════
@@ -199,8 +207,8 @@ export async function GET(request: NextRequest) {
         ledgerReference: certificate.ledgerReference || generateLedgerReference(),
       },
 
-      // Issuer
-      issuer: {
+      // Issuer — vault-based entity
+      issuer: ISSUER_BY_VAULT[certificate.vault] || {
         name: 'Auxite Precious Metals AG',
         address: 'Zurich, Switzerland',
       },

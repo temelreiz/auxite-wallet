@@ -20,6 +20,14 @@ const TERM_LABELS: Record<number, string> = {
   366: '12 Months',
 };
 
+// Vault-based issuer entities — jurisdiction-specific legal entities
+const ISSUER_BY_VAULT: Record<string, { name: string; address: string }> = {
+  IST: { name: 'Auxite Kıymetli Madenler Ticaret A.Ş.', address: 'Istanbul, Turkey' },
+  ZH:  { name: 'Auxite Precious Metals AG', address: 'Zurich, Switzerland' },
+  DB:  { name: 'Auxite Precious Metals Trading LLC', address: 'Dubai, UAE' },
+  LN:  { name: 'Auxite Kıymetli Madenler Ticaret A.Ş.', address: 'Istanbul, Turkey' },
+};
+
 function generateNoteId(): string {
   const year = new Date().getFullYear();
   const random = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -58,6 +66,7 @@ function generateParticipationNoteHTML(data: {
   yieldType: string;
   issueDate: string;
   issuerEntity: string;
+  issuerAddress: string;
 }): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -509,7 +518,7 @@ function generateParticipationNoteHTML(data: {
     <div class="footer">
       <div class="footer-left">
         ${data.issuerEntity}<br>
-        Zurich, Switzerland<br>
+        ${data.issuerAddress}<br>
         Treasury &amp; Leasing
       </div>
       <div class="footer-right">
@@ -574,7 +583,8 @@ export async function GET(request: NextRequest) {
       leaseRate: stake.apy || stake.apyPercent || '0',
       yieldType: 'Fixed',
       issueDate: formatDateFull(stake.createdAt || new Date()),
-      issuerEntity: 'Auxite Precious Metals AG',
+      issuerEntity: (ISSUER_BY_VAULT[stake.vault] || ISSUER_BY_VAULT['ZH']).name,
+      issuerAddress: (ISSUER_BY_VAULT[stake.vault] || ISSUER_BY_VAULT['ZH']).address,
     };
 
     if (format === 'json') {
@@ -604,6 +614,7 @@ export async function POST(request: NextRequest) {
       lockDays = 91,
       apy = '3.40',
       startDate = new Date().toISOString(),
+      vault = 'ZH',
     } = body;
 
     const termLabel = TERM_LABELS[lockDays] || `${lockDays} Days`;
@@ -629,7 +640,8 @@ export async function POST(request: NextRequest) {
       leaseRate: apy,
       yieldType: 'Fixed',
       issueDate: formatDateFull(new Date()),
-      issuerEntity: 'Auxite Precious Metals AG',
+      issuerEntity: (ISSUER_BY_VAULT[vault] || ISSUER_BY_VAULT['ZH']).name,
+      issuerAddress: (ISSUER_BY_VAULT[vault] || ISSUER_BY_VAULT['ZH']).address,
     };
 
     const html = generateParticipationNoteHTML(data);

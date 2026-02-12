@@ -186,7 +186,7 @@ function institutionalEmailWrapper(content: string, deskName: string): string {
       <p class="master-footer-notice">This message serves as an operational confirmation and should be retained for your financial records.</p>
     </div>
     <div class="footer">
-      <p>Auxite Precious Metals AG &middot; Zurich, Switzerland</p>
+      <p>Aurum Ledger Ltd &middot; Hong Kong</p>
       <p>This is an automated notification. Please do not reply.</p>
     </div>
     <div class="footer-gold"></div>

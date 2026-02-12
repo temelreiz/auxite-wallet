@@ -481,7 +481,7 @@ const templates = {
         subject: `You received ${amount} ${token}`,
         title: 'Transfer Received',
         greeting: `Hi ${name},`,
-        message: 'You have received a transfer to your wallet.',
+        message: 'You have received a transfer to your custody account.',
         amountLabel: 'Amount',
         fromLabel: 'From',
         viewWallet: 'View in Client Ledger',
@@ -490,7 +490,7 @@ const templates = {
         subject: `${amount} ${token} aldınız`,
         title: 'Transfer Alındı',
         greeting: `Merhaba ${name},`,
-        message: 'Cüzdanınıza bir transfer aldınız.',
+        message: 'Saklama hesabınıza bir transfer aldınız.',
         amountLabel: 'Miktar',
         fromLabel: 'Gönderen',
         viewWallet: 'Müşteri Defterinde Görüntüle',
@@ -557,7 +557,7 @@ function generateEmailHTML({ title, content }: { title: string; content: string 
           </tr>
           <tr>
             <td style="padding: 16px 30px; border-top: 1px solid #e5e5e5; text-align: center;">
-              <p style="font-size: 9px; color: #aaa; margin: 4px 0;">Auxite Precious Metals AG &middot; Zurich, Switzerland</p>
+              <p style="font-size: 9px; color: #aaa; margin: 4px 0;">Aurum Ledger Ltd &middot; Hong Kong</p>
               <p style="font-size: 9px; color: #aaa; margin: 4px 0;">This is an automated notification. Please do not reply.</p>
             </td>
           </tr>
