@@ -206,8 +206,8 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    if (format === 'html') {
-      const html = generateInstitutionalCertificateHTML(pdfData);
+    if (format === 'html' || format === 'pdf') {
+      const html = generateInstitutionalCertificateHTML(pdfData, format === 'pdf');
       return new NextResponse(html, {
         headers: { 'Content-Type': 'text/html; charset=utf-8' },
       });
@@ -225,7 +225,7 @@ export async function GET(request: NextRequest) {
 // Swiss Private Bank + LBMA Custody Statement
 // ═══════════════════════════════════════════════
 
-function generateInstitutionalCertificateHTML(data: any): string {
+function generateInstitutionalCertificateHTML(data: any, autoPrint: boolean = false): string {
   const issueDate = new Date(data.issueDate);
   const formattedDate = issueDate.toLocaleDateString('en-GB', {
     day: '2-digit', month: 'short', year: 'numeric'
@@ -297,7 +297,7 @@ function generateInstitutionalCertificateHTML(data: any): string {
     .header-right {
       text-align: right;
       font-size: 11px;
-      color: #555;
+      color: #333;
       line-height: 1.7;
     }
     .header-right .cert-no {
@@ -310,17 +310,17 @@ function generateInstitutionalCertificateHTML(data: any): string {
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: #888;
+      color: #666;
     }
 
     /* ── PREAMBLE ── */
     .preamble {
       padding: 16px 40px;
       font-size: 11px;
-      color: #555;
+      color: #333;
       font-style: italic;
-      background: #fafafa;
-      border-bottom: 1px solid #e5e5e5;
+      background: #f8f7f4;
+      border-bottom: 1px solid #e0e0e0;
     }
 
     /* ── CONTENT ── */
@@ -335,10 +335,10 @@ function generateInstitutionalCertificateHTML(data: any): string {
       font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #888;
+      color: #555;
       margin-bottom: 10px;
       padding-bottom: 4px;
-      border-bottom: 1px solid #ddd;
+      border-bottom: 1px solid #ccc;
     }
 
     /* ── CLIENT BLOCK ── */
@@ -352,12 +352,12 @@ function generateInstitutionalCertificateHTML(data: any): string {
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: #888;
+      color: #555;
     }
     .field-value {
-      font-size: 12px;
-      color: #1a1a1a;
-      font-weight: 500;
+      font-size: 13px;
+      color: #111;
+      font-weight: 600;
     }
     .field-value.mono {
       font-family: 'Courier New', monospace;
@@ -373,18 +373,18 @@ function generateInstitutionalCertificateHTML(data: any): string {
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: #888;
-      font-weight: 600;
+      color: #444;
+      font-weight: 700;
       padding: 8px 10px;
       text-align: left;
       border-bottom: 2px solid #C5A55A;
-      background: #fafafa;
+      background: #f8f7f4;
     }
     .metal-table td {
-      font-size: 12px;
+      font-size: 13px;
       padding: 10px 10px;
-      border-bottom: 1px solid #eee;
-      color: #1a1a1a;
+      border-bottom: 1px solid #ddd;
+      color: #111;
     }
     .metal-table td.mono {
       font-family: 'Courier New', monospace;
@@ -404,18 +404,18 @@ function generateInstitutionalCertificateHTML(data: any): string {
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: #888;
-      font-weight: 600;
+      color: #444;
+      font-weight: 700;
       padding: 8px 10px;
       text-align: left;
       border-bottom: 2px solid #1a1a1a;
-      background: #fafafa;
+      background: #f8f7f4;
     }
     .bar-table td {
-      font-size: 11px;
+      font-size: 12px;
       padding: 8px 10px;
-      border-bottom: 1px solid #eee;
-      color: #1a1a1a;
+      border-bottom: 1px solid #ddd;
+      color: #111;
     }
     .bar-table td.mono {
       font-family: 'Courier New', monospace;
@@ -424,10 +424,10 @@ function generateInstitutionalCertificateHTML(data: any): string {
     /* ── LEGAL STATEMENT ── */
     .legal-statement {
       padding: 14px 16px;
-      background: #fafafa;
+      background: #f8f7f4;
       border-left: 3px solid #C5A55A;
-      font-size: 11px;
-      color: #333;
+      font-size: 12px;
+      color: #222;
       font-style: italic;
       line-height: 1.7;
       margin: 16px 0;
@@ -454,11 +454,11 @@ function generateInstitutionalCertificateHTML(data: any): string {
     .hash-box {
       font-family: 'Courier New', monospace;
       font-size: 9px;
-      color: #555;
-      background: #f5f5f5;
+      color: #333;
+      background: #f5f5f3;
       padding: 10px 12px;
       word-break: break-all;
-      border: 1px solid #ddd;
+      border: 1px solid #ccc;
       margin-top: 6px;
     }
     .qr-block {
@@ -470,7 +470,7 @@ function generateInstitutionalCertificateHTML(data: any): string {
     }
     .qr-label {
       font-size: 8px;
-      color: #888;
+      color: #555;
       margin-top: 4px;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -498,11 +498,11 @@ function generateInstitutionalCertificateHTML(data: any): string {
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: #888;
+      color: #555;
     }
     .sig-entity {
       font-size: 10px;
-      color: #333;
+      color: #222;
       margin-top: 2px;
     }
 
@@ -516,12 +516,12 @@ function generateInstitutionalCertificateHTML(data: any): string {
     }
     .footer-left {
       font-size: 9px;
-      color: #888;
+      color: #555;
       line-height: 1.6;
     }
     .footer-right {
       font-size: 8px;
-      color: #aaa;
+      color: #777;
       text-align: right;
     }
     .footer-gold {
@@ -533,9 +533,40 @@ function generateInstitutionalCertificateHTML(data: any): string {
     .electronic-notice {
       text-align: center;
       font-size: 9px;
-      color: #888;
+      color: #555;
       padding: 8px 40px;
       font-style: italic;
+    }
+
+    /* ── PDF DOWNLOAD BAR ── */
+    .pdf-bar {
+      text-align: center;
+      padding: 12px 40px;
+      background: #f8f7f4;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .pdf-bar button {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      padding: 10px 28px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin: 0 6px;
+    }
+    .pdf-bar button:hover { background: #333; }
+    .pdf-bar button.outline {
+      background: transparent;
+      color: #1a1a1a;
+      border: 1px solid #1a1a1a;
+    }
+    .pdf-bar button.outline:hover { background: #f0f0f0; }
+    @media print {
+      .pdf-bar { display: none !important; }
     }
 
     /* ── PRINT ── */
@@ -549,6 +580,12 @@ function generateInstitutionalCertificateHTML(data: any): string {
   <div class="page">
     <!-- Gold accent line -->
     <div class="gold-line"></div>
+
+    <!-- PDF Download Bar -->
+    <div class="pdf-bar">
+      <button onclick="window.print()">⬇ Save as PDF</button>
+      <button class="outline" onclick="window.history.back()">← Back</button>
+    </div>
 
     <!-- Header -->
     <div class="header">
@@ -683,7 +720,7 @@ function generateInstitutionalCertificateHTML(data: any): string {
             <div class="hash-box">${data.verification.hash}</div>
             <div style="margin-top: 8px;">
               <div class="field-label">Ledger References</div>
-              <div style="font-size: 11px; color: #333; margin-top: 4px;">
+              <div style="font-size: 11px; color: #222; margin-top: 4px;">
                 Event: <span class="mono" style="font-family: 'Courier New', monospace;">${data.ledger.allocationEventId}</span><br>
                 Ledger: <span class="mono" style="font-family: 'Courier New', monospace;">${data.ledger.ledgerReference}</span>
               </div>
@@ -734,6 +771,7 @@ function generateInstitutionalCertificateHTML(data: any): string {
     </div>
     <div class="footer-gold"></div>
   </div>
+  ${autoPrint ? `<script>window.onload = function() { window.print(); }</script>` : ''}
 </body>
 </html>`;
 }
