@@ -145,6 +145,10 @@ const translations: Record<string, Record<string, string>> = {
     yieldPrograms: "Getiri Programları",
     pendingDelivery: "Bekleyen Fiziksel Teslimat",
     tradeSettlement: "Takas İşlemleri",
+
+    // Custody Verification
+    custodyVerification: "Saklama Doğrulama",
+    custodyVerificationDesc: "Sertifika numarası veya QR kod ile doğrulayın",
   },
   en: {
     custodyStatus: "Custody Status",
@@ -229,6 +233,10 @@ const translations: Record<string, Record<string, string>> = {
     yieldPrograms: "Yield Programs",
     pendingDelivery: "Pending Physical Delivery",
     tradeSettlement: "Trade Settlement",
+
+    // Custody Verification
+    custodyVerification: "Custody Verification",
+    custodyVerificationDesc: "Verify via certificate number or QR code",
   },
 };
 
@@ -683,6 +691,27 @@ export default function VaultPage() {
             <span className="text-xs font-semibold text-[#BFA181] dark:text-[#BFA181]">{t.notRehypothecated}</span>
           </div>
         </div>
+
+        {/* Custody Verification — Certificate & QR Verification */}
+        <Link
+          href="/verify"
+          className="flex items-center justify-between p-4 bg-[#BFA181]/10 rounded-xl border border-[#BFA181]/40 hover:border-[#BFA181] transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-[#BFA181]/20 flex items-center justify-center">
+              <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-800 dark:text-white">{t.custodyVerification}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{t.custodyVerificationDesc}</p>
+            </div>
+          </div>
+          <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
 
         {/* Capital Actions */}
         <div>
