@@ -10,7 +10,6 @@
 import { useState, useEffect, useCallback } from "react";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
-import { useWallet } from "@/components/WalletContext";
 
 // ============================================
 // TRANSLATIONS
@@ -178,7 +177,12 @@ type ViewState = "allocate" | "preview" | "completed" | "rfq";
 export default function AllocatePage() {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
-  const { address } = useWallet();
+  // Wallet address — read from localStorage (same pattern as vault page)
+  const [address, setAddress] = useState<string | null>(null);
+  useEffect(() => {
+    const savedAddress = localStorage.getItem("auxite_wallet_address");
+    if (savedAddress) setAddress(savedAddress);
+  }, []);
 
   // State
   const [selectedMetal, setSelectedMetal] = useState("AUXG");
