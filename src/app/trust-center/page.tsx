@@ -26,8 +26,8 @@ const translations: Record<string, Record<string, string>> = {
     custodyNetwork: "Saklama Ağı",
     zurichVault: "Zürih Kasası",
     zurichVaultDesc: "İsviçre'nin en güvenli kasalarında, en yüksek güvenlik standartlarıyla saklama.",
-    singaporeVault: "Singapur Kasası",
-    singaporeVaultDesc: "Asya-Pasifik bölgesi için optimize edilmiş, uluslararası standartlarda saklama.",
+    istanbulVault: "İstanbul Kasası",
+    istanbulVaultDesc: "Borsa İstanbul onaylı, LBMA düzenlemeli tesislerde kurumsal saklama.",
     dubaiVault: "Dubai Kasası",
     dubaiVaultDesc: "DMCC lisanslı tesislerde, Orta Doğu ve Afrika için stratejik konum.",
     // Verification
@@ -93,8 +93,8 @@ const translations: Record<string, Record<string, string>> = {
     custodyNetwork: "Custody Network",
     zurichVault: "Zurich Vault",
     zurichVaultDesc: "Stored in Switzerland's most secure vaults with the highest security standards.",
-    singaporeVault: "Singapore Vault",
-    singaporeVaultDesc: "Optimized for Asia-Pacific region with international-grade custody.",
+    istanbulVault: "Istanbul Vault",
+    istanbulVaultDesc: "Borsa Istanbul approved, LBMA regulated institutional custody facilities.",
     dubaiVault: "Dubai Vault",
     dubaiVaultDesc: "DMCC-licensed facilities, strategically positioned for Middle East and Africa.",
     // Verification
@@ -267,16 +267,16 @@ export default function TrustCenterPage() {
 
                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-3xl">🇸🇬</span>
+                    <span className="text-3xl">🇹🇷</span>
                     <div>
-                      <h3 className="font-semibold text-slate-800 dark:text-white">{t.singaporeVault}</h3>
-                      <p className="text-xs text-slate-500">APAC Hub</p>
+                      <h3 className="font-semibold text-slate-800 dark:text-white">{t.istanbulVault}</h3>
+                      <p className="text-xs text-slate-500">Turkey Hub</p>
                     </div>
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{t.singaporeVaultDesc}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{t.istanbulVaultDesc}</p>
                   <div className="flex flex-wrap gap-2">
-                    <span className="px-2 py-1 text-xs rounded-full bg-[#2F6F62]/20 text-[#2F6F62]">MAS Regulated</span>
-                    <span className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-600">Freeport Zone</span>
+                    <span className="px-2 py-1 text-xs rounded-full bg-[#2F6F62]/20 text-[#2F6F62]">Borsa Istanbul Approved</span>
+                    <span className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-600">LBMA Regulated</span>
                   </div>
                 </div>
 

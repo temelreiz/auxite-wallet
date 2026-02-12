@@ -44,12 +44,12 @@ const vaultOptions: VaultOption[] = [
     available: true,
   },
   {
-    id: "singapore",
-    name: "Singapore",
-    location: "Singapore",
-    flag: "🇸🇬",
+    id: "istanbul",
+    name: "Istanbul",
+    location: "Turkey",
+    flag: "🇹🇷",
     insuranceLevel: "Full",
-    available: false, // Coming soon
+    available: true,
   },
 ];
 

@@ -27,16 +27,16 @@ const DEFAULT_VAULTS = [
     coordinates: { x: 48, y: 32 },
     description: { en: 'LBMA certified London vault', tr: 'LBMA sertifikalı Londra kasası' }
   },
-  { 
-    id: 'singapore', 
-    city: 'Singapore', 
-    country: 'Singapore', 
-    flag: '🇸🇬', 
-    status: 'active', 
-    capacity: '8,000 kg', 
-    metals: ['AUXG', 'AUXPT'], 
-    coordinates: { x: 78, y: 55 },
-    description: { en: 'Asia-Pacific hub', tr: 'Asya-Pasifik merkezi' }
+  {
+    id: 'istanbul',
+    city: 'Istanbul',
+    country: 'Turkey',
+    flag: '🇹🇷',
+    status: 'active',
+    capacity: '8,000 kg',
+    metals: ['AUXG', 'AUXPT'],
+    coordinates: { x: 58, y: 38 },
+    description: { en: 'Borsa Istanbul approved, LBMA regulated', tr: 'Borsa İstanbul onaylı, LBMA düzenlemeli' }
   },
   { 
     id: 'dubai', 

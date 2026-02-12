@@ -22,7 +22,7 @@ interface Allocation {
 // Vault locations
 const VAULT_LOCATIONS = [
   { id: "zurich", name: "Zurich Vault", country: "Switzerland", flag: "🇨🇭" },
-  { id: "singapore", name: "Singapore Vault", country: "Singapore", flag: "🇸🇬" },
+  { id: "istanbul", name: "Istanbul Vault", country: "Turkey", flag: "🇹🇷" },
   { id: "london", name: "London Vault", country: "United Kingdom", flag: "🇬🇧" },
   { id: "dubai", name: "Dubai Vault", country: "UAE", flag: "🇦🇪" },
 ];

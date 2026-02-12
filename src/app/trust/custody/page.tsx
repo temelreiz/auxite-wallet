@@ -17,7 +17,7 @@ const translations = {
     launchPhaseNotice: "Launch Phase Bildirimi",
     launchPhaseDesc: "Platform şu anda launch aşamasındadır. Saklama detayları canlı yayına geçtiğinde güncellenecektir.",
     zurich: "Zürih, İsviçre",
-    singapore: "Singapur",
+    istanbul: "İstanbul, Türkiye",
     london: "Londra, İngiltere",
     dubai: "Dubai, BAE",
     security247: "7/24 Güvenlik",
@@ -30,7 +30,7 @@ const translations = {
     comingSoon: "Yakında",
     maximum: "Maksimum",
     lbmaCertified: "LBMA Sertifikalı",
-    sgxCertified: "SGX Sertifikalı",
+    bistApproved: "Borsa İstanbul Onaylı",
     dmccCertified: "DMCC Sertifikalı",
   },
   en: {
@@ -44,7 +44,7 @@ const translations = {
     launchPhaseNotice: "Launch Phase Notice",
     launchPhaseDesc: "Platform is currently in launch phase. Custody details will be updated once we go live.",
     zurich: "Zurich, Switzerland",
-    singapore: "Singapore",
+    istanbul: "Istanbul, Turkey",
     london: "London, UK",
     dubai: "Dubai, UAE",
     security247: "24/7 Security",
@@ -57,7 +57,7 @@ const translations = {
     comingSoon: "Coming Soon",
     maximum: "Maximum",
     lbmaCertified: "LBMA Certified",
-    sgxCertified: "SGX Certified",
+    bistApproved: "Borsa Istanbul Approved",
     dmccCertified: "DMCC Certified",
   },
 };
@@ -73,14 +73,14 @@ const vaultLocations = [
     certification: "lbmaCertified",
     color: "from-red-500 to-red-600"
   },
-  { 
-    city: "singapore", 
-    country: "Singapore", 
-    flag: "🇸🇬", 
+  {
+    city: "istanbul",
+    country: "Turkey",
+    flag: "🇹🇷",
     metals: ["Gold", "Silver"],
     capacity: "15,000 kg",
     security: "maximum",
-    certification: "sgxCertified",
+    certification: "bistApproved",
     color: "from-red-600 to-white"
   },
   { 
