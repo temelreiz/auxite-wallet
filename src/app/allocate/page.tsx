@@ -487,10 +487,10 @@ export default function AllocatePage() {
                 <span className="text-sm text-slate-500">{t.executionPrice}</span>
                 <span className="text-sm font-bold text-slate-800 dark:text-white">{formatPricePerGram(metalExecPrice)}/g</span>
               </div>
-              {!isStablecoinSource && cryptoPerGram > 0 && (
+              {cryptoPerGram > 0 && (
                 <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
                   <span className="text-sm text-[#BFA181]">{lang === 'tr' ? 'Gram Başına' : 'Per Gram'} ({selectedSource})</span>
-                  <span className="text-sm font-bold text-[#BFA181]">{cryptoPerGram.toFixed(selectedSource === "BTC" ? 6 : 4)} {selectedSource}</span>
+                  <span className="text-sm font-bold text-[#BFA181]">{cryptoPerGram.toFixed(selectedSource === "BTC" ? 6 : isStablecoinSource ? 2 : 4)} {selectedSource}</span>
                 </div>
               )}
               <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
@@ -701,12 +701,12 @@ export default function AllocatePage() {
                 {metalExecPrice ? formatPricePerGram(metalExecPrice) : "--"}/g
               </span>
             </div>
-            {/* Execution price in crypto terms */}
-            {!isStablecoinSource && cryptoPerGram > 0 && (
+            {/* Execution price in asset terms — shown for ALL funding sources */}
+            {cryptoPerGram > 0 && (
               <div className="flex justify-between">
                 <span className="text-sm text-[#BFA181]">{lang === 'tr' ? 'Gram Başına' : 'Per Gram'} ({selectedSource})</span>
                 <span className="text-sm font-bold text-[#BFA181]">
-                  {cryptoPerGram.toFixed(selectedSource === "BTC" ? 6 : 4)} {selectedSource}
+                  {cryptoPerGram.toFixed(selectedSource === "BTC" ? 6 : isStablecoinSource ? 2 : 4)} {selectedSource}
                 </span>
               </div>
             )}
