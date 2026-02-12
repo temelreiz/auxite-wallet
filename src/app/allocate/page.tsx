@@ -187,6 +187,7 @@ export default function AllocatePage() {
   const [basePrices, setBasePrices] = useState<Record<string, number>>({});
   const [executionPrices, setExecutionPrices] = useState<Record<string, number>>({});
   const [spotPricesOz, setSpotPricesOz] = useState<Record<string, number>>({});
+  const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
   const [priceSource, setPriceSource] = useState<string>("--");
   const [viewState, setViewState] = useState<ViewState>("allocate");
   const [allocationResult, setAllocationResult] = useState<any>(null);
@@ -206,7 +207,22 @@ export default function AllocatePage() {
           if (data.pricingEngine?.source) setPriceSource(data.pricingEngine.source);
         }
       } catch (e) {
-        console.warn("Price feed temporarily unavailable");
+        console.warn("Metal price feed temporarily unavailable");
+      }
+
+      try {
+        const cryptoRes = await fetch("/api/crypto");
+        const cryptoData = await cryptoRes.json();
+        if (cryptoData) {
+          const prices: Record<string, number> = { AUXM: 1 };
+          if (cryptoData.bitcoin?.usd) prices.BTC = cryptoData.bitcoin.usd;
+          if (cryptoData.ethereum?.usd) prices.ETH = cryptoData.ethereum.usd;
+          if (cryptoData.tether?.usd) prices.USDT = cryptoData.tether.usd;
+          prices.USDC = 1;
+          setCryptoPrices(prices);
+        }
+      } catch (e) {
+        console.warn("Crypto price feed temporarily unavailable");
       }
     };
 
@@ -216,11 +232,22 @@ export default function AllocatePage() {
   }, []);
 
   // Calculations
-  const capitalAmount = parseFloat(amount) || 0;
+  const inputAmount = parseFloat(amount) || 0;
   const metalExecPrice = executionPrices[selectedMetal] || 0;
   const metalBasePrice = basePrices[selectedMetal] || 0;
   const metalSpotOz = spotPricesOz[selectedMetal] || 0;
+  const metalInfo = METALS.find((m) => m.symbol === selectedMetal);
+
+  // Determine if source is USD-denominated or crypto
+  const isStablecoinSource = selectedSource === "AUXM" || selectedSource === "USDC" || selectedSource === "USDT";
+  const cryptoUsdPrice = cryptoPrices[selectedSource] || 0;
+
+  // Capital in USD: for stablecoins input is USD, for crypto it's crypto amount × price
+  const capitalAmount = isStablecoinSource ? inputAmount : inputAmount * cryptoUsdPrice;
   const estimatedGrams = metalExecPrice > 0 ? capitalAmount / metalExecPrice : 0;
+
+  // How many units of this crypto = 1 gram of selected metal
+  const cryptoPerGram = (cryptoUsdPrice > 0 && metalExecPrice > 0) ? metalExecPrice / cryptoUsdPrice : 0;
 
   // RFQ threshold: $1.5M+ → institutional desk pricing
   const requiresRFQ = capitalAmount >= 1500000;
@@ -276,8 +303,6 @@ export default function AllocatePage() {
     setRfqSubmitted(true);
     // In production: POST to /api/rfq
   };
-
-  const metalInfo = METALS.find((m) => m.symbol === selectedMetal);
 
   // ============================================
   // RENDER: RFQ VIEW
@@ -441,8 +466,18 @@ export default function AllocatePage() {
                 <span className="text-sm font-semibold text-slate-800 dark:text-white">{t.fullyAllocated}</span>
               </div>
               <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
+                <span className="text-sm text-slate-500">{t.fundingSource}</span>
+                <span className="text-sm font-semibold text-slate-800 dark:text-white">{selectedSource}</span>
+              </div>
+              {!isStablecoinSource && (
+                <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
+                  <span className="text-sm text-slate-500">{lang === 'tr' ? 'Kripto Miktarı' : 'Crypto Amount'}</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-white">{inputAmount} {selectedSource}</span>
+                </div>
+              )}
+              <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
                 <span className="text-sm text-slate-500">{t.capitalDeployed}</span>
-                <span className="text-sm font-semibold text-slate-800 dark:text-white">{formatUSD(capitalAmount)}</span>
+                <span className="text-sm font-bold text-slate-800 dark:text-white">{formatUSD(capitalAmount)}</span>
               </div>
               <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
                 <span className="text-sm text-slate-500">{t.marketReference}</span>
@@ -452,6 +487,12 @@ export default function AllocatePage() {
                 <span className="text-sm text-slate-500">{t.executionPrice}</span>
                 <span className="text-sm font-bold text-slate-800 dark:text-white">{formatPricePerGram(metalExecPrice)}/g</span>
               </div>
+              {!isStablecoinSource && cryptoPerGram > 0 && (
+                <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
+                  <span className="text-sm text-[#BFA181]">{lang === 'tr' ? 'Gram Başına' : 'Per Gram'} ({selectedSource})</span>
+                  <span className="text-sm font-bold text-[#BFA181]">{cryptoPerGram.toFixed(selectedSource === "BTC" ? 6 : 4)} {selectedSource}</span>
+                </div>
+              )}
               <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
                 <span className="text-sm text-slate-500">{t.estimatedAllocation}</span>
                 <span className="text-sm font-bold text-[#BFA181]">{formatGrams(estimatedGrams)}</span>
@@ -582,7 +623,7 @@ export default function AllocatePage() {
             {FUNDING_SOURCES.map((source) => (
               <button
                 key={source.symbol}
-                onClick={() => setSelectedSource(source.symbol)}
+                onClick={() => { setSelectedSource(source.symbol); setAmount(""); }}
                 className={`flex-1 flex flex-col items-center p-3 rounded-xl border transition-all ${
                   selectedSource === source.symbol
                     ? "bg-[#BFA181]/10 border-[#BFA181]"
@@ -591,11 +632,15 @@ export default function AllocatePage() {
               >
                 <span className="text-sm font-semibold text-slate-800 dark:text-white">{source.symbol}</span>
                 <span className="text-[11px] text-slate-500 mt-0.5">{source.name}</span>
-                {source.symbol === "AUXM" && (
+                {source.symbol !== "AUXM" && source.symbol !== "USDC" && source.symbol !== "USDT" && cryptoPrices[source.symbol] ? (
+                  <span className="text-[9px] text-slate-400 mt-0.5">
+                    ${cryptoPrices[source.symbol]?.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                  </span>
+                ) : source.symbol === "AUXM" ? (
                   <span className="text-[10px] text-[#C6A15B] mt-0.5 font-medium">
                     {lang === 'tr' ? 'Tahsis için gerekli' : 'Required for allocation'}
                   </span>
-                )}
+                ) : null}
               </button>
             ))}
           </div>
@@ -607,16 +652,37 @@ export default function AllocatePage() {
             {t.capitalDeployed}
           </p>
           <div className="flex items-center bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl px-4 h-14 mb-4">
-            <span className="text-slate-400 mr-2 text-lg">$</span>
+            {isStablecoinSource && <span className="text-slate-400 mr-2 text-lg">$</span>}
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0"
-              className="flex-1 bg-transparent text-2xl font-semibold text-slate-800 dark:text-white outline-none"
+              className="flex-1 bg-transparent text-2xl font-semibold text-slate-800 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <span className="text-slate-500 text-sm">{selectedSource}</span>
           </div>
+
+          {/* USD Equivalent for crypto sources */}
+          {!isStablecoinSource && inputAmount > 0 && cryptoUsdPrice > 0 && (
+            <div className="flex justify-between items-center px-1 mb-3">
+              <span className="text-xs text-slate-500">{lang === 'tr' ? 'USD Karşılığı' : 'USD Equivalent'}</span>
+              <span className="text-sm font-bold text-slate-800 dark:text-white">{formatUSD(capitalAmount)}</span>
+            </div>
+          )}
+
+          {/* Crypto price info */}
+          {!isStablecoinSource && cryptoUsdPrice > 0 && (
+            <div className="flex items-center flex-wrap gap-1 px-3 py-2 bg-stone-50 dark:bg-slate-800 rounded-lg mb-4">
+              <span className="text-[11px] text-slate-500 font-semibold">1 {selectedSource}</span>
+              <span className="text-[11px] text-slate-800 dark:text-white font-bold">= {formatUSD(cryptoUsdPrice)}</span>
+              {cryptoPerGram > 0 && (
+                <span className="text-[10px] text-[#BFA181] font-medium ml-1">
+                  ({cryptoPerGram.toFixed(selectedSource === "BTC" ? 6 : 4)} {selectedSource}/g {metalInfo?.symbol || ""})
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Market Reference vs Execution Price */}
           <div className="space-y-2 mb-4">
@@ -635,6 +701,15 @@ export default function AllocatePage() {
                 {metalExecPrice ? formatPricePerGram(metalExecPrice) : "--"}/g
               </span>
             </div>
+            {/* Execution price in crypto terms */}
+            {!isStablecoinSource && cryptoPerGram > 0 && (
+              <div className="flex justify-between">
+                <span className="text-sm text-[#BFA181]">{lang === 'tr' ? 'Gram Başına' : 'Per Gram'} ({selectedSource})</span>
+                <span className="text-sm font-bold text-[#BFA181]">
+                  {cryptoPerGram.toFixed(selectedSource === "BTC" ? 6 : 4)} {selectedSource}
+                </span>
+              </div>
+            )}
             <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 italic">
               {lang === 'tr' ? 'Tedarik ve kurumsal işlem maliyetlerini içerir.' : 'Includes sourcing and institutional execution.'}
             </p>
@@ -647,6 +722,9 @@ export default function AllocatePage() {
               <p className="text-xl font-bold text-[#BFA181]">
                 {formatGrams(estimatedGrams)} {metalInfo?.name}
               </p>
+              {!isStablecoinSource && capitalAmount > 0 && (
+                <p className="text-xs text-slate-500 mt-1">≈ {formatUSD(capitalAmount)}</p>
+              )}
             </div>
           )}
         </div>

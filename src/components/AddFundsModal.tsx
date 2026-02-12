@@ -19,10 +19,10 @@ interface AddFundsModalProps {
 
 // Crypto sources for funding
 const CRYPTO_SOURCES = [
+  { id: "usdc", symbol: "USDC", name: "USD Coin", network: "ERC-20", icon: "◯", color: "#2775CA", settlementTime: "~15 min" },
+  { id: "usdt", symbol: "USDT", name: "Tether", network: "ERC-20 / TRC-20", icon: "₮", color: "#26A17B", settlementTime: "~15 min" },
   { id: "btc", symbol: "BTC", name: "Bitcoin", network: "Bitcoin Network", icon: "₿", color: "#F7931A", settlementTime: "~30 min" },
   { id: "eth", symbol: "ETH", name: "Ethereum", network: "Ethereum / Base", icon: "⟠", color: "#627EEA", settlementTime: "~15 min" },
-  { id: "usdt", symbol: "USDT", name: "Tether", network: "ERC-20 / TRC-20", icon: "₮", color: "#26A17B", settlementTime: "~15 min" },
-  { id: "usdc", symbol: "USDC", name: "USD Coin", network: "ERC-20", icon: "◯", color: "#2775CA", settlementTime: "~15 min" },
 ];
 
 // Coin ID mapping for NowPayments API
