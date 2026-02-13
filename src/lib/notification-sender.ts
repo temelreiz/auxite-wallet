@@ -1,10 +1,186 @@
 /**
  * Push Notification Sender Library
- * Bildirim gönderme fonksiyonları
+ * Multilingual push notifications — uses client's preferred language from Redis.
+ * Security alerts use fallback to 'en' if language unavailable (security > localization).
  */
 
 import webpush from 'web-push';
 import { redis } from '@/lib/redis';
+import { getUserLanguage } from '@/lib/user-language';
+
+type LangCode = 'en' | 'tr' | 'de' | 'fr' | 'ar' | 'ru';
+
+// ─── Notification Translations ───────────────────────────────────────────────
+
+const transactionTitles: Record<string, Record<LangCode, string>> = {
+  deposit: {
+    en: 'Deposit Confirmed',
+    tr: 'Yatırım Onaylandı',
+    de: 'Einzahlung bestätigt',
+    fr: 'Dépôt confirmé',
+    ar: 'تم تأكيد الإيداع',
+    ru: 'Депозит подтверждён',
+  },
+  withdrawal: {
+    en: 'Withdrawal Completed',
+    tr: 'Çekim Tamamlandı',
+    de: 'Auszahlung abgeschlossen',
+    fr: 'Retrait terminé',
+    ar: 'تم إتمام السحب',
+    ru: 'Вывод завершён',
+  },
+  swap: {
+    en: 'Conversion Successful',
+    tr: 'Dönüşüm Başarılı',
+    de: 'Umwandlung erfolgreich',
+    fr: 'Conversion réussie',
+    ar: 'تم التحويل بنجاح',
+    ru: 'Конвертация успешна',
+  },
+  transfer: {
+    en: 'Transfer Completed',
+    tr: 'Transfer Tamamlandı',
+    de: 'Überweisung abgeschlossen',
+    fr: 'Transfert terminé',
+    ar: 'تم إتمام التحويل',
+    ru: 'Перевод завершён',
+  },
+};
+
+const transactionBody: Record<LangCode, string> = {
+  en: 'transaction completed',
+  tr: 'işlemi tamamlandı',
+  de: 'Transaktion abgeschlossen',
+  fr: 'transaction terminée',
+  ar: 'تمت المعاملة',
+  ru: 'транзакция завершена',
+};
+
+const transactionFallbackTitle: Record<LangCode, string> = {
+  en: 'Transaction Notification',
+  tr: 'İşlem Bildirimi',
+  de: 'Transaktionsbenachrichtigung',
+  fr: 'Notification de transaction',
+  ar: 'إشعار معاملة',
+  ru: 'Уведомление о транзакции',
+};
+
+const actionLabels: Record<string, Record<LangCode, string>> = {
+  view: { en: 'View', tr: 'Görüntüle', de: 'Anzeigen', fr: 'Voir', ar: 'عرض', ru: 'Просмотр' },
+  dismiss: { en: 'Dismiss', tr: 'Kapat', de: 'Schließen', fr: 'Fermer', ar: 'إغلاق', ru: 'Закрыть' },
+  trade: { en: 'Trade', tr: 'İşlem Yap', de: 'Handeln', fr: 'Négocier', ar: 'تداول', ru: 'Торговать' },
+  review: { en: 'Review', tr: 'İncele', de: 'Überprüfen', fr: 'Examiner', ar: 'مراجعة', ru: 'Проверить' },
+  freeze: { en: 'Freeze Account', tr: 'Hesabı Dondur', de: 'Konto sperren', fr: 'Geler le compte', ar: 'تجميد الحساب', ru: 'Заморозить счёт' },
+};
+
+const priceAlertTitle: Record<LangCode, string> = {
+  en: 'Price Alert',
+  tr: 'Fiyat Uyarısı',
+  de: 'Preisalarm',
+  fr: 'Alerte de prix',
+  ar: 'تنبيه السعر',
+  ru: 'Ценовое уповещение',
+};
+
+const priceAlertBody: Record<LangCode, (token: string, target: number, price: number, dir: 'above' | 'below') => string> = {
+  en: (token, target, price, dir) => `${token} went ${dir} $${target}! Now: $${price}`,
+  tr: (token, target, price, dir) => `${token} $${target} ${dir === 'above' ? 'üstüne çıktı' : 'altına düştü'}! Şu an: $${price}`,
+  de: (token, target, price, dir) => `${token} ${dir === 'above' ? 'über' : 'unter'} $${target}! Aktuell: $${price}`,
+  fr: (token, target, price, dir) => `${token} ${dir === 'above' ? 'au-dessus de' : 'en dessous de'} $${target} ! Actuel : $${price}`,
+  ar: (token, target, price, dir) => `${token} ${dir === 'above' ? 'فوق' : 'تحت'} $${target}! الآن: $${price}`,
+  ru: (token, target, price, dir) => `${token} ${dir === 'above' ? 'выше' : 'ниже'} $${target}! Сейчас: $${price}`,
+};
+
+const securityTitles: Record<string, Record<LangCode, string>> = {
+  login: {
+    en: 'New Login',
+    tr: 'Yeni Giriş',
+    de: 'Neue Anmeldung',
+    fr: 'Nouvelle connexion',
+    ar: 'تسجيل دخول جديد',
+    ru: 'Новый вход',
+  },
+  new_device: {
+    en: 'New Device Detected',
+    tr: 'Yeni Cihaz Algılandı',
+    de: 'Neues Gerät erkannt',
+    fr: 'Nouvel appareil détecté',
+    ar: 'تم اكتشاف جهاز جديد',
+    ru: 'Обнаружено новое устройство',
+  },
+  '2fa_enabled': {
+    en: '2FA Enabled',
+    tr: '2FA Aktifleştirildi',
+    de: '2FA aktiviert',
+    fr: '2FA activé',
+    ar: 'تم تفعيل المصادقة الثنائية',
+    ru: '2FA активирована',
+  },
+  password_changed: {
+    en: 'Password Changed',
+    tr: 'Şifre Değiştirildi',
+    de: 'Passwort geändert',
+    fr: 'Mot de passe modifié',
+    ar: 'تم تغيير كلمة المرور',
+    ru: 'Пароль изменён',
+  },
+  suspicious_activity: {
+    en: 'Suspicious Activity',
+    tr: 'Şüpheli Aktivite',
+    de: 'Verdächtige Aktivität',
+    fr: 'Activité suspecte',
+    ar: 'نشاط مشبوه',
+    ru: 'Подозрительная активность',
+  },
+};
+
+const securityBodies: Record<string, Record<LangCode, (location?: string, details?: string) => string>> = {
+  login: {
+    en: (loc) => `Your account was accessed from ${loc || 'unknown location'}`,
+    tr: (loc) => `Hesabınıza ${loc || 'bilinmeyen konum'}dan giriş yapıldı`,
+    de: (loc) => `Zugriff auf Ihr Konto von ${loc || 'unbekanntem Standort'}`,
+    fr: (loc) => `Connexion à votre compte depuis ${loc || 'emplacement inconnu'}`,
+    ar: (loc) => `تم الوصول إلى حسابك من ${loc || 'موقع غير معروف'}`,
+    ru: (loc) => `Вход в ваш аккаунт из ${loc || 'неизвестного местоположения'}`,
+  },
+  new_device: {
+    en: () => 'Your account was accessed from a new device',
+    tr: () => 'Hesabınıza yeni bir cihazdan erişildi',
+    de: () => 'Zugriff auf Ihr Konto von einem neuen Gerät',
+    fr: () => 'Votre compte a été accédé depuis un nouvel appareil',
+    ar: () => 'تم الوصول إلى حسابك من جهاز جديد',
+    ru: () => 'В ваш аккаунт вошли с нового устройства',
+  },
+  '2fa_enabled': {
+    en: () => 'Two-factor authentication has been enabled',
+    tr: () => 'İki faktörlü doğrulama aktifleştirildi',
+    de: () => 'Zwei-Faktor-Authentifizierung wurde aktiviert',
+    fr: () => "L'authentification à deux facteurs a été activée",
+    ar: () => 'تم تفعيل المصادقة الثنائية',
+    ru: () => 'Двухфакторная аутентификация активирована',
+  },
+  password_changed: {
+    en: () => 'Your account password has been changed',
+    tr: () => 'Hesap şifreniz değiştirildi',
+    de: () => 'Ihr Kontokennwort wurde geändert',
+    fr: () => 'Le mot de passe de votre compte a été modifié',
+    ar: () => 'تم تغيير كلمة مرور حسابك',
+    ru: () => 'Пароль вашего аккаунта был изменён',
+  },
+  suspicious_activity: {
+    en: (_loc, details) => details || 'Suspicious activity detected on your account',
+    tr: (_loc, details) => details || 'Hesabınızda şüpheli aktivite tespit edildi',
+    de: (_loc, details) => details || 'Verdächtige Aktivität auf Ihrem Konto festgestellt',
+    fr: (_loc, details) => details || 'Activité suspecte détectée sur votre compte',
+    ar: (_loc, details) => details || 'تم اكتشاف نشاط مشبوه في حسابك',
+    ru: (_loc, details) => details || 'Обнаружена подозрительная активность в вашем аккаунте',
+  },
+};
+
+function getLang(lang: string): LangCode {
+  if (['en', 'tr', 'de', 'fr', 'ar', 'ru'].includes(lang)) return lang as LangCode;
+  return 'en';
+}
 
 // Types
 export interface NotificationPayload {
@@ -156,7 +332,7 @@ async function logNotification(
 }
 
 /**
- * İşlem bildirimi gönder
+ * İşlem bildirimi gönder (multilingual)
  */
 export async function notifyTransaction(
   walletAddress: string,
@@ -167,16 +343,11 @@ export async function notifyTransaction(
     txHash?: string;
   }
 ): Promise<void> {
-  const titles = {
-    deposit: 'Yatırım Onaylandı',
-    withdrawal: 'Çekim Tamamlandı',
-    swap: 'Dönüşüm Başarılı',
-    transfer: 'Transfer Tamamlandı',
-  };
+  const lang = getLang(await getUserLanguage(walletAddress));
 
   await sendNotification(walletAddress, 'transaction', {
-    title: titles[data.type] || 'İşlem Bildirimi',
-    body: `${data.amount} ${data.token} işlemi tamamlandı`,
+    title: transactionTitles[data.type]?.[lang] || transactionFallbackTitle[lang],
+    body: `${data.amount} ${data.token} ${transactionBody[lang]}`,
     icon: '/icons/icon-192x192.png',
     tag: `tx-${data.txHash || Date.now()}`,
     data: {
@@ -185,14 +356,14 @@ export async function notifyTransaction(
       txHash: data.txHash,
     },
     actions: [
-      { action: 'view', title: 'Görüntüle' },
-      { action: 'dismiss', title: 'Kapat' },
+      { action: 'view', title: actionLabels.view[lang] },
+      { action: 'dismiss', title: actionLabels.dismiss[lang] },
     ],
   });
 }
 
 /**
- * Fiyat uyarısı bildirimi gönder
+ * Fiyat uyarısı bildirimi gönder (multilingual)
  */
 export async function notifyPriceAlert(
   walletAddress: string,
@@ -204,11 +375,11 @@ export async function notifyPriceAlert(
     alertId: string;
   }
 ): Promise<void> {
-  const direction = data.direction === 'above' ? 'üstüne' : 'altına';
-  
+  const lang = getLang(await getUserLanguage(walletAddress));
+
   await sendNotification(walletAddress, 'price_alert', {
-    title: `🔔 ${data.token} Fiyat Uyarısı`,
-    body: `${data.token} $${data.targetPrice} ${direction} ${data.direction === 'above' ? 'çıktı' : 'düştü'}! Şu an: $${data.price}`,
+    title: `🔔 ${data.token} ${priceAlertTitle[lang]}`,
+    body: priceAlertBody[lang](data.token, data.targetPrice, data.price, data.direction),
     icon: '/icons/icon-192x192.png',
     tag: `alert-${data.alertId}`,
     data: {
@@ -218,14 +389,16 @@ export async function notifyPriceAlert(
     },
     requireInteraction: true,
     actions: [
-      { action: 'trade', title: 'İşlem Yap' },
-      { action: 'dismiss', title: 'Kapat' },
+      { action: 'trade', title: actionLabels.trade[lang] },
+      { action: 'dismiss', title: actionLabels.dismiss[lang] },
     ],
   });
 }
 
 /**
- * Güvenlik bildirimi gönder
+ * Güvenlik bildirimi gönder (multilingual)
+ * Note: Security alerts use fallback to 'en' if language unavailable.
+ * Per institutional standard: security > localization for alerts.
  */
 export async function notifySecurityEvent(
   walletAddress: string,
@@ -236,25 +409,14 @@ export async function notifySecurityEvent(
     location?: string;
   }
 ): Promise<void> {
-  const titles = {
-    login: 'Yeni Giriş',
-    new_device: 'Yeni Cihaz Algılandı',
-    '2fa_enabled': '2FA Aktifleştirildi',
-    password_changed: 'Şifre Değiştirildi',
-    suspicious_activity: '⚠️ Şüpheli Aktivite',
-  };
-
-  const bodies = {
-    login: `Hesabınıza ${data.location || 'bilinmeyen konum'}dan giriş yapıldı`,
-    new_device: 'Hesabınıza yeni bir cihazdan erişildi',
-    '2fa_enabled': 'İki faktörlü doğrulama aktifleştirildi',
-    password_changed: 'Hesap şifreniz değiştirildi',
-    suspicious_activity: data.details || 'Hesabınızda şüpheli aktivite tespit edildi',
-  };
+  const lang = getLang(await getUserLanguage(walletAddress));
+  const prefix = data.event === 'suspicious_activity' ? '⚠️ ' : '';
 
   await sendNotification(walletAddress, 'security', {
-    title: titles[data.event],
-    body: bodies[data.event],
+    title: prefix + (securityTitles[data.event]?.[lang] || securityTitles[data.event]?.en || 'Security Alert'),
+    body: securityBodies[data.event]?.[lang]?.(data.location, data.details)
+      || securityBodies[data.event]?.en?.(data.location, data.details)
+      || 'Security event detected',
     icon: '/icons/icon-192x192.png',
     tag: `security-${data.event}-${Date.now()}`,
     data: {
@@ -263,10 +425,10 @@ export async function notifySecurityEvent(
       ip: data.ip,
     },
     requireInteraction: data.event === 'suspicious_activity',
-    actions: data.event === 'suspicious_activity' 
+    actions: data.event === 'suspicious_activity'
       ? [
-          { action: 'review', title: 'İncele' },
-          { action: 'freeze', title: 'Hesabı Dondur' },
+          { action: 'review', title: actionLabels.review[lang] },
+          { action: 'freeze', title: actionLabels.freeze[lang] },
         ]
       : undefined,
   });

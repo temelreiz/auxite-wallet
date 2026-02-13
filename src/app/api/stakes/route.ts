@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/redis";
 import { sendStakingAgreementEmail } from "@/lib/email";
 import { stakeOnChain, getUserStakesOnChain, checkDelegationApproval } from "@/lib/staking-service";
+import { getUserLanguage } from "@/lib/user-language";
 
 const METAL_NAMES: Record<string, string> = {
   AUXG: "Gold",
@@ -154,6 +155,9 @@ export async function POST(request: NextRequest) {
 
     const apyPercent = apy || "2.0";
 
+    // Language lock: capture client language at agreement creation (immutable legal artifact)
+    const documentLanguage = await getUserLanguage(address.toLowerCase());
+
     const newStake = {
       id: stakeId,
       agreementNo,
@@ -169,6 +173,7 @@ export async function POST(request: NextRequest) {
       onChain: stakeResult?.success || false,
       txHash: stakeResult?.txHash || null,
       stakeCode: stakeResult?.stakeCode || null,
+      document_language: documentLanguage,
     };
 
     stakes.push(newStake);
@@ -185,6 +190,7 @@ export async function POST(request: NextRequest) {
     // Send email
     if (email) {
       try {
+        const stakeLang = await getUserLanguage(address.toLowerCase());
         await sendStakingAgreementEmail(email, "", {
           agreementNo,
           stakeId,
@@ -196,7 +202,7 @@ export async function POST(request: NextRequest) {
           startDate: formatDate(startDate),
           endDate: formatDate(endDate),
           holderName: holderName || undefined,
-          
+          language: stakeLang,
         });
         console.log(`📧 Staking agreement email sent to ${email}`);
       } catch (emailErr: any) {

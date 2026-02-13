@@ -86,17 +86,55 @@ const ISSUER_BY_VAULT: Record<string, { name: string; address: string }> = {
 };
 
 // ═══════════════════════════════════════════════
+// LANGUAGE LOCK — Certificate issuance language is a legal artifact.
+// Once issued, the document_language is immutable.
+// ═══════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════
 // GET — Generate Certificate Data + HTML
 // ═══════════════════════════════════════════════
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const certNumber = searchParams.get('certNumber');
+    let certNumber = searchParams.get('certNumber');
     const format = searchParams.get('format') || 'json';
+    const metal = searchParams.get('metal');
+    const address = searchParams.get('address');
 
     if (!certNumber) {
       return NextResponse.json({ error: 'certNumber required' }, { status: 400 });
+    }
+
+    // Support "latest" — find user's most recent certificate for the given metal
+    if (certNumber === 'latest' && address) {
+      const userUid = await redis.get(`user:address:${address.toLowerCase()}`) as string;
+      if (!userUid) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+      const certIds = await redis.smembers(`certificates:user:${userUid}`) as string[];
+      if (!certIds || certIds.length === 0) {
+        return NextResponse.json({ error: 'No certificates found' }, { status: 404 });
+      }
+
+      // Find the latest certificate matching the metal
+      let latestCert: any = null;
+      let latestDate = '';
+      for (const id of certIds) {
+        const cert = await redis.hgetall(`certificate:${id}`) as any;
+        if (!cert || !cert.certificateNumber) continue;
+        if (cert.status === 'VOID') continue;
+        if (metal && cert.metal !== metal) continue;
+        const issuedAt = cert.issuedAt || '';
+        if (issuedAt > latestDate) {
+          latestDate = issuedAt;
+          latestCert = cert;
+          certNumber = cert.certificateNumber;
+        }
+      }
+      if (!latestCert) {
+        return NextResponse.json({ error: 'No matching certificate found' }, { status: 404 });
+      }
     }
 
     const certificate = await redis.hgetall(`certificate:${certNumber}`) as any;
@@ -142,12 +180,16 @@ export async function GET(request: NextRequest) {
       console.warn('QR generation failed:', e);
     }
 
+    // Language lock: use stored document_language if exists (immutable after issuance)
+    const documentLanguage = certificate.document_language || 'en';
+
     // Build institutional certificate data
     const pdfData = {
       // Header
       certificateNumber: certificate.certificateNumber,
       issueDate: certificate.issuedAt,
       statementType: 'Allocated Custody',
+      documentLanguage: documentLanguage,
 
       // Client block
       client: {
@@ -761,7 +803,8 @@ function generateInstitutionalCertificateHTML(data: any, autoPrint: boolean = fa
 
     <!-- Electronic Notice -->
     <div class="electronic-notice">
-      This document is electronically issued and recorded within Auxite's custody ledger.
+      This certificate has been issued in the client's designated communication language
+      and recorded within Auxite's custody ledger.
     </div>
 
     <!-- Footer -->

@@ -931,9 +931,23 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setLangState(newLang);
     localStorage.setItem("auxite_language", newLang);
     window.dispatchEvent(new Event("languageChange"));
-    localStorage.setItem("auxite_language", newLang);
     // Set RTL for Arabic
     document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
+
+    // Sync language preference to backend (for emails, certificates, notifications)
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      fetch("/api/user/language", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ language: newLang }),
+      }).catch(() => {
+        // Silent fail — localStorage is primary, Redis is for backend services
+      });
+    }
   };
 
   const t = (key: string): string => {

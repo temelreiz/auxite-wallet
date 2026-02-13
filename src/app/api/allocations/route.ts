@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import { createHash } from 'crypto';
 import { sendCertificateEmail } from '@/lib/email';
+import { getUserLanguage } from '@/lib/user-language';
 
 export const dynamic = 'force-dynamic';
 
@@ -280,6 +281,9 @@ export async function POST(request: NextRequest) {
       console.log(`✅ Allocation: ${barSize}g ${metal} to ${userUid} from ${selectedBar.serialNumber}`);
     }
 
+    // Language lock: capture client language at issuance time (immutable legal artifact)
+    const documentLanguage = await getUserLanguage(address.toLowerCase());
+
     // Sertifika oluştur (tüm allocation'lar için tek sertifika)
     const certificate = {
       certificateNumber: certNumber,
@@ -298,6 +302,7 @@ export async function POST(request: NextRequest) {
       issuedAt: now,
       status: "active",
       issuer: "Auxite Precious Metals AG",
+      document_language: documentLanguage,
       allocationEventId: `ALLOC-EVT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
       ledgerReference: `AUX-LEDGER-${new Date().getFullYear()}-${Math.floor(Math.random() * 999999).toString().padStart(6, '0')}`,
     };
@@ -338,12 +343,14 @@ export async function POST(request: NextRequest) {
     
     if (userEmail) {
       try {
+        const certLang = await getUserLanguage(address.toLowerCase());
         await sendCertificateEmail(userEmail, "", {
           certificateNumber: certNumber,
           metal,
           metalName: METAL_NAMES[metal] || metal,
           grams: wholeGrams.toString(),
           holderName: holderName || undefined,
+          language: certLang,
         });
         console.log(`📧 Certificate email sent to ${email}`);
       } catch (emailErr: any) {
