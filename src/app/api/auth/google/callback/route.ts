@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import jwt from 'jsonwebtoken';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -137,14 +137,37 @@ export async function GET(request: NextRequest) {
     }
 
     // ══════════════════════════════════════════════════════════════
+    // CHECK/CREATE VAULT (for users without vault)
+    // ══════════════════════════════════════════════════════════════
+    let walletAddress = userData.walletAddress || '';
+    let vaultId = userData.vaultId || '';
+    const userId = userData.id;
+
+    if (!walletAddress) {
+      const addressHash = createHash('sha256').update(`auxite-wallet-${userId}`).digest('hex');
+      walletAddress = '0x' + addressHash.substring(0, 40);
+
+      if (!vaultId) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const part1 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        const part2 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        vaultId = `AX-VLT-${part1}-${part2}`;
+      }
+
+      await redis.hset(`auth:user:${normalizedEmail}`, { walletAddress, vaultId });
+      await redis.set(`user:address:${walletAddress.toLowerCase()}`, userId);
+      console.log(`[Google OAuth] Wallet assigned for ${userId}: ${walletAddress}, vault: ${vaultId}`);
+    }
+
+    // ══════════════════════════════════════════════════════════════
     // GENERATE JWT TOKEN
     // ══════════════════════════════════════════════════════════════
     const jwtToken = jwt.sign(
       {
-        userId: userData.id,
+        userId: userId,
         email: normalizedEmail,
         emailVerified: true,
-        walletAddress: userData.walletAddress || '',
+        walletAddress: walletAddress,
         authProvider: 'google',
       },
       JWT_SECRET,
@@ -161,7 +184,7 @@ export async function GET(request: NextRequest) {
       name: userData.name || googleUser.name || '',
       picture: userData.picture || googleUser.picture || '',
       emailVerified: true,
-      walletAddress: userData.walletAddress || '',
+      walletAddress: walletAddress,
     };
 
     // Encode data for URL
