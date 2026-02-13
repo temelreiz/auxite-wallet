@@ -83,10 +83,10 @@ const translations: Record<string, Record<string, string>> = {
 
 // Metal icon paths
 const METAL_ICONS: Record<string, string> = {
-  AUXG: "/images/metals/gold.png",
-  AUXS: "/images/metals/silver.png",
-  AUXPT: "/images/metals/platinum.png",
-  AUXPD: "/images/metals/palladium.png",
+  AUXG: "/images/metals/gold.svg",
+  AUXS: "/images/metals/silver.svg",
+  AUXPT: "/images/metals/platinum.svg",
+  AUXPD: "/images/metals/palladium.svg",
 };
 
 const metalBgColors: Record<string, string> = {
@@ -165,7 +165,7 @@ export default function TradingDetailPage({
     return {
       metal: symbol,
       name: name,
-      icon: METAL_ICONS[symbol] || "/images/metals/gold.png",
+      icon: METAL_ICONS[symbol] || "/images/metals/gold.svg",
       metalTokenAddress: metalTokenAddresses[symbol] || "0x...",
       periods: periods,
       minAmount: 1,

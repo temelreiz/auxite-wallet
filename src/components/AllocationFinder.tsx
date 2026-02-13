@@ -8,10 +8,10 @@ interface AllocationFinderProps {
 }
 
 const metalIcons: Record<string, string> = {
-  AUXG: "/images/metals/gold.png",
-  AUXS: "/images/metals/silver.png",
-  AUXPT: "/images/metals/platinum.png",
-  AUXPD: "/images/metals/palladium.png",
+  AUXG: "/images/metals/gold.svg",
+  AUXS: "/images/metals/silver.svg",
+  AUXPT: "/images/metals/platinum.svg",
+  AUXPD: "/images/metals/palladium.svg",
 };
 
 const metalColors: Record<string, string> = {

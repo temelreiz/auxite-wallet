@@ -68,10 +68,10 @@ const translations: Record<string, { overlay: string; panel: string; volume: str
 };
 
 const METAL_ICONS: Record<string, string> = {
-  AUXG: "/images/metals/gold.png",
-  AUXS: "/images/metals/silver.png",
-  AUXPT: "/images/metals/platinum.png",
-  AUXPD: "/images/metals/palladium.png",
+  AUXG: "/images/metals/gold.svg",
+  AUXS: "/images/metals/silver.svg",
+  AUXPT: "/images/metals/platinum.svg",
+  AUXPD: "/images/metals/palladium.svg",
 };
 
 // Seeded random number generator (mulberry32)

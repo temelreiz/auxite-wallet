@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Outer circle -->
+  <circle cx="60" cy="60" r="56" fill="#A6B0BF"/>
+  <circle cx="60" cy="60" r="52" fill="none" stroke="#C8D0DA" stroke-width="2"/>
+  <!-- Inner ring -->
+  <circle cx="60" cy="60" r="44" fill="none" stroke="#7E8A9A" stroke-width="1.5"/>
+  <!-- Auxite Triangle A -->
+  <path d="M60 24L88 80H32L60 24Z" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linejoin="round"/>
+  <!-- Crossbar -->
+  <line x1="42" y1="62" x2="78" y2="62" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  <!-- Inner triangle accent -->
+  <path d="M60 36L78 72H42L60 36Z" fill="none" stroke="#7E8A9A" stroke-width="1" stroke-linejoin="round" opacity="0.5"/>
+</svg>

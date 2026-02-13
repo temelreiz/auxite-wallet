@@ -51,10 +51,10 @@ type PaymentMethod = "AUXM" | "USDT" | "BTC" | "ETH" | "XRP" | "SOL";
 type OrderType = "market" | "limit";
 
 const METAL_INFO = {
-  AUXG: { name: "Gold", nameTr: "Altın", icon: "/images/metals/gold.png", color: "#FFD700" },
-  AUXS: { name: "Silver", nameTr: "Gümüş", icon: "/images/metals/silver.png", color: "#C0C0C0" },
-  AUXPT: { name: "Platinum", nameTr: "Platin", icon: "/images/metals/platinum.png", color: "#E5E4E2" },
-  AUXPD: { name: "Palladium", nameTr: "Paladyum", icon: "/images/metals/palladium.png", color: "#CED0DD" },
+  AUXG: { name: "Gold", nameTr: "Altın", icon: "/images/metals/gold.svg", color: "#FFD700" },
+  AUXS: { name: "Silver", nameTr: "Gümüş", icon: "/images/metals/silver.svg", color: "#C0C0C0" },
+  AUXPT: { name: "Platinum", nameTr: "Platin", icon: "/images/metals/platinum.svg", color: "#E5E4E2" },
+  AUXPD: { name: "Palladium", nameTr: "Paladyum", icon: "/images/metals/palladium.svg", color: "#CED0DD" },
 };
 
 const PAYMENT_METHODS: { id: PaymentMethod; name: string; icon: string; color: string }[] = [
