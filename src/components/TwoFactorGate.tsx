@@ -30,6 +30,8 @@ const translations: Record<string, Record<string, string>> = {
     setupSuccess: "2FA başarıyla kuruldu!",
     error: "Bir hata oluştu",
     loading: "Yükleniyor...",
+    processing: "İşlem gerçekleştiriliyor...",
+    processingDesc: "Lütfen bekleyin, işleminiz yürütülüyor.",
     retry: "Tekrar Dene",
     connectionError: "Bağlantı hatası. Tekrar deneyin.",
   },
@@ -59,6 +61,8 @@ const translations: Record<string, Record<string, string>> = {
     setupSuccess: "2FA successfully set up!",
     error: "An error occurred",
     loading: "Loading...",
+    processing: "Processing transaction...",
+    processingDesc: "Please wait while your transaction is being executed.",
     retry: "Retry",
     connectionError: "Connection error. Please retry.",
   },
@@ -71,7 +75,8 @@ const translations: Record<string, Record<string, string>> = {
     verifying: "Verifiziere...", cancel: "Abbrechen", continue: "Weiter", invalidCode: "Ungültiger Code",
     codeCopied: "Kopiert!", useBackupCode: "Backup-Code", useAuthenticator: "Authenticator",
     tooManyAttempts: "Zu viele Fehlversuche.", setupSuccess: "2FA erfolgreich!", error: "Ein Fehler ist aufgetreten",
-    loading: "Laden...", retry: "Wiederholen", connectionError: "Verbindungsfehler.",
+    loading: "Laden...", processing: "Transaktion wird verarbeitet...", processingDesc: "Bitte warten Sie, Ihre Transaktion wird ausgeführt.",
+    retry: "Wiederholen", connectionError: "Verbindungsfehler.",
   },
   fr: {
     setupTitle: "Configuration 2FA requise", setupDesc: "Vous devez configurer l'authentification à deux facteurs.",
@@ -82,7 +87,8 @@ const translations: Record<string, Record<string, string>> = {
     verifying: "Vérification...", cancel: "Annuler", continue: "Continuer", invalidCode: "Code invalide",
     codeCopied: "Copié!", useBackupCode: "Code de secours", useAuthenticator: "Authenticator",
     tooManyAttempts: "Trop de tentatives.", setupSuccess: "2FA configuré!", error: "Une erreur s'est produite",
-    loading: "Chargement...", retry: "Réessayer", connectionError: "Erreur de connexion.",
+    loading: "Chargement...", processing: "Traitement de la transaction...", processingDesc: "Veuillez patienter pendant l'exécution de votre transaction.",
+    retry: "Réessayer", connectionError: "Erreur de connexion.",
   },
   ar: {
     setupTitle: "إعداد 2FA مطلوب", setupDesc: "تحتاج إلى إعداد المصادقة الثنائية.", verifyTitle: "التحقق من 2FA",
@@ -92,7 +98,8 @@ const translations: Record<string, Record<string, string>> = {
     verify: "تحقق", verifying: "جاري التحقق...", cancel: "إلغاء", continue: "متابعة", invalidCode: "رمز غير صالح",
     codeCopied: "تم النسخ!", useBackupCode: "رمز احتياطي", useAuthenticator: "المصادق",
     tooManyAttempts: "محاولات كثيرة.", setupSuccess: "تم إعداد 2FA!", error: "حدث خطأ",
-    loading: "جاري التحميل...", retry: "إعادة المحاولة", connectionError: "خطأ في الاتصال.",
+    loading: "جاري التحميل...", processing: "جاري معالجة المعاملة...", processingDesc: "يرجى الانتظار أثناء تنفيذ معاملتك.",
+    retry: "إعادة المحاولة", connectionError: "خطأ في الاتصال.",
   },
   ru: {
     setupTitle: "Требуется настройка 2FA", setupDesc: "Настройте двухфакторную аутентификацию.",
@@ -104,7 +111,8 @@ const translations: Record<string, Record<string, string>> = {
     continue: "Продолжить", invalidCode: "Неверный код", codeCopied: "Скопировано!",
     useBackupCode: "Резервный код", useAuthenticator: "Аутентификатор", tooManyAttempts: "Слишком много попыток.",
     setupSuccess: "2FA настроен!", error: "Произошла ошибка",
-    loading: "Загрузка...", retry: "Повторить", connectionError: "Ошибка соединения.",
+    loading: "Загрузка...", processing: "Обработка транзакции...", processingDesc: "Пожалуйста, подождите, ваша транзакция выполняется.",
+    retry: "Повторить", connectionError: "Ошибка соединения.",
   },
 };
 
@@ -116,7 +124,7 @@ interface TwoFactorGateProps {
   lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
-type Step = "checking" | "error" | "setup-qr" | "setup-backup" | "verify";
+type Step = "checking" | "error" | "setup-qr" | "setup-backup" | "verify" | "processing";
 
 export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang = "en" }: TwoFactorGateProps) {
   const t = translations[lang] || translations.en;
@@ -304,11 +312,13 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
         throw new Error(data.error || t.invalidCode);
       }
 
+      // Show processing state before passing code to parent
+      setStep("processing");
+
       // Pass the verified code back so it can be sent to backend APIs
       onVerified(useBackupCode ? code.toUpperCase() : code);
     } catch (err: any) {
       setError(err.message || t.invalidCode);
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -334,14 +344,15 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={step !== "processing" ? onClose : undefined} />
 
       <div className="relative z-10 w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 overflow-hidden shadow-2xl">
         {/* Header */}
         <div className="p-4 sm:p-6 border-b border-stone-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-              step === "verify" ? "bg-[#BFA181]/15 dark:bg-[#BFA181]/20" : 
+              step === "verify" ? "bg-[#BFA181]/15 dark:bg-[#BFA181]/20" :
+              step === "processing" ? "bg-[#2F6F62]/15 dark:bg-[#2F6F62]/20" :
               step === "error" ? "bg-red-100 dark:bg-red-500/20" :
               "bg-blue-100 dark:bg-blue-500/20"
             }`}>
@@ -351,23 +362,28 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
                 {step === "setup-qr" && "📱"}
                 {step === "setup-backup" && "🔐"}
                 {step === "verify" && "🔑"}
+                {step === "processing" && "⚡"}
               </span>
             </div>
             <div className="flex-1">
               <h2 className="text-lg font-bold text-slate-800 dark:text-white">
                 {step === "error" ? t.error :
-                 step === "setup-qr" || step === "setup-backup" ? t.setupTitle : 
+                 step === "processing" ? t.processing :
+                 step === "setup-qr" || step === "setup-backup" ? t.setupTitle :
                  t.verifyTitle}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 {step === "error" ? "" :
-                 step === "setup-qr" || step === "setup-backup" ? t.setupDesc : 
+                 step === "processing" ? t.processingDesc :
+                 step === "setup-qr" || step === "setup-backup" ? t.setupDesc :
                  t.verifyDesc}
               </p>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-              ✕
-            </button>
+            {step !== "processing" && (
+              <button onClick={onClose} className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                ✕
+              </button>
+            )}
           </div>
         </div>
 
@@ -378,6 +394,23 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
             <div className="flex flex-col items-center py-8">
               <div className="w-12 h-12 border-4 border-[#BFA181]/30 border-t-[#BFA181] rounded-full animate-spin mb-4" />
               <p className="text-slate-500 dark:text-slate-400">{t.loading}</p>
+            </div>
+          )}
+
+          {/* Processing — 2FA verified, executing transaction */}
+          {step === "processing" && (
+            <div className="flex flex-col items-center py-8">
+              <div className="relative mb-6">
+                <div className="w-16 h-16 border-4 border-[#2F6F62]/20 border-t-[#2F6F62] rounded-full animate-spin" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-lg">✓</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-[#2F6F62] animate-pulse" />
+                <p className="text-sm font-semibold text-[#2F6F62]">{t.processing}</p>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 text-center">{t.processingDesc}</p>
             </div>
           )}
 

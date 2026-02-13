@@ -776,13 +776,15 @@ export function WithdrawTab() {
     setShow2FA(true);
   };
 
-  const handle2FAVerified = (verifiedCode?: string) => {
-    setShow2FA(false);
+  const handle2FAVerified = async (verifiedCode?: string) => {
+    // Don't close 2FA modal yet — show "processing" state while transaction executes
     if (transferType === "internal") {
-      executeInternalTransfer(verifiedCode);
+      await executeInternalTransfer(verifiedCode);
     } else {
-      executeExternalWithdrawal(verifiedCode);
+      await executeExternalWithdrawal(verifiedCode);
     }
+    // Close modal only after transaction completes (success or error)
+    setShow2FA(false);
   };
 
   const executeInternalTransfer = async (verifiedCode?: string) => {
