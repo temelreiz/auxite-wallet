@@ -231,16 +231,34 @@ export async function POST(request: NextRequest) {
     const normalizedAddress = address.toLowerCase();
     const balanceKey = `user:${normalizedAddress}:balance`;
 
-    // Mevcut bakiyeyi al
-    const currentBalance = await redis.hgetall(balanceKey);
+    // Balance API'den gerçek bakiyeyi al (blockchain + redis + allocation)
+    // Redis-only okuma yetersiz: external wallet kullanıcılarında USDT/ETH blockchain'de
+    const balanceFieldKey = BALANCE_KEYS[coin];
+    let cryptoBalance = 0;
 
-    if (!currentBalance || Object.keys(currentBalance).length === 0) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const baseUrl = request.headers.get("host")
+      ? `https://${request.headers.get("host")}`
+      : process.env.NEXT_PUBLIC_APP_URL || "https://wallet.auxite.io";
+
+    try {
+      const balanceRes = await fetch(`${baseUrl}/api/user/balance?address=${normalizedAddress}`);
+      const balanceData = await balanceRes.json();
+      if (balanceData.success && balanceData.balances) {
+        cryptoBalance = parseFloat(balanceData.balances[balanceFieldKey] || "0");
+        console.log(`📊 Balance from API: ${coin}=${cryptoBalance} (source: balance API)`);
+      } else {
+        throw new Error(balanceData.error || "Balance API returned unsuccessful");
+      }
+    } catch (e) {
+      // Fallback: Redis'ten oku
+      console.warn(`⚠️ Balance API failed, falling back to Redis:`, e);
+      const currentBalance = await redis.hgetall(balanceKey);
+      if (!currentBalance || Object.keys(currentBalance).length === 0) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+      cryptoBalance = parseFloat(currentBalance[balanceFieldKey] as string || "0");
     }
 
-    // Seçili kripto'nun bakiyesini kontrol et
-    const balanceFieldKey = BALANCE_KEYS[coin];
-    const cryptoBalance = parseFloat(currentBalance[balanceFieldKey] as string || "0");
     const networkFee = NETWORK_FEES[coin] || 0;
 
     console.log(`📊 Withdraw check - Coin: ${coin}, Balance: ${cryptoBalance}, Requested: ${amount}, Fee: ${networkFee}`);
