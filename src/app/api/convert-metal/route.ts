@@ -55,26 +55,31 @@ async function getMetalPrice(metal: string): Promise<{ ask: number; bid: number 
 async function getMetalBalance(address: string, metal: string): Promise<number> {
   try {
     const normalizedAddress = address.toLowerCase();
+    let allocTotal = 0;
+
     const userUid = await redis.get(`user:address:${normalizedAddress}`) as string;
 
     if (userUid) {
       const allocDataRaw = await redis.get(`allocation:user:${userUid}:list`);
       if (allocDataRaw) {
         const allocations = typeof allocDataRaw === "string" ? JSON.parse(allocDataRaw) : allocDataRaw;
-        let total = 0;
         for (const alloc of allocations) {
           if (alloc.status === "active" && alloc.metal?.toUpperCase() === metal.toUpperCase()) {
-            total += parseFloat(alloc.grams) || 0;
+            allocTotal += parseFloat(alloc.grams) || 0;
           }
         }
-        if (total > 0) return total;
       }
     }
 
-    // Fallback: Redis balance
+    // Redis balance (küsurat dahil) — allocation ile birlikte toplam bakiye
     const balanceKey = `user:${normalizedAddress}:balance`;
     const redisBalance = await redis.hget(balanceKey, metal.toLowerCase()) as string;
-    return parseFloat(redisBalance || "0");
+    const redisBal = parseFloat(redisBalance || "0");
+
+    // Allocation + Redis küsurat = toplam bakiye
+    const total = allocTotal + Math.max(0, redisBal);
+    console.log(`📦 getMetalBalance: ${metal} alloc=${allocTotal} redis=${redisBal} total=${total}`);
+    return total;
   } catch {
     return 0;
   }
@@ -87,15 +92,25 @@ async function getMetalBalance(address: string, metal: string): Promise<number> 
 async function getEncumberedAmount(address: string, metal: string): Promise<number> {
   try {
     const normalizedAddress = address.toLowerCase();
-    const userUid = await redis.get(`user:address:${normalizedAddress}`) as string;
-    if (!userUid) return 0;
 
-    // Check staked amounts
-    const stakedKey = `user:${normalizedAddress}:staked`;
-    const stakedRaw = await redis.hget(stakedKey, metal.toLowerCase()) as string;
-    const staked = parseFloat(stakedRaw || "0");
+    // Staking positions — aynı key balance API ile tutarlı (user:{address}:staking list)
+    const stakingKey = `user:${normalizedAddress}:staking`;
+    const positions = await redis.lrange(stakingKey, 0, -1);
 
-    return staked;
+    let total = 0;
+    const now = Date.now();
+
+    for (const pos of positions) {
+      try {
+        const position = typeof pos === "string" ? JSON.parse(pos) : pos;
+        if (position.status === "active" && position.endDate > now &&
+            position.metal?.toLowerCase() === metal.toLowerCase()) {
+          total += position.amount || 0;
+        }
+      } catch { /* skip invalid */ }
+    }
+
+    return total;
   } catch {
     return 0;
   }

@@ -111,11 +111,13 @@ export function WithdrawableAssetsPanel() {
   const assets = ASSET_ORDER.map((symbol) => {
     const key = symbol.toLowerCase() as keyof typeof balances;
     const total = parseFloat(String((balances as any)[key] || 0));
-    const staked = (stakedAmounts as any)?.[key] || 0;
-    const allocated = (allocationAmounts as any)?.[key] || 0;
-    const encumbered = staked + allocated;
+    const staked = parseFloat(String((stakedAmounts as any)?.[key] || 0));
+    const allocated = parseFloat(String((allocationAmounts as any)?.[key] || 0));
+    // Encumbered = sadece staked (yield'deki) metaller — allocation'lar encumbered DEĞİL
+    const encumbered = staked;
     const pending = 0; // Future: settlement pending tracking
-    const available = Math.max(0, total - encumbered - pending);
+    // balance API zaten staked'ı çıkarmış (total = redis + allocation - staked)
+    const available = Math.max(0, total - pending);
 
     return { symbol, total, staked, allocated, encumbered, pending, available };
   }).filter((a) => a.total > 0 || ["AUXM", "AUXG"].includes(a.symbol));

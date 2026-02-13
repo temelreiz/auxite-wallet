@@ -656,7 +656,9 @@ export function WithdrawTab() {
   };
 
   const getAvailable = (symbol: string): number => {
-    return Math.max(0, getBalance(symbol) - getStaked(symbol) - getAllocated(symbol));
+    // balance API zaten staked'ı çıkarmış (total = redis + allocation - staked)
+    // Allocation'lar total'e dahil, tekrar çıkartmıyoruz
+    return Math.max(0, getBalance(symbol));
   };
 
   const formatBal = (amount: number, symbol: string): string => {

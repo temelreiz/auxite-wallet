@@ -485,13 +485,13 @@ export function MetalConversionTab() {
 
   const getEncumbered = (symbol: string): number => {
     const key = symbol.toLowerCase();
-    const staked = parseFloat(String((stakedAmounts as any)?.[key] || 0));
-    const allocated = 0; // Metal allocations are the balance itself
-    return staked + allocated;
+    // Sadece staked (yield'deki) metaller encumbered — allocation'lar encumbered DEĞİL
+    return parseFloat(String((stakedAmounts as any)?.[key] || 0));
   };
 
   const getAvailable = (symbol: string): number => {
-    return Math.max(0, getBalance(symbol) - getEncumbered(symbol));
+    // balance API zaten staked'ı çıkarmış (total = redis + allocation - staked)
+    return Math.max(0, getBalance(symbol));
   };
 
   // ── Pricing Helpers ──
