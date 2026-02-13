@@ -14,9 +14,8 @@ function get2FAKey(address: string): string {
   return `user:2fa:${address.toLowerCase()}`;
 }
 
-function generateSecret(): string {
-  const secret = new OTPAuth.Secret({ size: 20 });
-  return secret.base32;
+function generateSecret(): OTPAuth.Secret {
+  return new OTPAuth.Secret({ size: 20 });
 }
 
 function generateBackupCodes(): string[] {
@@ -47,16 +46,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate new secret
-    const secret = generateSecret();
-    
-    // Create TOTP for QR code
+    const secretObj = generateSecret();
+    const secretBase32 = secretObj.base32;
+
+    // Create TOTP for QR code — secret obje olarak verilmeli (encoding tutarlılığı)
     const totp = new OTPAuth.TOTP({
       issuer: "Auxite",
       label: `Auxite:${normalizedAddress.slice(0, 8)}`,
       algorithm: "SHA1",
       digits: 6,
       period: 30,
-      secret: secret,
+      secret: secretObj,
     });
 
     const otpauthUrl = totp.toString();
@@ -74,16 +74,25 @@ export async function POST(request: NextRequest) {
     // Generate backup codes (plain text - will be shown once)
     const backupCodes = generateBackupCodes();
 
-    // Store temp secret (not enabled yet)
+    // Store temp secret as base32 string (not enabled yet)
     await redis.hset(key, {
-      tempSecret: secret,
+      tempSecret: secretBase32,
       tempBackupCodes: JSON.stringify(backupCodes),
       setupStarted: Date.now().toString(),
     });
 
+    console.log("2FA Setup:", {
+      address: normalizedAddress.slice(0, 8),
+      secretLength: secretBase32.length,
+      secretFirst4: secretBase32.substring(0, 4),
+      otpauthUrl: otpauthUrl.substring(0, 60) + "...",
+      currentCode: totp.generate(),
+      serverTime: new Date().toISOString(),
+    });
+
     return NextResponse.json({
       success: true,
-      secret,
+      secret: secretBase32,
       qrCodeDataUrl,
       qrCodeUrl: otpauthUrl,
       backupCodes, // Plain text - show to user once

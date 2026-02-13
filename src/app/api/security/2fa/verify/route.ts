@@ -15,26 +15,29 @@ function get2FAKey(address: string): string {
 
 function verifyTOTP(secret: string, code: string): boolean {
   try {
+    // Secret'i OTPAuth.Secret olarak oluştur (base32 decode garantisi)
+    const secretObj = OTPAuth.Secret.fromBase32(secret);
+
     const totp = new OTPAuth.TOTP({
       issuer: "Auxite",
       label: "user",
       algorithm: "SHA1",
       digits: 6,
       period: 30,
-      secret: secret,
+      secret: secretObj,
     });
-    
+
     // Window 2 = ±60 saniye tolerans (zaman senkronizasyon sorunları için)
     const delta = totp.validate({ token: code, window: 2 });
-    
-    console.log("TOTP validation:", { 
+
+    console.log("TOTP validation:", {
       secretLength: secret.length,
-      code, 
+      code,
       delta,
       currentCode: totp.generate(),
       serverTime: new Date().toISOString()
     });
-    
+
     return delta !== null;
   } catch (error) {
     console.error("TOTP verify error:", error);

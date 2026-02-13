@@ -14,17 +14,36 @@ function get2FAKey(address: string): string {
 }
 
 function verifyCode(secret: string, code: string): boolean {
-  const totp = new OTPAuth.TOTP({
-    issuer: "Auxite",
-    label: "user",
-    algorithm: "SHA1",
-    digits: 6,
-    period: 30,
-    secret: secret,
-  });
-  // Window 2 = ±60 saniye tolerans (QR scan + kod girişi arasındaki gecikme)
-  const delta = totp.validate({ token: code, window: 2 });
-  return delta !== null;
+  try {
+    // Secret'i OTPAuth.Secret olarak oluştur (base32 decode garantisi)
+    const secretObj = OTPAuth.Secret.fromBase32(secret);
+
+    const totp = new OTPAuth.TOTP({
+      issuer: "Auxite",
+      label: "user",
+      algorithm: "SHA1",
+      digits: 6,
+      period: 30,
+      secret: secretObj,
+    });
+
+    // Window 2 = ±60 saniye tolerans (QR scan + kod girişi arasındaki gecikme)
+    const delta = totp.validate({ token: code, window: 2 });
+
+    console.log("2FA Enable - TOTP validation:", {
+      secretLength: secret.length,
+      secretFirst4: secret.substring(0, 4),
+      code,
+      delta,
+      currentCode: totp.generate(),
+      serverTime: new Date().toISOString(),
+    });
+
+    return delta !== null;
+  } catch (error) {
+    console.error("2FA Enable - verifyCode error:", error);
+    return false;
+  }
 }
 
 function hashCode(code: string): string {

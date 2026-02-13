@@ -14,16 +14,22 @@ function get2FAKey(address: string): string {
 }
 
 function verifyCode(secret: string, code: string): boolean {
-  const totp = new OTPAuth.TOTP({
-    issuer: "Auxite",
-    label: "user",
-    algorithm: "SHA1",
-    digits: 6,
-    period: 30,
-    secret: secret,
-  });
-  const delta = totp.validate({ token: code, window: 1 });
-  return delta !== null;
+  try {
+    const secretObj = OTPAuth.Secret.fromBase32(secret);
+    const totp = new OTPAuth.TOTP({
+      issuer: "Auxite",
+      label: "user",
+      algorithm: "SHA1",
+      digits: 6,
+      period: 30,
+      secret: secretObj,
+    });
+    const delta = totp.validate({ token: code, window: 2 });
+    return delta !== null;
+  } catch (error) {
+    console.error("TOTP verify error:", error);
+    return false;
+  }
 }
 
 function hashCode(code: string): string {

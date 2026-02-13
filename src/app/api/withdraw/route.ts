@@ -83,13 +83,14 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
   
   // TOTP doğrula
   try {
+    const secretObj = OTPAuth.Secret.fromBase32(data.secret as string);
     const totp = new OTPAuth.TOTP({
       issuer: "Auxite",
       label: "user",
       algorithm: "SHA1",
       digits: 6,
       period: 30,
-      secret: data.secret as string,
+      secret: secretObj,
     });
     // Window 2 = ±60 saniye tolerans (frontend verify + backend re-verify arasındaki gecikme)
     const delta = totp.validate({ token: code, window: 2 });
