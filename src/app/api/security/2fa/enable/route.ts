@@ -22,7 +22,8 @@ function verifyCode(secret: string, code: string): boolean {
     period: 30,
     secret: secret,
   });
-  const delta = totp.validate({ token: code, window: 1 });
+  // Window 2 = ±60 saniye tolerans (QR scan + kod girişi arasındaki gecikme)
+  const delta = totp.validate({ token: code, window: 2 });
   return delta !== null;
 }
 

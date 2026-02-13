@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { getTokenPrices } from "@/lib/v6-token-service";
 import { notifyTrade } from "@/lib/telegram";
+import { sendTradeExecutionEmail, sendCertificateEmail } from "@/lib/email";
 import { submitForMatching } from "@/lib/matching-engine";
 import { recordExposure, closeHedge } from "@/lib/hedge-engine";
 import { checkOrderAllowed, recordClientAllocation, recordClientDeallocation } from "@/lib/inventory-manager";
@@ -19,6 +20,13 @@ const redis = new Redis({
 });
 
 const VALID_METALS = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
+
+const METAL_NAMES: Record<string, string> = {
+  AUXG: "Gold",
+  AUXS: "Silver",
+  AUXPT: "Platinum",
+  AUXPD: "Palladium",
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SERVER-SIDE PRICE — reuses v6-token-service (same as /api/exchange)
@@ -388,16 +396,20 @@ export async function POST(request: NextRequest) {
     await redis.lpush(txKey, JSON.stringify(transaction));
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // TELEGRAM NOTIFICATION
+    // TELEGRAM NOTIFICATION + EMAIL
     // ═══════════════════════════════════════════════════════════════════════════
 
     let userEmail = "";
+    let userName = "";
+    let userLanguage = "en";
     try {
       if (userUid) {
         const userData = await redis.hgetall(`user:${userUid}`);
         userEmail = (userData?.email as string) || "";
+        userName = (userData?.name as string) || (userData?.fullName as string) || "";
+        userLanguage = (userData?.language as string) || "en";
       }
-    } catch (e) { console.warn("Could not fetch user email:", e); }
+    } catch (e) { console.warn("Could not fetch user data:", e); }
 
     notifyTrade({
       type: "buy",
@@ -409,6 +421,40 @@ export async function POST(request: NextRequest) {
       certificateNumber: newCertificate || undefined,
       email: userEmail,
     }).catch((err) => console.error("Telegram notification error:", err));
+
+    // ── EMAIL NOTIFICATIONS ──
+    if (userEmail) {
+      const now = new Date().toISOString();
+      const txId = transaction.id;
+
+      // 1. Trade Execution Email (conversion = sell source + buy target)
+      sendTradeExecutionEmail(userEmail, {
+        clientName: userName || undefined,
+        transactionType: "Buy",
+        metal: toMetalUpper,
+        metalName: METAL_NAMES[toMetalUpper] || toMetalUpper,
+        grams: outputGrams.toFixed(4),
+        executionPrice: `$${toAskPrice.toFixed(2)}/g`,
+        grossConsideration: `$${auxmProceeds.toFixed(2)}`,
+        executionTime: now,
+        referenceId: txId,
+        language: userLanguage,
+      }).catch((err) => console.error("Trade execution email error:", err));
+
+      // 2. Certificate Email (if new certificate was issued)
+      if (newCertificate) {
+        sendCertificateEmail(userEmail, "", {
+          certificateNumber: newCertificate,
+          metal: toMetalUpper,
+          metalName: METAL_NAMES[toMetalUpper] || toMetalUpper,
+          grams: (allocationInfo.allocatedGrams || outputGrams).toFixed(4),
+          purity: toMetalUpper === "AUXG" ? "999.9" : toMetalUpper === "AUXS" ? "999.0" : "999.5",
+          vaultLocation: "Auxite Segregated Vault — Dubai",
+          holderName: userName || undefined,
+          language: userLanguage,
+        }).catch((err) => console.error("Certificate email error:", err));
+      }
+    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // RESPONSE
