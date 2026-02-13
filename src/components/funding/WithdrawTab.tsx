@@ -809,8 +809,9 @@ export function WithdrawTab() {
       await Promise.all([refreshBalances(), fetchDirectBalances(), loadHistory()]);
       setTimeout(() => resetWizard(), 4000);
     } catch (err: any) {
+      console.error("❌ Transfer error:", err.message);
       setError(err.message || t.transferFailed);
-      setStep(4);
+      // Stay on step 5 so user sees the error with retry option
     } finally {
       setLoading(false);
     }
@@ -821,6 +822,8 @@ export function WithdrawTab() {
     setError(null);
 
     try {
+      console.log(`🚀 Withdraw request: ${amount} ${selectedAsset} to ${destinationAddress} (network: ${network})`);
+
       const res = await fetch("/api/withdraw", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -829,20 +832,24 @@ export function WithdrawTab() {
           coin: selectedAsset,
           amount: parseFloat(amount),
           withdrawAddress: destinationAddress,
+          network: network || undefined,
           memo: memo || undefined,
           twoFactorCode: verifiedCode,
         }),
       });
 
       const data = await res.json();
+      console.log(`📡 Withdraw response:`, data);
+
       if (!res.ok) throw new Error(data.error || t.withdrawalFailed);
 
       setSuccess(t.withdrawalSuccess);
       await Promise.all([refreshBalances(), fetchDirectBalances(), loadHistory()]);
       setTimeout(() => resetWizard(), 4000);
     } catch (err: any) {
+      console.error("❌ Withdraw error:", err.message);
       setError(err.message || t.withdrawalFailed);
-      setStep(4);
+      // Stay on step 5 so user sees the error with retry option
     } finally {
       setLoading(false);
     }

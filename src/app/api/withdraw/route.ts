@@ -17,12 +17,14 @@ interface WithdrawRequest {
   coin: string;
   amount: number; // Direkt kripto miktarı
   withdrawAddress: string;
+  network?: string; // ethereum, tron, base, bitcoin etc.
   memo?: string;
 }
 
 // Network fee (kripto cinsinden)
 const NETWORK_FEES: Record<string, number> = {
   USDT: 1,      // 1 USDT gas fee
+  USDC: 1,      // 1 USDC gas fee
   ETH: 0.001,   // 0.001 ETH gas fee
   XRP: 0.1,     // 0.1 XRP fee
   SOL: 0.01,    // 0.01 SOL fee
@@ -32,6 +34,7 @@ const NETWORK_FEES: Record<string, number> = {
 // Minimum çekim miktarları
 const MIN_WITHDRAW: Record<string, number> = {
   USDT: 10,
+  USDC: 10,
   ETH: 0.001,
   XRP: 10,
   SOL: 0.1,
@@ -41,6 +44,7 @@ const MIN_WITHDRAW: Record<string, number> = {
 // Balance key mapping
 const BALANCE_KEYS: Record<string, string> = {
   USDT: "usdt",
+  USDC: "usdc",
   BTC: "btc",
   ETH: "eth",
   XRP: "xrp",
@@ -92,8 +96,8 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
       period: 30,
       secret: secretObj,
     });
-    // Window 2 = ±60 saniye tolerans (frontend verify + backend re-verify arasındaki gecikme)
-    const delta = totp.validate({ token: code, window: 2 });
+    // Window 3 = ±90 saniye tolerans (frontend verify + backend re-verify arasındaki gecikme)
+    const delta = totp.validate({ token: code, window: 3 });
     if (delta !== null) {
       return { valid: true, enabled: true };
     }
@@ -135,11 +139,21 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
 
 export async function POST(request: NextRequest) {
   try {
-    const body: WithdrawRequest = await request.json();
-    const { address, coin, amount, withdrawAddress, memo, twoFactorCode } = body;
+    const body = await request.json();
+    // Support both web (address, coin, withdrawAddress) and mobile (fromAddress, token, toAddress) field names
+    const address = body.address || body.fromAddress;
+    const coin = (body.coin || body.token || "").toUpperCase();
+    const amount = body.amount;
+    const withdrawAddress = body.withdrawAddress || body.toAddress;
+    const network = body.network;
+    const memo = body.memo;
+    const twoFactorCode = body.twoFactorCode;
+
+    console.log(`📤 Withdraw request: coin=${coin}, amount=${amount}, to=${withdrawAddress?.slice(0, 10)}..., network=${network || 'default'}, has2FA=${!!twoFactorCode}`);
 
     // Validation
     if (!address || !coin || !amount || !withdrawAddress) {
+      console.error(`❌ Missing fields: address=${!!address}, coin=${!!coin}, amount=${!!amount}, withdrawAddress=${!!withdrawAddress}`);
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -148,7 +162,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Desteklenen coinler
-    const supportedCoins = ["USDT", "ETH", "XRP", "SOL", "BTC"];
+    const supportedCoins = ["USDT", "USDC", "ETH", "XRP", "SOL", "BTC"];
     if (!supportedCoins.includes(coin)) {
       return NextResponse.json({ error: "Unsupported cryptocurrency" }, { status: 400 });
     }
@@ -187,10 +201,12 @@ export async function POST(request: NextRequest) {
     // Frontend kontrolü yeterli değil, backend'de de doğrulanmalı!
     // ═══════════════════════════════════════════════════════════════════════════
     const twoFAResult = await verify2FA(address, twoFactorCode || "");
+    console.log(`🔐 2FA result: enabled=${twoFAResult.enabled}, valid=${twoFAResult.valid}, error=${twoFAResult.error || 'none'}`);
 
     // 2FA etkinse kod gerekli
     if (twoFAResult.enabled) {
       if (!twoFAResult.valid) {
+        console.warn(`⚠️ 2FA verification failed for withdraw: ${twoFAResult.error}`);
         return NextResponse.json({
           error: twoFAResult.error || "Geçersiz 2FA kodu",
           code: "2FA_REQUIRED",
@@ -200,10 +216,15 @@ export async function POST(request: NextRequest) {
     }
     // 2FA etkin değilse işleme devam et (kullanıcı henüz 2FA kurmamış)
 
-    // BTC henüz desteklenmiyor
+    // BTC ve USDC henüz desteklenmiyor
     if (coin === "BTC") {
-      return NextResponse.json({ 
-        error: "BTC withdrawals coming soon. Please use ETH, USDT, XRP or SOL." 
+      return NextResponse.json({
+        error: "BTC withdrawals coming soon. Please use ETH, USDT, XRP or SOL."
+      }, { status: 400 });
+    }
+    if (coin === "USDC") {
+      return NextResponse.json({
+        error: "USDC withdrawals coming soon. Please use USDT for stablecoin withdrawals."
       }, { status: 400 });
     }
 

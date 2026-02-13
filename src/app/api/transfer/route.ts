@@ -59,8 +59,8 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
       period: 30,
       secret: secretObj,
     });
-    // Window 2 = ±60 saniye tolerans (frontend verify + backend re-verify arasındaki gecikme)
-    const delta = totp.validate({ token: code, window: 2 });
+    // Window 3 = ±90 saniye tolerans (frontend verify + backend re-verify arasındaki gecikme)
+    const delta = totp.validate({ token: code, window: 3 });
     if (delta !== null) {
       return { valid: true, enabled: true };
     }
