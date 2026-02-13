@@ -508,6 +508,8 @@ export async function POST(request: NextRequest) {
       });
 
       // ── EMAIL NOTIFICATIONS ──
+      console.log(`📧 Exchange email: to=${userEmail || 'EMPTY'}, user=${userName || 'EMPTY'}`);
+
       if (userEmail) {
         const now = new Date().toISOString();
         const txId = transaction.id;
@@ -518,32 +520,44 @@ export async function POST(request: NextRequest) {
         const totalValue = metalGrams * metalPrice;
 
         // 1. Trade Execution Email
-        sendTradeExecutionEmail(userEmail, {
-          clientName: userName || undefined,
-          transactionType: isBuying ? "Buy" : "Sell",
-          metal,
-          metalName: METAL_NAMES[metal] || metal,
-          grams: metalGrams.toFixed(4),
-          executionPrice: `$${metalPrice.toFixed(2)}/g`,
-          grossConsideration: `$${totalValue.toFixed(2)}`,
-          executionTime: now,
-          referenceId: txId,
-          language: userLanguage,
-        }).catch((err) => console.error("Trade execution email error:", err));
+        try {
+          const tradeEmailResult = await sendTradeExecutionEmail(userEmail, {
+            clientName: userName || undefined,
+            transactionType: isBuying ? "Buy" : "Sell",
+            metal,
+            metalName: METAL_NAMES[metal] || metal,
+            grams: metalGrams.toFixed(4),
+            executionPrice: `$${metalPrice.toFixed(2)}/g`,
+            grossConsideration: `$${totalValue.toFixed(2)}`,
+            executionTime: now,
+            referenceId: txId,
+            language: userLanguage,
+          });
+          console.log(`📧 Exchange trade email result:`, tradeEmailResult);
+        } catch (err) {
+          console.error("📧 Exchange trade email FAILED:", err);
+        }
 
         // 2. Certificate Email (if buying metal and certificate was issued)
         if (isBuying && allocationInfo.certificateNumber) {
-          sendCertificateEmail(userEmail, "", {
-            certificateNumber: allocationInfo.certificateNumber,
-            metal,
-            metalName: METAL_NAMES[metal] || metal,
-            grams: (allocationInfo.allocatedGrams || metalGrams).toFixed(4),
-            purity: metal === "AUXG" ? "999.9" : metal === "AUXS" ? "999.0" : "999.5",
-            vaultLocation: "Auxite Segregated Vault — Dubai",
-            holderName: userName || undefined,
-            language: userLanguage,
-          }).catch((err) => console.error("Certificate email error:", err));
+          try {
+            const certEmailResult = await sendCertificateEmail(userEmail, "", {
+              certificateNumber: allocationInfo.certificateNumber,
+              metal,
+              metalName: METAL_NAMES[metal] || metal,
+              grams: (allocationInfo.allocatedGrams || metalGrams).toFixed(4),
+              purity: metal === "AUXG" ? "999.9" : metal === "AUXS" ? "999.0" : "999.5",
+              vaultLocation: "Auxite Segregated Vault — Dubai",
+              holderName: userName || undefined,
+              language: userLanguage,
+            });
+            console.log(`📧 Exchange certificate email result:`, certEmailResult);
+          } catch (err) {
+            console.error("📧 Exchange certificate email FAILED:", err);
+          }
         }
+      } else {
+        console.warn("📧 No user email found — skipping email notifications for exchange");
       }
     }
 

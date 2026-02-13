@@ -321,6 +321,14 @@ export async function POST(request: NextRequest) {
         }
       } catch (e) {
         console.error("Allocation release error:", e);
+        // Fallback: allocation release başarısız oldu, Redis'ten düşür
+        try {
+          await redis.hincrbyfloat(balanceKey, fromMetalUpper.toLowerCase(), -amount);
+          console.log(`📉 Fallback: Deducted ${amount}g ${fromMetalUpper} from Redis (allocation error)`);
+          deductedFromAllocation = true; // fallback başarılı
+        } catch (redisErr) {
+          console.error("CRITICAL: Redis fallback deduction also failed:", redisErr);
+        }
       }
     }
 
@@ -438,37 +446,51 @@ export async function POST(request: NextRequest) {
     }).catch((err) => console.error("Telegram notification error:", err));
 
     // ── EMAIL NOTIFICATIONS ──
+    console.log(`📧 Convert email: to=${userEmail || 'EMPTY'}, user=${userName || 'EMPTY'}, uid=${userUid || 'EMPTY'}`);
+
     if (userEmail) {
       const now = new Date().toISOString();
       const txId = transaction.id;
 
       // 1. Trade Execution Email (conversion = sell source + buy target)
-      sendTradeExecutionEmail(userEmail, {
-        clientName: userName || undefined,
-        transactionType: "Buy",
-        metal: toMetalUpper,
-        metalName: METAL_NAMES[toMetalUpper] || toMetalUpper,
-        grams: outputGrams.toFixed(4),
-        executionPrice: `$${toAskPrice.toFixed(2)}/g`,
-        grossConsideration: `$${auxmProceeds.toFixed(2)}`,
-        executionTime: now,
-        referenceId: txId,
-        language: userLanguage,
-      }).catch((err) => console.error("Trade execution email error:", err));
+      try {
+        const tradeEmailResult = await sendTradeExecutionEmail(userEmail, {
+          clientName: userName || undefined,
+          transactionType: "Buy",
+          metal: toMetalUpper,
+          metalName: METAL_NAMES[toMetalUpper] || toMetalUpper,
+          grams: outputGrams.toFixed(4),
+          executionPrice: `$${toAskPrice.toFixed(2)}/g`,
+          grossConsideration: `$${auxmProceeds.toFixed(2)}`,
+          executionTime: now,
+          referenceId: txId,
+          language: userLanguage,
+        });
+        console.log(`📧 Trade email result:`, tradeEmailResult);
+      } catch (err) {
+        console.error("📧 Trade execution email FAILED:", err);
+      }
 
       // 2. Certificate Email (if new certificate was issued)
       if (newCertificate) {
-        sendCertificateEmail(userEmail, "", {
-          certificateNumber: newCertificate,
-          metal: toMetalUpper,
-          metalName: METAL_NAMES[toMetalUpper] || toMetalUpper,
-          grams: (allocationInfo.allocatedGrams || outputGrams).toFixed(4),
-          purity: toMetalUpper === "AUXG" ? "999.9" : toMetalUpper === "AUXS" ? "999.0" : "999.5",
-          vaultLocation: "Auxite Segregated Vault — Dubai",
-          holderName: userName || undefined,
-          language: userLanguage,
-        }).catch((err) => console.error("Certificate email error:", err));
+        try {
+          const certEmailResult = await sendCertificateEmail(userEmail, "", {
+            certificateNumber: newCertificate,
+            metal: toMetalUpper,
+            metalName: METAL_NAMES[toMetalUpper] || toMetalUpper,
+            grams: (allocationInfo.allocatedGrams || outputGrams).toFixed(4),
+            purity: toMetalUpper === "AUXG" ? "999.9" : toMetalUpper === "AUXS" ? "999.0" : "999.5",
+            vaultLocation: "Auxite Segregated Vault — Dubai",
+            holderName: userName || undefined,
+            language: userLanguage,
+          });
+          console.log(`📧 Certificate email result:`, certEmailResult);
+        } catch (err) {
+          console.error("📧 Certificate email FAILED:", err);
+        }
       }
+    } else {
+      console.warn("📧 No user email found — skipping email notifications for conversion");
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

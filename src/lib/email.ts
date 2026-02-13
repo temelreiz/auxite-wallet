@@ -17,9 +17,11 @@ interface EmailOptions {
 }
 
 export async function sendEmail({ to, subject, html }: EmailOptions) {
+  console.log(`📧 sendEmail called: to=${to}, subject="${subject.substring(0, 60)}...", from=${FROM_EMAIL}`);
+
   try {
     if (!resend) {
-      console.warn('Resend API key not configured — email not sent');
+      console.error('📧 CRITICAL: RESEND_API_KEY not configured! Check Vercel env vars. Email NOT sent.');
       return { success: false, error: 'Email service not configured' };
     }
 
@@ -31,14 +33,14 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
     });
 
     if (error) {
-      console.error('Email send error:', error);
+      console.error(`📧 Resend API error for ${to}:`, error);
       throw new Error(error.message);
     }
 
-    console.log(`Email sent to ${to}: ${data?.id}`);
+    console.log(`📧 Email sent successfully to ${to}: id=${data?.id}`);
     return { success: true, id: data?.id };
   } catch (err: any) {
-    console.error('Email service error:', err);
+    console.error(`📧 Email service error for ${to}:`, err?.message || err);
     throw err;
   }
 }
