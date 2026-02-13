@@ -5,13 +5,13 @@ import { useLanguage } from "@/components/LanguageContext";
 
 const trustSections = [
   {
-    title: "Proof of Reserves",
-    titleTr: "Rezerv Kanıtı",
-    description: "Real-time verification of physical metal backing all Auxite tokens",
-    descriptionTr: "Tüm Auxite tokenlarını destekleyen fiziksel metalin gerçek zamanlı doğrulaması",
+    title: "Custody Transparency",
+    titleTr: "Saklama Şeffaflığı",
+    description: "Institutional custody disclosure: allocated metals, encumbrance visibility, reconciliation status",
+    descriptionTr: "Kurumsal saklama açıklaması: tahsisli metaller, yükümlülük görünürlüğü, uzlaştırma durumu",
     href: "/trust/reserves",
-    icon: "📊",
-    color: "emerald",
+    icon: "📋",
+    color: "slate",
   },
   {
     title: "Custody Information",
@@ -150,7 +150,7 @@ export default function TrustPage() {
               <span className="text-2xl">🧾</span>
             </div>
             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
-              {isTr ? 'Rezerv Kanıtı & Denetim' : 'Proof of Reserves & Audit'}
+              {isTr ? 'Saklama Şeffaflığı & Denetim' : 'Custody Transparency & Audit'}
             </h3>
             <p className="text-slate-600 dark:text-slate-400 text-sm">
               {isTr 
