@@ -330,14 +330,17 @@ export async function POST(request: NextRequest) {
     })();
 
     // ===== GERÇEK BLOCKCHAIN TRANSFERİ =====
-    console.log(`🚀 Processing ${coin} withdraw: ${netAmount} to ${withdrawAddress}`);
-    
+    console.log(`🚀 Processing ${coin} withdraw: ${netAmount} to ${withdrawAddress} (network: ${network || 'default'})`);
+
     const withdrawResult = await processWithdraw(
-      coin, 
-      withdrawAddress, 
-      netAmount, 
+      coin,
+      withdrawAddress,
+      netAmount,
       coin === "XRP" && memo ? parseInt(memo) : undefined
     );
+
+    // Log detailed result for debugging
+    console.log(`📋 Withdraw result: success=${withdrawResult.success}, txHash=${withdrawResult.txHash || 'none'}, error=${withdrawResult.error || 'none'}`);
 
     if (withdrawResult.success) {
       // Başarılı - transaction'ı güncelle
@@ -434,8 +437,25 @@ export async function POST(request: NextRequest) {
 
       console.error(`❌ Withdraw failed: ${withdrawResult.error}`);
 
-      return NextResponse.json({ 
-        error: withdrawResult.error || "Withdrawal failed",
+      // Map blockchain errors to user-friendly messages
+      let userError = withdrawResult.error || "Withdrawal failed";
+      if (userError.includes("Insufficient USDT balance")) {
+        userError = "Hot wallet USDT balance insufficient. Please contact support.";
+      } else if (userError.includes("Insufficient ETH for gas")) {
+        userError = "Hot wallet ETH gas balance insufficient. Please contact support.";
+      } else if (userError.includes("Insufficient hot wallet balance")) {
+        userError = "Hot wallet balance insufficient. Please contact support.";
+      } else if (userError.includes("private key not configured")) {
+        userError = "Withdrawal service temporarily unavailable. Please contact support.";
+      } else if (userError.includes("Insufficient SOL balance")) {
+        userError = "Hot wallet SOL balance insufficient. Please contact support.";
+      } else if (userError.includes("Insufficient XRP balance")) {
+        userError = "Hot wallet XRP balance insufficient. Please contact support.";
+      }
+
+      return NextResponse.json({
+        error: userError,
+        debugError: withdrawResult.error, // Detailed error for debugging
         refunded: true,
       }, { status: 500 });
     }

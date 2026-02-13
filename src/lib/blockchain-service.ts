@@ -584,12 +584,22 @@ export async function getHotWalletBalances(): Promise<Record<string, number>> {
     balances.AUXPD = 0;
   }
 
-  // USDT on ETH Mainnet (off-chain tracked, placeholder)
+  // USDT on ETH Mainnet (ERC-20)
   try {
-    // USDT is tracked off-chain for now (no official USDT on Base)
-    balances.USDT = 0;
+    const ethMainnetProvider = new ethers.JsonRpcProvider(ETH_MAINNET_RPC);
+    const USDT_CONTRACT = process.env.USDT_CONTRACT_ADDRESS || '0xdAC17F958D2ee523a2206206994597C13D831ec7';
+    const usdtContract = new ethers.Contract(USDT_CONTRACT, ERC20_ABI, ethMainnetProvider);
+    const usdtBalance = await usdtContract.balanceOf(hotWalletAddress);
+    const usdtDecimals = await usdtContract.decimals();
+    balances.USDT = parseFloat(ethers.formatUnits(usdtBalance, usdtDecimals));
+
+    // Also get ETH balance on mainnet (needed for gas)
+    const ethMainnetBalance = await ethMainnetProvider.getBalance(hotWalletAddress);
+    balances.ETH_MAINNET_GAS = parseFloat(ethers.formatEther(ethMainnetBalance));
   } catch (e) {
+    console.error('Error fetching USDT/ETH mainnet balance:', e);
     balances.USDT = 0;
+    balances.ETH_MAINNET_GAS = 0;
   }
 
   try {
