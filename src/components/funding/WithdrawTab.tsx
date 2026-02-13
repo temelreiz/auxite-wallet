@@ -539,7 +539,7 @@ interface TransactionRecord {
 // ============================================
 export function WithdrawTab() {
   const { lang } = useLanguage();
-  const { address, balances, stakedAmounts, allocationAmounts, refreshBalances } = useWallet();
+  const { address, balances: ctxBalances, stakedAmounts: ctxStaked, allocationAmounts: ctxAllocations, refreshBalances } = useWallet();
   const t = translations[lang] || translations.en;
 
   // ── Wizard State ──
@@ -563,6 +563,54 @@ export function WithdrawTab() {
   // ── History ──
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+
+  // ── Direct Balance Fetch (fallback when WalletContext fails) ──
+  const [directBalances, setDirectBalances] = useState<Record<string, number> | null>(null);
+  const [directStaked, setDirectStaked] = useState<Record<string, number> | null>(null);
+  const [directAllocations, setDirectAllocations] = useState<Record<string, number> | null>(null);
+
+  const fetchDirectBalances = useCallback(async () => {
+    if (!address) return;
+    try {
+      const [balanceRes, allocRes] = await Promise.all([
+        fetch(`/api/user/balance?address=${address}`),
+        fetch(`/api/allocations?address=${address}`),
+      ]);
+
+      const balanceData = await balanceRes.json().catch(() => ({ success: false, balances: {} }));
+      const allocData = await allocRes.json().catch(() => ({ success: false, allocations: [], summary: {} }));
+
+      if (balanceData.balances) {
+        setDirectBalances(balanceData.balances);
+      }
+
+      if (balanceData.stakedAmounts) {
+        setDirectStaked(balanceData.stakedAmounts);
+      }
+
+      // Parse allocations
+      const allocTotals: Record<string, number> = { auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 };
+      if (Array.isArray(allocData.allocations)) {
+        for (const a of allocData.allocations) {
+          const metal = a.metal?.toLowerCase();
+          const grams = Number(a.grams) || 0;
+          if (metal && metal in allocTotals) {
+            allocTotals[metal] += grams;
+          }
+        }
+      }
+      setDirectAllocations(allocTotals);
+    } catch (err) {
+      console.error("Failed to fetch direct balances:", err);
+    }
+  }, [address]);
+
+  useEffect(() => { fetchDirectBalances(); }, [fetchDirectBalances]);
+
+  // Use WalletContext balances if available, otherwise use direct fetch
+  const balances = ctxBalances || directBalances;
+  const stakedAmounts = ctxStaked || directStaked;
+  const allocationAmounts = ctxAllocations || directAllocations;
 
   // ── Balance Helpers ──
   const getBalance = (symbol: string): number => {
@@ -736,7 +784,7 @@ export function WithdrawTab() {
       if (!res.ok) throw new Error(data.error || t.transferFailed);
 
       setSuccess(t.transferSuccess);
-      await Promise.all([refreshBalances(), loadHistory()]);
+      await Promise.all([refreshBalances(), fetchDirectBalances(), loadHistory()]);
       setTimeout(() => resetWizard(), 4000);
     } catch (err: any) {
       setError(err.message || t.transferFailed);
@@ -768,7 +816,7 @@ export function WithdrawTab() {
       if (!res.ok) throw new Error(data.error || t.withdrawalFailed);
 
       setSuccess(t.withdrawalSuccess);
-      await Promise.all([refreshBalances(), loadHistory()]);
+      await Promise.all([refreshBalances(), fetchDirectBalances(), loadHistory()]);
       setTimeout(() => resetWizard(), 4000);
     } catch (err: any) {
       setError(err.message || t.withdrawalFailed);
