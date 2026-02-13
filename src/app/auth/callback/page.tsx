@@ -42,6 +42,14 @@ export default function AuthCallbackPage() {
         const user = JSON.parse(decodeURIComponent(userParam));
         localStorage.setItem('user', JSON.stringify(user));
 
+        // Restore user's preferred language from backend
+        if (user.language && ['en','tr','de','fr','ar','ru'].includes(user.language)) {
+          localStorage.setItem('auxite_language', user.language);
+          document.documentElement.dir = user.language === 'ar' ? 'rtl' : 'ltr';
+          window.dispatchEvent(new Event('languageChange'));
+          console.log('[OAuth Callback] Language restored:', user.language);
+        }
+
         // Store wallet address for TopNav display (same as login flow)
         const displayAddress = user.walletAddress || null;
         if (displayAddress) {

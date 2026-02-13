@@ -51,9 +51,10 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
 // White background, black text, gold accent, serif typography
 // ═══════════════════════════════════════════════════════════════
 
-function institutionalEmailWrapper(content: string, deskName: string): string {
+function institutionalEmailWrapper(content: string, deskName: string, language?: string): string {
+  const dir = language === 'ar' ? 'rtl' : 'ltr';
   return `<!DOCTYPE html>
-<html>
+<html dir="${dir}" lang="${language || 'en'}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -186,6 +187,7 @@ function institutionalEmailWrapper(content: string, deskName: string): string {
 
       <p class="desk-sign">${deskName}</p>
       <p class="master-footer-notice">This message serves as an operational confirmation and should be retained for your financial records.</p>
+      ${language && language !== 'en' ? `<p class="master-footer-notice" style="margin-top: 8px;">This document is issued in the client's designated communication language. In case of conflict, the English version shall prevail.</p>` : ''}
     </div>
     <div class="footer">
       <p>Aurum Ledger Ltd &middot; Hong Kong</p>
@@ -221,41 +223,113 @@ export async function sendTradeExecutionEmail(
   const lang = data.language || 'en';
   const name = data.clientName || 'Client';
 
-  const t = lang === 'tr' ? {
-    subject: `Takas Onay\u0131 — ${data.referenceId}`,
-    greeting: `Say\u0131n ${name},`,
-    intro: 'Son i\u015Fleminiz ba\u015Far\u0131yla ger\u00E7ekle\u015Ftirilmi\u015F ve Auxite defterine kaydedilmi\u015Ftir.',
-    txType: '\u0130\u015Flem T\u00FCr\u00FC',
-    metal: 'Metal',
-    quantity: 'Miktar',
-    execPrice: 'Ger\u00E7ekle\u015Ftirme Fiyat\u0131',
-    grossConsideration: 'Br\u00FCt Tutar',
-    execTime: 'Ger\u00E7ekle\u015Ftirme Zaman\u0131',
-    refId: 'Referans No',
-    settlement: 'Takas i\u015Flemi \u015Fu anda devam etmektedir. Tamamland\u0131\u011F\u0131nda, g\u00FCncellenmi\u015F bakiyeleriniz saklama hesab\u0131n\u0131za yans\u0131t\u0131lacakt\u0131r.',
-    executionOnly: 'Auxite yaln\u0131zca emir ger\u00E7ekle\u015Ftirme modeliyle \u00E7al\u0131\u015F\u0131r ve m\u00FC\u015Fteri ak\u0131\u015F\u0131na kar\u015F\u0131 tescilli al\u0131m sat\u0131m yapmaz.',
-    unauthorized: 'Bu i\u015Flemi siz yetkilendirmediyseniz, l\u00FCtfen derhal Auxite ile ileti\u015Fime ge\u00E7in.',
-    viewLedger: 'M\u00FC\u015Fteri Defterinde G\u00F6r\u00FCnt\u00FCle',
-    desk: 'Auxite Ger\u00E7ekle\u015Ftirme Masas\u0131',
-  } : {
-    subject: `Trade Execution Confirmation — ${data.referenceId}`,
-    greeting: `Dear ${name},`,
-    intro: 'Your recent transaction has been successfully executed and recorded within the Auxite ledger.',
-    txType: 'Transaction Type',
-    metal: 'Metal',
-    quantity: 'Quantity',
-    execPrice: 'Execution Price',
-    grossConsideration: 'Gross Consideration',
-    execTime: 'Execution Time',
-    refId: 'Reference ID',
-    settlement: 'Settlement is currently in progress. Once completed, your updated balances will be reflected within your custody account.',
-    executionOnly: 'Auxite operates an execution-only model and does not engage in proprietary trading against client flow.',
-    unauthorized: 'If you did not authorize this transaction, please contact Auxite immediately.',
-    viewLedger: 'View in Client Ledger',
-    desk: 'Auxite Execution Desk',
+  const content: Record<string, Record<string, string>> = {
+    en: {
+      subject: `Trade Execution Confirmation — ${data.referenceId}`,
+      greeting: `Dear ${name},`,
+      intro: 'Your recent transaction has been successfully executed and recorded within the Auxite ledger.',
+      txType: 'Transaction Type',
+      metal: 'Metal',
+      quantity: 'Quantity',
+      execPrice: 'Execution Price',
+      grossConsideration: 'Gross Consideration',
+      execTime: 'Execution Time',
+      refId: 'Reference ID',
+      settlement: 'Settlement is currently in progress. Once completed, your updated balances will be reflected within your custody account.',
+      executionOnly: 'Auxite operates an execution-only model and does not engage in proprietary trading against client flow.',
+      unauthorized: 'If you did not authorize this transaction, please contact Auxite immediately.',
+      viewLedger: 'View in Client Ledger',
+      desk: 'Auxite Execution Desk',
+    },
+    tr: {
+      subject: `Takas Onayı — ${data.referenceId}`,
+      greeting: `Sayın ${name},`,
+      intro: 'Son işleminiz başarıyla gerçekleştirilmiş ve Auxite defterine kaydedilmiştir.',
+      txType: 'İşlem Türü',
+      metal: 'Metal',
+      quantity: 'Miktar',
+      execPrice: 'Gerçekleştirme Fiyatı',
+      grossConsideration: 'Brüt Tutar',
+      execTime: 'Gerçekleştirme Zamanı',
+      refId: 'Referans No',
+      settlement: 'Takas işlemi şu anda devam etmektedir. Tamamlandığında, güncellenmiş bakiyeleriniz saklama hesabınıza yansıtılacaktır.',
+      executionOnly: 'Auxite yalnızca emir gerçekleştirme modeliyle çalışır ve müşteri akışına karşı tescilli alım satım yapmaz.',
+      unauthorized: 'Bu işlemi siz yetkilendirmediyseniz, lütfen derhal Auxite ile iletişime geçin.',
+      viewLedger: 'Müşteri Defterinde Görüntüle',
+      desk: 'Auxite Gerçekleştirme Masası',
+    },
+    de: {
+      subject: `Handelsausführungsbestätigung — ${data.referenceId}`,
+      greeting: `Sehr geehrte/r ${name},`,
+      intro: 'Ihre letzte Transaktion wurde erfolgreich ausgeführt und im Auxite-Hauptbuch erfasst.',
+      txType: 'Transaktionstyp',
+      metal: 'Metall',
+      quantity: 'Menge',
+      execPrice: 'Ausführungspreis',
+      grossConsideration: 'Bruttogegenleistung',
+      execTime: 'Ausführungszeit',
+      refId: 'Referenz-ID',
+      settlement: 'Die Abwicklung ist derzeit in Bearbeitung. Nach Abschluss werden Ihre aktualisierten Salden in Ihrem Verwahrungskonto angezeigt.',
+      executionOnly: 'Auxite arbeitet nach einem reinen Ausführungsmodell und betreibt keinen Eigenhandel gegen Kundenaufträge.',
+      unauthorized: 'Falls Sie diese Transaktion nicht autorisiert haben, kontaktieren Sie bitte umgehend Auxite.',
+      viewLedger: 'Im Kundenbuch anzeigen',
+      desk: 'Auxite Ausführungsabteilung',
+    },
+    fr: {
+      subject: `Confirmation d'exécution de transaction — ${data.referenceId}`,
+      greeting: `Cher/Chère ${name},`,
+      intro: 'Votre transaction récente a été exécutée avec succès et enregistrée dans le registre Auxite.',
+      txType: 'Type de transaction',
+      metal: 'Métal',
+      quantity: 'Quantité',
+      execPrice: 'Prix d\'exécution',
+      grossConsideration: 'Contrepartie brute',
+      execTime: 'Heure d\'exécution',
+      refId: 'Référence',
+      settlement: 'Le règlement est en cours. Une fois terminé, vos soldes mis à jour seront reflétés dans votre compte de garde.',
+      executionOnly: 'Auxite fonctionne selon un modèle d\'exécution uniquement et ne pratique pas de trading propriétaire contre les flux clients.',
+      unauthorized: 'Si vous n\'avez pas autorisé cette transaction, veuillez contacter Auxite immédiatement.',
+      viewLedger: 'Voir dans le registre client',
+      desk: 'Bureau d\'exécution Auxite',
+    },
+    ar: {
+      subject: `تأكيد تنفيذ الصفقة — ${data.referenceId}`,
+      greeting: `عزيزي ${name}،`,
+      intro: 'تم تنفيذ معاملتك الأخيرة بنجاح وتسجيلها في دفتر Auxite.',
+      txType: 'نوع المعاملة',
+      metal: 'المعدن',
+      quantity: 'الكمية',
+      execPrice: 'سعر التنفيذ',
+      grossConsideration: 'القيمة الإجمالية',
+      execTime: 'وقت التنفيذ',
+      refId: 'رقم المرجع',
+      settlement: 'التسوية قيد التنفيذ حالياً. بمجرد الانتهاء، ستنعكس أرصدتك المحدثة في حساب الحفظ الخاص بك.',
+      executionOnly: 'تعمل Auxite وفق نموذج التنفيذ فقط ولا تمارس التداول لحسابها الخاص ضد تدفقات العملاء.',
+      unauthorized: 'إذا لم تقم بتفويض هذه المعاملة، يرجى الاتصال بـ Auxite فوراً.',
+      viewLedger: 'عرض في دفتر العميل',
+      desk: 'مكتب التنفيذ Auxite',
+    },
+    ru: {
+      subject: `Подтверждение исполнения сделки — ${data.referenceId}`,
+      greeting: `Уважаемый/ая ${name},`,
+      intro: 'Ваша последняя транзакция была успешно исполнена и записана в реестр Auxite.',
+      txType: 'Тип транзакции',
+      metal: 'Металл',
+      quantity: 'Количество',
+      execPrice: 'Цена исполнения',
+      grossConsideration: 'Валовое возмещение',
+      execTime: 'Время исполнения',
+      refId: 'Номер ссылки',
+      settlement: 'Расчет в настоящее время выполняется. После завершения обновленные балансы отразятся в вашем счете хранения.',
+      executionOnly: 'Auxite работает по модели исключительно исполнения и не занимается собственной торговлей против потока клиентов.',
+      unauthorized: 'Если вы не авторизовали эту транзакцию, пожалуйста, немедленно свяжитесь с Auxite.',
+      viewLedger: 'Посмотреть в клиентском реестре',
+      desk: 'Отдел исполнения Auxite',
+    },
   };
+  const t = content[lang] || content.en;
 
-  const content = `
+  const emailContent = `
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
@@ -301,14 +375,23 @@ export async function sendTradeExecutionEmail(
   return sendEmail({
     to,
     subject: t.subject,
-    html: institutionalEmailWrapper(content, t.desk),
+    html: institutionalEmailWrapper(emailContent, t.desk, lang),
   });
 }
 
 
 // ═══════════════════════════════════════════════════════════════
 // 2. METAL ALLOCATION CONFIRMATION (CERTIFICATE EMAIL)
+// Bilingual: client language notice + English legal text always present
 // ═══════════════════════════════════════════════════════════════
+
+const certNoticeTranslations: Record<string, string> = {
+  tr: 'Bu sertifika kriptografik olarak hashlenerek Base blockchain\'ine sabitlenmiştir. Bu belge elektronik olarak düzenlenmiş ve Auxite saklama defterine kaydedilmiştir.',
+  de: 'Dieses Zertifikat wurde kryptografisch gehasht und auf der Base-Blockchain verankert. Dieses Dokument wurde elektronisch erstellt und im Verwahrungsbuch von Auxite erfasst.',
+  fr: 'Ce certificat a été hashé cryptographiquement et ancré sur la blockchain Base. Ce document est émis électroniquement et enregistré dans le registre de conservation d\'Auxite.',
+  ar: 'تم تشفير هذه الشهادة وتثبيتها على سلسلة Base. صدرت هذه الوثيقة إلكترونياً وسُجلت في سجل الحفظ لدى Auxite.',
+  ru: 'Данный сертификат криптографически хеширован и закреплён на блокчейне Base. Данный документ выпущен в электронном виде и зафиксирован в реестре хранения Auxite.',
+};
 
 export async function sendCertificateEmail(
   to: string,
@@ -327,43 +410,119 @@ export async function sendCertificateEmail(
   const lang = data.language || 'en';
   const name = data.holderName || 'Client';
 
-  const t = lang === 'tr' ? {
-    subject: `Metal Tahsis Onay\u0131 — ${data.certificateNumber}`,
-    greeting: `Say\u0131n ${name},`,
-    intro: 'Son i\u015Fleminize ba\u011Fl\u0131 metaller tam olarak tahsis edilmi\u015F ve menfaatiniz i\u00E7in ba\u011F\u0131ms\u0131z saklama yap\u0131lar\u0131 dahilinde tutulmaktad\u0131r.',
-    metal: 'Metal',
-    quantity: 'Miktar',
-    purity: 'Safl\u0131k',
-    vault: 'Kasa Lokasyonu',
-    allocationType: 'Tahsis T\u00FCr\u00FC',
-    fullyAllocated: 'Tam Tahsisli',
-    encumbrance: 'Teminat Durumu',
-    none: 'Yok',
-    certId: 'Sertifika No',
-    balanceSheet: 'Metallerin m\u00FClkiyeti sizin menfaatinize tutulmakta olup Auxite bilan\u00E7osunda kay\u0131tl\u0131 de\u011Fildir.',
-    certAvailable: 'Tahsis sertifikan\u0131z art\u0131k belge kasan\u0131zda mevcuttur.',
-    viewCert: 'Sertifikay\u0131 G\u00F6r\u00FCnt\u00FCle',
-    desk: 'Auxite Saklama Operasyonlar\u0131',
-  } : {
-    subject: `Certificate of Metal Allocation — ${data.certificateNumber}`,
-    greeting: `Dear ${name},`,
-    intro: 'This is to confirm that the metals associated with your recent transaction have been fully allocated and are now held within independent custody structures for your benefit.',
-    metal: 'Metal',
-    quantity: 'Quantity',
-    purity: 'Purity',
-    vault: 'Vault Location',
-    allocationType: 'Allocation Type',
-    fullyAllocated: 'Fully Allocated',
-    encumbrance: 'Encumbrance Status',
-    none: 'None',
-    certId: 'Certificate ID',
-    balanceSheet: 'Title to the metals is held for your benefit and is not recorded on the balance sheet of Auxite.',
-    certAvailable: 'Your allocation certificate is now available within your document vault.',
-    viewCert: 'View Certificate',
-    desk: 'Auxite Custody Operations',
+  const content: Record<string, Record<string, string>> = {
+    en: {
+      subject: `Certificate of Metal Allocation — ${data.certificateNumber}`,
+      greeting: `Dear ${name},`,
+      intro: 'This is to confirm that the metals associated with your recent transaction have been fully allocated and are now held within independent custody structures for your benefit.',
+      metal: 'Metal',
+      quantity: 'Quantity',
+      purity: 'Purity',
+      vault: 'Vault Location',
+      allocationType: 'Allocation Type',
+      fullyAllocated: 'Fully Allocated',
+      encumbrance: 'Encumbrance Status',
+      none: 'None',
+      certId: 'Certificate ID',
+      balanceSheet: 'Title to the metals is held for your benefit and is not recorded on the balance sheet of Auxite.',
+      certAvailable: 'Your allocation certificate is now available within your document vault.',
+      viewCert: 'View Certificate',
+      desk: 'Auxite Custody Operations',
+    },
+    tr: {
+      subject: `Metal Tahsis Onayı — ${data.certificateNumber}`,
+      greeting: `Sayın ${name},`,
+      intro: 'Son işleminize bağlı metaller tam olarak tahsis edilmiş ve menfaatiniz için bağımsız saklama yapıları dahilinde tutulmaktadır.',
+      metal: 'Metal',
+      quantity: 'Miktar',
+      purity: 'Saflık',
+      vault: 'Kasa Lokasyonu',
+      allocationType: 'Tahsis Türü',
+      fullyAllocated: 'Tam Tahsisli',
+      encumbrance: 'Teminat Durumu',
+      none: 'Yok',
+      certId: 'Sertifika No',
+      balanceSheet: 'Metallerin mülkiyeti sizin menfaatinize tutulmakta olup Auxite bilançosunda kayıtlı değildir.',
+      certAvailable: 'Tahsis sertifikanız artık belge kasanızda mevcuttur.',
+      viewCert: 'Sertifikayı Görüntüle',
+      desk: 'Auxite Saklama Operasyonları',
+    },
+    de: {
+      subject: `Zertifikat der Metallzuteilung — ${data.certificateNumber}`,
+      greeting: `Sehr geehrte/r ${name},`,
+      intro: 'Hiermit bestätigen wir, dass die mit Ihrer letzten Transaktion verbundenen Metalle vollständig zugeteilt wurden und nun in unabhängigen Verwahrungsstrukturen zu Ihren Gunsten gehalten werden.',
+      metal: 'Metall',
+      quantity: 'Menge',
+      purity: 'Reinheit',
+      vault: 'Tresorstandort',
+      allocationType: 'Zuteilungstyp',
+      fullyAllocated: 'Vollständig zugeteilt',
+      encumbrance: 'Belastungsstatus',
+      none: 'Keine',
+      certId: 'Zertifikat-ID',
+      balanceSheet: 'Das Eigentum an den Metallen wird zu Ihren Gunsten gehalten und ist nicht in der Bilanz von Auxite erfasst.',
+      certAvailable: 'Ihr Zuteilungszertifikat ist jetzt in Ihrem Dokumententresor verfügbar.',
+      viewCert: 'Zertifikat anzeigen',
+      desk: 'Auxite Verwahrungsabteilung',
+    },
+    fr: {
+      subject: `Certificat d'allocation de métal — ${data.certificateNumber}`,
+      greeting: `Cher/Chère ${name},`,
+      intro: 'Nous confirmons que les métaux associés à votre transaction récente ont été entièrement alloués et sont désormais détenus dans des structures de garde indépendantes à votre bénéfice.',
+      metal: 'Métal',
+      quantity: 'Quantité',
+      purity: 'Pureté',
+      vault: 'Emplacement du coffre',
+      allocationType: 'Type d\'allocation',
+      fullyAllocated: 'Entièrement alloué',
+      encumbrance: 'Statut de charge',
+      none: 'Aucune',
+      certId: 'ID du certificat',
+      balanceSheet: 'Le titre de propriété des métaux est détenu à votre bénéfice et n\'est pas inscrit au bilan d\'Auxite.',
+      certAvailable: 'Votre certificat d\'allocation est maintenant disponible dans votre coffre de documents.',
+      viewCert: 'Voir le certificat',
+      desk: 'Opérations de garde Auxite',
+    },
+    ar: {
+      subject: `شهادة تخصيص المعدن — ${data.certificateNumber}`,
+      greeting: `عزيزي ${name}،`,
+      intro: 'نؤكد أن المعادن المرتبطة بمعاملتك الأخيرة قد تم تخصيصها بالكامل وهي الآن محتفظ بها ضمن هياكل حفظ مستقلة لصالحك.',
+      metal: 'المعدن',
+      quantity: 'الكمية',
+      purity: 'النقاوة',
+      vault: 'موقع الخزنة',
+      allocationType: 'نوع التخصيص',
+      fullyAllocated: 'مخصص بالكامل',
+      encumbrance: 'حالة الرهن',
+      none: 'لا يوجد',
+      certId: 'رقم الشهادة',
+      balanceSheet: 'ملكية المعادن محتفظ بها لصالحك وليست مسجلة في الميزانية العمومية لـ Auxite.',
+      certAvailable: 'شهادة التخصيص الخاصة بك متاحة الآن في خزنة المستندات الخاصة بك.',
+      viewCert: 'عرض الشهادة',
+      desk: 'عمليات الحفظ Auxite',
+    },
+    ru: {
+      subject: `Сертификат размещения металла — ${data.certificateNumber}`,
+      greeting: `Уважаемый/ая ${name},`,
+      intro: 'Настоящим подтверждаем, что металлы, связанные с вашей последней транзакцией, были полностью размещены и теперь хранятся в независимых структурах хранения в вашу пользу.',
+      metal: 'Металл',
+      quantity: 'Количество',
+      purity: 'Чистота',
+      vault: 'Расположение хранилища',
+      allocationType: 'Тип размещения',
+      fullyAllocated: 'Полностью размещено',
+      encumbrance: 'Статус обременения',
+      none: 'Отсутствует',
+      certId: 'ID сертификата',
+      balanceSheet: 'Право собственности на металлы удерживается в вашу пользу и не отражено в балансе Auxite.',
+      certAvailable: 'Ваш сертификат размещения теперь доступен в вашем хранилище документов.',
+      viewCert: 'Посмотреть сертификат',
+      desk: 'Отдел хранения Auxite',
+    },
   };
+  const t = content[lang] || content.en;
 
-  const content = `
+  const emailContent = `
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
@@ -408,18 +567,27 @@ export async function sendCertificateEmail(
     <a href="${VAULT_URL}/api/certificates/pdf?certNumber=${data.certificateNumber}&metal=${data.metal}&format=html" class="cta-button">${t.viewCert}</a>
 
     <div class="notice">
-      This certificate has been cryptographically hashed and anchored on the Base blockchain.
+      ${lang !== 'en' ? `${certNoticeTranslations[lang] || ''}<br><br>` : ''}This certificate has been cryptographically hashed and anchored on the Base blockchain.
       This document is electronically issued and recorded within Auxite's custody ledger.
     </div>
   `;
 
-  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(content, t.desk) });
+  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(emailContent, t.desk, lang) });
 }
 
 
 // ═══════════════════════════════════════════════════════════════
 // 3. YIELD ENROLLMENT CONFIRMATION (STRUCTURED YIELD PARTICIPATION)
+// Bilingual: client language notice + English legal text always present
 // ═══════════════════════════════════════════════════════════════
+
+const yieldNoticeTranslations: Record<string, string> = {
+  tr: 'Yapılandırılmış getiri programlarına tahsis edilen metaller karşı taraf ve uzlaşma riskine tabi olabilir. Auxite sıkı karşı taraf seçimi ve risk kontrolü uygular. Bu belge elektronik olarak düzenlenmiş ve Auxite saklama defterine kaydedilmiştir.',
+  de: 'Metalle, die strukturierten Ertragsprogrammen zugewiesen sind, können Gegenpartei- und Abwicklungsrisiken unterliegen. Auxite wendet strenge Gegenparteiauswahl und Risikokontrollen an. Dieses Dokument wurde elektronisch erstellt und im Verwahrungsbuch von Auxite erfasst.',
+  fr: 'Les métaux engagés dans des programmes de rendement structuré peuvent être soumis à un risque de contrepartie et de règlement. Auxite maintient une sélection stricte des contreparties et des contrôles de risques. Ce document est émis électroniquement et enregistré dans le registre de conservation d\'Auxite.',
+  ar: 'قد تخضع المعادن الملتزم بها في برامج العائد المهيكل لمخاطر الطرف المقابل والتسوية. تحافظ Auxite على اختيار صارم للأطراف المقابلة وضوابط المخاطر. صدرت هذه الوثيقة إلكترونياً وسُجلت في سجل الحفظ لدى Auxite.',
+  ru: 'Металлы, выделенные в программы структурированной доходности, могут быть подвержены контрагентному и расчётному риску. Auxite применяет строгий отбор контрагентов и контроль рисков. Данный документ выпущен в электронном виде и зафиксирован в реестре хранения Auxite.',
+};
 
 export async function sendStakingAgreementEmail(
   to: string,
@@ -443,41 +611,113 @@ export async function sendStakingAgreementEmail(
 
   const metalLabel = data.metalName ? `${data.metalName} (${data.metal})` : data.metal;
 
-  const t = lang === 'tr' ? {
-    subject: `Yap\u0131land\u0131r\u0131lm\u0131\u015F Getiri Kat\u0131l\u0131m Bildirimi — ${metalLabel}`,
-    greeting: `Say\u0131n ${name},`,
-    intro: 'Bu bildirim, Auxite de\u011Ferli metal yap\u0131land\u0131r\u0131lm\u0131\u015F getiri program\u0131na kat\u0131l\u0131m\u0131n\u0131z\u0131 teyit eder.',
-    metal: 'Metal',
-    quantity: 'Taahh\u00FCt Edilen Miktar',
-    leaseRate: 'Getiri Oran\u0131',
-    effectiveDate: 'Y\u00FCr\u00FCrl\u00FCk Tarihi',
-    maturityDate: 'Vade Tarihi',
-    tenor: 'Getiri Vadesi',
-    returnSettlement: 'Getiri Uzla\u015Fmas\u0131',
-    atMaturity: 'Vade Sonunda',
-    encumbered: 'Getiri s\u00FCresi boyunca, referans verilen metaller teminatl\u0131 kabul edilecek ve vadeye kadar transfer edilemez veya itfa edilemeyecektir.',
-    noteIssued: 'Resmi bir Kat\u0131l\u0131m Notu d\u00FCzenlenmi\u015F olup belge kasan\u0131zda eri\u015Filebilir durumdad\u0131r.',
-    viewNote: 'Kat\u0131l\u0131m Notunu G\u00F6r\u00FCnt\u00FCle',
-    desk: 'Auxite Hazine ve Yap\u0131land\u0131r\u0131lm\u0131\u015F Getiri',
-  } : {
-    subject: `Structured Yield Participation Notice — ${metalLabel}`,
-    greeting: `Dear ${name},`,
-    intro: 'This notice confirms your participation in an Auxite precious metals structured yield program.',
-    metal: 'Metal',
-    quantity: 'Committed Quantity',
-    leaseRate: 'Yield Rate',
-    effectiveDate: 'Effective Date',
-    maturityDate: 'Maturity Date',
-    tenor: 'Yield Tenor',
-    returnSettlement: 'Return Settlement',
-    atMaturity: 'At Maturity',
-    encumbered: 'During the yield tenor, the referenced metals will be considered encumbered and may not be transferred or redeemed until maturity.',
-    noteIssued: 'A formal Participation Note has been issued and is accessible within your document vault.',
-    viewNote: 'View Participation Note',
-    desk: 'Auxite Treasury & Structured Yield',
+  const content: Record<string, Record<string, string>> = {
+    en: {
+      subject: `Structured Yield Participation Notice — ${metalLabel}`,
+      greeting: `Dear ${name},`,
+      intro: 'This notice confirms your participation in an Auxite precious metals structured yield program.',
+      metal: 'Metal',
+      quantity: 'Committed Quantity',
+      leaseRate: 'Yield Rate',
+      effectiveDate: 'Effective Date',
+      maturityDate: 'Maturity Date',
+      tenor: 'Yield Tenor',
+      returnSettlement: 'Return Settlement',
+      atMaturity: 'At Maturity',
+      encumbered: 'During the yield tenor, the referenced metals will be considered encumbered and may not be transferred or redeemed until maturity.',
+      noteIssued: 'A formal Participation Note has been issued and is accessible within your document vault.',
+      viewNote: 'View Participation Note',
+      desk: 'Auxite Treasury & Structured Yield',
+    },
+    tr: {
+      subject: `Yapılandırılmış Getiri Katılım Bildirimi — ${metalLabel}`,
+      greeting: `Sayın ${name},`,
+      intro: 'Bu bildirim, Auxite değerli metal yapılandırılmış getiri programına katılımınızı teyit eder.',
+      metal: 'Metal',
+      quantity: 'Taahhüt Edilen Miktar',
+      leaseRate: 'Getiri Oranı',
+      effectiveDate: 'Yürürlük Tarihi',
+      maturityDate: 'Vade Tarihi',
+      tenor: 'Getiri Vadesi',
+      returnSettlement: 'Getiri Uzlaşması',
+      atMaturity: 'Vade Sonunda',
+      encumbered: 'Getiri süresi boyunca, referans verilen metaller teminatlı kabul edilecek ve vadeye kadar transfer edilemez veya itfa edilemeyecektir.',
+      noteIssued: 'Resmi bir Katılım Notu düzenlenmiş olup belge kasanızda erişilebilir durumdadır.',
+      viewNote: 'Katılım Notunu Görüntüle',
+      desk: 'Auxite Hazine ve Yapılandırılmış Getiri',
+    },
+    de: {
+      subject: `Mitteilung zur strukturierten Ertragspartizipation — ${metalLabel}`,
+      greeting: `Sehr geehrte/r ${name},`,
+      intro: 'Diese Mitteilung bestätigt Ihre Teilnahme an einem strukturierten Ertragsprogramm für Edelmetalle von Auxite.',
+      metal: 'Metall',
+      quantity: 'Zugesagte Menge',
+      leaseRate: 'Ertragsrate',
+      effectiveDate: 'Wirksamkeitsdatum',
+      maturityDate: 'Fälligkeitsdatum',
+      tenor: 'Ertragslaufzeit',
+      returnSettlement: 'Ertragsabwicklung',
+      atMaturity: 'Bei Fälligkeit',
+      encumbered: 'Während der Ertragslaufzeit gelten die referenzierten Metalle als belastet und können bis zur Fälligkeit nicht übertragen oder eingelöst werden.',
+      noteIssued: 'Eine formelle Partizipationsnote wurde ausgestellt und ist in Ihrem Dokumententresor zugänglich.',
+      viewNote: 'Partizipationsnote anzeigen',
+      desk: 'Auxite Treasury & Strukturierter Ertrag',
+    },
+    fr: {
+      subject: `Avis de participation au rendement structuré — ${metalLabel}`,
+      greeting: `Cher/Chère ${name},`,
+      intro: 'Cet avis confirme votre participation à un programme de rendement structuré de métaux précieux Auxite.',
+      metal: 'Métal',
+      quantity: 'Quantité engagée',
+      leaseRate: 'Taux de rendement',
+      effectiveDate: 'Date d\'effet',
+      maturityDate: 'Date d\'échéance',
+      tenor: 'Durée du rendement',
+      returnSettlement: 'Règlement du rendement',
+      atMaturity: 'À l\'échéance',
+      encumbered: 'Pendant la durée du rendement, les métaux référencés seront considérés comme grevés et ne pourront être transférés ou rachetés avant l\'échéance.',
+      noteIssued: 'Une Note de Participation formelle a été émise et est accessible dans votre coffre de documents.',
+      viewNote: 'Voir la Note de Participation',
+      desk: 'Auxite Trésorerie & Rendement Structuré',
+    },
+    ar: {
+      subject: `إشعار المشاركة في العائد المهيكل — ${metalLabel}`,
+      greeting: `عزيزي ${name}،`,
+      intro: 'يؤكد هذا الإشعار مشاركتك في برنامج العائد المهيكل للمعادن الثمينة من Auxite.',
+      metal: 'المعدن',
+      quantity: 'الكمية الملتزم بها',
+      leaseRate: 'معدل العائد',
+      effectiveDate: 'تاريخ السريان',
+      maturityDate: 'تاريخ الاستحقاق',
+      tenor: 'مدة العائد',
+      returnSettlement: 'تسوية العائد',
+      atMaturity: 'عند الاستحقاق',
+      encumbered: 'خلال مدة العائد، ستعتبر المعادن المشار إليها مرهونة ولا يمكن تحويلها أو استردادها حتى الاستحقاق.',
+      noteIssued: 'تم إصدار مذكرة مشاركة رسمية وهي متاحة في خزنة المستندات الخاصة بك.',
+      viewNote: 'عرض مذكرة المشاركة',
+      desk: 'خزينة Auxite والعائد المهيكل',
+    },
+    ru: {
+      subject: `Уведомление об участии в структурированной доходности — ${metalLabel}`,
+      greeting: `Уважаемый/ая ${name},`,
+      intro: 'Настоящее уведомление подтверждает ваше участие в программе структурированной доходности по драгоценным металлам Auxite.',
+      metal: 'Металл',
+      quantity: 'Выделенное количество',
+      leaseRate: 'Ставка доходности',
+      effectiveDate: 'Дата вступления в силу',
+      maturityDate: 'Дата погашения',
+      tenor: 'Срок доходности',
+      returnSettlement: 'Расчет доходности',
+      atMaturity: 'При погашении',
+      encumbered: 'В течение срока доходности указанные металлы будут считаться обремененными и не могут быть переведены или погашены до наступления срока.',
+      noteIssued: 'Формальная Записка об Участии выпущена и доступна в вашем хранилище документов.',
+      viewNote: 'Посмотреть Записку об Участии',
+      desk: 'Казначейство Auxite и Структурированная Доходность',
+    },
   };
+  const t = content[lang] || content.en;
 
-  const content = `
+  const emailContent = `
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
@@ -518,13 +758,13 @@ export async function sendStakingAgreementEmail(
     <a href="${VAULT_URL}/api/staking/agreement?stakeId=${data.stakeId}" class="cta-button">${t.viewNote}</a>
 
     <div class="notice">
-      Metals committed to structured yield programs may be subject to counterparty and settlement risk.
+      ${lang !== 'en' ? `${yieldNoticeTranslations[lang] || ''}<br><br>` : ''}Metals committed to structured yield programs may be subject to counterparty and settlement risk.
       Auxite maintains strict counterparty selection and risk controls. This document is
       electronically issued and recorded within Auxite's custody ledger.
     </div>
   `;
 
-  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(content, t.desk) });
+  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(emailContent, t.desk, lang) });
 }
 
 
@@ -549,33 +789,89 @@ export async function sendYieldDistributionEmail(
   const lang = data.language || 'en';
   const name = data.clientName || 'Client';
 
-  const t = lang === 'tr' ? {
-    subject: `Yap\u0131land\u0131r\u0131lm\u0131\u015F Getiri Da\u011F\u0131t\u0131m Bildirimi — ${data.referenceId}`,
-    greeting: `Say\u0131n ${name},`,
-    intro: 'Planlanm\u0131\u015F getiri da\u011F\u0131t\u0131m\u0131n\u0131z, yap\u0131land\u0131r\u0131lm\u0131\u015F getiri kat\u0131l\u0131m\u0131n\u0131z do\u011Frultusunda i\u015Flenmi\u015Ftir.',
-    metal: 'Metal',
-    leaseRate: 'Getiri Oran\u0131',
-    amountCredited: 'Yat\u0131r\u0131lan Miktar',
-    settlementDate: 'Uzla\u015Fma Tarihi',
-    refId: 'Referans No',
-    reflected: 'Yat\u0131r\u0131lan metaller art\u0131k tahsisli varl\u0131klar\u0131n\u0131za yans\u0131t\u0131lm\u0131\u015Ft\u0131r.',
-    viewLedger: 'M\u00FC\u015Fteri Defterinde G\u00F6r\u00FCnt\u00FCle',
-    desk: 'Auxite Hazine ve Yap\u0131land\u0131r\u0131lm\u0131\u015F Getiri',
-  } : {
-    subject: `Structured Yield Distribution Notice — ${data.referenceId}`,
-    greeting: `Dear ${name},`,
-    intro: 'Your scheduled yield distribution has been processed in accordance with your structured yield participation.',
-    metal: 'Metal',
-    leaseRate: 'Yield Rate',
-    amountCredited: 'Amount Credited',
-    settlementDate: 'Settlement Date',
-    refId: 'Reference ID',
-    reflected: 'The credited metals are now reflected within your allocated holdings.',
-    viewLedger: 'View in Client Ledger',
-    desk: 'Auxite Treasury & Structured Yield',
+  const content: Record<string, Record<string, string>> = {
+    en: {
+      subject: `Structured Yield Distribution Notice — ${data.referenceId}`,
+      greeting: `Dear ${name},`,
+      intro: 'Your scheduled yield distribution has been processed in accordance with your structured yield participation.',
+      metal: 'Metal',
+      leaseRate: 'Yield Rate',
+      amountCredited: 'Amount Credited',
+      settlementDate: 'Settlement Date',
+      refId: 'Reference ID',
+      reflected: 'The credited metals are now reflected within your allocated holdings.',
+      viewLedger: 'View in Client Ledger',
+      desk: 'Auxite Treasury & Structured Yield',
+    },
+    tr: {
+      subject: `Yapılandırılmış Getiri Dağıtım Bildirimi — ${data.referenceId}`,
+      greeting: `Sayın ${name},`,
+      intro: 'Planlanmış getiri dağıtımınız, yapılandırılmış getiri katılımınız doğrultusunda işlenmiştir.',
+      metal: 'Metal',
+      leaseRate: 'Getiri Oranı',
+      amountCredited: 'Yatırılan Miktar',
+      settlementDate: 'Uzlaşma Tarihi',
+      refId: 'Referans No',
+      reflected: 'Yatırılan metaller artık tahsisli varlıklarınıza yansıtılmıştır.',
+      viewLedger: 'Müşteri Defterinde Görüntüle',
+      desk: 'Auxite Hazine ve Yapılandırılmış Getiri',
+    },
+    de: {
+      subject: `Mitteilung zur strukturierten Ertragsverteilung — ${data.referenceId}`,
+      greeting: `Sehr geehrte/r ${name},`,
+      intro: 'Ihre planmäßige Ertragsverteilung wurde gemäß Ihrer strukturierten Ertragspartizipation verarbeitet.',
+      metal: 'Metall',
+      leaseRate: 'Ertragsrate',
+      amountCredited: 'Gutgeschriebener Betrag',
+      settlementDate: 'Abwicklungsdatum',
+      refId: 'Referenz-ID',
+      reflected: 'Die gutgeschriebenen Metalle sind jetzt in Ihren zugeteilten Beständen berücksichtigt.',
+      viewLedger: 'Im Kundenbuch anzeigen',
+      desk: 'Auxite Treasury & Strukturierter Ertrag',
+    },
+    fr: {
+      subject: `Avis de distribution de rendement structuré — ${data.referenceId}`,
+      greeting: `Cher/Chère ${name},`,
+      intro: 'Votre distribution de rendement programmée a été traitée conformément à votre participation au rendement structuré.',
+      metal: 'Métal',
+      leaseRate: 'Taux de rendement',
+      amountCredited: 'Montant crédité',
+      settlementDate: 'Date de règlement',
+      refId: 'Référence',
+      reflected: 'Les métaux crédités sont maintenant reflétés dans vos avoirs alloués.',
+      viewLedger: 'Voir dans le registre client',
+      desk: 'Auxite Trésorerie & Rendement Structuré',
+    },
+    ar: {
+      subject: `إشعار توزيع العائد المهيكل — ${data.referenceId}`,
+      greeting: `عزيزي ${name}،`,
+      intro: 'تمت معالجة توزيع العائد المجدول الخاص بك وفقاً لمشاركتك في العائد المهيكل.',
+      metal: 'المعدن',
+      leaseRate: 'معدل العائد',
+      amountCredited: 'المبلغ المُضاف',
+      settlementDate: 'تاريخ التسوية',
+      refId: 'رقم المرجع',
+      reflected: 'المعادن المُضافة تنعكس الآن في ممتلكاتك المخصصة.',
+      viewLedger: 'عرض في دفتر العميل',
+      desk: 'خزينة Auxite والعائد المهيكل',
+    },
+    ru: {
+      subject: `Уведомление о распределении структурированной доходности — ${data.referenceId}`,
+      greeting: `Уважаемый/ая ${name},`,
+      intro: 'Ваше запланированное распределение доходности было обработано в соответствии с вашим участием в структурированной доходности.',
+      metal: 'Металл',
+      leaseRate: 'Ставка доходности',
+      amountCredited: 'Зачисленная сумма',
+      settlementDate: 'Дата расчета',
+      refId: 'Номер ссылки',
+      reflected: 'Зачисленные металлы теперь отражены в ваших размещенных активах.',
+      viewLedger: 'Посмотреть в клиентском реестре',
+      desk: 'Казначейство Auxite и Структурированная Доходность',
+    },
   };
+  const t = content[lang] || content.en;
 
-  const content = `
+  const emailContent = `
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
@@ -607,7 +903,7 @@ export async function sendYieldDistributionEmail(
     <a href="${VAULT_URL}/vault" class="cta-button">${t.viewLedger}</a>
   `;
 
-  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(content, t.desk) });
+  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(emailContent, t.desk, lang) });
 }
 
 
@@ -632,37 +928,101 @@ export async function sendRedemptionInitiatedEmail(
   const lang = data.language || 'en';
   const name = data.clientName || 'Client';
 
-  const t = lang === 'tr' ? {
-    subject: `Fiziksel \u0130tfa Ba\u015Flat\u0131ld\u0131 — ${data.referenceId}`,
-    greeting: `Say\u0131n ${name},`,
-    intro: 'Fiziksel itfa talebiniz al\u0131nm\u0131\u015F ve \u015Fu anda i\u015Fleme al\u0131nmaktad\u0131r.',
-    metal: 'Metal',
-    quantity: 'Miktar',
-    vault: 'Kasa',
-    deliveryMethod: 'Teslimat Y\u00F6ntemi',
-    status: 'Durum',
-    preparingRelease: 'Serbest B\u0131rakma Haz\u0131rlan\u0131yor',
-    tracking: 'Sevk edildi\u011Finde, takip bilgileri sa\u011Flanacakt\u0131r.',
-    encumbered: 'Referans verilen metaller teslimat tamamlanana kadar teminatl\u0131 kabul edilmektedir.',
-    viewLedger: 'M\u00FC\u015Fteri Defterinde G\u00F6r\u00FCnt\u00FCle',
-    desk: 'Auxite Saklama Operasyonlar\u0131',
-  } : {
-    subject: `Physical Redemption Initiated — ${data.referenceId}`,
-    greeting: `Dear ${name},`,
-    intro: 'Your request for physical redemption has been received and is currently being processed.',
-    metal: 'Metal',
-    quantity: 'Quantity',
-    vault: 'Vault',
-    deliveryMethod: 'Delivery Method',
-    status: 'Status',
-    preparingRelease: 'Preparing for Release',
-    tracking: 'Once dispatched, tracking details will be provided.',
-    encumbered: 'Please note that the referenced metals are now encumbered pending completion of delivery.',
-    viewLedger: 'View in Client Ledger',
-    desk: 'Auxite Custody Operations',
+  const content: Record<string, Record<string, string>> = {
+    en: {
+      subject: `Physical Redemption Initiated — ${data.referenceId}`,
+      greeting: `Dear ${name},`,
+      intro: 'Your request for physical redemption has been received and is currently being processed.',
+      metal: 'Metal',
+      quantity: 'Quantity',
+      vault: 'Vault',
+      deliveryMethod: 'Delivery Method',
+      status: 'Status',
+      preparingRelease: 'Preparing for Release',
+      tracking: 'Once dispatched, tracking details will be provided.',
+      encumbered: 'Please note that the referenced metals are now encumbered pending completion of delivery.',
+      viewLedger: 'View in Client Ledger',
+      desk: 'Auxite Custody Operations',
+    },
+    tr: {
+      subject: `Fiziksel İtfa Başlatıldı — ${data.referenceId}`,
+      greeting: `Sayın ${name},`,
+      intro: 'Fiziksel itfa talebiniz alınmış ve şu anda işleme alınmaktadır.',
+      metal: 'Metal',
+      quantity: 'Miktar',
+      vault: 'Kasa',
+      deliveryMethod: 'Teslimat Yöntemi',
+      status: 'Durum',
+      preparingRelease: 'Serbest Bırakma Hazırlanıyor',
+      tracking: 'Sevk edildiğinde, takip bilgileri sağlanacaktır.',
+      encumbered: 'Referans verilen metaller teslimat tamamlanana kadar teminatlı kabul edilmektedir.',
+      viewLedger: 'Müşteri Defterinde Görüntüle',
+      desk: 'Auxite Saklama Operasyonları',
+    },
+    de: {
+      subject: `Physische Einlösung eingeleitet — ${data.referenceId}`,
+      greeting: `Sehr geehrte/r ${name},`,
+      intro: 'Ihr Antrag auf physische Einlösung wurde empfangen und wird derzeit bearbeitet.',
+      metal: 'Metall',
+      quantity: 'Menge',
+      vault: 'Tresor',
+      deliveryMethod: 'Liefermethode',
+      status: 'Status',
+      preparingRelease: 'Freigabe wird vorbereitet',
+      tracking: 'Nach dem Versand werden Ihnen Tracking-Details zur Verfügung gestellt.',
+      encumbered: 'Bitte beachten Sie, dass die referenzierten Metalle bis zum Abschluss der Lieferung als belastet gelten.',
+      viewLedger: 'Im Kundenbuch anzeigen',
+      desk: 'Auxite Verwahrungsabteilung',
+    },
+    fr: {
+      subject: `Rachat physique initié — ${data.referenceId}`,
+      greeting: `Cher/Chère ${name},`,
+      intro: 'Votre demande de rachat physique a été reçue et est actuellement en cours de traitement.',
+      metal: 'Métal',
+      quantity: 'Quantité',
+      vault: 'Coffre',
+      deliveryMethod: 'Méthode de livraison',
+      status: 'Statut',
+      preparingRelease: 'Préparation de la libération',
+      tracking: 'Une fois expédié, les détails de suivi vous seront fournis.',
+      encumbered: 'Veuillez noter que les métaux référencés sont désormais grevés en attendant la fin de la livraison.',
+      viewLedger: 'Voir dans le registre client',
+      desk: 'Opérations de garde Auxite',
+    },
+    ar: {
+      subject: `تم بدء الاسترداد المادي — ${data.referenceId}`,
+      greeting: `عزيزي ${name}،`,
+      intro: 'تم استلام طلبك للاسترداد المادي وهو قيد المعالجة حالياً.',
+      metal: 'المعدن',
+      quantity: 'الكمية',
+      vault: 'الخزنة',
+      deliveryMethod: 'طريقة التسليم',
+      status: 'الحالة',
+      preparingRelease: 'جارٍ التحضير للإفراج',
+      tracking: 'بمجرد الشحن، سيتم توفير تفاصيل التتبع.',
+      encumbered: 'يرجى ملاحظة أن المعادن المشار إليها تعتبر الآن مرهونة حتى اكتمال التسليم.',
+      viewLedger: 'عرض في دفتر العميل',
+      desk: 'عمليات الحفظ Auxite',
+    },
+    ru: {
+      subject: `Физическое погашение инициировано — ${data.referenceId}`,
+      greeting: `Уважаемый/ая ${name},`,
+      intro: 'Ваш запрос на физическое погашение получен и в настоящее время обрабатывается.',
+      metal: 'Металл',
+      quantity: 'Количество',
+      vault: 'Хранилище',
+      deliveryMethod: 'Способ доставки',
+      status: 'Статус',
+      preparingRelease: 'Подготовка к выпуску',
+      tracking: 'После отправки будут предоставлены данные для отслеживания.',
+      encumbered: 'Обратите внимание, что указанные металлы теперь обременены до завершения доставки.',
+      viewLedger: 'Посмотреть в клиентском реестре',
+      desk: 'Отдел хранения Auxite',
+    },
   };
+  const t = content[lang] || content.en;
 
-  const content = `
+  const emailContent = `
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
@@ -695,7 +1055,7 @@ export async function sendRedemptionInitiatedEmail(
     <a href="${VAULT_URL}/vault" class="cta-button">${t.viewLedger}</a>
   `;
 
-  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(content, t.desk) });
+  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(emailContent, t.desk, lang) });
 }
 
 
@@ -720,35 +1080,95 @@ export async function sendSecurityAlertEmail(
   const lang = data.language || 'en';
   const name = data.clientName || 'Client';
 
-  const t = lang === 'tr' ? {
-    subject: `G\u00FCvenlik Bildirimi — Hesap Etkinli\u011Fi Tespit Edildi`,
-    greeting: `Say\u0131n ${name},`,
-    intro: 'Hesab\u0131n\u0131za yeni bir \u00E7ekim hedefi eklenmi\u015Ftir.',
-    event: 'Olay',
-    asset: 'Varl\u0131k',
-    address: 'Adres',
-    network: 'A\u011F',
-    addedAt: 'Eklenme Zaman\u0131',
-    ipAddress: 'IP Adresi',
-    unauthorized: 'Bu de\u011Fi\u015Fikli\u011Fi siz yetkilendirmediyseniz, l\u00FCtfen derhal Auxite ile ileti\u015Fime ge\u00E7in.',
-    delay: 'G\u00FCvenlik nedenlerinden dolay\u0131, yeni eklenen adreslere yap\u0131lacak \u00E7ekimler ge\u00E7ici bir gecikmeye tabi olabilir.',
-    desk: 'Auxite G\u00FCvenlik Ekibi',
-  } : {
-    subject: `Security Notification — Account Activity Detected`,
-    greeting: `Dear ${name},`,
-    intro: 'A new withdrawal destination has been added to your account.',
-    event: 'Event',
-    asset: 'Asset',
-    address: 'Address',
-    network: 'Network',
-    addedAt: 'Added At',
-    ipAddress: 'IP Address',
-    unauthorized: 'If you did not authorize this change, please contact Auxite immediately.',
-    delay: 'For security reasons, withdrawals to newly added addresses may be subject to a temporary delay.',
-    desk: 'Auxite Security Team',
+  const content: Record<string, Record<string, string>> = {
+    en: {
+      subject: 'Security Notification — Account Activity Detected',
+      greeting: `Dear ${name},`,
+      intro: 'A new withdrawal destination has been added to your account.',
+      event: 'Event',
+      asset: 'Asset',
+      address: 'Address',
+      network: 'Network',
+      addedAt: 'Added At',
+      ipAddress: 'IP Address',
+      unauthorized: 'If you did not authorize this change, please contact Auxite immediately.',
+      delay: 'For security reasons, withdrawals to newly added addresses may be subject to a temporary delay.',
+      desk: 'Auxite Security Team',
+    },
+    tr: {
+      subject: 'Güvenlik Bildirimi — Hesap Etkinliği Tespit Edildi',
+      greeting: `Sayın ${name},`,
+      intro: 'Hesabınıza yeni bir çekim hedefi eklenmiştir.',
+      event: 'Olay',
+      asset: 'Varlık',
+      address: 'Adres',
+      network: 'Ağ',
+      addedAt: 'Eklenme Zamanı',
+      ipAddress: 'IP Adresi',
+      unauthorized: 'Bu değişikliği siz yetkilendirmediyseniz, lütfen derhal Auxite ile iletişime geçin.',
+      delay: 'Güvenlik nedenlerinden dolayı, yeni eklenen adreslere yapılacak çekimler geçici bir gecikmeye tabi olabilir.',
+      desk: 'Auxite Güvenlik Ekibi',
+    },
+    de: {
+      subject: 'Sicherheitsbenachrichtigung — Kontoaktivität erkannt',
+      greeting: `Sehr geehrte/r ${name},`,
+      intro: 'Ein neues Auszahlungsziel wurde Ihrem Konto hinzugefügt.',
+      event: 'Ereignis',
+      asset: 'Vermögenswert',
+      address: 'Adresse',
+      network: 'Netzwerk',
+      addedAt: 'Hinzugefügt am',
+      ipAddress: 'IP-Adresse',
+      unauthorized: 'Falls Sie diese Änderung nicht autorisiert haben, kontaktieren Sie bitte umgehend Auxite.',
+      delay: 'Aus Sicherheitsgründen können Auszahlungen an neu hinzugefügte Adressen einer vorübergehenden Verzögerung unterliegen.',
+      desk: 'Auxite Sicherheitsteam',
+    },
+    fr: {
+      subject: 'Notification de sécurité — Activité de compte détectée',
+      greeting: `Cher/Chère ${name},`,
+      intro: 'Une nouvelle destination de retrait a été ajoutée à votre compte.',
+      event: 'Événement',
+      asset: 'Actif',
+      address: 'Adresse',
+      network: 'Réseau',
+      addedAt: 'Ajouté le',
+      ipAddress: 'Adresse IP',
+      unauthorized: 'Si vous n\'avez pas autorisé ce changement, veuillez contacter Auxite immédiatement.',
+      delay: 'Pour des raisons de sécurité, les retraits vers des adresses nouvellement ajoutées peuvent être soumis à un délai temporaire.',
+      desk: 'Équipe de sécurité Auxite',
+    },
+    ar: {
+      subject: 'إشعار أمني — تم اكتشاف نشاط في الحساب',
+      greeting: `عزيزي ${name}،`,
+      intro: 'تمت إضافة وجهة سحب جديدة إلى حسابك.',
+      event: 'الحدث',
+      asset: 'الأصل',
+      address: 'العنوان',
+      network: 'الشبكة',
+      addedAt: 'تاريخ الإضافة',
+      ipAddress: 'عنوان IP',
+      unauthorized: 'إذا لم تقم بتفويض هذا التغيير، يرجى الاتصال بـ Auxite فوراً.',
+      delay: 'لأسباب أمنية، قد تخضع عمليات السحب إلى العناوين المضافة حديثاً لتأخير مؤقت.',
+      desk: 'فريق أمان Auxite',
+    },
+    ru: {
+      subject: 'Уведомление безопасности — Обнаружена активность аккаунта',
+      greeting: `Уважаемый/ая ${name},`,
+      intro: 'Новый адрес для вывода средств был добавлен в ваш аккаунт.',
+      event: 'Событие',
+      asset: 'Актив',
+      address: 'Адрес',
+      network: 'Сеть',
+      addedAt: 'Добавлено',
+      ipAddress: 'IP-адрес',
+      unauthorized: 'Если вы не авторизовали это изменение, пожалуйста, немедленно свяжитесь с Auxite.',
+      delay: 'По соображениям безопасности выводы на недавно добавленные адреса могут подвергаться временной задержке.',
+      desk: 'Команда безопасности Auxite',
+    },
   };
+  const t = content[lang] || content.en;
 
-  const content = `
+  const emailContent = `
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
@@ -791,5 +1211,5 @@ export async function sendSecurityAlertEmail(
     <p style="font-size: 12px; color: #666;">${t.delay}</p>
   `;
 
-  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(content, t.desk) });
+  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(emailContent, t.desk, lang) });
 }

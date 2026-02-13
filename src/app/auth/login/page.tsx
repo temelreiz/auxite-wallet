@@ -157,6 +157,14 @@ export default function LoginPage() {
       console.log('[Login] Response:', data);
       console.log('[Login] Wallet Address:', data.user.walletAddress);
 
+      // Restore user's preferred language from backend
+      if (data.user.language && ['en','tr','de','fr','ar','ru'].includes(data.user.language)) {
+        localStorage.setItem('auxite_language', data.user.language);
+        document.documentElement.dir = data.user.language === 'ar' ? 'rtl' : 'ltr';
+        window.dispatchEvent(new Event('languageChange'));
+        console.log('[Login] Language restored:', data.user.language);
+      }
+
       // Store wallet address for TopNav display
       // Always use the walletAddress from backend response (SHA256-derived)
       const displayAddress = data.user.walletAddress || null;
@@ -176,6 +184,10 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleAppleLogin = () => {
+    window.location.href = `/api/auth/apple/redirect`;
   };
 
   const handleGoogleLogin = () => {
@@ -316,6 +328,7 @@ export default function LoginPage() {
           {/* Social Sign In - Synced with Mobile */}
           <div className="space-y-3">
             <button
+              onClick={handleAppleLogin}
               type="button"
               className="w-full py-3.5 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 text-slate-800 dark:text-white font-medium rounded-xl hover:bg-stone-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-3"
             >

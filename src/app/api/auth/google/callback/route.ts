@@ -178,6 +178,15 @@ export async function GET(request: NextRequest) {
     // REDIRECT WITH TOKEN
     // ══════════════════════════════════════════════════════════════
     // We'll pass token via a temporary page that saves it to localStorage
+    // Resolve user language from Redis
+    let userLanguage = (userData.language as string) || 'en';
+    if (userId && userLanguage === 'en') {
+      const userProfile = await redis.hgetall(`user:${userId}`) as any;
+      if (userProfile?.language && ['en','tr','de','fr','ar','ru'].includes(userProfile.language)) {
+        userLanguage = userProfile.language;
+      }
+    }
+
     const userDataForClient = {
       id: userData.id,
       email: normalizedEmail,
@@ -185,6 +194,7 @@ export async function GET(request: NextRequest) {
       picture: userData.picture || googleUser.picture || '',
       emailVerified: true,
       walletAddress: walletAddress,
+      language: userLanguage,
     };
 
     // Encode data for URL

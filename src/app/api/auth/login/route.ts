@@ -150,6 +150,18 @@ export async function POST(request: NextRequest) {
     // ══════════════════════════════════════════════════════════════
     const hasWallet = walletAddress && walletAddress.length > 0;
 
+    // Resolve user language from Redis (check user:{userId} first, then auth:user:{email})
+    let userLanguage = 'en';
+    if (userId) {
+      const userProfile = await redis.hgetall(`user:${userId}`) as any;
+      if (userProfile?.language && ['en','tr','de','fr','ar','ru'].includes(userProfile.language)) {
+        userLanguage = userProfile.language;
+      }
+    }
+    if (userLanguage === 'en' && userData.language && ['en','tr','de','fr','ar','ru'].includes(userData.language)) {
+      userLanguage = userData.language;
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Login successful',
@@ -162,6 +174,7 @@ export async function POST(request: NextRequest) {
         walletAddress: walletAddress,
         vaultId: vaultId,
         authProvider: userData.authProvider || 'email',
+        language: userLanguage,
       },
       token,
       requiresWalletSetup: !hasWallet,
