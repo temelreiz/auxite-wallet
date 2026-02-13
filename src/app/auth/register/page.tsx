@@ -6,8 +6,17 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, Mail, Lock, Eye, EyeOff, AlertCircle, User, CheckCircle } from 'lucide-react';
+import { Loader2, Mail, Lock, Eye, EyeOff, AlertCircle, User, CheckCircle, Globe } from 'lucide-react';
 import { useLanguage } from "@/components/LanguageContext";
+
+const LANGUAGE_OPTIONS = [
+  { code: 'en', label: 'English' },
+  { code: 'tr', label: 'Türkçe' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'fr', label: 'Français' },
+  { code: 'ar', label: 'العربية' },
+  { code: 'ru', label: 'Русский' },
+];
 
 const translations: Record<string, Record<string, string>> = {
   tr: {
@@ -40,6 +49,8 @@ const translations: Record<string, Record<string, string>> = {
     termsOfService: "Hizmet Şartları",
     and: "ve",
     privacyPolicy: "Gizlilik Politikası",
+    preferredLanguage: "Tercih Edilen İletişim Dili",
+    languageHint: "Yasal belgeler ve saklama kayıtları için kullanılır",
   },
   en: {
     checkYourEmail: "Check Your Email",
@@ -71,6 +82,8 @@ const translations: Record<string, Record<string, string>> = {
     termsOfService: "Terms of Service",
     and: "and",
     privacyPolicy: "Privacy Policy",
+    preferredLanguage: "Preferred Communication Language",
+    languageHint: "Used for legal documents and custody records",
   },
   de: {
     checkYourEmail: "Überprüfen Sie Ihre E-Mail",
@@ -102,6 +115,8 @@ const translations: Record<string, Record<string, string>> = {
     termsOfService: "Nutzungsbedingungen",
     and: "und",
     privacyPolicy: "Datenschutzrichtlinie",
+    preferredLanguage: "Bevorzugte Kommunikationssprache",
+    languageHint: "Für rechtliche Dokumente und Verwahrungsunterlagen",
   },
   fr: {
     checkYourEmail: "Vérifiez votre e-mail",
@@ -133,6 +148,8 @@ const translations: Record<string, Record<string, string>> = {
     termsOfService: "Conditions d'utilisation",
     and: "et",
     privacyPolicy: "Politique de confidentialité",
+    preferredLanguage: "Langue de communication préférée",
+    languageHint: "Utilisée pour les documents juridiques et les registres de conservation",
   },
   ar: {
     checkYourEmail: "تحقق من بريدك الإلكتروني",
@@ -164,6 +181,8 @@ const translations: Record<string, Record<string, string>> = {
     termsOfService: "شروط الخدمة",
     and: "و",
     privacyPolicy: "سياسة الخصوصية",
+    preferredLanguage: "لغة التواصل المفضلة",
+    languageHint: "تُستخدم للمستندات القانونية وسجلات الحفظ",
   },
   ru: {
     checkYourEmail: "Проверьте вашу почту",
@@ -195,6 +214,8 @@ const translations: Record<string, Record<string, string>> = {
     termsOfService: "Условия использования",
     and: "и",
     privacyPolicy: "Политика конфиденциальности",
+    preferredLanguage: "Предпочтительный язык общения",
+    languageHint: "Используется для юридических документов и записей хранения",
   },
 };
 
@@ -207,6 +228,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [preferredLang, setPreferredLang] = useState(lang);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -239,7 +261,7 @@ export default function RegisterPage() {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name, language: lang }),
+        body: JSON.stringify({ email, password, name, language: preferredLang }),
       });
 
       const data = await response.json();
@@ -344,6 +366,26 @@ export default function RegisterPage() {
                 required
               />
             </div>
+          </div>
+
+          {/* Preferred Communication Language */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              {t('preferredLanguage')}
+            </label>
+            <div className="relative">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <select
+                value={preferredLang}
+                onChange={(e) => setPreferredLang(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#BFA181] focus:border-transparent transition-all appearance-none"
+              >
+                {LANGUAGE_OPTIONS.map(opt => (
+                  <option key={opt.code} value={opt.code}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">{t('languageHint')}</p>
           </div>
 
           {/* Password */}
