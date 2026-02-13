@@ -416,7 +416,7 @@ export async function sendCertificateEmail(
 
 
 // ═══════════════════════════════════════════════════════════════
-// 3. YIELD ENROLLMENT CONFIRMATION (LEASING PARTICIPATION)
+// 3. YIELD ENROLLMENT CONFIRMATION (STRUCTURED YIELD PARTICIPATION)
 // ═══════════════════════════════════════════════════════════════
 
 export async function sendStakingAgreementEmail(
@@ -442,37 +442,37 @@ export async function sendStakingAgreementEmail(
   const metalLabel = data.metalName ? `${data.metalName} (${data.metal})` : data.metal;
 
   const t = lang === 'tr' ? {
-    subject: `Kiralama Kat\u0131l\u0131m Bildirimi — ${metalLabel}`,
+    subject: `Yap\u0131land\u0131r\u0131lm\u0131\u015F Getiri Kat\u0131l\u0131m Bildirimi — ${metalLabel}`,
     greeting: `Say\u0131n ${name},`,
-    intro: 'Bu bildirim, Auxite de\u011Ferli metal kiralama facilitesine kat\u0131l\u0131m\u0131n\u0131z\u0131 teyit eder.',
+    intro: 'Bu bildirim, Auxite de\u011Ferli metal yap\u0131land\u0131r\u0131lm\u0131\u015F getiri program\u0131na kat\u0131l\u0131m\u0131n\u0131z\u0131 teyit eder.',
     metal: 'Metal',
     quantity: 'Taahh\u00FCt Edilen Miktar',
-    leaseRate: 'Kiralama Oran\u0131',
+    leaseRate: 'Getiri Oran\u0131',
     effectiveDate: 'Y\u00FCr\u00FCrl\u00FCk Tarihi',
     maturityDate: 'Vade Tarihi',
-    tenor: 'Kiralama Vadesi',
+    tenor: 'Getiri Vadesi',
     returnSettlement: 'Getiri Uzla\u015Fmas\u0131',
     atMaturity: 'Vade Sonunda',
-    encumbered: 'Kiralama s\u00FCresi boyunca, referans verilen metaller teminatl\u0131 kabul edilecek ve vadeye kadar transfer edilemez veya itfa edilemeyecektir.',
+    encumbered: 'Getiri s\u00FCresi boyunca, referans verilen metaller teminatl\u0131 kabul edilecek ve vadeye kadar transfer edilemez veya itfa edilemeyecektir.',
     noteIssued: 'Resmi bir Kat\u0131l\u0131m Notu d\u00FCzenlenmi\u015F olup belge kasan\u0131zda eri\u015Filebilir durumdad\u0131r.',
     viewNote: 'Kat\u0131l\u0131m Notunu G\u00F6r\u00FCnt\u00FCle',
-    desk: 'Auxite Hazine ve Kiralama',
+    desk: 'Auxite Hazine ve Yap\u0131land\u0131r\u0131lm\u0131\u015F Getiri',
   } : {
-    subject: `Leasing Participation Notice — ${metalLabel}`,
+    subject: `Structured Yield Participation Notice — ${metalLabel}`,
     greeting: `Dear ${name},`,
-    intro: 'This notice confirms your participation in an Auxite precious metals leasing facility.',
+    intro: 'This notice confirms your participation in an Auxite precious metals structured yield program.',
     metal: 'Metal',
     quantity: 'Committed Quantity',
-    leaseRate: 'Lease Rate',
+    leaseRate: 'Yield Rate',
     effectiveDate: 'Effective Date',
     maturityDate: 'Maturity Date',
-    tenor: 'Lease Tenor',
+    tenor: 'Yield Tenor',
     returnSettlement: 'Return Settlement',
     atMaturity: 'At Maturity',
-    encumbered: 'During the lease tenor, the referenced metals will be considered encumbered and may not be transferred or redeemed until maturity.',
+    encumbered: 'During the yield tenor, the referenced metals will be considered encumbered and may not be transferred or redeemed until maturity.',
     noteIssued: 'A formal Participation Note has been issued and is accessible within your document vault.',
     viewNote: 'View Participation Note',
-    desk: 'Auxite Treasury & Leasing',
+    desk: 'Auxite Treasury & Structured Yield',
   };
 
   const content = `
@@ -516,7 +516,7 @@ export async function sendStakingAgreementEmail(
     <a href="${VAULT_URL}/api/staking/agreement?stakeId=${data.stakeId}" class="cta-button">${t.viewNote}</a>
 
     <div class="notice">
-      Metals committed to leasing facilities may be subject to counterparty and settlement risk.
+      Metals committed to structured yield programs may be subject to counterparty and settlement risk.
       Auxite maintains strict counterparty selection and risk controls. This document is
       electronically issued and recorded within Auxite's custody ledger.
     </div>
@@ -548,29 +548,29 @@ export async function sendYieldDistributionEmail(
   const name = data.clientName || 'Client';
 
   const t = lang === 'tr' ? {
-    subject: `Kiralama Da\u011F\u0131t\u0131m Bildirimi — ${data.referenceId}`,
+    subject: `Yap\u0131land\u0131r\u0131lm\u0131\u015F Getiri Da\u011F\u0131t\u0131m Bildirimi — ${data.referenceId}`,
     greeting: `Say\u0131n ${name},`,
-    intro: 'Planlanm\u0131\u015F kiralama da\u011F\u0131t\u0131m\u0131n\u0131z, metal kiralama kat\u0131l\u0131m\u0131n\u0131z do\u011Frultusunda i\u015Flenmi\u015Ftir.',
+    intro: 'Planlanm\u0131\u015F getiri da\u011F\u0131t\u0131m\u0131n\u0131z, yap\u0131land\u0131r\u0131lm\u0131\u015F getiri kat\u0131l\u0131m\u0131n\u0131z do\u011Frultusunda i\u015Flenmi\u015Ftir.',
     metal: 'Metal',
-    leaseRate: 'Kiralama Oran\u0131',
+    leaseRate: 'Getiri Oran\u0131',
     amountCredited: 'Yat\u0131r\u0131lan Miktar',
     settlementDate: 'Uzla\u015Fma Tarihi',
     refId: 'Referans No',
     reflected: 'Yat\u0131r\u0131lan metaller art\u0131k tahsisli varl\u0131klar\u0131n\u0131za yans\u0131t\u0131lm\u0131\u015Ft\u0131r.',
     viewLedger: 'M\u00FC\u015Fteri Defterinde G\u00F6r\u00FCnt\u00FCle',
-    desk: 'Auxite Hazine ve Kiralama',
+    desk: 'Auxite Hazine ve Yap\u0131land\u0131r\u0131lm\u0131\u015F Getiri',
   } : {
-    subject: `Leasing Distribution Notice — ${data.referenceId}`,
+    subject: `Structured Yield Distribution Notice — ${data.referenceId}`,
     greeting: `Dear ${name},`,
-    intro: 'Your scheduled leasing distribution has been processed in accordance with your metals leasing participation.',
+    intro: 'Your scheduled yield distribution has been processed in accordance with your structured yield participation.',
     metal: 'Metal',
-    leaseRate: 'Lease Rate',
+    leaseRate: 'Yield Rate',
     amountCredited: 'Amount Credited',
     settlementDate: 'Settlement Date',
     refId: 'Reference ID',
     reflected: 'The credited metals are now reflected within your allocated holdings.',
     viewLedger: 'View in Client Ledger',
-    desk: 'Auxite Treasury & Leasing',
+    desk: 'Auxite Treasury & Structured Yield',
   };
 
   const content = `

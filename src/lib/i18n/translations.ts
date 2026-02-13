@@ -19,8 +19,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.markets": "Piyasalar",
     "nav.wallet": "Portföy",
     "nav.portfolio": "Portföy",
-    "nav.earn": "Kiralama",
-    "nav.yield": "Kıymetli Maden Kiralaması",
+    "nav.earn": "Yapılandırılmış Getiri",
+    "nav.yield": "Kıymetli Maden Yapılandırılmış Getiri Programı",
     "nav.profile": "Profil",
     "nav.admin": "Yönetim",
     "nav.allocate": "Tahsis Et",
@@ -132,23 +132,23 @@ export const translations: Record<Language, Record<string, string>> = {
     "trade.30days": "30 Gün",
     "trade.gtc": "İptal Edilene Kadar",
 
-    // Precious Metals Leasing (formerly Staking - Institutional terminology)
-    "staking.title": "Kıymetli Maden Kiralaması",
+    // Precious Metals Structured Yield (formerly Staking - Institutional terminology)
+    "staking.title": "Kıymetli Maden Yapılandırılmış Getiri Programı",
     "staking.stake": "Katıl",
     "staking.unstake": "Sonlandır",
     "staking.duration": "Süre",
-    "staking.apy": "Kiralama Oranı",
-    "staking.annualYield": "Kiralama Oranı",
+    "staking.apy": "Getiri Oranı",
+    "staking.annualYield": "Getiri Oranı",
     "staking.rewards": "Getiri",
     "staking.yieldReturns": "Getiri",
     "staking.locked": "Kilitli",
     "staking.endsIn": "Bitiş",
     "staking.daysRemaining": "gün kaldı",
-    "staking.endingSoon": "Kiralama sürenizin sona ermesine {days} gün kaldı",
-    "staking.ended": "Kiralama süresi doldu",
+    "staking.endingSoon": "Getiri sürenizin sona ermesine {days} gün kaldı",
+    "staking.ended": "Getiri süresi doldu",
     "staking.claimRewards": "Getiriyi Al",
-    "staking.structuredYield": "Kiralama Katılımı",
-    "staking.eligibleForYield": "Tahsis sonrası kiralama programı için uygun.",
+    "staking.structuredYield": "Yapılandırılmış Getiri Katılımı",
+    "staking.eligibleForYield": "Tahsis sonrası yapılandırılmış getiri programı için uygun.",
 
     // Security
     "security.title": "Güvenlik",
@@ -192,7 +192,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "notif.tradeCompleted": "İşlem tamamlandı",
     "notif.depositReceived": "Yatırım alındı",
     "notif.withdrawalSent": "Çekim gönderildi",
-    "notif.stakingEnding": "Kiralama süresi yaklaşıyor",
+    "notif.stakingEnding": "Getiri süresi yaklaşıyor",
     "notif.priceAlert": "Fiyat uyarısı",
 
     // Time
@@ -214,8 +214,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.markets": "Markets",
     "nav.wallet": "Portfolio",
     "nav.portfolio": "Portfolio",
-    "nav.earn": "Leasing",
-    "nav.yield": "Precious Metals Leasing",
+    "nav.earn": "Structured Yield",
+    "nav.yield": "Precious Metals Structured Yield Program",
     "nav.profile": "Profile",
     "nav.admin": "Admin",
     "nav.allocate": "Allocate",
@@ -330,26 +330,26 @@ export const translations: Record<Language, Record<string, string>> = {
     "trade.30days": "30 Days",
     "trade.gtc": "Good Till Cancelled",
 
-    // Precious Metals Leasing (formerly Staking - Institutional terminology)
-    "staking.title": "Precious Metals Leasing",
+    // Precious Metals Structured Yield (formerly Staking - Institutional terminology)
+    "staking.title": "Precious Metals Structured Yield Program",
     "staking.stake": "Participate",
     "staking.unstake": "Conclude",
     "staking.duration": "Duration",
-    "staking.apy": "Lease Rate",
-    "staking.annualYield": "Lease Rate",
+    "staking.apy": "Yield Rate",
+    "staking.annualYield": "Yield Rate",
     "staking.rewards": "Returns",
-    "staking.yieldReturns": "Leasing Returns",
+    "staking.yieldReturns": "Yield Returns",
     "staking.locked": "Locked",
     "staking.endsIn": "Ends in",
     "staking.daysRemaining": "days remaining",
-    "staking.endingSoon": "Your lease matures in {days} days",
-    "staking.ended": "Lease matured",
+    "staking.endingSoon": "Your yield matures in {days} days",
+    "staking.ended": "Yield matured",
     "staking.claimRewards": "Collect Returns",
-    "staking.structuredYield": "Leasing Participation",
-    "staking.eligibleForYield": "Eligible for leasing program after allocation.",
+    "staking.structuredYield": "Structured Yield Participation",
+    "staking.eligibleForYield": "Eligible for structured yield program after allocation.",
     "staking.enhanceCapital": "Enhance Capital Efficiency",
-    "staking.activateYield": "Participate in Leasing",
-    "staking.viewYieldOptions": "View Leasing Programs",
+    "staking.activateYield": "Participate in Structured Yield",
+    "staking.viewYieldOptions": "View Yield Programs",
 
     // Security
     "security.title": "Security",
@@ -395,7 +395,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "notif.tradeCompleted": "Trade completed",
     "notif.depositReceived": "Deposit received",
     "notif.withdrawalSent": "Withdrawal sent",
-    "notif.stakingEnding": "Lease maturing soon",
+    "notif.stakingEnding": "Yield maturing soon",
     "notif.priceAlert": "Price alert",
 
     // Time
@@ -416,7 +416,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Navigation
     "nav.markets": "Märkte",
     "nav.wallet": "Tresor",
-    "nav.earn": "Leasing",
+    "nav.earn": "Strukturierte Rendite",
     "nav.profile": "Profil",
     "nav.admin": "Admin",
 
@@ -505,18 +505,18 @@ export const translations: Record<Language, Record<string, string>> = {
     "trade.30days": "30 Tage",
     "trade.gtc": "Gültig bis Stornierung",
 
-    // Precious Metals Leasing
-    "staking.title": "Edelmetall-Leasing",
+    // Precious Metals Structured Yield
+    "staking.title": "Edelmetall-Strukturierte Rendite",
     "staking.stake": "Teilnehmen",
     "staking.unstake": "Beenden",
     "staking.duration": "Dauer",
-    "staking.apy": "Leasingrate",
+    "staking.apy": "Rendite-Rate",
     "staking.rewards": "Erträge",
     "staking.locked": "Gesperrt",
     "staking.endsIn": "Endet in",
     "staking.daysRemaining": "Tage verbleibend",
-    "staking.endingSoon": "Ihr Leasing endet in {days} Tagen",
-    "staking.ended": "Leasing-Zeitraum beendet",
+    "staking.endingSoon": "Ihre Rendite endet in {days} Tagen",
+    "staking.ended": "Rendite-Zeitraum beendet",
     "staking.claimRewards": "Erträge abholen",
 
     // Security
@@ -547,7 +547,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "notif.tradeCompleted": "Handel abgeschlossen",
     "notif.depositReceived": "Einzahlung erhalten",
     "notif.withdrawalSent": "Abhebung gesendet",
-    "notif.stakingEnding": "Leasing endet bald",
+    "notif.stakingEnding": "Rendite endet bald",
     "notif.priceAlert": "Preisalarm",
 
     // Time
@@ -568,7 +568,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Navigation
     "nav.markets": "Marchés",
     "nav.wallet": "Coffre",
-    "nav.earn": "Leasing",
+    "nav.earn": "Rendement Structuré",
     "nav.profile": "Profil",
     "nav.admin": "Admin",
 
@@ -657,18 +657,18 @@ export const translations: Record<Language, Record<string, string>> = {
     "trade.30days": "30 Jours",
     "trade.gtc": "Valable jusqu'à annulation",
 
-    // Precious Metals Leasing
-    "staking.title": "Location de Métaux",
+    // Precious Metals Structured Yield
+    "staking.title": "Rendement Structuré des Métaux Précieux",
     "staking.stake": "Participer",
     "staking.unstake": "Conclure",
     "staking.duration": "Durée",
-    "staking.apy": "Taux de location",
+    "staking.apy": "Taux de rendement",
     "staking.rewards": "Rendements",
     "staking.locked": "Verrouillé",
     "staking.endsIn": "Fin dans",
     "staking.daysRemaining": "jours restants",
-    "staking.endingSoon": "Votre location se termine dans {days} jours",
-    "staking.ended": "Période de location terminée",
+    "staking.endingSoon": "Votre rendement se termine dans {days} jours",
+    "staking.ended": "Période de rendement terminée",
     "staking.claimRewards": "Collecter les rendements",
 
     // Security
@@ -699,7 +699,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "notif.tradeCompleted": "Transaction terminée",
     "notif.depositReceived": "Dépôt reçu",
     "notif.withdrawalSent": "Retrait envoyé",
-    "notif.stakingEnding": "Location se termine bientôt",
+    "notif.stakingEnding": "Rendement se termine bientôt",
     "notif.priceAlert": "Alerte de prix",
 
     // Time
@@ -720,7 +720,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Navigation
     "nav.markets": "الأسواق",
     "nav.wallet": "الخزنة",
-    "nav.earn": "التأجير",
+    "nav.earn": "العائد المهيكل",
     "nav.profile": "الملف الشخصي",
     "nav.admin": "الإدارة",
 
@@ -809,18 +809,18 @@ export const translations: Record<Language, Record<string, string>> = {
     "trade.30days": "30 يوم",
     "trade.gtc": "صالح حتى الإلغاء",
 
-    // Precious Metals Leasing
-    "staking.title": "تأجير المعادن الثمينة",
+    // Precious Metals Structured Yield
+    "staking.title": "برنامج العائد المهيكل للمعادن الثمينة",
     "staking.stake": "المشاركة",
     "staking.unstake": "إنهاء",
     "staking.duration": "المدة",
-    "staking.apy": "معدل التأجير",
+    "staking.apy": "معدل العائد",
     "staking.rewards": "العوائد",
     "staking.locked": "مقفل",
     "staking.endsIn": "ينتهي في",
     "staking.daysRemaining": "أيام متبقية",
-    "staking.endingSoon": "ينتهي تأجيرك خلال {days} أيام",
-    "staking.ended": "انتهت فترة التأجير",
+    "staking.endingSoon": "ينتهي عائدك خلال {days} أيام",
+    "staking.ended": "انتهت فترة العائد",
     "staking.claimRewards": "تحصيل العوائد",
 
     // Security
@@ -851,7 +851,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "notif.tradeCompleted": "اكتملت الصفقة",
     "notif.depositReceived": "تم استلام الإيداع",
     "notif.withdrawalSent": "تم إرسال السحب",
-    "notif.stakingEnding": "التأجير ينتهي قريباً",
+    "notif.stakingEnding": "العائد ينتهي قريباً",
     "notif.priceAlert": "تنبيه السعر",
 
     // Time
@@ -872,7 +872,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Navigation
     "nav.markets": "Рынки",
     "nav.wallet": "Хранилище",
-    "nav.earn": "Лизинг",
+    "nav.earn": "Структурированная Доходность",
     "nav.profile": "Профиль",
     "nav.admin": "Админ",
 
@@ -961,18 +961,18 @@ export const translations: Record<Language, Record<string, string>> = {
     "trade.30days": "30 Дней",
     "trade.gtc": "До отмены",
 
-    // Precious Metals Leasing
-    "staking.title": "Лизинг Драгоценных Металлов",
+    // Precious Metals Structured Yield
+    "staking.title": "Структурированная Доходность Драгоценных Металлов",
     "staking.stake": "Участвовать",
     "staking.unstake": "Завершить",
     "staking.duration": "Срок",
-    "staking.apy": "Ставка лизинга",
+    "staking.apy": "Ставка доходности",
     "staking.rewards": "Доходы",
     "staking.locked": "Заблокировано",
     "staking.endsIn": "Заканчивается через",
     "staking.daysRemaining": "дней осталось",
-    "staking.endingSoon": "Ваш лизинг заканчивается через {days} дней",
-    "staking.ended": "Период лизинга завершён",
+    "staking.endingSoon": "Ваша доходность заканчивается через {days} дней",
+    "staking.ended": "Период доходности завершён",
     "staking.claimRewards": "Получить доходы",
 
     // Security
@@ -1003,7 +1003,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "notif.tradeCompleted": "Сделка завершена",
     "notif.depositReceived": "Депозит получен",
     "notif.withdrawalSent": "Вывод отправлен",
-    "notif.stakingEnding": "Лизинг скоро заканчивается",
+    "notif.stakingEnding": "Доходность скоро заканчивается",
     "notif.priceAlert": "Ценовое оповещение",
 
     // Time
