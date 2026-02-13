@@ -58,14 +58,15 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
       period: 30,
       secret: data.secret as string,
     });
-    const delta = totp.validate({ token: code, window: 1 });
+    // Window 2 = ±60 saniye tolerans (frontend verify + backend re-verify arasındaki gecikme)
+    const delta = totp.validate({ token: code, window: 2 });
     if (delta !== null) {
       return { valid: true, enabled: true };
     }
   } catch (e) {
     console.error("TOTP verify error:", e);
   }
-  
+
   // Backup kodu dene
   let backupCodes: string[] = [];
   if (data.backupCodes) {
