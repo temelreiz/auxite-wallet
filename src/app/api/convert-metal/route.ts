@@ -291,7 +291,19 @@ export async function POST(request: NextRequest) {
           }
 
           await redis.set(`allocation:user:${userUid}:list`, JSON.stringify(updatedAllocations));
-          deductedFromAllocation = true;
+
+          const releasedFromAllocation = amount - remainingToRelease;
+          if (releasedFromAllocation > 0) {
+            deductedFromAllocation = true;
+            console.log(`📦 Released ${releasedFromAllocation}g ${fromMetalUpper} from allocation`);
+          }
+
+          // Allocation tüm miktarı karşılamadıysa, kalanı Redis'ten düş
+          if (remainingToRelease > 0) {
+            await redis.hincrbyfloat(balanceKey, fromMetalUpper.toLowerCase(), -remainingToRelease);
+            console.log(`📉 Partial Redis deduction: ${remainingToRelease}g ${fromMetalUpper} (allocation covered ${releasedFromAllocation}g)`);
+            deductedFromAllocation = true;
+          }
 
           // Revoke certificate
           if (revokedCertificate) {
