@@ -365,8 +365,11 @@ type MetalSymbol = "AUXG" | "AUXS" | "AUXPT" | "AUXPD";
 // ============================================
 export function MetalConversionTab() {
   const { lang } = useLanguage();
-  const { address, balances: ctxBalances, stakedAmounts: ctxStaked, allocationAmounts: ctxAllocations, refreshBalances } = useWallet();
+  const { address: ctxAddress, balances: ctxBalances, stakedAmounts: ctxStaked, allocationAmounts: ctxAllocations, refreshBalances } = useWallet();
   const t = translations[lang] || translations.en;
+
+  // Belt & suspenders: fallback to localStorage address if WalletContext hasn't resolved
+  const address = ctxAddress || (typeof window !== "undefined" ? localStorage.getItem("auxite_wallet_address") : null);
 
   // ── Wizard State ──
   const [step, setStep] = useState(1);

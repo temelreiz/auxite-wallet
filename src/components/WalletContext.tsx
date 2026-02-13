@@ -136,6 +136,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (savedMode === "local" && hasWallet === "true" && savedAddress && sessionUnlocked === "true") {
       setWalletMode("local");
       setLocalWalletAddress(savedAddress);
+    } else if (savedMode === "custody" && savedAddress) {
+      // Email/custody login — treat as local wallet (no external wallet needed)
+      setWalletMode("local");
+      setLocalWalletAddress(savedAddress);
     } else if (savedMode) {
       setWalletMode(savedMode);
     }
@@ -148,6 +152,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const unlocked = sessionStorage.getItem("auxite_session_unlocked");
 
       if (mode === "local" && hasW === "true" && addr && unlocked === "true") {
+        setWalletMode("local");
+        setLocalWalletAddress(addr);
+      } else if (mode === "custody" && addr) {
+        // Email/custody login — treat as local wallet
         setWalletMode("local");
         setLocalWalletAddress(addr);
       } else {
