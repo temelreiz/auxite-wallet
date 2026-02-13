@@ -377,7 +377,7 @@ export default function RegisterPage() {
               <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <select
                 value={preferredLang}
-                onChange={(e) => setPreferredLang(e.target.value)}
+                onChange={(e) => setPreferredLang(e.target.value as typeof lang)}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#BFA181] focus:border-transparent transition-all appearance-none"
               >
                 {LANGUAGE_OPTIONS.map(opt => (
