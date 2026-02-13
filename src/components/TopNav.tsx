@@ -239,6 +239,7 @@ export default function TopNav({
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [addressCopied, setAddressCopied] = useState(false);
 
   // QR Login state - check localStorage
   const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
@@ -447,19 +448,32 @@ export default function TopNav({
 
               {/* Vault Wallet Display - Auxite Custody Model */}
               {localWalletAddress ? (
-                <Link
-                  href="/client-center"
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(localWalletAddress);
+                    setAddressCopied(true);
+                    setTimeout(() => setAddressCopied(false), 2000);
+                  }}
+                  title={localWalletAddress}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#d4a574]/10 hover:bg-[#d4a574]/20 border border-[#d4a574]/30 transition-all"
                 >
                   <div className="w-7 h-7 rounded-full bg-[#d4a574] flex items-center justify-center">
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
+                    {addressCopied ? (
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    )}
                   </div>
                   <span className="text-sm font-medium text-[#d4a574]">
-                    {`${localWalletAddress.slice(0, 6)}...${localWalletAddress.slice(-4)}`}
+                    {addressCopied
+                      ? (lang === "tr" ? "Kopyalandı!" : "Copied!")
+                      : `${localWalletAddress.slice(0, 6)}...${localWalletAddress.slice(-4)}`}
                   </span>
-                </Link>
+                </button>
               ) : (
                 <Link
                   href="/auth/login"

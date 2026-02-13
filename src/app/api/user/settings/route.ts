@@ -23,10 +23,20 @@ export async function GET(request: NextRequest) {
     const key = `user:${address.toLowerCase()}:settings`;
     const settings = await redis.hgetall(key);
 
+    let whitelistedAddresses: any[] = [];
+    try {
+      if (settings?.whitelistedAddresses) {
+        whitelistedAddresses = typeof settings.whitelistedAddresses === "string"
+          ? JSON.parse(settings.whitelistedAddresses)
+          : settings.whitelistedAddresses;
+      }
+    } catch {}
+
     return NextResponse.json({
       success: true,
       settings: {
         autoConvertToAuxm: settings?.autoConvertToAuxm !== "false", // default: true
+        whitelistedAddresses,
       },
     });
   } catch (error: any) {
@@ -42,7 +52,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { address, autoConvertToAuxm } = body;
+    const { address, autoConvertToAuxm, whitelistedAddresses } = body;
 
     if (!address) {
       return NextResponse.json({ error: "Missing address" }, { status: 400 });
@@ -57,14 +67,30 @@ export async function POST(request: NextRequest) {
       updates.autoConvertToAuxm = autoConvertToAuxm.toString();
     }
 
+    if (Array.isArray(whitelistedAddresses)) {
+      updates.whitelistedAddresses = JSON.stringify(whitelistedAddresses);
+    }
+
     if (Object.keys(updates).length > 0) {
       await redis.hset(key, updates);
     }
 
+    // Read back current state
+    const current = await redis.hgetall(key);
+    let currentAddresses: any[] = [];
+    try {
+      if (current?.whitelistedAddresses) {
+        currentAddresses = typeof current.whitelistedAddresses === "string"
+          ? JSON.parse(current.whitelistedAddresses)
+          : current.whitelistedAddresses;
+      }
+    } catch {}
+
     return NextResponse.json({
       success: true,
       settings: {
-        autoConvertToAuxm: updates.autoConvertToAuxm !== "false",
+        autoConvertToAuxm: current?.autoConvertToAuxm !== "false",
+        whitelistedAddresses: currentAddresses,
       },
     });
   } catch (error: any) {
