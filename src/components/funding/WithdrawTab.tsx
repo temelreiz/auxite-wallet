@@ -581,32 +581,43 @@ export function WithdrawTab() {
     try {
       const [balanceRes, allocRes] = await Promise.all([
         fetch(`/api/user/balance?address=${address}`),
-        fetch(`/api/allocations?address=${address}`),
+        fetch(`/api/allocations?address=${address}`).catch(() => null),
       ]);
 
-      const balanceData = await balanceRes.json().catch(() => ({ success: false, balances: {} }));
-      const allocData = await allocRes.json().catch(() => ({ success: false, allocations: [], summary: {} }));
+      const balanceData = await balanceRes.json().catch(() => null);
 
-      if (balanceData.balances) {
-        setDirectBalances(balanceData.balances);
+      if (balanceData?.balances) {
+        // Parse string values to numbers (API may return "25000" instead of 25000)
+        const parsed: Record<string, number> = {};
+        for (const [k, v] of Object.entries(balanceData.balances)) {
+          parsed[k] = parseFloat(String(v) || '0');
+        }
+        setDirectBalances(parsed);
       }
 
-      if (balanceData.stakedAmounts) {
-        setDirectStaked(balanceData.stakedAmounts);
+      if (balanceData?.stakedAmounts) {
+        const parsedStaked: Record<string, number> = {};
+        for (const [k, v] of Object.entries(balanceData.stakedAmounts)) {
+          parsedStaked[k] = parseFloat(String(v) || '0');
+        }
+        setDirectStaked(parsedStaked);
       }
 
       // Parse allocations
-      const allocTotals: Record<string, number> = { auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 };
-      if (Array.isArray(allocData.allocations)) {
-        for (const a of allocData.allocations) {
-          const metal = a.metal?.toLowerCase();
-          const grams = Number(a.grams) || 0;
-          if (metal && metal in allocTotals) {
-            allocTotals[metal] += grams;
+      if (allocRes) {
+        const allocData = await allocRes.json().catch(() => null);
+        const allocTotals: Record<string, number> = { auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 };
+        if (allocData?.allocations && Array.isArray(allocData.allocations)) {
+          for (const a of allocData.allocations) {
+            const metal = a.metal?.toLowerCase();
+            const grams = Number(a.grams) || 0;
+            if (metal && metal in allocTotals) {
+              allocTotals[metal] += grams;
+            }
           }
         }
+        setDirectAllocations(allocTotals);
       }
-      setDirectAllocations(allocTotals);
     } catch (err) {
       console.error("Failed to fetch direct balances:", err);
     }

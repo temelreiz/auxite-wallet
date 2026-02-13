@@ -165,7 +165,7 @@ export default function TradingDetailPage({
     return {
       metal: symbol,
       name: name,
-      icon: METAL_ICONS[symbol] || "/images/metals/gold.svg",
+      icon: METAL_ICONS[symbol] || "/auxg_icon.png",
       metalTokenAddress: metalTokenAddresses[symbol] || "0x...",
       periods: periods,
       minAmount: 1,

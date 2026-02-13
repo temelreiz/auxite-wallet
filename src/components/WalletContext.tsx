@@ -33,6 +33,7 @@ interface UserBalances {
   xrp: number;
   sol: number;
   usdt: number;
+  usdc: number;
   usd: number;
 }
 
@@ -105,6 +106,7 @@ const DEFAULT_BALANCES: UserBalances = {
   xrp: 0,
   sol: 0,
   usdt: 0,
+  usdc: 0,
   usd: 0,
 };
 
@@ -239,6 +241,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         xrp: redisData.balances?.xrp ?? 0,
         sol: redisData.balances?.sol ?? 0,
         usdt: redisData.balances?.usdt ?? 0,
+        usdc: redisData.balances?.usdc ?? 0,
         usd: redisData.balances?.usd ?? 0,
       };
 

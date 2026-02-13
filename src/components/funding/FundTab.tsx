@@ -236,8 +236,7 @@ const depositAssetInfo: Record<string, { icon: string; name: string; color: stri
   BTC: { icon: "₿", name: "Bitcoin", color: "bg-orange-500", confirmations: "3", minDeposit: "0.0005 BTC", creditTime: "~30 min" },
   ETH: { icon: "Ξ", name: "Ethereum", color: "bg-blue-500", confirmations: "12", minDeposit: "0.005 ETH", creditTime: "~15 min" },
   USDT: { icon: "₮", name: "Tether", color: "bg-[#2F6F62]", confirmations: "12", minDeposit: "10 USDT", creditTime: "~15 min" },
-  XRP: { icon: "✕", name: "XRP", color: "bg-slate-700", confirmations: "1", minDeposit: "10 XRP", creditTime: "< 5 min" },
-  SOL: { icon: "◎", name: "Solana", color: "bg-purple-500", confirmations: "32", minDeposit: "0.1 SOL", creditTime: "< 5 min" },
+  USDC: { icon: "$", name: "USD Coin", color: "bg-blue-600", confirmations: "12", minDeposit: "10 USDC", creditTime: "~15 min" },
 };
 
 interface DepositAddressInfo {

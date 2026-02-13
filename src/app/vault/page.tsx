@@ -16,10 +16,10 @@ import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 // Metal icons
 const metalIcons: Record<string, string> = {
-  AUXG: "/images/metals/gold.svg",
-  AUXS: "/images/metals/silver.svg",
-  AUXPT: "/images/metals/platinum.svg",
-  AUXPD: "/images/metals/palladium.svg",
+  AUXG: "/auxg_icon.png",
+  AUXS: "/auxs_icon.png",
+  AUXPT: "/auxpt_icon.png",
+  AUXPD: "/auxpd_icon.png",
 };
 
 // Crypto asset definitions — institutional liquidity instruments
@@ -27,8 +27,7 @@ const cryptoAssets = [
   { symbol: "USDT", name: "Tether", color: "#26A17B", icon: "₮" },
   { symbol: "BTC", name: "Bitcoin", color: "#F7931A", icon: "₿" },
   { symbol: "ETH", name: "Ethereum", color: "#627EEA", icon: "Ξ" },
-  { symbol: "SOL", name: "Solana", color: "#9945FF", icon: "◎" },
-  { symbol: "XRP", name: "Ripple", color: "#23292F", icon: "✕" },
+  { symbol: "USDC", name: "USD Coin", color: "#2775CA", icon: "$" },
 ];
 
 interface MetalHolding {
@@ -797,9 +796,10 @@ export default function VaultPage() {
                                 <Image
                                   src={metalIcons[holding.symbol]}
                                   alt={holding.name}
-                                  width={28}
-                                  height={28}
-                                  className="object-contain"
+                                  width={44}
+                                  height={44}
+                                  className="object-cover rounded-full"
+                                  style={{ filter: 'drop-shadow(0 6px 18px rgba(0,0,0,.35))' }}
                                 />
                               ) : (
                                 <span className="text-[#BFA181] font-bold">{holding.symbol[0]}</span>

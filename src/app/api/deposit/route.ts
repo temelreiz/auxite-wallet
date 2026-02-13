@@ -34,11 +34,11 @@ export async function POST(request: NextRequest) {
       const priceRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/crypto`);
       const priceData = await priceRes.json();
       const coinMap: Record<string, string> = {
-        btc: 'bitcoin', eth: 'ethereum', xrp: 'ripple', sol: 'solana', usdt: 'tether'
+        btc: 'bitcoin', eth: 'ethereum', usdt: 'tether', usdc: 'usd-coin'
       };
       cryptoPrice = priceData[coinMap[coinLower]]?.usd || 1;
     } catch {
-      const fallback: Record<string, number> = { usdt: 1, btc: 95000, eth: 3500, xrp: 2.2, sol: 200 };
+      const fallback: Record<string, number> = { usdt: 1, usdc: 1, btc: 95000, eth: 3500 };
       cryptoPrice = fallback[coinLower] || 1;
     }
 
@@ -156,9 +156,8 @@ export async function GET(request: NextRequest) {
   const addresses: Record<string, { address: string; network: string; memo?: string }> = {
     BTC: { address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", network: "Bitcoin" },
     ETH: { address: "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Ethereum / Base" },
-    XRP: { address: "r4pNH6DdDtVknt8NZAhhbcY8Wqr46QoGae", network: "XRP Ledger", memo: "123456" },
-    SOL: { address: "6orrQ2dRuiFwH5w3wddQjQNbPT6w7vEN7eMW9wUNM1Qe", network: "Solana" },
     USDT: { address: "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Ethereum / Tron" },
+    USDC: { address: "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Ethereum" },
   };
 
   if (coin && addresses[coin]) {

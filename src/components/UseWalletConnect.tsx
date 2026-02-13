@@ -18,6 +18,7 @@ interface UserBalances {
   xrp: number;
   sol: number;
   usdt: number;
+  usdc: number;
   usd: number;
 }
 
@@ -52,6 +53,7 @@ const DEFAULT_BALANCES: UserBalances = {
   xrp: 0,
   sol: 0,
   usdt: 0,
+  usdc: 0,
   usd: 0,
 };
 

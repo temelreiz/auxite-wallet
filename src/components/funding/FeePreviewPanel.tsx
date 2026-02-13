@@ -88,8 +88,7 @@ const NETWORK_FEES: Record<string, { fee: number; eta: string }> = {
   USDT: { fee: 1, eta: "15-30" },
   ETH: { fee: 0.001, eta: "15-30" },
   BTC: { fee: 0.0001, eta: "30-60" },
-  XRP: { fee: 0.1, eta: "< 5" },
-  SOL: { fee: 0.01, eta: "< 5" },
+  USDC: { fee: 1, eta: "15-30" },
 };
 
 interface FeePreviewPanelProps {

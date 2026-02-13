@@ -84,8 +84,7 @@ const ASSET_META: Record<string, AssetInfo> = {
   ETH: { symbol: "ETH", name: "Ethereum", icon: "Ξ", color: "#627EEA", unit: "" },
   BTC: { symbol: "BTC", name: "Bitcoin", icon: "₿", color: "#F7931A", unit: "" },
   USDT: { symbol: "USDT", name: "Tether", icon: "₮", color: "#26A17B", unit: "" },
-  XRP: { symbol: "XRP", name: "Ripple", icon: "✕", color: "#23292F", unit: "" },
-  SOL: { symbol: "SOL", name: "Solana", icon: "◎", color: "#9945FF", unit: "" },
+  USDC: { symbol: "USDC", name: "USD Coin", icon: "$", color: "#2775CA", unit: "" },
 };
 
 function displayAmount(amount: number, symbol: string): string {
@@ -107,7 +106,7 @@ export function WithdrawableAssetsPanel() {
     );
   }
 
-  const ASSET_ORDER = ["AUXM", "AUXG", "AUXS", "AUXPT", "AUXPD", "ETH", "BTC", "USDT", "XRP", "SOL"];
+  const ASSET_ORDER = ["AUXM", "AUXG", "AUXS", "AUXPT", "AUXPD", "ETH", "BTC", "USDT", "USDC"];
 
   const assets = ASSET_ORDER.map((symbol) => {
     const key = symbol.toLowerCase() as keyof typeof balances;

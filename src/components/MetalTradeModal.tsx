@@ -17,17 +17,14 @@ interface MetalTradeModalProps {
     metals: Record<string, number>;
     crypto?: {
       USDT: number;
+      USDC: number;
       BTC: number;
       ETH: number;
-      XRP: number;
-      SOL: number;
     };
   };
   cryptoPrices?: {
     BTC: number;
     ETH: number;
-    XRP: number;
-    SOL: number;
   };
   walletAddress?: string;
   onTradeComplete?: () => void;
@@ -47,14 +44,14 @@ interface Quote {
   timeRemaining: number;
 }
 
-type PaymentMethod = "AUXM" | "USDT" | "BTC" | "ETH" | "XRP" | "SOL";
+type PaymentMethod = "AUXM" | "USDT" | "USDC" | "BTC" | "ETH";
 type OrderType = "market" | "limit";
 
 const METAL_INFO = {
-  AUXG: { name: "Gold", nameTr: "Altın", icon: "/images/metals/gold.svg", color: "#FFD700" },
-  AUXS: { name: "Silver", nameTr: "Gümüş", icon: "/images/metals/silver.svg", color: "#C0C0C0" },
-  AUXPT: { name: "Platinum", nameTr: "Platin", icon: "/images/metals/platinum.svg", color: "#E5E4E2" },
-  AUXPD: { name: "Palladium", nameTr: "Paladyum", icon: "/images/metals/palladium.svg", color: "#CED0DD" },
+  AUXG: { name: "Gold", nameTr: "Altın", icon: "/auxg_icon.png", color: "#FFD700" },
+  AUXS: { name: "Silver", nameTr: "Gümüş", icon: "/auxs_icon.png", color: "#C0C0C0" },
+  AUXPT: { name: "Platinum", nameTr: "Platin", icon: "/auxpt_icon.png", color: "#E5E4E2" },
+  AUXPD: { name: "Palladium", nameTr: "Paladyum", icon: "/auxpd_icon.png", color: "#CED0DD" },
 };
 
 const PAYMENT_METHODS: { id: PaymentMethod; name: string; icon: string; color: string }[] = [
@@ -62,8 +59,7 @@ const PAYMENT_METHODS: { id: PaymentMethod; name: string; icon: string; color: s
   { id: "USDT", name: "USDT", icon: "₮", color: "#26A17B" },
   { id: "BTC", name: "BTC", icon: "₿", color: "#F7931A" },
   { id: "ETH", name: "ETH", icon: "Ξ", color: "#627EEA" },
-  { id: "XRP", name: "XRP", icon: "✕", color: "#23292F" },
-  { id: "SOL", name: "SOL", icon: "◎", color: "#9945FF" },
+  { id: "USDC", name: "USDC", icon: "$", color: "#2775CA" },
 ];
 
 export function MetalTradeModal({
@@ -75,7 +71,7 @@ export function MetalTradeModal({
   bidPrice,
   initialMode = "buy",
   lang = "en",
-  cryptoPrices = { BTC: 97500, ETH: 3650, XRP: 2.20, SOL: 235 },
+  cryptoPrices = { BTC: 97500, ETH: 3650 },
   walletAddress,
   onTradeComplete,
 }: MetalTradeModalProps) {
@@ -91,10 +87,9 @@ export function MetalTradeModal({
     },
     crypto: {
       USDT: walletBalances?.usdt || 0,
+      USDC: walletBalances?.usdc || 0,
       BTC: walletBalances?.btc || 0,
       ETH: walletBalances?.eth || 0,
-      XRP: walletBalances?.xrp || 0,
-      SOL: walletBalances?.sol || 0,
     },
   };
   const [orderType, setOrderType] = useState<OrderType>("market");

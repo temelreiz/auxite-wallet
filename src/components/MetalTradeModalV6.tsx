@@ -26,10 +26,10 @@ type OrderType = "market" | "limit";
 
 // Metal icon paths
 const METAL_ICONS: Record<string, string> = {
-  AUXG: "/images/metals/gold.svg",
-  AUXS: "/images/metals/silver.svg",
-  AUXPT: "/images/metals/platinum.svg",
-  AUXPD: "/images/metals/palladium.svg",
+  AUXG: "/auxg_icon.png",
+  AUXS: "/auxs_icon.png",
+  AUXPT: "/auxpt_icon.png",
+  AUXPD: "/auxpd_icon.png",
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
