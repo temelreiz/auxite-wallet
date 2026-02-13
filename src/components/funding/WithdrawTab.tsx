@@ -490,6 +490,7 @@ interface AssetConfig {
   symbol: string;
   name: string;
   icon: string;
+  iconImg?: string;   // PNG path for metal icons
   color: string;
   unit: string;
   balanceKey: string;
@@ -498,30 +499,36 @@ interface AssetConfig {
 const ALL_ASSETS: AssetConfig[] = [
   { symbol: "AUXM", name: "Settlement Balance", icon: "◈", color: "#BFA181", unit: "", balanceKey: "auxm" },
   { symbol: "USDT", name: "Tether", icon: "₮", color: "#26A17B", unit: "", balanceKey: "usdt" },
+  { symbol: "USDC", name: "USD Coin", icon: "$", color: "#2775CA", unit: "", balanceKey: "usdc" },
   { symbol: "BTC", name: "Bitcoin", icon: "₿", color: "#F7931A", unit: "", balanceKey: "btc" },
   { symbol: "ETH", name: "Ethereum", icon: "Ξ", color: "#627EEA", unit: "", balanceKey: "eth" },
-  { symbol: "AUXG", name: "Gold", icon: "Au", color: "#F59E0B", unit: "g", balanceKey: "auxg" },
-  { symbol: "AUXS", name: "Silver", icon: "Ag", color: "#94A3B8", unit: "g", balanceKey: "auxs" },
-  { symbol: "AUXPT", name: "Platinum", icon: "Pt", color: "#CBD5E1", unit: "g", balanceKey: "auxpt" },
-  { symbol: "AUXPD", name: "Palladium", icon: "Pd", color: "#64748B", unit: "g", balanceKey: "auxpd" },
-  { symbol: "XRP", name: "Ripple", icon: "✕", color: "#23292F", unit: "", balanceKey: "xrp" },
-  { symbol: "SOL", name: "Solana", icon: "◎", color: "#9945FF", unit: "", balanceKey: "sol" },
+  { symbol: "AUXG", name: "Gold", icon: "Au", iconImg: "/auxg_icon.png", color: "#F59E0B", unit: "g", balanceKey: "auxg" },
+  { symbol: "AUXS", name: "Silver", icon: "Ag", iconImg: "/auxs_icon.png", color: "#94A3B8", unit: "g", balanceKey: "auxs" },
+  { symbol: "AUXPT", name: "Platinum", icon: "Pt", iconImg: "/auxpt_icon.png", color: "#CBD5E1", unit: "g", balanceKey: "auxpt" },
+  { symbol: "AUXPD", name: "Palladium", icon: "Pd", iconImg: "/auxpd_icon.png", color: "#64748B", unit: "g", balanceKey: "auxpd" },
 ];
 
-type WithdrawCrypto = "USDT" | "BTC" | "ETH" | "XRP" | "SOL";
+// Metal icon glow styles per asset
+const METAL_GLOW: Record<string, string> = {
+  AUXG: "drop-shadow(0 0 12px rgba(255,215,0,.18))",
+  AUXS: "drop-shadow(0 0 12px rgba(180,190,210,.18))",
+  AUXPT: "drop-shadow(0 0 12px rgba(180,190,210,.18))",
+  AUXPD: "drop-shadow(0 0 12px rgba(180,190,210,.18))",
+};
+
+type WithdrawCrypto = "USDT" | "USDC" | "BTC" | "ETH";
 
 const WITHDRAW_NETWORKS: Record<string, { networks: { id: string; name: string }[]; minWithdraw: number; fee: number; eta: string }> = {
   USDT: { networks: [{ id: "ethereum", name: "Ethereum" }, { id: "tron", name: "Tron" }, { id: "base", name: "Base" }], minWithdraw: 10, fee: 1, eta: "15-30" },
+  USDC: { networks: [{ id: "ethereum", name: "Ethereum" }], minWithdraw: 10, fee: 1, eta: "15-30" },
   BTC: { networks: [{ id: "bitcoin", name: "Bitcoin Network" }], minWithdraw: 0.0005, fee: 0.0001, eta: "30-60" },
   ETH: { networks: [{ id: "ethereum", name: "Ethereum" }, { id: "base", name: "Base" }], minWithdraw: 0.005, fee: 0.001, eta: "15-30" },
-  XRP: { networks: [{ id: "xrp", name: "XRP Ledger" }], minWithdraw: 10, fee: 0.1, eta: "< 5" },
-  SOL: { networks: [{ id: "solana", name: "Solana" }], minWithdraw: 0.1, fee: 0.01, eta: "< 5" },
 };
 
 // Internal-eligible assets (all)
 const INTERNAL_ASSETS = ALL_ASSETS.map(a => a.symbol);
 // External-eligible assets (no metals)
-const EXTERNAL_ASSETS = ["AUXM", "USDT", "BTC", "ETH", "XRP", "SOL"];
+const EXTERNAL_ASSETS = ["AUXM", "USDT", "USDC", "BTC", "ETH"];
 
 interface TransactionRecord {
   id: string;
@@ -607,10 +614,13 @@ export function WithdrawTab() {
 
   useEffect(() => { fetchDirectBalances(); }, [fetchDirectBalances]);
 
-  // Use WalletContext balances if available, otherwise use direct fetch
-  const balances = ctxBalances || directBalances;
-  const stakedAmounts = ctxStaked || directStaked;
-  const allocationAmounts = ctxAllocations || directAllocations;
+  // Use WalletContext balances if they have real data, otherwise use direct fetch
+  // BUG FIX: ctxBalances can be DEFAULT_BALANCES (all zeros, but truthy object)
+  // when WalletContext fails — so we must check for actual values
+  const hasRealCtxBalances = ctxBalances && Object.values(ctxBalances).some(v => typeof v === "number" && v > 0);
+  const balances = hasRealCtxBalances ? ctxBalances : (directBalances || ctxBalances);
+  const stakedAmounts = hasRealCtxBalances ? ctxStaked : (directStaked || ctxStaked);
+  const allocationAmounts = hasRealCtxBalances ? ctxAllocations : (directAllocations || ctxAllocations);
 
   // ── Balance Helpers ──
   const getBalance = (symbol: string): number => {
@@ -729,10 +739,6 @@ export function WithdrawTab() {
       }
       if (!destinationAddress || destinationAddress.length < 10) {
         setError(t.invalidAddress);
-        return false;
-      }
-      if (selectedAsset === "XRP" && !memo) {
-        setError(t.xrpTagRequired);
         return false;
       }
       if (!network) {
@@ -939,12 +945,21 @@ export function WithdrawTab() {
                   : "border-stone-100 dark:border-slate-800 opacity-50"
               }`}
             >
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold mb-3"
-                style={{ backgroundColor: asset.color }}
-              >
-                {asset.icon}
-              </div>
+              {asset.iconImg ? (
+                <img
+                  src={asset.iconImg}
+                  alt={asset.symbol}
+                  className="w-10 h-10 rounded-full object-cover mb-3"
+                  style={{ filter: `drop-shadow(0 6px 18px rgba(0,0,0,.35)) ${METAL_GLOW[asset.symbol] || ""}` }}
+                />
+              ) : (
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold mb-3"
+                  style={{ backgroundColor: asset.color }}
+                >
+                  {asset.icon}
+                </div>
+              )}
               <p className="text-sm font-semibold text-slate-800 dark:text-white">{asset.symbol}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">{asset.name}</p>
               <p className={`text-xs font-medium mt-1 ${hasBalance ? "text-[#2F6F62]" : "text-slate-400"}`}>
@@ -978,12 +993,21 @@ export function WithdrawTab() {
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6 mb-6">
           {/* Asset Header */}
           <div className="flex items-center gap-4 mb-6">
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold"
-              style={{ backgroundColor: asset.color }}
-            >
-              {asset.icon}
-            </div>
+            {asset.iconImg ? (
+              <img
+                src={asset.iconImg}
+                alt={asset.symbol}
+                className="w-12 h-12 rounded-full object-cover"
+                style={{ filter: `drop-shadow(0 6px 18px rgba(0,0,0,.35)) ${METAL_GLOW[asset.symbol] || ""}` }}
+              />
+            ) : (
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold"
+                style={{ backgroundColor: asset.color }}
+              >
+                {asset.icon}
+              </div>
+            )}
             <div>
               <p className="text-xl font-bold text-slate-800 dark:text-white">{formatBal(total, selectedAsset)}</p>
               <p className="text-sm text-slate-500">{t.total}</p>
@@ -1238,28 +1262,11 @@ export function WithdrawTab() {
                       onChange={(e) => setDestinationAddress(e.target.value)}
                       placeholder={
                         selectedAsset === "BTC" ? "bc1q..." :
-                        selectedAsset === "XRP" ? "r..." :
-                        selectedAsset === "SOL" ? "So..." :
                         "0x..."
                       }
                       className="w-full px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#BFA181] font-mono text-sm"
                     />
                   </div>
-
-                  {/* XRP Destination Tag */}
-                  {selectedAsset === "XRP" && (
-                    <div>
-                      <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">{t.destinationTag}</h3>
-                      <input
-                        type="text"
-                        value={memo}
-                        onChange={(e) => setMemo(e.target.value.replace(/[^0-9]/g, ""))}
-                        placeholder={t.enterDestinationTag}
-                        className="w-full px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#BFA181] font-mono text-sm"
-                      />
-                      <p className="text-xs text-[#BFA181] mt-1">{t.xrpTagRequired}</p>
-                    </div>
-                  )}
 
                   {/* Amount */}
                   <div>
@@ -1362,12 +1369,13 @@ export function WithdrawTab() {
             <div className="flex items-center justify-between py-2">
               <span className="text-sm text-slate-500 dark:text-slate-400">{t.asset}</span>
               <div className="flex items-center gap-2">
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                  style={{ backgroundColor: asset.color }}
-                >
-                  {asset.icon}
-                </div>
+                {asset.iconImg ? (
+                  <img src={asset.iconImg} alt={asset.symbol} className="w-6 h-6 rounded-full object-cover"
+                    style={{ filter: `drop-shadow(0 4px 10px rgba(0,0,0,.3)) ${METAL_GLOW[asset.symbol] || ""}` }} />
+                ) : (
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                    style={{ backgroundColor: asset.color }}>{asset.icon}</div>
+                )}
                 <span className="text-sm font-semibold text-slate-800 dark:text-white">{selectedAsset}</span>
               </div>
             </div>
@@ -1426,14 +1434,6 @@ export function WithdrawTab() {
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   {WITHDRAW_NETWORKS[selectedAsset]?.networks.find(n => n.id === network)?.name || network}
                 </span>
-              </div>
-            )}
-
-            {/* XRP Memo */}
-            {transferType === "external" && selectedAsset === "XRP" && memo && (
-              <div className="flex items-center justify-between py-2 border-t border-stone-100 dark:border-slate-800">
-                <span className="text-sm text-slate-500 dark:text-slate-400">{t.destinationTag}</span>
-                <span className="text-sm font-mono text-slate-800 dark:text-white">{memo}</span>
               </div>
             )}
 
