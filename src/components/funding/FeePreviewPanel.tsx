@@ -5,11 +5,12 @@ import { useLanguage } from "@/components/LanguageContext";
 const translations: Record<string, Record<string, string>> = {
   tr: {
     feeBreakdown: "ÜCRET DÖKÜMÜ",
-    networkFee: "Ağ Ücreti",
+    networkFee: "Takas Ağı Ücreti",
     platformFee: "Platform Ücreti",
+    settlementFee: "Takas Ücreti (Dahili)",
     totalDeducted: "Toplam Kesinti",
-    netDelivered: "Net Teslimat",
-    estimatedTime: "Tahmini Süre",
+    netSettlementAmount: "Net Takas Tutarı",
+    estimatedSettlement: "Tahmini Takas Süresi",
     free: "Ücretsiz",
     noFees: "Ücret yok",
     minutes: "dakika",
@@ -17,11 +18,12 @@ const translations: Record<string, Record<string, string>> = {
   },
   en: {
     feeBreakdown: "FEE BREAKDOWN",
-    networkFee: "Network Fee",
+    networkFee: "Settlement Network Fee",
     platformFee: "Platform Fee",
+    settlementFee: "Settlement Fee (Internal)",
     totalDeducted: "Total Deducted",
-    netDelivered: "Net Delivered",
-    estimatedTime: "Estimated Time",
+    netSettlementAmount: "Net Settlement Amount",
+    estimatedSettlement: "Estimated Settlement Window",
     free: "Free",
     noFees: "No fees",
     minutes: "minutes",
@@ -29,11 +31,12 @@ const translations: Record<string, Record<string, string>> = {
   },
   de: {
     feeBreakdown: "GEBÜHRENAUFSCHLÜSSELUNG",
-    networkFee: "Netzwerkgebühr",
+    networkFee: "Abwicklungsnetzwerkgebühr",
     platformFee: "Plattformgebühr",
+    settlementFee: "Abwicklungsgebühr (Intern)",
     totalDeducted: "Gesamt Abgezogen",
-    netDelivered: "Netto Geliefert",
-    estimatedTime: "Geschätzte Zeit",
+    netSettlementAmount: "Nettoabwicklungsbetrag",
+    estimatedSettlement: "Geschätztes Abwicklungsfenster",
     free: "Kostenlos",
     noFees: "Keine Gebühren",
     minutes: "Minuten",
@@ -41,11 +44,12 @@ const translations: Record<string, Record<string, string>> = {
   },
   fr: {
     feeBreakdown: "DÉTAIL DES FRAIS",
-    networkFee: "Frais de Réseau",
+    networkFee: "Frais du Réseau de Règlement",
     platformFee: "Frais de Plateforme",
+    settlementFee: "Frais de Règlement (Interne)",
     totalDeducted: "Total Déduit",
-    netDelivered: "Net Livré",
-    estimatedTime: "Temps Estimé",
+    netSettlementAmount: "Montant Net de Règlement",
+    estimatedSettlement: "Fenêtre de Règlement Estimée",
     free: "Gratuit",
     noFees: "Pas de frais",
     minutes: "minutes",
@@ -53,11 +57,12 @@ const translations: Record<string, Record<string, string>> = {
   },
   ar: {
     feeBreakdown: "تفصيل الرسوم",
-    networkFee: "رسوم الشبكة",
+    networkFee: "رسوم شبكة التسوية",
     platformFee: "رسوم المنصة",
+    settlementFee: "رسوم التسوية (داخلي)",
     totalDeducted: "إجمالي الخصم",
-    netDelivered: "صافي التسليم",
-    estimatedTime: "الوقت المقدر",
+    netSettlementAmount: "صافي مبلغ التسوية",
+    estimatedSettlement: "نافذة التسوية المقدرة",
     free: "مجاني",
     noFees: "بدون رسوم",
     minutes: "دقائق",
@@ -65,11 +70,12 @@ const translations: Record<string, Record<string, string>> = {
   },
   ru: {
     feeBreakdown: "Разбивка Комиссий",
-    networkFee: "Комиссия Сети",
+    networkFee: "Комиссия Расчетной Сети",
     platformFee: "Комиссия Платформы",
+    settlementFee: "Комиссия Расчета (Внутр.)",
     totalDeducted: "Всего Удержано",
-    netDelivered: "Чистая Доставка",
-    estimatedTime: "Ожидаемое Время",
+    netSettlementAmount: "Чистая Сумма Расчета",
+    estimatedSettlement: "Расчетное Окно",
     free: "Бесплатно",
     noFees: "Без комиссий",
     minutes: "минут",
@@ -104,7 +110,7 @@ export function FeePreviewPanel({ crypto, amount, isInternal = false }: FeePrevi
         </h4>
         <div className="space-y-2">
           <div className="flex justify-between">
-            <span className="text-sm text-slate-600 dark:text-slate-400">{t.networkFee}</span>
+            <span className="text-sm text-slate-600 dark:text-slate-400">{t.settlementFee}</span>
             <span className="text-sm font-medium text-[#2F6F62]">{t.free}</span>
           </div>
           <div className="flex justify-between">
@@ -113,14 +119,14 @@ export function FeePreviewPanel({ crypto, amount, isInternal = false }: FeePrevi
           </div>
           <div className="border-t border-[#2F6F62]/20 pt-2 mt-2">
             <div className="flex justify-between">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t.netDelivered}</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t.netSettlementAmount}</span>
               <span className="text-sm font-bold text-[#2F6F62]">
                 {amount > 0 ? `${amount} ${crypto}` : "—"}
               </span>
             </div>
           </div>
           <div className="flex justify-between">
-            <span className="text-sm text-slate-600 dark:text-slate-400">{t.estimatedTime}</span>
+            <span className="text-sm text-slate-600 dark:text-slate-400">{t.estimatedSettlement}</span>
             <span className="text-sm font-medium text-[#2F6F62]">{t.instant}</span>
           </div>
         </div>
@@ -132,7 +138,7 @@ export function FeePreviewPanel({ crypto, amount, isInternal = false }: FeePrevi
   const networkFee = feeData.fee;
   const platformFee = 0; // Currently no platform fee
   const totalDeducted = networkFee + platformFee;
-  const netDelivered = Math.max(0, amount - totalDeducted);
+  const netSettlement = Math.max(0, amount - totalDeducted);
 
   return (
     <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-800">
@@ -160,14 +166,14 @@ export function FeePreviewPanel({ crypto, amount, isInternal = false }: FeePrevi
         )}
         <div className="border-t border-stone-200 dark:border-slate-700 pt-2 mt-1">
           <div className="flex justify-between">
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t.netDelivered}</span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t.netSettlementAmount}</span>
             <span className="text-sm font-bold text-slate-800 dark:text-white">
-              {amount > 0 ? `${netDelivered.toFixed(6)} ${crypto}` : "—"}
+              {amount > 0 ? `${netSettlement.toFixed(6)} ${crypto}` : "—"}
             </span>
           </div>
         </div>
         <div className="flex justify-between">
-          <span className="text-sm text-slate-600 dark:text-slate-400">{t.estimatedTime}</span>
+          <span className="text-sm text-slate-600 dark:text-slate-400">{t.estimatedSettlement}</span>
           <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
             {"< "}{feeData.eta} {t.minutes}
           </span>

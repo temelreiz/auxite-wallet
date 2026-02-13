@@ -369,32 +369,93 @@ const templates = {
   },
 
   // ────────────────────────────────────────────────────────────────────────────
-  // WITHDRAW CONFIRMED EMAIL
+  // EXTERNAL SETTLEMENT TRANSFER REQUESTED EMAIL
+  // ────────────────────────────────────────────────────────────────────────────
+  'withdraw-requested': (data: EmailData) => {
+    const { name, amount, token, toAddress, fee, language = 'en' } = data;
+
+    const content = {
+      en: {
+        subject: `External Settlement Transfer Requested: ${amount} ${token}`,
+        title: 'External Settlement Transfer Requested',
+        greeting: `Hi ${name},`,
+        message: 'Your external settlement transfer has been submitted and is being processed.',
+        amountLabel: 'Amount',
+        toLabel: 'Destination',
+        feeLabel: 'Settlement Network Fee',
+        statusLabel: 'Status',
+        statusValue: 'Processing',
+        notice: 'Assets transferred externally will no longer be held within Auxite custody structures.',
+        viewHistory: 'View in Client Ledger',
+      },
+      tr: {
+        subject: `Harici Takas Transferi Talep Edildi: ${amount} ${token}`,
+        title: 'Harici Takas Transferi Talep Edildi',
+        greeting: `Merhaba ${name},`,
+        message: 'Harici takas transfer talebiniz alındı ve işleniyor.',
+        amountLabel: 'Miktar',
+        toLabel: 'Hedef',
+        feeLabel: 'Takas Ağı Ücreti',
+        statusLabel: 'Durum',
+        statusValue: 'İşleniyor',
+        notice: 'Harici olarak transfer edilen varlıklar artık Auxite saklama yapıları altında tutulmayacaktır.',
+        viewHistory: 'Müşteri Defterinde Görüntüle',
+      },
+    };
+
+    const t = content[language as keyof typeof content] || content.en;
+
+    return {
+      subject: t.subject,
+      html: generateEmailHTML({
+        title: t.title,
+        content: `
+          <p>${t.greeting}</p>
+          <p>${t.message}</p>
+          <div style="background: #fafafa; border-left: 3px solid #C5A55A; padding: 16px 18px; margin: 18px 0;">
+            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #C5A55A; font-size: 18px; font-weight: 600;">${amount} ${token}</span></p>
+            <p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b;"><strong>${t.toLabel}:</strong> ${toAddress}</p>
+            ${fee ? `<p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b;"><strong>${t.feeLabel}:</strong> ${fee}</p>` : ''}
+            <p style="margin: 0; font-size: 12px; color: #C5A55A;"><strong>${t.statusLabel}:</strong> ${t.statusValue}</p>
+          </div>
+          <p style="color: #94a3b8; font-size: 12px; font-style: italic;">${t.notice}</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="https://vault.auxite.io/vault" style="background-color: #1a1a1a; color: #fff; padding: 12px 24px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: inline-block;">${t.viewHistory}</a>
+          </div>
+        `,
+      }),
+    };
+  },
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // EXTERNAL SETTLEMENT TRANSFER BROADCAST EMAIL (tx submitted)
   // ────────────────────────────────────────────────────────────────────────────
   'withdraw-confirmed': (data: EmailData) => {
     const { name, amount, token, toAddress, txHash, fee, language = 'en' } = data;
 
     const content = {
       en: {
-        subject: `Withdrawal Completed: ${amount} ${token}`,
-        title: 'Withdrawal Completed',
+        subject: `External Settlement Transfer Broadcast: ${amount} ${token}`,
+        title: 'External Settlement Transfer Broadcast',
         greeting: `Hi ${name},`,
-        message: 'Your withdrawal has been processed successfully.',
+        message: 'Your external settlement transfer has been broadcast to the settlement network.',
         amountLabel: 'Amount',
-        toLabel: 'To Address',
-        feeLabel: 'Network Fee',
-        txLabel: 'Transaction',
+        toLabel: 'Destination',
+        feeLabel: 'Settlement Network Fee',
+        txLabel: 'Transaction Hash',
+        notice: 'Assets transferred externally will no longer be held within Auxite custody structures.',
         viewHistory: 'View in Client Ledger',
       },
       tr: {
-        subject: `Çekim Tamamlandı: ${amount} ${token}`,
-        title: 'Çekim Tamamlandı',
+        subject: `Harici Takas Transferi Yayınlandı: ${amount} ${token}`,
+        title: 'Harici Takas Transferi Yayınlandı',
         greeting: `Merhaba ${name},`,
-        message: 'Çekim işleminiz başarıyla tamamlandı.',
+        message: 'Harici takas transferiniz takas ağına yayınlandı.',
         amountLabel: 'Miktar',
-        toLabel: 'Hedef Adres',
-        feeLabel: 'Ağ Ücreti',
-        txLabel: 'İşlem',
+        toLabel: 'Hedef',
+        feeLabel: 'Takas Ağı Ücreti',
+        txLabel: 'İşlem Hash',
+        notice: 'Harici olarak transfer edilen varlıklar artık Auxite saklama yapıları altında tutulmayacaktır.',
         viewHistory: 'Müşteri Defterinde Görüntüle',
       },
     };
@@ -414,6 +475,7 @@ const templates = {
             ${fee ? `<p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b;"><strong>${t.feeLabel}:</strong> ${fee}</p>` : ''}
             ${txHash ? `<p style="margin: 0; font-size: 12px; color: #64748b;"><strong>${t.txLabel}:</strong> ${txHash.substring(0, 20)}...</p>` : ''}
           </div>
+          <p style="color: #94a3b8; font-size: 12px; font-style: italic;">${t.notice}</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="https://vault.auxite.io/vault" style="background-color: #1a1a1a; color: #fff; padding: 12px 24px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: inline-block;">${t.viewHistory}</a>
           </div>
@@ -423,26 +485,26 @@ const templates = {
   },
 
   // ────────────────────────────────────────────────────────────────────────────
-  // TRANSFER SENT EMAIL
+  // INTERNAL CUSTODY TRANSFER CONFIRMED EMAIL
   // ────────────────────────────────────────────────────────────────────────────
   'transfer-sent': (data: EmailData) => {
     const { name, amount, token, toAddress, language = 'en' } = data;
 
     const content = {
       en: {
-        subject: `Transfer Sent: ${amount} ${token}`,
-        title: 'Transfer Sent',
+        subject: `Internal Custody Transfer Confirmed: ${amount} ${token}`,
+        title: 'Internal Custody Transfer Confirmed',
         greeting: `Hi ${name},`,
-        message: 'Your transfer has been sent successfully.',
+        message: 'Your internal custody transfer has been recorded in the Auxite custody ledger.',
         amountLabel: 'Amount',
-        toLabel: 'To',
+        toLabel: 'Recipient',
         viewWallet: 'View in Client Ledger',
       },
       tr: {
-        subject: `Transfer Gönderildi: ${amount} ${token}`,
-        title: 'Transfer Gönderildi',
+        subject: `Dahili Saklama Transferi Onaylandı: ${amount} ${token}`,
+        title: 'Dahili Saklama Transferi Onaylandı',
         greeting: `Merhaba ${name},`,
-        message: 'Transferiniz başarıyla gönderildi.',
+        message: 'Dahili saklama transferiniz Auxite saklama defterine kaydedildi.',
         amountLabel: 'Miktar',
         toLabel: 'Alıcı',
         viewWallet: 'Müşteri Defterinde Görüntüle',
@@ -471,26 +533,26 @@ const templates = {
   },
 
   // ────────────────────────────────────────────────────────────────────────────
-  // TRANSFER RECEIVED EMAIL
+  // INTERNAL CUSTODY TRANSFER RECEIVED EMAIL
   // ────────────────────────────────────────────────────────────────────────────
   'transfer-received': (data: EmailData) => {
     const { name, amount, token, fromAddress, language = 'en' } = data;
 
     const content = {
       en: {
-        subject: `You received ${amount} ${token}`,
-        title: 'Transfer Received',
+        subject: `Internal Custody Transfer Received: ${amount} ${token}`,
+        title: 'Internal Custody Transfer Received',
         greeting: `Hi ${name},`,
-        message: 'You have received a transfer to your custody account.',
+        message: 'An internal custody transfer has been recorded to your account in the Auxite custody ledger.',
         amountLabel: 'Amount',
         fromLabel: 'From',
         viewWallet: 'View in Client Ledger',
       },
       tr: {
-        subject: `${amount} ${token} aldınız`,
-        title: 'Transfer Alındı',
+        subject: `Dahili Saklama Transferi Alındı: ${amount} ${token}`,
+        title: 'Dahili Saklama Transferi Alındı',
         greeting: `Merhaba ${name},`,
-        message: 'Saklama hesabınıza bir transfer aldınız.',
+        message: 'Auxite saklama defterinde hesabınıza bir dahili saklama transferi kaydedildi.',
         amountLabel: 'Miktar',
         fromLabel: 'Gönderen',
         viewWallet: 'Müşteri Defterinde Görüntüle',
@@ -697,5 +759,13 @@ export async function sendTransferReceivedEmail(email: string, name: string, amo
     type: 'transfer-received',
     to: email,
     data: { name, amount, token, fromAddress, language },
+  });
+}
+
+export async function sendWithdrawRequestedEmail(email: string, name: string, amount: string, token: string, toAddress: string, fee?: string, language: string = 'en') {
+  return sendEmail({
+    type: 'withdraw-requested',
+    to: email,
+    data: { name, amount, token, toAddress, fee, language },
   });
 }

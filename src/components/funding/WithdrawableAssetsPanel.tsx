@@ -9,55 +9,61 @@ const translations: Record<string, Record<string, string>> = {
     availableToWithdraw: "Çekilebilir Varlıklar",
     total: "TOPLAM",
     available: "KULLANILABİLİR",
-    locked: "KİLİTLİ",
+    encumbered: "TAHSİS EDİLMİŞ",
+    pending: "BEKLEYEN",
     staked: "Staking",
     allocated: "Tahsis",
-    noAssets: "Varlık bulunamadı",
+    noAssets: "Kullanılabilir varlık yok",
   },
   en: {
     availableToWithdraw: "Available to Withdraw",
     total: "TOTAL",
     available: "AVAILABLE",
-    locked: "LOCKED",
+    encumbered: "ENCUMBERED",
+    pending: "PENDING",
     staked: "Staked",
     allocated: "Allocated",
-    noAssets: "No assets found",
+    noAssets: "No available assets",
   },
   de: {
     availableToWithdraw: "Verfügbar zum Abheben",
     total: "GESAMT",
     available: "VERFÜGBAR",
-    locked: "GESPERRT",
+    encumbered: "BELASTET",
+    pending: "AUSSTEHEND",
     staked: "Gestaked",
     allocated: "Zugewiesen",
-    noAssets: "Keine Vermögenswerte",
+    noAssets: "Keine verfügbaren Vermögenswerte",
   },
   fr: {
     availableToWithdraw: "Disponible pour Retrait",
     total: "TOTAL",
     available: "DISPONIBLE",
-    locked: "VERROUILLÉ",
+    encumbered: "GREVÉ",
+    pending: "EN ATTENTE",
     staked: "En Staking",
     allocated: "Alloué",
-    noAssets: "Aucun actif",
+    noAssets: "Aucun actif disponible",
   },
   ar: {
     availableToWithdraw: "متاح للسحب",
     total: "الإجمالي",
     available: "متاح",
-    locked: "مقفل",
+    encumbered: "مرهون",
+    pending: "معلق",
     staked: "مُرهون",
     allocated: "مُخصص",
-    noAssets: "لا توجد أصول",
+    noAssets: "لا توجد أصول متاحة",
   },
   ru: {
     availableToWithdraw: "Доступно для Вывода",
     total: "Всего",
     available: "Доступно",
-    locked: "Заблокировано",
+    encumbered: "Обременено",
+    pending: "Ожидается",
     staked: "В стейкинге",
     allocated: "Распределено",
-    noAssets: "Нет активов",
+    noAssets: "Нет доступных активов",
   },
 };
 
@@ -108,10 +114,11 @@ export function WithdrawableAssetsPanel() {
     const total = parseFloat(String((balances as any)[key] || 0));
     const staked = (stakedAmounts as any)?.[key] || 0;
     const allocated = (allocationAmounts as any)?.[key] || 0;
-    const locked = staked + allocated;
-    const available = Math.max(0, total - locked);
+    const encumbered = staked + allocated;
+    const pending = 0; // Future: settlement pending tracking
+    const available = Math.max(0, total - encumbered - pending);
 
-    return { symbol, total, staked, allocated, locked, available };
+    return { symbol, total, staked, allocated, encumbered, pending, available };
   }).filter((a) => a.total > 0 || ["AUXM", "AUXG"].includes(a.symbol));
 
   return (
@@ -126,11 +133,12 @@ export function WithdrawableAssetsPanel() {
       </div>
 
       {/* Header Row */}
-      <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider border-b border-stone-100 dark:border-slate-800">
+      <div className="hidden md:grid grid-cols-5 gap-4 px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider border-b border-stone-100 dark:border-slate-800">
         <span>ASSET</span>
         <span className="text-right">{t.total}</span>
         <span className="text-right text-[#2F6F62]">{t.available}</span>
-        <span className="text-right text-[#BFA181]">{t.locked}</span>
+        <span className="text-right text-[#BFA181]">{t.encumbered}</span>
+        <span className="text-right text-slate-400">{t.pending}</span>
       </div>
 
       {/* Asset Rows */}
@@ -140,7 +148,7 @@ export function WithdrawableAssetsPanel() {
           return (
             <div
               key={asset.symbol}
-              className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 px-4 py-3 hover:bg-stone-50 dark:hover:bg-slate-800/50 transition-colors"
+              className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4 px-4 py-3 hover:bg-stone-50 dark:hover:bg-slate-800/50 transition-colors"
             >
               {/* Asset Info */}
               <div className="flex items-center gap-3">
@@ -170,10 +178,17 @@ export function WithdrawableAssetsPanel() {
                 </p>
               </div>
 
-              {/* Locked */}
+              {/* Encumbered */}
               <div className="text-right md:flex md:flex-col md:justify-center">
                 <p className="text-sm text-[#BFA181]">
-                  {asset.locked > 0 ? displayAmount(asset.locked, asset.symbol) : "—"}
+                  {asset.encumbered > 0 ? displayAmount(asset.encumbered, asset.symbol) : "—"}
+                </p>
+              </div>
+
+              {/* Pending */}
+              <div className="text-right md:flex md:flex-col md:justify-center">
+                <p className="text-sm text-slate-400">
+                  {asset.pending > 0 ? displayAmount(asset.pending, asset.symbol) : "—"}
                 </p>
               </div>
             </div>

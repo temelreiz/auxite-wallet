@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { processWithdraw } from "@/lib/blockchain-service";
-import { sendWithdrawConfirmedEmail } from "@/lib/email-service";
+import { sendWithdrawConfirmedEmail, sendWithdrawRequestedEmail } from "@/lib/email-service";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
 
@@ -246,6 +246,7 @@ export async function POST(request: NextRequest) {
     const transaction = {
       id: txId,
       type: "withdraw",
+      subType: "external_settlement",
       coin: coin,
       amount: amount.toString(),
       netAmount: netAmount.toString(),
@@ -257,12 +258,35 @@ export async function POST(request: NextRequest) {
     };
 
     const txKey = `user:${normalizedAddress}:transactions`;
-    
+
     // Önce bakiyeyi düş
     await redis.hincrbyfloat(balanceKey, balanceFieldKey, -amount);
-    
+
     // Transaction'ı kaydet
     await redis.lpush(txKey, JSON.stringify(transaction));
+
+    // Send "requested" email (Stage 1 of 3)
+    (async () => {
+      try {
+        const userId = await redis.get(`user:address:${normalizedAddress}`);
+        if (userId) {
+          const userData = await redis.hgetall(`user:${userId}`);
+          if (userData?.email) {
+            await sendWithdrawRequestedEmail(
+              userData.email as string,
+              userData.name as string || 'User',
+              amount.toString(),
+              coin,
+              withdrawAddress,
+              networkFee.toString() + ' ' + coin,
+              'tr'
+            );
+          }
+        }
+      } catch (e) {
+        console.error('Failed to send withdraw-requested email:', e);
+      }
+    })();
 
     // ===== GERÇEK BLOCKCHAIN TRANSFERİ =====
     console.log(`🚀 Processing ${coin} withdraw: ${netAmount} to ${withdrawAddress}`);

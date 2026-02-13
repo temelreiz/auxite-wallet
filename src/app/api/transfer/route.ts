@@ -387,6 +387,7 @@ export async function POST(request: NextRequest) {
         const senderTx = {
           id: txId,
           type: "transfer",
+          subType: "internal_custody_transfer",
           token: "ETH",
           amount: -amount,
           toAddress: normalizedTo,
@@ -398,6 +399,7 @@ export async function POST(request: NextRequest) {
         const receiverTx = {
           id: txId,
           type: "receive",
+          subType: "internal_custody_transfer",
           token: "ETH",
           amount: amount,
           fromAddress: normalizedFrom,
@@ -450,6 +452,7 @@ export async function POST(request: NextRequest) {
         const senderTx = {
           id: txId,
           type: "transfer",
+          subType: "internal_custody_transfer",
           token: "ETH",
           amount: -amount,
           toAddress: normalizedTo,
@@ -542,6 +545,7 @@ export async function POST(request: NextRequest) {
       const senderTransaction = {
         id: txId,
         type: "transfer",
+        subType: "internal_custody_transfer",
         token: tokenUpper,
         amount: -amount,
         toAddress: normalizedTo,
@@ -555,6 +559,7 @@ export async function POST(request: NextRequest) {
       const receiverTransaction = {
         id: txId,
         type: "receive",
+        subType: "internal_custody_transfer",
         token: tokenUpper,
         amount: amount,
         fromAddress: normalizedFrom,
@@ -615,11 +620,12 @@ export async function POST(request: NextRequest) {
 
       // Log transactions
       const txId = `transfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       // Gönderen için - eksi miktar
       const senderTx = {
         id: txId,
         type: "transfer",
+        subType: "internal_custody_transfer",
         token: tokenUpper,
         amount: -amount,
         toAddress: normalizedTo,
@@ -632,6 +638,7 @@ export async function POST(request: NextRequest) {
       const receiverTx = {
         id: txId,
         type: "receive",
+        subType: "internal_custody_transfer",
         token: tokenUpper,
         amount: amount,
         fromAddress: normalizedFrom,
