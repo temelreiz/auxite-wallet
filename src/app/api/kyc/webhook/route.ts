@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
-import { verifyWebhookSignature, mapReviewStatusToLevel, mapReviewStatusToKYCStatus } from '@/lib/sumsub';
+import { verifyWebhookSignature, mapReviewStatusToLevel, mapReviewStatusToKYCStatus, getApplicantByExternalId } from '@/lib/sumsub';
 
 const KYC_LIMITS = {
   none: { dailyWithdraw: 100, monthlyWithdraw: 500, singleTransaction: 50 },
@@ -74,6 +74,88 @@ export async function POST(request: NextRequest) {
         }
 
         console.log('KYC updated:', externalUserId, 'status:', newStatus, 'level:', newLevel);
+
+        // ═══════════════════════════════════════════════════════════
+        // KYC ONAYLAND → Sumsub'dan identity bilgilerini çek ve user profile'a yaz
+        // ═══════════════════════════════════════════════════════════
+        if (reviewResult?.reviewAnswer === 'GREEN') {
+          try {
+            const applicant = await getApplicantByExternalId(externalUserId);
+            if (applicant?.info) {
+              const info = applicant.info;
+              const firstName = (info.firstNameEn || info.firstName || '').trim();
+              const lastName = (info.lastNameEn || info.lastName || '').trim();
+              const country = info.country || info.nationality || '';
+              const dob = info.dob || '';
+
+              // KYC kaydına identity bilgilerini ekle
+              const email = info.email || '';
+              const phone = info.phone || '';
+
+              kyc.personalInfo = {
+                ...kyc.personalInfo,
+                firstName,
+                lastName,
+                country,
+                dateOfBirth: dob,
+                nationality: info.nationality || '',
+                email,
+                phone,
+                verifiedAt: new Date().toISOString(),
+                verificationSource: 'sumsub',
+              };
+
+              // User profile'ı güncelle (user:{userId} hash)
+              const normalizedAddress = externalUserId.toLowerCase();
+              const userId = await redis.get(`user:address:${normalizedAddress}`);
+
+              if (userId) {
+                const fullName = `${firstName} ${lastName}`.trim();
+                const userUpdates: Record<string, string> = {
+                  name: fullName,
+                  firstName,
+                  lastName,
+                  country,
+                  kycVerified: 'true',
+                  kycVerifiedAt: new Date().toISOString(),
+                };
+
+                // Email'i Sumsub'dan gelen ile güncelle (eğer varsa ve mevcut değilse)
+                const existingUserData = await redis.hgetall(`user:${userId}`) as Record<string, string> | null;
+                if (email && (!existingUserData?.email || existingUserData.email === '')) {
+                  userUpdates.email = email;
+                }
+                // Phone'u Sumsub'dan gelen ile güncelle (eğer varsa ve mevcut değilse)
+                if (phone && (!existingUserData?.phone || existingUserData.phone === '')) {
+                  userUpdates.phone = phone;
+                }
+
+                await redis.hset(`user:${userId}`, userUpdates);
+
+                // auth:user:{email} hash'ini de güncelle
+                const authEmail = existingUserData?.email || email;
+                if (authEmail) {
+                  const authUpdates: Record<string, string> = {
+                    name: fullName,
+                    kycVerified: 'true',
+                  };
+                  if (phone && (!existingUserData?.phone || existingUserData.phone === '')) {
+                    authUpdates.phone = phone;
+                  }
+                  await redis.hset(`auth:user:${authEmail.toLowerCase()}`, authUpdates);
+                }
+
+                console.log(`✅ KYC identity synced for ${userId}: ${fullName}, country: ${country}, email: ${email ? '✓' : '—'}, phone: ${phone ? '✓' : '—'}`);
+              } else {
+                console.warn(`⚠️ User address mapping not found for ${normalizedAddress}`);
+              }
+            }
+          } catch (identityErr: any) {
+            // Non-fatal: KYC status zaten güncellendi, identity bonus data
+            console.error('Failed to sync KYC identity data:', identityErr.message);
+          }
+        }
+
         break;
 
       case 'applicantCreated':

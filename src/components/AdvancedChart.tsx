@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
+import { useLanguage } from "@/components/LanguageContext";
 import {
   createChart,
   IChartApi,
@@ -58,13 +59,13 @@ interface Props {
   metalIcon?: string;
 }
 
-const translations: Record<string, { overlay: string; panel: string; volume: string; high: string; low: string; open: string; close: string }> = {
-  tr: { overlay: "Overlay", panel: "Panel", volume: "Hacim", high: "Yüksek", low: "Düşük", open: "Açılış", close: "Kapanış" },
-  en: { overlay: "Overlay", panel: "Panel", volume: "Volume", high: "High", low: "Low", open: "Open", close: "Close" },
-  de: { overlay: "Overlay", panel: "Panel", volume: "Volumen", high: "Hoch", low: "Tief", open: "Eröffnung", close: "Schluss" },
-  fr: { overlay: "Superposition", panel: "Panneau", volume: "Volume", high: "Haut", low: "Bas", open: "Ouverture", close: "Clôture" },
-  ar: { overlay: "تراكب", panel: "لوحة", volume: "الحجم", high: "أعلى", low: "أدنى", open: "افتتاح", close: "إغلاق" },
-  ru: { overlay: "Наложение", panel: "Панель", volume: "Объём", high: "Макс", low: "Мин", open: "Открытие", close: "Закрытие" },
+const translations: Record<string, Record<string, string>> = {
+  tr: { overlay: "Overlay", panel: "Panel", volume: "Hacim", high: "Y\u00fcksek", low: "D\u00fc\u015f\u00fck", open: "A\u00e7\u0131l\u0131\u015f", close: "Kapan\u0131\u015f", hoverOverChart: "Grafik \u00fczerine gelin" },
+  en: { overlay: "Overlay", panel: "Panel", volume: "Volume", high: "High", low: "Low", open: "Open", close: "Close", hoverOverChart: "Hover over chart" },
+  de: { overlay: "Overlay", panel: "Panel", volume: "Volumen", high: "Hoch", low: "Tief", open: "Er\u00f6ffnung", close: "Schluss", hoverOverChart: "Fahren Sie \u00fcber das Diagramm" },
+  fr: { overlay: "Superposition", panel: "Panneau", volume: "Volume", high: "Haut", low: "Bas", open: "Ouverture", close: "Cl\u00f4ture", hoverOverChart: "Survolez le graphique" },
+  ar: { overlay: "\u062a\u0631\u0627\u0643\u0628", panel: "\u0644\u0648\u062d\u0629", volume: "\u0627\u0644\u062d\u062c\u0645", high: "\u0623\u0639\u0644\u0649", low: "\u0623\u062f\u0646\u0649", open: "\u0627\u0641\u062a\u062a\u0627\u062d", close: "\u0625\u063a\u0644\u0627\u0642", hoverOverChart: "\u0645\u0631\u0631 \u0641\u0648\u0642 \u0627\u0644\u0631\u0633\u0645 \u0627\u0644\u0628\u064a\u0627\u0646\u064a" },
+  ru: { overlay: "\u041d\u0430\u043b\u043e\u0436\u0435\u043d\u0438\u0435", panel: "\u041f\u0430\u043d\u0435\u043b\u044c", volume: "\u041e\u0431\u044a\u0451\u043c", high: "\u041c\u0430\u043a\u0441", low: "\u041c\u0438\u043d", open: "\u041e\u0442\u043a\u0440\u044b\u0442\u0438\u0435", close: "\u0417\u0430\u043a\u0440\u044b\u0442\u0438\u0435", hoverOverChart: "\u041d\u0430\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u0430 \u0433\u0440\u0430\u0444\u0438\u043a" },
 };
 
 const METAL_ICONS: Record<string, string> = {
@@ -314,23 +315,26 @@ export default function AdvancedChart({
   useEffect(() => { if (propOverlay) setLocalOverlay(propOverlay); }, [propOverlay]);
   useEffect(() => { if (propPanel !== undefined) setLocalPanel(propPanel); }, [propPanel]);
 
-  const handleTimeframeChange = useCallback((tf: TimeframeKey) => { 
+  const { lang: contextLang } = useLanguage();
+  const activeLang = lang || contextLang || "en";
+
+  const handleTimeframeChange = useCallback((tf: TimeframeKey) => {
     isFirstMountRef.current = true;
     savedVisibleRangeRef.current = null;
-    onTimeframeChange?.(tf); 
+    onTimeframeChange?.(tf);
   }, [onTimeframeChange]);
-  
+
   const toggleOverlay = useCallback((ind: OverlayIndicator) => {
     const newIndicators = overlayIndicators.includes(ind) ? overlayIndicators.filter(i => i !== ind) : [...overlayIndicators, ind];
     setLocalOverlay(newIndicators); onOverlayChange?.(newIndicators);
   }, [overlayIndicators, onOverlayChange]);
-  
+
   const togglePanel = useCallback((ind: PanelIndicator) => {
     const newIndicator = panelIndicator === ind ? null : ind;
     setLocalPanel(newIndicator); onPanelChange?.(newIndicator);
   }, [panelIndicator, onPanelChange]);
 
-  const labels = translations[lang] || translations.en;
+  const t = (key: string) => (translations as any)[activeLang]?.[key] || (translations as any).en[key] || key;
 
   const colors = useMemo(() => ({
     background: isDark ? '#0f172a' : '#ffffff',
@@ -655,13 +659,13 @@ export default function AdvancedChart({
           <div className="flex items-center gap-3 mt-1 text-xs flex-wrap">
             {crosshairData ? (
               <>
-                <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{labels.open}: <span className={isDark ? 'text-white' : 'text-slate-900'}>{formatPrice(crosshairData.open)}</span></span>
-                <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{labels.high}: <span className="text-[#2F6F62]">{formatPrice(crosshairData.high)}</span></span>
-                <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{labels.low}: <span className="text-red-500">{formatPrice(crosshairData.low)}</span></span>
-                <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{labels.close}: <span className={isDark ? 'text-white' : 'text-slate-900'}>{formatPrice(crosshairData.close)}</span></span>
+                <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t("open")}: <span className={isDark ? 'text-white' : 'text-slate-900'}>{formatPrice(crosshairData.open)}</span></span>
+                <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t("high")}: <span className="text-[#2F6F62]">{formatPrice(crosshairData.high)}</span></span>
+                <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t("low")}: <span className="text-red-500">{formatPrice(crosshairData.low)}</span></span>
+                <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t("close")}: <span className={isDark ? 'text-white' : 'text-slate-900'}>{formatPrice(crosshairData.close)}</span></span>
               </>
             ) : (
-              <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{lang === "tr" ? "Grafik üzerine gelin" : "Hover over chart"}</span>
+              <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>{t("hoverOverChart")}</span>
             )}
           </div>
         </div>
@@ -695,7 +699,7 @@ export default function AdvancedChart({
             <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               {panelIndicator === "RSI" && "RSI (14)"}
               {panelIndicator === "MACD" && "MACD (12, 26, 9)"}
-              {panelIndicator === "VOL" && labels.volume}
+              {panelIndicator === "VOL" && t("volume")}
             </span>
           </div>
           <div ref={panelContainerRef} className="w-full" style={{ overflow: 'hidden' }} />
@@ -705,7 +709,7 @@ export default function AdvancedChart({
       {showControls && (
         <div className={`px-2 sm:px-3 py-1.5 sm:py-2 border-t space-y-1 sm:space-y-1.5 ${isDark ? 'border-slate-800 bg-slate-900' : 'border-stone-200 bg-white'}`}>
           <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
-            <span className={`text-[9px] sm:text-[10px] w-10 sm:w-12 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{labels.overlay}:</span>
+            <span className={`text-[9px] sm:text-[10px] w-10 sm:w-12 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t("overlay")}:</span>
             {(["MA", "EMA", "BOLL", "SAR"] as OverlayIndicator[]).map(ind => (
               <button
                 key={ind}
@@ -723,7 +727,7 @@ export default function AdvancedChart({
             ))}
           </div>
           <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
-            <span className={`text-[9px] sm:text-[10px] w-10 sm:w-12 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{labels.panel}:</span>
+            <span className={`text-[9px] sm:text-[10px] w-10 sm:w-12 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t("panel")}:</span>
             {(["VOL", "RSI", "MACD"] as PanelIndicator[]).map(ind => (
               <button
                 key={ind}

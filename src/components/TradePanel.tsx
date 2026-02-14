@@ -10,6 +10,7 @@ import { useTrade } from "@/hooks/useTrade";
 import { isLaunchCampaignActive, calculateAuxmBonus } from "@/lib/auxm-bonus-service";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
 import { LimitOrdersList } from "./LimitOrdersList";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface TradePanelProps {
   metalId: MetalId;
@@ -18,7 +19,6 @@ interface TradePanelProps {
   currentPrice: number;
   bidPrice?: number;
   onClose: () => void;
-  lang?: string;
   initialMode?: "buy" | "sell";
 }
 
@@ -56,7 +56,6 @@ export default function TradePanel({
   currentPrice,
   bidPrice,
   onClose,
-  lang = "en",
   initialMode = "buy",
 }: TradePanelProps) {
   const { address, refreshBalances, balances, isConnected } = useWallet();
@@ -235,6 +234,13 @@ export default function TradePanel({
       sec: "sn",
       total: "Toplam",
       bonus: "Bonus",
+      partialAllocation: "Kısmi Tahsis",
+      youAreBuying: "{amount} {symbol} satın alıyorsunuz:",
+      vaultAllocated: "Kasada Tahsis Edilmiş",
+      nonAllocated: "Tahsis Edilmemiş",
+      partialAllocationDesc: "Sadece tam gramlar fiziksel metale tahsis edilebilir. Kesirli kısım bakiyenizde tahsis edilmemiş olarak kalır.",
+      add: "Ekle",
+      continue: "Devam Et",
     },
     en: {
       market: "Market",
@@ -299,6 +305,13 @@ export default function TradePanel({
       sec: "s",
       total: "Total",
       bonus: "Bonus",
+      partialAllocation: "Partial Allocation",
+      youAreBuying: "You are buying {amount} {symbol}:",
+      vaultAllocated: "Vault Allocated",
+      nonAllocated: "Non-Allocated",
+      partialAllocationDesc: "Only whole grams can be allocated to physical metal. Fractional amounts remain non-allocated in your balance.",
+      add: "Add",
+      continue: "Continue",
     },
     de: {
       market: "Markt",
@@ -358,6 +371,13 @@ export default function TradePanel({
       sec: "s",
       total: "Gesamt",
       bonus: "Bonus",
+      partialAllocation: "Teilweise Zuteilung",
+      youAreBuying: "Sie kaufen {amount} {symbol}:",
+      vaultAllocated: "Tresor Zugeteilt",
+      nonAllocated: "Nicht Zugeteilt",
+      partialAllocationDesc: "Nur ganze Gramm können physischem Metall zugeteilt werden. Bruchteile bleiben in Ihrem Guthaben nicht zugeteilt.",
+      add: "Hinzufügen",
+      continue: "Weiter",
     },
     fr: {
       market: "Marché",
@@ -417,6 +437,13 @@ export default function TradePanel({
       sec: "s",
       total: "Total",
       bonus: "Bonus",
+      partialAllocation: "Allocation Partielle",
+      youAreBuying: "Vous achetez {amount} {symbol} :",
+      vaultAllocated: "Coffre Alloue",
+      nonAllocated: "Non-Alloue",
+      partialAllocationDesc: "Seuls les grammes entiers peuvent etre alloues au metal physique. Les montants fractionnaires restent non-alloues dans votre solde.",
+      add: "Ajouter",
+      continue: "Continuer",
     },
     ar: {
       market: "السوق",
@@ -476,6 +503,13 @@ export default function TradePanel({
       sec: "ث",
       total: "المجموع",
       bonus: "مكافأة",
+      partialAllocation: "تخصيص جزئي",
+      youAreBuying: "أنت تشتري {amount} {symbol}:",
+      vaultAllocated: "مخصص في الخزنة",
+      nonAllocated: "غير مخصص",
+      partialAllocationDesc: "يمكن تخصيص الغرامات الكاملة فقط للمعدن الفعلي. تبقى المبالغ الكسرية غير مخصصة في رصيدك.",
+      add: "إضافة",
+      continue: "متابعة",
     },
     ru: {
       market: "Рынок",
@@ -535,10 +569,18 @@ export default function TradePanel({
       sec: "с",
       total: "Всего",
       bonus: "Бонус",
+      partialAllocation: "Частичное распределение",
+      youAreBuying: "Вы покупаете {amount} {symbol}:",
+      vaultAllocated: "Распределено в хранилище",
+      nonAllocated: "Не распределено",
+      partialAllocationDesc: "Только целые граммы могут быть распределены в физический металл. Дробные суммы остаются нераспределёнными в вашем балансе.",
+      add: "Добавить",
+      continue: "Продолжить",
     },
   };
 
-  const t = translations[lang] || translations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   // Set default limit price when switching to limit mode
   useEffect(() => {
@@ -608,11 +650,11 @@ export default function TradePanel({
   // Handle countdown expiry
   useEffect(() => {
     if (quote && countdown === 0) {
-      toast.error(t.priceExpired, t.getNewPrice);
+      toast.error(t("priceExpired"), t("getNewPrice"));
       setQuote(null);
       setShowConfirmation(false);
     }
-  }, [countdown, quote, t.priceExpired, t.getNewPrice]);
+  }, [countdown, quote]);
 
   // Handle Market Trade
   const handleAllocationConfirm = () => {
@@ -633,14 +675,14 @@ export default function TradePanel({
     console.log("🔵 handleMarketTrade", { isConnected, address, amountNum, mode });
     setValidationError(null);
     if (!isConnected || !address) {
-      setValidationError(t.connectWallet);
+      setValidationError(t("connectWallet"));
       return;
     }
     if (amountNum <= 0) {
-      setValidationError(t.enterValidAmount);
+      setValidationError(t("enterValidAmount"));
       return;
     }
-    
+
     // Allocation preview kontrolü (sadece buy modunda ve kesirli gram girildiğinde)
     // Tam gram girildiğinde (1, 2, 3...) uyarı gösterme - fee düzeltmesi API'de yapılacak
     const isWholeGram = Number.isInteger(amountNum);
@@ -673,19 +715,19 @@ export default function TradePanel({
     setValidationError(null);
 
     if (!isConnected || !address) {
-      setValidationError(t.connectWallet);
+      setValidationError(t("connectWallet"));
       return;
     }
     if (amountNum <= 0) {
-      setValidationError(t.enterValidAmount);
+      setValidationError(t("enterValidAmount"));
       return;
     }
     if (mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm) {
-      setValidationError(t.insufficientAuxm);
+      setValidationError(t("insufficientAuxm"));
       return;
     }
     if (mode === "sell" && walletMetalBalance < amountNum) {
-      setValidationError(t.insufficientBalance);
+      setValidationError(t("insufficientBalance"));
       return;
     }
 
@@ -712,7 +754,7 @@ export default function TradePanel({
         setShowConfirmation(true);
         return;
       } catch (error: any) {
-        toast.error(t.priceFailed, error.message);
+        toast.error(t("priceFailed"), error.message);
         return;
       }
     }
@@ -744,8 +786,8 @@ export default function TradePanel({
           });
           const data = await res.json();
           console.log("🟣 API Response:", data);
-          if (!data.success) throw new Error(data.error || "Trade failed");
-          toast.success(t.tradeSuccess || "Trade successful!");
+          if (!data.success) throw new Error(data.error || t("tradeFailed"));
+          toast.success(t("tradeSuccess"));
           setShowConfirmation(false);
           setQuote(null);
           setIsAuxmTrading(false);
@@ -767,15 +809,15 @@ export default function TradePanel({
           });
           const data = await res.json();
           console.log("🟣 Sell API Response:", data);
-          if (!data.success) throw new Error(data.error || "Trade failed");
-          toast.success(t.tradeSuccess || "Trade successful!");
+          if (!data.success) throw new Error(data.error || t("tradeFailed"));
+          toast.success(t("tradeSuccess"));
           setShowConfirmation(false);
           setQuote(null);
           setIsAuxmTrading(false);
         }
         await refreshBalances();
       } catch (error: any) {
-        toast.error(t.tradeFailed, error.message);
+        toast.error(t("tradeFailed"), error.message);
         setIsAuxmTrading(false);
       }
     }
@@ -784,19 +826,19 @@ export default function TradePanel({
   const handleLimitOrder = async () => {
     setValidationError(null);
     if (!isConnected || !address) {
-      setValidationError(t.connectWallet);
+      setValidationError(t("connectWallet"));
       return;
     }
     if (amountNum <= 0 || limitPriceNum <= 0) {
-      setValidationError(t.enterValidPrice);
+      setValidationError(t("enterValidPrice"));
       return;
     }
     if (mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm) {
-      setValidationError(t.insufficientAuxm);
+      setValidationError(t("insufficientAuxm"));
       return;
     }
     if (mode === "sell" && walletMetalBalance < amountNum) {
-      setValidationError(t.insufficientBalance);
+      setValidationError(t("insufficientBalance"));
       return;
     }
 
@@ -823,10 +865,10 @@ export default function TradePanel({
       }
 
       setLimitOrderSuccess(true);
-      toast.success(t.orderPlaced, t.orderCreated);
+      toast.success(t("orderPlaced"), t("orderCreated"));
       
     } catch (error: any) {
-      toast.error(t.orderFailed, error.message);
+      toast.error(t("orderFailed"), error.message);
     } finally {
       setIsPlacingLimitOrder(false);
     }
@@ -844,10 +886,10 @@ export default function TradePanel({
   const isProcessing = isApproving || isTrading || isPlacingLimitOrder || isAuxmTrading;
 
   const getStepText = () => {
-    if (isApproving) return t.tokenApproval;
-    if (isTrading) return t.waitingTransaction;
-    if (isPlacingLimitOrder) return t.placingOrder;
-    if (isAuxmTrading) return t.processing || "İşlem yapılıyor...";
+    if (isApproving) return t("tokenApproval");
+    if (isTrading) return t("waitingTransaction");
+    if (isPlacingLimitOrder) return t("placingOrder");
+    if (isAuxmTrading) return t("processing");
     return "";
   };
 
@@ -860,7 +902,7 @@ export default function TradePanel({
         <div className="flex items-center justify-between p-3 border-b border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              {mode === "buy" ? t.buy : t.sell} {metalSymbol}
+              {mode === "buy" ? t("buy") : t("sell")} {metalSymbol}
             </h2>
             <p className="text-xs text-slate-400">{metalName}</p>
           </div>
@@ -887,13 +929,11 @@ export default function TradePanel({
               </div>
               
               <h3 className="text-lg font-bold text-slate-900 dark:text-white text-center mb-2">
-                {lang === "tr" ? "Kısmi Allocation" : "Partial Allocation"}
+                {t("partialAllocation")}
               </h3>
-              
+
               <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-4">
-                {lang === "tr"
-                  ? `${formatAmount(allocationPreview.totalGrams, metalSymbol)}g ${metalSymbol} satın alıyorsunuz:`
-                  : `You are buying ${formatAmount(allocationPreview.totalGrams, metalSymbol)}g ${metalSymbol}:`}
+                {t("youAreBuying").replace("{amount}", formatAmount(allocationPreview.totalGrams, metalSymbol) + "g").replace("{symbol}", metalSymbol)}
               </p>
               
               <div className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-4 space-y-3 mb-4">
@@ -905,7 +945,7 @@ export default function TradePanel({
                       </svg>
                     </div>
                     <span className="text-sm text-slate-600 dark:text-slate-300">
-                      {lang === "tr" ? "Kasada Allocate" : "Vault Allocated"}
+                      {t("vaultAllocated")}
                     </span>
                   </div>
                   <span className="text-sm font-medium text-[#2F6F62] dark:text-[#2F6F62]">
@@ -919,7 +959,7 @@ export default function TradePanel({
                       <span className="text-[#BFA181] text-xs">○</span>
                     </div>
                     <span className="text-sm text-slate-600 dark:text-slate-300">
-                      {lang === "tr" ? "Non-Allocated" : "Non-Allocated"}
+                      {t("nonAllocated")}
                     </span>
                   </div>
                   <span className="text-sm font-medium text-[#BFA181] dark:text-[#BFA181]">
@@ -929,9 +969,7 @@ export default function TradePanel({
               </div>
               
               <p className="text-xs text-slate-400 dark:text-slate-500 text-center mb-4">
-                {lang === "tr" 
-                  ? "Sadece tam gramlar fiziksel metale allocate edilebilir. Kesirli kısım bakiyenizde non-allocated olarak kalır."
-                  : "Only whole grams can be allocated to physical metal. Fractional amounts remain non-allocated in your balance."}
+                {t("partialAllocationDesc")}
               </p>
               
               <div className="grid grid-cols-2 gap-3">
@@ -941,7 +979,7 @@ export default function TradePanel({
                     className="px-4 py-3 rounded-xl bg-stone-200 dark:bg-slate-800 border border-stone-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-stone-300 dark:hover:bg-slate-700 transition-colors text-sm font-medium"
                   >
                     <span className="block text-xs text-slate-500 dark:text-slate-400 mb-0.5">
-                      {lang === "tr" ? "Ekle" : "Add"}
+                      {t("add")}
                     </span>
                     +{formatAmount(allocationPreview.suggestion.gramsToAdd, metalSymbol)}g → {allocationPreview.suggestion.targetGrams}g
                   </button>
@@ -950,7 +988,7 @@ export default function TradePanel({
                   onClick={handleAllocationConfirm}
                   className="px-4 py-3 rounded-xl bg-[#2F6F62] text-white font-semibold hover:bg-[#2F6F62] transition-colors text-sm"
                 >
-                  {lang === "tr" ? "Devam Et" : "Continue"}
+                  {t("continue")}
                 </button>
               </div>
             </div>
@@ -965,7 +1003,7 @@ export default function TradePanel({
                 </svg>
               </div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                {t.tradeSuccess}
+                {t("tradeSuccess")}
               </h3>
               {tradeHash && (
                 <a
@@ -974,7 +1012,7 @@ export default function TradePanel({
                   rel="noopener noreferrer"
                   className="text-sm text-[#2F6F62] hover:underline"
                 >
-                  {t.viewTransaction} ↗
+                  {t("viewTransaction")} ↗
                 </a>
               )}
             </div>
@@ -988,15 +1026,15 @@ export default function TradePanel({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t.orderPlaced}</h3>
-              <p className="text-sm text-slate-400 mb-4 px-4">{t.limitOrderInfo}</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t("orderPlaced")}</h3>
+              <p className="text-sm text-slate-400 mb-4 px-4">{t("limitOrderInfo")}</p>
               <div className="p-3 bg-stone-50 dark:bg-slate-800 rounded-xl mx-4 text-sm">
                 <div className="flex justify-between mb-1">
-                  <span className="text-slate-400">{mode === "buy" ? "Buy" : "Sell"}</span>
+                  <span className="text-slate-400">{mode === "buy" ? t("buy") : t("sell")}</span>
                   <span className="text-slate-900 dark:text-white font-mono">{amountNum}g {metalSymbol}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">@ {t.limitPrice}</span>
+                  <span className="text-slate-400">@ {t("limitPrice")}</span>
                   <span className="text-blue-400 font-mono">${limitPriceNum.toFixed(2)}/g</span>
                 </div>
               </div>
@@ -1004,7 +1042,7 @@ export default function TradePanel({
                 onClick={onClose}
                 className="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-xl text-white font-medium"
               >
-                {t.close}
+                {t("close")}
               </button>
             </div>
           )}
@@ -1014,7 +1052,7 @@ export default function TradePanel({
             <div className="mb-4 p-4 rounded-xl bg-red-500/10 border border-red-500/30">
               <p className="text-sm text-red-400">{errorMessage}</p>
               <button onClick={reset} className="mt-2 text-sm text-red-400 hover:text-red-300 underline">
-                {t.tryAgain}
+                {t("tryAgain")}
               </button>
             </div>
           )}
@@ -1040,8 +1078,8 @@ export default function TradePanel({
                   <div className="flex items-center gap-2">
                     <span className="text-lg">🚀</span>
                     <div>
-                      <div className="text-sm font-semibold text-purple-700 dark:text-purple-200">{t.campaignActive}</div>
-                      <div className="text-[10px] text-purple-600 dark:text-purple-300">{t.campaignDesc}</div>
+                      <div className="text-sm font-semibold text-purple-700 dark:text-purple-200">{t("campaignActive")}</div>
+                      <div className="text-[10px] text-purple-600 dark:text-purple-300">{t("campaignDesc")}</div>
                     </div>
                   </div>
                 </div>
@@ -1058,7 +1096,7 @@ export default function TradePanel({
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
-                  {t.buy}
+                  {t("buy")}
                 </button>
                 <button
                   onClick={() => { setMode("sell"); setQuote(null); setShowConfirmation(false); setLimitPrice(""); }}
@@ -1069,13 +1107,13 @@ export default function TradePanel({
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
-                  {t.sell}
+                  {t("sell")}
                 </button>
               </div>
 
               {/* Order Type Toggle */}
               <div className="mb-2">
-                <label className="text-xs text-slate-400 mb-1 block">{t.orderType}</label>
+                <label className="text-xs text-slate-400 mb-1 block">{t("orderType")}</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => { setOrderType("market"); setQuote(null); setShowConfirmation(false); }}
@@ -1087,9 +1125,9 @@ export default function TradePanel({
                     }`}
                   >
                     <div className={`text-sm font-semibold ${orderType === "market" ? "text-[#2F6F62] dark:text-[#2F6F62]" : "text-slate-600 dark:text-slate-300"}`}>
-                      {t.market}
+                      {t("market")}
                     </div>
-                    <div className="text-[10px] text-slate-600 dark:text-slate-500">{t.marketDesc}</div>
+                    <div className="text-[10px] text-slate-600 dark:text-slate-500">{t("marketDesc")}</div>
                   </button>
                   <button
                     onClick={() => { setOrderType("limit"); setQuote(null); setShowConfirmation(false); }}
@@ -1101,9 +1139,9 @@ export default function TradePanel({
                     }`}
                   >
                     <div className={`text-sm font-semibold ${orderType === "limit" ? "text-blue-500 dark:text-blue-400" : "text-slate-600 dark:text-slate-300"}`}>
-                      {t.limit}
+                      {t("limit")}
                     </div>
-                    <div className="text-[10px] text-slate-600 dark:text-slate-500">{t.limitDesc}</div>
+                    <div className="text-[10px] text-slate-600 dark:text-slate-500">{t("limitDesc")}</div>
                   </button>
                 </div>
               </div>
@@ -1113,7 +1151,7 @@ export default function TradePanel({
                 {mode === "buy" ? (
                   <>
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="text-slate-400">{selectedCurrency} {t.balance}</span>
+                      <span className="text-slate-400">{selectedCurrency} {t("balance")}</span>
                       <span className="text-slate-900 dark:text-white font-mono">
                         {selectedCurrency === "AUXM" 
                           ? `${auxmBalance.auxm.toFixed(2)} AUXM`
@@ -1124,11 +1162,11 @@ export default function TradePanel({
                     {selectedCurrency === "AUXM" && auxmBalance.bonusAuxm > 0 && (
                       <>
                         <div className="flex justify-between text-xs">
-                          <span className="text-purple-400">🎁 {t.bonus} AUXM</span>
+                          <span className="text-purple-400">🎁 {t("bonus")} AUXM</span>
                           <span className="text-purple-400 font-mono">+{auxmBalance.bonusAuxm.toFixed(2)} AUXM</span>
                         </div>
                         <div className="flex justify-between text-xs border-t border-stone-200 dark:border-slate-700 pt-1 mt-1">
-                          <span className="text-slate-400">{t.total}</span>
+                          <span className="text-slate-400">{t("total")}</span>
                           <span className="text-slate-900 dark:text-white font-mono font-medium">{totalAuxm.toFixed(2)} AUXM</span>
                         </div>
                       </>
@@ -1136,7 +1174,7 @@ export default function TradePanel({
                   </>
                 ) : (
                   <div className="flex justify-between text-xs">
-                    <span className="text-slate-400">{metalSymbol} {t.balance}</span>
+                    <span className="text-slate-400">{metalSymbol} {t("balance")}</span>
                     <span className="text-slate-900 dark:text-white font-mono">{formatAmount(walletMetalBalance, metalSymbol)} {metalSymbol}</span>
                   </div>
                 )}
@@ -1147,8 +1185,8 @@ export default function TradePanel({
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-slate-400">
                     {orderType === "market" 
-                      ? (mode === "buy" ? t.askPrice : t.bidPrice)
-                      : t.currentPrice
+                      ? (mode === "buy" ? t("askPrice") : t("bidPrice"))
+                      : t("currentPrice")
                     }
                   </span>
                   <span className="text-lg font-bold text-slate-900 dark:text-white">
@@ -1163,11 +1201,11 @@ export default function TradePanel({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-[#2F6F62]">🔒</span>
-                      <span className="text-[#BFA181] text-xs font-medium">{t.priceLocked}</span>
+                      <span className="text-[#BFA181] text-xs font-medium">{t("priceLocked")}</span>
                     </div>
                     <div className={`flex items-center gap-1 px-2 py-0.5 rounded ${countdown <= 5 ? "bg-red-500/20 text-red-400 animate-pulse" : "bg-[#2F6F62]/20 text-[#2F6F62]"}`}>
                       <span className="text-lg font-bold font-mono">{countdown}</span>
-                      <span className="text-[10px]">{t.sec}</span>
+                      <span className="text-[10px]">{t("sec")}</span>
                     </div>
                   </div>
                 </div>
@@ -1175,7 +1213,7 @@ export default function TradePanel({
 
               {/* Amount Input */}
               <div className="mb-2">
-                <label className="block text-xs text-slate-400 mb-1">{t.amountGrams} ({metalSymbol})</label>
+                <label className="block text-xs text-slate-400 mb-1">{t("amountGrams")} ({metalSymbol})</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -1205,7 +1243,7 @@ export default function TradePanel({
               {/* Limit Price Input (Limit Orders Only) */}
               {orderType === "limit" && (
                 <div className="mb-2">
-                  <label className="block text-xs text-slate-400 mb-1">{t.limitPrice}</label>
+                  <label className="block text-xs text-slate-400 mb-1">{t("limitPrice")}</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
                     <input
@@ -1249,7 +1287,7 @@ export default function TradePanel({
               {/* Currency Selection - Both Buy and Sell */}
               <div className="mb-2">
                 <label className="block text-xs text-slate-400 mb-1">
-                  {mode === "buy" ? t.paymentMethod : t.receiveAs}
+                  {mode === "buy" ? t("paymentMethod") : t("receiveAs")}
                 </label>
                 <div className="grid grid-cols-6 gap-1">
                   {currencies.map((curr) => (
@@ -1296,7 +1334,7 @@ export default function TradePanel({
                       ? selectedCurrency === "AUXM" ? "text-purple-600 dark:text-purple-300" : "text-[#2F6F62] dark:text-[#2F6F62]" 
                       : "text-red-600 dark:text-red-300"
                 }`}>
-                  {mode === "buy" ? t.totalPayment : t.totalReceive}
+                  {mode === "buy" ? t("totalPayment") : t("totalReceive")}
                 </div>
                 <div className={`text-2xl font-bold ${
                   orderType === "limit"
@@ -1336,11 +1374,11 @@ export default function TradePanel({
                 <div className="mb-2 p-2 rounded-lg bg-purple-500/10 border border-purple-500/30">
                   <div className="text-xs text-purple-600 dark:text-purple-300">
                     <div className="flex justify-between">
-                      <span>🎁 {t.bonusUsage}:</span>
+                      <span>🎁 {t("bonusUsage")}:</span>
                       <span className="font-mono">{bonusUsage.usedBonus.toFixed(2)} AUXM</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>{t.regularAuxm}:</span>
+                      <span>{t("regularAuxm")}:</span>
                       <span className="font-mono">{bonusUsage.usedRegular.toFixed(2)} AUXM</span>
                     </div>
                   </div>
@@ -1350,7 +1388,7 @@ export default function TradePanel({
               {/* Insufficient Balance Warning */}
               {mode === "buy" && selectedCurrency === "AUXM" && !canAffordAuxm && amountNum > 0 && (
                 <div className="mb-2 p-2 rounded-lg bg-[#BFA181]/10 border border-[#BFA181]/30">
-                  <p className="text-xs text-[#BFA181]">⚠️ {t.insufficientAuxm}</p>
+                  <p className="text-xs text-[#BFA181]">⚠️ {t("insufficientAuxm")}</p>
                 </div>
               )}
 
@@ -1364,7 +1402,7 @@ export default function TradePanel({
                     </svg>
                     <div>
                       <div className="text-sm font-medium text-blue-300">{getStepText()}</div>
-                      <div className="text-[10px] text-blue-200">{t.pleaseWait}</div>
+                      <div className="text-[10px] text-blue-200">{t("pleaseWait")}</div>
                     </div>
                   </div>
                 </div>
@@ -1390,7 +1428,7 @@ export default function TradePanel({
                   disabled={isProcessing}
                   className="px-3 py-2 rounded-lg bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm hover:bg-slate-700 transition-colors disabled:opacity-50"
                 >
-                  {t.cancel}
+                  {t("cancel")}
                 </button>
                 
                 {orderType === "market" ? (
@@ -1410,14 +1448,14 @@ export default function TradePanel({
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
-                        {step === "approving" ? t.approving : t.processing}
+                        {step === "approving" ? t("approving") : t("processing")}
                       </span>
                     ) : showConfirmation && quote && countdown > 0 ? (
-                      `✓ ${t.confirm} (${countdown}s)`
+                      `✓ ${t("confirm")} (${countdown}s)`
                     ) : mode === "buy" ? (
-                      t.buyNow
+                      t("buyNow")
                     ) : (
-                      t.sellNow
+                      t("sellNow")
                     )}
                   </button>
                 ) : (
@@ -1433,10 +1471,10 @@ export default function TradePanel({
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
-                        {t.placingOrder}
+                        {t("placingOrder")}
                       </span>
                     ) : (
-                      t.placeOrder
+                      t("placeOrder")
                     )}
                   </button>
                 )}

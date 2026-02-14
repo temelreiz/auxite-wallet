@@ -34,7 +34,6 @@ export default function FundVaultPage() {
       <AddFundsModal
         isOpen={showModal}
         onClose={handleClose}
-        lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
         walletAddress={address || ""}
         vaultId={vaultId}
         auxmBalance={auxmBalance}

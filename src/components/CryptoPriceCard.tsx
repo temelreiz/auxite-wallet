@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { CryptoConvertModal } from "./CryptoConvertModal";
 import { useCryptoChart } from "@/hooks/useCryptoChart";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface CryptoPriceCardProps {
   cryptoId: "ETH" | "BTC" | "XRP" | "SOL";
@@ -13,7 +14,7 @@ interface CryptoPriceCardProps {
   balance?: number;
   icon?: string;
   color?: string;
-  lang?: "tr" | "en";
+  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   metalPrices?: {
     AUXG: number;
     AUXS: number;
@@ -34,6 +35,15 @@ const CRYPTO_ICONS: Record<string, string> = {
   BTC: "₿",
   XRP: "✕",
   SOL: "◎",
+};
+
+const translations: Record<string, Record<string, string>> = {
+  tr: { balance: "Bakiye", convert: "Dönüştür" },
+  en: { balance: "Balance", convert: "Convert" },
+  de: { balance: "Guthaben", convert: "Konvertieren" },
+  fr: { balance: "Solde", convert: "Convertir" },
+  ar: { balance: "الرصيد", convert: "تحويل" },
+  ru: { balance: "Баланс", convert: "Конвертировать" },
 };
 
 // Mini Sparkline Chart Component
@@ -98,9 +108,13 @@ export default function CryptoPriceCard({
   balance = 0,
   icon,
   color,
-  lang = "en",
+  lang: langProp,
   metalPrices = { AUXG: 139.31, AUXS: 1.79, AUXPT: 54.14, AUXPD: 48.16 },
 }: CryptoPriceCardProps) {
+  const { lang: contextLang } = useLanguage();
+  const lang = langProp || contextLang || "en";
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
+
   const [showConvertModal, setShowConvertModal] = useState(false);
   
   // Binance'den chart verisi çek
@@ -203,7 +217,7 @@ export default function CryptoPriceCard({
           {/* Balance */}
           {balance > 0 && (
             <div className="text-right">
-              <div className="text-xs text-slate-500">{lang === "tr" ? "Bakiye" : "Balance"}</div>
+              <div className="text-xs text-slate-500">{t("balance")}</div>
               <div className="text-sm text-slate-300 font-mono font-medium">{balance.toFixed(6)}</div>
             </div>
           )}
@@ -248,7 +262,7 @@ export default function CryptoPriceCard({
               d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
             />
           </svg>
-          {lang === "tr" ? "Dönüştür" : "Convert"}
+          {t("convert")}
         </button>
 
         {/* Click hint */}
@@ -265,7 +279,6 @@ export default function CryptoPriceCard({
           isOpen={showConvertModal}
           onClose={() => setShowConvertModal(false)}
           crypto={cryptoId}
-          lang={lang}
           cryptoBalances={{
             ETH: cryptoId === "ETH" ? balance : 0,
             BTC: cryptoId === "BTC" ? balance : 0,

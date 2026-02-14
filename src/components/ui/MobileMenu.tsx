@@ -2,24 +2,25 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useLanguage } from "@/components/LanguageContext";
 
 /**
  * Mobile Menu Component
  * Hamburger menu for mobile responsive navigation
  */
 
-interface MobileMenuProps {
-  lang: "tr" | "en";
-  currentPath?: string;
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// TRANSLATIONS
+// ═══════════════════════════════════════════════════════════════════════════════
 
-const t = {
+const translations = {
   tr: {
     markets: "Piyasalar",
     earn: "Kazan",
     vault: "Kasa",
     security: "Güvenlik",
     advancedSecurity: "Gelişmiş Güvenlik",
+    menu: "Menü",
   },
   en: {
     markets: "Markets",
@@ -27,12 +28,50 @@ const t = {
     vault: "Vault",
     security: "Security",
     advancedSecurity: "Advanced Security",
+    menu: "Menu",
+  },
+  de: {
+    markets: "Märkte",
+    earn: "Verdienen",
+    vault: "Tresor",
+    security: "Sicherheit",
+    advancedSecurity: "Erweiterte Sicherheit",
+    menu: "Menü",
+  },
+  fr: {
+    markets: "Marchés",
+    earn: "Gagner",
+    vault: "Coffre",
+    security: "Sécurité",
+    advancedSecurity: "Sécurité Avancée",
+    menu: "Menu",
+  },
+  ar: {
+    markets: "الأسواق",
+    earn: "اكسب",
+    vault: "الخزنة",
+    security: "الأمان",
+    advancedSecurity: "أمان متقدم",
+    menu: "القائمة",
+  },
+  ru: {
+    markets: "Рынки",
+    earn: "Заработок",
+    vault: "Хранилище",
+    security: "Безопасность",
+    advancedSecurity: "Расширенная Безопасность",
+    menu: "Меню",
   },
 };
 
-export function MobileMenu({ lang, currentPath = "/" }: MobileMenuProps) {
+interface MobileMenuProps {
+  currentPath?: string;
+}
+
+export function MobileMenu({ currentPath = "/" }: MobileMenuProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const [isOpen, setIsOpen] = useState(false);
-  const labels = t[lang];
 
   // Close menu on route change
   useEffect(() => {
@@ -52,9 +91,9 @@ export function MobileMenu({ lang, currentPath = "/" }: MobileMenuProps) {
   }, [isOpen]);
 
   const navItems = [
-    { href: "/", label: labels.markets, icon: "📊" },
-    { href: "/earn", label: labels.earn, icon: "💰" },
-    { href: "/vault", label: labels.vault, icon: "🏦" },
+    { href: "/", label: t("markets"), icon: "📊" },
+    { href: "/earn", label: t("earn"), icon: "💰" },
+    { href: "/vault", label: t("vault"), icon: "🏦" },
   ];
 
   return (
@@ -102,7 +141,7 @@ export function MobileMenu({ lang, currentPath = "/" }: MobileMenuProps) {
       >
         {/* Menu Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-800">
-          <span className="text-lg font-semibold text-white">Menu</span>
+          <span className="text-lg font-semibold text-white">{t("menu")}</span>
           <button
             onClick={() => setIsOpen(false)}
             className="p-2 rounded-lg hover:bg-slate-800 transition-colors"
@@ -140,7 +179,7 @@ export function MobileMenu({ lang, currentPath = "/" }: MobileMenuProps) {
         {/* Security Links */}
         <div className="p-4 space-y-2">
           <p className="px-4 text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
-            {labels.security}
+            {t("security")}
           </p>
           <button
             onClick={() => {
@@ -151,7 +190,7 @@ export function MobileMenu({ lang, currentPath = "/" }: MobileMenuProps) {
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition-colors text-left"
           >
             <span className="text-xl">🛡️</span>
-            <span className="font-medium">{labels.security}</span>
+            <span className="font-medium">{t("security")}</span>
           </button>
           <button
             onClick={() => {
@@ -162,7 +201,7 @@ export function MobileMenu({ lang, currentPath = "/" }: MobileMenuProps) {
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition-colors text-left"
           >
             <span className="text-xl">🔐</span>
-            <span className="font-medium">{labels.advancedSecurity}</span>
+            <span className="font-medium">{t("advancedSecurity")}</span>
           </button>
         </div>
       </div>
@@ -176,18 +215,18 @@ export function MobileMenu({ lang, currentPath = "/" }: MobileMenuProps) {
  */
 
 interface MobileBottomNavProps {
-  lang: "tr" | "en";
   currentPath?: string;
   onSecurityClick?: () => void;
 }
 
-export function MobileBottomNav({ lang, currentPath = "/", onSecurityClick }: MobileBottomNavProps) {
-  const labels = t[lang];
+export function MobileBottomNav({ currentPath = "/", onSecurityClick }: MobileBottomNavProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   const navItems = [
-    { href: "/", label: labels.markets, icon: "📊" },
-    { href: "/earn", label: labels.earn, icon: "💰" },
-    { href: "/vault", label: labels.vault, icon: "🏦" },
+    { href: "/", label: t("markets"), icon: "📊" },
+    { href: "/earn", label: t("earn"), icon: "💰" },
+    { href: "/vault", label: t("vault"), icon: "🏦" },
   ];
 
   return (
@@ -212,7 +251,7 @@ export function MobileBottomNav({ lang, currentPath = "/", onSecurityClick }: Mo
           className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
         >
           <span className="text-xl">🛡️</span>
-          <span className="text-xs font-medium">{labels.security}</span>
+          <span className="text-xs font-medium">{t("security")}</span>
         </button>
       </div>
     </nav>

@@ -179,15 +179,24 @@ export default function Home() {
               <span className="font-bold text-[#BFA181] tracking-widest text-sm">AUXITE</span>
             </div>
 
-            <div className="flex items-center gap-6 text-sm text-slate-400">
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-400">
               <Link href="/legal/terms" className="hover:text-white transition-colors">
                 Terms of Service
               </Link>
               <Link href="/privacy-policy" className="hover:text-white transition-colors">
                 Privacy Policy
               </Link>
+              <Link href="/legal/aml" className="hover:text-white transition-colors">
+                AML Policy
+              </Link>
+              <Link href="/legal/risk-disclosure" className="hover:text-white transition-colors">
+                Risk Disclosure
+              </Link>
+              <Link href="/legal/data-security" className="hover:text-white transition-colors">
+                Data Security
+              </Link>
               <Link href="/legal" className="hover:text-white transition-colors">
-                Legal
+                Compliance
               </Link>
             </div>
 

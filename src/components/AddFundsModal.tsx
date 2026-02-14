@@ -4,11 +4,11 @@
 
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface AddFundsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  lang: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   walletAddress: string;
   vaultId?: string;
   auxmBalance?: number;
@@ -33,7 +33,7 @@ const COIN_MAPPING: Record<string, string> = {
   usdc: "USDC",
 };
 
-const texts: Record<string, Record<string, string>> = {
+const translations: Record<string, Record<string, string>> = {
   tr: {
     title: "Kasayı Fonla",
     subtitle: "Saklama hesabınıza sermaye ekleyin",
@@ -91,6 +91,13 @@ const texts: Record<string, Record<string, string>> = {
     pendingSettlement: "Takas Bekleniyor",
     returnToVault: "Kasaya Dön",
     back: "Geri",
+    asset: "Varlık",
+    allocate: "Tahsis Et",
+    fullySegregated: "Tamamen Ayrılmış",
+    bankruptcyRemote: "İflas Korumalı",
+    vaultIdLabel: "Kasa Kimliği",
+    usdEquivalent: "USD karşılığı",
+    failedToGenerate: "Adres oluşturulamadı. Lütfen tekrar deneyin.",
   },
   en: {
     title: "Fund Vault",
@@ -149,6 +156,13 @@ const texts: Record<string, Record<string, string>> = {
     pendingSettlement: "Pending Settlement",
     returnToVault: "Return to Vault",
     back: "Back",
+    asset: "Asset",
+    allocate: "Allocate",
+    fullySegregated: "Fully Segregated",
+    bankruptcyRemote: "Bankruptcy Remote",
+    vaultIdLabel: "Vault ID",
+    usdEquivalent: "USD equivalent",
+    failedToGenerate: "Failed to generate address. Please try again.",
   },
   de: {
     title: "Tresor Aufladen",
@@ -197,6 +211,13 @@ const texts: Record<string, Record<string, string>> = {
     pendingSettlement: "Abwicklung Ausstehend",
     returnToVault: "Zurück zum Tresor",
     back: "Zurück",
+    asset: "Vermögenswert",
+    allocate: "Zuweisen",
+    fullySegregated: "Vollständig Getrennt",
+    bankruptcyRemote: "Insolvenzgeschützt",
+    vaultIdLabel: "Tresor-ID",
+    usdEquivalent: "USD-Äquivalent",
+    failedToGenerate: "Adresse konnte nicht generiert werden. Bitte versuchen Sie es erneut.",
   },
   fr: {
     title: "Alimenter le Coffre",
@@ -245,6 +266,13 @@ const texts: Record<string, Record<string, string>> = {
     pendingSettlement: "Règlement en Attente",
     returnToVault: "Retour au Coffre",
     back: "Retour",
+    asset: "Actif",
+    allocate: "Allouer",
+    fullySegregated: "Entièrement Séparé",
+    bankruptcyRemote: "Protection Faillite",
+    vaultIdLabel: "ID du Coffre",
+    usdEquivalent: "Équivalent USD",
+    failedToGenerate: "Échec de la génération de l'adresse. Veuillez réessayer.",
   },
   ar: {
     title: "تمويل الخزينة",
@@ -293,6 +321,13 @@ const texts: Record<string, Record<string, string>> = {
     pendingSettlement: "تسوية معلقة",
     returnToVault: "العودة للخزينة",
     back: "رجوع",
+    asset: "أصل",
+    allocate: "تخصيص",
+    fullySegregated: "منفصل بالكامل",
+    bankruptcyRemote: "حماية من الإفلاس",
+    vaultIdLabel: "معرف الخزينة",
+    usdEquivalent: "ما يعادله بالدولار",
+    failedToGenerate: "فشل في إنشاء العنوان. يرجى المحاولة مرة أخرى.",
   },
   ru: {
     title: "Пополнить Хранилище",
@@ -341,13 +376,19 @@ const texts: Record<string, Record<string, string>> = {
     pendingSettlement: "Ожидание Расчета",
     returnToVault: "Вернуться в Хранилище",
     back: "Назад",
+    asset: "Актив",
+    allocate: "Распределить",
+    fullySegregated: "Полностью Обособлено",
+    bankruptcyRemote: "Защита от Банкротства",
+    vaultIdLabel: "ID Хранилища",
+    usdEquivalent: "Эквивалент в USD",
+    failedToGenerate: "Не удалось сгенерировать адрес. Пожалуйста, попробуйте снова.",
   },
 };
 
 export function AddFundsModal({
   isOpen,
   onClose,
-  lang,
   walletAddress,
   vaultId,
   auxmBalance = 0,
@@ -355,6 +396,8 @@ export function AddFundsModal({
   defaultTab,
   bankOnly = false,
 }: AddFundsModalProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   // Map old tab names to new modal names
   const getInitialModal = () => {
     if (bankOnly) return "bank";
@@ -378,8 +421,6 @@ export function AddFundsModal({
     confirmTime: string;
     paymentId: string;
   } | null>(null);
-
-  const t = texts[lang] || texts.en;
 
   // Reset states when modal closes
   useEffect(() => {
@@ -468,15 +509,15 @@ export function AddFundsModal({
           <div className="w-20 h-20 rounded-full bg-[#BFA181]/15 flex items-center justify-center mx-auto mb-6">
             <span className="text-4xl text-[#BFA181]">◈</span>
           </div>
-          <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{t.pendingSettlement}</h3>
-          <p className="text-[#BFA181] font-semibold mb-4">{t.creditedAsAuxm}</p>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">{t.fundsSettled}</p>
+          <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{t("pendingSettlement")}</h3>
+          <p className="text-[#BFA181] font-semibold mb-4">{t("creditedAsAuxm")}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">{t("fundsSettled")}</p>
 
           {/* Settlement Flow */}
           <div className="flex items-center justify-center gap-3 bg-slate-50 dark:bg-white/5 rounded-xl p-4 mb-6">
             <div className="text-center">
               <span className="text-slate-500 text-lg">💳</span>
-              <p className="text-xs text-slate-500 mt-1">Asset</p>
+              <p className="text-xs text-slate-500 mt-1">{t("asset")}</p>
             </div>
             <span className="text-slate-300">→</span>
             <div className="text-center">
@@ -486,7 +527,7 @@ export function AddFundsModal({
             <span className="text-slate-300">→</span>
             <div className="text-center">
               <span className="text-[#2F6F62] text-lg">📦</span>
-              <p className="text-xs text-slate-500 mt-1">Allocate</p>
+              <p className="text-xs text-slate-500 mt-1">{t("allocate")}</p>
             </div>
           </div>
 
@@ -496,13 +537,13 @@ export function AddFundsModal({
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              Fully Segregated
+              {t("fullySegregated")}
             </span>
             <span className="px-3 py-1.5 rounded-lg bg-[#BFA181]/10 text-[#BFA181] text-xs font-semibold flex items-center gap-1">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              Bankruptcy Remote
+              {t("bankruptcyRemote")}
             </span>
           </div>
 
@@ -513,7 +554,7 @@ export function AddFundsModal({
             }}
             className="w-full py-4 rounded-xl bg-[#BFA181] text-black font-bold hover:bg-[#D4B47A] transition-colors"
           >
-            {t.returnToVault}
+            {t("returnToVault")}
           </button>
         </div>
       </div>
@@ -526,8 +567,8 @@ export function AddFundsModal({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-stone-200 dark:border-white/10 flex-shrink-0">
           <div>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t.title}</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{t.subtitle}</p>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t("title")}</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t("subtitle")}</p>
           </div>
           <button
             onClick={onClose}
@@ -552,14 +593,14 @@ export function AddFundsModal({
                   <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Vault ID:</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{t("vaultIdLabel")}:</span>
                   <span className="text-xs font-semibold text-[#BFA181]">{vaultId}</span>
                 </div>
               )}
 
               {/* Primary Funding Sources */}
               <div>
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">{t.fundingSources}</p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">{t("fundingSources")}</p>
                 <div className="space-y-3">
                   {/* Bank Wire */}
                   <button
@@ -573,12 +614,12 @@ export function AddFundsModal({
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <p className="font-semibold text-slate-800 dark:text-white">{t.bankWire}</p>
+                        <p className="font-semibold text-slate-800 dark:text-white">{t("bankWire")}</p>
                         <span className="text-xs font-semibold text-[#BFA181]">USD/EUR</span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{t.bankWireDesc}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{t("bankWireDesc")}</p>
                       <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                        {t.settlementTime}: <span className="text-[#2F6F62]">1-3 {t.businessDays}</span>
+                        {t("settlementTime")}: <span className="text-[#2F6F62]">1-3 {t("businessDays")}</span>
                       </p>
                     </div>
                     <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -596,12 +637,12 @@ export function AddFundsModal({
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <p className="font-semibold text-slate-800 dark:text-white">{t.auxmFunding}</p>
+                        <p className="font-semibold text-slate-800 dark:text-white">{t("auxmFunding")}</p>
                         <span className="text-xs font-semibold text-[#BFA181]">AUXM</span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{t.auxmFundingDesc}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{t("auxmFundingDesc")}</p>
                       <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                        {t.settlementTime}: <span className="text-[#2F6F62]">{t.instant}</span>
+                        {t("settlementTime")}: <span className="text-[#2F6F62]">{t("instant")}</span>
                       </p>
                     </div>
                     <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -613,7 +654,7 @@ export function AddFundsModal({
 
               {/* Crypto Funding */}
               <div>
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">{t.cryptoFunding}</p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">{t("cryptoFunding")}</p>
                 <div className="space-y-3">
                   {CRYPTO_SOURCES.map((crypto) => (
                     <button
@@ -634,7 +675,7 @@ export function AddFundsModal({
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">{crypto.network}</p>
                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                          {t.settlementTime}: <span className="text-[#2F6F62]">{crypto.settlementTime}</span>
+                          {t("settlementTime")}: <span className="text-[#2F6F62]">{crypto.settlementTime}</span>
                         </p>
                       </div>
                       <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -650,7 +691,7 @@ export function AddFundsModal({
                 <svg className="w-5 h-5 text-[#2F6F62] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="text-xs text-[#2F6F62] font-medium">{t.fundsCredited}</p>
+                <p className="text-xs text-[#2F6F62] font-medium">{t("fundsCredited")}</p>
               </div>
             </div>
           )}
@@ -667,36 +708,36 @@ export function AddFundsModal({
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                <span className="text-sm font-medium">{t.back}</span>
+                <span className="text-sm font-medium">{t("back")}</span>
               </button>
 
-              <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-4">{t.bankDetails}</h4>
+              <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-4">{t("bankDetails")}</h4>
 
               <div className="space-y-4">
                 <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t.beneficiary}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("beneficiary")}</p>
                   <p className="font-medium text-slate-800 dark:text-white">Auxite Custody Ltd.</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t.iban}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("iban")}</p>
                   <p className="font-medium text-slate-800 dark:text-white font-mono">CH93 0076 2011 6238 5295 7</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t.swift}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("swift")}</p>
                   <p className="font-medium text-slate-800 dark:text-white font-mono">UBSWCHZH80A</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t.bank}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("bank")}</p>
                   <p className="font-medium text-slate-800 dark:text-white">UBS Switzerland AG</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t.reference}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("reference")}</p>
                   <p className="font-medium text-[#BFA181]">{vaultId || "AX-VLT-XXXX-XXXX"}</p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/20">
-                  <p className="text-xs font-bold text-[#BFA181] mb-1">{t.importantNote}</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">{t.referenceNote}</p>
+                  <p className="text-xs font-bold text-[#BFA181] mb-1">{t("importantNote")}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">{t("referenceNote")}</p>
                 </div>
               </div>
 
@@ -711,7 +752,7 @@ export function AddFundsModal({
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                {t.copyAll}
+                {t("copyAll")}
               </button>
             </div>
           )}
@@ -728,14 +769,14 @@ export function AddFundsModal({
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                <span className="text-sm font-medium">{t.back}</span>
+                <span className="text-sm font-medium">{t("back")}</span>
               </button>
 
               {/* AUXM Balance Card */}
               <div className="p-5 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/20 text-center mb-6">
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <span className="text-2xl text-[#BFA181]">◈</span>
-                  <span className="text-sm text-slate-500 dark:text-slate-400">{t.auxmBalance}</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{t("auxmBalance")}</span>
                 </div>
                 <p className="text-3xl font-bold text-[#BFA181]">{auxmBalance.toLocaleString()} AUXM</p>
                 <p className="text-sm text-slate-500 dark:text-slate-400">≈ ${auxmBalance.toLocaleString()} USD</p>
@@ -744,7 +785,7 @@ export function AddFundsModal({
               {/* Amount Input */}
               <div className="mb-6">
                 <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-2">
-                  {t.auxmAmount}
+                  {t("auxmAmount")}
                 </label>
                 <div className="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 overflow-hidden">
                   <input
@@ -762,18 +803,18 @@ export function AddFundsModal({
                   </button>
                   <span className="flex-shrink-0 text-sm font-semibold text-[#BFA181]">AUXM</span>
                 </div>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t.auxmMin}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t("auxmMin")}</p>
               </div>
 
               {/* Rate Info */}
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 mb-6">
                 <div className="flex justify-between py-2">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">{t.auxmRate}</span>
-                  <span className="text-sm font-medium text-slate-800 dark:text-white">USD equivalent</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{t("auxmRate")}</span>
+                  <span className="text-sm font-medium text-slate-800 dark:text-white">{t("usdEquivalent")}</span>
                 </div>
                 <div className="border-t border-slate-200 dark:border-white/10 my-1"></div>
                 <div className="flex justify-between py-2">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">{t.auxmEquivalent}</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{t("auxmEquivalent")}</span>
                   <span className="text-sm font-medium text-[#2F6F62]">
                     ${(parseFloat(auxmAmount) || 0).toLocaleString()}
                   </span>
@@ -785,7 +826,7 @@ export function AddFundsModal({
                 <svg className="w-5 h-5 text-[#2F6F62] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="text-xs text-slate-600 dark:text-slate-400">{t.auxmNote}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">{t("auxmNote")}</p>
               </div>
 
               {/* Fund Button */}
@@ -797,7 +838,7 @@ export function AddFundsModal({
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
-                {t.auxmFund}
+                {t("auxmFund")}
               </button>
             </div>
           )}
@@ -818,7 +859,7 @@ export function AddFundsModal({
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                <span className="text-sm font-medium">{t.back}</span>
+                <span className="text-sm font-medium">{t("back")}</span>
               </button>
 
               {/* Crypto Header */}
@@ -838,7 +879,7 @@ export function AddFundsModal({
               {isLoadingAddress ? (
                 <div className="py-12 text-center">
                   <div className="animate-spin w-8 h-8 border-2 border-[#BFA181] border-t-transparent rounded-full mx-auto mb-4"></div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{t.generatingAddress}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{t("generatingAddress")}</p>
                 </div>
               ) : depositAddress ? (
                 <>
@@ -865,7 +906,7 @@ export function AddFundsModal({
                   {/* Deposit Address */}
                   <div className="mb-6">
                     <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-2">
-                      {t.depositAddress}
+                      {t("depositAddress")}
                     </label>
                     <button
                       onClick={() => copyToClipboard(depositAddress.address, "address")}
@@ -875,7 +916,7 @@ export function AddFundsModal({
                         {depositAddress.address}
                       </p>
                       <span className={`text-xs font-semibold ${copiedField === "address" ? "text-[#2F6F62]" : "text-[#BFA181]"}`}>
-                        {copiedField === "address" ? t.copied : t.copyAddress}
+                        {copiedField === "address" ? t("copied") : t("copyAddress")}
                       </span>
                     </button>
                   </div>
@@ -883,11 +924,11 @@ export function AddFundsModal({
                   {/* Details Grid */}
                   <div className="grid grid-cols-2 gap-3 mb-6">
                     <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 text-center">
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t.minAmount}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("minAmount")}</p>
                       <p className="text-sm font-bold text-slate-800 dark:text-white">{depositAddress.minDeposit}</p>
                     </div>
                     <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 text-center">
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t.settlementTime}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("settlementTime")}</p>
                       <p className="text-sm font-bold text-slate-800 dark:text-white">{depositAddress.confirmTime}</p>
                     </div>
                   </div>
@@ -896,11 +937,11 @@ export function AddFundsModal({
                   <div className="p-4 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/20 mb-4">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-lg text-[#BFA181]">◈</span>
-                      <span className="text-sm font-bold text-[#BFA181]">{t.settlementCredit}</span>
+                      <span className="text-sm font-bold text-[#BFA181]">{t("settlementCredit")}</span>
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">{t.fundsSettled}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">{t("fundsSettled")}</p>
                     <span className="px-3 py-1.5 rounded-lg bg-[#BFA181]/20 text-[#BFA181] text-xs font-semibold">
-                      {t.creditedAsAuxm}
+                      {t("creditedAsAuxm")}
                     </span>
                   </div>
 
@@ -909,7 +950,7 @@ export function AddFundsModal({
                     <svg className="w-5 h-5 text-[#2F6F62] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 italic">{t.custodyNote}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 italic">{t("custodyNote")}</p>
                   </div>
 
                   {/* Warning */}
@@ -919,9 +960,9 @@ export function AddFundsModal({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
                       <div>
-                        <p className="text-xs font-bold text-red-500 mb-1">{t.warningTitle}</p>
+                        <p className="text-xs font-bold text-red-500 mb-1">{t("warningTitle")}</p>
                         <p className="text-xs text-slate-600 dark:text-slate-400">
-                          {t.warningText.replace("{network}", depositAddress.network)}
+                          {t("warningText").replace("{network}", depositAddress.network)}
                         </p>
                       </div>
                     </div>
@@ -929,7 +970,7 @@ export function AddFundsModal({
                 </>
               ) : (
                 <div className="py-12 text-center text-red-500">
-                  Failed to generate address. Please try again.
+                  {t("failedToGenerate")}
                 </div>
               )}
             </div>

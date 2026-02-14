@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useLimitOrders, LimitOrder } from '@/hooks/useLimitOrders';
+import { useLanguage } from "@/components/LanguageContext";
 
 interface LimitOrdersListProps {
   address?: string;
@@ -138,12 +139,12 @@ export function LimitOrdersList({
   walletAddress,
   metal,
   compact = false,
-  lang = 'en',
+  lang: langProp,
   onOrderCancelled,
 }: LimitOrdersListProps) {
   // Support both address and walletAddress props
   const userAddress = address || walletAddress;
-  
+
   const { orders, loading, error, cancelOrder, refresh } = useLimitOrders({
     address: userAddress,
     metal,
@@ -152,7 +153,9 @@ export function LimitOrdersList({
 
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  const t = translations[lang] || translations.en;
+  const { lang: contextLang } = useLanguage();
+  const lang = langProp || contextLang || 'en';
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   const handleCancel = async (orderId: string) => {
     setCancellingId(orderId);
@@ -181,7 +184,7 @@ export function LimitOrdersList({
     const expires = new Date(expiresAt);
     const diff = expires.getTime() - now.getTime();
     
-    if (diff <= 0) return t.expired;
+    if (diff <= 0) return t("expired");
     
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -219,7 +222,7 @@ export function LimitOrdersList({
     return (
       <div className={`${compact ? 'p-2 sm:p-3' : 'p-3 sm:p-4'} text-center text-slate-500 dark:text-slate-400`}>
         <div className="animate-spin w-4 h-4 sm:w-5 sm:h-5 border-2 border-stone-300 dark:border-slate-600 border-t-[#BFA181] rounded-full mx-auto mb-2"></div>
-        <span className="text-xs sm:text-sm">{t.loading}</span>
+        <span className="text-xs sm:text-sm">{t("loading")}</span>
       </div>
     );
   }
@@ -228,7 +231,7 @@ export function LimitOrdersList({
     return (
       <div className={`${compact ? 'p-2 sm:p-3' : 'p-3 sm:p-4'} text-center text-slate-500 dark:text-slate-400`}>
         <div className="text-xl sm:text-2xl mb-2">📋</div>
-        <p className="text-xs sm:text-sm">{t.noOrders}</p>
+        <p className="text-xs sm:text-sm">{t("noOrders")}</p>
       </div>
     );
   }
@@ -238,13 +241,13 @@ export function LimitOrdersList({
     return (
       <div className="space-y-1.5 sm:space-y-2">
         <div className="flex items-center justify-between px-1">
-          <span className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">{t.title} ({orders.length})</span>
+          <span className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">{t("title")} ({orders.length})</span>
           <button
             onClick={refresh}
             disabled={loading}
             className="text-[10px] sm:text-xs text-[#2F6F62] dark:text-[#2F6F62] hover:text-[#2F6F62] dark:hover:text-[#BFA181]"
           >
-            {t.refresh}
+            {t("refresh")}
           </button>
         </div>
         
@@ -261,7 +264,7 @@ export function LimitOrdersList({
                     ? 'bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]' 
                     : 'bg-red-500/20 text-red-600 dark:text-red-400'
                 }`}>
-                  {order.type === 'buy' ? t.buy : t.sell}
+                  {order.type === 'buy' ? t("buy") : t("sell")}
                 </span>
                 <span className="text-slate-800 dark:text-white font-mono truncate">
                   {order.grams}g @ ${order.limitPrice}
@@ -286,13 +289,13 @@ export function LimitOrdersList({
   return (
     <div className="space-y-2 sm:space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300">{t.title}</h3>
+        <h3 className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300">{t("title")}</h3>
         <button
           onClick={refresh}
           disabled={loading}
           className="text-[10px] sm:text-xs text-[#2F6F62] dark:text-[#2F6F62] hover:text-[#2F6F62] dark:hover:text-[#BFA181] disabled:opacity-50"
         >
-          {loading ? '...' : t.refresh}
+          {loading ? '...' : t("refresh")}
         </button>
       </div>
 
@@ -314,7 +317,7 @@ export function LimitOrdersList({
                       ? 'bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]' 
                       : 'bg-red-500/20 text-red-600 dark:text-red-400'
                   }`}>
-                    {order.type === 'buy' ? t.buy : t.sell}
+                    {order.type === 'buy' ? t("buy") : t("sell")}
                   </span>
                   <span className="text-slate-800 dark:text-white font-medium text-sm sm:text-base">{order.metal}</span>
                 </div>
@@ -328,29 +331,29 @@ export function LimitOrdersList({
                       : 'bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/30'
                   }`}
                 >
-                  {cancellingId === order.id ? t.cancelling : t.cancel}
+                  {cancellingId === order.id ? t("cancelling") : t("cancel")}
                 </button>
               </div>
 
               {/* Grid - Responsive: stack on very small screens */}
               <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-xs sm:text-sm">
                 <div className="min-w-0">
-                  <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs block">{t.amount}</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs block">{t("amount")}</span>
                   <span className="text-slate-800 dark:text-white font-mono truncate block">{order.grams}g</span>
                 </div>
                 <div className="min-w-0">
-                  <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs block">{t.limitPrice}</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs block">{t("limitPrice")}</span>
                   <span className="text-slate-800 dark:text-white font-mono truncate block">${order.limitPrice.toFixed(2)}</span>
                 </div>
                 <div className="min-w-0">
-                  <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs block">{t.total}</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs block">{t("total")}</span>
                   <span className="text-slate-800 dark:text-white font-mono truncate block">${(order.grams * order.limitPrice).toFixed(2)}</span>
                 </div>
               </div>
 
               <div className="flex flex-col xs:flex-row xs:items-center justify-between mt-2 pt-2 border-t border-stone-200 dark:border-slate-700/50 text-[10px] sm:text-xs gap-1">
                 <span className="text-slate-500 dark:text-slate-400">
-                  {t.expires}: {getTimeRemaining(order.expiresAt)}
+                  {t("expires")}: {getTimeRemaining(order.expiresAt)}
                 </span>
                 <span className="text-slate-400 dark:text-slate-500 font-mono truncate">
                   {order.id.slice(0, 12)}...

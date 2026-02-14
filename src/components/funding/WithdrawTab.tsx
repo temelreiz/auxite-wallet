@@ -893,7 +893,6 @@ export function WithdrawTab() {
         isOpen={true}
         onClose={() => setShow2FA(false)}
         onVerified={handle2FAVerified}
-        lang={lang as any}
       />
     );
   }

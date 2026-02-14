@@ -297,7 +297,6 @@ export default function MarketsPage() {
         <AddFundsModal
           isOpen={showAddFunds}
           onClose={() => setShowAddFunds(false)}
-          lang={lang}
           walletAddress={address || ""}
           defaultTab={addFundsDefaultTab}
           bankOnly={addFundsDefaultTab === "bank"}

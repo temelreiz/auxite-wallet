@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 /**
  * PWA Install Banner
@@ -12,11 +13,7 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-interface Props {
-  lang?: "tr" | "en";
-}
-
-const t = {
+const translations = {
   tr: {
     title: "Uygulamayı Yükle",
     description: "Ana ekranınıza ekleyerek daha hızlı erişin",
@@ -31,15 +28,43 @@ const t = {
     notNow: "Not Now",
     iosInstructions: "Tap the share button in Safari and select 'Add to Home Screen'",
   },
+  de: {
+    title: "App installieren",
+    description: "Zum Startbildschirm hinzufugen fur schnellen Zugriff",
+    install: "Installieren",
+    notNow: "Nicht jetzt",
+    iosInstructions: "Tippen Sie in Safari auf die Teilen-Taste und wahlen Sie 'Zum Home-Bildschirm'",
+  },
+  fr: {
+    title: "Installer l'application",
+    description: "Ajouter a l'ecran d'accueil pour un acces rapide",
+    install: "Installer",
+    notNow: "Pas maintenant",
+    iosInstructions: "Appuyez sur le bouton de partage dans Safari et selectionnez 'Sur l'ecran d'accueil'",
+  },
+  ar: {
+    title: "تثبيت التطبيق",
+    description: "اضف الى الشاشة الرئيسية للوصول السريع",
+    install: "تثبيت",
+    notNow: "ليس الان",
+    iosInstructions: "اضغط على زر المشاركة في Safari واختر 'اضافة الى الشاشة الرئيسية'",
+  },
+  ru: {
+    title: "Установить приложение",
+    description: "Добавьте на главный экран для быстрого доступа",
+    install: "Установить",
+    notNow: "Не сейчас",
+    iosInstructions: "Нажмите кнопку 'Поделиться' в Safari и выберите 'На экран Домой'",
+  },
 };
 
-export function PWAInstallBanner({ lang = "tr" }: Props) {
+export function PWAInstallBanner() {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
-
-  const labels = t[lang];
 
   useEffect(() => {
     // iOS kontrolü
@@ -105,9 +130,9 @@ export function PWAInstallBanner({ lang = "tr" }: Props) {
               <span className="text-2xl">💎</span>
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-white">{labels.title}</h4>
+              <h4 className="font-semibold text-white">{t("title")}</h4>
               <p className="text-sm text-slate-400 mt-0.5">
-                {isIOS ? labels.iosInstructions : labels.description}
+                {isIOS ? t("iosInstructions") : t("description")}
               </p>
             </div>
             <button
@@ -126,13 +151,13 @@ export function PWAInstallBanner({ lang = "tr" }: Props) {
                 onClick={handleDismiss}
                 className="flex-1 py-2 text-sm text-slate-400 hover:text-slate-300 transition-colors"
               >
-                {labels.notNow}
+                {t("notNow")}
               </button>
               <button
                 onClick={handleInstall}
                 className="flex-1 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] text-white rounded-lg text-sm font-medium transition-colors"
               >
-                {labels.install}
+                {t("install")}
               </button>
             </div>
           )}

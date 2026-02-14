@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface CoinbaseDepositModalProps {
   isOpen: boolean;
@@ -149,19 +150,21 @@ export function CoinbaseDepositModal({
   isOpen,
   onClose,
   walletAddress,
-  lang = "tr",
+  lang: langProp,
   onSuccess,
 }: CoinbaseDepositModalProps) {
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const t = translations[lang] || translations.en;
+  const { lang: contextLang } = useLanguage();
+  const lang = langProp || contextLang || "en";
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const amountNum = parseFloat(amount) || 0;
 
   // Calculate bonus
   const getBonusPercent = (amt: number) => {
-    const tier = BONUS_TIERS.find((t) => amt >= t.min && amt <= t.max);
+    const tier = BONUS_TIERS.find((bt) => amt >= bt.min && amt <= bt.max);
     return tier?.percent || 0;
   };
 
@@ -171,7 +174,7 @@ export function CoinbaseDepositModal({
 
   const handleDeposit = async () => {
     if (amountNum < 10) {
-      setError(t.minDeposit);
+      setError(t("minDeposit"));
       return;
     }
 
@@ -200,7 +203,7 @@ export function CoinbaseDepositModal({
       }
     } catch (err: any) {
       console.error("Deposit error:", err);
-      setError(err.message || t.error);
+      setError(err.message || t("error"));
     } finally {
       setIsLoading(false);
     }
@@ -218,8 +221,8 @@ export function CoinbaseDepositModal({
               <span className="text-xl">💳</span>
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-white">{t.title}</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{t.subtitle}</p>
+              <h2 className="text-lg font-bold text-slate-800 dark:text-white">{t("title")}</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{t("subtitle")}</p>
             </div>
           </div>
           <button
@@ -235,7 +238,7 @@ export function CoinbaseDepositModal({
         <div className="p-4 space-y-4">
           {/* Supported Coins */}
           <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{t.supportedCoins}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{t("supportedCoins")}</p>
             <div className="flex gap-2 flex-wrap">
               {SUPPORTED_COINS.map((coin) => (
                 <div
@@ -254,7 +257,7 @@ export function CoinbaseDepositModal({
           {/* Amount Input */}
           <div>
             <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">
-              {t.amountLabel}
+              {t("amountLabel")}
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">$</span>
@@ -262,7 +265,7 @@ export function CoinbaseDepositModal({
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder={t.amountPlaceholder}
+                placeholder={t("amountPlaceholder")}
                 className="w-full pl-8 pr-4 py-3 rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-slate-800 dark:text-white text-lg font-mono focus:outline-none focus:border-blue-500"
               />
             </div>
@@ -270,7 +273,7 @@ export function CoinbaseDepositModal({
 
           {/* Quick Amounts */}
           <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{t.quickAmounts}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{t("quickAmounts")}</p>
             <div className="grid grid-cols-3 gap-2">
               {QUICK_AMOUNTS.map((amt) => (
                 <button
@@ -291,7 +294,7 @@ export function CoinbaseDepositModal({
           {/* Bonus Tiers Info */}
           <div className="bg-purple-50 dark:bg-purple-500/10 rounded-xl p-3 border border-purple-200 dark:border-purple-500/30">
             <p className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-2">
-              🎁 {t.bonusTiers}
+              🎁 {t("bonusTiers")}
             </p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
               {BONUS_TIERS.map((tier, i) => (
@@ -317,13 +320,13 @@ export function CoinbaseDepositModal({
           {amountNum >= 10 && (
             <div className="bg-stone-100 dark:bg-slate-800 rounded-xl p-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-slate-500 dark:text-slate-400">{t.youWillReceive}</span>
+                <span className="text-slate-500 dark:text-slate-400">{t("youWillReceive")}</span>
                 <span className="text-slate-700 dark:text-slate-300">{amountNum.toFixed(2)} AUXM</span>
               </div>
               {bonusPercent > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500 dark:text-slate-400">
-                    {t.bonus} (+{bonusPercent}%)
+                    {t("bonus")} (+{bonusPercent}%)
                   </span>
                   <span className="text-purple-600 dark:text-purple-400">
                     +{bonusAmount.toFixed(2)} AUXM
@@ -331,7 +334,7 @@ export function CoinbaseDepositModal({
                 </div>
               )}
               <div className="border-t border-stone-200 dark:border-slate-700 pt-2 flex justify-between">
-                <span className="font-semibold text-slate-800 dark:text-white">{t.total}</span>
+                <span className="font-semibold text-slate-800 dark:text-white">{t("total")}</span>
                 <span className="font-bold text-[#2F6F62] dark:text-[#2F6F62]">
                   {totalReceive.toFixed(2)} AUXM
                 </span>
@@ -351,7 +354,7 @@ export function CoinbaseDepositModal({
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>{t.redirectInfo}</span>
+            <span>{t("redirectInfo")}</span>
           </div>
 
           {/* Submit Button */}
@@ -366,11 +369,11 @@ export function CoinbaseDepositModal({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                <span>{t.processing}</span>
+                <span>{t("processing")}</span>
               </>
             ) : (
               <>
-                <span>{t.continue}</span>
+                <span>{t("continue")}</span>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -383,7 +386,7 @@ export function CoinbaseDepositModal({
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <span>{t.securePayment}</span>
+            <span>{t("securePayment")}</span>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/redis";
+import { getPhoneTiering } from "@/lib/phone-tiering";
 
 export const dynamic = "force-dynamic";
 
@@ -41,15 +42,65 @@ export async function GET(request: NextRequest) {
       authData = await redis.hgetall(`auth:user:${email.toLowerCase()}`) as Record<string, string> | null;
     }
 
+    // KYC verilerini al (identity bilgileri için)
+    let kycIdentity: Record<string, any> = {};
+    try {
+      const kycData = await redis.get(`kyc:${normalizedAddress}`);
+      if (kycData) {
+        const kyc = typeof kycData === 'string' ? JSON.parse(kycData) : kycData;
+        if (kyc.personalInfo) {
+          kycIdentity = {
+            firstName: kyc.personalInfo.firstName || '',
+            lastName: kyc.personalInfo.lastName || '',
+            dateOfBirth: kyc.personalInfo.dateOfBirth || '',
+            nationality: kyc.personalInfo.nationality || '',
+            verifiedAt: kyc.personalInfo.verifiedAt || null,
+            verificationSource: kyc.personalInfo.verificationSource || null,
+          };
+        }
+        kycIdentity.kycLevel = kyc.level || 'none';
+        kycIdentity.kycStatus = kyc.status || 'not_started';
+      }
+    } catch (_) {}
+
+    // Legal Name: KYC firstName+lastName > user hash name > auth name
+    const kycFullName = [kycIdentity.firstName, kycIdentity.lastName].filter(Boolean).join(' ').trim();
+    const fullName = kycFullName || userData?.name || authData?.name || '';
+
+    // Phone tiering data
+    let phoneTiering = { tier: 0, phoneVerified: false, communicationPreference: 'email' as string };
+    try {
+      const pt = await getPhoneTiering(normalizedAddress);
+      phoneTiering = {
+        tier: pt.tier,
+        phoneVerified: pt.phoneVerified,
+        communicationPreference: pt.communicationPreference,
+      };
+    } catch (_) {}
+
     return NextResponse.json({
       success: true,
       profile: {
-        name: authData?.name || userData?.name || "",
-        email: authData?.email || userData?.email || "",
-        phone: authData?.phone || userData?.phone || "",
-        country: userData?.country || "",
-        timezone: userData?.timezone || "Europe/Istanbul",
+        name: fullName,
+        firstName: kycIdentity.firstName || userData?.firstName || '',
+        lastName: kycIdentity.lastName || userData?.lastName || '',
+        email: authData?.email || userData?.email || '',
+        phone: authData?.phone || userData?.phone || '',
+        country: kycIdentity.nationality || userData?.country || '',
+        timezone: userData?.timezone || 'Europe/Istanbul',
         createdAt: authData?.createdAt || userData?.createdAt || null,
+        // KYC Identity fields
+        kycVerified: userData?.kycVerified === 'true' || authData?.kycVerified === 'true',
+        kycVerifiedAt: userData?.kycVerifiedAt || null,
+        kycLevel: kycIdentity.kycLevel || 'none',
+        kycStatus: kycIdentity.kycStatus || 'not_started',
+        dateOfBirth: kycIdentity.dateOfBirth || '',
+        nationality: kycIdentity.nationality || '',
+        verificationSource: kycIdentity.verificationSource || null,
+        // Phone tiering
+        phoneTier: phoneTiering.tier,
+        phoneVerified: phoneTiering.phoneVerified,
+        communicationPreference: phoneTiering.communicationPreference,
       },
       userId,
     });

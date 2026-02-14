@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { X, Smartphone, CheckCircle, XCircle, Loader2, RefreshCw } from 'lucide-react';
+import { useLanguage } from "@/components/LanguageContext";
 
 interface PairingSession {
   sessionId: string;
@@ -22,7 +23,6 @@ interface QRLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (walletAddress: string, authToken: string) => void;
-  lang?: 'tr' | 'en' | 'de' | 'fr' | 'ar' | 'ru';
 }
 
 const translations = {
@@ -130,8 +130,9 @@ const translations = {
   },
 };
 
-export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang = 'en' }: QRLoginModalProps) {
-  const t = translations[lang] || translations.en;
+export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress }: QRLoginModalProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   
   const [session, setSession] = useState<PairingSession | null>(null);
   const [status, setStatus] = useState<'loading' | 'pending' | 'verified' | 'success' | 'rejected' | 'expired'>('loading');
@@ -305,10 +306,10 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {t.title}
+                {t("title")}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {t.subtitle}
+                {t("subtitle")}
               </p>
             </div>
           </div>
@@ -332,27 +333,27 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
               <div className="w-64 h-64 flex flex-col items-center justify-center bg-[#2F6F62]/10 dark:bg-[#2F6F62]/20 rounded-2xl">
                 <CheckCircle className="w-16 h-16 text-[#2F6F62] mb-4" />
                 <p className="text-[#2F6F62] dark:text-[#2F6F62] font-medium">
-                  {t.success}
+                  {t("success")}
                 </p>
               </div>
             ) : status === 'rejected' ? (
               <div className="w-64 h-64 flex flex-col items-center justify-center bg-red-50 dark:bg-red-900/20 rounded-2xl">
                 <XCircle className="w-16 h-16 text-red-500 mb-4" />
                 <p className="text-red-600 dark:text-red-400 font-medium">
-                  {t.rejected}
+                  {t("rejected")}
                 </p>
               </div>
             ) : status === 'expired' ? (
               <div className="w-64 h-64 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-2xl">
                 <p className="text-slate-500 dark:text-slate-400 mb-4">
-                  {t.expired}
+                  {t("expired")}
                 </p>
                 <button
                   onClick={createSession}
                   className="flex items-center gap-2 px-4 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] text-white rounded-lg transition-colors"
                 >
                   <RefreshCw className="w-4 h-4" />
-                  {t.refresh}
+                  {t("refresh")}
                 </button>
               </div>
             ) : session?.qrData ? (
@@ -374,7 +375,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
                     <div className="text-center">
                       <Loader2 className="w-8 h-8 text-[#2F6F62] animate-spin mx-auto mb-2" />
                       <p className="text-sm text-slate-600 dark:text-slate-300">
-                        {t.verified}
+                        {t("verified")}
                       </p>
                     </div>
                   </div>
@@ -386,7 +387,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
             {session?.pairingCode && status === 'pending' && (
               <div className="mt-4 text-center">
                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-                  {t.orCode}
+                  {t("orCode")}
                 </p>
                 <div className="inline-flex items-center gap-1 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg font-mono text-lg tracking-widest text-slate-900 dark:text-white">
                   {session.pairingCode.split('').map((digit, i) => (
@@ -399,7 +400,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
             {/* Timer */}
             {timeLeft > 0 && status === 'pending' && (
               <div className="mt-3 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                <span>{t.expiresIn}</span>
+                <span>{t("expiresIn")}</span>
                 <span className="font-mono font-medium text-slate-700 dark:text-slate-200">
                   {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                 </span>
@@ -410,7 +411,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
             {status === 'pending' && (
               <div className="mt-4 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>{t.waiting}</span>
+                <span>{t("waiting")}</span>
               </div>
             )}
           </div>
@@ -418,7 +419,7 @@ export function QRLoginModal({ isOpen, onClose, onSuccess, walletAddress, lang =
           {/* Steps */}
           {(status === 'pending' || status === 'loading') && (
             <div className="mt-6 space-y-3">
-              {[t.step1, t.step2, t.step3].map((step, index) => (
+              {[t("step1"), t("step2"), t("step3")].map((step, index) => (
                 <div 
                   key={index}
                   className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300"

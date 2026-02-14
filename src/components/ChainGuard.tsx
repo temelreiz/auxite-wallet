@@ -3,8 +3,56 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useAccount, useSwitchChain } from "wagmi";
 import { APP_CHAIN } from "@/config/chains";
+import { useLanguage } from "@/components/LanguageContext";
+
+const translations = {
+  tr: {
+    wrongNetwork: "Yanlis Ag",
+    connectedTo: "Bagli oldugunuz ag:",
+    pleaseSwitch: "Devam etmek icin su aga gecin:",
+    switching: "Degistiriliyor...",
+    switchTo: "Gecis yap:",
+  },
+  en: {
+    wrongNetwork: "Wrong Network",
+    connectedTo: "Connected to",
+    pleaseSwitch: "Please switch to",
+    switching: "Switching...",
+    switchTo: "Switch to",
+  },
+  de: {
+    wrongNetwork: "Falsches Netzwerk",
+    connectedTo: "Verbunden mit",
+    pleaseSwitch: "Bitte wechseln Sie zu",
+    switching: "Wechseln...",
+    switchTo: "Wechseln zu",
+  },
+  fr: {
+    wrongNetwork: "Mauvais reseau",
+    connectedTo: "Connecte a",
+    pleaseSwitch: "Veuillez passer a",
+    switching: "Changement...",
+    switchTo: "Passer a",
+  },
+  ar: {
+    wrongNetwork: "شبكة خاطئة",
+    connectedTo: "متصل بـ",
+    pleaseSwitch: "يرجى التبديل الى",
+    switching: "جاري التبديل...",
+    switchTo: "التبديل الى",
+  },
+  ru: {
+    wrongNetwork: "Неверная сеть",
+    connectedTo: "Подключено к",
+    pleaseSwitch: "Пожалуйста, переключитесь на",
+    switching: "Переключение...",
+    switchTo: "Переключить на",
+  },
+};
 
 export function ChainGuard() {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const { isConnected } = useAccount();
   const { switchChain, isPending } = useSwitchChain();
   const [currentChainId, setCurrentChainId] = useState<number | null>(null);
@@ -81,10 +129,10 @@ export function ChainGuard() {
         <div className="rounded-xl border border-red-500/30 bg-red-900/90 px-4 py-3 text-sm backdrop-blur">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-white">
-              <div className="font-semibold text-red-200">⚠️ Wrong Network</div>
+              <div className="font-semibold text-red-200">⚠️ {t("wrongNetwork")}</div>
               <div className="opacity-90">
-                Connected to <b>{chainName}</b>. Please switch to{" "}
-                <b>{APP_CHAIN.name}</b> to continue.
+                {t("connectedTo")} <b>{chainName}</b>. {t("pleaseSwitch")}{" "}
+                <b>{APP_CHAIN.name}</b>.
               </div>
             </div>
 
@@ -93,7 +141,7 @@ export function ChainGuard() {
               disabled={isPending}
               className="inline-flex w-fit items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-white font-medium hover:bg-red-700 disabled:opacity-60 transition"
             >
-              {isPending ? "Switching..." : `Switch to ${APP_CHAIN.name}`}
+              {isPending ? t("switching") : `${t("switchTo")} ${APP_CHAIN.name}`}
             </button>
           </div>
         </div>

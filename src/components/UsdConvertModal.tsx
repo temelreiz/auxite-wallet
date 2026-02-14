@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
 import { useWallet } from "./WalletContext";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface UsdConvertModalProps {
   isOpen: boolean;
@@ -16,7 +17,7 @@ interface UsdConvertModalProps {
 // ============================================
 // 6-LANGUAGE TRANSLATIONS
 // ============================================
-const texts: Record<string, Record<string, string>> = {
+const translations: Record<string, Record<string, string>> = {
   tr: {
     title: "USD ↔ USDT Dönüştür",
     from: "Gönder",
@@ -106,10 +107,12 @@ const texts: Record<string, Record<string, string>> = {
 export function UsdConvertModal({
   isOpen,
   onClose,
-  lang,
+  lang: langProp,
   walletAddress,
   initialDirection = "usd-to-usdt",
 }: UsdConvertModalProps) {
+  const { lang: ctxLang } = useLanguage();
+  const lang = langProp || ctxLang || "en";
   const { balances, refreshBalances } = useWallet();
   const [direction, setDirection] = useState<"usd-to-usdt" | "usdt-to-usd">(initialDirection);
   const [amount, setAmount] = useState("");
@@ -140,7 +143,7 @@ export function UsdConvertModal({
   const fee = parsedAmount * 0.001; // %0.1 işlem ücreti
   const finalOutput = outputAmount - (outputAmount * 0.001);
 
-  const t = texts[lang] || texts.en;
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   // USDT fiyatını çek (gerçek API)
   useEffect(() => {
@@ -186,12 +189,12 @@ export function UsdConvertModal({
 
   const handleConvert = async () => {
     if (parsedAmount < 1) {
-      setError(t.minAmount);
+      setError(t("minAmount"));
       return;
     }
 
     if (parsedAmount > fromBalance) {
-      setError(t.insufficientBalance);
+      setError(t("insufficientBalance"));
       return;
     }
 
@@ -215,7 +218,7 @@ export function UsdConvertModal({
       const data = await response.json();
 
       if (data.success) {
-        setSuccess(t.success);
+        setSuccess(t("success"));
         setAmount("");
         if (refreshBalances) {
           await refreshBalances();
@@ -238,7 +241,7 @@ export function UsdConvertModal({
       <div className="bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-700 w-full max-w-[calc(100vw-24px)] sm:max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h3 className="text-lg sm:text-xl font-bold text-white">{t.title}</h3>
+          <h3 className="text-lg sm:text-xl font-bold text-white">{t("title")}</h3>
           <button
             onClick={onClose}
             className="p-2 hover:bg-slate-800 rounded-lg transition-colors touch-manipulation"
@@ -252,9 +255,9 @@ export function UsdConvertModal({
         {/* From Input */}
         <div className="mb-3">
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs sm:text-sm text-slate-400">{t.from}</label>
+            <label className="text-xs sm:text-sm text-slate-400">{t("from")}</label>
             <span className="text-[10px] sm:text-xs text-slate-500">
-              {t.available}: {fromBalance.toFixed(2)} {fromSymbol}
+              {t("available")}: {fromBalance.toFixed(2)} {fromSymbol}
             </span>
           </div>
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 sm:p-4">
@@ -288,7 +291,7 @@ export function UsdConvertModal({
           <button
             onClick={handleSwapDirection}
             className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all touch-manipulation"
-            title={t.swap}
+            title={t("swap")}
           >
             <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
@@ -298,7 +301,7 @@ export function UsdConvertModal({
 
         {/* To Output */}
         <div className="mb-4 sm:mb-5">
-          <label className="text-xs sm:text-sm text-slate-400 mb-2 block">{t.to}</label>
+          <label className="text-xs sm:text-sm text-slate-400 mb-2 block">{t("to")}</label>
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 sm:p-4">
             <div className="flex items-center justify-between gap-2">
               <span className="text-lg sm:text-xl text-white truncate">
@@ -317,11 +320,11 @@ export function UsdConvertModal({
         {/* Rate Info */}
         <div className="bg-slate-800/50 rounded-xl p-3 mb-4 sm:mb-5 space-y-2">
           <div className="flex justify-between text-xs sm:text-sm">
-            <span className="text-slate-400">{t.rate}</span>
+            <span className="text-slate-400">{t("rate")}</span>
             <span className="text-slate-300">1 USDT = ${usdtPrice.toFixed(4)} USD</span>
           </div>
           <div className="flex justify-between text-xs sm:text-sm">
-            <span className="text-slate-400">{t.fee}</span>
+            <span className="text-slate-400">{t("fee")}</span>
             <span className="text-yellow-400">0.1%</span>
           </div>
         </div>
@@ -348,7 +351,7 @@ export function UsdConvertModal({
               : "bg-[#2F6F62] hover:bg-[#2F6F62] active:bg-[#2F6F62]/80 text-white"
           }`}
         >
-          {isLoading ? t.processing : t.convert}
+          {isLoading ? t("processing") : t("convert")}
         </button>
       </div>
     </div>

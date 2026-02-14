@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 import { startRegistration, startAuthentication } from "@simplewebauthn/browser";
 
 interface BiometricSetupProps {
   walletAddress: string;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru" | "de" | "fr" | "ar" | "ru";
   onStatusChange?: () => void;
 }
 
@@ -18,11 +18,142 @@ interface Passkey {
   backedUp: boolean;
 }
 
-export function BiometricSetup({ 
-  walletAddress, 
-  lang = "en",
-  onStatusChange 
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    biometricAuth: "Biyometrik Doğrulama",
+    passkeyRegistered: "passkey kayıtlı",
+    noPasskeys: "Kayıtlı passkey yok",
+    waiting: "Bekleniyor...",
+    addPasskey: "+ Passkey Ekle",
+    registeredPasskeys: "Kayıtlı Passkey'ler",
+    test: "Test Et",
+    added: "Eklendi",
+    rename: "Yeniden Adlandır",
+    deleteLabel: "Sil",
+    whatIsPasskey: "Passkey Nedir?",
+    whatIsPasskeyDesc: "Passkey, parmak izi veya yüz tanıma gibi biyometrik yöntemlerle kimlik doğrulamanızı sağlar. Şifrelerden çok daha güvenlidir ve phishing saldırılarına karşı koruma sağlar.",
+    passkeyAdded: "Passkey başarıyla eklendi!",
+    operationCancelled: "İşlem iptal edildi",
+    errorOccurred: "Bir hata oluştu",
+    deleteConfirm: "Bu passkey silinsin mi?",
+    verificationSuccess: "Biyometrik doğrulama başarılı!",
+    notSupported: "Desteklenmiyor",
+    notSupportedDesc: "Bu cihaz biyometrik doğrulamayı desteklemiyor. Lütfen Touch ID veya Face ID destekleyen bir cihaz kullanın.",
+  },
+  en: {
+    biometricAuth: "Biometric Authentication",
+    passkeyRegistered: "passkey(s) registered",
+    noPasskeys: "No passkeys registered",
+    waiting: "Waiting...",
+    addPasskey: "+ Add Passkey",
+    registeredPasskeys: "Registered Passkeys",
+    test: "Test",
+    added: "Added",
+    rename: "Rename",
+    deleteLabel: "Delete",
+    whatIsPasskey: "What is a Passkey?",
+    whatIsPasskeyDesc: "Passkeys enable authentication using biometrics like fingerprint or face recognition. They're much more secure than passwords and protect against phishing attacks.",
+    passkeyAdded: "Passkey added successfully!",
+    operationCancelled: "Operation cancelled",
+    errorOccurred: "An error occurred",
+    deleteConfirm: "Delete this passkey?",
+    verificationSuccess: "Biometric verification successful!",
+    notSupported: "Not Supported",
+    notSupportedDesc: "This device doesn't support biometric authentication. Please use a device with Touch ID or Face ID.",
+  },
+  de: {
+    biometricAuth: "Biometrische Authentifizierung",
+    passkeyRegistered: "Passkey(s) registriert",
+    noPasskeys: "Keine Passkeys registriert",
+    waiting: "Warten...",
+    addPasskey: "+ Passkey hinzufügen",
+    registeredPasskeys: "Registrierte Passkeys",
+    test: "Testen",
+    added: "Hinzugefügt",
+    rename: "Umbenennen",
+    deleteLabel: "Löschen",
+    whatIsPasskey: "Was ist ein Passkey?",
+    whatIsPasskeyDesc: "Passkeys ermöglichen die Authentifizierung mit Biometrie wie Fingerabdruck oder Gesichtserkennung. Sie sind viel sicherer als Passwörter und schützen vor Phishing-Angriffen.",
+    passkeyAdded: "Passkey erfolgreich hinzugefügt!",
+    operationCancelled: "Vorgang abgebrochen",
+    errorOccurred: "Ein Fehler ist aufgetreten",
+    deleteConfirm: "Diesen Passkey löschen?",
+    verificationSuccess: "Biometrische Verifizierung erfolgreich!",
+    notSupported: "Nicht unterstützt",
+    notSupportedDesc: "Dieses Gerät unterstützt keine biometrische Authentifizierung. Bitte verwenden Sie ein Gerät mit Touch ID oder Face ID.",
+  },
+  fr: {
+    biometricAuth: "Authentification biométrique",
+    passkeyRegistered: "passkey(s) enregistré(s)",
+    noPasskeys: "Aucun passkey enregistré",
+    waiting: "En attente...",
+    addPasskey: "+ Ajouter un Passkey",
+    registeredPasskeys: "Passkeys enregistrés",
+    test: "Tester",
+    added: "Ajouté",
+    rename: "Renommer",
+    deleteLabel: "Supprimer",
+    whatIsPasskey: "Qu'est-ce qu'un Passkey ?",
+    whatIsPasskeyDesc: "Les passkeys permettent l'authentification par biométrie comme l'empreinte digitale ou la reconnaissance faciale. Ils sont beaucoup plus sûrs que les mots de passe et protègent contre les attaques de phishing.",
+    passkeyAdded: "Passkey ajouté avec succès !",
+    operationCancelled: "Opération annulée",
+    errorOccurred: "Une erreur est survenue",
+    deleteConfirm: "Supprimer ce passkey ?",
+    verificationSuccess: "Vérification biométrique réussie !",
+    notSupported: "Non pris en charge",
+    notSupportedDesc: "Cet appareil ne prend pas en charge l'authentification biométrique. Veuillez utiliser un appareil avec Touch ID ou Face ID.",
+  },
+  ar: {
+    biometricAuth: "المصادقة البيومترية",
+    passkeyRegistered: "مفتاح مرور مسجّل",
+    noPasskeys: "لا توجد مفاتيح مرور مسجّلة",
+    waiting: "في الانتظار...",
+    addPasskey: "+ إضافة مفتاح مرور",
+    registeredPasskeys: "مفاتيح المرور المسجّلة",
+    test: "اختبار",
+    added: "أُضيف",
+    rename: "إعادة تسمية",
+    deleteLabel: "حذف",
+    whatIsPasskey: "ما هو مفتاح المرور؟",
+    whatIsPasskeyDesc: "تتيح مفاتيح المرور المصادقة باستخدام البيومتري مثل بصمة الإصبع أو التعرف على الوجه. إنها أكثر أماناً من كلمات المرور وتحمي من هجمات التصيد.",
+    passkeyAdded: "تمت إضافة مفتاح المرور بنجاح!",
+    operationCancelled: "تم إلغاء العملية",
+    errorOccurred: "حدث خطأ",
+    deleteConfirm: "هل تريد حذف مفتاح المرور هذا؟",
+    verificationSuccess: "تم التحقق البيومتري بنجاح!",
+    notSupported: "غير مدعوم",
+    notSupportedDesc: "هذا الجهاز لا يدعم المصادقة البيومترية. يرجى استخدام جهاز يدعم Touch ID أو Face ID.",
+  },
+  ru: {
+    biometricAuth: "Биометрическая аутентификация",
+    passkeyRegistered: "ключ(и) зарегистрировано",
+    noPasskeys: "Нет зарегистрированных ключей",
+    waiting: "Ожидание...",
+    addPasskey: "+ Добавить Passkey",
+    registeredPasskeys: "Зарегистрированные Passkeys",
+    test: "Тест",
+    added: "Добавлен",
+    rename: "Переименовать",
+    deleteLabel: "Удалить",
+    whatIsPasskey: "Что такое Passkey?",
+    whatIsPasskeyDesc: "Passkeys обеспечивают аутентификацию с помощью биометрии, такой как отпечаток пальца или распознавание лица. Они намного безопаснее паролей и защищают от фишинговых атак.",
+    passkeyAdded: "Passkey успешно добавлен!",
+    operationCancelled: "Операция отменена",
+    errorOccurred: "Произошла ошибка",
+    deleteConfirm: "Удалить этот passkey?",
+    verificationSuccess: "Биометрическая проверка успешна!",
+    notSupported: "Не поддерживается",
+    notSupportedDesc: "Это устройство не поддерживает биометрическую аутентификацию. Пожалуйста, используйте устройство с Touch ID или Face ID.",
+  },
+};
+
+export function BiometricSetup({
+  walletAddress,
+  onStatusChange
 }: BiometricSetupProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
+
   const [passkeys, setPasskeys] = useState<Passkey[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -94,7 +225,7 @@ export function BiometricSetup({
           "Content-Type": "application/json",
           "x-wallet-address": walletAddress,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           action: "register-verify",
           response: credential,
           name: `Passkey ${passkeys.length + 1}`,
@@ -104,14 +235,14 @@ export function BiometricSetup({
       const verifyData = await verifyRes.json();
       if (!verifyRes.ok) throw new Error(verifyData.error);
 
-      setSuccess(lang === "tr" ? "Passkey başarıyla eklendi!" : "Passkey added successfully!");
+      setSuccess(t("passkeyAdded"));
       fetchPasskeys();
       onStatusChange?.();
     } catch (err: any) {
       if (err.name === "NotAllowedError") {
-        setError(lang === "tr" ? "İşlem iptal edildi" : "Operation cancelled");
+        setError(t("operationCancelled"));
       } else {
-        setError(err.message || (lang === "tr" ? "Bir hata oluştu" : "An error occurred"));
+        setError(err.message || t("errorOccurred"));
       }
     } finally {
       setProcessing(false);
@@ -119,7 +250,7 @@ export function BiometricSetup({
   };
 
   const deletePasskey = async (id: string) => {
-    if (!confirm(lang === "tr" ? "Bu passkey silinsin mi?" : "Delete this passkey?")) {
+    if (!confirm(t("deleteConfirm"))) {
       return;
     }
 
@@ -154,7 +285,7 @@ export function BiometricSetup({
           "Content-Type": "application/json",
           "x-wallet-address": walletAddress,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           action: "rename",
           passkeyId: id,
           newName: editName.trim(),
@@ -202,7 +333,7 @@ export function BiometricSetup({
           "Content-Type": "application/json",
           "x-wallet-address": walletAddress,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           action: "auth-verify",
           response: credential,
         }),
@@ -211,10 +342,10 @@ export function BiometricSetup({
       const verifyData = await verifyRes.json();
       if (!verifyRes.ok) throw new Error(verifyData.error);
 
-      setSuccess(lang === "tr" ? "Biyometrik doğrulama başarılı!" : "Biometric verification successful!");
+      setSuccess(t("verificationSuccess"));
     } catch (err: any) {
       if (err.name === "NotAllowedError") {
-        setError(lang === "tr" ? "İşlem iptal edildi" : "Operation cancelled");
+        setError(t("operationCancelled"));
       } else {
         setError(err.message);
       }
@@ -236,12 +367,10 @@ export function BiometricSetup({
       <div className="bg-[#BFA181]/10 border border-[#BFA181]/20 rounded-xl p-6 text-center">
         <span className="text-4xl mb-4 block">🚫</span>
         <h3 className="text-lg font-semibold text-[#BFA181] mb-2">
-          {lang === "tr" ? "Desteklenmiyor" : "Not Supported"}
+          {t("notSupported")}
         </h3>
         <p className="text-sm text-slate-400">
-          {lang === "tr" 
-            ? "Bu cihaz biyometrik doğrulamayı desteklemiyor. Lütfen Touch ID veya Face ID destekleyen bir cihaz kullanın."
-            : "This device doesn't support biometric authentication. Please use a device with Touch ID or Face ID."}
+          {t("notSupportedDesc")}
         </p>
       </div>
     );
@@ -260,24 +389,22 @@ export function BiometricSetup({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white">
-                {lang === "tr" ? "Biyometrik Doğrulama" : "Biometric Authentication"}
+                {t("biometricAuth")}
               </h3>
               <p className={`text-sm ${passkeys.length > 0 ? "text-[#2F6F62]" : "text-slate-400"}`}>
                 {passkeys.length > 0
-                  ? `${passkeys.length} ${lang === "tr" ? "passkey kayıtlı" : "passkey(s) registered"}`
-                  : (lang === "tr" ? "Kayıtlı passkey yok" : "No passkeys registered")}
+                  ? `${passkeys.length} ${t("passkeyRegistered")}`
+                  : t("noPasskeys")}
               </p>
             </div>
           </div>
-          
+
           <button
             onClick={registerPasskey}
             disabled={processing}
             className="px-4 py-2 rounded-lg bg-[#2F6F62] text-white hover:bg-[#2F6F62] transition-colors text-sm font-medium disabled:opacity-50"
           >
-            {processing 
-              ? (lang === "tr" ? "Bekleniyor..." : "Waiting...")
-              : (lang === "tr" ? "+ Passkey Ekle" : "+ Add Passkey")}
+            {processing ? t("waiting") : t("addPasskey")}
           </button>
         </div>
       </div>
@@ -299,19 +426,19 @@ export function BiometricSetup({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium text-slate-400">
-              {lang === "tr" ? "Kayıtlı Passkey'ler" : "Registered Passkeys"}
+              {t("registeredPasskeys")}
             </h4>
             <button
               onClick={testPasskey}
               disabled={processing}
               className="text-xs text-blue-400 hover:text-blue-300"
             >
-              {lang === "tr" ? "Test Et" : "Test"}
+              {t("test")}
             </button>
           </div>
 
           {passkeys.map((passkey) => (
-            <div 
+            <div
               key={passkey.id}
               className="bg-slate-800/50 rounded-xl p-4 border border-slate-700"
             >
@@ -348,7 +475,7 @@ export function BiometricSetup({
                     )}
                     <div className="flex items-center gap-2 text-xs text-slate-500">
                       <span>
-                        {lang === "tr" ? "Eklendi" : "Added"}: {new Date(passkey.createdAt).toLocaleDateString()}
+                        {t("added")}: {new Date(passkey.createdAt).toLocaleDateString()}
                       </span>
                       {passkey.backedUp && (
                         <span className="text-[#2F6F62]">• Synced</span>
@@ -364,7 +491,7 @@ export function BiometricSetup({
                       setEditName(passkey.name);
                     }}
                     className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-                    title={lang === "tr" ? "Yeniden Adlandır" : "Rename"}
+                    title={t("rename")}
                   >
                     <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -373,7 +500,7 @@ export function BiometricSetup({
                   <button
                     onClick={() => deletePasskey(passkey.id)}
                     className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-                    title={lang === "tr" ? "Sil" : "Delete"}
+                    title={t("deleteLabel")}
                   >
                     <svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -392,12 +519,10 @@ export function BiometricSetup({
           <span className="text-blue-400">ℹ️</span>
           <div>
             <p className="text-sm text-blue-400 font-medium mb-1">
-              {lang === "tr" ? "Passkey Nedir?" : "What is a Passkey?"}
+              {t("whatIsPasskey")}
             </p>
             <p className="text-xs text-slate-400">
-              {lang === "tr" 
-                ? "Passkey, parmak izi veya yüz tanıma gibi biyometrik yöntemlerle kimlik doğrulamanızı sağlar. Şifrelerden çok daha güvenlidir ve phishing saldırılarına karşı koruma sağlar."
-                : "Passkeys enable authentication using biometrics like fingerprint or face recognition. They're much more secure than passwords and protect against phishing attacks."}
+              {t("whatIsPasskeyDesc")}
             </p>
           </div>
         </div>

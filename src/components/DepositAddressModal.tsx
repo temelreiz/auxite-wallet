@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useWallet } from "@/components/WalletContext";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface DepositAddressModalProps {
   isOpen: boolean;
   onClose: () => void;
   coin: string;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
 // ============================================
@@ -43,6 +43,9 @@ const translations: Record<string, Record<string, string>> = {
     autoClose: "saniye sonra otomatik kapanacak",
     viewWallet: "Cüzdanı Görüntüle",
     destinationTag: "Destination Tag",
+    generatingAddress: "Adres oluşturuluyor...",
+    bonusRates: "AUXM Bonus Oranları",
+    onlySendWarning: "Bu adrese sadece {coin} gönderin. Bakiyeniz otomatik güncellenecektir.",
   },
   en: {
     deposit: "Deposit",
@@ -71,6 +74,9 @@ const translations: Record<string, Record<string, string>> = {
     autoClose: "seconds until auto-close",
     viewWallet: "View Wallet",
     destinationTag: "Destination Tag",
+    generatingAddress: "Generating address...",
+    bonusRates: "AUXM Bonus Rates",
+    onlySendWarning: "Only send {coin} to this address. Your balance will update automatically.",
   },
   de: {
     deposit: "Einzahlung",
@@ -99,6 +105,9 @@ const translations: Record<string, Record<string, string>> = {
     autoClose: "Sekunden bis zum automatischen Schließen",
     viewWallet: "Wallet Anzeigen",
     destinationTag: "Destination Tag",
+    generatingAddress: "Adresse wird generiert...",
+    bonusRates: "AUXM Bonus-Raten",
+    onlySendWarning: "Senden Sie nur {coin} an diese Adresse. Ihr Guthaben wird automatisch aktualisiert.",
   },
   fr: {
     deposit: "Dépôt",
@@ -127,6 +136,9 @@ const translations: Record<string, Record<string, string>> = {
     autoClose: "secondes avant fermeture automatique",
     viewWallet: "Voir le Portefeuille",
     destinationTag: "Destination Tag",
+    generatingAddress: "Génération de l'adresse...",
+    bonusRates: "Taux de Bonus AUXM",
+    onlySendWarning: "Envoyez uniquement {coin} à cette adresse. Votre solde sera mis à jour automatiquement.",
   },
   ar: {
     deposit: "إيداع",
@@ -155,6 +167,9 @@ const translations: Record<string, Record<string, string>> = {
     autoClose: "ثانية حتى الإغلاق التلقائي",
     viewWallet: "عرض المحفظة",
     destinationTag: "علامة الوجهة",
+    generatingAddress: "جاري إنشاء العنوان...",
+    bonusRates: "معدلات مكافأة AUXM",
+    onlySendWarning: "أرسل فقط {coin} إلى هذا العنوان. سيتم تحديث رصيدك تلقائياً.",
   },
   ru: {
     deposit: "Депозит",
@@ -183,6 +198,9 @@ const translations: Record<string, Record<string, string>> = {
     autoClose: "секунд до автоматического закрытия",
     viewWallet: "Просмотр Кошелька",
     destinationTag: "Тег Назначения",
+    generatingAddress: "Генерация адреса...",
+    bonusRates: "Бонусные ставки AUXM",
+    onlySendWarning: "Отправляйте только {coin} на этот адрес. Ваш баланс обновится автоматически.",
   },
 };
 
@@ -237,7 +255,7 @@ const COIN_METADATA: Record<string, {
   },
 };
 
-export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: DepositAddressModalProps) {
+export function DepositAddressModal({ isOpen, onClose, coin }: DepositAddressModalProps) {
   const { address, refreshBalances, isConnected } = useWallet();
   const { prices: cryptoPrices } = useCryptoPrices();
   
@@ -251,7 +269,8 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
 
-  const t = translations[lang] || translations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const coinMeta = COIN_METADATA[coin];
 
   // Fetch deposit address from NowPayments when modal opens
@@ -362,7 +381,7 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
-                {coin} {t.deposit}
+                {coin} {t("deposit")}
               </h2>
               <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{coinMeta.network}</p>
             </div>
@@ -382,7 +401,7 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
             <div className="flex flex-col items-center justify-center py-8">
               <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4"></div>
               <p className="text-slate-600 dark:text-slate-400 text-sm">
-                {lang === "tr" ? "Adres oluşturuluyor..." : "Generating address..."}
+                {t("generatingAddress")}
               </p>
             </div>
           )}
@@ -398,7 +417,7 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
                 onClick={fetchDepositAddress}
                 className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium"
               >
-                {lang === "tr" ? "Tekrar Dene" : "Try Again"}
+                {t("tryAgain")}
               </button>
             </div>
           )}
@@ -428,13 +447,13 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
               <div className="bg-stone-100 dark:bg-slate-800 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
                 <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                   <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-medium">
-                    {t.address}
+                    {t("address")}
                   </span>
                   <button
                     onClick={() => copyToClipboard(depositAddress, "address")}
                     className={`text-[10px] sm:text-xs font-medium ${copied ? "text-[#2F6F62]" : "text-[#2F6F62] dark:text-[#2F6F62] hover:text-[#2F6F62] dark:hover:text-[#2F6F62]"}`}
                   >
-                    {copied ? `✓ ${t.copied}` : t.copy}
+                    {copied ? `✓ ${t("copied")}` : t("copy")}
                   </button>
                 </div>
                 <p className="text-slate-800 dark:text-white font-mono text-[10px] sm:text-xs break-all select-all leading-relaxed">
@@ -446,12 +465,12 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
               {extraId && (
                 <div className="bg-[#BFA181]/10 dark:bg-[#BFA181]/10 border border-[#BFA181]/30 dark:border-[#BFA181]/30 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
                   <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                    <span className="text-[#BFA181] dark:text-[#BFA181] text-[10px] sm:text-xs font-medium">⚠️ {t.destinationTag}</span>
+                    <span className="text-[#BFA181] dark:text-[#BFA181] text-[10px] sm:text-xs font-medium">⚠️ {t("destinationTag")}</span>
                     <button
                       onClick={() => copyToClipboard(extraId, "memo")}
                       className={`text-[10px] sm:text-xs font-medium ${copiedMemo ? "text-[#BFA181]" : "text-[#BFA181] dark:text-[#BFA181]"}`}
                     >
-                      {copiedMemo ? "✓" : t.copy}
+                      {copiedMemo ? "✓" : t("copy")}
                     </button>
                   </div>
                   <p className="text-slate-800 dark:text-white font-mono text-base sm:text-lg font-bold">{extraId}</p>
@@ -461,7 +480,7 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
               {/* Bonus Info */}
               <div className="bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 border border-[#2F6F62]/30 dark:border-[#2F6F62]/30 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-2.5 sm:mb-3">
                 <p className="text-[#2F6F62] dark:text-[#2F6F62] text-xs font-medium mb-2">
-                  🎁 {lang === "tr" ? "AUXM Bonus Oranları" : "AUXM Bonus Rates"}
+                  🎁 {t("bonusRates")}
                 </p>
                 <div className="grid grid-cols-2 gap-1 text-[10px]">
                   <span className="text-slate-600 dark:text-slate-400">$10-99:</span>
@@ -480,15 +499,15 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
               {/* Deposit Info */}
               <div className="bg-stone-50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-3 sm:mb-4 text-[10px] sm:text-xs">
                 <div className="flex justify-between mb-0.5 sm:mb-1">
-                  <span className="text-slate-500 dark:text-slate-400">{t.minDeposit}</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t("minDeposit")}</span>
                   <span className="text-slate-700 dark:text-slate-300">{coinMeta.minDeposit}</span>
                 </div>
                 <div className="flex justify-between mb-0.5 sm:mb-1">
-                  <span className="text-slate-500 dark:text-slate-400">{t.confirmTime}</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t("confirmTime")}</span>
                   <span className="text-slate-700 dark:text-slate-300">{coinMeta.confirmTime}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">{t.price}</span>
+                  <span className="text-slate-500 dark:text-slate-400">{t("price")}</span>
                   <span className="text-slate-700 dark:text-slate-300">${getCryptoPrice().toLocaleString()}</span>
                 </div>
               </div>
@@ -496,9 +515,7 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
               {/* Important Notice */}
               <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg p-2.5 mb-3">
                 <p className="text-blue-700 dark:text-blue-400 text-[10px] sm:text-xs">
-                  ℹ️ {lang === "tr" 
-                    ? "Bu adrese sadece " + coin + " gönderin. Bakiyeniz otomatik güncellenecektir."
-                    : "Only send " + coin + " to this address. Your balance will update automatically."}
+                  ℹ️ {t("onlySendWarning").replace("{coin}", coin)}
                 </p>
               </div>
             </>
@@ -509,7 +526,7 @@ export function DepositAddressModal({ isOpen, onClose, coin, lang = "en" }: Depo
             onClick={onClose}
             className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-semibold text-sm sm:text-base transition-colors border border-stone-300 dark:border-slate-700"
           >
-            {t.close}
+            {t("close")}
           </button>
         </div>
       </div>

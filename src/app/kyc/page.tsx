@@ -3,14 +3,95 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 // Sumsub KYC Page - Standalone page for mobile WebBrowser
 // This page loads Sumsub SDK directly with token from URL params
+
+// ============================================
+// TRANSLATIONS
+// ============================================
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    missingToken: "Erişim jetonu eksik",
+    invalidRequest: "Geçersiz İstek",
+    missingTokenDesc: "Erişim jetonu eksik. Lütfen uygulamadan tekrar deneyin.",
+    identityVerification: "Kimlik Doğrulama",
+    secureVerification: "Sumsub tarafından desteklenen güvenli doğrulama",
+    loadingVerification: "Doğrulama yükleniyor...",
+    gdprCompliant: "KVKK Uyumlu",
+    poweredByAuxite: "Auxite tarafından desteklenmektedir",
+    failedInit: "Doğrulama başlatılamadı",
+    verificationError: "Doğrulama hatası",
+  },
+  en: {
+    missingToken: "Missing access token",
+    invalidRequest: "Invalid Request",
+    missingTokenDesc: "Missing access token. Please try again from the app.",
+    identityVerification: "Identity Verification",
+    secureVerification: "Secure verification powered by Sumsub",
+    loadingVerification: "Loading verification...",
+    gdprCompliant: "GDPR Compliant",
+    poweredByAuxite: "Powered by Auxite",
+    failedInit: "Failed to initialize verification",
+    verificationError: "Verification error",
+  },
+  de: {
+    missingToken: "Zugriffstoken fehlt",
+    invalidRequest: "Ungültige Anfrage",
+    missingTokenDesc: "Zugriffstoken fehlt. Bitte versuchen Sie es erneut über die App.",
+    identityVerification: "Identitätsprüfung",
+    secureVerification: "Sichere Verifizierung powered by Sumsub",
+    loadingVerification: "Verifizierung wird geladen...",
+    gdprCompliant: "DSGVO-konform",
+    poweredByAuxite: "Bereitgestellt von Auxite",
+    failedInit: "Verifizierung konnte nicht initialisiert werden",
+    verificationError: "Verifizierungsfehler",
+  },
+  fr: {
+    missingToken: "Jeton d'accès manquant",
+    invalidRequest: "Requête invalide",
+    missingTokenDesc: "Jeton d'accès manquant. Veuillez réessayer depuis l'application.",
+    identityVerification: "Vérification d'identité",
+    secureVerification: "Vérification sécurisée propulsée par Sumsub",
+    loadingVerification: "Chargement de la vérification...",
+    gdprCompliant: "Conforme au RGPD",
+    poweredByAuxite: "Propulsé par Auxite",
+    failedInit: "Échec de l'initialisation de la vérification",
+    verificationError: "Erreur de vérification",
+  },
+  ar: {
+    missingToken: "رمز الوصول مفقود",
+    invalidRequest: "طلب غير صالح",
+    missingTokenDesc: "رمز الوصول مفقود. يرجى المحاولة مرة أخرى من التطبيق.",
+    identityVerification: "التحقق من الهوية",
+    secureVerification: "تحقق آمن مدعوم من Sumsub",
+    loadingVerification: "جاري تحميل التحقق...",
+    gdprCompliant: "متوافق مع GDPR",
+    poweredByAuxite: "مدعوم من Auxite",
+    failedInit: "فشل في بدء التحقق",
+    verificationError: "خطأ في التحقق",
+  },
+  ru: {
+    missingToken: "Отсутствует токен доступа",
+    invalidRequest: "Недействительный запрос",
+    missingTokenDesc: "Отсутствует токен доступа. Пожалуйста, попробуйте снова из приложения.",
+    identityVerification: "Проверка личности",
+    secureVerification: "Безопасная верификация от Sumsub",
+    loadingVerification: "Загрузка верификации...",
+    gdprCompliant: "Соответствие GDPR",
+    poweredByAuxite: "На платформе Auxite",
+    failedInit: "Не удалось инициализировать верификацию",
+    verificationError: "Ошибка верификации",
+  },
+};
 
 function KYCContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const wallet = searchParams.get("wallet");
+  const { lang } = useLanguage();
+  const t = translations[lang] || translations.en;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +100,7 @@ function KYCContent() {
 
   useEffect(() => {
     if (!token) {
-      setError("Missing access token");
+      setError(t.missingToken);
       setLoading(false);
       return;
     }
@@ -61,7 +142,7 @@ function KYCContent() {
           })
           .withConf({
             theme: "dark",
-            lang: navigator.language.startsWith("tr") ? "tr" : "en",
+            lang: lang,
           })
           .withOptions({
             addViewportTag: false,
@@ -72,7 +153,7 @@ function KYCContent() {
           })
           .on("idCheck.onError", (error: any) => {
             console.error("SDK error:", error);
-            setError(error.message || "Verification error");
+            setError(error.message || t.verificationError);
           })
           .on("idCheck.applicantStatus", (payload: any) => {
             console.log("Applicant status:", payload);
@@ -97,7 +178,7 @@ function KYCContent() {
         setLoading(false);
       } catch (err: any) {
         console.error("SDK init error:", err);
-        setError(err.message || "Failed to initialize verification");
+        setError(err.message || t.failedInit);
         setLoading(false);
       }
     };
@@ -113,7 +194,7 @@ function KYCContent() {
         }
       }
     };
-  }, [token, wallet]);
+  }, [token, wallet, lang]);
 
   if (!token) {
     return (
@@ -124,8 +205,8 @@ function KYCContent() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-white mb-2">Invalid Request</h1>
-          <p className="text-slate-400">Missing access token. Please try again from the app.</p>
+          <h1 className="text-xl font-bold text-white mb-2">{t.invalidRequest}</h1>
+          <p className="text-slate-400">{t.missingTokenDesc}</p>
         </div>
       </div>
     );
@@ -137,8 +218,8 @@ function KYCContent() {
       <div className="bg-slate-900 border-b border-slate-800 px-4 py-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold text-white">Identity Verification</h1>
-            <p className="text-xs text-slate-400">Secure verification powered by Sumsub</p>
+            <h1 className="text-lg font-semibold text-white">{t.identityVerification}</h1>
+            <p className="text-xs text-slate-400">{t.secureVerification}</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#2F6F62]/20 rounded-full">
@@ -157,7 +238,7 @@ function KYCContent() {
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <div className="animate-spin w-10 h-10 border-2 border-slate-600 border-t-[#BFA181] rounded-full mx-auto mb-4"></div>
-              <p className="text-slate-400">Loading verification...</p>
+              <p className="text-slate-400">{t.loadingVerification}</p>
             </div>
           </div>
         )}
@@ -188,10 +269,10 @@ function KYCContent() {
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
-            GDPR Compliant
+            {t.gdprCompliant}
           </span>
           <span>•</span>
-          <span>Powered by Auxite</span>
+          <span>{t.poweredByAuxite}</span>
         </div>
       </div>
     </div>

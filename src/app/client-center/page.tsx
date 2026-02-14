@@ -928,7 +928,6 @@ export default function ClientCenterPage() {
       {showKycModal && address && (
         <KYCVerification
           walletAddress={address}
-          lang={lang === "tr" ? "tr" : "en"}
           onClose={handleKycClose}
         />
       )}

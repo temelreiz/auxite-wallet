@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface PriceAlert {
   id: string;
@@ -17,7 +18,6 @@ interface PriceAlert {
 
 interface PriceAlertsPanelProps {
   walletAddress: string;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   currentPrices?: Record<string, number>;
 }
 
@@ -69,6 +69,8 @@ const translations: Record<string, Record<string, string>> = {
     ethereum: "Ethereum",
     ripple: "Ripple",
     solana: "Solana",
+    failedCreate: "Alarm oluşturulamadı",
+    errorGeneric: "Hata",
   },
   en: {
     title: "Price Alerts",
@@ -104,6 +106,8 @@ const translations: Record<string, Record<string, string>> = {
     ethereum: "Ethereum",
     ripple: "Ripple",
     solana: "Solana",
+    failedCreate: "Failed to create alert",
+    errorGeneric: "Error",
   },
   de: {
     title: "Preisalarme",
@@ -139,6 +143,8 @@ const translations: Record<string, Record<string, string>> = {
     ethereum: "Ethereum",
     ripple: "Ripple",
     solana: "Solana",
+    failedCreate: "Alarm konnte nicht erstellt werden",
+    errorGeneric: "Fehler",
   },
   fr: {
     title: "Alertes de Prix",
@@ -174,6 +180,8 @@ const translations: Record<string, Record<string, string>> = {
     ethereum: "Ethereum",
     ripple: "Ripple",
     solana: "Solana",
+    failedCreate: "Impossible de créer l'alerte",
+    errorGeneric: "Erreur",
   },
   ar: {
     title: "تنبيهات الأسعار",
@@ -209,6 +217,8 @@ const translations: Record<string, Record<string, string>> = {
     ethereum: "إيثريوم",
     ripple: "ريبل",
     solana: "سولانا",
+    failedCreate: "فشل إنشاء التنبيه",
+    errorGeneric: "خطأ",
   },
   ru: {
     title: "Ценовые Оповещения",
@@ -244,10 +254,12 @@ const translations: Record<string, Record<string, string>> = {
     ethereum: "Эфириум",
     ripple: "Рипл",
     solana: "Солана",
+    failedCreate: "Не удалось создать оповещение",
+    errorGeneric: "Ошибка",
   },
 };
 
-export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {} }: PriceAlertsPanelProps) {
+export function PriceAlertsPanel({ walletAddress, currentPrices = {} }: PriceAlertsPanelProps) {
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -261,7 +273,8 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
   const [repeat, setRepeat] = useState(false);
   const [expiresInDays, setExpiresInDays] = useState(30);
 
-  const t = translations[lang] || translations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   // Render token icon
   const renderTokenIcon = (token: typeof TOKENS[0], size: "sm" | "md" | "lg" = "md") => {
@@ -304,7 +317,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
   // Create alert
   const handleCreate = async () => {
     if (!targetPrice || parseFloat(targetPrice) <= 0) {
-      setError(t.validPrice);
+      setError(t("validPrice"));
       return;
     }
 
@@ -330,17 +343,17 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to create alert");
+        throw new Error(data.error || t("failedCreate"));
       }
 
-      setSuccess(t.alertCreated);
+      setSuccess(t("alertCreated"));
       setShowForm(false);
       setTargetPrice("");
       fetchAlerts();
 
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
+      setError(err instanceof Error ? err.message : t("errorGeneric"));
     } finally {
       setLoading(false);
     }
@@ -373,10 +386,10 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
   // Get status text
   const getStatusText = (status: string) => {
     switch (status) {
-      case "active": return t.active;
-      case "triggered": return t.triggered;
-      case "expired": return t.expired;
-      case "cancelled": return t.cancelled;
+      case "active": return t("active");
+      case "triggered": return t("triggered");
+      case "expired": return t("expired");
+      case "cancelled": return t("cancelled");
       default: return status;
     }
   };
@@ -392,7 +405,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
   if (!walletAddress) {
     return (
       <div className="p-4 sm:p-6 text-center text-slate-600 dark:text-slate-400 text-sm">
-        {t.walletRequired}
+        {t("walletRequired")}
       </div>
     );
   }
@@ -403,16 +416,16 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
       <div className="flex items-center justify-between mb-3 sm:mb-6">
         <div className="min-w-0">
           <h3 className="text-sm sm:text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-1.5 sm:gap-2">
-            🔔 {t.title}
+            🔔 {t("title")}
           </h3>
-          <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1 truncate">{t.subtitle}</p>
+          <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1 truncate">{t("subtitle")}</p>
         </div>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
             className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] text-[10px] sm:text-sm font-medium flex-shrink-0 ml-2"
           >
-            + {t.newAlert}
+            + {t("newAlert")}
           </button>
         )}
       </div>
@@ -434,7 +447,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
         <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-stone-50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl border border-stone-200 dark:border-slate-700 space-y-3 sm:space-y-4">
           {/* Token Select */}
           <div>
-            <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t.token}</label>
+            <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t("token")}</label>
             <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
               {TOKENS.map((token) => (
                 <button
@@ -455,7 +468,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
 
           {/* Target Price */}
           <div>
-            <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t.targetPrice} ($)</label>
+            <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t("targetPrice")} ($)</label>
             <input
               type="number"
               value={targetPrice}
@@ -465,14 +478,14 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
             />
             {currentPrices[selectedToken.toLowerCase()] && (
               <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {t.currentPrice}: ${currentPrices[selectedToken.toLowerCase()]?.toLocaleString()}
+                {t("currentPrice")}: ${currentPrices[selectedToken.toLowerCase()]?.toLocaleString()}
               </p>
             )}
           </div>
 
           {/* Direction */}
           <div>
-            <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t.direction}</label>
+            <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t("direction")}</label>
             <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
               <button
                 onClick={() => setDirection("above")}
@@ -482,7 +495,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
                     : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
-                📈 {t.above}
+                📈 {t("above")}
               </button>
               <button
                 onClick={() => setDirection("below")}
@@ -492,7 +505,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
                     : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
-                📉 {t.below}
+                📉 {t("below")}
               </button>
             </div>
           </div>
@@ -500,21 +513,21 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
           {/* Expires & Repeat */}
           <div className="grid grid-cols-2 gap-2 sm:gap-4">
             <div>
-              <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t.expiresIn}</label>
+              <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t("expiresIn")}</label>
               <select
                 value={expiresInDays}
                 onChange={(e) => setExpiresInDays(parseInt(e.target.value))}
                 className="w-full px-2 sm:px-4 py-2 sm:py-3 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg sm:rounded-xl text-xs sm:text-base text-slate-800 dark:text-white focus:outline-none focus:border-[#2F6F62]"
               >
-                <option value={7}>7 {t.days}</option>
-                <option value={14}>14 {t.days}</option>
-                <option value={30}>30 {t.days}</option>
-                <option value={60}>60 {t.days}</option>
-                <option value={90}>90 {t.days}</option>
+                <option value={7}>7 {t("days")}</option>
+                <option value={14}>14 {t("days")}</option>
+                <option value={30}>30 {t("days")}</option>
+                <option value={60}>60 {t("days")}</option>
+                <option value={90}>90 {t("days")}</option>
               </select>
             </div>
             <div>
-              <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t.repeat}</label>
+              <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 sm:mb-2 font-medium">{t("repeat")}</label>
               <button
                 onClick={() => setRepeat(!repeat)}
                 className={`w-full p-2 sm:p-3 rounded-lg border text-[10px] sm:text-sm font-medium transition-colors ${
@@ -523,7 +536,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
                     : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
-                {repeat ? "✅ " : "○ "}{t.repeat}
+                {repeat ? "✅ " : "○ "}{t("repeat")}
               </button>
             </div>
           </div>
@@ -537,14 +550,14 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
               }}
               className="flex-1 py-2 sm:py-3 bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg sm:rounded-xl hover:bg-stone-300 dark:hover:bg-slate-600 font-medium text-xs sm:text-base"
             >
-              {t.cancel}
+              {t("cancel")}
             </button>
             <button
               onClick={handleCreate}
               disabled={loading || !targetPrice}
               className="flex-1 py-2 sm:py-3 bg-[#2F6F62] text-white rounded-lg sm:rounded-xl hover:bg-[#2F6F62] disabled:opacity-50 font-medium text-xs sm:text-base"
             >
-              {loading ? "..." : t.create}
+              {loading ? "..." : t("create")}
             </button>
           </div>
         </div>
@@ -558,7 +571,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
       ) : alerts.length === 0 ? (
         <div className="text-center py-6 sm:py-8 text-slate-500 dark:text-slate-400">
           <p className="text-2xl sm:text-4xl mb-2">🔕</p>
-          <p className="text-xs sm:text-base">{t.noAlerts}</p>
+          <p className="text-xs sm:text-base">{t("noAlerts")}</p>
         </div>
       ) : (
         <div className="space-y-2 sm:space-y-3">
@@ -587,7 +600,7 @@ export function PriceAlertsPanel({ walletAddress, lang = "tr", currentPrices = {
                       <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                         <span className="font-medium text-xs sm:text-base text-slate-800 dark:text-white">{alert.token}</span>
                         <span className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">
-                          {token && t[token.nameKey]}
+                          {token && t(token.nameKey)}
                         </span>
                         <span className={`text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${getStatusColor(alert.status)}`}>
                           {getStatusText(alert.status)}

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { X, FileText, Shield, Scale, AlertTriangle, ScrollText, BookOpen } from "lucide-react";
+import { useLanguage } from "@/components/LanguageContext";
 
 // ============================================
 // LEGAL SECTIONS
@@ -370,7 +371,7 @@ const legalContent: Record<string, Record<LegalSection, { title: string; lastUpd
   },
 };
 
-const translations = {
+const legalTranslations = {
   tr: { title: "Yasal Bilgiler", close: "Kapat", downloadPdf: "PDF İndir" },
   en: { title: "Legal Information", close: "Close", downloadPdf: "Download PDF" },
   de: { title: "Rechtliche Informationen", close: "Schließen", downloadPdf: "PDF herunterladen" },
@@ -390,8 +391,10 @@ interface LegalModalProps {
   initialSection?: LegalSection;
 }
 
-export default function LegalModal({ isOpen, onClose, lang = "en", initialSection = "terms" }: LegalModalProps) {
-  const t = translations[lang] || translations.en;
+export default function LegalModal({ isOpen, onClose, lang: langProp, initialSection = "terms" }: LegalModalProps) {
+  const { lang: contextLang } = useLanguage();
+  const lang = langProp || contextLang;
+  const t = (key: string) => (legalTranslations as any)[lang]?.[key] || (legalTranslations as any).en[key] || key;
   const tabs = legalTabs[lang] || legalTabs.en;
   const content = legalContent[lang] || legalContent.en;
 
@@ -415,7 +418,7 @@ export default function LegalModal({ isOpen, onClose, lang = "en", initialSectio
               <BookOpen className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.title}</h2>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t("title")}</h2>
               <p className="text-sm text-slate-500 dark:text-zinc-400">{currentContent.lastUpdated}</p>
             </div>
           </div>
@@ -462,7 +465,7 @@ export default function LegalModal({ isOpen, onClose, lang = "en", initialSectio
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl bg-stone-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-medium hover:bg-stone-300 dark:hover:bg-zinc-600 transition-colors"
           >
-            {t.close}
+            {t("close")}
           </button>
         </div>
       </div>

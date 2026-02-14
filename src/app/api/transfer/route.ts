@@ -6,6 +6,7 @@ import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
 import { getUserIdFromAddress, sendETH, sendERC20 } from "@/lib/kms-wallet";
 import { sendTransferSentEmail, sendTransferReceivedEmail } from "@/lib/email-service";
+import { getUserLanguage } from "@/lib/user-language";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -163,23 +164,25 @@ async function getUserEmail(address: string): Promise<{ email?: string; name?: s
 // Helper: Send transfer emails (non-blocking)
 async function sendTransferEmails(fromAddress: string, toAddress: string, amount: number, token: string) {
   try {
-    const [sender, receiver] = await Promise.all([
+    const [sender, receiver, senderLang, receiverLang] = await Promise.all([
       getUserEmail(fromAddress),
-      getUserEmail(toAddress)
+      getUserEmail(toAddress),
+      getUserLanguage(fromAddress),
+      getUserLanguage(toAddress),
     ]);
 
     const promises = [];
 
     if (sender.email) {
       promises.push(
-        sendTransferSentEmail(sender.email, sender.name || 'User', amount.toString(), token, toAddress, 'tr')
+        sendTransferSentEmail(sender.email, sender.name || 'User', amount.toString(), token, toAddress, senderLang)
           .catch(e => console.error('Failed to send transfer-sent email:', e))
       );
     }
 
     if (receiver.email) {
       promises.push(
-        sendTransferReceivedEmail(receiver.email, receiver.name || 'User', amount.toString(), token, fromAddress, 'tr')
+        sendTransferReceivedEmail(receiver.email, receiver.name || 'User', amount.toString(), token, fromAddress, receiverLang)
           .catch(e => console.error('Failed to send transfer-received email:', e))
       );
     }

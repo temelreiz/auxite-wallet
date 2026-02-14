@@ -12,6 +12,7 @@
  */
 
 import { Shield, Building, Lock, MapPin, CheckCircle } from "lucide-react";
+import { useLanguage } from "@/components/LanguageContext";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRANSLATIONS
@@ -30,6 +31,7 @@ const translations = {
     independent: "Bağımsız",
     preciselyAllocated: "Adınıza hassas şekilde tahsis edildi.",
     assetsHeldUnder: "Varlıklar bağımsız saklama yapılarında güvenle muhafaza edilmektedir.",
+    capitalProtection: "Sermaye Koruması",
   },
   en: {
     fullyAllocated: "Fully Allocated",
@@ -43,6 +45,7 @@ const translations = {
     independent: "Independent",
     preciselyAllocated: "Precisely allocated in your name.",
     assetsHeldUnder: "Assets safeguarded under independent custody.",
+    capitalProtection: "Capital Protection",
   },
   de: {
     fullyAllocated: "Vollständig Zugewiesen",
@@ -56,6 +59,7 @@ const translations = {
     independent: "Unabhängig",
     preciselyAllocated: "Präzise auf Ihren Namen zugewiesen.",
     assetsHeldUnder: "Vermögenswerte unter unabhängiger Verwahrung gesichert.",
+    capitalProtection: "Kapitalschutz",
   },
   fr: {
     fullyAllocated: "Entièrement Alloué",
@@ -69,6 +73,7 @@ const translations = {
     independent: "Indépendant",
     preciselyAllocated: "Précisément alloué à votre nom.",
     assetsHeldUnder: "Actifs sécurisés sous garde indépendante.",
+    capitalProtection: "Protection du Capital",
   },
   ar: {
     fullyAllocated: "مخصص بالكامل",
@@ -82,6 +87,7 @@ const translations = {
     independent: "مستقل",
     preciselyAllocated: "مخصص بدقة باسمك.",
     assetsHeldUnder: "الأصول محمية تحت حراسة مستقلة.",
+    capitalProtection: "حماية رأس المال",
   },
   ru: {
     fullyAllocated: "Полностью Распределено",
@@ -95,22 +101,21 @@ const translations = {
     independent: "Независимый",
     preciselyAllocated: "Точно распределено на ваше имя.",
     assetsHeldUnder: "Активы защищены под независимым хранением.",
+    capitalProtection: "Защита Капитала",
   },
 };
-
-type Language = keyof typeof translations;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRUST SIGNATURE STRIP - Header altında görünen ince şerit
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface TrustStripProps {
-  lang?: Language;
   className?: string;
 }
 
-export function TrustStrip({ lang = "en", className = "" }: TrustStripProps) {
-  const t = translations[lang] || translations.en;
+export function TrustStrip({ className = "" }: TrustStripProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   return (
     <div className={`bg-slate-900/50 border-b border-slate-800/50 ${className}`}>
@@ -118,15 +123,15 @@ export function TrustStrip({ lang = "en", className = "" }: TrustStripProps) {
         <div className="flex items-center justify-center gap-6 text-xs text-slate-400">
           <div className="flex items-center gap-1.5">
             <Shield className="w-3.5 h-3.5 text-[#2F6F62]" />
-            <span>{t.fullyAllocated}</span>
+            <span>{t("fullyAllocated")}</span>
           </div>
           <div className="hidden sm:flex items-center gap-1.5">
             <Building className="w-3.5 h-3.5 text-[#2F6F62]" />
-            <span>{t.independentCustody}</span>
+            <span>{t("independentCustody")}</span>
           </div>
           <div className="hidden md:flex items-center gap-1.5">
             <Lock className="w-3.5 h-3.5 text-[#2F6F62]" />
-            <span>{t.bankruptcyRemote}</span>
+            <span>{t("bankruptcyRemote")}</span>
           </div>
         </div>
       </div>
@@ -139,19 +144,18 @@ export function TrustStrip({ lang = "en", className = "" }: TrustStripProps) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface TrustBadgesProps {
-  lang?: Language;
   size?: "sm" | "md" | "lg";
   className?: string;
   variant?: "horizontal" | "vertical";
 }
 
 export function TrustBadges({
-  lang = "en",
   size = "md",
   className = "",
   variant = "horizontal"
 }: TrustBadgesProps) {
-  const t = translations[lang] || translations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   const sizeClasses = {
     sm: "text-xs gap-3",
@@ -166,9 +170,9 @@ export function TrustBadges({
   };
 
   const badges = [
-    { icon: Shield, label: t.fullyAllocated },
-    { icon: Building, label: t.independentCustody },
-    { icon: Lock, label: t.bankruptcyRemote },
+    { icon: Shield, label: t("fullyAllocated") },
+    { icon: Building, label: t("independentCustody") },
+    { icon: Lock, label: t("bankruptcyRemote") },
   ];
 
   return (
@@ -193,28 +197,28 @@ export function TrustBadges({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface VaultVisibilityProps {
-  lang?: Language;
   className?: string;
   compact?: boolean;
 }
 
-export function VaultVisibility({ lang = "en", className = "", compact = false }: VaultVisibilityProps) {
-  const t = translations[lang] || translations.en;
+export function VaultVisibility({ className = "", compact = false }: VaultVisibilityProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   if (compact) {
     return (
       <div className={`flex flex-wrap gap-3 text-xs ${className}`}>
         <div className="flex items-center gap-1.5 text-slate-400">
           <MapPin className="w-3.5 h-3.5 text-[#2F6F62]" />
-          <span>{t.vaultRegion}: <span className="text-white">{t.zurich}</span></span>
+          <span>{t("vaultRegion")}: <span className="text-white">{t("zurich")}</span></span>
         </div>
         <div className="flex items-center gap-1.5 text-slate-400">
           <Building className="w-3.5 h-3.5 text-[#2F6F62]" />
-          <span>{t.custodian}: <span className="text-white">{t.independent}</span></span>
+          <span>{t("custodian")}: <span className="text-white">{t("independent")}</span></span>
         </div>
         <div className="flex items-center gap-1.5 text-slate-400">
           <Shield className="w-3.5 h-3.5 text-[#2F6F62]" />
-          <span>{t.structure}: <span className="text-white">{t.segregated}</span></span>
+          <span>{t("structure")}: <span className="text-white">{t("segregated")}</span></span>
         </div>
       </div>
     );
@@ -227,22 +231,22 @@ export function VaultVisibility({ lang = "en", className = "", compact = false }
           <div className="flex items-center justify-center mb-2">
             <MapPin className="w-5 h-5 text-[#2F6F62]" />
           </div>
-          <div className="text-xs text-slate-400 mb-1">{t.vaultRegion}</div>
-          <div className="text-sm font-semibold text-white">{t.zurich}</div>
+          <div className="text-xs text-slate-400 mb-1">{t("vaultRegion")}</div>
+          <div className="text-sm font-semibold text-white">{t("zurich")}</div>
         </div>
         <div className="text-center border-x border-slate-700/50">
           <div className="flex items-center justify-center mb-2">
             <Building className="w-5 h-5 text-[#2F6F62]" />
           </div>
-          <div className="text-xs text-slate-400 mb-1">{t.custodian}</div>
-          <div className="text-sm font-semibold text-white">{t.independent}</div>
+          <div className="text-xs text-slate-400 mb-1">{t("custodian")}</div>
+          <div className="text-sm font-semibold text-white">{t("independent")}</div>
         </div>
         <div className="text-center">
           <div className="flex items-center justify-center mb-2">
             <Shield className="w-5 h-5 text-[#2F6F62]" />
           </div>
-          <div className="text-xs text-slate-400 mb-1">{t.structure}</div>
-          <div className="text-sm font-semibold text-white">{t.segregated}</div>
+          <div className="text-xs text-slate-400 mb-1">{t("structure")}</div>
+          <div className="text-sm font-semibold text-white">{t("segregated")}</div>
         </div>
       </div>
     </div>
@@ -254,17 +258,17 @@ export function VaultVisibility({ lang = "en", className = "", compact = false }
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface AllocationMessageProps {
-  lang?: Language;
   className?: string;
 }
 
-export function AllocationMessage({ lang = "en", className = "" }: AllocationMessageProps) {
-  const t = translations[lang] || translations.en;
+export function AllocationMessage({ className = "" }: AllocationMessageProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   return (
     <div className={`flex items-center gap-2 text-sm text-slate-400 ${className}`}>
       <CheckCircle className="w-4 h-4 text-[#2F6F62] flex-shrink-0" />
-      <span>{t.preciselyAllocated}</span>
+      <span>{t("preciselyAllocated")}</span>
     </div>
   );
 }
@@ -274,12 +278,12 @@ export function AllocationMessage({ lang = "en", className = "" }: AllocationMes
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface TrustCardProps {
-  lang?: Language;
   className?: string;
 }
 
-export function TrustCard({ lang = "en", className = "" }: TrustCardProps) {
-  const t = translations[lang] || translations.en;
+export function TrustCard({ className = "" }: TrustCardProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   return (
     <div className={`rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 ${className}`}>
@@ -288,15 +292,15 @@ export function TrustCard({ lang = "en", className = "" }: TrustCardProps) {
           <Shield className="w-6 h-6 text-[#2F6F62]" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-white">Capital Protection</h3>
-          <p className="text-sm text-slate-400">{t.assetsHeldUnder}</p>
+          <h3 className="text-lg font-semibold text-white">{t("capitalProtection")}</h3>
+          <p className="text-sm text-slate-400">{t("assetsHeldUnder")}</p>
         </div>
       </div>
 
-      <TrustBadges lang={lang} size="sm" variant="vertical" className="gap-3" />
+      <TrustBadges size="sm" variant="vertical" className="gap-3" />
 
       <div className="mt-4 pt-4 border-t border-slate-700/50">
-        <VaultVisibility lang={lang} compact />
+        <VaultVisibility compact />
       </div>
     </div>
   );
@@ -311,7 +315,6 @@ interface PricingDisplayProps {
   executionSpread: number;
   finalPrice: number;
   currency?: string;
-  lang?: Language;
   className?: string;
 }
 
@@ -365,10 +368,10 @@ export function PricingDisplay({
   executionSpread,
   finalPrice,
   currency = "USD",
-  lang = "en",
   className = "",
 }: PricingDisplayProps) {
-  const t = pricingTranslations[lang] || pricingTranslations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (pricingTranslations as any)[lang]?.[key] || (pricingTranslations as any).en[key] || key;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -382,27 +385,27 @@ export function PricingDisplay({
   return (
     <div className={`rounded-xl border border-slate-700/50 bg-slate-800/30 ${className}`}>
       <div className="px-4 py-3 border-b border-slate-700/50">
-        <h4 className="text-sm font-medium text-white">{t.pricingOverview}</h4>
+        <h4 className="text-sm font-medium text-white">{t("pricingOverview")}</h4>
       </div>
 
       <div className="p-4 space-y-3">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-400">{t.referencePrice}</span>
+          <span className="text-sm text-slate-400">{t("referencePrice")}</span>
           <span className="text-sm text-white font-medium">{formatPrice(referencePrice)}</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-400">{t.executionSpread}</span>
+          <span className="text-sm text-slate-400">{t("executionSpread")}</span>
           <span className="text-sm text-[#BFA181] font-medium">+{executionSpread.toFixed(2)}%</span>
         </div>
         <div className="h-px bg-slate-700/50" />
         <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-white">{t.finalPrice}</span>
+          <span className="text-sm font-medium text-white">{t("finalPrice")}</span>
           <span className="text-base font-semibold text-[#2F6F62]">{formatPrice(finalPrice)}</span>
         </div>
       </div>
 
       <div className="px-4 py-2 bg-slate-900/30 rounded-b-xl">
-        <p className="text-xs text-slate-500 text-center">{t.transparentPricing}</p>
+        <p className="text-xs text-slate-500 text-center">{t("transparentPricing")}</p>
       </div>
     </div>
   );

@@ -419,7 +419,6 @@ export default function TradingDetailPage({
                   isOpen={true}
                   onClose={() => setActiveTab("price")}
                   offer={leaseOffer}
-                  lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
                 />
               </div>
             )}
@@ -445,7 +444,6 @@ export default function TradingDetailPage({
           isOpen={showLeaseModal}
           onClose={() => setShowLeaseModal(false)}
           offer={leaseOffer}
-          lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
         />
       )}
     </>

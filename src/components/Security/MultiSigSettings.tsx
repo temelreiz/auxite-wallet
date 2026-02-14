@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface Signer {
   id: string;
@@ -35,10 +36,9 @@ interface MultiSigConfig {
 
 interface Props {
   walletAddress: string;
-  lang: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
-const t = {
+const translations: Record<string, Record<string, string>> = {
   tr: {
     title: "Çoklu İmza (Multi-Sig)",
     subtitle: "Büyük işlemler için çoklu onay sistemi",
@@ -107,16 +107,153 @@ const t = {
     expiresIn: "Expires:",
     noSigners: "No signers added yet",
   },
+  de: {
+    title: "Multi-Signatur",
+    subtitle: "Multi-Genehmigungssystem für große Transaktionen",
+    enabled: "Multi-Sig Aktiv",
+    disabled: "Multi-Sig Deaktiviert",
+    enable: "Aktivieren",
+    disable: "Deaktivieren",
+    signers: "Unterzeichner",
+    addSigner: "Unterzeichner hinzufügen",
+    removeSigner: "Entfernen",
+    pendingTx: "Ausstehende Transaktionen",
+    noPending: "Keine ausstehenden Transaktionen",
+    approve: "Genehmigen",
+    reject: "Ablehnen",
+    threshold: "Schwellenwert",
+    thresholdDesc: "Transaktionen über diesem Betrag erfordern Multi-Genehmigung",
+    requiredApprovals: "Erforderliche Genehmigungen",
+    of: "/",
+    owner: "Eigentümer",
+    approver: "Genehmiger",
+    viewer: "Betrachter",
+    approved: "Genehmigt",
+    rejected: "Abgelehnt",
+    pending: "Ausstehend",
+    expired: "Abgelaufen",
+    name: "Name",
+    address: "Wallet-Adresse",
+    email: "E-Mail (optional)",
+    role: "Rolle",
+    save: "Speichern",
+    cancel: "Abbrechen",
+    expiresIn: "Läuft ab:",
+    noSigners: "Noch keine Unterzeichner hinzugefügt",
+  },
+  fr: {
+    title: "Multi-Signature",
+    subtitle: "Système d'approbation multiple pour les grandes transactions",
+    enabled: "Multi-Sig Actif",
+    disabled: "Multi-Sig Désactivé",
+    enable: "Activer",
+    disable: "Désactiver",
+    signers: "Signataires",
+    addSigner: "Ajouter un signataire",
+    removeSigner: "Supprimer",
+    pendingTx: "Transactions en attente",
+    noPending: "Aucune transaction en attente",
+    approve: "Approuver",
+    reject: "Rejeter",
+    threshold: "Montant seuil",
+    thresholdDesc: "Les transactions au-dessus de ce montant nécessitent une approbation multiple",
+    requiredApprovals: "Approbations requises",
+    of: "/",
+    owner: "Propriétaire",
+    approver: "Approbateur",
+    viewer: "Observateur",
+    approved: "Approuvé",
+    rejected: "Rejeté",
+    pending: "En attente",
+    expired: "Expiré",
+    name: "Nom",
+    address: "Adresse du portefeuille",
+    email: "E-mail (optionnel)",
+    role: "Rôle",
+    save: "Enregistrer",
+    cancel: "Annuler",
+    expiresIn: "Expire :",
+    noSigners: "Aucun signataire ajouté",
+  },
+  ar: {
+    title: "التوقيع المتعدد",
+    subtitle: "نظام الموافقة المتعددة للمعاملات الكبيرة",
+    enabled: "التوقيع المتعدد مفعّل",
+    disabled: "التوقيع المتعدد معطّل",
+    enable: "تفعيل",
+    disable: "تعطيل",
+    signers: "الموقّعون",
+    addSigner: "إضافة موقّع",
+    removeSigner: "إزالة",
+    pendingTx: "المعاملات المعلّقة",
+    noPending: "لا توجد معاملات معلّقة",
+    approve: "موافقة",
+    reject: "رفض",
+    threshold: "مبلغ الحد",
+    thresholdDesc: "المعاملات التي تتجاوز هذا المبلغ تتطلب موافقة متعددة",
+    requiredApprovals: "الموافقات المطلوبة",
+    of: "/",
+    owner: "المالك",
+    approver: "المُوافِق",
+    viewer: "المشاهد",
+    approved: "تمت الموافقة",
+    rejected: "مرفوض",
+    pending: "معلّق",
+    expired: "منتهي الصلاحية",
+    name: "الاسم",
+    address: "عنوان المحفظة",
+    email: "البريد الإلكتروني (اختياري)",
+    role: "الدور",
+    save: "حفظ",
+    cancel: "إلغاء",
+    expiresIn: "ينتهي:",
+    noSigners: "لم تتم إضافة موقّعين بعد",
+  },
+  ru: {
+    title: "Мультиподпись",
+    subtitle: "Система множественного одобрения для крупных транзакций",
+    enabled: "Мультиподпись активна",
+    disabled: "Мультиподпись отключена",
+    enable: "Включить",
+    disable: "Отключить",
+    signers: "Подписанты",
+    addSigner: "Добавить подписанта",
+    removeSigner: "Удалить",
+    pendingTx: "Ожидающие транзакции",
+    noPending: "Нет ожидающих транзакций",
+    approve: "Одобрить",
+    reject: "Отклонить",
+    threshold: "Пороговая сумма",
+    thresholdDesc: "Транзакции выше этой суммы требуют множественного одобрения",
+    requiredApprovals: "Необходимые одобрения",
+    of: "/",
+    owner: "Владелец",
+    approver: "Одобряющий",
+    viewer: "Наблюдатель",
+    approved: "Одобрено",
+    rejected: "Отклонено",
+    pending: "Ожидает",
+    expired: "Истекло",
+    name: "Имя",
+    address: "Адрес кошелька",
+    email: "Email (необязательно)",
+    role: "Роль",
+    save: "Сохранить",
+    cancel: "Отмена",
+    expiresIn: "Истекает:",
+    noSigners: "Подписанты ещё не добавлены",
+  },
 };
 
-export function MultiSigSettings({ walletAddress, lang }: Props) {
+export function MultiSigSettings({ walletAddress }: Props) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
+
   const [config, setConfig] = useState<MultiSigConfig | null>(null);
   const [pending, setPending] = useState<PendingTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddSigner, setShowAddSigner] = useState(false);
   const [newSigner, setNewSigner] = useState({ name: "", address: "", email: "", role: "approver" });
-
-  const labels = (t as Record<string, typeof t.en>)[lang] || t.en;
 
   useEffect(() => {
     fetchData();
@@ -257,9 +394,9 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
 
   const getRoleLabel = (role: string) => {
     switch (role) {
-      case "owner": return labels.owner;
-      case "approver": return labels.approver;
-      case "viewer": return labels.viewer;
+      case "owner": return t("owner");
+      case "approver": return t("approver");
+      case "viewer": return t("viewer");
       default: return role;
     }
   };
@@ -275,7 +412,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
 
   const formatExpiry = (expiresAt: string) => {
     const diff = new Date(expiresAt).getTime() - Date.now();
-    if (diff <= 0) return labels.expired;
+    if (diff <= 0) return t("expired");
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     return `${hours}h ${mins}m`;
@@ -290,8 +427,8 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">{labels.title}</h3>
-          <p className="text-sm text-slate-400">{labels.subtitle}</p>
+          <h3 className="text-lg font-semibold text-white">{t("title")}</h3>
+          <p className="text-sm text-slate-400">{t("subtitle")}</p>
         </div>
         <button
           onClick={handleToggle}
@@ -301,7 +438,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
               : "bg-slate-700 text-slate-300 hover:bg-slate-600"
           }`}
         >
-          {config?.enabled ? labels.enabled : labels.disabled}
+          {config?.enabled ? t("enabled") : t("disabled")}
         </button>
       </div>
 
@@ -311,15 +448,15 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <p className="font-medium text-white">{labels.threshold}</p>
-                <p className="text-sm text-slate-400">{labels.thresholdDesc}</p>
+                <p className="font-medium text-white">{t("threshold")}</p>
+                <p className="text-sm text-slate-400">{t("thresholdDesc")}</p>
               </div>
               <div className="text-right">
                 <p className="text-2xl font-bold text-[#BFA181]">
                   ${config.thresholdAmount.toLocaleString()}
                 </p>
                 <p className="text-sm text-slate-500">
-                  {labels.requiredApprovals}: {config.requiredApprovals}{labels.of}{config.totalSigners || config.signers.length}
+                  {t("requiredApprovals")}: {config.requiredApprovals}{t("of")}{config.totalSigners || config.signers.length}
                 </p>
               </div>
             </div>
@@ -328,17 +465,17 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
           {/* Signers */}
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="font-medium text-white">{labels.signers}</h4>
+              <h4 className="font-medium text-white">{t("signers")}</h4>
               <button
                 onClick={() => setShowAddSigner(true)}
                 className="px-3 py-1.5 bg-[#2F6F62]/20 text-[#2F6F62] rounded-lg text-sm hover:bg-[#2F6F62]/30 transition-colors"
               >
-                + {labels.addSigner}
+                + {t("addSigner")}
               </button>
             </div>
 
             {config.signers.length === 0 ? (
-              <p className="text-slate-500 text-center py-4">{labels.noSigners}</p>
+              <p className="text-slate-500 text-center py-4">{t("noSigners")}</p>
             ) : (
               <div className="space-y-2">
                 {config.signers.map((signer) => (
@@ -363,7 +500,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`px-2 py-1 rounded text-xs ${
-                        signer.role === "owner" 
+                        signer.role === "owner"
                           ? "bg-[#BFA181]/20 text-[#BFA181]"
                           : "bg-slate-700 text-slate-400"
                       }`}>
@@ -374,7 +511,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
                           onClick={() => handleRemoveSigner(signer.id)}
                           className="text-red-400 hover:text-red-300 text-sm"
                         >
-                          {labels.removeSigner}
+                          {t("removeSigner")}
                         </button>
                       )}
                     </div>
@@ -386,10 +523,10 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
 
           {/* Pending Transactions */}
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-            <h4 className="font-medium text-white mb-4">{labels.pendingTx}</h4>
+            <h4 className="font-medium text-white mb-4">{t("pendingTx")}</h4>
 
             {pending.length === 0 ? (
-              <p className="text-slate-500 text-center py-4">{labels.noPending}</p>
+              <p className="text-slate-500 text-center py-4">{t("noPending")}</p>
             ) : (
               <div className="space-y-3">
                 {pending.map((tx) => (
@@ -403,11 +540,11 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
                           {tx.amount} {tx.token} → {tx.toAddress?.slice(0, 10)}...
                         </p>
                         <p className="text-sm text-slate-500">
-                          {labels.expiresIn} {formatExpiry(tx.expiresAt)}
+                          {t("expiresIn")} {formatExpiry(tx.expiresAt)}
                         </p>
                       </div>
                       <span className={`${getStatusColor(tx.status)}`}>
-                        {tx.approvals.length}/{tx.requiredApprovals} {labels.approved}
+                        {tx.approvals.length}/{tx.requiredApprovals} {t("approved")}
                       </span>
                     </div>
 
@@ -417,13 +554,13 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
                           onClick={() => handleApprove(tx.id)}
                           className="flex-1 py-2 bg-[#2F6F62]/20 text-[#2F6F62] rounded-lg hover:bg-[#2F6F62]/30 transition-colors"
                         >
-                          {labels.approve}
+                          {t("approve")}
                         </button>
                         <button
                           onClick={() => handleReject(tx.id)}
                           className="flex-1 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
                         >
-                          {labels.reject}
+                          {t("reject")}
                         </button>
                       </div>
                     )}
@@ -439,11 +576,11 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
       {showAddSigner && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-md border border-slate-700">
-            <h3 className="text-lg font-semibold text-white mb-4">{labels.addSigner}</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">{t("addSigner")}</h3>
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-slate-400 block mb-1">{labels.name}</label>
+                <label className="text-sm text-slate-400 block mb-1">{t("name")}</label>
                 <input
                   type="text"
                   value={newSigner.name}
@@ -453,7 +590,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
               </div>
 
               <div>
-                <label className="text-sm text-slate-400 block mb-1">{labels.address}</label>
+                <label className="text-sm text-slate-400 block mb-1">{t("address")}</label>
                 <input
                   type="text"
                   value={newSigner.address}
@@ -464,7 +601,7 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
               </div>
 
               <div>
-                <label className="text-sm text-slate-400 block mb-1">{labels.email}</label>
+                <label className="text-sm text-slate-400 block mb-1">{t("email")}</label>
                 <input
                   type="email"
                   value={newSigner.email}
@@ -474,14 +611,14 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
               </div>
 
               <div>
-                <label className="text-sm text-slate-400 block mb-1">{labels.role}</label>
+                <label className="text-sm text-slate-400 block mb-1">{t("role")}</label>
                 <select
                   value={newSigner.role}
                   onChange={(e) => setNewSigner({ ...newSigner, role: e.target.value })}
                   className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-[#2F6F62]"
                 >
-                  <option value="approver">{labels.approver}</option>
-                  <option value="viewer">{labels.viewer}</option>
+                  <option value="approver">{t("approver")}</option>
+                  <option value="viewer">{t("viewer")}</option>
                 </select>
               </div>
             </div>
@@ -491,14 +628,14 @@ export function MultiSigSettings({ walletAddress, lang }: Props) {
                 onClick={() => setShowAddSigner(false)}
                 className="flex-1 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
               >
-                {labels.cancel}
+                {t("cancel")}
               </button>
               <button
                 onClick={handleAddSigner}
                 disabled={!newSigner.name || !newSigner.address}
                 className="flex-1 py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {labels.save}
+                {t("save")}
               </button>
             </div>
           </div>

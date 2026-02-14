@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 import { useAllocations, FormattedAllocation as Allocation } from "@/hooks/useAllocations";
 import { useStaking, FormattedStake } from "@/hooks/useStaking";
 import { formatUnits } from "viem";
@@ -9,7 +10,6 @@ import { formatAmount } from "@/lib/format";
 interface LockedAssetsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   metalPrices?: {
     AUXG: number;
     AUXS: number;
@@ -53,6 +53,11 @@ const translations: Record<string, Record<string, string>> = {
     istanbul: "İstanbul Kasası",
     london: "Londra Kasası",
     dubai: "Dubai Kasası",
+    staked: "stake",
+    months: "ay",
+    progress: "İlerleme",
+    reward: "ödül",
+    noPositionsHint: "Stake pozisyonlarınızı Biriktir sekmesinden oluşturabilirsiniz.",
   },
   en: {
     title: "Allocated Assets",
@@ -87,6 +92,11 @@ const translations: Record<string, Record<string, string>> = {
     istanbul: "Istanbul Vault",
     london: "London Vault",
     dubai: "Dubai Vault",
+    staked: "staked",
+    months: "months",
+    progress: "Progress",
+    reward: "reward",
+    noPositionsHint: "You can create staking positions from the Earn tab.",
   },
   de: {
     title: "Zugewiesene Vermögenswerte",
@@ -121,6 +131,11 @@ const translations: Record<string, Record<string, string>> = {
     istanbul: "Istanbul Tresor",
     london: "London Tresor",
     dubai: "Dubai Tresor",
+    staked: "gestaked",
+    months: "Monate",
+    progress: "Fortschritt",
+    reward: "Belohnung",
+    noPositionsHint: "Sie können Staking-Positionen im Verdienen-Tab erstellen.",
   },
   fr: {
     title: "Actifs Alloués",
@@ -155,6 +170,11 @@ const translations: Record<string, Record<string, string>> = {
     istanbul: "Coffre Istanbul",
     london: "Coffre Londres",
     dubai: "Coffre Dubaï",
+    staked: "staké",
+    months: "mois",
+    progress: "Progression",
+    reward: "récompense",
+    noPositionsHint: "Vous pouvez créer des positions de staking depuis l'onglet Gagner.",
   },
   ar: {
     title: "الأصول المخصصة",
@@ -189,6 +209,11 @@ const translations: Record<string, Record<string, string>> = {
     istanbul: "خزنة إسطنبول",
     london: "خزنة لندن",
     dubai: "خزنة دبي",
+    staked: "مراهن",
+    months: "أشهر",
+    progress: "التقدم",
+    reward: "مكافأة",
+    noPositionsHint: "يمكنك إنشاء مراكز ستيكنج من علامة تبويب اكسب.",
   },
   ru: {
     title: "Распределённые Активы",
@@ -223,6 +248,11 @@ const translations: Record<string, Record<string, string>> = {
     istanbul: "Хранилище Стамбул",
     london: "Хранилище Лондон",
     dubai: "Хранилище Дубай",
+    staked: "в стейкинге",
+    months: "месяцев",
+    progress: "Прогресс",
+    reward: "награда",
+    noPositionsHint: "Вы можете создать позиции стейкинга на вкладке Заработок.",
   },
 };
 
@@ -243,11 +273,11 @@ const CUSTODIAN_MAP: Record<string, string> = {
 export function LockedAssetsModal({
   isOpen,
   onClose,
-  lang = "en",
   metalPrices = { AUXG: 95, AUXS: 1.15, AUXPT: 32, AUXPD: 35 },
 }: LockedAssetsModalProps) {
   const [activeTab, setActiveTab] = useState<"allocations" | "staking">("allocations");
-  const t = translations[lang] || translations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   
   const { allocations, allocationsByMetal, totalGrams, isLoading } = useAllocations();
   const { activeStakes, loading: stakingLoading } = useStaking();
@@ -278,7 +308,7 @@ export function LockedAssetsModal({
 
   const getCustodianName = (custodian: string): string => {
     const key = CUSTODIAN_MAP[custodian.toLowerCase().slice(0, 6)] || "zurich";
-    return t[key] || custodian;
+    return t(key) || custodian;
   };
 
   const formatDate = (timestamp: bigint): string => {
@@ -302,8 +332,8 @@ export function LockedAssetsModal({
               </svg>
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm sm:text-lg font-bold text-slate-800 dark:text-white truncate">{t.title}</h2>
-              <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 truncate hidden sm:block">{t.subtitle}</p>
+              <h2 className="text-sm sm:text-lg font-bold text-slate-800 dark:text-white truncate">{t("title")}</h2>
+              <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 truncate hidden sm:block">{t("subtitle")}</p>
             </div>
           </div>
           <button
@@ -320,7 +350,7 @@ export function LockedAssetsModal({
         <div className="p-2.5 sm:p-4 border-b border-stone-200 dark:border-slate-800 bg-gradient-to-r from-[#BFA181]/10 to-orange-500/10 dark:from-[#BFA181]/20 dark:to-orange-500/20 flex-shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
             <div className="min-w-0">
-              <p className="text-[10px] sm:text-sm text-slate-600 dark:text-slate-400">{t.totalLocked}</p>
+              <p className="text-[10px] sm:text-sm text-slate-600 dark:text-slate-400">{t("totalLocked")}</p>
               <div className="flex items-center gap-1.5 sm:gap-4 mt-1 flex-wrap">
                 {/* Allocation totals */}
                 {Object.entries(totalGrams || {}).map(([metal, grams]) => (
@@ -337,14 +367,14 @@ export function LockedAssetsModal({
                     <div key={`stake-${metal}`} className="flex items-center gap-0.5 sm:gap-1 px-1 sm:px-2 py-0.5 rounded-full bg-[#2F6F62]/20">
                       <img src={METAL_INFO[metal]?.icon} alt={metal} className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span className={`font-semibold text-[#2F6F62] dark:text-[#2F6F62] text-[9px] sm:text-sm`}>{grams.toFixed(2)}g</span>
-                      <span className="text-[8px] sm:text-xs text-[#2F6F62] hidden sm:inline">staked</span>
+                      <span className="text-[8px] sm:text-xs text-[#2F6F62] hidden sm:inline">{t("staked")}</span>
                     </div>
                   )
                 ))}
               </div>
             </div>
             <div className="text-left sm:text-right flex-shrink-0">
-              <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400">{t.estValue}</p>
+              <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400">{t("estValue")}</p>
               <p className="text-lg sm:text-2xl font-bold text-[#BFA181]">${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
           </div>
@@ -364,7 +394,7 @@ export function LockedAssetsModal({
               <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <span className="truncate">{t.allocations}</span>
+              <span className="truncate">{t("allocations")}</span>
             </span>
             {activeTab === "allocations" && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#BFA181]"></div>
@@ -382,7 +412,7 @@ export function LockedAssetsModal({
               <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="truncate">{t.stakingPositions}</span>
+              <span className="truncate">{t("stakingPositions")}</span>
               {activeStakes.length > 0 && (
                 <span className="px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-xs rounded-full bg-[#2F6F62] text-white ml-0.5">{activeStakes.length}</span>
               )}
@@ -397,7 +427,7 @@ export function LockedAssetsModal({
         <div className="p-2.5 sm:p-4 overflow-y-auto flex-1 min-h-0">
           {activeTab === "allocations" && (
             <div className="space-y-2 sm:space-y-4">
-              <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">{t.allocationsDesc}</p>
+              <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">{t("allocationsDesc")}</p>
               
               {isLoading ? (
                 <div className="flex items-center justify-center py-6 sm:py-12">
@@ -410,7 +440,7 @@ export function LockedAssetsModal({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   </div>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{t.noAllocations}</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{t("noAllocations")}</p>
                 </div>
               ) : (
                 <div className="space-y-2 sm:space-y-3">
@@ -432,7 +462,7 @@ export function LockedAssetsModal({
                               <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                                 <span className={`font-semibold text-xs sm:text-base ${metalInfo.color}`}>{allocation.metal}</span>
                                 <span className="text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]">
-                                  {t.allocated}
+                                  {t("allocated")}
                                 </span>
                               </div>
                               <div className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 truncate">
@@ -452,8 +482,8 @@ export function LockedAssetsModal({
                         
                         <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-stone-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 text-[9px] sm:text-xs">
                           <div className="flex items-center gap-2 sm:gap-4 text-slate-500 dark:text-slate-400 flex-wrap">
-                            <span>{t.allocationId}: #{allocation.id.toString()}</span>
-                            <span className="hidden sm:inline">{t.date}: {new Date(Number(allocation.timestamp)).toLocaleDateString()}</span>
+                            <span>{t("allocationId")}: #{allocation.id.toString()}</span>
+                            <span className="hidden sm:inline">{t("date")}: {new Date(Number(allocation.timestamp)).toLocaleDateString()}</span>
                           </div>
                           <a
                             href={`https://basescan.org/tx/${allocation.id}`}
@@ -461,7 +491,7 @@ export function LockedAssetsModal({
                             rel="noopener noreferrer"
                             className="text-[#BFA181] dark:text-[#BFA181] hover:underline flex items-center gap-1"
                           >
-                            {t.viewOnChain}
+                            {t("viewOnChain")}
                             <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
@@ -477,7 +507,7 @@ export function LockedAssetsModal({
 
           {activeTab === "staking" && (
             <div className="space-y-2 sm:space-y-4">
-              <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">{t.stakingDesc}</p>
+              <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">{t("stakingDesc")}</p>
               
               {stakingLoading ? (
                 <div className="flex items-center justify-center py-6 sm:py-12">
@@ -490,9 +520,9 @@ export function LockedAssetsModal({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{t.noPositions}</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">{t("noPositions")}</p>
                   <p className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500 mt-1 sm:mt-2">
-                    {lang === "tr" ? "Stake pozisyonlarınızı Biriktir sekmesinden oluşturabilirsiniz." : "You can create staking positions from the Earn tab."}
+                    {t("noPositionsHint")}
                   </p>
                 </div>
               ) : (
@@ -514,11 +544,11 @@ export function LockedAssetsModal({
                               <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                                 <span className={`font-semibold text-xs sm:text-base ${metalInfo?.color || "text-[#BFA181]"}`}>{stake.metalSymbol}</span>
                                 <span className={`text-[9px] sm:text-xs px-1 sm:px-2 py-0.5 rounded-full ${stake.isMatured ? "bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]" : "bg-blue-500/20 text-blue-600 dark:text-blue-400"}`}>
-                                  {stake.isMatured ? t.completed : t.active}
+                                  {stake.isMatured ? t("completed") : t("active")}
                                 </span>
                               </div>
                               <div className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">
-                                {stake.durationMonths} {lang === "tr" ? "ay" : "months"} • {stake.apyPercent.toFixed(2)}% APY
+                                {stake.durationMonths} {t("months")} • {stake.apyPercent.toFixed(2)}% APY
                               </div>
                             </div>
                           </div>
@@ -535,7 +565,7 @@ export function LockedAssetsModal({
                         {/* Progress Bar */}
                         <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-stone-200 dark:border-slate-700">
                           <div className="flex items-center justify-between text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 mb-1">
-                            <span>{lang === "tr" ? "İlerleme" : "Progress"}</span>
+                            <span>{t("progress")}</span>
                             <span>{stake.progress.toFixed(1)}%</span>
                           </div>
                           <div className="h-1 sm:h-1.5 bg-stone-200 dark:bg-slate-700 rounded-full overflow-hidden">
@@ -546,7 +576,7 @@ export function LockedAssetsModal({
                           </div>
                           {!stake.isMatured && stake.timeRemaining && (
                             <div className="text-[9px] sm:text-xs text-slate-400 mt-1 text-right">
-                              {stake.timeRemaining} {t.daysLeft}
+                              {stake.timeRemaining} {t("daysLeft")}
                             </div>
                           )}
                         </div>
@@ -554,7 +584,7 @@ export function LockedAssetsModal({
                         <div className="mt-2 sm:mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 text-[9px] sm:text-xs">
                           <div className="flex items-center gap-2 sm:gap-3 text-slate-500 dark:text-slate-400 flex-wrap">
                             <span>Code: {stake.shortCode}</span>
-                            <span className="text-[#2F6F62]">+{formatAmount(stake.expectedRewardGrams, stake.metalSymbol)}g {lang === "tr" ? "ödül" : "reward"}</span>
+                            <span className="text-[#2F6F62]">+{formatAmount(stake.expectedRewardGrams, stake.metalSymbol)}g {t("reward")}</span>
                           </div>
                           <a
                             href={`https://sepolia.etherscan.io/address/${process.env.NEXT_PUBLIC_STAKING_CONTRACT}`}
@@ -562,7 +592,7 @@ export function LockedAssetsModal({
                             rel="noopener noreferrer"
                             className="text-[#BFA181] dark:text-[#BFA181] hover:underline flex items-center gap-1"
                           >
-                            {t.viewOnChain}
+                            {t("viewOnChain")}
                             <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
@@ -583,7 +613,7 @@ export function LockedAssetsModal({
             onClick={onClose}
             className="w-full py-2 sm:py-3 rounded-lg sm:rounded-xl bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-medium transition-colors text-xs sm:text-base"
           >
-            {t.close}
+            {t("close")}
           </button>
         </div>
       </div>

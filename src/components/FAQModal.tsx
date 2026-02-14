@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { X, ChevronDown, ChevronUp, Search, HelpCircle, MessageCircle, Shield, Wallet, TrendingUp, Truck, CreditCard } from "lucide-react";
+import { useLanguage } from "@/components/LanguageContext";
 
 // ============================================
 // FAQ DATA - 6 LANGUAGES
@@ -212,8 +213,10 @@ interface FAQModalProps {
   lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
-export default function FAQModal({ isOpen, onClose, lang = "en" }: FAQModalProps) {
-  const t = translations[lang] || translations.en;
+export default function FAQModal({ isOpen, onClose, lang: langProp }: FAQModalProps) {
+  const { lang: ctxLang } = useLanguage();
+  const lang = langProp || ctxLang || "en";
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const faqs = faqData[lang] || faqData.en;
   const cats = categories[lang] || categories.en;
 
@@ -246,8 +249,8 @@ export default function FAQModal({ isOpen, onClose, lang = "en" }: FAQModalProps
               <MessageCircle className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.title}</h2>
-              <p className="text-sm text-slate-500 dark:text-zinc-400">{t.subtitle}</p>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t("title")}</h2>
+              <p className="text-sm text-slate-500 dark:text-zinc-400">{t("subtitle")}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-zinc-800 transition-colors">
@@ -262,7 +265,7 @@ export default function FAQModal({ isOpen, onClose, lang = "en" }: FAQModalProps
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
-              placeholder={t.searchPlaceholder}
+              placeholder={t("searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -279,7 +282,7 @@ export default function FAQModal({ isOpen, onClose, lang = "en" }: FAQModalProps
                   : "bg-stone-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-stone-200 dark:hover:bg-zinc-700"
               }`}
             >
-              {t.allCategories}
+              {t("allCategories")}
             </button>
             {cats.map((cat) => (
               <button
@@ -302,7 +305,7 @@ export default function FAQModal({ isOpen, onClose, lang = "en" }: FAQModalProps
         <div className="flex-1 overflow-y-auto p-6">
           {filteredFaqs.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-slate-500 dark:text-zinc-400">{t.noResults}</p>
+              <p className="text-slate-500 dark:text-zinc-400">{t("noResults")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -340,13 +343,13 @@ export default function FAQModal({ isOpen, onClose, lang = "en" }: FAQModalProps
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors"
           >
             <MessageCircle className="w-4 h-4" />
-            {t.contactSupport}
+            {t("contactSupport")}
           </button>
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-xl bg-stone-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300 font-medium hover:bg-stone-300 dark:hover:bg-zinc-600 transition-colors"
           >
-            {t.close}
+            {t("close")}
           </button>
         </div>
       </div>

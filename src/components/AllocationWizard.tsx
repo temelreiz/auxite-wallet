@@ -14,6 +14,7 @@ import { Shield, Building, Lock, MapPin, Check, ChevronRight, ArrowLeft, FileTex
 import { VaultVisibility, TrustBadges, AllocationMessage } from "./ui/TrustSignature";
 import { useWallet } from "@/components/WalletContext";
 import { useToast } from "@/components/ui/Toast";
+import { useLanguage } from "@/components/LanguageContext";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRANSLATIONS
@@ -90,6 +91,9 @@ const translations = {
     gramsOf: "gram",
     inYourName: "Adınıza kayıtlı fiziksel metal",
 
+    // Certificate
+    certificateNumberLabel: "Sertifika Numarası",
+
     // Private Client
     privateClientThreshold: "100.000 USD üzeri tahsisler için Özel Müşteri Masası hizmeti sunulmaktadır.",
     contactPrivateDesk: "Özel Müşteri Masası ile İletişime Geçin",
@@ -164,6 +168,9 @@ const translations = {
     gramsOf: "grams of",
     inYourName: "Physical metal registered in your name",
 
+    // Certificate
+    certificateNumberLabel: "Certificate Number",
+
     // Private Client
     privateClientThreshold: "For allocations above $100,000, Private Client Desk services are available.",
     contactPrivateDesk: "Contact Private Client Desk",
@@ -222,6 +229,7 @@ const translations = {
     youWillOwn: "Sie werden besitzen:",
     gramsOf: "Gramm",
     inYourName: "Physisches Metall auf Ihren Namen registriert",
+    certificateNumberLabel: "Zertifikatsnummer",
     privateClientThreshold: "Für Allokationen über 100.000 USD stehen Private Client Desk-Dienste zur Verfügung.",
     contactPrivateDesk: "Private Client Desk Kontaktieren",
   },
@@ -279,6 +287,7 @@ const translations = {
     youWillOwn: "Vous posséderez:",
     gramsOf: "grammes de",
     inYourName: "Métal physique enregistré à votre nom",
+    certificateNumberLabel: "Numéro de Certificat",
     privateClientThreshold: "Pour les allocations supérieures à 100 000 USD, les services du Bureau Client Privé sont disponibles.",
     contactPrivateDesk: "Contacter le Bureau Client Privé",
   },
@@ -336,6 +345,7 @@ const translations = {
     youWillOwn: "ستمتلك:",
     gramsOf: "غرام من",
     inYourName: "معدن فعلي مسجل باسمك",
+    certificateNumberLabel: "رقم الشهادة",
     privateClientThreshold: "للتخصيصات التي تزيد عن 100,000 دولار، تتوفر خدمات مكتب العملاء الخاصين.",
     contactPrivateDesk: "اتصل بمكتب العملاء الخاصين",
   },
@@ -393,12 +403,11 @@ const translations = {
     youWillOwn: "Вы будете владеть:",
     gramsOf: "грамм",
     inYourName: "Физический металл зарегистрирован на ваше имя",
+    certificateNumberLabel: "Номер Сертификата",
     privateClientThreshold: "Для распределений свыше $100,000 доступны услуги Частного Клиентского Отдела.",
     contactPrivateDesk: "Связаться с Частным Клиентским Отделом",
   },
 };
-
-type Language = keyof typeof translations;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ASSET DATA
@@ -453,7 +462,6 @@ const assets: Asset[] = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface AllocationWizardProps {
-  lang?: Language;
   onClose: () => void;
   onComplete?: (data: AllocationResult) => void;
   prices: Record<string, number>;
@@ -474,13 +482,13 @@ interface AllocationResult {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function AllocationWizard({
-  lang = "en",
   onClose,
   onComplete,
   prices,
   initialAsset,
 }: AllocationWizardProps) {
-  const t = translations[lang] || translations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const toast = useToast();
   const { address, balances, refreshBalances } = useWallet();
 
@@ -509,20 +517,20 @@ export function AllocationWizard({
   // Asset Descriptions based on language
   const getAssetDescription = (assetId: string) => {
     switch (assetId) {
-      case "gold": return t.goldDesc;
-      case "silver": return t.silverDesc;
-      case "platinum": return t.platinumDesc;
-      case "palladium": return t.palladiumDesc;
+      case "gold": return t("goldDesc");
+      case "silver": return t("silverDesc");
+      case "platinum": return t("platinumDesc");
+      case "palladium": return t("palladiumDesc");
       default: return "";
     }
   };
 
   const getAssetName = (assetId: string) => {
     switch (assetId) {
-      case "gold": return t.goldTitle;
-      case "silver": return t.silverTitle;
-      case "platinum": return t.platinumTitle;
-      case "palladium": return t.palladiumTitle;
+      case "gold": return t("goldTitle");
+      case "silver": return t("silverTitle");
+      case "platinum": return t("platinumTitle");
+      case "palladium": return t("palladiumTitle");
       default: return "";
     }
   };
@@ -603,13 +611,13 @@ export function AllocationWizard({
       setResult(allocationResult);
       setIsComplete(true);
       await refreshBalances();
-      toast.success(t.success);
+      toast.success(t("success"));
 
       if (onComplete) {
         onComplete(allocationResult);
       }
     } catch (error: any) {
-      toast.error(t.error, error.message);
+      toast.error(t("error"), error.message);
     } finally {
       setIsProcessing(false);
     }
@@ -627,13 +635,13 @@ export function AllocationWizard({
 
   // Trust Checklist Items - 7 Trust Signals (Capital Gravity Blueprint)
   const trustChecklistItems = [
-    t.checkFullyAllocated,
-    t.checkIndependentCustody,
-    t.checkBankruptcyRemote,
-    t.checkSegregated,
-    t.checkAudited,
-    t.checkInsured,
-    t.checkBlockchainAnchored,
+    t("checkFullyAllocated"),
+    t("checkIndependentCustody"),
+    t("checkBankruptcyRemote"),
+    t("checkSegregated"),
+    t("checkAudited"),
+    t("checkInsured"),
+    t("checkBlockchainAnchored"),
   ];
 
   return (
@@ -645,10 +653,10 @@ export function AllocationWizard({
         <div className="border-b border-slate-800">
           <div className="px-6 py-4 flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-white">{t.capitalAllocation}</h2>
+              <h2 className="text-xl font-semibold text-white">{t("capitalAllocation")}</h2>
               {!isComplete && (
                 <p className="text-sm text-slate-400 mt-0.5">
-                  {t.step} {currentStep} {t.of} 3
+                  {t("step")} {currentStep} {t("of")} 3
                 </p>
               )}
             </div>
@@ -676,9 +684,9 @@ export function AllocationWizard({
                 ))}
               </div>
               <div className="flex justify-between mt-2 text-xs text-slate-500">
-                <span className={currentStep >= 1 ? "text-[#2F6F62]" : ""}>{t.selectAsset}</span>
-                <span className={currentStep >= 2 ? "text-[#2F6F62]" : ""}>{t.defineAllocation}</span>
-                <span className={currentStep >= 3 ? "text-[#2F6F62]" : ""}>{t.reviewConfirm}</span>
+                <span className={currentStep >= 1 ? "text-[#2F6F62]" : ""}>{t("selectAsset")}</span>
+                <span className={currentStep >= 2 ? "text-[#2F6F62]" : ""}>{t("defineAllocation")}</span>
+                <span className={currentStep >= 3 ? "text-[#2F6F62]" : ""}>{t("reviewConfirm")}</span>
               </div>
             </div>
           )}
@@ -690,8 +698,8 @@ export function AllocationWizard({
           {currentStep === 1 && !isComplete && (
             <div className="space-y-4">
               <div className="text-center mb-6">
-                <h3 className="text-lg font-medium text-white">{t.selectAsset}</h3>
-                <p className="text-sm text-slate-400 mt-1">{t.selectAssetDesc}</p>
+                <h3 className="text-lg font-medium text-white">{t("selectAsset")}</h3>
+                <p className="text-sm text-slate-400 mt-1">{t("selectAssetDesc")}</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -734,13 +742,13 @@ export function AllocationWizard({
                   <span className="text-white font-medium">{getAssetName(selectedAsset.id)}</span>
                   <span className="text-slate-500 font-mono text-xs">{selectedAsset.symbol}</span>
                 </div>
-                <h3 className="text-lg font-medium text-white">{t.defineAllocation}</h3>
-                <p className="text-sm text-slate-400 mt-1">{t.defineAllocationDesc}</p>
+                <h3 className="text-lg font-medium text-white">{t("defineAllocation")}</h3>
+                <p className="text-sm text-slate-400 mt-1">{t("defineAllocationDesc")}</p>
               </div>
 
               {/* Amount Input */}
               <div className="space-y-2">
-                <label className="block text-sm text-slate-400">{t.amount} ({t.grams})</label>
+                <label className="block text-sm text-slate-400">{t("amount")} ({t("grams")})</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -752,13 +760,13 @@ export function AllocationWizard({
                     className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white text-lg font-mono focus:outline-none focus:border-[#2F6F62] transition-colors"
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
-                    {t.grams}
+                    {t("grams")}
                   </div>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">{t.minimumAllocation}: 0.01g</span>
+                  <span className="text-slate-500">{t("minimumAllocation")}: 0.01g</span>
                   <span className="text-slate-500">
-                    {t.availableBalance}: {formatCurrency(auxmBalance)}
+                    {t("availableBalance")}: {formatCurrency(auxmBalance)}
                   </span>
                 </div>
               </div>
@@ -766,35 +774,35 @@ export function AllocationWizard({
               {/* Ownership Preview */}
               {amountNum > 0 && (
                 <div className="p-4 rounded-xl bg-[#2F6F62]/10 border border-[#2F6F62]/20">
-                  <div className="text-sm text-[#2F6F62] mb-1">{t.youWillOwn}</div>
+                  <div className="text-sm text-[#2F6F62] mb-1">{t("youWillOwn")}</div>
                   <div className="text-2xl font-bold text-white">
-                    {amountNum.toLocaleString()} {t.gramsOf} {getAssetName(selectedAsset.id)}
+                    {amountNum.toLocaleString()} {t("gramsOf")} {getAssetName(selectedAsset.id)}
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">{t.inYourName}</div>
+                  <div className="text-xs text-slate-400 mt-1">{t("inYourName")}</div>
                 </div>
               )}
 
               {/* Pricing Breakdown */}
               <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 divide-y divide-slate-700/50">
                 <div className="px-4 py-3">
-                  <h4 className="text-sm font-medium text-white">{t.allocationValue}</h4>
+                  <h4 className="text-sm font-medium text-white">{t("allocationValue")}</h4>
                 </div>
                 <div className="p-4 space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">{t.referencePrice}</span>
+                    <span className="text-slate-400">{t("referencePrice")}</span>
                     <span className="text-white font-mono">{formatCurrency(assetPrice)}/g</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">{t.executionSpread}</span>
+                    <span className="text-slate-400">{t("executionSpread")}</span>
                     <span className="text-[#BFA181] font-mono">+{executionSpread.toFixed(2)}%</span>
                   </div>
                   <div className="h-px bg-slate-700/50" />
                   <div className="flex justify-between text-sm">
-                    <span className="text-white font-medium">{t.finalPrice}</span>
+                    <span className="text-white font-medium">{t("finalPrice")}</span>
                     <span className="text-[#2F6F62] font-mono">{formatCurrency(finalPrice)}/g</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-slate-700/50">
-                    <span className="text-white font-semibold">{t.totalValue}</span>
+                    <span className="text-white font-semibold">{t("totalValue")}</span>
                     <span className="text-xl font-bold text-white">{formatCurrency(totalValue)}</span>
                   </div>
                 </div>
@@ -803,9 +811,9 @@ export function AllocationWizard({
               {/* Whale Threshold Notice */}
               {isWhaleThreshold && (
                 <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                  <p className="text-sm text-purple-300">{t.privateClientThreshold}</p>
+                  <p className="text-sm text-purple-300">{t("privateClientThreshold")}</p>
                   <button className="mt-2 text-sm text-purple-400 hover:text-purple-300 underline">
-                    {t.contactPrivateDesk}
+                    {t("contactPrivateDesk")}
                   </button>
                 </div>
               )}
@@ -813,7 +821,7 @@ export function AllocationWizard({
               {/* Insufficient Balance Warning */}
               {!canAfford && amountNum > 0 && (
                 <div className="p-3 rounded-lg bg-[#BFA181]/10 border border-[#BFA181]/20">
-                  <p className="text-sm text-[#BFA181]">⚠️ {t.insufficientBalance}</p>
+                  <p className="text-sm text-[#BFA181]">⚠️ {t("insufficientBalance")}</p>
                 </div>
               )}
 
@@ -824,14 +832,14 @@ export function AllocationWizard({
                   className="px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors flex items-center gap-2"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  {t.back}
+                  {t("back")}
                 </button>
                 <button
                   onClick={handleContinueToReview}
                   disabled={amountNum <= 0 || !canAfford}
                   className="flex-1 px-4 py-2.5 rounded-xl bg-[#2F6F62] text-white font-semibold hover:bg-[#2F6F62] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
-                  {t.continue}
+                  {t("continue")}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -842,34 +850,34 @@ export function AllocationWizard({
           {currentStep === 3 && selectedAsset && !isComplete && (
             <div className="space-y-6">
               <div className="text-center mb-4">
-                <h3 className="text-lg font-medium text-white">{t.reviewConfirm}</h3>
-                <p className="text-sm text-slate-400 mt-1">{t.reviewConfirmDesc}</p>
+                <h3 className="text-lg font-medium text-white">{t("reviewConfirm")}</h3>
+                <p className="text-sm text-slate-400 mt-1">{t("reviewConfirmDesc")}</p>
               </div>
 
               {/* Allocation Summary */}
               <div className="rounded-xl border border-slate-700/50 bg-slate-800/30">
                 <div className="px-4 py-3 border-b border-slate-700/50">
-                  <h4 className="text-sm font-medium text-white">{t.allocationSummary}</h4>
+                  <h4 className="text-sm font-medium text-white">{t("allocationSummary")}</h4>
                 </div>
                 <div className="p-4 space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">{t.asset}</span>
+                    <span className="text-slate-400">{t("asset")}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{selectedAsset.icon}</span>
                       <span className="text-white font-medium">{getAssetName(selectedAsset.id)}</span>
                     </div>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">{t.quantity}</span>
-                    <span className="text-white font-mono">{amountNum.toLocaleString()} {t.grams}</span>
+                    <span className="text-slate-400">{t("quantity")}</span>
+                    <span className="text-white font-mono">{amountNum.toLocaleString()} {t("grams")}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">{t.finalPrice}</span>
+                    <span className="text-slate-400">{t("finalPrice")}</span>
                     <span className="text-white font-mono">{formatCurrency(finalPrice)}/g</span>
                   </div>
                   <div className="h-px bg-slate-700/50" />
                   <div className="flex justify-between">
-                    <span className="text-white font-semibold">{t.value}</span>
+                    <span className="text-white font-semibold">{t("value")}</span>
                     <span className="text-xl font-bold text-[#2F6F62]">{formatCurrency(totalValue)}</span>
                   </div>
                 </div>
@@ -878,10 +886,10 @@ export function AllocationWizard({
               {/* Vault Details */}
               <div className="rounded-xl border border-slate-700/50 bg-slate-800/30">
                 <div className="px-4 py-3 border-b border-slate-700/50">
-                  <h4 className="text-sm font-medium text-white">{t.vaultDetails}</h4>
+                  <h4 className="text-sm font-medium text-white">{t("vaultDetails")}</h4>
                 </div>
                 <div className="p-4">
-                  <VaultVisibility lang={lang} compact />
+                  <VaultVisibility compact />
                 </div>
               </div>
 
@@ -890,7 +898,7 @@ export function AllocationWizard({
                 <div className="px-4 py-3 border-b border-[#2F6F62]/20">
                   <h4 className="text-sm font-medium text-[#2F6F62] flex items-center gap-2">
                     <Shield className="w-4 h-4" />
-                    {t.trustChecklist}
+                    {t("trustChecklist")}
                   </h4>
                 </div>
                 <div className="p-4 space-y-3">
@@ -923,7 +931,7 @@ export function AllocationWizard({
                   className="px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 disabled:opacity-50 transition-colors flex items-center gap-2"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  {t.back}
+                  {t("back")}
                 </button>
                 <button
                   onClick={handleConfirmAllocation}
@@ -936,10 +944,10 @@ export function AllocationWizard({
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      {t.processing}
+                      {t("processing")}
                     </span>
                   ) : (
-                    t.confirmAllocation
+                    t("confirmAllocation")
                   )}
                 </button>
               </div>
@@ -953,12 +961,12 @@ export function AllocationWizard({
                 <Check className="w-10 h-10 text-[#2F6F62]" />
               </div>
 
-              <h3 className="text-2xl font-bold text-white mb-2">{t.success}</h3>
+              <h3 className="text-2xl font-bold text-white mb-2">{t("success")}</h3>
 
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800 text-sm mb-6">
                 <span className="text-xl">{selectedAsset?.icon}</span>
                 <span className="text-white font-medium">
-                  {result.amount.toLocaleString()} {t.grams} {result.asset}
+                  {result.amount.toLocaleString()} {t("grams")} {result.asset}
                 </span>
               </div>
 
@@ -967,7 +975,7 @@ export function AllocationWizard({
                 <div className="mb-6 p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <Award className="w-5 h-5 text-[#BFA181]" />
-                    <span className="text-sm text-slate-400">Certificate Number</span>
+                    <span className="text-sm text-slate-400">{t("certificateNumberLabel")}</span>
                   </div>
                   <div className="text-lg font-mono text-white">{result.certificateNumber}</div>
                 </div>
@@ -975,11 +983,11 @@ export function AllocationWizard({
 
               {/* Trust Badges */}
               <div className="mb-6">
-                <TrustBadges lang={lang} size="sm" />
+                <TrustBadges size="sm" />
               </div>
 
               {/* Allocation Message */}
-              <AllocationMessage lang={lang} className="justify-center mb-6" />
+              <AllocationMessage className="justify-center mb-6" />
 
               {/* Actions */}
               <div className="flex gap-3 justify-center">
@@ -987,12 +995,12 @@ export function AllocationWizard({
                   onClick={onClose}
                   className="px-6 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white hover:bg-slate-700 transition-colors"
                 >
-                  {t.cancel}
+                  {t("cancel")}
                 </button>
                 {result.certificateNumber && (
                   <button className="px-6 py-2.5 rounded-xl bg-[#2F6F62] text-white font-semibold hover:bg-[#2F6F62] transition-colors flex items-center gap-2">
                     <FileText className="w-4 h-4" />
-                    {t.viewCertificate}
+                    {t("viewCertificate")}
                   </button>
                 )}
               </div>

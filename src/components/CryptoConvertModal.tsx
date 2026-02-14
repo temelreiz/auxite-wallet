@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
 import { isLaunchCampaignActive } from "@/lib/auxm-bonus-service";
+import { useLanguage } from "@/components/LanguageContext";
 
 // Spread Config Interface
 interface SpreadConfig {
@@ -41,7 +42,6 @@ interface CryptoConvertModalProps {
   isOpen: boolean;
   onClose: () => void;
   crypto: "ETH" | "BTC" | "XRP" | "SOL";
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   cryptoBalances?: {
     ETH: number;
     BTC: number;
@@ -89,6 +89,8 @@ const translations: Record<string, Record<string, string>> = {
     platinum: "Platin",
     palladium: "Paladyum",
     auxiteMoney: "Auxite Para",
+    spread: "Spread",
+    gram: "gram",
   },
   en: {
     convert: "Convert",
@@ -112,6 +114,8 @@ const translations: Record<string, Record<string, string>> = {
     platinum: "Platinum",
     palladium: "Palladium",
     auxiteMoney: "Auxite Money",
+    spread: "Spread",
+    gram: "gram",
   },
   de: {
     convert: "Umwandeln",
@@ -135,6 +139,8 @@ const translations: Record<string, Record<string, string>> = {
     platinum: "Platin",
     palladium: "Palladium",
     auxiteMoney: "Auxite Geld",
+    spread: "Spread",
+    gram: "Gramm",
   },
   fr: {
     convert: "Convertir",
@@ -158,6 +164,8 @@ const translations: Record<string, Record<string, string>> = {
     platinum: "Platine",
     palladium: "Palladium",
     auxiteMoney: "Auxite Argent",
+    spread: "Spread",
+    gram: "gramme",
   },
   ar: {
     convert: "تحويل",
@@ -181,6 +189,8 @@ const translations: Record<string, Record<string, string>> = {
     platinum: "بلاتين",
     palladium: "بالاديوم",
     auxiteMoney: "أوكسيت موني",
+    spread: "سبريد",
+    gram: "غرام",
   },
   ru: {
     convert: "Конвертировать",
@@ -204,6 +214,8 @@ const translations: Record<string, Record<string, string>> = {
     platinum: "Платина",
     palladium: "Палладий",
     auxiteMoney: "Auxite Деньги",
+    spread: "Спред",
+    gram: "грамм",
   },
 };
 
@@ -236,7 +248,6 @@ export function CryptoConvertModal({
   isOpen,
   onClose,
   crypto,
-  lang = "tr",
   cryptoBalances = { ETH: 0, BTC: 0, XRP: 0, SOL: 0 },
   cryptoPrices = { ETH: 3650, BTC: 97500, XRP: 2.20, SOL: 235 },
   metalBidPrices = { AUXG: 134.69, AUXS: 1.82, AUXPT: 52.92, AUXPD: 45.57 },
@@ -250,7 +261,8 @@ export function CryptoConvertModal({
   // Spread config state
   const [spreadConfig, setSpreadConfig] = useState<SpreadConfig>(DEFAULT_SPREAD);
 
-  const t = translations[lang] || translations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const isCampaignActive = isLaunchCampaignActive();
 
   // Kaynak kripto SABİT - prop'tan geliyor, değiştirilemez
@@ -383,7 +395,7 @@ export function CryptoConvertModal({
   };
 
   const getTargetName = (target: TargetType): string => {
-    return t[TARGET_INFO[target].nameKey] || TARGET_INFO[target].nameKey;
+    return t(TARGET_INFO[target].nameKey);
   };
 
   // Render icon helper
@@ -489,10 +501,10 @@ export function CryptoConvertModal({
             </div>
             <div>
               <h3 className="font-bold text-sm sm:text-base text-slate-800 dark:text-white">
-                {fromCrypto} {t.convert}
+                {fromCrypto} {t("convert")}
               </h3>
               <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
-                {cryptoInfo.name} → {t.toAuxmMetal}
+                {cryptoInfo.name} → {t("toAuxmMetal")}
               </p>
             </div>
           </div>
@@ -519,15 +531,15 @@ export function CryptoConvertModal({
               </div>
               <div className="space-y-1 text-[10px] sm:text-xs mt-2">
                 <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                  <span>{t.conversionValue}</span>
+                  <span>{t("conversionValue")}</span>
                   <span>${fromValueUSD.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-purple-600 dark:text-purple-400 font-medium">
-                  <span>{t.bonusEarnedLabel}</span>
+                  <span>{t("bonusEarnedLabel")}</span>
                   <span>+${bonusUSD.toFixed(2)} AUXM</span>
                 </div>
                 <div className="flex justify-between text-[#2F6F62] dark:text-[#2F6F62] font-semibold pt-1 border-t border-stone-200 dark:border-slate-700/50">
-                  <span>{t.totalValue}</span>
+                  <span>{t("totalValue")}</span>
                   <span>${totalValueUSD.toFixed(2)}</span>
                 </div>
               </div>
@@ -539,7 +551,7 @@ export function CryptoConvertModal({
             <div className="px-2.5 sm:px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center gap-2">
               <span>🎁</span>
               <span className="text-xs sm:text-sm text-purple-600 dark:text-purple-300">
-                +%{bonusPercent} {t.earnBonus}
+                +%{bonusPercent} {t("earnBonus")}
               </span>
             </div>
           )}
@@ -553,14 +565,14 @@ export function CryptoConvertModal({
                 </svg>
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-[#2F6F62] dark:text-[#2F6F62] mb-2">
-                {t.conversionSuccess}
+                {t("conversionSuccess")}
               </h3>
               <p className="text-sm sm:text-base text-slate-700 dark:text-slate-400">
                 {formatAmount(fromAmountNum, fromCrypto)} {fromCrypto} → {formatAmount(toAmount, toAsset)}{toAsset !== "AUXM" ? "g" : ""} {toAsset}
               </p>
               {bonusUSD > 0 && (
                 <p className="text-purple-600 dark:text-purple-400 text-xs sm:text-sm mt-2">
-                  🎁 +{bonusUSD.toFixed(2)} Bonus AUXM {t.bonusEarned}
+                  🎁 +{bonusUSD.toFixed(2)} Bonus AUXM {t("bonusEarned")}
                 </p>
               )}
             </div>
@@ -568,7 +580,7 @@ export function CryptoConvertModal({
             <>
               {/* From Section - SABİT, değiştirilemez */}
               <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
-                <div className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mb-1 font-medium">{t.send}</div>
+                <div className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mb-1 font-medium">{t("send")}</div>
                 <div 
                   className="flex items-center gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg bg-stone-200 dark:bg-slate-700/50 border border-stone-300 dark:border-slate-600"
                 >
@@ -588,7 +600,7 @@ export function CryptoConvertModal({
                 
                 <div className="flex items-center justify-between mt-2 mb-1">
                   <span className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
-                    {t.balance}: {formatAmount(fromBalance, fromCrypto)} {fromCrypto}
+                    {t("balance")}: {formatAmount(fromBalance, fromCrypto)} {fromCrypto}
                   </span>
                   <button
                     onClick={handleMaxClick}
@@ -633,11 +645,11 @@ export function CryptoConvertModal({
                   onSelect={setToAsset}
                   show={showToSelect}
                   setShow={setShowToSelect}
-                  label={t.receive}
+                  label={t("receive")}
                 />
                 
                 <div className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 mt-2 mb-1 font-medium">
-                  {t.youWillReceive}
+                  {t("youWillReceive")}
                 </div>
                 
                 <div className="bg-white dark:bg-slate-900 rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 border border-stone-200 dark:border-slate-700">
@@ -646,7 +658,7 @@ export function CryptoConvertModal({
                       {fromAmountNum > 0 ? formatAmount(toAmount, toAsset) : "0.00"}
                     </span>
                     <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium">
-                      {toAsset !== "AUXM" ? "gram" : toAsset}
+                      {toAsset !== "AUXM" ? t("gram") : toAsset}
                     </span>
                   </div>
                 </div>
@@ -659,13 +671,13 @@ export function CryptoConvertModal({
               {/* Exchange Rate & Fee Info */}
               <div className="px-2.5 sm:px-3 py-2 rounded-lg bg-stone-50 dark:bg-slate-800/30 border border-stone-200 dark:border-slate-700 space-y-1 text-xs sm:text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">{t.exchangeRate}</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t("exchangeRate")}</span>
                   <span className="text-slate-800 dark:text-slate-300 font-medium text-[11px] sm:text-sm">
                     1 {fromCrypto} = {formatAmount(fromPrice / toPrice, toAsset)}{toAsset !== "AUXM" ? "g" : ""} {toAsset}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Spread</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t("spread")}</span>
                   <span className="text-slate-800 dark:text-slate-300 font-medium">{totalSpreadPercent.toFixed(2)}%</span>
                 </div>
                 {/* Spread detayı */}
@@ -676,7 +688,7 @@ export function CryptoConvertModal({
                 )}
                 {toAsset !== "AUXM" && (
                   <div className="flex justify-between text-[10px] sm:text-xs pt-1 border-t border-stone-200 dark:border-slate-700/50">
-                    <span className="text-slate-500 dark:text-slate-500">{t.metalBidPrice}</span>
+                    <span className="text-slate-500 dark:text-slate-500">{t("metalBidPrice")}</span>
                     <span className="text-slate-600 dark:text-slate-400">${toPrice.toFixed(2)}/g</span>
                   </div>
                 )}
@@ -685,7 +697,7 @@ export function CryptoConvertModal({
               {/* Insufficient Balance Warning */}
               {!canAfford && fromAmountNum > 0 && (
                 <div className="px-2.5 sm:px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs sm:text-sm text-red-600 dark:text-red-400">
-                  ⚠️ {t.insufficientBalance}
+                  ⚠️ {t("insufficientBalance")}
                 </div>
               )}
 
@@ -701,14 +713,14 @@ export function CryptoConvertModal({
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    {t.processing}
+                    {t("processing")}
                   </>
                 ) : (
                   <>
                     <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
-                    {t.convert}
+                    {t("convert")}
                   </>
                 )}
               </button>

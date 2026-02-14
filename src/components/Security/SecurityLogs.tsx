@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface SecurityLogsProps {
   walletAddress: string;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
 interface SecurityLog {
@@ -16,7 +16,85 @@ interface SecurityLog {
   relativeTime: string;
 }
 
-export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) {
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    securityHistory: "Güvenlik Geçmişi",
+    recentEvents: "Son güvenlik olayları",
+    all: "Tümü",
+    loading: "Yükleniyor...",
+    showMore: "Daha Fazla Göster",
+    noEvents: "Henüz güvenlik olayı yok",
+    eventTypes: "Olay Türleri:",
+    info: "Bilgi",
+    warning: "Uyarı",
+    critical: "Kritik",
+  },
+  en: {
+    securityHistory: "Security History",
+    recentEvents: "Recent security events",
+    all: "All",
+    loading: "Loading...",
+    showMore: "Show More",
+    noEvents: "No security events yet",
+    eventTypes: "Event Types:",
+    info: "Info",
+    warning: "Warning",
+    critical: "Critical",
+  },
+  de: {
+    securityHistory: "Sicherheitsverlauf",
+    recentEvents: "Aktuelle Sicherheitsereignisse",
+    all: "Alle",
+    loading: "Laden...",
+    showMore: "Mehr anzeigen",
+    noEvents: "Noch keine Sicherheitsereignisse",
+    eventTypes: "Ereignistypen:",
+    info: "Info",
+    warning: "Warnung",
+    critical: "Kritisch",
+  },
+  fr: {
+    securityHistory: "Historique de sécurité",
+    recentEvents: "Événements de sécurité récents",
+    all: "Tous",
+    loading: "Chargement...",
+    showMore: "Afficher plus",
+    noEvents: "Aucun événement de sécurité",
+    eventTypes: "Types d'événements :",
+    info: "Info",
+    warning: "Avertissement",
+    critical: "Critique",
+  },
+  ar: {
+    securityHistory: "سجل الأمان",
+    recentEvents: "أحداث الأمان الأخيرة",
+    all: "الكل",
+    loading: "جارٍ التحميل...",
+    showMore: "عرض المزيد",
+    noEvents: "لا توجد أحداث أمنية بعد",
+    eventTypes: "أنواع الأحداث:",
+    info: "معلومات",
+    warning: "تحذير",
+    critical: "حرج",
+  },
+  ru: {
+    securityHistory: "История безопасности",
+    recentEvents: "Недавние события безопасности",
+    all: "Все",
+    loading: "Загрузка...",
+    showMore: "Показать больше",
+    noEvents: "Пока нет событий безопасности",
+    eventTypes: "Типы событий:",
+    info: "Информация",
+    warning: "Предупреждение",
+    critical: "Критический",
+  },
+};
+
+export function SecurityLogs({ walletAddress }: SecurityLogsProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
+
   const [logs, setLogs] = useState<SecurityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "info" | "warning" | "danger">("all");
@@ -37,22 +115,22 @@ export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) 
 
       const currentOffset = reset ? 0 : offset;
       const severityParam = filter !== "all" ? `&severity=${filter}` : "";
-      
+
       const res = await fetch(
         `/api/security/logs?limit=${limit}&offset=${currentOffset}&lang=${lang}${severityParam}`,
         {
           headers: { "x-wallet-address": walletAddress },
         }
       );
-      
+
       const data = await res.json();
-      
+
       if (reset) {
         setLogs(data.logs || []);
       } else {
         setLogs(prev => [...prev, ...(data.logs || [])]);
       }
-      
+
       setHasMore(data.hasMore);
       setOffset(currentOffset + limit);
     } catch (err) {
@@ -111,7 +189,7 @@ export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) 
           value = `${parts[0]}.${parts[1]}.***.***`;
         }
       }
-      
+
       return (
         <span key={key} className="inline-flex items-center gap-1 text-xs bg-slate-700/50 px-2 py-0.5 rounded">
           <span className="text-slate-500">{key}:</span>
@@ -119,6 +197,13 @@ export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) 
         </span>
       );
     });
+  };
+
+  const getLocaleCode = () => {
+    const localeMap: Record<string, string> = {
+      tr: "tr-TR", en: "en-US", de: "de-DE", fr: "fr-FR", ar: "ar-SA", ru: "ru-RU",
+    };
+    return localeMap[lang] || "en-US";
   };
 
   if (loading && logs.length === 0) {
@@ -135,17 +220,17 @@ export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) 
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-white">
-            {lang === "tr" ? "Güvenlik Geçmişi" : "Security History"}
+            {t("securityHistory")}
           </h3>
           <p className="text-sm text-slate-400">
-            {lang === "tr" ? "Son güvenlik olayları" : "Recent security events"}
+            {t("recentEvents")}
           </p>
         </div>
 
         {/* Filter */}
         <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1">
           {[
-            { id: "all", label: lang === "tr" ? "Tümü" : "All" },
+            { id: "all", label: t("all") },
             { id: "info", label: "ℹ️" },
             { id: "warning", label: "⚠️" },
             { id: "danger", label: "🔴" },
@@ -169,7 +254,7 @@ export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) 
       <div className="space-y-2">
         {logs.map((log, index) => {
           const styles = getSeverityStyles(log.severity);
-          
+
           return (
             <div
               key={`${log.timestamp}-${index}`}
@@ -199,7 +284,7 @@ export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) 
 
                   {/* Time */}
                   <p className="text-xs text-slate-500 mt-2">
-                    {log.relativeTime} • {new Date(log.timestamp).toLocaleString(lang === "tr" ? "tr-TR" : "en-US")}
+                    {log.relativeTime} • {new Date(log.timestamp).toLocaleString(getLocaleCode())}
                   </p>
                 </div>
               </div>
@@ -216,9 +301,9 @@ export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) 
             disabled={loading}
             className="px-6 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors text-sm disabled:opacity-50"
           >
-            {loading 
-              ? (lang === "tr" ? "Yükleniyor..." : "Loading...")
-              : (lang === "tr" ? "Daha Fazla Göster" : "Show More")}
+            {loading
+              ? t("loading")
+              : t("showMore")}
           </button>
         </div>
       )}
@@ -228,7 +313,7 @@ export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) 
         <div className="text-center py-12">
           <span className="text-4xl mb-4 block">📋</span>
           <p className="text-slate-400">
-            {lang === "tr" ? "Henüz güvenlik olayı yok" : "No security events yet"}
+            {t("noEvents")}
           </p>
         </div>
       )}
@@ -236,20 +321,20 @@ export function SecurityLogs({ walletAddress, lang = "en" }: SecurityLogsProps) 
       {/* Legend */}
       <div className="bg-slate-800/30 rounded-xl p-4">
         <p className="text-xs text-slate-500 mb-2">
-          {lang === "tr" ? "Olay Türleri:" : "Event Types:"}
+          {t("eventTypes")}
         </p>
         <div className="flex flex-wrap gap-3 text-xs">
           <span className="flex items-center gap-1">
             <span className="text-blue-400">🔵</span>
-            <span className="text-slate-400">{lang === "tr" ? "Bilgi" : "Info"}</span>
+            <span className="text-slate-400">{t("info")}</span>
           </span>
           <span className="flex items-center gap-1">
             <span className="text-[#BFA181]">🟡</span>
-            <span className="text-slate-400">{lang === "tr" ? "Uyarı" : "Warning"}</span>
+            <span className="text-slate-400">{t("warning")}</span>
           </span>
           <span className="flex items-center gap-1">
             <span className="text-red-400">🔴</span>
-            <span className="text-slate-400">{lang === "tr" ? "Kritik" : "Critical"}</span>
+            <span className="text-slate-400">{t("critical")}</span>
           </span>
         </div>
       </div>

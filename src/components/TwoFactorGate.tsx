@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import QRCode from "qrcode";
+import { useLanguage } from "@/components/LanguageContext";
 
 const translations: Record<string, Record<string, string>> = {
   tr: {
@@ -34,6 +35,8 @@ const translations: Record<string, Record<string, string>> = {
     processingDesc: "Lütfen bekleyin, işleminiz yürütülüyor.",
     retry: "Tekrar Dene",
     connectionError: "Bağlantı hatası. Tekrar deneyin.",
+    copyAll: "Tümünü Kopyala",
+    hide: "Gizle",
   },
   en: {
     setupTitle: "2FA Setup Required",
@@ -65,6 +68,8 @@ const translations: Record<string, Record<string, string>> = {
     processingDesc: "Please wait while your transaction is being executed.",
     retry: "Retry",
     connectionError: "Connection error. Please retry.",
+    copyAll: "Copy all",
+    hide: "Hide",
   },
   de: {
     setupTitle: "2FA-Einrichtung erforderlich", setupDesc: "Sie müssen die Zwei-Faktor-Authentifizierung einrichten.",
@@ -77,6 +82,7 @@ const translations: Record<string, Record<string, string>> = {
     tooManyAttempts: "Zu viele Fehlversuche.", setupSuccess: "2FA erfolgreich!", error: "Ein Fehler ist aufgetreten",
     loading: "Laden...", processing: "Transaktion wird verarbeitet...", processingDesc: "Bitte warten Sie, Ihre Transaktion wird ausgeführt.",
     retry: "Wiederholen", connectionError: "Verbindungsfehler.",
+    copyAll: "Alle kopieren", hide: "Ausblenden",
   },
   fr: {
     setupTitle: "Configuration 2FA requise", setupDesc: "Vous devez configurer l'authentification à deux facteurs.",
@@ -89,6 +95,7 @@ const translations: Record<string, Record<string, string>> = {
     tooManyAttempts: "Trop de tentatives.", setupSuccess: "2FA configuré!", error: "Une erreur s'est produite",
     loading: "Chargement...", processing: "Traitement de la transaction...", processingDesc: "Veuillez patienter pendant l'exécution de votre transaction.",
     retry: "Réessayer", connectionError: "Erreur de connexion.",
+    copyAll: "Tout copier", hide: "Masquer",
   },
   ar: {
     setupTitle: "إعداد 2FA مطلوب", setupDesc: "تحتاج إلى إعداد المصادقة الثنائية.", verifyTitle: "التحقق من 2FA",
@@ -100,6 +107,7 @@ const translations: Record<string, Record<string, string>> = {
     tooManyAttempts: "محاولات كثيرة.", setupSuccess: "تم إعداد 2FA!", error: "حدث خطأ",
     loading: "جاري التحميل...", processing: "جاري معالجة المعاملة...", processingDesc: "يرجى الانتظار أثناء تنفيذ معاملتك.",
     retry: "إعادة المحاولة", connectionError: "خطأ في الاتصال.",
+    copyAll: "نسخ الكل", hide: "إخفاء",
   },
   ru: {
     setupTitle: "Требуется настройка 2FA", setupDesc: "Настройте двухфакторную аутентификацию.",
@@ -113,6 +121,7 @@ const translations: Record<string, Record<string, string>> = {
     setupSuccess: "2FA настроен!", error: "Произошла ошибка",
     loading: "Загрузка...", processing: "Обработка транзакции...", processingDesc: "Пожалуйста, подождите, ваша транзакция выполняется.",
     retry: "Повторить", connectionError: "Ошибка соединения.",
+    copyAll: "Копировать все", hide: "Скрыть",
   },
 };
 
@@ -121,13 +130,13 @@ interface TwoFactorGateProps {
   isOpen: boolean;
   onClose: () => void;
   onVerified: (verifiedCode?: string) => void; // Now passes the verified code
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
 type Step = "checking" | "error" | "setup-qr" | "setup-backup" | "verify" | "processing";
 
-export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang = "en" }: TwoFactorGateProps) {
-  const t = translations[lang] || translations.en;
+export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified }: TwoFactorGateProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   const [step, setStep] = useState<Step>("checking");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
@@ -182,9 +191,9 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
     } catch (err: any) {
       console.error("2FA status check error:", err);
       if (err.name === "AbortError") {
-        setError(t.connectionError);
+        setError(t("connectionError"));
       } else {
-        setError(err.message || t.error);
+        setError(err.message || t("error"));
       }
       setStep("error");
     }
@@ -231,9 +240,9 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
     } catch (err: any) {
       console.error("Setup error:", err);
       if (err.name === "AbortError") {
-        setError(t.connectionError);
+        setError(t("connectionError"));
       } else {
-        setError(err.message || t.error);
+        setError(err.message || t("error"));
       }
       setStep("error");
     } finally {
@@ -269,7 +278,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
       console.log("Enable response:", data);
 
       if (!res.ok) {
-        throw new Error(data.error || t.invalidCode);
+        throw new Error(data.error || t("invalidCode"));
       }
 
       if (data.backupCodes) {
@@ -278,7 +287,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
       setStep("setup-backup");
       setCode("");
     } catch (err: any) {
-      setError(err.message || t.invalidCode);
+      setError(err.message || t("invalidCode"));
     } finally {
       setIsProcessing(false);
     }
@@ -309,7 +318,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
       console.log("Verify response:", data);
 
       if (!res.ok || !data.valid) {
-        throw new Error(data.error || t.invalidCode);
+        throw new Error(data.error || t("invalidCode"));
       }
 
       // Show processing state before passing code to parent
@@ -318,7 +327,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
       // Pass the verified code back so it can be sent to backend APIs
       onVerified(useBackupCode ? code.toUpperCase() : code);
     } catch (err: any) {
-      setError(err.message || t.invalidCode);
+      setError(err.message || t("invalidCode"));
       setIsProcessing(false);
     }
   };
@@ -367,16 +376,16 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
             </div>
             <div className="flex-1">
               <h2 className="text-lg font-bold text-slate-800 dark:text-white">
-                {step === "error" ? t.error :
-                 step === "processing" ? t.processing :
-                 step === "setup-qr" || step === "setup-backup" ? t.setupTitle :
-                 t.verifyTitle}
+                {step === "error" ? t("error") :
+                 step === "processing" ? t("processing") :
+                 step === "setup-qr" || step === "setup-backup" ? t("setupTitle") :
+                 t("verifyTitle")}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 {step === "error" ? "" :
-                 step === "processing" ? t.processingDesc :
-                 step === "setup-qr" || step === "setup-backup" ? t.setupDesc :
-                 t.verifyDesc}
+                 step === "processing" ? t("processingDesc") :
+                 step === "setup-qr" || step === "setup-backup" ? t("setupDesc") :
+                 t("verifyDesc")}
               </p>
             </div>
             {step !== "processing" && (
@@ -393,7 +402,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
           {step === "checking" && (
             <div className="flex flex-col items-center py-8">
               <div className="w-12 h-12 border-4 border-[#BFA181]/30 border-t-[#BFA181] rounded-full animate-spin mb-4" />
-              <p className="text-slate-500 dark:text-slate-400">{t.loading}</p>
+              <p className="text-slate-500 dark:text-slate-400">{t("loading")}</p>
             </div>
           )}
 
@@ -408,9 +417,9 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
               </div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-2 h-2 rounded-full bg-[#2F6F62] animate-pulse" />
-                <p className="text-sm font-semibold text-[#2F6F62]">{t.processing}</p>
+                <p className="text-sm font-semibold text-[#2F6F62]">{t("processing")}</p>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 text-center">{t.processingDesc}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 text-center">{t("processingDesc")}</p>
             </div>
           )}
 
@@ -420,19 +429,19 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
               <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center mb-4">
                 <span className="text-3xl">❌</span>
               </div>
-              <p className="text-red-600 dark:text-red-400 mb-4 text-center">{error || t.connectionError}</p>
+              <p className="text-red-600 dark:text-red-400 mb-4 text-center">{error || t("connectionError")}</p>
               <div className="flex gap-3">
                 <button 
                   onClick={onClose}
                   className="px-4 py-2 rounded-lg bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium"
                 >
-                  {t.cancel}
+                  {t("cancel")}
                 </button>
                 <button 
                   onClick={check2FAStatus}
                   className="px-4 py-2 rounded-lg bg-[#2F6F62] hover:bg-[#2F6F62] text-white font-medium"
                 >
-                  {t.retry}
+                  {t("retry")}
                 </button>
               </div>
             </div>
@@ -442,7 +451,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
           {step === "setup-qr" && (
             <div className="space-y-4">
               <div className="flex flex-col items-center">
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 text-center">{t.scanQRDesc}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 text-center">{t("scanQRDesc")}</p>
                 {qrCodeDataUrl && (
                   <div className="bg-white p-3 rounded-xl shadow-lg">
                     <img src={qrCodeDataUrl} alt="QR Code" className="w-48 h-48" />
@@ -452,11 +461,11 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
 
               <div className="pt-2">
                 <button onClick={() => setShowManualKey(!showManualKey)} className="text-sm text-[#BFA181] dark:text-[#BFA181] hover:underline">
-                  {showManualKey ? "Hide" : t.manualEntry} →
+                  {showManualKey ? t("hide") : t("manualEntry")} →
                 </button>
                 {showManualKey && secret && (
                   <div className="mt-2 p-3 bg-stone-100 dark:bg-slate-800 rounded-lg">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t.secretKey}:</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("secretKey")}:</p>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 text-sm font-mono text-slate-800 dark:text-white break-all">{secret}</code>
                       <button onClick={() => copyToClipboard(secret)} className="p-1.5 bg-white dark:bg-slate-700 rounded text-slate-500 hover:text-slate-700">
@@ -468,7 +477,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
               </div>
 
               <div>
-                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">{t.verificationCode}</label>
+                <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">{t("verificationCode")}</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -489,14 +498,14 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
 
               <div className="flex gap-3 pt-2">
                 <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-stone-300 dark:hover:bg-slate-600 transition-colors">
-                  {t.cancel}
+                  {t("cancel")}
                 </button>
                 <button
                   onClick={handleVerifySetup}
                   disabled={code.length !== 6 || isProcessing}
                   className="flex-1 py-3 rounded-xl bg-[#2F6F62] hover:bg-[#2F6F62] disabled:opacity-50 text-white font-semibold transition-colors"
                 >
-                  {isProcessing ? t.verifying : t.continue}
+                  {isProcessing ? t("verifying") : t("continue")}
                 </button>
               </div>
             </div>
@@ -506,14 +515,14 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
           {step === "setup-backup" && (
             <div className="space-y-4">
               <div className="p-4 bg-[#BFA181]/10 dark:bg-[#BFA181]/10 border border-[#BFA181]/30 dark:border-[#BFA181]/30 rounded-xl">
-                <p className="text-sm text-[#BFA181] dark:text-[#D4B47A]">⚠️ {t.backupCodesDesc}</p>
+                <p className="text-sm text-[#BFA181] dark:text-[#D4B47A]">⚠️ {t("backupCodesDesc")}</p>
               </div>
 
               <div className="bg-stone-100 dark:bg-slate-800 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.backupCodes}</span>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t("backupCodes")}</span>
                   <button onClick={copyAllBackupCodes} className="text-xs text-[#BFA181] dark:text-[#BFA181] hover:underline">
-                    {copied ? t.codeCopied : "Copy all"}
+                    {copied ? t("codeCopied") : t("copyAll")}
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -529,7 +538,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
                 onClick={handleBackupCodesSaved}
                 className="w-full py-3 rounded-xl bg-[#2F6F62] hover:bg-[#2F6F62] text-white font-semibold transition-colors"
               >
-                {t.saveBackupCodes}
+                {t("saveBackupCodes")}
               </button>
             </div>
           )}
@@ -539,7 +548,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">
-                  {useBackupCode ? t.backupCodes : t.verificationCode}
+                  {useBackupCode ? t("backupCodes") : t("verificationCode")}
                 </label>
                 <input
                   type="text"
@@ -562,7 +571,7 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
                 onClick={() => { setUseBackupCode(!useBackupCode); setCode(""); setError(null); }}
                 className="text-sm text-[#BFA181] dark:text-[#BFA181] hover:underline"
               >
-                {useBackupCode ? t.useAuthenticator : t.useBackupCode} →
+                {useBackupCode ? t("useAuthenticator") : t("useBackupCode")} →
               </button>
 
               {error && (
@@ -573,14 +582,14 @@ export function TwoFactorGate({ walletAddress, isOpen, onClose, onVerified, lang
 
               <div className="flex gap-3 pt-2">
                 <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium hover:bg-stone-300 dark:hover:bg-slate-600 transition-colors">
-                  {t.cancel}
+                  {t("cancel")}
                 </button>
                 <button
                   onClick={handleVerify}
                   disabled={(useBackupCode ? code.length !== 8 : code.length !== 6) || isProcessing}
                   className="flex-1 py-3 rounded-xl bg-[#2F6F62] hover:bg-[#2F6F62] disabled:opacity-50 text-white font-semibold transition-colors"
                 >
-                  {isProcessing ? t.verifying : t.verify}
+                  {isProcessing ? t("verifying") : t("verify")}
                 </button>
               </div>
             </div>

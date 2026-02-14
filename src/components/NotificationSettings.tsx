@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePushNotification } from "@/hooks/usePushNotification";
+import { useLanguage } from "@/components/LanguageContext";
 
 /**
  * Notification Settings Component
@@ -10,7 +11,6 @@ import { usePushNotification } from "@/hooks/usePushNotification";
 
 interface Props {
   walletAddress: string;
-  lang: "tr" | "en";
 }
 
 interface NotificationPreferences {
@@ -21,7 +21,7 @@ interface NotificationPreferences {
   marketing: boolean;
 }
 
-const t = {
+const translations: Record<string, Record<string, string>> = {
   tr: {
     title: "Bildirim Ayarları",
     subtitle: "Push bildirimlerini yönetin",
@@ -66,10 +66,100 @@ const t = {
     testNotification: "Send Test Notification",
     testSent: "Test notification sent",
   },
+  de: {
+    title: "Benachrichtigungseinstellungen",
+    subtitle: "Push-Benachrichtigungen verwalten",
+    pushNotifications: "Push-Benachrichtigungen",
+    enablePush: "Benachrichtigungen aktivieren",
+    disablePush: "Benachrichtigungen deaktivieren",
+    notSupported: "Ihr Browser unterstützt keine Benachrichtigungen",
+    permissionDenied: "Benachrichtigungsberechtigung verweigert. In den Browsereinstellungen aktivieren.",
+    categories: "Benachrichtigungskategorien",
+    transactions: "Transaktionsbenachrichtigungen",
+    transactionsDesc: "Einzahlungs-, Auszahlungs- und Überweisungsbenachrichtigungen",
+    priceAlerts: "Preisalarme",
+    priceAlertsDesc: "Wenn Ihre Preisziele erreicht werden",
+    security: "Sicherheitsbenachrichtigungen",
+    securityDesc: "Neue Anmeldungen, Geräte- und Sicherheitswarnungen",
+    marketing: "Werbebenachrichtigungen",
+    marketingDesc: "Kampagnen- und Angebotsbenachrichtigungen",
+    enabled: "An",
+    disabled: "Aus",
+    testNotification: "Testbenachrichtigung senden",
+    testSent: "Testbenachrichtigung gesendet",
+  },
+  fr: {
+    title: "Paramètres de notifications",
+    subtitle: "Gérer les notifications push",
+    pushNotifications: "Notifications Push",
+    enablePush: "Activer les notifications",
+    disablePush: "Désactiver les notifications",
+    notSupported: "Votre navigateur ne prend pas en charge les notifications",
+    permissionDenied: "Permission de notification refusée. Activez dans les paramètres du navigateur.",
+    categories: "Catégories de notifications",
+    transactions: "Notifications de transactions",
+    transactionsDesc: "Notifications de dépôt, retrait et transfert",
+    priceAlerts: "Alertes de prix",
+    priceAlertsDesc: "Lorsque vos objectifs de prix sont atteints",
+    security: "Notifications de sécurité",
+    securityDesc: "Nouvelles connexions, appareils et alertes de sécurité",
+    marketing: "Notifications promotionnelles",
+    marketingDesc: "Notifications de campagnes et offres",
+    enabled: "Activé",
+    disabled: "Désactivé",
+    testNotification: "Envoyer une notification test",
+    testSent: "Notification test envoyée",
+  },
+  ar: {
+    title: "إعدادات الإشعارات",
+    subtitle: "إدارة إشعارات الدفع",
+    pushNotifications: "إشعارات الدفع",
+    enablePush: "تفعيل الإشعارات",
+    disablePush: "تعطيل الإشعارات",
+    notSupported: "متصفحك لا يدعم الإشعارات",
+    permissionDenied: "تم رفض إذن الإشعارات. قم بالتفعيل من إعدادات المتصفح.",
+    categories: "فئات الإشعارات",
+    transactions: "إشعارات المعاملات",
+    transactionsDesc: "إشعارات الإيداع والسحب والتحويل",
+    priceAlerts: "تنبيهات الأسعار",
+    priceAlertsDesc: "عند الوصول إلى أهداف السعر المحددة",
+    security: "إشعارات الأمان",
+    securityDesc: "تسجيلات الدخول الجديدة وتنبيهات الأجهزة والأمان",
+    marketing: "إشعارات ترويجية",
+    marketingDesc: "إشعارات الحملات والعروض",
+    enabled: "مفعّل",
+    disabled: "معطّل",
+    testNotification: "إرسال إشعار تجريبي",
+    testSent: "تم إرسال الإشعار التجريبي",
+  },
+  ru: {
+    title: "Настройки уведомлений",
+    subtitle: "Управление push-уведомлениями",
+    pushNotifications: "Push-уведомления",
+    enablePush: "Включить уведомления",
+    disablePush: "Отключить уведомления",
+    notSupported: "Ваш браузер не поддерживает уведомления",
+    permissionDenied: "Разрешение на уведомления отклонено. Включите в настройках браузера.",
+    categories: "Категории уведомлений",
+    transactions: "Уведомления о транзакциях",
+    transactionsDesc: "Уведомления о пополнении, выводе и переводах",
+    priceAlerts: "Ценовые оповещения",
+    priceAlertsDesc: "Когда ваши ценовые цели достигнуты",
+    security: "Уведомления безопасности",
+    securityDesc: "Новые входы, устройства и оповещения безопасности",
+    marketing: "Рекламные уведомления",
+    marketingDesc: "Уведомления о кампаниях и предложениях",
+    enabled: "Вкл",
+    disabled: "Выкл",
+    testNotification: "Отправить тестовое уведомление",
+    testSent: "Тестовое уведомление отправлено",
+  },
 };
 
-export function NotificationSettings({ walletAddress, lang }: Props) {
-  const labels = t[lang];
+export function NotificationSettings({ walletAddress }: Props) {
+  const { lang } = useLanguage();
+  const t = (key: string) =>
+    (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const {
     isSupported,
     permission,
@@ -177,8 +267,8 @@ export function NotificationSettings({ walletAddress, lang }: Props) {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h3 className="text-lg font-semibold text-white">{labels.title}</h3>
-        <p className="text-sm text-slate-400">{labels.subtitle}</p>
+        <h3 className="text-lg font-semibold text-white">{t("title")}</h3>
+        <p className="text-sm text-slate-400">{t("subtitle")}</p>
       </div>
 
       {/* Push Notifications Toggle */}
@@ -191,11 +281,11 @@ export function NotificationSettings({ walletAddress, lang }: Props) {
               </svg>
             </div>
             <div>
-              <p className="font-medium text-white">{labels.pushNotifications}</p>
+              <p className="font-medium text-white">{t("pushNotifications")}</p>
               <p className="text-sm text-slate-400">
-                {!isSupported && labels.notSupported}
-                {isSupported && permission === "denied" && labels.permissionDenied}
-                {isSupported && permission !== "denied" && (isSubscribed ? labels.enabled : labels.disabled)}
+                {!isSupported && t("notSupported")}
+                {isSupported && permission === "denied" && t("permissionDenied")}
+                {isSupported && permission !== "denied" && (isSubscribed ? t("enabled") : t("disabled"))}
               </p>
             </div>
           </div>
@@ -216,9 +306,9 @@ export function NotificationSettings({ walletAddress, lang }: Props) {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
               ) : isSubscribed ? (
-                labels.disablePush
+                t("disablePush")
               ) : (
-                labels.enablePush
+                t("enablePush")
               )}
             </button>
           )}
@@ -233,15 +323,15 @@ export function NotificationSettings({ walletAddress, lang }: Props) {
       {isSubscribed && (
         <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
           <div className="p-4 border-b border-slate-700">
-            <h4 className="font-medium text-white">{labels.categories}</h4>
+            <h4 className="font-medium text-white">{t("categories")}</h4>
           </div>
 
           <div className="divide-y divide-slate-700">
             {/* Transactions */}
             <ToggleRow
               icon="💸"
-              title={labels.transactions}
-              description={labels.transactionsDesc}
+              title={t("transactions")}
+              description={t("transactionsDesc")}
               checked={preferences.transactions}
               onChange={(v) => updatePreference("transactions", v)}
               disabled={saving}
@@ -250,8 +340,8 @@ export function NotificationSettings({ walletAddress, lang }: Props) {
             {/* Price Alerts */}
             <ToggleRow
               icon="📈"
-              title={labels.priceAlerts}
-              description={labels.priceAlertsDesc}
+              title={t("priceAlerts")}
+              description={t("priceAlertsDesc")}
               checked={preferences.priceAlerts}
               onChange={(v) => updatePreference("priceAlerts", v)}
               disabled={saving}
@@ -260,8 +350,8 @@ export function NotificationSettings({ walletAddress, lang }: Props) {
             {/* Security */}
             <ToggleRow
               icon="🔒"
-              title={labels.security}
-              description={labels.securityDesc}
+              title={t("security")}
+              description={t("securityDesc")}
               checked={preferences.security}
               onChange={(v) => updatePreference("security", v)}
               disabled={saving}
@@ -270,8 +360,8 @@ export function NotificationSettings({ walletAddress, lang }: Props) {
             {/* Marketing */}
             <ToggleRow
               icon="🎁"
-              title={labels.marketing}
-              description={labels.marketingDesc}
+              title={t("marketing")}
+              description={t("marketingDesc")}
               checked={preferences.marketing}
               onChange={(v) => updatePreference("marketing", v)}
               disabled={saving}
@@ -287,7 +377,7 @@ export function NotificationSettings({ walletAddress, lang }: Props) {
           disabled={testSent}
           className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors disabled:opacity-50"
         >
-          {testSent ? `✓ ${labels.testSent}` : labels.testNotification}
+          {testSent ? `✓ ${t("testSent")}` : t("testNotification")}
         </button>
       )}
     </div>

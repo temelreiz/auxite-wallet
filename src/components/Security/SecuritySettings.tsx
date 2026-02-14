@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 import { TwoFactorSetup } from "./TwoFactorSetup";
 import { DeviceManager } from "./DeviceManager";
 import { SessionManager } from "./SessionManager";
@@ -9,7 +10,6 @@ import { SecurityLogs } from "./SecurityLogs";
 
 interface SecuritySettingsProps {
   walletAddress: string;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   onClose?: () => void;
 }
 
@@ -22,11 +22,166 @@ interface SecurityStatus {
   backupCodesRemaining?: number;
 }
 
-export function SecuritySettings({ 
-  walletAddress, 
-  lang = "en",
-  onClose 
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    securitySettings: "Güvenlik Ayarları",
+    protectAccount: "Hesabınızı koruyun",
+    securityScore: "Güvenlik Skoru",
+    strong: "Güçlü",
+    medium: "Orta",
+    weak: "Zayıf",
+    overview: "Genel",
+    bio: "Bio",
+    device: "Cihaz",
+    session: "Oturum",
+    log: "Log",
+    active: "Aktif",
+    off: "Kapalı",
+    backup: "yedek",
+    trusted: "güvenilir",
+    activeLabel: "aktif",
+    recommendations: "Öneriler",
+    enable2FA: "2FA'yı Aktifleştirin",
+    enable2FADesc: "Hesabınızı ekstra güvenlik katmanıyla koruyun",
+    addBiometric: "Biyometrik Ekleyin",
+    addBiometricDesc: "Touch ID veya Face ID ile hızlı ve güvenli giriş",
+    great: "Harika!",
+    wellProtected: "Hesabınız güçlü bir şekilde korunuyor",
+  },
+  en: {
+    securitySettings: "Security Settings",
+    protectAccount: "Protect your account",
+    securityScore: "Security Score",
+    strong: "Strong",
+    medium: "Medium",
+    weak: "Weak",
+    overview: "Overview",
+    bio: "Bio",
+    device: "Device",
+    session: "Session",
+    log: "Logs",
+    active: "Active",
+    off: "Off",
+    backup: "backup",
+    trusted: "trusted",
+    activeLabel: "active",
+    recommendations: "Recommendations",
+    enable2FA: "Enable 2FA",
+    enable2FADesc: "Protect your account with an extra layer of security",
+    addBiometric: "Add Biometric",
+    addBiometricDesc: "Quick and secure login with Touch ID or Face ID",
+    great: "Great!",
+    wellProtected: "Your account is well protected",
+  },
+  de: {
+    securitySettings: "Sicherheitseinstellungen",
+    protectAccount: "Schützen Sie Ihr Konto",
+    securityScore: "Sicherheitsbewertung",
+    strong: "Stark",
+    medium: "Mittel",
+    weak: "Schwach",
+    overview: "Übersicht",
+    bio: "Bio",
+    device: "Gerät",
+    session: "Sitzung",
+    log: "Protokoll",
+    active: "Aktiv",
+    off: "Aus",
+    backup: "Backup",
+    trusted: "vertraut",
+    activeLabel: "aktiv",
+    recommendations: "Empfehlungen",
+    enable2FA: "2FA aktivieren",
+    enable2FADesc: "Schützen Sie Ihr Konto mit einer zusätzlichen Sicherheitsebene",
+    addBiometric: "Biometrie hinzufügen",
+    addBiometricDesc: "Schnelle und sichere Anmeldung mit Touch ID oder Face ID",
+    great: "Großartig!",
+    wellProtected: "Ihr Konto ist gut geschützt",
+  },
+  fr: {
+    securitySettings: "Paramètres de sécurité",
+    protectAccount: "Protégez votre compte",
+    securityScore: "Score de sécurité",
+    strong: "Fort",
+    medium: "Moyen",
+    weak: "Faible",
+    overview: "Aperçu",
+    bio: "Bio",
+    device: "Appareil",
+    session: "Session",
+    log: "Journaux",
+    active: "Actif",
+    off: "Désactivé",
+    backup: "secours",
+    trusted: "confiance",
+    activeLabel: "actif",
+    recommendations: "Recommandations",
+    enable2FA: "Activer la 2FA",
+    enable2FADesc: "Protégez votre compte avec une couche de sécurité supplémentaire",
+    addBiometric: "Ajouter la biométrie",
+    addBiometricDesc: "Connexion rapide et sécurisée avec Touch ID ou Face ID",
+    great: "Excellent !",
+    wellProtected: "Votre compte est bien protégé",
+  },
+  ar: {
+    securitySettings: "إعدادات الأمان",
+    protectAccount: "احمِ حسابك",
+    securityScore: "درجة الأمان",
+    strong: "قوي",
+    medium: "متوسط",
+    weak: "ضعيف",
+    overview: "نظرة عامة",
+    bio: "بيو",
+    device: "جهاز",
+    session: "جلسة",
+    log: "السجلات",
+    active: "نشط",
+    off: "معطّل",
+    backup: "احتياطي",
+    trusted: "موثوق",
+    activeLabel: "نشط",
+    recommendations: "التوصيات",
+    enable2FA: "تفعيل المصادقة الثنائية",
+    enable2FADesc: "احمِ حسابك بطبقة أمان إضافية",
+    addBiometric: "إضافة البيومتري",
+    addBiometricDesc: "تسجيل دخول سريع وآمن باستخدام Touch ID أو Face ID",
+    great: "ممتاز!",
+    wellProtected: "حسابك محمي بشكل جيد",
+  },
+  ru: {
+    securitySettings: "Настройки безопасности",
+    protectAccount: "Защитите свой аккаунт",
+    securityScore: "Оценка безопасности",
+    strong: "Сильная",
+    medium: "Средняя",
+    weak: "Слабая",
+    overview: "Обзор",
+    bio: "Био",
+    device: "Устройство",
+    session: "Сессия",
+    log: "Журнал",
+    active: "Активно",
+    off: "Выкл",
+    backup: "резерв",
+    trusted: "доверенных",
+    activeLabel: "активных",
+    recommendations: "Рекомендации",
+    enable2FA: "Включить 2FA",
+    enable2FADesc: "Защитите аккаунт дополнительным уровнем безопасности",
+    addBiometric: "Добавить биометрию",
+    addBiometricDesc: "Быстрый и безопасный вход с Touch ID или Face ID",
+    great: "Отлично!",
+    wellProtected: "Ваш аккаунт хорошо защищён",
+  },
+};
+
+export function SecuritySettings({
+  walletAddress,
+  onClose
 }: SecuritySettingsProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
+
   const [activeTab, setActiveTab] = useState<"overview" | "2fa" | "biometric" | "devices" | "sessions" | "logs">("overview");
   const [status, setStatus] = useState<SecurityStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +193,7 @@ export function SecuritySettings({
   const fetchSecurityStatus = async () => {
     try {
       setLoading(true);
-      
+
       // 2FA durumu
       const twoFARes = await fetch("/api/security/2fa/status", {
         headers: { "x-wallet-address": walletAddress },
@@ -93,18 +248,18 @@ export function SecuritySettings({
   };
 
   const getScoreLabel = (score: number) => {
-    if (score >= 80) return lang === "tr" ? "Güçlü" : "Strong";
-    if (score >= 50) return lang === "tr" ? "Orta" : "Medium";
-    return lang === "tr" ? "Zayıf" : "Weak";
+    if (score >= 80) return t("strong");
+    if (score >= 50) return t("medium");
+    return t("weak");
   };
 
   const tabs = [
-    { id: "overview", label: lang === "tr" ? "Genel" : "Overview", icon: "🛡️" },
+    { id: "overview", label: t("overview"), icon: "🛡️" },
     { id: "2fa", label: "2FA", icon: "🔐" },
-    { id: "biometric", label: lang === "tr" ? "Bio" : "Bio", icon: "👆" },
-    { id: "devices", label: lang === "tr" ? "Cihaz" : "Device", icon: "📱" },
-    { id: "sessions", label: lang === "tr" ? "Oturum" : "Session", icon: "🔑" },
-    { id: "logs", label: lang === "tr" ? "Log" : "Logs", icon: "📋" },
+    { id: "biometric", label: t("bio"), icon: "👆" },
+    { id: "devices", label: t("device"), icon: "📱" },
+    { id: "sessions", label: t("session"), icon: "🔑" },
+    { id: "logs", label: t("log"), icon: "📋" },
   ];
 
   return (
@@ -118,10 +273,10 @@ export function SecuritySettings({
             </div>
             <div className="min-w-0">
               <h2 className="text-base sm:text-xl font-bold text-white truncate">
-                {lang === "tr" ? "Güvenlik Ayarları" : "Security Settings"}
+                {t("securitySettings")}
               </h2>
               <p className="text-xs sm:text-sm text-slate-400 hidden sm:block">
-                {lang === "tr" ? "Hesabınızı koruyun" : "Protect your account"}
+                {t("protectAccount")}
               </p>
             </div>
           </div>
@@ -168,7 +323,7 @@ export function SecuritySettings({
                   <div className="bg-slate-800/50 rounded-xl p-4 sm:p-6 border border-slate-700">
                     <div className="flex items-center justify-between mb-3 sm:mb-4">
                       <h3 className="text-sm sm:text-lg font-semibold text-white">
-                        {lang === "tr" ? "Güvenlik Skoru" : "Security Score"}
+                        {t("securityScore")}
                       </h3>
                       <div className={`text-2xl sm:text-3xl font-bold ${getScoreColor(status.securityScore)}`}>
                         {status.securityScore}/100
@@ -194,7 +349,7 @@ export function SecuritySettings({
                   {/* Quick Status Cards */}
                   <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
                     {/* 2FA Status */}
-                    <div 
+                    <div
                       className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700 cursor-pointer hover:border-slate-600 transition-colors touch-manipulation active:scale-[0.98]"
                       onClick={() => setActiveTab("2fa")}
                     >
@@ -203,70 +358,66 @@ export function SecuritySettings({
                         <span className="text-[10px] sm:text-sm text-slate-400">2FA</span>
                       </div>
                       <div className={`text-sm sm:text-lg font-semibold ${status.twoFactorEnabled ? "text-[#2F6F62]" : "text-red-400"}`}>
-                        {status.twoFactorEnabled 
-                          ? (lang === "tr" ? "Aktif" : "Active") 
-                          : (lang === "tr" ? "Kapalı" : "Off")}
+                        {status.twoFactorEnabled ? t("active") : t("off")}
                       </div>
                       {status.twoFactorEnabled && status.backupCodesRemaining !== undefined && (
                         <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1">
-                          {status.backupCodesRemaining} {lang === "tr" ? "yedek" : "backup"}
+                          {status.backupCodesRemaining} {t("backup")}
                         </p>
                       )}
                     </div>
 
                     {/* Biometric Status */}
-                    <div 
+                    <div
                       className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700 cursor-pointer hover:border-slate-600 transition-colors touch-manipulation active:scale-[0.98]"
                       onClick={() => setActiveTab("biometric")}
                     >
                       <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
                         <span className="text-base sm:text-xl">👆</span>
                         <span className="text-[10px] sm:text-sm text-slate-400">
-                          {lang === "tr" ? "Bio" : "Bio"}
+                          {t("bio")}
                         </span>
                       </div>
                       <div className={`text-sm sm:text-lg font-semibold ${status.biometricEnabled ? "text-[#2F6F62]" : "text-slate-400"}`}>
-                        {status.biometricEnabled 
-                          ? (lang === "tr" ? "Aktif" : "Active") 
-                          : (lang === "tr" ? "Kapalı" : "Off")}
+                        {status.biometricEnabled ? t("active") : t("off")}
                       </div>
                     </div>
 
                     {/* Devices */}
-                    <div 
+                    <div
                       className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700 cursor-pointer hover:border-slate-600 transition-colors touch-manipulation active:scale-[0.98]"
                       onClick={() => setActiveTab("devices")}
                     >
                       <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
                         <span className="text-base sm:text-xl">📱</span>
                         <span className="text-[10px] sm:text-sm text-slate-400">
-                          {lang === "tr" ? "Cihaz" : "Device"}
+                          {t("device")}
                         </span>
                       </div>
                       <div className="text-sm sm:text-lg font-semibold text-white">
                         {status.trustedDevices}
                       </div>
                       <p className="text-[10px] sm:text-xs text-slate-500">
-                        {lang === "tr" ? "güvenilir" : "trusted"}
+                        {t("trusted")}
                       </p>
                     </div>
 
                     {/* Sessions */}
-                    <div 
+                    <div
                       className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700 cursor-pointer hover:border-slate-600 transition-colors touch-manipulation active:scale-[0.98]"
                       onClick={() => setActiveTab("sessions")}
                     >
                       <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
                         <span className="text-base sm:text-xl">🔑</span>
                         <span className="text-[10px] sm:text-sm text-slate-400">
-                          {lang === "tr" ? "Oturum" : "Session"}
+                          {t("session")}
                         </span>
                       </div>
                       <div className="text-sm sm:text-lg font-semibold text-white">
                         {status.activeSessions}
                       </div>
                       <p className="text-[10px] sm:text-xs text-slate-500">
-                        {lang === "tr" ? "aktif" : "active"}
+                        {t("activeLabel")}
                       </p>
                     </div>
                   </div>
@@ -274,7 +425,7 @@ export function SecuritySettings({
                   {/* Recommendations */}
                   <div className="bg-slate-800/50 rounded-xl p-4 sm:p-6 border border-slate-700">
                     <h3 className="text-sm sm:text-lg font-semibold text-white mb-3 sm:mb-4">
-                      {lang === "tr" ? "Öneriler" : "Recommendations"}
+                      {t("recommendations")}
                     </h3>
                     <div className="space-y-2 sm:space-y-3">
                       {!status.twoFactorEnabled && (
@@ -282,12 +433,10 @@ export function SecuritySettings({
                           <span className="text-[#BFA181] text-sm sm:text-base flex-shrink-0">⚠️</span>
                           <div className="min-w-0">
                             <p className="text-xs sm:text-sm text-[#BFA181] font-medium">
-                              {lang === "tr" ? "2FA'yı Aktifleştirin" : "Enable 2FA"}
+                              {t("enable2FA")}
                             </p>
                             <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5">
-                              {lang === "tr" 
-                                ? "Hesabınızı ekstra güvenlik katmanıyla koruyun" 
-                                : "Protect your account with an extra layer of security"}
+                              {t("enable2FADesc")}
                             </p>
                           </div>
                         </div>
@@ -297,12 +446,10 @@ export function SecuritySettings({
                           <span className="text-blue-500 text-sm sm:text-base flex-shrink-0">💡</span>
                           <div className="min-w-0">
                             <p className="text-xs sm:text-sm text-blue-400 font-medium">
-                              {lang === "tr" ? "Biyometrik Ekleyin" : "Add Biometric"}
+                              {t("addBiometric")}
                             </p>
                             <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5">
-                              {lang === "tr" 
-                                ? "Touch ID veya Face ID ile hızlı ve güvenli giriş" 
-                                : "Quick and secure login with Touch ID or Face ID"}
+                              {t("addBiometricDesc")}
                             </p>
                           </div>
                         </div>
@@ -312,12 +459,10 @@ export function SecuritySettings({
                           <span className="text-[#2F6F62] text-sm sm:text-base flex-shrink-0">✅</span>
                           <div className="min-w-0">
                             <p className="text-xs sm:text-sm text-[#2F6F62] font-medium">
-                              {lang === "tr" ? "Harika!" : "Great!"}
+                              {t("great")}
                             </p>
                             <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5">
-                              {lang === "tr" 
-                                ? "Hesabınız güçlü bir şekilde korunuyor" 
-                                : "Your account is well protected"}
+                              {t("wellProtected")}
                             </p>
                           </div>
                         </div>
@@ -329,43 +474,38 @@ export function SecuritySettings({
 
               {/* 2FA Tab */}
               {activeTab === "2fa" && (
-                <TwoFactorSetup 
-                  walletAddress={walletAddress} 
-                  lang={lang}
+                <TwoFactorSetup
+                  walletAddress={walletAddress}
                   onStatusChange={fetchSecurityStatus}
                 />
               )}
 
               {/* Biometric Tab */}
               {activeTab === "biometric" && (
-                <BiometricSetup 
-                  walletAddress={walletAddress} 
-                  lang={lang}
+                <BiometricSetup
+                  walletAddress={walletAddress}
                   onStatusChange={fetchSecurityStatus}
                 />
               )}
 
               {/* Devices Tab */}
               {activeTab === "devices" && (
-                <DeviceManager 
-                  walletAddress={walletAddress} 
-                  lang={lang}
+                <DeviceManager
+                  walletAddress={walletAddress}
                 />
               )}
 
               {/* Sessions Tab */}
               {activeTab === "sessions" && (
-                <SessionManager 
-                  walletAddress={walletAddress} 
-                  lang={lang}
+                <SessionManager
+                  walletAddress={walletAddress}
                 />
               )}
 
               {/* Logs Tab */}
               {activeTab === "logs" && (
-                <SecurityLogs 
-                  walletAddress={walletAddress} 
-                  lang={lang}
+                <SecurityLogs
+                  walletAddress={walletAddress}
                 />
               )}
             </>

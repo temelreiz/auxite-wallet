@@ -1,22 +1,22 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "./WalletContext";
+import { useLanguage } from "@/components/LanguageContext";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 interface BuyMetalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   onSuccess?: () => void;
 }
 
 const translations: Record<string, Record<string, string>> = {
   tr: { buyMetal: "Metal Satın Al", selectMetal: "Metal Seçin", youPay: "Ödeme", youReceive: "Alacağınız", balance: "Bakiye", transactionFee: "İşlem Ücreti", spread: "Spread", confirm: "Onayla", processing: "İşleniyor...", success: "Başarılı!", insufficientBalance: "Yetersiz bakiye", enterAmount: "Miktar girin", loading: "Yükleniyor...", error: "Hata oluştu", partialAllocation: "Kısmi Allocation", vaultAllocated: "Kasada Allocate", nonAllocated: "Non-Allocated", continueAnyway: "Devam Et", addMore: "Ekle", allocationNote: "Sadece tam gramlar fiziksel metale allocate edilebilir." },
   en: { buyMetal: "Buy Metal", selectMetal: "Select Metal", youPay: "You Pay", youReceive: "You Receive", balance: "Balance", transactionFee: "Transaction Fee", spread: "Spread", confirm: "Confirm", processing: "Processing...", success: "Success!", insufficientBalance: "Insufficient balance", enterAmount: "Enter amount", loading: "Loading...", error: "Error occurred", partialAllocation: "Partial Allocation", vaultAllocated: "Vault Allocated", nonAllocated: "Non-Allocated", continueAnyway: "Continue", addMore: "Add", allocationNote: "Only whole grams can be allocated to physical metal." },
-  de: { buyMetal: "Metall kaufen", selectMetal: "Metall auswählen", youPay: "Sie zahlen", youReceive: "Sie erhalten", balance: "Guthaben", transactionFee: "Transaktionsgebühr", spread: "Spread", confirm: "Bestätigen", processing: "Verarbeitung...", success: "Erfolgreich!", insufficientBalance: "Unzureichendes Guthaben", enterAmount: "Betrag eingeben", loading: "Laden...", error: "Fehler" },
-  fr: { buyMetal: "Acheter du Métal", selectMetal: "Sélectionner", youPay: "Vous payez", youReceive: "Vous recevez", balance: "Solde", transactionFee: "Frais", spread: "Spread", confirm: "Confirmer", processing: "Traitement...", success: "Succès!", insufficientBalance: "Solde insuffisant", enterAmount: "Montant", loading: "Chargement...", error: "Erreur" },
-  ar: { buyMetal: "شراء المعدن", selectMetal: "اختر المعدن", youPay: "تدفع", youReceive: "تستلم", balance: "الرصيد", transactionFee: "رسوم", spread: "السبريد", confirm: "تأكيد", processing: "جاري...", success: "نجاح!", insufficientBalance: "رصيد غير كافٍ", enterAmount: "المبلغ", loading: "تحميل...", error: "خطأ" },
-  ru: { buyMetal: "Купить металл", selectMetal: "Выберите", youPay: "Вы платите", youReceive: "Вы получите", balance: "Баланс", transactionFee: "Комиссия", spread: "Спред", confirm: "Подтвердить", processing: "Обработка...", success: "Успешно!", insufficientBalance: "Недостаточно", enterAmount: "Сумма", loading: "Загрузка...", error: "Ошибка" },
+  de: { buyMetal: "Metall kaufen", selectMetal: "Metall auswählen", youPay: "Sie zahlen", youReceive: "Sie erhalten", balance: "Guthaben", transactionFee: "Transaktionsgebühr", spread: "Spread", confirm: "Bestätigen", processing: "Verarbeitung...", success: "Erfolgreich!", insufficientBalance: "Unzureichendes Guthaben", enterAmount: "Betrag eingeben", loading: "Laden...", error: "Fehler", partialAllocation: "Teilweise Zuweisung", vaultAllocated: "Tresor zugewiesen", nonAllocated: "Nicht zugewiesen", continueAnyway: "Fortfahren", addMore: "Hinzufügen", allocationNote: "Nur ganze Gramm können physischem Metall zugewiesen werden." },
+  fr: { buyMetal: "Acheter du Métal", selectMetal: "Sélectionner", youPay: "Vous payez", youReceive: "Vous recevez", balance: "Solde", transactionFee: "Frais", spread: "Spread", confirm: "Confirmer", processing: "Traitement...", success: "Succès!", insufficientBalance: "Solde insuffisant", enterAmount: "Montant", loading: "Chargement...", error: "Erreur", partialAllocation: "Allocation partielle", vaultAllocated: "Coffre alloué", nonAllocated: "Non alloué", continueAnyway: "Continuer", addMore: "Ajouter", allocationNote: "Seuls les grammes entiers peuvent être alloués au métal physique." },
+  ar: { buyMetal: "شراء المعدن", selectMetal: "اختر المعدن", youPay: "تدفع", youReceive: "تستلم", balance: "الرصيد", transactionFee: "رسوم", spread: "السبريد", confirm: "تأكيد", processing: "جاري...", success: "نجاح!", insufficientBalance: "رصيد غير كافٍ", enterAmount: "المبلغ", loading: "تحميل...", error: "خطأ", partialAllocation: "تخصيص جزئي", vaultAllocated: "مخصص في الخزنة", nonAllocated: "غير مخصص", continueAnyway: "متابعة", addMore: "إضافة", allocationNote: "يمكن تخصيص الغرامات الكاملة فقط للمعدن الفعلي." },
+  ru: { buyMetal: "Купить металл", selectMetal: "Выберите", youPay: "Вы платите", youReceive: "Вы получите", balance: "Баланс", transactionFee: "Комиссия", spread: "Спред", confirm: "Подтвердить", processing: "Обработка...", success: "Успешно!", insufficientBalance: "Недостаточно", enterAmount: "Сумма", loading: "Загрузка...", error: "Ошибка", partialAllocation: "Частичное распределение", vaultAllocated: "Распределено в хранилище", nonAllocated: "Не распределено", continueAnyway: "Продолжить", addMore: "Добавить", allocationNote: "Только целые граммы могут быть распределены в физический металл." },
 };
 
 interface MetalInfo { symbol: string; name: string; icon: string; price: number; spread: number; }
@@ -38,8 +38,9 @@ const PAYMENT_METHODS = [
   { symbol: "USDT", icon: "₮", name: "USDT" },
 ];
 
-function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModalProps) {
-  const t = translations[lang] || translations.en;
+function BuyMetalModal({ isOpen, onClose, onSuccess }: BuyMetalModalProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   // Use WalletContext for both custodial and external wallets
   const { address, balances: walletBalances, refreshBalances } = useWallet();
   
@@ -111,10 +112,10 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
       if (!selectedMetal && metalsWithPrices.length > 0) setSelectedMetal(metalsWithPrices[0]);
     } catch (err: any) { 
       console.error('❌ BuyMetalModal fetchPrices error:', err); 
-      setError(err?.message || t.error); 
+      setError(err?.message || t("error")); 
     }
     finally { setIsLoadingPrices(false); }
-  }, [selectedMetal, t.error]);
+  }, [selectedMetal, lang]);
 
   const fetchPreview = useCallback(async () => {
     if (!selectedMetal || !amount || parseFloat(amount) <= 0 || !address) { 
@@ -143,14 +144,14 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
         if (data.preview.allocationPreview) setAllocationPreview(data.preview.allocationPreview);
       } else { 
         console.log("❌ BuyMetalModal preview error:", data.error);
-        setError(data.error || t.error); 
+        setError(data.error || t("error")); 
       }
     } catch (err: any) { 
       console.error('❌ BuyMetalModal fetchPreview error:', err); 
-      setError(err?.message || t.error); 
+      setError(err?.message || t("error")); 
     }
     finally { setIsLoadingPreview(false); }
-  }, [selectedMetal, selectedPayment, amount, address, t.error]);
+  }, [selectedMetal, selectedPayment, amount, address, lang]);
 
   const handleConfirmWithAllocation = () => {
     console.log("✅ handleConfirmWithAllocation called");
@@ -227,11 +228,11 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
         }, 2000);
       } else { 
         console.log('❌ Trade failed:', data.error);
-        setError(data.error || t.error); 
+        setError(data.error || t("error")); 
       }
     } catch (err: any) { 
       console.error('❌ Trade error:', err); 
-      setError(err?.message || t.error); 
+      setError(err?.message || t("error")); 
     }
     finally { setIsProcessing(false); }
   };
@@ -277,7 +278,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/50 backdrop-blur-sm">
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-700 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-stone-200 dark:border-slate-800">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t.buyMetal}</h3>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t("buyMetal")}</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-slate-800 hover:bg-stone-200 dark:hover:bg-slate-700 flex items-center justify-center">
             <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
@@ -285,7 +286,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
 
         <div className="p-4 space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2 block">{t.selectMetal}</label>
+            <label className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2 block">{t("selectMetal")}</label>
             {isLoadingPrices ? (
               <div className="flex justify-center py-4"><svg className="animate-spin h-6 w-6 text-[#2F6F62]" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg></div>
             ) : (
@@ -302,7 +303,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2 block">{t.youPay}</label>
+            <label className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2 block">{t("youPay")}</label>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
               {PAYMENT_METHODS.map((method) => (
                 <button key={method.symbol} onClick={() => setSelectedPayment(method)} className={`p-2 sm:p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${selectedPayment.symbol === method.symbol ? "border-purple-500 bg-purple-50 dark:bg-purple-500/20" : "border-stone-200 dark:border-slate-700"}`}>
@@ -312,14 +313,14 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
               ))}
             </div>
             <div className="flex justify-between text-sm mb-3">
-              <span className="text-slate-500">{t.balance}:</span>
+              <span className="text-slate-500">{t("balance")}:</span>
               <span className={`font-medium ${isInsufficientBalance ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>{formatAmount(balance, selectedPayment.symbol)} {selectedPayment.symbol}</span>
             </div>
             <div className="relative">
               <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full px-4 py-4 pr-20 rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#2F6F62] text-lg font-medium" />
               <button onClick={() => setAmount(balance.toString())} className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-stone-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium">MAX</button>
             </div>
-            {isInsufficientBalance && <p className="text-red-500 text-xs mt-1">{t.insufficientBalance}</p>}
+            {isInsufficientBalance && <p className="text-red-500 text-xs mt-1">{t("insufficientBalance")}</p>}
           </div>
 
           <div className="flex justify-center">
@@ -329,7 +330,7 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2 block">{t.youReceive}</label>
+            <label className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2 block">{t("youReceive")}</label>
             <div className="p-4 rounded-xl bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700">
               <div className="flex items-center gap-3">
                 {selectedMetal && <img src={selectedMetal.icon} alt={selectedMetal.symbol} className="w-10 h-10" />}
@@ -344,11 +345,11 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
 
           <div className="space-y-2">
             <div className="flex justify-between text-sm p-3 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
-              <span className="text-slate-500">{t.transactionFee}:</span>
+              <span className="text-slate-500">{t("transactionFee")}:</span>
               <span className="text-slate-700 dark:text-slate-300 font-medium">{preview ? `${preview.feePercent}% ($${preview.fee.toFixed(2)})` : '0.35%'}</span>
             </div>
             <div className="flex justify-between text-sm p-3 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
-              <span className="text-slate-500">{t.spread}:</span>
+              <span className="text-slate-500">{t("spread")}:</span>
               <span className="text-slate-700 dark:text-slate-300 font-medium">{preview?.spread || `${selectedMetal?.spread || 0}%`}</span>
             </div>
             {preview?.tier && (
@@ -368,47 +369,47 @@ function BuyMetalModal({ isOpen, onClose, lang = "en", onSuccess }: BuyMetalModa
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
-                <h4 className="font-bold text-[#BFA181] dark:text-[#BFA181]">{t.partialAllocation || "Partial Allocation"}</h4>
+                <h4 className="font-bold text-[#BFA181] dark:text-[#BFA181]">{t("partialAllocation")}</h4>
               </div>
               
               <div className="space-y-2 mb-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                    <span className="text-[#2F6F62]">✓</span> {t.vaultAllocated || "Vault Allocated"}
+                    <span className="text-[#2F6F62]">✓</span> {t("vaultAllocated")}
                   </span>
                   <span className="font-semibold text-[#2F6F62] dark:text-[#2F6F62]">{allocationPreview.allocatedGrams}g</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                    <span className="text-[#BFA181]">○</span> {t.nonAllocated || "Non-Allocated"}
+                    <span className="text-[#BFA181]">○</span> {t("nonAllocated")}
                   </span>
                   <span className="font-semibold text-[#BFA181] dark:text-[#BFA181]">{formatAmount(allocationPreview.nonAllocatedGrams, selectedMetal?.symbol || 'AUXG')}g</span>
                 </div>
               </div>
               
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{t.allocationNote || "Only whole grams can be allocated to physical metal."}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{t("allocationNote")}</p>
               
               <div className="grid grid-cols-2 gap-2">
                 {allocationPreview.suggestion && (
                   <button onClick={handleAddMoreForAllocation} className="py-2.5 px-3 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
-                    <span className="block text-xs text-slate-500 dark:text-slate-400">{t.addMore || "Add"}</span>
+                    <span className="block text-xs text-slate-500 dark:text-slate-400">{t("addMore")}</span>
                     +{formatAmount(allocationPreview.suggestion.gramsToAdd, selectedMetal?.symbol || 'AUXG')}g → {allocationPreview.suggestion.targetGrams}g
                   </button>
                 )}
                 <button onClick={handleConfirmWithAllocation} className="py-2.5 px-3 rounded-lg bg-[#2F6F62] hover:bg-[#2F6F62] text-white text-sm font-medium transition-colors">
-                  {t.continueAnyway || "Continue"}
+                  {t("continueAnyway")}
                 </button>
               </div>
             </div>
           )}
 
           {error && <div className="p-3 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30"><p className="text-red-600 dark:text-red-400 text-sm">{error}</p></div>}
-          {success && <div className="p-3 rounded-lg bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 border border-[#2F6F62]/30 dark:border-[#2F6F62]/30"><p className="text-[#2F6F62] dark:text-[#2F6F62] text-sm font-medium text-center">✅ {t.success}</p></div>}
+          {success && <div className="p-3 rounded-lg bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 border border-[#2F6F62]/30 dark:border-[#2F6F62]/30"><p className="text-[#2F6F62] dark:text-[#2F6F62] text-sm font-medium text-center">✅ {t("success")}</p></div>}
         </div>
 
         <div className="p-4 border-t border-stone-200 dark:border-slate-800">
           <button onClick={executeTrade} disabled={!canTrade} className="w-full py-4 rounded-xl bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] hover:from-[#BFA181] hover:to-[#2F6F62] disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-700 dark:disabled:to-slate-700 text-white disabled:text-slate-500 font-semibold text-base transition-all flex items-center justify-center gap-2">
-            {isProcessing ? (<><svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /></svg>{t.processing}</>) : success ? (<><span>✅</span>{t.success}</>) : (<><span>🔒</span>{t.confirm}</>)}
+            {isProcessing ? (<><svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /></svg>{t("processing")}</>) : success ? (<><span>✅</span>{t("success")}</>) : (<><span>🔒</span>{t("confirm")}</>)}
           </button>
         </div>
       </div>

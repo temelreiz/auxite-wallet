@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
+import { getPhoneTiering } from "@/lib/phone-tiering";
 
 export const dynamic = "force-dynamic";
 
@@ -32,11 +33,25 @@ export async function GET(request: NextRequest) {
       }
     } catch {}
 
+    // Phone tiering data
+    let phoneTiering = { tier: 0, phoneVerified: false, communicationPreference: 'email' };
+    try {
+      const pt = await getPhoneTiering(address);
+      phoneTiering = {
+        tier: pt.tier,
+        phoneVerified: pt.phoneVerified,
+        communicationPreference: pt.communicationPreference,
+      };
+    } catch (_) {}
+
     return NextResponse.json({
       success: true,
       settings: {
         autoConvertToAuxm: settings?.autoConvertToAuxm !== "false", // default: true
         whitelistedAddresses,
+        phoneTier: phoneTiering.tier,
+        phoneVerified: phoneTiering.phoneVerified,
+        communicationPreference: phoneTiering.communicationPreference,
       },
     });
   } catch (error: any) {

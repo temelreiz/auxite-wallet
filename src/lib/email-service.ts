@@ -101,6 +101,7 @@ const templates = {
       subject: t.subject,
       html: generateEmailHTML({
         title: t.title,
+        language,
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
@@ -146,6 +147,42 @@ const templates = {
         expiry: 'Bu bağlantı 24 saat içinde geçerliliğini yitirecektir.',
         ignore: 'Hesap oluşturmadıysanız, bu e-postayı görmezden gelebilirsiniz.',
       },
+      de: {
+        subject: 'Bestätigen Sie Ihr Auxite-Konto',
+        title: 'E-Mail-Verifizierung',
+        greeting: `Hallo ${name},`,
+        message: 'Vielen Dank für die Erstellung eines Auxite-Kontos. Bitte bestätigen Sie Ihre E-Mail-Adresse:',
+        buttonText: 'E-Mail bestätigen',
+        expiry: 'Dieser Link läuft in 24 Stunden ab.',
+        ignore: 'Falls Sie kein Konto erstellt haben, ignorieren Sie diese E-Mail.',
+      },
+      fr: {
+        subject: 'Vérifiez votre compte Auxite',
+        title: 'Vérification de l\'email',
+        greeting: `Bonjour ${name},`,
+        message: 'Merci d\'avoir créé un compte Auxite. Veuillez vérifier votre adresse email en cliquant ci-dessous:',
+        buttonText: 'Vérifier l\'email',
+        expiry: 'Ce lien expirera dans 24 heures.',
+        ignore: 'Si vous n\'avez pas créé de compte, ignorez cet email.',
+      },
+      ar: {
+        subject: 'تأكيد حساب Auxite الخاص بك',
+        title: 'التحقق من البريد الإلكتروني',
+        greeting: `مرحباً ${name}،`,
+        message: 'شكراً لإنشاء حساب Auxite. يرجى التحقق من بريدك الإلكتروني بالنقر أدناه:',
+        buttonText: 'تأكيد البريد',
+        expiry: 'ستنتهي صلاحية هذا الرابط خلال 24 ساعة.',
+        ignore: 'إذا لم تقم بإنشاء حساب، يرجى تجاهل هذا البريد.',
+      },
+      ru: {
+        subject: 'Подтвердите ваш аккаунт Auxite',
+        title: 'Подтверждение email',
+        greeting: `Привет ${name},`,
+        message: 'Спасибо за создание аккаунта Auxite. Пожалуйста, подтвердите ваш email, нажав на кнопку ниже:',
+        buttonText: 'Подтвердить email',
+        expiry: 'Эта ссылка истечет через 24 часа.',
+        ignore: 'Если вы не создавали аккаунт, проигнорируйте это письмо.',
+      },
     };
 
     const t = content[language as keyof typeof content] || content.en;
@@ -154,6 +191,7 @@ const templates = {
       subject: t.subject,
       html: generateEmailHTML({
         title: t.title,
+        language,
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
@@ -202,6 +240,62 @@ const templates = {
         cta: 'Başlayın',
         support: 'Sorularınız varsa, destek ekibimiz size yardımcı olmak için burada.',
       },
+      de: {
+        subject: 'Willkommen bei Auxite!',
+        title: 'Willkommen bei Auxite',
+        greeting: `Hallo ${name},`,
+        message: 'Ihre E-Mail wurde verifiziert und Ihr Auxite-Konto ist jetzt aktiv!',
+        features: [
+          'Physische Edelmetalle in sicherer Verwahrung zuweisen und halten',
+          'Abwicklungs- und Ausführungsdienste für Edelmetalle',
+          'An strukturierten Metallleasing-Programmen teilnehmen',
+          'Unabhängige Verwahrung mit voller Zuweisungstransparenz',
+        ],
+        cta: 'Jetzt starten',
+        support: 'Bei Fragen steht Ihnen unser Support-Team gerne zur Verfügung.',
+      },
+      fr: {
+        subject: 'Bienvenue chez Auxite !',
+        title: 'Bienvenue chez Auxite',
+        greeting: `Bonjour ${name},`,
+        message: 'Votre email a été vérifié et votre compte Auxite est maintenant actif !',
+        features: [
+          'Allouer et détenir des métaux précieux physiques en garde sécurisée',
+          'Services de règlement et d\'exécution pour les métaux précieux',
+          'Participer à des programmes structurés de leasing de métaux',
+          'Garde indépendante avec transparence totale de l\'allocation',
+        ],
+        cta: 'Commencer',
+        support: 'Si vous avez des questions, notre équipe de support est là pour vous aider.',
+      },
+      ar: {
+        subject: 'مرحباً بك في Auxite!',
+        title: 'مرحباً بك في Auxite',
+        greeting: `مرحباً ${name}،`,
+        message: 'تم التحقق من بريدك الإلكتروني وحسابك في Auxite نشط الآن!',
+        features: [
+          'تخصيص والاحتفاظ بالمعادن الثمينة المادية في حفظ آمن',
+          'خدمات التسوية والتنفيذ للمعادن الثمينة',
+          'المشاركة في برامج تأجير المعادن المهيكلة',
+          'حفظ مستقل مع شفافية كاملة في التخصيص',
+        ],
+        cta: 'ابدأ الآن',
+        support: 'إذا كانت لديك أي أسئلة، فريق الدعم لدينا هنا لمساعدتك.',
+      },
+      ru: {
+        subject: 'Добро пожаловать в Auxite!',
+        title: 'Добро пожаловать в Auxite',
+        greeting: `Привет ${name},`,
+        message: 'Ваш email подтвержден, и ваш аккаунт Auxite теперь активен!',
+        features: [
+          'Размещение и хранение физических драгоценных металлов в надежном хранилище',
+          'Услуги расчетов и исполнения по драгоценным металлам',
+          'Участие в структурированных программах лизинга металлов',
+          'Независимое хранение с полной прозрачностью размещения',
+        ],
+        cta: 'Начать',
+        support: 'Если у вас есть вопросы, наша команда поддержки готова помочь.',
+      },
     };
 
     const t = content[language as keyof typeof content] || content.en;
@@ -210,6 +304,7 @@ const templates = {
       subject: t.subject,
       html: generateEmailHTML({
         title: t.title,
+        language,
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
@@ -253,6 +348,42 @@ const templates = {
         expiry: `Bu bağlantı ${expiryMinutes} dakika içinde geçerliliğini yitirecektir.`,
         ignore: 'Bu talebi siz yapmadıysanız, bu e-postayı görmezden gelin.',
       },
+      de: {
+        subject: 'Setzen Sie Ihr Auxite-Passwort zurück',
+        title: 'Passwort zurücksetzen',
+        greeting: `Hallo ${name},`,
+        message: 'Wir haben eine Anfrage zum Zurücksetzen Ihres Passworts erhalten. Klicken Sie auf den Button:',
+        buttonText: 'Passwort zurücksetzen',
+        expiry: `Dieser Link läuft in ${expiryMinutes} Minuten ab.`,
+        ignore: 'Falls Sie dies nicht angefordert haben, ignorieren Sie diese E-Mail.',
+      },
+      fr: {
+        subject: 'Réinitialisez votre mot de passe Auxite',
+        title: 'Réinitialisation du mot de passe',
+        greeting: `Bonjour ${name},`,
+        message: 'Nous avons reçu une demande de réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous :',
+        buttonText: 'Réinitialiser le mot de passe',
+        expiry: `Ce lien expirera dans ${expiryMinutes} minutes.`,
+        ignore: 'Si vous n\'avez pas fait cette demande, veuillez ignorer cet email.',
+      },
+      ar: {
+        subject: 'إعادة تعيين كلمة مرور Auxite',
+        title: 'إعادة تعيين كلمة المرور',
+        greeting: `مرحباً ${name}،`,
+        message: 'تلقينا طلباً لإعادة تعيين كلمة المرور الخاصة بك. انقر على الزر أدناه:',
+        buttonText: 'إعادة تعيين كلمة المرور',
+        expiry: `ستنتهي صلاحية هذا الرابط خلال ${expiryMinutes} دقيقة.`,
+        ignore: 'إذا لم تقم بهذا الطلب، يرجى تجاهل هذا البريد.',
+      },
+      ru: {
+        subject: 'Сбросьте пароль Auxite',
+        title: 'Сброс пароля',
+        greeting: `Привет ${name},`,
+        message: 'Мы получили запрос на сброс вашего пароля. Нажмите на кнопку ниже:',
+        buttonText: 'Сбросить пароль',
+        expiry: `Эта ссылка истечет через ${expiryMinutes} минут.`,
+        ignore: 'Если вы не запрашивали сброс, проигнорируйте это письмо.',
+      },
     };
 
     const t = content[language as keyof typeof content] || content.en;
@@ -261,6 +392,7 @@ const templates = {
       subject: t.subject,
       html: generateEmailHTML({
         title: t.title,
+        language,
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
@@ -297,6 +429,38 @@ const templates = {
         expiry: 'Bu kod 10 dakika içinde geçerliliğini yitirecektir.',
         ignore: 'Bu kodu talep etmediyseniz, bu e-postayı görmezden gelin.',
       },
+      de: {
+        subject: 'Ihr Auxite-Bestätigungscode',
+        title: 'Bestätigungscode',
+        greeting: `Hallo ${name},`,
+        message: 'Ihr Bestätigungscode lautet:',
+        expiry: 'Dieser Code läuft in 10 Minuten ab.',
+        ignore: 'Falls Sie diesen Code nicht angefordert haben, ignorieren Sie diese E-Mail.',
+      },
+      fr: {
+        subject: 'Votre code de vérification Auxite',
+        title: 'Code de vérification',
+        greeting: `Bonjour ${name},`,
+        message: 'Votre code de vérification est :',
+        expiry: 'Ce code expirera dans 10 minutes.',
+        ignore: 'Si vous n\'avez pas demandé ce code, veuillez ignorer cet email.',
+      },
+      ar: {
+        subject: 'رمز التحقق الخاص بك من Auxite',
+        title: 'رمز التحقق',
+        greeting: `مرحباً ${name}،`,
+        message: 'رمز التحقق الخاص بك هو:',
+        expiry: 'ستنتهي صلاحية هذا الرمز خلال 10 دقائق.',
+        ignore: 'إذا لم تطلب هذا الرمز، يرجى تجاهل هذا البريد.',
+      },
+      ru: {
+        subject: 'Ваш код подтверждения Auxite',
+        title: 'Код подтверждения',
+        greeting: `Привет ${name},`,
+        message: 'Ваш код подтверждения:',
+        expiry: 'Этот код истечет через 10 минут.',
+        ignore: 'Если вы не запрашивали этот код, проигнорируйте это письмо.',
+      },
     };
 
     const t = content[language as keyof typeof content] || content.en;
@@ -305,6 +469,7 @@ const templates = {
       subject: t.subject,
       html: generateEmailHTML({
         title: t.title,
+        language,
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
@@ -345,6 +510,42 @@ const templates = {
         txLabel: 'İşlem',
         viewWallet: 'Müşteri Defterinde Görüntüle',
       },
+      de: {
+        subject: `Einzahlung bestätigt: ${amount} ${token}`,
+        title: 'Einzahlung bestätigt',
+        greeting: `Hallo ${name},`,
+        message: 'Ihre Einzahlung wurde bestätigt und Ihrem Konto gutgeschrieben.',
+        amountLabel: 'Betrag',
+        txLabel: 'Transaktion',
+        viewWallet: 'Im Kundenbuch anzeigen',
+      },
+      fr: {
+        subject: `Dépôt confirmé : ${amount} ${token}`,
+        title: 'Dépôt confirmé',
+        greeting: `Bonjour ${name},`,
+        message: 'Votre dépôt a été confirmé et crédité sur votre compte.',
+        amountLabel: 'Montant',
+        txLabel: 'Transaction',
+        viewWallet: 'Voir dans le registre client',
+      },
+      ar: {
+        subject: `تم تأكيد الإيداع: ${amount} ${token}`,
+        title: 'تم تأكيد الإيداع',
+        greeting: `مرحباً ${name}،`,
+        message: 'تم تأكيد إيداعك وإضافته إلى حسابك.',
+        amountLabel: 'المبلغ',
+        txLabel: 'المعاملة',
+        viewWallet: 'عرض في دفتر العميل',
+      },
+      ru: {
+        subject: `Депозит подтвержден: ${amount} ${token}`,
+        title: 'Депозит подтвержден',
+        greeting: `Привет ${name},`,
+        message: 'Ваш депозит подтвержден и зачислен на ваш счет.',
+        amountLabel: 'Сумма',
+        txLabel: 'Транзакция',
+        viewWallet: 'Посмотреть в клиентском реестре',
+      },
     };
 
     const t = content[language as keyof typeof content] || content.en;
@@ -353,6 +554,7 @@ const templates = {
       subject: t.subject,
       html: generateEmailHTML({
         title: t.title,
+        language,
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
@@ -401,6 +603,58 @@ const templates = {
         notice: 'Harici olarak transfer edilen varlıklar artık Auxite saklama yapıları altında tutulmayacaktır.',
         viewHistory: 'Müşteri Defterinde Görüntüle',
       },
+      de: {
+        subject: `Externe Abwicklung angefordert: ${amount} ${token}`,
+        title: 'Externe Abwicklung angefordert',
+        greeting: `Hallo ${name},`,
+        message: 'Ihr externer Abwicklungstransfer wurde eingereicht und wird bearbeitet.',
+        amountLabel: 'Betrag',
+        toLabel: 'Ziel',
+        feeLabel: 'Abwicklungsnetzwerkgebühr',
+        statusLabel: 'Status',
+        statusValue: 'In Bearbeitung',
+        notice: 'Extern transferierte Vermögenswerte werden nicht mehr innerhalb der Auxite-Verwahrungsstrukturen gehalten.',
+        viewHistory: 'Im Kundenbuch anzeigen',
+      },
+      fr: {
+        subject: `Transfert de règlement externe demandé : ${amount} ${token}`,
+        title: 'Transfert de règlement externe demandé',
+        greeting: `Bonjour ${name},`,
+        message: 'Votre transfert de règlement externe a été soumis et est en cours de traitement.',
+        amountLabel: 'Montant',
+        toLabel: 'Destination',
+        feeLabel: 'Frais de réseau de règlement',
+        statusLabel: 'Statut',
+        statusValue: 'En cours de traitement',
+        notice: 'Les actifs transférés en externe ne seront plus détenus dans les structures de garde Auxite.',
+        viewHistory: 'Voir dans le registre client',
+      },
+      ar: {
+        subject: `طلب تحويل تسوية خارجي: ${amount} ${token}`,
+        title: 'طلب تحويل تسوية خارجي',
+        greeting: `مرحباً ${name}،`,
+        message: 'تم تقديم طلب التحويل الخارجي الخاص بك وهو قيد المعالجة.',
+        amountLabel: 'المبلغ',
+        toLabel: 'الوجهة',
+        feeLabel: 'رسوم شبكة التسوية',
+        statusLabel: 'الحالة',
+        statusValue: 'قيد المعالجة',
+        notice: 'الأصول المحولة خارجياً لن تكون محتفظ بها ضمن هياكل حفظ Auxite.',
+        viewHistory: 'عرض في دفتر العميل',
+      },
+      ru: {
+        subject: `Запрос на внешний расчетный перевод: ${amount} ${token}`,
+        title: 'Запрос на внешний расчетный перевод',
+        greeting: `Привет ${name},`,
+        message: 'Ваш запрос на внешний расчетный перевод отправлен и обрабатывается.',
+        amountLabel: 'Сумма',
+        toLabel: 'Назначение',
+        feeLabel: 'Комиссия расчетной сети',
+        statusLabel: 'Статус',
+        statusValue: 'Обработка',
+        notice: 'Активы, переведенные на внешние адреса, больше не будут храниться в структурах хранения Auxite.',
+        viewHistory: 'Посмотреть в клиентском реестре',
+      },
     };
 
     const t = content[language as keyof typeof content] || content.en;
@@ -409,6 +663,7 @@ const templates = {
       subject: t.subject,
       html: generateEmailHTML({
         title: t.title,
+        language,
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
@@ -458,6 +713,54 @@ const templates = {
         notice: 'Harici olarak transfer edilen varlıklar artık Auxite saklama yapıları altında tutulmayacaktır.',
         viewHistory: 'Müşteri Defterinde Görüntüle',
       },
+      de: {
+        subject: `Externe Abwicklung gesendet: ${amount} ${token}`,
+        title: 'Externe Abwicklung gesendet',
+        greeting: `Hallo ${name},`,
+        message: 'Ihr externer Abwicklungstransfer wurde an das Abwicklungsnetzwerk übermittelt.',
+        amountLabel: 'Betrag',
+        toLabel: 'Ziel',
+        feeLabel: 'Abwicklungsnetzwerkgebühr',
+        txLabel: 'Transaktions-Hash',
+        notice: 'Extern transferierte Vermögenswerte werden nicht mehr innerhalb der Auxite-Verwahrungsstrukturen gehalten.',
+        viewHistory: 'Im Kundenbuch anzeigen',
+      },
+      fr: {
+        subject: `Transfert de règlement externe diffusé : ${amount} ${token}`,
+        title: 'Transfert de règlement externe diffusé',
+        greeting: `Bonjour ${name},`,
+        message: 'Votre transfert de règlement externe a été diffusé sur le réseau de règlement.',
+        amountLabel: 'Montant',
+        toLabel: 'Destination',
+        feeLabel: 'Frais de réseau de règlement',
+        txLabel: 'Hash de transaction',
+        notice: 'Les actifs transférés en externe ne seront plus détenus dans les structures de garde Auxite.',
+        viewHistory: 'Voir dans le registre client',
+      },
+      ar: {
+        subject: `تم بث تحويل التسوية الخارجي: ${amount} ${token}`,
+        title: 'تم بث تحويل التسوية الخارجي',
+        greeting: `مرحباً ${name}،`,
+        message: 'تم بث تحويل التسوية الخارجي الخاص بك إلى شبكة التسوية.',
+        amountLabel: 'المبلغ',
+        toLabel: 'الوجهة',
+        feeLabel: 'رسوم شبكة التسوية',
+        txLabel: 'هاش المعاملة',
+        notice: 'الأصول المحولة خارجياً لن تكون محتفظ بها ضمن هياكل حفظ Auxite.',
+        viewHistory: 'عرض في دفتر العميل',
+      },
+      ru: {
+        subject: `Внешний расчетный перевод отправлен: ${amount} ${token}`,
+        title: 'Внешний расчетный перевод отправлен',
+        greeting: `Привет ${name},`,
+        message: 'Ваш внешний расчетный перевод отправлен в расчетную сеть.',
+        amountLabel: 'Сумма',
+        toLabel: 'Назначение',
+        feeLabel: 'Комиссия расчетной сети',
+        txLabel: 'Хэш транзакции',
+        notice: 'Активы, переведенные на внешние адреса, больше не будут храниться в структурах хранения Auxite.',
+        viewHistory: 'Посмотреть в клиентском реестре',
+      },
     };
 
     const t = content[language as keyof typeof content] || content.en;
@@ -466,6 +769,7 @@ const templates = {
       subject: t.subject,
       html: generateEmailHTML({
         title: t.title,
+        language,
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
@@ -509,6 +813,42 @@ const templates = {
         toLabel: 'Alıcı',
         viewWallet: 'Müşteri Defterinde Görüntüle',
       },
+      de: {
+        subject: `Interne Verwahrungsübertragung bestätigt: ${amount} ${token}`,
+        title: 'Interne Verwahrungsübertragung bestätigt',
+        greeting: `Hallo ${name},`,
+        message: 'Ihre interne Verwahrungsübertragung wurde im Auxite-Verwahrungsbuch erfasst.',
+        amountLabel: 'Betrag',
+        toLabel: 'Empfänger',
+        viewWallet: 'Im Kundenbuch anzeigen',
+      },
+      fr: {
+        subject: `Transfert de garde interne confirmé : ${amount} ${token}`,
+        title: 'Transfert de garde interne confirmé',
+        greeting: `Bonjour ${name},`,
+        message: 'Votre transfert de garde interne a été enregistré dans le registre de garde Auxite.',
+        amountLabel: 'Montant',
+        toLabel: 'Destinataire',
+        viewWallet: 'Voir dans le registre client',
+      },
+      ar: {
+        subject: `تم تأكيد التحويل الداخلي: ${amount} ${token}`,
+        title: 'تم تأكيد التحويل الداخلي',
+        greeting: `مرحباً ${name}،`,
+        message: 'تم تسجيل التحويل الداخلي الخاص بك في دفتر حفظ Auxite.',
+        amountLabel: 'المبلغ',
+        toLabel: 'المستلم',
+        viewWallet: 'عرض في دفتر العميل',
+      },
+      ru: {
+        subject: `Внутренний перевод подтвержден: ${amount} ${token}`,
+        title: 'Внутренний перевод подтвержден',
+        greeting: `Привет ${name},`,
+        message: 'Ваш внутренний перевод записан в реестр хранения Auxite.',
+        amountLabel: 'Сумма',
+        toLabel: 'Получатель',
+        viewWallet: 'Посмотреть в клиентском реестре',
+      },
     };
 
     const t = content[language as keyof typeof content] || content.en;
@@ -517,6 +857,7 @@ const templates = {
       subject: t.subject,
       html: generateEmailHTML({
         title: t.title,
+        language,
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
@@ -557,6 +898,42 @@ const templates = {
         fromLabel: 'Gönderen',
         viewWallet: 'Müşteri Defterinde Görüntüle',
       },
+      de: {
+        subject: `Interne Verwahrungsübertragung erhalten: ${amount} ${token}`,
+        title: 'Interne Verwahrungsübertragung erhalten',
+        greeting: `Hallo ${name},`,
+        message: 'Eine interne Verwahrungsübertragung wurde in Ihrem Konto im Auxite-Verwahrungsbuch erfasst.',
+        amountLabel: 'Betrag',
+        fromLabel: 'Von',
+        viewWallet: 'Im Kundenbuch anzeigen',
+      },
+      fr: {
+        subject: `Transfert de garde interne reçu : ${amount} ${token}`,
+        title: 'Transfert de garde interne reçu',
+        greeting: `Bonjour ${name},`,
+        message: 'Un transfert de garde interne a été enregistré sur votre compte dans le registre de garde Auxite.',
+        amountLabel: 'Montant',
+        fromLabel: 'De',
+        viewWallet: 'Voir dans le registre client',
+      },
+      ar: {
+        subject: `تم استلام تحويل داخلي: ${amount} ${token}`,
+        title: 'تم استلام تحويل داخلي',
+        greeting: `مرحباً ${name}،`,
+        message: 'تم تسجيل تحويل داخلي إلى حسابك في دفتر حفظ Auxite.',
+        amountLabel: 'المبلغ',
+        fromLabel: 'من',
+        viewWallet: 'عرض في دفتر العميل',
+      },
+      ru: {
+        subject: `Получен внутренний перевод: ${amount} ${token}`,
+        title: 'Получен внутренний перевод',
+        greeting: `Привет ${name},`,
+        message: 'Внутренний перевод был записан на ваш счет в реестре хранения Auxite.',
+        amountLabel: 'Сумма',
+        fromLabel: 'От',
+        viewWallet: 'Посмотреть в клиентском реестре',
+      },
     };
 
     const t = content[language as keyof typeof content] || content.en;
@@ -565,6 +942,7 @@ const templates = {
       subject: t.subject,
       html: generateEmailHTML({
         title: t.title,
+        language,
         content: `
           <p>${t.greeting}</p>
           <p>${t.message}</p>
@@ -585,10 +963,12 @@ const templates = {
 // HTML EMAIL WRAPPER
 // ══════════════════════════════════════════════════════════════════════════════
 
-function generateEmailHTML({ title, content }: { title: string; content: string }): string {
+function generateEmailHTML({ title, content, language }: { title: string; content: string; language?: string }): string {
+  const dir = language === 'ar' ? 'rtl' : 'ltr';
+  const align = language === 'ar' ? 'right' : 'left';
   return `
 <!DOCTYPE html>
-<html>
+<html dir="${dir}" lang="${language || 'en'}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

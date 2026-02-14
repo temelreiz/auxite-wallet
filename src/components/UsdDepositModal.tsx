@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface UsdDepositModalProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ const FIAT_OPTIONS = [
 
 const AMOUNT_PRESETS = [50, 100, 250, 500, 1000];
 
-const texts: Record<string, Record<string, string>> = {
+const translations: Record<string, Record<string, string>> = {
   tr: {
     title: "Kripto Satın Al",
     subtitle: "Kredi/Banka Kartı ile",
@@ -135,9 +136,13 @@ const texts: Record<string, Record<string, string>> = {
 export function UsdDepositModal({
   isOpen,
   onClose,
-  lang,
+  lang: langProp,
   walletAddress,
 }: UsdDepositModalProps) {
+  const { lang: ctxLang } = useLanguage();
+  const lang = langProp || ctxLang || "en";
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
+
   const [cryptoCurrency, setCryptoCurrency] = useState("ETH");
   const [fiatCurrency, setFiatCurrency] = useState("USD");
   const [amount, setAmount] = useState("100");
@@ -146,8 +151,6 @@ export function UsdDepositModal({
   const [error, setError] = useState<string | null>(null);
   const [showWidget, setShowWidget] = useState(false);
   const [widgetUrl, setWidgetUrl] = useState<string | null>(null);
-
-  const t = texts[lang] || texts.en;
   const fiatSymbol = FIAT_OPTIONS.find(f => f.value === fiatCurrency)?.symbol || "$";
 
   const handleBuy = useCallback(async () => {
@@ -158,7 +161,7 @@ export function UsdDepositModal({
 
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum < 30 || amountNum > 10000) {
-      setError(t.minMax);
+      setError(t("minMax"));
       return;
     }
 
@@ -203,11 +206,11 @@ export function UsdDepositModal({
       }
 
     } catch (err: any) {
-      setError(err.message || t.error);
+      setError(err.message || t("error"));
     } finally {
       setIsLoading(false);
     }
-  }, [walletAddress, amount, cryptoCurrency, fiatCurrency, email, t, onClose]);
+  }, [walletAddress, amount, cryptoCurrency, fiatCurrency, email, lang, onClose]);
 
   const handleCloseWidget = () => {
     setShowWidget(false);
@@ -222,7 +225,7 @@ export function UsdDepositModal({
       <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3 sm:p-4">
         <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-stone-200 dark:border-slate-700 max-w-md w-full overflow-hidden">
           <div className="flex items-center justify-between p-4 border-b border-stone-200 dark:border-slate-700">
-            <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t.title}</h3>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t("title")}</h3>
             <button
               onClick={handleCloseWidget}
               className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
@@ -248,8 +251,8 @@ export function UsdDepositModal({
         {/* Header */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div>
-            <h3 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">{t.title}</h3>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{t.subtitle}</p>
+            <h3 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">{t("title")}</h3>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{t("subtitle")}</p>
           </div>
           <button
             onClick={onClose}
@@ -264,7 +267,7 @@ export function UsdDepositModal({
         {/* Crypto Selection */}
         <div className="mb-4">
           <label className="block text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-            {t.selectCrypto}
+            {t("selectCrypto")}
           </label>
           <div className="grid grid-cols-4 gap-2">
             {CRYPTO_OPTIONS.map((crypto) => (
@@ -289,7 +292,7 @@ export function UsdDepositModal({
         {/* Amount Input */}
         <div className="mb-4">
           <label className="block text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-            {t.amount}
+            {t("amount")}
           </label>
           <div className="relative">
             <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 font-medium text-sm sm:text-base">
@@ -316,7 +319,7 @@ export function UsdDepositModal({
               ))}
             </select>
           </div>
-          <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 mt-1">{t.minMax}</p>
+          <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 mt-1">{t("minMax")}</p>
 
           {/* Amount Presets */}
           <div className="flex gap-1.5 sm:gap-2 mt-2">
@@ -339,14 +342,14 @@ export function UsdDepositModal({
         {/* Email (Optional) */}
         <div className="mb-4">
           <label className="block text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-            {t.email}
+            {t("email")}
           </label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm sm:text-base focus:ring-2 focus:ring-[#BFA181] focus:border-transparent"
-            placeholder={t.emailPlaceholder}
+            placeholder={t("emailPlaceholder")}
           />
         </div>
 
@@ -369,18 +372,18 @@ export function UsdDepositModal({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              {t.buying}
+              {t("buying")}
             </>
           ) : (
             <>
-              {t.buy} {cryptoCurrency}
+              {t("buy")} {cryptoCurrency}
             </>
           )}
         </button>
 
         {/* Wallet Address Display */}
         <div className="mt-4 p-2.5 sm:p-3 rounded-lg bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
-          <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mb-1">{t.receivingWallet}</p>
+          <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mb-1">{t("receivingWallet")}</p>
           <p className="text-xs sm:text-sm font-mono text-slate-700 dark:text-slate-300 truncate">
             {walletAddress}
           </p>
@@ -389,10 +392,10 @@ export function UsdDepositModal({
         {/* Security Note & Powered By */}
         <div className="mt-4 text-center">
           <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mb-2">
-            {t.securityNote}
+            {t("securityNote")}
           </p>
           <div className="flex items-center justify-center gap-1.5">
-            <span className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-600">{t.poweredBy}</span>
+            <span className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-600">{t("poweredBy")}</span>
             <svg className="w-14 sm:w-16 h-4 sm:h-5" viewBox="0 0 100 24" fill="none">
               <text x="0" y="17" className="text-xs font-bold fill-[#2F6F62]">TRANSAK</text>
             </svg>

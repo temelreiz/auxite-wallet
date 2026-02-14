@@ -849,7 +849,6 @@ export function MetalConversionTab() {
             isOpen={true}
             onClose={() => setShow2FA(false)}
             onVerified={handleConvert}
-            lang={lang as any}
           />
           {/* Conversion Summary overlay behind 2FA */}
           <div className="fixed inset-0 z-40 bg-black/50 flex items-center justify-center p-4">

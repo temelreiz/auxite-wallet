@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useWallet } from "@/components/WalletContext";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface TradeModalProps {
   isOpen: boolean;
@@ -13,7 +14,6 @@ interface TradeModalProps {
     icon: string;
   };
   mode: "buy" | "sell";
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
 const paymentMethods = [
@@ -92,9 +92,10 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
-export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeModalProps) {
+export function TradeModal({ isOpen, onClose, metal, mode }: TradeModalProps) {
   // Gerçek bakiyeler - useWallet hook'undan
   const { balances, isConnected } = useWallet();
+  const { lang } = useLanguage();
   
   const auxmBalance = balances?.auxm ?? 0;
   const totalAuxm = auxmBalance;
@@ -103,7 +104,7 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
   const [selectedCurrency, setSelectedCurrency] = useState("AUXM");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const t = translations[lang] || translations.en;
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   useEffect(() => {
     if (isOpen) {
@@ -151,7 +152,7 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
       <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-800 shadow-xl">
         <div className="flex items-center justify-between p-4 border-b border-stone-200 dark:border-slate-800">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-            {mode === "buy" ? t.buy : t.sell} {metal.name}
+            {mode === "buy" ? t("buy") : t("sell")} {metal.name}
           </h2>
           <button onClick={onClose} className="p-1 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400">
             ✕
@@ -161,7 +162,7 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
         <div className="p-4 space-y-4">
           <div>
             <label className="text-sm text-slate-500 dark:text-slate-400 mb-2 block">
-              {mode === "buy" ? t.youPay : t.youReceive}
+              {mode === "buy" ? t("youPay") : t("youReceive")}
             </label>
             <div className="flex gap-2 mb-3">
               {paymentMethods.map((pm) => (
@@ -181,7 +182,7 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
             
             {selectedCurrency === "AUXM" && (
               <div className="flex items-center justify-between text-xs mb-2">
-                <span className="text-slate-400 dark:text-slate-500">{t.balance}:</span>
+                <span className="text-slate-400 dark:text-slate-500">{t("balance")}:</span>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-700 dark:text-white font-mono">{auxmBalance.toFixed(2)} AUXM</span>
                 </div>
@@ -198,7 +199,7 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
               }`}
             />
             {hasInsufficientBalance && (
-              <p className="text-red-500 dark:text-red-400 text-xs mt-1">{t.insufficientBalance}</p>
+              <p className="text-red-500 dark:text-red-400 text-xs mt-1">{t("insufficientBalance")}</p>
             )}
           </div>
 
@@ -210,7 +211,7 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
 
           <div>
             <label className="text-sm text-slate-500 dark:text-slate-400 mb-2 block">
-              {mode === "buy" ? t.youReceive : t.youPay}
+              {mode === "buy" ? t("youReceive") : t("youPay")}
             </label>
             <div className="flex items-center gap-3 p-4 bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl">
               <span className="text-2xl">{metal.icon}</span>
@@ -235,9 +236,9 @@ export function TradeModal({ isOpen, onClose, metal, mode, lang = "en" }: TradeM
           >
             {isProcessing ? (
               <span className="flex items-center justify-center gap-2">
-                ⏳ {t.processing}
+                ⏳ {t("processing")}
               </span>
-            ) : !isConnected ? t.connectWallet : `${mode === "buy" ? t.buy : t.sell} ${metal.symbol}`}
+            ) : !isConnected ? t("connectWallet") : `${mode === "buy" ? t("buy") : t("sell")} ${metal.symbol}`}
           </button>
         </div>
       </div>

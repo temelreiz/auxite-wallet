@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface DeliveryAddress {
   id: string;
@@ -30,13 +31,12 @@ interface DeliveryRequest {
 
 interface Props {
   walletAddress: string;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   metalBalances?: Record<string, number>;
   onClose: () => void;
 }
 
 // 6-Language translations
-const translations: Record<string, Record<string, any>> = {
+const translations: Record<string, Record<string, string>> = {
   tr: {
     title: "Fiziksel Teslimat",
     subtitle: "Metal varlıklarınızı fiziksel olarak teslim alın",
@@ -56,37 +56,29 @@ const translations: Record<string, Record<string, any>> = {
     noAddresses: "Henüz adres eklemediniz",
     default: "Varsayılan",
     trackingNo: "Takip No",
-    status: {
-      pending: "Beklemede",
-      confirmed: "Onaylandı",
-      processing: "Hazırlanıyor",
-      shipped: "Kargoda",
-      delivered: "Teslim Edildi",
-      cancelled: "İptal Edildi",
-    },
-    addressForm: {
-      label: "Adres Etiketi",
-      fullName: "Ad Soyad",
-      phone: "Telefon",
-      country: "Ülke",
-      city: "Şehir",
-      district: "İlçe",
-      addressLine1: "Adres Satırı 1",
-      addressLine2: "Adres Satırı 2 (Opsiyonel)",
-      postalCode: "Posta Kodu",
-      setDefault: "Varsayılan adres olarak ayarla",
-      save: "Kaydet",
-    },
-    success: {
-      requestCreated: "Teslimat talebi oluşturuldu!",
-      addressAdded: "Adres eklendi!",
-      requestCancelled: "Talep iptal edildi",
-    },
-    errors: {
-      insufficientBalance: "Yetersiz bakiye",
-      minAmountRequired: "Minimum miktar gerekli",
-      error: "Bir hata oluştu",
-    },
+    statusPending: "Beklemede",
+    statusConfirmed: "Onaylandı",
+    statusProcessing: "Hazırlanıyor",
+    statusShipped: "Kargoda",
+    statusDelivered: "Teslim Edildi",
+    statusCancelled: "İptal Edildi",
+    addressFormLabel: "Adres Etiketi",
+    addressFormFullName: "Ad Soyad",
+    addressFormPhone: "Telefon",
+    addressFormCountry: "Ülke",
+    addressFormCity: "Şehir",
+    addressFormDistrict: "İlçe",
+    addressFormAddressLine1: "Adres Satırı 1",
+    addressFormAddressLine2: "Adres Satırı 2 (Opsiyonel)",
+    addressFormPostalCode: "Posta Kodu",
+    addressFormSetDefault: "Varsayılan adres olarak ayarla",
+    addressFormSave: "Kaydet",
+    successRequestCreated: "Teslimat talebi oluşturuldu!",
+    successAddressAdded: "Adres eklendi!",
+    successRequestCancelled: "Talep iptal edildi",
+    errorsInsufficientBalance: "Yetersiz bakiye",
+    errorsMinAmountRequired: "Minimum miktar gerekli",
+    errorsError: "Bir hata oluştu",
   },
   en: {
     title: "Physical Delivery",
@@ -107,37 +99,29 @@ const translations: Record<string, Record<string, any>> = {
     noAddresses: "No addresses added yet",
     default: "Default",
     trackingNo: "Tracking No",
-    status: {
-      pending: "Pending",
-      confirmed: "Confirmed",
-      processing: "Processing",
-      shipped: "Shipped",
-      delivered: "Delivered",
-      cancelled: "Cancelled",
-    },
-    addressForm: {
-      label: "Address Label",
-      fullName: "Full Name",
-      phone: "Phone",
-      country: "Country",
-      city: "City",
-      district: "District",
-      addressLine1: "Address Line 1",
-      addressLine2: "Address Line 2 (Optional)",
-      postalCode: "Postal Code",
-      setDefault: "Set as default address",
-      save: "Save",
-    },
-    success: {
-      requestCreated: "Delivery request created!",
-      addressAdded: "Address added!",
-      requestCancelled: "Request cancelled",
-    },
-    errors: {
-      insufficientBalance: "Insufficient balance",
-      minAmountRequired: "Minimum amount required",
-      error: "An error occurred",
-    },
+    statusPending: "Pending",
+    statusConfirmed: "Confirmed",
+    statusProcessing: "Processing",
+    statusShipped: "Shipped",
+    statusDelivered: "Delivered",
+    statusCancelled: "Cancelled",
+    addressFormLabel: "Address Label",
+    addressFormFullName: "Full Name",
+    addressFormPhone: "Phone",
+    addressFormCountry: "Country",
+    addressFormCity: "City",
+    addressFormDistrict: "District",
+    addressFormAddressLine1: "Address Line 1",
+    addressFormAddressLine2: "Address Line 2 (Optional)",
+    addressFormPostalCode: "Postal Code",
+    addressFormSetDefault: "Set as default address",
+    addressFormSave: "Save",
+    successRequestCreated: "Delivery request created!",
+    successAddressAdded: "Address added!",
+    successRequestCancelled: "Request cancelled",
+    errorsInsufficientBalance: "Insufficient balance",
+    errorsMinAmountRequired: "Minimum amount required",
+    errorsError: "An error occurred",
   },
   de: {
     title: "Physische Lieferung",
@@ -158,37 +142,29 @@ const translations: Record<string, Record<string, any>> = {
     noAddresses: "Noch keine Adressen hinzugefügt",
     default: "Standard",
     trackingNo: "Sendungsnr.",
-    status: {
-      pending: "Ausstehend",
-      confirmed: "Bestätigt",
-      processing: "In Bearbeitung",
-      shipped: "Versendet",
-      delivered: "Geliefert",
-      cancelled: "Storniert",
-    },
-    addressForm: {
-      label: "Adresslabel",
-      fullName: "Vollständiger Name",
-      phone: "Telefon",
-      country: "Land",
-      city: "Stadt",
-      district: "Bezirk",
-      addressLine1: "Adresszeile 1",
-      addressLine2: "Adresszeile 2 (Optional)",
-      postalCode: "Postleitzahl",
-      setDefault: "Als Standardadresse festlegen",
-      save: "Speichern",
-    },
-    success: {
-      requestCreated: "Lieferanfrage erstellt!",
-      addressAdded: "Adresse hinzugefügt!",
-      requestCancelled: "Anfrage storniert",
-    },
-    errors: {
-      insufficientBalance: "Unzureichendes Guthaben",
-      minAmountRequired: "Mindestmenge erforderlich",
-      error: "Ein Fehler ist aufgetreten",
-    },
+    statusPending: "Ausstehend",
+    statusConfirmed: "Bestätigt",
+    statusProcessing: "In Bearbeitung",
+    statusShipped: "Versendet",
+    statusDelivered: "Geliefert",
+    statusCancelled: "Storniert",
+    addressFormLabel: "Adresslabel",
+    addressFormFullName: "Vollständiger Name",
+    addressFormPhone: "Telefon",
+    addressFormCountry: "Land",
+    addressFormCity: "Stadt",
+    addressFormDistrict: "Bezirk",
+    addressFormAddressLine1: "Adresszeile 1",
+    addressFormAddressLine2: "Adresszeile 2 (Optional)",
+    addressFormPostalCode: "Postleitzahl",
+    addressFormSetDefault: "Als Standardadresse festlegen",
+    addressFormSave: "Speichern",
+    successRequestCreated: "Lieferanfrage erstellt!",
+    successAddressAdded: "Adresse hinzugefügt!",
+    successRequestCancelled: "Anfrage storniert",
+    errorsInsufficientBalance: "Unzureichendes Guthaben",
+    errorsMinAmountRequired: "Mindestmenge erforderlich",
+    errorsError: "Ein Fehler ist aufgetreten",
   },
   fr: {
     title: "Livraison Physique",
@@ -209,37 +185,29 @@ const translations: Record<string, Record<string, any>> = {
     noAddresses: "Aucune adresse ajoutée",
     default: "Par défaut",
     trackingNo: "N° de suivi",
-    status: {
-      pending: "En attente",
-      confirmed: "Confirmé",
-      processing: "En cours",
-      shipped: "Expédié",
-      delivered: "Livré",
-      cancelled: "Annulé",
-    },
-    addressForm: {
-      label: "Étiquette d'adresse",
-      fullName: "Nom complet",
-      phone: "Téléphone",
-      country: "Pays",
-      city: "Ville",
-      district: "District",
-      addressLine1: "Ligne d'adresse 1",
-      addressLine2: "Ligne d'adresse 2 (Optionnel)",
-      postalCode: "Code postal",
-      setDefault: "Définir comme adresse par défaut",
-      save: "Enregistrer",
-    },
-    success: {
-      requestCreated: "Demande de livraison créée!",
-      addressAdded: "Adresse ajoutée!",
-      requestCancelled: "Demande annulée",
-    },
-    errors: {
-      insufficientBalance: "Solde insuffisant",
-      minAmountRequired: "Quantité minimale requise",
-      error: "Une erreur s'est produite",
-    },
+    statusPending: "En attente",
+    statusConfirmed: "Confirmé",
+    statusProcessing: "En cours",
+    statusShipped: "Expédié",
+    statusDelivered: "Livré",
+    statusCancelled: "Annulé",
+    addressFormLabel: "Étiquette d'adresse",
+    addressFormFullName: "Nom complet",
+    addressFormPhone: "Téléphone",
+    addressFormCountry: "Pays",
+    addressFormCity: "Ville",
+    addressFormDistrict: "District",
+    addressFormAddressLine1: "Ligne d'adresse 1",
+    addressFormAddressLine2: "Ligne d'adresse 2 (Optionnel)",
+    addressFormPostalCode: "Code postal",
+    addressFormSetDefault: "Définir comme adresse par défaut",
+    addressFormSave: "Enregistrer",
+    successRequestCreated: "Demande de livraison créée!",
+    successAddressAdded: "Adresse ajoutée!",
+    successRequestCancelled: "Demande annulée",
+    errorsInsufficientBalance: "Solde insuffisant",
+    errorsMinAmountRequired: "Quantité minimale requise",
+    errorsError: "Une erreur s'est produite",
   },
   ar: {
     title: "التوصيل الفعلي",
@@ -260,37 +228,29 @@ const translations: Record<string, Record<string, any>> = {
     noAddresses: "لم تتم إضافة عناوين بعد",
     default: "افتراضي",
     trackingNo: "رقم التتبع",
-    status: {
-      pending: "معلق",
-      confirmed: "مؤكد",
-      processing: "قيد التجهيز",
-      shipped: "تم الشحن",
-      delivered: "تم التوصيل",
-      cancelled: "ملغي",
-    },
-    addressForm: {
-      label: "تسمية العنوان",
-      fullName: "الاسم الكامل",
-      phone: "الهاتف",
-      country: "البلد",
-      city: "المدينة",
-      district: "المنطقة",
-      addressLine1: "سطر العنوان 1",
-      addressLine2: "سطر العنوان 2 (اختياري)",
-      postalCode: "الرمز البريدي",
-      setDefault: "تعيين كعنوان افتراضي",
-      save: "حفظ",
-    },
-    success: {
-      requestCreated: "تم إنشاء طلب التوصيل!",
-      addressAdded: "تمت إضافة العنوان!",
-      requestCancelled: "تم إلغاء الطلب",
-    },
-    errors: {
-      insufficientBalance: "رصيد غير كافٍ",
-      minAmountRequired: "الحد الأدنى للكمية مطلوب",
-      error: "حدث خطأ",
-    },
+    statusPending: "معلق",
+    statusConfirmed: "مؤكد",
+    statusProcessing: "قيد التجهيز",
+    statusShipped: "تم الشحن",
+    statusDelivered: "تم التوصيل",
+    statusCancelled: "ملغي",
+    addressFormLabel: "تسمية العنوان",
+    addressFormFullName: "الاسم الكامل",
+    addressFormPhone: "الهاتف",
+    addressFormCountry: "البلد",
+    addressFormCity: "المدينة",
+    addressFormDistrict: "المنطقة",
+    addressFormAddressLine1: "سطر العنوان 1",
+    addressFormAddressLine2: "سطر العنوان 2 (اختياري)",
+    addressFormPostalCode: "الرمز البريدي",
+    addressFormSetDefault: "تعيين كعنوان افتراضي",
+    addressFormSave: "حفظ",
+    successRequestCreated: "تم إنشاء طلب التوصيل!",
+    successAddressAdded: "تمت إضافة العنوان!",
+    successRequestCancelled: "تم إلغاء الطلب",
+    errorsInsufficientBalance: "رصيد غير كافٍ",
+    errorsMinAmountRequired: "الحد الأدنى للكمية مطلوب",
+    errorsError: "حدث خطأ",
   },
   ru: {
     title: "Физическая Доставка",
@@ -311,37 +271,29 @@ const translations: Record<string, Record<string, any>> = {
     noAddresses: "Адреса еще не добавлены",
     default: "По умолчанию",
     trackingNo: "Номер отслеживания",
-    status: {
-      pending: "В ожидании",
-      confirmed: "Подтверждено",
-      processing: "Обрабатывается",
-      shipped: "Отправлено",
-      delivered: "Доставлено",
-      cancelled: "Отменено",
-    },
-    addressForm: {
-      label: "Название адреса",
-      fullName: "Полное имя",
-      phone: "Телефон",
-      country: "Страна",
-      city: "Город",
-      district: "Район",
-      addressLine1: "Адресная строка 1",
-      addressLine2: "Адресная строка 2 (Необязательно)",
-      postalCode: "Почтовый индекс",
-      setDefault: "Установить как адрес по умолчанию",
-      save: "Сохранить",
-    },
-    success: {
-      requestCreated: "Запрос на доставку создан!",
-      addressAdded: "Адрес добавлен!",
-      requestCancelled: "Запрос отменен",
-    },
-    errors: {
-      insufficientBalance: "Недостаточный баланс",
-      minAmountRequired: "Требуется минимальное количество",
-      error: "Произошла ошибка",
-    },
+    statusPending: "В ожидании",
+    statusConfirmed: "Подтверждено",
+    statusProcessing: "Обрабатывается",
+    statusShipped: "Отправлено",
+    statusDelivered: "Доставлено",
+    statusCancelled: "Отменено",
+    addressFormLabel: "Название адреса",
+    addressFormFullName: "Полное имя",
+    addressFormPhone: "Телефон",
+    addressFormCountry: "Страна",
+    addressFormCity: "Город",
+    addressFormDistrict: "Район",
+    addressFormAddressLine1: "Адресная строка 1",
+    addressFormAddressLine2: "Адресная строка 2 (Необязательно)",
+    addressFormPostalCode: "Почтовый индекс",
+    addressFormSetDefault: "Установить как адрес по умолчанию",
+    addressFormSave: "Сохранить",
+    successRequestCreated: "Запрос на доставку создан!",
+    successAddressAdded: "Адрес добавлен!",
+    successRequestCancelled: "Запрос отменен",
+    errorsInsufficientBalance: "Недостаточный баланс",
+    errorsMinAmountRequired: "Требуется минимальное количество",
+    errorsError: "Произошла ошибка",
   },
 };
 
@@ -360,8 +312,9 @@ const DELIVERY_FEES: Record<string, number> = {
   AUXPD: 50,
 };
 
-export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {}, onClose }: Props) {
-  const t = translations[lang] || translations.en;
+export function PhysicalDelivery({ walletAddress, metalBalances = {}, onClose }: Props) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const [activeTab, setActiveTab] = useState<"new" | "requests" | "addresses">("new");
   const [requests, setRequests] = useState<DeliveryRequest[]>([]);
   const [addresses, setAddresses] = useState<DeliveryAddress[]>([]);
@@ -421,13 +374,13 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
     const amountNum = parseFloat(amount);
 
     if (!metal || amountNum < metal.minAmount) {
-      setErrorMessage(t.errors.minAmountRequired + ": " + metal?.minAmount + "g");
+      setErrorMessage(t("errorsMinAmountRequired") + ": " + metal?.minAmount + "g");
       setSubmitting(false);
       return;
     }
 
     if (amountNum > balance) {
-      setErrorMessage(t.errors.insufficientBalance);
+      setErrorMessage(t("errorsInsufficientBalance"));
       setSubmitting(false);
       return;
     }
@@ -440,7 +393,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
       });
       const data = await res.json();
       if (res.ok) {
-        setSuccessMessage(t.success.requestCreated);
+        setSuccessMessage(t("successRequestCreated"));
         setAmount("");
         fetchData();
         setActiveTab("requests");
@@ -448,7 +401,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
         setErrorMessage(data.error);
       }
     } catch (err) {
-      setErrorMessage(t.errors.error);
+      setErrorMessage(t("errorsError"));
     } finally {
       setSubmitting(false);
     }
@@ -465,7 +418,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
       });
       const data = await res.json();
       if (res.ok) {
-        setSuccessMessage(t.success.addressAdded);
+        setSuccessMessage(t("successAddressAdded"));
         setShowAddressForm(false);
         setAddressForm({ label: "", fullName: "", phone: "", country: "Türkiye", city: "", district: "", addressLine1: "", addressLine2: "", postalCode: "", isDefault: false });
         fetchData();
@@ -473,7 +426,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
         setErrorMessage(data.error);
       }
     } catch (err) {
-      setErrorMessage(t.errors.error);
+      setErrorMessage(t("errorsError"));
     } finally {
       setSubmitting(false);
     }
@@ -486,7 +439,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
         headers: { "x-wallet-address": walletAddress },
       });
       if (res.ok) {
-        setSuccessMessage(t.success.requestCancelled);
+        setSuccessMessage(t("successRequestCancelled"));
         fetchData();
       }
     } catch (err) {
@@ -503,8 +456,8 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
         {/* Header - Responsive */}
         <div className="sticky top-0 bg-white dark:bg-slate-900 p-3 sm:p-4 border-b border-stone-300 dark:border-slate-700 flex items-center justify-between z-10">
           <div className="min-w-0 flex-1">
-            <h2 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-white truncate">{t.title}</h2>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 truncate">{t.subtitle}</p>
+            <h2 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-white truncate">{t("title")}</h2>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 truncate">{t("subtitle")}</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg flex-shrink-0 ml-2">
             <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -524,9 +477,9 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
         {/* Tabs - Responsive */}
         <div className="flex border-b border-stone-300 dark:border-slate-700 overflow-x-auto">
           {[
-            { id: "new", label: t.newRequest },
-            { id: "requests", label: t.myRequests },
-            { id: "addresses", label: t.myAddresses },
+            { id: "new", label: t("newRequest") },
+            { id: "requests", label: t("myRequests") },
+            { id: "addresses", label: t("myAddresses") },
           ].map(tab => (
             <button
               key={tab.id}
@@ -546,7 +499,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
             <div className="space-y-3 sm:space-y-4">
               {/* Metal Selection - Responsive Grid */}
               <div>
-                <label className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t.selectMetal}</label>
+                <label className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t("selectMetal")}</label>
                 <div className="grid grid-cols-2 gap-2">
                   {METALS.map(metal => (
                     <button
@@ -560,7 +513,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
                         <img src={metal.icon} alt={metal.symbol} className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0" />
                         <div className="text-left min-w-0 flex-1">
                           <div className="text-slate-800 dark:text-white font-medium text-sm sm:text-base">{metal.symbol}</div>
-                          <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500">{t.minAmount}: {metal.minAmount}g</div>
+                          <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500">{t("minAmount")}: {metal.minAmount}g</div>
                         </div>
                       </div>
                     </button>
@@ -570,7 +523,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
 
               {/* Amount - Responsive */}
               <div>
-                <label className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t.amount}</label>
+                <label className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t("amount")}</label>
                 <input
                   type="number"
                   value={amount}
@@ -580,17 +533,17 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
                   min={selectedMetalInfo?.minAmount}
                 />
                 <div className="flex justify-between mt-2 text-[10px] sm:text-xs">
-                  <span className="text-slate-500 dark:text-slate-500">{t.minAmount}: {selectedMetalInfo?.minAmount}g</span>
-                  <span className="text-slate-600 dark:text-slate-400">{t.yourBalance}: {currentBalance.toFixed(2)}g</span>
+                  <span className="text-slate-500 dark:text-slate-500">{t("minAmount")}: {selectedMetalInfo?.minAmount}g</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t("yourBalance")}: {currentBalance.toFixed(2)}g</span>
                 </div>
               </div>
 
               {/* Address Selection - Responsive */}
               <div>
-                <label className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t.selectAddress}</label>
+                <label className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t("selectAddress")}</label>
                 {addresses.length === 0 ? (
                   <button onClick={() => { setActiveTab("addresses"); setShowAddressForm(true); }} className="w-full p-3 sm:p-4 border border-dashed border-stone-400 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-400 hover:border-slate-500 text-sm">
-                    + {t.addAddress}
+                    + {t("addAddress")}
                   </button>
                 ) : (
                   <select value={selectedAddressId} onChange={(e) => setSelectedAddressId(e.target.value)} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-slate-800 dark:text-white text-sm sm:text-base">
@@ -604,7 +557,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
               {/* Fee Info - Responsive */}
               <div className="p-2.5 sm:p-3 bg-stone-100 dark:bg-slate-800/50 rounded-xl">
                 <div className="flex justify-between text-xs sm:text-sm">
-                  <span className="text-slate-600 dark:text-slate-400">{t.deliveryFee}</span>
+                  <span className="text-slate-600 dark:text-slate-400">{t("deliveryFee")}</span>
                   <span className="text-slate-800 dark:text-white">${DELIVERY_FEES[selectedMetal]}</span>
                 </div>
               </div>
@@ -615,7 +568,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
                 disabled={submitting || !amount || !selectedAddressId || parseFloat(amount) < (selectedMetalInfo?.minAmount || 0)}
                 className="w-full py-2.5 sm:py-3 bg-[#BFA181] text-slate-800 dark:text-white rounded-xl font-medium hover:bg-[#2F6F62] disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
-                {submitting ? "..." : t.submit}
+                {submitting ? "..." : t("submit")}
               </button>
             </div>
           )}
@@ -630,7 +583,7 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
               ) : requests.length === 0 ? (
                 <div className="text-center py-6 sm:py-8 text-slate-500 dark:text-slate-500">
                   <p className="text-3xl sm:text-4xl mb-2">📦</p>
-                  <p className="text-sm">{t.noRequests}</p>
+                  <p className="text-sm">{t("noRequests")}</p>
                 </div>
               ) : (
                 requests.map(req => {
@@ -651,13 +604,13 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
                           req.status === "shipped" ? "bg-blue-500/20 text-blue-400" :
                           "bg-[#BFA181]/20 text-[#BFA181]"
                         }`}>
-                          {t.status[req.status]}
+                          {t("status" + req.status.charAt(0).toUpperCase() + req.status.slice(1))}
                         </span>
                       </div>
                       <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-500 mb-2">{req.address.city}, {req.address.country}</div>
-                      {req.trackingNumber && <div className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">{t.trackingNo}: {req.trackingNumber}</div>}
+                      {req.trackingNumber && <div className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">{t("trackingNo")}: {req.trackingNumber}</div>}
                       {req.status === "pending" && (
-                        <button onClick={() => handleCancelRequest(req.id)} className="mt-2 text-[10px] sm:text-xs text-red-400 hover:text-red-300">{t.cancel}</button>
+                        <button onClick={() => handleCancelRequest(req.id)} className="mt-2 text-[10px] sm:text-xs text-red-400 hover:text-red-300">{t("cancel")}</button>
                       )}
                     </div>
                   );
@@ -672,19 +625,19 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
               {!showAddressForm ? (
                 <>
                   <button onClick={() => setShowAddressForm(true)} className="w-full p-2.5 sm:p-3 border border-dashed border-stone-400 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-400 hover:border-[#BFA181] hover:text-[#BFA181] text-sm">
-                    + {t.addAddress}
+                    + {t("addAddress")}
                   </button>
                   {addresses.length === 0 ? (
                     <div className="text-center py-6 sm:py-8 text-slate-500 dark:text-slate-500">
                       <p className="text-3xl sm:text-4xl mb-2">🏠</p>
-                      <p className="text-sm">{t.noAddresses}</p>
+                      <p className="text-sm">{t("noAddresses")}</p>
                     </div>
                   ) : (
                     addresses.map(addr => (
                       <div key={addr.id} className="bg-stone-100 dark:bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-stone-300 dark:border-slate-700">
                         <div className="flex items-center justify-between mb-2 gap-2">
                           <div className="font-medium text-slate-800 dark:text-white text-sm sm:text-base truncate">{addr.label}</div>
-                          {addr.isDefault && <span className="text-[10px] sm:text-xs bg-[#BFA181]/20 text-[#BFA181] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded flex-shrink-0">{t.default}</span>}
+                          {addr.isDefault && <span className="text-[10px] sm:text-xs bg-[#BFA181]/20 text-[#BFA181] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded flex-shrink-0">{t("default")}</span>}
                         </div>
                         <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 space-y-0.5">
                           <p>{addr.fullName}</p>
@@ -700,25 +653,25 @@ export function PhysicalDelivery({ walletAddress, lang = "en", metalBalances = {
                 </>
               ) : (
                 <div className="space-y-2 sm:space-y-3">
-                  <input type="text" placeholder={t.addressForm.label} value={addressForm.label} onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
-                  <input type="text" placeholder={t.addressForm.fullName} value={addressForm.fullName} onChange={(e) => setAddressForm({ ...addressForm, fullName: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
-                  <input type="tel" placeholder={t.addressForm.phone} value={addressForm.phone} onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
+                  <input type="text" placeholder={t("addressFormLabel")} value={addressForm.label} onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
+                  <input type="text" placeholder={t("addressFormFullName")} value={addressForm.fullName} onChange={(e) => setAddressForm({ ...addressForm, fullName: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
+                  <input type="tel" placeholder={t("addressFormPhone")} value={addressForm.phone} onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <input type="text" placeholder={t.addressForm.country} value={addressForm.country} onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })} className="bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
-                    <input type="text" placeholder={t.addressForm.city} value={addressForm.city} onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })} className="bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
+                    <input type="text" placeholder={t("addressFormCountry")} value={addressForm.country} onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })} className="bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
+                    <input type="text" placeholder={t("addressFormCity")} value={addressForm.city} onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })} className="bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
                   </div>
-                  <input type="text" placeholder={t.addressForm.district} value={addressForm.district} onChange={(e) => setAddressForm({ ...addressForm, district: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
-                  <input type="text" placeholder={t.addressForm.addressLine1} value={addressForm.addressLine1} onChange={(e) => setAddressForm({ ...addressForm, addressLine1: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
-                  <input type="text" placeholder={t.addressForm.addressLine2} value={addressForm.addressLine2} onChange={(e) => setAddressForm({ ...addressForm, addressLine2: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
-                  <input type="text" placeholder={t.addressForm.postalCode} value={addressForm.postalCode} onChange={(e) => setAddressForm({ ...addressForm, postalCode: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
+                  <input type="text" placeholder={t("addressFormDistrict")} value={addressForm.district} onChange={(e) => setAddressForm({ ...addressForm, district: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
+                  <input type="text" placeholder={t("addressFormAddressLine1")} value={addressForm.addressLine1} onChange={(e) => setAddressForm({ ...addressForm, addressLine1: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
+                  <input type="text" placeholder={t("addressFormAddressLine2")} value={addressForm.addressLine2} onChange={(e) => setAddressForm({ ...addressForm, addressLine2: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
+                  <input type="text" placeholder={t("addressFormPostalCode")} value={addressForm.postalCode} onChange={(e) => setAddressForm({ ...addressForm, postalCode: e.target.value })} className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-lg px-3 sm:px-4 py-2 text-slate-800 dark:text-white text-sm" />
                   <label className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                     <input type="checkbox" checked={addressForm.isDefault} onChange={(e) => setAddressForm({ ...addressForm, isDefault: e.target.checked })} className="rounded" />
-                    {t.addressForm.setDefault}
+                    {t("addressFormSetDefault")}
                   </label>
                   <div className="flex gap-2">
-                    <button onClick={() => setShowAddressForm(false)} className="flex-1 py-2 bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm">{t.cancel}</button>
+                    <button onClick={() => setShowAddressForm(false)} className="flex-1 py-2 bg-stone-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm">{t("cancel")}</button>
                     <button onClick={handleAddAddress} disabled={submitting || !addressForm.label || !addressForm.fullName || !addressForm.phone || !addressForm.city || !addressForm.addressLine1 || !addressForm.postalCode} className="flex-1 py-2 bg-[#BFA181] text-slate-800 dark:text-white rounded-lg disabled:opacity-50 text-sm">
-                      {submitting ? "..." : t.addressForm.save}
+                      {submitting ? "..." : t("addressFormSave")}
                     </button>
                   </div>
                 </div>

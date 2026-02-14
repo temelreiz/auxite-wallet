@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface WhitelistAddress {
   id: string;
@@ -14,7 +15,6 @@ interface WhitelistAddress {
 
 interface WhitelistManagerProps {
   walletAddress: string;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
 const NETWORK_ICONS: Record<string, { icon: string; color: string; name: string }> = {
@@ -136,7 +136,8 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
-export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManagerProps) {
+export function WhitelistManager({ walletAddress }: WhitelistManagerProps) {
+  const { lang } = useLanguage();
   const [addresses, setAddresses] = useState<WhitelistAddress[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -145,7 +146,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const t = translations[lang] || translations.en;
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   useEffect(() => {
     fetchAddresses();
@@ -165,7 +166,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
 
   const handleAdd = async () => {
     if (!newAddress.address || !newAddress.network) {
-      setError(t.addressRequired);
+      setError(t("addressRequired"));
       return;
     }
 
@@ -204,7 +205,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
   };
 
   const handleDelete = async (addressId: string) => {
-    if (!confirm(t.confirmDelete)) {
+    if (!confirm(t("confirmDelete"))) {
       return;
     }
 
@@ -252,8 +253,8 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="text-sm sm:text-lg font-semibold text-slate-800 dark:text-white">{t.title}</h3>
-          <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">{t.description}</p>
+          <h3 className="text-sm sm:text-lg font-semibold text-slate-800 dark:text-white">{t("title")}</h3>
+          <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400">{t("description")}</p>
         </div>
         {!showAddForm && (
           <button
@@ -263,8 +264,8 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
             <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            <span className="hidden sm:inline">{t.addNew}</span>
-            <span className="sm:hidden">{t.add}</span>
+            <span className="hidden sm:inline">{t("addNew")}</span>
+            <span className="sm:hidden">{t("add")}</span>
           </button>
         )}
       </div>
@@ -286,7 +287,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
         <div className="p-3 sm:p-4 bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700 rounded-lg sm:rounded-xl space-y-3 sm:space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <div className="sm:col-span-2">
-              <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1 font-medium">{t.address}</label>
+              <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1 font-medium">{t("address")}</label>
               <input
                 type="text"
                 value={newAddress.address}
@@ -296,7 +297,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
               />
             </div>
             <div>
-              <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1 font-medium">{t.network}</label>
+              <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1 font-medium">{t("network")}</label>
               <select
                 value={newAddress.network}
                 onChange={(e) => setNewAddress({ ...newAddress, network: e.target.value as any })}
@@ -310,12 +311,12 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
             </div>
           </div>
           <div>
-            <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1 font-medium">{t.label}</label>
+            <label className="block text-[10px] sm:text-sm text-slate-600 dark:text-slate-400 mb-1 font-medium">{t("label")}</label>
             <input
               type="text"
               value={newAddress.label}
               onChange={(e) => setNewAddress({ ...newAddress, label: e.target.value })}
-              placeholder={t.labelPlaceholder}
+              placeholder={t("labelPlaceholder")}
               className="w-full px-2.5 sm:px-3 py-2 sm:py-2 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-lg text-xs sm:text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-[#2F6F62] focus:outline-none"
             />
           </div>
@@ -325,7 +326,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
               disabled={submitting}
               className="px-3 sm:px-4 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] disabled:opacity-50 text-white font-medium rounded-lg transition-colors text-xs sm:text-sm"
             >
-              {submitting ? "..." : t.add}
+              {submitting ? "..." : t("add")}
             </button>
             <button
               onClick={() => {
@@ -335,7 +336,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
               }}
               className="px-3 sm:px-4 py-2 bg-stone-200 dark:bg-slate-700 hover:bg-stone-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-medium rounded-lg transition-colors text-xs sm:text-sm"
             >
-              {t.cancel}
+              {t("cancel")}
             </button>
           </div>
         </div>
@@ -347,7 +348,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
           <svg className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
-          <p className="text-xs sm:text-sm">{t.noAddresses}</p>
+          <p className="text-xs sm:text-sm">{t("noAddresses")}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -372,11 +373,11 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
                       <span className="text-xs sm:text-sm text-slate-800 dark:text-white font-medium truncate">{addr.label || networkInfo.name}</span>
                       {addr.isVerified ? (
                         <span className="text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62] rounded flex-shrink-0">
-                          ✓ {t.verified}
+                          ✓ {t("verified")}
                         </span>
                       ) : (
                         <span className="text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-[#BFA181]/20 text-[#BFA181] dark:text-[#BFA181] rounded flex-shrink-0">
-                          ⏳ {t.pending}
+                          ⏳ {t("pending")}
                         </span>
                       )}
                     </div>
@@ -385,7 +386,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
                     </p>
                     {timeRemaining && (
                       <p className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500 mt-0.5 sm:mt-1">
-                        {t.verifyIn} {timeRemaining}
+                        {t("verifyIn")} {timeRemaining}
                       </p>
                     )}
                   </div>
@@ -393,7 +394,7 @@ export function WhitelistManager({ walletAddress, lang = "en" }: WhitelistManage
                 <button
                   onClick={() => handleDelete(addr.id)}
                   className="p-1.5 sm:p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
-                  title={t.delete}
+                  title={t("delete")}
                 >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface TwoFactorVerifyProps {
   walletAddress: string;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru" | "de" | "fr" | "ar" | "ru";
   title?: string;
   description?: string;
   onVerified: (verificationToken: string) => void;
@@ -12,15 +12,140 @@ interface TwoFactorVerifyProps {
   allowBiometric?: boolean;
 }
 
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    verificationRequired: "Doğrulama Gerekli",
+    verifyToConfirm: "İşlemi onaylamak için doğrulayın",
+    verifyWithBiometric: "Biyometrik ile Doğrula",
+    waiting: "Bekleniyor...",
+    or: "veya",
+    backupCode: "Backup Kodu",
+    verificationCode: "Doğrulama Kodu",
+    useAuthenticator: "← Authenticator kodu kullan",
+    useBackupCode: "Backup kodu kullan →",
+    remainingAttempts: "Kalan deneme:",
+    cancel: "İptal",
+    verify: "Doğrula",
+    verifying: "Doğrulanıyor...",
+    enter8digit: "8 haneli backup kodu girin",
+    enter6digit: "6 haneli kod girin",
+    tooManyAttempts: "Çok fazla başarısız deneme. 15 dakika sonra tekrar deneyin.",
+    errorOccurred: "Bir hata oluştu",
+    operationCancelled: "İşlem iptal edildi",
+  },
+  en: {
+    verificationRequired: "Verification Required",
+    verifyToConfirm: "Verify to confirm this action",
+    verifyWithBiometric: "Verify with Biometric",
+    waiting: "Waiting...",
+    or: "or",
+    backupCode: "Backup Code",
+    verificationCode: "Verification Code",
+    useAuthenticator: "← Use authenticator code",
+    useBackupCode: "Use backup code →",
+    remainingAttempts: "Remaining attempts:",
+    cancel: "Cancel",
+    verify: "Verify",
+    verifying: "Verifying...",
+    enter8digit: "Enter 8-digit backup code",
+    enter6digit: "Enter 6-digit code",
+    tooManyAttempts: "Too many failed attempts. Try again in 15 minutes.",
+    errorOccurred: "An error occurred",
+    operationCancelled: "Operation cancelled",
+  },
+  de: {
+    verificationRequired: "Verifizierung erforderlich",
+    verifyToConfirm: "Verifizieren Sie diese Aktion",
+    verifyWithBiometric: "Mit Biometrie verifizieren",
+    waiting: "Warten...",
+    or: "oder",
+    backupCode: "Backup-Code",
+    verificationCode: "Verifizierungscode",
+    useAuthenticator: "← Authenticator-Code verwenden",
+    useBackupCode: "Backup-Code verwenden →",
+    remainingAttempts: "Verbleibende Versuche:",
+    cancel: "Abbrechen",
+    verify: "Verifizieren",
+    verifying: "Verifizierung...",
+    enter8digit: "8-stelligen Backup-Code eingeben",
+    enter6digit: "6-stelligen Code eingeben",
+    tooManyAttempts: "Zu viele fehlgeschlagene Versuche. Versuchen Sie es in 15 Minuten erneut.",
+    errorOccurred: "Ein Fehler ist aufgetreten",
+    operationCancelled: "Vorgang abgebrochen",
+  },
+  fr: {
+    verificationRequired: "Vérification requise",
+    verifyToConfirm: "Vérifiez pour confirmer cette action",
+    verifyWithBiometric: "Vérifier avec biométrie",
+    waiting: "En attente...",
+    or: "ou",
+    backupCode: "Code de secours",
+    verificationCode: "Code de vérification",
+    useAuthenticator: "← Utiliser le code authenticator",
+    useBackupCode: "Utiliser le code de secours →",
+    remainingAttempts: "Tentatives restantes :",
+    cancel: "Annuler",
+    verify: "Vérifier",
+    verifying: "Vérification...",
+    enter8digit: "Entrez le code de secours à 8 chiffres",
+    enter6digit: "Entrez le code à 6 chiffres",
+    tooManyAttempts: "Trop de tentatives échouées. Réessayez dans 15 minutes.",
+    errorOccurred: "Une erreur est survenue",
+    operationCancelled: "Opération annulée",
+  },
+  ar: {
+    verificationRequired: "التحقق مطلوب",
+    verifyToConfirm: "تحقق لتأكيد هذا الإجراء",
+    verifyWithBiometric: "التحقق بالبصمة",
+    waiting: "جارٍ الانتظار...",
+    or: "أو",
+    backupCode: "رمز النسخ الاحتياطي",
+    verificationCode: "رمز التحقق",
+    useAuthenticator: "← استخدم رمز المصادقة",
+    useBackupCode: "استخدم رمز النسخ الاحتياطي →",
+    remainingAttempts: "المحاولات المتبقية:",
+    cancel: "إلغاء",
+    verify: "تحقق",
+    verifying: "جارٍ التحقق...",
+    enter8digit: "أدخل رمز النسخ الاحتياطي المكون من 8 أرقام",
+    enter6digit: "أدخل الرمز المكون من 6 أرقام",
+    tooManyAttempts: "محاولات فاشلة كثيرة. حاول مرة أخرى بعد 15 دقيقة.",
+    errorOccurred: "حدث خطأ",
+    operationCancelled: "تم إلغاء العملية",
+  },
+  ru: {
+    verificationRequired: "Требуется проверка",
+    verifyToConfirm: "Подтвердите это действие",
+    verifyWithBiometric: "Подтвердить биометрией",
+    waiting: "Ожидание...",
+    or: "или",
+    backupCode: "Резервный код",
+    verificationCode: "Код подтверждения",
+    useAuthenticator: "← Использовать код аутентификатора",
+    useBackupCode: "Использовать резервный код →",
+    remainingAttempts: "Оставшиеся попытки:",
+    cancel: "Отмена",
+    verify: "Подтвердить",
+    verifying: "Проверка...",
+    enter8digit: "Введите 8-значный резервный код",
+    enter6digit: "Введите 6-значный код",
+    tooManyAttempts: "Слишком много неудачных попыток. Попробуйте через 15 минут.",
+    errorOccurred: "Произошла ошибка",
+    operationCancelled: "Операция отменена",
+  },
+};
+
 export function TwoFactorVerify({
   walletAddress,
-  lang = "en",
   title,
   description,
   onVerified,
   onCancel,
   allowBiometric = true,
 }: TwoFactorVerifyProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
+
   const [code, setCode] = useState("");
   const [useBackupCode, setUseBackupCode] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,15 +175,15 @@ export function TwoFactorVerify({
 
   const verify = async () => {
     const cleanCode = code.replace(/\s/g, "");
-    
+
     if (useBackupCode) {
       if (cleanCode.length !== 8) {
-        setError(lang === "tr" ? "8 haneli backup kodu girin" : "Enter 8-digit backup code");
+        setError(t("enter8digit"));
         return;
       }
     } else {
       if (cleanCode.length !== 6) {
-        setError(lang === "tr" ? "6 haneli kod girin" : "Enter 6-digit code");
+        setError(t("enter6digit"));
         return;
       }
     }
@@ -73,7 +198,7 @@ export function TwoFactorVerify({
           "Content-Type": "application/json",
           "x-wallet-address": walletAddress,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           code: cleanCode,
           isBackupCode: useBackupCode,
         }),
@@ -83,11 +208,7 @@ export function TwoFactorVerify({
 
       if (!res.ok) {
         if (data.locked) {
-          setError(
-            lang === "tr" 
-              ? "Çok fazla başarısız deneme. 15 dakika sonra tekrar deneyin."
-              : "Too many failed attempts. Try again in 15 minutes."
-          );
+          setError(t("tooManyAttempts"));
         } else {
           setError(data.error);
           if (data.remainingAttempts !== undefined) {
@@ -99,7 +220,7 @@ export function TwoFactorVerify({
 
       onVerified(data.verificationToken);
     } catch (err: any) {
-      setError(err.message || (lang === "tr" ? "Bir hata oluştu" : "An error occurred"));
+      setError(err.message || t("errorOccurred"));
     } finally {
       setProcessing(false);
     }
@@ -136,7 +257,7 @@ export function TwoFactorVerify({
           "Content-Type": "application/json",
           "x-wallet-address": walletAddress,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           action: "auth-verify",
           response: credential,
         }),
@@ -148,7 +269,7 @@ export function TwoFactorVerify({
       onVerified(verifyData.verificationToken);
     } catch (err: any) {
       if (err.name === "NotAllowedError") {
-        setError(lang === "tr" ? "İşlem iptal edildi" : "Operation cancelled");
+        setError(t("operationCancelled"));
       } else {
         setError(err.message);
       }
@@ -176,10 +297,10 @@ export function TwoFactorVerify({
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">
-                {title || (lang === "tr" ? "Doğrulama Gerekli" : "Verification Required")}
+                {title || t("verificationRequired")}
               </h2>
               <p className="text-sm text-slate-400">
-                {description || (lang === "tr" ? "İşlemi onaylamak için doğrulayın" : "Verify to confirm this action")}
+                {description || t("verifyToConfirm")}
               </p>
             </div>
           </div>
@@ -196,15 +317,15 @@ export function TwoFactorVerify({
                 className="w-full py-4 rounded-xl bg-blue-500/20 border border-blue-500/30 text-blue-400 hover:bg-blue-500/30 transition-colors font-medium flex items-center justify-center gap-3 disabled:opacity-50"
               >
                 <span className="text-2xl">👆</span>
-                {processing 
-                  ? (lang === "tr" ? "Bekleniyor..." : "Waiting...")
-                  : (lang === "tr" ? "Biyometrik ile Doğrula" : "Verify with Biometric")}
+                {processing
+                  ? t("waiting")
+                  : t("verifyWithBiometric")}
               </button>
 
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-px bg-slate-700" />
                 <span className="text-xs text-slate-500">
-                  {lang === "tr" ? "veya" : "or"}
+                  {t("or")}
                 </span>
                 <div className="flex-1 h-px bg-slate-700" />
               </div>
@@ -214,9 +335,9 @@ export function TwoFactorVerify({
           {/* Code Input */}
           <div>
             <label className="block text-sm text-slate-400 mb-2">
-              {useBackupCode 
-                ? (lang === "tr" ? "Backup Kodu" : "Backup Code")
-                : (lang === "tr" ? "Doğrulama Kodu" : "Verification Code")}
+              {useBackupCode
+                ? t("backupCode")
+                : t("verificationCode")}
             </label>
             <input
               ref={inputRef}
@@ -243,9 +364,9 @@ export function TwoFactorVerify({
             }}
             className="text-sm text-slate-400 hover:text-slate-300"
           >
-            {useBackupCode 
-              ? (lang === "tr" ? "← Authenticator kodu kullan" : "← Use authenticator code")
-              : (lang === "tr" ? "Backup kodu kullan →" : "Use backup code →")}
+            {useBackupCode
+              ? t("useAuthenticator")
+              : t("useBackupCode")}
           </button>
 
           {/* Error */}
@@ -254,7 +375,7 @@ export function TwoFactorVerify({
               {error}
               {remainingAttempts !== null && (
                 <p className="mt-1 text-xs">
-                  {lang === "tr" ? `Kalan deneme: ${remainingAttempts}` : `Remaining attempts: ${remainingAttempts}`}
+                  {t("remainingAttempts")} {remainingAttempts}
                 </p>
               )}
             </div>
@@ -268,19 +389,19 @@ export function TwoFactorVerify({
             disabled={processing}
             className="flex-1 py-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors font-medium disabled:opacity-50"
           >
-            {lang === "tr" ? "İptal" : "Cancel"}
+            {t("cancel")}
           </button>
           <button
             onClick={verify}
             disabled={
-              processing || 
+              processing ||
               (useBackupCode ? code.length !== 8 : code.length !== 6)
             }
             className="flex-1 py-3 rounded-xl bg-[#2F6F62] text-white hover:bg-[#2F6F62] transition-colors font-medium disabled:opacity-50"
           >
-            {processing 
-              ? (lang === "tr" ? "Doğrulanıyor..." : "Verifying...")
-              : (lang === "tr" ? "Doğrula" : "Verify")}
+            {processing
+              ? t("verifying")
+              : t("verify")}
           </button>
         </div>
       </div>

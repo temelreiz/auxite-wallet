@@ -5,12 +5,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import QRCode from "qrcode";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface QRLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (walletAddress: string) => void;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
 const translations = {
@@ -96,8 +96,9 @@ const translations = {
 
 type Status = "loading" | "ready" | "waiting" | "approved" | "expired" | "error";
 
-export default function QRLoginModal({ isOpen, onClose, onSuccess, lang = "en" }: QRLoginModalProps) {
-  const t = translations[lang] || translations.en;
+export default function QRLoginModal({ isOpen, onClose, onSuccess }: QRLoginModalProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   
   const [status, setStatus] = useState<Status>("loading");
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
@@ -214,8 +215,8 @@ export default function QRLoginModal({ isOpen, onClose, onSuccess, lang = "en" }
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t.title}</h2>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">{t.subtitle}</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">{t("subtitle")}</p>
         </div>
 
         {/* QR Code Area */}
@@ -230,7 +231,7 @@ export default function QRLoginModal({ isOpen, onClose, onSuccess, lang = "en" }
             <div className="text-center">
               <img src={qrCodeUrl} alt="QR Code" className="w-64 h-64 mx-auto rounded-lg" />
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-                {t.waiting} ({formatTime(timeLeft)})
+                {t("waiting")} ({formatTime(timeLeft)})
               </p>
             </div>
           )}
@@ -242,7 +243,7 @@ export default function QRLoginModal({ isOpen, onClose, onSuccess, lang = "en" }
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <p className="text-lg font-semibold text-green-600 dark:text-green-400">{t.success}</p>
+              <p className="text-lg font-semibold text-green-600 dark:text-green-400">{t("success")}</p>
             </div>
           )}
 
@@ -253,12 +254,12 @@ export default function QRLoginModal({ isOpen, onClose, onSuccess, lang = "en" }
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">{t.expired}</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">{t("expired")}</p>
               <button
                 onClick={generateQRCode}
                 className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
               >
-                {t.refresh}
+                {t("refresh")}
               </button>
             </div>
           )}
@@ -270,12 +271,12 @@ export default function QRLoginModal({ isOpen, onClose, onSuccess, lang = "en" }
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
-              <p className="text-red-500 mb-4">{error || t.error}</p>
+              <p className="text-red-500 mb-4">{error || t("error")}</p>
               <button
                 onClick={generateQRCode}
                 className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
               >
-                {t.refresh}
+                {t("refresh")}
               </button>
             </div>
           )}
@@ -284,7 +285,7 @@ export default function QRLoginModal({ isOpen, onClose, onSuccess, lang = "en" }
         {/* Steps */}
         {(status === "ready" || status === "loading") && (
           <div className="space-y-3 mb-6">
-            {[t.step1, t.step2, t.step3].map((step, i) => (
+            {[t("step1"), t("step2"), t("step3")].map((step, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center text-yellow-600 dark:text-yellow-400 font-semibold text-sm">
                   {i + 1}
@@ -300,7 +301,7 @@ export default function QRLoginModal({ isOpen, onClose, onSuccess, lang = "en" }
           onClick={onClose}
           className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
         >
-          {t.cancel}
+          {t("cancel")}
         </button>
       </div>
     </div>

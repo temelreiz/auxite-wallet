@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface TwoFactorSetupProps {
   walletAddress: string;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru" | "de" | "fr" | "ar" | "ru";
   onStatusChange?: () => void;
 }
 
@@ -14,11 +14,220 @@ interface TwoFAStatus {
   backupCodesRemaining?: number;
 }
 
-export function TwoFactorSetup({ 
-  walletAddress, 
-  lang = "en",
-  onStatusChange 
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    twoFactorAuth: "İki Faktörlü Doğrulama",
+    active: "Aktif",
+    disabled: "Kapalı",
+    disable: "Kapat",
+    loading: "Yükleniyor...",
+    enable: "Aktifleştir",
+    backupCodesRemaining: "Kalan yedek kod",
+    enabledAt: "Aktifleştirilme",
+    whatIs2FA: "2FA Nedir?",
+    whatIs2FADesc: "İki faktörlü doğrulama, hesabınıza giriş yaparken şifrenize ek olarak telefonunuzdaki bir uygulamadan kod girmenizi gerektirir. Bu, hesabınızı çok daha güvenli hale getirir.",
+    scanQR: "QR Kodu Tarayın",
+    scanQRDesc: "Google Authenticator veya Authy uygulamasıyla tarayın",
+    verificationCode: "Doğrulama Kodu",
+    cancel: "İptal",
+    verifying: "Doğrulanıyor...",
+    verifyAndEnable: "Doğrula ve Aktifleştir",
+    enter6Digit: "6 haneli kod girin",
+    setupFailed: "Kurulum başlatılamadı",
+    verificationFailed: "Doğrulama başarısız",
+    operationFailed: "İşlem başarısız",
+    twoFAEnabled: "2FA Aktifleştirildi!",
+    saveBackupCodes: "Yedek kodlarınızı güvenli bir yere kaydedin",
+    backupCodes: "Yedek Kodlar",
+    copied: "✓ Kopyalandı",
+    copy: "Kopyala",
+    backupWarning: "Bu kodları bir daha göremeyeceksiniz. Güvenli bir yere kaydedin!",
+    done: "Tamamla",
+    disable2FA: "2FA'yı Kapat",
+    disable2FADesc: "Doğrulama kodunuzu girerek 2FA'yı kapatın",
+    disableWarning: "2FA'yı kapatmak hesabınızın güvenliğini azaltır. Bu işlemi sadece gerekli durumlarda yapın.",
+    processing: "İşleniyor...",
+    disable2FAButton: "2FA'yı Kapat",
+  },
+  en: {
+    twoFactorAuth: "Two-Factor Authentication",
+    active: "Enabled",
+    disabled: "Disabled",
+    disable: "Disable",
+    loading: "Loading...",
+    enable: "Enable",
+    backupCodesRemaining: "Backup codes remaining",
+    enabledAt: "Enabled at",
+    whatIs2FA: "What is 2FA?",
+    whatIs2FADesc: "Two-factor authentication requires you to enter a code from an app on your phone in addition to your password when logging in. This makes your account much more secure.",
+    scanQR: "Scan QR Code",
+    scanQRDesc: "Scan with Google Authenticator or Authy app",
+    verificationCode: "Verification Code",
+    cancel: "Cancel",
+    verifying: "Verifying...",
+    verifyAndEnable: "Verify & Enable",
+    enter6Digit: "Enter 6-digit code",
+    setupFailed: "Setup failed",
+    verificationFailed: "Verification failed",
+    operationFailed: "Operation failed",
+    twoFAEnabled: "2FA Enabled!",
+    saveBackupCodes: "Save your backup codes in a safe place",
+    backupCodes: "Backup Codes",
+    copied: "✓ Copied",
+    copy: "Copy",
+    backupWarning: "You won't see these codes again. Save them somewhere safe!",
+    done: "Done",
+    disable2FA: "Disable 2FA",
+    disable2FADesc: "Enter your verification code to disable 2FA",
+    disableWarning: "Disabling 2FA reduces your account security. Only do this when necessary.",
+    processing: "Processing...",
+    disable2FAButton: "Disable 2FA",
+  },
+  de: {
+    twoFactorAuth: "Zwei-Faktor-Authentifizierung",
+    active: "Aktiviert",
+    disabled: "Deaktiviert",
+    disable: "Deaktivieren",
+    loading: "Laden...",
+    enable: "Aktivieren",
+    backupCodesRemaining: "Verbleibende Backup-Codes",
+    enabledAt: "Aktiviert am",
+    whatIs2FA: "Was ist 2FA?",
+    whatIs2FADesc: "Die Zwei-Faktor-Authentifizierung erfordert, dass Sie beim Anmelden zusätzlich zu Ihrem Passwort einen Code aus einer App auf Ihrem Telefon eingeben. Dies macht Ihr Konto wesentlich sicherer.",
+    scanQR: "QR-Code scannen",
+    scanQRDesc: "Scannen Sie mit Google Authenticator oder der Authy-App",
+    verificationCode: "Verifizierungscode",
+    cancel: "Abbrechen",
+    verifying: "Verifizierung...",
+    verifyAndEnable: "Verifizieren & Aktivieren",
+    enter6Digit: "6-stelligen Code eingeben",
+    setupFailed: "Einrichtung fehlgeschlagen",
+    verificationFailed: "Verifizierung fehlgeschlagen",
+    operationFailed: "Vorgang fehlgeschlagen",
+    twoFAEnabled: "2FA Aktiviert!",
+    saveBackupCodes: "Speichern Sie Ihre Backup-Codes an einem sicheren Ort",
+    backupCodes: "Backup-Codes",
+    copied: "✓ Kopiert",
+    copy: "Kopieren",
+    backupWarning: "Sie werden diese Codes nicht wieder sehen. Bewahren Sie sie sicher auf!",
+    done: "Fertig",
+    disable2FA: "2FA Deaktivieren",
+    disable2FADesc: "Geben Sie Ihren Verifizierungscode ein, um 2FA zu deaktivieren",
+    disableWarning: "Das Deaktivieren von 2FA verringert die Sicherheit Ihres Kontos. Tun Sie dies nur, wenn es notwendig ist.",
+    processing: "Verarbeitung...",
+    disable2FAButton: "2FA Deaktivieren",
+  },
+  fr: {
+    twoFactorAuth: "Authentification à deux facteurs",
+    active: "Activé",
+    disabled: "Désactivé",
+    disable: "Désactiver",
+    loading: "Chargement...",
+    enable: "Activer",
+    backupCodesRemaining: "Codes de secours restants",
+    enabledAt: "Activé le",
+    whatIs2FA: "Qu'est-ce que la 2FA ?",
+    whatIs2FADesc: "L'authentification à deux facteurs vous oblige à entrer un code depuis une application sur votre téléphone en plus de votre mot de passe lors de la connexion. Cela rend votre compte beaucoup plus sécurisé.",
+    scanQR: "Scanner le code QR",
+    scanQRDesc: "Scannez avec Google Authenticator ou l'application Authy",
+    verificationCode: "Code de vérification",
+    cancel: "Annuler",
+    verifying: "Vérification...",
+    verifyAndEnable: "Vérifier et activer",
+    enter6Digit: "Entrez le code à 6 chiffres",
+    setupFailed: "Échec de la configuration",
+    verificationFailed: "Échec de la vérification",
+    operationFailed: "Échec de l'opération",
+    twoFAEnabled: "2FA Activée !",
+    saveBackupCodes: "Enregistrez vos codes de secours dans un endroit sûr",
+    backupCodes: "Codes de secours",
+    copied: "✓ Copié",
+    copy: "Copier",
+    backupWarning: "Vous ne reverrez plus ces codes. Conservez-les en lieu sûr !",
+    done: "Terminé",
+    disable2FA: "Désactiver la 2FA",
+    disable2FADesc: "Entrez votre code de vérification pour désactiver la 2FA",
+    disableWarning: "Désactiver la 2FA réduit la sécurité de votre compte. Ne le faites que si nécessaire.",
+    processing: "Traitement...",
+    disable2FAButton: "Désactiver la 2FA",
+  },
+  ar: {
+    twoFactorAuth: "المصادقة الثنائية",
+    active: "مفعّل",
+    disabled: "معطّل",
+    disable: "تعطيل",
+    loading: "جاري التحميل...",
+    enable: "تفعيل",
+    backupCodesRemaining: "رموز النسخ الاحتياطي المتبقية",
+    enabledAt: "تم التفعيل في",
+    whatIs2FA: "ما هي المصادقة الثنائية؟",
+    whatIs2FADesc: "تتطلب المصادقة الثنائية إدخال رمز من تطبيق على هاتفك بالإضافة إلى كلمة المرور عند تسجيل الدخول. هذا يجعل حسابك أكثر أماناً.",
+    scanQR: "امسح رمز QR",
+    scanQRDesc: "امسح باستخدام تطبيق Google Authenticator أو Authy",
+    verificationCode: "رمز التحقق",
+    cancel: "إلغاء",
+    verifying: "جاري التحقق...",
+    verifyAndEnable: "تحقق وتفعيل",
+    enter6Digit: "أدخل الرمز المكون من 6 أرقام",
+    setupFailed: "فشل في بدء الإعداد",
+    verificationFailed: "فشل التحقق",
+    operationFailed: "فشل العملية",
+    twoFAEnabled: "تم تفعيل المصادقة الثنائية!",
+    saveBackupCodes: "احفظ رموز النسخ الاحتياطي في مكان آمن",
+    backupCodes: "رموز النسخ الاحتياطي",
+    copied: "✓ تم النسخ",
+    copy: "نسخ",
+    backupWarning: "لن ترى هذه الرموز مرة أخرى. احفظها في مكان آمن!",
+    done: "تم",
+    disable2FA: "تعطيل المصادقة الثنائية",
+    disable2FADesc: "أدخل رمز التحقق لتعطيل المصادقة الثنائية",
+    disableWarning: "تعطيل المصادقة الثنائية يقلل من أمان حسابك. افعل ذلك فقط عند الضرورة.",
+    processing: "جاري المعالجة...",
+    disable2FAButton: "تعطيل المصادقة الثنائية",
+  },
+  ru: {
+    twoFactorAuth: "Двухфакторная аутентификация",
+    active: "Включено",
+    disabled: "Отключено",
+    disable: "Отключить",
+    loading: "Загрузка...",
+    enable: "Включить",
+    backupCodesRemaining: "Оставшиеся резервные коды",
+    enabledAt: "Включено",
+    whatIs2FA: "Что такое 2FA?",
+    whatIs2FADesc: "Двухфакторная аутентификация требует ввода кода из приложения на телефоне в дополнение к паролю при входе. Это делает ваш аккаунт значительно безопаснее.",
+    scanQR: "Сканируйте QR-код",
+    scanQRDesc: "Сканируйте с помощью Google Authenticator или приложения Authy",
+    verificationCode: "Код подтверждения",
+    cancel: "Отмена",
+    verifying: "Проверка...",
+    verifyAndEnable: "Подтвердить и включить",
+    enter6Digit: "Введите 6-значный код",
+    setupFailed: "Не удалось начать настройку",
+    verificationFailed: "Проверка не удалась",
+    operationFailed: "Операция не удалась",
+    twoFAEnabled: "2FA Включена!",
+    saveBackupCodes: "Сохраните резервные коды в безопасном месте",
+    backupCodes: "Резервные коды",
+    copied: "✓ Скопировано",
+    copy: "Копировать",
+    backupWarning: "Вы больше не увидите эти коды. Сохраните их в надёжном месте!",
+    done: "Готово",
+    disable2FA: "Отключить 2FA",
+    disable2FADesc: "Введите код подтверждения для отключения 2FA",
+    disableWarning: "Отключение 2FA снижает безопасность вашего аккаунта. Делайте это только при необходимости.",
+    processing: "Обработка...",
+    disable2FAButton: "Отключить 2FA",
+  },
+};
+
+export function TwoFactorSetup({
+  walletAddress,
+  onStatusChange,
 }: TwoFactorSetupProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
+
   const [status, setStatus] = useState<TwoFAStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<"status" | "setup" | "verify" | "backup" | "disable">("status");
@@ -53,10 +262,10 @@ export function TwoFactorSetup({
     try {
       setProcessing(true);
       setError(null);
-      
+
       const res = await fetch("/api/security/2fa/setup", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "x-wallet-address": walletAddress,
         },
@@ -64,9 +273,9 @@ export function TwoFactorSetup({
       });
 
       const data = await res.json();
-      
+
       if (!res.ok) {
-        throw new Error(data.error || "Kurulum başlatılamadı");
+        throw new Error(data.error || t("setupFailed"));
       }
 
       setQrCode(data.qrCodeDataUrl);
@@ -81,7 +290,7 @@ export function TwoFactorSetup({
 
   const verifyAndEnable = async () => {
     if (verifyCode.length !== 6) {
-      setError(lang === "tr" ? "6 haneli kod girin" : "Enter 6-digit code");
+      setError(t("enter6Digit"));
       return;
     }
 
@@ -101,7 +310,7 @@ export function TwoFactorSetup({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Doğrulama başarısız");
+        throw new Error(data.error || t("verificationFailed"));
       }
 
       setStep("backup");
@@ -115,7 +324,7 @@ export function TwoFactorSetup({
 
   const disable2FA = async () => {
     if (verifyCode.length !== 6) {
-      setError(lang === "tr" ? "6 haneli kod girin" : "Enter 6-digit code");
+      setError(t("enter6Digit"));
       return;
     }
 
@@ -135,7 +344,7 @@ export function TwoFactorSetup({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "İşlem başarısız");
+        throw new Error(data.error || t("operationFailed"));
       }
 
       await fetchStatus();
@@ -177,22 +386,20 @@ export function TwoFactorSetup({
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">
-                    {lang === "tr" ? "İki Faktörlü Doğrulama" : "Two-Factor Authentication"}
+                    {t("twoFactorAuth")}
                   </h3>
                   <p className={`text-sm ${status?.enabled ? "text-[#2F6F62]" : "text-slate-400"}`}>
-                    {status?.enabled 
-                      ? (lang === "tr" ? "Aktif" : "Enabled")
-                      : (lang === "tr" ? "Kapalı" : "Disabled")}
+                    {status?.enabled ? t("active") : t("disabled")}
                   </p>
                 </div>
               </div>
-              
+
               {status?.enabled ? (
                 <button
                   onClick={() => setStep("disable")}
                   className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm font-medium"
                 >
-                  {lang === "tr" ? "Kapat" : "Disable"}
+                  {t("disable")}
                 </button>
               ) : (
                 <button
@@ -200,9 +407,7 @@ export function TwoFactorSetup({
                   disabled={processing}
                   className="px-4 py-2 rounded-lg bg-[#2F6F62] text-white hover:bg-[#2F6F62] transition-colors text-sm font-medium disabled:opacity-50"
                 >
-                  {processing 
-                    ? (lang === "tr" ? "Yükleniyor..." : "Loading...")
-                    : (lang === "tr" ? "Aktifleştir" : "Enable")}
+                  {processing ? t("loading") : t("enable")}
                 </button>
               )}
             </div>
@@ -211,7 +416,7 @@ export function TwoFactorSetup({
               <div className="mt-4 pt-4 border-t border-slate-700">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-400">
-                    {lang === "tr" ? "Kalan yedek kod" : "Backup codes remaining"}
+                    {t("backupCodesRemaining")}
                   </span>
                   <span className={`font-medium ${
                     (status.backupCodesRemaining || 0) <= 2 ? "text-[#BFA181]" : "text-slate-300"
@@ -222,10 +427,10 @@ export function TwoFactorSetup({
                 {status.enabledAt && (
                   <div className="flex items-center justify-between text-sm mt-2">
                     <span className="text-slate-400">
-                      {lang === "tr" ? "Aktifleştirilme" : "Enabled at"}
+                      {t("enabledAt")}
                     </span>
                     <span className="text-slate-300">
-                      {new Date(status.enabledAt).toLocaleDateString(lang === "tr" ? "tr-TR" : "en-US")}
+                      {new Date(status.enabledAt).toLocaleDateString(lang === "tr" ? "tr-TR" : lang === "de" ? "de-DE" : lang === "fr" ? "fr-FR" : lang === "ar" ? "ar-SA" : lang === "ru" ? "ru-RU" : "en-US")}
                     </span>
                   </div>
                 )}
@@ -239,12 +444,10 @@ export function TwoFactorSetup({
               <span className="text-blue-400">ℹ️</span>
               <div>
                 <p className="text-sm text-blue-400 font-medium mb-1">
-                  {lang === "tr" ? "2FA Nedir?" : "What is 2FA?"}
+                  {t("whatIs2FA")}
                 </p>
                 <p className="text-xs text-slate-400">
-                  {lang === "tr" 
-                    ? "İki faktörlü doğrulama, hesabınıza giriş yaparken şifrenize ek olarak telefonunuzdaki bir uygulamadan kod girmenizi gerektirir. Bu, hesabınızı çok daha güvenli hale getirir."
-                    : "Two-factor authentication requires you to enter a code from an app on your phone in addition to your password when logging in. This makes your account much more secure."}
+                  {t("whatIs2FADesc")}
                 </p>
               </div>
             </div>
@@ -257,12 +460,10 @@ export function TwoFactorSetup({
         <div className="space-y-6">
           <div className="text-center">
             <h3 className="text-lg font-semibold text-white mb-2">
-              {lang === "tr" ? "QR Kodu Tarayın" : "Scan QR Code"}
+              {t("scanQR")}
             </h3>
             <p className="text-sm text-slate-400">
-              {lang === "tr" 
-                ? "Google Authenticator veya Authy uygulamasıyla tarayın"
-                : "Scan with Google Authenticator or Authy app"}
+              {t("scanQRDesc")}
             </p>
           </div>
 
@@ -276,7 +477,7 @@ export function TwoFactorSetup({
           {/* Verify Code Input */}
           <div>
             <label className="block text-sm text-slate-400 mb-2">
-              {lang === "tr" ? "Doğrulama Kodu" : "Verification Code"}
+              {t("verificationCode")}
             </label>
             <input
               type="text"
@@ -305,16 +506,14 @@ export function TwoFactorSetup({
               }}
               className="flex-1 py-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors font-medium"
             >
-              {lang === "tr" ? "İptal" : "Cancel"}
+              {t("cancel")}
             </button>
             <button
               onClick={verifyAndEnable}
               disabled={verifyCode.length !== 6 || processing}
               className="flex-1 py-3 rounded-xl bg-[#2F6F62] text-white hover:bg-[#2F6F62] transition-colors font-medium disabled:opacity-50"
             >
-              {processing 
-                ? (lang === "tr" ? "Doğrulanıyor..." : "Verifying...")
-                : (lang === "tr" ? "Doğrula ve Aktifleştir" : "Verify & Enable")}
+              {processing ? t("verifying") : t("verifyAndEnable")}
             </button>
           </div>
         </div>
@@ -328,12 +527,10 @@ export function TwoFactorSetup({
               <span className="text-3xl">✅</span>
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">
-              {lang === "tr" ? "2FA Aktifleştirildi!" : "2FA Enabled!"}
+              {t("twoFAEnabled")}
             </h3>
             <p className="text-sm text-slate-400">
-              {lang === "tr" 
-                ? "Yedek kodlarınızı güvenli bir yere kaydedin"
-                : "Save your backup codes in a safe place"}
+              {t("saveBackupCodes")}
             </p>
           </div>
 
@@ -341,15 +538,13 @@ export function TwoFactorSetup({
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm text-slate-400">
-                {lang === "tr" ? "Yedek Kodlar" : "Backup Codes"}
+                {t("backupCodes")}
               </span>
               <button
                 onClick={copyBackupCodes}
                 className="text-xs text-[#2F6F62] hover:text-[#BFA181]"
               >
-                {copiedBackup 
-                  ? (lang === "tr" ? "✓ Kopyalandı" : "✓ Copied")
-                  : (lang === "tr" ? "Kopyala" : "Copy")}
+                {copiedBackup ? t("copied") : t("copy")}
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -365,9 +560,7 @@ export function TwoFactorSetup({
             <div className="flex gap-2">
               <span className="text-[#BFA181]">⚠️</span>
               <p className="text-xs text-[#BFA181]">
-                {lang === "tr" 
-                  ? "Bu kodları bir daha göremeyeceksiniz. Güvenli bir yere kaydedin!"
-                  : "You won't see these codes again. Save them somewhere safe!"}
+                {t("backupWarning")}
               </p>
             </div>
           </div>
@@ -379,7 +572,7 @@ export function TwoFactorSetup({
             }}
             className="w-full py-3 rounded-xl bg-[#2F6F62] text-white hover:bg-[#2F6F62] transition-colors font-medium"
           >
-            {lang === "tr" ? "Tamamla" : "Done"}
+            {t("done")}
           </button>
         </div>
       )}
@@ -392,19 +585,17 @@ export function TwoFactorSetup({
               <span className="text-3xl">🔓</span>
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">
-              {lang === "tr" ? "2FA'yı Kapat" : "Disable 2FA"}
+              {t("disable2FA")}
             </h3>
             <p className="text-sm text-slate-400">
-              {lang === "tr" 
-                ? "Doğrulama kodunuzu girerek 2FA'yı kapatın"
-                : "Enter your verification code to disable 2FA"}
+              {t("disable2FADesc")}
             </p>
           </div>
 
           {/* Verify Code Input */}
           <div>
             <label className="block text-sm text-slate-400 mb-2">
-              {lang === "tr" ? "Doğrulama Kodu" : "Verification Code"}
+              {t("verificationCode")}
             </label>
             <input
               type="text"
@@ -426,9 +617,7 @@ export function TwoFactorSetup({
             <div className="flex gap-2">
               <span className="text-red-500">⚠️</span>
               <p className="text-xs text-red-400">
-                {lang === "tr" 
-                  ? "2FA'yı kapatmak hesabınızın güvenliğini azaltır. Bu işlemi sadece gerekli durumlarda yapın."
-                  : "Disabling 2FA reduces your account security. Only do this when necessary."}
+                {t("disableWarning")}
               </p>
             </div>
           </div>
@@ -443,16 +632,14 @@ export function TwoFactorSetup({
               }}
               className="flex-1 py-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors font-medium"
             >
-              {lang === "tr" ? "İptal" : "Cancel"}
+              {t("cancel")}
             </button>
             <button
               onClick={disable2FA}
               disabled={verifyCode.length !== 6 || processing}
               className="flex-1 py-3 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors font-medium disabled:opacity-50"
             >
-              {processing 
-                ? (lang === "tr" ? "İşleniyor..." : "Processing...")
-                : (lang === "tr" ? "2FA'yı Kapat" : "Disable 2FA")}
+              {processing ? t("processing") : t("disable2FAButton")}
             </button>
           </div>
         </div>

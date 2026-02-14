@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface DeviceManagerProps {
   walletAddress: string;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru" | "de" | "fr" | "ar" | "ru";
 }
 
 interface Device {
@@ -29,7 +29,145 @@ interface Device {
   isCurrent: boolean;
 }
 
-export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps) {
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    connectedDevices: "Bağlı Cihazlar",
+    devices: "cihaz",
+    trusted: "güvenilir",
+    refresh: "Yenile",
+    thisDevice: "Bu cihaz",
+    trustedLabel: "Güvenilir",
+    unknown: "Bilinmiyor",
+    lastSeen: "Son görülme",
+    removeTrust: "Güveni Kaldır",
+    markTrusted: "Güvenilir Yap",
+    removeDevice: "Cihazı Sil",
+    cannotRemoveCurrent: "Mevcut cihazı silemezsiniz",
+    confirmRemove: "Bu cihaz silinsin mi?",
+    noDevices: "Henüz kayıtlı cihaz yok",
+    trustedDevices: "Güvenilir Cihazlar",
+    trustedDevicesInfo: "Güvenilir olarak işaretlediğiniz cihazlarda bazı ek güvenlik adımları atlanabilir. Tanımadığınız cihazları derhal silin.",
+    justNow: "Şimdi",
+    minsAgo: "dk önce",
+    hoursAgo: "saat önce",
+    daysAgo: "gün önce",
+  },
+  en: {
+    connectedDevices: "Connected Devices",
+    devices: "device(s)",
+    trusted: "trusted",
+    refresh: "Refresh",
+    thisDevice: "This device",
+    trustedLabel: "Trusted",
+    unknown: "Unknown",
+    lastSeen: "Last seen",
+    removeTrust: "Remove Trust",
+    markTrusted: "Mark Trusted",
+    removeDevice: "Remove Device",
+    cannotRemoveCurrent: "Cannot remove current device",
+    confirmRemove: "Remove this device?",
+    noDevices: "No devices registered yet",
+    trustedDevices: "Trusted Devices",
+    trustedDevicesInfo: "Devices marked as trusted may skip some security steps. Remove any devices you don't recognize immediately.",
+    justNow: "Just now",
+    minsAgo: "m ago",
+    hoursAgo: "h ago",
+    daysAgo: "d ago",
+  },
+  de: {
+    connectedDevices: "Verbundene Geräte",
+    devices: "Gerät(e)",
+    trusted: "vertraut",
+    refresh: "Aktualisieren",
+    thisDevice: "Dieses Gerät",
+    trustedLabel: "Vertraut",
+    unknown: "Unbekannt",
+    lastSeen: "Zuletzt gesehen",
+    removeTrust: "Vertrauen entfernen",
+    markTrusted: "Als vertraut markieren",
+    removeDevice: "Gerät entfernen",
+    cannotRemoveCurrent: "Aktuelles Gerät kann nicht entfernt werden",
+    confirmRemove: "Dieses Gerät entfernen?",
+    noDevices: "Noch keine Geräte registriert",
+    trustedDevices: "Vertrauenswürdige Geräte",
+    trustedDevicesInfo: "Bei als vertraut markierten Geräten können einige Sicherheitsschritte übersprungen werden. Entfernen Sie sofort alle Geräte, die Sie nicht erkennen.",
+    justNow: "Gerade eben",
+    minsAgo: "Min. her",
+    hoursAgo: "Std. her",
+    daysAgo: "T. her",
+  },
+  fr: {
+    connectedDevices: "Appareils connectés",
+    devices: "appareil(s)",
+    trusted: "de confiance",
+    refresh: "Actualiser",
+    thisDevice: "Cet appareil",
+    trustedLabel: "De confiance",
+    unknown: "Inconnu",
+    lastSeen: "Dernière activité",
+    removeTrust: "Retirer la confiance",
+    markTrusted: "Marquer comme fiable",
+    removeDevice: "Supprimer l'appareil",
+    cannotRemoveCurrent: "Impossible de supprimer l'appareil actuel",
+    confirmRemove: "Supprimer cet appareil ?",
+    noDevices: "Aucun appareil enregistré",
+    trustedDevices: "Appareils de confiance",
+    trustedDevicesInfo: "Les appareils marqués comme fiables peuvent ignorer certaines étapes de sécurité. Supprimez immédiatement les appareils que vous ne reconnaissez pas.",
+    justNow: "À l'instant",
+    minsAgo: "min",
+    hoursAgo: "h",
+    daysAgo: "j",
+  },
+  ar: {
+    connectedDevices: "الأجهزة المتصلة",
+    devices: "جهاز (أجهزة)",
+    trusted: "موثوق",
+    refresh: "تحديث",
+    thisDevice: "هذا الجهاز",
+    trustedLabel: "موثوق",
+    unknown: "غير معروف",
+    lastSeen: "آخر ظهور",
+    removeTrust: "إزالة الثقة",
+    markTrusted: "وضع علامة موثوق",
+    removeDevice: "إزالة الجهاز",
+    cannotRemoveCurrent: "لا يمكن إزالة الجهاز الحالي",
+    confirmRemove: "هل تريد إزالة هذا الجهاز؟",
+    noDevices: "لا توجد أجهزة مسجلة بعد",
+    trustedDevices: "الأجهزة الموثوقة",
+    trustedDevicesInfo: "الأجهزة المميزة كموثوقة قد تتخطى بعض خطوات الأمان. احذف فوراً أي أجهزة لا تتعرف عليها.",
+    justNow: "الآن",
+    minsAgo: "د مضت",
+    hoursAgo: "س مضت",
+    daysAgo: "ي مضت",
+  },
+  ru: {
+    connectedDevices: "Подключённые устройства",
+    devices: "устройство(а)",
+    trusted: "доверенные",
+    refresh: "Обновить",
+    thisDevice: "Это устройство",
+    trustedLabel: "Доверенное",
+    unknown: "Неизвестно",
+    lastSeen: "Последний раз",
+    removeTrust: "Снять доверие",
+    markTrusted: "Отметить доверенным",
+    removeDevice: "Удалить устройство",
+    cannotRemoveCurrent: "Невозможно удалить текущее устройство",
+    confirmRemove: "Удалить это устройство?",
+    noDevices: "Пока нет зарегистрированных устройств",
+    trustedDevices: "Доверенные устройства",
+    trustedDevicesInfo: "Устройства, отмеченные как доверенные, могут пропускать некоторые шаги безопасности. Немедленно удалите устройства, которые вы не узнаёте.",
+    justNow: "Только что",
+    minsAgo: "мин назад",
+    hoursAgo: "ч назад",
+    daysAgo: "д назад",
+  },
+};
+
+export function DeviceManager({ walletAddress }: DeviceManagerProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
+
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -84,11 +222,11 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
   const removeDevice = async (deviceId: string) => {
     const device = devices.find(d => d.id === deviceId);
     if (device?.isCurrent) {
-      setError(lang === "tr" ? "Mevcut cihazı silemezsiniz" : "Cannot remove current device");
+      setError(t("cannotRemoveCurrent"));
       return;
     }
 
-    if (!confirm(lang === "tr" ? "Bu cihaz silinsin mi?" : "Remove this device?")) {
+    if (!confirm(t("confirmRemove"))) {
       return;
     }
 
@@ -132,6 +270,13 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
     return "💻";
   };
 
+  const getLocaleCode = () => {
+    const localeMap: Record<string, string> = {
+      tr: "tr-TR", en: "en-US", de: "de-DE", fr: "fr-FR", ar: "ar-SA", ru: "ru-RU",
+    };
+    return localeMap[lang] || "en-US";
+  };
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
@@ -140,19 +285,11 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (lang === "tr") {
-      if (diffMins < 5) return "Şimdi";
-      if (diffMins < 60) return `${diffMins} dk önce`;
-      if (diffHours < 24) return `${diffHours} saat önce`;
-      if (diffDays < 7) return `${diffDays} gün önce`;
-      return date.toLocaleDateString("tr-TR");
-    } else {
-      if (diffMins < 5) return "Just now";
-      if (diffMins < 60) return `${diffMins}m ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays < 7) return `${diffDays}d ago`;
-      return date.toLocaleDateString("en-US");
-    }
+    if (diffMins < 5) return t("justNow");
+    if (diffMins < 60) return `${diffMins} ${t("minsAgo")}`;
+    if (diffHours < 24) return `${diffHours} ${t("hoursAgo")}`;
+    if (diffDays < 7) return `${diffDays} ${t("daysAgo")}`;
+    return date.toLocaleDateString(getLocaleCode());
   };
 
   if (loading) {
@@ -169,17 +306,17 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-white">
-            {lang === "tr" ? "Bağlı Cihazlar" : "Connected Devices"}
+            {t("connectedDevices")}
           </h3>
           <p className="text-sm text-slate-400">
-            {devices.length} {lang === "tr" ? "cihaz" : "device(s)"} • 
-            {devices.filter(d => d.trusted).length} {lang === "tr" ? "güvenilir" : "trusted"}
+            {devices.length} {t("devices")} •
+            {devices.filter(d => d.trusted).length} {t("trusted")}
           </p>
         </div>
         <button
           onClick={fetchDevices}
           className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-          title={lang === "tr" ? "Yenile" : "Refresh"}
+          title={t("refresh")}
         >
           <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -197,13 +334,13 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
       {/* Devices List */}
       <div className="space-y-3">
         {devices.map((device) => (
-          <div 
+          <div
             key={device.id}
             className={`bg-slate-800/50 rounded-xl p-4 border transition-colors ${
-              device.isCurrent 
-                ? "border-[#2F6F62]/50" 
-                : device.trusted 
-                ? "border-blue-500/30" 
+              device.isCurrent
+                ? "border-[#2F6F62]/50"
+                : device.trusted
+                ? "border-blue-500/30"
                 : "border-slate-700"
             }`}
           >
@@ -211,10 +348,10 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
               <div className="flex items-start gap-3">
                 {/* Device Icon */}
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  device.isCurrent 
-                    ? "bg-[#2F6F62]/20" 
-                    : device.trusted 
-                    ? "bg-blue-500/20" 
+                  device.isCurrent
+                    ? "bg-[#2F6F62]/20"
+                    : device.trusted
+                    ? "bg-blue-500/20"
                     : "bg-slate-700"
                 }`}>
                   <span className="text-2xl">{getDeviceIcon(device.deviceType)}</span>
@@ -226,12 +363,12 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
                     <p className="text-white font-medium">{device.name}</p>
                     {device.isCurrent && (
                       <span className="text-xs bg-[#2F6F62]/20 text-[#2F6F62] px-2 py-0.5 rounded-full">
-                        {lang === "tr" ? "Bu cihaz" : "This device"}
+                        {t("thisDevice")}
                       </span>
                     )}
                     {device.trusted && !device.isCurrent && (
                       <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">
-                        {lang === "tr" ? "Güvenilir" : "Trusted"}
+                        {t("trustedLabel")}
                       </span>
                     )}
                   </div>
@@ -246,11 +383,11 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
 
                   <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
                     <span className="flex items-center gap-1">
-                      📍 {device.locationFormatted || "Bilinmiyor"}
+                      📍 {device.locationFormatted || t("unknown")}
                     </span>
                     <span>•</span>
                     <span>
-                      {lang === "tr" ? "Son görülme" : "Last seen"}: {formatDate(device.lastSeen)}
+                      {t("lastSeen")}: {formatDate(device.lastSeen)}
                     </span>
                   </div>
 
@@ -268,13 +405,13 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
                     onClick={() => toggleTrust(device.id, !device.trusted)}
                     disabled={processing === device.id}
                     className={`p-2 rounded-lg transition-colors ${
-                      device.trusted 
-                        ? "hover:bg-slate-700 text-blue-400" 
+                      device.trusted
+                        ? "hover:bg-slate-700 text-blue-400"
                         : "hover:bg-blue-500/20 text-slate-400"
                     }`}
-                    title={device.trusted 
-                      ? (lang === "tr" ? "Güveni Kaldır" : "Remove Trust")
-                      : (lang === "tr" ? "Güvenilir Yap" : "Mark Trusted")}
+                    title={device.trusted
+                      ? t("removeTrust")
+                      : t("markTrusted")}
                   >
                     {processing === device.id ? (
                       <div className="w-4 h-4 border-2 border-slate-600 border-t-[#BFA181] rounded-full animate-spin" />
@@ -288,7 +425,7 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
                     onClick={() => removeDevice(device.id)}
                     disabled={processing === device.id}
                     className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-slate-400 hover:text-red-400"
-                    title={lang === "tr" ? "Cihazı Sil" : "Remove Device"}
+                    title={t("removeDevice")}
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -306,7 +443,7 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
         <div className="text-center py-12">
           <span className="text-4xl mb-4 block">📱</span>
           <p className="text-slate-400">
-            {lang === "tr" ? "Henüz kayıtlı cihaz yok" : "No devices registered yet"}
+            {t("noDevices")}
           </p>
         </div>
       )}
@@ -317,12 +454,10 @@ export function DeviceManager({ walletAddress, lang = "en" }: DeviceManagerProps
           <span className="text-blue-400">ℹ️</span>
           <div>
             <p className="text-sm text-blue-400 font-medium mb-1">
-              {lang === "tr" ? "Güvenilir Cihazlar" : "Trusted Devices"}
+              {t("trustedDevices")}
             </p>
             <p className="text-xs text-slate-400">
-              {lang === "tr" 
-                ? "Güvenilir olarak işaretlediğiniz cihazlarda bazı ek güvenlik adımları atlanabilir. Tanımadığınız cihazları derhal silin."
-                : "Devices marked as trusted may skip some security steps. Remove any devices you don't recognize immediately."}
+              {t("trustedDevicesInfo")}
             </p>
           </div>
         </div>

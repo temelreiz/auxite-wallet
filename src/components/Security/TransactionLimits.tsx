@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface LimitConfig {
   enabled: boolean;
@@ -20,10 +21,9 @@ interface TransactionLimits {
 
 interface Props {
   walletAddress: string;
-  lang: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
-const t = {
+const translations: Record<string, Record<string, string>> = {
   tr: {
     title: "İşlem Limitleri",
     subtitle: "Günlük, haftalık ve aylık çekim limitleri",
@@ -46,6 +46,7 @@ const t = {
     cancel: "İptal",
     hours: "saat",
     days: "gün",
+    aboveRequiresMultiApproval: "Üstü çoklu onay gerektirir",
   },
   en: {
     title: "Transaction Limits",
@@ -69,10 +70,110 @@ const t = {
     cancel: "Cancel",
     hours: "hours",
     days: "days",
+    aboveRequiresMultiApproval: "Above requires multi-approval",
+  },
+  de: {
+    title: "Transaktionslimits",
+    subtitle: "Tägliche, wöchentliche und monatliche Auszahlungslimits",
+    enabled: "Limits Aktiv",
+    disabled: "Limits Deaktiviert",
+    daily: "Tägliches Limit",
+    weekly: "Wöchentliches Limit",
+    monthly: "Monatliches Limit",
+    perTx: "Pro Transaktion",
+    used: "Verwendet",
+    remaining: "Verbleibend",
+    resetIn: "Zurücksetzung in",
+    whitelist: "Vertrauenswürdige Adressen",
+    whitelistDesc: "Keine Limits bei Sendungen an diese Adressen",
+    addAddress: "Adresse hinzufügen",
+    remove: "Entfernen",
+    noWhitelist: "Keine vertrauenswürdigen Adressen hinzugefügt",
+    edit: "Bearbeiten",
+    save: "Speichern",
+    cancel: "Abbrechen",
+    hours: "Stunden",
+    days: "Tage",
+    aboveRequiresMultiApproval: "Darüber ist Multi-Genehmigung erforderlich",
+  },
+  fr: {
+    title: "Limites de transaction",
+    subtitle: "Limites de retrait quotidiennes, hebdomadaires et mensuelles",
+    enabled: "Limites actives",
+    disabled: "Limites désactivées",
+    daily: "Limite quotidienne",
+    weekly: "Limite hebdomadaire",
+    monthly: "Limite mensuelle",
+    perTx: "Par transaction",
+    used: "Utilisé",
+    remaining: "Restant",
+    resetIn: "Réinitialisation dans",
+    whitelist: "Adresses de confiance",
+    whitelistDesc: "Aucune limite ne s'applique lors de l'envoi à ces adresses",
+    addAddress: "Ajouter une adresse",
+    remove: "Supprimer",
+    noWhitelist: "Aucune adresse de confiance ajoutée",
+    edit: "Modifier",
+    save: "Enregistrer",
+    cancel: "Annuler",
+    hours: "heures",
+    days: "jours",
+    aboveRequiresMultiApproval: "Au-dessus nécessite une approbation multiple",
+  },
+  ar: {
+    title: "حدود المعاملات",
+    subtitle: "حدود السحب اليومية والأسبوعية والشهرية",
+    enabled: "الحدود مفعّلة",
+    disabled: "الحدود معطّلة",
+    daily: "الحد اليومي",
+    weekly: "الحد الأسبوعي",
+    monthly: "الحد الشهري",
+    perTx: "لكل معاملة",
+    used: "مستخدم",
+    remaining: "متبقي",
+    resetIn: "إعادة التعيين خلال",
+    whitelist: "العناوين الموثوقة",
+    whitelistDesc: "لا تطبق حدود عند الإرسال إلى هذه العناوين",
+    addAddress: "إضافة عنوان",
+    remove: "إزالة",
+    noWhitelist: "لم تتم إضافة عناوين موثوقة",
+    edit: "تعديل",
+    save: "حفظ",
+    cancel: "إلغاء",
+    hours: "ساعات",
+    days: "أيام",
+    aboveRequiresMultiApproval: "ما فوق يتطلب موافقة متعددة",
+  },
+  ru: {
+    title: "Лимиты транзакций",
+    subtitle: "Дневные, недельные и месячные лимиты вывода",
+    enabled: "Лимиты активны",
+    disabled: "Лимиты отключены",
+    daily: "Дневной лимит",
+    weekly: "Недельный лимит",
+    monthly: "Месячный лимит",
+    perTx: "За транзакцию",
+    used: "Использовано",
+    remaining: "Осталось",
+    resetIn: "Сброс через",
+    whitelist: "Доверенные адреса",
+    whitelistDesc: "Лимиты не применяются при отправке на эти адреса",
+    addAddress: "Добавить адрес",
+    remove: "Удалить",
+    noWhitelist: "Доверенные адреса не добавлены",
+    edit: "Редактировать",
+    save: "Сохранить",
+    cancel: "Отмена",
+    hours: "часов",
+    days: "дней",
+    aboveRequiresMultiApproval: "Выше требуется множественное одобрение",
   },
 };
 
-export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
+export function TransactionLimitsSettings({ walletAddress }: Props) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
+
   const [limits, setLimits] = useState<TransactionLimits | null>(null);
   const [usage, setUsage] = useState({ daily: 0, weekly: 0, monthly: 0 });
   const [nextReset, setNextReset] = useState({ daily: "", weekly: "", monthly: "" });
@@ -81,8 +182,6 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
   const [editValues, setEditValues] = useState({ daily: 0, weekly: 0, monthly: 0, perTransaction: 0 });
   const [newAddress, setNewAddress] = useState("");
   const [showAddAddress, setShowAddAddress] = useState(false);
-
-  const labels = (t as Record<string, typeof t.en>)[lang] || t.en;
 
   useEffect(() => {
     fetchData();
@@ -208,9 +307,9 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
     const diff = new Date(isoDate).getTime() - Date.now();
     if (diff <= 0) return "0h";
     const hours = Math.floor(diff / (1000 * 60 * 60));
-    if (hours < 24) return `${hours}${labels.hours}`;
+    if (hours < 24) return `${hours}${t("hours")}`;
     const days = Math.floor(hours / 24);
-    return `${days}${labels.days}`;
+    return `${days}${t("days")}`;
   };
 
   const getProgressColor = (percentage: number) => {
@@ -228,8 +327,8 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">{labels.title}</h3>
-          <p className="text-sm text-slate-400">{labels.subtitle}</p>
+          <h3 className="text-lg font-semibold text-white">{t("title")}</h3>
+          <p className="text-sm text-slate-400">{t("subtitle")}</p>
         </div>
         <button
           onClick={handleToggle}
@@ -239,7 +338,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
               : "bg-slate-700 text-slate-300 hover:bg-slate-600"
           }`}
         >
-          {limits?.enabled ? labels.enabled : labels.disabled}
+          {limits?.enabled ? t("enabled") : t("disabled")}
         </button>
       </div>
 
@@ -249,12 +348,14 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
           <div className="grid grid-cols-2 gap-4">
             {/* Daily */}
             <LimitCard
-              label={labels.daily}
+              label={t("daily")}
               limit={limits.daily.amount}
               used={limits.daily.used}
               percentage={usage.daily}
               resetTime={formatResetTime(nextReset.daily)}
-              labels={labels}
+              usedLabel={t("used")}
+              remainingLabel={t("remaining")}
+              resetInLabel={t("resetIn")}
               editing={editing}
               editValue={editValues.daily}
               onEditChange={(v) => setEditValues({ ...editValues, daily: v })}
@@ -263,12 +364,14 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
 
             {/* Weekly */}
             <LimitCard
-              label={labels.weekly}
+              label={t("weekly")}
               limit={limits.weekly.amount}
               used={limits.weekly.used}
               percentage={usage.weekly}
               resetTime={formatResetTime(nextReset.weekly)}
-              labels={labels}
+              usedLabel={t("used")}
+              remainingLabel={t("remaining")}
+              resetInLabel={t("resetIn")}
               editing={editing}
               editValue={editValues.weekly}
               onEditChange={(v) => setEditValues({ ...editValues, weekly: v })}
@@ -277,12 +380,14 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
 
             {/* Monthly */}
             <LimitCard
-              label={labels.monthly}
+              label={t("monthly")}
               limit={limits.monthly.amount}
               used={limits.monthly.used}
               percentage={usage.monthly}
               resetTime={formatResetTime(nextReset.monthly)}
-              labels={labels}
+              usedLabel={t("used")}
+              remainingLabel={t("remaining")}
+              resetInLabel={t("resetIn")}
               editing={editing}
               editValue={editValues.monthly}
               onEditChange={(v) => setEditValues({ ...editValues, monthly: v })}
@@ -292,7 +397,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
             {/* Per Transaction */}
             <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-slate-400">{labels.perTx}</span>
+                <span className="text-slate-400">{t("perTx")}</span>
                 <span className="text-[#BFA181] text-sm">Multi-sig</span>
               </div>
               {editing ? (
@@ -308,7 +413,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
                 </p>
               )}
               <p className="text-xs text-slate-500 mt-1">
-                {lang === "tr" ? "Üstü çoklu onay gerektirir" : "Above requires multi-approval"}
+                {t("aboveRequiresMultiApproval")}
               </p>
             </div>
           </div>
@@ -321,13 +426,13 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
                   onClick={() => setEditing(false)}
                   className="px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
                 >
-                  {labels.cancel}
+                  {t("cancel")}
                 </button>
                 <button
                   onClick={handleSave}
                   className="px-4 py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] transition-colors"
                 >
-                  {labels.save}
+                  {t("save")}
                 </button>
               </>
             ) : (
@@ -335,7 +440,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
                 onClick={() => setEditing(true)}
                 className="px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
               >
-                {labels.edit}
+                {t("edit")}
               </button>
             )}
           </div>
@@ -344,19 +449,19 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h4 className="font-medium text-white">{labels.whitelist}</h4>
-                <p className="text-sm text-slate-500">{labels.whitelistDesc}</p>
+                <h4 className="font-medium text-white">{t("whitelist")}</h4>
+                <p className="text-sm text-slate-500">{t("whitelistDesc")}</p>
               </div>
               <button
                 onClick={() => setShowAddAddress(true)}
                 className="px-3 py-1.5 bg-[#2F6F62]/20 text-[#2F6F62] rounded-lg text-sm hover:bg-[#2F6F62]/30 transition-colors"
               >
-                + {labels.addAddress}
+                + {t("addAddress")}
               </button>
             </div>
 
             {limits.whitelistedAddresses.length === 0 ? (
-              <p className="text-slate-500 text-center py-4">{labels.noWhitelist}</p>
+              <p className="text-slate-500 text-center py-4">{t("noWhitelist")}</p>
             ) : (
               <div className="space-y-2">
                 {limits.whitelistedAddresses.map((address, i) => (
@@ -371,7 +476,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
                       onClick={() => handleRemoveWhitelist(address)}
                       className="text-red-400 hover:text-red-300 text-sm"
                     >
-                      {labels.remove}
+                      {t("remove")}
                     </button>
                   </div>
                 ))}
@@ -385,7 +490,7 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
       {showAddAddress && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-md border border-slate-700">
-            <h3 className="text-lg font-semibold text-white mb-4">{labels.addAddress}</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">{t("addAddress")}</h3>
 
             <input
               type="text"
@@ -400,14 +505,14 @@ export function TransactionLimitsSettings({ walletAddress, lang }: Props) {
                 onClick={() => setShowAddAddress(false)}
                 className="flex-1 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
               >
-                {labels.cancel}
+                {t("cancel")}
               </button>
               <button
                 onClick={handleAddWhitelist}
                 disabled={!newAddress}
                 className="flex-1 py-2 bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62] transition-colors disabled:opacity-50"
               >
-                {labels.save}
+                {t("save")}
               </button>
             </div>
           </div>
@@ -424,7 +529,9 @@ function LimitCard({
   used,
   percentage,
   resetTime,
-  labels,
+  usedLabel,
+  remainingLabel,
+  resetInLabel,
   editing,
   editValue,
   onEditChange,
@@ -435,7 +542,9 @@ function LimitCard({
   used: number;
   percentage: number;
   resetTime: string;
-  labels: Record<string, string>;
+  usedLabel: string;
+  remainingLabel: string;
+  resetInLabel: string;
   editing: boolean;
   editValue: number;
   onEditChange: (v: number) => void;
@@ -447,7 +556,7 @@ function LimitCard({
     <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
       <div className="flex items-center justify-between mb-2">
         <span className="text-slate-400">{label}</span>
-        <span className="text-slate-500 text-sm">{labels.resetIn} {resetTime}</span>
+        <span className="text-slate-500 text-sm">{resetInLabel} {resetTime}</span>
       </div>
 
       {editing ? (
@@ -473,10 +582,10 @@ function LimitCard({
 
       <div className="flex justify-between text-sm">
         <span className="text-slate-500">
-          {labels.used}: ${used.toLocaleString()}
+          {usedLabel}: ${used.toLocaleString()}
         </span>
         <span className="text-[#2F6F62]">
-          {labels.remaining}: ${remaining.toLocaleString()}
+          {remainingLabel}: ${remaining.toLocaleString()}
         </span>
       </div>
     </div>

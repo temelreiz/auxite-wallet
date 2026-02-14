@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { processWithdraw } from "@/lib/blockchain-service";
 import { sendWithdrawConfirmedEmail, sendWithdrawRequestedEmail } from "@/lib/email-service";
+import { getUserLanguage } from "@/lib/user-language";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
 
@@ -313,6 +314,7 @@ export async function POST(request: NextRequest) {
         if (userId) {
           const userData = await redis.hgetall(`user:${userId}`);
           if (userData?.email) {
+            const userLang = await getUserLanguage(normalizedAddress);
             await sendWithdrawRequestedEmail(
               userData.email as string,
               userData.name as string || 'User',
@@ -320,7 +322,7 @@ export async function POST(request: NextRequest) {
               coin,
               withdrawAddress,
               networkFee.toString() + ' ' + coin,
-              'tr'
+              userLang
             );
           }
         }
@@ -374,6 +376,7 @@ export async function POST(request: NextRequest) {
           if (userId) {
             const userData = await redis.hgetall(`user:${userId}`);
             if (userData?.email) {
+              const userLang = await getUserLanguage(normalizedAddress);
               await sendWithdrawConfirmedEmail(
                 userData.email as string,
                 userData.name as string || 'User',
@@ -382,7 +385,7 @@ export async function POST(request: NextRequest) {
                 withdrawAddress,
                 withdrawResult.txHash,
                 networkFee.toString() + ' ' + coin,
-                'tr'
+                userLang
               );
             }
           }

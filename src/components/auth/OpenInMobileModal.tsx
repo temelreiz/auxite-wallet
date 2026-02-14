@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Smartphone, CheckCircle, XCircle, Loader2, Bell } from 'lucide-react';
+import { useLanguage } from "@/components/LanguageContext";
 
 interface OpenInMobileModalProps {
   isOpen: boolean;
@@ -12,7 +13,6 @@ interface OpenInMobileModalProps {
   walletAddress: string;
   action?: string;
   actionData?: Record<string, any>;
-  lang?: 'tr' | 'en' | 'de' | 'fr' | 'ar' | 'ru';
 }
 
 const translations = {
@@ -102,15 +102,15 @@ const translations = {
   },
 };
 
-export function OpenInMobileModal({ 
-  isOpen, 
-  onClose, 
+export function OpenInMobileModal({
+  isOpen,
+  onClose,
   walletAddress,
   action = 'open_app',
   actionData,
-  lang = 'en' 
 }: OpenInMobileModalProps) {
-  const t = translations[lang] || translations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   
   const [status, setStatus] = useState<'sending' | 'waiting' | 'success' | 'rejected' | 'expired' | 'noDevice'>('sending');
   const [requestId, setRequestId] = useState<string | null>(null);
@@ -239,10 +239,10 @@ export function OpenInMobileModal({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {t.title}
+                {t("title")}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {t.subtitle}
+                {t("subtitle")}
               </p>
             </div>
           </div>
@@ -261,7 +261,7 @@ export function OpenInMobileModal({
               <div className="w-20 h-20 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
                 <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
               </div>
-              <p className="text-slate-600 dark:text-slate-300">{t.sending}</p>
+              <p className="text-slate-600 dark:text-slate-300">{t("sending")}</p>
             </>
           )}
 
@@ -271,16 +271,16 @@ export function OpenInMobileModal({
                 <Bell className="w-10 h-10 text-[#BFA181]" />
               </div>
               <p className="text-slate-600 dark:text-slate-300 text-center mb-2">
-                {t.waiting}
+                {t("waiting")}
               </p>
               <div className="space-y-2 text-sm text-slate-500 dark:text-slate-400">
                 <div className="flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center text-xs text-[#2F6F62]">1</span>
-                  <span>{t.checkPhone}</span>
+                  <span>{t("checkPhone")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center text-xs text-[#2F6F62]">2</span>
-                  <span>{t.tapNotification}</span>
+                  <span>{t("tapNotification")}</span>
                 </div>
               </div>
             </>
@@ -292,7 +292,7 @@ export function OpenInMobileModal({
                 <CheckCircle className="w-10 h-10 text-[#2F6F62]" />
               </div>
               <p className="text-[#2F6F62] dark:text-[#2F6F62] font-medium">
-                {t.success}
+                {t("success")}
               </p>
             </>
           )}
@@ -303,13 +303,13 @@ export function OpenInMobileModal({
                 <XCircle className="w-10 h-10 text-red-500" />
               </div>
               <p className="text-red-600 dark:text-red-400 font-medium mb-4">
-                {t.rejected}
+                {t("rejected")}
               </p>
               <button
                 onClick={sendRequest}
                 className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-200 transition-colors"
               >
-                {t.retry}
+                {t("retry")}
               </button>
             </>
           )}
@@ -320,13 +320,13 @@ export function OpenInMobileModal({
                 <XCircle className="w-10 h-10 text-slate-400" />
               </div>
               <p className="text-slate-500 dark:text-slate-400 mb-4">
-                {t.expired}
+                {t("expired")}
               </p>
               <button
                 onClick={sendRequest}
                 className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
               >
-                {t.retry}
+                {t("retry")}
               </button>
             </>
           )}
@@ -337,13 +337,13 @@ export function OpenInMobileModal({
                 <Smartphone className="w-10 h-10 text-slate-400" />
               </div>
               <p className="text-slate-500 dark:text-slate-400 text-center mb-4">
-                {t.noDevice}
+                {t("noDevice")}
               </p>
               <button
                 onClick={onClose}
                 className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-200 transition-colors"
               >
-                {t.close}
+                {t("close")}
               </button>
             </>
           )}

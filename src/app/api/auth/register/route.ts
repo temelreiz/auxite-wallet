@@ -124,6 +124,17 @@ export async function POST(request: NextRequest) {
     // Create vault ID reverse lookup for internal transfers
     await redis.set(`vault:${vaultId}`, userId);
 
+    // Store user profile in user:{userId} hash (for getUserLanguage and other lookups)
+    await redis.hset(`user:${userId}`, {
+      email: normalizedEmail,
+      name: name || '',
+      phone: phone || '',
+      language,
+      walletAddress: vaultAddress,
+      vaultId: vaultId,
+      createdAt: Date.now().toString(),
+    });
+
     console.log(`[Register] Wallet assigned for ${userId}: ${vaultAddress}, vault: ${vaultId}`);
 
     // ══════════════════════════════════════════════════════════════

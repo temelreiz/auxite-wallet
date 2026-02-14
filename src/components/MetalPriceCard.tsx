@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import TradePanel from "./TradePanel";
 import TradingDetailPage from "./TradingDetailPage";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface MetalPriceCardProps {
   metalId: "gold" | "silver" | "platinum" | "palladium";
@@ -17,6 +18,15 @@ interface MetalPriceCardProps {
   lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
+const translations: Record<string, Record<string, string>> = {
+  tr: { buy: "Tahsis Et", sell: "Geri Al" },
+  en: { buy: "Allocate", sell: "Redeem" },
+  de: { buy: "Zuweisen", sell: "Einlösen" },
+  fr: { buy: "Allouer", sell: "Racheter" },
+  ar: { buy: "تخصيص", sell: "استرداد" },
+  ru: { buy: "Распределить", sell: "Выкупить" },
+};
+
 export default function MetalPriceCard({
   metalId,
   symbol,
@@ -27,12 +37,16 @@ export default function MetalPriceCard({
   change24h,
   direction,
   icon,
-  lang = "en",
+  lang: langProp,
 }: MetalPriceCardProps) {
+  const { lang: contextLang } = useLanguage();
+  const lang = langProp || contextLang || "en";
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
+
   const [showTradePanel, setShowTradePanel] = useState(false);
   const [showTradingDetail, setShowTradingDetail] = useState(false);
   const [tradeMode, setTradeMode] = useState<"buy" | "sell">("buy");
-  
+
   const prevPriceRef = useRef<number>(basePrice);
   const [priceDirection, setPriceDirection] = useState<"up" | "down" | "neutral">("neutral");
   
@@ -77,17 +91,6 @@ export default function MetalPriceCard({
     setTradeMode("sell");
     setShowTradePanel(true);
   };
-
-  // Institutional terminology: Allocate/Redeem (not Buy/Sell)
-  const translations: Record<string, { buy: string; sell: string }> = {
-    tr: { buy: "Tahsis Et", sell: "Geri Al" },
-    en: { buy: "Allocate", sell: "Redeem" },
-    de: { buy: "Zuweisen", sell: "Einlösen" },
-    fr: { buy: "Allouer", sell: "Racheter" },
-    ar: { buy: "تخصيص", sell: "استرداد" },
-    ru: { buy: "Распределить", sell: "Выкупить" },
-  };
-  const t = translations[lang] || translations.en;
 
   const getDirectionStyles = () => {
     let badgeBg, badgeText, arrow;
@@ -174,13 +177,13 @@ export default function MetalPriceCard({
             onClick={handleBuy}
             className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#d4a574] hover:bg-[#c49464] text-white text-xs sm:text-sm font-medium transition-colors"
           >
-            {t.buy}
+            {t("buy")}
           </button>
           <button
             onClick={handleSell}
             className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs sm:text-sm font-medium transition-colors"
           >
-            {t.sell}
+            {t("sell")}
           </button>
         </div>
 
@@ -201,7 +204,6 @@ export default function MetalPriceCard({
           currentPrice={tradeMode === "buy" ? askPrice : bidPrice}
           bidPrice={bidPrice}
           onClose={() => setShowTradePanel(false)}
-          lang={lang}
           initialMode={tradeMode}
         />
       )}

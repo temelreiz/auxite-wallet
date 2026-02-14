@@ -3,10 +3,7 @@
 import { useState } from "react";
 import { useTransactionHistory, Transaction } from "@/hooks/useTransactionHistory";
 import { formatAmount } from "@/lib/format";
-
-interface TransactionHistoryProps {
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
-}
+import { useLanguage } from "@/components/LanguageContext";
 
 const metalIcons: Record<string, string> = {
   AUXG: "/auxg_icon.png",
@@ -220,12 +217,13 @@ const translations: Record<string, Record<string, string>> = {
 
 const INITIAL_VISIBLE_COUNT = 3;
 
-export function TransactionHistory({ lang = "en" }: TransactionHistoryProps) {
+export function TransactionHistory() {
+  const { lang } = useLanguage();
   const { transactions, loading, error, hasMore, loadMore, refresh } = useTransactionHistory(20);
   const [filter, setFilter] = useState<string>("all");
   const [showAll, setShowAll] = useState(false);
 
-  const t = translations[lang] || translations.en;
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -271,24 +269,24 @@ export function TransactionHistory({ lang = "en" }: TransactionHistoryProps) {
   const hiddenCount = filteredTransactions.length - INITIAL_VISIBLE_COUNT;
 
   const tabs = [
-    { id: "all", label: t.all },
-    { id: "deposit", label: t.deposits },
-    { id: "withdraw", label: t.withdrawals },
-    { id: "swap", label: t.swaps },
-    { id: "buy", label: t.buys },
-    { id: "sell", label: t.sells },
-    { id: "bonus", label: t.bonus },
+    { id: "all", label: t("all") },
+    { id: "deposit", label: t("deposits") },
+    { id: "withdraw", label: t("withdrawals") },
+    { id: "swap", label: t("swaps") },
+    { id: "buy", label: t("buys") },
+    { id: "sell", label: t("sells") },
+    { id: "bonus", label: t("bonus") },
   ];
 
   return (
     <div className="rounded-lg sm:rounded-xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-4 sm:p-6 shadow-sm dark:shadow-none">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <h3 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-slate-100">
-          {t.title}
+          {t("title")}
         </h3>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            {filteredTransactions.length} {t.transactions}
+            {filteredTransactions.length} {t("transactions")}
           </span>
           <button
             onClick={refresh}
@@ -332,20 +330,20 @@ export function TransactionHistory({ lang = "en" }: TransactionHistoryProps) {
       {loading && transactions.length === 0 ? (
         <div className="py-6 sm:py-8 text-center">
           <div className="h-5 w-5 sm:h-6 sm:w-6 animate-spin rounded-full border-2 border-[#2F6F62] border-t-transparent mx-auto mb-2 sm:mb-3"></div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{t.loading}</p>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{t("loading")}</p>
         </div>
       ) : filteredTransactions.length === 0 ? (
         <div className="py-6 sm:py-8 text-center">
           <div className="mb-2 sm:mb-3 text-3xl sm:text-4xl">📊</div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            {filter === "all" ? t.noTransactions : t.noCategory}
+            {filter === "all" ? t("noTransactions") : t("noCategory")}
           </p>
         </div>
       ) : (
         <div className="space-y-2 sm:space-y-3">
           {visibleTransactions.map((tx) => {
             const typeInfo = typeIcons[tx.type] || { icon: "•", color: "text-slate-500 dark:text-slate-400" };
-            const typeLabel = t[tx.type as keyof typeof t] || tx.type;
+            const typeLabel = t(tx.type) || tx.type;
             return (
               <div key={tx.id} className="rounded-lg border border-stone-200 dark:border-slate-800 bg-stone-50 dark:bg-slate-800/30 p-3 sm:p-4 transition-colors hover:bg-stone-100 dark:hover:bg-slate-800/50">
                 <div className="flex items-start justify-between">
@@ -359,9 +357,9 @@ export function TransactionHistory({ lang = "en" }: TransactionHistoryProps) {
                           : tx.status === "pending" ? "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400"
                           : "bg-red-500/20 text-red-600 dark:text-red-400"
                         }`}>
-                          {tx.status === "completed" ? t.completed
-                            : tx.status === "pending" ? t.pending
-                            : t.failed}
+                          {tx.status === "completed" ? t("completed")
+                            : tx.status === "pending" ? t("pending")
+                            : t("failed")}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm flex-wrap">
@@ -389,7 +387,7 @@ export function TransactionHistory({ lang = "en" }: TransactionHistoryProps) {
                       </div>
                       <div className="flex items-center gap-2 sm:gap-3 mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-slate-500">
                         <span>{formatDate(tx.timestamp)}</span>
-                        {tx.fee && parseFloat(tx.fee) > 0 && (<><span>•</span><span>{t.fee} ${parseFloat(tx.fee).toFixed(2)}</span></>)}
+                        {tx.fee && parseFloat(tx.fee) > 0 && (<><span>•</span><span>{t("fee")} ${parseFloat(tx.fee).toFixed(2)}</span></>)}
                       </div>
                     </div>
                   </div>
@@ -401,16 +399,16 @@ export function TransactionHistory({ lang = "en" }: TransactionHistoryProps) {
           {hiddenCount > 0 && (
             <button onClick={() => setShowAll(!showAll)} className="w-full py-2.5 sm:py-3 rounded-lg border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800/30 text-xs sm:text-sm text-slate-600 dark:text-slate-300 transition-colors hover:bg-stone-100 dark:hover:bg-slate-700/50 hover:border-[#2F6F62]/50 flex items-center justify-center gap-1.5 sm:gap-2">
               {showAll ? (
-                <><svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>{t.viewLess}</>
+                <><svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>{t("viewLess")}</>
               ) : (
-                <><svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>{hiddenCount} {t.viewMore}</>
+                <><svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>{hiddenCount} {t("viewMore")}</>
               )}
             </button>
           )}
 
           {showAll && hasMore && (
             <button onClick={loadMore} disabled={loading} className="w-full py-2.5 sm:py-3 rounded-lg border border-dashed border-stone-300 dark:border-slate-700 bg-transparent text-xs sm:text-sm text-slate-500 dark:text-slate-400 transition-colors hover:bg-stone-50 dark:hover:bg-slate-800/30 disabled:opacity-50">
-              {loading ? t.loadingMore : t.loadOlder}
+              {loading ? t("loadingMore") : t("loadOlder")}
             </button>
           )}
         </div>

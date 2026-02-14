@@ -2,12 +2,55 @@
 
 import { useState } from "react";
 import { usePositionNotifications } from "@/hooks/usePositionNotifications";
+import { useLanguage } from "@/components/LanguageContext";
+
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    notifications: "Bildirimler",
+    clearAll: "Tümünü Temizle",
+    noNotifications: "Bildirim yok",
+    withdraw: "Geri Çek",
+  },
+  en: {
+    notifications: "Notifications",
+    clearAll: "Clear All",
+    noNotifications: "No notifications",
+    withdraw: "Withdraw",
+  },
+  de: {
+    notifications: "Benachrichtigungen",
+    clearAll: "Alle löschen",
+    noNotifications: "Keine Benachrichtigungen",
+    withdraw: "Abheben",
+  },
+  fr: {
+    notifications: "Notifications",
+    clearAll: "Tout effacer",
+    noNotifications: "Aucune notification",
+    withdraw: "Retirer",
+  },
+  ar: {
+    notifications: "الإشعارات",
+    clearAll: "مسح الكل",
+    noNotifications: "لا توجد إشعارات",
+    withdraw: "سحب",
+  },
+  ru: {
+    notifications: "Уведомления",
+    clearAll: "Очистить все",
+    noNotifications: "Нет уведомлений",
+    withdraw: "Вывести",
+  },
+};
 
 interface NotificationBellProps {
-  lang: "tr" | "en";
+  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
-export function NotificationBell({ lang }: NotificationBellProps) {
+export function NotificationBell({ lang: langProp }: NotificationBellProps) {
+  const { lang: ctxLang } = useLanguage();
+  const lang = langProp || ctxLang || "en";
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const [isOpen, setIsOpen] = useState(false);
   const { 
     notifications, 
@@ -84,14 +127,14 @@ export function NotificationBell({ lang }: NotificationBellProps) {
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-800">
               <h3 className="font-semibold text-slate-200">
-                {lang === "tr" ? "Bildirimler" : "Notifications"}
+                {t("notifications")}
               </h3>
               {notifications.length > 0 && (
                 <button
                   onClick={clearAllNotifications}
                   className="text-xs text-slate-400 hover:text-slate-300"
                 >
-                  {lang === "tr" ? "Tümünü Temizle" : "Clear All"}
+                  {t("clearAll")}
                 </button>
               )}
             </div>
@@ -102,7 +145,7 @@ export function NotificationBell({ lang }: NotificationBellProps) {
                 <div className="text-center py-8 text-slate-500">
                   <div className="text-3xl mb-2">🔔</div>
                   <p className="text-sm">
-                    {lang === "tr" ? "Bildirim yok" : "No notifications"}
+                    {t("noNotifications")}
                   </p>
                 </div>
               ) : (
@@ -142,7 +185,7 @@ export function NotificationBell({ lang }: NotificationBellProps) {
                           }}
                           className="mt-2 w-full px-3 py-1.5 rounded bg-[#2F6F62] hover:bg-[#2F6F62] text-white text-xs font-medium transition-colors"
                         >
-                          {lang === "tr" ? "Geri Çek" : "Withdraw"}
+                          {t("withdraw")}
                         </button>
                       )}
                     </div>

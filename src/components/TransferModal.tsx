@@ -8,6 +8,7 @@ import { parseUnits, parseEther } from "viem";
 import { useAllocations } from "@/hooks/useAllocations";
 import { METAL_TOKENS as METAL_TOKEN_ADDRESSES, USDT_ADDRESS } from "@/config/contracts-v8";
 import { TwoFactorGate } from "@/components/TwoFactorGate";
+import { useLanguage } from "@/components/LanguageContext";
 
 type TokenType = "AUXG" | "AUXS" | "AUXPT" | "AUXPD" | "ETH" | "USDT" | "BTC" | "XRP" | "SOL";
 
@@ -51,6 +52,14 @@ const translations: Record<string, Record<string, string>> = {
     metalNote: "Metal transferi sadece kayıtlı Auxite kullanıcılarına yapılabilir",
     checkingRecipient: "Kontrol ediliyor...", auxiteUser: "Auxite kullanıcısı ✓",
     notAuxiteUser: "Alıcı Auxite kullanıcısı değil",
+    sent: "gönderildi",
+    txRejected: "İşlem kullanıcı tarafından reddedildi",
+    insufficientGas: "Yetersiz bakiye (gas dahil)",
+    connectWallet: "Cüzdanınızı bağlayın",
+    metalTransferFailed: "Metal transferi başarısız",
+    allocationTransferFailed: "Tahsis transferi başarısız",
+    ethTransferFailed: "ETH transferi başarısız",
+    transferFailed: "Transfer başarısız",
   },
   en: {
     title: "Transfer", subtitle: "Send assets to another wallet", selectToken: "Select Token",
@@ -61,11 +70,93 @@ const translations: Record<string, Record<string, string>> = {
     metalNote: "Metal transfers can only be made to registered Auxite users",
     checkingRecipient: "Checking...", auxiteUser: "Auxite user ✓",
     notAuxiteUser: "Recipient is not an Auxite user",
+    sent: "sent",
+    txRejected: "Transaction rejected by user",
+    insufficientGas: "Insufficient funds (including gas)",
+    connectWallet: "Please connect your wallet",
+    metalTransferFailed: "Metal transfer failed",
+    allocationTransferFailed: "Allocation transfer failed",
+    ethTransferFailed: "ETH transfer failed",
+    transferFailed: "Transfer failed",
+  },
+  de: {
+    title: "Überweisung", subtitle: "Vermögenswerte an eine andere Wallet senden", selectToken: "Token Auswählen",
+    recipientAddress: "Empfängeradresse", amount: "Betrag", balance: "Guthaben", send: "Senden",
+    sending: "Wird gesendet...", success: "Überweisung Erfolgreich!", error: "Überweisung Fehlgeschlagen",
+    insufficientBalance: "Unzureichendes Guthaben", invalidAddress: "Ungültige Adresse", cancel: "Schließen",
+    onChainNote: "On-Chain-Überweisung - Sie müssen in Ihrer Wallet signieren",
+    metalNote: "Metalltransfers können nur an registrierte Auxite-Benutzer erfolgen",
+    checkingRecipient: "Wird überprüft...", auxiteUser: "Auxite-Benutzer ✓",
+    notAuxiteUser: "Empfänger ist kein Auxite-Benutzer",
+    sent: "gesendet",
+    txRejected: "Transaktion vom Benutzer abgelehnt",
+    insufficientGas: "Unzureichendes Guthaben (einschließlich Gas)",
+    connectWallet: "Bitte verbinden Sie Ihre Wallet",
+    metalTransferFailed: "Metalltransfer fehlgeschlagen",
+    allocationTransferFailed: "Allokationstransfer fehlgeschlagen",
+    ethTransferFailed: "ETH-Überweisung fehlgeschlagen",
+    transferFailed: "Überweisung fehlgeschlagen",
+  },
+  fr: {
+    title: "Transfert", subtitle: "Envoyer des actifs vers un autre portefeuille", selectToken: "Sélectionner un Token",
+    recipientAddress: "Adresse du Destinataire", amount: "Montant", balance: "Solde", send: "Envoyer",
+    sending: "Envoi en cours...", success: "Transfert Réussi!", error: "Transfert Échoué",
+    insufficientBalance: "Solde insuffisant", invalidAddress: "Adresse invalide", cancel: "Fermer",
+    onChainNote: "Transfert on-chain - Vous devrez signer dans votre portefeuille",
+    metalNote: "Les transferts de métaux ne peuvent être effectués qu'aux utilisateurs Auxite enregistrés",
+    checkingRecipient: "Vérification...", auxiteUser: "Utilisateur Auxite ✓",
+    notAuxiteUser: "Le destinataire n'est pas un utilisateur Auxite",
+    sent: "envoyé",
+    txRejected: "Transaction rejetée par l'utilisateur",
+    insufficientGas: "Fonds insuffisants (frais de gas inclus)",
+    connectWallet: "Veuillez connecter votre portefeuille",
+    metalTransferFailed: "Échec du transfert de métal",
+    allocationTransferFailed: "Échec du transfert d'allocation",
+    ethTransferFailed: "Échec du transfert ETH",
+    transferFailed: "Échec du transfert",
+  },
+  ar: {
+    title: "تحويل", subtitle: "إرسال الأصول إلى محفظة أخرى", selectToken: "اختر التوكن",
+    recipientAddress: "عنوان المستلم", amount: "المبلغ", balance: "الرصيد", send: "إرسال",
+    sending: "جارٍ الإرسال...", success: "تم التحويل بنجاح!", error: "فشل التحويل",
+    insufficientBalance: "رصيد غير كافٍ", invalidAddress: "عنوان غير صالح", cancel: "إغلاق",
+    onChainNote: "تحويل على السلسلة - ستحتاج إلى التوقيع في محفظتك",
+    metalNote: "يمكن إجراء تحويلات المعادن فقط إلى مستخدمي Auxite المسجلين",
+    checkingRecipient: "جارٍ التحقق...", auxiteUser: "مستخدم Auxite ✓",
+    notAuxiteUser: "المستلم ليس مستخدم Auxite",
+    sent: "تم الإرسال",
+    txRejected: "تم رفض المعاملة من قبل المستخدم",
+    insufficientGas: "رصيد غير كافٍ (بما في ذلك الغاز)",
+    connectWallet: "يرجى توصيل محفظتك",
+    metalTransferFailed: "فشل تحويل المعدن",
+    allocationTransferFailed: "فشل تحويل التخصيص",
+    ethTransferFailed: "فشل تحويل ETH",
+    transferFailed: "فشل التحويل",
+  },
+  ru: {
+    title: "Перевод", subtitle: "Отправить активы на другой кошелёк", selectToken: "Выбрать Токен",
+    recipientAddress: "Адрес Получателя", amount: "Сумма", balance: "Баланс", send: "Отправить",
+    sending: "Отправка...", success: "Перевод Выполнен!", error: "Перевод Не Удался",
+    insufficientBalance: "Недостаточный баланс", invalidAddress: "Недействительный адрес", cancel: "Закрыть",
+    onChainNote: "Перевод в блокчейне - Вам потребуется подписать в кошельке",
+    metalNote: "Переводы металлов возможны только зарегистрированным пользователям Auxite",
+    checkingRecipient: "Проверка...", auxiteUser: "Пользователь Auxite ✓",
+    notAuxiteUser: "Получатель не является пользователем Auxite",
+    sent: "отправлено",
+    txRejected: "Транзакция отклонена пользователем",
+    insufficientGas: "Недостаточно средств (включая газ)",
+    connectWallet: "Пожалуйста, подключите ваш кошелёк",
+    metalTransferFailed: "Ошибка перевода металла",
+    allocationTransferFailed: "Ошибка перевода распределения",
+    ethTransferFailed: "Ошибка перевода ETH",
+    transferFailed: "Ошибка перевода",
   },
 };
 
-export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalProps) {
-  const t = translations[lang] || translations.en;
+export function TransferModal({ isOpen, onClose, lang: propLang }: TransferModalProps) {
+  const { lang: contextLang } = useLanguage();
+  const lang = propLang || contextLang || "en";
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const { balances, refreshBalances, address } = useWallet();
   const { isConnected } = useAccount();
   const { allocations, totalGrams, refresh: refreshAllocations } = useAllocations();
@@ -130,12 +221,12 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
     const error = writeError || sendError || receiptError;
     if (error) {
       console.error('🔴 Wallet/Transaction error:', error);
-      const errorMsg = error.message || "Transaction failed";
+      const errorMsg = error.message || t("transferFailed");
       // Check for common error types
       if (errorMsg.includes('User rejected') || errorMsg.includes('rejected')) {
-        setErrorMessage("İşlem reddedildi / Transaction rejected by user");
+        setErrorMessage(t("txRejected"));
       } else if (errorMsg.includes('insufficient funds')) {
-        setErrorMessage("Yetersiz bakiye (gas dahil) / Insufficient funds for gas");
+        setErrorMessage(t("insufficientGas"));
       } else {
         setErrorMessage(errorMsg.slice(0, 200));
       }
@@ -280,7 +371,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
             if (refreshBalances) await refreshBalances();
             if (refreshAllocations) await refreshAllocations();
           } else {
-            throw new Error(data.error || "Metal transfer failed");
+            throw new Error(data.error || t("metalTransferFailed"));
           }
           setIsProcessing(false);
           return;
@@ -295,7 +386,7 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
             body: JSON.stringify({ fromAddress: address, toAddress: recipientAddress, allocationId: metalAllocations[0].id, grams: amountNum }),
           });
           const allocData = await allocResponse.json();
-          if (!allocData.success) throw new Error(allocData.error || "Allocation transfer failed");
+          if (!allocData.success) throw new Error(allocData.error || t("allocationTransferFailed"));
         }
         const amountInUnits = parseUnits(amount, tokenInfo.decimals);
         writeContract({ address: tokenInfo.address as `0x${string}`, abi: ERC20_ABI, functionName: "transfer", args: [recipientAddress as `0x${string}`, amountInUnits], gas: BigInt(200000) });
@@ -330,9 +421,9 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
             setFlowStep("result");
             if (refreshBalances) await refreshBalances();
           } else if (data.code === "USE_WALLET_SIGNING") {
-            throw new Error("Cüzdanınızı bağlayın / Please connect your wallet to transfer ETH");
+            throw new Error(t("connectWallet"));
           } else {
-            throw new Error(data.error || "ETH transfer failed");
+            throw new Error(data.error || t("ethTransferFailed"));
           }
           setIsProcessing(false);
           return;
@@ -360,12 +451,12 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           setFlowStep("result");
           if (refreshBalances) await refreshBalances();
         } else {
-          throw new Error(data.error || "Transfer failed");
+          throw new Error(data.error || t("transferFailed"));
         }
         setIsProcessing(false);
       }
-    } catch (error: any) { 
-      setErrorMessage(error.message || "Transfer failed"); 
+    } catch (error: any) {
+      setErrorMessage(error.message || t("transferFailed")); 
       setResult("error"); 
       setFlowStep("result");
       setIsProcessing(false); 
@@ -386,7 +477,6 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         isOpen={true}
         onClose={() => setFlowStep("form")}
         onVerified={handle2FAVerified}
-        lang={lang as any}
       />
     );
   }
@@ -399,9 +489,9 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 flex items-center justify-center">
             <span className="text-3xl">✅</span>
           </div>
-          <h3 className="text-xl font-bold text-[#2F6F62] dark:text-[#2F6F62] mb-2">{t.success}</h3>
-          <p className="text-slate-500 mb-4">{amountNum} {selectedToken} sent</p>
-          <button onClick={onClose} className="px-6 py-2 bg-[#2F6F62] text-white rounded-xl font-medium">{t.cancel}</button>
+          <h3 className="text-xl font-bold text-[#2F6F62] dark:text-[#2F6F62] mb-2">{t("success")}</h3>
+          <p className="text-slate-500 mb-4">{amountNum} {selectedToken} {t("sent")}</p>
+          <button onClick={onClose} className="px-6 py-2 bg-[#2F6F62] text-white rounded-xl font-medium">{t("cancel")}</button>
         </div>
       </div>
     );
@@ -414,9 +504,9 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center">
             <span className="text-3xl">❌</span>
           </div>
-          <h3 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">{t.error}</h3>
+          <h3 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">{t("error")}</h3>
           <p className="text-slate-500 mb-4">{errorMessage}</p>
-          <button onClick={onClose} className="px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium">{t.cancel}</button>
+          <button onClick={onClose} className="px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium">{t("cancel")}</button>
         </div>
       </div>
     );
@@ -428,15 +518,15 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-700 max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white">{t.title}</h2>
-            <p className="text-sm text-slate-500">{t.subtitle}</p>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white">{t("title")}</h2>
+            <p className="text-sm text-slate-500">{t("subtitle")}</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-500">✕</button>
         </div>
 
         {/* Token Selection */}
         <div className="mb-4">
-          <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t.selectToken}</label>
+          <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t("selectToken")}</label>
           <div className="grid grid-cols-5 gap-2">
             {TRANSFERABLE_TOKENS.map((token) => (
               <button key={token} onClick={() => setSelectedToken(token)} className={`p-2 rounded-lg border flex flex-col items-center gap-1 ${selectedToken === token ? "border-blue-500 bg-blue-50 dark:bg-blue-500/20" : "border-stone-300 dark:border-slate-700"}`}>
@@ -450,23 +540,23 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         {/* Notices */}
         {isMetal && (
           <div className="mb-4 p-2 bg-[#BFA181]/10 dark:bg-[#BFA181]/10 border border-[#BFA181]/30 dark:border-[#BFA181]/30 rounded-lg">
-            <p className="text-xs text-[#BFA181] dark:text-[#BFA181]">⚠️ {t.metalNote}</p>
+            <p className="text-xs text-[#BFA181] dark:text-[#BFA181]">⚠️ {t("metalNote")}</p>
           </div>
         )}
         {tokenInfo.onChain && !isMetal && (
           <div className="mb-4 p-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg">
-            <p className="text-xs text-blue-700 dark:text-blue-400">⚡ {t.onChainNote}</p>
+            <p className="text-xs text-blue-700 dark:text-blue-400">⚡ {t("onChainNote")}</p>
           </div>
         )}
 
         {/* Recipient Address */}
         <div className="mb-4">
-          <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t.recipientAddress}</label>
+          <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">{t("recipientAddress")}</label>
           <input type="text" value={recipientAddress} onChange={(e) => setRecipientAddress(e.target.value)} placeholder="0x..." className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white font-mono text-sm" />
-          {recipientAddress && !isValidAddress && <p className="text-xs text-red-500 mt-1">{t.invalidAddress}</p>}
+          {recipientAddress && !isValidAddress && <p className="text-xs text-red-500 mt-1">{t("invalidAddress")}</p>}
           {isMetal && isValidAddress && (
             <div className="mt-2">
-              {isCheckingRecipient ? <p className="text-xs text-slate-500">⏳ {t.checkingRecipient}</p> : recipientValid === true ? <p className="text-xs text-[#2F6F62]">✓ {t.auxiteUser}</p> : recipientValid === false ? <p className="text-xs text-red-500">✕ {t.notAuxiteUser}</p> : null}
+              {isCheckingRecipient ? <p className="text-xs text-slate-500">⏳ {t("checkingRecipient")}</p> : recipientValid === true ? <p className="text-xs text-[#2F6F62]">✓ {t("auxiteUser")}</p> : recipientValid === false ? <p className="text-xs text-red-500">✕ {t("notAuxiteUser")}</p> : null}
             </div>
           )}
         </div>
@@ -474,14 +564,14 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
         {/* Amount */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm text-slate-600 dark:text-slate-400">{t.amount}</label>
-            <span className="text-xs text-slate-500">{t.balance}: {formatAmount(availableBalance, selectedToken)} {selectedToken}</span>
+            <label className="text-sm text-slate-600 dark:text-slate-400">{t("amount")}</label>
+            <span className="text-xs text-slate-500">{t("balance")}: {formatAmount(availableBalance, selectedToken)} {selectedToken}</span>
           </div>
           <div className="flex gap-2">
             <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="flex-1 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white" />
             <button onClick={() => setAmount(availableBalance.toString())} className="px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-300 dark:border-slate-700 rounded-xl text-[#2F6F62] dark:text-[#2F6F62] font-medium">MAX</button>
           </div>
-          {amountNum > 0 && !canAfford && <p className="text-xs text-red-500 mt-1">{t.insufficientBalance}</p>}
+          {amountNum > 0 && !canAfford && <p className="text-xs text-red-500 mt-1">{t("insufficientBalance")}</p>}
         </div>
 
         {/* Send Button */}
@@ -491,9 +581,9 @@ export function TransferModal({ isOpen, onClose, lang = "en" }: TransferModalPro
           className="w-full py-3 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-semibold flex items-center justify-center gap-2"
         >
           {isProcessing ? (
-            <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> {t.sending}</>
+            <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> {t("sending")}</>
           ) : (
-            <>🔐 {t.send}</>
+            <>🔐 {t("send")}</>
           )}
         </button>
       </div>

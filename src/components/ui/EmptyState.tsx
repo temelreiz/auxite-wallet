@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { useLanguage } from "@/components/LanguageContext";
 
 /**
  * Empty State Component
@@ -50,7 +51,6 @@ interface ErrorStateProps {
   title?: string;
   message?: string;
   onRetry?: () => void;
-  lang?: "tr" | "en";
 }
 
 const errorTexts = {
@@ -64,10 +64,31 @@ const errorTexts = {
     message: "Please try again later.",
     retry: "Try Again",
   },
+  de: {
+    title: "Etwas ist schiefgelaufen",
+    message: "Bitte versuchen Sie es später erneut.",
+    retry: "Erneut versuchen",
+  },
+  fr: {
+    title: "Une erreur est survenue",
+    message: "Veuillez réessayer plus tard.",
+    retry: "Réessayer",
+  },
+  ar: {
+    title: "حدث خطأ ما",
+    message: "يرجى المحاولة مرة أخرى لاحقاً.",
+    retry: "إعادة المحاولة",
+  },
+  ru: {
+    title: "Что-то пошло не так",
+    message: "Пожалуйста, попробуйте позже.",
+    retry: "Повторить",
+  },
 };
 
-export function ErrorState({ title, message, onRetry, lang = "tr" }: ErrorStateProps) {
-  const texts = errorTexts[lang];
+export function ErrorState({ title, message, onRetry }: ErrorStateProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (errorTexts as any)[lang]?.[key] || (errorTexts as any).en[key] || key;
 
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
@@ -76,8 +97,8 @@ export function ErrorState({ title, message, onRetry, lang = "tr" }: ErrorStateP
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
       </div>
-      <h3 className="text-lg font-medium text-white mb-2">{title || texts.title}</h3>
-      <p className="text-slate-400 max-w-sm mb-4">{message || texts.message}</p>
+      <h3 className="text-lg font-medium text-white mb-2">{title || t("title")}</h3>
+      <p className="text-slate-400 max-w-sm mb-4">{message || t("message")}</p>
       {onRetry && (
         <button
           onClick={onRetry}
@@ -86,7 +107,7 @@ export function ErrorState({ title, message, onRetry, lang = "tr" }: ErrorStateP
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          {texts.retry}
+          {t("retry")}
         </button>
       )}
     </div>
@@ -100,7 +121,6 @@ export function ErrorState({ title, message, onRetry, lang = "tr" }: ErrorStateP
 
 interface NoDataStateProps {
   type: "transactions" | "assets" | "devices" | "sessions" | "logs";
-  lang?: "tr" | "en";
   onAction?: () => void;
 }
 
@@ -159,6 +179,114 @@ const noDataTexts = {
       action: null,
     },
   },
+  de: {
+    transactions: {
+      title: "Kein Transaktionsverlauf",
+      description: "Sie haben noch keine Transaktionen durchgeführt.",
+      action: "Erste Transaktion durchführen",
+    },
+    assets: {
+      title: "Keine Vermögenswerte gefunden",
+      description: "Sie haben noch keine Vermögenswerte in Ihrem Portfolio.",
+      action: "Einzahlung vornehmen",
+    },
+    devices: {
+      title: "Keine registrierten Geräte",
+      description: "Es wurden keine vertrauenswürdigen Geräte hinzugefügt.",
+      action: "Gerät hinzufügen",
+    },
+    sessions: {
+      title: "Keine aktiven Sitzungen",
+      description: "Derzeit gibt es keine aktiven Sitzungen.",
+      action: null,
+    },
+    logs: {
+      title: "Keine Sicherheitsprotokolle",
+      description: "Noch keine Sicherheitsaufzeichnungen gefunden.",
+      action: null,
+    },
+  },
+  fr: {
+    transactions: {
+      title: "Aucun historique de transactions",
+      description: "Vous n'avez encore effectué aucune transaction.",
+      action: "Effectuer votre première transaction",
+    },
+    assets: {
+      title: "Aucun actif trouvé",
+      description: "Vous n'avez aucun actif dans votre portefeuille.",
+      action: "Effectuer un dépôt",
+    },
+    devices: {
+      title: "Aucun appareil enregistré",
+      description: "Aucun appareil de confiance n'a été ajouté.",
+      action: "Ajouter un appareil",
+    },
+    sessions: {
+      title: "Aucune session active",
+      description: "Il n'y a aucune session active pour le moment.",
+      action: null,
+    },
+    logs: {
+      title: "Aucun journal de sécurité",
+      description: "Aucun enregistrement de sécurité trouvé.",
+      action: null,
+    },
+  },
+  ar: {
+    transactions: {
+      title: "لا يوجد سجل معاملات",
+      description: "لم تقم بأي معاملات بعد.",
+      action: "قم بأول معاملة لك",
+    },
+    assets: {
+      title: "لم يتم العثور على أصول",
+      description: "ليس لديك أي أصول في محفظتك.",
+      action: "قم بالإيداع",
+    },
+    devices: {
+      title: "لا توجد أجهزة مسجلة",
+      description: "لم تتم إضافة أجهزة موثوقة.",
+      action: "إضافة جهاز",
+    },
+    sessions: {
+      title: "لا توجد جلسات نشطة",
+      description: "لا توجد جلسات نشطة حالياً.",
+      action: null,
+    },
+    logs: {
+      title: "لا توجد سجلات أمان",
+      description: "لم يتم العثور على سجلات أمان بعد.",
+      action: null,
+    },
+  },
+  ru: {
+    transactions: {
+      title: "Нет истории транзакций",
+      description: "Вы ещё не совершали транзакций.",
+      action: "Совершите первую транзакцию",
+    },
+    assets: {
+      title: "Активы не найдены",
+      description: "В вашем портфеле пока нет активов.",
+      action: "Внести депозит",
+    },
+    devices: {
+      title: "Нет зарегистрированных устройств",
+      description: "Доверенные устройства не добавлены.",
+      action: "Добавить устройство",
+    },
+    sessions: {
+      title: "Нет активных сессий",
+      description: "В данный момент нет активных сессий.",
+      action: null,
+    },
+    logs: {
+      title: "Нет журналов безопасности",
+      description: "Записи безопасности пока не найдены.",
+      action: null,
+    },
+  },
 };
 
 const noDataIcons = {
@@ -189,8 +317,9 @@ const noDataIcons = {
   ),
 };
 
-export function NoDataState({ type, lang = "tr", onAction }: NoDataStateProps) {
-  const texts = noDataTexts[lang][type];
+export function NoDataState({ type, onAction }: NoDataStateProps) {
+  const { lang } = useLanguage();
+  const texts = (noDataTexts as any)[lang]?.[type] || noDataTexts.en[type];
   const icon = noDataIcons[type];
 
   return (

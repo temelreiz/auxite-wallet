@@ -1,6 +1,157 @@
 "use client";
 
 import { useState } from "react";
+import { useLanguage } from "@/components/LanguageContext";
+
+// ============================================
+// METAL EXCHANGE MODAL TRANSLATIONS
+// ============================================
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    exchange: "Dönüştür",
+    toAuxmMetal: "→ AUXM/Metal",
+    buyMetal: "Al",
+    sellMetal: "Sat",
+    buyPrice: "Alış Fiyatı",
+    sellPrice: "Satış Fiyatı",
+    from: "Gönder",
+    balance: "Bakiye",
+    fixed: "Sabit",
+    auxiteMoney: "Auxite Para",
+    insufficientBalance: "Yetersiz bakiye",
+    to: "Al",
+    youllReceive: "Alacağınız",
+    rate: "Kur",
+    txFee: "İşlem Ücreti",
+    free: "Ücretsiz",
+    processing: "İşleniyor...",
+    successMsg: "Başarılı!",
+    metalGold: "Altın",
+    metalSilver: "Gümüş",
+    metalPlatinum: "Platin",
+    metalPalladium: "Paladyum",
+  },
+  en: {
+    exchange: "Exchange",
+    toAuxmMetal: "→ AUXM/Metal",
+    buyMetal: "Buy",
+    sellMetal: "Sell",
+    buyPrice: "Buy Price",
+    sellPrice: "Sell Price",
+    from: "From",
+    balance: "Balance",
+    fixed: "Fixed",
+    auxiteMoney: "Auxite Money",
+    insufficientBalance: "Insufficient balance",
+    to: "To",
+    youllReceive: "You'll receive",
+    rate: "Rate",
+    txFee: "Fee",
+    free: "Free",
+    processing: "Processing...",
+    successMsg: "Success!",
+    metalGold: "Gold",
+    metalSilver: "Silver",
+    metalPlatinum: "Platinum",
+    metalPalladium: "Palladium",
+  },
+  de: {
+    exchange: "Tauschen",
+    toAuxmMetal: "→ AUXM/Metall",
+    buyMetal: "Kaufen",
+    sellMetal: "Verkaufen",
+    buyPrice: "Kaufpreis",
+    sellPrice: "Verkaufspreis",
+    from: "Von",
+    balance: "Guthaben",
+    fixed: "Fest",
+    auxiteMoney: "Auxite Geld",
+    insufficientBalance: "Unzureichendes Guthaben",
+    to: "An",
+    youllReceive: "Sie erhalten",
+    rate: "Kurs",
+    txFee: "Gebühr",
+    free: "Kostenlos",
+    processing: "Verarbeitung...",
+    successMsg: "Erfolgreich!",
+    metalGold: "Gold",
+    metalSilver: "Silber",
+    metalPlatinum: "Platin",
+    metalPalladium: "Palladium",
+  },
+  fr: {
+    exchange: "Échanger",
+    toAuxmMetal: "→ AUXM/Métal",
+    buyMetal: "Acheter",
+    sellMetal: "Vendre",
+    buyPrice: "Prix d'achat",
+    sellPrice: "Prix de vente",
+    from: "De",
+    balance: "Solde",
+    fixed: "Fixe",
+    auxiteMoney: "Auxite Monnaie",
+    insufficientBalance: "Solde insuffisant",
+    to: "Vers",
+    youllReceive: "Vous recevrez",
+    rate: "Taux",
+    txFee: "Frais",
+    free: "Gratuit",
+    processing: "Traitement...",
+    successMsg: "Succès !",
+    metalGold: "Or",
+    metalSilver: "Argent",
+    metalPlatinum: "Platine",
+    metalPalladium: "Palladium",
+  },
+  ar: {
+    exchange: "تحويل",
+    toAuxmMetal: "← AUXM/معدن",
+    buyMetal: "شراء",
+    sellMetal: "بيع",
+    buyPrice: "سعر الشراء",
+    sellPrice: "سعر البيع",
+    from: "من",
+    balance: "الرصيد",
+    fixed: "ثابت",
+    auxiteMoney: "أوكسايت نقود",
+    insufficientBalance: "رصيد غير كاف",
+    to: "إلى",
+    youllReceive: "ستستلم",
+    rate: "السعر",
+    txFee: "الرسوم",
+    free: "مجاني",
+    processing: "جاري المعالجة...",
+    successMsg: "تم بنجاح!",
+    metalGold: "ذهب",
+    metalSilver: "فضة",
+    metalPlatinum: "بلاتين",
+    metalPalladium: "بالاديوم",
+  },
+  ru: {
+    exchange: "Обмен",
+    toAuxmMetal: "→ AUXM/Металл",
+    buyMetal: "Купить",
+    sellMetal: "Продать",
+    buyPrice: "Цена покупки",
+    sellPrice: "Цена продажи",
+    from: "Отправить",
+    balance: "Баланс",
+    fixed: "Фикс.",
+    auxiteMoney: "Auxite Деньги",
+    insufficientBalance: "Недостаточный баланс",
+    to: "Получить",
+    youllReceive: "Вы получите",
+    rate: "Курс",
+    txFee: "Комиссия",
+    free: "Бесплатно",
+    processing: "Обработка...",
+    successMsg: "Успешно!",
+    metalGold: "Золото",
+    metalSilver: "Серебро",
+    metalPlatinum: "Платина",
+    metalPalladium: "Палладий",
+  },
+};
 
 interface MetalExchangeModalProps {
   isOpen: boolean;
@@ -26,48 +177,48 @@ type MetalType = "AUXG" | "AUXS" | "AUXPT" | "AUXPD";
 type TargetType = "AUXM" | "AUXG" | "AUXS" | "AUXPT" | "AUXPD";
 type ModeType = "sell" | "buy"; // sell: Metal → AUXM, buy: AUXM → Metal
 
-const METAL_INFO: Record<MetalType, { 
-  name: string; 
-  nameTr: string; 
-  icon: string; 
+const METAL_INFO: Record<MetalType, {
+  nameKey: string;
+  icon: string;
   color: string;
   bgColor: string;
   borderColor: string;
 }> = {
-  AUXG: { name: "Gold", nameTr: "Altın", icon: "/auxg_icon.png", color: "#FFD700", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500/50" },
-  AUXS: { name: "Silver", nameTr: "Gümüş", icon: "/auxs_icon.png", color: "#C0C0C0", bgColor: "bg-slate-400/20", borderColor: "border-slate-400/50" },
-  AUXPT: { name: "Platinum", nameTr: "Platin", icon: "/auxpt_icon.png", color: "#E5E4E2", bgColor: "bg-slate-300/20", borderColor: "border-slate-300/50" },
-  AUXPD: { name: "Palladium", nameTr: "Paladyum", icon: "/auxpd_icon.png", color: "#CED0DD", bgColor: "bg-slate-500/20", borderColor: "border-slate-500/50" },
+  AUXG: { nameKey: "metalGold", icon: "/auxg_icon.png", color: "#FFD700", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500/50" },
+  AUXS: { nameKey: "metalSilver", icon: "/auxs_icon.png", color: "#C0C0C0", bgColor: "bg-slate-400/20", borderColor: "border-slate-400/50" },
+  AUXPT: { nameKey: "metalPlatinum", icon: "/auxpt_icon.png", color: "#E5E4E2", bgColor: "bg-slate-300/20", borderColor: "border-slate-300/50" },
+  AUXPD: { nameKey: "metalPalladium", icon: "/auxpd_icon.png", color: "#CED0DD", bgColor: "bg-slate-500/20", borderColor: "border-slate-500/50" },
 };
 
-const TARGET_INFO: Record<TargetType, { 
-  name: string; 
-  nameTr: string; 
+const TARGET_INFO: Record<TargetType, {
+  nameKey: string;
   emoji: string;
   bgColor: string;
   borderColor: string;
 }> = {
-  AUXM: { name: "Auxite Money", nameTr: "Auxite Para", emoji: "◈", bgColor: "bg-purple-500/20", borderColor: "border-purple-500/30" },
-  AUXG: { name: "Gold", nameTr: "Altın", emoji: "🥇", bgColor: "bg-yellow-500/10", borderColor: "border-yellow-500/30" },
-  AUXS: { name: "Silver", nameTr: "Gümüş", emoji: "🥈", bgColor: "bg-slate-400/10", borderColor: "border-slate-400/30" },
-  AUXPT: { name: "Platinum", nameTr: "Platin", emoji: "⚪", bgColor: "bg-slate-300/10", borderColor: "border-slate-300/30" },
-  AUXPD: { name: "Palladium", nameTr: "Paladyum", emoji: "🔘", bgColor: "bg-slate-500/10", borderColor: "border-slate-500/30" },
+  AUXM: { nameKey: "auxiteMoney", emoji: "◈", bgColor: "bg-purple-500/20", borderColor: "border-purple-500/30" },
+  AUXG: { nameKey: "metalGold", emoji: "🥇", bgColor: "bg-yellow-500/10", borderColor: "border-yellow-500/30" },
+  AUXS: { nameKey: "metalSilver", emoji: "🥈", bgColor: "bg-slate-400/10", borderColor: "border-slate-400/30" },
+  AUXPT: { nameKey: "metalPlatinum", emoji: "⚪", bgColor: "bg-slate-300/10", borderColor: "border-slate-300/30" },
+  AUXPD: { nameKey: "metalPalladium", emoji: "🔘", bgColor: "bg-slate-500/10", borderColor: "border-slate-500/30" },
 };
 
 export function MetalExchangeModal({
   isOpen,
   onClose,
   metal,
-  lang = "tr",
   metalBalances = { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 },
   auxmBalance = 5000,
-  metalPrices = { 
-    AUXG: { ask: 139.04, bid: 134.69 }, 
-    AUXS: { ask: 1.93, bid: 1.82 }, 
-    AUXPT: { ask: 54.85, bid: 52.92 }, 
-    AUXPD: { ask: 47.09, bid: 45.57 } 
+  metalPrices = {
+    AUXG: { ask: 139.04, bid: 134.69 },
+    AUXS: { ask: 1.93, bid: 1.82 },
+    AUXPT: { ask: 54.85, bid: 52.92 },
+    AUXPD: { ask: 47.09, bid: 45.57 }
   },
 }: MetalExchangeModalProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
+
   const [mode, setMode] = useState<ModeType>("buy"); // buy: AUXM → Metal, sell: Metal → AUXM
   const [amount, setAmount] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -77,17 +228,17 @@ export function MetalExchangeModal({
 
   // Kaynak metal SABİT - prop'tan geliyor
   const metalInfo = METAL_INFO[metal];
-  
+
   // Fiyatlar
   const askPrice = metalPrices[metal].ask; // Alış fiyatı (kullanıcı alırken)
   const bidPrice = metalPrices[metal].bid; // Satış fiyatı (kullanıcı satarken)
-  
+
   // Spread hesaplama
   const spread = ((askPrice - bidPrice) / askPrice * 100).toFixed(2);
 
   // Hesaplamalar
   const amountNum = parseFloat(amount) || 0;
-  
+
   let fromValue = 0;
   let toValue = 0;
   let fromBalance = 0;
@@ -121,15 +272,15 @@ export function MetalExchangeModal({
   // İşlem
   const handleExchange = async () => {
     if (amountNum <= 0 || insufficientBalance) return;
-    
+
     setIsProcessing(true);
-    
+
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
+
     setResult("success");
     setIsProcessing(false);
-    
+
     // Auto close after success
     setTimeout(() => {
       setResult(null);
@@ -141,7 +292,7 @@ export function MetalExchangeModal({
   if (!isOpen) return null;
 
   // Hedef seçenekleri (kaynak metal hariç)
-  const targetOptions: TargetType[] = ["AUXM", "AUXG", "AUXS", "AUXPT", "AUXPD"].filter(t => t !== metal) as TargetType[];
+  const targetOptions: TargetType[] = ["AUXM", "AUXG", "AUXS", "AUXPT", "AUXPD"].filter(tgt => tgt !== metal) as TargetType[];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -159,10 +310,10 @@ export function MetalExchangeModal({
             <img src={metalInfo.icon} alt={metal} className="w-8 h-8" />
             <div>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                {metal} {lang === "tr" ? "Dönüştür" : "Exchange"}
+                {metal} {t("exchange")}
               </h2>
               <p className="text-xs text-slate-400">
-                {lang === "tr" ? `${metalInfo.nameTr} → AUXM/Metal` : `${metalInfo.name} → AUXM/Metal`}
+                {t(metalInfo.nameKey)} {t("toAuxmMetal")}
               </p>
             </div>
           </div>
@@ -187,7 +338,7 @@ export function MetalExchangeModal({
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              {lang === "tr" ? `${metal} Al` : `Buy ${metal}`}
+              {metal} {t("buyMetal")}
             </button>
             <button
               onClick={() => { setMode("sell"); setAmount(""); }}
@@ -197,7 +348,7 @@ export function MetalExchangeModal({
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              {lang === "tr" ? `${metal} Sat` : `Sell ${metal}`}
+              {metal} {t("sellMetal")}
             </button>
           </div>
         </div>
@@ -208,9 +359,7 @@ export function MetalExchangeModal({
           <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50 dark:bg-slate-800/50">
             <div>
               <div className="text-xs text-slate-500">
-                {mode === "buy" 
-                  ? (lang === "tr" ? "Alış Fiyatı" : "Buy Price")
-                  : (lang === "tr" ? "Satış Fiyatı" : "Sell Price")}
+                {mode === "buy" ? t("buyPrice") : t("sellPrice")}
               </div>
               <div className="text-lg font-bold text-slate-900 dark:text-white">
                 ${mode === "buy" ? askPrice.toFixed(2) : bidPrice.toFixed(2)}
@@ -227,13 +376,13 @@ export function MetalExchangeModal({
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-slate-400">
-                {lang === "tr" ? "Gönder" : "From"}
+                {t("from")}
               </span>
               <span className="text-xs text-slate-500">
-                {lang === "tr" ? "Bakiye" : "Balance"}: {fromBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} {fromSymbol}
+                {t("balance")}: {fromBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} {fromSymbol}
               </span>
             </div>
-            
+
             {/* Kaynak Asset - SABİT görünüm */}
             <div className={`p-3 rounded-xl ${mode === "buy" ? "bg-purple-500/10 border border-purple-500/30" : `${metalInfo.bgColor} border ${metalInfo.borderColor}`}`}>
               <div className="flex items-center gap-3">
@@ -247,11 +396,11 @@ export function MetalExchangeModal({
                 <div className="flex-1">
                   <div className="text-slate-900 dark:text-white font-semibold">{fromSymbol}</div>
                   <div className="text-xs text-slate-400">
-                    {mode === "buy" ? "Auxite Para" : metalInfo.nameTr}
+                    {mode === "buy" ? t("auxiteMoney") : t(metalInfo.nameKey)}
                   </div>
                 </div>
                 <div className="px-2 py-1 rounded bg-stone-200 dark:bg-slate-700/50 text-xs text-slate-600 dark:text-slate-400">
-                  {lang === "tr" ? "Sabit" : "Fixed"}
+                  {t("fixed")}
                 </div>
               </div>
             </div>
@@ -280,7 +429,7 @@ export function MetalExchangeModal({
               </div>
               {insufficientBalance && (
                 <p className="text-xs text-red-400 mt-1">
-                  {lang === "tr" ? "Yetersiz bakiye" : "Insufficient balance"}
+                  {t("insufficientBalance")}
                 </p>
               )}
               <p className="text-xs text-slate-500 mt-1">
@@ -302,10 +451,10 @@ export function MetalExchangeModal({
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-slate-400">
-                {lang === "tr" ? "Al" : "To"}
+                {t("to")}
               </span>
               <span className="text-xs text-slate-500">
-                {lang === "tr" ? "Bakiye" : "Balance"}: {toBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} {toSymbol}
+                {t("balance")}: {toBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} {toSymbol}
               </span>
             </div>
 
@@ -322,7 +471,7 @@ export function MetalExchangeModal({
                 <div className="flex-1">
                   <div className="text-slate-900 dark:text-white font-semibold">{toSymbol}</div>
                   <div className="text-xs text-slate-400">
-                    {mode === "sell" ? "Auxite Para" : metalInfo.nameTr}
+                    {mode === "sell" ? t("auxiteMoney") : t(metalInfo.nameKey)}
                   </div>
                 </div>
               </div>
@@ -332,7 +481,7 @@ export function MetalExchangeModal({
             <div className="mt-3 p-3 bg-stone-50 dark:bg-slate-800/50 rounded-xl">
               <div className="flex items-center justify-between">
                 <span className="text-slate-400 text-sm">
-                  {lang === "tr" ? "Alacağınız" : "You'll receive"}
+                  {t("youllReceive")}
                 </span>
                 <div className="text-right">
                   <span className="text-xl font-bold text-slate-900 dark:text-white">
@@ -351,15 +500,15 @@ export function MetalExchangeModal({
           {amountNum > 0 && (
             <div className="p-3 rounded-xl bg-stone-50 dark:bg-slate-800/30 border border-stone-200 dark:border-slate-700/50">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">{lang === "tr" ? "Kur" : "Rate"}</span>
+                <span className="text-slate-400">{t("rate")}</span>
                 <span className="text-slate-200">
                   1 {metal} = ${price.toFixed(2)} AUXM
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm mt-2">
-                <span className="text-slate-400">{lang === "tr" ? "İşlem Ücreti" : "Fee"}</span>
+                <span className="text-slate-400">{t("txFee")}</span>
                 <span className="text-[#2F6F62]">
-                  {lang === "tr" ? "Ücretsiz" : "Free"}
+                  {t("free")}
                 </span>
               </div>
             </div>
@@ -384,23 +533,23 @@ export function MetalExchangeModal({
             {isProcessing ? (
               <>
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                {lang === "tr" ? "İşleniyor..." : "Processing..."}
+                {t("processing")}
               </>
             ) : result === "success" ? (
               <>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                {lang === "tr" ? "Başarılı!" : "Success!"}
+                {t("successMsg")}
               </>
             ) : (
               <>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                 </svg>
-                {mode === "buy" 
-                  ? (lang === "tr" ? `${metal} Al` : `Buy ${metal}`)
-                  : (lang === "tr" ? `${metal} Sat` : `Sell ${metal}`)}
+                {mode === "buy"
+                  ? `${metal} ${t("buyMetal")}`
+                  : `${metal} ${t("sellMetal")}`}
               </>
             )}
           </button>

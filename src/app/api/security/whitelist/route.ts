@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { sendSecurityAlertEmail } from "@/lib/email";
+import { getUserLanguage } from "@/lib/user-language";
 
 const redis = Redis.fromEnv();
 
@@ -105,6 +106,7 @@ export async function POST(request: NextRequest) {
     const userData = await redis.hgetall(userDataKey) as Record<string, string> | null;
     if (userData?.email) {
       const ipHeader = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip');
+      const whitelistLang = await getUserLanguage(walletAddress.toLowerCase());
       sendSecurityAlertEmail(userData.email, {
         clientName: userData.name || undefined,
         event: 'Withdrawal Address Whitelisted',
@@ -113,6 +115,7 @@ export async function POST(request: NextRequest) {
         network,
         timestamp: new Date().toISOString().replace('T', ', ').replace(/\.\d+Z/, ' UTC'),
         ipAddress: ipHeader || undefined,
+        language: whitelistLang,
       }).catch((err: any) => console.error('Security alert email error:', err));
     }
 

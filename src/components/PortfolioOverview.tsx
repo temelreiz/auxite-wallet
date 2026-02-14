@@ -7,9 +7,9 @@ import { useTokenBalances } from "@/hooks/useTokenBalances";
 import { useMetalsPrices } from "@/hooks/useMetalsPrices";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
+import { useLanguage } from "@/components/LanguageContext";
 
 interface PortfolioOverviewProps {
-  lang?: "tr" | "en";
   onExchangeClick?: () => void;
   walletAddress?: string;
   showActionButtons?: boolean;
@@ -63,14 +63,123 @@ const CryptoIcons: Record<string, React.ReactNode> = {
   ),
 };
 
-export function PortfolioOverview({ 
-  lang = "en", 
-  onExchangeClick, 
+// ============================================
+// LOCAL TRANSLATIONS (6 languages)
+// ============================================
+const translations = {
+  tr: {
+    totalPortfolioValue: "Toplam Portföy Değeri",
+    approx: "yaklaşık",
+    connectWalletPrompt: "Portföyünüzü görmek için cüzdanınızı bağlayın",
+    auxmBalance: "Bakiyeniz",
+    platformCurrency: "Platform Para Birimi",
+    exchange: "Dönüştür",
+    portfolioDetails: "Portföy Detayları",
+    metalAssets: "Metal Varlıklar",
+    cryptoAssets: "Kripto Varlıklar",
+    ofPortfolio: "portföy",
+    details: "Detaylar",
+    gold: "Altın",
+    silver: "Gümüş",
+    platinum: "Platin",
+    palladium: "Paladyum",
+  },
+  en: {
+    totalPortfolioValue: "Total Portfolio Value",
+    approx: "approx.",
+    connectWalletPrompt: "Connect your wallet to view your portfolio",
+    auxmBalance: "Balance",
+    platformCurrency: "Platform Currency",
+    exchange: "Exchange",
+    portfolioDetails: "Portfolio Details",
+    metalAssets: "Metal Assets",
+    cryptoAssets: "Crypto Assets",
+    ofPortfolio: "of portfolio",
+    details: "Details",
+    gold: "Gold",
+    silver: "Silver",
+    platinum: "Platinum",
+    palladium: "Palladium",
+  },
+  de: {
+    totalPortfolioValue: "Gesamtwert des Portfolios",
+    approx: "ungefähr",
+    connectWalletPrompt: "Verbinden Sie Ihre Wallet, um Ihr Portfolio anzuzeigen",
+    auxmBalance: "Guthaben",
+    platformCurrency: "Plattformwährung",
+    exchange: "Tauschen",
+    portfolioDetails: "Portfolio-Details",
+    metalAssets: "Metallvermögen",
+    cryptoAssets: "Krypto-Vermögen",
+    ofPortfolio: "des Portfolios",
+    details: "Details",
+    gold: "Gold",
+    silver: "Silber",
+    platinum: "Platin",
+    palladium: "Palladium",
+  },
+  fr: {
+    totalPortfolioValue: "Valeur Totale du Portefeuille",
+    approx: "environ",
+    connectWalletPrompt: "Connectez votre portefeuille pour voir votre portefeuille",
+    auxmBalance: "Solde",
+    platformCurrency: "Monnaie de la Plateforme",
+    exchange: "Échanger",
+    portfolioDetails: "Détails du Portefeuille",
+    metalAssets: "Actifs Métalliques",
+    cryptoAssets: "Actifs Crypto",
+    ofPortfolio: "du portefeuille",
+    details: "Détails",
+    gold: "Or",
+    silver: "Argent",
+    platinum: "Platine",
+    palladium: "Palladium",
+  },
+  ar: {
+    totalPortfolioValue: "إجمالي قيمة المحفظة",
+    approx: "تقريباً",
+    connectWalletPrompt: "اربط محفظتك لعرض محفظتك",
+    auxmBalance: "الرصيد",
+    platformCurrency: "عملة المنصة",
+    exchange: "تبادل",
+    portfolioDetails: "تفاصيل المحفظة",
+    metalAssets: "أصول المعادن",
+    cryptoAssets: "أصول العملات المشفرة",
+    ofPortfolio: "من المحفظة",
+    details: "التفاصيل",
+    gold: "ذهب",
+    silver: "فضة",
+    platinum: "بلاتين",
+    palladium: "بالاديوم",
+  },
+  ru: {
+    totalPortfolioValue: "Общая Стоимость Портфеля",
+    approx: "примерно",
+    connectWalletPrompt: "Подключите кошелек для просмотра портфеля",
+    auxmBalance: "Баланс",
+    platformCurrency: "Валюта Платформы",
+    exchange: "Обмен",
+    portfolioDetails: "Детали Портфеля",
+    metalAssets: "Металлические Активы",
+    cryptoAssets: "Крипто Активы",
+    ofPortfolio: "портфеля",
+    details: "Детали",
+    gold: "Золото",
+    silver: "Серебро",
+    platinum: "Платина",
+    palladium: "Палладий",
+  },
+};
+
+export function PortfolioOverview({
+  onExchangeClick,
   walletAddress,
   showActionButtons = true,
   onMetalClick,
   onCryptoClick,
 }: PortfolioOverviewProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const [mounted, setMounted] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const { address, isConnected } = useAccount();
@@ -104,7 +213,7 @@ export function PortfolioOverview({
     
     return {
       symbol: metal,
-      name: metal === "AUXG" ? "Gold" : metal === "AUXS" ? "Silver" : metal === "AUXPT" ? "Platinum" : "Palladium",
+      name: metal === "AUXG" ? t("gold") : metal === "AUXS" ? t("silver") : metal === "AUXPT" ? t("platinum") : t("palladium"),
       balance: balanceNum,
       balanceKg: balanceNum / 1000,
       price,
@@ -185,9 +294,7 @@ export function PortfolioOverview({
         <div className="text-center py-8">
           <div className="text-4xl mb-4">💼</div>
           <p className="text-slate-400 text-sm">
-            {lang === "tr" 
-              ? "Portföyünüzü görmek için cüzdanınızı bağlayın" 
-              : "Connect your wallet to view your portfolio"}
+            {t("connectWalletPrompt")}
           </p>
         </div>
       </div>
@@ -199,8 +306,8 @@ export function PortfolioOverview({
       {/* Total Value Header */}
       <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
         <div className="text-sm text-slate-400 mb-1">
-          {lang === "tr" ? "Toplam Portföy Değeri" : "Total Portfolio Value"}{" "}
-          <span className="text-slate-500">({lang === "tr" ? "yaklaşık" : "approx."})</span>
+          {t("totalPortfolioValue")}{" "}
+          <span className="text-slate-500">({t("approx")})</span>
         </div>
         <div className="text-3xl font-bold text-slate-100">
           ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -216,9 +323,9 @@ export function PortfolioOverview({
               ◈
             </div>
             <div>
-              <div className="text-xs text-purple-300">AUXM {lang === "tr" ? "Bakiyeniz" : "Balance"}</div>
+              <div className="text-xs text-purple-300">AUXM {t("auxmBalance")}</div>
               <div className="font-bold text-white text-lg">5,000.00 AUXM</div>
-              <div className="text-xs text-slate-500">{lang === "tr" ? "Platform Para Birimi" : "Platform Currency"}</div>
+              <div className="text-xs text-slate-500">{t("platformCurrency")}</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -233,7 +340,7 @@ export function PortfolioOverview({
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
               </svg>
-              {lang === "tr" ? "Dönüştür" : "Exchange"}
+              {t("exchange")}
             </button>
           </div>
         </div>
@@ -319,29 +426,29 @@ export function PortfolioOverview({
       {showDetails && (
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
           <h3 className="text-lg font-semibold text-slate-200 mb-4">
-            {lang === "tr" ? "Portföy Detayları" : "Portfolio Details"}
+            {t("portfolioDetails")}
           </h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="p-4 bg-slate-800/50 rounded-lg">
               <div className="text-sm text-slate-400 mb-1">
-                {lang === "tr" ? "Metal Varlıklar" : "Metal Assets"}
+                {t("metalAssets")}
               </div>
               <div className="text-xl font-bold text-[#BFA181]">
                 ${metalTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
               <div className="text-xs text-slate-500 mt-1">
-                {totalValue > 0 ? ((metalTotal / totalValue) * 100).toFixed(1) : '0'}% {lang === "tr" ? "portföy" : "of portfolio"}
+                {totalValue > 0 ? ((metalTotal / totalValue) * 100).toFixed(1) : '0'}% {t("ofPortfolio")}
               </div>
             </div>
             <div className="p-4 bg-slate-800/50 rounded-lg">
               <div className="text-sm text-slate-400 mb-1">
-                {lang === "tr" ? "Kripto Varlıklar" : "Crypto Assets"}
+                {t("cryptoAssets")}
               </div>
               <div className="text-xl font-bold text-blue-400">
                 ${cryptoTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </div>
               <div className="text-xs text-slate-500 mt-1">
-                {totalValue > 0 ? ((cryptoTotal / totalValue) * 100).toFixed(1) : '0'}% {lang === "tr" ? "portföy" : "of portfolio"}
+                {totalValue > 0 ? ((cryptoTotal / totalValue) * 100).toFixed(1) : '0'}% {t("ofPortfolio")}
               </div>
             </div>
           </div>
@@ -358,7 +465,7 @@ export function PortfolioOverview({
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
-            {lang === "tr" ? "Dönüştür" : "Exchange"}
+            {t("exchange")}
           </button>
           <button
             onClick={() => setShowDetails(!showDetails)}
@@ -367,7 +474,7 @@ export function PortfolioOverview({
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
-            {lang === "tr" ? "Detaylar" : "Details"}
+            {t("details")}
           </button>
         </div>
       )}

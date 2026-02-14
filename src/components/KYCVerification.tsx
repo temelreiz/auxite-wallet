@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface KYCData {
   walletAddress: string;
@@ -13,17 +14,31 @@ interface KYCData {
 
 interface Props {
   walletAddress: string;
-  lang: "tr" | "en";
   onClose?: () => void;
 }
 
-const t = {
+// ============================================
+// 6-LANGUAGE TRANSLATIONS
+// ============================================
+const translations: Record<string, Record<string, string>> = {
   tr: {
-    title: "Kimlik Doğrulama (KYC)", subtitle: "Limitlerini artırmak için kimliğini doğrula",
+    title: "Kimlik Doğrulama (KYC)",
+    subtitle: "Limitlerini artırmak için kimliğini doğrula",
     currentLevel: "Mevcut Seviye",
-    levels: { none: "Doğrulanmamış", basic: "Temel", verified: "Doğrulanmış", enhanced: "Tam Doğrulama" },
-    status: { not_started: "Başlanmadı", pending: "Bekliyor", under_review: "İnceleniyor", approved: "Onaylandı", rejected: "Reddedildi", expired: "Süresi Doldu" },
-    limits: "Limitler", dailyWithdraw: "Günlük Çekim", monthlyWithdraw: "Aylık Çekim", singleTransaction: "Tek İşlem",
+    level_none: "Doğrulanmamış",
+    level_basic: "Temel",
+    level_verified: "Doğrulanmış",
+    level_enhanced: "Tam Doğrulama",
+    status_not_started: "Başlanmadı",
+    status_pending: "Bekliyor",
+    status_under_review: "İnceleniyor",
+    status_approved: "Onaylandı",
+    status_rejected: "Reddedildi",
+    status_expired: "Süresi Doldu",
+    limits: "Limitler",
+    dailyWithdraw: "Günlük Çekim",
+    monthlyWithdraw: "Aylık Çekim",
+    singleTransaction: "Tek İşlem",
     startVerification: "Doğrulamayı Başlat",
     continueVerification: "Doğrulamaya Devam Et",
     verificationInProgress: "Doğrulama devam ediyor...",
@@ -34,13 +49,26 @@ const t = {
     pending: "Başvurunuz inceleniyor. Bu işlem 24-48 saat sürebilir.",
     error: "Bir hata oluştu",
     loading: "Yükleniyor...",
+    tokenError: "Token alınamadı",
   },
   en: {
-    title: "Identity Verification (KYC)", subtitle: "Verify your identity to increase limits",
+    title: "Identity Verification (KYC)",
+    subtitle: "Verify your identity to increase limits",
     currentLevel: "Current Level",
-    levels: { none: "Unverified", basic: "Basic", verified: "Verified", enhanced: "Enhanced" },
-    status: { not_started: "Not Started", pending: "Pending", under_review: "Under Review", approved: "Approved", rejected: "Rejected", expired: "Expired" },
-    limits: "Limits", dailyWithdraw: "Daily Withdraw", monthlyWithdraw: "Monthly Withdraw", singleTransaction: "Single Transaction",
+    level_none: "Unverified",
+    level_basic: "Basic",
+    level_verified: "Verified",
+    level_enhanced: "Enhanced",
+    status_not_started: "Not Started",
+    status_pending: "Pending",
+    status_under_review: "Under Review",
+    status_approved: "Approved",
+    status_rejected: "Rejected",
+    status_expired: "Expired",
+    limits: "Limits",
+    dailyWithdraw: "Daily Withdraw",
+    monthlyWithdraw: "Monthly Withdraw",
+    singleTransaction: "Single Transaction",
     startVerification: "Start Verification",
     continueVerification: "Continue Verification",
     verificationInProgress: "Verification in progress...",
@@ -51,11 +79,133 @@ const t = {
     pending: "Your application is under review. This may take 24-48 hours.",
     error: "An error occurred",
     loading: "Loading...",
+    tokenError: "Could not retrieve token",
+  },
+  de: {
+    title: "Identitaetsverifizierung (KYC)",
+    subtitle: "Verifiziere deine Identitaet, um Limits zu erhoehen",
+    currentLevel: "Aktuelles Level",
+    level_none: "Nicht verifiziert",
+    level_basic: "Basis",
+    level_verified: "Verifiziert",
+    level_enhanced: "Vollstaendig verifiziert",
+    status_not_started: "Nicht gestartet",
+    status_pending: "Ausstehend",
+    status_under_review: "In Pruefung",
+    status_approved: "Genehmigt",
+    status_rejected: "Abgelehnt",
+    status_expired: "Abgelaufen",
+    limits: "Limits",
+    dailyWithdraw: "Taegliche Abhebung",
+    monthlyWithdraw: "Monatliche Abhebung",
+    singleTransaction: "Einzeltransaktion",
+    startVerification: "Verifizierung starten",
+    continueVerification: "Verifizierung fortsetzen",
+    verificationInProgress: "Verifizierung laeuft...",
+    rejected: "Ihr Antrag wurde abgelehnt",
+    rejectionReason: "Grund",
+    tryAgain: "Erneut versuchen",
+    approved: "Ihre Identitaet wurde verifiziert!",
+    pending: "Ihr Antrag wird geprueft. Dies kann 24-48 Stunden dauern.",
+    error: "Ein Fehler ist aufgetreten",
+    loading: "Wird geladen...",
+    tokenError: "Token konnte nicht abgerufen werden",
+  },
+  fr: {
+    title: "Verification d'identite (KYC)",
+    subtitle: "Verifiez votre identite pour augmenter vos limites",
+    currentLevel: "Niveau actuel",
+    level_none: "Non verifie",
+    level_basic: "Basique",
+    level_verified: "Verifie",
+    level_enhanced: "Verification complete",
+    status_not_started: "Non commence",
+    status_pending: "En attente",
+    status_under_review: "En cours d'examen",
+    status_approved: "Approuve",
+    status_rejected: "Rejete",
+    status_expired: "Expire",
+    limits: "Limites",
+    dailyWithdraw: "Retrait quotidien",
+    monthlyWithdraw: "Retrait mensuel",
+    singleTransaction: "Transaction unique",
+    startVerification: "Demarrer la verification",
+    continueVerification: "Continuer la verification",
+    verificationInProgress: "Verification en cours...",
+    rejected: "Votre demande a ete rejetee",
+    rejectionReason: "Raison",
+    tryAgain: "Reessayer",
+    approved: "Votre identite a ete verifiee !",
+    pending: "Votre demande est en cours d'examen. Cela peut prendre 24 a 48 heures.",
+    error: "Une erreur est survenue",
+    loading: "Chargement...",
+    tokenError: "Impossible de recuperer le jeton",
+  },
+  ar: {
+    title: "التحقق من الهوية (KYC)",
+    subtitle: "تحقق من هويتك لزيادة الحدود",
+    currentLevel: "المستوى الحالي",
+    level_none: "غير موثق",
+    level_basic: "أساسي",
+    level_verified: "موثق",
+    level_enhanced: "توثيق كامل",
+    status_not_started: "لم يبدأ",
+    status_pending: "قيد الانتظار",
+    status_under_review: "قيد المراجعة",
+    status_approved: "تمت الموافقة",
+    status_rejected: "مرفوض",
+    status_expired: "منتهي الصلاحية",
+    limits: "الحدود",
+    dailyWithdraw: "السحب اليومي",
+    monthlyWithdraw: "السحب الشهري",
+    singleTransaction: "معاملة واحدة",
+    startVerification: "بدء التحقق",
+    continueVerification: "متابعة التحقق",
+    verificationInProgress: "جارٍ التحقق...",
+    rejected: "تم رفض طلبك",
+    rejectionReason: "السبب",
+    tryAgain: "حاول مرة أخرى",
+    approved: "تم التحقق من هويتك!",
+    pending: "طلبك قيد المراجعة. قد يستغرق ذلك 24-48 ساعة.",
+    error: "حدث خطأ",
+    loading: "جارٍ التحميل...",
+    tokenError: "تعذر الحصول على الرمز",
+  },
+  ru: {
+    title: "Верификация личности (KYC)",
+    subtitle: "Подтвердите личность для увеличения лимитов",
+    currentLevel: "Текущий уровень",
+    level_none: "Не подтверждено",
+    level_basic: "Базовый",
+    level_verified: "Подтверждено",
+    level_enhanced: "Полная верификация",
+    status_not_started: "Не начато",
+    status_pending: "Ожидание",
+    status_under_review: "На рассмотрении",
+    status_approved: "Одобрено",
+    status_rejected: "Отклонено",
+    status_expired: "Истек срок",
+    limits: "Лимиты",
+    dailyWithdraw: "Дневной вывод",
+    monthlyWithdraw: "Месячный вывод",
+    singleTransaction: "Одна транзакция",
+    startVerification: "Начать верификацию",
+    continueVerification: "Продолжить верификацию",
+    verificationInProgress: "Верификация в процессе...",
+    rejected: "Ваша заявка отклонена",
+    rejectionReason: "Причина",
+    tryAgain: "Попробовать снова",
+    approved: "Ваша личность подтверждена!",
+    pending: "Ваша заявка на рассмотрении. Это может занять 24-48 часов.",
+    error: "Произошла ошибка",
+    loading: "Загрузка...",
+    tokenError: "Не удалось получить токен",
   },
 };
 
-export function KYCVerification({ walletAddress, lang, onClose }: Props) {
-  const labels = t[lang];
+export function KYCVerification({ walletAddress, onClose }: Props) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const [loading, setLoading] = useState(true);
   const [kyc, setKyc] = useState<KYCData | null>(null);
   const [sdkLoading, setSdkLoading] = useState(false);
@@ -106,7 +256,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
       console.log("Sumsub token response:", tokenData);
 
       if (!tokenRes.ok) {
-        throw new Error(tokenData.error || "Token alınamadı");
+        throw new Error(tokenData.error || t("tokenError"));
       }
 
       // Check if token is a test token (starts with test_)
@@ -141,7 +291,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
           return refreshData.accessToken;
         })
         .withConf({ theme: "dark",
-          lang: lang === "tr" ? "tr" : "en",
+          lang: ["tr", "en", "de", "fr", "ar", "ru"].includes(lang) ? lang : "en",
         })
         .withOptions({
           addViewportTag: false,
@@ -152,7 +302,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
         })
         .on("idCheck.onError", (error: any) => {
           console.error("SDK error:", error);
-          setErrorMessage(labels.error + ": " + (error.message || JSON.stringify(error)));
+          setErrorMessage(t("error") + ": " + (error.message || JSON.stringify(error)));
         })
         .on("idCheck.applicantStatus", (payload: any) => {
           console.log("Applicant status:", payload);
@@ -176,12 +326,12 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
 
     } catch (err: any) {
       console.error("SDK launch error:", err);
-      setErrorMessage(err.message || labels.error);
+      setErrorMessage(err.message || t("error"));
       setSdkActive(false);
     } finally {
       setSdkLoading(false);
     }
-  }, [walletAddress, lang, labels.error]);
+  }, [walletAddress, lang]);
 
   if (loading) {
     return (
@@ -199,7 +349,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
     <div className="space-y-4">
       {onClose && !sdkActive && (
         <div className="flex items-center justify-between mb-4">
-          <div><h2 className="text-lg font-semibold text-white">{labels.title}</h2><p className="text-sm text-slate-400">{labels.subtitle}</p></div>
+          <div><h2 className="text-lg font-semibold text-white">{t("title")}</h2><p className="text-sm text-slate-400">{t("subtitle")}</p></div>
           <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg">
             <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
@@ -210,18 +360,18 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
       {!sdkActive && (
         <>
           <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
-            <div><div className="text-xs text-slate-500">{labels.currentLevel}</div><div className="text-white font-medium">{labels.levels[kyc?.level || "none"]}</div></div>
+            <div><div className="text-xs text-slate-500">{t("currentLevel")}</div><div className="text-white font-medium">{t(`level_${kyc?.level || "none"}`)}</div></div>
             <span className={`px-3 py-1 rounded-full text-xs ${isApproved ? "bg-[#2F6F62]/20 text-[#2F6F62]" : isRejected ? "bg-red-500/20 text-red-400" : isPending ? "bg-[#BFA181]/20 text-[#BFA181]" : "bg-slate-500/20 text-slate-400"}`}>
-              {labels.status[kyc?.status || "not_started"]}
+              {t(`status_${kyc?.status || "not_started"}`)}
             </span>
           </div>
 
           <div className="p-3 bg-slate-800/50 rounded-xl space-y-2">
-            <div className="text-sm text-slate-400 font-medium">{labels.limits}</div>
+            <div className="text-sm text-slate-400 font-medium">{t("limits")}</div>
             <div className="grid grid-cols-3 gap-2 text-center">
-              <div><div className="text-xs text-slate-500">{labels.dailyWithdraw}</div><div className="text-white font-medium">${kyc?.limits.dailyWithdraw.toLocaleString()}</div></div>
-              <div><div className="text-xs text-slate-500">{labels.monthlyWithdraw}</div><div className="text-white font-medium">${kyc?.limits.monthlyWithdraw.toLocaleString()}</div></div>
-              <div><div className="text-xs text-slate-500">{labels.singleTransaction}</div><div className="text-white font-medium">${kyc?.limits.singleTransaction.toLocaleString()}</div></div>
+              <div><div className="text-xs text-slate-500">{t("dailyWithdraw")}</div><div className="text-white font-medium">${kyc?.limits.dailyWithdraw.toLocaleString()}</div></div>
+              <div><div className="text-xs text-slate-500">{t("monthlyWithdraw")}</div><div className="text-white font-medium">${kyc?.limits.monthlyWithdraw.toLocaleString()}</div></div>
+              <div><div className="text-xs text-slate-500">{t("singleTransaction")}</div><div className="text-white font-medium">${kyc?.limits.singleTransaction.toLocaleString()}</div></div>
             </div>
           </div>
         </>
@@ -230,24 +380,24 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
       {/* Status Messages */}
       {isApproved && !sdkActive && (
         <div className="p-4 bg-[#2F6F62]/20 border border-[#2F6F62]/50 rounded-xl text-[#2F6F62] text-center">
-          ✅ {labels.approved}
+          ✅ {t("approved")}
         </div>
       )}
 
       {isPending && !sdkActive && (
         <div className="p-4 bg-[#BFA181]/20 border border-[#BFA181]/50 rounded-xl text-[#BFA181] text-center">
-          ⏳ {labels.pending}
+          ⏳ {t("pending")}
         </div>
       )}
 
       {isRejected && !sdkActive && (
         <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
-          <div className="text-red-400 font-medium text-center">{labels.rejected}</div>
+          <div className="text-red-400 font-medium text-center">{t("rejected")}</div>
           {kyc?.verification?.rejectionReason && (
-            <div className="text-red-300 text-sm mt-1 text-center">{labels.rejectionReason}: {kyc.verification.rejectionReason}</div>
+            <div className="text-red-300 text-sm mt-1 text-center">{t("rejectionReason")}: {kyc.verification.rejectionReason}</div>
           )}
           <button onClick={launchSumsubSDK} className="mt-3 w-full py-2 bg-red-500 text-white rounded-lg text-sm">
-            {labels.tryAgain}
+            {t("tryAgain")}
           </button>
         </div>
       )}
@@ -270,7 +420,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
           ) : (
             <>
               <span>🔐</span>
-              <span>{kyc?.status === "not_started" ? labels.startVerification : labels.continueVerification}</span>
+              <span>{kyc?.status === "not_started" ? t("startVerification") : t("continueVerification")}</span>
             </>
           )}
         </button>
@@ -280,7 +430,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
       {sdkActive && (
         <div className="relative">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">{labels.title}</h2>
+            <h2 className="text-lg font-semibold text-white">{t("title")}</h2>
             <button
               onClick={() => { 
                 if (sdkInstanceRef.current) {
@@ -297,7 +447,7 @@ export function KYCVerification({ walletAddress, lang, onClose }: Props) {
           {sdkLoading && (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin w-8 h-8 border-2 border-slate-600 border-t-[#BFA181] rounded-full"></div>
-              <span className="ml-3 text-slate-400">{labels.loading}</span>
+              <span className="ml-3 text-slate-400">{t("loading")}</span>
             </div>
           )}
           {errorMessage && (

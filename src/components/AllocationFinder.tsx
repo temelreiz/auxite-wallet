@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { useWallet } from "@/components/WalletContext";
+import { useLanguage } from "@/components/LanguageContext";
 import Image from "next/image";
 
 interface AllocationFinderProps {
@@ -211,8 +212,10 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
-export default function AllocationFinder({ lang = "en" }: AllocationFinderProps) {
-  const t = translations[lang] || translations.en;
+export default function AllocationFinder({ lang: langProp }: AllocationFinderProps) {
+  const { lang: contextLang } = useLanguage();
+  const lang = langProp || contextLang || "en";
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const { address } = useWallet();
 
   // Allocation state
@@ -263,7 +266,7 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
       if (data.verified) {
         setCertResult(data);
       } else {
-        setCertError(data.error || t.certNotFound);
+        setCertError(data.error || t("certNotFound"));
       }
     } catch {
       setCertError("Error");
@@ -309,10 +312,10 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
   const getPdfUrl = (certNum: string) => `/api/certificates/pdf?certNumber=${certNum}&format=html`;
 
   const metalNames: Record<string, string> = {
-    AUXG: t.gold,
-    AUXS: t.silver,
-    AUXPT: t.platinum,
-    AUXPD: t.palladium,
+    AUXG: t("gold"),
+    AUXS: t("silver"),
+    AUXPT: t("platinum"),
+    AUXPD: t("palladium"),
   };
 
   const handleMetalClick = (metal: string) => {
@@ -336,15 +339,15 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t.allocationTitle}</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">{t.allocationSubtitle}</p>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t("allocationTitle")}</h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("allocationSubtitle")}</p>
             </div>
             {selectedMetal && (
               <button
                 onClick={() => setSelectedMetal(null)}
                 className="text-[10px] px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
               >
-                {t.all} ✕
+                {t("all")} ✕
               </button>
             )}
           </div>
@@ -373,9 +376,9 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
                     <span className="text-[10px] text-slate-500 dark:text-slate-400">{metalNames[metal]}</span>
                   </div>
                   <p className={`text-sm font-bold ${metalColors[metal]}`}>
-                    {metalSummary[metal].grams.toFixed(0)} {t.grams}
+                    {metalSummary[metal].grams.toFixed(0)} {t("grams")}
                   </p>
-                  <p className="text-[9px] text-slate-400">{metalSummary[metal].count} {t.records}</p>
+                  <p className="text-[9px] text-slate-400">{metalSummary[metal].count} {t("records")}</p>
                   {isSelected && (
                     <div className={`w-full h-0.5 mt-1 rounded-full ${metalColors[metal].replace('text-', 'bg-')}`} />
                   )}
@@ -387,10 +390,10 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
           {/* Allocation List */}
           <div className="min-h-[140px] max-h-[220px] overflow-y-auto">
             {allocLoading ? (
-              <p className="text-xs text-slate-400 text-center py-6">{t.loading}</p>
+              <p className="text-xs text-slate-400 text-center py-6">{t("loading")}</p>
             ) : filteredAllocations.length === 0 ? (
               <p className="text-xs text-slate-400 text-center py-6">
-                {selectedMetal ? t.noMetalRecords : t.noRecords}
+                {selectedMetal ? t("noMetalRecords") : t("noRecords")}
               </p>
             ) : (
               <div className="space-y-2">
@@ -410,7 +413,7 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
                           <span className={`text-xs font-semibold ${metalColors[a.metal] || "text-slate-800 dark:text-white"}`}>
                             {a.metal}
                           </span>
-                          <p className="text-[10px] text-slate-500">{parseFloat(a.grams).toFixed(2)}{t.grams} · {a.vaultName || a.vault || "-"}</p>
+                          <p className="text-[10px] text-slate-500">{parseFloat(a.grams).toFixed(2)}{t("grams")} · {a.vaultName || a.vault || "-"}</p>
                         </div>
                       </div>
                       <div className="text-right">
@@ -432,7 +435,7 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
-                          {t.viewPdf}
+                          {t("viewPdf")}
                         </a>
                       </div>
                     )}
@@ -452,8 +455,8 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
               </svg>
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t.certTitle}</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">{t.certSubtitle}</p>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t("certTitle")}</h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("certSubtitle")}</p>
             </div>
           </div>
 
@@ -461,7 +464,7 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
           <div className="flex gap-2 mb-4">
             <input
               className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2.5 text-xs font-mono text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#BFA181]/60 uppercase"
-              placeholder={t.certPlaceholder}
+              placeholder={t("certPlaceholder")}
               value={certInput}
               onChange={(e) => setCertInput(e.target.value.toUpperCase())}
               onKeyDown={(e) => e.key === "Enter" && handleCertVerify()}
@@ -471,7 +474,7 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
               disabled={!isValidCert || certLoading}
               className={"rounded-xl px-4 py-2.5 text-xs font-semibold transition whitespace-nowrap " + (isValidCert && !certLoading ? "bg-[#2F6F62] text-white hover:bg-[#2F6F62]" : "cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-400")}
             >
-              {certLoading ? t.verifying : t.verify}
+              {certLoading ? t("verifying") : t("verify")}
             </button>
           </div>
 
@@ -486,7 +489,7 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <p className="text-[11px] text-slate-400">{t.enterCert}</p>
+                <p className="text-[11px] text-slate-400">{t("enterCert")}</p>
               </div>
             )}
 
@@ -496,26 +499,26 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
                 <div className="flex items-center justify-center">
                   <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold ${certResult.blockchain?.anchored ? "bg-[#2F6F62]/20 dark:bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]" : "bg-[#BFA181]/15 dark:bg-[#BFA181]/20 text-[#BFA181] dark:text-[#BFA181]"}`}>
                     <div className={`w-2 h-2 rounded-full ${certResult.blockchain?.anchored ? "bg-[#2F6F62]" : "bg-[#BFA181]"}`} />
-                    {certResult.blockchain?.anchored ? t.anchored : t.pending}
+                    {certResult.blockchain?.anchored ? t("anchored") : t("pending")}
                   </div>
                 </div>
 
                 {/* Certificate Details */}
                 <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 p-3 space-y-2">
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-slate-500">{t.metal}</span>
+                    <span className="text-slate-500">{t("metal")}</span>
                     <span className="font-semibold text-slate-800 dark:text-white">{certResult.certificate.metalName} ({certResult.certificate.metal})</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-slate-500">{t.weight}</span>
+                    <span className="text-slate-500">{t("weight")}</span>
                     <span className="font-semibold text-slate-800 dark:text-white">{certResult.certificate.grams}g</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-slate-500">{t.purity}</span>
+                    <span className="text-slate-500">{t("purity")}</span>
                     <span className="text-slate-800 dark:text-white">{certResult.certificate.purity}</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-slate-500">{t.issuedAt}</span>
+                    <span className="text-slate-500">{t("issuedAt")}</span>
                     <span className="text-slate-800 dark:text-white">{formatDate(certResult.certificate.issuedAt)}</span>
                   </div>
                 </div>
@@ -527,14 +530,14 @@ export default function AllocationFinder({ lang = "en" }: AllocationFinderProps)
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
-                      {t.viewExplorer}
+                      {t("viewExplorer")}
                     </a>
                   )}
                   <a href={getPdfUrl(certResult.certificate.certificateNumber)} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#BFA181]/15 dark:bg-[#BFA181]/20 text-[10px] font-medium text-[#BFA181] dark:text-[#BFA181] hover:bg-[#BFA181]/20 dark:hover:bg-[#BFA181]/30 transition">
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    {t.viewPdf}
+                    {t("viewPdf")}
                   </a>
                 </div>
               </div>
