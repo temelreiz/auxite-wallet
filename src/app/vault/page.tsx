@@ -38,6 +38,7 @@ interface MetalHolding {
   total: number;
   price: number;
   value: number;
+  stakedGrams: number;
 }
 
 // ============================================
@@ -104,6 +105,7 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerification: "Custody Verification",
     custodyVerificationDesc: "Verify via certificate number or QR code",
     noLiquidity: "No liquidity balance yet", total: "Total",
+    structuredYield: "Structured Yield", yieldValue: "Yield Value",
   },
   // ══════════════════════════════════════════════════════════════
   // TURKISH — "Teminatlı" → "Bloke" standardized, auxmPeg fixed
@@ -165,6 +167,7 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerification: "Saklama Doğrulama",
     custodyVerificationDesc: "Sertifika numarası veya QR kod ile doğrulayın",
     noLiquidity: "Henüz likidite bakiyesi yok", total: "Toplam",
+    structuredYield: "Yapılandırılmış Getiri", yieldValue: "Getiri Değeri",
   },
   // ══════════════════════════════════════════════════════════════
   // GERMAN
@@ -226,6 +229,7 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerification: "Verwahrungsverifizierung",
     custodyVerificationDesc: "Verifizieren Sie per Zertifikatsnummer oder QR-Code",
     noLiquidity: "Noch kein Liquiditätssaldo", total: "Gesamt",
+    structuredYield: "Strukturierter Ertrag", yieldValue: "Ertragswert",
   },
   // ══════════════════════════════════════════════════════════════
   // FRENCH
@@ -287,6 +291,7 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerification: "Vérification de conservation",
     custodyVerificationDesc: "Vérifiez par numéro de certificat ou code QR",
     noLiquidity: "Pas encore de solde de liquidité", total: "Total",
+    structuredYield: "Rendement structuré", yieldValue: "Valeur du rendement",
   },
   // ══════════════════════════════════════════════════════════════
   // ARABIC
@@ -348,6 +353,7 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerification: "التحقق من الحفظ",
     custodyVerificationDesc: "التحقق عبر رقم الشهادة أو رمز QR",
     noLiquidity: "لا يوجد رصيد سيولة بعد", total: "الإجمالي",
+    structuredYield: "العائد المهيكل", yieldValue: "قيمة العائد",
   },
   // ══════════════════════════════════════════════════════════════
   // RUSSIAN
@@ -409,6 +415,7 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerification: "Верификация хранения",
     custodyVerificationDesc: "Проверьте по номеру сертификата или QR-коду",
     noLiquidity: "Баланс ликвидности пока отсутствует", total: "Итого",
+    structuredYield: "Структурированный доход", yieldValue: "Стоимость дохода",
   },
 };
 
@@ -524,21 +531,29 @@ export default function VaultPage() {
           total: balance,
           price,
           value,
+          stakedGrams: 0,
         });
 
         totalValue += value;
         allocatedValue += value; // Total metal value = Allocated Assets
       }
 
-      // Encumbered positions (yield programs)
+      // Encumbered positions (yield programs) + per-metal staked grams
       let yieldProgramsValue = 0;
+      const stakedByMetal: Record<string, number> = {};
       if (stakeData.success && stakeData.stakes) {
         for (const stake of stakeData.stakes) {
           const amount = parseFloat(stake.amount) || 0;
           const metal = stake.metal?.toUpperCase() || "AUXG";
           const price = priceData.basePrices?.[metal] || 0;
           yieldProgramsValue += amount * price;
+          stakedByMetal[metal] = (stakedByMetal[metal] || 0) + amount;
         }
+      }
+
+      // Attach stakedGrams to each holding
+      for (const h of holdingsList) {
+        h.stakedGrams = stakedByMetal[h.symbol] || 0;
       }
       encumberedValue = yieldProgramsValue;
       setEncumberedBreakdown({
@@ -956,12 +971,9 @@ export default function VaultPage() {
                     {holdings.map((holding) => (
                       <div
                         key={holding.symbol}
-                        className="p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
+                        className="p-3 rounded-lg"
                       >
-                        <Link
-                          href={`/asset/${holding.symbol}`}
-                          className="flex items-center justify-between"
-                        >
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-11 h-11 rounded-full bg-[#BFA181]/10 flex items-center justify-center relative">
                               {metalIcons[holding.symbol] ? (
@@ -994,7 +1006,7 @@ export default function VaultPage() {
                               {formatGrams(holding.allocated)} {t.allocated}
                             </p>
                           </div>
-                        </Link>
+                        </div>
 
                         {/* Holdings Detail Row */}
                         <div className="grid grid-cols-4 gap-2 mt-3 pl-14 pr-2">
@@ -1019,6 +1031,27 @@ export default function VaultPage() {
                             </p>
                           </div>
                         </div>
+
+                        {/* Structured Yield Row */}
+                        <div className="grid grid-cols-2 gap-2 mt-2 pl-14 pr-2">
+                          <div>
+                            <p className="text-[9px] text-[#D4B47A]">{t.structuredYield}</p>
+                            <p className={`text-[11px] font-semibold ${holding.stakedGrams > 0 ? "text-[#D4B47A]" : "text-slate-400 dark:text-slate-500"}`}>
+                              {holding.stakedGrams > 0 ? formatGrams(holding.stakedGrams, holding.symbol) : "--"}
+                            </p>
+                          </div>
+                          <div>
+                            {holding.stakedGrams > 0 && (
+                              <>
+                                <p className="text-[9px] text-[#D4B47A]">{t.yieldValue}</p>
+                                <p className="text-[11px] font-semibold text-[#D4B47A]">
+                                  {formatCurrency(holding.stakedGrams * holding.price)}
+                                </p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
                         {/* Buy / Sell Buttons */}
                         <div className="flex items-center gap-2 mt-3 pl-14">
                             <Link
@@ -1028,10 +1061,7 @@ export default function VaultPage() {
                               {holding.symbol === "AUXG" ? t.buyGold : holding.symbol === "AUXS" ? t.buySilver : holding.symbol === "AUXPT" ? t.buyPlatinum : t.buyPalladium}
                             </Link>
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSellModal({ open: true, metal: holding });
-                              }}
+                              onClick={() => setSellModal({ open: true, metal: holding })}
                               className="flex-1 py-2 text-center text-xs font-semibold border border-[#BFA181] text-[#BFA181] rounded-lg hover:bg-[#BFA181]/10 transition-colors"
                             >
                               {holding.symbol === "AUXG" ? t.sellGold : holding.symbol === "AUXS" ? t.sellSilver : holding.symbol === "AUXPT" ? t.sellPlatinum : t.sellPalladium}
