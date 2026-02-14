@@ -6,6 +6,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
+import { sendEmail } from '@/lib/email';
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'contact@auxite.io';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -278,6 +281,74 @@ export async function POST(request: NextRequest) {
       date: new Date().toISOString(),
     };
     await redis.lpush('treasury:log', JSON.stringify(logEntry));
+
+    // ── Admin Notification Email ──
+    const methodLabels: Record<string, string> = {
+      cash: 'Cash Settlement (AUXM)',
+      pickup: 'Vault Pickup',
+      courier: 'Insured Courier',
+      vault_transfer: 'Vault Transfer',
+    };
+
+    try {
+      await sendEmail({
+        to: ADMIN_EMAIL,
+        subject: `🔔 New Redemption Request — ${amt}g ${upperMetal} [${redemptionId}]`,
+        html: `
+          <div style="font-family:'Inter',Arial,sans-serif;max-width:600px;margin:0 auto;padding:40px 32px;background:#fafaf8;border:1px solid #e5e2dc">
+            <div style="border-bottom:2px solid #2F6F62;padding-bottom:16px;margin-bottom:24px">
+              <h2 style="margin:0;font-size:18px;color:#1a1a1a;font-weight:600">New Physical Redemption Request</h2>
+              <p style="margin:4px 0 0;font-size:12px;color:#888;letter-spacing:0.05em">${new Date().toISOString()}</p>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333">
+              <tr style="border-bottom:1px solid #e5e2dc">
+                <td style="padding:10px 0;font-weight:600;color:#666;width:160px">Redemption ID</td>
+                <td style="padding:10px 0;font-family:monospace;color:#2F6F62;font-weight:600">${redemptionId}</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e5e2dc">
+                <td style="padding:10px 0;font-weight:600;color:#666">Wallet</td>
+                <td style="padding:10px 0;font-family:monospace;font-size:12px">${address}</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e5e2dc">
+                <td style="padding:10px 0;font-weight:600;color:#666">Metal</td>
+                <td style="padding:10px 0;font-weight:600">${upperMetal}</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e5e2dc">
+                <td style="padding:10px 0;font-weight:600;color:#666">Gross Amount</td>
+                <td style="padding:10px 0">${amt.toLocaleString()}g</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e5e2dc">
+                <td style="padding:10px 0;font-weight:600;color:#666">Fee (${(feeRate * 100).toFixed(2)}%)</td>
+                <td style="padding:10px 0">${fee.toFixed(2)}g</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e5e2dc">
+                <td style="padding:10px 0;font-weight:600;color:#666">Net Delivery</td>
+                <td style="padding:10px 0;font-weight:700;color:#2F6F62">${netAmount.toFixed(2)}g</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e5e2dc">
+                <td style="padding:10px 0;font-weight:600;color:#666">Method</td>
+                <td style="padding:10px 0">${methodLabels[method] || method}</td>
+              </tr>
+              <tr style="border-bottom:1px solid #e5e2dc">
+                <td style="padding:10px 0;font-weight:600;color:#666">Vault</td>
+                <td style="padding:10px 0">${vault || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 0;font-weight:600;color:#666">Status</td>
+                <td style="padding:10px 0"><span style="background:${method === 'cash' ? '#2F6F62' : '#f59e0b'};color:#fff;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:600">${redemption.status.replace('_', ' ').toUpperCase()}</span></td>
+              </tr>
+            </table>
+            ${method !== 'cash' ? '<div style="margin-top:24px;padding:14px 16px;background:#fff8e1;border:1px solid #f59e0b33;border-radius:6px;font-size:13px;color:#92400e">⚠️ This request requires manual approval. Review in Admin Panel → Redemption tab.</div>' : ''}
+            <div style="margin-top:32px;padding-top:16px;border-top:1px solid #e5e2dc;font-size:11px;color:#999">
+              Auxite Physical Redemption System · Aurum Ledger Ltd · Hong Kong
+            </div>
+          </div>
+        `,
+      });
+    } catch (emailErr) {
+      console.error('Admin notification email failed:', emailErr);
+      // Non-blocking: don't fail the redemption if email fails
+    }
 
     return NextResponse.json({
       success: true,
