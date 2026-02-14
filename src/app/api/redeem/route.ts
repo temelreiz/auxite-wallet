@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { sendEmail } from '@/lib/email';
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'contact@auxite.io';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'physicalredemption@auxite.io';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
