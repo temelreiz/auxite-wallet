@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
-import { useAccount } from "wagmi";
 
 // ============================================
 // CAPITAL LEDGER - Institutional audit-friendly ledger view
@@ -264,12 +263,20 @@ function getEventLabelKey(type: string): string {
 export default function LedgerPage() {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
-  const { address } = useAccount();
 
+  const [address, setAddress] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [ledgerData, setLedgerData] = useState<LedgerEntry[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Load wallet address from localStorage (same as vault page)
+  useEffect(() => {
+    const savedAddress = localStorage.getItem("auxite_wallet_address");
+    if (savedAddress) {
+      setAddress(savedAddress);
+    }
+  }, []);
 
   // Load transactions from /api/transactions (Redis-based, address param)
   const loadTransactions = useCallback(async () => {
