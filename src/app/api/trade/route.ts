@@ -1,5 +1,6 @@
 // src/app/api/trade/route.ts
 import { sendCertificateEmail, sendTradeExecutionEmail } from "@/lib/email";
+import { getUserLanguage } from "@/lib/user-language";
 import { formatAmount } from "@/lib/format";
 export const maxDuration = 60;
 // V6 BLOCKCHAIN ENTEGRASYONLU - Gerçek token mint/burn işlemleri
@@ -91,6 +92,21 @@ const VALID_TOKENS = [...METALS, "auxm", ...CRYPTOS];
 
 // Tokens that require on-chain transfer FROM user (non-custodial)
 const ON_CHAIN_FROM_TOKENS = ["eth"]; // User sends ETH to hot wallet
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GET USER EMAIL FROM REDIS
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function getUserEmail(address: string): Promise<{ email?: string; name?: string }> {
+  const normalizedAddress = address.toLowerCase();
+  const userId = await redis.get(`user:address:${normalizedAddress}`);
+  if (userId) {
+    const userData = await redis.hgetall(`user:${userId}`);
+    return { email: userData?.email as string, name: userData?.name as string || undefined };
+  }
+  const directUserData = await redis.hgetall(`user:${normalizedAddress}`);
+  return { email: directUserData?.email as string, name: directUserData?.name as string || undefined };
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CUSTODIAL WALLET CHECK
@@ -1602,14 +1618,27 @@ export async function POST(request: NextRequest) {
     // ═══════════════════════════════════════════════════════════════════════
     // 12. TRADE EXECUTION EMAIL — Institutional confirmation
     // ═══════════════════════════════════════════════════════════════════════
-    if (email) {
+    let tradeEmail = email;
+    let tradeClientName = holderName;
+    if (!tradeEmail) {
+      try {
+        const userInfo = await getUserEmail(normalizedAddress);
+        tradeEmail = userInfo.email;
+        if (!tradeClientName) tradeClientName = userInfo.name;
+      } catch (e) {
+        console.warn('Could not retrieve user email for trade confirmation:', e);
+      }
+    }
+
+    if (tradeEmail) {
       const metalNameMap: Record<string, string> = {
         auxg: 'Gold (LBMA Good Delivery)', auxs: 'Silver', auxpt: 'Platinum', auxpd: 'Palladium',
       };
       const metalToken = type === 'buy' ? toTokenLower : fromToken.toLowerCase();
       const metalSymbol = type === 'buy' ? toToken.toUpperCase() : fromToken.toUpperCase();
-      sendTradeExecutionEmail(email, {
-        clientName: holderName,
+      const tradeLang = await getUserLanguage(normalizedAddress);
+      sendTradeExecutionEmail(tradeEmail, {
+        clientName: tradeClientName,
         transactionType: type === 'buy' ? 'Buy' : 'Sell',
         metal: metalSymbol,
         metalName: metalNameMap[metalToken] || metalSymbol,
@@ -1618,7 +1647,10 @@ export async function POST(request: NextRequest) {
         grossConsideration: `USD ${(fromAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
         executionTime: new Date().toISOString().replace('T', ', ').replace(/\.\d+Z/, ' UTC'),
         referenceId: txId,
+        language: tradeLang,
       }).catch((err: any) => console.error('Trade execution email error:', err));
+    } else {
+      console.warn(`⚠️ No email found for ${normalizedAddress} — trade execution email skipped`);
     }
 
     return NextResponse.json({

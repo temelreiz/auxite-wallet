@@ -11,6 +11,19 @@ const METAL_NAMES: Record<string, string> = {
   AUXPD: "Palladium",
 };
 
+// Helper: Get user email from Redis (same pattern as transfer/withdraw)
+async function getUserEmail(address: string): Promise<{ email?: string; name?: string }> {
+  const normalizedAddress = address.toLowerCase();
+  const userId = await redis.get(`user:address:${normalizedAddress}`);
+  if (userId) {
+    const userData = await redis.hgetall(`user:${userId}`);
+    return { email: userData?.email as string, name: userData?.name as string || undefined };
+  }
+  // Fallback for legacy format
+  const directUserData = await redis.hgetall(`user:${normalizedAddress}`);
+  return { email: directUserData?.email as string, name: directUserData?.name as string || undefined };
+}
+
 const TERM_LABELS: Record<number, string> = {
   91: "3 Months",
   181: "6 Months",
@@ -187,11 +200,23 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Stake saved: ${stakeId} - ${amount} ${metal} for ${lockDays} days (onChain: ${newStake.onChain})`);
 
-    // Send email
-    if (email) {
+    // Send email — auto-retrieve from Redis if not provided in body
+    let userEmail = email;
+    let userName = holderName;
+    if (!userEmail) {
+      try {
+        const userInfo = await getUserEmail(address);
+        userEmail = userInfo.email;
+        if (!userName) userName = userInfo.name;
+      } catch (e) {
+        console.warn('Could not retrieve user email from Redis:', e);
+      }
+    }
+
+    if (userEmail) {
       try {
         const stakeLang = await getUserLanguage(address.toLowerCase());
-        await sendStakingAgreementEmail(email, "", {
+        await sendStakingAgreementEmail(userEmail, "", {
           agreementNo,
           stakeId,
           metal,
@@ -201,13 +226,15 @@ export async function POST(request: NextRequest) {
           apy: apyPercent,
           startDate: formatDate(startDate),
           endDate: formatDate(endDate),
-          holderName: holderName || undefined,
+          holderName: userName || undefined,
           language: stakeLang,
         });
-        console.log(`📧 Staking agreement email sent to ${email}`);
+        console.log(`📧 Staking agreement email sent to ${userEmail}`);
       } catch (emailErr: any) {
         console.error(`❌ Staking email failed:`, emailErr.message);
       }
+    } else {
+      console.warn(`⚠️ No email found for ${address} — staking agreement email skipped`);
     }
 
     return NextResponse.json({
