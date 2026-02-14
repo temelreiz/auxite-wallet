@@ -501,7 +501,7 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
           </div>
         )}
 
-        {activeTab === "positions" && <PositionsTab lang={lang} />}
+        {activeTab === "positions" && <PositionsTab />}
 
         {activeTab === "dca" && (
           showRecurringStake ? (
@@ -551,7 +551,7 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
         </div>
       </div>
 
-      <AllocationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} offer={selectedOffer} lang={lang} />
+      <AllocationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} offer={selectedOffer} />
     </>
   );
 }
