@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAccount } from "wagmi";
 import { useStaking, FormattedStake } from "@/hooks/useStaking";
 import { formatAmount } from "@/lib/format";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface PositionsTabProps {
   address?: string;
-  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
 }
 
 const metalIcons: Record<string, string> = {
@@ -258,16 +258,15 @@ const translations: Record<string, Record<string, string>> = {
 };
 
 // Position Card Component
-function PositionCard({ 
-  stake, 
-  onUnstake, 
-  onClaim, 
+function PositionCard({
+  stake,
+  onUnstake,
+  onClaim,
   onCompound,
   isUnstaking,
   isClaiming,
   isCompounding,
-  lang 
-}: { 
+}: {
   stake: FormattedStake;
   onUnstake: (id: number) => void;
   onClaim: (id: number) => void;
@@ -275,9 +274,9 @@ function PositionCard({
   isUnstaking: boolean;
   isClaiming: boolean;
   isCompounding: boolean;
-  lang: string;
 }) {
-  const t = translations[lang] || translations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const [copied, setCopied] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
@@ -319,31 +318,31 @@ function PositionCard({
                   </span>
                   {stake.isMatured ? (
                     <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#2F6F62]/20 text-[#2F6F62] dark:text-[#2F6F62]">
-                      {t.matured}
+                      {t("matured")}
                     </span>
                   ) : (
                     <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-500 dark:text-blue-400">
-                      {t.active}
+                      {t("active")}
                     </span>
                   )}
                   {stake.compounding && (
                     <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-500 dark:text-purple-400">
-                      {t.compounding}
+                      {t("compounding")}
                     </span>
                   )}
                 </div>
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {stake.amountGrams.toFixed(2)}g · {stake.durationMonths} {t.months}
+                  {stake.amountGrams.toFixed(2)}g · {stake.durationMonths} {t("months")}
                 </div>
               </div>
             </div>
 
             <div className="text-right">
               <div className="text-xl font-bold text-[#2F6F62] dark:text-[#2F6F62]">
-                {stake.apyPercent.toFixed(2)}% {t.apy}
+                {stake.apyPercent.toFixed(2)}% {t("apy")}
               </div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
-                +{formatAmount(stake.expectedRewardGrams, stake.metalSymbol)}g {t.earned.toLowerCase()}
+                +{formatAmount(stake.expectedRewardGrams, stake.metalSymbol)}g {t("earned").toLowerCase()}
               </div>
             </div>
           </div>
@@ -353,7 +352,7 @@ function PositionCard({
         <div className="px-5 py-3 bg-slate-100/50 dark:bg-slate-800/30 border-y border-slate-200/50 dark:border-slate-700/50">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 dark:text-slate-400">{t.stakeCode}:</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{t("stakeCode")}:</span>
               <code className="px-2 py-1 rounded bg-slate-200/50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 font-mono text-xs">
                 {stake.shortCode}
               </code>
@@ -363,7 +362,7 @@ function PositionCard({
                 onClick={handleCopy}
                 className="px-2 py-1 rounded text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
-                {copied ? t.copied : t.copyCode}
+                {copied ? t("copied") : t("copyCode")}
               </button>
               <a
                 href={`https://etherscan.io/address/${process.env.NEXT_PUBLIC_STAKING_CONTRACT}`}
@@ -371,7 +370,7 @@ function PositionCard({
                 rel="noopener noreferrer"
                 className="px-2 py-1 rounded text-xs text-blue-500 dark:text-blue-400 hover:bg-blue-500/10 transition-colors"
               >
-                {t.viewOnChain}
+                {t("viewOnChain")}
               </a>
             </div>
           </div>
@@ -381,7 +380,7 @@ function PositionCard({
         {stake.active && (
           <div className="px-5 py-3">
             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-2">
-              <span>{t.progress}</span>
+              <span>{t("progress")}</span>
               <span>{stake.isMatured ? "100%" : `${stake.progress.toFixed(1)}%`}</span>
             </div>
             <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
@@ -392,7 +391,7 @@ function PositionCard({
             </div>
             {!stake.isMatured && stake.timeRemaining && (
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center">
-                {stake.timeRemaining} {t.daysLeft}
+                {stake.timeRemaining} {t("daysLeft")}
               </div>
             )}
           </div>
@@ -401,15 +400,15 @@ function PositionCard({
         {/* Stats */}
         <div className="px-5 py-3 grid grid-cols-3 gap-4 border-t border-slate-200/50 dark:border-slate-700/50">
           <div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">{t.principal}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">{t("principal")}</div>
             <div className="font-semibold text-slate-800 dark:text-white">{formatAmount(stake.amountGrams, stake.metalSymbol)}g</div>
           </div>
           <div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">{t.reward}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">{t("reward")}</div>
             <div className="font-semibold text-[#2F6F62] dark:text-[#2F6F62]">+{formatAmount(stake.expectedRewardGrams, stake.metalSymbol)}g</div>
           </div>
           <div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">{t.claimable}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">{t("claimable")}</div>
             <div className="font-semibold text-purple-600 dark:text-purple-400">{formatAmount(stake.claimableRewardGrams, stake.metalSymbol)}g</div>
           </div>
         </div>
@@ -430,14 +429,14 @@ function PositionCard({
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      {t.unstaking}
+                      {t("unstaking")}
                     </>
                   ) : (
                     <>
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      {t.withdraw}
+                      {t("withdraw")}
                     </>
                   )}
                 </button>
@@ -459,7 +458,7 @@ function PositionCard({
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                           </svg>
-                          {t.compound}
+                          {t("compound")}
                         </>
                       )}
                     </button>
@@ -475,14 +474,14 @@ function PositionCard({
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                           </svg>
-                          {t.claiming}
+                          {t("claiming")}
                         </>
                       ) : (
                         <>
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          {t.claim}
+                          {t("claim")}
                         </>
                       )}
                     </button>
@@ -495,7 +494,7 @@ function PositionCard({
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    {t.earlyWithdraw}
+                    {t("earlyWithdraw")}
                   </button>
                 </>
               )}
@@ -515,14 +514,14 @@ function PositionCard({
                 </svg>
               </div>
               <h3 className="text-lg font-bold text-center text-slate-800 dark:text-white mb-2">
-                {t.earlyWithdraw}
+                {t("earlyWithdraw")}
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-4">
-                {t.withdrawWarning}
+                {t("withdrawWarning")}
               </p>
               <div className="p-3 rounded-lg bg-[#BFA181]/10 border border-[#BFA181]/20 text-center">
                 <span className="text-sm text-[#BFA181] dark:text-[#BFA181] font-medium">
-                  {t.penalty}: 5% ({formatAmount(stake.amountGrams * 0.05, stake.metalSymbol)}g)
+                  {t("penalty")}: 5% ({formatAmount(stake.amountGrams * 0.05, stake.metalSymbol)}g)
                 </span>
               </div>
             </div>
@@ -531,13 +530,13 @@ function PositionCard({
                 onClick={() => setShowWithdrawModal(false)}
                 className="flex-1 py-2.5 px-4 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium transition-colors"
               >
-                {t.cancel}
+                {t("cancel")}
               </button>
               <button
                 onClick={confirmWithdraw}
                 className="flex-1 py-2.5 px-4 rounded-lg bg-[#2F6F62] hover:bg-[#2F6F62] text-white font-medium transition-colors"
               >
-                {t.confirmWithdraw}
+                {t("confirmWithdraw")}
               </button>
             </div>
           </div>
@@ -547,23 +546,103 @@ function PositionCard({
   );
 }
 
-export function PositionsTab({ address: propAddress, lang = "en" }: PositionsTabProps) {
+export function PositionsTab({ address: propAddress }: PositionsTabProps) {
   const { address: walletAddress } = useAccount();
   const address = propAddress || walletAddress;
-  const t = translations[lang] || translations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
-  // Use staking hook
+  // Use on-chain staking hook
   const {
     activeStakes,
     loading,
     unstake,
     claimRewards,
     compoundRewards,
-    refresh,
+    refresh: refreshOnChain,
     isUnstaking,
     isClaiming,
     isCompounding,
   } = useStaking();
+
+  // Custody/API-based positions
+  const [apiPositions, setApiPositions] = useState<FormattedStake[]>([]);
+  const [apiLoading, setApiLoading] = useState(false);
+
+  const fetchApiPositions = useCallback(async () => {
+    if (!address) return;
+    setApiLoading(true);
+    try {
+      const res = await fetch(`/api/stakes?address=${address}`);
+      const data = await res.json();
+      if (data.success && data.stakes) {
+        const now = Date.now();
+        const formatted: FormattedStake[] = data.stakes
+          .filter((s: any) => s.status === 'active')
+          .map((s: any) => {
+            const startDate = new Date(s.startDate);
+            const endDate = new Date(s.endDate);
+            const durationMs = endDate.getTime() - startDate.getTime();
+            const elapsedMs = now - startDate.getTime();
+            const progress = Math.min(100, Math.max(0, (elapsedMs / durationMs) * 100));
+            const isMatured = now >= endDate.getTime();
+            const amountGrams = parseFloat(s.amount) || 0;
+            const apyPercent = parseFloat(s.apy) || 0;
+            const durationMonths = s.durationMonths || Math.round((s.duration || 90) / 30);
+            const expectedRewardGrams = (amountGrams * apyPercent / 100) * (durationMonths / 12);
+
+            let timeRemaining = '';
+            if (!isMatured) {
+              const remainingMs = endDate.getTime() - now;
+              const days = Math.floor(remainingMs / (1000 * 60 * 60 * 24));
+              const hours = Math.floor((remainingMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              timeRemaining = days > 0 ? `${days}d ${hours}h` : `${hours}h`;
+            }
+
+            return {
+              id: s.id ? parseInt(s.id.replace(/\D/g, '').slice(-6)) || Math.random() * 100000 : Math.random() * 100000,
+              stakeCode: s.stakeCode || s.id || '',
+              shortCode: s.agreementNo || s.id || '',
+              staker: address,
+              metal: s.metal === 'AUXG' ? 'Gold' : s.metal === 'AUXS' ? 'Silver' : s.metal === 'AUXPT' ? 'Platinum' : 'Palladium',
+              metalSymbol: (s.metal || 'AUXG').toUpperCase(),
+              amountGrams,
+              startDate,
+              endDate,
+              durationMonths,
+              apyPercent,
+              expectedRewardGrams,
+              claimedRewardGrams: 0,
+              claimableRewardGrams: 0,
+              active: true,
+              compounding: false,
+              allocationId: 0,
+              progress,
+              timeRemaining,
+              isMatured,
+            } as FormattedStake;
+          });
+        setApiPositions(formatted);
+      }
+    } catch (e) {
+      // Silently fail
+    } finally {
+      setApiLoading(false);
+    }
+  }, [address]);
+
+  useEffect(() => {
+    fetchApiPositions();
+  }, [fetchApiPositions]);
+
+  // Combine on-chain and API positions
+  const allPositions = [...activeStakes, ...apiPositions];
+  const isLoading = loading || apiLoading;
+
+  const refresh = useCallback(() => {
+    refreshOnChain();
+    fetchApiPositions();
+  }, [refreshOnChain, fetchApiPositions]);
 
   // Handler functions
   const handleUnstake = async (stakeId: number) => {
@@ -590,18 +669,18 @@ export function PositionsTab({ address: propAddress, lang = "en" }: PositionsTab
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="flex items-center gap-3">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2F6F62]"></div>
-          <span className="text-slate-500 dark:text-slate-400">{t.loading}</span>
+          <span className="text-slate-500 dark:text-slate-400">{t("loading")}</span>
         </div>
       </div>
     );
   }
 
-  if (activeStakes.length === 0) {
+  if (allPositions.length === 0) {
     return (
       <div className="text-center py-16">
         <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center">
@@ -610,10 +689,10 @@ export function PositionsTab({ address: propAddress, lang = "en" }: PositionsTab
           </svg>
         </div>
         <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">
-          {t.noPositions}
+          {t("noPositions")}
         </h3>
         <p className="text-slate-500 dark:text-slate-400">
-          {t.startEarning}
+          {t("startEarning")}
         </p>
       </div>
     );
@@ -624,7 +703,7 @@ export function PositionsTab({ address: propAddress, lang = "en" }: PositionsTab
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-          {t.yourPositions} ({activeStakes.length})
+          {t("yourPositions")} ({allPositions.length})
         </h3>
         <button
           onClick={refresh}
@@ -633,13 +712,13 @@ export function PositionsTab({ address: propAddress, lang = "en" }: PositionsTab
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          {t.refresh}
+          {t("refresh")}
         </button>
       </div>
 
       {/* Positions List */}
       <div className="space-y-4">
-        {activeStakes.map((stake) => (
+        {allPositions.map((stake) => (
           <PositionCard
             key={stake.id}
             stake={stake}
@@ -649,7 +728,6 @@ export function PositionsTab({ address: propAddress, lang = "en" }: PositionsTab
             isUnstaking={isUnstaking}
             isClaiming={isClaiming}
             isCompounding={isCompounding}
-            lang={lang}
           />
         ))}
       </div>

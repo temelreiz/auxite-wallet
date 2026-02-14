@@ -57,6 +57,27 @@ export default function ProfilePage() {
     totalReferrals: 12,
     totalEarnings: 450.25,
   });
+
+  // KYC Identity data (from Sumsub verification)
+  const [identityData, setIdentityData] = useState({
+    legalName: "",
+    firstName: "",
+    lastName: "",
+    kycVerified: false,
+    kycVerifiedAt: "",
+    kycLevel: "none" as string,
+    kycStatus: "not_started" as string,
+    nationality: "",
+    dateOfBirth: "",
+    verificationSource: null as string | null,
+  });
+
+  // Phone Tiering data
+  const [phoneTiering, setPhoneTiering] = useState({
+    tier: 0 as number,
+    phoneVerified: false,
+    communicationPreference: "email" as string,
+  });
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -76,6 +97,27 @@ export default function ProfilePage() {
               country: data.profile.country || "",
               timezone: data.profile.timezone || "Europe/Istanbul",
             }));
+            // KYC Identity data
+            const p = data.profile;
+            const legalName = [p.firstName, p.lastName].filter(Boolean).join(' ').trim() || p.name || '';
+            setIdentityData({
+              legalName,
+              firstName: p.firstName || '',
+              lastName: p.lastName || '',
+              kycVerified: p.kycVerified === true,
+              kycVerifiedAt: p.kycVerifiedAt || '',
+              kycLevel: p.kycLevel || 'none',
+              kycStatus: p.kycStatus || 'not_started',
+              nationality: p.nationality || '',
+              dateOfBirth: p.dateOfBirth || '',
+              verificationSource: p.verificationSource || null,
+            });
+            // Phone Tiering
+            setPhoneTiering({
+              tier: p.phoneTier ?? 0,
+              phoneVerified: p.phoneVerified === true,
+              communicationPreference: p.communicationPreference || 'email',
+            });
           }
         })
         .catch(err => console.error("Profile fetch error:", err))
@@ -514,9 +556,133 @@ export default function ProfilePage() {
                 <svg className="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </div>
             </div>
+            {/* Client Identity - KYC Verified Data */}
+            {identityData.kycVerified && (
+              <div className="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#2F6F62]/10 via-emerald-500/5 to-transparent border border-[#2F6F62]/20">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                  <h4 className="text-xs sm:text-sm font-semibold text-[#2F6F62]">
+                    {lang === "tr" ? "Doğrulanmış Müşteri Kimliği" : lang === "de" ? "Verifizierte Kundenidentität" : lang === "fr" ? "Identité Client Vérifiée" : lang === "ar" ? "هوية العميل الموثقة" : lang === "ru" ? "Подтверждённая Личность Клиента" : "Verified Client Identity"}
+                  </h4>
+                  <span className="ml-auto px-2 py-0.5 text-[9px] sm:text-[10px] font-medium rounded-full bg-[#2F6F62]/20 text-[#2F6F62]">
+                    {identityData.verificationSource === 'sumsub' ? 'Sumsub' : ''} {identityData.kycLevel?.toUpperCase()}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                  <div>
+                    <p className="text-[10px] text-slate-500 dark:text-zinc-500 mb-0.5">
+                      {lang === "tr" ? "Yasal Ad" : "Legal Name"}
+                    </p>
+                    <p className="font-medium text-slate-800 dark:text-white">{identityData.legalName || "—"}</p>
+                  </div>
+                  {identityData.nationality && (
+                    <div>
+                      <p className="text-[10px] text-slate-500 dark:text-zinc-500 mb-0.5">
+                        {lang === "tr" ? "Uyruk" : "Nationality"}
+                      </p>
+                      <p className="font-medium text-slate-800 dark:text-white">{identityData.nationality}</p>
+                    </div>
+                  )}
+                  {identityData.kycVerifiedAt && (
+                    <div>
+                      <p className="text-[10px] text-slate-500 dark:text-zinc-500 mb-0.5">
+                        {lang === "tr" ? "Doğrulama Tarihi" : "Verified On"}
+                      </p>
+                      <p className="font-medium text-slate-800 dark:text-white">
+                        {new Date(identityData.kycVerifiedAt).toLocaleDateString(lang === "tr" ? "tr-TR" : lang === "de" ? "de-DE" : lang === "fr" ? "fr-FR" : lang === "ar" ? "ar-SA" : lang === "ru" ? "ru-RU" : "en-US", { year: "numeric", month: "long", day: "numeric" })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* KYC Not Verified Warning */}
+            {!identityData.kycVerified && identityData.kycStatus !== 'not_started' && (
+              <div className="p-3 sm:p-4 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/20">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-[#BFA181] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <p className="text-xs text-[#BFA181] font-medium">
+                    {lang === "tr" ? "Kimlik doğrulamanız inceleniyor..." : "Your identity verification is under review..."}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="grid gap-2 sm:gap-3">
               <InfoCard icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>} label={t("email")} value={userData.email} action={() => openEditModal("email")} />
-              <InfoCard icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>} label={t("phone")} value={userData.phone} action={() => openEditModal("phone")} />
+
+              {/* Verified Contact Number - Phone Tiering */}
+              <div className="group p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50 hover:border-stone-300 dark:hover:border-zinc-600 transition-all shadow-sm dark:shadow-none">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-700/50 flex items-center justify-center text-slate-500 dark:text-zinc-400 flex-shrink-0">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500 mb-0.5">
+                        {lang === "tr" ? "Doğrulanmış İletişim Numarası" : lang === "de" ? "Verifizierte Kontaktnummer" : lang === "fr" ? "Numéro de contact vérifié" : lang === "ar" ? "رقم الاتصال الموثق" : lang === "ru" ? "Подтверждённый контактный номер" : "Verified Contact Number"}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-zinc-200 truncate">{userData.phone || "—"}</p>
+                        {phoneTiering.phoneVerified && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-[#2F6F62]/20 text-[#2F6F62]">
+                            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                            Tier {phoneTiering.tier}
+                          </span>
+                        )}
+                      </div>
+                      {!phoneTiering.phoneVerified && userData.phone && (
+                        <p className="text-[9px] text-[#BFA181] mt-0.5">
+                          {lang === "tr" ? "Doğrulama gerekli — Custody ve yüksek değerli işlemler için" : "Verification required — For custody and high-value operations"}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <button onClick={() => openEditModal("phone")} className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-lg bg-stone-100 dark:bg-zinc-700/50 hover:bg-stone-200 dark:hover:bg-zinc-600 text-slate-600 dark:text-zinc-300 transition-colors flex-shrink-0">{t("edit")}</button>
+                </div>
+              </div>
+
+              {/* Communication Preference */}
+              <div className="group p-3 sm:p-4 rounded-lg sm:rounded-xl bg-white dark:bg-zinc-800/50 border border-stone-200 dark:border-zinc-700/50 hover:border-stone-300 dark:hover:border-zinc-600 transition-all shadow-sm dark:shadow-none">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-stone-100 dark:bg-zinc-700/50 flex items-center justify-center text-slate-500 dark:text-zinc-400 flex-shrink-0">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-500 mb-0.5">
+                        {lang === "tr" ? "İletişim Tercihi" : lang === "de" ? "Kommunikationspräferenz" : lang === "fr" ? "Préférence de communication" : lang === "ar" ? "تفضيل التواصل" : lang === "ru" ? "Предпочтение связи" : "Communication Preference"}
+                      </p>
+                      <div className="flex items-center gap-1.5">
+                        {(["email", "phone", "both"] as const).map((pref) => (
+                          <button
+                            key={pref}
+                            onClick={async () => {
+                              try {
+                                await fetch("/api/user/phone", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ address, action: "set_communication_preference", preference: pref }),
+                                });
+                                setPhoneTiering(prev => ({ ...prev, communicationPreference: pref }));
+                              } catch (err) { console.error("Comm pref error:", err); }
+                            }}
+                            className={`px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors ${
+                              phoneTiering.communicationPreference === pref
+                                ? "bg-[#2F6F62] text-white"
+                                : "bg-stone-100 dark:bg-zinc-700/50 text-slate-600 dark:text-zinc-400 hover:bg-stone-200 dark:hover:bg-zinc-600"
+                            }`}
+                          >
+                            {pref === "email" ? (lang === "tr" ? "E-posta" : "Email") : pref === "phone" ? (lang === "tr" ? "Telefon" : "Phone") : (lang === "tr" ? "Her İkisi" : "Both")}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <InfoCard icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} label={t("country")} value={userData.country} action={() => openEditModal("country")} />
               <InfoCard icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} label={t("timezone")} value={userData.timezone} action={() => openEditModal("timezone")} />
             </div>
@@ -610,7 +776,7 @@ export default function ProfilePage() {
             {/* Whitelist Manager */}
             {isConnected && address && (
               <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-stone-200 dark:border-zinc-700">
-                <WhitelistManager walletAddress={address} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
+                <WhitelistManager walletAddress={address} />
               </div>
             )}
           </div>
@@ -954,8 +1120,8 @@ export default function ProfilePage() {
           // Notify TopNav and other components
           window.dispatchEvent(new Event("walletChanged"));
           setShowMobilePairModal(false);
-        }} lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />
-      {isConnected && address && <OpenInMobileModal walletAddress={address} isOpen={showOpenInMobileModal} onClose={() => setShowOpenInMobileModal(false)} action="open_app" lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"} />}
+        }} />
+      {isConnected && address && <OpenInMobileModal walletAddress={address} isOpen={showOpenInMobileModal} onClose={() => setShowOpenInMobileModal(false)} action="open_app" />}
       {/* 2FA Setup Modal */}
       {isConnected && address && (
         <TwoFactorGate
@@ -966,7 +1132,6 @@ export default function ProfilePage() {
             setShow2FASetup(false);
             setTwoFactorEnabled(true);
           }}
-          lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
         />
       )}
     </main>

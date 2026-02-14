@@ -5,6 +5,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadCont
 import { parseUnits, erc20Abi } from "viem";
 import { useStaking, METAL_IDS } from "@/hooks/useStaking";
 import { useWallet } from "@/components/WalletContext";
+import { useLanguage } from "@/components/LanguageContext";
 import { formatAmount } from "@/lib/format";
 
 // 6-language translations — Institutional Language Bible compliant
@@ -45,6 +46,10 @@ const translations: Record<string, Record<string, string>> = {
     custodyNotice: "Müşteri metalleri tamamen tahsis edilmiş ve bağımsız saklama altındadır.",
     counterpartyNotice: "Gelir, kurumsal karşı taraflar aracılığıyla üretilmektedir.",
     riskDisclosure: "Gelir programlarına tahsis edilen sermaye, karşı taraf riskine tabi olabilir.",
+    incomeProgram: "Gelir Programı",
+    fixedTermAllocation: "Sabit Vadeli Tahsis",
+    totalLabel: "Toplam",
+    allocationFailed: "Tahsis başarısız oldu. Lütfen tekrar deneyin.",
   },
   en: {
     lockEarn: "Deploy Capital",
@@ -82,6 +87,10 @@ const translations: Record<string, Record<string, string>> = {
     custodyNotice: "Client metals remain fully allocated and under independent custody.",
     counterpartyNotice: "Income generated through institutional counterparties.",
     riskDisclosure: "Capital deployed into income programs may be subject to counterparty risk.",
+    incomeProgram: "Income Program",
+    fixedTermAllocation: "Fixed-Term Allocation",
+    totalLabel: "Total",
+    allocationFailed: "Allocation failed. Please try again.",
   },
   de: {
     lockEarn: "Kapital Einsetzen",
@@ -119,6 +128,10 @@ const translations: Record<string, Record<string, string>> = {
     custodyNotice: "Kundenmetalle bleiben vollständig allokiert und unter unabhängiger Verwahrung.",
     counterpartyNotice: "Einkommen wird durch institutionelle Gegenparteien generiert.",
     riskDisclosure: "In Einkommensprogramme eingesetztes Kapital kann dem Gegenparteirisiko unterliegen.",
+    incomeProgram: "Einkommensprogramm",
+    fixedTermAllocation: "Festlaufzeit-Allokation",
+    totalLabel: "Gesamt",
+    allocationFailed: "Allokation fehlgeschlagen. Bitte versuchen Sie es erneut.",
   },
   fr: {
     lockEarn: "Déployer le Capital",
@@ -156,6 +169,10 @@ const translations: Record<string, Record<string, string>> = {
     custodyNotice: "Les métaux des clients restent entièrement alloués et sous garde indépendante.",
     counterpartyNotice: "Revenu généré par des contreparties institutionnelles.",
     riskDisclosure: "Le capital déployé dans les programmes de revenu peut être soumis au risque de contrepartie.",
+    incomeProgram: "Programme de Revenu",
+    fixedTermAllocation: "Allocation à Terme Fixe",
+    totalLabel: "Total",
+    allocationFailed: "L'allocation a échoué. Veuillez réessayer.",
   },
   ar: {
     lockEarn: "نشر رأس المال",
@@ -193,6 +210,10 @@ const translations: Record<string, Record<string, string>> = {
     custodyNotice: "تبقى معادن العملاء مخصصة بالكامل وتحت حفظ مستقل.",
     counterpartyNotice: "الدخل المولّد عبر أطراف مقابلة مؤسسية.",
     riskDisclosure: "رأس المال المنشور في برامج الدخل قد يخضع لمخاطر الطرف المقابل.",
+    incomeProgram: "برنامج الدخل",
+    fixedTermAllocation: "تخصيص بأجل ثابت",
+    totalLabel: "الإجمالي",
+    allocationFailed: "فشل التخصيص. يرجى المحاولة مرة أخرى.",
   },
   ru: {
     lockEarn: "Разместить Капитал",
@@ -230,6 +251,10 @@ const translations: Record<string, Record<string, string>> = {
     custodyNotice: "Металлы клиентов остаются полностью аллоцированными и под независимым хранением.",
     counterpartyNotice: "Доход генерируется через институциональных контрагентов.",
     riskDisclosure: "Капитал, размещённый в программах дохода, может быть подвержен контрагентному риску.",
+    incomeProgram: "Программа Дохода",
+    fixedTermAllocation: "Аллокация с Фиксированным Сроком",
+    totalLabel: "Итого",
+    allocationFailed: "Аллокация не удалась. Пожалуйста, попробуйте снова.",
   },
 };
 
@@ -247,17 +272,16 @@ interface AllocationModalProps {
     tvl: number;
     contractAddress: string;
   } | null;
-  lang: string;
 }
 
 // APY Visual Comparison
-function APYVisual({ periods, selectedPeriod, onSelect, lang }: {
+function APYVisual({ periods, selectedPeriod, onSelect }: {
   periods: Array<{ months: number; days: number; apy: number }>;
   selectedPeriod: number;
   onSelect: (months: number) => void;
-  lang: string;
 }) {
-  const t = translations[lang] || translations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const maxAPY = Math.max(...periods.map(p => p.apy));
   
   const getDays = (months: number, days?: number) => days || (months === 12 ? 365 : months * 30);
@@ -291,13 +315,13 @@ function APYVisual({ periods, selectedPeriod, onSelect, lang }: {
             </div>
             
             <div className={`text-xs sm:text-sm font-bold whitespace-nowrap ${isSelected ? "text-[#C6A15B] dark:text-[#C6A15B]" : "text-slate-700 dark:text-slate-300"}`}>
-              {period.months} {t.month}
+              {period.months} {t("month")}
             </div>
             <div className="text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400">
-              {periodDays} {t.days}
+              {periodDays} {t("days")}
             </div>
             <div className="text-[7px] sm:text-[8px] text-slate-400 dark:text-slate-500 mt-0.5">
-              {lang === 'tr' ? 'Sabit Vadeli Tahsis' : 'Fixed-Term Allocation'}
+              {t("fixedTermAllocation")}
             </div>
             
             <div className={`mt-1 text-[11px] sm:text-xs font-semibold ${isSelected ? "text-[#C6A15B] dark:text-[#C6A15B]" : "text-slate-600 dark:text-slate-400"}`}>
@@ -319,14 +343,14 @@ function APYVisual({ periods, selectedPeriod, onSelect, lang }: {
 }
 
 // Earnings Calculator
-function EarningsCalculator({ amount, apy, days, metalSymbol, lang }: {
+function EarningsCalculator({ amount, apy, days, metalSymbol }: {
   amount: number;
   apy: number;
   days: number;
   metalSymbol: string;
-  lang: string;
 }) {
-  const t = translations[lang] || translations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const earnings = (amount * apy * days) / (100 * 365);
   const total = amount + earnings;
   
@@ -339,19 +363,19 @@ function EarningsCalculator({ amount, apy, days, metalSymbol, lang }: {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
         <span className="text-xs sm:text-sm font-medium text-[#C6A15B] dark:text-[#C6A15B]">
-          {t.estimatedEarnings}
+          {t("estimatedEarnings")}
         </span>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <div>
-          <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{t.afterPeriod}</div>
+          <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{t("afterPeriod")}</div>
           <div className="text-base sm:text-lg font-bold text-[#C6A15B] dark:text-[#C6A15B]">
             +{formatAmount(earnings, metalSymbol)}g
           </div>
         </div>
         <div>
-          <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Total</div>
+          <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{t("totalLabel")}</div>
           <div className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
             {formatAmount(total, metalSymbol)}g
           </div>
@@ -362,13 +386,13 @@ function EarningsCalculator({ amount, apy, days, metalSymbol, lang }: {
 }
 
 // Stake Code Display Component
-function StakeCodeDisplay({ stakeCode, shortCode, txHash, lang }: {
+function StakeCodeDisplay({ stakeCode, shortCode, txHash }: {
   stakeCode: string;
   shortCode: string;
   txHash?: string;
-  lang: string;
 }) {
-  const t = translations[lang] || translations.en;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -385,7 +409,7 @@ function StakeCodeDisplay({ stakeCode, shortCode, txHash, lang }: {
     <div className="rounded-lg sm:rounded-xl bg-gradient-to-br from-[#C6A15B]/20 to-cyan-500/20 border border-[#C6A15B]/30 p-3 sm:p-4 space-y-2 sm:space-y-3">
       <div>
         <div className="text-[10px] sm:text-xs text-[#C6A15B] dark:text-[#C6A15B] mb-1 font-medium">
-          {t.stakeCode}
+          {t("stakeCode")}
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
           <code className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-slate-900/50 text-[#C6A15B] font-mono text-xs sm:text-sm truncate">
@@ -400,14 +424,14 @@ function StakeCodeDisplay({ stakeCode, shortCode, txHash, lang }: {
                 <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="hidden sm:inline">{t.copied}</span>
+                <span className="hidden sm:inline">{t("copied")}</span>
               </>
             ) : (
               <>
                 <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                <span className="hidden sm:inline">{t.copyCode}</span>
+                <span className="hidden sm:inline">{t("copyCode")}</span>
               </>
             )}
           </button>
@@ -424,25 +448,30 @@ function StakeCodeDisplay({ stakeCode, shortCode, txHash, lang }: {
           <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
-          {t.viewOnChain}
+          {t("viewOnChain")}
         </a>
       )}
     </div>
   );
 }
 
-function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps) {
-  const t = translations[lang] || translations.en;
-  const { address, isConnected } = useAccount();
-  const { balances } = useWallet();
-  
-  // Staking hook
-  const { 
-    stake, 
-    isStaking, 
-    isStakeSuccess, 
+function AllocationModal({ isOpen, onClose, offer }: AllocationModalProps) {
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
+  const { address: externalAddress, isConnected: isExternalConnected } = useAccount();
+  const { balances, address: walletCtxAddress, isConnected: isWalletConnected } = useWallet();
+
+  // Determine wallet mode: custody (API-based) vs on-chain
+  const isCustodyMode = isWalletConnected && !isExternalConnected;
+  const activeAddress = isCustodyMode ? walletCtxAddress : externalAddress;
+
+  // Staking hook (only used in on-chain mode)
+  const {
+    stake,
+    isStaking: isOnChainStaking,
+    isStakeSuccess: isOnChainStakeSuccess,
     stakeHash,
-    previewReward 
+    previewReward
   } = useStaking();
 
   // Local state
@@ -451,6 +480,15 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
   const [compounding, setCompounding] = useState(false);
   const [resultStakeCode, setResultStakeCode] = useState<string | null>(null);
   const [resultShortCode, setResultShortCode] = useState<string | null>(null);
+
+  // Custody mode state
+  const [isCustodyStaking, setIsCustodyStaking] = useState(false);
+  const [isCustodySuccess, setIsCustodySuccess] = useState(false);
+  const [custodyError, setCustodyError] = useState<string | null>(null);
+
+  // Combined states
+  const isStaking = isCustodyMode ? isCustodyStaking : isOnChainStaking;
+  const isStakeSuccess = isCustodyMode ? isCustodySuccess : isOnChainStakeSuccess;
 
   const stakingContractAddress = process.env.NEXT_PUBLIC_STAKING_CONTRACT as `0x${string}`;
   const tokenAddress = offer?.metalTokenAddress as `0x${string}`;
@@ -463,44 +501,27 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
   };
   const walletMetalBalance = getMetalBalance();
 
-  // Debug logs
-  console.log("AllocationModal Debug:", {
-    tokenAddress,
-    stakingContractAddress,
-    address,
-    isOpen,
-    offerMetal: offer?.metal, fullOffer: offer,
-    walletMetalBalance,
-  });
-
-  // Read token balance (on-chain - keeping for reference)
+  // Read token balance (on-chain - only for external wallets)
   const { data: balanceData } = useReadContract({
     address: tokenAddress,
     abi: erc20Abi,
     functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-    query: { enabled: !!address && !!tokenAddress && isOpen },
+    args: externalAddress ? [externalAddress] : undefined,
+    query: { enabled: !!externalAddress && !!tokenAddress && isOpen && !isCustodyMode },
   });
 
-  // Read current allowance
+  // Read current allowance (only for on-chain mode)
   const { data: allowanceData, refetch: refetchAllowance } = useReadContract({
     address: tokenAddress,
     abi: erc20Abi,
     functionName: 'allowance',
-    args: address && stakingContractAddress ? [address, stakingContractAddress] : undefined,
-    query: { enabled: !!address && !!stakingContractAddress && !!tokenAddress && isOpen },
+    args: externalAddress && stakingContractAddress ? [externalAddress, stakingContractAddress] : undefined,
+    query: { enabled: !!externalAddress && !!stakingContractAddress && !!tokenAddress && isOpen && !isCustodyMode },
   });
 
-  // Debug balance & allowance
-  console.log("Balance/Allowance Debug:", {
-    balanceData: balanceData?.toString(),
-    balanceNum: balanceData ? Number(balanceData) / 1000 : 0,
-    allowanceData: allowanceData?.toString(),
-  });
-
-  // Approve write contract
-  const { 
-    writeContract: writeApprove, 
+  // Approve write contract (only for on-chain mode)
+  const {
+    writeContract: writeApprove,
     data: approveHash,
     isPending: isApprovePending,
     reset: resetApprove
@@ -526,6 +547,9 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
       setCompounding(false);
       setResultStakeCode(null);
       setResultShortCode(null);
+      setIsCustodyStaking(false);
+      setIsCustodySuccess(false);
+      setCustodyError(null);
       resetApprove();
     }
   }, [isOpen]);
@@ -540,14 +564,14 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
   const currentAllowance = allowanceData ? Number(allowanceData) / 1000 : 0;
   const currentPeriod = offer.periods.find(p => p.months === selectedPeriod) || offer.periods[0];
   const periodDays = currentPeriod.days || (selectedPeriod === 12 ? 365 : selectedPeriod * 30);
-  
-  // Check if needs approval
-  const needsApproval = amountNum > 0 && currentAllowance < amountNum;
+
+  // Check if needs approval (only relevant for on-chain mode)
+  const needsApproval = !isCustodyMode && amountNum > 0 && currentAllowance < amountNum;
   const isApproving = isApprovePending || isApproveConfirming;
 
-  // Handle approve
+  // Handle approve (on-chain mode only)
   const handleApprove = () => {
-    if (!address || !tokenAddress || !stakingContractAddress) return;
+    if (!externalAddress || !tokenAddress || !stakingContractAddress) return;
 
     writeApprove({
       address: tokenAddress,
@@ -557,24 +581,55 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
     });
   };
 
-  // Handle stake
+  // Handle stake — custody mode (API) or on-chain
   const handleStake = async () => {
-    if (!address || !offer) return;
+    if (!activeAddress || !offer) return;
 
-    try {
-      const metalSymbol = offer.metal as 'AUXG' | 'AUXS' | 'AUXPT' | 'AUXPD';
-      const durationMonths = selectedPeriod as 3 | 6 | 12;
-
-      await stake(metalSymbol, amountNum, durationMonths, compounding, 0);
-
-      // Generate display stake code
-      const timestamp = Date.now().toString(16).toUpperCase();
-      const shortCode = `ALC-${timestamp.slice(-8)}`;
-      setResultShortCode(shortCode);
-      setResultStakeCode(`0x${timestamp}${Math.random().toString(16).slice(2, 10)}`);
-
-    } catch (err) {
-      console.error("Stake failed:", err);
+    if (isCustodyMode) {
+      // ═══ CUSTODY MODE: API-based staking ═══
+      setIsCustodyStaking(true);
+      setCustodyError(null);
+      try {
+        const durationMonths = selectedPeriod;
+        const currentPeriodData = offer.periods.find(p => p.months === selectedPeriod) || offer.periods[0];
+        const res = await fetch('/api/stakes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address: activeAddress,
+            metal: offer.metal,
+            amount: amountNum.toString(),
+            duration: durationMonths,
+            apy: currentPeriodData.apy.toFixed(2),
+          }),
+        });
+        const data = await res.json();
+        if (data.success && data.stake) {
+          setIsCustodySuccess(true);
+          const shortCode = data.agreementNo || `ALC-${(data.stake.id || '').slice(-8).toUpperCase()}`;
+          setResultShortCode(shortCode);
+          setResultStakeCode(data.stake.id || data.agreementNo);
+        } else {
+          setCustodyError(data.error || t('allocationFailed'));
+        }
+      } catch (err) {
+        setCustodyError(lang === 'tr' ? 'Bağlantı hatası' : 'Connection error');
+      } finally {
+        setIsCustodyStaking(false);
+      }
+    } else {
+      // ═══ ON-CHAIN MODE: Smart contract staking ═══
+      try {
+        const metalSymbol = offer.metal as 'AUXG' | 'AUXS' | 'AUXPT' | 'AUXPD';
+        const durationMonths = selectedPeriod as 3 | 6 | 12;
+        await stake(metalSymbol, amountNum, durationMonths, compounding, 0);
+        const timestamp = Date.now().toString(16).toUpperCase();
+        const shortCode = `ALC-${timestamp.slice(-8)}`;
+        setResultShortCode(shortCode);
+        setResultStakeCode(`0x${timestamp}${Math.random().toString(16).slice(2, 10)}`);
+      } catch (err) {
+        console.error("Stake failed:", err);
+      }
     }
   };
 
@@ -592,10 +647,10 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">
-                {offer.name} {lang === 'tr' ? 'Gelir Programı' : 'Income Program'}
+                {offer.name} {t("incomeProgram")}
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                {t.headerSub}
+                {t("headerSub")}
               </p>
             </div>
           </div>
@@ -617,13 +672,12 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
               <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              {t.lockPeriod}
+              {t("lockPeriod")}
             </label>
             <APYVisual
               periods={offer.periods}
               selectedPeriod={selectedPeriod}
               onSelect={setSelectedPeriod}
-              lang={lang}
             />
           </div>
 
@@ -633,17 +687,17 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
               <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
               </svg>
-              {t.amount}
+              {t("amount")}
             </label>
             <div className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mb-1.5 sm:mb-2 ml-5 sm:ml-6">
-              {t.amountSub} ({offer.metal})
+              {t("amountSub")} ({offer.metal})
             </div>
             <div className="relative">
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder={`${t.minAllocation}: ${offer.minAmount}g`}
+                placeholder={`${t("minAllocation")}: ${offer.minAmount}g`}
                 disabled={isApproving || isStaking}
                 className="w-full px-3 sm:px-4 py-3 sm:py-4 pr-16 sm:pr-20 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#C6A15B] transition-colors disabled:opacity-50 text-base sm:text-lg font-medium"
               />
@@ -662,11 +716,11 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                 <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
-                {t.balance}: {formatAmount(balanceNum, offer.metal)} {offer.metal}
+                {t("balance")}: {formatAmount(balanceNum, offer.metal)} {offer.metal}
               </span>
               {amountNum > 0 && amountNum < offer.minAmount && (
                 <span className="text-[10px] sm:text-xs text-red-400">
-                  {t.minAllocation}: {offer.minAmount}g {offer.metal}
+                  {t("minAllocation")}: {offer.minAmount}g {offer.metal}
                 </span>
               )}
             </div>
@@ -681,8 +735,8 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                 </svg>
               </div>
               <div>
-                <div className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">{t.compounding}</div>
-                <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{t.compoundingDesc}</div>
+                <div className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">{t("compounding")}</div>
+                <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{t("compoundingDesc")}</div>
               </div>
             </div>
             <button
@@ -703,7 +757,6 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
             apy={currentPeriod.apy}
             days={periodDays}
             metalSymbol={offer.metal}
-            lang={lang}
           />
 
           {/* Success Message with Stake Code */}
@@ -718,10 +771,10 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                   </div>
                   <div>
                     <div className="text-xs sm:text-sm font-medium text-[#C6A15B] dark:text-[#C6A15B]">
-                      {t.lockSuccess}
+                      {t("lockSuccess")}
                     </div>
                     <div className="text-[10px] sm:text-xs text-[#C6A15B] dark:text-[#C6A15B]/70">
-                      {t.positionCreated}
+                      {t("positionCreated")}
                     </div>
                   </div>
                 </div>
@@ -731,7 +784,6 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                 stakeCode={resultStakeCode || ""}
                 shortCode={resultShortCode}
                 txHash={stakeHash}
-                lang={lang}
               />
             </div>
           )}
@@ -748,11 +800,25 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                 </div>
                 <div>
                   <div className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-300">
-                    {t.txConfirming}
+                    {t("txConfirming")}
                   </div>
                   <div className="text-[10px] sm:text-xs text-blue-500 dark:text-blue-400/70">
-                    {t.txPending}
+                    {t("txPending")}
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Custody Error */}
+          {custodyError && (
+            <div className="rounded-lg sm:rounded-xl bg-red-500/20 border border-red-500/30 p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div>
+                  <div className="text-xs sm:text-sm font-medium text-red-600 dark:text-red-300">{custodyError}</div>
                 </div>
               </div>
             </div>
@@ -769,10 +835,10 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                 </div>
                 <div>
                   <div className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-300">
-                    {t.approved}
+                    {t("approved")}
                   </div>
                   <div className="text-[10px] sm:text-xs text-blue-500 dark:text-blue-400/70">
-                    {t.canLockNow}
+                    {t("canLockNow")}
                   </div>
                 </div>
               </div>
@@ -788,22 +854,22 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
-                    {periodDays} {t.infoNotice}
+                    {periodDays} {t("infoNotice")}
                   </p>
                 </div>
               </div>
               <div className="rounded-lg sm:rounded-xl bg-stone-50 dark:bg-slate-800/30 border border-stone-200 dark:border-slate-700/50 p-2.5 sm:p-3">
                 <p className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-500 leading-relaxed">
-                  {t.yieldDisclaimer}
+                  {t("yieldDisclaimer")}
                 </p>
                 <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 mt-1 leading-relaxed">
-                  {t.counterpartyNotice}
+                  {t("counterpartyNotice")}
                 </p>
                 <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 mt-1 leading-relaxed italic">
-                  {t.riskDisclosure}
+                  {t("riskDisclosure")}
                 </p>
                 <p className="text-[9px] sm:text-[10px] text-[#C6A15B] dark:text-[#C6A15B] mt-1.5 font-medium">
-                  {t.custodyNotice}
+                  {t("custodyNotice")}
                 </p>
               </div>
             </div>
@@ -812,7 +878,8 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
 
         {/* Footer Actions */}
         <div className="p-4 sm:p-6 border-t border-stone-200 dark:border-slate-800 space-y-2 sm:space-y-3">
-          {needsApproval && !isStakeSuccess ? (
+          {/* On-chain mode: Approve button */}
+          {!isCustodyMode && needsApproval && !isStakeSuccess ? (
             <button
               onClick={handleApprove}
               disabled={!amount || amountNum < offer.minAmount || isApproving || isStaking}
@@ -824,21 +891,21 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  {t.approving}
+                  {t("approving")}
                 </>
               ) : (
                 <>
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
-                  {t.approveToken}
+                  {t("approveToken")}
                 </>
               )}
             </button>
           ) : !isStakeSuccess ? (
             <button
               onClick={handleStake}
-              disabled={!amount || amountNum < offer.minAmount || isApproving || isStaking || needsApproval}
+              disabled={!amount || amountNum < offer.minAmount || isApproving || isStaking || (!isCustodyMode && needsApproval)}
               className="w-full px-3 sm:px-4 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#C6A15B] to-[#BFA181] hover:from-[#BFA181] hover:to-[#C6A15B] disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold text-sm sm:text-base transition-all shadow-lg shadow-[#C6A15B]/20 flex items-center justify-center gap-2"
             >
               {isStaking ? (
@@ -847,14 +914,14 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  {t.locking}
+                  {t("locking")}
                 </>
               ) : (
                 <>
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  {t.lockEarn}
+                  {t("lockEarn")}
                 </>
               )}
             </button>
@@ -863,7 +930,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
           {/* Regulatory Shield */}
           {!isStakeSuccess && (
             <p className="text-[8px] sm:text-[9px] text-center text-slate-400 dark:text-slate-500 px-2">
-              {t.custodyNotice}
+              {t("custodyNotice")}
             </p>
           )}
 
@@ -873,7 +940,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
               disabled={isApproving || isStaking}
               className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-sm sm:text-base transition-colors disabled:opacity-50"
             >
-              {t.cancel}
+              {t("cancel")}
             </button>
           )}
 
@@ -882,7 +949,7 @@ function AllocationModal({ isOpen, onClose, offer, lang }: AllocationModalProps)
               onClick={onClose}
               className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-[#C6A15B] hover:bg-[#C6A15B] text-white font-medium text-sm sm:text-base transition-colors"
             >
-              {t.done}
+              {t("done")}
             </button>
           )}
         </div>

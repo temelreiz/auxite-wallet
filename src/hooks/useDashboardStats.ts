@@ -1,8 +1,8 @@
 // hooks/useDashboardStats.ts
-// Dashboard stats from staking contract
+// Dashboard stats from both on-chain staking and custody API
 
 import { useStaking } from './useStaking';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 interface DashboardStats {
   totalLocked: number;
@@ -19,49 +19,96 @@ const METAL_PRICES: Record<string, number> = {
   AUXPD: 55,   // Palladium ~$35/gram
 };
 
+interface APIStake {
+  id: string;
+  metal: string;
+  amount: string;
+  duration: number;
+  durationMonths?: number;
+  apy: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+}
+
 export function useDashboardStats(address?: string) {
-  const { activeStakes, loading, isConnected } = useStaking();
+  const { activeStakes, loading: onChainLoading, isConnected } = useStaking();
+  const [apiStakes, setApiStakes] = useState<APIStake[]>([]);
+  const [apiLoading, setApiLoading] = useState(false);
+
+  // Fetch custody/API-based stakes
+  useEffect(() => {
+    if (!address) return;
+
+    const fetchAPIStakes = async () => {
+      setApiLoading(true);
+      try {
+        const res = await fetch(`/api/stakes?address=${address}`);
+        const data = await res.json();
+        if (data.success && data.stakes) {
+          setApiStakes(data.stakes.filter((s: APIStake) => s.status === 'active'));
+        }
+      } catch (e) {
+        // Silently fail — on-chain data is still available
+      } finally {
+        setApiLoading(false);
+      }
+    };
+
+    fetchAPIStakes();
+  }, [address]);
 
   const stats = useMemo<DashboardStats>(() => {
-    if (!activeStakes || activeStakes.length === 0) {
-      return {
-        totalLocked: 0,
-        activePositions: 0,
-        annualEarnings: 0,
-        avgAPY: 0,
-      };
-    }
-
+    // On-chain stats
     let totalLockedUSD = 0;
     let totalExpectedRewardUSD = 0;
     let totalAPY = 0;
+    let positionCount = 0;
 
-    activeStakes.forEach((stake) => {
-      const price = METAL_PRICES[stake.metalSymbol] || 85;
-      
-      // Total locked value in USD
-      totalLockedUSD += stake.amountGrams * price;
-      
-      // Expected annual reward in USD
-      totalExpectedRewardUSD += stake.expectedRewardGrams * price;
-      
-      // Sum APY for average calculation
-      totalAPY += stake.apyPercent;
-    });
+    if (activeStakes && activeStakes.length > 0) {
+      activeStakes.forEach((stake) => {
+        const price = METAL_PRICES[stake.metalSymbol] || 85;
+        totalLockedUSD += stake.amountGrams * price;
+        totalExpectedRewardUSD += stake.expectedRewardGrams * price;
+        totalAPY += stake.apyPercent;
+        positionCount++;
+      });
+    }
 
-    const avgAPY = activeStakes.length > 0 ? totalAPY / activeStakes.length : 0;
+    // API/custody stats (avoid double-counting if same position exists on-chain)
+    const now = Date.now();
+    if (apiStakes && apiStakes.length > 0) {
+      apiStakes.forEach((stake) => {
+        const endDate = new Date(stake.endDate).getTime();
+        if (endDate <= now) return; // Skip matured
+
+        const metalUpper = (stake.metal || '').toUpperCase();
+        const price = METAL_PRICES[metalUpper] || 85;
+        const amount = parseFloat(stake.amount) || 0;
+        const apy = parseFloat(stake.apy) || 0;
+        const durationMonths = stake.durationMonths || Math.round((stake.duration || 90) / 30);
+        const expectedReward = (amount * apy / 100) * (durationMonths / 12);
+
+        totalLockedUSD += amount * price;
+        totalExpectedRewardUSD += expectedReward * price;
+        totalAPY += apy;
+        positionCount++;
+      });
+    }
+
+    const avgAPY = positionCount > 0 ? totalAPY / positionCount : 0;
 
     return {
       totalLocked: Math.round(totalLockedUSD),
-      activePositions: activeStakes.length,
+      activePositions: positionCount,
       annualEarnings: Math.round(totalExpectedRewardUSD),
       avgAPY: parseFloat(avgAPY.toFixed(2)),
     };
-  }, [activeStakes]);
+  }, [activeStakes, apiStakes]);
 
   return {
     stats,
-    loading,
+    loading: onChainLoading || apiLoading,
     isConnected,
   };
 }

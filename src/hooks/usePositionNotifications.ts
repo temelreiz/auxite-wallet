@@ -16,14 +16,14 @@ interface Notification {
   daysRemaining?: number;
 }
 
-const METAL_NAMES = {
-  AUXG: { tr: "Altın", en: "Gold" },
-  AUXS: { tr: "Gümüş", en: "Silver" },
-  AUXPT: { tr: "Platin", en: "Platinum" },
-  AUXPD: { tr: "Paladyum", en: "Palladium" },
+const METAL_NAMES: Record<string, Record<string, string>> = {
+  AUXG: { tr: "Altın", en: "Gold", de: "Gold", fr: "Or", ar: "ذهب", ru: "Золото" },
+  AUXS: { tr: "Gümüş", en: "Silver", de: "Silber", fr: "Argent", ar: "فضة", ru: "Серебро" },
+  AUXPT: { tr: "Platin", en: "Platinum", de: "Platin", fr: "Platine", ar: "بلاتين", ru: "Платина" },
+  AUXPD: { tr: "Paladyum", en: "Palladium", de: "Palladium", fr: "Palladium", ar: "بالاديوم", ru: "Палладий" },
 };
 
-export function usePositionNotifications(lang: "tr" | "en" = "en") {
+export function usePositionNotifications(lang: string = "en") {
   const { address } = useAccount();
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
@@ -74,7 +74,7 @@ export function usePositionNotifications(lang: "tr" | "en" = "en") {
         const endTime = Number(pos.endTime);
         const amount = formatUnits(pos.amount, 18);
         const daysRemaining = Math.max(0, Math.ceil((endTime - now) / (24 * 60 * 60)));
-        const metalName = METAL_NAMES[metal][lang];
+        const metalName = METAL_NAMES[metal]?.[lang] || METAL_NAMES[metal]?.en || metal;
 
         // Already unlocked
         if (endTime <= now) {

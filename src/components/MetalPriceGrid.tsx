@@ -454,10 +454,9 @@ export default function MetalPriceGrid() {
 
       {/* Exchange Modal */}
       {showExchange && (
-        <ExchangeModal 
+        <ExchangeModal
           isOpen={showExchange}
           onClose={() => setShowExchange(false)}
-          lang={lang}
         />
       )}
 
@@ -466,7 +465,6 @@ export default function MetalPriceGrid() {
         <BuyMetalModal
           isOpen={showBuyMetal}
           onClose={() => setShowBuyMetal(false)}
-          lang={lang}
         />
       )}
 
@@ -475,7 +473,6 @@ export default function MetalPriceGrid() {
         <AddFundsModal
           isOpen={showAddFunds}
           onClose={() => setShowAddFunds(false)}
-          lang={lang as "tr" | "en" | "de" | "fr" | "ar" | "ru"}
           walletAddress={walletAddress}
           defaultTab={addFundsDefaultTab}
           bankOnly={addFundsDefaultTab === "bank"}
@@ -626,7 +623,6 @@ export default function MetalPriceGrid() {
             setShowOnChainDeposit(false);
           }}
           coin={selectedDepositCoin}
-          lang={lang}
         />
       )}
 
@@ -722,7 +718,6 @@ export default function MetalPriceGrid() {
           isOpen={!!showCryptoConvert}
           onClose={() => setShowCryptoConvert(null)}
           crypto={showCryptoConvert}
-          lang={lang}
           cryptoBalances={{
             ETH: 0,
             BTC: 0,

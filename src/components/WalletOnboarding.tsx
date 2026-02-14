@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { QRLoginModal } from "@/components/auth/QRLoginModal";
+import { useLanguage } from "@/components/LanguageContext";
 
 // ============================================
 // BIP39 WORD LIST (TAM 2048 KELİME)
@@ -89,6 +90,11 @@ const translations = {
     // Google Login
     googleLogin: "Google ile Giriş",
     googleLoginError: "Google girişi başarısız",
+    // Import & Unlock
+    resetConfirm: "Cüzdanınızı sıfırlamak istediğinize emin misiniz? Seed phrase ile tekrar içe aktarmanız gerekecek.",
+    importDescription: "12 veya 24 kelimelik kurtarma ifadenizi girin",
+    importHint: "Kelimeleri boşluk ile ayırarak girin",
+    unlockSubtitle: "Cüzdanınıza erişmek için şifre girin",
   },
   en: {
     welcomeTitle: "Welcome to Your Auxite Vault",
@@ -166,6 +172,11 @@ const translations = {
     // Google Login
     googleLogin: "Continue with Google",
     googleLoginError: "Google sign-in failed",
+    // Import & Unlock
+    resetConfirm: "Are you sure you want to reset? You will need to re-import with your seed phrase.",
+    importDescription: "Enter your 12 or 24 word recovery phrase",
+    importHint: "Enter words separated by spaces",
+    unlockSubtitle: "Enter password to access your wallet",
   },
   de: {
     welcomeTitle: "Willkommen in Ihrem Auxite Tresor",
@@ -243,6 +254,11 @@ const translations = {
     // Google Login
     googleLogin: "Mit Google fortfahren",
     googleLoginError: "Google-Anmeldung fehlgeschlagen",
+    // Import & Unlock
+    resetConfirm: "Sind Sie sicher, dass Sie zurücksetzen möchten? Sie müssen Ihre Wallet mit der Wiederherstellungsphrase erneut importieren.",
+    importDescription: "Geben Sie Ihre 12 oder 24 Wörter Wiederherstellungsphrase ein",
+    importHint: "Geben Sie die Wörter durch Leerzeichen getrennt ein",
+    unlockSubtitle: "Passwort eingeben, um auf Ihre Wallet zuzugreifen",
   },
   fr: {
     welcomeTitle: "Bienvenue dans votre Coffre Auxite",
@@ -320,6 +336,11 @@ const translations = {
     // Google Login
     googleLogin: "Continuer avec Google",
     googleLoginError: "Échec de la connexion Google",
+    // Import & Unlock
+    resetConfirm: "Êtes-vous sûr de vouloir réinitialiser ? Vous devrez réimporter avec votre phrase de récupération.",
+    importDescription: "Entrez votre phrase de récupération de 12 ou 24 mots",
+    importHint: "Entrez les mots séparés par des espaces",
+    unlockSubtitle: "Entrez le mot de passe pour accéder à votre portefeuille",
   },
   ar: {
     welcomeTitle: "مرحباً بك في محفظة Auxite",
@@ -397,6 +418,11 @@ const translations = {
     // Google Login
     googleLogin: "المتابعة مع Google",
     googleLoginError: "فشل تسجيل الدخول بـ Google",
+    // Import & Unlock
+    resetConfirm: "هل أنت متأكد أنك تريد إعادة التعيين؟ ستحتاج إلى إعادة الاستيراد باستخدام عبارة الاسترداد.",
+    importDescription: "أدخل عبارة الاسترداد المكونة من 12 أو 24 كلمة",
+    importHint: "أدخل الكلمات مفصولة بمسافات",
+    unlockSubtitle: "أدخل كلمة المرور للوصول إلى محفظتك",
   },
   ru: {
     welcomeTitle: "Добро пожаловать в Auxite Wallet",
@@ -474,6 +500,11 @@ const translations = {
     // Google Login
     googleLogin: "Продолжить с Google",
     googleLoginError: "Ошибка входа через Google",
+    // Import & Unlock
+    resetConfirm: "Вы уверены, что хотите сбросить? Вам потребуется повторный импорт с помощью фразы восстановления.",
+    importDescription: "Введите вашу фразу восстановления из 12 или 24 слов",
+    importHint: "Введите слова, разделённые пробелами",
+    unlockSubtitle: "Введите пароль для доступа к кошельку",
   },
 };
 
@@ -560,7 +591,6 @@ interface WalletOnboardingProps {
 // MAIN COMPONENT
 // ============================================
 export default function WalletOnboarding({
-  lang = "tr",
   onWalletReady,
 }: WalletOnboardingProps) {
   const [step, setStep] = useState<WalletStep>("checking");
@@ -594,7 +624,8 @@ export default function WalletOnboarding({
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [onboardingError, setOnboardingError] = useState<string | null>(null);
 
-  const t = (key: string) => (translations[lang] as Record<string, string>)[key] || key;
+  const { lang } = useLanguage();
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
 
   // Check if wallet exists
   useEffect(() => {
@@ -724,9 +755,7 @@ export default function WalletOnboarding({
 
   // Forgot password
   const handleForgotPassword = () => {
-    if (confirm(lang === "tr" 
-      ? "Cüzdanınızı sıfırlamak istediğinize emin misiniz? Seed phrase ile tekrar içe aktarmanız gerekecek." 
-      : "Are you sure you want to reset? You will need to re-import with your seed phrase.")) {
+    if (confirm(t("resetConfirm"))) {
       localStorage.removeItem(STORAGE_KEYS.HAS_WALLET);
       localStorage.removeItem(STORAGE_KEYS.PASSWORD_HASH);
       localStorage.removeItem(STORAGE_KEYS.ENCRYPTED_SEED);
@@ -1122,7 +1151,6 @@ export default function WalletOnboarding({
               setShowQRModal(false);
               onWalletReady(walletAddress);
             }}
-            lang={lang}
           />
         </div>
       </div>
@@ -1386,7 +1414,7 @@ export default function WalletOnboarding({
 
           <h1 className="text-2xl font-bold text-white mb-2">{t("importWallet")}</h1>
           <p className="text-slate-400 mb-6">
-            {lang === "tr" ? "12 veya 24 kelimelik kurtarma ifadenizi girin" : "Enter your 12 or 24 word recovery phrase"}
+            {t("importDescription")}
           </p>
 
           {/* Input */}
@@ -1401,9 +1429,7 @@ export default function WalletOnboarding({
 
           {/* Hint */}
           <p className="text-xs text-slate-500 mb-4 text-center">
-            {lang === "tr" 
-              ? "Kelimeleri boşluk ile ayırarak girin" 
-              : "Enter words separated by spaces"}
+            {t("importHint")}
           </p>
 
           {/* Error Banner */}
@@ -1448,7 +1474,7 @@ export default function WalletOnboarding({
 
           <h1 className="text-2xl font-bold text-white mb-2">{t("enterPinTitle")}</h1>
           <p className="text-slate-400 mb-8">
-            {lang === "tr" ? "Cüzdanınıza erişmek için şifre girin" : "Enter password to access your wallet"}
+            {t("unlockSubtitle")}
           </p>
 
           {/* Input */}

@@ -1,24 +1,121 @@
 "use client";
 
 import { calculateAuxmBonus, isLaunchCampaignActive } from "@/lib/auxm-bonus-service";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface DepositConfirmationProps {
   coin: string;
   amount: number;
   amountUsd: number;
-  lang?: "tr" | "en";
+  lang?: "tr" | "en" | "de" | "fr" | "ar" | "ru";
   onConfirm?: () => void;
   onCancel?: () => void;
 }
 
-export function DepositConfirmation({ 
-  coin, 
-  amount, 
-  amountUsd, 
-  lang = "en",
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    depositReceived: "Yatırım Alındı!",
+    depositProcessing: "Yatırımınız işleniyor ve AUXM'e dönüştürülüyor.",
+    deposited: "Yatırılan",
+    usdValue: "USD Değeri",
+    total: "Toplam",
+    bonusUsageTitle: "Bonus Kullanım Koşulu",
+    bonusUsageDesc: "Bonus AUXM sadece metal alımında (Altın, Gümüş, Platin, Paladyum) kullanılabilir. Çekim veya transfer için kullanılamaz.",
+    expiresLabel: "Son kullanma:",
+    walletBalance: "Cüzdan Bakiyeniz:",
+    buyMetals: "Metal Satın Al",
+    goToWallet: "Cüzdana Git",
+    close: "Kapat",
+    useBonusCta: "Bonus AUXM'inizi kullanarak hemen altın veya gümüş satın alabilirsiniz!",
+  },
+  en: {
+    depositReceived: "Deposit Received!",
+    depositProcessing: "Your deposit is being processed and converted to AUXM.",
+    deposited: "Deposited",
+    usdValue: "USD Value",
+    total: "Total",
+    bonusUsageTitle: "Bonus Usage Terms",
+    bonusUsageDesc: "Bonus AUXM can only be used for metal purchases (Gold, Silver, Platinum, Palladium). Cannot be withdrawn or transferred.",
+    expiresLabel: "Expires:",
+    walletBalance: "Your Wallet Balance:",
+    buyMetals: "Buy Metals",
+    goToWallet: "Go to Wallet",
+    close: "Close",
+    useBonusCta: "Use your Bonus AUXM to buy gold or silver right now!",
+  },
+  de: {
+    depositReceived: "Einzahlung erhalten!",
+    depositProcessing: "Ihre Einzahlung wird verarbeitet und in AUXM umgewandelt.",
+    deposited: "Eingezahlt",
+    usdValue: "USD-Wert",
+    total: "Gesamt",
+    bonusUsageTitle: "Bonus-Nutzungsbedingungen",
+    bonusUsageDesc: "Bonus-AUXM kann nur zum Metallkauf (Gold, Silber, Platin, Palladium) verwendet werden. Kann nicht abgehoben oder transferiert werden.",
+    expiresLabel: "Ablauf:",
+    walletBalance: "Ihr Wallet-Guthaben:",
+    buyMetals: "Metalle kaufen",
+    goToWallet: "Zum Wallet",
+    close: "Schließen",
+    useBonusCta: "Nutzen Sie Ihre Bonus-AUXM, um jetzt Gold oder Silber zu kaufen!",
+  },
+  fr: {
+    depositReceived: "Dépôt reçu !",
+    depositProcessing: "Votre dépôt est en cours de traitement et converti en AUXM.",
+    deposited: "Déposé",
+    usdValue: "Valeur USD",
+    total: "Total",
+    bonusUsageTitle: "Conditions d'utilisation du bonus",
+    bonusUsageDesc: "Le bonus AUXM ne peut être utilisé que pour l'achat de métaux (Or, Argent, Platine, Palladium). Ne peut pas être retiré ou transféré.",
+    expiresLabel: "Expire :",
+    walletBalance: "Solde de votre portefeuille :",
+    buyMetals: "Acheter des métaux",
+    goToWallet: "Aller au portefeuille",
+    close: "Fermer",
+    useBonusCta: "Utilisez vos AUXM bonus pour acheter de l'or ou de l'argent maintenant !",
+  },
+  ar: {
+    depositReceived: "تم استلام الإيداع!",
+    depositProcessing: "جاري معالجة إيداعك وتحويله إلى AUXM.",
+    deposited: "المبلغ المودع",
+    usdValue: "القيمة بالدولار",
+    total: "المجموع",
+    bonusUsageTitle: "شروط استخدام المكافأة",
+    bonusUsageDesc: "يمكن استخدام مكافأة AUXM فقط لشراء المعادن (الذهب، الفضة، البلاتين، البالاديوم). لا يمكن سحبها أو تحويلها.",
+    expiresLabel: "تنتهي:",
+    walletBalance: "رصيد محفظتك:",
+    buyMetals: "شراء المعادن",
+    goToWallet: "الذهاب إلى المحفظة",
+    close: "إغلاق",
+    useBonusCta: "استخدم مكافأة AUXM لشراء الذهب أو الفضة الآن!",
+  },
+  ru: {
+    depositReceived: "Депозит получен!",
+    depositProcessing: "Ваш депозит обрабатывается и конвертируется в AUXM.",
+    deposited: "Внесено",
+    usdValue: "Сумма в USD",
+    total: "Итого",
+    bonusUsageTitle: "Условия использования бонуса",
+    bonusUsageDesc: "Бонусные AUXM могут использоваться только для покупки металлов (Золото, Серебро, Платина, Палладий). Нельзя вывести или перевести.",
+    expiresLabel: "Срок действия:",
+    walletBalance: "Баланс вашего кошелька:",
+    buyMetals: "Купить металлы",
+    goToWallet: "Перейти в кошелёк",
+    close: "Закрыть",
+    useBonusCta: "Используйте бонусные AUXM для покупки золота или серебра прямо сейчас!",
+  },
+};
+
+export function DepositConfirmation({
+  coin,
+  amount,
+  amountUsd,
+  lang: langProp,
   onConfirm,
-  onCancel 
+  onCancel
 }: DepositConfirmationProps) {
+  const { lang: contextLang } = useLanguage();
+  const lang = langProp || contextLang || "en";
+  const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const bonus = calculateAuxmBonus(amountUsd);
   const isLaunchActive = isLaunchCampaignActive();
 
@@ -34,13 +131,11 @@ export function DepositConfirmation({
       </div>
 
       <h3 className="text-xl font-bold text-white text-center mb-2">
-        {lang === "tr" ? "Yatırım Alındı!" : "Deposit Received!"}
+        {t("depositReceived")}
       </h3>
       
       <p className="text-slate-400 text-sm text-center mb-6">
-        {lang === "tr" 
-          ? "Yatırımınız işleniyor ve AUXM'e dönüştürülüyor."
-          : "Your deposit is being processed and converted to AUXM."}
+        {t("depositProcessing")}
       </p>
 
       {/* Deposit Details */}
@@ -48,7 +143,7 @@ export function DepositConfirmation({
         {/* Coin Amount */}
         <div className="flex justify-between items-center">
           <span className="text-slate-400 text-sm">
-            {lang === "tr" ? "Yatırılan" : "Deposited"}
+            {t("deposited")}
           </span>
           <span className="text-white font-semibold">
             {amount} {coin}
@@ -58,7 +153,7 @@ export function DepositConfirmation({
         {/* USD Value */}
         <div className="flex justify-between items-center">
           <span className="text-slate-400 text-sm">
-            {lang === "tr" ? "USD Değeri" : "USD Value"}
+            {t("usdValue")}
           </span>
           <span className="text-white font-mono">
             ${amountUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -86,7 +181,7 @@ export function DepositConfirmation({
               <div className="w-2 h-2 rounded-full bg-purple-500" />
               <span className="text-slate-400 text-sm flex items-center gap-1">
                 {isLaunchActive ? "🚀" : "🎁"}
-                {lang === "tr" ? "Bonus AUXM" : "Bonus AUXM"}
+                {"Bonus AUXM"}
                 <span className="text-purple-400 text-xs">
                   (+{bonus.bonusPercent}%)
                 </span>
@@ -104,7 +199,7 @@ export function DepositConfirmation({
         {/* Total */}
         <div className="flex justify-between items-center">
           <span className="text-white font-semibold">
-            {lang === "tr" ? "Toplam" : "Total"}
+            {t("total")}
           </span>
           <span className="text-[#2F6F62] font-bold text-lg font-mono">
             {bonus.totalAuxm.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} AUXM
@@ -121,18 +216,14 @@ export function DepositConfirmation({
             </svg>
             <div>
               <p className="text-sm text-purple-300 font-medium mb-1">
-                {lang === "tr" ? "Bonus Kullanım Koşulu" : "Bonus Usage Terms"}
+                {t("bonusUsageTitle")}
               </p>
               <p className="text-xs text-purple-300/80">
-                {lang === "tr" 
-                  ? `${bonus.bonusAmount.toFixed(2)} Bonus AUXM sadece metal alımında (Altın, Gümüş, Platin, Paladyum) kullanılabilir. Çekim veya transfer için kullanılamaz.`
-                  : `${bonus.bonusAmount.toFixed(2)} Bonus AUXM can only be used for metal purchases (Gold, Silver, Platinum, Palladium). Cannot be withdrawn or transferred.`}
+                {`${bonus.bonusAmount.toFixed(2)} ${t("bonusUsageDesc")}`}
               </p>
               {bonus.bonusExpiresAt && (
                 <p className="text-xs text-purple-400 mt-1">
-                  {lang === "tr" 
-                    ? `⏰ Son kullanma: ${bonus.bonusExpiresAt.toLocaleDateString("tr-TR")}`
-                    : `⏰ Expires: ${bonus.bonusExpiresAt.toLocaleDateString("en-US")}`}
+                  {`⏰ ${t("expiresLabel")} ${bonus.bonusExpiresAt.toLocaleDateString(lang === "tr" ? "tr-TR" : lang === "de" ? "de-DE" : lang === "fr" ? "fr-FR" : lang === "ar" ? "ar-SA" : lang === "ru" ? "ru-RU" : "en-US")}`}
                 </p>
               )}
             </div>
@@ -150,7 +241,7 @@ export function DepositConfirmation({
           <p className={`text-sm font-medium ${
             isLaunchActive ? "text-purple-300" : "text-[#2F6F62]"
           }`}>
-            {bonus.message[lang]}
+            {(bonus.message as Record<string, string>)[lang] || bonus.message.en}
           </p>
         </div>
       )}
@@ -159,7 +250,7 @@ export function DepositConfirmation({
       {bonus.bonusAmount === 0 && (
         <div className="bg-slate-800/50 rounded-xl p-3 mb-4 border border-slate-700">
           <p className="text-sm text-center text-slate-400">
-            {bonus.message[lang]}
+            {(bonus.message as Record<string, string>)[lang] || bonus.message.en}
           </p>
         </div>
       )}
@@ -167,7 +258,7 @@ export function DepositConfirmation({
       {/* Balance Breakdown Preview */}
       <div className="bg-slate-800/50 rounded-xl p-3 mb-4 border border-slate-700">
         <p className="text-xs text-slate-400 mb-2">
-          {lang === "tr" ? "Cüzdan Bakiyeniz:" : "Your Wallet Balance:"}
+          {t("walletBalance")}
         </p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -196,9 +287,7 @@ export function DepositConfirmation({
           <div className="flex items-center gap-2">
             <span className="text-xl">✨</span>
             <p className="text-sm text-[#BFA181]">
-              {lang === "tr" 
-                ? "Bonus AUXM'inizi kullanarak hemen altın veya gümüş satın alabilirsiniz!"
-                : "Use your Bonus AUXM to buy gold or silver right now!"}
+              {t("useBonusCta")}
             </p>
           </div>
         </div>
@@ -211,7 +300,7 @@ export function DepositConfirmation({
             onClick={onCancel}
             className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium transition-colors"
           >
-            {lang === "tr" ? "Kapat" : "Close"}
+            {t("close")}
           </button>
         )}
         {onConfirm && (
@@ -223,9 +312,7 @@ export function DepositConfirmation({
                 : "bg-[#2F6F62] hover:bg-[#2F6F62]"
             }`}
           >
-            {bonus.bonusAmount > 0
-              ? (lang === "tr" ? "Metal Satın Al" : "Buy Metals")
-              : (lang === "tr" ? "Cüzdana Git" : "Go to Wallet")}
+            {bonus.bonusAmount > 0 ? t("buyMetals") : t("goToWallet")}
           </button>
         )}
       </div>
