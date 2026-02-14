@@ -620,7 +620,7 @@ export default function VaultPage() {
 
         {/* Physical Redemption Card */}
         <Link
-          href="/physical-delivery"
+          href="/redeem"
           className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 hover:border-[#BFA181] transition-colors"
         >
           <div className="flex items-center gap-3">

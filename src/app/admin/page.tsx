@@ -391,6 +391,7 @@ const TABS = [
   { id: "leasing", label: "Leasing", icon: "🏦" },
   { id: "treasury", label: "AUXM Treasury", icon: "🏛️" },
   { id: "depositMonitor", label: "Deposit Scanner", icon: "📡" },
+  { id: "redemption", label: "Redemption", icon: "📦" },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -4801,6 +4802,102 @@ export default function AdminDashboard() {
 
           {activeTab === "depositMonitor" && (
             <DepositMonitorTab />
+          )}
+
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {/* REDEMPTION TAB */}
+          {/* ═══════════════════════════════════════════════════════════ */}
+          {activeTab === "redemption" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-white">Physical Redemption Controls</h2>
+                  <p className="text-sm text-slate-400">Manage physical redemption settings, toggles, and pending requests</p>
+                </div>
+              </div>
+
+              {/* Global Toggles */}
+              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                <h3 className="text-sm font-bold text-slate-300 mb-4">Global Settings</h3>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    { key: 'redemption_enabled', label: 'Redemption Enabled', desc: 'Global kill switch', active: true },
+                    { key: 'courier_enabled', label: 'Courier Enabled', desc: 'Insured delivery option', active: true },
+                    { key: 'manual_approval', label: 'Manual Approval', desc: 'Require admin approval', active: true },
+                    { key: 'soft_launch', label: 'Soft Launch Mode', desc: 'Request-only mode', active: true },
+                  ].map((toggle) => (
+                    <div key={toggle.key} className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-slate-400">{toggle.label}</span>
+                        <div className={`w-10 h-5 ${toggle.active ? 'bg-green-600' : 'bg-slate-600'} rounded-full relative cursor-pointer`}>
+                          <div className={`w-4 h-4 bg-white rounded-full absolute ${toggle.active ? 'right-0.5' : 'left-0.5'} top-0.5`} />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-500">{toggle.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Per-Metal Config */}
+              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                <h3 className="text-sm font-bold text-slate-300 mb-4">Per-Metal Configuration</h3>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-slate-400 text-xs border-b border-slate-700">
+                      <th className="text-left py-2 px-3">Metal</th>
+                      <th className="text-left py-2 px-3">Min Threshold</th>
+                      <th className="text-left py-2 px-3">Fee %</th>
+                      <th className="text-left py-2 px-3">SLA (days)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { sym: 'AUXG', name: 'Gold', min: '100g', fee: '0.75%', sla: '5-15' },
+                      { sym: 'AUXS', name: 'Silver', min: '31,000g', fee: '1.25%', sla: '10-25' },
+                      { sym: 'AUXPT', name: 'Platinum', min: '100g', fee: '1.50%', sla: '5-20' },
+                      { sym: 'AUXPD', name: 'Palladium', min: '100g', fee: '1.50%', sla: '5-20' },
+                    ].map((m) => (
+                      <tr key={m.sym} className="border-b border-slate-700/50">
+                        <td className="py-3 px-3 text-white font-semibold">{m.sym} <span className="text-slate-500 text-xs">{m.name}</span></td>
+                        <td className="py-3 px-3 text-slate-300">{m.min}</td>
+                        <td className="py-3 px-3 text-[#D4B47A]">{m.fee}</td>
+                        <td className="py-3 px-3 text-slate-300">{m.sla}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Vault Locations */}
+              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                <h3 className="text-sm font-bold text-slate-300 mb-4">Vault Locations</h3>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    { id: 'zurich', name: 'Zurich', country: 'Switzerland', active: true },
+                    { id: 'dubai', name: 'Dubai', country: 'UAE', active: true },
+                    { id: 'london', name: 'London', country: 'UK', active: false },
+                    { id: 'singapore', name: 'Singapore', country: 'Singapore', active: false },
+                  ].map((v) => (
+                    <div key={v.id} className={`bg-slate-900/50 rounded-lg p-4 border ${v.active ? 'border-[#2F6F62]/40' : 'border-slate-700'}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-bold text-white">{v.name}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${v.active ? 'bg-[#2F6F62]/20 text-[#2F6F62]' : 'bg-slate-700 text-slate-400'}`}>
+                          {v.active ? 'Active' : 'Soon'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">{v.country}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pending Redemptions */}
+              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                <h3 className="text-sm font-bold text-slate-300 mb-4">Pending Redemption Requests</h3>
+                <p className="text-sm text-slate-500 text-center py-6">No pending redemption requests</p>
+              </div>
+            </div>
           )}
 
           {/* Website Edit Modal */}
