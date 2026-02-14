@@ -71,8 +71,10 @@ export default function RootLayout({
         <ToastProvider>
           <UIToastProvider>
             <Web3Provider>
-              <ChainGuard />
-              <LanguageProvider>{children}</LanguageProvider>
+              <LanguageProvider>
+                <ChainGuard />
+                {children}
+              </LanguageProvider>
             </Web3Provider>
           </UIToastProvider>
         </ToastProvider>
