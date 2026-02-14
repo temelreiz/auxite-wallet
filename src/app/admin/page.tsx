@@ -389,6 +389,7 @@ const TABS = [
   { id: "siteVaults", label: "Kasalar", icon: "🏛️" },
   { id: "risk", label: "Risk", icon: "🛡️" },
   { id: "leasing", label: "Leasing", icon: "🏦" },
+  { id: "treasury", label: "AUXM Treasury", icon: "🏛️" },
   { id: "depositMonitor", label: "Deposit Scanner", icon: "📡" },
 ] as const;
 
@@ -4794,6 +4795,10 @@ export default function AdminDashboard() {
             <LeasingEngineTab />
           )}
 
+          {activeTab === "treasury" && (
+            <AuxmTreasuryTab />
+          )}
+
           {activeTab === "depositMonitor" && (
             <DepositMonitorTab />
           )}
@@ -5943,6 +5948,568 @@ function LeasingEngineTab() {
               ))}
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AUXM TREASURY DASHBOARD COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function AuxmTreasuryTab() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState<'overview' | 'float' | 'settlement' | 'exposure' | 'yield' | 'log'>('overview');
+  const [logNote, setLogNote] = useState('');
+  const [logSaving, setLogSaving] = useState(false);
+
+  const fetchTreasury = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/treasury', {
+        headers: { Authorization: 'Bearer auxite-admin-2024' },
+      });
+      const result = await res.json();
+      if (result.success) setData(result);
+    } catch (e) {
+      console.error('Treasury fetch error:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTreasury();
+    const interval = setInterval(fetchTreasury, 15000);
+    return () => clearInterval(interval);
+  }, [fetchTreasury]);
+
+  const addLogEntry = async () => {
+    if (!logNote.trim()) return;
+    setLogSaving(true);
+    try {
+      await fetch('/api/admin/treasury', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer auxite-admin-2024',
+        },
+        body: JSON.stringify({ action: 'addLog', type: 'note', message: logNote }),
+      });
+      setLogNote('');
+      fetchTreasury();
+    } catch (e) {
+      console.error('Log save error:', e);
+    } finally {
+      setLogSaving(false);
+    }
+  };
+
+  const fmt = (n: number) => {
+    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
+    if (n >= 1_000) return `$${(n / 1_000).toFixed(2)}K`;
+    return `$${n.toFixed(2)}`;
+  };
+
+  const fmtGrams = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(2)} kg` : `${n.toFixed(2)} g`;
+
+  if (loading) return <div className="text-center py-12 text-slate-400">Loading AUXM Treasury...</div>;
+  if (!data) return <div className="text-center py-12 text-red-400">Failed to load treasury data</div>;
+
+  const { summary, clientFloat, operatingCapital, yieldPrograms, settlement, metalExposure, recentLog } = data;
+
+  const sections = [
+    { id: 'overview', label: 'Overview', icon: '🏛️' },
+    { id: 'float', label: 'AUXM Float', icon: '💰' },
+    { id: 'settlement', label: 'Settlement', icon: '🔄' },
+    { id: 'exposure', label: 'Exposure', icon: '📊' },
+    { id: 'yield', label: 'Yield Programs', icon: '📈' },
+    { id: 'log', label: 'Treasury Log', icon: '📋' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white">AUXM Treasury Dashboard</h2>
+        <div className="flex items-center gap-3">
+          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+            (summary?.liquidityCoverageRatio || 0) >= 10 ? 'bg-green-500/20 text-green-400' :
+            (summary?.liquidityCoverageRatio || 0) >= 5 ? 'bg-yellow-500/20 text-yellow-400' :
+            'bg-red-500/20 text-red-400'
+          }`}>
+            LCR: {summary?.liquidityCoverageRatio?.toFixed(1) || 0}%
+          </span>
+          <button onClick={fetchTreasury} className="px-3 py-1 bg-slate-800 rounded-lg text-sm text-slate-300 hover:bg-slate-700">
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Section Navigation */}
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {sections.map(s => (
+          <button
+            key={s.id}
+            onClick={() => setActiveSection(s.id as any)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+              activeSection === s.id
+                ? 'bg-[#D4B47A] text-black'
+                : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700'
+            }`}
+          >
+            {s.icon} {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ══════════════════════════════════════════════════ */}
+      {/* OVERVIEW */}
+      {/* ══════════════════════════════════════════════════ */}
+      {activeSection === 'overview' && (
+        <div className="space-y-6">
+          {/* Top Summary Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="bg-gradient-to-br from-[#D4B47A]/20 to-[#BFA181]/10 rounded-xl p-4 border border-[#D4B47A]/30">
+              <p className="text-[10px] text-[#D4B47A] mb-1 uppercase tracking-wider">Total AUXM Float</p>
+              <p className="text-xl font-bold text-white">{fmt(summary?.totalAuxmFloat || 0)}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+              <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider">Available</p>
+              <p className="text-xl font-bold text-green-400">{fmt(summary?.available || 0)}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+              <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider">Reserved (Yield)</p>
+              <p className="text-xl font-bold text-[#D4B47A]">{fmt(summary?.reserved || 0)}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+              <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider">Pending Settlement</p>
+              <p className="text-xl font-bold text-yellow-400">{fmt(summary?.pendingSettlement || 0)}</p>
+            </div>
+            <div className={`rounded-xl p-4 border ${
+              (summary?.liquidityCoverageRatio || 0) >= 10
+                ? 'bg-green-500/10 border-green-500/30'
+                : (summary?.liquidityCoverageRatio || 0) >= 5
+                  ? 'bg-yellow-500/10 border-yellow-500/30'
+                  : 'bg-red-500/10 border-red-500/30'
+            }`}>
+              <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider">Liquidity Coverage</p>
+              <p className="text-xl font-bold text-white">{summary?.liquidityCoverageRatio?.toFixed(1) || 0}%</p>
+            </div>
+          </div>
+
+          {/* Client Float vs Operating Capital */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+              <h3 className="text-sm font-bold text-[#D4B47A] mb-3">Client Float</h3>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-slate-400">Total Client Deposits</span>
+                <span className="text-sm font-semibold text-white">{fmt(clientFloat?.total || 0)}</span>
+              </div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-slate-400">Active Clients</span>
+                <span className="text-sm font-semibold text-white">{clientFloat?.clientCount || 0}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">Avg per Client</span>
+                <span className="text-sm font-semibold text-white">
+                  {clientFloat?.clientCount > 0 ? fmt((clientFloat?.total || 0) / clientFloat.clientCount) : '$0'}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+              <h3 className="text-sm font-bold text-[#2F6F62] mb-3">Operating Capital</h3>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-slate-400">Total Operating</span>
+                <span className="text-sm font-semibold text-white">{fmt(operatingCapital?.totalOperatingUsd || 0)}</span>
+              </div>
+              {operatingCapital?.breakdown && Object.entries(operatingCapital.breakdown).map(([token, info]: [string, any]) => (
+                <div key={token} className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-slate-500">{token}</span>
+                  <span className="text-xs text-slate-300">
+                    {info.pending?.toFixed(2)} ({fmt(info.valueUsd || 0)})
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Settlement Quick View */}
+          <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+            <h3 className="text-sm font-bold text-slate-300 mb-3">Settlement Overview (24h)</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Buys</p>
+                <p className="text-lg font-bold text-green-400">{settlement?.buys24h || 0}</p>
+                <p className="text-[10px] text-slate-500">{fmt(settlement?.buyVolume24h || 0)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Sells</p>
+                <p className="text-lg font-bold text-red-400">{settlement?.sells24h || 0}</p>
+                <p className="text-[10px] text-slate-500">{fmt(settlement?.sellVolume24h || 0)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Net Position</p>
+                <p className={`text-lg font-bold ${(settlement?.netSettlement24h || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {(settlement?.netSettlement24h || 0) >= 0 ? '+' : ''}{fmt(settlement?.netSettlement24h || 0)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Netting Ratio</p>
+                <p className="text-lg font-bold text-blue-400">{(settlement?.nettingRatio || 0).toFixed(1)}%</p>
+                <p className="text-[10px] text-slate-500">Internal match</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Metal Exposure Quick View */}
+          <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+            <h3 className="text-sm font-bold text-slate-300 mb-3">Metal Exposure</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {metalExposure && Object.entries(metalExposure).map(([metal, exp]: [string, any]) => {
+                const metalColors: Record<string, string> = {
+                  AUXG: 'text-[#C6A15B]',
+                  AUXS: 'text-[#A6B0BF]',
+                  AUXPT: 'text-[#8FA3B8]',
+                  AUXPD: 'text-[#6E7C8A]',
+                };
+                return (
+                  <div key={metal} className="text-center">
+                    <p className={`text-sm font-bold ${metalColors[metal] || 'text-white'}`}>{metal}</p>
+                    <p className="text-xs text-slate-400 mt-1">Allocated: {fmtGrams(exp.totalAllocated)}</p>
+                    <p className="text-xs text-slate-400">Staked: {fmtGrams(exp.totalStaked)}</p>
+                    <p className="text-xs text-white font-medium">Net: {fmt(exp.netExposureUsd)}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════ */}
+      {/* AUXM FLOAT DETAIL */}
+      {/* ══════════════════════════════════════════════════ */}
+      {activeSection === 'float' && (
+        <div className="space-y-6">
+          {/* Float Breakdown */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gradient-to-br from-[#D4B47A]/20 to-[#BFA181]/10 rounded-xl p-5 border border-[#D4B47A]/30">
+              <p className="text-xs text-[#D4B47A] mb-1">Total Client Float</p>
+              <p className="text-2xl font-bold text-white">{fmt(clientFloat?.total || 0)}</p>
+              <p className="text-xs text-slate-400 mt-1">{clientFloat?.clientCount || 0} clients</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+              <p className="text-xs text-[#2F6F62] mb-1">Operating Capital</p>
+              <p className="text-2xl font-bold text-white">{fmt(operatingCapital?.totalOperatingUsd || 0)}</p>
+              <p className="text-xs text-slate-400 mt-1">Platform fees reserve</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+              <p className="text-xs text-slate-400 mb-1">Combined Float</p>
+              <p className="text-2xl font-bold text-white">{fmt(summary?.totalAuxmFloat || 0)}</p>
+              <p className="text-xs text-slate-400 mt-1">Client + Operating</p>
+            </div>
+          </div>
+
+          {/* Top Holders */}
+          <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+            <h3 className="text-sm font-bold text-slate-300 mb-3">Top 10 AUXM Holders</h3>
+            <div className="space-y-2">
+              {clientFloat?.topHolders?.map((holder: any, i: number) => (
+                <div key={i} className="flex items-center justify-between py-2 border-b border-slate-700/50 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-slate-500 w-6">#{i + 1}</span>
+                    <span className="text-xs text-slate-300 font-mono">
+                      {holder.address.slice(0, 6)}...{holder.address.slice(-4)}
+                    </span>
+                  </div>
+                  <span className="text-sm font-semibold text-white">{fmt(holder.balance)}</span>
+                </div>
+              ))}
+              {(!clientFloat?.topHolders || clientFloat.topHolders.length === 0) && (
+                <p className="text-xs text-slate-500 text-center py-4">No holders found</p>
+              )}
+            </div>
+          </div>
+
+          {/* Operating Capital Breakdown */}
+          <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+            <h3 className="text-sm font-bold text-[#2F6F62] mb-3">Operating Capital Breakdown</h3>
+            {operatingCapital?.breakdown && Object.entries(operatingCapital.breakdown).map(([token, info]: [string, any]) => (
+              <div key={token} className="flex items-center justify-between py-2 border-b border-slate-700/50 last:border-0">
+                <span className="text-sm text-white font-medium">{token}</span>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-white">{fmt(info.valueUsd || 0)}</p>
+                  <p className="text-[10px] text-slate-500">
+                    Total: {info.amount?.toFixed(4)} | Pending: {info.pending?.toFixed(4)} | Transferred: {info.transferred?.toFixed(4)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════ */}
+      {/* SETTLEMENT & NETTING */}
+      {/* ══════════════════════════════════════════════════ */}
+      {activeSection === 'settlement' && (
+        <div className="space-y-6">
+          {/* Net Settlement Position */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+              <p className="text-[10px] text-slate-400 mb-1 uppercase">Total Trades</p>
+              <p className="text-2xl font-bold text-white">{settlement?.totalTrades || 0}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+              <p className="text-[10px] text-slate-400 mb-1 uppercase">Total Volume</p>
+              <p className="text-2xl font-bold text-white">{fmt(settlement?.totalVolume || 0)}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+              <p className="text-[10px] text-slate-400 mb-1 uppercase">Netting Ratio</p>
+              <p className="text-2xl font-bold text-blue-400">{(settlement?.nettingRatio || 0).toFixed(1)}%</p>
+              <p className="text-[10px] text-slate-500">Higher = better</p>
+            </div>
+            <div className={`rounded-xl p-4 border ${
+              (settlement?.netSettlement24h || 0) >= 0
+                ? 'bg-green-500/10 border-green-500/30'
+                : 'bg-red-500/10 border-red-500/30'
+            }`}>
+              <p className="text-[10px] text-slate-400 mb-1 uppercase">Net Position (24h)</p>
+              <p className={`text-2xl font-bold ${(settlement?.netSettlement24h || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {(settlement?.netSettlement24h || 0) >= 0 ? '+' : ''}{fmt(settlement?.netSettlement24h || 0)}
+              </p>
+            </div>
+          </div>
+
+          {/* Buy vs Sell Breakdown */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+              <h3 className="text-sm font-bold text-green-400 mb-3">Buy Side (24h)</h3>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-slate-400">Trade Count</span>
+                <span className="text-lg font-bold text-green-400">{settlement?.buys24h || 0}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">Volume</span>
+                <span className="text-lg font-bold text-green-400">{fmt(settlement?.buyVolume24h || 0)}</span>
+              </div>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+              <h3 className="text-sm font-bold text-red-400 mb-3">Sell Side (24h)</h3>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-slate-400">Trade Count</span>
+                <span className="text-lg font-bold text-red-400">{settlement?.sells24h || 0}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">Volume</span>
+                <span className="text-lg font-bold text-red-400">{fmt(settlement?.sellVolume24h || 0)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 7d Activity */}
+          <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+            <h3 className="text-sm font-bold text-slate-300 mb-3">7 Day Activity</h3>
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Buys (7d)</p>
+                <p className="text-xl font-bold text-green-400">{settlement?.buys7d || 0}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Sells (7d)</p>
+                <p className="text-xl font-bold text-red-400">{settlement?.sells7d || 0}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════ */}
+      {/* METAL EXPOSURE */}
+      {/* ══════════════════════════════════════════════════ */}
+      {activeSection === 'exposure' && (
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold text-white">Per-Metal Net Exposure</h3>
+          {metalExposure && Object.entries(metalExposure).map(([metal, exp]: [string, any]) => {
+            const metalColors: Record<string, string> = {
+              AUXG: '#C6A15B',
+              AUXS: '#A6B0BF',
+              AUXPT: '#8FA3B8',
+              AUXPD: '#6E7C8A',
+            };
+            const color = metalColors[metal] || '#fff';
+            const hedgedPct = exp.hedgedPercent || 0;
+
+            return (
+              <div key={metal} className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-base font-bold" style={{ color }}>{metal}</h4>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    hedgedPct >= 80 ? 'bg-green-500/20 text-green-400' :
+                    hedgedPct >= 50 ? 'bg-yellow-500/20 text-yellow-400' :
+                    'bg-red-500/20 text-red-400'
+                  }`}>
+                    {hedgedPct.toFixed(1)}% Hedged
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-4 text-center">
+                  <div>
+                    <p className="text-[10px] text-slate-500">Allocated</p>
+                    <p className="text-sm font-semibold text-white">{fmtGrams(exp.totalAllocated)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500">Staked</p>
+                    <p className="text-sm font-semibold" style={{ color }}>{fmtGrams(exp.totalStaked)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500">Net Exposure</p>
+                    <p className="text-sm font-semibold text-white">{fmtGrams(exp.netExposure)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500">USD Value</p>
+                    <p className="text-sm font-semibold text-white">{fmt(exp.netExposureUsd)}</p>
+                  </div>
+                </div>
+
+                {/* Hedged bar */}
+                <div className="mt-3">
+                  <div className="w-full bg-slate-700 rounded-full h-2">
+                    <div
+                      className="h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min(hedgedPct, 100)}%`, backgroundColor: color }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════ */}
+      {/* YIELD PROGRAMS */}
+      {/* ══════════════════════════════════════════════════ */}
+      {activeSection === 'yield' && (
+        <div className="space-y-6">
+          {/* Yield Summary */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-gradient-to-br from-[#D4B47A]/20 to-[#BFA181]/10 rounded-xl p-4 border border-[#D4B47A]/30">
+              <p className="text-[10px] text-[#D4B47A] mb-1 uppercase">Total Staked Value</p>
+              <p className="text-xl font-bold text-white">{fmt(yieldPrograms?.totalStakedValueUsd || 0)}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+              <p className="text-[10px] text-slate-400 mb-1 uppercase">Active Stakes</p>
+              <p className="text-xl font-bold text-white">{yieldPrograms?.activeStakeCount || 0}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+              <p className="text-[10px] text-slate-400 mb-1 uppercase">Unique Stakers</p>
+              <p className="text-xl font-bold text-white">{yieldPrograms?.totalStakers || 0}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+              <p className="text-[10px] text-slate-400 mb-1 uppercase">Avg per Staker</p>
+              <p className="text-xl font-bold text-white">
+                {yieldPrograms?.totalStakers > 0 ? fmt((yieldPrograms?.totalStakedValueUsd || 0) / yieldPrograms.totalStakers) : '$0'}
+              </p>
+            </div>
+          </div>
+
+          {/* By Metal */}
+          <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+            <h3 className="text-sm font-bold text-[#D4B47A] mb-3">Staked by Metal</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {yieldPrograms?.stakedByMetal && Object.entries(yieldPrograms.stakedByMetal).map(([metal, info]: [string, any]) => {
+                const metalColors: Record<string, string> = {
+                  AUXG: 'text-[#C6A15B]',
+                  AUXS: 'text-[#A6B0BF]',
+                  AUXPT: 'text-[#8FA3B8]',
+                  AUXPD: 'text-[#6E7C8A]',
+                };
+                return (
+                  <div key={metal} className="text-center">
+                    <p className={`text-sm font-bold ${metalColors[metal] || 'text-white'}`}>{metal}</p>
+                    <p className="text-xs text-white mt-1">{fmtGrams(info.grams)}</p>
+                    <p className="text-[10px] text-slate-400">{fmt(info.valueUsd)}</p>
+                    <p className="text-[10px] text-slate-500">{info.count} stakes</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* By Term */}
+          <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+            <h3 className="text-sm font-bold text-slate-300 mb-3">Distribution by Term</h3>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-xs text-slate-500 mb-1">3 Month</p>
+                <p className="text-xl font-bold text-green-400">{yieldPrograms?.stakedByTerm?.['3m'] || 0}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">6 Month</p>
+                <p className="text-xl font-bold text-blue-400">{yieldPrograms?.stakedByTerm?.['6m'] || 0}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">12 Month</p>
+                <p className="text-xl font-bold text-purple-400">{yieldPrograms?.stakedByTerm?.['12m'] || 0}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════ */}
+      {/* TREASURY LOG */}
+      {/* ══════════════════════════════════════════════════ */}
+      {activeSection === 'log' && (
+        <div className="space-y-4">
+          {/* Add Log Entry */}
+          <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+            <h3 className="text-sm font-bold text-slate-300 mb-3">Add Treasury Note</h3>
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={logNote}
+                onChange={(e) => setLogNote(e.target.value)}
+                placeholder="Treasury operation note..."
+                className="flex-1 bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
+                onKeyDown={(e) => e.key === 'Enter' && addLogEntry()}
+              />
+              <button
+                onClick={addLogEntry}
+                disabled={logSaving || !logNote.trim()}
+                className="px-4 py-2 bg-[#D4B47A] text-black font-semibold rounded-lg text-sm hover:bg-[#C6A15B] disabled:opacity-50"
+              >
+                {logSaving ? '...' : 'Add'}
+              </button>
+            </div>
+          </div>
+
+          {/* Log Entries */}
+          <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+            <h3 className="text-sm font-bold text-slate-300 mb-3">Recent Treasury Activity</h3>
+            <div className="space-y-2">
+              {recentLog?.map((log: any, i: number) => (
+                <div key={log.id || i} className="flex items-start gap-3 py-2 border-b border-slate-700/50 last:border-0">
+                  <span className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
+                    {new Date(log.timestamp || log.date).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <span className="text-xs text-white">{log.message || log.note || JSON.stringify(log)}</span>
+                  {log.amount > 0 && (
+                    <span className="text-xs text-[#D4B47A] whitespace-nowrap ml-auto">
+                      {log.amount} {log.token}
+                    </span>
+                  )}
+                </div>
+              ))}
+              {(!recentLog || recentLog.length === 0) && (
+                <p className="text-xs text-slate-500 text-center py-4">No treasury log entries yet</p>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
