@@ -425,9 +425,16 @@ export default function LedgerPage() {
   const formatAmount = (amount: string, asset: string) => {
     const num = parseFloat(amount);
     if (isNaN(num)) return amount;
-    if (['AUXG', 'AUXPT', 'AUXPD'].includes(asset?.toUpperCase())) return num.toFixed(4);
-    if (asset?.toUpperCase() === 'AUXS') return num.toFixed(2);
-    if (['ETH', 'BTC'].includes(asset?.toUpperCase())) return num.toFixed(6);
+    const upper = (asset || '').toUpperCase();
+    // Metals: 2 decimal
+    if (['AUXG', 'AUXS', 'AUXPT', 'AUXPD'].includes(upper)) return num.toFixed(2);
+    // Stablecoins / AUXM / USD: 2 decimal
+    if (['USDT', 'USDC', 'AUXM', 'USD', 'DAI', 'BUSD'].includes(upper)) return num.toFixed(2);
+    // BTC: 6 decimal
+    if (upper === 'BTC') return num.toFixed(6);
+    // ETH: 4 decimal
+    if (upper === 'ETH') return num.toFixed(4);
+    // Default: 2 decimal
     return num.toFixed(2);
   };
 
