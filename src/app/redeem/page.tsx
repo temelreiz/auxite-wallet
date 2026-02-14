@@ -34,6 +34,8 @@ const translations: Record<string, Record<string, string>> = {
     notEligible: "Not Eligible",
     eligible: "Eligible",
     belowMinimum: "Below minimum threshold",
+    moreRequired: "more required for redemption",
+    insufficientForRedemption: "Insufficient for Redemption",
     // Methods
     selectMethod: "REDEMPTION METHOD",
     selectMethodDesc: "Choose how you want to receive your physical metals",
@@ -120,6 +122,8 @@ const translations: Record<string, Record<string, string>> = {
     notEligible: "Uygun Değil",
     eligible: "Uygun",
     belowMinimum: "Minimum eşiğin altında",
+    moreRequired: "daha gerekli",
+    insufficientForRedemption: "Teslimat İçin Yetersiz",
     selectMethod: "TESLIMAT YÖNTEMİ",
     selectMethodDesc: "Fiziksel metallerinizi nasıl almak istediğinizi seçin",
     cashSettlement: "Nakit Takas",
@@ -198,6 +202,8 @@ const translations: Record<string, Record<string, string>> = {
     notEligible: "Nicht berechtigt",
     eligible: "Berechtigt",
     belowMinimum: "Unter dem Mindestschwellenwert",
+    moreRequired: "mehr erforderlich",
+    insufficientForRedemption: "Unzureichend für Einlösung",
     selectMethod: "EINLÖSUNGSMETHODE",
     selectMethodDesc: "Wählen Sie wie Sie Ihre physischen Metalle erhalten möchten",
     cashSettlement: "Barausgleich",
@@ -276,6 +282,8 @@ const translations: Record<string, Record<string, string>> = {
     notEligible: "Non éligible",
     eligible: "Éligible",
     belowMinimum: "En dessous du seuil minimum",
+    moreRequired: "de plus requis",
+    insufficientForRedemption: "Insuffisant pour le rachat",
     selectMethod: "MÉTHODE DE RACHAT",
     selectMethodDesc: "Choisissez comment vous souhaitez recevoir vos métaux physiques",
     cashSettlement: "Règlement en espèces",
@@ -354,6 +362,8 @@ const translations: Record<string, Record<string, string>> = {
     notEligible: "غير مؤهل",
     eligible: "مؤهل",
     belowMinimum: "أقل من الحد الأدنى",
+    moreRequired: "إضافية مطلوبة",
+    insufficientForRedemption: "غير كافٍ للاسترداد",
     selectMethod: "طريقة الاسترداد",
     selectMethodDesc: "اختر كيف تريد استلام معادنك المادية",
     cashSettlement: "تسوية نقدية",
@@ -432,6 +442,8 @@ const translations: Record<string, Record<string, string>> = {
     notEligible: "Не подходит",
     eligible: "Подходит",
     belowMinimum: "Ниже минимального порога",
+    moreRequired: "ещё необходимо",
+    insufficientForRedemption: "Недостаточно для погашения",
     selectMethod: "МЕТОД ПОГАШЕНИЯ",
     selectMethodDesc: "Выберите как вы хотите получить физические металлы",
     cashSettlement: "Расчёт наличными",
@@ -838,20 +850,26 @@ export default function RedeemPage() {
                           <span className="text-xs font-semibold text-amber-500">{userInfo.encumbered.toFixed(2)}{t.grams}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-xs text-slate-500">{t.availableForRedemption}</span>
-                          <span className="text-xs font-bold text-[#2F6F62]">{userInfo.available.toFixed(2)}{t.grams}</span>
-                        </div>
-                        <div className="flex justify-between">
                           <span className="text-xs text-slate-500">{t.minimumRequired}</span>
                           <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{minThreshold}{t.grams}</span>
                         </div>
                         <div className="flex justify-end mt-1">
                           {userInfo.eligible ? (
                             <span className="text-xs font-bold text-[#2F6F62] bg-[#2F6F62]/10 px-2 py-0.5 rounded">{t.eligible}</span>
-                          ) : (
+                          ) : userInfo.coolingActive ? (
                             <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded">
-                              {userInfo.coolingActive ? t.coolingPeriod : t.belowMinimum}
+                              {t.coolingPeriod}
                             </span>
+                          ) : (
+                            <div className="w-full mt-1 p-2 rounded-lg bg-red-500/5 border border-red-500/15">
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-red-500 font-semibold">{t.insufficientForRedemption}</span>
+                                <span className="text-xs font-bold text-red-500">{userInfo.available.toFixed(2)}{t.grams} / {minThreshold}{t.grams}</span>
+                              </div>
+                              <p className="text-[11px] text-red-400 mt-1">
+                                {(minThreshold - userInfo.available).toFixed(2)}{t.grams} {t.moreRequired}
+                              </p>
+                            </div>
                           )}
                         </div>
                       </div>
