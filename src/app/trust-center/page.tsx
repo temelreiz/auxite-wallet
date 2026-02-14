@@ -70,6 +70,24 @@ const translations: Record<string, Record<string, string>> = {
     termsOfService: "Kullanım Koşulları",
     redemptionPolicy: "İtfa Politikası",
     privacyPolicy: "Gizlilik Politikası",
+    // Cash Settlement
+    cashSettlement: "Nakit Takas",
+    cashSettlementSubtitle: "Saklama Çözümü — Ticaret Değil",
+    cashSettlementDesc: "Nakit takas, pozisyonunuzdan çıkmanızı sağlayan bir saklama çözümüdür — bir ticaret değildir. Tahsis edilmiş metaliniz LBMA spot fiyatlaması üzerinden tasfiye edilir ve gelirleri hesabınıza yatırılır.",
+    cashSettlementPricing: "LBMA Spot Fiyatlama",
+    cashSettlementPricingDesc: "Çıkış fiyatı, LBMA anlık spot fiyatından %0,60–0,80 çıkış marjı düşülerek belirlenir. Fiyat teklifi 120 saniye kilitlenir.",
+    cashSettlementTimeline: "T+1 Takas Süresi",
+    cashSettlementTimelineDesc: "Metal bakiyesi fiyat kilidi onayında anında düşülür. Gelirler 1 iş günü içinde hesabınıza yatırılır.",
+    cashSettlementFinality: "İptal Edilemez Kesinlik",
+    cashSettlementFinalityDesc: "Fiyat kilidi onaylandıktan sonra takas iptal edilemez. Bu, piyasa manipülasyonunu ve önceden alım satımı önler.",
+    cashSettlementRails: "Takas Kanalları",
+    cashSettlementRailsDesc: "Gelirler AUXM (dahili) veya USDT aracılığıyla yatırılır. Günlük takas limiti geçerlidir.",
+    cashSettlementAudit: "Denetim İzi",
+    cashSettlementAuditDesc: "Fiyat, zaman damgası, tutar ve takas durumu dahil olmak üzere tam denetim izi tutulur.",
+    cashSettlementQuoteLock: "120 saniyelik fiyat kilidi",
+    cashSettlementNonCancelable: "Onay sonrası iptal edilemez",
+    cashSettlementDailyCap: "Günlük takas limiti geçerlidir",
+    cashSettlementFullAudit: "Tam denetim izi tutulur",
     // CTA
     verifyCertificate: "Sertifika Doğrula",
     verifyCertificateDesc: "Auxite dijital sertifikasının gerçekliğini ve geçerliliğini doğrulayın",
@@ -132,6 +150,24 @@ const translations: Record<string, Record<string, string>> = {
     notStablecoin: "A stablecoin issuer",
     notSecurities: "A securities issuer",
     notYieldGuarantee: "A yield-guaranteeing product",
+    // Cash Settlement
+    cashSettlement: "Cash Settlement",
+    cashSettlementSubtitle: "Custody Unwind — Not a Trade",
+    cashSettlementDesc: "Cash settlement is a custody unwind that allows you to exit your position — it is not a trade. Your allocated metal is liquidated at LBMA spot pricing, and the proceeds are credited to your account.",
+    cashSettlementPricing: "LBMA Spot Pricing",
+    cashSettlementPricingDesc: "Exit price is determined from the LBMA live spot price, minus an exit spread of 0.60–0.80%. Price quotes are locked for 120 seconds.",
+    cashSettlementTimeline: "T+1 Settlement Timeline",
+    cashSettlementTimelineDesc: "Metal balance is deducted immediately upon price lock confirmation. Proceeds are credited to your account within 1 business day.",
+    cashSettlementFinality: "Non-Cancelable Finality",
+    cashSettlementFinalityDesc: "Once the price lock is confirmed, the settlement cannot be canceled. This prevents market manipulation and front-running.",
+    cashSettlementRails: "Settlement Rails",
+    cashSettlementRailsDesc: "Proceeds are credited via AUXM (internal) or USDT. A daily settlement cap applies.",
+    cashSettlementAudit: "Audit Trail",
+    cashSettlementAuditDesc: "A full audit trail is maintained including price, timestamp, amount, and settlement status.",
+    cashSettlementQuoteLock: "120-second price quote lock",
+    cashSettlementNonCancelable: "Non-cancelable after confirmation",
+    cashSettlementDailyCap: "Daily settlement cap applies",
+    cashSettlementFullAudit: "Full audit trail maintained",
     // Documents
     legalDocuments: "Legal Documents",
     termsOfService: "Terms of Service",
@@ -144,6 +180,310 @@ const translations: Record<string, Record<string, string>> = {
     viewReserves: "View Reserves",
     viewAudits: "View Audits",
     viewCustody: "Custody Details",
+  },
+  de: {
+    title: "Vertrauenszentrum",
+    subtitle: "Institutionelle Transparenz, Verwahrungsgarantien und regulatorische Compliance",
+    coreArchitecture: "Kernarchitektur",
+    segregatedCustody: "Getrennte Verwahrung",
+    segregatedCustodyDesc: "Kundenvermogen werden nie mit Unternehmensgeldern vermischt. Jede Zuteilung wird unabhangig erfasst und ist verifizierbar.",
+    noRehypothecation: "Keine Weiterverpfandung",
+    noRehypothecationDesc: "Kundenvermogen werden nie weiterverpfandet. Ihre Vermogenswerte gehoren immer nur Ihnen.",
+    fullAllocation: "Vollstandige Zuteilung",
+    fullAllocationDesc: "Alle Edelmetalle sind zu 100% physisch zugeteilt und nach Seriennummer getrennt.",
+    custodyNetwork: "Verwahrungsnetzwerk",
+    zurichVault: "Tresor Zurich",
+    zurichVaultDesc: "Gelagert in den sichersten Tresoren der Schweiz mit hochsten Sicherheitsstandards.",
+    istanbulVault: "Tresor Istanbul",
+    istanbulVaultDesc: "Von der Borsa Istanbul zugelassene, LBMA-regulierte institutionelle Verwahrung.",
+    dubaiVault: "Tresor Dubai",
+    dubaiVaultDesc: "DMCC-lizenzierte Einrichtungen, strategisch positioniert fur Nahen Osten und Afrika.",
+    verification: "Verifizierungssysteme",
+    proofOfReserves: "Reservennachweis",
+    proofOfReservesDesc: "Gesamte Metallbestande mit Echtzeitverifizierung anzeigen.",
+    auditReports: "Prufungsberichte",
+    auditReportsDesc: "Zugang zu unabhangigen Prufungsergebnissen Dritter.",
+    certificateVerify: "Zertifikatsverifizierung",
+    certificateVerifyDesc: "Uberprufen Sie die Echtheit Ihrer Zuteilungszertifikate.",
+    settlementArchitecture: "Abwicklungsarchitektur",
+    auxmSettlement: "AUXM-Abwicklungseinheit",
+    auxmSettlementDesc: "AUXM ist eine interne Einheit, die ausschliesslich fur die Abwicklung innerhalb der Auxite-Infrastruktur verwendet wird. Es ist keine Kryptowahrung oder Stablecoin.",
+    settlementFlow: "Abwicklungsablauf",
+    settlementFlowDesc: "Einzahlung → AUXM-Gutschrift → Metallzuteilung. Alle Zuteilungen erfolgen mit abgewickeltem Kapital.",
+    settlementFinality: "Abwicklungsendgultigkeit",
+    settlementFinalityDesc: "Nach Zuteilung ist Ihre Position endgultig und unwiderruflich. Die Abwicklungsendgultigkeit wird auf institutionellem Niveau garantiert.",
+    cashSettlement: "Barabwicklung",
+    cashSettlementSubtitle: "Verwahrungsauflosung — Kein Handel",
+    cashSettlementDesc: "Die Barabwicklung ist eine Verwahrungsauflosung, die Ihnen den Ausstieg aus Ihrer Position ermoglicht — kein Handel. Ihr zugeteiltes Metall wird zum LBMA-Spotpreis liquidiert und der Erlos Ihrem Konto gutgeschrieben.",
+    cashSettlementPricing: "LBMA-Spotpreise",
+    cashSettlementPricingDesc: "Der Ausstiegspreis wird vom LBMA-Live-Spotpreis abzuglich eines Ausstiegsspreads von 0,60–0,80% bestimmt. Preisangebote werden fur 120 Sekunden gesperrt.",
+    cashSettlementTimeline: "T+1 Abwicklungszeitraum",
+    cashSettlementTimelineDesc: "Der Metallbestand wird bei Bestatigung der Preissperre sofort abgezogen. Erlose werden innerhalb von 1 Geschaftstag gutgeschrieben.",
+    cashSettlementFinality: "Unwiderrufliche Endgultigkeit",
+    cashSettlementFinalityDesc: "Nach Bestatigung der Preissperre kann die Abwicklung nicht storniert werden. Dies verhindert Marktmanipulation und Front-Running.",
+    cashSettlementRails: "Abwicklungskanale",
+    cashSettlementRailsDesc: "Erlose werden uber AUXM (intern) oder USDT gutgeschrieben. Ein tagliches Abwicklungslimit gilt.",
+    cashSettlementAudit: "Prufpfad",
+    cashSettlementAuditDesc: "Ein vollstandiger Prufpfad wird gefuhrt, einschliesslich Preis, Zeitstempel, Betrag und Abwicklungsstatus.",
+    cashSettlementQuoteLock: "120-Sekunden-Preissperre",
+    cashSettlementNonCancelable: "Nach Bestatigung nicht stornierbar",
+    cashSettlementDailyCap: "Tagliches Abwicklungslimit gilt",
+    cashSettlementFullAudit: "Vollstandiger Prufpfad gefuhrt",
+    compliance: "Regulatorische Compliance",
+    amlKyc: "AML/KYC-Verfahren",
+    amlKycDesc: "Vollstandige Einhaltung internationaler Geldwasche- und Kundenidentifizierungsstandards.",
+    dataProtection: "Datenschutz",
+    dataProtectionDesc: "DSGVO-konforme und internationale Datenschutzstandardverarbeitung.",
+    regulatoryReporting: "Regulatorische Berichterstattung",
+    regulatoryReportingDesc: "Einhaltung regulatorischer Berichtspflichten in erforderlichen Rechtsgebieten.",
+    whatIsAuxite: "Was Auxite ist — und was nicht",
+    auxiteIs: "Auxite ist:",
+    auxiteIsNot: "Auxite ist nicht:",
+    isDigitalPlatform: "Eine digitale Plattform zur Verwaltung zugeteilter Edelmetalle",
+    isRwaInfrastructure: "Eine Transparenz-orientierte RWA-Infrastruktur",
+    isCustodyTech: "Institutionelle Verwahrungstechnologie",
+    notBank: "Eine Bank",
+    notStablecoin: "Ein Stablecoin-Emittent",
+    notSecurities: "Ein Wertpapieremittent",
+    notYieldGuarantee: "Ein renditegarantierendes Produkt",
+    legalDocuments: "Rechtliche Dokumente",
+    termsOfService: "Nutzungsbedingungen",
+    redemptionPolicy: "Einlosungsrichtlinie",
+    privacyPolicy: "Datenschutzrichtlinie",
+    verifyCertificate: "Zertifikat verifizieren",
+    verifyCertificateDesc: "Uberprufen Sie die Echtheit und Gultigkeit eines Auxite-Digitalzertifikats",
+    goToVerification: "Zur Verifizierungsseite",
+    viewReserves: "Reserven anzeigen",
+    viewAudits: "Prufungen anzeigen",
+    viewCustody: "Verwahrungsdetails",
+  },
+  fr: {
+    title: "Centre de Confiance",
+    subtitle: "Transparence institutionnelle, garanties de conservation et conformite reglementaire",
+    coreArchitecture: "Architecture Fondamentale",
+    segregatedCustody: "Conservation Segreguee",
+    segregatedCustodyDesc: "Les actifs des clients ne sont jamais melanges aux fonds de l'entreprise. Chaque allocation est enregistree independamment et verifiable.",
+    noRehypothecation: "Pas de Rehypotheque",
+    noRehypothecationDesc: "Les actifs des clients ne sont jamais rehypotheques. Vos actifs vous appartiennent toujours exclusivement.",
+    fullAllocation: "Allocation Complete",
+    fullAllocationDesc: "Tous les metaux precieux sont alloues physiquement a 100% et segregues par lingot numerote.",
+    custodyNetwork: "Reseau de Conservation",
+    zurichVault: "Coffre de Zurich",
+    zurichVaultDesc: "Stocke dans les coffres les plus securises de Suisse avec les normes de securite les plus elevees.",
+    istanbulVault: "Coffre d'Istanbul",
+    istanbulVaultDesc: "Approuve par Borsa Istanbul, conservation institutionnelle reglementee LBMA.",
+    dubaiVault: "Coffre de Dubai",
+    dubaiVaultDesc: "Installations licenciees DMCC, positionnement strategique pour le Moyen-Orient et l'Afrique.",
+    verification: "Systemes de Verification",
+    proofOfReserves: "Preuve de Reserves",
+    proofOfReservesDesc: "Consultez les avoirs totaux en metaux avec verification en temps reel.",
+    auditReports: "Rapports d'Audit",
+    auditReportsDesc: "Acces aux resultats d'audit independants de tiers.",
+    certificateVerify: "Verification de Certificat",
+    certificateVerifyDesc: "Verifiez l'authenticite de vos certificats d'allocation.",
+    settlementArchitecture: "Architecture de Reglement",
+    auxmSettlement: "Unite de Reglement AUXM",
+    auxmSettlementDesc: "AUXM est une unite interne utilisee exclusivement pour le reglement au sein de l'infrastructure Auxite. Ce n'est ni une cryptomonnaie ni un stablecoin.",
+    settlementFlow: "Flux de Reglement",
+    settlementFlowDesc: "Depot → Credit AUXM → Allocation Metal. Toutes les allocations sont effectuees avec du capital regle.",
+    settlementFinality: "Finalite du Reglement",
+    settlementFinalityDesc: "Une fois alloue, votre position est definitive et irrevocable. La finalite du reglement est garantie au niveau institutionnel.",
+    cashSettlement: "Reglement en Especes",
+    cashSettlementSubtitle: "Denouement de Conservation — Pas un Echange",
+    cashSettlementDesc: "Le reglement en especes est un denouement de conservation qui vous permet de sortir de votre position — ce n'est pas un echange. Votre metal alloue est liquide au prix spot LBMA et le produit est credite sur votre compte.",
+    cashSettlementPricing: "Tarification Spot LBMA",
+    cashSettlementPricingDesc: "Le prix de sortie est determine a partir du prix spot LBMA en direct, moins un ecart de sortie de 0,60–0,80%. Les cotations sont verrouillees pendant 120 secondes.",
+    cashSettlementTimeline: "Delai de Reglement T+1",
+    cashSettlementTimelineDesc: "Le solde metal est deduit immediatement a la confirmation du verrouillage du prix. Le produit est credite sur votre compte sous 1 jour ouvrable.",
+    cashSettlementFinality: "Finalite Non-Annulable",
+    cashSettlementFinalityDesc: "Une fois le verrouillage du prix confirme, le reglement ne peut etre annule. Cela empeche la manipulation du marche et le front-running.",
+    cashSettlementRails: "Canaux de Reglement",
+    cashSettlementRailsDesc: "Le produit est credite via AUXM (interne) ou USDT. Un plafond quotidien de reglement s'applique.",
+    cashSettlementAudit: "Piste d'Audit",
+    cashSettlementAuditDesc: "Une piste d'audit complete est maintenue incluant prix, horodatage, montant et statut du reglement.",
+    cashSettlementQuoteLock: "Verrouillage du prix pendant 120 secondes",
+    cashSettlementNonCancelable: "Non annulable apres confirmation",
+    cashSettlementDailyCap: "Plafond quotidien de reglement applicable",
+    cashSettlementFullAudit: "Piste d'audit complete maintenue",
+    compliance: "Conformite Reglementaire",
+    amlKyc: "Procedures AML/KYC",
+    amlKycDesc: "Conformite totale aux normes internationales de lutte contre le blanchiment et de connaissance du client.",
+    dataProtection: "Protection des Donnees",
+    dataProtectionDesc: "Traitement conforme au RGPD et aux normes internationales de protection des donnees.",
+    regulatoryReporting: "Rapports Reglementaires",
+    regulatoryReportingDesc: "Conformite aux obligations de reporting reglementaire dans les juridictions requises.",
+    whatIsAuxite: "Ce qu'Auxite est — et n'est pas",
+    auxiteIs: "Auxite est :",
+    auxiteIsNot: "Auxite n'est pas :",
+    isDigitalPlatform: "Une plateforme numerique pour la gestion des metaux precieux alloues",
+    isRwaInfrastructure: "Une infrastructure RWA axee sur la transparence",
+    isCustodyTech: "Technologie de conservation de niveau institutionnel",
+    notBank: "Une banque",
+    notStablecoin: "Un emetteur de stablecoin",
+    notSecurities: "Un emetteur de valeurs mobilieres",
+    notYieldGuarantee: "Un produit garantissant un rendement",
+    legalDocuments: "Documents Juridiques",
+    termsOfService: "Conditions d'Utilisation",
+    redemptionPolicy: "Politique de Rachat",
+    privacyPolicy: "Politique de Confidentialite",
+    verifyCertificate: "Verifier le Certificat",
+    verifyCertificateDesc: "Verifiez l'authenticite et la validite d'un certificat numerique Auxite",
+    goToVerification: "Aller a la Page de Verification",
+    viewReserves: "Voir les Reserves",
+    viewAudits: "Voir les Audits",
+    viewCustody: "Details de Conservation",
+  },
+  ar: {
+    title: "مركز الثقة",
+    subtitle: "الشفافية المؤسسية وضمانات الحفظ والامتثال التنظيمي",
+    coreArchitecture: "البنية الأساسية",
+    segregatedCustody: "الحفظ المنفصل",
+    segregatedCustodyDesc: "لا يتم خلط أصول العملاء أبداً مع أموال الشركة. يتم تسجيل كل تخصيص بشكل مستقل وقابل للتحقق.",
+    noRehypothecation: "لا إعادة رهن",
+    noRehypothecationDesc: "لا يتم إعادة رهن أصول العملاء أبداً. أصولك ملك لك دائماً.",
+    fullAllocation: "تخصيص كامل",
+    fullAllocationDesc: "جميع المعادن الثمينة مخصصة مادياً بنسبة 100% ومفصولة حسب رقم السبيكة التسلسلي.",
+    custodyNetwork: "شبكة الحفظ",
+    zurichVault: "خزنة زيورخ",
+    zurichVaultDesc: "مخزنة في أكثر خزائن سويسرا أماناً بأعلى معايير الأمان.",
+    istanbulVault: "خزنة إسطنبول",
+    istanbulVaultDesc: "معتمدة من بورصة إسطنبول، حفظ مؤسسي منظم وفق LBMA.",
+    dubaiVault: "خزنة دبي",
+    dubaiVaultDesc: "منشآت مرخصة من DMCC، موقع استراتيجي للشرق الأوسط وأفريقيا.",
+    verification: "أنظمة التحقق",
+    proofOfReserves: "إثبات الاحتياطيات",
+    proofOfReservesDesc: "عرض إجمالي حيازات المعادن مع التحقق في الوقت الفعلي.",
+    auditReports: "تقارير التدقيق",
+    auditReportsDesc: "الوصول إلى نتائج التدقيق المستقلة من أطراف ثالثة.",
+    certificateVerify: "التحقق من الشهادة",
+    certificateVerifyDesc: "تحقق من صحة شهادات التخصيص الخاصة بك.",
+    settlementArchitecture: "بنية التسوية",
+    auxmSettlement: "وحدة تسوية AUXM",
+    auxmSettlementDesc: "AUXM هي وحدة داخلية تُستخدم حصرياً للتسوية ضمن بنية Auxite التحتية. ليست عملة مشفرة أو عملة مستقرة.",
+    settlementFlow: "تدفق التسوية",
+    settlementFlowDesc: "إيداع الأموال → رصيد AUXM → تخصيص المعادن. جميع التخصيصات تتم برأس مال مُسوّى.",
+    settlementFinality: "نهائية التسوية",
+    settlementFinalityDesc: "بمجرد التخصيص، يكون مركزك نهائياً وغير قابل للإلغاء. نهائية التسوية مضمونة بمعايير مؤسسية.",
+    cashSettlement: "التسوية النقدية",
+    cashSettlementSubtitle: "فك الحفظ — ليست صفقة تداول",
+    cashSettlementDesc: "التسوية النقدية هي عملية فك حفظ تتيح لك الخروج من مركزك — وليست صفقة تداول. يتم تصفية معدنك المخصص بسعر LBMA الفوري ويُضاف العائد إلى حسابك.",
+    cashSettlementPricing: "تسعير LBMA الفوري",
+    cashSettlementPricingDesc: "يُحدد سعر الخروج من سعر LBMA الفوري المباشر، مطروحاً منه هامش خروج بنسبة 0.60–0.80%. يتم تثبيت عروض الأسعار لمدة 120 ثانية.",
+    cashSettlementTimeline: "جدول تسوية T+1",
+    cashSettlementTimelineDesc: "يُخصم رصيد المعدن فوراً عند تأكيد تثبيت السعر. يُضاف العائد إلى حسابك خلال يوم عمل واحد.",
+    cashSettlementFinality: "نهائية غير قابلة للإلغاء",
+    cashSettlementFinalityDesc: "بمجرد تأكيد تثبيت السعر، لا يمكن إلغاء التسوية. هذا يمنع التلاعب بالسوق والتداول المسبق.",
+    cashSettlementRails: "قنوات التسوية",
+    cashSettlementRailsDesc: "يُضاف العائد عبر AUXM (داخلي) أو USDT. ينطبق حد تسوية يومي.",
+    cashSettlementAudit: "مسار التدقيق",
+    cashSettlementAuditDesc: "يتم الاحتفاظ بمسار تدقيق كامل يشمل السعر والطابع الزمني والمبلغ وحالة التسوية.",
+    cashSettlementQuoteLock: "تثبيت عرض السعر لمدة 120 ثانية",
+    cashSettlementNonCancelable: "غير قابل للإلغاء بعد التأكيد",
+    cashSettlementDailyCap: "ينطبق حد التسوية اليومي",
+    cashSettlementFullAudit: "مسار تدقيق كامل محفوظ",
+    compliance: "الامتثال التنظيمي",
+    amlKyc: "إجراءات مكافحة غسل الأموال/اعرف عميلك",
+    amlKycDesc: "امتثال كامل لمعايير مكافحة غسل الأموال وتحديد هوية العملاء الدولية.",
+    dataProtection: "حماية البيانات",
+    dataProtectionDesc: "معالجة متوافقة مع GDPR ومعايير حماية البيانات الدولية.",
+    regulatoryReporting: "التقارير التنظيمية",
+    regulatoryReportingDesc: "الامتثال لالتزامات التقارير التنظيمية في الولايات القضائية المطلوبة.",
+    whatIsAuxite: "ما هي Auxite — وما ليست عليه",
+    auxiteIs: "Auxite هي:",
+    auxiteIsNot: "Auxite ليست:",
+    isDigitalPlatform: "منصة رقمية لإدارة المعادن الثمينة المخصصة",
+    isRwaInfrastructure: "بنية تحتية RWA تعطي الأولوية للشفافية",
+    isCustodyTech: "تكنولوجيا حفظ بمستوى مؤسسي",
+    notBank: "بنك",
+    notStablecoin: "مُصدر عملات مستقرة",
+    notSecurities: "مُصدر أوراق مالية",
+    notYieldGuarantee: "منتج يضمن العائد",
+    legalDocuments: "الوثائق القانونية",
+    termsOfService: "شروط الخدمة",
+    redemptionPolicy: "سياسة الاسترداد",
+    privacyPolicy: "سياسة الخصوصية",
+    verifyCertificate: "التحقق من الشهادة",
+    verifyCertificateDesc: "تحقق من صحة وصلاحية شهادة Auxite الرقمية",
+    goToVerification: "الذهاب إلى صفحة التحقق",
+    viewReserves: "عرض الاحتياطيات",
+    viewAudits: "عرض التدقيقات",
+    viewCustody: "تفاصيل الحفظ",
+  },
+  ru: {
+    title: "Центр Доверия",
+    subtitle: "Институциональная прозрачность, гарантии хранения и нормативное соответствие",
+    coreArchitecture: "Основная Архитектура",
+    segregatedCustody: "Раздельное Хранение",
+    segregatedCustodyDesc: "Активы клиентов никогда не смешиваются с корпоративными средствами. Каждое распределение регистрируется независимо и поддается проверке.",
+    noRehypothecation: "Без Перезалога",
+    noRehypothecationDesc: "Активы клиентов никогда не перезакладываются. Ваши активы всегда принадлежат только вам.",
+    fullAllocation: "Полное Распределение",
+    fullAllocationDesc: "Все драгоценные металлы на 100% физически распределены и разделены по серийному номеру слитка.",
+    custodyNetwork: "Сеть Хранения",
+    zurichVault: "Хранилище Цюриха",
+    zurichVaultDesc: "Хранение в самых безопасных хранилищах Швейцарии с высочайшими стандартами безопасности.",
+    istanbulVault: "Хранилище Стамбула",
+    istanbulVaultDesc: "Одобрено Borsa Istanbul, институциональное хранение под регулированием LBMA.",
+    dubaiVault: "Хранилище Дубая",
+    dubaiVaultDesc: "Объекты с лицензией DMCC, стратегически расположенные для Ближнего Востока и Африки.",
+    verification: "Системы Верификации",
+    proofOfReserves: "Доказательство Резервов",
+    proofOfReservesDesc: "Просмотр общих запасов металлов с верификацией в реальном времени.",
+    auditReports: "Аудиторские Отчеты",
+    auditReportsDesc: "Доступ к результатам независимого аудита третьих сторон.",
+    certificateVerify: "Верификация Сертификата",
+    certificateVerifyDesc: "Проверьте подлинность ваших сертификатов распределения.",
+    settlementArchitecture: "Архитектура Расчетов",
+    auxmSettlement: "Расчетная Единица AUXM",
+    auxmSettlementDesc: "AUXM — внутренняя единица, используемая исключительно для расчетов в инфраструктуре Auxite. Это не криптовалюта и не стейблкоин.",
+    settlementFlow: "Поток Расчетов",
+    settlementFlowDesc: "Внесение средств → Кредит AUXM → Распределение металла. Все распределения осуществляются с помощью рассчитанного капитала.",
+    settlementFinality: "Окончательность Расчета",
+    settlementFinalityDesc: "После распределения ваша позиция окончательна и безотзывна. Окончательность расчета гарантируется на институциональном уровне.",
+    cashSettlement: "Денежный Расчет",
+    cashSettlementSubtitle: "Ликвидация Хранения — Не Сделка",
+    cashSettlementDesc: "Денежный расчет — это ликвидация хранения, позволяющая выйти из позиции — это не сделка. Ваш распределенный металл ликвидируется по спотовой цене LBMA, а выручка зачисляется на ваш счет.",
+    cashSettlementPricing: "Спотовая Цена LBMA",
+    cashSettlementPricingDesc: "Цена выхода определяется по текущей спотовой цене LBMA за вычетом спреда выхода 0,60–0,80%. Котировки фиксируются на 120 секунд.",
+    cashSettlementTimeline: "Срок Расчета T+1",
+    cashSettlementTimelineDesc: "Баланс металла списывается немедленно при подтверждении фиксации цены. Выручка зачисляется на ваш счет в течение 1 рабочего дня.",
+    cashSettlementFinality: "Безотзывная Окончательность",
+    cashSettlementFinalityDesc: "После подтверждения фиксации цены расчет не может быть отменен. Это предотвращает манипуляции рынком и фронтраннинг.",
+    cashSettlementRails: "Каналы Расчета",
+    cashSettlementRailsDesc: "Выручка зачисляется через AUXM (внутренний) или USDT. Применяется дневной лимит расчетов.",
+    cashSettlementAudit: "Аудиторский След",
+    cashSettlementAuditDesc: "Ведется полный аудиторский след, включая цену, временную метку, сумму и статус расчета.",
+    cashSettlementQuoteLock: "Фиксация котировки на 120 секунд",
+    cashSettlementNonCancelable: "Безотзывно после подтверждения",
+    cashSettlementDailyCap: "Применяется дневной лимит расчетов",
+    cashSettlementFullAudit: "Полный аудиторский след ведется",
+    compliance: "Нормативное Соответствие",
+    amlKyc: "Процедуры ПОД/KYC",
+    amlKycDesc: "Полное соответствие международным стандартам противодействия отмыванию денег и идентификации клиентов.",
+    dataProtection: "Защита Данных",
+    dataProtectionDesc: "Обработка в соответствии с GDPR и международными стандартами защиты данных.",
+    regulatoryReporting: "Нормативная Отчетность",
+    regulatoryReportingDesc: "Соответствие обязательствам нормативной отчетности в требуемых юрисдикциях.",
+    whatIsAuxite: "Что такое Auxite — и чем не является",
+    auxiteIs: "Auxite — это:",
+    auxiteIsNot: "Auxite — это не:",
+    isDigitalPlatform: "Цифровая платформа для управления распределенными драгоценными металлами",
+    isRwaInfrastructure: "RWA-инфраструктура с приоритетом прозрачности",
+    isCustodyTech: "Технология хранения институционального уровня",
+    notBank: "Банк",
+    notStablecoin: "Эмитент стейблкоинов",
+    notSecurities: "Эмитент ценных бумаг",
+    notYieldGuarantee: "Продукт с гарантией доходности",
+    legalDocuments: "Юридические Документы",
+    termsOfService: "Условия Использования",
+    redemptionPolicy: "Политика Погашения",
+    privacyPolicy: "Политика Конфиденциальности",
+    verifyCertificate: "Проверить Сертификат",
+    verifyCertificateDesc: "Проверьте подлинность и действительность цифрового сертификата Auxite",
+    goToVerification: "Перейти на Страницу Проверки",
+    viewReserves: "Просмотр Резервов",
+    viewAudits: "Просмотр Аудитов",
+    viewCustody: "Детали Хранения",
   },
 };
 
@@ -391,6 +731,114 @@ export default function TrustCenterPage() {
                     <p className="text-xs text-blue-600/80 dark:text-blue-400/80 mt-1">
                       AUXM is an internal settlement unit used exclusively within the Auxite infrastructure. It is denominated in USD value for settlement purposes only. It is not a cryptocurrency, stablecoin, or transferable asset outside the Auxite ecosystem.
                     </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cash Settlement Section */}
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-[#BFA181]/20 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-800 dark:text-white">{t.cashSettlement}</h3>
+                    <p className="text-xs text-[#BFA181] font-medium">{t.cashSettlementSubtitle}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">{t.cashSettlementDesc}</p>
+
+                {/* Cash Settlement Flow Diagram */}
+                <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
+                  <div className="px-4 py-3 bg-[#BFA181]/20 border border-[#BFA181]/30 rounded-lg text-center">
+                    <p className="text-xs text-[#BFA181] mb-1">Step 1</p>
+                    <p className="font-semibold text-[#BFA181]">Price Lock</p>
+                    <p className="text-xs text-[#BFA181]/70">120s quote window</p>
+                  </div>
+                  <svg className="w-6 h-6 text-[#2F6F62] rotate-90 md:rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                  <div className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg text-center">
+                    <p className="text-xs text-red-500 mb-1">Step 2</p>
+                    <p className="font-semibold text-red-500">Metal Deducted</p>
+                    <p className="text-xs text-red-500/70">Immediate & final</p>
+                  </div>
+                  <svg className="w-6 h-6 text-[#2F6F62] rotate-90 md:rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                  <div className="px-4 py-3 bg-[#2F6F62]/20 border border-[#2F6F62]/30 rounded-lg text-center">
+                    <p className="text-xs text-[#2F6F62] mb-1">Step 3</p>
+                    <p className="font-semibold text-[#2F6F62]">Proceeds Credited</p>
+                    <p className="text-xs text-[#2F6F62]/70">T+1 via AUXM/USDT</p>
+                  </div>
+                </div>
+
+                {/* Cash Settlement Detail Cards */}
+                <div className="grid md:grid-cols-2 gap-4 mb-6">
+                  <div className="p-4 bg-stone-50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg className="w-4 h-4 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                      <h4 className="font-medium text-slate-800 dark:text-white">{t.cashSettlementPricing}</h4>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{t.cashSettlementPricingDesc}</p>
+                  </div>
+                  <div className="p-4 bg-stone-50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg className="w-4 h-4 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <h4 className="font-medium text-slate-800 dark:text-white">{t.cashSettlementTimeline}</h4>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{t.cashSettlementTimelineDesc}</p>
+                  </div>
+                  <div className="p-4 bg-stone-50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      <h4 className="font-medium text-slate-800 dark:text-white">{t.cashSettlementFinality}</h4>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{t.cashSettlementFinalityDesc}</p>
+                  </div>
+                  <div className="p-4 bg-stone-50 dark:bg-slate-800/50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                      </svg>
+                      <h4 className="font-medium text-slate-800 dark:text-white">{t.cashSettlementRails}</h4>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{t.cashSettlementRailsDesc}</p>
+                  </div>
+                </div>
+
+                {/* Audit Trail */}
+                <div className="p-4 bg-stone-50 dark:bg-slate-800/50 rounded-lg mb-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="w-4 h-4 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                    <h4 className="font-medium text-slate-800 dark:text-white">{t.cashSettlementAudit}</h4>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">{t.cashSettlementAuditDesc}</p>
+                </div>
+
+                {/* Key Parameters Summary */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="p-3 bg-[#2F6F62]/10 rounded-lg border border-[#2F6F62]/30 text-center">
+                    <p className="text-xs text-[#2F6F62] font-medium">{t.cashSettlementQuoteLock}</p>
+                  </div>
+                  <div className="p-3 bg-red-500/10 rounded-lg border border-red-500/30 text-center">
+                    <p className="text-xs text-red-600 dark:text-red-400 font-medium">{t.cashSettlementNonCancelable}</p>
+                  </div>
+                  <div className="p-3 bg-[#BFA181]/10 rounded-lg border border-[#BFA181]/30 text-center">
+                    <p className="text-xs text-[#BFA181] font-medium">{t.cashSettlementDailyCap}</p>
+                  </div>
+                  <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/30 text-center">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">{t.cashSettlementFullAudit}</p>
                   </div>
                 </div>
               </div>

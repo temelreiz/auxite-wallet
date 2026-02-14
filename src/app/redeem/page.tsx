@@ -105,6 +105,37 @@ const translations: Record<string, Record<string, string>> = {
     cancel: "Cancel",
     grams: "g",
     perGram: "/g",
+    // Cash Settlement
+    cashSettlementTitle: "CASH SETTLEMENT",
+    settlementFlowDesc: "Custody unwind — convert allocated metal to settlement proceeds",
+    settlementRail: "Settlement Rail",
+    selectRail: "Select how you want to receive proceeds",
+    getQuote: "Get Price Quote",
+    gettingQuote: "Getting quote...",
+    priceLocked: "Price Locked",
+    priceLockedFor: "Price locked for",
+    seconds: "seconds",
+    spotPrice: "LBMA Spot Price",
+    exitSpread: "Exit Spread",
+    settlementPrice: "Settlement Price",
+    totalProceeds: "Total Proceeds",
+    confirmSettlement: "Confirm Settlement",
+    confirming: "Confirming...",
+    priceExpired: "Price quote expired",
+    getNewQuote: "Get New Quote",
+    nonCancelableWarning: "Settlement is non-cancelable after confirmation. Metal will be deducted immediately.",
+    settlementT1: "Settlement: T+1 (1 business day)",
+    settlementLocked: "Settlement Price Locked",
+    settlementLockedDesc: "Your settlement has been submitted. Proceeds will be credited within 1 business day.",
+    settlementId: "Settlement ID",
+    estimatedCredit: "Estimated Credit",
+    settlementStatus: "Status",
+    statusPriceLocked: "Price Locked",
+    statusPending: "Pending Settlement",
+    statusProcessing: "Treasury Processing",
+    statusCompleted: "Completed",
+    quoteExpiredMsg: "Your price quote has expired. Please get a new quote to continue.",
+    dailyCapReached: "Daily settlement cap reached. Please try again tomorrow.",
   },
   tr: {
     pageTitle: "Fiziksel Teslimat",
@@ -185,6 +216,36 @@ const translations: Record<string, Record<string, string>> = {
     cancel: "İptal",
     grams: "g",
     perGram: "/g",
+    cashSettlementTitle: "NAKİT TAKAS",
+    settlementFlowDesc: "Saklama çözümü — tahsisli metali takas gelirine dönüştürün",
+    settlementRail: "Takas Kanalı",
+    selectRail: "Geliri nasıl almak istediğinizi seçin",
+    getQuote: "Fiyat Teklifi Al",
+    gettingQuote: "Teklif alınıyor...",
+    priceLocked: "Fiyat Kilitlendi",
+    priceLockedFor: "Fiyat kilitli kalma süresi",
+    seconds: "saniye",
+    spotPrice: "LBMA Spot Fiyat",
+    exitSpread: "Çıkış Marjı",
+    settlementPrice: "Takas Fiyatı",
+    totalProceeds: "Toplam Gelir",
+    confirmSettlement: "Takası Onayla",
+    confirming: "Onaylanıyor...",
+    priceExpired: "Fiyat teklifi süresi doldu",
+    getNewQuote: "Yeni Teklif Al",
+    nonCancelableWarning: "Onaydan sonra takas iptal edilemez. Metal hemen düşülecektir.",
+    settlementT1: "Takas: T+1 (1 iş günü)",
+    settlementLocked: "Takas Fiyatı Kilitlendi",
+    settlementLockedDesc: "Takasınız gönderildi. Gelir 1 iş günü içinde hesabınıza yatırılacaktır.",
+    settlementId: "Takas ID",
+    estimatedCredit: "Tahmini Kredi",
+    settlementStatus: "Durum",
+    statusPriceLocked: "Fiyat Kilitli",
+    statusPending: "Takas Bekliyor",
+    statusProcessing: "Hazine İşliyor",
+    statusCompleted: "Tamamlandı",
+    quoteExpiredMsg: "Fiyat teklifiniz süresi doldu. Devam etmek için yeni teklif alın.",
+    dailyCapReached: "Günlük takas limiti doldu. Lütfen yarın tekrar deneyin.",
   },
   de: {
     pageTitle: "Physische Einlösung",
@@ -265,6 +326,36 @@ const translations: Record<string, Record<string, string>> = {
     cancel: "Abbrechen",
     grams: "g",
     perGram: "/g",
+    cashSettlementTitle: "BARAUSGLEICH",
+    settlementFlowDesc: "Verwahrungsauflösung — zugeteiltes Metall in Erlöse umwandeln",
+    settlementRail: "Auszahlungsweg",
+    selectRail: "Wählen Sie wie Sie die Erlöse erhalten möchten",
+    getQuote: "Preisangebot erhalten",
+    gettingQuote: "Angebot wird eingeholt...",
+    priceLocked: "Preis gesperrt",
+    priceLockedFor: "Preis gesperrt für",
+    seconds: "Sekunden",
+    spotPrice: "LBMA Spotpreis",
+    exitSpread: "Ausstiegs-Spread",
+    settlementPrice: "Abrechnungspreis",
+    totalProceeds: "Gesamterlös",
+    confirmSettlement: "Abrechnung bestätigen",
+    confirming: "Wird bestätigt...",
+    priceExpired: "Preisangebot abgelaufen",
+    getNewQuote: "Neues Angebot erhalten",
+    nonCancelableWarning: "Abrechnung ist nach Bestätigung nicht stornierbar. Metall wird sofort abgezogen.",
+    settlementT1: "Abrechnung: T+1 (1 Werktag)",
+    settlementLocked: "Abrechnungspreis gesperrt",
+    settlementLockedDesc: "Ihre Abrechnung wurde eingereicht. Erlöse werden innerhalb von 1 Werktag gutgeschrieben.",
+    settlementId: "Abrechnungs-ID",
+    estimatedCredit: "Geschätzte Gutschrift",
+    settlementStatus: "Status",
+    statusPriceLocked: "Preis gesperrt",
+    statusPending: "Abrechnung ausstehend",
+    statusProcessing: "Treasury-Verarbeitung",
+    statusCompleted: "Abgeschlossen",
+    quoteExpiredMsg: "Ihr Preisangebot ist abgelaufen. Bitte neues Angebot einholen.",
+    dailyCapReached: "Tägliches Abrechnungslimit erreicht. Bitte morgen erneut versuchen.",
   },
   fr: {
     pageTitle: "Rachat Physique",
@@ -345,6 +436,36 @@ const translations: Record<string, Record<string, string>> = {
     cancel: "Annuler",
     grams: "g",
     perGram: "/g",
+    cashSettlementTitle: "RÈGLEMENT EN ESPÈCES",
+    settlementFlowDesc: "Dénouement de conservation — convertir le métal alloué en produit de règlement",
+    settlementRail: "Canal de règlement",
+    selectRail: "Sélectionnez comment recevoir les produits",
+    getQuote: "Obtenir un devis",
+    gettingQuote: "Obtention du devis...",
+    priceLocked: "Prix verrouillé",
+    priceLockedFor: "Prix verrouillé pendant",
+    seconds: "secondes",
+    spotPrice: "Prix spot LBMA",
+    exitSpread: "Spread de sortie",
+    settlementPrice: "Prix de règlement",
+    totalProceeds: "Produit total",
+    confirmSettlement: "Confirmer le règlement",
+    confirming: "Confirmation...",
+    priceExpired: "Devis expiré",
+    getNewQuote: "Nouveau devis",
+    nonCancelableWarning: "Le règlement est irrévocable après confirmation. Le métal sera déduit immédiatement.",
+    settlementT1: "Règlement: T+1 (1 jour ouvrable)",
+    settlementLocked: "Prix de règlement verrouillé",
+    settlementLockedDesc: "Votre règlement a été soumis. Les produits seront crédités sous 1 jour ouvrable.",
+    settlementId: "ID de règlement",
+    estimatedCredit: "Crédit estimé",
+    settlementStatus: "Statut",
+    statusPriceLocked: "Prix verrouillé",
+    statusPending: "Règlement en attente",
+    statusProcessing: "Traitement trésorerie",
+    statusCompleted: "Terminé",
+    quoteExpiredMsg: "Votre devis a expiré. Veuillez obtenir un nouveau devis.",
+    dailyCapReached: "Plafond quotidien atteint. Réessayez demain.",
   },
   ar: {
     pageTitle: "الاسترداد المادي",
@@ -425,6 +546,36 @@ const translations: Record<string, Record<string, string>> = {
     cancel: "إلغاء",
     grams: "غ",
     perGram: "/غ",
+    cashSettlementTitle: "تسوية نقدية",
+    settlementFlowDesc: "تصفية الحفظ — تحويل المعدن المخصص إلى عائدات التسوية",
+    settlementRail: "قناة التسوية",
+    selectRail: "اختر كيف تريد استلام العائدات",
+    getQuote: "الحصول على عرض سعر",
+    gettingQuote: "جاري الحصول على العرض...",
+    priceLocked: "السعر مقفل",
+    priceLockedFor: "السعر مقفل لمدة",
+    seconds: "ثانية",
+    spotPrice: "سعر LBMA الفوري",
+    exitSpread: "هامش الخروج",
+    settlementPrice: "سعر التسوية",
+    totalProceeds: "إجمالي العائدات",
+    confirmSettlement: "تأكيد التسوية",
+    confirming: "جاري التأكيد...",
+    priceExpired: "انتهت صلاحية العرض",
+    getNewQuote: "عرض جديد",
+    nonCancelableWarning: "لا يمكن إلغاء التسوية بعد التأكيد. سيتم خصم المعدن فوراً.",
+    settlementT1: "التسوية: T+1 (يوم عمل واحد)",
+    settlementLocked: "سعر التسوية مقفل",
+    settlementLockedDesc: "تم تقديم تسويتك. سيتم إيداع العائدات خلال يوم عمل واحد.",
+    settlementId: "رقم التسوية",
+    estimatedCredit: "الائتمان المقدر",
+    settlementStatus: "الحالة",
+    statusPriceLocked: "السعر مقفل",
+    statusPending: "تسوية معلقة",
+    statusProcessing: "الخزينة تعالج",
+    statusCompleted: "مكتمل",
+    quoteExpiredMsg: "انتهت صلاحية عرض السعر. يرجى الحصول على عرض جديد.",
+    dailyCapReached: "تم الوصول إلى الحد اليومي. يرجى المحاولة غداً.",
   },
   ru: {
     pageTitle: "Физическое погашение",
@@ -505,6 +656,36 @@ const translations: Record<string, Record<string, string>> = {
     cancel: "Отмена",
     grams: "г",
     perGram: "/г",
+    cashSettlementTitle: "ДЕНЕЖНЫЙ РАСЧЁТ",
+    settlementFlowDesc: "Расформирование хранения — конвертация размещённого металла в расчётные средства",
+    settlementRail: "Канал расчёта",
+    selectRail: "Выберите способ получения средств",
+    getQuote: "Получить котировку",
+    gettingQuote: "Получение котировки...",
+    priceLocked: "Цена зафиксирована",
+    priceLockedFor: "Цена зафиксирована на",
+    seconds: "секунд",
+    spotPrice: "Спот-цена LBMA",
+    exitSpread: "Спред выхода",
+    settlementPrice: "Цена расчёта",
+    totalProceeds: "Итого к получению",
+    confirmSettlement: "Подтвердить расчёт",
+    confirming: "Подтверждение...",
+    priceExpired: "Котировка истекла",
+    getNewQuote: "Новая котировка",
+    nonCancelableWarning: "Расчёт не может быть отменён после подтверждения. Металл будет списан немедленно.",
+    settlementT1: "Расчёт: T+1 (1 рабочий день)",
+    settlementLocked: "Цена расчёта зафиксирована",
+    settlementLockedDesc: "Ваш расчёт отправлен. Средства будут зачислены в течение 1 рабочего дня.",
+    settlementId: "ID расчёта",
+    estimatedCredit: "Ориентировочное зачисление",
+    settlementStatus: "Статус",
+    statusPriceLocked: "Цена зафиксирована",
+    statusPending: "Ожидание расчёта",
+    statusProcessing: "Обработка казначейством",
+    statusCompleted: "Завершён",
+    quoteExpiredMsg: "Ваша котировка истекла. Пожалуйста, получите новую котировку.",
+    dailyCapReached: "Дневной лимит расчётов достигнут. Попробуйте завтра.",
   },
 };
 
@@ -566,6 +747,14 @@ export default function RedeemPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ id: string; netAmount: number; method: string; estimatedDelivery: string } | null>(null);
+
+  // Settlement-specific state
+  const [settlementRail, setSettlementRail] = useState<"auxm" | "usdt">("auxm");
+  const [settlementQuote, setSettlementQuote] = useState<any>(null);
+  const [settlementCountdown, setSettlementCountdown] = useState(0);
+  const [gettingQuote, setGettingQuote] = useState(false);
+  const [settlementSuccess, setSettlementSuccess] = useState<any>(null);
+  const [confirmingSettlement, setConfirmingSettlement] = useState(false);
 
   // Load wallet address from localStorage
   useEffect(() => {
@@ -633,6 +822,85 @@ export default function RedeemPage() {
     }
   };
 
+  // ── Settlement: Countdown Timer ──
+  useEffect(() => {
+    if (!settlementQuote || settlementCountdown <= 0) return;
+    const timer = setInterval(() => {
+      setSettlementCountdown((prev) => {
+        if (prev <= 1) {
+          setSettlementQuote(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [settlementQuote, settlementCountdown]);
+
+  // ── Settlement: Get Quote ──
+  const handleGetQuote = async () => {
+    if (!address || !amount) return;
+    setGettingQuote(true);
+    setError(null);
+    setSettlementQuote(null);
+    try {
+      const res = await fetch("/api/settlement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "quote",
+          address,
+          metal: selectedMetal,
+          grams: parseFloat(amount),
+          rail: settlementRail,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSettlementQuote(data.quote);
+        setSettlementCountdown(data.quote.timeRemaining || 120);
+      } else {
+        setError(data.error || "Failed to get quote");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setGettingQuote(false);
+    }
+  };
+
+  // ── Settlement: Execute ──
+  const handleExecuteSettlement = async () => {
+    if (!settlementQuote) return;
+    setConfirmingSettlement(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/settlement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "execute",
+          quoteId: settlementQuote.id,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSettlementSuccess(data.order);
+        setSettlementQuote(null);
+      } else {
+        if (data.error?.includes("expired")) {
+          setSettlementQuote(null);
+          setSettlementCountdown(0);
+        }
+        setError(data.error || "Settlement failed");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setConfirmingSettlement(false);
+    }
+  };
+
   // Computed values
   const amt = parseFloat(amount) || 0;
   const feeRate = config?.feePercent ? config.feePercent / 100 : 0;
@@ -673,6 +941,110 @@ export default function RedeemPage() {
               </svg>
             </div>
             <p className="text-slate-500 dark:text-slate-400">{t.connectWallet}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Settlement success state
+  if (settlementSuccess) {
+    const statusSteps = [
+      { key: "price_locked", label: t.statusPriceLocked },
+      { key: "pending_settlement", label: t.statusPending },
+      { key: "treasury_processing", label: t.statusProcessing },
+      { key: "completed", label: t.statusCompleted },
+    ];
+    const currentStatusIdx = statusSteps.findIndex((s) => s.key === settlementSuccess.status);
+
+    return (
+      <div className={`min-h-screen bg-slate-50 dark:bg-[#0B0F1A] ${isRTL ? "rtl" : ""}`}>
+        <TopNav />
+        <div className="max-w-2xl mx-auto px-4 pt-24">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-800 p-8 text-center">
+            <div className="w-20 h-20 bg-[#2F6F62]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{t.settlementLocked}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{t.settlementLockedDesc}</p>
+
+            {/* Status Tracker */}
+            <div className="flex items-center justify-center gap-1 mb-6 px-4">
+              {statusSteps.map((s, i) => (
+                <div key={s.key} className="flex items-center gap-1">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                    i <= currentStatusIdx
+                      ? "bg-[#2F6F62] text-white"
+                      : "bg-slate-200 dark:bg-slate-700 text-slate-400"
+                  }`}>
+                    {i < currentStatusIdx ? "✓" : i + 1}
+                  </div>
+                  <span className={`text-[10px] font-medium hidden sm:block ${
+                    i <= currentStatusIdx ? "text-[#2F6F62]" : "text-slate-400"
+                  }`}>{s.label}</span>
+                  {i < statusSteps.length - 1 && (
+                    <div className={`w-6 h-0.5 ${i < currentStatusIdx ? "bg-[#2F6F62]" : "bg-slate-200 dark:bg-slate-700"}`} />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Settlement Details */}
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 mb-6 space-y-3 text-left">
+              <div className="flex justify-between">
+                <span className="text-xs text-slate-500">{t.settlementId}</span>
+                <span className="text-xs font-mono text-[#2F6F62]">{settlementSuccess.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-slate-500">{t.metal}</span>
+                <span className="text-xs font-semibold text-slate-800 dark:text-white">{metalNames[selectedMetal]} ({selectedMetal})</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-slate-500">{t.grossAmount}</span>
+                <span className="text-xs font-semibold text-slate-800 dark:text-white">{settlementSuccess.grams}{t.grams}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-slate-500">{t.settlementPrice}</span>
+                <span className="text-xs font-semibold text-[#2F6F62]">${settlementSuccess.settlementPricePerGram?.toFixed(2)}{t.perGram}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-stone-100 dark:border-slate-700">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{t.totalProceeds}</span>
+                <span className="text-sm font-bold text-[#2F6F62]">${settlementSuccess.totalSettlementUSD?.toFixed(2)} {settlementSuccess.settlementRail?.toUpperCase()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-slate-500">{t.estimatedCredit}</span>
+                <span className="text-xs font-semibold text-slate-800 dark:text-white">{settlementSuccess.estimatedCompletion || "T+1"}</span>
+              </div>
+            </div>
+
+            {/* Non-cancelable notice */}
+            <div className="flex items-start gap-3 p-4 mb-6 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30">
+              <svg className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <p className="text-xs text-amber-700 dark:text-amber-400">{t.nonCancelableWarning}</p>
+            </div>
+
+            <div className="flex gap-3">
+              <Link href="/vault" className="flex-1 py-3 text-center rounded-xl border border-stone-200 dark:border-slate-700 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                {t.viewStatus}
+              </Link>
+              <button
+                onClick={() => {
+                  setSettlementSuccess(null);
+                  setSettlementQuote(null);
+                  setStep(1);
+                  setAmount("");
+                  setSelectedMethod(null);
+                  fetchConfig();
+                }}
+                className="flex-1 py-3 text-center rounded-xl bg-[#BFA181] text-sm font-semibold text-black hover:bg-[#D4B47A] transition-colors"
+              >
+                {t.newRedemption}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1030,9 +1402,9 @@ export default function RedeemPage() {
         )}
 
         {/* ═══════════════════════════════════════════════ */}
-        {/* STEP 3: Configure */}
+        {/* STEP 3: Configure (Physical Methods) */}
         {/* ═══════════════════════════════════════════════ */}
-        {!loading && step === 3 && (
+        {!loading && step === 3 && selectedMethod !== "cash" && (
           <div>
             <div className="mb-4">
               <h2 className="text-xs font-semibold tracking-wider text-slate-400 dark:text-slate-500">{t.configureRedemption}</h2>
@@ -1067,13 +1439,13 @@ export default function RedeemPage() {
                 </div>
 
                 {/* Minimum threshold notice for physical methods */}
-                {selectedMethod !== "cash" && amt > 0 && amt < minThreshold && (
+                {amt > 0 && amt < minThreshold && (
                   <p className="text-xs text-red-500 mt-2">{t.belowMinThreshold} ({minThreshold}{t.grams} {t.minimumRequired.toLowerCase()})</p>
                 )}
               </div>
 
               {/* Vault Selection (for pickup & courier) */}
-              {selectedMethod !== "cash" && activeVaults.length > 0 && (
+              {activeVaults.length > 0 && (
                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-5">
                   <p className="text-xs font-semibold tracking-wider text-slate-400 dark:text-slate-500 mb-3">{t.vaultLocation}</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1134,24 +1506,22 @@ export default function RedeemPage() {
                   <div className="flex justify-between">
                     <span className="text-xs text-slate-500">{t.estimatedDelivery}</span>
                     <span className="text-sm font-semibold text-slate-800 dark:text-white">
-                      {selectedMethod === "cash" ? t.instant : `${sla.min}-${sla.max} ${t.businessDays}`}
+                      {`${sla.min}-${sla.max} ${t.businessDays}`}
                     </span>
                   </div>
                 </div>
               )}
 
-              {/* Fabrication Note (for physical methods) */}
-              {selectedMethod !== "cash" && (
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-[#BFA181]/5 dark:bg-[#BFA181]/10 border border-[#BFA181]/20">
-                  <svg className="w-5 h-5 text-[#BFA181] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <p className="text-xs font-semibold text-[#BFA181] mb-1">{t.fabricationNote}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{t.fabricationDesc}</p>
-                  </div>
+              {/* Fabrication Note */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-[#BFA181]/5 dark:bg-[#BFA181]/10 border border-[#BFA181]/20">
+                <svg className="w-5 h-5 text-[#BFA181] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-xs font-semibold text-[#BFA181] mb-1">{t.fabricationNote}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t.fabricationDesc}</p>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Navigation */}
@@ -1164,10 +1534,9 @@ export default function RedeemPage() {
               </button>
               <button
                 onClick={() => {
-                  // Validate
                   if (amt <= 0) { setError(t.enterAmount); return; }
                   if (userInfo && amt > userInfo.available) { setError(t.insufficientBalance); return; }
-                  if (selectedMethod !== "cash" && amt < minThreshold) { setError(t.belowMinThreshold); return; }
+                  if (amt < minThreshold) { setError(t.belowMinThreshold); return; }
                   setError(null);
                   setStep(4);
                 }}
@@ -1181,9 +1550,225 @@ export default function RedeemPage() {
         )}
 
         {/* ═══════════════════════════════════════════════ */}
-        {/* STEP 4: Review & Confirm */}
+        {/* STEP 3: Cash Settlement Flow */}
         {/* ═══════════════════════════════════════════════ */}
-        {!loading && step === 4 && (
+        {!loading && step === 3 && selectedMethod === "cash" && (
+          <div>
+            <div className="mb-4">
+              <h2 className="text-xs font-semibold tracking-wider text-slate-400 dark:text-slate-500">{t.cashSettlementTitle}</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t.settlementFlowDesc}</p>
+            </div>
+
+            <div className="space-y-4">
+              {/* Amount Input */}
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-5">
+                <div className="flex justify-between items-center mb-3">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">{t.amount} ({t.grams})</label>
+                  <span className="text-xs text-slate-400">
+                    {t.maxAvailable}: <span className="font-bold text-[#2F6F62]">{userInfo?.available.toFixed(2) || "0"}{t.grams}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => { setAmount(e.target.value); setError(null); setSettlementQuote(null); }}
+                    placeholder={t.enterAmount}
+                    className="flex-1 text-2xl font-bold text-slate-800 dark:text-white bg-transparent outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                    min="0"
+                    step="0.01"
+                  />
+                  <span className="text-lg text-slate-400 font-semibold">{t.grams}</span>
+                  <button
+                    onClick={() => { setAmount(userInfo?.available.toFixed(2) || "0"); setSettlementQuote(null); }}
+                    className="px-3 py-1.5 rounded-lg bg-[#BFA181]/10 text-xs font-bold text-[#BFA181] hover:bg-[#BFA181]/20 transition-colors"
+                  >
+                    {t.useMax}
+                  </button>
+                </div>
+              </div>
+
+              {/* Settlement Rail Selector */}
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-5">
+                <p className="text-xs font-semibold tracking-wider text-slate-400 dark:text-slate-500 mb-1">{t.settlementRail}</p>
+                <p className="text-[11px] text-slate-400 mb-3">{t.selectRail}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => { setSettlementRail("auxm"); setSettlementQuote(null); }}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      settlementRail === "auxm"
+                        ? "border-[#2F6F62] bg-[#2F6F62]/5 dark:bg-[#2F6F62]/10"
+                        : "border-stone-200 dark:border-slate-700 hover:border-stone-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-[#2F6F62]/10 rounded-full flex items-center justify-center">
+                        <span className="text-xs font-bold text-[#2F6F62]">Ⓜ</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-800 dark:text-white">AUXM</p>
+                        <p className="text-[10px] text-slate-400">Internal</p>
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => { setSettlementRail("usdt"); setSettlementQuote(null); }}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      settlementRail === "usdt"
+                        ? "border-[#2F6F62] bg-[#2F6F62]/5 dark:bg-[#2F6F62]/10"
+                        : "border-stone-200 dark:border-slate-700 hover:border-stone-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                        <span className="text-xs font-bold text-emerald-500">₮</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-800 dark:text-white">USDT</p>
+                        <p className="text-[10px] text-slate-400">Tether</p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quote Section — No quote yet */}
+              {!settlementQuote && (
+                <div className="mt-2">
+                  <button
+                    onClick={handleGetQuote}
+                    disabled={gettingQuote || !amount || amt <= 0 || (userInfo ? amt > userInfo.available : false)}
+                    className="w-full py-4 rounded-xl bg-[#2F6F62] text-sm font-bold text-white hover:bg-[#245A4E] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {gettingQuote ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        {t.gettingQuote}
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                        {t.getQuote}
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {/* Quote Received — Price Breakdown with Countdown */}
+              {settlementQuote && settlementCountdown > 0 && (
+                <div className="bg-white dark:bg-slate-900 rounded-xl border-2 border-[#2F6F62] p-5 space-y-4">
+                  {/* Countdown Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-[#2F6F62] rounded-full animate-pulse" />
+                      <span className="text-xs font-bold text-[#2F6F62]">{t.priceLocked}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-[#2F6F62]/10 px-3 py-1.5 rounded-full">
+                      <svg className="w-4 h-4 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className={`text-sm font-mono font-bold ${settlementCountdown <= 30 ? "text-red-500" : "text-[#2F6F62]"}`}>
+                        {Math.floor(settlementCountdown / 60)}:{(settlementCountdown % 60).toString().padStart(2, "0")}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Countdown Progress Bar */}
+                  <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-1000 ${settlementCountdown <= 30 ? "bg-red-500" : "bg-[#2F6F62]"}`}
+                      style={{ width: `${(settlementCountdown / 120) * 100}%` }}
+                    />
+                  </div>
+
+                  {/* Price Breakdown */}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex justify-between">
+                      <span className="text-xs text-slate-500">{t.metal}</span>
+                      <span className="text-sm font-semibold text-slate-800 dark:text-white">{settlementQuote.grams}{t.grams} {metalNames[selectedMetal]}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-slate-500">{t.spotPrice}</span>
+                      <span className="text-sm font-semibold text-slate-800 dark:text-white">${settlementQuote.spotPricePerGram?.toFixed(2)}{t.perGram}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-slate-500">{t.exitSpread}</span>
+                      <span className="text-sm text-amber-500 font-semibold">-{settlementQuote.exitSpreadPercent?.toFixed(2)}%</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-stone-100 dark:border-slate-800">
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{t.settlementPrice}</span>
+                      <span className="text-sm font-bold text-[#2F6F62]">${settlementQuote.settlementPricePerGram?.toFixed(2)}{t.perGram}</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-stone-100 dark:border-slate-800">
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{t.totalProceeds}</span>
+                      <span className="text-lg font-bold text-[#2F6F62]">${settlementQuote.totalSettlementUSD?.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-slate-500">{t.settlementRail}</span>
+                      <span className="text-sm font-semibold text-slate-800 dark:text-white">{settlementQuote.settlementRail?.toUpperCase()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-slate-500">{t.estimatedDelivery}</span>
+                      <span className="text-sm font-semibold text-slate-800 dark:text-white">{t.settlementT1}</span>
+                    </div>
+                  </div>
+
+                  {/* Non-cancelable Warning */}
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30">
+                    <svg className="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <p className="text-[11px] text-red-600 dark:text-red-400">{t.nonCancelableWarning}</p>
+                  </div>
+
+                  {/* Confirm Settlement Button */}
+                  <button
+                    onClick={handleExecuteSettlement}
+                    disabled={confirmingSettlement}
+                    className="w-full py-4 rounded-xl bg-[#2F6F62] text-sm font-bold text-white hover:bg-[#245A4E] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                  >
+                    {confirmingSettlement ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        {t.confirming}
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        {t.confirmSettlement}
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {/* Quote Expired */}
+              {settlementQuote === null && settlementCountdown === 0 && !gettingQuote && amt > 0 && (
+                <div className="hidden" />
+              )}
+            </div>
+
+            {/* Navigation */}
+            <div className="mt-8 flex justify-start">
+              <button
+                onClick={() => { setStep(2); setSettlementQuote(null); setSettlementCountdown(0); }}
+                className="px-6 py-3 rounded-xl border border-stone-200 dark:border-slate-700 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                {t.back}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════ */}
+        {/* STEP 4: Review & Confirm (Physical only) */}
+        {/* ═══════════════════════════════════════════════ */}
+        {!loading && step === 4 && selectedMethod !== "cash" && (
           <div>
             <div className="mb-4">
               <h2 className="text-xs font-semibold tracking-wider text-slate-400 dark:text-slate-500">{t.reviewTitle}</h2>
@@ -1226,7 +1811,7 @@ export default function RedeemPage() {
               <div className="flex justify-between">
                 <span className="text-xs text-slate-500">{t.deliverySLA}</span>
                 <span className="text-sm font-semibold text-slate-800 dark:text-white">
-                  {selectedMethod === "cash" ? t.instant : `${sla.min}-${sla.max} ${t.businessDays}`}
+                  {`${sla.min}-${sla.max} ${t.businessDays}`}
                 </span>
               </div>
             </div>
