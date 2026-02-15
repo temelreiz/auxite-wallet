@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL
   ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/google/callback`
-  : 'https://wallet.auxite.io/api/auth/google/callback';
+  : 'https://vault.auxite.io/api/auth/google/callback';
 
 export async function GET(request: NextRequest) {
   // Generate state for CSRF protection

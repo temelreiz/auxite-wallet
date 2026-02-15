@@ -15,7 +15,7 @@ const CRON_SECRET = process.env.CRON_SECRET;
 // Crypto fiyatlarını al
 async function getCryptoPrices(): Promise<Record<string, number>> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://wallet.auxite.io";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io";
     const res = await fetch(`${baseUrl}/api/crypto`, { next: { revalidate: 0 } });
     const data = await res.json();
 

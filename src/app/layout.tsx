@@ -9,6 +9,7 @@ import { ToastProvider } from "@/components/ToastProvider";
 import { ToastProvider as UIToastProvider } from "@/components/ui/Toast";
 import { LanguageProvider } from "@/components/LanguageContext";
 import { ChainGuard } from "@/components/ChainGuard";
+import { SecurityBanner } from "@/components/SecurityBanner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -72,6 +73,7 @@ export default function RootLayout({
           <UIToastProvider>
             <Web3Provider>
               <LanguageProvider>
+                <SecurityBanner />
                 <ChainGuard />
                 {children}
               </LanguageProvider>

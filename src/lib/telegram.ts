@@ -100,7 +100,7 @@ ${notification.txHash ? `<b>TxHash:</b> <code>${notification.txHash.slice(0, 16)
 2️⃣ Kuveyt Türk: TRY yatır
 3️⃣ Kuveyt Türk: Altın al
 
-📊 <a href="https://wallet.auxite.io/admin">Admin Panel</a>
+📊 <a href="https://vault.auxite.io/admin">Admin Panel</a>
 `;
 
   return sendTelegramMessage(message.trim());
@@ -146,7 +146,7 @@ ${trade.txHash ? `<b>TxHash:</b> <code>${trade.txHash.slice(0, 16)}...</code>` :
 3️⃣ Kuveyt Türk: Altın al
 4️⃣ Admin Panel'den "Tamamla" işaretle
 
-📊 <a href="https://wallet.auxite.io/admin?tab=operations">Admin Panel - Operations</a>
+📊 <a href="https://vault.auxite.io/admin?tab=operations">Admin Panel - Operations</a>
 `;
 
   return sendTelegramMessage(message.trim());
@@ -175,7 +175,7 @@ export async function sendDailySummary(stats: {
 
 ⏳ <b>Bekleyen Ops:</b> ${stats.pendingOps}
 
-📊 <a href="https://wallet.auxite.io/admin">Admin Panel</a>
+📊 <a href="https://vault.auxite.io/admin">Admin Panel</a>
 `;
 
   return sendTelegramMessage(message.trim());

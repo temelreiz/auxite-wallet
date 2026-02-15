@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io';
 
 export async function POST(request: NextRequest) {
   try {

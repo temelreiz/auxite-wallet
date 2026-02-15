@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { authLimiter, withRateLimit } from '@/lib/security/rate-limiter';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -19,6 +20,10 @@ const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 attempts per minute per IP
+    const rateLimited = await withRateLimit(request, authLimiter);
+    if (rateLimited) return rateLimited;
+
     const body = await request.json();
     const { email, token, newPassword } = body;
 

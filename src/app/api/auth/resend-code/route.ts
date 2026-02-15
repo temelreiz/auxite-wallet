@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { sendEmail } from '@/lib/email-service';
+import { authLimiter, withRateLimit } from '@/lib/security/rate-limiter';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -17,6 +18,10 @@ function generateVerificationCode(): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 attempts per minute per IP
+    const rateLimited = await withRateLimit(request, authLimiter);
+    if (rateLimited) return rateLimited;
+
     const body = await request.json();
     const { email } = body;
 
@@ -57,7 +62,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Send email
-    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io'}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(normalizedEmail)}`;
+    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io'}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(normalizedEmail)}`;
 
     await sendEmail({
       type: 'verification-code',

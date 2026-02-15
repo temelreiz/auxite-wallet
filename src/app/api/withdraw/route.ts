@@ -239,7 +239,7 @@ export async function POST(request: NextRequest) {
 
     const baseUrl = request.headers.get("host")
       ? `https://${request.headers.get("host")}`
-      : process.env.NEXT_PUBLIC_APP_URL || "https://wallet.auxite.io";
+      : process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io";
 
     try {
       const balanceRes = await fetch(`${baseUrl}/api/user/balance?address=${normalizedAddress}`);

@@ -161,7 +161,32 @@ export async function withAdminAuth(
     );
   }
 
+  // Log admin action
+  await logAdminAction(validation.address!, request);
+
   return handler(validation.address!);
+}
+
+/**
+ * Log admin endpoint access for audit trail
+ */
+async function logAdminAction(address: string, request: NextRequest): Promise<void> {
+  try {
+    const ip = getClientIP(request);
+    const url = new URL(request.url);
+    const entry = JSON.stringify({
+      address,
+      ip,
+      method: request.method,
+      path: url.pathname,
+      timestamp: Date.now(),
+      userAgent: request.headers.get("user-agent") || "unknown",
+    });
+    await redis.lpush("admin:audit:actions", entry);
+    await redis.ltrim("admin:audit:actions", 0, 999); // Keep last 1000 actions
+  } catch {
+    // Don't block admin actions if logging fails
+  }
 }
 
 /**

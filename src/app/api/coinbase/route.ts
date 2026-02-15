@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
         order_id: orderId,
         requested_coin: coin || "any",
       },
-      redirect_url: `https://wallet.auxite.io/wallet?deposit=success`,
-      cancel_url: `https://wallet.auxite.io/wallet?deposit=cancelled`,
+      redirect_url: `https://vault.auxite.io/wallet?deposit=success`,
+      cancel_url: `https://vault.auxite.io/wallet?deposit=cancelled`,
     };
 
     const response = await fetch(`${COINBASE_API_URL}/charges`, {

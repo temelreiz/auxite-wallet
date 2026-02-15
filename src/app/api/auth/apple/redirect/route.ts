@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID || 'com.auxite.wallet';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io';
 const REDIRECT_URI = `${APP_URL}/api/auth/apple/callback`;
 
 export async function GET(request: NextRequest) {

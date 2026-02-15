@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
       pay_currency: coinConfig.currency,
       order_id: orderId,
       order_description: `Auxite Wallet Deposit - ${coin}`,
-      ipn_callback_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://wallet.auxite.io"}/api/nowpayments/ipn`,
+      ipn_callback_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io"}/api/nowpayments/ipn`,
     };
 
     const response = await fetch(`${NOWPAYMENTS_API_URL}/payment`, {

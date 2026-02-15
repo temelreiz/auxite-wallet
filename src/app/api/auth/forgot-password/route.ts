@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { randomBytes } from 'crypto';
+import { authLimiter, withRateLimit } from '@/lib/security/rate-limiter';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -12,6 +13,10 @@ const redis = new Redis({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 attempts per minute per IP
+    const rateLimited = await withRateLimit(request, authLimiter);
+    if (rateLimited) return rateLimited;
+
     const body = await request.json();
     const { email } = body;
 
@@ -78,7 +83,7 @@ export async function POST(request: NextRequest) {
     // ══════════════════════════════════════════════════════════════
     // SEND RESET EMAIL
     // ══════════════════════════════════════════════════════════════
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io'}/reset-password?token=${resetToken}&email=${encodeURIComponent(normalizedEmail)}`;
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io'}/reset-password?token=${resetToken}&email=${encodeURIComponent(normalizedEmail)}`;
 
     await redis.lpush('email:queue', JSON.stringify({
       type: 'password-reset',

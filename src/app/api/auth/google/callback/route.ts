@@ -17,8 +17,8 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 const REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL 
   ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/google/callback`
-  : 'https://wallet.auxite.io/api/auth/google/callback';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io';
+  : 'https://vault.auxite.io/api/auth/google/callback';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io';
 
 export async function GET(request: NextRequest) {
   try {

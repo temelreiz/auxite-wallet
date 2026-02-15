@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
     // ══════════════════════════════════════════════════════════════
     // SEND VERIFICATION EMAIL
     // ══════════════════════════════════════════════════════════════
-    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://wallet.auxite.io'}/verify-email?token=${verificationToken}&email=${encodeURIComponent(normalizedEmail)}`;
+    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io'}/verify-email?token=${verificationToken}&email=${encodeURIComponent(normalizedEmail)}`;
 
     await redis.lpush('email:queue', JSON.stringify({
       type: 'verification',
