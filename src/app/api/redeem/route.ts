@@ -7,6 +7,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { sendEmail } from '@/lib/email';
+import { getUserBalance } from '@/lib/redis';
+import { ethers } from 'ethers';
+import { METAL_TOKENS } from '@/config/contracts-v8';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'physicalredemption@auxite.io';
 
@@ -14,6 +17,73 @@ const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
+
+// ── Blockchain balance helpers (same as user/balance) ──
+const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || "https://mainnet.base.org";
+const ERC20_ABI = ["function balanceOf(address owner) view returns (uint256)"];
+const TOKEN_DECIMALS: Record<string, number> = { auxg: 3, auxs: 3, auxpt: 3, auxpd: 3 };
+
+async function getOnChainMetalBalance(address: string, metal: string): Promise<number> {
+  try {
+    const metalUpper = metal.toUpperCase();
+    const contractAddress = METAL_TOKENS[metalUpper as keyof typeof METAL_TOKENS];
+    if (!contractAddress) return 0;
+    const provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
+    const contract = new ethers.Contract(contractAddress, ERC20_ABI, provider);
+    const balance = await contract.balanceOf(address);
+    return parseFloat(ethers.formatUnits(balance, TOKEN_DECIMALS[metal.toLowerCase()] || 3));
+  } catch {
+    return 0;
+  }
+}
+
+async function isCustodialWallet(address: string): Promise<boolean> {
+  try {
+    const userId = await redis.get(`user:address:${address.toLowerCase()}`);
+    if (userId) {
+      const userData = await redis.hgetall(`user:${userId}`);
+      if (userData?.walletType === 'custodial') return true;
+    }
+    const directData = await redis.hgetall(`user:${address.toLowerCase()}`);
+    return directData?.walletType === 'custodial';
+  } catch {
+    return false;
+  }
+}
+
+async function getAllocationAmount(address: string, metal: string): Promise<number> {
+  try {
+    const userUid = await redis.get(`user:address:${address.toLowerCase()}`);
+    if (!userUid) return 0;
+    const allocDataRaw = await redis.get(`allocation:user:${userUid}:list`);
+    if (!allocDataRaw) return 0;
+    const allocList = typeof allocDataRaw === 'string' ? JSON.parse(allocDataRaw) : allocDataRaw;
+    let total = 0;
+    for (const alloc of allocList) {
+      if (alloc.status === 'active' && alloc.metal?.toLowerCase() === metal.toLowerCase()) {
+        total += parseFloat(alloc.grams) || 0;
+      }
+    }
+    return total;
+  } catch {
+    return 0;
+  }
+}
+
+async function getHybridMetalBalance(address: string, metal: string): Promise<number> {
+  const metalLower = metal.toLowerCase();
+  const redisBalance = await getUserBalance(address);
+  const redisBal = parseFloat(String((redisBalance as any)[metalLower] || 0));
+  const allocBal = await getAllocationAmount(address, metalLower);
+  const custodial = await isCustodialWallet(address);
+
+  if (custodial) {
+    return redisBal + allocBal;
+  } else {
+    const onChainBal = await getOnChainMetalBalance(address, metalLower);
+    return onChainBal + redisBal + allocBal;
+  }
+}
 
 // ── Thresholds ──
 const MIN_THRESHOLDS: Record<string, number> = {
@@ -67,15 +137,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: `Physical redemption for ${metal} is currently unavailable` });
   }
 
-  // User balance check
+  // User balance check — hybrid (Redis + on-chain + allocation)
   let userBalance = 0;
   let encumbered = 0;
   if (address) {
-    const balKey = `user:${address.toLowerCase()}:balance`;
-    const bal = await redis.hget(balKey, metal.toLowerCase());
-    userBalance = parseFloat(bal as string || '0');
+    // Get hybrid balance (same logic as /api/user/balance)
+    userBalance = await getHybridMetalBalance(address, metal);
 
-    // Check encumbered (staked) amount
+    // Check encumbered (staked) amount — check both staking formats
+    // Format 1: stakes:{address} (legacy)
     const stakesRaw = await redis.get(`stakes:${address.toLowerCase()}`);
     if (stakesRaw) {
       const stakes = typeof stakesRaw === 'string' ? JSON.parse(stakesRaw) : stakesRaw;
@@ -86,6 +156,21 @@ export async function GET(request: NextRequest) {
           }
         }
       }
+    }
+
+    // Format 2: user:{address}:staking (current format used by /api/user/balance)
+    const stakingKey = `user:${address.toLowerCase()}:staking`;
+    const stakingPositions = await redis.lrange(stakingKey, 0, -1);
+    const now = Date.now();
+    for (const pos of stakingPositions) {
+      try {
+        const position = typeof pos === 'string' ? JSON.parse(pos) : pos;
+        if (position.status === 'active' && (position.metal || '').toUpperCase() === metal) {
+          if (!position.endDate || position.endDate > now) {
+            encumbered += parseFloat(position.amount) || 0;
+          }
+        }
+      } catch { /* skip invalid */ }
     }
   }
 
@@ -170,11 +255,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check balance
+    // Check balance — hybrid (Redis + on-chain + allocation)
     const balKey = `user:${address.toLowerCase()}:balance`;
-    const bal = parseFloat(await redis.hget(balKey, upperMetal.toLowerCase()) as string || '0');
+    const bal = await getHybridMetalBalance(address, upperMetal);
 
-    // Check encumbered
+    // Check encumbered (staked) — both formats
     let encumbered = 0;
     const stakesRaw = await redis.get(`stakes:${address.toLowerCase()}`);
     if (stakesRaw) {
@@ -186,6 +271,19 @@ export async function POST(request: NextRequest) {
           }
         }
       }
+    }
+    const stakingKey = `user:${address.toLowerCase()}:staking`;
+    const stakingPositions = await redis.lrange(stakingKey, 0, -1);
+    const now = Date.now();
+    for (const pos of stakingPositions) {
+      try {
+        const position = typeof pos === 'string' ? JSON.parse(pos) : pos;
+        if (position.status === 'active' && (position.metal || '').toUpperCase() === upperMetal) {
+          if (!position.endDate || position.endDate > now) {
+            encumbered += parseFloat(position.amount) || 0;
+          }
+        }
+      } catch { /* skip invalid */ }
     }
 
     const available = bal - encumbered;
