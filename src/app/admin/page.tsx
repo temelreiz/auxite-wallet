@@ -393,6 +393,7 @@ const TABS = [
   { id: "depositMonitor", label: "Deposit Scanner", icon: "📡" },
   { id: "redemption", label: "Redemption", icon: "📦" },
   { id: "cashSettlement", label: "Cash Settlement", icon: "💰" },
+  { id: "relationshipManagers", label: "RM / CRM", icon: "🤝" },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -641,6 +642,93 @@ export default function AdminDashboard() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [showWebsiteModal, setShowWebsiteModal] = useState<string | null>(null);
 
+  // Relationship Manager CRM
+  const [rmList, setRmList] = useState<any[]>([]);
+  const [rmStats, setRmStats] = useState<any>(null);
+  const [rmLoading, setRmLoading] = useState(false);
+  const [showRmForm, setShowRmForm] = useState(false);
+  const [editingRm, setEditingRm] = useState<any>(null);
+  const [rmFormData, setRmFormData] = useState({ name: '', title: 'Relationship Manager', email: '', phone: '', whatsapp: '', capacity: 100, languages: 'en', specializations: '' });
+  const [rmSaving, setRmSaving] = useState(false);
+  const [rmClients, setRmClients] = useState<string[]>([]);
+  const [viewingRmClients, setViewingRmClients] = useState<string | null>(null);
+
+  const loadRelationshipManagers = async () => {
+    setRmLoading(true);
+    try {
+      const token = sessionStorage.getItem("auxite_admin_token");
+      const res = await fetch("/api/admin/relationship-managers", { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        setRmList(data.managers || []);
+        setRmStats(data.stats || null);
+      }
+    } catch (e) { console.error("RM load error:", e); }
+    setRmLoading(false);
+  };
+
+  const saveRM = async () => {
+    setRmSaving(true);
+    try {
+      const token = sessionStorage.getItem("auxite_admin_token");
+      const langs = rmFormData.languages.split(',').map((l: string) => l.trim()).filter(Boolean);
+      const specs = rmFormData.specializations ? rmFormData.specializations.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+      const body = editingRm
+        ? { action: 'update', id: editingRm.id, ...rmFormData, languages: langs, specializations: specs }
+        : { action: 'create', ...rmFormData, languages: langs, specializations: specs };
+      const res = await fetch("/api/admin/relationship-managers", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        setShowRmForm(false);
+        setEditingRm(null);
+        setRmFormData({ name: '', title: 'Relationship Manager', email: '', phone: '', whatsapp: '', capacity: 100, languages: 'en', specializations: '' });
+        loadRelationshipManagers();
+      }
+    } catch (e) { console.error("RM save error:", e); }
+    setRmSaving(false);
+  };
+
+  const deactivateRM = async (id: string) => {
+    if (!confirm('Bu RM devre dışı bırakılacak ve müşterileri yeniden atanacak. Emin misiniz?')) return;
+    try {
+      const token = sessionStorage.getItem("auxite_admin_token");
+      await fetch("/api/admin/relationship-managers", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'deactivate', id }),
+      });
+      loadRelationshipManagers();
+    } catch (e) { console.error("RM deactivate error:", e); }
+  };
+
+  const deleteRM = async (id: string) => {
+    if (!confirm('Bu ilişki yöneticisini silmek istediğinize emin misiniz? Tüm müşterileri yeniden atanacak.')) return;
+    try {
+      const token = sessionStorage.getItem("auxite_admin_token");
+      await fetch("/api/admin/relationship-managers", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'delete', id }),
+      });
+      loadRelationshipManagers();
+    } catch (e) { console.error("RM delete error:", e); }
+  };
+
+  const viewRmClients = async (rmId: string) => {
+    try {
+      const token = sessionStorage.getItem("auxite_admin_token");
+      const res = await fetch(`/api/admin/relationship-managers?id=${rmId}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        setRmClients(data.clients || []);
+        setViewingRmClients(rmId);
+      }
+    } catch (e) { console.error("RM clients error:", e); }
+  };
+
   // ═══════════════════════════════════════════════════════════════════════════════
   // AUTH LOGIC - Only password based
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -694,6 +782,9 @@ export default function AdminDashboard() {
     if (activeTab === "mint") {
       loadPlatformStock();
       intervals.push(setInterval(loadPlatformStock, 60000));
+    }
+    if (activeTab === "relationshipManagers") {
+      loadRelationshipManagers();
     }
 
     return () => intervals.forEach(clearInterval);
@@ -5314,6 +5405,230 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
+
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {/* RELATIONSHIP MANAGERS / CRM TAB                                        */}
+          {/* ═══════════════════════════════════════════════════════════════════════ */}
+          {activeTab === "relationshipManagers" && (
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-white">Relationship Managers</h2>
+                  <p className="text-xs text-slate-400">Müşteri ilişki yönetimi ve CRM</p>
+                </div>
+                <button
+                  onClick={() => { setEditingRm(null); setRmFormData({ name: '', title: 'Relationship Manager', email: '', phone: '', whatsapp: '', capacity: 100, languages: 'en', specializations: '' }); setShowRmForm(true); }}
+                  className="px-4 py-2 bg-[#2F6F62] text-white font-semibold rounded-lg text-sm hover:bg-[#2F6F62]/80"
+                >
+                  + Yeni RM Ekle
+                </button>
+              </div>
+
+              {/* Stats Cards */}
+              {rmStats && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                    <p className="text-xs text-slate-400 mb-1">Toplam RM</p>
+                    <p className="text-2xl font-bold text-white">{rmStats.totalManagers}</p>
+                    <p className="text-xs text-[#2F6F62]">{rmStats.activeManagers} aktif</p>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                    <p className="text-xs text-slate-400 mb-1">Atanmış Müşteri</p>
+                    <p className="text-2xl font-bold text-white">{rmStats.totalClients}</p>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                    <p className="text-xs text-slate-400 mb-1">Ort. Yük</p>
+                    <p className="text-2xl font-bold text-white">{rmStats.averageLoad}</p>
+                    <p className="text-xs text-slate-500">müşteri/RM</p>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                    <p className="text-xs text-slate-400 mb-1">Atanmamış</p>
+                    <p className="text-2xl font-bold text-amber-400">{rmStats.unassignedUsers}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* RM List */}
+              {rmLoading ? (
+                <div className="text-center py-12 text-slate-500">Yükleniyor...</div>
+              ) : rmList.length === 0 ? (
+                <div className="bg-slate-800/50 rounded-xl p-8 border border-slate-700 text-center">
+                  <p className="text-slate-400 mb-4">Henüz ilişki yöneticisi eklenmedi</p>
+                  <button
+                    onClick={() => setShowRmForm(true)}
+                    className="px-4 py-2 bg-[#2F6F62] text-white font-semibold rounded-lg text-sm"
+                  >
+                    İlk RM&apos;yi Ekle
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {rmList.map((rm: any) => (
+                    <div key={rm.id} className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+                      <div className="flex items-start gap-3 mb-4">
+                        <div className="w-12 h-12 rounded-full bg-[#BFA181]/20 flex items-center justify-center text-[#BFA181] font-bold text-lg flex-shrink-0">
+                          {rm.initials || rm.name?.charAt(0) || '?'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-semibold truncate">{rm.name}</p>
+                          <p className="text-xs text-slate-400">{rm.title}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{rm.email}</p>
+                        </div>
+                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                          rm.status === 'active' ? 'bg-[#2F6F62]/20 text-[#2F6F62]' :
+                          rm.status === 'on_leave' ? 'bg-amber-500/20 text-amber-400' :
+                          'bg-red-500/20 text-red-400'
+                        }`}>
+                          {rm.status === 'active' ? 'Aktif' : rm.status === 'on_leave' ? 'İzinde' : 'Pasif'}
+                        </span>
+                      </div>
+
+                      {/* Capacity Bar */}
+                      <div className="mb-3">
+                        <div className="flex justify-between text-xs text-slate-400 mb-1">
+                          <span>Müşteri Yükü</span>
+                          <span>{rm.currentLoad || 0} / {rm.capacity}</span>
+                        </div>
+                        <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              (rm.utilization || 0) > 90 ? 'bg-red-500' :
+                              (rm.utilization || 0) > 70 ? 'bg-amber-500' : 'bg-[#2F6F62]'
+                            }`}
+                            style={{ width: `${Math.min(rm.utilization || 0, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {rm.languages?.map((l: string) => (
+                          <span key={l} className="px-1.5 py-0.5 text-[10px] bg-slate-700 text-slate-300 rounded">{l.toUpperCase()}</span>
+                        ))}
+                        {rm.phone && <span className="text-[10px] text-slate-500 ml-auto">{rm.phone}</span>}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingRm(rm);
+                            setRmFormData({
+                              name: rm.name, title: rm.title, email: rm.email, phone: rm.phone || '',
+                              whatsapp: rm.whatsapp || '', capacity: rm.capacity || 100,
+                              languages: (rm.languages || []).join(', '),
+                              specializations: (rm.specializations || []).join(', '),
+                            });
+                            setShowRmForm(true);
+                          }}
+                          className="flex-1 py-1.5 text-xs font-medium bg-slate-700 text-white rounded-lg hover:bg-slate-600"
+                        >
+                          Düzenle
+                        </button>
+                        <button
+                          onClick={() => viewRmClients(rm.id)}
+                          className="flex-1 py-1.5 text-xs font-medium bg-[#BFA181]/15 text-[#BFA181] rounded-lg hover:bg-[#BFA181]/25"
+                        >
+                          Müşteriler ({rm.currentLoad || 0})
+                        </button>
+                        <button
+                          onClick={() => rm.status === 'active' ? deactivateRM(rm.id) : deleteRM(rm.id)}
+                          className="py-1.5 px-3 text-xs font-medium bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20"
+                        >
+                          {rm.status === 'active' ? 'Deaktif' : 'Sil'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add/Edit RM Modal */}
+              {showRmForm && (
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowRmForm(false)}>
+                  <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-md border border-slate-700" onClick={(e) => e.stopPropagation()}>
+                    <h3 className="text-lg font-bold text-white mb-4">{editingRm ? 'RM Düzenle' : 'Yeni RM Ekle'}</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs text-slate-400 mb-1 block">İsim *</label>
+                        <input value={rmFormData.name} onChange={(e) => setRmFormData(p => ({ ...p, name: e.target.value }))} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="Ahmet Yılmaz" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 mb-1 block">Ünvan</label>
+                        <input value={rmFormData.title} onChange={(e) => setRmFormData(p => ({ ...p, title: e.target.value }))} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="Relationship Manager" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 mb-1 block">E-posta *</label>
+                        <input value={rmFormData.email} onChange={(e) => setRmFormData(p => ({ ...p, email: e.target.value }))} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="ahmet@auxite.io" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-slate-400 mb-1 block">Telefon</label>
+                          <input value={rmFormData.phone} onChange={(e) => setRmFormData(p => ({ ...p, phone: e.target.value }))} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="+90 5xx xxx xx xx" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-400 mb-1 block">WhatsApp</label>
+                          <input value={rmFormData.whatsapp} onChange={(e) => setRmFormData(p => ({ ...p, whatsapp: e.target.value }))} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="905xxxxxxxxx" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-slate-400 mb-1 block">Kapasite (max müşteri)</label>
+                          <input type="number" value={rmFormData.capacity} onChange={(e) => setRmFormData(p => ({ ...p, capacity: parseInt(e.target.value) || 100 }))} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-400 mb-1 block">Diller (virgülle)</label>
+                          <input value={rmFormData.languages} onChange={(e) => setRmFormData(p => ({ ...p, languages: e.target.value }))} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="en, tr, de" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 mb-1 block">Uzmanlık Alanları (virgülle)</label>
+                        <input value={rmFormData.specializations} onChange={(e) => setRmFormData(p => ({ ...p, specializations: e.target.value }))} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="institutional, metals, crypto" />
+                      </div>
+                    </div>
+                    <div className="flex gap-3 mt-5">
+                      <button onClick={() => setShowRmForm(false)} className="flex-1 py-2.5 text-sm font-medium bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700">İptal</button>
+                      <button onClick={saveRM} disabled={rmSaving || !rmFormData.name || !rmFormData.email} className="flex-1 py-2.5 text-sm font-semibold bg-[#2F6F62] text-white rounded-lg hover:bg-[#2F6F62]/80 disabled:opacity-50">
+                        {rmSaving ? 'Kaydediliyor...' : editingRm ? 'Güncelle' : 'Ekle'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* View Clients Modal */}
+              {viewingRmClients && (
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setViewingRmClients(null)}>
+                  <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-md border border-slate-700 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-white">Atanmış Müşteriler</h3>
+                      <span className="text-sm text-[#BFA181] font-semibold">{rmClients.length} müşteri</span>
+                    </div>
+                    {rmClients.length === 0 ? (
+                      <p className="text-sm text-slate-500 text-center py-8">Henüz atanmış müşteri yok</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {rmClients.map((addr: string) => (
+                          <div key={addr} className="flex items-center justify-between py-2 px-3 bg-slate-800 rounded-lg">
+                            <span className="text-xs font-mono text-slate-300">{addr.slice(0, 8)}...{addr.slice(-6)}</span>
+                            <button
+                              onClick={() => { navigator.clipboard.writeText(addr); }}
+                              className="text-xs text-slate-500 hover:text-white"
+                            >
+                              Kopyala
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <button onClick={() => setViewingRmClients(null)} className="w-full mt-4 py-2.5 text-sm font-medium bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700">Kapat</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       </div>
     </main>

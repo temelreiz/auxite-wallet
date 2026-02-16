@@ -22,6 +22,11 @@ const translations: Record<string, Record<string, string>> = {
     relationshipManagerDesc: "Saklama uzmanlarına doğrudan erişim",
     contactTeam: "Ekiple İletişim",
     available: "Müsait",
+    contactOptions: "İletişim Seçenekleri",
+    sendSecureMessage: "Güvenli Mesaj Gönder",
+    emailManager: "E-posta ile İletişim",
+    whatsappChat: "WhatsApp ile Yazışın",
+    close: "Kapat",
 
     // Account Safeguards
     accountSafeguards: "HESAP GÜVENCELERİ",
@@ -87,6 +92,11 @@ const translations: Record<string, Record<string, string>> = {
     relationshipManagerDesc: "Direct access to custody specialists",
     contactTeam: "Contact Team",
     available: "Available",
+    contactOptions: "Contact Options",
+    sendSecureMessage: "Send Secure Message",
+    emailManager: "Email Relationship Manager",
+    whatsappChat: "WhatsApp Chat",
+    close: "Close",
 
     // Account Safeguards
     accountSafeguards: "ACCOUNT SAFEGUARDS",
@@ -150,6 +160,11 @@ const translations: Record<string, Record<string, string>> = {
     relationshipManagerDesc: "Direkter Zugang zu Verwahrungsspezialisten",
     contactTeam: "Team kontaktieren",
     available: "Verfügbar",
+    contactOptions: "Kontaktoptionen",
+    sendSecureMessage: "Sichere Nachricht senden",
+    emailManager: "E-Mail an Beziehungsmanager",
+    whatsappChat: "WhatsApp Chat",
+    close: "Schließen",
     accountSafeguards: "KONTOSICHERUNGEN",
     fullyAllocated: "Vollständig zugewiesen",
     segregated: "Getrennt",
@@ -192,6 +207,11 @@ const translations: Record<string, Record<string, string>> = {
     relationshipManagerDesc: "Accès direct aux spécialistes de la garde",
     contactTeam: "Contacter l'équipe",
     available: "Disponible",
+    contactOptions: "Options de contact",
+    sendSecureMessage: "Envoyer un message sécurisé",
+    emailManager: "Email au gestionnaire",
+    whatsappChat: "Chat WhatsApp",
+    close: "Fermer",
     accountSafeguards: "GARANTIES DU COMPTE",
     fullyAllocated: "Entièrement alloué",
     segregated: "Séparé",
@@ -234,6 +254,11 @@ const translations: Record<string, Record<string, string>> = {
     relationshipManagerDesc: "الوصول المباشر لمتخصصي الحفظ",
     contactTeam: "اتصل بالفريق",
     available: "متاح",
+    contactOptions: "خيارات الاتصال",
+    sendSecureMessage: "إرسال رسالة آمنة",
+    emailManager: "بريد إلكتروني لمدير العلاقات",
+    whatsappChat: "محادثة واتساب",
+    close: "إغلاق",
     accountSafeguards: "ضمانات الحساب",
     fullyAllocated: "مخصص بالكامل",
     segregated: "منفصل",
@@ -276,6 +301,11 @@ const translations: Record<string, Record<string, string>> = {
     relationshipManagerDesc: "Прямой доступ к специалистам по хранению",
     contactTeam: "Связаться с командой",
     available: "Доступен",
+    contactOptions: "Варианты связи",
+    sendSecureMessage: "Отправить защищённое сообщение",
+    emailManager: "Написать менеджеру",
+    whatsappChat: "Чат WhatsApp",
+    close: "Закрыть",
     accountSafeguards: "ГАРАНТИИ АККАУНТА",
     fullyAllocated: "Полностью распределено",
     segregated: "Сегрегировано",
@@ -335,6 +365,13 @@ export default function ClientCenterPage() {
     status: "not_started" | "pending" | "under_review" | "approved" | "rejected" | "expired";
   } | null>(null);
   const [kycLoading, setKycLoading] = useState(true);
+
+  // Relationship Manager
+  const [assignedRM, setAssignedRM] = useState<{
+    name: string; title: string; email: string; phone: string; whatsapp: string;
+    initials: string; available: boolean; languages: string[];
+  } | null>(null);
+  const [showContactModal, setShowContactModal] = useState(false);
 
   // Real user data from API
   const [userProfile, setUserProfile] = useState<{
@@ -435,6 +472,25 @@ export default function ClientCenterPage() {
       }
     };
     fetchKYC();
+  }, [address]);
+
+  // Fetch assigned Relationship Manager
+  useEffect(() => {
+    if (!address) return;
+    const fetchRM = async () => {
+      try {
+        const res = await fetch(`/api/user/relationship-manager?address=${address}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.manager) {
+            setAssignedRM(data.manager);
+          }
+        }
+      } catch (err) {
+        console.error("RM fetch error:", err);
+      }
+    };
+    fetchRM();
   }, [address]);
 
   // Map KYC status to our display format
@@ -566,18 +622,21 @@ export default function ClientCenterPage() {
                 {t.yourRelationshipManager}
               </p>
               <p className="text-base font-semibold text-slate-800 dark:text-white mb-0.5">
-                Marcus Reynolds
+                {assignedRM?.name || "..."}
               </p>
-              <p className="text-xs text-slate-500">{t.relationshipManagerDesc}</p>
+              <p className="text-xs text-slate-500">{assignedRM?.title || t.relationshipManagerDesc}</p>
             </div>
             <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-[#2F6F62] animate-pulse" />
-              <span className="text-[10px] font-medium text-[#2F6F62] dark:text-[#2F6F62]">
-                {t.available}
+              <span className={`w-2 h-2 rounded-full ${assignedRM?.available ? 'bg-[#2F6F62] animate-pulse' : 'bg-slate-400'}`} />
+              <span className={`text-[10px] font-medium ${assignedRM?.available ? 'text-[#2F6F62]' : 'text-slate-400'}`}>
+                {assignedRM?.available ? t.available : '—'}
               </span>
             </div>
           </div>
-          <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#BFA181]/15 text-[#BFA181] dark:text-[#BFA181] font-medium text-sm hover:bg-[#BFA181]/25 transition-colors">
+          <button
+            onClick={() => setShowContactModal(true)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[#BFA181]/15 text-[#BFA181] dark:text-[#BFA181] font-medium text-sm hover:bg-[#BFA181]/25 transition-colors"
+          >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
@@ -930,6 +989,96 @@ export default function ClientCenterPage() {
           walletAddress={address}
           onClose={handleKycClose}
         />
+      )}
+
+      {/* Contact Team Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center" onClick={() => setShowContactModal(false)}>
+          <div className="bg-white dark:bg-slate-900 w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-6 border border-stone-200 dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t.contactOptions}</h3>
+              <button onClick={() => setShowContactModal(false)} className="p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-slate-800">
+                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {assignedRM && (
+              <div className="flex items-center gap-3 mb-5 p-3 bg-stone-50 dark:bg-slate-800 rounded-xl">
+                <div className="w-10 h-10 rounded-full bg-[#BFA181]/20 flex items-center justify-center text-[#BFA181] font-bold text-sm flex-shrink-0">
+                  {assignedRM.initials}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">{assignedRM.name}</p>
+                  <p className="text-xs text-slate-500">{assignedRM.title}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {/* Secure Message */}
+              <a
+                href="/support"
+                className="flex items-center gap-3 p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#2F6F62]/15 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">{t.sendSecureMessage}</p>
+                  <p className="text-xs text-slate-500">End-to-end encrypted</p>
+                </div>
+              </a>
+
+              {/* Email */}
+              <a
+                href={`mailto:${assignedRM?.email || 'support@auxite.io'}?subject=Auxite%20Client%20Request`}
+                className="flex items-center gap-3 p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#BFA181]/15 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">{t.emailManager}</p>
+                  <p className="text-xs text-slate-500">{assignedRM?.email || 'support@auxite.io'}</p>
+                </div>
+              </a>
+
+              {/* WhatsApp */}
+              {assignedRM?.whatsapp && (
+                <a
+                  href={`https://wa.me/${assignedRM.whatsapp.replace(/[^0-9]/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-full bg-green-500/15 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                      <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a8 8 0 01-4.093-1.121l-.293-.174-2.87.853.853-2.87-.174-.293A8 8 0 1112 20z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">{t.whatsappChat}</p>
+                    <p className="text-xs text-slate-500">{assignedRM.phone || assignedRM.whatsapp}</p>
+                  </div>
+                </a>
+              )}
+            </div>
+
+            <button
+              onClick={() => setShowContactModal(false)}
+              className="w-full mt-5 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            >
+              {t.close}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

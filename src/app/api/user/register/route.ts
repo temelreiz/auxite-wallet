@@ -1,6 +1,7 @@
 // app/api/user/register/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createCustodialWallet, getWalletAddress } from "@/lib/kms-wallet";
+import { autoAssignRM } from "@/lib/relationship-manager";
 
 // 12 haneli alfanümerik UID oluştur
 function generateUID(): string {
@@ -175,6 +176,15 @@ export async function POST(request: NextRequest) {
     const userReferralCode = `AUX${userId.substring(0, 8).toUpperCase()}`;
     await redis.set(`referral:code:${userReferralCode}`, userId);
     await redis.hset(`user:${userId}`, { referralCode: userReferralCode });
+
+    // Auto-assign a Relationship Manager
+    try {
+      if (custodialWalletAddress) {
+        await autoAssignRM(custodialWalletAddress);
+      }
+    } catch (rmError) {
+      console.error("RM auto-assign failed (non-blocking):", rmError);
+    }
 
     console.log(`✅ New user registered: ${userId} (${normalizedAddress})`);
 

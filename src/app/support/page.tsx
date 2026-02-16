@@ -206,6 +206,20 @@ interface Ticket {
   createdAt: string;
 }
 
+interface AssignedRM {
+  id: string;
+  name: string;
+  title: string;
+  email: string;
+  phone: string;
+  whatsapp: string;
+  photoUrl: string;
+  initials: string;
+  status: string;
+  available: boolean;
+  languages: string[];
+}
+
 export default function SupportPage() {
   const { lang } = useLanguage();
   const { address } = useWallet();
@@ -217,6 +231,22 @@ export default function SupportPage() {
   const [newTicket, setNewTicket] = useState({ subject: "", category: "general", message: "" });
   const [sending, setSending] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+  const [assignedRM, setAssignedRM] = useState<AssignedRM | null>(null);
+
+  // Fetch assigned RM
+  useEffect(() => {
+    if (!address) return;
+    const fetchRM = async () => {
+      try {
+        const res = await fetch(`/api/user/relationship-manager?address=${address}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.manager) setAssignedRM(data.manager);
+        }
+      } catch {}
+    };
+    fetchRM();
+  }, [address]);
 
   // Fetch tickets
   useEffect(() => {
@@ -331,28 +361,41 @@ export default function SupportPage() {
                 <div className="flex-1">
                   <h3 className="text-sm font-semibold text-slate-800 dark:text-white">{t.dedicatedTeam}</h3>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-[#2F6F62] animate-pulse" />
-                  <span className="text-xs text-[#2F6F62] font-medium">{t.available}</span>
-                </div>
+                {assignedRM?.available && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-[#2F6F62] animate-pulse" />
+                    <span className="text-xs text-[#2F6F62] font-medium">{t.available}</span>
+                  </div>
+                )}
               </div>
 
-              {/* Team Members */}
+              {/* Team Members — Dynamic from API */}
               <div className="space-y-3 mb-4">
-                {[
-                  { initials: "MA", name: "Marcus Altmann", role: t.relationshipManager, bg: "bg-[#BFA181]" },
-                  { initials: "SH", name: "Sophie Hartmann", role: t.seniorAdvisor, bg: "bg-purple-500" },
-                ].map(member => (
-                  <div key={member.name} className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-full ${member.bg} flex items-center justify-center text-white text-xs font-bold`}>
-                      {member.initials}
+                {assignedRM ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-[#BFA181] flex items-center justify-center text-white text-xs font-bold">
+                      {assignedRM.initials}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-slate-800 dark:text-white">{member.name}</p>
-                      <p className="text-[11px] text-slate-500 dark:text-zinc-400">{member.role}</p>
+                      <p className="text-sm font-medium text-slate-800 dark:text-white">{assignedRM.name}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-zinc-400">{assignedRM.title}</p>
+                    </div>
+                    {assignedRM.available && (
+                      <div className="ml-auto flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#2F6F62]" />
+                        <span className="text-[10px] text-[#2F6F62] font-medium">{t.available}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-zinc-700 flex items-center justify-center animate-pulse" />
+                    <div className="space-y-1">
+                      <div className="w-24 h-3 rounded bg-slate-200 dark:bg-zinc-700 animate-pulse" />
+                      <div className="w-16 h-2 rounded bg-slate-200 dark:bg-zinc-700 animate-pulse" />
                     </div>
                   </div>
-                ))}
+                )}
               </div>
 
               <div className="h-px bg-stone-200 dark:bg-zinc-700 mb-3" />
@@ -382,20 +425,52 @@ export default function SupportPage() {
               </div>
             </div>
 
-            {/* Contact Channels */}
+            {/* Contact Channels — Functional */}
             <div className="space-y-2 mb-4">
-              {contactChannels.map(channel => (
-                <div key={channel.label} className="bg-white dark:bg-zinc-800/50 rounded-xl border border-stone-200 dark:border-zinc-700/50 p-4 flex items-center gap-3 cursor-pointer hover:shadow-sm transition">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: channel.color + "15" }}>
-                    <span className="text-lg">{channel.icon}</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">{channel.label}</p>
-                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{channel.desc}</p>
-                  </div>
-                  <svg className="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+              {/* Secure Message */}
+              <div
+                onClick={() => setActiveTab("messages")}
+                className="bg-white dark:bg-zinc-800/50 rounded-xl border border-stone-200 dark:border-zinc-700/50 p-4 flex items-center gap-3 cursor-pointer hover:shadow-sm transition"
+              >
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-500/10">
+                  <span className="text-lg">💬</span>
                 </div>
-              ))}
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">{t.secureMessage}</p>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{t.secureMessageDesc}</p>
+                </div>
+                <svg className="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+              </div>
+
+              {/* Priority Email */}
+              <a
+                href={assignedRM?.email ? `mailto:${assignedRM.email}?subject=Auxite Client Request` : "#"}
+                className="bg-white dark:bg-zinc-800/50 rounded-xl border border-stone-200 dark:border-zinc-700/50 p-4 flex items-center gap-3 cursor-pointer hover:shadow-sm transition block"
+              >
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-purple-500/10">
+                  <span className="text-lg">✉️</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">{t.priorityEmail}</p>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{t.priorityEmailDesc}</p>
+                </div>
+                <svg className="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+              </a>
+
+              {/* Emergency Line */}
+              <a
+                href={assignedRM?.phone ? `tel:${assignedRM.phone}` : "#"}
+                className="bg-white dark:bg-zinc-800/50 rounded-xl border border-stone-200 dark:border-zinc-700/50 p-4 flex items-center gap-3 cursor-pointer hover:shadow-sm transition block"
+              >
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-red-500/10">
+                  <span className="text-lg">🚨</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">{t.emergencyLine}</p>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{t.emergencyLineDesc}</p>
+                </div>
+                <svg className="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+              </a>
             </div>
 
             {/* Quick Actions Grid */}
