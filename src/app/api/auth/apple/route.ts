@@ -14,7 +14,8 @@ const redis = new Redis({
 
 // JWT Secret - MUST be set in environment, no fallback for security
 const JWT_SECRET = process.env.JWT_SECRET!;
-const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID; // Your app's bundle ID
+const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID; // Mobile app's bundle ID
+const APPLE_WEB_CLIENT_ID = process.env.APPLE_WEB_CLIENT_ID; // Web Services ID
 
 // Apple's public keys URL
 const APPLE_KEYS_URL = 'https://appleid.apple.com/auth/keys';
@@ -37,10 +38,11 @@ async function verifyAppleToken(identityToken: string) {
     // Import the public key
     const publicKey = await jose.importJWK(key, 'RS256');
 
-    // Verify the token
+    // Verify the token — accept both mobile (bundle ID) and web (services ID)
+    const allowedAudiences = [APPLE_CLIENT_ID, APPLE_WEB_CLIENT_ID].filter(Boolean) as string[];
     const { payload } = await jose.jwtVerify(identityToken, publicKey, {
       issuer: 'https://appleid.apple.com',
-      audience: APPLE_CLIENT_ID,
+      audience: allowedAudiences.length > 0 ? allowedAudiences : undefined,
     });
 
     return {
