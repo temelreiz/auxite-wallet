@@ -38,8 +38,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${APP_URL}/auth/login?error=no_code`);
     }
 
-    // Validate state (CSRF protection) — mobile requests have '_mobile' suffix and no cookie
-    const isMobileRequest = state?.endsWith('_mobile');
+    // Validate state (CSRF protection)
+    // Mobile state format: {randomId}_mobile_{encodedReturnUrl}
+    const isMobileRequest = state?.includes('_mobile');
+    let mobileReturnUrl = 'auxite-vault://auth/callback'; // fallback
+    if (isMobileRequest && state) {
+      const mobileIdx = state.indexOf('_mobile_');
+      if (mobileIdx !== -1) {
+        const encodedUrl = state.substring(mobileIdx + '_mobile_'.length);
+        if (encodedUrl) {
+          mobileReturnUrl = decodeURIComponent(encodedUrl);
+        }
+      }
+    }
     if (!isMobileRequest) {
       const storedState = request.cookies.get('oauth_state')?.value;
       if (!storedState || storedState !== state) {
@@ -204,10 +215,10 @@ export async function GET(request: NextRequest) {
     const encodedToken = encodeURIComponent(jwtToken);
     const encodedUser = encodeURIComponent(JSON.stringify(userDataForClient));
 
-    // Mobile requests → redirect to app custom scheme
+    // Mobile requests → redirect to app (Expo Go or custom scheme)
     // Web requests → redirect to web callback page
     const callbackBase = isMobileRequest
-      ? 'auxite-vault://auth/callback'
+      ? mobileReturnUrl
       : `${APP_URL}/auth/callback`;
 
     const response = NextResponse.redirect(
