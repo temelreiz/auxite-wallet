@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Web uses Services ID (different from mobile App/Bundle ID)
-const APPLE_WEB_CLIENT_ID = process.env.APPLE_WEB_CLIENT_ID || process.env.APPLE_CLIENT_ID || 'com.auxite.wallet';
+const APPLE_WEB_CLIENT_ID = process.env.APPLE_WEB_CLIENT_ID || 'io.auxite.wallet.web';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io';
 const REDIRECT_URI = `${APP_URL}/api/auth/apple/callback`;
 
