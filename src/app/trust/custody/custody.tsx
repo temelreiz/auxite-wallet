@@ -334,7 +334,7 @@ export default function CustodyPage() {
       {/* Header */}
       <div className="bg-slate-900 border-b border-slate-800">
         <div className="max-w-6xl mx-auto px-4 py-6">
-          <Link href="/trust" className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-4">
+          <Link href="/trust-center" className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-4">
             <ArrowLeft className="w-4 h-4" />
             {t.backToTrust}
           </Link>

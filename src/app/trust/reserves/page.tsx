@@ -461,7 +461,7 @@ export default function ProofOfReservesPage() {
 
       <main className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
         {/* Back Link */}
-        <Link href="/trust" className="inline-flex items-center gap-1 text-sm text-[#2F6F62] hover:underline mb-8">
+        <Link href="/trust-center" className="inline-flex items-center gap-1 text-sm text-[#2F6F62] hover:underline mb-8">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           {t.backToTrust}
         </Link>
