@@ -23,7 +23,7 @@ const nextConfig = {
           "frame-src 'self' https://challenges.cloudflare.com https://verify.walletconnect.com https://global.transak.com",
           "object-src 'none'",
           "base-uri 'self'",
-          "form-action 'self'",
+          "form-action 'self' https://appleid.apple.com",
           "frame-ancestors 'none'",
         ].join("; "),
       },

@@ -21,10 +21,12 @@ export async function GET(request: NextRequest) {
     `https://appleid.apple.com/auth/authorize?${params.toString()}`
   );
 
+  // Must be sameSite: 'none' because Apple uses form_post (cross-site POST)
+  // sameSite: 'lax' cookies are NOT sent with cross-site POST requests
   response.cookies.set('apple_oauth_state', state, {
     httpOnly: true,
     secure: true,
-    sameSite: 'lax',
+    sameSite: 'none',
     maxAge: 60 * 10,
   });
 
