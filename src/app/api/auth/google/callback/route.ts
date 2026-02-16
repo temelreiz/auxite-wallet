@@ -204,12 +204,19 @@ export async function GET(request: NextRequest) {
     const encodedToken = encodeURIComponent(jwtToken);
     const encodedUser = encodeURIComponent(JSON.stringify(userDataForClient));
 
-    // Clear oauth state cookie
+    // Mobile requests → redirect to app custom scheme
+    // Web requests → redirect to web callback page
+    const callbackBase = isMobileRequest
+      ? 'auxite-vault://auth/callback'
+      : `${APP_URL}/auth/callback`;
+
     const response = NextResponse.redirect(
-      `${APP_URL}/auth/callback?token=${encodedToken}&user=${encodedUser}`
+      `${callbackBase}?token=${encodedToken}&user=${encodedUser}`
     );
-    
-    response.cookies.delete('oauth_state');
+
+    if (!isMobileRequest) {
+      response.cookies.delete('oauth_state');
+    }
 
     return response;
 

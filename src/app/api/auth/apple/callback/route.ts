@@ -41,15 +41,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(`${APP_URL}/auth/login?error=apple_auth_failed`);
     }
 
-    // Redirect with token (same as Google callback)
+    // Redirect with token
     const encodedToken = encodeURIComponent(data.token);
     const encodedUser = encodeURIComponent(JSON.stringify(data.user));
 
+    // Mobile requests → redirect to app custom scheme
+    // Web requests → redirect to web callback page
+    const callbackBase = isMobileRequest
+      ? 'auxite-vault://auth/callback'
+      : `${APP_URL}/auth/callback`;
+
     const response = NextResponse.redirect(
-      `${APP_URL}/auth/callback?token=${encodedToken}&user=${encodedUser}`
+      `${callbackBase}?token=${encodedToken}&user=${encodedUser}`
     );
 
-    response.cookies.delete('apple_oauth_state');
+    if (!isMobileRequest) {
+      response.cookies.delete('apple_oauth_state');
+    }
     return response;
 
   } catch (error: any) {
