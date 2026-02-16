@@ -38,11 +38,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${APP_URL}/auth/login?error=no_code`);
     }
 
-    // Validate state (CSRF protection)
-    const storedState = request.cookies.get('oauth_state')?.value;
-    if (!storedState || storedState !== state) {
-      console.error('State mismatch:', { storedState, state });
-      return NextResponse.redirect(`${APP_URL}/auth/login?error=invalid_state`);
+    // Validate state (CSRF protection) — mobile requests have '_mobile' suffix and no cookie
+    const isMobileRequest = state?.endsWith('_mobile');
+    if (!isMobileRequest) {
+      const storedState = request.cookies.get('oauth_state')?.value;
+      if (!storedState || storedState !== state) {
+        console.error('State mismatch:', { storedState, state });
+        return NextResponse.redirect(`${APP_URL}/auth/login?error=invalid_state`);
+      }
     }
 
     // ══════════════════════════════════════════════════════════════
