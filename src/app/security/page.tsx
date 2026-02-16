@@ -395,12 +395,21 @@ export default function SecurityPage() {
     const fetchSecurityData = async () => {
       setLoading(true);
       try {
-        const [twoFARes, sessionsRes, devicesRes, logsRes] = await Promise.all([
+        const [twoFARes, sessionsRes, devicesRes, logsRes, emergencyRes] = await Promise.all([
           fetch(`/api/security/2fa/status`, { headers: { "x-wallet-address": address } }).catch(() => null),
           fetch(`/api/security/sessions`, { headers: { "x-wallet-address": address } }).catch(() => null),
           fetch(`/api/security/devices`, { headers: { "x-wallet-address": address } }).catch(() => null),
           fetch(`/api/security/logs`, { headers: { "x-wallet-address": address } }).catch(() => null),
+          fetch(`/api/security/emergency`, { headers: { "x-wallet-address": address } }).catch(() => null),
         ]);
+
+        // Load frozen state from backend
+        if (emergencyRes?.ok) {
+          const emergencyData = await emergencyRes.json();
+          if (emergencyData.config?.frozen) {
+            setIsVaultFrozen(true);
+          }
+        }
 
         if (twoFARes?.ok) {
           const data = await twoFARes.json();
@@ -497,9 +506,38 @@ export default function SecurityPage() {
     }
   };
 
-  const handleFreezeVault = () => {
-    setIsVaultFrozen(true);
+  const handleFreezeVault = async () => {
+    try {
+      const res = await fetch(`/api/security/emergency`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-wallet-address": address || "" },
+        body: JSON.stringify({ action: "freeze", reason: "Manuel dondurma" }),
+      });
+      if (res.ok) {
+        setIsVaultFrozen(true);
+      }
+    } catch (err) {
+      console.error("Vault freeze error:", err);
+    }
     setShowFreezeModal(false);
+  };
+
+  const handleUnfreezeVault = async () => {
+    try {
+      const res = await fetch(`/api/security/emergency`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-wallet-address": address || "" },
+        body: JSON.stringify({ action: "unfreeze" }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsVaultFrozen(false);
+      } else {
+        alert(data.error || "Unfreeze failed");
+      }
+    } catch (err) {
+      console.error("Vault unfreeze error:", err);
+    }
   };
 
   const protectionColor = protectionLevel >= 80 ? "bg-[#2F6F62]" : protectionLevel >= 50 ? "bg-[#BFA181]" : "bg-[#f59e0b]";
@@ -800,7 +838,7 @@ export default function SecurityPage() {
           )}
 
           <button
-            onClick={() => isVaultFrozen ? setIsVaultFrozen(false) : setShowFreezeModal(true)}
+            onClick={() => isVaultFrozen ? handleUnfreezeVault() : setShowFreezeModal(true)}
             className={`w-full flex items-center gap-3.5 p-4 rounded-xl border transition ${
               isVaultFrozen
                 ? "border-[#2F6F62] bg-[#2F6F62]/15 hover:bg-[#2F6F62]/20"
