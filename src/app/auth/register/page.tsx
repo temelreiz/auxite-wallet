@@ -321,10 +321,9 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-stone-100 dark:bg-slate-950 flex flex-col">
       {/* Logo Area - Matching Login */}
       <div className="pt-12 pb-6 text-center">
-        <div className="w-24 h-24 rounded-3xl overflow-hidden mx-auto mb-4">
-          <Image src="/auxite-logo.png" alt="Auxite" width={96} height={96} className="w-full h-full object-contain" />
-        </div>
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">{t('createAccountTitle')}</h1>
+        <Image src="/auxite.png" alt="Auxite" width={96} height={96} className="mx-auto mb-4" />
+        <h1 className="text-2xl font-bold text-[#BFA181] tracking-widest mb-1">AUXITE</h1>
+        <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-1">{t('createAccountTitle')}</h2>
         <p className="text-slate-500 dark:text-slate-400">{t('joinAuxite')}</p>
       </div>
 
