@@ -9,10 +9,13 @@ export async function POST(request: NextRequest) {
     const state = formData.get('state') as string;
     const userStr = formData.get('user') as string; // Only on first sign-in
 
-    // Validate state
-    const storedState = request.cookies.get('apple_oauth_state')?.value;
-    if (!storedState || storedState !== state) {
-      return NextResponse.redirect(`${APP_URL}/auth/login?error=invalid_state`);
+    // Validate state — mobile requests have '_mobile' suffix and no cookie
+    const isMobileRequest = state?.endsWith('_mobile');
+    if (!isMobileRequest) {
+      const storedState = request.cookies.get('apple_oauth_state')?.value;
+      if (!storedState || storedState !== state) {
+        return NextResponse.redirect(`${APP_URL}/auth/login?error=invalid_state`);
+      }
     }
 
     if (!idToken) {
