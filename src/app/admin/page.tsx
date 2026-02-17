@@ -395,6 +395,7 @@ const TABS = [
   { id: "cashSettlement", label: "Cash Settlement", icon: "💰" },
   { id: "relationshipManagers", label: "RM / CRM", icon: "🤝" },
   { id: "statements", label: "Raporlar", icon: "📑" },
+  { id: "pushNotifications", label: "Push Bildirim", icon: "🔔" },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -5717,6 +5718,11 @@ export default function AdminDashboard() {
           )}
 
           {/* ═══════════════ STATEMENTS TAB ═══════════════ */}
+          {/* ═══════════════ PUSH NOTIFICATIONS TAB ═══════════════ */}
+          {activeTab === "pushNotifications" && (
+            <PushNotificationsTab />
+          )}
+
           {activeTab === "statements" && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold">📑 Rapor Yönetimi</h2>
@@ -7328,6 +7334,294 @@ function AuxmTreasuryTab() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PUSH NOTIFICATIONS TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function PushNotificationsTab() {
+  const [mode, setMode] = useState<"single" | "broadcast">("single");
+  const [walletAddress, setWalletAddress] = useState("");
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [notifType, setNotifType] = useState("system");
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(true);
+  const [registeredUsers, setRegisteredUsers] = useState<number>(0);
+
+  // Fetch notification log
+  const fetchLogs = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/push-log", {
+        headers: { Authorization: "Bearer auxite-admin-2024" },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLogs(data.logs || []);
+        setRegisteredUsers(data.registeredUsers || 0);
+      }
+    } catch (e) {
+      console.error("Push log fetch error:", e);
+    } finally {
+      setLogsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
+
+  const handleSend = async () => {
+    if (!title.trim() || !body.trim()) return;
+    if (mode === "single" && !walletAddress.trim()) return;
+
+    setSending(true);
+    setResult(null);
+
+    try {
+      const payload: any = {
+        title,
+        body,
+        type: notifType,
+        data: { category: notifType },
+      };
+
+      if (mode === "single") {
+        payload.walletAddress = walletAddress.trim();
+      } else {
+        // For broadcast, we send to all registered users
+        payload.broadcast = true;
+      }
+
+      const res = await fetch("/api/admin/push-send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer auxite-admin-2024",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      setResult(data);
+
+      if (data.success) {
+        setTitle("");
+        setBody("");
+        setWalletAddress("");
+        fetchLogs();
+      }
+    } catch (e: any) {
+      setResult({ success: false, error: e.message });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const notifTypes = [
+    { value: "system", label: "Sistem", icon: "⚙️" },
+    { value: "security", label: "Güvenlik", icon: "🛡️" },
+    { value: "trade", label: "İşlem", icon: "💱" },
+    { value: "deposit", label: "Yatırma", icon: "📥" },
+    { value: "withdrawal", label: "Çekim", icon: "📤" },
+    { value: "price_alert", label: "Fiyat Uyarısı", icon: "📊" },
+    { value: "statement", label: "Rapor", icon: "📑" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">🔔 Push Bildirim Yönetimi</h2>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-slate-400">
+            📱 {registeredUsers} kayıtlı cihaz
+          </span>
+          <button
+            onClick={fetchLogs}
+            className="px-3 py-1 bg-slate-800 rounded-lg text-sm text-slate-300 hover:bg-slate-700"
+          >
+            Yenile
+          </button>
+        </div>
+      </div>
+
+      {/* Send Notification Form */}
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+        <h3 className="font-semibold mb-4">Bildirim Gönder</h3>
+
+        {/* Mode Toggle */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setMode("single")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              mode === "single"
+                ? "bg-[#BFA181]/20 text-[#BFA181] border border-[#BFA181]/30"
+                : "bg-slate-800 text-slate-400 border border-slate-700"
+            }`}
+          >
+            👤 Tek Kullanıcı
+          </button>
+          <button
+            onClick={() => setMode("broadcast")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              mode === "broadcast"
+                ? "bg-[#BFA181]/20 text-[#BFA181] border border-[#BFA181]/30"
+                : "bg-slate-800 text-slate-400 border border-slate-700"
+            }`}
+          >
+            📢 Tüm Kullanıcılar
+          </button>
+        </div>
+
+        {/* Wallet Address (single mode) */}
+        {mode === "single" && (
+          <div className="mb-4">
+            <label className="block text-xs text-slate-400 mb-1">Wallet Address</label>
+            <input
+              type="text"
+              value={walletAddress}
+              onChange={(e) => setWalletAddress(e.target.value)}
+              placeholder="0x..."
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#BFA181]/50"
+            />
+          </div>
+        )}
+
+        {mode === "broadcast" && (
+          <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+            <p className="text-xs text-yellow-400">
+              ⚠️ Bu bildirim tüm kayıtlı {registeredUsers} cihaza gönderilecek.
+            </p>
+          </div>
+        )}
+
+        {/* Notification Type */}
+        <div className="mb-4">
+          <label className="block text-xs text-slate-400 mb-1">Bildirim Tipi</label>
+          <div className="flex flex-wrap gap-2">
+            {notifTypes.map((t) => (
+              <button
+                key={t.value}
+                onClick={() => setNotifType(t.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  notifType === t.value
+                    ? "bg-[#2F6F62]/20 text-[#2F6F62] border border-[#2F6F62]/30"
+                    : "bg-slate-800 text-slate-400 border border-slate-700"
+                }`}
+              >
+                {t.icon} {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Title */}
+        <div className="mb-4">
+          <label className="block text-xs text-slate-400 mb-1">Başlık</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Bildirim başlığı..."
+            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#BFA181]/50"
+          />
+        </div>
+
+        {/* Body */}
+        <div className="mb-4">
+          <label className="block text-xs text-slate-400 mb-1">İçerik</label>
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Bildirim içeriği..."
+            rows={3}
+            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#BFA181]/50 resize-none"
+          />
+        </div>
+
+        {/* Send Button */}
+        <button
+          onClick={handleSend}
+          disabled={sending || !title.trim() || !body.trim() || (mode === "single" && !walletAddress.trim())}
+          className="px-6 py-2.5 bg-[#BFA181] text-[#0D1421] rounded-lg font-semibold text-sm hover:bg-[#BFA181]/80 disabled:opacity-50 transition-colors"
+        >
+          {sending ? "Gönderiliyor..." : mode === "broadcast" ? "📢 Herkese Gönder" : "📤 Gönder"}
+        </button>
+
+        {/* Result */}
+        {result && (
+          <div className={`mt-4 p-3 rounded-lg text-sm ${
+            result.success
+              ? "bg-green-500/10 border border-green-500/20 text-green-400"
+              : "bg-red-500/10 border border-red-500/20 text-red-400"
+          }`}>
+            {result.success ? (
+              <p>
+                ✅ Gönderildi — Web: {result.web?.sent || 0}, Mobil: {result.mobile?.sent || 0}
+                {(result.web?.failed > 0 || result.mobile?.failed > 0) && (
+                  <span className="text-yellow-400 ml-2">
+                    (Başarısız: Web {result.web?.failed || 0}, Mobil {result.mobile?.failed || 0})
+                  </span>
+                )}
+              </p>
+            ) : (
+              <p>❌ Hata: {result.error || "Gönderim başarısız"}</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Notification Log */}
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+        <h3 className="font-semibold mb-4">📋 Gönderim Geçmişi</h3>
+
+        {logsLoading ? (
+          <p className="text-slate-400 text-center py-8">Yükleniyor...</p>
+        ) : logs.length === 0 ? (
+          <p className="text-slate-400 text-center py-8">Henüz bildirim gönderilmemiş</p>
+        ) : (
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {logs.map((log, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700/50"
+              >
+                <div className="text-lg">
+                  {log.type === "security" ? "🛡️" :
+                   log.type === "trade" ? "💱" :
+                   log.type === "deposit" ? "📥" :
+                   log.type === "withdrawal" ? "📤" :
+                   log.type === "price_alert" ? "📊" :
+                   log.type === "statement" ? "📑" : "⚙️"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{log.title}</p>
+                  <p className="text-xs text-slate-400 truncate">{log.body}</p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-xs text-slate-500">
+                      {new Date(log.timestamp).toLocaleString("tr-TR")}
+                    </span>
+                    <span className="text-xs text-blue-400">
+                      Web: {log.webSent || 0}
+                    </span>
+                    <span className="text-xs text-green-400">
+                      Mobil: {log.mobileSent || 0}
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      → {log.recipients || 0} alıcı
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
