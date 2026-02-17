@@ -396,6 +396,7 @@ const TABS = [
   { id: "relationshipManagers", label: "RM / CRM", icon: "🤝" },
   { id: "statements", label: "Raporlar", icon: "📑" },
   { id: "pushNotifications", label: "Push Bildirim", icon: "🔔" },
+  { id: "oracleWatcher", label: "Oracle Watcher", icon: "👁️" },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -5723,6 +5724,11 @@ export default function AdminDashboard() {
             <PushNotificationsTab />
           )}
 
+          {/* Oracle Watcher Tab */}
+          {activeTab === "oracleWatcher" && (
+            <OracleWatcherTab />
+          )}
+
           {activeTab === "statements" && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold">📑 Rapor Yönetimi</h2>
@@ -7621,6 +7627,314 @@ function PushNotificationsTab() {
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ORACLE WATCHER TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const WATCHER_URL = process.env.NEXT_PUBLIC_ORACLE_WATCHER_URL || "";
+
+function OracleWatcherTab() {
+  const [status, setWatcherStatus] = useState<any>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [actionMsg, setActionMsg] = useState("");
+
+  // Override form
+  const [overrideGold, setOverrideGold] = useState("");
+  const [overrideSilver, setOverrideSilver] = useState("");
+  const [overridePlatinum, setOverridePlatinum] = useState("");
+  const [overridePalladium, setOverridePalladium] = useState("");
+  const [overrideDuration, setOverrideDuration] = useState("60");
+
+  const fetchWatcherStatus = useCallback(async () => {
+    if (!WATCHER_URL) return;
+    setLoading(true);
+    try {
+      const [statusRes, historyRes] = await Promise.all([
+        fetch(`${WATCHER_URL}/status`),
+        fetch(`${WATCHER_URL}/history?limit=20`),
+      ]);
+      if (statusRes.ok) setWatcherStatus(await statusRes.json());
+      if (historyRes.ok) {
+        const data = await historyRes.json();
+        setHistory(data.history || []);
+      }
+    } catch (err: any) {
+      setActionMsg(`Bağlantı hatası: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchWatcherStatus();
+    const interval = setInterval(fetchWatcherStatus, 15000);
+    return () => clearInterval(interval);
+  }, [fetchWatcherStatus]);
+
+  const watcherHeaders: Record<string, string> = { "Content-Type": "application/json" };
+
+  const toggleKillSwitch = async () => {
+    if (!WATCHER_URL || !status) return;
+    const newState = !status.killSwitch;
+    try {
+      const res = await fetch(`${WATCHER_URL}/admin/kill-switch`, {
+        method: "POST", headers: watcherHeaders, body: JSON.stringify({ active: newState }),
+      });
+      if (res.ok) {
+        setActionMsg(`Kill switch ${newState ? "AKTİF" : "KAPALI"}`);
+        fetchWatcherStatus();
+      }
+    } catch (err: any) {
+      setActionMsg(`Hata: ${err.message}`);
+    }
+  };
+
+  const forceUpdate = async () => {
+    if (!WATCHER_URL) return;
+    try {
+      const res = await fetch(`${WATCHER_URL}/admin/force-update`, { method: "POST", headers: watcherHeaders });
+      if (res.ok) {
+        setActionMsg("Force update tetiklendi");
+        setTimeout(fetchWatcherStatus, 5000);
+      }
+    } catch (err: any) {
+      setActionMsg(`Hata: ${err.message}`);
+    }
+  };
+
+  const submitOverride = async () => {
+    if (!WATCHER_URL) return;
+    const prices = {
+      gold: parseFloat(overrideGold),
+      silver: parseFloat(overrideSilver),
+      platinum: parseFloat(overridePlatinum),
+      palladium: parseFloat(overridePalladium),
+    };
+    if (isNaN(prices.gold) || isNaN(prices.silver)) {
+      setActionMsg("Fiyatları doğru girin ($/gram)");
+      return;
+    }
+    try {
+      const res = await fetch(`${WATCHER_URL}/admin/override`, {
+        method: "POST", headers: watcherHeaders,
+        body: JSON.stringify({ prices, expiresInMinutes: parseInt(overrideDuration) || 60 }),
+      });
+      if (res.ok) {
+        setActionMsg("Override ayarlandı");
+        fetchWatcherStatus();
+      }
+    } catch (err: any) {
+      setActionMsg(`Hata: ${err.message}`);
+    }
+  };
+
+  const clearOverride = async () => {
+    if (!WATCHER_URL) return;
+    try {
+      const res = await fetch(`${WATCHER_URL}/admin/override`, { method: "DELETE", headers: watcherHeaders });
+      if (res.ok) {
+        setActionMsg("Override temizlendi");
+        fetchWatcherStatus();
+      }
+    } catch (err: any) {
+      setActionMsg(`Hata: ${err.message}`);
+    }
+  };
+
+  if (!WATCHER_URL) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">👁️ Oracle Watcher</h2>
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6 text-center">
+          <p className="text-yellow-400">NEXT_PUBLIC_ORACLE_WATCHER_URL environment variable tanımlı değil.</p>
+          <p className="text-sm text-slate-400 mt-2">Railway&apos;de watcher deploy edildikten sonra URL&apos;yi .env&apos;e ekleyin.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const metalLabels: Record<string, string> = { gold: "Altın", silver: "Gümüş", platinum: "Platin", palladium: "Paladyum" };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">👁️ Oracle Watcher</h2>
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-xs text-slate-400 animate-pulse">Yenileniyor...</span>}
+          <button onClick={fetchWatcherStatus} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm">
+            🔄 Yenile
+          </button>
+        </div>
+      </div>
+
+      {actionMsg && (
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-sm text-blue-400">
+          {actionMsg}
+        </div>
+      )}
+
+      {/* Status Cards */}
+      {status && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+            <p className="text-xs text-slate-400 mb-1">Durum</p>
+            <div className="flex items-center gap-2">
+              <div className={`w-2.5 h-2.5 rounded-full ${
+                status.state === "running" ? "bg-green-500" :
+                status.state === "paused" ? "bg-yellow-500" : "bg-red-500"
+              }`} />
+              <span className="font-semibold capitalize">{status.state}</span>
+            </div>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+            <p className="text-xs text-slate-400 mb-1">Kill Switch</p>
+            <button onClick={toggleKillSwitch}
+              className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                status.killSwitch
+                  ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                  : "bg-green-500/20 text-green-400 border border-green-500/30"
+              }`}>
+              {status.killSwitch ? "🛑 AKTİF" : "✅ KAPALI"}
+            </button>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+            <p className="text-xs text-slate-400 mb-1">Ardışık Hata</p>
+            <span className={`text-lg font-bold ${status.consecutiveErrors > 0 ? "text-red-400" : "text-green-400"}`}>
+              {status.consecutiveErrors}
+            </span>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+            <p className="text-xs text-slate-400 mb-1">Son Cycle</p>
+            <span className="text-lg font-bold">{status.lastCycleMs}ms</span>
+          </div>
+        </div>
+      )}
+
+      {/* Price Comparison Table */}
+      {status?.prices?.current && (
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold mb-4">Fiyat Karşılaştırma</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-slate-400 border-b border-slate-700">
+                  <th className="text-left py-2">Metal</th>
+                  <th className="text-right py-2">Güncel ($/g)</th>
+                  <th className="text-right py-2">On-Chain ($/g)</th>
+                  <th className="text-right py-2">Deviation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(["gold", "silver", "platinum", "palladium"] as const).map((metal) => {
+                  const current = status.prices.current?.[metal] || 0;
+                  const onChain = status.prices.onChain?.[metal] || 0;
+                  const dev = status.prices.deviations?.[metal] || 0;
+                  return (
+                    <tr key={metal} className="border-b border-slate-800">
+                      <td className="py-2 font-medium">{metalLabels[metal]}</td>
+                      <td className="py-2 text-right">${current.toFixed(4)}</td>
+                      <td className="py-2 text-right">${onChain.toFixed(4)}</td>
+                      <td className={`py-2 text-right font-medium ${dev > 0.5 ? "text-yellow-400" : "text-green-400"}`}>
+                        {dev.toFixed(2)}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex gap-3 mt-4">
+            <button onClick={forceUpdate} className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-medium">
+              ⚡ Force Update
+            </button>
+            <p className="text-xs text-slate-500 self-center">
+              Kaynak: {status.lastFetch?.source || "—"} · Son fetch: {status.lastFetch?.timestamp ? new Date(status.lastFetch.timestamp).toLocaleTimeString("tr-TR") : "—"}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Override Form */}
+      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+        <h3 className="text-lg font-semibold mb-4">Manuel Fiyat Override</h3>
+        {status?.overrideActive && (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-4 flex items-center justify-between">
+            <span className="text-sm text-yellow-400">⚠️ Override aktif</span>
+            <button onClick={clearOverride} className="text-xs text-red-400 hover:text-red-300">Temizle</button>
+          </div>
+        )}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+          {[
+            { label: "Altın ($/g)", value: overrideGold, set: setOverrideGold },
+            { label: "Gümüş ($/g)", value: overrideSilver, set: setOverrideSilver },
+            { label: "Platin ($/g)", value: overridePlatinum, set: setOverridePlatinum },
+            { label: "Paladyum ($/g)", value: overridePalladium, set: setOverridePalladium },
+          ].map(({ label, value, set }) => (
+            <div key={label}>
+              <label className="block text-xs text-slate-400 mb-1">{label}</label>
+              <input type="number" step="0.01" value={value} onChange={(e) => set(e.target.value)}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white" />
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-3">
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">Süre (dk)</label>
+            <input type="number" value={overrideDuration} onChange={(e) => setOverrideDuration(e.target.value)}
+              className="w-20 bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white" />
+          </div>
+          <button onClick={submitOverride}
+            className="mt-4 px-4 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg text-sm font-medium">
+            Override Uygula
+          </button>
+        </div>
+      </div>
+
+      {/* Price History */}
+      {history.length > 0 && (
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+          <h3 className="text-lg font-semibold mb-4">Son Fiyat Geçmişi</h3>
+          <div className="overflow-x-auto max-h-80 overflow-y-auto">
+            <table className="w-full text-xs">
+              <thead className="sticky top-0 bg-slate-900">
+                <tr className="text-slate-400 border-b border-slate-700">
+                  <th className="text-left py-2 px-1">Zaman</th>
+                  <th className="text-right py-2 px-1">Altın</th>
+                  <th className="text-right py-2 px-1">Gümüş</th>
+                  <th className="text-right py-2 px-1">Platin</th>
+                  <th className="text-right py-2 px-1">Paladyum</th>
+                  <th className="text-right py-2 px-1">Kaynak</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((snap: any, i: number) => (
+                  <tr key={i} className="border-b border-slate-800/50">
+                    <td className="py-1.5 px-1 text-slate-400">
+                      {new Date(snap.timestamp).toLocaleTimeString("tr-TR")}
+                    </td>
+                    <td className="py-1.5 px-1 text-right">${snap.fetched?.gold?.toFixed(2)}</td>
+                    <td className="py-1.5 px-1 text-right">${snap.fetched?.silver?.toFixed(4)}</td>
+                    <td className="py-1.5 px-1 text-right">${snap.fetched?.platinum?.toFixed(2)}</td>
+                    <td className="py-1.5 px-1 text-right">${snap.fetched?.palladium?.toFixed(2)}</td>
+                    <td className="py-1.5 px-1 text-right text-slate-400">{snap.source}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Connection Info */}
+      <div className="text-xs text-slate-500 space-y-1">
+        <p>Watcher URL: {WATCHER_URL}</p>
+        <p>Auto-refresh: 15s · Threshold: {status?.config?.deviationThresholdPct || "—"}% · Poll: {status?.config?.pollIntervalMs || "—"}ms</p>
       </div>
     </div>
   );
