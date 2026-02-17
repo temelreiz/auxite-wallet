@@ -7717,7 +7717,7 @@ function OracleWatcherTab() {
       palladium: parseFloat(overridePalladium),
     };
     if (isNaN(prices.gold) || isNaN(prices.silver)) {
-      setActionMsg("Fiyatları doğru girin ($/gram)");
+      setActionMsg("Fiyatları doğru girin ($/oz)");
       return;
     }
     try {
@@ -7816,6 +7816,23 @@ function OracleWatcherTab() {
         </div>
       )}
 
+      {/* Last Update Info */}
+      {status?.lastUpdate && (
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-4">
+              <span className="text-slate-400">Son Oracle Güncelleme:</span>
+              <span className="text-white">{new Date(status.lastUpdate.timestamp).toLocaleString("tr-TR")}</span>
+              <span className="text-slate-400">ETH: <span className="text-white">${status.lastUpdate.ethPrice?.toFixed(2) || "—"}</span></span>
+            </div>
+            <a href={`https://basescan.org/tx/${status.lastUpdate.txHash}`} target="_blank" rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300 text-xs font-mono truncate max-w-[200px]">
+              {status.lastUpdate.txHash?.slice(0, 10)}...
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Price Comparison Table */}
       {status?.prices?.current && (
         <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
@@ -7825,8 +7842,8 @@ function OracleWatcherTab() {
               <thead>
                 <tr className="text-slate-400 border-b border-slate-700">
                   <th className="text-left py-2">Metal</th>
-                  <th className="text-right py-2">Güncel ($/g)</th>
-                  <th className="text-right py-2">On-Chain ($/g)</th>
+                  <th className="text-right py-2">Spot ($/oz)</th>
+                  <th className="text-right py-2">On-Chain ($/oz)</th>
                   <th className="text-right py-2">Deviation</th>
                 </tr>
               </thead>
@@ -7838,8 +7855,8 @@ function OracleWatcherTab() {
                   return (
                     <tr key={metal} className="border-b border-slate-800">
                       <td className="py-2 font-medium">{metalLabels[metal]}</td>
-                      <td className="py-2 text-right">${current.toFixed(4)}</td>
-                      <td className="py-2 text-right">${onChain.toFixed(4)}</td>
+                      <td className="py-2 text-right">${current.toFixed(2)}</td>
+                      <td className="py-2 text-right">${onChain.toFixed(2)}</td>
                       <td className={`py-2 text-right font-medium ${dev > 0.5 ? "text-yellow-400" : "text-green-400"}`}>
                         {dev.toFixed(2)}%
                       </td>
@@ -7871,10 +7888,10 @@ function OracleWatcherTab() {
         )}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
           {[
-            { label: "Altın ($/g)", value: overrideGold, set: setOverrideGold },
-            { label: "Gümüş ($/g)", value: overrideSilver, set: setOverrideSilver },
-            { label: "Platin ($/g)", value: overridePlatinum, set: setOverridePlatinum },
-            { label: "Paladyum ($/g)", value: overridePalladium, set: setOverridePalladium },
+            { label: "Altın ($/oz)", value: overrideGold, set: setOverrideGold },
+            { label: "Gümüş ($/oz)", value: overrideSilver, set: setOverrideSilver },
+            { label: "Platin ($/oz)", value: overridePlatinum, set: setOverridePlatinum },
+            { label: "Paladyum ($/oz)", value: overridePalladium, set: setOverridePalladium },
           ].map(({ label, value, set }) => (
             <div key={label}>
               <label className="block text-xs text-slate-400 mb-1">{label}</label>
@@ -7918,10 +7935,10 @@ function OracleWatcherTab() {
                     <td className="py-1.5 px-1 text-slate-400">
                       {new Date(snap.timestamp).toLocaleTimeString("tr-TR")}
                     </td>
-                    <td className="py-1.5 px-1 text-right">${snap.fetched?.gold?.toFixed(2)}</td>
-                    <td className="py-1.5 px-1 text-right">${snap.fetched?.silver?.toFixed(4)}</td>
-                    <td className="py-1.5 px-1 text-right">${snap.fetched?.platinum?.toFixed(2)}</td>
-                    <td className="py-1.5 px-1 text-right">${snap.fetched?.palladium?.toFixed(2)}</td>
+                    <td className="py-1.5 px-1 text-right">${snap.fetched?.gold?.toFixed(2)}/oz</td>
+                    <td className="py-1.5 px-1 text-right">${snap.fetched?.silver?.toFixed(2)}/oz</td>
+                    <td className="py-1.5 px-1 text-right">${snap.fetched?.platinum?.toFixed(2)}/oz</td>
+                    <td className="py-1.5 px-1 text-right">${snap.fetched?.palladium?.toFixed(2)}/oz</td>
                     <td className="py-1.5 px-1 text-right text-slate-400">{snap.source}</td>
                   </tr>
                 ))}
