@@ -1,9 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
 import Link from "next/link";
+
+// ============================================
+// CUSTODY STATEMENTS
+// Real data from /api/admin/statements (public endpoint)
+// ============================================
+
+interface StatementContent {
+  tr: string;
+  en: string;
+  de?: string;
+  fr?: string;
+  ar?: string;
+  ru?: string;
+}
+
+interface Statement {
+  id: string;
+  type: "monthly" | "quarterly" | "annual";
+  title: StatementContent;
+  period: StatementContent;
+  periodEnding: string;
+  generatedDate: string;
+  fileSize: string;
+  status: "available" | "generating" | "scheduled";
+  published: boolean;
+  pdfUrl?: string;
+}
 
 const translations: Record<string, Record<string, string>> = {
   tr: {
@@ -28,6 +55,10 @@ const translations: Record<string, Record<string, string>> = {
     requestCustom: "Özel Beyan Talep Et",
     requestCustomDesc: "Belirli bir dönem için özelleştirilmiş beyan talep edin",
     back: "Geri",
+    loading: "Raporlar yükleniyor...",
+    noStatements: "Henüz yayınlanmış rapor yok",
+    errorLoading: "Raporlar yüklenemedi",
+    retry: "Tekrar Dene",
   },
   en: {
     title: "Custody Statements",
@@ -51,6 +82,10 @@ const translations: Record<string, Record<string, string>> = {
     requestCustom: "Request Custom Statement",
     requestCustomDesc: "Request a customized statement for a specific period",
     back: "Back",
+    loading: "Loading statements...",
+    noStatements: "No published statements yet",
+    errorLoading: "Failed to load statements",
+    retry: "Retry",
   },
   de: {
     title: "Verwahrungsauszüge",
@@ -74,6 +109,10 @@ const translations: Record<string, Record<string, string>> = {
     requestCustom: "Benutzerdefinierten Auszug anfordern",
     requestCustomDesc: "Fordern Sie einen maßgeschneiderten Auszug für einen bestimmten Zeitraum an",
     back: "Zurück",
+    loading: "Auszüge werden geladen...",
+    noStatements: "Noch keine veröffentlichten Auszüge",
+    errorLoading: "Auszüge konnten nicht geladen werden",
+    retry: "Erneut versuchen",
   },
   fr: {
     title: "Relevés de conservation",
@@ -97,6 +136,10 @@ const translations: Record<string, Record<string, string>> = {
     requestCustom: "Demander un relevé personnalisé",
     requestCustomDesc: "Demandez un relevé personnalisé pour une période spécifique",
     back: "Retour",
+    loading: "Chargement des relevés...",
+    noStatements: "Aucun relevé publié pour le moment",
+    errorLoading: "Impossible de charger les relevés",
+    retry: "Réessayer",
   },
   ar: {
     title: "كشوفات الحفظ",
@@ -120,6 +163,10 @@ const translations: Record<string, Record<string, string>> = {
     requestCustom: "طلب كشف مخصص",
     requestCustomDesc: "اطلب كشفًا مخصصًا لفترة محددة",
     back: "رجوع",
+    loading: "جاري تحميل الكشوفات...",
+    noStatements: "لا توجد كشوفات منشورة بعد",
+    errorLoading: "فشل تحميل الكشوفات",
+    retry: "إعادة المحاولة",
   },
   ru: {
     title: "Выписки хранения",
@@ -143,30 +190,12 @@ const translations: Record<string, Record<string, string>> = {
     requestCustom: "Запросить индивидуальную выписку",
     requestCustomDesc: "Запросите выписку за определённый период",
     back: "Назад",
+    loading: "Загрузка выписок...",
+    noStatements: "Опубликованных выписок пока нет",
+    errorLoading: "Не удалось загрузить выписки",
+    retry: "Повторить",
   },
 };
-
-interface Statement {
-  id: string;
-  type: "monthly" | "quarterly" | "annual";
-  title: string;
-  periodEnding: string;
-  generated: string;
-  fileSize: string;
-  status: "available" | "generating" | "scheduled";
-}
-
-const mockStatements: Statement[] = [
-  { id: "s1", type: "monthly", title: "January 2024 Statement", periodEnding: "Jan 31, 2024", generated: "Feb 1, 2024", fileSize: "245 KB", status: "available" },
-  { id: "s2", type: "monthly", title: "December 2023 Statement", periodEnding: "Dec 31, 2023", generated: "Jan 1, 2024", fileSize: "312 KB", status: "available" },
-  { id: "s3", type: "quarterly", title: "Q4 2023 Quarterly Report", periodEnding: "Dec 31, 2023", generated: "Jan 5, 2024", fileSize: "1.2 MB", status: "available" },
-  { id: "s4", type: "monthly", title: "November 2023 Statement", periodEnding: "Nov 30, 2023", generated: "Dec 1, 2023", fileSize: "287 KB", status: "available" },
-  { id: "s5", type: "monthly", title: "October 2023 Statement", periodEnding: "Oct 31, 2023", generated: "Nov 1, 2023", fileSize: "256 KB", status: "available" },
-  { id: "s6", type: "quarterly", title: "Q3 2023 Quarterly Report", periodEnding: "Sep 30, 2023", generated: "Oct 5, 2023", fileSize: "1.1 MB", status: "available" },
-  { id: "s7", type: "monthly", title: "September 2023 Statement", periodEnding: "Sep 30, 2023", generated: "Oct 1, 2023", fileSize: "234 KB", status: "available" },
-  { id: "s8", type: "annual", title: "2023 Annual Report", periodEnding: "Dec 31, 2023", generated: "Jan 15, 2024", fileSize: "4.8 MB", status: "available" },
-  { id: "s9", type: "monthly", title: "February 2024 Statement", periodEnding: "Feb 29, 2024", generated: "-", fileSize: "-", status: "scheduled" },
-];
 
 const typeConfig: Record<string, { color: string; bgColor: string; icon: string }> = {
   monthly: { color: "#BFA181", bgColor: "bg-[#BFA181]/15", icon: "📅" },
@@ -179,10 +208,37 @@ export default function StatementsPage() {
   const t = translations[lang] || translations.en;
 
   const [activeFilter, setActiveFilter] = useState("all");
+  const [statements, setStatements] = useState<Statement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  // Fetch published statements from API
+  const fetchStatements = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await fetch("/api/admin/statements");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.statements)) {
+        setStatements(data.statements);
+      } else {
+        setStatements([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch statements:", err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStatements();
+  }, [fetchStatements]);
 
   const filteredStatements = activeFilter === "all"
-    ? mockStatements
-    : mockStatements.filter(s => s.type === activeFilter);
+    ? statements
+    : statements.filter(s => s.type === activeFilter);
 
   const filters = [
     { key: "all", label: t.all },
@@ -190,6 +246,25 @@ export default function StatementsPage() {
     { key: "quarterly", label: t.quarterly },
     { key: "annual", label: t.annual },
   ];
+
+  // Get localized text from StatementContent
+  const getText = (content: StatementContent | string | undefined): string => {
+    if (!content) return "";
+    if (typeof content === "string") return content;
+    return content[lang as keyof StatementContent] || content.en || content.tr || "";
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr || dateStr === "—") return dateStr;
+    try {
+      return new Date(dateStr).toLocaleDateString(
+        lang === "tr" ? "tr-TR" : lang === "de" ? "de-DE" : lang === "fr" ? "fr-FR" : lang === "ar" ? "ar-SA" : lang === "ru" ? "ru-RU" : "en-US",
+        { year: "numeric", month: "short", day: "numeric" }
+      );
+    } catch {
+      return dateStr;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f8f5f0] dark:bg-[#0a0a0a]">
@@ -250,65 +325,98 @@ export default function StatementsPage() {
           ))}
         </div>
 
+        {/* Loading state */}
+        {loading && (
+          <div className="bg-white dark:bg-zinc-800/50 rounded-xl border border-stone-200 dark:border-zinc-700/50 p-12 text-center">
+            <div className="w-8 h-8 border-2 border-[#BFA181] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-slate-500 dark:text-zinc-400 text-sm">{t.loading}</p>
+          </div>
+        )}
+
+        {/* Error state */}
+        {!loading && error && (
+          <div className="bg-white dark:bg-zinc-800/50 rounded-xl border border-stone-200 dark:border-zinc-700/50 p-12 text-center">
+            <p className="text-slate-500 dark:text-zinc-400 text-sm mb-4">{t.errorLoading}</p>
+            <button onClick={fetchStatements} className="px-4 py-2 text-sm font-medium text-white bg-[#BFA181] rounded-lg hover:bg-[#a88e6e] transition-colors">
+              {t.retry}
+            </button>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && !error && filteredStatements.length === 0 && (
+          <div className="bg-white dark:bg-zinc-800/50 rounded-xl border border-stone-200 dark:border-zinc-700/50 p-12 text-center">
+            <svg className="w-16 h-16 text-slate-300 dark:text-zinc-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p className="text-slate-500 dark:text-zinc-400 text-sm">{t.noStatements}</p>
+          </div>
+        )}
+
         {/* Statement Cards */}
-        <div className="space-y-3">
-          {filteredStatements.map(statement => {
-            const config = typeConfig[statement.type];
-            return (
-              <div key={statement.id} className="bg-white dark:bg-zinc-800/50 rounded-xl border border-stone-200 dark:border-zinc-700/50 p-4">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className={`w-10 h-10 rounded-full ${config.bgColor} flex items-center justify-center flex-shrink-0`}>
-                    <span className="text-lg">{config.icon}</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-slate-800 dark:text-white">{statement.title}</h3>
-                      {statement.status !== "available" ? (
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                          statement.status === "generating" ? "bg-amber-500/20 text-amber-600" : "bg-slate-200 dark:bg-zinc-600 text-slate-500 dark:text-zinc-300"
-                        }`}>
-                          {statement.status === "generating" ? `⏳ ${t.generating}` : `📋 ${t.scheduled}`}
-                        </span>
-                      ) : (
+        {!loading && !error && filteredStatements.length > 0 && (
+          <div className="space-y-3">
+            {filteredStatements.map(statement => {
+              const config = typeConfig[statement.type] || typeConfig.monthly;
+              return (
+                <div key={statement.id} className="bg-white dark:bg-zinc-800/50 rounded-xl border border-stone-200 dark:border-zinc-700/50 p-4">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className={`w-10 h-10 rounded-full ${config.bgColor} flex items-center justify-center flex-shrink-0`}>
+                      <span className="text-lg">{config.icon}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-slate-800 dark:text-white">{getText(statement.title)}</h3>
                         <span className="px-2 py-0.5 rounded text-[10px] font-semibold" style={{ backgroundColor: config.color + "20", color: config.color }}>
                           {t[statement.type]}
                         </span>
-                      )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Details */}
-                <div className="grid grid-cols-3 gap-2 mb-3 pl-[52px]">
-                  <div>
-                    <p className="text-[10px] text-slate-400 dark:text-zinc-500">{t.periodEnding}</p>
-                    <p className="text-xs text-slate-700 dark:text-zinc-300 font-medium">{statement.periodEnding}</p>
+                  {/* Details */}
+                  <div className="grid grid-cols-3 gap-2 mb-3 pl-[52px]">
+                    <div>
+                      <p className="text-[10px] text-slate-400 dark:text-zinc-500">{t.periodEnding}</p>
+                      <p className="text-xs text-slate-700 dark:text-zinc-300 font-medium">{formatDate(statement.periodEnding)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 dark:text-zinc-500">{t.generated}</p>
+                      <p className="text-xs text-slate-700 dark:text-zinc-300 font-medium">{formatDate(statement.generatedDate)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 dark:text-zinc-500">{t.fileSize}</p>
+                      <p className="text-xs text-slate-700 dark:text-zinc-300 font-medium">{statement.fileSize || "—"}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 dark:text-zinc-500">{t.generated}</p>
-                    <p className="text-xs text-slate-700 dark:text-zinc-300 font-medium">{statement.generated}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 dark:text-zinc-500">{t.fileSize}</p>
-                    <p className="text-xs text-slate-700 dark:text-zinc-300 font-medium">{statement.fileSize}</p>
-                  </div>
-                </div>
 
-                {/* Actions */}
-                {statement.status === "available" && (
-                  <div className="flex gap-2 pl-[52px]">
-                    <button className="flex-1 py-2.5 rounded-lg text-xs font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: config.color }}>
-                      {t.downloadPdf}
-                    </button>
-                    <button className="px-4 py-2.5 rounded-lg text-xs font-semibold border border-stone-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-700/50 transition">
-                      {t.preview}
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  {/* Actions */}
+                  {statement.pdfUrl ? (
+                    <div className="flex gap-2 pl-[52px]">
+                      <button
+                        onClick={() => window.open(statement.pdfUrl, "_blank")}
+                        className="flex-1 py-2.5 rounded-lg text-xs font-semibold text-white transition hover:opacity-90"
+                        style={{ backgroundColor: config.color }}
+                      >
+                        {t.downloadPdf}
+                      </button>
+                      <button
+                        onClick={() => window.open(statement.pdfUrl, "_blank")}
+                        className="px-4 py-2.5 rounded-lg text-xs font-semibold border border-stone-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-700/50 transition"
+                      >
+                        {t.preview}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="pl-[52px]">
+                      <span className="text-xs text-slate-400 dark:text-zinc-500 italic">PDF —</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Request Custom Statement */}
         <div className="mt-4 mb-8 border-2 border-dashed border-stone-300 dark:border-zinc-600 rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:border-[#BFA181] hover:bg-[#BFA181]/5 transition">

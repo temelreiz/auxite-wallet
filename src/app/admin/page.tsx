@@ -394,6 +394,7 @@ const TABS = [
   { id: "redemption", label: "Redemption", icon: "📦" },
   { id: "cashSettlement", label: "Cash Settlement", icon: "💰" },
   { id: "relationshipManagers", label: "RM / CRM", icon: "🤝" },
+  { id: "statements", label: "Raporlar", icon: "📑" },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -581,6 +582,19 @@ export default function AdminDashboard() {
     active: true,
   });
   const [campaignSaving, setCampaignSaving] = useState(false);
+
+  // ── Statements State ──
+  const [adminStatements, setAdminStatements] = useState<any[]>([]);
+  const [stmtLangTab, setStmtLangTab] = useState("tr");
+  const [stmtSaving, setStmtSaving] = useState(false);
+  const [newStmt, setNewStmt] = useState<any>({
+    type: "monthly",
+    title: { tr: "", en: "", de: "", fr: "", ar: "", ru: "" },
+    period: { tr: "", en: "", de: "", fr: "", ar: "", ru: "" },
+    periodEnding: "",
+    fileSize: "",
+    pdfUrl: "",
+  });
 
   // NEW: Announcements State
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -842,6 +856,7 @@ export default function AdminDashboard() {
     loadBanners();
     loadCampaigns();
     loadAnnouncements();
+    loadStatements();
     loadAnalytics();
     loadAuxiteerConfig();
     loadSovereignInvitations();
@@ -1091,6 +1106,78 @@ export default function AdminDashboard() {
       }
     } catch (e) {
       console.error("Failed to load campaigns:", e);
+    }
+  };
+
+  // ── Statements Loaders & Handlers ──
+  const loadStatements = async () => {
+    try {
+      const res = await fetch("/api/admin/statements?admin=true", { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setAdminStatements(data.statements || []);
+      }
+    } catch (e) {
+      console.error("Failed to load statements:", e);
+    }
+  };
+
+  const handleCreateStatement = async () => {
+    if (!newStmt.title?.tr || !newStmt.title?.en || !newStmt.period?.tr || !newStmt.period?.en || !newStmt.periodEnding) {
+      setMessage({ type: "error", text: "Başlık (TR+EN), Dönem (TR+EN) ve Dönem Bitiş tarihi gerekli" });
+      return;
+    }
+    setStmtSaving(true);
+    try {
+      const res = await fetch("/api/admin/statements", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ action: "create", ...newStmt }),
+      });
+      if (res.ok) {
+        setMessage({ type: "success", text: "Rapor oluşturuldu" });
+        setNewStmt({
+          type: "monthly",
+          title: { tr: "", en: "", de: "", fr: "", ar: "", ru: "" },
+          period: { tr: "", en: "", de: "", fr: "", ar: "", ru: "" },
+          periodEnding: "",
+          fileSize: "",
+          pdfUrl: "",
+        });
+        loadStatements();
+      }
+    } catch (e) {
+      setMessage({ type: "error", text: "Rapor oluşturulamadı" });
+    } finally {
+      setStmtSaving(false);
+    }
+  };
+
+  const handleToggleStatementPublish = async (id: string) => {
+    try {
+      await fetch("/api/admin/statements", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ action: "toggle-publish", id }),
+      });
+      loadStatements();
+    } catch (e) {
+      console.error("Toggle publish failed:", e);
+    }
+  };
+
+  const handleDeleteStatement = async (id: string) => {
+    if (!confirm("Bu raporu silmek istediğinize emin misiniz?")) return;
+    try {
+      await fetch("/api/admin/statements", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ action: "delete", id }),
+      });
+      loadStatements();
+      setMessage({ type: "success", text: "Rapor silindi" });
+    } catch (e) {
+      console.error("Delete failed:", e);
     }
   };
 
@@ -5626,6 +5713,198 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ═══════════════ STATEMENTS TAB ═══════════════ */}
+          {activeTab === "statements" && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold">📑 Rapor Yönetimi</h2>
+              <p className="text-sm text-slate-400">Saklama beyanları, aylık/çeyreklik/yıllık raporları buradan oluşturup yayınlayın. Çoklu dil desteğiyle.</p>
+
+              {/* Existing Statements */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-4">Mevcut Raporlar ({adminStatements.length})</h3>
+
+                {adminStatements.length === 0 ? (
+                  <p className="text-slate-400 text-center py-8">Henüz rapor eklenmemiş</p>
+                ) : (
+                  <div className="space-y-3">
+                    {adminStatements.map((stmt: any) => (
+                      <div
+                        key={stmt.id}
+                        className={`p-4 rounded-xl border ${
+                          stmt.published ? "bg-slate-800/50 border-[#2F6F62]/50" : "bg-slate-900/50 border-slate-800 opacity-70"
+                        }`}
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <p className="font-medium text-white">{stmt.title?.tr || stmt.title?.en}</p>
+                              <span className={`px-2 py-0.5 rounded text-xs ${
+                                stmt.type === 'monthly' ? 'bg-[#BFA181]/20 text-[#BFA181]' :
+                                stmt.type === 'quarterly' ? 'bg-blue-500/20 text-blue-400' :
+                                'bg-purple-500/20 text-purple-400'
+                              }`}>
+                                {stmt.type === 'monthly' ? 'Aylık' : stmt.type === 'quarterly' ? 'Çeyreklik' : 'Yıllık'}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded text-xs ${
+                                stmt.published ? 'bg-[#2F6F62]/20 text-[#2F6F62]' : 'bg-red-500/20 text-red-400'
+                              }`}>
+                                {stmt.published ? '✅ Yayında' : '⏸ Taslak'}
+                              </span>
+                            </div>
+                            <p className="text-sm text-slate-400">{stmt.title?.en}</p>
+                            <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
+                              <span>Dönem: {stmt.period?.tr || stmt.period?.en}</span>
+                              <span>Bitiş: {stmt.periodEnding}</span>
+                              {stmt.fileSize && <span>Boyut: {stmt.fileSize}</span>}
+                              {stmt.pdfUrl && <span className="text-blue-400">PDF ✓</span>}
+                            </div>
+                            {/* Show which languages are filled */}
+                            <div className="flex gap-1 mt-2">
+                              {['tr', 'en', 'de', 'fr', 'ar', 'ru'].map(lang => (
+                                <span key={lang} className={`px-1.5 py-0.5 rounded text-[10px] ${
+                                  stmt.title?.[lang] ? 'bg-[#2F6F62]/20 text-[#2F6F62]' : 'bg-slate-700 text-slate-500'
+                                }`}>
+                                  {lang.toUpperCase()}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleToggleStatementPublish(stmt.id)}
+                              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                                stmt.published
+                                  ? "bg-[#2F6F62]/20 text-[#2F6F62] hover:bg-[#2F6F62]/30"
+                                  : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                              }`}
+                              title={stmt.published ? 'Yayından kaldır' : 'Yayınla'}
+                            >
+                              {stmt.published ? "📢" : "📤"}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteStatement(stmt.id)}
+                              className="w-10 h-10 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 flex items-center justify-center"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* New Statement Form */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-4">Yeni Rapor Ekle</h3>
+
+                {/* Language Tabs */}
+                <div className="flex gap-1 mb-4 flex-wrap">
+                  {['TR', 'EN', 'DE', 'FR', 'AR', 'RU'].map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => setStmtLangTab(lang.toLowerCase())}
+                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                        stmtLangTab === lang.toLowerCase()
+                          ? 'bg-[#2F6F62] text-white'
+                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      }`}
+                    >
+                      {lang}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Title — Active Language */}
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">
+                      Başlık ({stmtLangTab.toUpperCase()}) {(stmtLangTab === 'tr' || stmtLangTab === 'en') && <span className="text-red-400">*</span>}
+                    </label>
+                    <input
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                      value={newStmt.title?.[stmtLangTab] || ""}
+                      onChange={e => setNewStmt({ ...newStmt, title: { ...newStmt.title, [stmtLangTab]: e.target.value } })}
+                      placeholder={stmtLangTab === 'tr' ? 'Ocak 2026 Saklama Beyanı' : stmtLangTab === 'en' ? 'January 2026 Custody Statement' : `Title (${stmtLangTab.toUpperCase()})`}
+                    />
+                  </div>
+
+                  {/* Period — Active Language */}
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">
+                      Dönem ({stmtLangTab.toUpperCase()}) {(stmtLangTab === 'tr' || stmtLangTab === 'en') && <span className="text-red-400">*</span>}
+                    </label>
+                    <input
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                      value={newStmt.period?.[stmtLangTab] || ""}
+                      onChange={e => setNewStmt({ ...newStmt, period: { ...newStmt.period, [stmtLangTab]: e.target.value } })}
+                      placeholder={stmtLangTab === 'tr' ? 'Ocak 2026' : stmtLangTab === 'en' ? 'January 2026' : `Period (${stmtLangTab.toUpperCase()})`}
+                    />
+                  </div>
+
+                  {/* Type */}
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Tür</label>
+                    <select
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                      value={newStmt.type}
+                      onChange={e => setNewStmt({ ...newStmt, type: e.target.value })}
+                    >
+                      <option value="monthly">Aylık</option>
+                      <option value="quarterly">Çeyreklik</option>
+                      <option value="annual">Yıllık</option>
+                    </select>
+                  </div>
+
+                  {/* Period Ending Date */}
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Dönem Bitiş Tarihi <span className="text-red-400">*</span></label>
+                    <input
+                      type="date"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                      value={newStmt.periodEnding}
+                      onChange={e => setNewStmt({ ...newStmt, periodEnding: e.target.value })}
+                    />
+                  </div>
+
+                  {/* File Size */}
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Dosya Boyutu</label>
+                    <input
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                      value={newStmt.fileSize}
+                      onChange={e => setNewStmt({ ...newStmt, fileSize: e.target.value })}
+                      placeholder="245 KB"
+                    />
+                  </div>
+
+                  {/* PDF URL */}
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">PDF URL (opsiyonel)</label>
+                    <input
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                      value={newStmt.pdfUrl}
+                      onChange={e => setNewStmt({ ...newStmt, pdfUrl: e.target.value })}
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+
+                {/* Submit */}
+                <button
+                  onClick={handleCreateStatement}
+                  disabled={stmtSaving}
+                  className="mt-4 px-6 py-2.5 bg-[#2F6F62] text-white rounded-lg font-semibold text-sm hover:bg-[#2F6F62]/80 disabled:opacity-50 transition-colors"
+                >
+                  {stmtSaving ? "Kaydediliyor..." : "📋 Rapor Oluştur"}
+                </button>
+              </div>
             </div>
           )}
 
