@@ -4,6 +4,11 @@ import { NextRequest } from "next/server";
 export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
+  // Fetch the logo from public folder
+  const logoUrl = new URL("/auxite.png", request.url);
+  const logoData = await fetch(logoUrl).then((res) => res.arrayBuffer());
+  const logoBase64 = `data:image/png;base64,${Buffer.from(logoData).toString("base64")}`;
+
   return new ImageResponse(
     (
       <div
@@ -14,7 +19,7 @@ export async function GET(request: NextRequest) {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #0B1420 0%, #0D1825 100%)",
+          background: "linear-gradient(135deg, #0B1420 0%, #0D1825 50%, #0F1C2E 100%)",
           position: "relative",
         }}
       >
@@ -27,7 +32,7 @@ export async function GET(request: NextRequest) {
             right: 0,
             height: "2px",
             background: "linear-gradient(90deg, transparent, #BFA181, transparent)",
-            opacity: 0.4,
+            opacity: 0.5,
           }}
         />
 
@@ -38,84 +43,83 @@ export async function GET(request: NextRequest) {
             bottom: 0,
             left: 0,
             right: 0,
-            height: "40px",
-            backgroundColor: "#121A2A",
+            height: "44px",
+            backgroundColor: "#0A1018",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            borderTop: "1px solid rgba(191, 161, 129, 0.1)",
           }}
         >
-          <span style={{ color: "#3A4A5A", fontSize: 12, letterSpacing: 1 }}>
+          <span style={{ color: "#4A5E73", fontSize: 13, letterSpacing: 2, fontWeight: 400 }}>
             vault.auxite.io
           </span>
         </div>
 
-        {/* Logo circle */}
-        <div
+        {/* Auxite Logo */}
+        <img
+          src={logoBase64}
+          width={120}
+          height={108}
           style={{
-            width: 96,
-            height: 96,
-            borderRadius: "50%",
-            border: "1.5px solid rgba(191, 161, 129, 0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: 28,
-            background: "rgba(191, 161, 129, 0.06)",
+            marginBottom: 32,
           }}
-        >
-          <span
-            style={{
-              fontSize: 32,
-              fontWeight: 600,
-              color: "#BFA181",
-              letterSpacing: 2,
-            }}
-          >
-            Au
-          </span>
-        </div>
+        />
 
         {/* Brand */}
         <span
           style={{
-            fontSize: 52,
+            fontSize: 48,
             fontWeight: 300,
             color: "#BFA181",
-            letterSpacing: 14,
-            marginBottom: 16,
+            letterSpacing: 16,
+            marginBottom: 24,
           }}
         >
           AUXITE
         </span>
 
-        {/* Tagline */}
+        {/* Divider */}
+        <div
+          style={{
+            width: 80,
+            height: 1,
+            background: "linear-gradient(90deg, transparent, #BFA181, transparent)",
+            marginBottom: 24,
+            opacity: 0.6,
+          }}
+        />
+
+        {/* Title */}
         <span
           style={{
-            fontSize: 20,
-            fontWeight: 400,
-            color: "#8FA3B8",
-            letterSpacing: 1.5,
-            marginBottom: 20,
+            fontSize: 22,
+            fontWeight: 500,
+            color: "#D4CBB8",
+            letterSpacing: 1.2,
+            marginBottom: 14,
+            textAlign: "center",
           }}
         >
-          Institutional Precious Metal Custody
+          Institutional Access to Fully Allocated Precious Metals
         </span>
 
-        {/* Features */}
+        {/* Description */}
         <span
           style={{
-            fontSize: 14,
-            color: "#4A5E73",
-            letterSpacing: 0.5,
-            marginBottom: 28,
+            fontSize: 15,
+            fontWeight: 400,
+            color: "#6B7F94",
+            letterSpacing: 2,
+            marginBottom: 36,
+            textAlign: "center",
           }}
         >
-          Fully Allocated · Segregated Storage · LBMA Approved Vaults
+          Secure ownership · Independent custody · Institutional execution
         </span>
 
         {/* Metal badges */}
-        <div style={{ display: "flex", gap: 12 }}>
+        <div style={{ display: "flex", gap: 14 }}>
           {[
             { label: "GOLD", color: "#D4A017" },
             { label: "SILVER", color: "#A8A9AD" },
@@ -125,10 +129,10 @@ export async function GET(request: NextRequest) {
             <div
               key={m.label}
               style={{
-                padding: "6px 16px",
+                padding: "7px 18px",
                 borderRadius: 6,
-                backgroundColor: `${m.color}15`,
-                border: `1px solid ${m.color}30`,
+                backgroundColor: `${m.color}12`,
+                border: `1px solid ${m.color}25`,
                 display: "flex",
                 alignItems: "center",
               }}
@@ -138,7 +142,7 @@ export async function GET(request: NextRequest) {
                   fontSize: 11,
                   fontWeight: 600,
                   color: m.color,
-                  letterSpacing: 1,
+                  letterSpacing: 1.5,
                 }}
               >
                 {m.label}

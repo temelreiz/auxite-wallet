@@ -25,8 +25,8 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   metadataBase: new URL("https://vault.auxite.io"),
   openGraph: {
-    title: "Auxite — Institutional Precious Metal Custody",
-    description: "Trade digital tokens backed by physical gold, silver, platinum & palladium. Fully allocated, segregated custody in LBMA-approved vaults worldwide.",
+    title: "Auxite — Institutional Access to Fully Allocated Precious Metals",
+    description: "Secure ownership, Independent custody, Institutional execution.",
     url: "https://vault.auxite.io",
     siteName: "Auxite",
     type: "website",
@@ -36,14 +36,14 @@ export const metadata: Metadata = {
         url: "/api/og",
         width: 1200,
         height: 630,
-        alt: "Auxite — Tokenized Precious Metals",
+        alt: "Auxite — Institutional Access to Fully Allocated Precious Metals",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Auxite — Institutional Precious Metal Custody",
-    description: "Trade digital tokens backed by physical gold, silver, platinum & palladium.",
+    title: "Auxite — Institutional Access to Fully Allocated Precious Metals",
+    description: "Secure ownership, Independent custody, Institutional execution.",
     images: ["/api/og"],
   },
   robots: {
