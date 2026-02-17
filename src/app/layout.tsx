@@ -20,13 +20,19 @@ export const dynamic = "force-dynamic";
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "";
 
 export const metadata: Metadata = {
-  title: "Auxite - Tokenized Precious Metals",
-  description: "Trade digital tokens backed by physical precious metals. Fully allocated, segregated custody in LBMA-approved vaults.",
+  title: {
+    default: "Auxite | Fully Allocated Precious Metals",
+    template: "%s | Auxite",
+  },
+  description: "Own fully allocated precious metals with institutional custody and real-time transparency. Auxite brings vaulted metals on-chain.",
   manifest: "/manifest.json",
   metadataBase: new URL("https://vault.auxite.io"),
+  alternates: {
+    canonical: "https://vault.auxite.io",
+  },
   openGraph: {
-    title: "Auxite — Institutional Access to Fully Allocated Precious Metals",
-    description: "Secure ownership, Independent custody, Institutional execution.",
+    title: "Auxite | Fully Allocated Precious Metals",
+    description: "Own fully allocated precious metals with institutional custody and real-time transparency. Auxite brings vaulted metals on-chain.",
     url: "https://vault.auxite.io",
     siteName: "Auxite",
     type: "website",
@@ -36,14 +42,14 @@ export const metadata: Metadata = {
         url: "/api/og",
         width: 1200,
         height: 630,
-        alt: "Auxite — Institutional Access to Fully Allocated Precious Metals",
+        alt: "Auxite — Fully Allocated Precious Metals",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Auxite — Institutional Access to Fully Allocated Precious Metals",
-    description: "Secure ownership, Independent custody, Institutional execution.",
+    title: "Auxite | Fully Allocated Precious Metals",
+    description: "Own fully allocated precious metals with institutional custody and real-time transparency.",
     images: ["/api/og"],
   },
   robots: {
@@ -53,7 +59,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Auxite",
+    title: "Auxite | Allocated Metals",
   },
 };
 
@@ -76,6 +82,26 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
+
+        {/* JSON-LD Structured Data — FinancialService (RWA optimized) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FinancialService",
+              name: "Auxite",
+              url: "https://vault.auxite.io",
+              description: "Auxite provides access to fully allocated precious metals with institutional custody and transparency-first reporting.",
+              areaServed: "Global",
+              serviceType: "Asset-backed precious metals platform",
+              sameAs: [
+                "https://www.linkedin.com/company/auxite",
+                "https://x.com/auxite",
+              ],
+            }),
+          }}
+        />
 
         {/* Theme initialization script - always dark mode */}
         <script
