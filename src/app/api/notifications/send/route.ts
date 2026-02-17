@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import webpush from 'web-push';
 import { redis } from '@/lib/redis';
+import { sendPushToUser, broadcastPush } from '@/lib/expo-push';
 
 // VAPID configuration
 webpush.setVapidDetails(
@@ -106,17 +107,41 @@ export async function POST(request: NextRequest) {
 
     let totalSent = 0;
     let totalFailed = 0;
+    let mobileSent = 0;
+    let mobileFailed = 0;
 
     // Send to specific user(s)
     if (walletAddress) {
+      // Web push
       const result = await sendToUser(walletAddress, payload);
       totalSent = result.sent;
       totalFailed = result.failed;
+      // Mobile push (Expo)
+      const mobileResult = await sendPushToUser(
+        walletAddress,
+        title,
+        messageBody,
+        { type, ...data, category: type },
+        { channelId: type === 'security' ? 'security' : type === 'trade' ? 'trades' : 'default' }
+      );
+      mobileSent = mobileResult.sent;
+      mobileFailed = mobileResult.failed;
     } else if (walletAddresses && Array.isArray(walletAddresses)) {
       for (const addr of walletAddresses) {
+        // Web push
         const result = await sendToUser(addr, payload);
         totalSent += result.sent;
         totalFailed += result.failed;
+        // Mobile push (Expo)
+        const mobileResult = await sendPushToUser(
+          addr,
+          title,
+          messageBody,
+          { type, ...data, category: type },
+          { channelId: type === 'security' ? 'security' : type === 'trade' ? 'trades' : 'default' }
+        );
+        mobileSent += mobileResult.sent;
+        mobileFailed += mobileResult.failed;
       }
     } else {
       return NextResponse.json({ error: 'walletAddress veya walletAddresses gerekli' }, { status: 400 });
@@ -128,16 +153,20 @@ export async function POST(request: NextRequest) {
       title,
       body: messageBody,
       recipients: walletAddress ? 1 : walletAddresses?.length || 0,
-      sent: totalSent,
-      failed: totalFailed,
+      webSent: totalSent,
+      webFailed: totalFailed,
+      mobileSent,
+      mobileFailed,
       timestamp: Date.now(),
     }));
     await redis.ltrim('notifications:log', 0, 999); // Keep last 1000
 
     return NextResponse.json({
       success: true,
-      sent: totalSent,
-      failed: totalFailed,
+      web: { sent: totalSent, failed: totalFailed },
+      mobile: { sent: mobileSent, failed: mobileFailed },
+      totalSent: totalSent + mobileSent,
+      totalFailed: totalFailed + mobileFailed,
     });
 
   } catch (error) {
