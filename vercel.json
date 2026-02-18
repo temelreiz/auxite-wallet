@@ -33,6 +33,10 @@
     {
       "path": "/api/cron/scan-deposits",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/send-monthly-statements",
+      "schedule": "0 8 1 * *"
     }
   ]
 }
