@@ -42,10 +42,10 @@ const nextConfig = {
             key: "Access-Control-Allow-Origin",
             value: process.env.CORS_ORIGIN || "https://vault.auxite.io",
           },
-          { key: "Access-Control-Allow-Methods", value: "GET,POST,OPTIONS" },
+          { key: "Access-Control-Allow-Methods", value: "GET,POST,PUT,DELETE,PATCH,OPTIONS" },
           {
             key: "Access-Control-Allow-Headers",
-            value: "Content-Type, Authorization",
+            value: "Content-Type, Authorization, x-wallet-address, x-client-platform, x-client-version, x-request-id",
           },
         ],
       },
