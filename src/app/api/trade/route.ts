@@ -12,6 +12,7 @@ import { Redis } from "@upstash/redis";
 import { z } from "zod";
 import { validateRequest } from "@/lib/validations";
 import { withRateLimit, tradeLimiter, checkSuspiciousActivity } from "@/lib/security/rate-limiter";
+import { checkTradingAllowed } from "@/lib/trading-guard";
 import { logTrade, logAudit } from "@/lib/security/audit-logger";
 import { getMetalSpread } from "@/lib/spread-config";
 import { getUserTier, calculateTierFee, getDefaultTier } from "@/lib/auxiteer-service";
@@ -466,6 +467,16 @@ export async function GET(request: NextRequest) {
     const fromTokenLower = fromToken.toLowerCase();
     const toTokenLower = toToken.toLowerCase();
 
+    // Kill Switch / Trading Guard
+    const tradingFeature = (METALS.includes(fromTokenLower) || METALS.includes(toTokenLower)) ? 'metalTrading' as const : 'cryptoTrading' as const;
+    const tradingCheck = await checkTradingAllowed(tradingFeature);
+    if (!tradingCheck.allowed) {
+      return NextResponse.json(
+        { error: tradingCheck.message?.en || 'Trading temporarily disabled', reason: tradingCheck.reason, message: tradingCheck.message },
+        { status: 503 }
+      );
+    }
+
     // Token validation
     if (!VALID_TOKENS.includes(fromTokenLower) || !VALID_TOKENS.includes(toTokenLower)) {
       return NextResponse.json({ error: "Geçersiz token" }, { status: 400 });
@@ -712,6 +723,18 @@ export async function POST(request: NextRequest) {
     } = validation.data;
 
     const normalizedAddress = address.toLowerCase();
+    const fromTokenLower = fromToken.toLowerCase();
+    const toTokenLower = toToken.toLowerCase();
+
+    // Kill Switch / Trading Guard
+    const tradingFeature = (METALS.includes(fromTokenLower) || METALS.includes(toTokenLower)) ? 'metalTrading' as const : 'cryptoTrading' as const;
+    const tradingCheck = await checkTradingAllowed(tradingFeature);
+    if (!tradingCheck.allowed) {
+      return NextResponse.json(
+        { error: tradingCheck.message?.en || 'Trading temporarily disabled', reason: tradingCheck.reason, message: tradingCheck.message },
+        { status: 503 }
+      );
+    }
 
     // ═══════════════════════════════════════════════════════════════════════
     // GET USER TIER FOR FEE CALCULATION
@@ -746,9 +769,6 @@ export async function POST(request: NextRequest) {
       lockedPrice = quote.pricePerGram;
       console.log(`🔒 Using locked price: $${lockedPrice.toFixed(2)}/g`);
     }
-
-    const fromTokenLower = fromToken.toLowerCase();
-    const toTokenLower = toToken.toLowerCase();
 
     // 3. Token validation
     if (!VALID_TOKENS.includes(fromTokenLower) || !VALID_TOKENS.includes(toTokenLower)) {

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { sendEmail } from '@/lib/email';
 import { getUserBalance } from '@/lib/redis';
+import { checkTradingAllowed } from '@/lib/trading-guard';
 import { ethers } from 'ethers';
 import { METAL_TOKENS } from '@/config/contracts-v8';
 
@@ -223,6 +224,15 @@ export async function GET(request: NextRequest) {
 // ── POST: Submit redemption request ──
 export async function POST(request: NextRequest) {
   try {
+    // Kill Switch / Trading Guard
+    const redeemCheck = await checkTradingAllowed('metalTrading');
+    if (!redeemCheck.allowed) {
+      return NextResponse.json(
+        { error: redeemCheck.message?.en || 'Redemption temporarily disabled', reason: redeemCheck.reason, message: redeemCheck.message },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { address, metal, amount, method, vault, notes, twoFactorCode } = body;
 

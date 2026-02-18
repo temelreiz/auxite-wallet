@@ -4,6 +4,7 @@ import { Redis } from "@upstash/redis";
 import { processWithdraw } from "@/lib/blockchain-service";
 import { sendWithdrawConfirmedEmail, sendWithdrawRequestedEmail } from "@/lib/email-service";
 import { getUserLanguage } from "@/lib/user-language";
+import { checkTradingAllowed } from "@/lib/trading-guard";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
 
@@ -140,6 +141,15 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
 
 export async function POST(request: NextRequest) {
   try {
+    // Kill Switch / Trading Guard
+    const withdrawCheck = await checkTradingAllowed('cryptoWithdraw');
+    if (!withdrawCheck.allowed) {
+      return NextResponse.json(
+        { error: withdrawCheck.message?.en || 'Withdrawal temporarily disabled', reason: withdrawCheck.reason, message: withdrawCheck.message },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     // Support both web (address, coin, withdrawAddress) and mobile (fromAddress, token, toAddress) field names
     const address = body.address || body.fromAddress;

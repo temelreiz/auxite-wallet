@@ -5,12 +5,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import { formatAmount } from '@/lib/format';
+import { checkTradingAllowed } from '@/lib/trading-guard';
 
 export async function POST(request: NextRequest) {
   try {
     const apiKey = request.headers.get('x-api-key');
     if (apiKey !== process.env.INTERNAL_API_KEY) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Kill Switch / Trading Guard — maintenance'de DCA'lar atlanır
+    const tradingCheck = await checkTradingAllowed('metalTrading');
+    if (!tradingCheck.allowed) {
+      return NextResponse.json(
+        { error: 'DCA execution skipped — trading disabled', reason: tradingCheck.reason },
+        { status: 503 }
+      );
     }
 
     const now = new Date();
