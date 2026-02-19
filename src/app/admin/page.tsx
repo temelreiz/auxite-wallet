@@ -397,6 +397,7 @@ const TABS = [
   { id: "statements", label: "Raporlar", icon: "📑" },
   { id: "pushNotifications", label: "Push Bildirim", icon: "🔔" },
   { id: "oracleWatcher", label: "Oracle Watcher", icon: "👁️" },
+  { id: "supportSettings", label: "Destek", icon: "💬" },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -658,6 +659,17 @@ export default function AdminDashboard() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [showWebsiteModal, setShowWebsiteModal] = useState<string | null>(null);
 
+  // Support Contact Settings
+  const [supportContactSettings, setSupportContactSettings] = useState({
+    whatsappNumber: '905335062856',
+    telegramLink: '',
+    supportEmail: 'support@auxite.io',
+    phoneNumber: '',
+    businessHours: 'Mon-Fri 9:00-18:00 CET',
+  });
+  const [supportSettingsLoading, setSupportSettingsLoading] = useState(false);
+  const [supportSettingsSaving, setSupportSettingsSaving] = useState(false);
+
   // Relationship Manager CRM
   const [rmList, setRmList] = useState<any[]>([]);
   const [rmStats, setRmStats] = useState<any>(null);
@@ -668,6 +680,38 @@ export default function AdminDashboard() {
   const [rmSaving, setRmSaving] = useState(false);
   const [rmClients, setRmClients] = useState<string[]>([]);
   const [viewingRmClients, setViewingRmClients] = useState<string | null>(null);
+
+  const loadSupportSettings = async () => {
+    setSupportSettingsLoading(true);
+    try {
+      const res = await fetch("/api/admin/support-settings", { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.settings) setSupportContactSettings(data.settings);
+      }
+    } catch (e) { console.error("Support settings load error:", e); }
+    setSupportSettingsLoading(false);
+  };
+
+  const saveSupportSettings = async () => {
+    setSupportSettingsSaving(true);
+    try {
+      const res = await fetch("/api/admin/support-settings", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(supportContactSettings),
+      });
+      if (res.ok) {
+        setMessage({ type: "success", text: "Destek ayarları kaydedildi" });
+      } else {
+        setMessage({ type: "error", text: "Kaydetme başarısız" });
+      }
+    } catch (e) {
+      console.error("Support settings save error:", e);
+      setMessage({ type: "error", text: "Kaydetme hatası" });
+    }
+    setSupportSettingsSaving(false);
+  };
 
   const loadRelationshipManagers = async () => {
     setRmLoading(true);
@@ -801,6 +845,9 @@ export default function AdminDashboard() {
     }
     if (activeTab === "relationshipManagers") {
       loadRelationshipManagers();
+    }
+    if (activeTab === "supportSettings") {
+      loadSupportSettings();
     }
 
     return () => intervals.forEach(clearInterval);
@@ -5917,6 +5964,154 @@ export default function AdminDashboard() {
                   {stmtSaving ? "Kaydediliyor..." : "📋 Rapor Oluştur"}
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Support Settings Tab */}
+          {activeTab === "supportSettings" && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold">💬 Destek Kanalları Yönetimi</h2>
+              <p className="text-slate-400 text-sm">Mobil uygulama ve web sitesinde gösterilecek iletişim bilgilerini buradan yönetin.</p>
+
+              {supportSettingsLoading ? (
+                <div className="text-center py-12 text-slate-400">Yükleniyor...</div>
+              ) : (
+                <>
+                  {/* WhatsApp */}
+                  <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-[#25D366]/15 flex items-center justify-center text-lg">📱</div>
+                      <div>
+                        <h3 className="font-semibold text-white">WhatsApp Numarası</h3>
+                        <p className="text-xs text-slate-500">Uluslararası format: ülke kodu + numara (örn: 905335062856)</p>
+                      </div>
+                    </div>
+                    <input
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500"
+                      value={supportContactSettings.whatsappNumber}
+                      onChange={(e) => setSupportContactSettings({ ...supportContactSettings, whatsappNumber: e.target.value })}
+                      placeholder="905335062856"
+                    />
+                    {supportContactSettings.whatsappNumber && (
+                      <p className="text-xs text-slate-500 mt-2">
+                        Link: <span className="text-[#25D366]">wa.me/{supportContactSettings.whatsappNumber}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Telegram */}
+                  <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-[#0088cc]/15 flex items-center justify-center text-lg">✈️</div>
+                      <div>
+                        <h3 className="font-semibold text-white">Telegram Linki</h3>
+                        <p className="text-xs text-slate-500">Kullanıcı adı veya tam link (örn: AuxiteSupport veya https://t.me/AuxiteSupport)</p>
+                      </div>
+                    </div>
+                    <input
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500"
+                      value={supportContactSettings.telegramLink}
+                      onChange={(e) => setSupportContactSettings({ ...supportContactSettings, telegramLink: e.target.value })}
+                      placeholder="AuxiteSupport"
+                    />
+                    {supportContactSettings.telegramLink && (
+                      <p className="text-xs text-slate-500 mt-2">
+                        Link: <span className="text-[#0088cc]">
+                          {supportContactSettings.telegramLink.startsWith('http') ? supportContactSettings.telegramLink : `t.me/${supportContactSettings.telegramLink}`}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-purple-500/15 flex items-center justify-center text-lg">📧</div>
+                      <div>
+                        <h3 className="font-semibold text-white">Destek E-posta</h3>
+                        <p className="text-xs text-slate-500">Kullanıcıların destek talebi göndereceği e-posta adresi</p>
+                      </div>
+                    </div>
+                    <input
+                      type="email"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500"
+                      value={supportContactSettings.supportEmail}
+                      onChange={(e) => setSupportContactSettings({ ...supportContactSettings, supportEmail: e.target.value })}
+                      placeholder="support@auxite.io"
+                    />
+                  </div>
+
+                  {/* Phone */}
+                  <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center text-lg">📞</div>
+                      <div>
+                        <h3 className="font-semibold text-white">Telefon Numarası</h3>
+                        <p className="text-xs text-slate-500">Destek hattı telefon numarası</p>
+                      </div>
+                    </div>
+                    <input
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500"
+                      value={supportContactSettings.phoneNumber}
+                      onChange={(e) => setSupportContactSettings({ ...supportContactSettings, phoneNumber: e.target.value })}
+                      placeholder="+90 533 506 28 56"
+                    />
+                  </div>
+
+                  {/* Business Hours */}
+                  <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-[#BFA181]/15 flex items-center justify-center text-lg">🕐</div>
+                      <div>
+                        <h3 className="font-semibold text-white">Çalışma Saatleri</h3>
+                        <p className="text-xs text-slate-500">Destek ekibinin aktif olduğu saatler</p>
+                      </div>
+                    </div>
+                    <input
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500"
+                      value={supportContactSettings.businessHours}
+                      onChange={(e) => setSupportContactSettings({ ...supportContactSettings, businessHours: e.target.value })}
+                      placeholder="Mon-Fri 9:00-18:00 CET"
+                    />
+                  </div>
+
+                  {/* Preview */}
+                  <div className="bg-slate-900/50 border border-[#BFA181]/20 rounded-xl p-6">
+                    <h3 className="font-semibold text-[#BFA181] mb-4">Önizleme</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#25D366]">WhatsApp:</span>
+                        <span className="text-white">{supportContactSettings.whatsappNumber || '—'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#0088cc]">Telegram:</span>
+                        <span className="text-white">{supportContactSettings.telegramLink || '—'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-purple-400">Email:</span>
+                        <span className="text-white">{supportContactSettings.supportEmail || '—'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-400">Telefon:</span>
+                        <span className="text-white">{supportContactSettings.phoneNumber || '—'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 col-span-2">
+                        <span className="text-[#BFA181]">Saatler:</span>
+                        <span className="text-white">{supportContactSettings.businessHours || '—'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Save Button */}
+                  <button
+                    onClick={saveSupportSettings}
+                    disabled={supportSettingsSaving}
+                    className="w-full py-3 bg-[#BFA181] text-white rounded-xl font-semibold text-sm hover:bg-[#BFA181]/80 disabled:opacity-50 transition-colors"
+                  >
+                    {supportSettingsSaving ? "Kaydediliyor..." : "💾 Destek Ayarlarını Kaydet"}
+                  </button>
+                </>
+              )}
             </div>
           )}
 
