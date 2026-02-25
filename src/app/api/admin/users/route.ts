@@ -12,6 +12,7 @@ const redis = new Redis({
 // Admin addresses (environment'tan al)
 const ADMIN_ADDRESSES = [
   process.env.ADMIN_ADDRESS?.toLowerCase(),
+  ...(process.env.NEXT_PUBLIC_ADMIN_ADDRESSES || "").split(",").map(a => a.trim().toLowerCase()),
 ].filter(Boolean);
 
 // ═══════════════════════════════════════════════════════════════════════════
