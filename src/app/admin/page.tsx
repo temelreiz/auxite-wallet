@@ -7832,6 +7832,14 @@ function PushNotificationsTab() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const WATCHER_URL = process.env.NEXT_PUBLIC_ORACLE_WATCHER_URL || "";
+const PROXY_BASE = "/api/admin/watcher-proxy";
+
+function watcherProxy(path: string, method: "GET" | "POST" | "DELETE" = "GET", body?: any) {
+  const url = `${PROXY_BASE}?path=${encodeURIComponent(path)}`;
+  const opts: RequestInit = { method, headers: { "Content-Type": "application/json" } };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(url, opts);
+}
 
 function OracleWatcherTab() {
   const [status, setWatcherStatus] = useState<any>(null);
@@ -7847,12 +7855,11 @@ function OracleWatcherTab() {
   const [overrideDuration, setOverrideDuration] = useState("60");
 
   const fetchWatcherStatus = useCallback(async () => {
-    if (!WATCHER_URL) return;
     setLoading(true);
     try {
       const [statusRes, historyRes] = await Promise.all([
-        fetch(`${WATCHER_URL}/status`),
-        fetch(`${WATCHER_URL}/history?limit=20`),
+        watcherProxy("/status"),
+        watcherProxy("/history?limit=20"),
       ]);
       if (statusRes.ok) setWatcherStatus(await statusRes.json());
       if (historyRes.ok) {
@@ -7872,15 +7879,11 @@ function OracleWatcherTab() {
     return () => clearInterval(interval);
   }, [fetchWatcherStatus]);
 
-  const watcherHeaders: Record<string, string> = { "Content-Type": "application/json" };
-
   const toggleKillSwitch = async () => {
-    if (!WATCHER_URL || !status) return;
+    if (!status) return;
     const newState = !status.killSwitch;
     try {
-      const res = await fetch(`${WATCHER_URL}/admin/kill-switch`, {
-        method: "POST", headers: watcherHeaders, body: JSON.stringify({ active: newState }),
-      });
+      const res = await watcherProxy("/admin/kill-switch", "POST", { active: newState });
       if (res.ok) {
         setActionMsg(`Kill switch ${newState ? "AKTİF" : "KAPALI"}`);
         fetchWatcherStatus();
@@ -7891,9 +7894,8 @@ function OracleWatcherTab() {
   };
 
   const forceUpdate = async () => {
-    if (!WATCHER_URL) return;
     try {
-      const res = await fetch(`${WATCHER_URL}/admin/force-update`, { method: "POST", headers: watcherHeaders });
+      const res = await watcherProxy("/admin/force-update", "POST");
       if (res.ok) {
         setActionMsg("Force update tetiklendi");
         setTimeout(fetchWatcherStatus, 5000);
@@ -7904,7 +7906,6 @@ function OracleWatcherTab() {
   };
 
   const submitOverride = async () => {
-    if (!WATCHER_URL) return;
     const prices = {
       gold: parseFloat(overrideGold),
       silver: parseFloat(overrideSilver),
@@ -7916,10 +7917,7 @@ function OracleWatcherTab() {
       return;
     }
     try {
-      const res = await fetch(`${WATCHER_URL}/admin/override`, {
-        method: "POST", headers: watcherHeaders,
-        body: JSON.stringify({ prices, expiresInMinutes: parseInt(overrideDuration) || 60 }),
-      });
+      const res = await watcherProxy("/admin/override", "POST", { prices, expiresInMinutes: parseInt(overrideDuration) || 60 });
       if (res.ok) {
         setActionMsg("Override ayarlandı");
         fetchWatcherStatus();
@@ -7930,9 +7928,8 @@ function OracleWatcherTab() {
   };
 
   const clearOverride = async () => {
-    if (!WATCHER_URL) return;
     try {
-      const res = await fetch(`${WATCHER_URL}/admin/override`, { method: "DELETE", headers: watcherHeaders });
+      const res = await watcherProxy("/admin/override", "DELETE");
       if (res.ok) {
         setActionMsg("Override temizlendi");
         fetchWatcherStatus();
@@ -7941,18 +7938,6 @@ function OracleWatcherTab() {
       setActionMsg(`Hata: ${err.message}`);
     }
   };
-
-  if (!WATCHER_URL) {
-    return (
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">👁️ Oracle Watcher</h2>
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6 text-center">
-          <p className="text-yellow-400">NEXT_PUBLIC_ORACLE_WATCHER_URL environment variable tanımlı değil.</p>
-          <p className="text-sm text-slate-400 mt-2">Railway&apos;de watcher deploy edildikten sonra URL&apos;yi .env&apos;e ekleyin.</p>
-        </div>
-      </div>
-    );
-  }
 
   const metalLabels: Record<string, string> = { gold: "Altın", silver: "Gümüş", platinum: "Platin", palladium: "Paladyum" };
 
