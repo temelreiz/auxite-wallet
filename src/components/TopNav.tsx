@@ -240,6 +240,17 @@ export default function TopNav({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [addressCopied, setAddressCopied] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState("447520637591");
+
+  // Load WhatsApp number from support settings
+  useEffect(() => {
+    fetch("/api/admin/support-settings")
+      .then(r => r.json())
+      .then(data => {
+        if (data.settings?.whatsappNumber) setWhatsappNumber(data.settings.whatsappNumber);
+      })
+      .catch(() => {});
+  }, []);
 
   // QR Login state - check localStorage
   const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
@@ -537,7 +548,7 @@ export default function TopNav({
 
             {/* WhatsApp Support */}
             <a
-              href="https://wa.me/447520637591"
+              href={`https://wa.me/${whatsappNumber}`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setMobileMenuOpen(false)}
