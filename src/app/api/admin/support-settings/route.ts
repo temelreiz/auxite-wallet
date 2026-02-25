@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = 'force-dynamic';
 
 const DEFAULT_SETTINGS = {
-  whatsappNumber: '905335062856',
+  whatsappNumber: '447520637591',
   telegramLink: '',
   supportEmail: 'support@auxite.io',
   phoneNumber: '',

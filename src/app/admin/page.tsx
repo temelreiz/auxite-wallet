@@ -661,7 +661,7 @@ export default function AdminDashboard() {
 
   // Support Contact Settings
   const [supportContactSettings, setSupportContactSettings] = useState({
-    whatsappNumber: '905335062856',
+    whatsappNumber: '447520637591',
     telegramLink: '',
     supportEmail: 'support@auxite.io',
     phoneNumber: '',
