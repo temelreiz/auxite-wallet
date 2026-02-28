@@ -905,7 +905,7 @@ export default function AdminDashboard() {
   const getAuthHeaders = () => ({
   "Content-Type": "application/json",
   "Authorization": `Bearer ${sessionStorage.getItem("auxite_admin_token")}`,
-  "x-admin-address": "0x7bb286a8c876ac6283dd0b95d8ec853bbdb20378",
+  "x-admin-address": "0x101bD08219773E0ff8cD3805542c0A2835Fec0FF",
   });
 
   // ═══════════════════════════════════════════════════════════════════════════════
