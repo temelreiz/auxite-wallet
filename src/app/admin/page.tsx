@@ -70,6 +70,20 @@ interface UserInfo {
   createdAt: string;
 }
 
+interface UserDetailData {
+  user: {
+    address: string;
+    info: Record<string, any>;
+    balance: Record<string, any>;
+    totalValueUsd: number;
+    tier: { id: string; name: string };
+    transactionCount: number;
+    allocationCount: number;
+  };
+  transactions: any[];
+  allocations: any[];
+}
+
 interface PendingWithdraw {
   id: string;
   oderId: string;
@@ -498,6 +512,8 @@ export default function AdminDashboard() {
   // Users
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [userSearch, setUserSearch] = useState("");
+  const [selectedUserDetail, setSelectedUserDetail] = useState<UserDetailData | null>(null);
+  const [userDetailLoading, setUserDetailLoading] = useState(false);
 
   // Pending Withdraws
   const [pendingWithdraws, setPendingWithdraws] = useState<PendingWithdraw[]>([]);
@@ -1325,6 +1341,21 @@ export default function AdminDashboard() {
       console.error("Failed to load users:", e);
     }
   };
+  const loadUserDetail = async (address: string) => {
+    setUserDetailLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users?address=${address}`, { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) setSelectedUserDetail(data);
+      }
+    } catch (e) {
+      console.error("Failed to load user detail:", e);
+    } finally {
+      setUserDetailLoading(false);
+    }
+  };
+
   // ═══════════════════════════════════════════════════════════════════════════════
   // AUXITEER FUNCTIONS
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -2937,15 +2968,7 @@ export default function AdminDashboard() {
                           </td>
                           <td className="p-3">
                             <button
-                              onClick={() => {
-                                fetch(`/api/admin/users?address=${user.address}`, { headers: getAuthHeaders() })
-                                  .then(r => r.json())
-                                  .then(d => {
-                                    if (d.user) {
-                                      alert(JSON.stringify(d.user.balance, null, 2));
-                                    }
-                                  });
-                              }}
+                              onClick={() => loadUserDetail(user.address)}
                               className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-xs text-slate-300"
                             >
                               Detay
@@ -2961,6 +2984,104 @@ export default function AdminDashboard() {
               <p className="text-slate-500 text-sm text-center">
                 Toplam {users.length} kullanıcı
               </p>
+
+              {/* User Detail Modal */}
+              {(selectedUserDetail || userDetailLoading) && (
+                <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => !userDetailLoading && setSelectedUserDetail(null)}>
+                  <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                    {userDetailLoading && !selectedUserDetail ? (
+                      <div className="p-12 text-center text-slate-400">Yükleniyor...</div>
+                    ) : selectedUserDetail ? (
+                      <>
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-5 border-b border-slate-700">
+                          <div>
+                            <h3 className="text-lg font-bold text-white">Kullanıcı Detayı</h3>
+                            <p className="font-mono text-sm text-slate-400 mt-1">{selectedUserDetail.user.address}</p>
+                          </div>
+                          <button onClick={() => setSelectedUserDetail(null)} className="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+                        </div>
+
+                        {/* Info */}
+                        <div className="p-5 space-y-5">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="bg-slate-800 rounded-lg p-3">
+                              <p className="text-xs text-slate-500">Email</p>
+                              <p className="text-sm text-white truncate">{selectedUserDetail.user.info?.email || "—"}</p>
+                            </div>
+                            <div className="bg-slate-800 rounded-lg p-3">
+                              <p className="text-xs text-slate-500">Tier</p>
+                              <p className="text-sm text-white">{selectedUserDetail.user.tier?.name || "Regular"}</p>
+                            </div>
+                            <div className="bg-slate-800 rounded-lg p-3">
+                              <p className="text-xs text-slate-500">İşlem Sayısı</p>
+                              <p className="text-sm text-white">{selectedUserDetail.user.transactionCount}</p>
+                            </div>
+                            <div className="bg-slate-800 rounded-lg p-3">
+                              <p className="text-xs text-slate-500">Toplam USD</p>
+                              <p className="text-sm text-green-400 font-semibold">${selectedUserDetail.user.totalValueUsd.toFixed(2)}</p>
+                            </div>
+                          </div>
+
+                          {/* Balances */}
+                          <div>
+                            <h4 className="text-sm font-semibold text-slate-300 mb-2">Bakiyeler</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                              {Object.entries(selectedUserDetail.user.balance || {}).map(([token, amount]) => (
+                                <div key={token} className="bg-slate-800/60 border border-slate-700 rounded-lg p-2.5">
+                                  <span className="text-xs text-slate-500 uppercase">{token}</span>
+                                  <p className="text-sm text-white font-mono">{parseFloat(String(amount) || "0").toFixed(token === "eth" || token === "btc" ? 6 : 2)}</p>
+                                </div>
+                              ))}
+                              {Object.keys(selectedUserDetail.user.balance || {}).length === 0 && (
+                                <p className="text-sm text-slate-500 col-span-4">Bakiye yok</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Allocations */}
+                          {selectedUserDetail.allocations.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-slate-300 mb-2">Allocation&apos;lar ({selectedUserDetail.allocations.length})</h4>
+                              <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                                {selectedUserDetail.allocations.map((a: any, i: number) => (
+                                  <div key={i} className="bg-slate-800/60 border border-slate-700 rounded-lg p-2.5 text-xs flex justify-between">
+                                    <span className="text-slate-300">{a.metal || a.token} — {a.amount} oz</span>
+                                    <span className="text-slate-500">{a.vault || a.location || "—"}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Transactions */}
+                          <div>
+                            <h4 className="text-sm font-semibold text-slate-300 mb-2">Son İşlemler ({selectedUserDetail.transactions.length})</h4>
+                            {selectedUserDetail.transactions.length === 0 ? (
+                              <p className="text-sm text-slate-500">İşlem yok</p>
+                            ) : (
+                              <div className="space-y-1.5 max-h-60 overflow-y-auto">
+                                {selectedUserDetail.transactions.map((tx: any, i: number) => (
+                                  <div key={i} className="bg-slate-800/60 border border-slate-700 rounded-lg p-2.5 text-xs flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${tx.type === "buy" || tx.type === "deposit" ? "bg-green-500/20 text-green-400" : tx.type === "sell" || tx.type === "withdraw" ? "bg-red-500/20 text-red-400" : "bg-slate-700 text-slate-400"}`}>
+                                        {tx.type?.toUpperCase() || "TX"}
+                                      </span>
+                                      <span className="text-slate-300">{tx.token || tx.asset || "—"}</span>
+                                      <span className="text-white font-mono">{tx.amount || "—"}</span>
+                                    </div>
+                                    <span className="text-slate-500">{tx.timestamp ? new Date(tx.timestamp).toLocaleDateString("tr-TR") : "—"}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
