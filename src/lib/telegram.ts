@@ -3,11 +3,13 @@
 
 import { formatAmount } from "@/lib/format";
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8392512425:AAG5ixJeJnG-rE9UEW4HJ75qAtrMCcQ37n0";
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "1611619602";
+// 🔒 SECURITY: Credentials MUST come from environment variables
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// Debug: Log config on module load
-console.log(`📱 Telegram Bot Config: Token=${TELEGRAM_BOT_TOKEN ? "SET" : "MISSING"}, ChatID=${TELEGRAM_CHAT_ID}`);
+if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+  console.warn("⚠️ Telegram Bot credentials not configured in environment variables!");
+}
 
 interface TradeNotification {
   type: "buy" | "sell" | "swap";
@@ -36,6 +38,11 @@ interface OperationNotification {
  */
 export async function sendTelegramMessage(message: string): Promise<boolean> {
   try {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+      console.error("❌ Telegram credentials not configured — cannot send message");
+      return false;
+    }
+
     console.log(`📤 Sending Telegram message to chat ${TELEGRAM_CHAT_ID}...`);
 
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;

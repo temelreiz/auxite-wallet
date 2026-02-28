@@ -144,17 +144,15 @@ export async function withAdminAuth(
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
 
-  // Legacy support: ADMIN_SECRET for backwards compatibility
-  const adminSecret = process.env.ADMIN_SECRET;
-  if (adminSecret && token === adminSecret) {
-    // Log legacy auth usage
-    console.warn("Legacy ADMIN_SECRET auth used - consider migrating to session auth");
-    return handler("legacy-admin");
-  }
+  // 🔒 SECURITY: Legacy ADMIN_SECRET bypass REMOVED
+  // All admin actions now require proper session authentication
 
   const validation = await validateAdminSession(token || "", request);
 
   if (!validation.valid) {
+    // 🔒 Log failed auth attempt
+    const ip = getClientIP(request);
+    console.warn(`🚨 FAILED ADMIN AUTH: ${validation.error} from IP ${ip}`);
     return NextResponse.json(
       { error: validation.error || "Unauthorized" },
       { status: 401 }
@@ -205,15 +203,15 @@ export async function requireAdmin(
     };
   }
 
-  // Legacy ADMIN_SECRET support
-  const adminSecret = process.env.ADMIN_SECRET;
-  if (adminSecret && token === adminSecret) {
-    return { authorized: true, address: "legacy-admin" };
-  }
+  // 🔒 SECURITY: Legacy ADMIN_SECRET bypass REMOVED
+  // All admin actions now require proper session authentication
 
   const validation = await validateAdminSession(token, request);
 
   if (!validation.valid) {
+    // 🔒 Log failed auth
+    const ip = getClientIP(request);
+    console.warn(`🚨 FAILED ADMIN AUTH (requireAdmin): ${validation.error} from IP ${ip}`);
     return {
       authorized: false,
       response: NextResponse.json(

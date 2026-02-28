@@ -1,36 +1,80 @@
 // src/app/api/admin/fees/route.ts
 // Platform Fee Management API
+// 🔒 SECURITY: Full audit trail + IP logging + Telegram alerts
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { kv } from "@vercel/kv";
+import { sendTelegramMessage } from "@/lib/telegram";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-// Admin authentication - supports both ADMIN_SECRET and session token
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "auxite-admin-secret";
+// ═══════════════════════════════════════════════════════════════════════════
+// 🔒 SECURITY: IP extraction + audit logging
+// ═══════════════════════════════════════════════════════════════════════════
+function getClientIP(request: NextRequest): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return request.headers.get("x-real-ip") || "unknown";
+}
 
-async function isAuthorized(request: NextRequest): Promise<boolean> {
+async function logAdminAudit(
+  action: string,
+  details: Record<string, any>,
+  request: NextRequest,
+  authMethod: string,
+): Promise<void> {
+  try {
+    const entry = {
+      action,
+      ...details,
+      ip: getClientIP(request),
+      userAgent: request.headers.get("user-agent") || "unknown",
+      authMethod,
+      timestamp: Date.now(),
+      date: new Date().toISOString(),
+    };
+    await redis.lpush("admin:audit:actions", JSON.stringify(entry));
+    await redis.ltrim("admin:audit:actions", 0, 999);
+    // Also log to dedicated fees audit trail
+    await redis.lpush("admin:audit:fees", JSON.stringify(entry));
+    await redis.ltrim("admin:audit:fees", 0, 999);
+    console.log(`🔒 AUDIT: ${action} from IP ${entry.ip} via ${authMethod}`);
+  } catch (e) {
+    console.error("Audit log error:", e);
+  }
+}
+
+// Admin authentication - session token ONLY (legacy ADMIN_SECRET removed)
+async function isAuthorized(request: NextRequest): Promise<{ authorized: boolean; method: string }> {
   const authHeader = request.headers.get("authorization");
-  if (!authHeader) return false;
-  
+  if (!authHeader) return { authorized: false, method: "none" };
+
   const token = authHeader.replace("Bearer ", "");
-  
-  // Check direct ADMIN_SECRET
-  if (token === ADMIN_SECRET) return true;
-  
+
   // Check session token from Vercel KV (admin panel login)
   try {
     const session = await kv.get(`admin:session:${token}`);
-    if (session) return true;
+    if (session) return { authorized: true, method: "session" };
   } catch (e) {
     console.error("Session check error:", e);
   }
-  
-  return false;
+
+  // 🔒 Log failed auth attempt
+  const ip = getClientIP(request);
+  console.warn(`🚨 FAILED AUTH ATTEMPT on /api/admin/fees from IP: ${ip}`);
+  await redis.lpush("admin:audit:failed_auth", JSON.stringify({
+    endpoint: "/api/admin/fees",
+    ip,
+    userAgent: request.headers.get("user-agent") || "unknown",
+    timestamp: Date.now(),
+  }));
+  await redis.ltrim("admin:audit:failed_auth", 0, 499);
+
+  return { authorized: false, method: "invalid" };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -38,7 +82,8 @@ async function isAuthorized(request: NextRequest): Promise<boolean> {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function GET(request: NextRequest) {
-  if (!await isAuthorized(request)) {
+  const auth = await isAuthorized(request);
+  if (!auth.authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -124,13 +169,20 @@ export async function GET(request: NextRequest) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function POST(request: NextRequest) {
-  if (!await isAuthorized(request)) {
+  const auth = await isAuthorized(request);
+  if (!auth.authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const body = await request.json();
     const { action, token, amount, ledgerAddress, txHash, note, toAddress } = body;
+
+    // 🔒 Log every POST action
+    await logAdminAudit(`fees:${action || 'transfer'}`, {
+      token, amount, toAddress, note,
+      requestBody: { action, token, amount, toAddress },
+    }, request, auth.method);
 
     // ═══════════════════════════════════════════════════════════════════════
     // ACTION: Send REAL on-chain crypto from hot wallet to any address
@@ -264,6 +316,22 @@ export async function POST(request: NextRequest) {
         await redis.lpush("platform:fees:transfers", JSON.stringify(transfer));
         await redis.ltrim("platform:fees:transfers", 0, 99);
 
+        // 🔒 SECURITY: Telegram alert for on-chain/custodial transfers
+        const transferIp = getClientIP(request);
+        sendTelegramMessage(
+          `🚨 <b>ADMIN TRANSFER</b> 🚨\n\n` +
+          `<b>Tür:</b> ${isCustodialTarget ? "Custodial (Redis)" : "On-Chain (Gerçek)"}\n` +
+          `<b>Token:</b> ${tokenUpper}\n` +
+          `<b>Miktar:</b> ${amount}\n` +
+          `<b>Hedef:</b> <code>${toAddress}</code>\n` +
+          `<b>TxHash:</b> <code>${txHash}</code>\n` +
+          `<b>Fee:</b> ${networkFee}\n` +
+          `<b>IP:</b> <code>${transferIp}</code>\n` +
+          `<b>Auth:</b> ${auth.method}\n` +
+          `<b>Zaman:</b> ${new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" })}\n\n` +
+          `⚠️ Bu işlemi siz yapmadıysanız hemen kontrol edin!`
+        ).catch((err) => console.error("Transfer Telegram alert error:", err));
+
         return NextResponse.json({
           success: true,
           message: isCustodialTarget
@@ -333,6 +401,22 @@ export async function POST(request: NextRequest) {
       await redis.ltrim(`user:${toAddress.toLowerCase()}:transactions`, 0, 99);
 
       const newBalance = currentBalance + amount;
+
+      // 🔒 SECURITY: Telegram alert for admin mint operations
+      const ip = getClientIP(request);
+      sendTelegramMessage(
+        `🚨 <b>ADMIN MINT İŞLEMİ</b> 🚨\n\n` +
+        `<b>Token:</b> ${token.toUpperCase()}\n` +
+        `<b>Miktar:</b> ${amount}\n` +
+        `<b>Hedef:</b> <code>${toAddress.toLowerCase()}</code>\n` +
+        `<b>Önceki Bakiye:</b> ${currentBalance}\n` +
+        `<b>Yeni Bakiye:</b> ${newBalance}\n` +
+        `<b>Not:</b> ${note || "Yok"}\n` +
+        `<b>IP:</b> <code>${ip}</code>\n` +
+        `<b>Auth:</b> ${auth.method}\n` +
+        `<b>Zaman:</b> ${new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" })}\n\n` +
+        `⚠️ Bu işlemi siz yapmadıysanız hemen kontrol edin!`
+      ).catch((err) => console.error("Mint Telegram alert error:", err));
 
       return NextResponse.json({
         success: true,
