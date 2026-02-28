@@ -119,37 +119,74 @@ export async function GET(request: NextRequest) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // LIST ALL USERS
+    // LIST ALL USERS — auth:user:* (registered) + user:0x*:balance (with funds)
     // ─────────────────────────────────────────────────────────────────────────
-    
-    // Get all user balance keys
-    let userKeys = await redis.keys("user:0x*:balance");
-    
-    // Filter by search if provided
-    if (search) {
-      userKeys = userKeys.filter(key => 
-        key.toLowerCase().includes(search.toLowerCase())
-      );
-    }
 
-    // Sort and paginate
-    const total = userKeys.length;
-    const startIndex = (page - 1) * limit;
-    const paginatedKeys = userKeys.slice(startIndex, startIndex + limit);
+    // 1. Get all registered users from auth:user:* keys
+    const authKeys = await redis.keys("auth:user:*");
 
-    // Get user details
-    const users = [];
+    // 2. Also get balance-based users (legacy or direct)
+    const balanceKeys = await redis.keys("user:0x*:balance");
+
+    // Build a map of all users: address -> user data
+    const userMap = new Map<string, any>();
+
     const prices: Record<string, number> = {
       auxm: 1, usd: 1, usdt: 1, eth: 2900, btc: 95000,
       auxg: 95, auxs: 1.1, auxpt: 32, auxpd: 35,
     };
 
-    for (const key of paginatedKeys) {
-      const address = key.split(":")[1];
+    // Process registered users (auth:user:{email})
+    for (const authKey of authKeys) {
+      try {
+        const userData = await redis.hgetall(authKey);
+        if (!userData || !userData.walletAddress) continue;
+
+        const walletAddr = (userData.walletAddress as string).toLowerCase();
+        const email = authKey.replace("auth:user:", "");
+
+        // Get balance
+        const balance = await redis.hgetall(`user:${walletAddr}:balance`);
+        const userInfo = await redis.hgetall(`user:${walletAddr}:info`);
+
+        let totalValueUsd = 0;
+        if (balance) {
+          for (const [token, amount] of Object.entries(balance)) {
+            const val = parseFloat(amount as string || "0");
+            const price = prices[token.toLowerCase()] || 0;
+            totalValueUsd += val * price;
+          }
+        }
+
+        userMap.set(walletAddr, {
+          address: walletAddr,
+          email: email || (userInfo?.email as string) || null,
+          name: (userData.name as string) || (userInfo?.name as string) || null,
+          totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
+          auxmBalance: parseFloat(balance?.auxm as string || "0"),
+          ethBalance: parseFloat(balance?.eth as string || "0"),
+          btcBalance: parseFloat(balance?.btc as string || "0"),
+          auxgBalance: parseFloat(balance?.auxg as string || "0"),
+          auxsBalance: parseFloat(balance?.auxs as string || "0"),
+          auxptBalance: parseFloat(balance?.auxpt as string || "0"),
+          auxpdBalance: parseFloat(balance?.auxpd as string || "0"),
+          createdAt: (userData.createdAt as string) || (userInfo?.createdAt as string) || null,
+          vaultId: (userData.vaultId as string) || null,
+          userId: (userData.id as string) || null,
+        });
+      } catch (e) {
+        console.warn(`Failed to process ${authKey}:`, e);
+      }
+    }
+
+    // Process balance-only users (not in auth:user:*)
+    for (const key of balanceKeys) {
+      const addr = key.split(":")[1];
+      if (userMap.has(addr)) continue; // Already added from auth
+
       const balance = await redis.hgetall(key);
-      const userInfo = await redis.hgetall(`user:${address}:info`);
-      
-      // Calculate total value
+      const userInfo = await redis.hgetall(`user:${addr}:info`);
+
       let totalValueUsd = 0;
       if (balance) {
         for (const [token, amount] of Object.entries(balance)) {
@@ -159,10 +196,10 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      users.push({
-        address,
-        email: userInfo?.email || null,
-        name: userInfo?.name || null,
+      userMap.set(addr, {
+        address: addr,
+        email: (userInfo?.email as string) || null,
+        name: (userInfo?.name as string) || null,
         totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
         auxmBalance: parseFloat(balance?.auxm as string || "0"),
         ethBalance: parseFloat(balance?.eth as string || "0"),
@@ -171,16 +208,34 @@ export async function GET(request: NextRequest) {
         auxsBalance: parseFloat(balance?.auxs as string || "0"),
         auxptBalance: parseFloat(balance?.auxpt as string || "0"),
         auxpdBalance: parseFloat(balance?.auxpd as string || "0"),
-        createdAt: userInfo?.createdAt || null,
+        createdAt: (userInfo?.createdAt as string) || null,
       });
     }
 
+    // Convert to array
+    let users = Array.from(userMap.values());
+
+    // Filter by search if provided
+    if (search) {
+      const q = search.toLowerCase();
+      users = users.filter(u =>
+        u.address?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.name?.toLowerCase().includes(q)
+      );
+    }
+
     // Sort by total value
-    users.sort((a, b) => b.totalValueUsd - a.totalValueUsd);
+    users.sort((a: any, b: any) => b.totalValueUsd - a.totalValueUsd);
+
+    // Paginate
+    const total = users.length;
+    const startIndex = (page - 1) * limit;
+    const paginatedUsers = users.slice(startIndex, startIndex + limit);
 
     return NextResponse.json({
       success: true,
-      users,
+      users: paginatedUsers,
       pagination: {
         page,
         limit,
