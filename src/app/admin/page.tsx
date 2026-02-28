@@ -1333,9 +1333,11 @@ export default function AdminDashboard() {
   const loadUsers = async () => {
     try {
       const res = await fetch("/api/admin/users", { headers: getAuthHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.users) setUsers(data.users);
+      const data = await res.json();
+      if (res.ok && data.users) {
+        setUsers(data.users);
+      } else {
+        console.error("Users API error:", res.status, data);
       }
     } catch (e) {
       console.error("Failed to load users:", e);

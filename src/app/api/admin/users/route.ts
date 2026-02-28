@@ -140,9 +140,8 @@ export async function GET(request: NextRequest) {
     for (const authKey of authKeys) {
       try {
         const userData = await redis.hgetall(authKey);
-        if (!userData || !userData.walletAddress) continue;
-
-        const walletAddr = (userData.walletAddress as string).toLowerCase();
+        const walletAddr = ((userData?.walletAddress as string) || "").toLowerCase().trim();
+        if (!walletAddr) continue;
         const email = authKey.replace("auth:user:", "");
 
         // Get balance
@@ -161,7 +160,7 @@ export async function GET(request: NextRequest) {
         userMap.set(walletAddr, {
           address: walletAddr,
           email: email || (userInfo?.email as string) || null,
-          name: (userData.name as string) || (userInfo?.name as string) || null,
+          name: (userData?.name as string) || (userInfo?.name as string) || null,
           totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
           auxmBalance: parseFloat(balance?.auxm as string || "0"),
           ethBalance: parseFloat(balance?.eth as string || "0"),
@@ -170,9 +169,9 @@ export async function GET(request: NextRequest) {
           auxsBalance: parseFloat(balance?.auxs as string || "0"),
           auxptBalance: parseFloat(balance?.auxpt as string || "0"),
           auxpdBalance: parseFloat(balance?.auxpd as string || "0"),
-          createdAt: (userData.createdAt as string) || (userInfo?.createdAt as string) || null,
-          vaultId: (userData.vaultId as string) || null,
-          userId: (userData.id as string) || null,
+          createdAt: (userData?.createdAt as string) || (userInfo?.createdAt as string) || null,
+          vaultId: (userData?.vaultId as string) || null,
+          userId: (userData?.id as string) || null,
         });
       } catch (e) {
         console.warn(`Failed to process ${authKey}:`, e);
