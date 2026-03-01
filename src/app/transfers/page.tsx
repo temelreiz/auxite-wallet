@@ -78,39 +78,39 @@ export default function FundingWithdrawalsPage() {
         <div className="flex gap-1 mb-8 bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-1">
           <button
             onClick={() => setActiveTab("fund")}
-            className={`flex-1 py-3 px-6 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 px-2 sm:px-6 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === "fund"
                 ? "bg-[#2F6F62] text-white shadow-md"
                 : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             {t.fundTab}
           </button>
           <button
             onClick={() => setActiveTab("withdraw")}
-            className={`flex-1 py-3 px-6 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 px-2 sm:px-6 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === "withdraw"
                 ? "bg-[#BFA181] text-white shadow-md"
                 : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19V5m0 14l-7-7m7 7l7-7" />
             </svg>
             {t.withdrawTab}
           </button>
           <button
             onClick={() => setActiveTab("convert")}
-            className={`flex-1 py-3 px-6 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 px-2 sm:px-6 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === "convert"
                 ? "bg-[#2F6F62] text-white shadow-md"
                 : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
             {t.convertTab}

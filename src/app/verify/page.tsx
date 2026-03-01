@@ -227,13 +227,13 @@ function VerifyContent() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
         </div>
-        <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">{t("certificateVerification")}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white mb-2">{t("certificateVerification")}</h1>
         <p className="text-slate-600 dark:text-slate-400">{t("verifySubtitle")}</p>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 mb-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 mb-6">
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("certificateNumber")}</label>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <input
             type="text"
             value={certNumber}
@@ -242,10 +242,10 @@ function VerifyContent() {
             className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-[#BFA181] focus:border-transparent"
             onKeyDown={(e) => e.key === "Enter" && handleVerify()}
           />
-          <button 
-            onClick={handleVerify} 
-            disabled={loading || !certNumber.trim()} 
-            className="px-6 py-3 bg-[#2F6F62] hover:bg-[#2F6F62] disabled:bg-slate-400 text-white font-semibold rounded-xl transition-colors"
+          <button
+            onClick={handleVerify}
+            disabled={loading || !certNumber.trim()}
+            className="w-full sm:w-auto px-6 py-3 bg-[#2F6F62] hover:bg-[#2F6F62] disabled:bg-slate-400 text-white font-semibold rounded-xl transition-colors"
           >
             {loading ? t("verifying") : t("verify")}
           </button>
@@ -296,7 +296,7 @@ function VerifyContent() {
                   <h3 className="text-white font-bold text-lg">{t("certificateDetails")}</h3>
                 </div>
                 <div className="p-6 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <p className="text-xs text-slate-500 uppercase tracking-wide">{t("certificateNo")}</p>
                       <p className="font-mono font-bold text-slate-800 dark:text-white">{result.certificate.certificateNumber}</p>
@@ -309,7 +309,7 @@ function VerifyContent() {
                   
                   <hr className="border-slate-200 dark:border-slate-700" />
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <p className="text-xs text-slate-500 uppercase tracking-wide">{t("metal")}</p>
                       <p className="font-bold text-slate-800 dark:text-white">{result.certificate.metalName} ({result.certificate.metal})</p>
@@ -320,7 +320,7 @@ function VerifyContent() {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <p className="text-xs text-slate-500 uppercase tracking-wide">{t("serialNumber")}</p>
                       <p className="font-mono text-slate-800 dark:text-white text-sm">{result.certificate.serialNumber}</p>
@@ -331,7 +331,7 @@ function VerifyContent() {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <p className="text-xs text-slate-500 uppercase tracking-wide">{t("vaultLocation")}</p>
                       <p className="text-slate-800 dark:text-white">{result.certificate.vaultName}</p>

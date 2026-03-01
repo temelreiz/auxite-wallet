@@ -504,28 +504,30 @@ export default function LedgerPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-4 mb-6">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold text-slate-500 mr-2">{t.filters}:</span>
-            {[
-              { key: "all", label: t.all },
-              { key: "allocations", label: t.allocations },
-              { key: "settlements", label: t.settlements },
-              { key: "yield", label: t.yield },
-              { key: "redemptions", label: t.redemptions },
-            ].map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  filter === f.key
-                    ? "bg-[#BFA181] text-white"
-                    : "bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-700"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-3 sm:p-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <span className="text-xs font-semibold text-slate-500 sm:mr-2">{t.filters}:</span>
+            <div className="flex gap-1.5 sm:gap-2 flex-wrap">
+              {[
+                { key: "all", label: t.all },
+                { key: "allocations", label: t.allocations },
+                { key: "settlements", label: t.settlements },
+                { key: "yield", label: t.yield },
+                { key: "redemptions", label: t.redemptions },
+              ].map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                    filter === f.key
+                      ? "bg-[#BFA181] text-white"
+                      : "bg-stone-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-700"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

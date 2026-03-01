@@ -583,7 +583,7 @@ export default function AllocatePage() {
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-4">
             {t.selectMetal}
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             {METALS.map((metal) => {
               const isSelected = selectedMetal === metal.symbol;
               return (
@@ -643,12 +643,12 @@ export default function AllocatePage() {
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-4">
             {t.fundingSource}
           </p>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {FUNDING_SOURCES.map((source) => (
               <button
                 key={source.symbol}
                 onClick={() => { setSelectedSource(source.symbol); setAmount(""); }}
-                className={`flex-1 flex flex-col items-center p-3 rounded-xl border transition-all ${
+                className={`flex flex-col items-center p-3 rounded-xl border transition-all ${
                   selectedSource === source.symbol
                     ? "bg-[#BFA181]/10 border-[#BFA181]"
                     : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700 hover:border-[#BFA181]/50"
@@ -661,7 +661,7 @@ export default function AllocatePage() {
                     ${cryptoPrices[source.symbol]?.toLocaleString("en-US", { maximumFractionDigits: 0 })}
                   </span>
                 ) : source.symbol === "AUXM" ? (
-                  <span className="text-[10px] text-[#C6A15B] mt-0.5 font-medium">
+                  <span className="text-[10px] text-[#C6A15B] mt-0.5 font-medium text-center leading-tight">
                     {lang === 'tr' ? 'Tahsis için gerekli' : 'Required for allocation'}
                   </span>
                 ) : null}

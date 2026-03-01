@@ -688,7 +688,7 @@ export function MetalConversionTab() {
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{t.selectTarget}</p>
 
           {/* Target Metal Selection */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
             {METALS.filter((m) => m.symbol !== fromMetal).map((metal) => {
               const isSelected = toMetal === metal.symbol;
               return (
