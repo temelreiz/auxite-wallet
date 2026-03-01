@@ -339,16 +339,21 @@ export default function TopNav({
             <div className="flex items-center gap-1 sm:gap-4 min-w-0 flex-1">
               {/* Logo */}
               <Link href="/" className="flex items-center gap-1.5 sm:gap-2 mr-2 sm:mr-0 flex-shrink-0">
+                {/* Mobile: Icon only */}
+                <div className="relative w-8 h-8 sm:hidden flex-shrink-0">
+                  <Image src="/auxite.png" alt="Auxite" fill className="object-contain rounded-md" />
+                </div>
+                <span className="sm:hidden font-semibold text-sm text-white tracking-wide">
+                  AUXITE
+                </span>
+                {/* Desktop: Full logo */}
                 <Image
-                 src="/auxite-wallet-logo.png"
+                  src="/auxite-wallet-logo.png"
                   alt="Auxite"
                   width={160}
                   height={40}
-                  className="h-8 sm:h-10 md:h-12 w-auto"
+                  className="hidden sm:block h-10 md:h-12 w-auto"
                 />
-                <span className="hidden xs:inline font-semibold text-base sm:text-lg text-slate-800 dark:text-white">
-                  Auxite
-                </span>
               </Link>
 
               {/* Desktop Navigation */}
