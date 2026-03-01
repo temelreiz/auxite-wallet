@@ -334,7 +334,7 @@ export default function TopNav({
 
       <header className="border-b border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="relative flex items-center justify-between h-14 sm:h-16">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Mobile: Hamburger (left) */}
             <div className="sm:hidden flex items-center flex-shrink-0">
               <button
@@ -353,15 +353,17 @@ export default function TopNav({
               </button>
             </div>
 
-            {/* Mobile: Centered Logo */}
-            <Link href="/" className="sm:hidden absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 flex-shrink-0">
-              <div className="relative w-8 h-8 flex-shrink-0">
-                <Image src="/auxite.png" alt="Auxite" fill className="object-contain rounded-md" />
-              </div>
-              <span className="font-semibold text-sm text-white tracking-wide">
-                AUXITE
-              </span>
-            </Link>
+            {/* Mobile: Centered Logo - flex-1 centers between hamburger and wallet */}
+            <div className="sm:hidden flex-1 flex items-center justify-center">
+              <Link href="/" className="flex items-center gap-1.5">
+                <div className="relative w-8 h-8 flex-shrink-0">
+                  <Image src="/auxite.png" alt="Auxite" fill className="object-contain rounded-md" />
+                </div>
+                <span className="font-semibold text-sm text-white tracking-wide">
+                  AUXITE
+                </span>
+              </Link>
+            </div>
 
             {/* Left: Logo + Nav (Desktop) */}
             <div className="hidden sm:flex items-center gap-4 min-w-0 flex-1">
