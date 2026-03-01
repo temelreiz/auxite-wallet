@@ -334,30 +334,50 @@ export default function TopNav({
 
       <header className="border-b border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14 sm:h-16">
-            {/* Left: Logo + Nav */}
-            <div className="flex items-center gap-1 sm:gap-4 min-w-0 flex-1">
-              {/* Logo */}
-              <Link href="/" className="flex items-center gap-1.5 sm:gap-2 mr-2 sm:mr-0 flex-shrink-0">
-                {/* Mobile: Icon only */}
-                <div className="relative w-8 h-8 sm:hidden flex-shrink-0">
-                  <Image src="/auxite.png" alt="Auxite" fill className="object-contain rounded-md" />
-                </div>
-                <span className="sm:hidden font-semibold text-sm text-white tracking-wide">
-                  AUXITE
-                </span>
-                {/* Desktop: Full logo */}
+          <div className="relative flex items-center justify-between h-14 sm:h-16">
+            {/* Mobile: Hamburger (left) */}
+            <div className="sm:hidden flex items-center flex-shrink-0">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 rounded-lg bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 transition-colors"
+              >
+                {mobileMenuOpen ? (
+                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {/* Mobile: Centered Logo */}
+            <Link href="/" className="sm:hidden absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 flex-shrink-0">
+              <div className="relative w-8 h-8 flex-shrink-0">
+                <Image src="/auxite.png" alt="Auxite" fill className="object-contain rounded-md" />
+              </div>
+              <span className="font-semibold text-sm text-white tracking-wide">
+                AUXITE
+              </span>
+            </Link>
+
+            {/* Left: Logo + Nav (Desktop) */}
+            <div className="hidden sm:flex items-center gap-4 min-w-0 flex-1">
+              {/* Desktop: Full logo */}
+              <Link href="/" className="flex items-center gap-2 flex-shrink-0">
                 <Image
                   src="/auxite-wallet-logo.png"
                   alt="Auxite"
                   width={160}
                   height={40}
-                  className="hidden sm:block h-10 md:h-12 w-auto"
+                  className="h-10 md:h-12 w-auto"
                 />
               </Link>
 
               {/* Desktop Navigation */}
-              <nav className="hidden sm:flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
+              <nav className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
                 {navLinks.map((link) => (
                   <Link
                     key={link.key}
@@ -400,22 +420,6 @@ export default function TopNav({
 
             {/* Right: Actions */}
             <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-              {/* Mobile Menu Toggle */}
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="sm:hidden p-2 rounded-lg bg-stone-200 dark:bg-slate-800 hover:bg-stone-300 dark:hover:bg-slate-700 transition-colors"
-              >
-                {mobileMenuOpen ? (
-                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                )}
-              </button>
-
               {/* Language Dropdown */}
               <div className="relative" ref={langDropdownRef}>
                 <button
