@@ -466,10 +466,10 @@ export default function LedgerPage() {
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{t.title}</h1>
-            <p className="text-slate-600 dark:text-slate-400">{t.subtitle}</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white mb-1 sm:mb-2">{t.title}</h1>
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">{t.subtitle}</p>
           </div>
 
           {/* Export Button */}
@@ -542,8 +542,8 @@ export default function LedgerPage() {
         {/* Ledger Table */}
         {address && (
           <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 overflow-hidden">
-            {/* Table Header */}
-            <div className="grid grid-cols-6 gap-4 px-6 py-4 bg-stone-50 dark:bg-slate-800/50 border-b border-stone-200 dark:border-slate-800">
+            {/* Table Header - Desktop only */}
+            <div className="hidden md:grid grid-cols-6 gap-4 px-6 py-4 bg-stone-50 dark:bg-slate-800/50 border-b border-stone-200 dark:border-slate-800">
               <div className="text-xs font-semibold text-slate-500 uppercase">{t.event}</div>
               <div className="text-xs font-semibold text-slate-500 uppercase">{t.asset}</div>
               <div className="text-xs font-semibold text-slate-500 uppercase">{t.amount}</div>
@@ -567,37 +567,71 @@ export default function LedgerPage() {
               </div>
             ) : (
               filteredData.map((item, index) => (
-                <div
-                  key={item.id + '-' + index}
-                  className={`grid grid-cols-6 gap-4 px-6 py-4 ${
-                    index !== filteredData.length - 1 ? "border-b border-stone-100 dark:border-slate-800" : ""
-                  } hover:bg-stone-50 dark:hover:bg-slate-800/30 transition-colors`}
-                >
-                  <div className="flex items-center gap-2">
-                    {getEventIcon(item.type)}
-                    <span className="text-sm font-medium text-slate-800 dark:text-white">{getEventLabel(item.type)}</span>
+                <div key={item.id + '-' + index}>
+                  {/* Desktop Row */}
+                  <div
+                    className={`hidden md:grid grid-cols-6 gap-4 px-6 py-4 ${
+                      index !== filteredData.length - 1 ? "border-b border-stone-100 dark:border-slate-800" : ""
+                    } hover:bg-stone-50 dark:hover:bg-slate-800/30 transition-colors`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {getEventIcon(item.type)}
+                      <span className="text-sm font-medium text-slate-800 dark:text-white">{getEventLabel(item.type)}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-sm font-semibold text-slate-800 dark:text-white">{item.asset?.toUpperCase()}</span>
+                    </div>
+                    <div className="flex flex-col justify-center">
+                      <span className="text-sm font-medium text-slate-800 dark:text-white">
+                        {formatAmount(item.amount, item.asset)}
+                      </span>
+                      {item.amountUsd && item.amountUsd > 0 && (
+                        <span className="text-xs text-slate-500">${typeof item.amountUsd === 'number' ? item.amountUsd.toFixed(2) : item.amountUsd}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center">
+                      {getStatusBadge(item.status)}
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-sm text-slate-600 dark:text-slate-400">{formatTimestamp(item.timestamp)}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-xs font-mono text-slate-500 bg-stone-100 dark:bg-slate-800 px-2 py-1 rounded truncate max-w-[150px]" title={item.referenceId || item.id}>
+                        {(item.referenceId || item.id).slice(0, 16)}{(item.referenceId || item.id).length > 16 ? '...' : ''}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center">
-                    <span className="text-sm font-semibold text-slate-800 dark:text-white">{item.asset?.toUpperCase()}</span>
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <span className="text-sm font-medium text-slate-800 dark:text-white">
-                      {formatAmount(item.amount, item.asset)}
-                    </span>
-                    {item.amountUsd && item.amountUsd > 0 && (
-                      <span className="text-xs text-slate-500">${typeof item.amountUsd === 'number' ? item.amountUsd.toFixed(2) : item.amountUsd}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center">
-                    {getStatusBadge(item.status)}
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-sm text-slate-600 dark:text-slate-400">{formatTimestamp(item.timestamp)}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-xs font-mono text-slate-500 bg-stone-100 dark:bg-slate-800 px-2 py-1 rounded truncate max-w-[150px]" title={item.referenceId || item.id}>
-                      {(item.referenceId || item.id).slice(0, 16)}{(item.referenceId || item.id).length > 16 ? '...' : ''}
-                    </span>
+
+                  {/* Mobile Card */}
+                  <div
+                    className={`md:hidden px-4 py-4 ${
+                      index !== filteredData.length - 1 ? "border-b border-stone-100 dark:border-slate-800" : ""
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {getEventIcon(item.type)}
+                        <span className="text-sm font-medium text-slate-800 dark:text-white">{getEventLabel(item.type)}</span>
+                      </div>
+                      {getStatusBadge(item.status)}
+                    </div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-semibold text-slate-800 dark:text-white">{item.asset?.toUpperCase()}</span>
+                      <div className="text-right">
+                        <span className="text-sm font-semibold text-slate-800 dark:text-white">
+                          {formatAmount(item.amount, item.asset)}
+                        </span>
+                        {item.amountUsd && item.amountUsd > 0 && (
+                          <span className="text-xs text-slate-500 ml-1">(${typeof item.amountUsd === 'number' ? item.amountUsd.toFixed(2) : item.amountUsd})</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{formatTimestamp(item.timestamp)}</span>
+                      <span className="text-[10px] font-mono text-slate-500 bg-stone-100 dark:bg-slate-800 px-1.5 py-0.5 rounded truncate max-w-[120px]" title={item.referenceId || item.id}>
+                        {(item.referenceId || item.id).slice(0, 12)}{(item.referenceId || item.id).length > 12 ? '...' : ''}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))

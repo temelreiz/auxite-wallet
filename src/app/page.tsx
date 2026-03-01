@@ -148,7 +148,7 @@ export default function Home() {
       {/* How It Works */}
       <section className="max-w-6xl mx-auto px-6 py-16">
         <h2 className="text-2xl font-bold text-center mb-12">How Auxite Works</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {[
             { step: "1", title: "Create Account", desc: "Sign up with email or Google and complete identity verification." },
             { step: "2", title: "Fund Your Vault", desc: "Deposit funds via bank transfer, crypto, or supported payment methods." },

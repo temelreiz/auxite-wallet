@@ -652,23 +652,23 @@ export default function VaultPage() {
           </div>
 
           {/* Stats Row — Mini Balance Sheet: Allocated | Liquidity | Encumbered | Utilization */}
-          <div className="grid grid-cols-4 gap-3 pt-4 border-t border-stone-200 dark:border-slate-700">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-stone-200 dark:border-slate-700">
             <div className="text-center">
-              <p className="text-lg font-semibold text-[#BFA181]">{formatCurrency(allocatedHoldings)}</p>
+              <p className="text-base sm:text-lg font-semibold text-[#BFA181]">{formatCurrency(allocatedHoldings)}</p>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.allocatedAssets}</p>
             </div>
-            <div className="text-center border-x border-stone-200 dark:border-slate-700">
-              <p className="text-lg font-semibold text-[#2F6F62]">{formatCurrency(liquidityValue)}</p>
+            <div className="text-center sm:border-x border-stone-200 dark:border-slate-700">
+              <p className="text-base sm:text-lg font-semibold text-[#2F6F62]">{formatCurrency(liquidityValue)}</p>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.availableLiquidity}</p>
             </div>
-            <div className="text-center border-r border-stone-200 dark:border-slate-700">
+            <div className="text-center sm:border-r border-stone-200 dark:border-slate-700">
               <button onClick={() => setShowEncumberedModal(true)} className="hover:opacity-80 transition-opacity">
-                <p className="text-lg font-semibold text-orange-500">{formatCurrency(encumberedAssetsValue)}</p>
+                <p className="text-base sm:text-lg font-semibold text-orange-500">{formatCurrency(encumberedAssetsValue)}</p>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.encumberedAssets}</p>
               </button>
             </div>
             <div className="text-center">
-              <p className="text-lg font-semibold text-slate-500">{utilizationRatio}%</p>
+              <p className="text-base sm:text-lg font-semibold text-slate-500">{utilizationRatio}%</p>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.assetUtilization}</p>
             </div>
           </div>
@@ -687,7 +687,7 @@ export default function VaultPage() {
           <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">
             {t.capitalClarity}
           </p>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="flex flex-wrap gap-x-6 gap-y-3 sm:grid sm:grid-cols-3 sm:gap-4">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-[#BFA181]" />
               <div>
@@ -905,7 +905,7 @@ export default function VaultPage() {
           <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">
             {t.capitalActions}
           </p>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-4 gap-2 sm:gap-3">
             {[
               { icon: "wallet", label: t.fundSettlement, href: "/fund-vault" },
               { icon: "cube", label: t.allocateMetal, href: "/allocate" },
@@ -915,7 +915,7 @@ export default function VaultPage() {
               <Link
                 key={action.label}
                 href={action.href}
-                className="flex flex-col items-center p-3 bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 hover:border-[#BFA181] transition-colors"
+                className="flex flex-col items-center p-2 sm:p-3 bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 hover:border-[#BFA181] transition-colors"
               >
                 <div className="w-10 h-10 rounded-full bg-[#BFA181]/15 flex items-center justify-center mb-2">
                   {action.icon === "wallet" && (
@@ -1009,7 +1009,7 @@ export default function VaultPage() {
                         </div>
 
                         {/* Holdings Detail Row */}
-                        <div className="grid grid-cols-4 gap-2 mt-3 pl-14 pr-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 pl-14 pr-2">
                           <div>
                             <p className="text-[9px] text-slate-400 dark:text-slate-500">{t.holdingsLabel}</p>
                             <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">{formatGrams(holding.total)}</p>

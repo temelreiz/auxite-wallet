@@ -505,7 +505,7 @@ export function AddFundsModal({
   if (showConfirmation) {
     return (
       <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-        <div className="bg-white dark:bg-[#121A2A] rounded-2xl border border-stone-200 dark:border-white/10 w-full max-w-md p-8 text-center">
+        <div className="bg-white dark:bg-[#121A2A] rounded-2xl border border-stone-200 dark:border-white/10 w-full max-w-md p-5 sm:p-8 text-center">
           <div className="w-20 h-20 rounded-full bg-[#BFA181]/15 flex items-center justify-center mx-auto mb-6">
             <span className="text-4xl text-[#BFA181]">◈</span>
           </div>
