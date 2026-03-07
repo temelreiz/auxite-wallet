@@ -1,12 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/privacy",
+        destination: "/legal/privacy",
+        permanent: true,
+      },
+      {
+        source: "/privacy-policy",
+        destination: "/legal/privacy",
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     const securityHeaders = [
       { key: "X-Frame-Options", value: "DENY" },
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "X-XSS-Protection", value: "1; mode=block" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-      { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+      { key: "Permissions-Policy", value: "camera=(self https://*.sumsub.com), microphone=(), geolocation=()" },
       {
         key: "Strict-Transport-Security",
         value: "max-age=63072000; includeSubDomains; preload",
@@ -15,12 +30,12 @@ const nextConfig = {
         key: "Content-Security-Policy",
         value: [
           "default-src 'self'",
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://cdn.jsdelivr.net",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://cdn.jsdelivr.net https://*.sumsub.com",
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
           "font-src 'self' https://fonts.gstatic.com",
           "img-src 'self' data: blob: https:",
-          "connect-src 'self' https://*.auxite.io https://*.upstash.io https://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.com wss://*.walletconnect.org https://*.infura.io https://*.alchemy.com https://cloudflare-eth.com https://api.coingecko.com https://api.goldapi.io https://*.sentry.io https://*.coinbase.com https://*.nowpayments.io https://api.transak.com",
-          "frame-src 'self' https://challenges.cloudflare.com https://verify.walletconnect.com https://global.transak.com",
+          "connect-src 'self' https://*.auxite.io https://*.upstash.io https://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.com wss://*.walletconnect.org https://*.infura.io https://*.alchemy.com https://cloudflare-eth.com https://api.coingecko.com https://api.goldapi.io https://*.sentry.io https://*.coinbase.com https://*.nowpayments.io https://api.transak.com https://*.sumsub.com",
+          "frame-src 'self' https://challenges.cloudflare.com https://verify.walletconnect.com https://global.transak.com https://*.sumsub.com",
           "object-src 'none'",
           "base-uri 'self'",
           "form-action 'self' https://appleid.apple.com",
