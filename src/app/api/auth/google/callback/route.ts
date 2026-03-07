@@ -170,7 +170,29 @@ export async function GET(request: NextRequest) {
 
       await redis.hset(`auth:user:${normalizedEmail}`, { walletAddress, vaultId });
       await redis.set(`user:address:${walletAddress.toLowerCase()}`, userId);
+      await redis.set(`vault:${vaultId}`, userId);
       console.log(`[Google OAuth] Wallet assigned for ${userId}: ${walletAddress}, vault: ${vaultId}`);
+    }
+
+    // Ensure user profile hash exists
+    const existingProfile = await redis.hgetall(`user:${userId}`) as any;
+    if (!existingProfile || Object.keys(existingProfile).length === 0) {
+      const nameParts = (userData.name || googleUser.name || '').trim().split(/\s+/);
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
+      await redis.hset(`user:${userId}`, {
+        email: normalizedEmail,
+        name: userData.name || googleUser.name || '',
+        firstName,
+        lastName,
+        phone: userData.phone || '',
+        language: userData.language || 'en',
+        walletAddress,
+        vaultId,
+        emailVerified: 'true',
+        createdAt: (userData.createdAt || Date.now()).toString(),
+      });
     }
 
     // ══════════════════════════════════════════════════════════════

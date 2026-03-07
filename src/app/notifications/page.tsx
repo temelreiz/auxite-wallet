@@ -142,28 +142,30 @@ const categoryConfig: Record<string, { color: string; bgColor: string; icon: str
   operational: { color: "#f59e0b", bgColor: "bg-amber-500/15", icon: "⚙️" },
 };
 
-// Mock notifications matching mobile
-const mockNotifications: Notification[] = [
-  { id: "n1", category: "asset", title: "Allocation Complete", message: "Your 50g AUXG allocation has been confirmed and secured in the Zurich vault.", read: false, createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
-  { id: "n2", category: "security", title: "New Session Detected", message: "A new login session was detected from Chrome on MacBook Pro in Istanbul, Turkey.", read: false, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
-  { id: "n3", category: "compliance", title: "KYC Review Complete", message: "Your identity verification has been approved. All account features are now available.", read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() },
-  { id: "n4", category: "yield", title: "Yield Contract Executed", message: "Your monthly yield of 0.45% has been credited to your AUXM settlement balance.", read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() },
-  { id: "n5", category: "document", title: "Monthly Statement Available", message: "Your January 2024 custody statement is now available for download.", read: false, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString() },
-  { id: "n6", category: "asset", title: "Redemption Request Received", message: "Your redemption request for 25g AUXS has been received and is being processed.", read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4).toISOString() },
-  { id: "n7", category: "security", title: "Withdrawal Protection Active", message: "24-hour withdrawal delay has been activated for your account security.", read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString() },
-  { id: "n8", category: "operational", title: "Scheduled Maintenance", message: "Platform maintenance scheduled for Sunday 02:00-04:00 CET. Services may be briefly unavailable.", read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString() },
-  { id: "n9", category: "yield", title: "Monthly Yield Credit", message: "Your monthly yield of $127.50 has been credited to your settlement balance.", read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString() },
-  { id: "n10", category: "document", title: "Audit Certificate Published", message: "Q4 2023 independent audit certificate is now available in your documents.", read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString() },
-  { id: "n11", category: "operational", title: "New Feature: QR Login", message: "You can now log in from desktop using QR code scanning from your mobile app.", read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString() },
-];
 
 export default function NotificationsPage() {
   const { lang } = useLanguage();
   const { address } = useWallet();
   const t = translations[lang] || translations.en;
 
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real notifications from API
+  useEffect(() => {
+    if (!address) { setLoading(false); return; }
+    (async () => {
+      try {
+        const res = await fetch(`/api/notifications?address=${address}`);
+        const data = await res.json();
+        if (data.notifications && Array.isArray(data.notifications)) {
+          setNotifications(data.notifications);
+        }
+      } catch {}
+      setLoading(false);
+    })();
+  }, [address]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

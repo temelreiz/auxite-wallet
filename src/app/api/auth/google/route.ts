@@ -130,7 +130,28 @@ export async function POST(request: NextRequest) {
 
       await redisClient.hset(`auth:user:${normalizedEmail}`, { walletAddress, vaultId });
       await redisClient.set(`user:address:${walletAddress.toLowerCase()}`, userId);
+      await redisClient.set(`vault:${vaultId}`, userId);
       console.log(`[Google Mobile Auth] Wallet assigned for ${userId}: ${walletAddress}, vault: ${vaultId}`);
+    }
+
+    // Ensure user profile hash exists
+    const existingProfile = await redisClient.hgetall(`user:${userId}`) as any;
+    if (!existingProfile || Object.keys(existingProfile).length === 0) {
+      const nameParts = (userData.name || googleUser.name || '').trim().split(/\s+/);
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
+      await redisClient.hset(`user:${userId}`, {
+        email: normalizedEmail,
+        name: userData.name || googleUser.name || '',
+        firstName,
+        lastName,
+        language: userData.language || 'en',
+        walletAddress,
+        vaultId,
+        emailVerified: 'true',
+        createdAt: (userData.createdAt || Date.now()).toString(),
+      });
     }
 
     // Generate JWT

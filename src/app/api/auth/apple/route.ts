@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import jwt from 'jsonwebtoken';
-import { randomBytes } from 'crypto';
+import crypto, { randomBytes } from 'crypto';
 import * as jose from 'jose';
 
 const redis = new Redis({
@@ -171,14 +171,60 @@ export async function POST(request: NextRequest) {
     }
 
     // ══════════════════════════════════════════════════════════════
+    // CHECK/CREATE VAULT (for users without vault)
+    // ══════════════════════════════════════════════════════════════
+    const userEmail = existingEmail || normalizedEmail;
+    let walletAddress = userData.walletAddress || '';
+    let vaultId = userData.vaultId || '';
+    const userId = userData.id;
+
+    if (!walletAddress) {
+      const addressHash = crypto.createHash('sha256').update(`auxite-wallet-${userId}`).digest('hex');
+      walletAddress = '0x' + addressHash.substring(0, 40);
+
+      if (!vaultId) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const p1 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        const p2 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        vaultId = `AX-VLT-${p1}-${p2}`;
+      }
+
+      await redis.hset(`auth:user:${userEmail}`, { walletAddress, vaultId });
+      await redis.set(`user:address:${walletAddress.toLowerCase()}`, userId);
+      await redis.set(`vault:${vaultId}`, userId);
+      console.log(`[Apple Auth] Wallet assigned for ${userId}: ${walletAddress}, vault: ${vaultId}`);
+    }
+
+    // Ensure user profile hash exists
+    const existingProfile = await redis.hgetall(`user:${userId}`) as any;
+    if (!existingProfile || Object.keys(existingProfile).length === 0) {
+      const nameParts = (userData.name || '').trim().split(/\s+/);
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
+      await redis.hset(`user:${userId}`, {
+        email: userEmail,
+        name: userData.name || '',
+        firstName,
+        lastName,
+        phone: userData.phone || '',
+        language: userData.language || 'en',
+        walletAddress,
+        vaultId,
+        emailVerified: 'true',
+        createdAt: (userData.createdAt || Date.now()).toString(),
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════════
     // GENERATE JWT TOKEN
     // ══════════════════════════════════════════════════════════════
     const token = jwt.sign(
       {
-        userId: userData.id,
-        email: userData.email,
+        userId,
+        email: userEmail,
         emailVerified: true,
-        walletAddress: userData.walletAddress || '',
+        walletAddress,
         authProvider: 'apple',
       },
       JWT_SECRET,
@@ -188,23 +234,20 @@ export async function POST(request: NextRequest) {
     // ══════════════════════════════════════════════════════════════
     // RESPONSE
     // ══════════════════════════════════════════════════════════════
-    const hasWallet = userData.walletAddress && userData.walletAddress.length > 0;
-
     return NextResponse.json({
       success: true,
       message: isNewUser ? 'Account created successfully' : 'Login successful',
       isNewUser,
       user: {
-        id: userData.id,
-        email: userData.email,
+        id: userId,
+        email: userEmail,
         name: userData.name || '',
         emailVerified: true,
-        walletAddress: userData.walletAddress || '',
+        walletAddress,
         authProvider: userData.authProvider || 'apple',
         isPrivateEmail: userData.isPrivateEmail === 'true' || userData.isPrivateEmail === true,
       },
       token,
-      requiresWalletSetup: !hasWallet,
     });
 
   } catch (error: any) {

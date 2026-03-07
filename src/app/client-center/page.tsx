@@ -372,6 +372,7 @@ export default function ClientCenterPage() {
     initials: string; available: boolean; languages: string[];
   } | null>(null);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [documentCount, setDocumentCount] = useState(0);
 
   // Real user data from API
   const [userProfile, setUserProfile] = useState<{
@@ -491,6 +492,21 @@ export default function ClientCenterPage() {
       }
     };
     fetchRM();
+  }, [address]);
+
+  // Fetch document count
+  useEffect(() => {
+    if (!address) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/certificates?address=${address}`);
+        if (res.ok) {
+          const data = await res.json();
+          const certs = (data.certificates || []).filter((c: any) => c.status !== 'voided');
+          setDocumentCount(certs.length);
+        }
+      } catch {}
+    })();
   }, [address]);
 
   // Map KYC status to our display format
@@ -902,7 +918,7 @@ export default function ClientCenterPage() {
             icon={<svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
             label={t.documentVault}
             href="/documents"
-            badge="3"
+            badge={documentCount > 0 ? String(documentCount) : undefined}
           />
           <MenuItem
             icon={<svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>}
@@ -913,7 +929,6 @@ export default function ClientCenterPage() {
             icon={<svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>}
             label={t.notifications}
             href="/notifications"
-            badge="2"
           />
           <MenuItem
             icon={<svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
