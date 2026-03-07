@@ -265,8 +265,14 @@ export function KYCVerification({ walletAddress, onClose }: Props) {
 
       // SDK'yı dinamik olarak yükle
       const snsWebSdkModule = await import("@sumsub/websdk");
-      const snsWebSdk = snsWebSdkModule.default || snsWebSdkModule;
-      console.log("SDK loaded:", Object.keys(snsWebSdkModule));
+      console.log("SDK module keys:", Object.keys(snsWebSdkModule));
+      console.log("SDK default:", snsWebSdkModule.default);
+      console.log("SDK init:", typeof (snsWebSdkModule as any).init);
+      // ESM build has default export, CJS does not
+      const snsWebSdk = snsWebSdkModule.default ?? snsWebSdkModule;
+      if (!snsWebSdk || typeof snsWebSdk.init !== 'function') {
+        throw new Error("Sumsub SDK loaded but init() not found. Keys: " + Object.keys(snsWebSdkModule).join(', '));
+      }
 
       // Container'ın hazır olmasını bekle
       await new Promise(resolve => setTimeout(resolve, 100));

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 // Storage keys to clear
 const STORAGE_KEYS = [
   "authToken",
+  "auxite_auth_token",
   "user",
   "auxite_has_wallet",
   "auxite_wallet_address",
@@ -14,8 +14,6 @@ const STORAGE_KEYS = [
 ];
 
 export default function LogoutPage() {
-  const router = useRouter();
-
   useEffect(() => {
     // Clear all auth-related localStorage
     STORAGE_KEYS.forEach((key) => {
@@ -25,9 +23,12 @@ export default function LogoutPage() {
     // Clear sessionStorage
     sessionStorage.removeItem("auxite_session_unlocked");
 
+    // Notify wallet context
+    window.dispatchEvent(new Event("walletChanged"));
+
     // Redirect to login
-    router.replace("/auth/login");
-  }, [router]);
+    window.location.href = "/auth/login";
+  }, []);
 
   return (
     <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">

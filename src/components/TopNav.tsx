@@ -523,12 +523,8 @@ export default function TopNav({
                       <div className="border-t border-slate-700" />
                       <button
                         onClick={() => {
-                          localStorage.removeItem("auxite_wallet_address");
-                          localStorage.removeItem("auxite_wallet_mode");
-                          localStorage.removeItem("auxite_auth_token");
-                          window.dispatchEvent(new Event("walletChanged"));
                           setWalletDropdownOpen(false);
-                          window.location.href = "/";
+                          window.location.href = "/auth/logout";
                         }}
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-slate-800 transition-colors"
                       >
