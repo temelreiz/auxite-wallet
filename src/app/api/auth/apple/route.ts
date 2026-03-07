@@ -195,24 +195,25 @@ export async function POST(request: NextRequest) {
       console.log(`[Apple Auth] Wallet assigned for ${userId}: ${walletAddress}, vault: ${vaultId}`);
     }
 
-    // Ensure user profile hash exists
+    // Ensure user profile hash exists and has name/email
     const existingProfile = await redis.hgetall(`user:${userId}`) as any;
-    if (!existingProfile || Object.keys(existingProfile).length === 0) {
-      const nameParts = (userData.name || '').trim().split(/\s+/);
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+    const fullName = userData.name || '';
+    const nameParts = fullName.trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
+    if (!existingProfile || Object.keys(existingProfile).length === 0 || !existingProfile.email || !existingProfile.name) {
       await redis.hset(`user:${userId}`, {
         email: userEmail,
-        name: userData.name || '',
+        name: fullName,
         firstName,
         lastName,
-        phone: userData.phone || '',
-        language: userData.language || 'en',
+        phone: userData.phone || existingProfile?.phone || '',
+        language: userData.language || existingProfile?.language || 'en',
         walletAddress,
         vaultId,
         emailVerified: 'true',
-        createdAt: (userData.createdAt || Date.now()).toString(),
+        createdAt: (existingProfile?.createdAt || userData.createdAt || Date.now()).toString(),
       });
     }
 

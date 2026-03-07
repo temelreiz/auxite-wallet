@@ -136,6 +136,33 @@ export async function POST(request: NextRequest) {
       console.log(`[Login] Wallet assigned for ${userId}: ${walletAddress}, vault: ${vaultId}`);
     }
 
+    // Ensure vault reverse lookup exists
+    if (vaultId) {
+      await redis.set(`vault:${vaultId}`, userId);
+    }
+
+    // Ensure user profile hash has name/email
+    const existingProfile = await redis.hgetall(`user:${userId}`) as any;
+    const fullName = userData.name || '';
+    if (!existingProfile || !existingProfile.email || !existingProfile.name) {
+      const nameParts = fullName.trim().split(/\s+/);
+      const firstName = userData.firstName || nameParts[0] || '';
+      const lastName = userData.lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+
+      await redis.hset(`user:${userId}`, {
+        email: normalizedEmail,
+        name: fullName,
+        firstName,
+        lastName,
+        phone: userData.phone || existingProfile?.phone || '',
+        language: userData.language || existingProfile?.language || 'en',
+        walletAddress,
+        vaultId,
+        emailVerified: String(userData.emailVerified === 'true' || userData.emailVerified === true),
+        createdAt: (existingProfile?.createdAt || userData.createdAt || Date.now()).toString(),
+      });
+    }
+
     // ══════════════════════════════════════════════════════════════
     // GENERATE JWT TOKEN
     // ══════════════════════════════════════════════════════════════
