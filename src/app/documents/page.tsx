@@ -214,12 +214,33 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
+// Metal SVG icons
+function MetalIcon({ metal, size = 20 }: { metal: string; size?: number }) {
+  const colors: Record<string, string> = {
+    AUXG: "#D4A017",
+    AUXS: "#A8A9AD",
+    AUXPT: "#7B8794",
+    AUXPD: "#B87333",
+  };
+  const color = colors[metal] || "#BFA181";
+  // Gold bar / ingot icon for all metals, colored appropriately
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 17L6 7H18L21 17H3Z" fill={color} fillOpacity={0.25} stroke={color} strokeWidth={1.5} strokeLinejoin="round"/>
+      <path d="M6 7L8 3H16L18 7" stroke={color} strokeWidth={1.5} strokeLinejoin="round"/>
+      <line x1="8" y1="3" x2="6" y2="7" stroke={color} strokeWidth={1.5}/>
+      <line x1="16" y1="3" x2="18" y2="7" stroke={color} strokeWidth={1.5}/>
+      <rect x="9" y="10" width="6" height="4" rx="0.5" stroke={color} strokeWidth={1} fill={color} fillOpacity={0.15}/>
+    </svg>
+  );
+}
+
 // Metal icon/color mapping
-const METAL_CONFIG: Record<string, { icon: string; color: string }> = {
-  AUXG: { icon: "🥇", color: "#D4A017" },
-  AUXS: { icon: "🥈", color: "#A8A9AD" },
-  AUXPT: { icon: "⬜", color: "#7B8794" },
-  AUXPD: { icon: "🟫", color: "#B87333" },
+const METAL_CONFIG: Record<string, { color: string }> = {
+  AUXG: { color: "#D4A017" },
+  AUXS: { color: "#A8A9AD" },
+  AUXPT: { color: "#7B8794" },
+  AUXPD: { color: "#B87333" },
 };
 
 export default function DocumentsPage() {
@@ -262,11 +283,11 @@ export default function DocumentsPage() {
 
   // Metal-based categories with brand colors
   const categories = [
-    { key: "all", label: t.all, icon: "📁", color: "#BFA181" },
-    { key: "AUXG", label: t.gold, icon: "🥇", color: "#D4A017" },
-    { key: "AUXS", label: t.silver, icon: "🥈", color: "#A8A9AD" },
-    { key: "AUXPT", label: t.platinum, icon: "⬜", color: "#7B8794" },
-    { key: "AUXPD", label: t.palladium, icon: "🟫", color: "#B87333" },
+    { key: "all", label: t.all, metal: "", color: "#BFA181" },
+    { key: "AUXG", label: t.gold, metal: "AUXG", color: "#D4A017" },
+    { key: "AUXS", label: t.silver, metal: "AUXS", color: "#A8A9AD" },
+    { key: "AUXPT", label: t.platinum, metal: "AUXPT", color: "#7B8794" },
+    { key: "AUXPD", label: t.palladium, metal: "AUXPD", color: "#B87333" },
   ];
 
   const filteredDocs = filter === "all"
@@ -317,7 +338,15 @@ export default function DocumentsPage() {
                           : "text-slate-600 dark:text-slate-400 hover:bg-stone-100 dark:hover:bg-slate-800"
                       }`}
                     >
-                      <span>{cat.icon}</span>
+                      <span className="flex-shrink-0">
+                        {cat.metal ? (
+                          <MetalIcon metal={cat.metal} size={20} />
+                        ) : (
+                          <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                          </svg>
+                        )}
+                      </span>
                       <span>{cat.label}</span>
                       <span className={`ml-auto text-xs ${filter === cat.key ? "text-[#BFA181]" : "text-slate-400"}`}>
                         {count}

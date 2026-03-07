@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import dynamic from "next/dynamic";
 import { useLanguage } from "@/components/LanguageContext";
 
 interface KYCData {
@@ -265,8 +264,9 @@ export function KYCVerification({ walletAddress, onClose }: Props) {
       }
 
       // SDK'yı dinamik olarak yükle
-      const snsWebSdk = (await import("@sumsub/websdk")).default;
-      console.log("SDK loaded:", snsWebSdk);
+      const snsWebSdkModule = await import("@sumsub/websdk");
+      const snsWebSdk = snsWebSdkModule.default || snsWebSdkModule;
+      console.log("SDK loaded:", Object.keys(snsWebSdkModule));
 
       // Container'ın hazır olmasını bekle
       await new Promise(resolve => setTimeout(resolve, 100));
