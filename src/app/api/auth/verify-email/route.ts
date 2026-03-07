@@ -71,6 +71,24 @@ export async function GET(request: NextRequest) {
     });
 
     // ══════════════════════════════════════════════════════════════
+    // SYNC PROFILE DATA (for certificates & monthly reports)
+    // ══════════════════════════════════════════════════════════════
+    if (userData.id) {
+      const nameParts = (userData.name || '').trim().split(/\s+/);
+      const firstName = userData.firstName || nameParts[0] || '';
+      const lastName = userData.lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+
+      await redis.hset(`user:${userData.id}`, {
+        email: normalizedEmail,
+        firstName,
+        lastName,
+        name: userData.name || '',
+        emailVerified: 'true',
+        language: userData.language || 'en',
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════════
     // GENERATE NEW JWT TOKEN
     // ══════════════════════════════════════════════════════════════
     const jwtToken = jwt.sign(

@@ -240,6 +240,8 @@ export default function TopNav({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [addressCopied, setAddressCopied] = useState(false);
+  const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
+  const walletDropdownRef = useRef<HTMLDivElement>(null);
   const [whatsappNumber, setWhatsappNumber] = useState("447520637591");
 
   // Load WhatsApp number from support settings
@@ -305,6 +307,9 @@ export default function TopNav({
     const handleClickOutside = (event: MouseEvent) => {
       if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
         setLangDropdownOpen(false);
+      }
+      if (walletDropdownRef.current && !walletDropdownRef.current.contains(event.target as Node)) {
+        setWalletDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -470,32 +475,71 @@ export default function TopNav({
 
               {/* Vault Wallet Display - Auxite Custody Model */}
               {localWalletAddress ? (
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(localWalletAddress);
-                    setAddressCopied(true);
-                    setTimeout(() => setAddressCopied(false), 2000);
-                  }}
-                  title={localWalletAddress}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#d4a574]/10 hover:bg-[#d4a574]/20 border border-[#d4a574]/30 transition-all"
-                >
-                  <div className="w-7 h-7 rounded-full bg-[#d4a574] flex items-center justify-center">
-                    {addressCopied ? (
-                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : (
+                <div className="relative" ref={walletDropdownRef}>
+                  <button
+                    onClick={() => setWalletDropdownOpen(!walletDropdownOpen)}
+                    title={localWalletAddress}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#d4a574]/10 hover:bg-[#d4a574]/20 border border-[#d4a574]/30 transition-all"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-[#d4a574] flex items-center justify-center">
                       <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
-                    )}
-                  </div>
-                  <span className="text-sm font-medium text-[#d4a574]">
-                    {addressCopied
-                      ? (lang === "tr" ? "Kopyalandı!" : "Copied!")
-                      : `${localWalletAddress.slice(0, 6)}...${localWalletAddress.slice(-4)}`}
-                  </span>
-                </button>
+                    </div>
+                    <span className="text-sm font-medium text-[#d4a574]">
+                      {`${localWalletAddress.slice(0, 6)}...${localWalletAddress.slice(-4)}`}
+                    </span>
+                    <svg className={`w-3 h-3 text-[#d4a574] transition-transform ${walletDropdownOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {walletDropdownOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(localWalletAddress);
+                          setAddressCopied(true);
+                          setTimeout(() => setAddressCopied(false), 2000);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 transition-colors"
+                      >
+                        {addressCopied ? (
+                          <>
+                            <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>{lang === "tr" ? "Kopyalandı!" : "Copied!"}</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <span>{lang === "tr" ? "Adresi Kopyala" : "Copy Address"}</span>
+                          </>
+                        )}
+                      </button>
+                      <div className="border-t border-slate-700" />
+                      <button
+                        onClick={() => {
+                          localStorage.removeItem("auxite_wallet_address");
+                          localStorage.removeItem("auxite_wallet_mode");
+                          localStorage.removeItem("auxite_auth_token");
+                          window.dispatchEvent(new Event("walletChanged"));
+                          setWalletDropdownOpen(false);
+                          window.location.href = "/";
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-slate-800 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        <span>{lang === "tr" ? "Çıkış Yap" : "Sign Out"}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <Link
                   href="/auth/login"

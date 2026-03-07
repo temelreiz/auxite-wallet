@@ -83,11 +83,18 @@ export async function POST(request: NextRequest) {
     const verificationCode = generateVerificationCode();
     const userId = randomBytes(16).toString('hex');
 
+    // Parse full name into firstName / lastName
+    const nameParts = (name || '').trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
     const userData = {
       id: userId,
       email: normalizedEmail,
       passwordHash,
       name: name || '',
+      firstName,
+      lastName,
       phone: phone || '',
       language,
       walletAddress: '',
@@ -133,6 +140,8 @@ export async function POST(request: NextRequest) {
     await redis.hset(`user:${userId}`, {
       email: normalizedEmail,
       name: name || '',
+      firstName,
+      lastName,
       phone: phone || '',
       language,
       walletAddress: vaultAddress,
