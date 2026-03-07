@@ -6,6 +6,7 @@ import crypto from 'crypto';
 
 const SUMSUB_APP_TOKEN = process.env.SUMSUB_APP_TOKEN || '';
 const SUMSUB_SECRET_KEY = process.env.SUMSUB_SECRET_KEY || '';
+const SUMSUB_WEBHOOK_SECRET = process.env.SUMSUB_WEBHOOK_SECRET || SUMSUB_SECRET_KEY;
 const SUMSUB_BASE_URL = process.env.SUMSUB_BASE_URL || 'https://api.sumsub.com';
 
 // Sadece token ve secret yoksa test mode
@@ -87,7 +88,7 @@ export async function getApplicantByExternalId(externalUserId: string): Promise<
 }
 
 export function verifyWebhookSignature(payload: string, signature: string): boolean {
-  const expectedSignature = crypto.createHmac('sha256', SUMSUB_SECRET_KEY).update(payload).digest('hex');
+  const expectedSignature = crypto.createHmac('sha256', SUMSUB_WEBHOOK_SECRET).update(payload).digest('hex');
   return signature === expectedSignature;
 }
 
