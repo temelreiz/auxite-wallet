@@ -36,16 +36,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing externalUserId' }, { status: 400 });
     }
 
-    // KYC verisini al
+    // KYC verisini al (yoksa oluştur)
     const kycKey = 'kyc:' + externalUserId.toLowerCase();
     const kycData = await redis.get(kycKey);
-    
-    if (!kycData) {
-      console.error('KYC data not found for:', externalUserId);
-      return NextResponse.json({ error: 'KYC not found' }, { status: 404 });
-    }
 
-    const kyc = typeof kycData === 'string' ? JSON.parse(kycData) : kycData;
+    const kyc = kycData
+      ? (typeof kycData === 'string' ? JSON.parse(kycData) : kycData)
+      : {
+          walletAddress: externalUserId.toLowerCase(),
+          level: 'none' as const,
+          status: 'pending',
+          limits: KYC_LIMITS.none,
+          sumsubApplicantId: applicantId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
 
     // Webhook tipine göre işle
     switch (type) {
