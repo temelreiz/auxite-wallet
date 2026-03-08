@@ -1213,3 +1213,232 @@ export async function sendSecurityAlertEmail(
 
   return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(emailContent, t.desk, lang) });
 }
+
+// ═══════════════════════════════════════════════════════════════
+// KYC VERIFICATION RESULT EMAIL
+// ═══════════════════════════════════════════════════════════════
+
+export async function sendKYCApprovalEmail(
+  to: string,
+  data: {
+    clientName?: string;
+    level: string;
+    verifiedAt: string;
+    language?: string;
+  }
+) {
+  const lang = data.language || 'en';
+  const name = data.clientName || 'Client';
+
+  const content: Record<string, Record<string, string>> = {
+    en: {
+      subject: 'Identity Verification Approved — Account Upgraded',
+      greeting: `Dear ${name},`,
+      intro: 'Your identity verification has been successfully completed. Your account has been upgraded with enhanced transaction limits.',
+      statusLabel: 'Verification Status',
+      statusValue: 'Approved',
+      levelLabel: 'Account Level',
+      verifiedAtLabel: 'Verified At',
+      limitsTitle: 'Your new transaction limits are now active. You may view your updated limits within your account settings.',
+      cta: 'View Account',
+      desk: 'Auxite Compliance Desk',
+    },
+    tr: {
+      subject: 'Kimlik Dogrulama Onaylandi — Hesap Yukseltildi',
+      greeting: `Sayin ${name},`,
+      intro: 'Kimlik dogrulamaniz basariyla tamamlanmistir. Hesabiniz artirilmis islem limitleriyle yukseltilmistir.',
+      statusLabel: 'Dogrulama Durumu',
+      statusValue: 'Onaylandi',
+      levelLabel: 'Hesap Seviyesi',
+      verifiedAtLabel: 'Dogrulama Tarihi',
+      limitsTitle: 'Yeni islem limitleriniz artik aktiftir. Guncellenmis limitlerinizi hesap ayarlarinizdan goruntuleyebilirsiniz.',
+      cta: 'Hesabi Goruntule',
+      desk: 'Auxite Uyum Masasi',
+    },
+    de: {
+      subject: 'Identitaetsverifizierung genehmigt — Konto aufgewertet',
+      greeting: `Sehr geehrte/r ${name},`,
+      intro: 'Ihre Identitaetsverifizierung wurde erfolgreich abgeschlossen. Ihr Konto wurde mit erweiterten Transaktionslimits aufgewertet.',
+      statusLabel: 'Verifizierungsstatus',
+      statusValue: 'Genehmigt',
+      levelLabel: 'Kontostufe',
+      verifiedAtLabel: 'Verifiziert am',
+      limitsTitle: 'Ihre neuen Transaktionslimits sind jetzt aktiv. Sie koennen Ihre aktualisierten Limits in Ihren Kontoeinstellungen einsehen.',
+      cta: 'Konto anzeigen',
+      desk: 'Auxite Compliance-Abteilung',
+    },
+    fr: {
+      subject: "Verification d'identite approuvee — Compte mis a niveau",
+      greeting: `Cher/Chere ${name},`,
+      intro: "Votre verification d'identite a ete completee avec succes. Votre compte a ete mis a niveau avec des limites de transaction ameliorees.",
+      statusLabel: 'Statut de verification',
+      statusValue: 'Approuve',
+      levelLabel: 'Niveau du compte',
+      verifiedAtLabel: 'Verifie le',
+      limitsTitle: 'Vos nouvelles limites de transaction sont maintenant actives. Vous pouvez consulter vos limites mises a jour dans les parametres de votre compte.',
+      cta: 'Voir le compte',
+      desk: 'Bureau de conformite Auxite',
+    },
+    ar: {
+      subject: 'تمت الموافقة على التحقق من الهوية — تمت ترقية الحساب',
+      greeting: `عزيزي ${name}،`,
+      intro: 'تم إكمال التحقق من هويتك بنجاح. تمت ترقية حسابك بحدود معاملات محسنة.',
+      statusLabel: 'حالة التحقق',
+      statusValue: 'تمت الموافقة',
+      levelLabel: 'مستوى الحساب',
+      verifiedAtLabel: 'تاريخ التحقق',
+      limitsTitle: 'حدود معاملاتك الجديدة نشطة الآن. يمكنك عرض حدودك المحدثة في إعدادات حسابك.',
+      cta: 'عرض الحساب',
+      desk: 'مكتب الامتثال Auxite',
+    },
+    ru: {
+      subject: 'Верификация личности одобрена — Аккаунт обновлен',
+      greeting: `Уважаемый/ая ${name},`,
+      intro: 'Верификация вашей личности успешно завершена. Ваш аккаунт обновлен с увеличенными лимитами транзакций.',
+      statusLabel: 'Статус верификации',
+      statusValue: 'Одобрено',
+      levelLabel: 'Уровень аккаунта',
+      verifiedAtLabel: 'Дата верификации',
+      limitsTitle: 'Ваши новые лимиты транзакций теперь активны. Вы можете просмотреть обновленные лимиты в настройках аккаунта.',
+      cta: 'Просмотр аккаунта',
+      desk: 'Отдел комплаенса Auxite',
+    },
+  };
+  const t = content[lang] || content.en;
+
+  const levelDisplay: Record<string, string> = {
+    verified: 'Verified', enhanced: 'Enhanced', basic: 'Basic',
+  };
+
+  const emailContent = `
+    <p class="greeting">${t.greeting}</p>
+    <p>${t.intro}</p>
+
+    <div class="detail-card">
+      <div class="detail-row">
+        <span class="detail-label">${t.statusLabel}</span>
+        <span class="detail-value" style="color: #16a34a;">&#10003; ${t.statusValue}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">${t.levelLabel}</span>
+        <span class="detail-value">${levelDisplay[data.level] || data.level}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">${t.verifiedAtLabel}</span>
+        <span class="detail-value">${data.verifiedAt}</span>
+      </div>
+    </div>
+
+    <p>${t.limitsTitle}</p>
+
+    <a href="https://vault.auxite.io/profile" class="cta-button">${t.cta}</a>
+  `;
+
+  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(emailContent, t.desk, lang) });
+}
+
+export async function sendKYCRejectionEmail(
+  to: string,
+  data: {
+    clientName?: string;
+    reason?: string;
+    language?: string;
+  }
+) {
+  const lang = data.language || 'en';
+  const name = data.clientName || 'Client';
+
+  const content: Record<string, Record<string, string>> = {
+    en: {
+      subject: 'Identity Verification Update — Action Required',
+      greeting: `Dear ${name},`,
+      intro: 'Unfortunately, your identity verification could not be completed at this time. Please review the details below and resubmit your documents.',
+      statusLabel: 'Verification Status',
+      statusValue: 'Not Approved',
+      reasonLabel: 'Reason',
+      action: 'You may resubmit your verification at any time through your account settings. Ensure all documents are clear, valid, and match your personal information.',
+      cta: 'Retry Verification',
+      desk: 'Auxite Compliance Desk',
+    },
+    tr: {
+      subject: 'Kimlik Dogrulama Guncellemesi — Islem Gerekiyor',
+      greeting: `Sayin ${name},`,
+      intro: 'Maalesef kimlik dogrulamaniz su anda tamamlanamamistir. Lutfen asagidaki detaylari inceleyip belgelerinizi yeniden gonderin.',
+      statusLabel: 'Dogrulama Durumu',
+      statusValue: 'Onaylanmadi',
+      reasonLabel: 'Sebep',
+      action: 'Dogrulamanizi hesap ayarlarinizdan istediginiz zaman yeniden gonderebilirsiniz. Tum belgelerin net, gecerli ve kisisel bilgilerinizle eslestiklerinden emin olun.',
+      cta: 'Dogrulamayi Yeniden Dene',
+      desk: 'Auxite Uyum Masasi',
+    },
+    de: {
+      subject: 'Identitaetsverifizierung — Aktion erforderlich',
+      greeting: `Sehr geehrte/r ${name},`,
+      intro: 'Leider konnte Ihre Identitaetsverifizierung derzeit nicht abgeschlossen werden. Bitte ueberpruefen Sie die Details und reichen Sie Ihre Dokumente erneut ein.',
+      statusLabel: 'Verifizierungsstatus',
+      statusValue: 'Nicht genehmigt',
+      reasonLabel: 'Grund',
+      action: 'Sie koennen Ihre Verifizierung jederzeit ueber Ihre Kontoeinstellungen erneut einreichen.',
+      cta: 'Verifizierung wiederholen',
+      desk: 'Auxite Compliance-Abteilung',
+    },
+    fr: {
+      subject: "Verification d'identite — Action requise",
+      greeting: `Cher/Chere ${name},`,
+      intro: "Malheureusement, votre verification d'identite n'a pas pu etre completee. Veuillez consulter les details ci-dessous et soumettre a nouveau vos documents.",
+      statusLabel: 'Statut de verification',
+      statusValue: 'Non approuve',
+      reasonLabel: 'Raison',
+      action: 'Vous pouvez soumettre a nouveau votre verification a tout moment via les parametres de votre compte.',
+      cta: 'Reessayer la verification',
+      desk: 'Bureau de conformite Auxite',
+    },
+    ar: {
+      subject: 'تحديث التحقق من الهوية — إجراء مطلوب',
+      greeting: `عزيزي ${name}،`,
+      intro: 'للأسف، لم يتم إكمال التحقق من هويتك في هذا الوقت. يرجى مراجعة التفاصيل أدناه وإعادة تقديم مستنداتك.',
+      statusLabel: 'حالة التحقق',
+      statusValue: 'غير موافق عليه',
+      reasonLabel: 'السبب',
+      action: 'يمكنك إعادة تقديم التحقق في أي وقت من خلال إعدادات حسابك.',
+      cta: 'إعادة محاولة التحقق',
+      desk: 'مكتب الامتثال Auxite',
+    },
+    ru: {
+      subject: 'Обновление верификации — Требуется действие',
+      greeting: `Уважаемый/ая ${name},`,
+      intro: 'К сожалению, верификация вашей личности не может быть завершена. Пожалуйста, ознакомьтесь с деталями ниже и повторно отправьте документы.',
+      statusLabel: 'Статус верификации',
+      statusValue: 'Не одобрено',
+      reasonLabel: 'Причина',
+      action: 'Вы можете повторно отправить верификацию в любое время через настройки аккаунта.',
+      cta: 'Повторить верификацию',
+      desk: 'Отдел комплаенса Auxite',
+    },
+  };
+  const t = content[lang] || content.en;
+
+  const emailContent = `
+    <p class="greeting">${t.greeting}</p>
+    <p>${t.intro}</p>
+
+    <div class="detail-card">
+      <div class="detail-row">
+        <span class="detail-label">${t.statusLabel}</span>
+        <span class="detail-value" style="color: #dc2626;">&#10007; ${t.statusValue}</span>
+      </div>
+      ${data.reason ? `
+      <div class="detail-row">
+        <span class="detail-label">${t.reasonLabel}</span>
+        <span class="detail-value">${data.reason}</span>
+      </div>
+      ` : ''}
+    </div>
+
+    <p>${t.action}</p>
+
+    <a href="https://vault.auxite.io/profile" class="cta-button">${t.cta}</a>
+  `;
+
+  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(emailContent, t.desk, lang) });
+}

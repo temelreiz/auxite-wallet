@@ -6,6 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import { verifyWebhookSignature, mapReviewStatusToLevel, mapReviewStatusToKYCStatus, getApplicantByExternalId } from '@/lib/sumsub';
+import { sendKYCApprovalEmail, sendKYCRejectionEmail } from '@/lib/email';
+import { getUserLanguage } from '@/lib/user-language';
 
 const KYC_LIMITS = {
   none: { dailyWithdraw: 100, monthlyWithdraw: 500, singleTransaction: 50 },
@@ -180,21 +182,56 @@ export async function POST(request: NextRequest) {
 
     await redis.set(kycKey, JSON.stringify(kyc));
 
-    // Push notification gönder (opsiyonel)
+    // Email + Push notification gönder
     if (type === 'applicantReviewed' && reviewResult) {
       const isApproved = reviewResult.reviewAnswer === 'GREEN';
+
+      // KYC sonuç emaili gönder
+      try {
+        const normalizedAddr = externalUserId.toLowerCase();
+        const uid = await redis.get(`user:address:${normalizedAddr}`);
+        const userData = uid ? await redis.hgetall(`user:${uid}`) as Record<string, string> | null : null;
+        const userEmail = userData?.email || kyc?.personalInfo?.email;
+        const userName = userData?.name || [kyc?.personalInfo?.firstName, kyc?.personalInfo?.lastName].filter(Boolean).join(' ') || undefined;
+        const userLang = await getUserLanguage(normalizedAddr);
+
+        if (userEmail) {
+          if (isApproved) {
+            await sendKYCApprovalEmail(userEmail, {
+              clientName: userName,
+              level: kyc.level || 'verified',
+              verifiedAt: new Date().toISOString(),
+              language: userLang,
+            });
+            console.log(`📧 KYC approval email sent to ${userEmail}`);
+          } else {
+            await sendKYCRejectionEmail(userEmail, {
+              clientName: userName,
+              reason: reviewResult.rejectLabels?.join(', '),
+              language: userLang,
+            });
+            console.log(`📧 KYC rejection email sent to ${userEmail}`);
+          }
+        } else {
+          console.warn('⚠️ No email found for KYC notification:', normalizedAddr);
+        }
+      } catch (emailErr) {
+        console.error('Failed to send KYC email:', emailErr);
+      }
+
+      // Push notification gönder
       try {
         await fetch(process.env.NEXT_PUBLIC_BASE_URL + '/api/notifications/send', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             'x-api-key': process.env.INTERNAL_API_KEY || '',
           },
           body: JSON.stringify({
             walletAddress: externalUserId,
             title: isApproved ? 'KYC Onaylandı!' : 'KYC Reddedildi',
-            body: isApproved 
-              ? 'Kimlik doğrulamanız başarıyla tamamlandı.' 
+            body: isApproved
+              ? 'Kimlik doğrulamanız başarıyla tamamlandı.'
               : 'Kimlik doğrulamanız reddedildi. Lütfen tekrar deneyin.',
             type: 'kyc_result',
           }),
