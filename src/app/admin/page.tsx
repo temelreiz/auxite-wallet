@@ -3068,7 +3068,19 @@ export default function AdminDashboard() {
                           <div>
                             <h4 className="text-sm font-semibold text-slate-300 mb-2">Bakiyeler</h4>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                              {Object.entries(selectedUserDetail.user.balance || {}).map(([token, amount]) => (
+                              {Object.entries(selectedUserDetail.user.balance || {})
+                                .filter(([token]) => {
+                                  // Filter out metadata/internal keys that are not actual token balances
+                                  const excluded = ['bonusexpiresat', 'totalauxm', 'bonusauxm', 'totalvalueusd', 'lastupdated', 'createdat'];
+                                  return !excluded.includes(token.toLowerCase());
+                                })
+                                .filter(([, amount]) => {
+                                  // Also filter out NaN values
+                                  const val = parseFloat(String(amount) || "0");
+                                  return !isNaN(val);
+                                })
+                                .sort(([, a], [, b]) => parseFloat(String(b) || "0") - parseFloat(String(a) || "0"))
+                                .map(([token, amount]) => (
                                 <div key={token} className="bg-slate-800/60 border border-slate-700 rounded-lg p-2.5">
                                   <span className="text-xs text-slate-500 uppercase">{token}</span>
                                   <p className="text-sm text-white font-mono">{parseFloat(String(amount) || "0").toFixed(token === "eth" || token === "btc" ? 6 : 2)}</p>

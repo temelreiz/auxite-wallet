@@ -135,6 +135,7 @@ export async function GET(request: NextRequest) {
       if (balance) {
         for (const [token, amount] of Object.entries(balance)) {
           const val = parseFloat(amount as string || "0");
+          if (isNaN(val)) continue; // Skip NaN values (e.g. bonusExpiresat)
           const price = prices[token.toLowerCase()] || 0;
           totalValueUsd += val * price;
         }
@@ -190,6 +191,7 @@ export async function GET(request: NextRequest) {
         if (balance) {
           for (const [token, amount] of Object.entries(balance)) {
             const val = parseFloat(amount as string || "0");
+            if (isNaN(val)) continue; // Skip NaN values
             const price = prices[token.toLowerCase()] || 0;
             totalValueUsd += val * price;
           }
@@ -241,6 +243,7 @@ export async function GET(request: NextRequest) {
       if (balance) {
         for (const [token, amount] of Object.entries(balance)) {
           const val = parseFloat(amount as string || "0");
+          if (isNaN(val)) continue; // Skip NaN values
           const price = prices[token.toLowerCase()] || 0;
           totalValueUsd += val * price;
         }
