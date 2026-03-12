@@ -57,13 +57,51 @@ export async function GET(request: NextRequest) {
     // ─────────────────────────────────────────────────────────────────────────
     if (address) {
       const normalizedAddress = address.toLowerCase();
-      
+
       // Get balance
       const balance = await redis.hgetall(`user:${normalizedAddress}:balance`);
-      
-      // Get user info
-      const userInfo = await redis.hgetall(`user:${normalizedAddress}:info`);
-      
+
+      // Get user info from :info hash
+      const userInfo = await redis.hgetall(`user:${normalizedAddress}:info`) || {};
+
+      // Also try to find auth:user data (registered users have more info)
+      let authData: Record<string, any> = {};
+      // Find auth:user entry by wallet address
+      const authKeys = await redis.keys("auth:user:*");
+      for (const authKey of authKeys) {
+        try {
+          const data = await redis.hgetall(authKey);
+          if (data && (data as any).walletAddress?.toLowerCase() === normalizedAddress) {
+            authData = data as Record<string, any>;
+            // Also get userId-based profile for extra info
+            const userId = (data as any).id;
+            if (userId) {
+              const profile = await redis.hgetall(`user:${userId}`);
+              if (profile) {
+                authData = { ...authData, ...(profile as Record<string, any>) };
+              }
+            }
+            break;
+          }
+        } catch { /* skip */ }
+      }
+
+      // Merge info: auth data takes priority
+      const mergedInfo = {
+        email: authData.email || (userInfo as any)?.email || null,
+        name: authData.name || authData.firstName ? `${authData.firstName || ''} ${authData.lastName || ''}`.trim() : (userInfo as any)?.name || null,
+        phone: authData.phone || (userInfo as any)?.phone || null,
+        createdAt: authData.createdAt || (userInfo as any)?.createdAt || null,
+        vaultId: authData.vaultId || null,
+        kycStatus: (userInfo as any)?.kycStatus || authData.kycStatus || 'none',
+        banned: (userInfo as any)?.banned || false,
+        banReason: (userInfo as any)?.banReason || null,
+        authProvider: authData.authProvider || 'email',
+        emailVerified: authData.emailVerified || false,
+        picture: authData.picture || null,
+        language: authData.language || 'en',
+      };
+
       // Get transactions
       const transactions = await redis.lrange(`user:${normalizedAddress}:transactions`, 0, 49);
       const parsedTx = transactions.map((tx: any) => {
@@ -92,7 +130,7 @@ export async function GET(request: NextRequest) {
         auxm: 1, usd: 1, usdt: 1, eth: 2900, btc: 95000,
         auxg: 95, auxs: 1.1, auxpt: 32, auxpd: 35,
       };
-      
+
       let totalValueUsd = 0;
       if (balance) {
         for (const [token, amount] of Object.entries(balance)) {
@@ -106,7 +144,7 @@ export async function GET(request: NextRequest) {
         success: true,
         user: {
           address: normalizedAddress,
-          info: userInfo || {},
+          info: mergedInfo,
           balance: balance || {},
           totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
           tier: tierInfo || { id: "regular", name: "Regular" },
@@ -157,10 +195,23 @@ export async function GET(request: NextRequest) {
           }
         }
 
+        // Also get user:{userId} profile for extra info
+        const userId = (userData?.id as string) || null;
+        let profileData: Record<string, any> = {};
+        if (userId) {
+          const profile = await redis.hgetall(`user:${userId}`);
+          if (profile) profileData = profile as Record<string, any>;
+        }
+
+        const userName = (userData?.name as string) || profileData.name ||
+          (profileData.firstName ? `${profileData.firstName} ${profileData.lastName || ''}`.trim() : null) ||
+          (userInfo?.name as string) || null;
+
         userMap.set(walletAddr, {
           address: walletAddr,
           email: email || (userInfo?.email as string) || null,
-          name: (userData?.name as string) || (userInfo?.name as string) || null,
+          name: userName,
+          phone: (userData?.phone as string) || profileData.phone || (userInfo?.phone as string) || null,
           totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
           auxmBalance: parseFloat(balance?.auxm as string || "0"),
           ethBalance: parseFloat(balance?.eth as string || "0"),
@@ -169,9 +220,9 @@ export async function GET(request: NextRequest) {
           auxsBalance: parseFloat(balance?.auxs as string || "0"),
           auxptBalance: parseFloat(balance?.auxpt as string || "0"),
           auxpdBalance: parseFloat(balance?.auxpd as string || "0"),
-          createdAt: (userData?.createdAt as string) || (userInfo?.createdAt as string) || null,
-          vaultId: (userData?.vaultId as string) || null,
-          userId: (userData?.id as string) || null,
+          createdAt: (userData?.createdAt as string) || profileData.createdAt || (userInfo?.createdAt as string) || null,
+          vaultId: (userData?.vaultId as string) || profileData.vaultId || null,
+          userId,
         });
       } catch (e) {
         console.warn(`Failed to process ${authKey}:`, e);
@@ -199,6 +250,7 @@ export async function GET(request: NextRequest) {
         address: addr,
         email: (userInfo?.email as string) || null,
         name: (userInfo?.name as string) || null,
+        phone: (userInfo?.phone as string) || null,
         totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
         auxmBalance: parseFloat(balance?.auxm as string || "0"),
         ethBalance: parseFloat(balance?.eth as string || "0"),

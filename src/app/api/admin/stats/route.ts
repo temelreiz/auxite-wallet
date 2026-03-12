@@ -29,28 +29,46 @@ export async function GET(request: NextRequest) {
     let activeAlerts = 0;
 
     try {
-      // Toplam kullanıcı sayısı
-      const userKeys = await redis.keys('user:*:meta');
-      totalUsers = userKeys.length;
-
-      // KYC bekleyenler
-      for (const key of userKeys) {
+      // Toplam kullanıcı sayısı — auth:user:* (kayıtlı) + user:0x*:balance (bakiyeli)
+      const authUserKeys = await redis.keys('auth:user:*');
+      const balanceUserKeys = await redis.keys('user:0x*:balance');
+      // Unique adresler: auth kullanıcılardan wallet adreslerini al
+      const addressSet = new Set<string>();
+      for (const key of authUserKeys) {
         try {
-          const meta = await redis.get(key);
-          if (meta) {
-            const userData = typeof meta === 'string' ? JSON.parse(meta) : meta;
-            if (userData.kycStatus === 'pending') {
-              pendingKYC++;
-            }
+          const userData = await redis.hgetall(key);
+          const addr = ((userData?.walletAddress as string) || '').toLowerCase().trim();
+          if (addr) addressSet.add(addr);
+        } catch { /* skip */ }
+      }
+      for (const key of balanceUserKeys) {
+        const addr = key.split(':')[1];
+        if (addr) addressSet.add(addr);
+      }
+      totalUsers = addressSet.size;
+
+      // KYC bekleyenler — user:0x*:info'dan kycStatus kontrol
+      const infoKeys = await redis.keys('user:0x*:info');
+      for (const key of infoKeys) {
+        try {
+          const info = await redis.hgetall(key);
+          if (info && (info as any).kycStatus === 'pending') {
+            pendingKYC++;
           }
-        } catch (e) {
-          // Skip invalid entries
-        }
+        } catch { /* skip */ }
       }
 
-      // Toplam trade sayısı
+      // Toplam trade sayısı — tüm kullanıcıların işlem listelerini say
       const tradeCountStr = await redis.get('stats:total:trades');
       totalTrades = tradeCountStr ? parseInt(tradeCountStr as string) : 0;
+      // Alternatif: bireysel transaction listelerinden hesapla
+      if (totalTrades === 0) {
+        const txKeys = await redis.keys('user:0x*:transactions');
+        for (const txKey of txKeys) {
+          const len = await redis.llen(txKey);
+          totalTrades += len;
+        }
+      }
 
       // Toplam hacim
       const volumeStr = await redis.get('stats:total:volume');
@@ -59,8 +77,6 @@ export async function GET(request: NextRequest) {
       // Bekleyen çekimler
       const withdrawKeys = await redis.keys('withdraw:pending:*');
       pendingWithdraws = withdrawKeys.length;
-
-      // Alternatif: withdraw listesinden
       if (pendingWithdraws === 0) {
         const pendingList = await redis.lrange('withdraws:pending', 0, -1);
         pendingWithdraws = pendingList.length;
@@ -73,16 +89,10 @@ export async function GET(request: NextRequest) {
           const ann = await redis.get(key);
           if (ann) {
             const data = typeof ann === 'string' ? JSON.parse(ann) : ann;
-            if (data.active) {
-              activeAlerts++;
-            }
+            if (data.active) activeAlerts++;
           }
-        } catch (e) {
-          // Skip
-        }
+        } catch { /* skip */ }
       }
-
-      // Alternatif: announcements listesinden
       if (activeAlerts === 0) {
         const annList = await redis.lrange('announcements:active', 0, -1);
         activeAlerts = annList.length;

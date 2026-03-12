@@ -2890,7 +2890,7 @@ export default function AdminDashboard() {
                 <div className="flex gap-4">
                   <input
                     type="text"
-                    placeholder="Adres ile ara (0x...)"
+                    placeholder="Adres, email veya isim ile ara..."
                     className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500"
                     onChange={(e) => {
                       const search = e.target.value.toLowerCase();
@@ -2914,17 +2914,16 @@ export default function AdminDashboard() {
 
               {/* Users Table */}
               <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-x-auto">
-                <table className="w-full min-w-[1200px]">
+                <table className="w-full min-w-[1400px]">
                   <thead className="bg-slate-800">
                     <tr>
-                      <th className="text-left p-3 text-slate-300">Adres</th>
+                      <th className="text-left p-3 text-slate-300">Kullanıcı</th>
+                      <th className="text-left p-3 text-slate-400">Kayıt Tarihi</th>
                       <th className="text-left p-3 text-slate-300">AUXM</th>
                       <th className="text-left p-3 text-blue-400">ETH</th>
                       <th className="text-left p-3 text-orange-400">BTC</th>
                       <th className="text-left p-3 text-[#BFA181]">AUXG</th>
                       <th className="text-left p-3 text-slate-400">AUXS</th>
-                      <th className="text-left p-3 text-slate-400">AUXPT</th>
-                      <th className="text-left p-3 text-slate-400">AUXPD</th>
                       <th className="text-left p-3 text-green-400">Toplam USD</th>
                       <th className="text-left p-3 text-slate-300">İşlem</th>
                     </tr>
@@ -2932,17 +2931,34 @@ export default function AdminDashboard() {
                   <tbody>
                     {users.length === 0 ? (
                       <tr>
-                        <td colSpan={10} className="p-8 text-center text-slate-400">
+                        <td colSpan={9} className="p-8 text-center text-slate-400">
                           Kullanıcı yükleniyor...
                         </td>
                       </tr>
                     ) : (
                       users.map((user, i) => (
-                        <tr key={user.address || i} className="border-t border-slate-800 hover:bg-slate-800/50">
+                        <tr key={user.address || i} className="border-t border-slate-800 hover:bg-slate-800/50 cursor-pointer" onClick={() => loadUserDetail(user.address)}>
                           <td className="p-3">
-                            <span className="font-mono text-sm text-slate-300">
-                              {user.address?.slice(0, 8)}...{user.address?.slice(-6)}
-                            </span>
+                            <div className="flex flex-col">
+                              {(user as any).name && (
+                                <span className="text-sm text-white font-medium">{(user as any).name}</span>
+                              )}
+                              {(user as any).email && (
+                                <span className="text-xs text-blue-400">{(user as any).email}</span>
+                              )}
+                              {(user as any).phone && (
+                                <span className="text-xs text-slate-500">{(user as any).phone}</span>
+                              )}
+                              <span className="font-mono text-xs text-slate-500 mt-0.5">
+                                {user.address?.slice(0, 8)}...{user.address?.slice(-6)}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="p-3 text-slate-400 text-xs">
+                            {(user as any).createdAt ? (() => {
+                              const d = new Date(typeof (user as any).createdAt === 'string' && !(user as any).createdAt.includes('-') ? parseInt((user as any).createdAt) : (user as any).createdAt);
+                              return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                            })() : '—'}
                           </td>
                           <td className="p-3 text-slate-300">
                             {formatAmount((user as any).auxmBalance || 0, 'AUXM')}
@@ -2959,18 +2975,12 @@ export default function AdminDashboard() {
                           <td className="p-3 text-slate-400">
                             {formatAmount((user as any).auxsBalance || 0, 'AUXS')}
                           </td>
-                          <td className="p-3 text-slate-400">
-                            {formatAmount((user as any).auxptBalance || 0, 'AUXPT')}
-                          </td>
-                          <td className="p-3 text-slate-400">
-                            {formatAmount((user as any).auxpdBalance || 0, 'AUXPD')}
-                          </td>
                           <td className="p-3 text-green-400 font-semibold">
                             ${((user as any).totalValueUsd || 0).toFixed(2)}
                           </td>
                           <td className="p-3">
                             <button
-                              onClick={() => loadUserDetail(user.address)}
+                              onClick={(e) => { e.stopPropagation(); loadUserDetail(user.address); }}
                               className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-xs text-slate-300"
                             >
                               Detay
@@ -2998,8 +3008,13 @@ export default function AdminDashboard() {
                         {/* Header */}
                         <div className="flex items-center justify-between p-5 border-b border-slate-700">
                           <div>
-                            <h3 className="text-lg font-bold text-white">Kullanıcı Detayı</h3>
+                            <h3 className="text-lg font-bold text-white">
+                              {selectedUserDetail.user.info?.name || "Kullanıcı Detayı"}
+                            </h3>
                             <p className="font-mono text-sm text-slate-400 mt-1">{selectedUserDetail.user.address}</p>
+                            {selectedUserDetail.user.info?.vaultId && (
+                              <p className="text-xs text-[#BFA181] mt-0.5">Vault: {selectedUserDetail.user.info.vaultId}</p>
+                            )}
                           </div>
                           <button onClick={() => setSelectedUserDetail(null)} className="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
                         </div>
@@ -3012,6 +3027,26 @@ export default function AdminDashboard() {
                               <p className="text-sm text-white truncate">{selectedUserDetail.user.info?.email || "—"}</p>
                             </div>
                             <div className="bg-slate-800 rounded-lg p-3">
+                              <p className="text-xs text-slate-500">İsim</p>
+                              <p className="text-sm text-white">{selectedUserDetail.user.info?.name || "—"}</p>
+                            </div>
+                            <div className="bg-slate-800 rounded-lg p-3">
+                              <p className="text-xs text-slate-500">Telefon</p>
+                              <p className="text-sm text-white">{selectedUserDetail.user.info?.phone || "—"}</p>
+                            </div>
+                            <div className="bg-slate-800 rounded-lg p-3">
+                              <p className="text-xs text-slate-500">Kayıt Tarihi</p>
+                              <p className="text-sm text-white">
+                                {selectedUserDetail.user.info?.createdAt ? (() => {
+                                  const raw = selectedUserDetail.user.info.createdAt;
+                                  const d = new Date(typeof raw === 'string' && !raw.includes('-') ? parseInt(raw) : raw);
+                                  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                                })() : "—"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="bg-slate-800 rounded-lg p-3">
                               <p className="text-xs text-slate-500">Tier</p>
                               <p className="text-sm text-white">{selectedUserDetail.user.tier?.name || "Regular"}</p>
                             </div>
@@ -3022,6 +3057,10 @@ export default function AdminDashboard() {
                             <div className="bg-slate-800 rounded-lg p-3">
                               <p className="text-xs text-slate-500">Toplam USD</p>
                               <p className="text-sm text-green-400 font-semibold">${selectedUserDetail.user.totalValueUsd.toFixed(2)}</p>
+                            </div>
+                            <div className="bg-slate-800 rounded-lg p-3">
+                              <p className="text-xs text-slate-500">Giriş Yöntemi</p>
+                              <p className="text-sm text-white capitalize">{selectedUserDetail.user.info?.authProvider || "—"}</p>
                             </div>
                           </div>
 
@@ -3062,19 +3101,58 @@ export default function AdminDashboard() {
                             {selectedUserDetail.transactions.length === 0 ? (
                               <p className="text-sm text-slate-500">İşlem yok</p>
                             ) : (
-                              <div className="space-y-1.5 max-h-60 overflow-y-auto">
-                                {selectedUserDetail.transactions.map((tx: any, i: number) => (
-                                  <div key={i} className="bg-slate-800/60 border border-slate-700 rounded-lg p-2.5 text-xs flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${tx.type === "buy" || tx.type === "deposit" ? "bg-green-500/20 text-green-400" : tx.type === "sell" || tx.type === "withdraw" ? "bg-red-500/20 text-red-400" : "bg-slate-700 text-slate-400"}`}>
-                                        {tx.type?.toUpperCase() || "TX"}
-                                      </span>
-                                      <span className="text-slate-300">{tx.token || tx.asset || "—"}</span>
-                                      <span className="text-white font-mono">{tx.amount || "—"}</span>
+                              <div className="space-y-1.5 max-h-80 overflow-y-auto">
+                                {selectedUserDetail.transactions.map((tx: any, i: number) => {
+                                  const txId = `tx-${i}`;
+                                  return (
+                                    <div key={i} className="bg-slate-800/60 border border-slate-700 rounded-lg overflow-hidden">
+                                      <div
+                                        className="p-2.5 text-xs flex items-center justify-between cursor-pointer hover:bg-slate-700/40 transition-colors"
+                                        onClick={() => {
+                                          const el = document.getElementById(txId);
+                                          if (el) el.classList.toggle('hidden');
+                                        }}
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                            tx.type === "buy" || tx.type === "deposit" || tx.type === "admin_adjustment" ? "bg-green-500/20 text-green-400" :
+                                            tx.type === "sell" || tx.type === "withdraw" ? "bg-red-500/20 text-red-400" :
+                                            tx.type === "exchange" || tx.type === "convert" ? "bg-blue-500/20 text-blue-400" :
+                                            "bg-slate-700 text-slate-400"
+                                          }`}>
+                                            {tx.type?.toUpperCase() || "TX"}
+                                          </span>
+                                          <span className="text-slate-300">{tx.token || tx.asset || tx.fromToken || "—"}</span>
+                                          <span className="text-white font-mono">{tx.amount || "—"}</span>
+                                          {tx.toToken && <span className="text-slate-500">→ {tx.toToken} {tx.toAmount || ""}</span>}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-slate-500">
+                                            {tx.timestamp ? (() => {
+                                              const d = new Date(tx.timestamp);
+                                              return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('tr-TR') + ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                                            })() : "—"}
+                                          </span>
+                                          <span className="text-slate-600">▼</span>
+                                        </div>
+                                      </div>
+                                      <div id={txId} className="hidden border-t border-slate-700 p-2.5 bg-slate-900/50 text-xs">
+                                        <div className="grid grid-cols-2 gap-2">
+                                          {Object.entries(tx).map(([key, val]) => (
+                                            <div key={key}>
+                                              <span className="text-slate-500">{key}: </span>
+                                              <span className="text-slate-300 font-mono break-all">
+                                                {key === 'timestamp' && typeof val === 'number'
+                                                  ? new Date(val).toLocaleString('tr-TR')
+                                                  : String(val)}
+                                              </span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
                                     </div>
-                                    <span className="text-slate-500">{tx.timestamp ? new Date(tx.timestamp).toLocaleDateString("tr-TR") : "—"}</span>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
