@@ -3,6 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createCustodialWallet, getWalletAddress } from "@/lib/kms-wallet";
 import { autoAssignRM } from "@/lib/relationship-manager";
 
+// ═══════════════════════════════════════════════════════════════
+// 🎉 EARLY BIRD CAMPAIGN — First N users get free AUXG
+// ═══════════════════════════════════════════════════════════════
+const EARLY_BIRD_ENABLED = process.env.EARLY_BIRD_ENABLED !== "false"; // default: enabled
+const EARLY_BIRD_LIMIT = parseInt(process.env.EARLY_BIRD_LIMIT || "50"); // first 50 users
+const EARLY_BIRD_AUXG = parseFloat(process.env.EARLY_BIRD_AUXG || "10"); // 10 AUXG
+const EARLY_BIRD_EXPIRY_DAYS = parseInt(process.env.EARLY_BIRD_EXPIRY_DAYS || "90"); // 90 gün
+
 // 12 haneli alfanümerik UID oluştur
 function generateUID(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -145,6 +153,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 🎉 Early Bird Campaign — İlk N kullanıcıya AUXG hediye
+    let earlyBirdGranted = false;
+    if (EARLY_BIRD_ENABLED && EARLY_BIRD_AUXG > 0) {
+      try {
+        // Atomic increment — race condition safe
+        const currentCount = await redis.incr("campaign:earlybird:count");
+
+        if (currentCount <= EARLY_BIRD_LIMIT) {
+          // Grant AUXG directly
+          await redis.set(`user:${userId}:balance:AUXG`, EARLY_BIRD_AUXG);
+
+          // Set bonus expiry
+          const expiryDate = new Date();
+          expiryDate.setDate(expiryDate.getDate() + EARLY_BIRD_EXPIRY_DAYS);
+          await redis.set(`user:${userId}:earlybird:expiresAt`, expiryDate.toISOString());
+
+          // Transaction kaydı
+          await redis.lpush(
+            `user:${userId}:transactions`,
+            JSON.stringify({
+              type: "bonus",
+              asset: "AUXG",
+              amount: EARLY_BIRD_AUXG,
+              description: `Early Bird Campaign — İlk ${EARLY_BIRD_LIMIT} kullanıcıya ${EARLY_BIRD_AUXG} AUXG hediye! 🎉`,
+              descriptionEn: `Early Bird Campaign — Free ${EARLY_BIRD_AUXG} AUXG for the first ${EARLY_BIRD_LIMIT} users! 🎉`,
+              timestamp: createdAt,
+              campaign: "earlybird",
+              expiresAt: expiryDate.toISOString(),
+            })
+          );
+
+          // Track which users received the bonus
+          await redis.lpush("campaign:earlybird:users", JSON.stringify({
+            userId,
+            email: email || null,
+            rank: currentCount,
+            grantedAt: createdAt,
+          }));
+
+          earlyBirdGranted = true;
+          console.log(`🎉 Early Bird #${currentCount}/${EARLY_BIRD_LIMIT}: ${userId} received ${EARLY_BIRD_AUXG} AUXG`);
+        } else {
+          // Limit aşıldı, counter'ı geri al (temizlik)
+          await redis.decr("campaign:earlybird:count");
+          console.log(`⏰ Early Bird campaign full (${EARLY_BIRD_LIMIT}/${EARLY_BIRD_LIMIT})`);
+        }
+      } catch (ebError) {
+        console.error("Early Bird campaign error (non-blocking):", ebError);
+      }
+    }
+
     // Referral işleme (varsa)
     if (referralCode) {
       const referrerId = await redis.get(`referral:code:${referralCode}`);
@@ -199,6 +258,15 @@ export async function POST(request: NextRequest) {
       },
       depositAddresses: DEPOSIT_ADDRESSES,
       welcomeBonus: WELCOME_BONUS > 0 ? WELCOME_BONUS : undefined,
+      earlyBird: earlyBirdGranted ? {
+        granted: true,
+        amount: EARLY_BIRD_AUXG,
+        asset: "AUXG",
+        message: {
+          tr: `Tebrikler! 🎉 İlk ${EARLY_BIRD_LIMIT} kullanıcıdan biri olarak ${EARLY_BIRD_AUXG} AUXG hediye kazandınız!`,
+          en: `Congratulations! 🎉 As one of the first ${EARLY_BIRD_LIMIT} users, you've earned ${EARLY_BIRD_AUXG} free AUXG!`,
+        },
+      } : undefined,
     });
   } catch (error: any) {
     console.error("User registration error:", error);
