@@ -47,7 +47,8 @@ export async function GET(request: NextRequest) {
       const count = (await kv.get<number>("campaign:earlybird:count")) || 0;
       const users = (await kv.lrange("campaign:earlybird:users", 0, -1)) || [];
       const limit = parseInt(process.env.EARLY_BIRD_LIMIT || "50");
-      const auxgAmount = parseFloat(process.env.EARLY_BIRD_AUXG || "10");
+      const amount = parseFloat(process.env.EARLY_BIRD_AMOUNT || "10");
+      const asset = process.env.EARLY_BIRD_ASSET || "AUXS";
       const enabled = process.env.EARLY_BIRD_ENABLED !== "false";
 
       return NextResponse.json({
@@ -55,7 +56,9 @@ export async function GET(request: NextRequest) {
         earlyBird: {
           enabled,
           limit,
-          auxgPerUser: auxgAmount,
+          asset,
+          amountPerUser: amount,
+          transferable: false,
           totalGranted: count,
           remaining: Math.max(0, limit - count),
           isFull: count >= limit,
