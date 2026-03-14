@@ -5,6 +5,7 @@
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from "@/lib/admin-auth";
 import {
   registerCounterparty,
   updateCounterparty,
@@ -63,6 +64,9 @@ import {
 // GET — Admin dashboard data
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     const { searchParams } = new URL(request.url);
     const section = searchParams.get('section');
 
@@ -217,6 +221,9 @@ export async function GET(request: NextRequest) {
 // POST — Admin actions
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     const body = await request.json();
     const { section, action } = body;
 

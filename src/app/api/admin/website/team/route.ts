@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
+import { requireAdmin } from "@/lib/admin-auth";
 
 const redis = Redis.fromEnv();
 const TEAM_KEY = 'website:team';
@@ -68,8 +69,11 @@ const DEFAULT_TEAM = [
   },
 ];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     let team = await redis.get(TEAM_KEY);
     if (!team) {
       await redis.set(TEAM_KEY, DEFAULT_TEAM);
@@ -82,9 +86,12 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const member = await req.json();
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
+    const member = await request.json();
     const team: any[] = await redis.get(TEAM_KEY) || [];
     
     if (!member.id) {
@@ -100,9 +107,12 @@ export async function POST(req: Request) {
   }
 }
 
-export async function PUT(req: Request) {
+export async function PUT(request: NextRequest) {
   try {
-    const member = await req.json();
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
+    const member = await request.json();
     const team: any[] = await redis.get(TEAM_KEY) || [];
     
     const index = team.findIndex(m => m.id === member.id);

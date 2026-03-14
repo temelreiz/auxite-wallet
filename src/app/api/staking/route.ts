@@ -26,15 +26,37 @@ const DURATION_TO_TENOR: Record<number, string> = {
   366: '12M',
 };
 
-// Staking süreleri ve APY oranları (yıllık)
+// Duration labels
+const DURATION_LABELS: Record<number, string> = {
+  30: "1 Ay", 90: "3 Ay", 91: "3 Ay",
+  180: "6 Ay", 181: "6 Ay",
+  365: "1 Yıl", 366: "1 Yıl",
+};
+
+// APY oranları — yield-builder / lease-rates ile senkronize
+// Bu oranlar frontend'de gösterilen oranlarla aynı olmalı
+const APY_RATES: Record<string, Record<string, number>> = {
+  auxg:  { '3M': 1.53, '6M': 2.03, '12M': 2.53 },
+  auxs:  { '3M': 1.23, '6M': 1.73, '12M': 2.23 },
+  auxpt: { '3M': 2.03, '6M': 2.53, '12M': 3.03 },
+  auxpd: { '3M': 1.83, '6M': 2.33, '12M': 2.83 },
+};
+
+function getApy(metal: string, duration: number): number {
+  const tenor = DURATION_TO_TENOR[duration];
+  if (!tenor) return 2.0;
+  return APY_RATES[metal.toLowerCase()]?.[tenor] || 2.0;
+}
+
+// Legacy STAKING_TIERS for backward compat (GET response uses this for generic display)
 const STAKING_TIERS: Record<number, { apy: number; label: string }> = {
-  30: { apy: 3, label: "1 Ay" },
-  90: { apy: 5, label: "3 Ay" },
-  91: { apy: 5, label: "3 Ay" },
-  180: { apy: 8, label: "6 Ay" },
-  181: { apy: 8, label: "6 Ay" },
-  365: { apy: 12, label: "1 Yıl" },
-  366: { apy: 12, label: "1 Yıl" },
+  30:  { apy: 1.53, label: "1 Ay" },
+  90:  { apy: 1.53, label: "3 Ay" },
+  91:  { apy: 1.53, label: "3 Ay" },
+  180: { apy: 2.03, label: "6 Ay" },
+  181: { apy: 2.03, label: "6 Ay" },
+  365: { apy: 2.53, label: "1 Yıl" },
+  366: { apy: 2.53, label: "1 Yıl" },
 };
 
 // Minimum stake miktarları (gram)
@@ -172,7 +194,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Invalid metal for staking" }, { status: 400 });
       }
 
-      if (!STAKING_TIERS[duration]) {
+      if (!DURATION_LABELS[duration]) {
         return NextResponse.json({
           error: "Invalid duration. Valid options: 30, 90, 180, 365 days"
         }, { status: 400 });
@@ -202,17 +224,18 @@ export async function POST(request: NextRequest) {
         }, { status: 400 });
       }
 
-      // Create stake position
-      const tier = STAKING_TIERS[duration];
+      // Create stake position — metal-specific APY from yield-builder rates
+      const apy = getApy(metalLower, duration);
+      const label = DURATION_LABELS[duration] || `${duration} Gün`;
       const endDate = now + (duration * 24 * 60 * 60 * 1000);
-      const expectedReward = (amount * tier.apy / 100) * (duration / 365);
+      const expectedReward = (amount * apy / 100) * (duration / 365);
 
       const position: StakePosition = {
         id: `stake_${now}_${Math.random().toString(36).substr(2, 9)}`,
         metal: metalLower,
         amount,
         duration,
-        apy: tier.apy,
+        apy,
         startDate: now,
         endDate,
         expectedReward,
@@ -258,7 +281,7 @@ export async function POST(request: NextRequest) {
         metal: metalUpper,
         amount: amount.toString(),
         duration,
-        apy: tier.apy,
+        apy,
         expectedReward: expectedReward.toFixed(6),
         status: "active",
         timestamp: now,
@@ -269,12 +292,12 @@ export async function POST(request: NextRequest) {
 
       await multi.exec();
 
-      console.log(`✅ Stake created: ${amount}g ${metalUpper} for ${duration} days @ ${tier.apy}% APY${position.poolId ? ` (Pool: ${position.poolId})` : ''}`);
+      console.log(`✅ Stake created: ${amount}g ${metalUpper} for ${duration} days @ ${apy}% APY${position.poolId ? ` (Pool: ${position.poolId})` : ''}`);
 
       return NextResponse.json({
         success: true,
         position,
-        message: `${amount}g ${metalUpper} staked for ${tier.label} at ${tier.apy}% APY`,
+        message: `${amount}g ${metalUpper} staked for ${label} at ${apy}% APY`,
       });
     }
 

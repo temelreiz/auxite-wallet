@@ -3,29 +3,17 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { requireAdmin } from "@/lib/admin-auth";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-// Admin authentication
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "auxite-admin-secret";
-
-function isAuthorized(request: NextRequest): boolean {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader) return false;
-  
-  const token = authHeader.replace("Bearer ", "");
-  return token === ADMIN_SECRET;
-}
-
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
     // ═══════════════════════════════════════════════════════════════════════
     // USER STATISTICS
     // ═══════════════════════════════════════════════════════════════════════

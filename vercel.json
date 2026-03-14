@@ -37,6 +37,14 @@
     {
       "path": "/api/cron/send-monthly-statements",
       "schedule": "0 8 1 * *"
+    },
+    {
+      "path": "/api/cron/staking-reminders",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/execute-all",
+      "schedule": "0 * * * *"
     }
   ]
 }

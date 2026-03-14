@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import { redis } from "@/lib/redis";
 import { sendPushToUser, broadcastPush } from "@/lib/expo-push";
 
@@ -12,11 +13,8 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
-    // Admin auth check
-    const auth = request.headers.get("authorization");
-    if (auth !== "Bearer auxite-admin-2024") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
 
     const body = await request.json();
     const { walletAddress, title, body: messageBody, type, data, broadcast } = body;

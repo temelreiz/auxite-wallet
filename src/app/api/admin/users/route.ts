@@ -3,49 +3,21 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { requireAdmin } from "@/lib/admin-auth";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-// Admin addresses (environment'tan al)
-const ADMIN_ADDRESSES = [
-  process.env.ADMIN_ADDRESS?.toLowerCase(),
-  ...(process.env.NEXT_PUBLIC_ADMIN_ADDRESSES || "").split(",").map(a => a.trim().toLowerCase()),
-].filter(Boolean);
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ADMIN AUTHENTICATION - Bearer token + Admin address verification
-// ═══════════════════════════════════════════════════════════════════════════
-function isAuthorized(request: NextRequest): boolean {
-  // 1. Bearer token kontrolü
-  const authHeader = request.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!token || token === "null" || token === "undefined") {
-    return false;
-  }
-
-  // 2. Admin address kontrolü (opsiyonel ama önerilir)
-  const adminAddress = request.headers.get("x-admin-address");
-  if (adminAddress && !ADMIN_ADDRESSES.includes(adminAddress.toLowerCase())) {
-    return false;
-  }
-
-  return true;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
 // GET - List users or get single user details
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
     const { searchParams } = new URL(request.url);
     const address = searchParams.get("address");
     const page = parseInt(searchParams.get("page") || "1");
@@ -308,11 +280,9 @@ export async function GET(request: NextRequest) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
     const body = await request.json();
     const { action, address, ...params } = body;
 

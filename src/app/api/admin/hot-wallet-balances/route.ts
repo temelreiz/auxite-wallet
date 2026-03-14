@@ -1,9 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getHotWalletBalances } from "@/lib/blockchain-service";
 import { getNOWPaymentsBalance } from "@/lib/nowpayments-service";
+import { requireAdmin } from "@/lib/admin-auth";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     const balances = await getHotWalletBalances();
     
     // NOWPayments BTC bakiyesi

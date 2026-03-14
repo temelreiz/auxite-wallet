@@ -1,5 +1,6 @@
 // Mobile Management API
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
 import { Redis } from '@upstash/redis';
 
 const redis = new Redis({
@@ -83,6 +84,8 @@ const DEFAULT_REMOTE_CONFIG = {
 // GET - Get mobile config
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'all';
 
@@ -154,10 +157,8 @@ export async function GET(request: NextRequest) {
 // POST - Update mobile config
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
 
     const body = await request.json();
     const { action } = body;

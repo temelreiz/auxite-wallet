@@ -1,13 +1,16 @@
 // API to trigger oracle price update
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
 import { updateOraclePrices, fetchMetalPrices, getOraclePrices } from '@/lib/oracle-updater';
 
-// GET - Check current prices
 // GET - Check current oracle prices (no GoldAPI call)
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     const oraclePrices = await getOraclePrices();
-    
+
     return NextResponse.json({
       oracle: oraclePrices,
       timestamp: new Date().toISOString(),
@@ -20,11 +23,8 @@ export async function GET() {
 // POST - Update oracle prices
 export async function POST(request: NextRequest) {
   try {
-    // Auth check
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
 
     const result = await updateOraclePrices();
     

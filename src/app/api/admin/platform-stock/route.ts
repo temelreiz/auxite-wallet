@@ -3,6 +3,7 @@
 // Vault bazlı stok takibi ile
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
+import { requireAdmin } from "@/lib/admin-auth";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -35,6 +36,9 @@ const DEFAULT_WARNING_THRESHOLD = 0.2; // %20
 // ═══════════════════════════════════════════════════════════════════════════
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     const { searchParams } = new URL(request.url);
     const metal = searchParams.get('metal');
     const detailed = searchParams.get('detailed') === 'true';
@@ -144,11 +148,8 @@ export async function GET(request: NextRequest) {
 // ═══════════════════════════════════════════════════════════════════════════
 export async function POST(request: NextRequest) {
   try {
-    // Admin authentication
-    const adminKey = request.headers.get('x-admin-key');
-    if (adminKey !== process.env.ADMIN_API_KEY) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
 
     const body = await request.json();
     const { metal, amount, action, reason, warningThreshold, vault } = body;
@@ -393,10 +394,8 @@ export async function POST(request: NextRequest) {
 // ═══════════════════════════════════════════════════════════════════════════
 export async function DELETE(request: NextRequest) {
   try {
-    const adminKey = request.headers.get('x-admin-key');
-    if (adminKey !== process.env.ADMIN_API_KEY) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
 
     const { searchParams } = new URL(request.url);
     const metal = searchParams.get('metal');

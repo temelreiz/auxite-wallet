@@ -4,17 +4,15 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import { redis } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    // Admin auth check
-    const auth = request.headers.get("authorization");
-    if (auth !== "Bearer auxite-admin-2024") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
 
     // Get notification log (last 50)
     const logRaw = await redis.lrange("notifications:log", 0, 49);

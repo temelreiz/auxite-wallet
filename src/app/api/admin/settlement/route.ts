@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
+import { requireAdmin } from '@/lib/admin-auth';
 import { getSettlementSpreadConfig, setSettlementSpreadConfig } from '@/lib/settlement-spread';
 import { getSettlementConfig, getPendingOrders } from '@/lib/settlement-service';
 
@@ -13,19 +14,10 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'auxite-admin-2024';
-
-function checkAuth(request: NextRequest): boolean {
-  const authHeader = request.headers.get('authorization');
-  const token = authHeader?.replace('Bearer ', '');
-  return token === ADMIN_TOKEN;
-}
-
 // ── GET: Full settlement dashboard data ──
 export async function GET(request: NextRequest) {
-  if (!checkAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireAdmin(request);
+  if (!auth.authorized) return auth.response!;
 
   const config = await getSettlementConfig();
   const spreadConfig = await getSettlementSpreadConfig();
@@ -52,11 +44,9 @@ export async function GET(request: NextRequest) {
 
 // ── POST: Update config, flags, spread ──
 export async function POST(request: NextRequest) {
-  if (!checkAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
     const { action, ...data } = await request.json();
 
     switch (action) {

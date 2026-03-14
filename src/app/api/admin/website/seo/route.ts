@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
+import { requireAdmin } from "@/lib/admin-auth";
 
 const redis = Redis.fromEnv();
 const SEO_KEY = 'website:seo';
@@ -49,8 +50,11 @@ const DEFAULT_SEO = [
   },
 ];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     let seo = await redis.get(SEO_KEY);
     if (!seo) {
       await redis.set(SEO_KEY, DEFAULT_SEO);
@@ -63,9 +67,12 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const seoData = await req.json();
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
+    const seoData = await request.json();
     await redis.set(SEO_KEY, seoData);
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -74,9 +81,12 @@ export async function POST(req: Request) {
   }
 }
 
-export async function PUT(req: Request) {
+export async function PUT(request: NextRequest) {
   try {
-    const { locale, ...data } = await req.json();
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
+    const { locale, ...data } = await request.json();
     const seoList: any[] = await redis.get(SEO_KEY) || DEFAULT_SEO;
     
     const index = seoList.findIndex(s => s.locale === locale);

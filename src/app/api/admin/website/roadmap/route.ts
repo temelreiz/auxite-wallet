@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
+import { requireAdmin } from "@/lib/admin-auth";
 
 const redis = Redis.fromEnv();
 const ROADMAP_KEY = 'website:roadmap';
@@ -55,8 +56,11 @@ const DEFAULT_ROADMAP = [
   },
 ];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     let roadmap = await redis.get(ROADMAP_KEY);
     if (!roadmap) {
       await redis.set(ROADMAP_KEY, DEFAULT_ROADMAP);
@@ -69,9 +73,12 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const phase = await req.json();
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
+    const phase = await request.json();
     const roadmap: any[] = await redis.get(ROADMAP_KEY) || [];
     
     if (!phase.id) {
@@ -87,9 +94,12 @@ export async function POST(req: Request) {
   }
 }
 
-export async function PUT(req: Request) {
+export async function PUT(request: NextRequest) {
   try {
-    const phase = await req.json();
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
+    const phase = await request.json();
     const roadmap: any[] = await redis.get(ROADMAP_KEY) || [];
     
     const index = roadmap.findIndex(p => p.id === phase.id);

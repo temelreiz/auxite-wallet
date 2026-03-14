@@ -1,10 +1,14 @@
 // Admin Audit Logs API
 import { NextRequest, NextResponse } from 'next/server';
 import { getGlobalAuditLogs, getHighRiskLogs, AuditLog, RiskLevel, AuditAction } from '@/lib/security/audit-logger';
+import { requireAdmin } from '@/lib/admin-auth';
 
 // GET - Get audit logs
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     const { searchParams } = new URL(request.url);
     const filter = searchParams.get('filter') || 'all';
     const action = searchParams.get('action') as AuditAction | null;

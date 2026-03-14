@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 const WATCHER_URL = process.env.ORACLE_WATCHER_URL || process.env.NEXT_PUBLIC_ORACLE_WATCHER_URL || "";
 
@@ -11,6 +12,9 @@ export async function GET(req: NextRequest) {
   const url = `${WATCHER_URL}${path}`;
 
   try {
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) return auth.response!;
+
     const res = await fetch(url, { cache: "no-store" });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
@@ -28,6 +32,9 @@ export async function POST(req: NextRequest) {
   const url = `${WATCHER_URL}${path}`;
 
   try {
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) return auth.response!;
+
     const body = await req.json().catch(() => null);
     const res = await fetch(url, {
       method: "POST",
@@ -50,6 +57,9 @@ export async function DELETE(req: NextRequest) {
   const url = `${WATCHER_URL}${path}`;
 
   try {
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) return auth.response!;
+
     const res = await fetch(url, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },

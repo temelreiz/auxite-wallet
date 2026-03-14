@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const dynamic = 'force-dynamic';
 
@@ -21,8 +22,11 @@ async function getRedis() {
   });
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     const redis = await getRedis();
     const settings = await redis.get(SETTINGS_KEY);
     if (settings && typeof settings === "object") {
@@ -37,6 +41,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     const body = await request.json();
 
     const settings = {

@@ -1,5 +1,6 @@
 // Admin Pricing Engine Configuration API v3
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
 import {
   getPricingConfig,
   setPricingConfig,
@@ -10,8 +11,11 @@ import {
 } from '@/lib/pricing-engine';
 import type { DepthMode } from '@/lib/pricing-engine';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     const config = await getPricingConfig();
     return NextResponse.json({ success: true, config });
   } catch (error: any) {
@@ -21,10 +25,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
 
     const body = await request.json();
 

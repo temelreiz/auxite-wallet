@@ -9,19 +9,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
+import { requireAdmin } from '@/lib/admin-auth';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
-
-// Auth check
-function isAuthorized(request: NextRequest): boolean {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) return false;
-  const token = authHeader.replace('Bearer ', '');
-  return token === process.env.ADMIN_TOKEN || token === 'auxite-admin-2024';
-}
 
 // ═══════════════════════════════════════════════════════════════════════
 // HELPER: Aggregate all user AUXM balances
@@ -327,11 +320,9 @@ async function getTreasuryLog(limit: number = 20) {
 // ═══════════════════════════════════════════════════════════════════════
 
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
     const { searchParams } = new URL(request.url);
     const section = searchParams.get('section');
 
@@ -421,11 +412,9 @@ export async function GET(request: NextRequest) {
 // ═══════════════════════════════════════════════════════════════════════
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
     const body = await request.json();
     const { action, ...params } = body;
 

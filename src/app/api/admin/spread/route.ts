@@ -1,10 +1,14 @@
 // Admin Spread Configuration API
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
 import { getSpreadConfig, setSpreadConfig, setFullSpreadConfig } from '@/lib/spread-config';
 
 // GET - Get current spread config
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     const config = await getSpreadConfig();
     return NextResponse.json({ success: true, config });
   } catch (error: any) {
@@ -15,10 +19,8 @@ export async function GET() {
 // POST - Update spread config
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
 
     const body = await request.json();
     

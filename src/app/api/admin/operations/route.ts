@@ -3,22 +3,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { requireAdmin } from "@/lib/admin-auth";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
-
-// Admin wallet kontrolü
-const ADMIN_WALLETS = [
-  "0x101bd08219773e0ff8cd3805542c0a2835fec0ff",
-  "0x7bb286a8e09d83daa24c449aaec9bf3bbdb20378",
-].map((w) => w.toLowerCase());
-
-function isAdmin(address: string | null): boolean {
-  if (!address) return false;
-  return ADMIN_WALLETS.includes(address.toLowerCase());
-}
 
 interface PendingOperation {
   id: string;
@@ -38,13 +28,10 @@ interface PendingOperation {
 
 // GET: Pending operations listele
 export async function GET(req: NextRequest) {
-  const adminAddress = req.headers.get("x-wallet-address");
-  
-  if (!isAdmin(adminAddress)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) return auth.response!;
+
     const status = req.nextUrl.searchParams.get("status") || "pending";
     const limit = parseInt(req.nextUrl.searchParams.get("limit") || "50");
 
@@ -82,6 +69,9 @@ export async function GET(req: NextRequest) {
 // POST: Yeni operation ekle (trade API'den çağrılır)
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) return auth.response!;
+
     const body = await req.json();
     const { type, userAddress, metal, amount, usdValue, txHash, certificateNumber } = body;
 
@@ -110,13 +100,10 @@ export async function POST(req: NextRequest) {
 
 // PATCH: Operation durumunu güncelle
 export async function PATCH(req: NextRequest) {
-  const adminAddress = req.headers.get("x-wallet-address");
-  
-  if (!isAdmin(adminAddress)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) return auth.response!;
+
     const body = await req.json();
     const { operationId, status, notes } = body;
 
@@ -166,7 +153,7 @@ export async function PATCH(req: NextRequest) {
     
     if (status === "completed") {
       foundOp.completedAt = new Date().toISOString();
-      foundOp.completedBy = adminAddress || undefined;
+      foundOp.completedBy = auth.address || undefined;
       
       // Completed listesine ekle
       await redis.lpush("admin:operations:completed", JSON.stringify(foundOp));

@@ -11,6 +11,7 @@
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
 import { getMatchingStats, getRecentMatches, getPendingOrderBook } from '@/lib/matching-engine';
 import { getExposureSnapshot, getOpenHedgePositions, getHedgeStats, checkExposureAlerts, getHedgeConfig } from '@/lib/hedge-engine';
 import { getAllPositions, getRiskSummary, getViolations, getInventoryConfig } from '@/lib/inventory-manager';
@@ -18,12 +19,8 @@ import { getAllPositions, getRiskSummary, getViolations, getInventoryConfig } fr
 // GET — Full risk dashboard
 export async function GET(request: NextRequest) {
   try {
-    // Auth check
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-    if (token !== process.env.ADMIN_TOKEN && token !== 'auxite-admin-2024') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
 
     // Fetch all data in parallel
     const [
@@ -117,11 +114,8 @@ export async function GET(request: NextRequest) {
 // POST — Update risk configs
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-    if (token !== process.env.ADMIN_TOKEN && token !== 'auxite-admin-2024') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
 
     const body = await request.json();
     const { action, ...params } = body;

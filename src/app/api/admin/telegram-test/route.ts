@@ -3,9 +3,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { sendTestMessage, notifyTrade, sendTelegramMessage } from "@/lib/telegram";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     // Test mesajı gönder
     const success = await sendTestMessage();
 
@@ -31,6 +35,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     const body = await request.json();
     const { type } = body;
 

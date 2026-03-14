@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
+import { requireAdmin } from "@/lib/admin-auth";
 
 const redis = Redis.fromEnv();
 const VAULTS_KEY = 'website:vaults';
@@ -51,8 +52,11 @@ const DEFAULT_VAULTS = [
   },
 ];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
     let vaults = await redis.get(VAULTS_KEY);
     if (!vaults) {
       await redis.set(VAULTS_KEY, DEFAULT_VAULTS);
@@ -65,9 +69,12 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const vault = await req.json();
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
+    const vault = await request.json();
     const vaults: any[] = await redis.get(VAULTS_KEY) || [];
     
     if (!vault.id) {
@@ -83,9 +90,12 @@ export async function POST(req: Request) {
   }
 }
 
-export async function PUT(req: Request) {
+export async function PUT(request: NextRequest) {
   try {
-    const vault = await req.json();
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
+
+    const vault = await request.json();
     const vaults: any[] = await redis.get(VAULTS_KEY) || [];
     
     const index = vaults.findIndex(v => v.id === vault.id);

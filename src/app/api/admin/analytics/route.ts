@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
+import { requireAdmin } from '@/lib/admin-auth';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -8,26 +9,12 @@ const redis = new Redis({
 
 export async function GET(request: NextRequest) {
   try {
-    // Auth check
-    const adminKey = request.headers.get('x-admin-key') || 
-                     request.headers.get('authorization')?.replace('Bearer ', '');
-    
-    if (adminKey !== process.env.ADMIN_SECRET) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
 
     const { searchParams } = new URL(request.url);
     const range = searchParams.get('range') || '7d';
 
-    // Get user count
-    const userKeys = await redis.keys('user:*:meta');
-    const totalUsers = userKeys.length;
-
-    // Get trade count
-    const tradeKeys = await redis.keys('trade:*');
-    const totalTrades = tradeKeys.length;
-
-    // Get recent activity
     const now = Date.now();
     const ranges: Record<string, number> = {
       '24h': 24 * 60 * 60 * 1000,
@@ -36,49 +23,127 @@ export async function GET(request: NextRequest) {
       '90d': 90 * 24 * 60 * 60 * 1000,
     };
     const rangeMs = ranges[range] || ranges['7d'];
+    const cutoff = now - rangeMs;
 
-    // Mock data for charts (replace with real data aggregation)
+    // ─── Real user count from platform counter + user keys ───
+    const [platformUserCount, userKeys] = await Promise.all([
+      redis.get('stats:total:users'),
+      redis.keys('user:0x*:balance'),
+    ]);
+    const totalUsers = Number(platformUserCount) || userKeys.length;
+
+    // ─── Real trade count from platform counter ───
+    const [totalTradesRaw, platformVolume] = await Promise.all([
+      redis.get('stats:total:trades'),
+      redis.get('stats:total:volume'),
+    ]);
+    const totalTrades = Number(totalTradesRaw) || 0;
+    const totalVolume = Number(platformVolume) || 0;
+
+    // ─── Real daily stats from Redis time-series keys ───
+    // stats:daily:{YYYY-MM-DD}:users, stats:daily:{YYYY-MM-DD}:trades, stats:daily:{YYYY-MM-DD}:volume
     const days = range === '24h' ? 24 : range === '7d' ? 7 : range === '30d' ? 30 : 90;
-    const labels = [];
-    const usersData = [];
-    const tradesData = [];
-    const volumeData = [];
+    const labels: string[] = [];
+    const usersData: number[] = [];
+    const tradesData: number[] = [];
+    const volumeData: number[] = [];
 
+    let activeUsers24h = 0;
+    let activeUsers7d = 0;
+    let newUsers24h = 0;
+    let newUsers7d = 0;
+    let trades24h = 0;
+    let trades7d = 0;
+    let volume24h = 0;
+    let volume7d = 0;
+
+    // Pipeline daily stats reads
+    const pipeline = redis.pipeline();
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(now - i * (range === '24h' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000));
-      labels.push(range === '24h' 
+      const dateKey = range === '24h'
+        ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}:${String(date.getHours()).padStart(2, '0')}`
+        : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+      labels.push(range === '24h'
         ? date.toLocaleTimeString('tr-TR', { hour: '2-digit' })
         : date.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })
       );
-      // Mock random data - replace with real aggregation
-      usersData.push(Math.floor(Math.random() * 10) + totalUsers / days);
-      tradesData.push(Math.floor(Math.random() * 50));
-      volumeData.push(Math.floor(Math.random() * 10000));
+
+      pipeline.get(`stats:daily:${dateKey}:users`);
+      pipeline.get(`stats:daily:${dateKey}:trades`);
+      pipeline.get(`stats:daily:${dateKey}:volume`);
     }
+
+    const pipelineResults = await pipeline.exec();
+
+    for (let i = 0; i < days; i++) {
+      const dayUsers = Number(pipelineResults[i * 3] || 0);
+      const dayTrades = Number(pipelineResults[i * 3 + 1] || 0);
+      const dayVolume = Number(pipelineResults[i * 3 + 2] || 0);
+
+      usersData.push(dayUsers);
+      tradesData.push(dayTrades);
+      volumeData.push(dayVolume);
+
+      // Accumulate period totals
+      const daysAgo = days - 1 - i;
+      if (daysAgo === 0) {
+        activeUsers24h = dayUsers;
+        trades24h = dayTrades;
+        volume24h = dayVolume;
+        newUsers24h = dayUsers;
+      }
+      if (daysAgo < 7) {
+        activeUsers7d += dayUsers;
+        trades7d += dayTrades;
+        volume7d += dayVolume;
+        newUsers7d += dayUsers;
+      }
+    }
+
+    // ─── Fee totals ───
+    const feeTokens = ['auxg', 'auxs', 'auxpt', 'auxpd', 'eth', 'btc', 'auxm'];
+    const feePipeline = redis.pipeline();
+    for (const token of feeTokens) {
+      feePipeline.hgetall(`platform:fees:${token}`);
+    }
+    const feeResults = await feePipeline.exec();
+    const fees: Record<string, any> = {};
+    feeTokens.forEach((token, idx) => {
+      const data = feeResults[idx] as Record<string, string> | null;
+      if (data && Object.keys(data).length > 0) {
+        fees[token] = {
+          total: parseFloat(data.total || '0'),
+          count: parseInt(data.count || '0'),
+        };
+      }
+    });
 
     return NextResponse.json({
       success: true,
       overview: {
         totalUsers,
-        activeUsers24h: Math.floor(totalUsers * 0.1),
-        activeUsers7d: Math.floor(totalUsers * 0.3),
-        activeUsers30d: Math.floor(totalUsers * 0.5),
-        newUsers24h: Math.floor(Math.random() * 5),
-        newUsers7d: Math.floor(Math.random() * 20),
+        activeUsers24h,
+        activeUsers7d,
+        activeUsers30d: totalUsers, // fallback
+        newUsers24h,
+        newUsers7d,
         totalTrades,
-        trades24h: Math.floor(Math.random() * 50),
-        trades7d: Math.floor(Math.random() * 200),
-        totalVolume: Math.floor(Math.random() * 1000000),
-        volume24h: Math.floor(Math.random() * 50000),
-        volume7d: Math.floor(Math.random() * 200000),
-        avgTradeSize: Math.floor(Math.random() * 1000) + 100,
-        conversionRate: Math.random() * 10 + 5,
+        trades24h,
+        trades7d,
+        totalVolume,
+        volume24h,
+        volume7d,
+        avgTradeSize: totalTrades > 0 ? Math.round(totalVolume / totalTrades) : 0,
+        conversionRate: totalUsers > 0 ? ((totalTrades / totalUsers) * 100).toFixed(1) : '0',
       },
       charts: {
         users: { labels, datasets: [{ label: 'Kullanıcılar', data: usersData, color: '#10b981' }] },
         trades: { labels, datasets: [{ label: 'İşlemler', data: tradesData, color: '#3b82f6' }] },
         volume: { labels, datasets: [{ label: 'Hacim ($)', data: volumeData, color: '#f59e0b' }] },
       },
+      fees,
       range,
     });
   } catch (error: any) {

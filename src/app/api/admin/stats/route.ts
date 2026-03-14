@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
+import { requireAdmin } from '@/lib/admin-auth';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -12,13 +13,8 @@ const redis = new Redis({
 // GET - Dashboard statistics
 export async function GET(request: NextRequest) {
   try {
-    // Auth check - Bearer token veya ADMIN_SECRET
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader?.replace('Bearer ', '');
-    
-    if (!token || token === 'null' || token === 'undefined') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
+    const auth = await requireAdmin(request);
+    if (!auth.authorized) return auth.response!;
 
     // Stats hesaplama
     let totalUsers = 0;
