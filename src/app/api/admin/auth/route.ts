@@ -111,12 +111,17 @@ export async function POST(request: NextRequest) {
     // Session token oluştur
     const token = generateSessionToken();
 
-    // Redis'e kaydet (KV)
-    await kv.set(`admin:session:${token}`, {
+    // Redis'e kaydet (Upstash — requireAdmin ile aynı store)
+    const sessionData = JSON.stringify({
+      address: "admin",
       createdAt: Date.now(),
+      expiresAt: Date.now() + SESSION_TTL * 1000,
       ip,
       userAgent: request.headers.get("user-agent") || "unknown",
-    }, { ex: SESSION_TTL });
+    });
+    await redis.set(`admin:session:${token}`, sessionData, { ex: SESSION_TTL });
+    // Backward compat: also write to KV if available
+    try { await kv.set(`admin:session:${token}`, { createdAt: Date.now(), ip, userAgent: request.headers.get("user-agent") || "unknown" }, { ex: SESSION_TTL }); } catch {};
 
     // 🔒 Audit: Log successful login
     await redis.lpush("admin:audit:logins", JSON.stringify({
@@ -164,7 +169,11 @@ export async function GET(request: NextRequest) {
       }, { status: 401 });
     }
 
-    const session = await kv.get(`admin:session:${token}`);
+    // Check Upstash Redis first (primary), then KV fallback
+    let session = await redis.get(`admin:session:${token}`);
+    if (!session) {
+      session = await kv.get(`admin:session:${token}`);
+    }
 
     if (!session) {
       return NextResponse.json({
@@ -189,7 +198,8 @@ export async function DELETE(request: NextRequest) {
     const token = authHeader?.replace("Bearer ", "");
 
     if (token) {
-      await kv.del(`admin:session:${token}`);
+      await redis.del(`admin:session:${token}`);
+      try { await kv.del(`admin:session:${token}`); } catch {};
 
       // 🔒 Audit: Log logout
       const ip = getClientIP(request);
