@@ -25,20 +25,41 @@ export async function GET(request: NextRequest) {
     const rangeMs = ranges[range] || ranges['7d'];
     const cutoff = now - rangeMs;
 
-    // ─── Real user count from platform counter + user keys ───
-    const [platformUserCount, userKeys] = await Promise.all([
-      redis.get('stats:total:users'),
+    // ─── User count: same logic as stats route ───
+    const [authUserKeys, balanceUserKeys] = await Promise.all([
+      redis.keys('auth:user:*'),
       redis.keys('user:0x*:balance'),
     ]);
-    const totalUsers = Number(platformUserCount) || userKeys.length;
+    // Merge unique addresses
+    const addressSet = new Set<string>();
+    for (const key of authUserKeys) {
+      try {
+        const userData = await redis.hgetall(key);
+        const addr = ((userData?.walletAddress as string) || '').toLowerCase().trim();
+        if (addr) addressSet.add(addr);
+      } catch { /* skip */ }
+    }
+    for (const key of balanceUserKeys) {
+      const addr = key.split(':')[1];
+      if (addr) addressSet.add(addr);
+    }
+    const totalUsers = addressSet.size;
 
-    // ─── Real trade count from platform counter ───
+    // ─── Trade count from platform counter or transaction lists ───
     const [totalTradesRaw, platformVolume] = await Promise.all([
       redis.get('stats:total:trades'),
       redis.get('stats:total:volume'),
     ]);
-    const totalTrades = Number(totalTradesRaw) || 0;
+    let totalTrades = Number(totalTradesRaw) || 0;
     const totalVolume = Number(platformVolume) || 0;
+
+    // Fallback: count from individual transaction lists
+    if (totalTrades === 0) {
+      const txKeys = await redis.keys('user:0x*:transactions');
+      for (const txKey of txKeys) {
+        totalTrades += await redis.llen(txKey);
+      }
+    }
 
     // ─── Real daily stats from Redis time-series keys ───
     // stats:daily:{YYYY-MM-DD}:users, stats:daily:{YYYY-MM-DD}:trades, stats:daily:{YYYY-MM-DD}:volume
