@@ -31,6 +31,7 @@ import {
 import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
 import { notifyTrade } from "@/lib/telegram";
 import { createCryptoPayout, checkPayoutBalance } from "@/lib/nowpayments-service";
+import { queueTradeForProcurement } from "@/lib/procurement-pipeline";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CRYPTO PRICE HELPER - Direkt Binance'den fiyat al
@@ -1395,6 +1396,17 @@ export async function POST(request: NextRequest) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // 💼 PRINCIPAL TRACKING — Track user payment (minus fee) in treasury capital
+    // ─────────────────────────────────────────────────────────────────────────
+    const netPrincipal = fromAmount - fee;
+    if (netPrincipal > 0) {
+      const capitalToken = fromTokenLower;
+      multi.hincrbyfloat(`platform:capital:${capitalToken}`, "total", netPrincipal);
+      multi.hincrbyfloat(`platform:capital:${capitalToken}`, "pending", netPrincipal);
+      console.log(`💼 Principal tracked: ${netPrincipal.toFixed(4)} ${capitalToken.toUpperCase()} → platform:capital`);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // 📦 PLATFORM STOCK UPDATE
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -1633,6 +1645,23 @@ export async function POST(request: NextRequest) {
       }).catch((err) => {
         console.error(`❌ Telegram bildirim hatası:`, err);
       });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 11.5 PROCUREMENT QUEUE — Queue metal purchase from KuveytTürk
+    // ═══════════════════════════════════════════════════════════════════════
+    if (type === "buy" && METALS.includes(toTokenLower)) {
+      queueTradeForProcurement({
+        tradeId: txId,
+        userAddress: normalizedAddress,
+        type: "buy",
+        fromToken: fromToken.toUpperCase(),
+        fromAmount,
+        toToken: toToken.toUpperCase(),
+        toAmount,
+        pricePerGram: price,
+        fee,
+      }).catch((err) => console.error("❌ Procurement queue error:", err));
     }
 
     // ═══════════════════════════════════════════════════════════════════════

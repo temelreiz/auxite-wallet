@@ -64,12 +64,13 @@ async function getAuxmFloatData() {
 // ═══════════════════════════════════════════════════════════════════════
 
 async function getOperatingCapital() {
-  const feeTokens = ['auxm', 'usd', 'usdt', 'eth'];
-  const prices: Record<string, number> = { auxm: 1, usd: 1, usdt: 1, eth: 2900 };
+  const feeTokens = ['auxm', 'usd', 'usdt', 'eth', 'btc'];
+  const prices: Record<string, number> = { auxm: 1, usd: 1, usdt: 1, eth: 2900, btc: 85000 };
 
   let totalOperatingUsd = 0;
   const breakdown: Record<string, { amount: number; pending: number; transferred: number; valueUsd: number }> = {};
 
+  // Fee income
   for (const token of feeTokens) {
     const feeData = await redis.hgetall(`platform:fees:${token}`);
     if (feeData && Object.keys(feeData).length > 0) {
@@ -84,7 +85,24 @@ async function getOperatingCapital() {
     }
   }
 
-  return { totalOperatingUsd, breakdown };
+  // Capital received (principal payments from user trades, minus fees)
+  let totalCapitalUsd = 0;
+  const capitalBreakdown: Record<string, { total: number; pending: number; valueUsd: number }> = {};
+
+  for (const token of feeTokens) {
+    const capitalData = await redis.hgetall(`platform:capital:${token}`);
+    if (capitalData && Object.keys(capitalData).length > 0) {
+      const total = parseFloat(capitalData.total as string || '0');
+      const pending = parseFloat(capitalData.pending as string || '0');
+      const price = prices[token] || 1;
+      const valueUsd = pending * price;
+
+      capitalBreakdown[token.toUpperCase()] = { total, pending, valueUsd };
+      totalCapitalUsd += valueUsd;
+    }
+  }
+
+  return { totalOperatingUsd, breakdown, totalCapitalUsd, capitalBreakdown };
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -263,11 +281,12 @@ async function getMetalExposure() {
   }> = {};
 
   for (const metal of metals) {
-    // Get platform stock
-    const stockData = await redis.hgetall(`platform:stock:${metal.toLowerCase()}`);
-    const totalMinted = parseFloat(stockData?.totalMinted as string || '0');
-    const totalBurned = parseFloat(stockData?.totalBurned as string || '0');
-    const allocated = totalMinted - totalBurned;
+    // Get platform stock — trade route uses UPPERCASE keys and available/reserved fields
+    const stockData = await redis.hgetall(`platform:stock:${metal.toUpperCase()}`);
+    const total = parseFloat(stockData?.total as string || '0');
+    const available = parseFloat(stockData?.available as string || '0');
+    const reserved = parseFloat(stockData?.reserved as string || '0');
+    const allocated = reserved; // reserved = grams allocated to users via trades
 
     // Get staked amount for this metal
     const stakedKey = `platform:staked:${metal.toLowerCase()}`;

@@ -273,23 +273,26 @@ export default function AllocatePage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/exchange", {
+      const res = await fetch("/api/trade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fromAsset: selectedSource,
-          toAsset: selectedMetal,
+          type: "buy",
+          fromToken: selectedSource,
+          toToken: selectedMetal,
           fromAmount: capitalAmount,
-          toAmount: estimatedGrams,
+          expectedToAmount: estimatedGrams,
           address,
+          executeOnChain: false,
+          slippage: 2,
         }),
       });
 
       const data = await res.json();
       if (data.success) {
         setAllocationResult({
-          id: data.exchange?.allocation?.certificateNumber || `AUX-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-          grams: data.exchange?.toAmount || estimatedGrams,
+          id: data.transaction?.allocation?.certificateNumber || `AUX-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+          grams: data.transaction?.toAmount || estimatedGrams,
           metal: selectedMetal,
           capitalDeployed: capitalAmount,
           executionPrice: metalExecPrice,
