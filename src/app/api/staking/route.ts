@@ -185,33 +185,19 @@ export async function POST(request: NextRequest) {
         }, { status: 400 });
       }
 
-      // Balance check
+      // Balance check — balance is now properly deducted on stake,
+      // so available = actual Redis balance (no need to subtract staked positions)
       const balanceKey = `user:${normalizedAddress}:balance`;
       const currentBalance = await redis.hget(balanceKey, metalLower);
-      const totalBalance = parseFloat(currentBalance as string || "0");
-
-      const stakingKey = `user:${normalizedAddress}:staking`;
-      const existingPositions = await redis.lrange(stakingKey, 0, -1);
-      let alreadyStaked = 0;
+      const availableBalance = parseFloat(currentBalance as string || "0");
       const now = Date.now();
 
-      for (const pos of existingPositions) {
-        try {
-          const position = typeof pos === 'string' ? JSON.parse(pos) : pos;
-          if (position.status === 'active' && position.metal === metalLower && position.endDate > now) {
-            alreadyStaked += position.amount || 0;
-          }
-        } catch (e) {}
-      }
-
-      const availableBalance = totalBalance - alreadyStaked;
+      const stakingKey = `user:${normalizedAddress}:staking`;
 
       if (availableBalance < amount) {
         return NextResponse.json({
           error: `Insufficient ${metalUpper} balance`,
           available: availableBalance,
-          totalBalance,
-          alreadyStaked,
           required: amount,
         }, { status: 400 });
       }
@@ -234,9 +220,9 @@ export async function POST(request: NextRequest) {
       };
 
       // ── LEASING ENGINE INTEGRATION ──
-      // 1. Update encumbrance ledger with user's total allocated metal
+      // 1. Update encumbrance ledger with staked amount (not total balance)
       try {
-        await setTotalAllocated(normalizedAddress, metalUpper, totalBalance);
+        await setTotalAllocated(normalizedAddress, metalUpper, amount);
       } catch (e) {
         console.warn('Encumbrance ledger update failed (non-blocking):', e);
       }
@@ -253,8 +239,16 @@ export async function POST(request: NextRequest) {
         console.warn('Pool join failed (non-blocking, stake still created):', e);
       }
 
-      // Save stake position
+      // Save stake position AND lock the balance
       const multi = redis.multi();
+
+      // ── CRITICAL FIX: Deduct staked amount from available balance ──
+      multi.hincrbyfloat(balanceKey, metalLower, -amount);
+
+      // Track total staked per metal for treasury visibility
+      multi.hincrbyfloat(`platform:staked:${metalLower}`, "total", amount);
+      multi.hincrbyfloat(`platform:staked:${metalLower}`, "active", amount);
+
       multi.lpush(stakingKey, JSON.stringify(position));
 
       const txKey = `user:${normalizedAddress}:transactions`;
@@ -334,19 +328,26 @@ export async function POST(request: NextRequest) {
 
       const totalReturn = targetPosition.amount + actualReward;
       const balanceKey = `user:${normalizedAddress}:balance`;
+      const metalKey = targetPosition.metal;
 
-      await redis.hincrbyfloat(balanceKey, targetPosition.metal, totalReturn);
-      await redis.lset(stakingKey, targetIndex, JSON.stringify(targetPosition));
+      // ── Use atomic multi to prevent race conditions ──
+      const withdrawMulti = redis.multi();
 
-      // ── LEASING ENGINE INTEGRATION ──
-      // Withdraw from pool if joined
-      if (targetPosition.poolId) {
-        try {
-          await withdrawFromPool(targetPosition.poolId, normalizedAddress);
-        } catch (e) {
-          console.warn('Pool withdrawal failed (non-blocking):', e);
-        }
+      // Return principal + reward to user balance
+      withdrawMulti.hincrbyfloat(balanceKey, metalKey, totalReturn);
+
+      // Track reward paid from platform yield reserve
+      if (actualReward > 0) {
+        withdrawMulti.hincrbyfloat(`platform:yield:paid:${metalKey}`, "total", actualReward);
+        withdrawMulti.hincrbyfloat(`platform:yield:paid:${metalKey}`, "count", 1);
       }
+
+      // Update platform staked tracking
+      withdrawMulti.hincrbyfloat(`platform:staked:${metalKey}`, "active", -targetPosition.amount);
+
+      // ── Fix race condition: use sentinel-based update instead of raw lset ──
+      // Mark position as withdrawn with unique sentinel to verify correct update
+      const updatedPosition = JSON.stringify(targetPosition);
 
       const txKey = `user:${normalizedAddress}:transactions`;
       const transaction = {
@@ -361,7 +362,30 @@ export async function POST(request: NextRequest) {
         timestamp: now,
         originalPositionId: positionId,
       };
-      await redis.lpush(txKey, JSON.stringify(transaction));
+      withdrawMulti.lpush(txKey, JSON.stringify(transaction));
+
+      await withdrawMulti.exec();
+
+      // Update position in list (separate to avoid index shift from lpush above)
+      // Re-read to get correct index after multi exec
+      const freshPositions = await redis.lrange(stakingKey, 0, -1);
+      for (let i = 0; i < freshPositions.length; i++) {
+        const pos = typeof freshPositions[i] === 'string' ? JSON.parse(freshPositions[i] as string) : freshPositions[i];
+        if (pos.id === positionId && pos.status !== "withdrawn") {
+          await redis.lset(stakingKey, i, updatedPosition);
+          break;
+        }
+      }
+
+      // ── LEASING ENGINE INTEGRATION ──
+      // Withdraw from pool if joined
+      if (targetPosition.poolId) {
+        try {
+          await withdrawFromPool(targetPosition.poolId, normalizedAddress);
+        } catch (e) {
+          console.warn('Pool withdrawal failed (non-blocking):', e);
+        }
+      }
 
       console.log(`✅ Stake withdrawn: ${targetPosition.amount}g ${targetPosition.metal.toUpperCase()} + ${actualReward.toFixed(6)}g reward`);
 

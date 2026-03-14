@@ -193,11 +193,11 @@ async function executeBuy(walletAddress: string, plan: any, gramAmount: number, 
 
 async function executeStake(walletAddress: string, token: string, amount: number, duration: number) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  
+
   const response = await fetch(baseUrl + '/api/staking', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-wallet-address': walletAddress },
-    body: JSON.stringify({ action: 'stake', token, amount, duration }),
+    body: JSON.stringify({ action: 'create', metal: token, amount, duration, address: walletAddress }),
   });
 
   const data = await response.json();
