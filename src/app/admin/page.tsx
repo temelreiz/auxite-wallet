@@ -946,7 +946,7 @@ export default function AdminDashboard() {
   const loadSpreadConfig = async () => {
     setSpreadLoading(true);
     try {
-      const res = await fetch("/api/admin/spread");
+      const res = await fetch("/api/admin/spread", { headers: getAuthHeaders() });
       if (res.ok) {
         const data = await res.json();
         if (data.config) setSpreadConfigState(data.config);
@@ -1750,7 +1750,7 @@ export default function AdminDashboard() {
   const loadPlatformStock = async () => {
     setStockLoading(true);
     try {
-      const res = await fetch("/api/admin/platform-stock?detailed=true");
+      const res = await fetch("/api/admin/platform-stock?detailed=true", { headers: getAuthHeaders() });
       if (res.ok) {
         const data = await res.json();
         setPlatformStock(data.stocks || {});
@@ -1792,10 +1792,7 @@ export default function AdminDashboard() {
 
       const res = await fetch("/api/admin/platform-stock", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-key": process.env.NEXT_PUBLIC_ADMIN_API_KEY || localStorage.getItem("admin_api_key") || "",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(bodyData),
       });
 
@@ -5358,7 +5355,7 @@ export default function AdminDashboard() {
                       try {
                         await fetch('/api/admin/settlement', {
                           method: 'POST',
-                          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('admin_token') || 'auxite-admin-2024'}` },
+                          headers: getAuthHeaders(),
                           body: JSON.stringify({ action: 'emergency_freeze' }),
                         });
                         alert('Cash settlement FROZEN');
@@ -6344,8 +6341,9 @@ function RiskDashboardTab() {
 
   const fetchRisk = useCallback(async () => {
     try {
+      const token = sessionStorage.getItem("auxite_admin_token");
       const res = await fetch('/api/admin/risk', {
-        headers: { Authorization: 'Bearer auxite-admin-2024' },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (data.success) setRiskData(data);
@@ -6882,7 +6880,10 @@ function LeasingEngineTab() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/admin/leasing?section=${activeSection === 'overview' ? '' : activeSection}`);
+      const token = sessionStorage.getItem("auxite_admin_token");
+      const res = await fetch(`/api/admin/leasing?section=${activeSection === 'overview' ? '' : activeSection}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const json = await res.json();
       if (json.success) setData(json);
     } catch (e) {
@@ -6897,9 +6898,10 @@ function LeasingEngineTab() {
   const doAction = async (section: string, action: string, extra: any = {}) => {
     try {
       setActionMsg('Processing...');
+      const token = sessionStorage.getItem("auxite_admin_token");
       const res = await fetch('/api/admin/leasing', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ section, action, ...extra }),
       });
       const json = await res.json();
@@ -7203,8 +7205,9 @@ function AuxmTreasuryTab() {
 
   const fetchTreasury = useCallback(async () => {
     try {
+      const token = sessionStorage.getItem("auxite_admin_token");
       const res = await fetch('/api/admin/treasury', {
-        headers: { Authorization: 'Bearer auxite-admin-2024' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
       const result = await res.json();
       if (result.success) setData(result);
@@ -7225,12 +7228,10 @@ function AuxmTreasuryTab() {
     if (!logNote.trim()) return;
     setLogSaving(true);
     try {
+      const token = sessionStorage.getItem("auxite_admin_token");
       await fetch('/api/admin/treasury', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer auxite-admin-2024',
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ action: 'addLog', type: 'note', message: logNote }),
       });
       setLogNote('');
@@ -7771,8 +7772,9 @@ function PushNotificationsTab() {
   // Fetch notification log
   const fetchLogs = useCallback(async () => {
     try {
+      const token = sessionStorage.getItem("auxite_admin_token");
       const res = await fetch("/api/admin/push-log", {
-        headers: { Authorization: "Bearer auxite-admin-2024" },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (data.success) {
@@ -7812,12 +7814,10 @@ function PushNotificationsTab() {
         payload.broadcast = true;
       }
 
+      const token = sessionStorage.getItem("auxite_admin_token");
       const res = await fetch("/api/admin/push-send", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer auxite-admin-2024",
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
       });
 
@@ -8049,7 +8049,8 @@ const PROXY_BASE = "/api/admin/watcher-proxy";
 
 function watcherProxy(path: string, method: "GET" | "POST" | "DELETE" = "GET", body?: any) {
   const url = `${PROXY_BASE}?path=${encodeURIComponent(path)}`;
-  const opts: RequestInit = { method, headers: { "Content-Type": "application/json" } };
+  const token = sessionStorage.getItem("auxite_admin_token");
+  const opts: RequestInit = { method, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } };
   if (body) opts.body = JSON.stringify(body);
   return fetch(url, opts);
 }
