@@ -1,7 +1,7 @@
 // API to trigger oracle price update
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
-import { updateOraclePrices, fetchMetalPrices, getOraclePrices } from '@/lib/oracle-updater';
+import { updateOraclePrices, getOraclePrices } from '@/lib/oracle-updater';
 
 // GET - Check current oracle prices (no GoldAPI call)
 export async function GET(request: NextRequest) {
