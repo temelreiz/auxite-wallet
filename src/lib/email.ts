@@ -71,7 +71,6 @@ function institutionalEmailWrapper(content: string, deskName: string, language?:
       letter-spacing: 5px;
       color: #1a1a1a;
       font-weight: 700;
-      text-transform: uppercase;
       margin: 0 0 2px 0;
     }
     .header p {
@@ -112,7 +111,6 @@ function institutionalEmailWrapper(content: string, deskName: string, language?:
     .detail-row:last-child { border-bottom: none; }
     .detail-label {
       font-size: 10px;
-      text-transform: uppercase;
       letter-spacing: 1px;
       color: #888;
     }
@@ -131,7 +129,6 @@ function institutionalEmailWrapper(content: string, deskName: string, language?:
       font-size: 12px;
       font-weight: 600;
       letter-spacing: 1px;
-      text-transform: uppercase;
       margin: 16px 0;
     }
     .notice {
@@ -179,7 +176,7 @@ function institutionalEmailWrapper(content: string, deskName: string, language?:
   <div class="container">
     <div class="gold-line"></div>
     <div class="header">
-      <h1>Auxite</h1>
+      <h1>AUXITE</h1>
       <p>Custody &amp; Settlement Services</p>
     </div>
     <div class="body">
