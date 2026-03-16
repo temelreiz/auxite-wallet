@@ -177,6 +177,12 @@ export default function LoginPage() {
         console.log('[Login] Stored address:', displayAddress);
       }
 
+      // If email not verified, redirect to verification page
+      if (data.requiresEmailVerification) {
+        router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
+        return;
+      }
+
       // Redirect to main app
       router.push('/');
     } catch (err) {
