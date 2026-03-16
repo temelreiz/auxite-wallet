@@ -188,7 +188,7 @@ function institutionalEmailWrapper(content: string, deskName: string, language?:
   <div class="container">
     <div class="gold-line"></div>
     <div class="header">
-      <img src="${logoUrl}" alt="Auxite" width="220" height="55" style="display: block; height: 55px; width: auto;" />
+      <img src="${logoUrl}" alt="Auxite" width="480" height="120" style="display: block; height: 120px; width: auto;" />
       <p>Custody &amp; Settlement Services</p>
     </div>
     <div class="body">
