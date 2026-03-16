@@ -6,6 +6,7 @@ import { sendTradeExecutionEmail, sendCertificateEmail } from "@/lib/email";
 import { submitForMatching } from "@/lib/matching-engine";
 import { recordExposure, closeHedge } from "@/lib/hedge-engine";
 import { checkOrderAllowed, recordClientAllocation, recordClientDeallocation } from "@/lib/inventory-manager";
+import { handleBonusConvert } from "@/lib/bonus-guard";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // METAL CONVERSION — Atomic Dual-Leg Route
@@ -406,6 +407,17 @@ export async function POST(request: NextRequest) {
       // Fallback: add to Redis
       await redis.hincrbyfloat(balanceKey, toMetalUpper.toLowerCase(), outputGrams);
       console.error("Allocation request failed:", e);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // BONUS GUARD — Track bonus through metal conversions
+    // ═══════════════════════════════════════════════════════════════════════════
+    if (userUid) {
+      try {
+        await handleBonusConvert(userUid, fromMetalUpper, toMetalUpper, amount, outputGrams);
+      } catch (bonusErr) {
+        console.error("Bonus convert tracking error (non-blocking):", bonusErr);
+      }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

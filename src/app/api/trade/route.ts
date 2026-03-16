@@ -28,6 +28,7 @@ import {
   getTokenPrices,
   checkReserveLimit,
 } from "@/lib/v6-token-service";
+import { recordPurchase } from "@/lib/bonus-guard";
 import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
 import { notifyTrade } from "@/lib/telegram";
 import { createCryptoPayout, checkPayoutBalance } from "@/lib/nowpayments-service";
@@ -1662,6 +1663,24 @@ export async function POST(request: NextRequest) {
         pricePerGram: price,
         fee,
       }).catch((err) => console.error("❌ Procurement queue error:", err));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 11.6 BONUS GUARD — Track purchase toward unlock threshold (500 AUXS equiv)
+    // ═══════════════════════════════════════════════════════════════════════
+    if (type === "buy" && METALS.includes(toTokenLower)) {
+      try {
+        const userId = await redis.get(`user:address:${normalizedAddress}`) as string;
+        if (userId) {
+          const purchaseResult = await recordPurchase(userId, toToken.toUpperCase(), toAmount, price);
+          console.log(`🎁 Bonus tracking: ${purchaseResult.totalPurchasedAuxsEquiv.toFixed(1)}/${purchaseResult.unlockThreshold} AUXS equiv`);
+          if (purchaseResult.justUnlocked) {
+            console.log(`🔓 BONUS UNLOCKED for ${userId}!`);
+          }
+        }
+      } catch (bonusErr) {
+        console.error("Bonus guard tracking error (non-blocking):", bonusErr);
+      }
     }
 
     // ═══════════════════════════════════════════════════════════════════════

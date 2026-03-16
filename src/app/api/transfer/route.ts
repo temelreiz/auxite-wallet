@@ -7,6 +7,7 @@ import * as crypto from "crypto";
 import { getUserIdFromAddress, sendETH, sendERC20 } from "@/lib/kms-wallet";
 import { sendTransferSentEmail, sendTransferReceivedEmail } from "@/lib/email-service";
 import { getUserLanguage } from "@/lib/user-language";
+import { checkTransferAllowed } from "@/lib/bonus-guard";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -308,6 +309,30 @@ export async function POST(request: NextRequest) {
         code: "RATE_LIMIT_EXCEEDED",
         retryAfter: rateLimitCheck.retryAfter,
       }, { status: 429 });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // BONUS GUARD — Bonus assets cannot be transferred
+    // ═══════════════════════════════════════════════════════════════════════════
+    const BONUS_METALS = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
+    if (BONUS_METALS.includes(token.toUpperCase())) {
+      try {
+        const senderId = await redis.get(`user:address:${fromAddress.toLowerCase()}`) as string;
+        if (senderId) {
+          const bonusCheck = await checkTransferAllowed(senderId, token, amount);
+          if (!bonusCheck.allowed) {
+            return NextResponse.json({
+              error: bonusCheck.message?.en || "Transfer blocked by bonus lock",
+              errorTr: bonusCheck.message?.tr,
+              code: "BONUS_LOCKED",
+              maxTransferable: bonusCheck.maxTransferable,
+              bonusLocked: bonusCheck.bonusLocked,
+            }, { status: 403 });
+          }
+        }
+      } catch (bonusErr) {
+        console.error("Bonus guard check error (non-blocking):", bonusErr);
+      }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
