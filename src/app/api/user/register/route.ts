@@ -136,6 +136,13 @@ export async function POST(request: NextRequest) {
     await redis.set(`user:${userId}:balance:AUXPT`, 0);
     await redis.set(`user:${userId}:balance:AUXPD`, 0);
 
+    // Wallet address-based hash (used by balance API)
+    await redis.hset(`user:${custodialWalletAddress}:balance`, {
+      auxm: 0, auxg: 0, auxs: 0, auxpt: 0, auxpd: 0,
+      eth: 0, btc: 0, xrp: 0, sol: 0, usdt: 0, usd: 0,
+      bonusAuxm: 0, totalAuxm: 0, bonusExpiresAt: null,
+    });
+
     // Hoşgeldin bonusu (opsiyonel)
     const WELCOME_BONUS = parseFloat(process.env.WELCOME_BONUS_AUXM || "0");
     if (WELCOME_BONUS > 0) {
@@ -166,6 +173,9 @@ export async function POST(request: NextRequest) {
 
           // Grant asset to regular balance (visible in portfolio)
           await redis.set(`user:${userId}:balance:${assetKey}`, EARLY_BIRD_AMOUNT);
+          await redis.hset(`user:${custodialWalletAddress}:balance`, {
+            [assetKey.toLowerCase()]: EARLY_BIRD_AMOUNT,
+          });
 
           // 🔒 Mark as bonus (non-transferable, non-withdrawable)
           // bonusAuxs tracks the locked portion — transfer/withdraw logic checks this

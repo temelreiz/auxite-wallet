@@ -154,11 +154,19 @@ export async function POST(request: NextRequest) {
     // ══════════════════════════════════════════════════════════════
     // INITIALIZE BALANCES
     // ══════════════════════════════════════════════════════════════
+    // Legacy userId-based keys
     await redis.set(`user:${userId}:balance:AUXM`, 0);
     await redis.set(`user:${userId}:balance:AUXG`, 0);
     await redis.set(`user:${userId}:balance:AUXS`, 0);
     await redis.set(`user:${userId}:balance:AUXPT`, 0);
     await redis.set(`user:${userId}:balance:AUXPD`, 0);
+
+    // Wallet address-based hash (used by balance API)
+    await redis.hset(`user:${vaultAddress.toLowerCase()}:balance`, {
+      auxm: 0, auxg: 0, auxs: 0, auxpt: 0, auxpd: 0,
+      eth: 0, btc: 0, xrp: 0, sol: 0, usdt: 0, usd: 0,
+      bonusAuxm: 0, totalAuxm: 0, bonusExpiresAt: null,
+    });
 
     // ══════════════════════════════════════════════════════════════
     // 🎉 EARLY BIRD CAMPAIGN — First N users get free AUXS
@@ -177,8 +185,11 @@ export async function POST(request: NextRequest) {
         if (currentCount <= EARLY_BIRD_LIMIT) {
           const assetKey = EARLY_BIRD_ASSET.toUpperCase();
 
-          // Grant asset to balance
+          // Grant asset to balance (userId key + wallet hash)
           await redis.set(`user:${userId}:balance:${assetKey}`, EARLY_BIRD_AMOUNT);
+          await redis.hset(`user:${vaultAddress.toLowerCase()}:balance`, {
+            [assetKey.toLowerCase()]: EARLY_BIRD_AMOUNT,
+          });
 
           // Mark as bonus (non-transferable, non-withdrawable)
           await redis.set(`user:${userId}:balance:bonus${assetKey}`, EARLY_BIRD_AMOUNT);
