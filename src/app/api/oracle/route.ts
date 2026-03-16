@@ -9,15 +9,18 @@ export const maxDuration = 60; // 60 saniye timeout
 // GET - Vercel cron'dan çağrılır, fiyatları günceller
 export async function GET(request: NextRequest) {
   try {
-    const isVercelCron = request.headers.get('x-vercel-cron') === '1';
+    // Vercel cron CRON_SECRET'i Authorization header'da gönderir
+    const cronSecret = process.env.CRON_SECRET;
+    const authHeader = request.headers.get('authorization');
+    const isCronRequest = cronSecret && authHeader === `Bearer ${cronSecret}`;
 
-    // Cron veya auth ile güncelleme yap
-    if (isVercelCron) {
+    // Cron ile güncelleme yap
+    if (isCronRequest) {
       console.log('🔄 Cron: Starting Oracle price update...');
       const result = await updateOraclePrices();
 
       if (result.success) {
-        console.log('✅ Cron: Oracle updated successfully');
+        console.log(`✅ Cron: Oracle updated via ${result.source}`);
         return NextResponse.json({
           success: true,
           message: 'Oracle prices updated via cron',
