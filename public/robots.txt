@@ -14,6 +14,7 @@ Disallow: /security
 Disallow: /notifications
 Disallow: /statements
 Disallow: /api/
-Disallow: /_next/
+Disallow: /_next/data/
+Allow: /_next/static/
 
 # Sitemap not needed — authenticated app
