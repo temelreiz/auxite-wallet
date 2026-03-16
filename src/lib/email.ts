@@ -53,6 +53,7 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
 
 function institutionalEmailWrapper(content: string, deskName: string, language?: string): string {
   const dir = language === 'ar' ? 'rtl' : 'ltr';
+  const logoUrl = `${VAULT_URL}/auxite-logo.png`;
   return `<!DOCTYPE html>
 <html dir="${dir}" lang="${language || 'en'}">
 <head>
@@ -66,17 +67,10 @@ function institutionalEmailWrapper(content: string, deskName: string, language?:
       padding: 24px 30px 16px;
       border-bottom: 1px solid #e5e5e5;
     }
-    .header h1 {
-      font-size: 13px;
-      letter-spacing: 5px;
-      color: #1a1a1a;
-      font-weight: 700;
-      margin: 0 0 2px 0;
-    }
     .header p {
       font-size: 11px;
       color: #888;
-      margin: 0;
+      margin: 6px 0 0 0;
     }
     .body { padding: 28px 30px; }
     .body h2 {
@@ -99,20 +93,26 @@ function institutionalEmailWrapper(content: string, deskName: string, language?:
     .detail-card {
       background: #fafafa;
       border-left: 3px solid #C5A55A;
-      padding: 16px 18px;
+      padding: 4px 0;
       margin: 18px 0;
     }
-    .detail-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid #eee;
+    .detail-card table {
+      width: 100%;
+      border-collapse: collapse;
     }
-    .detail-row:last-child { border-bottom: none; }
+    .detail-card td {
+      padding: 8px 18px;
+      border-bottom: 1px solid #eee;
+      vertical-align: middle;
+    }
+    .detail-card tr:last-child td {
+      border-bottom: none;
+    }
     .detail-label {
       font-size: 10px;
       letter-spacing: 1px;
       color: #888;
+      width: 45%;
     }
     .detail-value {
       font-size: 12px;
@@ -123,7 +123,7 @@ function institutionalEmailWrapper(content: string, deskName: string, language?:
     .cta-button {
       display: inline-block;
       background: #1a1a1a;
-      color: #fff;
+      color: #fff !important;
       padding: 12px 24px;
       text-decoration: none;
       font-size: 12px;
@@ -156,8 +156,20 @@ function institutionalEmailWrapper(content: string, deskName: string, language?:
     .security-alert-box {
       background: #fef2f2;
       border-left: 3px solid #dc2626;
-      padding: 16px 18px;
+      padding: 4px 0;
       margin: 18px 0;
+    }
+    .security-alert-box table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .security-alert-box td {
+      padding: 8px 18px;
+      border-bottom: 1px solid #fecaca;
+      vertical-align: middle;
+    }
+    .security-alert-box tr:last-child td {
+      border-bottom: none;
     }
     .footer {
       padding: 16px 30px;
@@ -176,7 +188,7 @@ function institutionalEmailWrapper(content: string, deskName: string, language?:
   <div class="container">
     <div class="gold-line"></div>
     <div class="header">
-      <h1>AUXITE</h1>
+      <img src="${logoUrl}" alt="Auxite" width="160" height="40" style="display: block; height: 40px; width: auto;" />
       <p>Custody &amp; Settlement Services</p>
     </div>
     <div class="body">
@@ -330,36 +342,36 @@ export async function sendTradeExecutionEmail(
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
-    <div class="detail-card">
-      <div class="detail-row">
-        <span class="detail-label">${t.txType}</span>
-        <span class="detail-value">${data.transactionType}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.metal}</span>
-        <span class="detail-value">${data.metalName} (${data.metal})</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.quantity}</span>
-        <span class="detail-value">${data.grams}g</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.execPrice}</span>
-        <span class="detail-value">${data.executionPrice}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.grossConsideration}</span>
-        <span class="detail-value">${data.grossConsideration}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.execTime}</span>
-        <span class="detail-value">${data.executionTime}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.refId}</span>
-        <span class="detail-value">${data.referenceId}</span>
-      </div>
-    </div>
+    <div class="detail-card"><table>
+      <tr>
+        <td class="detail-label">${t.txType}</td>
+        <td class="detail-value">${data.transactionType}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.metal}</td>
+        <td class="detail-value">${data.metalName} (${data.metal})</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.quantity}</td>
+        <td class="detail-value">${data.grams}g</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.execPrice}</td>
+        <td class="detail-value">${data.executionPrice}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.grossConsideration}</td>
+        <td class="detail-value">${data.grossConsideration}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.execTime}</td>
+        <td class="detail-value">${data.executionTime}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.refId}</td>
+        <td class="detail-value">${data.referenceId}</td>
+      </tr>
+    </table></div>
 
     <p>${t.settlement}</p>
     <p style="font-size: 12px; color: #666;">${t.executionOnly}</p>
@@ -523,40 +535,40 @@ export async function sendCertificateEmail(
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
-    <div class="detail-card">
-      <div class="detail-row">
-        <span class="detail-label">${t.metal}</span>
-        <span class="detail-value">${data.metalName} (${data.metal})</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.quantity}</span>
-        <span class="detail-value">${data.grams}g</span>
-      </div>
+    <div class="detail-card"><table>
+      <tr>
+        <td class="detail-label">${t.metal}</td>
+        <td class="detail-value">${data.metalName} (${data.metal})</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.quantity}</td>
+        <td class="detail-value">${data.grams}g</td>
+      </tr>
       ${data.purity ? `
-      <div class="detail-row">
-        <span class="detail-label">${t.purity}</span>
-        <span class="detail-value">${data.purity}</span>
-      </div>
+      <tr>
+        <td class="detail-label">${t.purity}</td>
+        <td class="detail-value">${data.purity}</td>
+      </tr>
       ` : ''}
       ${data.vaultLocation ? `
-      <div class="detail-row">
-        <span class="detail-label">${t.vault}</span>
-        <span class="detail-value">${data.vaultLocation}</span>
-      </div>
+      <tr>
+        <td class="detail-label">${t.vault}</td>
+        <td class="detail-value">${data.vaultLocation}</td>
+      </tr>
       ` : ''}
-      <div class="detail-row">
-        <span class="detail-label">${t.allocationType}</span>
-        <span class="detail-value">${t.fullyAllocated}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.encumbrance}</span>
-        <span class="detail-value">${t.none}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.certId}</span>
-        <span class="detail-value">${data.certificateNumber}</span>
-      </div>
-    </div>
+      <tr>
+        <td class="detail-label">${t.allocationType}</td>
+        <td class="detail-value">${t.fullyAllocated}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.encumbrance}</td>
+        <td class="detail-value">${t.none}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.certId}</td>
+        <td class="detail-value">${data.certificateNumber}</td>
+      </tr>
+    </table></div>
 
     <p style="font-weight: 600; color: #1a1a1a;">${t.balanceSheet}</p>
     <p>${t.certAvailable}</p>
@@ -718,36 +730,36 @@ export async function sendStakingAgreementEmail(
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
-    <div class="detail-card">
-      <div class="detail-row">
-        <span class="detail-label">${t.metal}</span>
-        <span class="detail-value">${data.metalName} (${data.metal})</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.quantity}</span>
-        <span class="detail-value">${data.amount}g</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.leaseRate}</span>
-        <span class="detail-value">${data.apy}%</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.effectiveDate}</span>
-        <span class="detail-value">${data.startDate}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.maturityDate}</span>
-        <span class="detail-value">${data.endDate}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.tenor}</span>
-        <span class="detail-value">${data.termLabel}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.returnSettlement}</span>
-        <span class="detail-value">${t.atMaturity}</span>
-      </div>
-    </div>
+    <div class="detail-card"><table>
+      <tr>
+        <td class="detail-label">${t.metal}</td>
+        <td class="detail-value">${data.metalName} (${data.metal})</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.quantity}</td>
+        <td class="detail-value">${data.amount}g</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.leaseRate}</td>
+        <td class="detail-value">${data.apy}%</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.effectiveDate}</td>
+        <td class="detail-value">${data.startDate}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.maturityDate}</td>
+        <td class="detail-value">${data.endDate}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.tenor}</td>
+        <td class="detail-value">${data.termLabel}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.returnSettlement}</td>
+        <td class="detail-value">${t.atMaturity}</td>
+      </tr>
+    </table></div>
 
     <p>${t.encumbered}</p>
     <p>${t.noteIssued}</p>
@@ -872,28 +884,28 @@ export async function sendYieldDistributionEmail(
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
-    <div class="detail-card">
-      <div class="detail-row">
-        <span class="detail-label">${t.metal}</span>
-        <span class="detail-value">${data.metalName} (${data.metal})</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.leaseRate}</span>
-        <span class="detail-value">${data.yieldRate}%</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.amountCredited}</span>
-        <span class="detail-value">${data.amountCredited}g</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.settlementDate}</span>
-        <span class="detail-value">${data.creditedAt}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.refId}</span>
-        <span class="detail-value">${data.referenceId}</span>
-      </div>
-    </div>
+    <div class="detail-card"><table>
+      <tr>
+        <td class="detail-label">${t.metal}</td>
+        <td class="detail-value">${data.metalName} (${data.metal})</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.leaseRate}</td>
+        <td class="detail-value">${data.yieldRate}%</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.amountCredited}</td>
+        <td class="detail-value">${data.amountCredited}g</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.settlementDate}</td>
+        <td class="detail-value">${data.creditedAt}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.refId}</td>
+        <td class="detail-value">${data.referenceId}</td>
+      </tr>
+    </table></div>
 
     <p>${t.reflected}</p>
 
@@ -1023,28 +1035,28 @@ export async function sendRedemptionInitiatedEmail(
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
-    <div class="detail-card">
-      <div class="detail-row">
-        <span class="detail-label">${t.metal}</span>
-        <span class="detail-value">${data.metalName} (${data.metal})</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.quantity}</span>
-        <span class="detail-value">${data.grams}g</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.vault}</span>
-        <span class="detail-value">${data.vaultLocation}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.deliveryMethod}</span>
-        <span class="detail-value">${data.deliveryMethod}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.status}</span>
-        <span class="detail-value">${t.preparingRelease}</span>
-      </div>
-    </div>
+    <div class="detail-card"><table>
+      <tr>
+        <td class="detail-label">${t.metal}</td>
+        <td class="detail-value">${data.metalName} (${data.metal})</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.quantity}</td>
+        <td class="detail-value">${data.grams}g</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.vault}</td>
+        <td class="detail-value">${data.vaultLocation}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.deliveryMethod}</td>
+        <td class="detail-value">${data.deliveryMethod}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.status}</td>
+        <td class="detail-value">${t.preparingRelease}</td>
+      </tr>
+    </table></div>
 
     <p>${t.tracking}</p>
     <p style="font-size: 12px; color: #666;">${t.encumbered}</p>
@@ -1169,40 +1181,40 @@ export async function sendSecurityAlertEmail(
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
-    <div class="security-alert-box">
-      <div class="detail-row">
-        <span class="detail-label">${t.event}</span>
-        <span class="detail-value">${data.event}</span>
-      </div>
+    <div class="security-alert-box"><table>
+      <tr>
+        <td class="detail-label">${t.event}</td>
+        <td class="detail-value">${data.event}</td>
+      </tr>
       ${data.asset ? `
-      <div class="detail-row">
-        <span class="detail-label">${t.asset}</span>
-        <span class="detail-value">${data.asset}</span>
-      </div>
+      <tr>
+        <td class="detail-label">${t.asset}</td>
+        <td class="detail-value">${data.asset}</td>
+      </tr>
       ` : ''}
       ${data.address ? `
-      <div class="detail-row">
-        <span class="detail-label">${t.address}</span>
-        <span class="detail-value" style="font-size: 10px;">${data.address}</span>
-      </div>
+      <tr>
+        <td class="detail-label">${t.address}</td>
+        <td class="detail-value" style="font-size: 10px;">${data.address}</td>
+      </tr>
       ` : ''}
       ${data.network ? `
-      <div class="detail-row">
-        <span class="detail-label">${t.network}</span>
-        <span class="detail-value">${data.network}</span>
-      </div>
+      <tr>
+        <td class="detail-label">${t.network}</td>
+        <td class="detail-value">${data.network}</td>
+      </tr>
       ` : ''}
-      <div class="detail-row">
-        <span class="detail-label">${t.addedAt}</span>
-        <span class="detail-value">${data.timestamp}</span>
-      </div>
+      <tr>
+        <td class="detail-label">${t.addedAt}</td>
+        <td class="detail-value">${data.timestamp}</td>
+      </tr>
       ${data.ipAddress ? `
-      <div class="detail-row">
-        <span class="detail-label">${t.ipAddress}</span>
-        <span class="detail-value">${data.ipAddress}</span>
-      </div>
+      <tr>
+        <td class="detail-label">${t.ipAddress}</td>
+        <td class="detail-value">${data.ipAddress}</td>
+      </tr>
       ` : ''}
-    </div>
+    </table></div>
 
     <p style="font-weight: 600; color: #dc2626;">${t.unauthorized}</p>
     <p style="font-size: 12px; color: #666;">${t.delay}</p>
@@ -1311,20 +1323,20 @@ export async function sendKYCApprovalEmail(
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
-    <div class="detail-card">
-      <div class="detail-row">
-        <span class="detail-label">${t.statusLabel}</span>
-        <span class="detail-value" style="color: #16a34a;">&#10003; ${t.statusValue}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.levelLabel}</span>
-        <span class="detail-value">${levelDisplay[data.level] || data.level}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">${t.verifiedAtLabel}</span>
-        <span class="detail-value">${data.verifiedAt}</span>
-      </div>
-    </div>
+    <div class="detail-card"><table>
+      <tr>
+        <td class="detail-label">${t.statusLabel}</td>
+        <td class="detail-value" style="color: #16a34a;">&#10003; ${t.statusValue}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.levelLabel}</td>
+        <td class="detail-value">${levelDisplay[data.level] || data.level}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.verifiedAtLabel}</td>
+        <td class="detail-value">${data.verifiedAt}</td>
+      </tr>
+    </table></div>
 
     <p>${t.limitsTitle}</p>
 
@@ -1419,18 +1431,18 @@ export async function sendKYCRejectionEmail(
     <p class="greeting">${t.greeting}</p>
     <p>${t.intro}</p>
 
-    <div class="detail-card">
-      <div class="detail-row">
-        <span class="detail-label">${t.statusLabel}</span>
-        <span class="detail-value" style="color: #dc2626;">&#10007; ${t.statusValue}</span>
-      </div>
+    <div class="detail-card"><table>
+      <tr>
+        <td class="detail-label">${t.statusLabel}</td>
+        <td class="detail-value" style="color: #dc2626;">&#10007; ${t.statusValue}</td>
+      </tr>
       ${data.reason ? `
-      <div class="detail-row">
-        <span class="detail-label">${t.reasonLabel}</span>
-        <span class="detail-value">${data.reason}</span>
-      </div>
+      <tr>
+        <td class="detail-label">${t.reasonLabel}</td>
+        <td class="detail-value">${data.reason}</td>
+      </tr>
       ` : ''}
-    </div>
+    </table></div>
 
     <p>${t.action}</p>
 
