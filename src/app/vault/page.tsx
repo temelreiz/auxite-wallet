@@ -535,7 +535,7 @@ export default function VaultPage() {
         });
 
         totalValue += value;
-        allocatedValue += value; // Total metal value = Allocated Assets
+        allocatedValue += allocatedGrams * price; // Only certificated physical metal
       }
 
       // Encumbered positions (yield programs) + per-metal staked grams
@@ -585,8 +585,9 @@ export default function VaultPage() {
       const auxmBalance = balanceData.balances?.auxm || balanceData.balances?.AUXM || 0;
       setSettlementBalance(auxmBalance);
 
-      // Liquidity = AUXM + crypto
-      const totalLiquidity = auxmBalance + cryptoTotalValue;
+      // Liquidity = AUXM + crypto + unallocated metal balance
+      const unallocatedMetalValue = holdingsList.reduce((sum, h) => sum + (h.available * h.price), 0);
+      const totalLiquidity = auxmBalance + cryptoTotalValue + unallocatedMetalValue;
       setLiquidityValue(totalLiquidity);
 
       // Total vault value = metals + crypto + AUXM
