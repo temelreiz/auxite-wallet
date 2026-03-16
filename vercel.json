@@ -24,7 +24,7 @@
   "crons": [
     {
       "path": "/api/oracle",
-      "schedule": "* * * * *"
+      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/cron/verify-pending-transfers",

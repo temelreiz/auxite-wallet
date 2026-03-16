@@ -6,11 +6,37 @@ import { updateOraclePrices, getOraclePrices } from '@/lib/oracle-updater';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // 60 saniye timeout
 
-// GET - Mevcut Oracle fiyatlarını getir
-export async function GET() {
+// GET - Vercel cron'dan çağrılır, fiyatları günceller
+export async function GET(request: NextRequest) {
   try {
+    const isVercelCron = request.headers.get('x-vercel-cron') === '1';
+
+    // Cron veya auth ile güncelleme yap
+    if (isVercelCron) {
+      console.log('🔄 Cron: Starting Oracle price update...');
+      const result = await updateOraclePrices();
+
+      if (result.success) {
+        console.log('✅ Cron: Oracle updated successfully');
+        return NextResponse.json({
+          success: true,
+          message: 'Oracle prices updated via cron',
+          txHashes: result.txHashes,
+          prices: result.prices,
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        console.error('❌ Cron: Oracle update failed:', result.error);
+        return NextResponse.json({
+          success: false,
+          error: result.error,
+        }, { status: 500 });
+      }
+    }
+
+    // Normal GET - sadece oku
     const prices = await getOraclePrices();
-    
+
     return NextResponse.json({
       success: true,
       prices,
