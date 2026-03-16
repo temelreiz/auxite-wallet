@@ -6,9 +6,10 @@ import { ORACLE_ADDRESS } from '@/config/contracts-v8';
 import { getMetalPricesInUsd } from './kuveytturk-service';
 
 const ORACLE_ABI = [
-  'function updatePrice(bytes32 metalId, uint256 priceE6) external',
+  'function setAllPrices(uint256 goldE6, uint256 silverE6, uint256 platinumE6, uint256 palladiumE6, uint256 ethE6) external',
+  'function setETHPriceE6(uint256 newPriceE6) external',
   'function getBasePerKgE6(bytes32 metalId) external view returns (uint256)',
-  'function getETHPriceE6() view returns (uint256)'
+  'function getETHPriceE6() view returns (uint256)',
 ];
 
 const METAL_IDS = {
@@ -171,25 +172,22 @@ export async function updateOraclePrices(): Promise<{
     const wallet = new ethers.Wallet(privateKey, provider);
     const oracle = new ethers.Contract(ORACLE_ADDRESS, ORACLE_ABI, wallet);
 
-    const txHashes: string[] = [];
+    // 5. Calculate E6/kg values
+    const goldE6Kg = gramToKgE6(askPrices.gold);
+    const silverE6Kg = gramToKgE6(askPrices.silver);
+    const platinumE6Kg = gramToKgE6(askPrices.platinum);
+    const palladiumE6Kg = gramToKgE6(askPrices.palladium);
 
-    // 5. Update each metal with spread-applied price
-    const updates = [
-      { id: METAL_IDS.GOLD, price: gramToKgE6(askPrices.gold), name: 'GOLD', pricePerGram: askPrices.gold },
-      { id: METAL_IDS.SILVER, price: gramToKgE6(askPrices.silver), name: 'SILVER', pricePerGram: askPrices.silver },
-      { id: METAL_IDS.PLATINUM, price: gramToKgE6(askPrices.platinum), name: 'PLATINUM', pricePerGram: askPrices.platinum },
-      { id: METAL_IDS.PALLADIUM, price: gramToKgE6(askPrices.palladium), name: 'PALLADIUM', pricePerGram: askPrices.palladium },
-    ];
+    // Fetch current ETH price
+    const ethPrice = await oracle.getETHPriceE6().catch(() => 2340_000000n);
 
-    for (const update of updates) {
-      console.log(`Updating ${update.name}: $${update.pricePerGram.toFixed(2)}/g (E6/kg: ${update.price})`);
+    console.log(`Updating all prices via setAllPrices — Gold: $${askPrices.gold.toFixed(2)}/g, Silver: $${askPrices.silver.toFixed(2)}/g`);
 
-      await new Promise(r => setTimeout(r, 2000)); // Wait 2s between txs
-      const tx = await oracle.updatePrice(update.id, update.price);
-      txHashes.push(tx.hash);
-    }
+    // 6. Single tx to update all prices
+    const tx = await oracle.setAllPrices(goldE6Kg, silverE6Kg, platinumE6Kg, palladiumE6Kg, ethPrice);
+    const txHashes = [tx.hash];
 
-    console.log(`✅ Oracle prices updated via ${source}!`);
+    console.log(`✅ Oracle prices updated via ${source} — tx: ${tx.hash}`);
 
     return {
       success: true,
