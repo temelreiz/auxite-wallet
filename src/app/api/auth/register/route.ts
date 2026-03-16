@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto, { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/email-service';
+import { sendEarlyAccessBonusEmail } from '@/lib/email';
 import { authLimiter, withRateLimit } from '@/lib/security/rate-limiter';
 
 const redis = new Redis({
@@ -229,6 +230,16 @@ export async function POST(request: NextRequest) {
 
           earlyBirdGranted = true;
           console.log(`🎉 Early Bird #${currentCount}/${EARLY_BIRD_LIMIT}: ${userId} received ${EARLY_BIRD_AMOUNT} ${assetKey}`);
+
+          // Send Early Access Bonus terms email (non-blocking)
+          sendEarlyAccessBonusEmail(normalizedEmail, {
+            clientName: name || 'Client',
+            bonusAmount: String(EARLY_BIRD_AMOUNT),
+            bonusAsset: assetKey,
+            unlockThreshold: '500',
+            expiryDays: String(EARLY_BIRD_EXPIRY_DAYS),
+            language: language || 'en',
+          }).catch(err => console.error('Early access bonus email error:', err));
         } else {
           await redis.decr("campaign:earlybird:count");
           console.log(`⏰ Early Bird campaign full (${EARLY_BIRD_LIMIT}/${EARLY_BIRD_LIMIT})`);

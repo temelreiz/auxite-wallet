@@ -9,6 +9,7 @@ import {
   sendYieldDistributionEmail,
   sendRedemptionInitiatedEmail,
   sendSecurityAlertEmail,
+  sendEarlyAccessBonusEmail,
 } from '@/lib/email';
 import {
   sendDepositConfirmedEmail,
@@ -194,8 +195,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ type: 'transfer-received', ...result });
     }
 
+    // 11. Early Access Bonus
+    if (type === 'early-access') {
+      const result = await sendEarlyAccessBonusEmail(to, {
+        clientName: 'Test Client',
+        bonusAmount: '10',
+        bonusAsset: 'AUXS',
+        unlockThreshold: '500',
+        expiryDays: '90',
+      });
+      return NextResponse.json({ type: 'early-access', ...result });
+    }
+
     return NextResponse.json({
-      error: 'Invalid type. Available: trade, certificate, staking/leasing, yield, redemption, security, deposit, withdraw, transfer-sent, transfer-received',
+      error: 'Invalid type. Available: trade, certificate, staking/leasing, yield, redemption, security, deposit, withdraw, transfer-sent, transfer-received, early-access',
     }, { status: 400 });
   } catch (error: any) {
     console.error('Email test error:', error);

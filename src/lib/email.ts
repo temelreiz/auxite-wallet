@@ -1451,3 +1451,161 @@ export async function sendKYCRejectionEmail(
 
   return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(emailContent, t.desk, lang) });
 }
+
+// ─── EARLY ACCESS BONUS NOTIFICATION ─────────────────────────────────────────
+export async function sendEarlyAccessBonusEmail(
+  to: string,
+  data: {
+    clientName?: string;
+    bonusAmount: string;
+    bonusAsset: string;
+    unlockThreshold: string;
+    expiryDays: string;
+    language?: string;
+  }
+) {
+  const lang = data.language || 'en';
+  const name = data.clientName || 'Client';
+
+  const content: Record<string, Record<string, string>> = {
+    en: {
+      subject: 'Early Access Bonus — Terms & Conditions',
+      greeting: `Dear ${name},`,
+      intro: `Thank you for joining the Auxite Early Access programme. As part of this initiative, a promotional allocation of ${data.bonusAmount} ${data.bonusAsset} has been credited to your custody account.`,
+      detailsTitle: 'Bonus Allocation Details',
+      amountLabel: 'Credited Amount',
+      amountValue: `${data.bonusAmount} ${data.bonusAsset}`,
+      statusLabel: 'Status',
+      statusValue: 'Restricted — Platform Use Only',
+      conditionsTitle: 'Terms of Use',
+      cond1: `This allocation is designated exclusively for platform-internal operations. You may convert ${data.bonusAsset} into other precious metal tokens (AUXG, AUXS, AUXPT, AUXPD) within the Auxite platform.`,
+      cond2: 'This promotional allocation is non-transferable. It cannot be withdrawn, sent to an external wallet, or transferred to another Auxite account.',
+      cond3: `The allocation will be fully unlocked and become unrestricted once your account reaches a cumulative investment threshold of ${data.unlockThreshold} ${data.bonusAsset} or equivalent in precious metal tokens.`,
+      cond4: `This promotional allocation is valid for ${data.expiryDays} days from the date of issuance. Unused balances will expire after this period.`,
+      closing: 'Auxite reserves the right to modify or discontinue this programme at its discretion. Should you have any questions regarding these terms, please do not hesitate to contact our client services team.',
+      cta: 'Access Your Account',
+      desk: 'Auxite Client Services',
+    },
+    tr: {
+      subject: 'Erken Erişim Bonusu — Şartlar ve Koşullar',
+      greeting: `Sayın ${name},`,
+      intro: `Auxite Erken Erişim programına katıldığınız için teşekkür ederiz. Bu girişim kapsamında saklama hesabınıza ${data.bonusAmount} ${data.bonusAsset} tutarında promosyon tahsisi yapılmıştır.`,
+      detailsTitle: 'Bonus Tahsis Detayları',
+      amountLabel: 'Tahsis Edilen Tutar',
+      amountValue: `${data.bonusAmount} ${data.bonusAsset}`,
+      statusLabel: 'Durum',
+      statusValue: 'Kısıtlı — Yalnızca Platform İçi Kullanım',
+      conditionsTitle: 'Kullanım Şartları',
+      cond1: `Bu tahsis yalnızca platform içi işlemler için ayrılmıştır. ${data.bonusAsset} tokeni, Auxite platformu dahilinde diğer kıymetli metal tokenlerine (AUXG, AUXS, AUXPT, AUXPD) dönüştürülebilir.`,
+      cond2: 'Bu promosyon tahsisi devredilemez niteliktedir. Çekilemez, harici bir cüzdana gönderilemez veya başka bir Auxite hesabına aktarılamaz.',
+      cond3: `Hesabınızda kümülatif yatırım tutarı ${data.unlockThreshold} ${data.bonusAsset} veya muadili kıymetli metal tokenine ulaştığında, tahsis tamamen serbest bırakılacak ve kısıtlamalar kaldırılacaktır.`,
+      cond4: `Bu promosyon tahsisi, verildiği tarihten itibaren ${data.expiryDays} gün süreyle geçerlidir. Bu süre sonunda kullanılmayan bakiyeler sona erecektir.`,
+      closing: 'Auxite, bu programı kendi takdirine bağlı olarak değiştirme veya sonlandırma hakkını saklı tutar. Bu şartlarla ilgili herhangi bir sorunuz olması halinde müşteri hizmetleri ekibimizle iletişime geçmekten çekinmeyin.',
+      cta: 'Hesabınıza Erişin',
+      desk: 'Auxite Müşteri Hizmetleri',
+    },
+    de: {
+      subject: 'Early-Access-Bonus — Allgemeine Geschäftsbedingungen',
+      greeting: `Sehr geehrte/r ${name},`,
+      intro: `Vielen Dank für Ihre Teilnahme am Auxite Early-Access-Programm. Im Rahmen dieser Initiative wurde Ihrem Verwahrungskonto eine Werbeprämie von ${data.bonusAmount} ${data.bonusAsset} gutgeschrieben.`,
+      detailsTitle: 'Bonus-Zuteilungsdetails',
+      amountLabel: 'Gutgeschriebener Betrag',
+      amountValue: `${data.bonusAmount} ${data.bonusAsset}`,
+      statusLabel: 'Status',
+      statusValue: 'Eingeschränkt — Nur Plattforminterne Nutzung',
+      conditionsTitle: 'Nutzungsbedingungen',
+      cond1: `Diese Zuteilung ist ausschließlich für plattforminterne Operationen bestimmt. Sie können ${data.bonusAsset} innerhalb der Auxite-Plattform in andere Edelmetall-Token (AUXG, AUXS, AUXPT, AUXPD) umtauschen.`,
+      cond2: 'Diese Werbeprämie ist nicht übertragbar. Sie kann nicht abgehoben, an eine externe Wallet gesendet oder auf ein anderes Auxite-Konto übertragen werden.',
+      cond3: `Die Zuteilung wird vollständig freigeschaltet, sobald Ihr Konto eine kumulative Investitionsschwelle von ${data.unlockThreshold} ${data.bonusAsset} oder gleichwertige Edelmetall-Token erreicht.`,
+      cond4: `Diese Werbeprämie ist ab dem Ausstellungsdatum ${data.expiryDays} Tage gültig. Nicht genutzte Guthaben verfallen nach diesem Zeitraum.`,
+      closing: 'Auxite behält sich das Recht vor, dieses Programm nach eigenem Ermessen zu ändern oder einzustellen. Bei Fragen zu diesen Bedingungen wenden Sie sich bitte an unser Kundenservice-Team.',
+      cta: 'Auf Ihr Konto zugreifen',
+      desk: 'Auxite Kundenservice',
+    },
+    fr: {
+      subject: 'Bonus Early Access — Termes et Conditions',
+      greeting: `Cher/Chère ${name},`,
+      intro: `Merci d'avoir rejoint le programme Early Access d'Auxite. Dans le cadre de cette initiative, une allocation promotionnelle de ${data.bonusAmount} ${data.bonusAsset} a été créditée sur votre compte de garde.`,
+      detailsTitle: 'Détails de l\'allocation bonus',
+      amountLabel: 'Montant crédité',
+      amountValue: `${data.bonusAmount} ${data.bonusAsset}`,
+      statusLabel: 'Statut',
+      statusValue: 'Restreint — Usage Interne à la Plateforme',
+      conditionsTitle: 'Conditions d\'utilisation',
+      cond1: `Cette allocation est exclusivement réservée aux opérations internes de la plateforme. Vous pouvez convertir ${data.bonusAsset} en d'autres jetons de métaux précieux (AUXG, AUXS, AUXPT, AUXPD) au sein de la plateforme Auxite.`,
+      cond2: 'Cette allocation promotionnelle est non transférable. Elle ne peut être retirée, envoyée à un portefeuille externe ou transférée vers un autre compte Auxite.',
+      cond3: `L'allocation sera entièrement débloquée lorsque votre compte atteindra un seuil d'investissement cumulé de ${data.unlockThreshold} ${data.bonusAsset} ou l'équivalent en jetons de métaux précieux.`,
+      cond4: `Cette allocation promotionnelle est valable ${data.expiryDays} jours à compter de la date d'émission. Les soldes non utilisés expireront après cette période.`,
+      closing: 'Auxite se réserve le droit de modifier ou d\'interrompre ce programme à sa discrétion. Pour toute question concernant ces conditions, n\'hésitez pas à contacter notre équipe de services clients.',
+      cta: 'Accéder à votre compte',
+      desk: 'Service Clients Auxite',
+    },
+    ar: {
+      subject: 'مكافأة الوصول المبكر — الشروط والأحكام',
+      greeting: `عزيزي ${name}،`,
+      intro: `شكراً لانضمامك إلى برنامج الوصول المبكر من Auxite. كجزء من هذه المبادرة، تم إيداع مخصص ترويجي بقيمة ${data.bonusAmount} ${data.bonusAsset} في حساب الحفظ الخاص بك.`,
+      detailsTitle: 'تفاصيل المكافأة',
+      amountLabel: 'المبلغ المضاف',
+      amountValue: `${data.bonusAmount} ${data.bonusAsset}`,
+      statusLabel: 'الحالة',
+      statusValue: 'مقيّد — للاستخدام داخل المنصة فقط',
+      conditionsTitle: 'شروط الاستخدام',
+      cond1: `هذا المخصص مخصص حصرياً للعمليات الداخلية للمنصة. يمكنك تحويل ${data.bonusAsset} إلى رموز معادن ثمينة أخرى (AUXG، AUXS، AUXPT، AUXPD) داخل منصة Auxite.`,
+      cond2: 'هذا المخصص الترويجي غير قابل للتحويل. لا يمكن سحبه أو إرساله إلى محفظة خارجية أو تحويله إلى حساب Auxite آخر.',
+      cond3: `سيتم فتح المخصص بالكامل ورفع القيود عنه عندما يصل حسابك إلى حد استثمار تراكمي قدره ${data.unlockThreshold} ${data.bonusAsset} أو ما يعادله من رموز المعادن الثمينة.`,
+      cond4: `هذا المخصص الترويجي صالح لمدة ${data.expiryDays} يوماً من تاريخ الإصدار. ستنتهي صلاحية الأرصدة غير المستخدمة بعد هذه الفترة.`,
+      closing: 'تحتفظ Auxite بالحق في تعديل أو إيقاف هذا البرنامج وفقاً لتقديرها. إذا كانت لديك أي أسئلة بخصوص هذه الشروط، فلا تتردد في الاتصال بفريق خدمات العملاء.',
+      cta: 'الوصول إلى حسابك',
+      desk: 'خدمات العملاء Auxite',
+    },
+    ru: {
+      subject: 'Бонус раннего доступа — Условия и положения',
+      greeting: `Уважаемый/ая ${name},`,
+      intro: `Благодарим вас за участие в программе раннего доступа Auxite. В рамках данной инициативы на ваш счёт хранения зачислено промо-начисление в размере ${data.bonusAmount} ${data.bonusAsset}.`,
+      detailsTitle: 'Детали бонусного начисления',
+      amountLabel: 'Зачисленная сумма',
+      amountValue: `${data.bonusAmount} ${data.bonusAsset}`,
+      statusLabel: 'Статус',
+      statusValue: 'Ограничено — Только для использования на платформе',
+      conditionsTitle: 'Условия использования',
+      cond1: `Данное начисление предназначено исключительно для внутриплатформенных операций. Вы можете конвертировать ${data.bonusAsset} в другие токены драгоценных металлов (AUXG, AUXS, AUXPT, AUXPD) в рамках платформы Auxite.`,
+      cond2: 'Данное промо-начисление не подлежит передаче. Оно не может быть выведено, отправлено на внешний кошелёк или переведено на другой счёт Auxite.',
+      cond3: `Начисление будет полностью разблокировано после достижения вашим счётом совокупного инвестиционного порога в ${data.unlockThreshold} ${data.bonusAsset} или эквивалента в токенах драгоценных металлов.`,
+      cond4: `Данное промо-начисление действительно в течение ${data.expiryDays} дней с даты выпуска. Неиспользованные остатки будут аннулированы по истечении этого срока.`,
+      closing: 'Auxite оставляет за собой право изменять или прекращать данную программу по своему усмотрению. При возникновении вопросов относительно данных условий обращайтесь в нашу службу клиентской поддержки.',
+      cta: 'Войти в аккаунт',
+      desk: 'Клиентская служба Auxite',
+    },
+  };
+
+  const t = content[lang] || content.en;
+
+  const emailContent = `
+    <p class="greeting">${t.greeting}</p>
+    <p>${t.intro}</p>
+
+    <h2>${t.detailsTitle}</h2>
+    <div class="detail-card"><table>
+      <tr>
+        <td class="detail-label">${t.amountLabel}</td>
+        <td class="detail-value">${t.amountValue}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">${t.statusLabel}</td>
+        <td class="detail-value">${t.statusValue}</td>
+      </tr>
+    </table></div>
+
+    <h2>${t.conditionsTitle}</h2>
+    <p>${t.cond1}</p>
+    <p>${t.cond2}</p>
+    <p>${t.cond3}</p>
+    <p>${t.cond4}</p>
+
+    <p class="notice">${t.closing}</p>
+
+    <a href="https://vault.auxite.io/dashboard" class="cta-button">${t.cta}</a>
+  `;
+
+  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(emailContent, t.desk, lang) });
+}
