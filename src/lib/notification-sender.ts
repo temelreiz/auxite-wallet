@@ -7,6 +7,7 @@
 import webpush from 'web-push';
 import { redis } from '@/lib/redis';
 import { getUserLanguage } from '@/lib/user-language';
+import { sendPushToUser } from '@/lib/expo-push';
 
 type LangCode = 'en' | 'tr' | 'de' | 'fr' | 'ar' | 'ru';
 
@@ -255,14 +256,10 @@ export async function sendNotification(
         ? (typeof subscriptionsData === 'string' ? JSON.parse(subscriptionsData) : subscriptionsData)
         : [];
 
-    if (subscriptions.length === 0) {
-      return { success: false, sent: 0, failed: 0 };
-    }
-
     let sent = 0;
     let failed = 0;
 
-    // Her subscription'a gönder
+    // Her web subscription'a gönder
     for (const subscription of subscriptions) {
       try {
         await webpush.sendNotification(
@@ -287,6 +284,42 @@ export async function sendNotification(
           await redis.set(`push:subscriptions:${walletAddress}`, JSON.stringify(updatedSubs));
         }
       }
+    }
+
+    // ─── Mobile Push (Expo) ────────────────────────────────────────────
+    try {
+      const categoryMap: Record<string, string> = {
+        transaction: 'trade', deposit: 'trade', withdrawal: 'trade',
+        login: 'security', security: 'security',
+        price_alert: 'price_alert', system: 'system',
+      };
+      const channelMap: Record<string, string> = {
+        security: 'security', login: 'security',
+        transaction: 'trades', deposit: 'trades', withdrawal: 'trades',
+      };
+
+      const mobileResult = await sendPushToUser(
+        walletAddress,
+        payload.title,
+        payload.body,
+        {
+          ...payload.data,
+          type,
+          category: categoryMap[type] || type,
+        },
+        {
+          sound: 'default',
+          channelId: channelMap[type] || 'default',
+          priority: type === 'security' || type === 'login' ? 'high' : 'default',
+        }
+      );
+
+      if (mobileResult) {
+        sent += mobileResult.sent || 0;
+        failed += mobileResult.failed || 0;
+      }
+    } catch (mobileErr) {
+      console.error('[notification-sender] Mobile push error:', mobileErr);
     }
 
     // Log kaydet
