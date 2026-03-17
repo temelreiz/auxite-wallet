@@ -6,8 +6,8 @@ import { ORACLE_ADDRESS } from '@/config/contracts-v8';
 import { getMetalPricesInUsd } from './kuveytturk-service';
 
 const ORACLE_ABI = [
-  'function setAllPrices(uint256 goldE6, uint256 silverE6, uint256 platinumE6, uint256 palladiumE6, uint256 ethE6) external',
-  'function setETHPriceE6(uint256 newPriceE6) external',
+  'function updateAllPrices(uint256 goldE6, uint256 silverE6, uint256 platinumE6, uint256 palladiumE6, uint256 ethE6) external',
+  'function updateETHPrice(uint256 newPriceE6) external',
   'function getBasePerKgE6(bytes32 metalId) external view returns (uint256)',
   'function getETHPriceE6() view returns (uint256)',
 ];
@@ -181,10 +181,10 @@ export async function updateOraclePrices(): Promise<{
     // Fetch current ETH price
     const ethPrice = await oracle.getETHPriceE6().catch(() => 2340_000000n);
 
-    console.log(`Updating all prices via setAllPrices — Gold: $${askPrices.gold.toFixed(2)}/g, Silver: $${askPrices.silver.toFixed(2)}/g`);
+    console.log(`Updating all prices via updateAllPrices — Gold: $${askPrices.gold.toFixed(2)}/g, Silver: $${askPrices.silver.toFixed(2)}/g`);
 
     // 6. Single tx to update all prices
-    const tx = await oracle.setAllPrices(goldE6Kg, silverE6Kg, platinumE6Kg, palladiumE6Kg, ethPrice);
+    const tx = await oracle.updateAllPrices(goldE6Kg, silverE6Kg, platinumE6Kg, palladiumE6Kg, ethPrice);
     const txHashes = [tx.hash];
 
     console.log(`✅ Oracle prices updated via ${source} — tx: ${tx.hash}`);
