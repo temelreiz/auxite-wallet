@@ -465,6 +465,7 @@ export default function VaultPage() {
   const [encumberedBreakdown, setEncumberedBreakdown] = useState({ yieldPrograms: 0, pendingDelivery: 0, tradeSettlement: 0 });
   const [sellModal, setSellModal] = useState<{ open: boolean; metal: MetalHolding | null }>({ open: false, metal: null });
   const [kycStatus, setKycStatus] = useState<'none' | 'pending' | 'verified'>('none');
+  const [bonusData, setBonusData] = useState<any>(null);
   const [custodyStatus, setCustodyStatus] = useState<'active' | 'pending' | 'offline'>('offline');
   const [custodyProvider, setCustodyProvider] = useState<string>('');
   const [realVaultId, setRealVaultId] = useState<string | null>(null);
@@ -525,6 +526,13 @@ export default function VaultPage() {
       // KYC status (API returns { profile: { kycStatus, kycLevel } })
       const kycSt = profileData.profile?.kycStatus || profileData.profile?.kycLevel || 'none';
       setKycStatus(kycSt === 'approved' || kycSt === 'verified' || kycSt === 'enhanced' ? 'verified' : kycSt === 'pending' || kycSt === 'under_review' ? 'pending' : 'none');
+
+      // Bonus status fetch
+      try {
+        const bonusRes = await fetch(`/api/bonus?address=${address}`);
+        const bonusJson = await bonusRes.json();
+        if (bonusJson.success) setBonusData(bonusJson.bonus);
+      } catch {}
 
       const metalSymbols = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
       const metalNames: Record<string, string> = {
@@ -1007,6 +1015,54 @@ export default function VaultPage() {
             ))}
           </div>
         </div>
+
+        {/* Bonus / Liquidity Credits Widget */}
+        {bonusData?.hasBonus && !loading && (
+          <div className="bg-gradient-to-r from-[#BFA181]/5 to-[#BFA181]/10 dark:from-[#BFA181]/10 dark:to-[#BFA181]/5 rounded-xl p-4 border border-[#BFA181]/20">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🎁</span>
+                <span className="text-xs font-semibold text-[#BFA181] tracking-wider">LIQUIDITY CREDITS</span>
+              </div>
+              <span className={`text-xs font-semibold px-2 py-1 rounded-md ${
+                bonusData.unlocked
+                  ? 'bg-[#2F6F62]/15 text-[#2F6F62]'
+                  : 'bg-[#BFA181]/15 text-[#BFA181]'
+              }`}>
+                {bonusData.unlocked ? '✓ Unlocked' : `${bonusData.unlockPercent?.toFixed(0) || 0}% Unlocked`}
+              </span>
+            </div>
+
+            {/* Bonus Balances */}
+            <div className="flex flex-wrap gap-3 mb-3">
+              {Object.entries(bonusData.bonusBalances || {}).map(([metal, grams]: [string, any]) => (
+                grams > 0 && (
+                  <div key={metal} className="flex items-center gap-1.5 bg-white/50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{Number(grams).toFixed(3)}g</span>
+                    <span className="text-[10px] text-[#BFA181] font-medium">{metal}-B</span>
+                  </div>
+                )
+              ))}
+            </div>
+
+            {/* Unlock Progress Bar */}
+            {!bonusData.unlocked && (
+              <div>
+                <div className="w-full h-2 bg-stone-200 dark:bg-slate-700 rounded-full overflow-hidden mb-1.5">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#BFA181] to-[#D4B47A] rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, bonusData.unlockPercent || 0)}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                  {bonusData.daysRemaining > 0 && `${Math.ceil(bonusData.daysRemaining)} days remaining`}
+                  {bonusData.daysRemaining > 0 && bonusData.volumeProgress < 100 && ' · '}
+                  {bonusData.volumeProgress < 100 && `$${Math.max(0, (bonusData.volumeRequired || 0) - (bonusData.currentVolumeUsd || 0)).toFixed(0)} volume to unlock`}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Holdings Section — Split into Metals + Liquidity */}
         <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-stone-200 dark:border-slate-800">

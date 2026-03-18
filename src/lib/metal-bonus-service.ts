@@ -206,8 +206,14 @@ export async function checkCostCaps(
  * Record bonus cost for cap tracking.
  */
 export async function recordBonusCost(userId: string, bonusValueUsd: number): Promise<void> {
-  await redis.incrbyfloat(`user:${userId}:bonus:totalCostUsd`, bonusValueUsd);
-  await redis.incrbyfloat('campaign:bonus:globalCostUsd', bonusValueUsd);
+  const userKey = `user:${userId}:bonus:totalCostUsd`;
+  const globalKey = 'campaign:bonus:globalCostUsd';
+
+  const userCost = parseFloat((await redis.get(userKey) as string) || '0');
+  await redis.set(userKey, (userCost + bonusValueUsd).toString());
+
+  const globalCost = parseFloat((await redis.get(globalKey) as string) || '0');
+  await redis.set(globalKey, (globalCost + bonusValueUsd).toString());
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -267,8 +273,11 @@ export async function calculateUnlockPercent(userId: string): Promise<{
  * Record trade volume for unlock tracking.
  */
 export async function recordVolume(userId: string, amountUsd: number): Promise<number> {
-  const newTotal = await redis.incrbyfloat(`user:${userId}:bonus:volumeUsd`, amountUsd);
-  return typeof newTotal === 'number' ? newTotal : parseFloat(String(newTotal));
+  const key = `user:${userId}:bonus:volumeUsd`;
+  const current = parseFloat((await redis.get(key) as string) || '0');
+  const newTotal = current + amountUsd;
+  await redis.set(key, newTotal.toString());
+  return newTotal;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -299,11 +308,13 @@ export async function grantBonus(
 
   // Credit bonus balance
   const bonusKey = `user:${userId}:balance:bonus${asset}`;
-  await redis.incrbyfloat(bonusKey, adjustedGrams);
+  const currentBonus = parseFloat((await redis.get(bonusKey) as string) || '0');
+  await redis.set(bonusKey, (currentBonus + adjustedGrams).toString());
 
   // Also credit main balance (bonus is part of total display balance)
   const mainKey = `user:${userId}:balance:${asset.toLowerCase()}`;
-  await redis.incrbyfloat(mainKey, adjustedGrams);
+  const currentMain = parseFloat((await redis.get(mainKey) as string) || '0');
+  await redis.set(mainKey, (currentMain + adjustedGrams).toString());
 
   // Record cost
   await recordBonusCost(userId, adjustedValueUsd);
