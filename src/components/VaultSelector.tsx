@@ -16,6 +16,7 @@ interface VaultOption {
   flag: string;
   insuranceLevel: string;
   available: boolean;
+  status?: "on-hold" | "coming-soon";
 }
 
 const vaultOptions: VaultOption[] = [
@@ -41,7 +42,8 @@ const vaultOptions: VaultOption[] = [
     location: "UAE",
     flag: "🇦🇪",
     insuranceLevel: "Full",
-    available: true,
+    available: false,
+    status: "on-hold",
   },
   {
     id: "istanbul",
@@ -163,8 +165,12 @@ export function VaultSelector({ selectedVault, onSelect, compact = false }: Vaul
             } ${!vault.available ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             {!vault.available && (
-              <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-700 text-slate-400">
-                {t.comingSoon}
+              <div className={`absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-medium ${
+                vault.status === "on-hold"
+                  ? "bg-amber-900/50 text-amber-400 border border-amber-700/50"
+                  : "bg-slate-700 text-slate-400"
+              }`}>
+                {vault.status === "on-hold" ? "⏸ On Hold" : t.comingSoon}
               </div>
             )}
 
