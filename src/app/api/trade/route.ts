@@ -28,7 +28,7 @@ import {
   getTokenPrices,
   checkReserveLimit,
 } from "@/lib/v6-token-service";
-import { recordPurchase } from "@/lib/bonus-guard";
+import { recordVolume } from "@/lib/bonus-guard";
 import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
 import { notifyTrade } from "@/lib/telegram";
 import { createCryptoPayout, checkPayoutBalance } from "@/lib/nowpayments-service";
@@ -1672,10 +1672,11 @@ export async function POST(request: NextRequest) {
       try {
         const userId = await redis.get(`user:address:${normalizedAddress}`) as string;
         if (userId) {
-          const purchaseResult = await recordPurchase(userId, toToken.toUpperCase(), toAmount, price);
-          console.log(`🎁 Bonus tracking: ${purchaseResult.totalPurchasedAuxsEquiv.toFixed(1)}/${purchaseResult.unlockThreshold} AUXS equiv`);
-          if (purchaseResult.justUnlocked) {
-            console.log(`🔓 BONUS UNLOCKED for ${userId}!`);
+          const tradeValueUsd = toAmount * price;
+          const volumeResult = await recordVolume(userId, tradeValueUsd);
+          console.log(`🎁 Bonus tracking: $${volumeResult.currentVolumeUsd.toFixed(0)} volume, ${volumeResult.unlockPercent.toFixed(0)}% unlocked`);
+          if (volumeResult.justFullyUnlocked) {
+            console.log(`🔓 BONUS FULLY UNLOCKED for ${userId}!`);
           }
         }
       } catch (bonusErr) {

@@ -42,27 +42,36 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get("code");
     const earlybird = searchParams.get("earlybird");
 
-    // Early Bird kampanya durumu
+    // Early Bird (legacy) kampanya durumu
     if (earlybird === "status") {
       const count = (await kv.get<number>("campaign:earlybird:count")) || 0;
       const users = (await kv.lrange("campaign:earlybird:users", 0, -1)) || [];
-      const limit = parseInt(process.env.EARLY_BIRD_LIMIT || "50");
-      const amount = parseFloat(process.env.EARLY_BIRD_AMOUNT || "10");
-      const asset = process.env.EARLY_BIRD_ASSET || "AUXS";
-      const enabled = process.env.EARLY_BIRD_ENABLED !== "false";
 
       return NextResponse.json({
         success: true,
         earlyBird: {
-          enabled,
-          limit,
-          asset,
-          amountPerUser: amount,
-          transferable: false,
+          enabled: false,
+          legacy: true,
           totalGranted: count,
-          remaining: Math.max(0, limit - count),
-          isFull: count >= limit,
           users: users.map((u: any) => typeof u === 'string' ? JSON.parse(u) : u),
+        },
+      });
+    }
+
+    // Bonus System v2 metrikleri
+    const bonusStats = searchParams.get("bonus");
+    if (bonusStats === "status") {
+      const { getCampaignInfo } = await import("@/lib/metal-bonus-service");
+      const info = await getCampaignInfo();
+
+      return NextResponse.json({
+        success: true,
+        bonus: {
+          ...info,
+          unlockMethod: 'hybrid',
+          unlockDays: 30,
+          volumeMultiplier: 5,
+          maxPerUserUsd: 100,
         },
       });
     }

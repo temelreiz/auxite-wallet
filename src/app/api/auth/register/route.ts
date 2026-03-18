@@ -7,7 +7,6 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto, { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/email-service';
-import { sendEarlyAccessBonusEmail } from '@/lib/email';
 import { authLimiter, withRateLimit } from '@/lib/security/rate-limiter';
 
 const redis = new Redis({
@@ -170,84 +169,9 @@ export async function POST(request: NextRequest) {
     });
 
     // ══════════════════════════════════════════════════════════════
-    // 🎉 EARLY BIRD CAMPAIGN — First N users get free AUXS
+    // BONUS v2: Welcome bonus is now triggered on first deposit
+    // (KYC + $100 deposit required). No more early bird at registration.
     // ══════════════════════════════════════════════════════════════
-    const EARLY_BIRD_ENABLED = process.env.EARLY_BIRD_ENABLED !== "false";
-    const EARLY_BIRD_LIMIT = parseInt(process.env.EARLY_BIRD_LIMIT || "50");
-    const EARLY_BIRD_AMOUNT = parseFloat(process.env.EARLY_BIRD_AMOUNT || "10");
-    const EARLY_BIRD_ASSET = process.env.EARLY_BIRD_ASSET || "AUXS";
-    const EARLY_BIRD_EXPIRY_DAYS = parseInt(process.env.EARLY_BIRD_EXPIRY_DAYS || "90");
-
-    let earlyBirdGranted = false;
-    if (EARLY_BIRD_ENABLED && EARLY_BIRD_AMOUNT > 0) {
-      try {
-        const currentCount = await redis.incr("campaign:earlybird:count");
-
-        if (currentCount <= EARLY_BIRD_LIMIT) {
-          const assetKey = EARLY_BIRD_ASSET.toUpperCase();
-
-          // Grant asset to balance (userId key + wallet hash)
-          await redis.set(`user:${userId}:balance:${assetKey}`, EARLY_BIRD_AMOUNT);
-          await redis.hset(`user:${vaultAddress.toLowerCase()}:balance`, {
-            [assetKey.toLowerCase()]: EARLY_BIRD_AMOUNT,
-          });
-
-          // Mark as bonus (non-transferable, non-withdrawable)
-          await redis.set(`user:${userId}:balance:bonus${assetKey}`, EARLY_BIRD_AMOUNT);
-
-          // Set bonus expiry
-          const expiryDate = new Date();
-          expiryDate.setDate(expiryDate.getDate() + EARLY_BIRD_EXPIRY_DAYS);
-          await redis.set(`user:${userId}:earlybird:expiresAt`, expiryDate.toISOString());
-          await redis.set(`user:${userId}:balance:bonus${assetKey}ExpiresAt`, expiryDate.toISOString());
-
-          // Transaction record
-          await redis.lpush(
-            `user:${vaultAddress.toLowerCase()}:transactions`,
-            JSON.stringify({
-              type: "bonus",
-              subtype: "earlybird",
-              asset: assetKey,
-              amount: EARLY_BIRD_AMOUNT,
-              transferable: false,
-              description: `Early Bird — Free ${EARLY_BIRD_AMOUNT} ${assetKey} for the first ${EARLY_BIRD_LIMIT} users!`,
-              descriptionTr: `Early Bird — İlk ${EARLY_BIRD_LIMIT} kullanıcıya ${EARLY_BIRD_AMOUNT} ${assetKey} hediye!`,
-              timestamp: new Date().toISOString(),
-              campaign: "earlybird",
-              expiresAt: expiryDate.toISOString(),
-            })
-          );
-
-          // Track which users received the bonus
-          await redis.lpush("campaign:earlybird:users", JSON.stringify({
-            userId,
-            email: normalizedEmail,
-            rank: currentCount,
-            asset: assetKey,
-            amount: EARLY_BIRD_AMOUNT,
-            grantedAt: new Date().toISOString(),
-          }));
-
-          earlyBirdGranted = true;
-          console.log(`🎉 Early Bird #${currentCount}/${EARLY_BIRD_LIMIT}: ${userId} received ${EARLY_BIRD_AMOUNT} ${assetKey}`);
-
-          // Send Early Access Bonus terms email (non-blocking)
-          sendEarlyAccessBonusEmail(normalizedEmail, {
-            clientName: name || 'Client',
-            bonusAmount: String(EARLY_BIRD_AMOUNT),
-            bonusAsset: assetKey,
-            unlockThreshold: '500',
-            expiryDays: String(EARLY_BIRD_EXPIRY_DAYS),
-            language: language || 'en',
-          }).catch(err => console.error('Early access bonus email error:', err));
-        } else {
-          await redis.decr("campaign:earlybird:count");
-          console.log(`⏰ Early Bird campaign full (${EARLY_BIRD_LIMIT}/${EARLY_BIRD_LIMIT})`);
-        }
-      } catch (ebError) {
-        console.error("Early Bird campaign error (non-blocking):", ebError);
-      }
-    }
 
     // ══════════════════════════════════════════════════════════════
     // SEND VERIFICATION EMAIL WITH CODE
@@ -297,16 +221,12 @@ export async function POST(request: NextRequest) {
       requiresEmailVerification: true,
       requiresWalletSetup: false, // Vault is auto-created
       vaultCreated: !!vaultId,
-      earlyBird: earlyBirdGranted ? {
-        granted: true,
-        amount: EARLY_BIRD_AMOUNT,
-        asset: EARLY_BIRD_ASSET,
-        transferable: false,
+      bonusInfo: {
         message: {
-          tr: `Tebrikler! 🎉 İlk ${EARLY_BIRD_LIMIT} kullanıcıdan biri olarak ${EARLY_BIRD_AMOUNT} ${EARLY_BIRD_ASSET} hediye kazandınız!`,
-          en: `Congratulations! 🎉 As one of the first ${EARLY_BIRD_LIMIT} users, you've earned ${EARLY_BIRD_AMOUNT} free ${EARLY_BIRD_ASSET}!`,
+          tr: 'İlk yatırımınızda hoşgeldin bonusu kazanın! (KYC + min $100)',
+          en: 'Earn a welcome bonus on your first deposit! (KYC + min $100)',
         },
-      } : undefined,
+      },
     });
 
   } catch (error: any) {

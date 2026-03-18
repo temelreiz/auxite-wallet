@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { sendDepositConfirmedEmail } from "@/lib/email-service";
+import {
+  calculateDepositBonus,
+  checkWelcomeBonusEligibility,
+  getWelcomeBonusAmount,
+  calculateReferralBonus,
+  grantBonus,
+  checkIpVelocity,
+  BONUS_CONFIG,
+} from "@/lib/metal-bonus-service";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -49,14 +58,8 @@ export async function POST(request: NextRequest) {
     let resultData: any;
 
     if (convertToAuxm) {
-      // AUXM'e çevir + bonus
-      const bonusPercent = amountUsd >= 10000 ? 15 : amountUsd >= 5000 ? 12 : amountUsd >= 1000 ? 10 : amountUsd >= 100 ? 5 : 0;
-      const bonusAmount = amountUsd * (bonusPercent / 100);
-
+      // AUXM'e çevir (no more AUXM bonus — bonuses are now metal-based)
       await redis.hincrbyfloat(balanceKey, "auxm", amountUsd);
-      if (bonusAmount > 0) {
-        await redis.hincrbyfloat(balanceKey, "bonusauxm", bonusAmount);
-      }
 
       transaction = {
         id: txId,
@@ -66,8 +69,6 @@ export async function POST(request: NextRequest) {
         amountUsd: amountUsd.toFixed(2),
         convertedTo: "AUXM",
         auxmReceived: amountUsd.toFixed(2),
-        bonusReceived: bonusAmount.toFixed(2),
-        bonusPercent,
         txHash: txHash || null,
         status: "completed",
         timestamp: Date.now(),
@@ -76,9 +77,7 @@ export async function POST(request: NextRequest) {
       resultData = {
         converted: true,
         auxmReceived: amountUsd,
-        bonusReceived: bonusAmount,
-        bonusPercent,
-        totalReceived: amountUsd + bonusAmount,
+        totalReceived: amountUsd,
       };
     } else {
       // Crypto olarak tut
@@ -102,6 +101,84 @@ export async function POST(request: NextRequest) {
         coin: coin.toUpperCase(),
         valueUsd: amountUsd,
       };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // METAL BONUS SYSTEM v2 — Deposit Bonus + Welcome Bonus + Referral
+    // ═══════════════════════════════════════════════════════════════
+    let bonusResults: any = {};
+
+    if (BONUS_CONFIG.enabled) {
+      // Get userId for bonus tracking
+      const userId = await redis.get(`user:address:${normalizedAddress}`) as string;
+
+      if (userId) {
+        // Get AUXS price for bonus calculation (default bonus asset)
+        let auxsPrice = 2.80;
+        try {
+          const priceRes2 = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/prices?chain=84532`);
+          const pd = await priceRes2.json();
+          auxsPrice = pd.basePrices?.AUXS || 2.80;
+        } catch {}
+
+        // IP velocity check
+        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+        const ipCheck = await checkIpVelocity(userId, ip);
+
+        if (ipCheck.allowed) {
+          // 1. DEPOSIT BONUS: 2% as AUXS bonus
+          if (amountUsd >= BONUS_CONFIG.minDepositForBonus) {
+            const depositBonus = calculateDepositBonus(amountUsd, auxsPrice);
+            if (depositBonus.bonusGrams > 0) {
+              const grant = await grantBonus(userId, 'deposit', 'AUXS', depositBonus.bonusGrams, depositBonus.bonusValueUsd);
+              if (grant.granted) {
+                bonusResults.depositBonus = { asset: 'AUXS', grams: grant.grantedGrams, valueUsd: depositBonus.bonusValueUsd };
+              }
+            }
+          }
+
+          // 2. WELCOME BONUS: 10 AUXS (KYC + first deposit >= $100)
+          if (amountUsd >= BONUS_CONFIG.minDepositForWelcome) {
+            const welcomeCheck = await checkWelcomeBonusEligibility(userId, normalizedAddress);
+            if (welcomeCheck.eligible) {
+              const welcomeBonus = getWelcomeBonusAmount(auxsPrice);
+              const grant = await grantBonus(userId, 'welcome', 'AUXS', welcomeBonus.bonusGrams, welcomeBonus.bonusValueUsd);
+              if (grant.granted) {
+                bonusResults.welcomeBonus = { asset: 'AUXS', grams: grant.grantedGrams, valueUsd: welcomeBonus.bonusValueUsd };
+              }
+            }
+          }
+
+          // 3. REFERRAL BONUS: 0.5% for both parties on first deposit
+          const referredBy = await redis.get(`referred-by:${normalizedAddress}`) as string;
+          const referralCredited = await redis.get(`user:${userId}:bonus:referralCredited`);
+          if (referredBy && !referralCredited) {
+            const refBonus = calculateReferralBonus(amountUsd, auxsPrice);
+            if (refBonus.bonusGrams > 0) {
+              // Referee gets bonus
+              const refGrant = await grantBonus(userId, 'referral', 'AUXS', refBonus.bonusGrams, refBonus.bonusValueUsd);
+
+              // Referrer gets bonus too
+              const referrerCode = typeof referredBy === 'string' ? referredBy : '';
+              if (referrerCode) {
+                const codeData = await redis.get(`referral-code:${referrerCode}`) as any;
+                const referrerAddress = codeData?.creatorAddress || codeData?.address;
+                if (referrerAddress) {
+                  const referrerId = await redis.get(`user:address:${referrerAddress.toLowerCase()}`) as string;
+                  if (referrerId) {
+                    await grantBonus(referrerId, 'referral', 'AUXS', refBonus.bonusGrams, refBonus.bonusValueUsd);
+                  }
+                }
+              }
+
+              await redis.set(`user:${userId}:bonus:referralCredited`, 'true');
+              if (refGrant.granted) {
+                bonusResults.referralBonus = { asset: 'AUXS', grams: refGrant.grantedGrams, valueUsd: refBonus.bonusValueUsd };
+              }
+            }
+          }
+        }
+      }
     }
 
     // Transaction kaydet
@@ -140,6 +217,7 @@ export async function POST(request: NextRequest) {
         ...resultData,
         status: "completed",
       },
+      bonus: Object.keys(bonusResults).length > 0 ? bonusResults : undefined,
       balances: updatedBalance,
     });
 

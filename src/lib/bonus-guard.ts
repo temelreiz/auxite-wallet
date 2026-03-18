@@ -1,20 +1,19 @@
 // src/lib/bonus-guard.ts
-// Bonus Asset Guard — Early Bird & Campaign bonus restrictions
+// Bonus Asset Guard — Liquidity Credit System v2
 // Rules:
-// 1. Bonus assets CANNOT be withdrawn
-// 2. Bonus assets CANNOT be transferred to another user
+// 1. Bonus assets CANNOT be withdrawn (respecting progressive unlock %)
+// 2. Bonus assets CANNOT be transferred (respecting progressive unlock %)
 // 3. Bonus assets CAN be converted between metals (stays as bonus)
-// 4. Bonus unlocks when user makes real purchases totaling 500 AUXS equivalent
+// 4. Bonus assets CAN be used for fee payment and yield participation
+// 5. Unlock: 30 days OR 5x trade volume (HYBRID, progressive)
 
 import { Redis } from "@upstash/redis";
+import { calculateUnlockPercent, BONUS_CONFIG } from "@/lib/metal-bonus-service";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
-
-// Unlock threshold: 500 AUXS or equivalent in other metals
-const UNLOCK_THRESHOLD_AUXS = 500;
 
 // All bonus-trackable assets
 const BONUS_ASSETS = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
@@ -44,100 +43,113 @@ export async function getAllBonusBalances(userId: string): Promise<Record<string
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// GET WITHDRAWABLE BALANCE — total balance minus bonus (locked) portion
+// GET WITHDRAWABLE BALANCE — factors in progressive unlock percentage
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function getWithdrawableBalance(userId: string, asset: string): Promise<{
   total: number;
   bonus: number;
+  lockedBonus: number;
+  unlockedBonus: number;
   withdrawable: number;
+  unlockPercent: number;
   isFullyLocked: boolean;
 }> {
   const assetUpper = asset.toUpperCase();
 
-  // Check if bonus is already unlocked
-  const unlocked = await isBonusUnlocked(userId);
+  // Get progressive unlock percentage
+  const { unlockPercent } = await calculateUnlockPercent(userId);
 
   const pipeline = redis.pipeline();
-  pipeline.get(`user:${userId}:balance:${assetUpper}`);
+  pipeline.get(`user:${userId}:balance:${assetUpper.toLowerCase()}`);
   pipeline.get(`user:${userId}:balance:bonus${assetUpper}`);
   const [total, bonus] = await pipeline.exec();
 
   const totalAmount = (total as number) || 0;
-  const bonusAmount = unlocked ? 0 : ((bonus as number) || 0);
-  const withdrawable = Math.max(0, totalAmount - bonusAmount);
+  const bonusAmount = (bonus as number) || 0;
+
+  // Progressive unlock: only (100 - unlockPercent)% of bonus is still locked
+  const lockedBonus = bonusAmount * (1 - unlockPercent / 100);
+  const unlockedBonus = bonusAmount - lockedBonus;
+  const withdrawable = Math.max(0, totalAmount - lockedBonus);
 
   return {
     total: totalAmount,
     bonus: bonusAmount,
+    lockedBonus,
+    unlockedBonus,
     withdrawable,
+    unlockPercent,
     isFullyLocked: withdrawable <= 0 && totalAmount > 0,
   };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CHECK TRANSFER ALLOWED — bonus assets cannot be transferred
+// CHECK TRANSFER ALLOWED — bonus assets cannot be transferred (progressive)
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function checkTransferAllowed(userId: string, asset: string, amount: number): Promise<{
   allowed: boolean;
   maxTransferable: number;
   bonusLocked: number;
+  unlockPercent: number;
   message?: { tr: string; en: string };
 }> {
   const assetUpper = asset.toUpperCase();
 
-  // Only metal assets can have bonus locks
   if (!BONUS_ASSETS.includes(assetUpper)) {
-    return { allowed: true, maxTransferable: amount, bonusLocked: 0 };
+    return { allowed: true, maxTransferable: amount, bonusLocked: 0, unlockPercent: 100 };
   }
 
-  const { total, bonus, withdrawable } = await getWithdrawableBalance(userId, assetUpper);
+  const { withdrawable, lockedBonus, unlockPercent } = await getWithdrawableBalance(userId, assetUpper);
 
   if (amount <= withdrawable) {
-    return { allowed: true, maxTransferable: withdrawable, bonusLocked: bonus };
+    return { allowed: true, maxTransferable: withdrawable, bonusLocked: lockedBonus, unlockPercent };
   }
 
   return {
     allowed: false,
     maxTransferable: withdrawable,
-    bonusLocked: bonus,
+    bonusLocked: lockedBonus,
+    unlockPercent,
     message: {
-      tr: `${bonus.toFixed(4)} ${assetUpper} bonus olarak kilitlidir ve transfer edilemez. Transfer edilebilir bakiye: ${withdrawable.toFixed(4)} ${assetUpper}`,
-      en: `${bonus.toFixed(4)} ${assetUpper} is locked as bonus and cannot be transferred. Transferable balance: ${withdrawable.toFixed(4)} ${assetUpper}`,
+      tr: `${lockedBonus.toFixed(4)} ${assetUpper} bonus olarak kilitlidir (%${(100 - unlockPercent).toFixed(0)} kilitli). Transfer edilebilir: ${withdrawable.toFixed(4)} ${assetUpper}`,
+      en: `${lockedBonus.toFixed(4)} ${assetUpper} is locked as bonus (${(100 - unlockPercent).toFixed(0)}% locked). Transferable: ${withdrawable.toFixed(4)} ${assetUpper}`,
     },
   };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CHECK WITHDRAW ALLOWED — bonus assets cannot be withdrawn
+// CHECK WITHDRAW ALLOWED — bonus assets cannot be withdrawn (progressive)
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function checkWithdrawAllowed(userId: string, asset: string, amount: number): Promise<{
   allowed: boolean;
   maxWithdrawable: number;
   bonusLocked: number;
+  unlockPercent: number;
   message?: { tr: string; en: string };
 }> {
   const assetUpper = asset.toUpperCase();
 
   if (!BONUS_ASSETS.includes(assetUpper)) {
-    return { allowed: true, maxWithdrawable: amount, bonusLocked: 0 };
+    return { allowed: true, maxWithdrawable: amount, bonusLocked: 0, unlockPercent: 100 };
   }
 
-  const { withdrawable, bonus } = await getWithdrawableBalance(userId, assetUpper);
+  const { withdrawable, lockedBonus, unlockPercent } = await getWithdrawableBalance(userId, assetUpper);
 
   if (amount <= withdrawable) {
-    return { allowed: true, maxWithdrawable: withdrawable, bonusLocked: bonus };
+    return { allowed: true, maxWithdrawable: withdrawable, bonusLocked: lockedBonus, unlockPercent };
   }
 
   return {
     allowed: false,
     maxWithdrawable: withdrawable,
-    bonusLocked: bonus,
+    bonusLocked: lockedBonus,
+    unlockPercent,
     message: {
-      tr: `${bonus.toFixed(4)} ${assetUpper} bonus olarak kilitlidir ve çekilemez. Çekilebilir bakiye: ${withdrawable.toFixed(4)} ${assetUpper}`,
-      en: `${bonus.toFixed(4)} ${assetUpper} is locked as bonus and cannot be withdrawn. Withdrawable balance: ${withdrawable.toFixed(4)} ${assetUpper}`,
+      tr: `${lockedBonus.toFixed(4)} ${assetUpper} bonus olarak kilitlidir (%${(100 - unlockPercent).toFixed(0)} kilitli). Çekilebilir: ${withdrawable.toFixed(4)} ${assetUpper}`,
+      en: `${lockedBonus.toFixed(4)} ${assetUpper} is locked as bonus (${(100 - unlockPercent).toFixed(0)}% locked). Withdrawable: ${withdrawable.toFixed(4)} ${assetUpper}`,
     },
   };
 }
@@ -157,16 +169,11 @@ export async function handleBonusConvert(
   const fromUpper = fromAsset.toUpperCase();
   const toUpper = toAsset.toUpperCase();
 
-  // Check if bonus is already unlocked
-  const unlocked = await isBonusUnlocked(userId);
-  if (unlocked) return;
-
   const bonusFrom = await getBonusBalance(userId, fromUpper);
   if (bonusFrom <= 0) return;
 
   // Calculate how much of the converted amount was bonus
-  const totalFrom = ((await redis.get(`user:${userId}:balance:${fromUpper}`)) as number) || 0;
-  // After conversion, totalFrom has already been reduced, so we use the pre-conversion total
+  const totalFrom = ((await redis.get(`user:${userId}:balance:${fromUpper.toLowerCase()}`)) as number) || 0;
   const preConversionTotal = totalFrom + fromAmount;
   const bonusRatio = Math.min(1, bonusFrom / preConversionTotal);
   const bonusPortionFrom = fromAmount * bonusRatio;
@@ -184,7 +191,42 @@ export async function handleBonusConvert(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// RECORD PURCHASE — track cumulative purchases for unlock threshold
+// RECORD VOLUME — track cumulative trade volume for hybrid unlock
+// (Replaces old recordPurchase with AUXS threshold)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export async function recordVolume(
+  userId: string,
+  amountUsd: number
+): Promise<{
+  currentVolumeUsd: number;
+  unlockPercent: number;
+  justFullyUnlocked: boolean;
+}> {
+  // Import from metal-bonus-service to avoid circular deps
+  const { recordVolume: doRecordVolume } = await import("@/lib/metal-bonus-service");
+  const newTotal = await doRecordVolume(userId, amountUsd);
+
+  const unlock = await calculateUnlockPercent(userId);
+  const justFullyUnlocked = unlock.unlockPercent >= 100;
+
+  // If fully unlocked, zero out all bonus balances
+  if (justFullyUnlocked) {
+    const wasUnlocked = await redis.get(`user:${userId}:bonus:unlocked`);
+    if (wasUnlocked !== true && wasUnlocked !== "true") {
+      await fullUnlock(userId);
+    }
+  }
+
+  return {
+    currentVolumeUsd: newTotal,
+    unlockPercent: unlock.unlockPercent,
+    justFullyUnlocked,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BACKWARD COMPAT: recordPurchase wrapper (delegates to recordVolume)
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function recordPurchase(
@@ -197,47 +239,20 @@ export async function recordPurchase(
   unlockThreshold: number;
   justUnlocked: boolean;
 }> {
-  const metalUpper = metal.toUpperCase();
-
-  // Get AUXS price to calculate equivalent
-  let auxsPrice = 2.90; // fallback
-  try {
-    const { getTokenPrices } = await import("@/lib/v6-token-service");
-    const auxsPrices = await getTokenPrices("AUXS");
-    auxsPrice = auxsPrices.askPerGram || 2.90;
-  } catch {}
-
-  // Calculate AUXS equivalent of this purchase
-  const purchaseValueUsd = amountGrams * pricePerGram;
-  const auxsEquivalent = purchaseValueUsd / auxsPrice;
-
-  // Increment cumulative purchases
-  const key = `user:${userId}:purchases:auxsEquiv`;
-  const prev = ((await redis.get(key)) as number) || 0;
-  const newTotal = prev + auxsEquivalent;
-  await redis.set(key, newTotal);
-
-  // Check if threshold just crossed
-  const wasUnlocked = prev >= UNLOCK_THRESHOLD_AUXS;
-  const isNowUnlocked = newTotal >= UNLOCK_THRESHOLD_AUXS;
-  const justUnlocked = !wasUnlocked && isNowUnlocked;
-
-  if (justUnlocked) {
-    await unlockBonus(userId);
-  }
-
+  const amountUsd = amountGrams * pricePerGram;
+  const result = await recordVolume(userId, amountUsd);
   return {
-    totalPurchasedAuxsEquiv: newTotal,
-    unlockThreshold: UNLOCK_THRESHOLD_AUXS,
-    justUnlocked,
+    totalPurchasedAuxsEquiv: result.currentVolumeUsd,
+    unlockThreshold: 0, // deprecated
+    justUnlocked: result.justFullyUnlocked,
   };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// UNLOCK BONUS — remove all bonus locks for a user
+// FULL UNLOCK — zero out all bonus locks when 100% unlocked
 // ═══════════════════════════════════════════════════════════════════════════
 
-async function unlockBonus(userId: string): Promise<void> {
+async function fullUnlock(userId: string): Promise<void> {
   const pipeline = redis.pipeline();
 
   for (const asset of BONUS_ASSETS) {
@@ -248,23 +263,22 @@ async function unlockBonus(userId: string): Promise<void> {
 
   await pipeline.exec();
 
-  // Record unlock event
   await redis.lpush(
     `user:${userId}:transactions`,
     JSON.stringify({
       type: "bonus",
       subtype: "unlock",
-      description: `Bonus unlocked! You've reached ${UNLOCK_THRESHOLD_AUXS} AUXS in purchases. All bonus assets are now fully available.`,
-      descriptionTr: `Bonus kilidi açıldı! ${UNLOCK_THRESHOLD_AUXS} AUXS değerinde alım yaptınız. Tüm bonus varlıklarınız artık serbesttir.`,
+      description: "Bonus fully unlocked! All bonus assets are now freely available.",
+      descriptionTr: "Bonus kilidi tamamen açıldı! Tüm bonus varlıklarınız artık serbesttir.",
       timestamp: new Date().toISOString(),
     })
   );
 
-  console.log(`🔓 Bonus UNLOCKED for user ${userId} — reached ${UNLOCK_THRESHOLD_AUXS} AUXS threshold`);
+  console.log(`🔓 Bonus FULLY UNLOCKED for user ${userId}`);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// IS BONUS UNLOCKED — check if user has reached the threshold
+// IS BONUS UNLOCKED — check if user has fully unlocked
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function isBonusUnlocked(userId: string): Promise<boolean> {
@@ -273,38 +287,40 @@ export async function isBonusUnlocked(userId: string): Promise<boolean> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// GET BONUS STATUS — full status for UI display
+// GET BONUS STATUS — full status for UI display (v2 with progressive)
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function getBonusStatus(userId: string): Promise<{
   hasBonus: boolean;
   unlocked: boolean;
   bonusBalances: Record<string, number>;
-  totalPurchasedAuxsEquiv: number;
-  unlockThreshold: number;
-  progressPercent: number;
-  remainingToUnlock: number;
+  unlockPercent: number;
+  unlockMethod: 'time' | 'volume' | 'none';
+  daysRemaining: number;
+  volumeProgress: number;
+  volumeRequired: number;
+  currentVolumeUsd: number;
   message: { tr: string; en: string };
 }> {
   const bonusBalances = await getAllBonusBalances(userId);
   const hasBonus = Object.values(bonusBalances).some(v => v > 0);
   const unlocked = await isBonusUnlocked(userId);
 
-  const totalPurchased = ((await redis.get(`user:${userId}:purchases:auxsEquiv`)) as number) || 0;
-  const progressPercent = Math.min(100, (totalPurchased / UNLOCK_THRESHOLD_AUXS) * 100);
-  const remaining = Math.max(0, UNLOCK_THRESHOLD_AUXS - totalPurchased);
+  const unlock = await calculateUnlockPercent(userId);
+  const volumeRequired = unlock.totalBonusValueUsd * BONUS_CONFIG.volumeMultiplier;
 
   let message: { tr: string; en: string };
 
-  if (unlocked) {
+  if (unlocked || unlock.unlockPercent >= 100) {
     message = {
       tr: "Bonus varlıklarınızın kilidi açılmıştır. Tüm varlıklarınızı serbestçe kullanabilirsiniz.",
       en: "Your bonus assets are unlocked. You can freely use all your assets.",
     };
   } else if (hasBonus) {
+    const daysLeft = Math.max(0, BONUS_CONFIG.unlockDays - unlock.daysElapsed);
     message = {
-      tr: `Bonus varlıklarınız kilitlidir. ${remaining.toFixed(0)} AUXS değerinde daha alım yaparak kilidi açabilirsiniz. (%${progressPercent.toFixed(0)} tamamlandı)`,
-      en: `Your bonus assets are locked. Purchase ${remaining.toFixed(0)} AUXS worth more to unlock. (${progressPercent.toFixed(0)}% complete)`,
+      tr: `Bonus varlıklarınız %${unlock.unlockPercent.toFixed(0)} açık. ${daysLeft.toFixed(0)} gün kaldı veya $${(volumeRequired - unlock.currentVolumeUsd).toFixed(0)} daha işlem yapın.`,
+      en: `Your bonus assets are ${unlock.unlockPercent.toFixed(0)}% unlocked. ${daysLeft.toFixed(0)} days remaining or trade $${(volumeRequired - unlock.currentVolumeUsd).toFixed(0)} more.`,
     };
   } else {
     message = { tr: "", en: "" };
@@ -312,12 +328,14 @@ export async function getBonusStatus(userId: string): Promise<{
 
   return {
     hasBonus,
-    unlocked,
+    unlocked: unlocked || unlock.unlockPercent >= 100,
     bonusBalances,
-    totalPurchasedAuxsEquiv: totalPurchased,
-    unlockThreshold: UNLOCK_THRESHOLD_AUXS,
-    progressPercent,
-    remainingToUnlock: remaining,
+    unlockPercent: unlock.unlockPercent,
+    unlockMethod: unlock.timeProgress >= unlock.volumeProgress ? 'time' : 'volume',
+    daysRemaining: Math.max(0, BONUS_CONFIG.unlockDays - unlock.daysElapsed),
+    volumeProgress: unlock.volumeProgress,
+    volumeRequired,
+    currentVolumeUsd: unlock.currentVolumeUsd,
     message,
   };
 }
