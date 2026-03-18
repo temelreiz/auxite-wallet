@@ -361,14 +361,18 @@ export async function checkIpVelocity(
 ): Promise<{ allowed: boolean; reason?: string }> {
   const key = `bonus:ip:${ip}:users`;
 
-  // Add user to IP set
-  await redis.sadd(key, userId);
-  await redis.expire(key, BONUS_CONFIG.ipWindowHours * 3600);
+  // Track users per IP using a simple list approach
+  const existing = (await redis.get(key) as string) || '';
+  const users = existing ? existing.split(',').filter(Boolean) : [];
 
-  // Check count
-  const count = await redis.scard(key);
-  if (count > BONUS_CONFIG.maxAccountsPerIp) {
-    return { allowed: false, reason: `Too many accounts from same IP (${count})` };
+  if (!users.includes(userId)) {
+    users.push(userId);
+    await redis.set(key, users.join(','));
+    await redis.expire(key, BONUS_CONFIG.ipWindowHours * 3600);
+  }
+
+  if (users.length > BONUS_CONFIG.maxAccountsPerIp) {
+    return { allowed: false, reason: `Too many accounts from same IP (${users.length})` };
   }
 
   return { allowed: true };
