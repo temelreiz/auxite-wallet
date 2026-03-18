@@ -1609,3 +1609,212 @@ export async function sendEarlyAccessBonusEmail(
 
   return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(emailContent, t.desk, lang) });
 }
+
+
+// ═══════════════════════════════════════════════════════════════
+// CAMPAIGN WELCOME EMAIL — Liquidity Credits Programme
+// Sent after successful registration
+// ═══════════════════════════════════════════════════════════════
+
+export async function sendCampaignWelcomeEmail(
+  to: string,
+  data: {
+    clientName?: string;
+    language?: string;
+  }
+) {
+  const lang = data.language || 'en';
+  const name = data.clientName || 'Client';
+
+  const content: Record<string, Record<string, string>> = {
+    en: {
+      subject: 'Welcome to Auxite — Liquidity Credits Programme',
+      greeting: `Dear ${name},`,
+      intro: 'Thank you for registering with Auxite. You are now enrolled in our Liquidity Credits Programme, designed to reward early participants of the platform.',
+      programTitle: 'PROGRAMME DETAILS',
+      welcomeBonus: 'Welcome Bonus',
+      welcomeBonusVal: '10 AUXS (Silver Credits)',
+      welcomeBonusCond: 'Credited upon KYC verification + first deposit of $100 or more',
+      depositBonus: 'Deposit Bonus',
+      depositBonusVal: '2% in metal credits on each qualifying deposit',
+      referralBonus: 'Referral Bonus',
+      referralBonusVal: "0.5% of referred user's first deposit",
+      conditionsTitle: 'UNLOCK CONDITIONS',
+      cond1: 'Liquidity Credits are non-transferable until unlock conditions are met.',
+      cond2: 'Credits unlock after 30 calendar days from issuance, OR upon reaching 5x the credited amount in verified trading volume.',
+      cond3: 'Once unlocked, credits convert to fully transferable metal holdings in your custody account.',
+      nextSteps: 'NEXT STEPS',
+      step1: '1. Complete your identity verification (KYC)',
+      step2: '2. Make your first deposit ($100 minimum)',
+      step3: '3. Receive your 10 AUXS Welcome Bonus automatically',
+      closing: 'This programme is limited to the first 50 qualifying participants. Terms are subject to modification at the discretion of Auxite.',
+      cta: 'Access Your Vault',
+      desk: 'Auxite Client Onboarding',
+    },
+    tr: {
+      subject: 'Auxite\'e Hoş Geldiniz — Likidite Kredileri Programı',
+      greeting: `Sayın ${name},`,
+      intro: 'Auxite\'e kaydolduğunuz için teşekkür ederiz. Artık platformun erken katılımcılarını ödüllendirmek için tasarlanmış Likidite Kredileri Programımıza kayıtlısınız.',
+      programTitle: 'PROGRAM DETAYLARI',
+      welcomeBonus: 'Hoş Geldin Bonusu',
+      welcomeBonusVal: '10 AUXS (Gümüş Kredisi)',
+      welcomeBonusCond: 'KYC doğrulaması + 100$ veya üzeri ilk yatırım sonrası hesabınıza tanımlanır',
+      depositBonus: 'Yatırım Bonusu',
+      depositBonusVal: 'Her nitelikli yatırımda %2 metal kredisi',
+      referralBonus: 'Referans Bonusu',
+      referralBonusVal: 'Referans edilen kullanıcının ilk yatırımının %0,5\'i',
+      conditionsTitle: 'KİLİT AÇMA KOŞULLARI',
+      cond1: 'Likidite Kredileri, kilit açma koşulları karşılanana kadar transfer edilemez.',
+      cond2: 'Krediler, verilme tarihinden 30 takvim günü sonra VEYA kredi tutarının 5 katı doğrulanmış işlem hacmine ulaşıldığında açılır.',
+      cond3: 'Açıldığında, krediler saklama hesabınızdaki tam transfer edilebilir metal varlıklarına dönüşür.',
+      nextSteps: 'SONRAKİ ADIMLAR',
+      step1: '1. Kimlik doğrulamanızı (KYC) tamamlayın',
+      step2: '2. İlk yatırımınızı yapın (minimum 100$)',
+      step3: '3. 10 AUXS Hoş Geldin Bonusunuzu otomatik olarak alın',
+      closing: 'Bu program ilk 50 nitelikli katılımcıyla sınırlıdır. Koşullar Auxite\'in takdirine bağlı olarak değiştirilebilir.',
+      cta: 'Kasanıza Erişin',
+      desk: 'Auxite Müşteri Kabul Masası',
+    },
+    de: {
+      subject: 'Willkommen bei Auxite — Liquiditätskredite-Programm',
+      greeting: `Sehr geehrte/r ${name},`,
+      intro: 'Vielen Dank für Ihre Registrierung bei Auxite. Sie sind jetzt in unser Liquiditätskredite-Programm aufgenommen, das frühe Teilnehmer der Plattform belohnt.',
+      programTitle: 'PROGRAMMDETAILS',
+      welcomeBonus: 'Willkommensbonus',
+      welcomeBonusVal: '10 AUXS (Silberkredite)',
+      welcomeBonusCond: 'Gutschrift nach KYC-Verifizierung + erste Einzahlung von 100$ oder mehr',
+      depositBonus: 'Einzahlungsbonus',
+      depositBonusVal: '2% Metallkredite bei jeder qualifizierenden Einzahlung',
+      referralBonus: 'Empfehlungsbonus',
+      referralBonusVal: '0,5% der ersten Einzahlung des empfohlenen Benutzers',
+      conditionsTitle: 'FREISCHALTBEDINGUNGEN',
+      cond1: 'Liquiditätskredite sind bis zur Erfüllung der Freischaltbedingungen nicht übertragbar.',
+      cond2: 'Kredite werden nach 30 Kalendertagen ab Ausstellung ODER bei Erreichen des 5-fachen des gutgeschriebenen Betrags im verifizierten Handelsvolumen freigeschaltet.',
+      cond3: 'Nach der Freischaltung werden die Kredite in vollständig übertragbare Metallbestände in Ihrem Verwahrungskonto umgewandelt.',
+      nextSteps: 'NÄCHSTE SCHRITTE',
+      step1: '1. Identitätsverifizierung (KYC) abschließen',
+      step2: '2. Erste Einzahlung tätigen (Minimum 100$)',
+      step3: '3. 10 AUXS Willkommensbonus automatisch erhalten',
+      closing: 'Dieses Programm ist auf die ersten 50 qualifizierenden Teilnehmer begrenzt.',
+      cta: 'Auf Ihr Depot zugreifen',
+      desk: 'Auxite Kunden-Onboarding',
+    },
+    fr: {
+      subject: 'Bienvenue chez Auxite — Programme de Crédits de Liquidité',
+      greeting: `Cher/Chère ${name},`,
+      intro: 'Merci de vous être inscrit(e) chez Auxite. Vous êtes désormais inscrit(e) à notre Programme de Crédits de Liquidité, conçu pour récompenser les premiers participants de la plateforme.',
+      programTitle: 'DÉTAILS DU PROGRAMME',
+      welcomeBonus: 'Bonus de bienvenue',
+      welcomeBonusVal: '10 AUXS (Crédits Argent)',
+      welcomeBonusCond: 'Crédité après vérification KYC + premier dépôt de 100$ ou plus',
+      depositBonus: 'Bonus de dépôt',
+      depositBonusVal: '2% en crédits métal sur chaque dépôt qualifiant',
+      referralBonus: 'Bonus de parrainage',
+      referralBonusVal: "0,5% du premier dépôt de l'utilisateur parrainé",
+      conditionsTitle: 'CONDITIONS DE DÉBLOCAGE',
+      cond1: 'Les Crédits de Liquidité ne sont pas transférables tant que les conditions de déblocage ne sont pas remplies.',
+      cond2: "Les crédits sont débloqués après 30 jours calendaires, OU lorsque le volume de trading vérifié atteint 5x le montant crédité.",
+      cond3: 'Une fois débloqués, les crédits sont convertis en avoirs métalliques entièrement transférables.',
+      nextSteps: 'PROCHAINES ÉTAPES',
+      step1: "1. Complétez votre vérification d'identité (KYC)",
+      step2: '2. Effectuez votre premier dépôt (minimum 100$)',
+      step3: '3. Recevez automatiquement votre Bonus de 10 AUXS',
+      closing: 'Ce programme est limité aux 50 premiers participants qualifiants.',
+      cta: 'Accéder à votre coffre',
+      desk: 'Auxite Accueil Client',
+    },
+    ar: {
+      subject: 'مرحباً بك في Auxite — برنامج ائتمانات السيولة',
+      greeting: `عزيزي/عزيزتي ${name}،`,
+      intro: 'شكراً لتسجيلك في Auxite. أنت الآن مسجل في برنامج ائتمانات السيولة الخاص بنا، المصمم لمكافأة المشاركين الأوائل في المنصة.',
+      programTitle: 'تفاصيل البرنامج',
+      welcomeBonus: 'مكافأة الترحيب',
+      welcomeBonusVal: '10 AUXS (ائتمانات فضية)',
+      welcomeBonusCond: 'تُضاف بعد التحقق من الهوية + أول إيداع بقيمة 100$ أو أكثر',
+      depositBonus: 'مكافأة الإيداع',
+      depositBonusVal: '2% ائتمانات معدنية على كل إيداع مؤهل',
+      referralBonus: 'مكافأة الإحالة',
+      referralBonusVal: '0.5% من أول إيداع للمستخدم المُحال',
+      conditionsTitle: 'شروط الفتح',
+      cond1: 'ائتمانات السيولة غير قابلة للتحويل حتى يتم استيفاء شروط الفتح.',
+      cond2: 'يتم فتح الائتمانات بعد 30 يوماً تقويمياً من الإصدار، أو عند الوصول إلى 5 أضعاف المبلغ المُضاف في حجم التداول.',
+      cond3: 'بمجرد الفتح، تتحول الائتمانات إلى حيازات معدنية قابلة للتحويل بالكامل.',
+      nextSteps: 'الخطوات التالية',
+      step1: '1. أكمل التحقق من هويتك (KYC)',
+      step2: '2. قم بإيداعك الأول (الحد الأدنى 100$)',
+      step3: '3. احصل على مكافأة الترحيب 10 AUXS تلقائياً',
+      closing: 'هذا البرنامج محدود لأول 50 مشاركاً مؤهلاً.',
+      cta: 'الوصول إلى خزنتك',
+      desk: 'مكتب استقبال العملاء في Auxite',
+    },
+    ru: {
+      subject: 'Добро пожаловать в Auxite — Программа ликвидных кредитов',
+      greeting: `Уважаемый/ая ${name},`,
+      intro: 'Благодарим вас за регистрацию в Auxite. Теперь вы зарегистрированы в нашей Программе ликвидных кредитов, предназначенной для поощрения ранних участников платформы.',
+      programTitle: 'ДЕТАЛИ ПРОГРАММЫ',
+      welcomeBonus: 'Приветственный бонус',
+      welcomeBonusVal: '10 AUXS (серебряные кредиты)',
+      welcomeBonusCond: 'Зачисляется после верификации KYC + первый депозит от 100$',
+      depositBonus: 'Бонус за депозит',
+      depositBonusVal: '2% в металлических кредитах на каждый квалифицирующий депозит',
+      referralBonus: 'Реферальный бонус',
+      referralBonusVal: '0,5% от первого депозита приглашённого пользователя',
+      conditionsTitle: 'УСЛОВИЯ РАЗБЛОКИРОВКИ',
+      cond1: 'Ликвидные кредиты не подлежат передаче до выполнения условий разблокировки.',
+      cond2: 'Кредиты разблокируются через 30 календарных дней ИЛИ при достижении 5-кратного объёма проверенных торгов.',
+      cond3: 'После разблокировки кредиты конвертируются в полностью передаваемые металлические активы.',
+      nextSteps: 'СЛЕДУЮЩИЕ ШАГИ',
+      step1: '1. Завершите верификацию личности (KYC)',
+      step2: '2. Сделайте первый депозит (минимум 100$)',
+      step3: '3. Автоматически получите приветственный бонус 10 AUXS',
+      closing: 'Эта программа ограничена первыми 50 квалифицирующими участниками.',
+      cta: 'Доступ к хранилищу',
+      desk: 'Auxite Клиентский приём',
+    },
+  };
+
+  const t = content[lang] || content.en;
+
+  const emailContent = `
+    <p class="greeting">${t.greeting}</p>
+    <p>${t.intro}</p>
+
+    <h2>${t.programTitle}</h2>
+
+    <div class="detail-card">
+      <table>
+        <tr>
+          <td class="detail-label">${t.welcomeBonus}</td>
+          <td class="detail-value">${t.welcomeBonusVal}</td>
+        </tr>
+        <tr>
+          <td colspan="2" style="padding: 4px 18px 8px; font-size: 11px; color: #888; border-bottom: 1px solid #eee;">${t.welcomeBonusCond}</td>
+        </tr>
+        <tr>
+          <td class="detail-label">${t.depositBonus}</td>
+          <td class="detail-value">${t.depositBonusVal}</td>
+        </tr>
+        <tr>
+          <td class="detail-label">${t.referralBonus}</td>
+          <td class="detail-value">${t.referralBonusVal}</td>
+        </tr>
+      </table>
+    </div>
+
+    <h2>${t.conditionsTitle}</h2>
+    <p>${t.cond1}</p>
+    <p>${t.cond2}</p>
+    <p>${t.cond3}</p>
+
+    <h2>${t.nextSteps}</h2>
+    <p>${t.step1}</p>
+    <p>${t.step2}</p>
+    <p>${t.step3}</p>
+
+    <p class="notice">${t.closing}</p>
+
+    <a href="https://vault.auxite.io/dashboard" class="cta-button">${t.cta}</a>
+  `;
+
+  return sendEmail({ to, subject: t.subject, html: institutionalEmailWrapper(emailContent, t.desk, lang) });
+}

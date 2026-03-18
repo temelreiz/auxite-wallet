@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto, { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/email-service';
+import { sendCampaignWelcomeEmail } from '@/lib/email';
 import { authLimiter, withRateLimit } from '@/lib/security/rate-limiter';
 
 const redis = new Redis({
@@ -189,6 +190,14 @@ export async function POST(request: NextRequest) {
         language,
       },
     });
+
+    // ══════════════════════════════════════════════════════════════
+    // SEND CAMPAIGN WELCOME EMAIL (non-blocking)
+    // ══════════════════════════════════════════════════════════════
+    sendCampaignWelcomeEmail(normalizedEmail, {
+      clientName: name || normalizedEmail.split('@')[0],
+      language,
+    }).catch(err => console.error('Campaign welcome email failed:', err));
 
     // ══════════════════════════════════════════════════════════════
     // GENERATE JWT TOKEN
