@@ -1018,49 +1018,67 @@ export default function VaultPage() {
 
         {/* Bonus / Liquidity Credits Widget */}
         {bonusData?.hasBonus && !loading && (
-          <div className="bg-gradient-to-r from-[#BFA181]/5 to-[#BFA181]/10 dark:from-[#BFA181]/10 dark:to-[#BFA181]/5 rounded-xl p-4 border border-[#BFA181]/20">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🎁</span>
-                <span className="text-xs font-semibold text-[#BFA181] tracking-wider">LIQUIDITY CREDITS</span>
-              </div>
-              <span className={`text-xs font-semibold px-2 py-1 rounded-md ${
-                bonusData.unlocked
-                  ? 'bg-[#2F6F62]/15 text-[#2F6F62]'
-                  : 'bg-[#BFA181]/15 text-[#BFA181]'
-              }`}>
-                {bonusData.unlocked ? '✓ Unlocked' : `${bonusData.unlockPercent?.toFixed(0) || 0}% Unlocked`}
-              </span>
-            </div>
+          <div className="relative overflow-hidden rounded-2xl border border-[#BFA181]/30">
+            {/* Premium gradient background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1a1207] via-[#2a1f10] to-[#0D1421] dark:from-[#1a1207] dark:via-[#2a1f10] dark:to-[#0D1421]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#BFA181]/10 via-transparent to-[#D4B47A]/10" />
+            {/* Subtle shimmer line */}
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#BFA181]/50 to-transparent" />
 
-            {/* Bonus Balances */}
-            <div className="flex flex-wrap gap-3 mb-3">
-              {Object.entries(bonusData.bonusBalances || {}).map(([metal, grams]: [string, any]) => (
-                grams > 0 && (
-                  <div key={metal} className="flex items-center gap-1.5 bg-white/50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{Number(grams).toFixed(3)}g</span>
-                    <span className="text-[10px] text-[#BFA181] font-medium">{metal}-B</span>
+            <div className="relative p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[#BFA181]/20 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                    </svg>
                   </div>
-                )
-              ))}
-            </div>
-
-            {/* Unlock Progress Bar */}
-            {!bonusData.unlocked && (
-              <div>
-                <div className="w-full h-2 bg-stone-200 dark:bg-slate-700 rounded-full overflow-hidden mb-1.5">
-                  <div
-                    className="h-full bg-gradient-to-r from-[#BFA181] to-[#D4B47A] rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, bonusData.unlockPercent || 0)}%` }}
-                  />
+                  <div>
+                    <p className="text-xs font-bold text-[#BFA181] tracking-[0.15em]">LIQUIDITY CREDITS</p>
+                    <p className="text-[10px] text-[#BFA181]/60">Platform utility credits</p>
+                  </div>
                 </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                  {bonusData.daysRemaining > 0 && `${Math.ceil(bonusData.daysRemaining)} days remaining`}
-                  {bonusData.daysRemaining > 0 && bonusData.volumeProgress < 100 && ' · '}
-                  {bonusData.volumeProgress < 100 && `$${Math.max(0, (bonusData.volumeRequired || 0) - (bonusData.currentVolumeUsd || 0)).toFixed(0)} volume to unlock`}
-                </p>
+                <span className={`text-xs font-bold px-3 py-1.5 rounded-lg ${
+                  bonusData.unlocked
+                    ? 'bg-[#2F6F62]/20 text-[#2F6F62] border border-[#2F6F62]/30'
+                    : 'bg-[#BFA181]/15 text-[#BFA181] border border-[#BFA181]/20'
+                }`}>
+                  {bonusData.unlocked ? '✓ Unlocked' : `${bonusData.unlockPercent?.toFixed(0) || 0}%`}
+                </span>
               </div>
-            )}
+
+              {/* Bonus Balances */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {Object.entries(bonusData.bonusBalances || {}).map(([metal, grams]: [string, any]) => (
+                  grams > 0 && (
+                    <div key={metal} className="flex items-center gap-2 bg-white/5 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-[#BFA181]/10">
+                      <span className="text-sm font-bold text-white">{Number(grams).toFixed(3)}g</span>
+                      <span className="text-[10px] font-semibold text-[#BFA181]/80 tracking-wider">{metal}-B</span>
+                    </div>
+                  )
+                ))}
+              </div>
+
+              {/* Unlock Progress Bar */}
+              {!bonusData.unlocked && (
+                <div>
+                  <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden mb-2">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#BFA181] via-[#D4B47A] to-[#BFA181] rounded-full transition-all duration-700 shadow-[0_0_12px_rgba(191,161,129,0.4)]"
+                      style={{ width: `${Math.min(100, bonusData.unlockPercent || 0)}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] text-[#BFA181]/50">
+                      {bonusData.daysRemaining > 0 && `${Math.ceil(bonusData.daysRemaining)} days remaining`}
+                      {bonusData.daysRemaining > 0 && bonusData.volumeProgress < 100 && ' · '}
+                      {bonusData.volumeProgress < 100 && `$${Math.max(0, (bonusData.volumeRequired || 0) - (bonusData.currentVolumeUsd || 0)).toFixed(0)} volume to unlock`}
+                    </p>
+                    <p className="text-[10px] text-[#BFA181]/40">Trade or hold to unlock</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
