@@ -106,6 +106,9 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerificationDesc: "Verify via certificate number or QR code",
     noLiquidity: "No liquidity balance yet", total: "Total",
     structuredYield: "Structured Yield", yieldValue: "Yield Value",
+    kycRequired: "Identity Verification Required", kycRequiredDesc: "Complete KYC to unlock full trading limits",
+    kycPending: "KYC Under Review", kycPendingDesc: "Your verification is being reviewed",
+    kycAction: "Verify Now",
   },
   // ══════════════════════════════════════════════════════════════
   // TURKISH — "Teminatlı" → "Bloke" standardized, auxmPeg fixed
@@ -168,6 +171,9 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerificationDesc: "Sertifika numarası veya QR kod ile doğrulayın",
     noLiquidity: "Henüz likidite bakiyesi yok", total: "Toplam",
     structuredYield: "Yapılandırılmış Getiri", yieldValue: "Getiri Değeri",
+    kycRequired: "Kimlik Doğrulama Gerekli", kycRequiredDesc: "Tam işlem limitlerini açmak için KYC'yi tamamlayın",
+    kycPending: "KYC İnceleniyor", kycPendingDesc: "Doğrulamanız inceleniyor",
+    kycAction: "Doğrula",
   },
   // ══════════════════════════════════════════════════════════════
   // GERMAN
@@ -230,6 +236,9 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerificationDesc: "Verifizieren Sie per Zertifikatsnummer oder QR-Code",
     noLiquidity: "Noch kein Liquiditätssaldo", total: "Gesamt",
     structuredYield: "Strukturierter Ertrag", yieldValue: "Ertragswert",
+    kycRequired: "Identitätsprüfung erforderlich", kycRequiredDesc: "KYC abschließen für volle Handelslimits",
+    kycPending: "KYC wird überprüft", kycPendingDesc: "Ihre Verifizierung wird überprüft",
+    kycAction: "Jetzt verifizieren",
   },
   // ══════════════════════════════════════════════════════════════
   // FRENCH
@@ -292,6 +301,9 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerificationDesc: "Vérifiez par numéro de certificat ou code QR",
     noLiquidity: "Pas encore de solde de liquidité", total: "Total",
     structuredYield: "Rendement structuré", yieldValue: "Valeur du rendement",
+    kycRequired: "Vérification d'identité requise", kycRequiredDesc: "Complétez le KYC pour débloquer les limites",
+    kycPending: "KYC en cours d'examen", kycPendingDesc: "Votre vérification est en cours",
+    kycAction: "Vérifier",
   },
   // ══════════════════════════════════════════════════════════════
   // ARABIC
@@ -354,6 +366,9 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerificationDesc: "التحقق عبر رقم الشهادة أو رمز QR",
     noLiquidity: "لا يوجد رصيد سيولة بعد", total: "الإجمالي",
     structuredYield: "العائد المهيكل", yieldValue: "قيمة العائد",
+    kycRequired: "مطلوب التحقق من الهوية", kycRequiredDesc: "أكمل KYC لفتح حدود التداول",
+    kycPending: "KYC قيد المراجعة", kycPendingDesc: "يتم مراجعة التحقق الخاص بك",
+    kycAction: "تحقق الآن",
   },
   // ══════════════════════════════════════════════════════════════
   // RUSSIAN
@@ -416,6 +431,9 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerificationDesc: "Проверьте по номеру сертификата или QR-коду",
     noLiquidity: "Баланс ликвидности пока отсутствует", total: "Итого",
     structuredYield: "Структурированный доход", yieldValue: "Стоимость дохода",
+    kycRequired: "Требуется проверка личности", kycRequiredDesc: "Пройдите KYC для полных лимитов",
+    kycPending: "KYC на рассмотрении", kycPendingDesc: "Ваша верификация рассматривается",
+    kycAction: "Подтвердить",
   },
 };
 
@@ -446,6 +464,7 @@ export default function VaultPage() {
   const [showEncumberedModal, setShowEncumberedModal] = useState(false);
   const [encumberedBreakdown, setEncumberedBreakdown] = useState({ yieldPrograms: 0, pendingDelivery: 0, tradeSettlement: 0 });
   const [sellModal, setSellModal] = useState<{ open: boolean; metal: MetalHolding | null }>({ open: false, metal: null });
+  const [kycStatus, setKycStatus] = useState<'none' | 'pending' | 'verified'>('none');
   const [custodyStatus, setCustodyStatus] = useState<'active' | 'pending' | 'offline'>('offline');
   const [custodyProvider, setCustodyProvider] = useState<string>('');
   const [realVaultId, setRealVaultId] = useState<string | null>(null);
@@ -487,12 +506,13 @@ export default function VaultPage() {
     }
 
     try {
-      const [balanceRes, allocRes, priceRes, stakeRes, cryptoRes] = await Promise.all([
+      const [balanceRes, allocRes, priceRes, stakeRes, cryptoRes, profileRes] = await Promise.all([
         fetch(`/api/user/balance?address=${address}`),
         fetch(`/api/allocations?address=${address}`),
         fetch(`/api/prices?chain=84532`),
         fetch(`/api/stakes?address=${address}`),
         fetch(`/api/crypto`),
+        fetch(`/api/user/profile?address=${address}`),
       ]);
 
       const balanceData = await balanceRes.json().catch(() => ({ success: false, balances: {} }));
@@ -500,6 +520,11 @@ export default function VaultPage() {
       const priceData = await priceRes.json().catch(() => ({ success: false, basePrices: {} }));
       const stakeData = await stakeRes.json().catch(() => ({ success: false, stakes: [] }));
       const cryptoData = await cryptoRes.json().catch(() => ({}));
+      const profileData = await profileRes.json().catch(() => ({ kycStatus: 'not_started' }));
+
+      // KYC status
+      const kycSt = profileData.kycStatus || profileData.kycLevel || 'none';
+      setKycStatus(kycSt === 'approved' || kycSt === 'verified' || kycSt === 'enhanced' ? 'verified' : kycSt === 'pending' || kycSt === 'under_review' ? 'pending' : 'none');
 
       const metalSymbols = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
       const metalNames: Record<string, string> = {
@@ -628,6 +653,43 @@ export default function VaultPage() {
       <TopNav />
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+        {/* KYC Warning Banner */}
+        {kycStatus !== 'verified' && !loading && (
+          <Link href="/profile" className="block">
+            <div className={`flex items-center gap-3 p-4 rounded-xl border ${
+              kycStatus === 'pending'
+                ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/30'
+                : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30'
+            }`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                kycStatus === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-red-100 dark:bg-red-900/30'
+              }`}>
+                <svg className={`w-5 h-5 ${kycStatus === 'pending' ? 'text-amber-600' : 'text-red-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {kycStatus === 'pending'
+                    ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  }
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className={`text-sm font-semibold ${kycStatus === 'pending' ? 'text-amber-700 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {kycStatus === 'pending' ? t.kycPending : t.kycRequired}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {kycStatus === 'pending' ? t.kycPendingDesc : t.kycRequiredDesc}
+                </p>
+              </div>
+              <span className={`text-xs font-semibold px-3 py-1.5 rounded-lg ${
+                kycStatus === 'pending'
+                  ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                  : 'bg-[#BFA181]/15 text-[#BFA181]'
+              }`}>
+                {kycStatus === 'pending' ? '⏳' : t.kycAction}
+              </span>
+            </div>
+          </Link>
+        )}
+
         {/* Hero Card - Client Assets Under Custody */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-stone-200 dark:border-slate-800">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-2">
