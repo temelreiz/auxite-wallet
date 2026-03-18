@@ -520,10 +520,10 @@ export default function VaultPage() {
       const priceData = await priceRes.json().catch(() => ({ success: false, basePrices: {} }));
       const stakeData = await stakeRes.json().catch(() => ({ success: false, stakes: [] }));
       const cryptoData = await cryptoRes.json().catch(() => ({}));
-      const profileData = await profileRes.json().catch(() => ({ kycStatus: 'not_started' }));
+      const profileData = await profileRes.json().catch(() => ({ profile: { kycStatus: 'not_started' } }));
 
-      // KYC status
-      const kycSt = profileData.kycStatus || profileData.kycLevel || 'none';
+      // KYC status (API returns { profile: { kycStatus, kycLevel } })
+      const kycSt = profileData.profile?.kycStatus || profileData.profile?.kycLevel || 'none';
       setKycStatus(kycSt === 'approved' || kycSt === 'verified' || kycSt === 'enhanced' ? 'verified' : kycSt === 'pending' || kycSt === 'under_review' ? 'pending' : 'none');
 
       const metalSymbols = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
