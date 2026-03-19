@@ -1,249 +1,128 @@
-/**
- * Mobile Push Token Registration API
- * Stores Expo Push Tokens for mobile push notifications via FCM/APNs
- *
- * POST   - Register/update push token
- * DELETE - Remove push token (logout/unsubscribe)
- * GET    - Get registered tokens for user
- */
-
 import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/redis";
 
-export const dynamic = "force-dynamic";
-
-// Redis key pattern: push:mobile:{walletAddress}
-// Stores array of { token, platform, deviceName, createdAt, updatedAt }
-
-interface MobilePushToken {
-  token: string;
-  platform: "ios" | "android";
-  deviceName: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// ─── POST - Register push token ────────────────────────────────────────
-export async function POST(request: NextRequest) {
+// POST /api/push-token — Register Expo push token
+export async function POST(req: NextRequest) {
   try {
-    // Auth: wallet address from header or Bearer token
-    const walletAddress = request.headers.get("x-wallet-address");
-    const authHeader = request.headers.get("authorization");
-
-    let userId = walletAddress?.toLowerCase();
-
-    // If Bearer token provided, resolve to wallet address
-    if (!userId && authHeader?.startsWith("Bearer ")) {
-      const token = authHeader.slice(7);
-      // Look up user by auth token
-      const tokenUser = (await redis.get(`auth:token:${token}`)) as
-        | string
-        | null;
-      if (tokenUser) {
-        userId =
-          typeof tokenUser === "string"
-            ? JSON.parse(tokenUser).address?.toLowerCase()
-            : undefined;
-      }
-    }
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    const body = await request.json();
+    const body = await req.json();
     const { token, platform, deviceName } = body;
 
     if (!token) {
-      return NextResponse.json(
-        { error: "Push token is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Token required" }, { status: 400 });
     }
 
-    if (!platform || !["ios", "android"].includes(platform)) {
-      return NextResponse.json(
-        { error: "Valid platform (ios/android) is required" },
-        { status: 400 }
-      );
+    // Get wallet address from auth header or session
+    const authHeader = req.headers.get("authorization");
+    const sessionToken = authHeader?.replace("Bearer ", "");
+
+    if (!sessionToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get existing tokens
-    const key = `push:mobile:${userId}`;
-    const existingData = (await redis.get(key)) as string | null;
-    const tokens: MobilePushToken[] = existingData
-      ? JSON.parse(existingData)
-      : [];
+    // Look up wallet from session
+    const sessionData = await redis.get(`session:${sessionToken}`);
+    const session = typeof sessionData === "string" ? JSON.parse(sessionData) : sessionData;
+    const walletAddress = session?.walletAddress || session?.address;
 
-    const now = new Date().toISOString();
+    if (!walletAddress) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
 
-    // Check if token already exists
-    const existingIndex = tokens.findIndex((t) => t.token === token);
+    // Store push token
+    const tokenData = {
+      token,
+      platform: platform || "unknown",
+      deviceName: deviceName || "Unknown",
+      walletAddress,
+      registeredAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
 
-    if (existingIndex >= 0) {
-      // Update existing token
-      tokens[existingIndex] = {
-        ...tokens[existingIndex],
-        platform,
-        deviceName: deviceName || tokens[existingIndex].deviceName,
-        updatedAt: now,
-      };
-    } else {
-      // Add new token (max 5 devices per user)
-      if (tokens.length >= 5) {
-        // Remove oldest token
-        tokens.sort(
-          (a, b) =>
-            new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
-        );
-        tokens.shift();
-      }
+    const walletLower = walletAddress.toLowerCase();
 
-      tokens.push({
+    // Get existing tokens for this user
+    const existingData = await redis.get(`push:mobile:${walletLower}`) as string | null;
+    const existingTokens = existingData ? JSON.parse(existingData) : [];
+
+    // Check if token already registered
+    const tokenExists = existingTokens.some((t: { token: string }) => t.token === token);
+    if (!tokenExists) {
+      existingTokens.push({
         token,
-        platform,
-        deviceName: deviceName || "Unknown Device",
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-
-    await redis.set(key, JSON.stringify(tokens));
-
-    // Also add to global token index for broadcast notifications
-    await redis.sadd("push:mobile:all_users", userId);
-
-    return NextResponse.json({
-      success: true,
-      message: "Push token registered",
-      deviceCount: tokens.length,
-    });
-  } catch (error: any) {
-    console.error("Push token POST error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
-// ─── DELETE - Remove push token ────────────────────────────────────────
-export async function DELETE(request: NextRequest) {
-  try {
-    const walletAddress = request.headers.get("x-wallet-address");
-    const authHeader = request.headers.get("authorization");
-
-    let userId = walletAddress?.toLowerCase();
-
-    if (!userId && authHeader?.startsWith("Bearer ")) {
-      const token = authHeader.slice(7);
-      const tokenUser = (await redis.get(`auth:token:${token}`)) as
-        | string
-        | null;
-      if (tokenUser) {
-        userId =
-          typeof tokenUser === "string"
-            ? JSON.parse(tokenUser).address?.toLowerCase()
-            : undefined;
-      }
-    }
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    const { searchParams } = new URL(request.url);
-    const tokenToRemove = searchParams.get("token");
-
-    const key = `push:mobile:${userId}`;
-
-    if (tokenToRemove) {
-      // Remove specific token
-      const existingData = (await redis.get(key)) as string | null;
-      const tokens: MobilePushToken[] = existingData
-        ? JSON.parse(existingData)
-        : [];
-      const filtered = tokens.filter((t) => t.token !== tokenToRemove);
-      await redis.set(key, JSON.stringify(filtered));
-
-      // If no tokens left, remove from global index
-      if (filtered.length === 0) {
-        await redis.srem("push:mobile:all_users", userId);
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: "Push token removed",
-        deviceCount: filtered.length,
+        platform: platform || "unknown",
+        deviceName: deviceName || "Unknown",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
     } else {
-      // Remove all tokens for user
-      await redis.del(key);
-      await redis.srem("push:mobile:all_users", userId);
-
-      return NextResponse.json({
-        success: true,
-        message: "All push tokens removed",
-        deviceCount: 0,
-      });
+      // Update existing token's timestamp
+      const idx = existingTokens.findIndex((t: { token: string }) => t.token === token);
+      if (idx >= 0) existingTokens[idx].updatedAt = new Date().toISOString();
     }
-  } catch (error: any) {
-    console.error("Push token DELETE error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Save tokens for this wallet (format expo-push.ts expects)
+    await redis.set(`push:mobile:${walletLower}`, JSON.stringify(existingTokens));
+
+    // Add wallet to global users set (for broadcast)
+    await redis.sadd("push:mobile:all_users", walletLower);
+
+    console.log(`[Push Token] Registered: ${token.slice(0, 20)}... for ${walletAddress.slice(0, 10)}... (${platform}/${deviceName})`);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[Push Token] Error:", error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
 
-// ─── GET - Get registered tokens for user ──────────────────────────────
-export async function GET(request: NextRequest) {
+// DELETE /api/push-token — Remove push token on logout
+export async function DELETE(req: NextRequest) {
   try {
-    const walletAddress = request.headers.get("x-wallet-address");
-    const authHeader = request.headers.get("authorization");
+    const body = await req.json();
+    const { token } = body;
 
-    let userId = walletAddress?.toLowerCase();
+    if (!token) {
+      return NextResponse.json({ error: "Token required" }, { status: 400 });
+    }
 
-    if (!userId && authHeader?.startsWith("Bearer ")) {
-      const token = authHeader.slice(7);
-      const tokenUser = (await redis.get(`auth:token:${token}`)) as
-        | string
-        | null;
-      if (tokenUser) {
-        userId =
-          typeof tokenUser === "string"
-            ? JSON.parse(tokenUser).address?.toLowerCase()
-            : undefined;
+    // Get token data to find wallet
+    const tokenDataStr = await redis.get(`push:token:${token}`);
+    if (tokenDataStr) {
+      const tokenData = typeof tokenDataStr === "string" ? JSON.parse(tokenDataStr) : tokenDataStr;
+      const walletAddress = tokenData?.walletAddress;
+
+      if (walletAddress) {
+        const walletLower = walletAddress.toLowerCase();
+        const existingData = await redis.get(`push:mobile:${walletLower}`) as string | null;
+        if (existingData) {
+          const tokens = JSON.parse(existingData);
+          const filtered = tokens.filter((t: { token: string }) => t.token !== token);
+          if (filtered.length > 0) {
+            await redis.set(`push:mobile:${walletLower}`, JSON.stringify(filtered));
+          } else {
+            await redis.del(`push:mobile:${walletLower}`);
+            await redis.srem("push:mobile:all_users", walletLower);
+          }
+        }
       }
     }
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
+    console.log(`[Push Token] Removed: ${token.slice(0, 20)}...`);
 
-    const key = `push:mobile:${userId}`;
-    const existingData = (await redis.get(key)) as string | null;
-    const tokens: MobilePushToken[] = existingData
-      ? JSON.parse(existingData)
-      : [];
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[Push Token] Delete error:", error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
+}
 
-    return NextResponse.json({
-      success: true,
-      tokens: tokens.map((t) => ({
-        platform: t.platform,
-        deviceName: t.deviceName,
-        createdAt: t.createdAt,
-        updatedAt: t.updatedAt,
-        // Don't expose full token for security
-        tokenPreview: t.token.slice(0, 20) + "...",
-      })),
-      deviceCount: tokens.length,
-    });
-  } catch (error: any) {
-    console.error("Push token GET error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+// GET /api/push-token — Get push token count (for admin)
+export async function GET() {
+  try {
+    const count = await redis.scard("push:mobile:all_users");
+    return NextResponse.json({ count });
+  } catch (error) {
+    console.error("[Push Token] Count error:", error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
