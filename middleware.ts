@@ -29,8 +29,8 @@ function buildCsp() {
   
   // Production'da daha sıkı CSP
   const scriptSrc = isDev
-    ? "'self' 'unsafe-inline' 'unsafe-eval' https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com"
-    : "'self' 'unsafe-inline' https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com"; // Production'da unsafe-eval yok
+    ? "'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.sumsub.com https://challenges.cloudflare.com https://cdn.jsdelivr.net"
+    : "'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.sumsub.com https://challenges.cloudflare.com https://cdn.jsdelivr.net";
 
   return [
     "default-src 'self'",
@@ -38,11 +38,11 @@ function buildCsp() {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: blob: https:",
-    "frame-src 'self' https://api.sumsub.com https://in.sumsub.com https://*.sumsub.com",
-    "connect-src 'self' https: wss: https://api.auxite.io https://*.walletconnect.com https://*.walletconnect.org https://*.web3modal.org https://*.web3modal.com https://*.reown.com https://*.infura.io https://*.alchemy.com",
+    "frame-src 'self' https://*.sumsub.com https://*.google.com",
+    "connect-src 'self' https: wss:",
     "media-src 'self' blob:",
     "worker-src 'self' blob:",
-    "frame-ancestors 'none'", // Clickjacking koruması
+    "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
   ].join("; ");
