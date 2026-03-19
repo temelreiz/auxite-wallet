@@ -119,7 +119,8 @@ export async function DELETE(req: NextRequest) {
 // GET /api/push-token — Get push token count (for admin)
 export async function GET() {
   try {
-    const count = await redis.scard("push:mobile:all_users");
+    const members = await redis.smembers("push:mobile:all_users");
+    const count = members?.length || 0;
     return NextResponse.json({ count });
   } catch (error) {
     console.error("[Push Token] Count error:", error);
