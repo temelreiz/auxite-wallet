@@ -10,8 +10,8 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-// Admin session süresi (4 saat)
-const SESSION_TTL = 4 * 60 * 60;
+// Admin session süresi (2 saat - güvenlik için kısaltıldı)
+const SESSION_TTL = 2 * 60 * 60;
 
 // Admin addresses - ENV'den alınır
 const ADMIN_ADDRESSES = (process.env.ADMIN_ADDRESSES || "")
@@ -19,6 +19,21 @@ const ADMIN_ADDRESSES = (process.env.ADMIN_ADDRESSES || "")
   .split(",")
   .map((a) => a.trim())
   .filter(Boolean);
+
+// IP Whitelist - sadece bu IP'lerden admin erişimi
+const ADMIN_IP_WHITELIST = (process.env.ADMIN_IP_WHITELIST || "")
+  .split(",")
+  .map((ip) => ip.trim())
+  .filter(Boolean);
+
+/**
+ * Check if IP is whitelisted for admin access
+ */
+function isIPAllowed(ip: string): boolean {
+  // Whitelist boşsa tüm IP'lere izin ver (geriye uyumluluk)
+  if (ADMIN_IP_WHITELIST.length === 0) return true;
+  return ADMIN_IP_WHITELIST.includes(ip);
+}
 
 interface AdminSession {
   address: string;
@@ -63,14 +78,29 @@ export async function createAdminSession(
     return null;
   }
 
+  const ip = getClientIP(request);
+
+  // IP Whitelist kontrolü
+  if (!isIPAllowed(ip)) {
+    console.warn(`🚨 ADMIN LOGIN BLOCKED - IP not whitelisted: ${ip}`);
+    await redis.lpush("admin:audit:blocked", JSON.stringify({
+      address: address.toLowerCase(),
+      ip,
+      timestamp: Date.now(),
+      reason: "IP not whitelisted",
+      userAgent: request.headers.get("user-agent") || "unknown",
+    }));
+    return null;
+  }
+
   const token = generateSessionToken();
   const now = Date.now();
-  
+
   const session: AdminSession = {
     address: address.toLowerCase(),
     createdAt: now,
     expiresAt: now + SESSION_TTL * 1000,
-    ip: getClientIP(request),
+    ip,
     userAgent: request.headers.get("user-agent") || "unknown",
   };
 
@@ -78,7 +108,7 @@ export async function createAdminSession(
     ex: SESSION_TTL,
   });
 
-  // Log admin login
+  // Log admin login with full details
   await redis.lpush(
     "admin:audit:logins",
     JSON.stringify({
@@ -86,6 +116,7 @@ export async function createAdminSession(
       ip: session.ip,
       timestamp: now,
       action: "login",
+      userAgent: session.userAgent,
     })
   );
 
@@ -196,6 +227,19 @@ export async function requireAdmin(
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
 
+  // IP Whitelist kontrolü - session'dan önce
+  const ip = getClientIP(request);
+  if (!isIPAllowed(ip)) {
+    console.warn(`🚨 ADMIN ACCESS BLOCKED - IP not whitelisted: ${ip} on ${request.url}`);
+    await redis.lpush("admin:audit:blocked", JSON.stringify({
+      ip, timestamp: Date.now(), path: new URL(request.url).pathname, reason: "IP not whitelisted",
+    }));
+    return {
+      authorized: false,
+      response: NextResponse.json({ error: "Access denied" }, { status: 403 }),
+    };
+  }
+
   if (!token || token === "null" || token === "undefined") {
     return {
       authorized: false,
@@ -203,14 +247,9 @@ export async function requireAdmin(
     };
   }
 
-  // 🔒 SECURITY: Legacy ADMIN_SECRET bypass REMOVED
-  // All admin actions now require proper session authentication
-
   const validation = await validateAdminSession(token, request);
 
   if (!validation.valid) {
-    // 🔒 Log failed auth
-    const ip = getClientIP(request);
     console.warn(`🚨 FAILED ADMIN AUTH (requireAdmin): ${validation.error} from IP ${ip}`);
     return {
       authorized: false,
@@ -220,6 +259,18 @@ export async function requireAdmin(
       ),
     };
   }
+
+  // Tüm admin aksiyonlarını logla (method, path, body snippet)
+  try {
+    await redis.lpush("admin:audit:actions", JSON.stringify({
+      address: validation.address,
+      ip,
+      method: request.method,
+      path: new URL(request.url).pathname,
+      timestamp: Date.now(),
+    }));
+    await redis.ltrim("admin:audit:actions", 0, 4999); // Son 5000 aksiyon
+  } catch {}
 
   return { authorized: true, address: validation.address };
 }
