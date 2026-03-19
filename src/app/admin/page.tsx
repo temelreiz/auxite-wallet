@@ -6193,14 +6193,14 @@ export default function AdminDashboard() {
                       <div className="w-10 h-10 rounded-full bg-[#25D366]/15 flex items-center justify-center text-lg">📱</div>
                       <div>
                         <h3 className="font-semibold text-white">WhatsApp Numarası</h3>
-                        <p className="text-xs text-slate-500">Uluslararası format: ülke kodu + numara (örn: 905335062856)</p>
+                        <p className="text-xs text-slate-500">Uluslararası format: ülke kodu + numara (örn: 447520637591)</p>
                       </div>
                     </div>
                     <input
                       className="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500"
                       value={supportContactSettings.whatsappNumber}
                       onChange={(e) => setSupportContactSettings({ ...supportContactSettings, whatsappNumber: e.target.value })}
-                      placeholder="905335062856"
+                      placeholder="447520637591"
                     />
                     {supportContactSettings.whatsappNumber && (
                       <p className="text-xs text-slate-500 mt-2">

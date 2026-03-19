@@ -4,10 +4,10 @@ import { requireAdmin } from "@/lib/admin-auth";
 export const dynamic = 'force-dynamic';
 
 const DEFAULT_SETTINGS = {
-  whatsappNumber: '447520637591',
-  telegramLink: '',
+  whatsappNumber: '+447520637591',
+  telegramLink: 'https://t.me/auxite',
   supportEmail: 'support@auxite.io',
-  phoneNumber: '',
+  phoneNumber: '+447520637591',
   businessHours: 'Mon-Fri 9:00-18:00 CET',
 };
 
