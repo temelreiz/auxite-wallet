@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/redis";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET!;
 
 // POST /api/push-token — Register Expo push token
 export async function POST(req: NextRequest) {
@@ -11,21 +14,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Token required" }, { status: 400 });
     }
 
-    // Get wallet address from auth header or session
+    // Get JWT from auth header
     const authHeader = req.headers.get("authorization");
-    const sessionToken = authHeader?.replace("Bearer ", "");
+    const jwtToken = authHeader?.replace("Bearer ", "");
 
-    if (!sessionToken) {
+    if (!jwtToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Look up wallet from session
-    const sessionData = await redis.get(`session:${sessionToken}`);
-    const session = typeof sessionData === "string" ? JSON.parse(sessionData) : sessionData;
-    const walletAddress = session?.walletAddress || session?.address;
+    // Decode JWT to get wallet address
+    let decoded: any;
+    try {
+      decoded = jwt.verify(jwtToken, JWT_SECRET);
+    } catch {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const walletAddress = decoded?.walletAddress;
 
     if (!walletAddress) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+      return NextResponse.json({ error: "No wallet in token" }, { status: 401 });
     }
 
     // Store push token
