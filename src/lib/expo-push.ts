@@ -112,7 +112,7 @@ export async function sendPushToUser(
     return { sent: 0, failed: 0 };
   }
 
-  const tokens: MobilePushToken[] = JSON.parse(existingData);
+  const tokens: MobilePushToken[] = typeof existingData === 'string' ? JSON.parse(existingData) : existingData as MobilePushToken[];
 
   if (tokens.length === 0) {
     return { sent: 0, failed: 0 };
