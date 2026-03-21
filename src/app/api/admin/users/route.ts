@@ -187,6 +187,7 @@ export async function GET(request: NextRequest) {
           name: userName,
           phone: (userData?.phone as string) || profileData.phone || (userInfo?.phone as string) || null,
           platform: (userData?.lastPlatform as string) || (userData?.platform as string) || null,
+          source: (userData?.source as string) || null,
           totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
           auxmBalance: parseFloat(balance?.auxm as string || "0"),
           ethBalance: parseFloat(balance?.eth as string || "0"),

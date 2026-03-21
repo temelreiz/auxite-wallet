@@ -2961,6 +2961,11 @@ export default function AdminDashboard() {
                                     {(user as any).platform === 'mobile' ? '📱 Mobile' : (user as any).platform === 'web' ? '🌐 Web' : (user as any).platform}
                                   </span>
                                 )}
+                                {(user as any).source && (
+                                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-purple-500/20 text-purple-400">
+                                    {(user as any).source}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </td>

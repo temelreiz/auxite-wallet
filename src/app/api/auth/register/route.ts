@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     if (rateLimited) return rateLimited;
 
     const body = await request.json();
-    const { email, password, name, phone, language = 'en', platform: clientPlatform } = body;
+    const { email, password, name, phone, language = 'en', platform: clientPlatform, source, utm_source, utm_medium, utm_campaign } = body;
 
     // Detect platform from User-Agent or client-sent field
     const ua = request.headers.get('user-agent') || '';
@@ -113,6 +113,9 @@ export async function POST(request: NextRequest) {
       verificationCode,
       verificationCodeExpiry: Date.now() + 10 * 60 * 1000, // 10 minutes
       platform,
+      source: source || utm_source || '',
+      utm_medium: utm_medium || '',
+      utm_campaign: utm_campaign || '',
       createdAt: Date.now(),
       lastLogin: Date.now(),
     };

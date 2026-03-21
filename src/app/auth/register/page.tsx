@@ -3,8 +3,8 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Loader2, Mail, Lock, Eye, EyeOff, AlertCircle, User, CheckCircle, Globe } from 'lucide-react';
@@ -222,7 +222,13 @@ const translations: Record<string, Record<string, string>> = {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { lang } = useLanguage();
+
+  // Capture UTM parameters from URL
+  const utmSource = searchParams.get('source') || searchParams.get('utm_source') || '';
+  const utmMedium = searchParams.get('utm_medium') || '';
+  const utmCampaign = searchParams.get('utm_campaign') || '';
   const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -262,7 +268,7 @@ export default function RegisterPage() {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name, language: preferredLang }),
+        body: JSON.stringify({ email, password, name, language: preferredLang, source: utmSource, utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign }),
       });
 
       const data = await response.json();
