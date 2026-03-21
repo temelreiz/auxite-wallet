@@ -37,7 +37,14 @@ export async function POST(request: NextRequest) {
     if (rateLimited) return rateLimited;
 
     const body = await request.json();
-    const { email, password, name, phone, language = 'en' } = body;
+    const { email, password, name, phone, language = 'en', platform: clientPlatform } = body;
+
+    // Detect platform from User-Agent or client-sent field
+    const ua = request.headers.get('user-agent') || '';
+    const platform = clientPlatform || (
+      ua.includes('Expo') || ua.includes('okhttp') || ua.includes('Auxite') ? 'mobile' :
+      ua.includes('Mozilla') || ua.includes('Chrome') || ua.includes('Safari') ? 'web' : 'unknown'
+    );
 
     // ══════════════════════════════════════════════════════════════
     // VALIDATION
@@ -105,6 +112,7 @@ export async function POST(request: NextRequest) {
       verificationToken,
       verificationCode,
       verificationCodeExpiry: Date.now() + 10 * 60 * 1000, // 10 minutes
+      platform,
       createdAt: Date.now(),
       lastLogin: Date.now(),
     };

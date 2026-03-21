@@ -90,11 +90,19 @@ export async function POST(request: NextRequest) {
     // ══════════════════════════════════════════════════════════════
     // SUCCESSFUL LOGIN
     // ══════════════════════════════════════════════════════════════
-    // Reset failed attempts and update last login
+    // Detect platform
+    const ua = request.headers.get('user-agent') || '';
+    const lastPlatform =
+      ua.includes('Expo') || ua.includes('okhttp') || ua.includes('Auxite') ? 'mobile' :
+      ua.includes('Mozilla') || ua.includes('Chrome') || ua.includes('Safari') ? 'web' : 'unknown';
+
+    // Reset failed attempts and update last login + platform
     await redis.hset(`auth:user:${normalizedEmail}`, {
       failedLoginAttempts: 0,
       lockUntil: 0,
       lastLogin: Date.now(),
+      lastPlatform,
+      platform: userData.platform || lastPlatform,
     });
 
     // ══════════════════════════════════════════════════════════════
