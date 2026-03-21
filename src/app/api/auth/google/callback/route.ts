@@ -122,6 +122,7 @@ export async function GET(request: NextRequest) {
         authProvider: 'google',
         googleId: googleUser.id,
         emailVerified: true,
+        platform: isMobileRequest ? 'mobile' : 'web',
         createdAt: Date.now(),
         lastLogin: Date.now(),
       };
@@ -134,16 +135,21 @@ export async function GET(request: NextRequest) {
       // ══════════════════════════════════════════════════════════════
       // EXISTING USER - Update
       // ══════════════════════════════════════════════════════════════
+      const lastPlatform = isMobileRequest ? 'mobile' : 'web';
       if (!userData.googleId) {
         await redis.hset(`auth:user:${normalizedEmail}`, {
           googleId: googleUser.id,
           picture: googleUser.picture || userData.picture || '',
           lastLogin: Date.now(),
+          lastPlatform,
+          platform: userData.platform || lastPlatform,
         });
         await redis.set(`auth:google:${googleUser.id}`, normalizedEmail);
       } else {
         await redis.hset(`auth:user:${normalizedEmail}`, {
           lastLogin: Date.now(),
+          lastPlatform,
+          platform: userData.platform || lastPlatform,
         });
       }
 
@@ -170,6 +176,7 @@ export async function GET(request: NextRequest) {
 
       await redis.hset(`auth:user:${normalizedEmail}`, { walletAddress, vaultId });
       await redis.set(`user:address:${walletAddress.toLowerCase()}`, userId);
+      await redis.set(`wallet:${walletAddress}`, normalizedEmail);
       await redis.set(`vault:${vaultId}`, userId);
       console.log(`[Google OAuth] Wallet assigned for ${userId}: ${walletAddress}, vault: ${vaultId}`);
     }
