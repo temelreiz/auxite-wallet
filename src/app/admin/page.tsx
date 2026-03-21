@@ -2946,9 +2946,22 @@ export default function AdminDashboard() {
                               {(user as any).phone && (
                                 <span className="text-xs text-slate-500">{(user as any).phone}</span>
                               )}
-                              <span className="font-mono text-xs text-slate-500 mt-0.5">
-                                {user.address?.slice(0, 8)}...{user.address?.slice(-6)}
-                              </span>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="font-mono text-xs text-slate-500">
+                                  {user.address?.slice(0, 8)}...{user.address?.slice(-6)}
+                                </span>
+                                {(user as any).platform && (
+                                  <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${
+                                    (user as any).platform === 'mobile'
+                                      ? 'bg-green-500/20 text-green-400'
+                                      : (user as any).platform === 'web'
+                                      ? 'bg-blue-500/20 text-blue-400'
+                                      : 'bg-slate-600/30 text-slate-400'
+                                  }`}>
+                                    {(user as any).platform === 'mobile' ? '📱 Mobile' : (user as any).platform === 'web' ? '🌐 Web' : (user as any).platform}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td className="p-3 text-slate-400 text-xs">
