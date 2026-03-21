@@ -9,6 +9,7 @@ import crypto, { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/email-service';
 import { sendCampaignWelcomeEmail } from '@/lib/email';
 import { authLimiter, withRateLimit } from '@/lib/security/rate-limiter';
+import { autoAssignRM } from '@/lib/relationship-manager';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -198,6 +199,13 @@ export async function POST(request: NextRequest) {
       clientName: name || normalizedEmail.split('@')[0],
       language,
     }).catch(err => console.error('Campaign welcome email failed:', err));
+
+    // ══════════════════════════════════════════════════════════════
+    // AUTO-ASSIGN RELATIONSHIP MANAGER (non-blocking)
+    // ══════════════════════════════════════════════════════════════
+    if (vaultAddress) {
+      autoAssignRM(vaultAddress).catch(err => console.error('Auto-assign RM failed:', err));
+    }
 
     // ══════════════════════════════════════════════════════════════
     // GENERATE JWT TOKEN

@@ -9,6 +9,7 @@ import {
   updateManager,
   deleteManager,
   manualAssignRM,
+  autoAssignRM,
   reassignAllClients,
   getClientsForRM,
   getActivity,
@@ -140,6 +141,34 @@ export async function POST(request: NextRequest) {
         if (!fromRmId) return NextResponse.json({ error: 'fromRmId required' }, { status: 400 });
         const count = await reassignAllClients(fromRmId, toRmId);
         return NextResponse.json({ success: true, reassigned: count });
+      }
+
+      case 'assign-all-unassigned': {
+        const managers = await getAllManagersWithLoad();
+        const activeManagers = managers.filter(m => m.status === 'active');
+        if (activeManagers.length === 0) {
+          return NextResponse.json({ error: 'No active RMs available' }, { status: 400 });
+        }
+
+        const { Redis } = await import('@upstash/redis');
+        const redis = new Redis({
+          url: process.env.UPSTASH_REDIS_REST_URL!,
+          token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+        });
+
+        const walletKeys = await redis.keys('wallet:0x*');
+        let assigned = 0;
+
+        for (const key of walletKeys) {
+          const addr = (key as string).replace('wallet:', '');
+          const existingRm = await redis.get('rm:assignment:' + addr);
+          if (existingRm) continue;
+
+          const rmId = await autoAssignRM(addr);
+          if (rmId) assigned++;
+        }
+
+        return NextResponse.json({ success: true, assigned });
       }
 
       default:

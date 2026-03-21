@@ -5763,12 +5763,34 @@ export default function AdminDashboard() {
                   <h2 className="text-lg font-bold text-white">Relationship Managers</h2>
                   <p className="text-xs text-slate-400">Müşteri ilişki yönetimi ve CRM</p>
                 </div>
-                <button
-                  onClick={() => { setEditingRm(null); setRmFormData({ name: '', title: 'Relationship Manager', email: '', phone: '', whatsapp: '', capacity: 100, languages: 'en', specializations: '' }); setShowRmForm(true); }}
-                  className="px-4 py-2 bg-[#2F6F62] text-white font-semibold rounded-lg text-sm hover:bg-[#2F6F62]/80"
-                >
-                  + Yeni RM Ekle
-                </button>
+                <div className="flex gap-2">
+                  {rmStats?.unassignedUsers > 0 && (
+                    <button
+                      onClick={async () => {
+                        if (!confirm(`${rmStats.unassignedUsers} atanmamış müşteri tüm RM'lere otomatik atanacak. Devam?`)) return;
+                        try {
+                          const token = sessionStorage.getItem("auxite_admin_token");
+                          const res = await fetch("/api/admin/relationship-managers", {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ action: 'assign-all-unassigned' }),
+                          });
+                          if (res.ok) { const data = await res.json(); alert(`${data.assigned} müşteri atandı`); loadRelationshipManagers(); }
+                          else { const err = await res.json(); alert('Hata: ' + err.error); }
+                        } catch (e: any) { alert('Hata: ' + e.message); }
+                      }}
+                      className="px-4 py-2 bg-amber-600 text-white font-semibold rounded-lg text-sm hover:bg-amber-500"
+                    >
+                      Tümünü Ata ({rmStats.unassignedUsers})
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setEditingRm(null); setRmFormData({ name: '', title: 'Relationship Manager', email: '', phone: '', whatsapp: '', capacity: 100, languages: 'en', specializations: '' }); setShowRmForm(true); }}
+                    className="px-4 py-2 bg-[#2F6F62] text-white font-semibold rounded-lg text-sm hover:bg-[#2F6F62]/80"
+                  >
+                    + Yeni RM Ekle
+                  </button>
+                </div>
               </div>
 
               {/* Stats Cards */}
