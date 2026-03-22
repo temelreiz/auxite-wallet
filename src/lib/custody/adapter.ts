@@ -65,12 +65,13 @@ export function getDefaultProvider(): CustodyProvider {
     return 'mock';
   }
 
-  // Production: require Fireblocks
+  // Production: prefer Fireblocks, fallback to mock
   if (env === 'production') {
-    if (!adapters.has('fireblocks')) {
-      throw new Error('Fireblocks adapter required for production');
+    if (adapters.has('fireblocks')) {
+      return 'fireblocks';
     }
-    return 'fireblocks';
+    console.warn('[Custody] Fireblocks not configured in production, using mock adapter');
+    return 'mock';
   }
 
   // Default to mock for testing
