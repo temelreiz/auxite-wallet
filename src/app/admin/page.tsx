@@ -410,6 +410,7 @@ const TABS = [
   { id: "relationshipManagers", label: "RM / CRM", icon: "🤝" },
   { id: "statements", label: "Raporlar", icon: "📑" },
   { id: "pushNotifications", label: "Push Bildirim", icon: "🔔" },
+  { id: "notificationHistory", label: "Bildirim Geçmişi", icon: "📋" },
   { id: "oracleWatcher", label: "Oracle Watcher", icon: "👁️" },
   { id: "supportSettings", label: "Destek", icon: "💬" },
 ] as const;
@@ -6034,6 +6035,11 @@ export default function AdminDashboard() {
             <PushNotificationsTab />
           )}
 
+          {/* ═══════════════ NOTIFICATION HISTORY TAB ═══════════════ */}
+          {activeTab === "notificationHistory" && (
+            <NotificationHistoryTab />
+          )}
+
           {/* Oracle Watcher Tab */}
           {activeTab === "oracleWatcher" && (
             <OracleWatcherTab />
@@ -8106,6 +8112,135 @@ function watcherProxy(path: string, method: "GET" | "POST" | "DELETE" = "GET", b
   const opts: RequestInit = { method, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } };
   if (body) opts.body = JSON.stringify(body);
   return fetch(url, opts);
+}
+
+function NotificationHistoryTab() {
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchLogs = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/push-log", {
+        headers: { Authorization: `Bearer ${document.cookie.replace(/(?:(?:^|.*;\s*)admin_session\s*=\s*([^;]*).*$)|^.*$/, "$1")}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLogs(data.logs || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch logs", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchLogs(); }, [fetchLogs]);
+
+  const typeIcons: Record<string, string> = {
+    system: "⚙️", security: "🛡️", transaction: "💱",
+    deposit: "📥", withdrawal: "📤", price_alert: "📊",
+    report: "📑", welcome: "🎉",
+  };
+
+  const typeColors: Record<string, string> = {
+    system: "bg-blue-500/20 text-blue-400",
+    security: "bg-red-500/20 text-red-400",
+    transaction: "bg-green-500/20 text-green-400",
+    deposit: "bg-emerald-500/20 text-emerald-400",
+    withdrawal: "bg-orange-500/20 text-orange-400",
+    price_alert: "bg-purple-500/20 text-purple-400",
+    welcome: "bg-amber-500/20 text-amber-400",
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">📋 Bildirim Geçmişi</h2>
+        <button
+          onClick={() => { setLoading(true); fetchLogs(); }}
+          className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm"
+        >
+          🔄 Yenile
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12 text-slate-400">Yükleniyor...</div>
+      ) : logs.length === 0 ? (
+        <div className="text-center py-12 text-slate-400">Henüz bildirim gönderilmemiş.</div>
+      ) : (
+        <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-700 text-left text-xs text-slate-400 uppercase">
+                  <th className="px-4 py-3">Tarih</th>
+                  <th className="px-4 py-3">Tip</th>
+                  <th className="px-4 py-3">Başlık</th>
+                  <th className="px-4 py-3">İçerik</th>
+                  <th className="px-4 py-3">Hedef</th>
+                  <th className="px-4 py-3">Web</th>
+                  <th className="px-4 py-3">Mobil</th>
+                  <th className="px-4 py-3">Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((log: any, i: number) => {
+                  const date = new Date(log.timestamp);
+                  const typeKey = log.type || "system";
+                  const totalSent = (log.webSent || 0) + (log.mobileSent || 0);
+                  const totalFailed = (log.webFailed || 0) + (log.mobileFailed || 0);
+                  return (
+                    <tr key={i} className="border-b border-slate-700/50 hover:bg-slate-700/30 text-sm">
+                      <td className="px-4 py-3 text-slate-300 whitespace-nowrap">
+                        {date.toLocaleDateString("tr-TR")} {date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs ${typeColors[typeKey] || "bg-slate-500/20 text-slate-400"}`}>
+                          {typeIcons[typeKey] || "📌"} {typeKey}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-white font-medium max-w-[200px] truncate">{log.title}</td>
+                      <td className="px-4 py-3 text-slate-400 max-w-[250px] truncate">{log.body}</td>
+                      <td className="px-4 py-3">
+                        {log.broadcast ? (
+                          <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded-full">📢 Herkese</span>
+                        ) : log.targetWallet ? (
+                          <span className="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded-full">👤 {log.targetWallet.slice(0, 8)}...</span>
+                        ) : (
+                          <span className="text-xs text-slate-500">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-xs text-slate-300">{log.webSent || 0}</span>
+                        {(log.webFailed || 0) > 0 && <span className="text-xs text-red-400 ml-1">({log.webFailed}✗)</span>}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-xs text-slate-300">{log.mobileSent || 0}</span>
+                        {(log.mobileFailed || 0) > 0 && <span className="text-xs text-red-400 ml-1">({log.mobileFailed}✗)</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        {totalFailed === 0 && totalSent > 0 ? (
+                          <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">✅ Başarılı</span>
+                        ) : totalFailed > 0 ? (
+                          <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded-full">⚠️ {totalFailed} Başarısız</span>
+                        ) : (
+                          <span className="text-xs bg-slate-500/20 text-slate-400 px-2 py-1 rounded-full">0 Gönderim</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-4 py-3 border-t border-slate-700 text-xs text-slate-500">
+            Son {logs.length} bildirim gösteriliyor (maks. 50)
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function OracleWatcherTab() {
