@@ -11,6 +11,7 @@ import Link from "next/link";
 import Image from "next/image";
 import TopNav from "@/components/TopNav";
 import LiquidateModal from "@/components/LiquidateModal";
+import { MarketStatusBanner } from "@/components/MarketStatusBanner";
 import { useLanguage } from "@/components/LanguageContext";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
@@ -661,6 +662,9 @@ export default function VaultPage() {
       <TopNav />
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+        {/* Market Status Banner */}
+        <MarketStatusBanner />
+
         {/* KYC Warning Banner */}
         {kycStatus !== 'verified' && !loading && (
           <Link href="/profile" className="block">
