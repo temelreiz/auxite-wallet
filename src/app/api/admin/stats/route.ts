@@ -43,12 +43,13 @@ export async function GET(request: NextRequest) {
       }
       totalUsers = addressSet.size;
 
-      // KYC bekleyenler — user:0x*:info'dan kycStatus kontrol
-      const infoKeys = await redis.keys('user:0x*:info');
-      for (const key of infoKeys) {
+      // KYC bekleyenler — kyc:0x* key'lerinden status kontrol
+      const kycKeys = await redis.keys('kyc:0x*');
+      for (const key of kycKeys) {
         try {
-          const info = await redis.hgetall(key);
-          if (info && (info as any).kycStatus === 'pending') {
+          const kycData = await redis.get(key);
+          const kyc = kycData ? (typeof kycData === 'string' ? JSON.parse(kycData) : kycData) : null;
+          if (kyc && kyc.status === 'pending') {
             pendingKYC++;
           }
         } catch { /* skip */ }

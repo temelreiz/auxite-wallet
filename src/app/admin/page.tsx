@@ -2966,6 +2966,19 @@ export default function AdminDashboard() {
                                     {(user as any).source}
                                   </span>
                                 )}
+                                {(user as any).kycStatus && (user as any).kycStatus !== 'none' && (
+                                  <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${
+                                    (user as any).kycStatus === 'approved'
+                                      ? 'bg-emerald-500/20 text-emerald-400'
+                                      : (user as any).kycStatus === 'pending'
+                                      ? 'bg-yellow-500/20 text-yellow-400'
+                                      : (user as any).kycStatus === 'rejected'
+                                      ? 'bg-red-500/20 text-red-400'
+                                      : 'bg-slate-600/30 text-slate-400'
+                                  }`}>
+                                    {(user as any).kycStatus === 'approved' ? '✅ KYC' : (user as any).kycStatus === 'pending' ? '⏳ KYC' : (user as any).kycStatus === 'rejected' ? '❌ KYC' : (user as any).kycStatus}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </td>
