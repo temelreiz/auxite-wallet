@@ -246,7 +246,7 @@ export default function TopNav({
 
   // Load WhatsApp number from support settings
   useEffect(() => {
-    fetch("/api/admin/support-settings")
+    fetch("/api/support-settings")
       .then(r => r.json())
       .then(data => {
         if (data.settings?.whatsappNumber) setWhatsappNumber(data.settings.whatsappNumber);
