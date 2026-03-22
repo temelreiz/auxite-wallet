@@ -14,6 +14,7 @@ import { DynamicBanner } from "./DynamicBanner";
 import { TransferModal } from "@/components/TransferModal";
 import { useLanguage } from "@/components/LanguageContext";
 import { AddFundsModal } from "@/components/AddFundsModal";
+import { MarketStatusBanner } from "@/components/MarketStatusBanner";
 
 // Metal icon mapping
 const metalIcons: Record<string, string> = {
@@ -172,6 +173,9 @@ export default function MetalPriceGrid() {
     <div className="space-y-4">
       {/* Campaign Banner */}
       <DynamicBanner />
+
+      {/* Market Status Banner */}
+      <MarketStatusBanner />
 
       {/* Header */}
       <div className="flex items-center justify-between">
