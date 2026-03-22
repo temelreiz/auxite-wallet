@@ -31,8 +31,13 @@ interface ScanResult {
 // CONSTANTS
 // ============================================
 
-// USDT ERC-20 contract (Ethereum mainnet)
-const USDT_CONTRACT = "0xdac17f958d2ee523a2206206994597c13d831ec7";
+// USDT ERC-20 contract (Base mainnet - bridged USDT)
+const USDT_CONTRACT = "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2";
+// USDC on Base
+const USDC_CONTRACT = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+
+// Base chain explorer API
+const BASE_EXPLORER_API = "https://api.basescan.org/api";
 
 // Minimum deposit amounts (spam prevention)
 const MIN_DEPOSITS: Record<string, number> = {
@@ -63,8 +68,9 @@ export async function scanEthDeposits(): Promise<ScanResult> {
     const lastBlock = ((await redis.get("scanner:eth:lastBlock")) as number) || 0;
     const startBlock = lastBlock > 0 ? lastBlock + 1 : "latest";
 
-    // 1. Native ETH transfers
-    const ethUrl = `https://api.etherscan.io/api?module=account&action=txlist&address=${hotWallet}&startblock=${startBlock}&endblock=99999999&sort=asc&apikey=${apiKey}`;
+    // 1. Native ETH transfers (Base chain)
+    const basescanKey = process.env.BASESCAN_API_KEY || apiKey;
+    const ethUrl = `${BASE_EXPLORER_API}?module=account&action=txlist&address=${hotWallet}&startblock=${startBlock}&endblock=99999999&sort=asc&apikey=${basescanKey}`;
     const ethRes = await fetch(ethUrl);
     const ethData = await ethRes.json();
 
@@ -97,16 +103,18 @@ export async function scanEthDeposits(): Promise<ScanResult> {
       }
     }
 
-    // 2. ERC-20 USDT transfers
-    const tokenUrl = `https://api.etherscan.io/api?module=account&action=tokentx&address=${hotWallet}&startblock=${startBlock}&endblock=99999999&sort=asc&apikey=${apiKey}`;
+    // 2. ERC-20 USDT/USDC transfers (Base chain)
+    const tokenUrl = `${BASE_EXPLORER_API}?module=account&action=tokentx&address=${hotWallet}&startblock=${startBlock}&endblock=99999999&sort=asc&apikey=${basescanKey}`;
     const tokenRes = await fetch(tokenUrl);
     const tokenData = await tokenRes.json();
 
     if (tokenData.status === "1" && Array.isArray(tokenData.result)) {
       for (const tx of tokenData.result) {
-        // Sadece gelen USDT
+        // Sadece gelen USDT veya USDC
         if (tx.to?.toLowerCase() !== hotWallet.toLowerCase()) continue;
-        if (tx.contractAddress?.toLowerCase() !== USDT_CONTRACT) continue;
+        const contractAddr = tx.contractAddress?.toLowerCase();
+        if (contractAddr !== USDT_CONTRACT.toLowerCase() && contractAddr !== USDC_CONTRACT.toLowerCase()) continue;
+        const coinName = contractAddr === USDC_CONTRACT.toLowerCase() ? "USDC" : "USDT";
 
         const decimals = parseInt(tx.tokenDecimal || "6");
         const amount = parseFloat(tx.value) / Math.pow(10, decimals);
@@ -117,7 +125,7 @@ export async function scanEthDeposits(): Promise<ScanResult> {
 
         deposits.push({
           chain: "eth",
-          coin: "USDT",
+          coin: coinName,
           amount,
           txHash: tx.hash,
           fromAddress: tx.from,
