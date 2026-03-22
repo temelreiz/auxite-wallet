@@ -103,9 +103,9 @@ export function isMarketOpen(now?: Date): boolean {
 function findNextOpenDate(from: Date): Date {
   const next = new Date(from);
 
-  // Start from the next day at 00:00 UTC
+  // Start from the next day at 08:00 UTC (LBMA London open)
   next.setUTCDate(next.getUTCDate() + 1);
-  next.setUTCHours(0, 0, 0, 0);
+  next.setUTCHours(8, 0, 0, 0);
 
   // Advance until we find a weekday that is not a holiday (max 10 days safety)
   for (let i = 0; i < 10; i++) {
