@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "auxite-wallet",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "fundization-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "3001"],
+      "port": 3001
+    },
+    {
+      "name": "auxite-website",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "3002"],
+      "port": 3002
+    },
+    {
+      "name": "auxite-vault-expo",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/bs/Desktop/auxite-vault && npx expo start --web --port 8082"],
+      "port": 8082
+    }
+  ]
+}

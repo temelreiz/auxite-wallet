@@ -94,7 +94,7 @@ export const METAL_TOKENS = METAL_TOKENS_V8;
 
 export const ORACLE_ADDRESS = (
   process.env.NEXT_PUBLIC_ORACLE_ADDRESS ||
-  "0xbB109166062D718756D0389F4bA2aB02A36F296c" // Base Mainnet
+  "0xDB36fFD8a762226928d62a2Fe6F19bB329b5EbbE" // Base Mainnet (redeployed 2026-03-17)
 ) as `0x${string}`;
 
 export const EXCHANGE_ADDRESS = (

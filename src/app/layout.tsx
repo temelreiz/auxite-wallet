@@ -29,6 +29,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://vault.auxite.io"),
   alternates: {
     canonical: "https://vault.auxite.io",
+    languages: {
+      "en": "https://vault.auxite.io",
+      "tr": "https://vault.auxite.io",
+      "x-default": "https://vault.auxite.io",
+    },
   },
   openGraph: {
     title: "Auxite | Fully Allocated Precious Metals",

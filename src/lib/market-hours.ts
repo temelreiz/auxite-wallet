@@ -1,16 +1,14 @@
 // src/lib/market-hours.ts
 // Precious metals market hours detection (LBMA-based)
-// Market is OPEN Monday-Friday (UTC), CLOSED Saturday-Sunday and major holidays
+// Market opens Sunday 22:00 UTC (Monday 01:00 Turkey time)
+// Market closes Friday 21:00 UTC (Saturday 00:00 Turkey time)
 
 export interface MarketStatus {
   open: boolean;
-  nextOpen: Date;
   label: string;
 }
 
 // Major holidays that close precious metals markets (month is 0-indexed)
-// Static holidays: Christmas Day, New Year's Day, Boxing Day
-// Dynamic holidays: Good Friday, Easter Monday (computed per year)
 function getHolidays(year: number): Date[] {
   const holidays: Date[] = [];
 
@@ -23,14 +21,12 @@ function getHolidays(year: number): Date[] {
   // Boxing Day - December 26
   holidays.push(new Date(Date.UTC(year, 11, 26)));
 
-  // Good Friday & Easter Monday (computed via anonymous Gregorian algorithm)
+  // Good Friday & Easter Monday
   const easter = computeEasterDate(year);
-  // Good Friday = Easter - 2 days
   const goodFriday = new Date(easter);
   goodFriday.setUTCDate(goodFriday.getUTCDate() - 2);
   holidays.push(goodFriday);
 
-  // Easter Monday = Easter + 1 day
   const easterMonday = new Date(easter);
   easterMonday.setUTCDate(easterMonday.getUTCDate() + 1);
   holidays.push(easterMonday);
@@ -38,9 +34,6 @@ function getHolidays(year: number): Date[] {
   return holidays;
 }
 
-/**
- * Compute Easter Sunday using the Anonymous Gregorian algorithm
- */
 function computeEasterDate(year: number): Date {
   const a = year % 19;
   const b = Math.floor(year / 100);
@@ -54,15 +47,12 @@ function computeEasterDate(year: number): Date {
   const k = c % 4;
   const l = (32 + 2 * e + 2 * i - h - k) % 7;
   const m = Math.floor((a + 11 * h + 22 * l) / 451);
-  const month = Math.floor((h + l - 7 * m + 114) / 31); // 3 = March, 4 = April
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
   const day = ((h + l - 7 * m + 114) % 31) + 1;
 
   return new Date(Date.UTC(year, month - 1, day));
 }
 
-/**
- * Check if a given date (UTC) falls on a market holiday
- */
 function isHoliday(date: Date): boolean {
   const year = date.getUTCFullYear();
   const holidays = getHolidays(year);
@@ -77,18 +67,33 @@ function isHoliday(date: Date): boolean {
 
 /**
  * Check if the precious metals market is currently open.
- * Market is open Monday (1) through Friday (5) UTC, excluding holidays.
+ *
+ * Market schedule (UTC):
+ * - Opens: Sunday 22:00 UTC (Monday 01:00 Turkey time)
+ * - Closes: Friday 21:00 UTC (Saturday 00:00 Turkey time)
+ * - Also closed on major holidays
  */
 export function isMarketOpen(now?: Date): boolean {
   const date = now || new Date();
   const dayOfWeek = date.getUTCDay(); // 0 = Sunday, 6 = Saturday
+  const hour = date.getUTCHours();
 
-  // Weekend check
-  if (dayOfWeek === 0 || dayOfWeek === 6) {
+  // Saturday: always closed
+  if (dayOfWeek === 6) {
     return false;
   }
 
-  // Holiday check
+  // Sunday: closed until 22:00 UTC
+  if (dayOfWeek === 0) {
+    return hour >= 22;
+  }
+
+  // Friday: closed after 21:00 UTC
+  if (dayOfWeek === 5 && hour >= 21) {
+    return false;
+  }
+
+  // Monday-Friday (before Friday 21:00): check holidays
   if (isHoliday(date)) {
     return false;
   }
@@ -97,45 +102,24 @@ export function isMarketOpen(now?: Date): boolean {
 }
 
 /**
- * Find the next market open date from a given date.
- * Skips weekends and holidays.
- */
-function findNextOpenDate(from: Date): Date {
-  const next = new Date(from);
-
-  // Start from the next day at 22:00 UTC (01:00 Turkey time = market open)
-  next.setUTCDate(next.getUTCDate());
-  next.setUTCHours(22, 0, 0, 0);
-
-  // If we're already past 22:00 UTC today, move to next day
-  if (next <= from) {
-    next.setUTCDate(next.getUTCDate() + 1);
-  }
-
-  // Advance until we find a weekday that is not a holiday (max 10 days safety)
-  for (let i = 0; i < 10; i++) {
-    const day = next.getUTCDay();
-    if (day !== 0 && day !== 6 && !isHoliday(next)) {
-      return next;
-    }
-    next.setUTCDate(next.getUTCDate() + 1);
-  }
-
-  return next;
-}
-
-/**
- * Get detailed market status including label and next open time.
+ * Get market status with label.
  */
 export function getMarketStatus(now?: Date): MarketStatus {
   const date = now || new Date();
   const dayOfWeek = date.getUTCDay();
 
   // Check weekend
-  if (dayOfWeek === 0 || dayOfWeek === 6) {
+  if (dayOfWeek === 6 || (dayOfWeek === 0 && date.getUTCHours() < 22)) {
     return {
       open: false,
-      nextOpen: findNextOpenDate(date),
+      label: "Weekend Prices Applied",
+    };
+  }
+
+  // Friday after close
+  if (dayOfWeek === 5 && date.getUTCHours() >= 21) {
+    return {
+      open: false,
       label: "Weekend Prices Applied",
     };
   }
@@ -144,7 +128,6 @@ export function getMarketStatus(now?: Date): MarketStatus {
   if (isHoliday(date)) {
     return {
       open: false,
-      nextOpen: findNextOpenDate(date),
       label: "Holiday Prices Applied",
     };
   }
@@ -152,7 +135,6 @@ export function getMarketStatus(now?: Date): MarketStatus {
   // Market is open
   return {
     open: true,
-    nextOpen: date, // Already open
     label: "Live Market Prices",
   };
 }
@@ -164,7 +146,11 @@ export function getPriceType(now?: Date): "live" | "weekend" | "holiday" {
   const date = now || new Date();
   const dayOfWeek = date.getUTCDay();
 
-  if (dayOfWeek === 0 || dayOfWeek === 6) {
+  if (dayOfWeek === 6 || (dayOfWeek === 0 && date.getUTCHours() < 22)) {
+    return "weekend";
+  }
+
+  if (dayOfWeek === 5 && date.getUTCHours() >= 21) {
     return "weekend";
   }
 

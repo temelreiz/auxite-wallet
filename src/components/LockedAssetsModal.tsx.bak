@@ -226,10 +226,10 @@ const translations: Record<string, Record<string, string>> = {
 };
 
 const METAL_INFO: Record<string, { nameKey: string; icon: string; color: string }> = {
-  AUXG: { nameKey: "gold", icon: "/gold-favicon-32x32.png", color: "text-amber-500" },
-  AUXS: { nameKey: "silver", icon: "/silver-favicon-32x32.png", color: "text-slate-400" },
-  AUXPT: { nameKey: "platinum", icon: "/platinum-favicon-32x32.png", color: "text-cyan-400" },
-  AUXPD: { nameKey: "palladium", icon: "/palladium-favicon-32x32.png", color: "text-rose-400" },
+  AUXG: { nameKey: "gold", icon: "/auxg_icon.png", color: "text-amber-500" },
+  AUXS: { nameKey: "silver", icon: "/auxs_icon.png", color: "text-slate-400" },
+  AUXPT: { nameKey: "platinum", icon: "/auxpt_icon.png", color: "text-cyan-400" },
+  AUXPD: { nameKey: "palladium", icon: "/auxpd_icon.png", color: "text-rose-400" },
 };
 
 const CUSTODIAN_MAP: Record<string, string> = {
@@ -512,7 +512,7 @@ export function LockedAssetsModal({
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <img src={metalInfo?.icon || "/gold-favicon-32x32.png"} alt={stake.metalSymbol} className="w-10 h-10" />
+                            <img src={metalInfo?.icon || "/auxg_icon.png"} alt={stake.metalSymbol} className="w-10 h-10" />
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className={`font-semibold ${metalInfo?.color || "text-amber-500"}`}>{stake.metalSymbol}</span>

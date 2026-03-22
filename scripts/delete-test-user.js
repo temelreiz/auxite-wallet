@@ -17,23 +17,53 @@ async function deleteUser(email) {
   const normalizedEmail = email.toLowerCase().trim();
 
   try {
-    // Check if user exists
     const user = await redis.hgetall(`auth:user:${normalizedEmail}`);
 
     if (!user || Object.keys(user).length === 0) {
-      console.log(`❌ User not found: ${normalizedEmail}`);
+      console.log(`User not found: ${normalizedEmail}`);
       return;
     }
 
-    console.log(`Found user: ${normalizedEmail}`);
-    console.log(`  ID: ${user.id}`);
-    console.log(`  Created: ${new Date(parseInt(user.createdAt)).toISOString()}`);
+    const userId = user.id;
+    const wa = user.walletAddress;
+    const vaultId = user.vaultId;
+    console.log(`Found: id=${userId}, wallet=${wa}, vault=${vaultId}`);
 
-    // Delete user data
-    await redis.del(`auth:user:${normalizedEmail}`);
-    await redis.del(`auth:email:${normalizedEmail}`);
+    const keys = [
+      `auth:user:${normalizedEmail}`,
+      `auth:email:${normalizedEmail}`,
+      `user:${userId}`,
+      `user:${userId}:balance:AUXM`,
+      `user:${userId}:balance:AUXG`,
+      `user:${userId}:balance:AUXS`,
+      `user:${userId}:balance:AUXPT`,
+      `user:${userId}:balance:AUXPD`,
+      `user:${userId}:balance:bonusAUXS`,
+      `user:${userId}:earlybird:expiresAt`,
+      `user:${userId}:balance:bonusAUXSExpiresAt`,
+      `user:${userId}:transactions`,
+      `user:${userId}:purchases:auxsEquiv`,
+    ];
+    if (wa) {
+      keys.push(`user:address:${wa.toLowerCase()}`);
+      keys.push(`user:${wa.toLowerCase()}:transactions`);
+      keys.push(`user:${wa.toLowerCase()}:balance`);
+    }
+    if (vaultId) keys.push(`vault:${vaultId}`);
 
-    console.log(`✅ User deleted: ${normalizedEmail}`);
+    for (const k of keys) {
+      const r = await redis.del(k);
+      if (r > 0) console.log(`  DEL ${k}`);
+    }
+
+    // Decrement early bird counter
+    const ebCount = await redis.get("campaign:earlybird:count");
+    if (ebCount > 0) {
+      await redis.decr("campaign:earlybird:count");
+      console.log(`  EB count: ${ebCount} -> ${ebCount - 1}`);
+    }
+
+    console.log(`Done: ${normalizedEmail} deleted`);
   } catch (error) {
     console.error('Error:', error);
   }

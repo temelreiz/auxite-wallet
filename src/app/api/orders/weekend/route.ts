@@ -194,7 +194,6 @@ export async function POST(request: NextRequest) {
         estimatedTotalUsd,
         status: "pending",
         marketStatus: marketLabel,
-        nextMarketOpen: marketStatus.nextOpen.toISOString(),
       },
     });
   } catch (error: unknown) {
