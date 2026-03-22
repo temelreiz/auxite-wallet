@@ -181,6 +181,12 @@ export async function GET(request: NextRequest) {
           (profileData.firstName ? `${profileData.firstName} ${profileData.lastName || ''}`.trim() : null) ||
           (userInfo?.name as string) || null;
 
+        // Get KYC status
+        const kycData = await redis.get(`kyc:${walletAddr}`);
+        const kyc = kycData ? (typeof kycData === 'string' ? JSON.parse(kycData) : kycData) : null;
+        const kycStatus = kyc?.status || (userData?.kycVerified === 'true' ? 'approved' : 'none');
+        const kycLevel = kyc?.level || (userData?.kycVerified === 'true' ? 'verified' : 'none');
+
         userMap.set(walletAddr, {
           address: walletAddr,
           email: email || (userInfo?.email as string) || null,
@@ -188,6 +194,8 @@ export async function GET(request: NextRequest) {
           phone: (userData?.phone as string) || profileData.phone || (userInfo?.phone as string) || null,
           platform: (userData?.lastPlatform as string) || (userData?.platform as string) || null,
           source: (userData?.source as string) || null,
+          kycStatus,
+          kycLevel,
           totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
           auxmBalance: parseFloat(balance?.auxm as string || "0"),
           ethBalance: parseFloat(balance?.eth as string || "0"),
@@ -223,11 +231,17 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Get KYC status
+      const kycData2 = await redis.get(`kyc:${addr}`);
+      const kyc2 = kycData2 ? (typeof kycData2 === 'string' ? JSON.parse(kycData2) : kycData2) : null;
+
       userMap.set(addr, {
         address: addr,
         email: (userInfo?.email as string) || null,
         name: (userInfo?.name as string) || null,
         phone: (userInfo?.phone as string) || null,
+        kycStatus: kyc2?.status || 'none',
+        kycLevel: kyc2?.level || 'none',
         totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
         auxmBalance: parseFloat(balance?.auxm as string || "0"),
         ethBalance: parseFloat(balance?.eth as string || "0"),
