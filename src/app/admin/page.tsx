@@ -513,6 +513,8 @@ export default function AdminDashboard() {
   // Users
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [userSearch, setUserSearch] = useState("");
+  const [usersPage, setUsersPage] = useState(1);
+  const USERS_PER_PAGE = 100;
   const [selectedUserDetail, setSelectedUserDetail] = useState<UserDetailData | null>(null);
   const [userDetailLoading, setUserDetailLoading] = useState(false);
 
@@ -2934,7 +2936,7 @@ export default function AdminDashboard() {
                         </td>
                       </tr>
                     ) : (
-                      users.map((user, i) => (
+                      users.slice((usersPage - 1) * USERS_PER_PAGE, usersPage * USERS_PER_PAGE).map((user, i) => (
                         <tr key={user.address || i} className="border-t border-slate-800 hover:bg-slate-800/50 cursor-pointer" onClick={() => loadUserDetail(user.address)}>
                           <td className="p-3">
                             <div className="flex flex-col">
@@ -3022,9 +3024,47 @@ export default function AdminDashboard() {
                 </table>
               </div>
 
-              <p className="text-slate-500 text-sm text-center">
-                Toplam {users.length} kullanıcı
-              </p>
+              {/* Pagination */}
+              {users.length > 0 && (
+                <div className="flex items-center justify-between px-2">
+                  <p className="text-slate-500 text-sm">
+                    Toplam {users.length} kullanıcı • Sayfa {usersPage} / {Math.ceil(users.length / USERS_PER_PAGE)}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setUsersPage(p => Math.max(1, p - 1))}
+                      disabled={usersPage === 1}
+                      className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg text-xs text-white"
+                    >
+                      ← Önceki
+                    </button>
+                    {Array.from({ length: Math.ceil(users.length / USERS_PER_PAGE) }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === Math.ceil(users.length / USERS_PER_PAGE) || Math.abs(p - usersPage) <= 2)
+                      .map((p, idx, arr) => (
+                        <span key={p}>
+                          {idx > 0 && arr[idx - 1] !== p - 1 && <span className="text-slate-600 text-xs mx-1">...</span>}
+                          <button
+                            onClick={() => setUsersPage(p)}
+                            className={`w-8 h-8 rounded-lg text-xs font-medium ${
+                              p === usersPage
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        </span>
+                      ))}
+                    <button
+                      onClick={() => setUsersPage(p => Math.min(Math.ceil(users.length / USERS_PER_PAGE), p + 1))}
+                      disabled={usersPage >= Math.ceil(users.length / USERS_PER_PAGE)}
+                      className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg text-xs text-white"
+                    >
+                      Sonraki →
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* User Detail Modal */}
               {(selectedUserDetail || userDetailLoading) && (
