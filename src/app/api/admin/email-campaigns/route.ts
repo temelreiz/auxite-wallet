@@ -50,6 +50,9 @@ export async function GET(request: NextRequest) {
       }
 
       // Segment counts
+      const langCounts: Record<string, number> = {};
+      recipients.forEach(r => { langCounts[r.language] = (langCounts[r.language] || 0) + 1; });
+
       const segments = {
         all: recipients.length,
         kycVerified: recipients.filter(r => r.kycStatus === "approved").length,
@@ -57,6 +60,7 @@ export async function GET(request: NextRequest) {
         noKyc: recipients.filter(r => r.kycStatus === "none").length,
         mobile: recipients.filter(r => r.platform === "mobile").length,
         web: recipients.filter(r => r.platform === "web").length,
+        languages: langCounts,
       };
 
       return NextResponse.json({
@@ -94,7 +98,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { subject, htmlContent, segment, testEmail } = body;
+    const { subject, htmlContent, segment, testEmail, language } = body;
 
     if (!subject || !htmlContent) {
       return NextResponse.json({ error: "Subject and content required" }, { status: 400 });
@@ -143,6 +147,12 @@ export async function POST(request: NextRequest) {
         include = data.platform === "mobile";
       } else if (segment === "web") {
         include = data.platform === "web";
+      }
+
+      // Language filter
+      if (include && language && language !== "all") {
+        const userLang = data.language || "en";
+        include = userLang === language;
       }
 
       if (include) {

@@ -8173,6 +8173,7 @@ function EmailCampaignsTab() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<"compose" | "history" | "list">("compose");
+  const [language, setLanguage] = useState("all");
 
   const getHeaders = () => ({
     "Content-Type": "application/json",
@@ -8238,6 +8239,7 @@ function EmailCampaignsTab() {
           subject,
           htmlContent: customHtml,
           segment,
+          language,
           ...(isTest ? { testEmail } : {}),
         }),
       });
@@ -8288,13 +8290,25 @@ function EmailCampaignsTab() {
       {/* Compose */}
       {activeView === "compose" && (
         <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="text-xs text-slate-400 block mb-1">Hedef Segment</label>
               <select value={segment} onChange={(e) => setSegment(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white">
                 {segmentOptions.map((s) => (
                   <option key={s.value} value={s.value}>{s.label} ({s.count || 0})</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Dil</label>
+              <select value={language} onChange={(e) => setLanguage(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white">
+                <option value="all">Tüm Diller</option>
+                {segments.languages && Object.entries(segments.languages).sort((a: any, b: any) => b[1] - a[1]).map(([lang, count]: any) => (
+                  <option key={lang} value={lang}>
+                    {lang === "en" ? "🇬🇧 English" : lang === "fr" ? "🇫🇷 Français" : lang === "tr" ? "🇹🇷 Türkçe" : lang === "ar" ? "🇸🇦 العربية" : lang === "ru" ? "🇷🇺 Русский" : lang === "de" ? "🇩🇪 Deutsch" : lang} ({count})
+                  </option>
                 ))}
               </select>
             </div>
