@@ -408,6 +408,7 @@ const TABS = [
   { id: "redemption", label: "Redemption", icon: "📦" },
   { id: "cashSettlement", label: "Cash Settlement", icon: "💰" },
   { id: "relationshipManagers", label: "RM / CRM", icon: "🤝" },
+  { id: "emailCampaigns", label: "Email Kampanya", icon: "📧" },
   { id: "statements", label: "Raporlar", icon: "📑" },
   { id: "pushNotifications", label: "Push Bildirim", icon: "🔔" },
   { id: "notificationHistory", label: "Bildirim Geçmişi", icon: "📋" },
@@ -6069,6 +6070,11 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* ═══════════════ EMAIL CAMPAIGNS TAB ═══════════════ */}
+          {activeTab === "emailCampaigns" && (
+            <EmailCampaignsTab />
+          )}
+
           {/* ═══════════════ STATEMENTS TAB ═══════════════ */}
           {/* ═══════════════ PUSH NOTIFICATIONS TAB ═══════════════ */}
           {activeTab === "pushNotifications" && (
@@ -8152,6 +8158,266 @@ function watcherProxy(path: string, method: "GET" | "POST" | "DELETE" = "GET", b
   const opts: RequestInit = { method, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } };
   if (body) opts.body = JSON.stringify(body);
   return fetch(url, opts);
+}
+
+function EmailCampaignsTab() {
+  const [segment, setSegment] = useState("all");
+  const [subject, setSubject] = useState("");
+  const [template, setTemplate] = useState("custom");
+  const [customHtml, setCustomHtml] = useState("");
+  const [sending, setSending] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+  const [result, setResult] = useState<any>(null);
+  const [recipients, setRecipients] = useState<any[]>([]);
+  const [segments, setSegments] = useState<any>({});
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState<"compose" | "history" | "list">("compose");
+
+  const getHeaders = () => ({
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${sessionStorage.getItem("auxite_admin_token")}`,
+    "x-admin-address": "0x101bD08219773E0ff8cD3805542c0A2835Fec0FF",
+  });
+
+  const loadData = useCallback(async () => {
+    try {
+      const [recipRes, histRes] = await Promise.all([
+        fetch("/api/admin/email-campaigns?action=recipients", { headers: getHeaders() }),
+        fetch("/api/admin/email-campaigns?action=history", { headers: getHeaders() }),
+      ]);
+      if (recipRes.ok) {
+        const data = await recipRes.json();
+        setRecipients(data.recipients || []);
+        setSegments(data.segments || {});
+      }
+      if (histRes.ok) {
+        const data = await histRes.json();
+        setCampaigns(data.campaigns || []);
+      }
+    } catch (e) { console.error("Email campaigns load error:", e); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const templates: Record<string, { subject: string; html: string }> = {
+    kycReminder: {
+      subject: "Complete Your Verification — Earn 10 AUXS Bonus",
+      html: `<div style="font-family:Georgia,serif;background:#f5f5f5;padding:20px;color:#1a1a1a"><div style="max-width:600px;margin:0 auto;background:#fff"><div style="height:3px;background:#C5A55A"></div><div style="padding:24px 30px"><img src="https://vault.auxite.io/auxite-logo-new.png" alt="Auxite" width="120" style="display:block;width:120px;height:auto;margin-bottom:16px"/><p style="font-size:13px;color:#444;line-height:1.7">Complete your identity verification (KYC) and make your first deposit of $100 or more to receive <strong>10 AUXS Welcome Bonus</strong>.</p><p style="font-size:13px;color:#444;line-height:1.7">Your bonus credits will unlock after 30 days or upon reaching 5x trading volume.</p><a href="https://vault.auxite.io/dashboard" style="display:inline-block;background:#1a1a1a;color:#fff;padding:12px 24px;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:1px;margin:16px 0">VERIFY NOW</a></div><div style="padding:16px 30px;border-top:1px solid #e5e5e5;text-align:center"><p style="font-size:9px;color:#aaa;margin:4px 0">Aurum Ledger Ltd · Hong Kong</p></div><div style="height:2px;background:#C5A55A"></div></div></div>`,
+    },
+    welcomeBonus: {
+      subject: "Welcome to Auxite — Your 10 AUXS Bonus Awaits",
+      html: `<div style="font-family:Georgia,serif;background:#f5f5f5;padding:20px;color:#1a1a1a"><div style="max-width:600px;margin:0 auto;background:#fff"><div style="height:3px;background:#C5A55A"></div><div style="padding:24px 30px"><img src="https://vault.auxite.io/auxite-logo-new.png" alt="Auxite" width="120" style="display:block;width:120px;height:auto;margin-bottom:16px"/><p style="font-size:13px;color:#444;line-height:1.7">Thank you for joining Auxite. You are now enrolled in our <strong>Liquidity Credits Programme</strong>.</p><p style="font-size:13px;color:#444;line-height:1.7"><strong>Welcome Bonus:</strong> 10 AUXS upon KYC + $100 deposit<br/><strong>Deposit Bonus:</strong> 2% in metal credits<br/><strong>Referral Bonus:</strong> 0.5% of referred deposit</p><a href="https://vault.auxite.io/dashboard" style="display:inline-block;background:#1a1a1a;color:#fff;padding:12px 24px;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:1px;margin:16px 0">ACCESS YOUR VAULT</a></div><div style="padding:16px 30px;border-top:1px solid #e5e5e5;text-align:center"><p style="font-size:9px;color:#aaa;margin:4px 0">Aurum Ledger Ltd · Hong Kong</p></div><div style="height:2px;background:#C5A55A"></div></div></div>`,
+    },
+    marketUpdate: {
+      subject: "Precious Metals Market Update — Auxite",
+      html: `<div style="font-family:Georgia,serif;background:#f5f5f5;padding:20px;color:#1a1a1a"><div style="max-width:600px;margin:0 auto;background:#fff"><div style="height:3px;background:#C5A55A"></div><div style="padding:24px 30px"><img src="https://vault.auxite.io/auxite-logo-new.png" alt="Auxite" width="120" style="display:block;width:120px;height:auto;margin-bottom:16px"/><h2 style="font-size:16px;color:#1a1a1a;font-weight:400;margin:0 0 16px">Market Update</h2><p style="font-size:13px;color:#444;line-height:1.7">Check the latest precious metals prices on Auxite. Gold, Silver, Platinum and Palladium are available 24/7 for allocation.</p><a href="https://vault.auxite.io/dashboard" style="display:inline-block;background:#1a1a1a;color:#fff;padding:12px 24px;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:1px;margin:16px 0">VIEW PRICES</a></div><div style="padding:16px 30px;border-top:1px solid #e5e5e5;text-align:center"><p style="font-size:9px;color:#aaa;margin:4px 0">Aurum Ledger Ltd · Hong Kong</p></div><div style="height:2px;background:#C5A55A"></div></div></div>`,
+    },
+  };
+
+  const handleTemplateChange = (tmpl: string) => {
+    setTemplate(tmpl);
+    if (tmpl !== "custom" && templates[tmpl]) {
+      setSubject(templates[tmpl].subject);
+      setCustomHtml(templates[tmpl].html);
+    } else {
+      setSubject("");
+      setCustomHtml("");
+    }
+  };
+
+  const sendCampaign = async (isTest = false) => {
+    setSending(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/admin/email-campaigns", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          subject,
+          htmlContent: customHtml,
+          segment,
+          ...(isTest ? { testEmail } : {}),
+        }),
+      });
+      const data = await res.json();
+      setResult(data);
+      if (!isTest) loadData();
+    } catch (e: any) {
+      setResult({ error: e.message });
+    } finally { setSending(false); }
+  };
+
+  const segmentOptions = [
+    { value: "all", label: "Tüm Kullanıcılar", count: segments.all },
+    { value: "kycVerified", label: "KYC Onaylı", count: segments.kycVerified },
+    { value: "kycPending", label: "KYC Bekleyen", count: segments.kycPending },
+    { value: "noKyc", label: "KYC Yapmayan", count: segments.noKyc },
+    { value: "mobile", label: "Mobil Kullanıcılar", count: segments.mobile },
+    { value: "web", label: "Web Kullanıcılar", count: segments.web },
+  ];
+
+  if (loading) return <div className="text-center py-12 text-slate-400">Yükleniyor...</div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">📧 Email Kampanyaları</h2>
+        <div className="flex gap-2">
+          {(["compose", "history", "list"] as const).map((v) => (
+            <button key={v} onClick={() => setActiveView(v)}
+              className={`px-3 py-1.5 rounded-lg text-sm ${activeView === v ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" : "bg-slate-700 text-slate-300 hover:bg-slate-600"}`}>
+              {v === "compose" ? "✍️ Oluştur" : v === "history" ? "📋 Geçmiş" : "👥 Liste"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Segment Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {segmentOptions.map((s) => (
+          <div key={s.value} onClick={() => { setSegment(s.value); setActiveView("compose"); }}
+            className={`p-3 rounded-xl border cursor-pointer transition-all ${segment === s.value ? "border-amber-500/50 bg-amber-500/10" : "border-slate-700 bg-slate-800/50 hover:border-slate-600"}`}>
+            <div className="text-lg font-bold text-white">{s.count || 0}</div>
+            <div className="text-xs text-slate-400">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Compose */}
+      {activeView === "compose" && (
+        <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Hedef Segment</label>
+              <select value={segment} onChange={(e) => setSegment(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white">
+                {segmentOptions.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label} ({s.count || 0})</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Şablon</label>
+              <select value={template} onChange={(e) => handleTemplateChange(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white">
+                <option value="custom">Özel</option>
+                <option value="kycReminder">KYC Hatırlatma</option>
+                <option value="welcomeBonus">Welcome Bonus</option>
+                <option value="marketUpdate">Piyasa Güncellemesi</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-slate-400 block mb-1">Konu</label>
+            <input value={subject} onChange={(e) => setSubject(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white"
+              placeholder="Email subject..." />
+          </div>
+
+          <div>
+            <label className="text-xs text-slate-400 block mb-1">HTML İçerik</label>
+            <textarea value={customHtml} onChange={(e) => setCustomHtml(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white font-mono min-h-[200px]"
+              placeholder="<div>Email HTML content...</div>" />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <input value={testEmail} onChange={(e) => setTestEmail(e.target.value)}
+              className="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white w-64"
+              placeholder="Test email adresi..." />
+            <button onClick={() => sendCampaign(true)} disabled={sending || !subject || !customHtml || !testEmail}
+              className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded-lg text-sm disabled:opacity-50">
+              🧪 Test Gönder
+            </button>
+            <button onClick={() => sendCampaign(false)} disabled={sending || !subject || !customHtml}
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg text-sm font-semibold disabled:opacity-50">
+              📧 {sending ? "Gönderiliyor..." : `Herkese Gönder (${segmentOptions.find(s => s.value === segment)?.count || 0} kişi)`}
+            </button>
+          </div>
+
+          {result && (
+            <div className={`p-3 rounded-lg text-sm ${result.error ? "bg-red-500/20 text-red-400" : "bg-green-500/20 text-green-400"}`}>
+              {result.error ? `❌ ${result.error}` : result.test ? "✅ Test emaili gönderildi" : `✅ ${result.sent} gönderildi, ${result.failed} başarısız`}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* History */}
+      {activeView === "history" && (
+        <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+          {campaigns.length === 0 ? (
+            <div className="text-center py-12 text-slate-400">Henüz kampanya gönderilmemiş.</div>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-700 text-left text-xs text-slate-400 uppercase">
+                  <th className="px-4 py-3">Tarih</th>
+                  <th className="px-4 py-3">Konu</th>
+                  <th className="px-4 py-3">Segment</th>
+                  <th className="px-4 py-3">Gönderilen</th>
+                  <th className="px-4 py-3">Başarısız</th>
+                </tr>
+              </thead>
+              <tbody>
+                {campaigns.map((c: any, i: number) => (
+                  <tr key={i} className="border-b border-slate-700/50 text-sm">
+                    <td className="px-4 py-3 text-slate-300">{new Date(c.timestamp).toLocaleString("tr-TR")}</td>
+                    <td className="px-4 py-3 text-white">{c.subject}</td>
+                    <td className="px-4 py-3"><span className="px-2 py-1 bg-slate-600 rounded-full text-xs">{c.segment}</span></td>
+                    <td className="px-4 py-3 text-green-400">{c.sent}</td>
+                    <td className="px-4 py-3 text-red-400">{c.failed || 0}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {/* Email List */}
+      {activeView === "list" && (
+        <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-700 text-left text-xs text-slate-400 uppercase">
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">İsim</th>
+                <th className="px-4 py-3">Platform</th>
+                <th className="px-4 py-3">KYC</th>
+                <th className="px-4 py-3">Dil</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recipients.map((r: any, i: number) => (
+                <tr key={i} className="border-b border-slate-700/50 text-sm hover:bg-slate-700/30">
+                  <td className="px-4 py-3 text-white">{r.email}</td>
+                  <td className="px-4 py-3 text-slate-300">{r.name || "-"}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${r.platform === "mobile" ? "bg-green-500/20 text-green-400" : r.platform === "web" ? "bg-blue-500/20 text-blue-400" : "bg-slate-500/20 text-slate-400"}`}>
+                      {r.platform === "mobile" ? "📱" : r.platform === "web" ? "🌐" : "❓"} {r.platform}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${r.kycStatus === "approved" ? "bg-green-500/20 text-green-400" : r.kycStatus === "pending" ? "bg-amber-500/20 text-amber-400" : "bg-slate-500/20 text-slate-400"}`}>
+                      {r.kycStatus === "approved" ? "✅" : r.kycStatus === "pending" ? "⏳" : "❌"} {r.kycStatus}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-400 text-xs">{r.language}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="px-4 py-3 border-t border-slate-700 text-xs text-slate-500">
+            Toplam {recipients.length} email adresi
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function NotificationHistoryTab() {
