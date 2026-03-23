@@ -8161,7 +8161,11 @@ function NotificationHistoryTab() {
   const fetchLogs = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/push-log", {
-        headers: { Authorization: `Bearer ${document.cookie.replace(/(?:(?:^|.*;\s*)admin_session\s*=\s*([^;]*).*$)|^.*$/, "$1")}` },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${sessionStorage.getItem("auxite_admin_token")}`,
+          "x-admin-address": "0x101bD08219773E0ff8cD3805542c0A2835Fec0FF",
+        },
       });
       if (res.ok) {
         const data = await res.json();
