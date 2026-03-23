@@ -337,7 +337,6 @@ export async function POST(request: NextRequest) {
 
     // Get balance based on asset type
     let currentFromBalance: number;
-    const isSellingMetal = METALS.includes(fromKey);
     const isSellingCrypto = CRYPTOS.includes(fromKey);
 
     if (isSellingMetal) {
