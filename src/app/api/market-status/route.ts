@@ -25,24 +25,15 @@ export async function GET() {
     let lastPrice: Record<string, number> = { ...FALLBACK_PRICES };
 
     try {
+      // Cache and stale are already in $/gram (converted by price-cache.ts)
       const cached = await redis.get("metal:prices:cache");
-      if (cached) {
-        const data = typeof cached === "string" ? JSON.parse(cached) : cached;
-        const TROY_OZ_TO_GRAM = 31.1035;
-        if (data.gold) lastPrice.auxg = data.gold / TROY_OZ_TO_GRAM;
-        if (data.silver) lastPrice.auxs = data.silver / TROY_OZ_TO_GRAM;
-        if (data.platinum) lastPrice.auxpt = data.platinum / TROY_OZ_TO_GRAM;
-        if (data.palladium) lastPrice.auxpd = data.palladium / TROY_OZ_TO_GRAM;
-      } else {
-        const stale = await redis.get("metal:prices:stale");
-        if (stale) {
-          const data = typeof stale === "string" ? JSON.parse(stale) : stale;
-          const TROY_OZ_TO_GRAM = 31.1035;
-          if (data.gold) lastPrice.auxg = data.gold / TROY_OZ_TO_GRAM;
-          if (data.silver) lastPrice.auxs = data.silver / TROY_OZ_TO_GRAM;
-          if (data.platinum) lastPrice.auxpt = data.platinum / TROY_OZ_TO_GRAM;
-          if (data.palladium) lastPrice.auxpd = data.palladium / TROY_OZ_TO_GRAM;
-        }
+      const source = cached || await redis.get("metal:prices:stale");
+      if (source) {
+        const data = typeof source === "string" ? JSON.parse(source) : source;
+        if (data.gold) lastPrice.auxg = data.gold;
+        if (data.silver) lastPrice.auxs = data.silver;
+        if (data.platinum) lastPrice.auxpt = data.platinum;
+        if (data.palladium) lastPrice.auxpd = data.palladium;
       }
     } catch (cacheError) {
       console.warn("Failed to fetch cached prices for market-status:", cacheError);

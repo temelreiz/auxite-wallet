@@ -139,8 +139,19 @@ export async function getTokenPrices(token: string): Promise<{
 
     const tokenUpper = token.toUpperCase();
 
-    // Get base price (without spread)
+    // Get base price (without spread) - should be in $/gram
     const basePrice = await getMetalPrice(tokenUpper);
+
+    // SAFETY CHECK: Prices should be per gram, not per ounce
+    // Gold max ~$300/g, Silver max ~$10/g, Platinum max ~$200/g, Palladium max ~$200/g
+    const maxGramPrices: Record<string, number> = {
+      AUXG: 500, AUXS: 20, AUXPT: 300, AUXPD: 300,
+    };
+    const maxPrice = maxGramPrices[tokenUpper] || 500;
+    if (basePrice > maxPrice) {
+      console.error(`🚨 PRICE SAFETY: ${tokenUpper} price $${basePrice.toFixed(2)} exceeds max $${maxPrice}/gram - likely ounce price!`);
+      throw new Error(`Price safety check failed: ${tokenUpper} $${basePrice.toFixed(2)} exceeds $${maxPrice}/gram limit`);
+    }
 
     // Get spread config for this metal
     const spreadConfig = await getMetalSpread(tokenUpper);
