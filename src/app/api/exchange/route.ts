@@ -223,6 +223,32 @@ export async function POST(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // 🔒 BONUS TOKEN SELL PROTECTION
+    // ═══════════════════════════════════════════════════════════════════════════
+    const isSellingMetal = METALS.includes(fromAsset.toLowerCase());
+    if (isSellingMetal) {
+      const bonusStatus = await redis.get(`user:${normalizedAddress}:bonus:welcome`);
+      if (bonusStatus === 'claimed') {
+        const bonusAmount = parseFloat((await redis.get(`user:${normalizedAddress}:bonus:welcomeAmount`) as string) || '0');
+        if (bonusAmount > 0) {
+          const metalKey = fromAsset.toLowerCase();
+          const currentBalance = parseFloat((await redis.hget(balanceKey, metalKey) as string) || '0');
+          // Check if bonus token is same metal being sold
+          const bonusToken = 'auxs'; // Welcome bonus is always AUXS
+          if (metalKey === bonusToken) {
+            const nonBonusBalance = Math.max(0, currentBalance - bonusAmount);
+            if (fromAmount > nonBonusBalance) {
+              return NextResponse.json({
+                error: "Bonus tokens cannot be sold. Your bonus balance is locked until unlock conditions are met (30 days or 5x trading volume).",
+                code: "BONUS_LOCKED",
+              }, { status: 403 });
+            }
+          }
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // 🔒 SERVER-SIDE PRICE CALCULATION - Frontend manipulation önleme
     // ═══════════════════════════════════════════════════════════════════════════
     const { toAmount, fromPrice, toPrice } = await calculateServerToAmount(fromAsset, toAsset, fromAmount);
