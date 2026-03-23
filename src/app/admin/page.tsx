@@ -8344,7 +8344,16 @@ function EmailCampaignsTab() {
             </button>
             <button onClick={() => sendCampaign(false)} disabled={sending || !subject || !customHtml}
               className="px-4 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg text-sm font-semibold disabled:opacity-50">
-              📧 {sending ? "Gönderiliyor..." : `Herkese Gönder (${segmentOptions.find(s => s.value === segment)?.count || 0} kişi)`}
+              📧 {sending ? "Gönderiliyor..." : `Gönder (${(() => {
+                let filtered = recipients;
+                if (segment === "kycVerified") filtered = filtered.filter((r: any) => r.kycStatus === "approved");
+                else if (segment === "kycPending") filtered = filtered.filter((r: any) => r.kycStatus === "pending");
+                else if (segment === "noKyc") filtered = filtered.filter((r: any) => !r.kycStatus || r.kycStatus === "none");
+                else if (segment === "mobile") filtered = filtered.filter((r: any) => r.platform === "mobile");
+                else if (segment === "web") filtered = filtered.filter((r: any) => r.platform === "web");
+                if (language !== "all") filtered = filtered.filter((r: any) => (r.language || "en") === language);
+                return filtered.length;
+              })()} kişi)`}
             </button>
           </div>
 
