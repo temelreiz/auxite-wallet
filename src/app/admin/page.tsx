@@ -8202,20 +8202,10 @@ function EmailCampaignsTab() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const templates: Record<string, { subject: string; html: string }> = {
-    kycReminder: {
-      subject: "Complete Your Verification — Earn 10 AUXS Bonus",
-      html: `<div style="font-family:Georgia,serif;background:#f5f5f5;padding:20px;color:#1a1a1a"><div style="max-width:600px;margin:0 auto;background:#fff"><div style="height:3px;background:#C5A55A"></div><div style="padding:24px 30px"><img src="https://vault.auxite.io/auxite-logo-new.png" alt="Auxite" width="120" style="display:block;width:120px;height:auto;margin-bottom:16px"/><p style="font-size:13px;color:#444;line-height:1.7">Complete your identity verification (KYC) and make your first deposit of $100 or more to receive <strong>10 AUXS Welcome Bonus</strong>.</p><p style="font-size:13px;color:#444;line-height:1.7">Your bonus credits will unlock after 30 days or upon reaching 5x trading volume.</p><a href="https://vault.auxite.io/dashboard" style="display:inline-block;background:#1a1a1a;color:#fff;padding:12px 24px;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:1px;margin:16px 0">VERIFY NOW</a></div><div style="padding:16px 30px;border-top:1px solid #e5e5e5;text-align:center"><p style="font-size:9px;color:#aaa;margin:4px 0">Aurum Ledger Ltd · Hong Kong</p></div><div style="height:2px;background:#C5A55A"></div></div></div>`,
-    },
-    welcomeBonus: {
-      subject: "Welcome to Auxite — Your 10 AUXS Bonus Awaits",
-      html: `<div style="font-family:Georgia,serif;background:#f5f5f5;padding:20px;color:#1a1a1a"><div style="max-width:600px;margin:0 auto;background:#fff"><div style="height:3px;background:#C5A55A"></div><div style="padding:24px 30px"><img src="https://vault.auxite.io/auxite-logo-new.png" alt="Auxite" width="120" style="display:block;width:120px;height:auto;margin-bottom:16px"/><p style="font-size:13px;color:#444;line-height:1.7">Thank you for joining Auxite. You are now enrolled in our <strong>Liquidity Credits Programme</strong>.</p><p style="font-size:13px;color:#444;line-height:1.7"><strong>Welcome Bonus:</strong> 10 AUXS upon KYC + $100 deposit<br/><strong>Deposit Bonus:</strong> 2% in metal credits<br/><strong>Referral Bonus:</strong> 0.5% of referred deposit</p><a href="https://vault.auxite.io/dashboard" style="display:inline-block;background:#1a1a1a;color:#fff;padding:12px 24px;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:1px;margin:16px 0">ACCESS YOUR VAULT</a></div><div style="padding:16px 30px;border-top:1px solid #e5e5e5;text-align:center"><p style="font-size:9px;color:#aaa;margin:4px 0">Aurum Ledger Ltd · Hong Kong</p></div><div style="height:2px;background:#C5A55A"></div></div></div>`,
-    },
-    marketUpdate: {
-      subject: "Precious Metals Market Update — Auxite",
-      html: `<div style="font-family:Georgia,serif;background:#f5f5f5;padding:20px;color:#1a1a1a"><div style="max-width:600px;margin:0 auto;background:#fff"><div style="height:3px;background:#C5A55A"></div><div style="padding:24px 30px"><img src="https://vault.auxite.io/auxite-logo-new.png" alt="Auxite" width="120" style="display:block;width:120px;height:auto;margin-bottom:16px"/><h2 style="font-size:16px;color:#1a1a1a;font-weight:400;margin:0 0 16px">Market Update</h2><p style="font-size:13px;color:#444;line-height:1.7">Check the latest precious metals prices on Auxite. Gold, Silver, Platinum and Palladium are available 24/7 for allocation.</p><a href="https://vault.auxite.io/dashboard" style="display:inline-block;background:#1a1a1a;color:#fff;padding:12px 24px;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:1px;margin:16px 0">VIEW PRICES</a></div><div style="padding:16px 30px;border-top:1px solid #e5e5e5;text-align:center"><p style="font-size:9px;color:#aaa;margin:4px 0">Aurum Ledger Ltd · Hong Kong</p></div><div style="height:2px;background:#C5A55A"></div></div></div>`,
-    },
-  };
+  const templates: Record<string, { subject: string; html: string }> = (() => {
+    const { emailTemplates } = require("@/lib/email-templates");
+    return emailTemplates;
+  })();
 
   const handleTemplateChange = (tmpl: string) => {
     setTemplate(tmpl);
@@ -8320,6 +8310,12 @@ function EmailCampaignsTab() {
                 <option value="kycReminder">KYC Hatırlatma</option>
                 <option value="welcomeBonus">Welcome Bonus</option>
                 <option value="marketUpdate">Piyasa Güncellemesi</option>
+                <option value="welcomeEN">🇬🇧 Welcome (English)</option>
+                <option value="welcomeTR">🇹🇷 Hoş Geldin (Türkçe)</option>
+                <option value="welcomeFR">🇫🇷 Bienvenue (Français)</option>
+                <option value="welcomeDE">🇩🇪 Willkommen (Deutsch)</option>
+                <option value="welcomeAR">🇸🇦 مرحباً (العربية)</option>
+                <option value="welcomeRU">🇷🇺 Добро пожаловать (Русский)</option>
               </select>
             </div>
           </div>
