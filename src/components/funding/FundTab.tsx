@@ -532,59 +532,18 @@ export function FundTab() {
       {/* BANK WIRE CONTENT                      */}
       {/* ═══════════════════════════════════════ */}
       {selectedRail === "bank" && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6 mb-6">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">{t.bankDetails}</h2>
-
-          <div className="space-y-4 mb-6">
-            {[
-              { label: t.beneficiary, value: "Auxite Custody Ltd.", mono: false },
-              { label: t.iban, value: "CH93 0076 2011 6238 5295 7", mono: true },
-              { label: t.swift, value: "UBSWCHZH80A", mono: true },
-              { label: t.bank, value: "UBS Switzerland AG", mono: false },
-              { label: t.reference, value: address ? `AX-${address.slice(2, 8).toUpperCase()}` : "AX-VLT-XXXX", mono: false, highlight: true },
-            ].map((row, i) => (
-              <div key={i} className="flex items-center justify-between py-3 border-b border-stone-100 dark:border-slate-800 last:border-0">
-                <span className="text-sm text-slate-500 dark:text-slate-400">{row.label}</span>
-                <span className={`text-sm font-medium ${row.highlight ? "text-[#BFA181]" : "text-slate-800 dark:text-white"} ${row.mono ? "font-mono" : ""}`}>
-                  {row.value}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Important Note */}
-          <div className="p-3 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/20 mb-4">
-            <div className="flex items-start gap-2">
-              <svg className="w-4 h-4 text-[#BFA181] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <p className="text-xs text-slate-600 dark:text-slate-400">{t.referenceNote}</p>
-            </div>
-          </div>
-
-          {/* Settlement */}
-          <div className="p-3 rounded-xl bg-[#2F6F62]/5 border border-[#2F6F62]/20 mb-4">
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-xs text-[#2F6F62] font-medium">{t.settlement}</p>
-            </div>
-          </div>
-
-          {/* Copy All */}
-          <button
-            onClick={() => {
-              const details = `Beneficiary: Auxite Custody Ltd.\nIBAN: CH93 0076 2011 6238 5295 7\nSWIFT: UBSWCHZH80A\nBank: UBS Switzerland AG\nReference: ${address ? `AX-${address.slice(2, 8).toUpperCase()}` : "AX-VLT-XXXX"}`;
-              copyToClipboard(details, "bank-all");
-            }}
-            className="w-full py-3 rounded-xl bg-[#BFA181] hover:bg-[#BFA181]/90 text-white font-semibold transition-colors flex items-center justify-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-8 mb-6 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#BFA181]/10 flex items-center justify-center">
+            <svg className="w-8 h-8 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
-            {copiedField === "bank-all" ? t.copied : t.copyAll}
-          </button>
+          </div>
+          <span className="inline-block px-4 py-1.5 rounded-full bg-[#BFA181]/15 text-[#BFA181] text-sm font-semibold mb-3">
+            Coming Soon
+          </span>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+            Bank wire transfers will be available soon. In the meantime, you can fund your vault using cryptocurrency.
+          </p>
         </div>
       )}
 
