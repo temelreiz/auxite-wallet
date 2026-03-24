@@ -514,6 +514,7 @@ export default function VaultPage() {
   const [encumberedBreakdown, setEncumberedBreakdown] = useState({ yieldPrograms: 0, pendingDelivery: 0, tradeSettlement: 0 });
   const [sellModal, setSellModal] = useState<{ open: boolean; metal: MetalHolding | null }>({ open: false, metal: null });
   const [kycStatus, setKycStatus] = useState<'none' | 'pending' | 'verified'>('none');
+  const [kycLoaded, setKycLoaded] = useState(false);
   const [bonusData, setBonusData] = useState<any>(null);
   const [custodyStatus, setCustodyStatus] = useState<'active' | 'pending' | 'offline'>('offline');
   const [custodyProvider, setCustodyProvider] = useState<string>('');
@@ -575,6 +576,7 @@ export default function VaultPage() {
       // KYC status (API returns { profile: { kycStatus, kycLevel } })
       const kycSt = profileData.profile?.kycStatus || profileData.profile?.kycLevel || 'none';
       setKycStatus(kycSt === 'approved' || kycSt === 'verified' || kycSt === 'enhanced' ? 'verified' : kycSt === 'pending' || kycSt === 'under_review' ? 'pending' : 'none');
+      setKycLoaded(true);
 
       // Bonus status fetch
       try {
@@ -729,7 +731,7 @@ export default function VaultPage() {
         <MarketStatusBanner />
 
         {/* KYC Warning Banner */}
-        {kycStatus !== 'verified' && !loading && (
+        {kycStatus !== 'verified' && kycLoaded && (
           <Link href="/profile" className="block">
             <div className={`flex items-center gap-3 p-4 rounded-xl border ${
               kycStatus === 'pending'
