@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID!;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN!;
-const TWILIO_WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
+const TWILIO_WHATSAPP_FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+15559556796";
 
 // Auxite platform knowledge base for AI
 const SYSTEM_PROMPT = `You are the Auxite Support Assistant — a helpful, professional AI that assists users of the Auxite precious metals platform.
