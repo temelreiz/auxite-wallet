@@ -662,6 +662,21 @@ export default function VaultPage() {
       <TopNav />
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+        {/* ═══ TRUST BAR ═══ */}
+        <a href="/trust-center" className="block">
+          <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#C5A55A]/5 border border-[#C5A55A]/20 hover:bg-[#C5A55A]/10 transition-colors cursor-pointer">
+            <svg className="w-4 h-4 text-[#C5A55A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <span className="text-[10px] font-semibold text-[#C5A55A] tracking-[2px]">
+              FULLY ALLOCATED &nbsp;•&nbsp; SEGREGATED &nbsp;•&nbsp; AUDITED
+            </span>
+            <svg className="w-3 h-3 text-[#C5A55A]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </a>
+
         {/* Market Status Banner */}
         <MarketStatusBanner />
 
@@ -747,6 +762,46 @@ export default function VaultPage() {
               <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.assetUtilization}</p>
             </div>
           </div>
+        </div>
+
+        {/* ═══ PRIMARY CTA: FUND VAULT ═══ */}
+        <a href="/fund-vault" className="block">
+          <div className="bg-gradient-to-r from-[#C5A55A] to-[#D4AF37] rounded-xl py-4 px-6 text-center hover:opacity-90 transition-opacity shadow-lg shadow-[#C5A55A]/20">
+            <p className="text-lg font-bold text-[#0B0B0D] tracking-wide">Fund Vault</p>
+            <p className="text-xs text-[#0B0B0D]/60 mt-1">No minimum deposit required</p>
+          </div>
+        </a>
+
+        {/* ═══ SECONDARY CTA: ALLOCATE METALS ═══ */}
+        <a href="/allocate" className={`block ${totalVaultValue <= 0 ? 'pointer-events-none opacity-40' : ''}`}>
+          <div className={`rounded-xl py-3.5 px-6 text-center border ${totalVaultValue > 0 ? 'border-[#C5A55A]/40 hover:bg-[#C5A55A]/5' : 'border-slate-700'} transition-colors`}>
+            <p className={`text-sm font-semibold ${totalVaultValue > 0 ? 'text-[#C5A55A]' : 'text-slate-500'}`}>Allocate Metals</p>
+            {totalVaultValue <= 0 && <p className="text-[10px] text-slate-600 mt-0.5">Fund your vault first</p>}
+          </div>
+        </a>
+
+        {/* ═══ HOW IT WORKS - 3 STEPS ═══ */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { icon: '💰', label: 'Fund your vault' },
+            { icon: '🏗️', label: 'Allocate metals' },
+            { icon: '📈', label: 'Hold or sell anytime' },
+          ].map((step, i) => (
+            <div key={i} className="flex flex-col items-center py-4 px-2 bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800">
+              <span className="text-2xl mb-2">{step.icon}</span>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 text-center leading-tight">{step.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* ═══ TRUST MICROCOPY ═══ */}
+        <div className="flex items-start gap-3 py-3 px-4 bg-white dark:bg-slate-900 rounded-xl border border-[#BFA181]/20">
+          <svg className="w-5 h-5 text-[#BFA181] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <p className="text-xs text-[#BFA181] leading-relaxed">
+            Your funds remain under your control until allocation. You are buying real, allocated metal — not exposure. Sell anytime at live market price.
+          </p>
         </div>
 
         {/* Institutional Architecture Message */}
