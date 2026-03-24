@@ -95,6 +95,15 @@ const translations: Record<string, Record<string, string>> = {
     transferToSettlement: "Transfer to Settlement",
     capitalClarity: "CAPITAL STATUS", settledCapital: "Settled", encumbered: "Encumbered",
     institutionalArchitecture: "Built on institutional custody architecture.",
+    trustBar: "FULLY ALLOCATED  •  SEGREGATED  •  AUDITED",
+    fundVault: "Fund Vault",
+    noMinDeposit: "No minimum deposit required",
+    allocateMetals: "Allocate Metals",
+    fundFirst: "Fund your vault first",
+    step1: "Fund your vault",
+    step2: "Allocate metals",
+    step3: "Hold or sell anytime",
+    trustMicrocopy: "Your funds remain under your control until allocation. You are buying real, allocated metal — not exposure. Sell anytime at live market price.",
     custodySeparation: "Assets under custody are never commingled with corporate funds.",
     notRehypothecated: "Client assets are never rehypothecated.",
     unallocatedCapital: "UNALLOCATED CAPITAL",
@@ -160,6 +169,15 @@ const translations: Record<string, Record<string, string>> = {
     transferToSettlement: "Takasa Transfer Et",
     capitalClarity: "SERMAYE DURUMU", settledCapital: "Takas Edilmiş", encumbered: "Bloke",
     institutionalArchitecture: "Kurumsal saklama mimarisi üzerine inşa edilmiştir.",
+    trustBar: "TAM TAHSİSLİ  •  AYRILMIŞ  •  DENETLENMİŞ",
+    fundVault: "Kasayı Fonla",
+    noMinDeposit: "Minimum yatırım tutarı yok",
+    allocateMetals: "Metal Tahsis Et",
+    fundFirst: "Önce kasanızı fonlayın",
+    step1: "Kasanızı fonlayın",
+    step2: "Metal tahsis edin",
+    step3: "Tutun veya istediğiniz zaman satın",
+    trustMicrocopy: "Fonlarınız tahsis edilene kadar kontrolünüz altındadır. Gerçek, tahsis edilmiş metal satın alıyorsunuz — maruz kalma değil. İstediğiniz zaman canlı piyasa fiyatından satın.",
     custodySeparation: "Saklama altındaki varlıklar hiçbir zaman kurumsal fonlarla birleştirilmez.",
     notRehypothecated: "Müşteri varlıkları asla yeniden teminatlandırılmaz.",
     unallocatedCapital: "TAHSİS EDİLMEMİŞ SERMAYE",
@@ -225,6 +243,14 @@ const translations: Record<string, Record<string, string>> = {
     transferToSettlement: "Zur Abwicklung überweisen",
     capitalClarity: "KAPITALSTATUS", settledCapital: "Abgewickelt", encumbered: "Belastet",
     institutionalArchitecture: "Aufgebaut auf institutioneller Verwahrungsarchitektur.",
+    trustBar: "VOLL ZUGETEILT  •  GETRENNT  •  GEPRÜFT",
+    noMinDeposit: "Keine Mindesteinlage erforderlich",
+    allocateMetals: "Metalle zuweisen",
+    fundFirst: "Finanzieren Sie zuerst Ihren Tresor",
+    step1: "Tresor finanzieren",
+    step2: "Metalle zuweisen",
+    step3: "Halten oder jederzeit verkaufen",
+    trustMicrocopy: "Ihre Mittel bleiben bis zur Zuweisung unter Ihrer Kontrolle. Sie kaufen echtes, zugewiesenes Metall — keine Exposition. Jederzeit zum Live-Marktpreis verkaufen.",
     custodySeparation: "Verwahrte Vermögenswerte werden niemals mit Unternehmensgeldern vermischt.",
     notRehypothecated: "Kundenvermögen wird niemals weiterverpfändet.",
     unallocatedCapital: "NICHT ZUGETEILTES KAPITAL",
@@ -290,6 +316,15 @@ const translations: Record<string, Record<string, string>> = {
     transferToSettlement: "Transférer au règlement",
     capitalClarity: "STATUT DU CAPITAL", settledCapital: "Réglé", encumbered: "Grevé",
     institutionalArchitecture: "Construit sur une architecture de conservation institutionnelle.",
+    trustBar: "ENTIÈREMENT ALLOUÉ  •  SÉPARÉ  •  AUDITÉ",
+    fundVault: "Alimenter le Coffre",
+    noMinDeposit: "Aucun dépôt minimum requis",
+    allocateMetals: "Allouer des Métaux",
+    fundFirst: "Alimentez d'abord votre coffre",
+    step1: "Alimentez votre coffre",
+    step2: "Allouez des métaux",
+    step3: "Conservez ou vendez à tout moment",
+    trustMicrocopy: "Vos fonds restent sous votre contrôle jusqu'à l'allocation. Vous achetez du métal réel et alloué — pas une exposition. Vendez à tout moment au prix du marché.",
     custodySeparation: "Les actifs en conservation ne sont jamais mélangés avec les fonds de l'entreprise.",
     notRehypothecated: "Les actifs clients ne sont jamais réhypothéqués.",
     unallocatedCapital: "CAPITAL NON ALLOUÉ",
@@ -355,6 +390,15 @@ const translations: Record<string, Record<string, string>> = {
     transferToSettlement: "تحويل إلى التسوية",
     capitalClarity: "حالة رأس المال", settledCapital: "مسوّى", encumbered: "مرهون",
     institutionalArchitecture: "مبني على بنية حفظ مؤسسية.",
+    trustBar: "مخصص بالكامل  •  منفصل  •  مدقق",
+    fundVault: "تمويل الخزنة",
+    noMinDeposit: "لا يوجد حد أدنى للإيداع",
+    allocateMetals: "تخصيص المعادن",
+    fundFirst: "قم بتمويل خزنتك أولاً",
+    step1: "موّل خزنتك",
+    step2: "خصّص المعادن",
+    step3: "احتفظ أو بع في أي وقت",
+    trustMicrocopy: "أموالك تبقى تحت سيطرتك حتى التخصيص. أنت تشتري معدناً حقيقياً مخصصاً — وليس تعرضاً. بع في أي وقت بسعر السوق المباشر.",
     custodySeparation: "لا يتم خلط الأصول المحفوظة أبداً مع أموال الشركة.",
     notRehypothecated: "لا يتم إعادة رهن أصول العملاء أبداً.",
     unallocatedCapital: "رأس المال غير المخصص",
@@ -420,6 +464,15 @@ const translations: Record<string, Record<string, string>> = {
     transferToSettlement: "Перевести на расчёт",
     capitalClarity: "СТАТУС КАПИТАЛА", settledCapital: "Рассчитано", encumbered: "Обременено",
     institutionalArchitecture: "Построено на институциональной архитектуре хранения.",
+    trustBar: "ПОЛНОСТЬЮ РАСПРЕДЕЛЕНО  •  СЕГРЕГИРОВАНО  •  ПРОВЕРЕНО",
+    fundVault: "Пополнить Хранилище",
+    noMinDeposit: "Минимальный депозит не требуется",
+    allocateMetals: "Распределить Металлы",
+    fundFirst: "Сначала пополните хранилище",
+    step1: "Пополните хранилище",
+    step2: "Распределите металлы",
+    step3: "Держите или продавайте в любое время",
+    trustMicrocopy: "Ваши средства остаются под вашим контролем до распределения. Вы покупаете реальный, распределённый металл — не экспозицию. Продавайте в любое время по рыночной цене.",
     custodySeparation: "Хранимые активы никогда не смешиваются с корпоративными средствами.",
     notRehypothecated: "Активы клиентов никогда не перезакладываются.",
     unallocatedCapital: "НЕРАСПРЕДЕЛЁННЫЙ КАПИТАЛ",
@@ -669,7 +722,7 @@ export default function VaultPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
             <span className="text-[10px] font-semibold text-[#C5A55A] tracking-[2px]">
-              FULLY ALLOCATED &nbsp;•&nbsp; SEGREGATED &nbsp;•&nbsp; AUDITED
+              {t.trustBar}
             </span>
             <svg className="w-3 h-3 text-[#C5A55A]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -767,25 +820,25 @@ export default function VaultPage() {
         {/* ═══ PRIMARY CTA: FUND VAULT ═══ */}
         <a href="/fund-vault" className="block">
           <div className="bg-gradient-to-r from-[#C5A55A] to-[#D4AF37] rounded-xl py-4 px-6 text-center hover:opacity-90 transition-opacity shadow-lg shadow-[#C5A55A]/20">
-            <p className="text-lg font-bold text-[#0B0B0D] tracking-wide">Fund Vault</p>
-            <p className="text-xs text-[#0B0B0D]/60 mt-1">No minimum deposit required</p>
+            <p className="text-lg font-bold text-[#0B0B0D] tracking-wide">{t.fundVault}</p>
+            <p className="text-xs text-[#0B0B0D]/60 mt-1">{t.noMinDeposit}</p>
           </div>
         </a>
 
         {/* ═══ SECONDARY CTA: ALLOCATE METALS ═══ */}
         <a href="/allocate" className={`block ${totalVaultValue <= 0 ? 'pointer-events-none opacity-40' : ''}`}>
           <div className={`rounded-xl py-3.5 px-6 text-center border ${totalVaultValue > 0 ? 'border-[#C5A55A]/40 hover:bg-[#C5A55A]/5' : 'border-slate-700'} transition-colors`}>
-            <p className={`text-sm font-semibold ${totalVaultValue > 0 ? 'text-[#C5A55A]' : 'text-slate-500'}`}>Allocate Metals</p>
-            {totalVaultValue <= 0 && <p className="text-[10px] text-slate-600 mt-0.5">Fund your vault first</p>}
+            <p className={`text-sm font-semibold ${totalVaultValue > 0 ? 'text-[#C5A55A]' : 'text-slate-500'}`}>{t.allocateMetals}</p>
+            {totalVaultValue <= 0 && <p className="text-[10px] text-slate-600 mt-0.5">{t.fundFirst}</p>}
           </div>
         </a>
 
         {/* ═══ HOW IT WORKS - 3 STEPS ═══ */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { icon: '💰', label: 'Fund your vault' },
-            { icon: '🏗️', label: 'Allocate metals' },
-            { icon: '📈', label: 'Hold or sell anytime' },
+            { icon: '💰', label: t.step1 },
+            { icon: '🏗️', label: t.step2 },
+            { icon: '📈', label: t.step3 },
           ].map((step, i) => (
             <div key={i} className="flex flex-col items-center py-4 px-2 bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800">
               <span className="text-2xl mb-2">{step.icon}</span>
@@ -800,7 +853,7 @@ export default function VaultPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
           <p className="text-xs text-[#BFA181] leading-relaxed">
-            Your funds remain under your control until allocation. You are buying real, allocated metal — not exposure. Sell anytime at live market price.
+            {t.trustMicrocopy}
           </p>
         </div>
 
