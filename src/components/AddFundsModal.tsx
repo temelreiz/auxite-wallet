@@ -602,11 +602,8 @@ export function AddFundsModal({
               <div>
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">{t("fundingSources")}</p>
                 <div className="space-y-3">
-                  {/* Bank Wire */}
-                  <button
-                    onClick={() => setActiveModal("bank")}
-                    className="w-full p-4 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[#BFA181]/50 transition-all flex items-center gap-4 text-left"
-                  >
+                  {/* Bank Wire - Coming Soon */}
+                  <div className="w-full p-4 rounded-xl border border-slate-200 dark:border-white/10 flex items-center gap-4 opacity-50 cursor-not-allowed">
                     <div className="w-12 h-12 rounded-xl bg-[#BFA181]/15 flex items-center justify-center">
                       <svg className="w-6 h-6 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -615,17 +612,11 @@ export function AddFundsModal({
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <p className="font-semibold text-slate-800 dark:text-white">{t("bankWire")}</p>
-                        <span className="text-xs font-semibold text-[#BFA181]">USD/EUR</span>
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#BFA181]/15 text-[#BFA181]">Coming Soon</span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{t("bankWireDesc")}</p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                        {t("settlementTime")}: <span className="text-[#2F6F62]">1-3 {t("businessDays")}</span>
-                      </p>
                     </div>
-                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
+                  </div>
 
                   {/* AUXM */}
                   <button
