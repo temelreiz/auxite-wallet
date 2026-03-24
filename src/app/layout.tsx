@@ -102,7 +102,7 @@ export default function RootLayout({
               serviceType: "Asset-backed precious metals platform",
               sameAs: [
                 "https://www.linkedin.com/company/auxite",
-                "https://x.com/auxite",
+                "https://x.com/AuxiteGlobal",
               ],
             }),
           }}
