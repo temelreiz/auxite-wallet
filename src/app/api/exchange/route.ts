@@ -53,24 +53,31 @@ async function getServerPrice(asset: string): Promise<{ ask: number; bid: number
     }
   }
 
-  // Cryptos - fetch from Binance
+  // Cryptos - fetch from HTX (primary) with Binance fallback
   if (CRYPTOS.includes(assetLower)) {
     try {
       const symbols: Record<string, string> = {
-        eth: "ETHUSDT", btc: "BTCUSDT"
+        eth: "ethusdt", btc: "btcusdt"
       };
       const symbol = symbols[assetLower];
       if (symbol) {
-        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
-        const data = await res.json();
-        const price = parseFloat(data.price);
+        // Try HTX first
+        const htxRes = await fetch(`https://api.huobi.pro/market/detail/merged?symbol=${symbol}`);
+        const htxData = await htxRes.json();
+        if (htxData.status === "ok" && htxData.tick) {
+          return { ask: htxData.tick.ask[0], bid: htxData.tick.bid[0] };
+        }
+        // Fallback to Binance
+        const binRes = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol.toUpperCase()}`);
+        const binData = await binRes.json();
+        const price = parseFloat(binData.price);
         return { ask: price, bid: price };
       }
     } catch (e) {
       console.error(`Failed to get ${asset} crypto price:`, e);
     }
     // Fallback
-    const fallbacks: Record<string, number> = { eth: 3500, btc: 97000 };
+    const fallbacks: Record<string, number> = { eth: 2000, btc: 87000 };
     const p = fallbacks[assetLower] || 1;
     return { ask: p, bid: p };
   }
