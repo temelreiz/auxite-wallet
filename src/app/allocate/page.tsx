@@ -11,6 +11,7 @@ import { useState, useEffect, useCallback } from "react";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
+import { useDemoMode } from "@/hooks/useDemoMode";
 
 // ============================================
 // TRANSLATIONS
@@ -60,6 +61,11 @@ const translations: Record<string, Record<string, string>> = {
     executionError: "Tahsis Hatası",
     allocationFailed: "Tahsis başarısız. Lütfen tekrar deneyin.",
     connectionError: "Bağlantı hatası. Lütfen tekrar deneyin.",
+    // Demo Mode
+    demoBadge: "Demo Modu",
+    demoTradeNote: "Bu sanal bir tahsistir — gerçek varlık hareketi yapılmaz.",
+    demoAvailable: "Demo Bakiye",
+    demoInsufficientBalance: "Yetersiz demo bakiye",
   },
   en: {
     title: "Metal Allocation",
@@ -105,6 +111,11 @@ const translations: Record<string, Record<string, string>> = {
     executionError: "Allocation Error",
     allocationFailed: "Allocation failed. Please try again.",
     connectionError: "Connection error. Please try again.",
+    // Demo Mode
+    demoBadge: "Demo Mode",
+    demoTradeNote: "This is a virtual allocation — no real asset movement.",
+    demoAvailable: "Demo Balance",
+    demoInsufficientBalance: "Insufficient demo balance",
   },
 };
 
@@ -183,6 +194,9 @@ export default function AllocatePage() {
     const savedAddress = localStorage.getItem("auxite_wallet_address");
     if (savedAddress) setAddress(savedAddress);
   }, []);
+
+  // Demo Mode
+  const { demoActive, demoBalance, executeDemoTrade } = useDemoMode(address);
 
   // State
   const [selectedMetal, setSelectedMetal] = useState("AUXG");
@@ -273,41 +287,76 @@ export default function AllocatePage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/trade", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "buy",
-          fromToken: selectedSource,
-          toToken: selectedMetal,
-          fromAmount: capitalAmount,
-          expectedToAmount: estimatedGrams,
-          address,
-          executeOnChain: false,
-          slippage: 2,
-        }),
-      });
+      if (demoActive) {
+        // Demo mode: use demo trade API
+        const fromKey = selectedSource.toLowerCase();
+        const availableBalance = demoBalance?.[fromKey] ?? 0;
+        const neededAmount = isStablecoinSource ? capitalAmount : inputAmount;
 
-      const data = await res.json();
-      if (data.success) {
-        setAllocationResult({
-          id: data.transaction?.allocation?.certificateNumber || `AUX-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-          grams: data.transaction?.toAmount || estimatedGrams,
-          metal: selectedMetal,
-          capitalDeployed: capitalAmount,
-          executionPrice: metalExecPrice,
-          vault: "Zurich, Switzerland",
+        if (availableBalance < neededAmount) {
+          setError(t.demoInsufficientBalance || "Insufficient demo balance");
+          setIsExecuting(false);
+          return;
+        }
+
+        const result = await executeDemoTrade({
+          fromAsset: selectedSource,
+          toAsset: selectedMetal,
+          fromAmount: neededAmount,
         });
-        setViewState("completed");
+
+        if (result.success) {
+          setAllocationResult({
+            id: result.transaction?.id || `DEMO-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+            grams: result.transaction?.toAmount || estimatedGrams,
+            metal: selectedMetal,
+            capitalDeployed: capitalAmount,
+            executionPrice: metalExecPrice,
+            vault: "Zurich, Switzerland",
+            isDemo: true,
+          });
+          setViewState("completed");
+        } else {
+          setError(result.error || t.allocationFailed);
+        }
       } else {
-        setError(data.error || t.allocationFailed);
+        // Real mode: use normal trade API
+        const res = await fetch("/api/trade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "buy",
+            fromToken: selectedSource,
+            toToken: selectedMetal,
+            fromAmount: capitalAmount,
+            expectedToAmount: estimatedGrams,
+            address,
+            executeOnChain: false,
+            slippage: 2,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          setAllocationResult({
+            id: data.transaction?.allocation?.certificateNumber || `AUX-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+            grams: data.transaction?.toAmount || estimatedGrams,
+            metal: selectedMetal,
+            capitalDeployed: capitalAmount,
+            executionPrice: metalExecPrice,
+            vault: "Zurich, Switzerland",
+          });
+          setViewState("completed");
+        } else {
+          setError(data.error || t.allocationFailed);
+        }
       }
     } catch (error) {
       setError(t.connectionError);
     } finally {
       setIsExecuting(false);
     }
-  }, [isExecuting, selectedSource, selectedMetal, capitalAmount, estimatedGrams, address, metalExecPrice]);
+  }, [isExecuting, selectedSource, selectedMetal, capitalAmount, estimatedGrams, address, metalExecPrice, demoActive, demoBalance, executeDemoTrade, inputAmount, isStablecoinSource]);
 
   const handleRFQSubmit = async () => {
     setRfqSubmitted(true);
@@ -388,6 +437,11 @@ export default function AllocatePage() {
                 </svg>
               </div>
               <h2 className="text-xl font-bold text-[#2F6F62]">{t.allocationCompleted}</h2>
+              {allocationResult.isDemo && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium">
+                  🎮 {t.demoBadge}
+                </span>
+              )}
               <p className="text-sm text-slate-500 mt-1 font-mono">{t.allocationId}: {allocationResult.id}</p>
             </div>
 
@@ -462,7 +516,14 @@ export default function AllocatePage() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-800 overflow-hidden">
             {/* Header */}
             <div className="p-6 border-b border-stone-200 dark:border-slate-800">
-              <h2 className="text-lg font-bold text-slate-800 dark:text-white">{t.allocationPreview}</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white">{t.allocationPreview}</h2>
+                {demoActive && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium">
+                    🎮 {t.demoBadge}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Details */}
@@ -583,6 +644,22 @@ export default function AllocatePage() {
       <TopNav />
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+        {/* Demo Mode Banner */}
+        {demoActive && (
+          <div className="flex items-center justify-between px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🎮</span>
+              <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">{t.demoBadge}</span>
+              <span className="text-xs text-purple-500 dark:text-purple-400">— {t.demoTradeNote}</span>
+            </div>
+            {demoBalance && (
+              <div className="text-xs font-mono text-purple-600 dark:text-purple-300">
+                {t.demoAvailable}: ${(demoBalance.usdt + demoBalance.auxm + demoBalance.usdc).toLocaleString("en-US", { maximumFractionDigits: 0 })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">{t.title}</h1>

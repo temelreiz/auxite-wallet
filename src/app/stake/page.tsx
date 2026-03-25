@@ -4,6 +4,7 @@ import { LeasingDashboard } from "@/components/LeasingDashboard";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
 import { useLeaseRates } from "@/hooks/useLeaseRates";
+import { useDemoMode } from "@/hooks/useDemoMode";
 import Link from "next/link";
 
 const STORAGE_KEYS = {
@@ -136,9 +137,55 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
+const demoStakeTranslations: Record<string, Record<string, string>> = {
+  en: {
+    demoBadge: "Demo Mode",
+    demoYieldTitle: "Yield Programs in Demo Mode",
+    demoYieldMessage: "Structured yield programs are available in real mode. Allocate metals first using your demo balance, then exit demo to enter yield programs.",
+    demoMetalBalance: "Your Demo Metal Holdings",
+    backToVault: "Back to Vault",
+  },
+  tr: {
+    demoBadge: "Demo Modu",
+    demoYieldTitle: "Demo Modunda Getiri Programları",
+    demoYieldMessage: "Yapılandırılmış getiri programları gerçek modda kullanılabilir. Demo bakiyenizle metal tahsis edin, ardından getiri programlarına katılmak için demo modundan çıkın.",
+    demoMetalBalance: "Demo Metal Varlıklarınız",
+    backToVault: "Kasaya Dön",
+  },
+  de: {
+    demoBadge: "Demo-Modus",
+    demoYieldTitle: "Rendite im Demo-Modus",
+    demoYieldMessage: "Strukturierte Rendite-Programme sind im Echtmodus verfügbar. Weisen Sie Metalle mit Ihrem Demo-Guthaben zu.",
+    demoMetalBalance: "Demo-Metallbestände",
+    backToVault: "Zurück zum Tresor",
+  },
+  fr: {
+    demoBadge: "Mode Démo",
+    demoYieldTitle: "Programmes de Rendement en Mode Démo",
+    demoYieldMessage: "Les programmes de rendement structuré sont disponibles en mode réel.",
+    demoMetalBalance: "Vos Métaux Démo",
+    backToVault: "Retour au Coffre",
+  },
+  ar: {
+    demoBadge: "الوضع التجريبي",
+    demoYieldTitle: "برامج العائد في الوضع التجريبي",
+    demoYieldMessage: "برامج العائد المهيكل متاحة في الوضع الحقيقي.",
+    demoMetalBalance: "حيازاتك التجريبية",
+    backToVault: "العودة إلى الخزنة",
+  },
+  ru: {
+    demoBadge: "Демо-режим",
+    demoYieldTitle: "Программы доходности в демо",
+    demoYieldMessage: "Структурированные программы доходности доступны в реальном режиме.",
+    demoMetalBalance: "Ваши демо-металлы",
+    backToVault: "Назад к хранилищу",
+  },
+};
+
 export default function StakePage() {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
+  const dt = demoStakeTranslations[lang] || demoStakeTranslations.en;
 
   const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -154,6 +201,7 @@ export default function StakePage() {
     setIsLoading(false);
   }, []);
 
+  const { demoActive, demoBalance } = useDemoMode(localWalletAddress);
   const isWalletConnected = !!localWalletAddress;
 
   if (isLoading) {
@@ -189,9 +237,78 @@ export default function StakePage() {
         </div>
       </div>
 
+      {/* Demo Mode Banner */}
+      {demoActive && (
+        <div className="max-w-7xl mx-auto px-4 pt-4">
+          <div className="flex items-center gap-2 px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl">
+            <span className="text-lg">🎮</span>
+            <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">{dt.demoBadge}</span>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
-        {isWalletConnected && localWalletAddress ? (
+        {isWalletConnected && localWalletAddress && demoActive ? (
+          /* Demo Mode: Show informational card about yield programs */
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-purple-200 dark:border-purple-800 p-8 text-center">
+              <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">🎮</span>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">{dt.demoYieldTitle}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-lg mx-auto mb-6">{dt.demoYieldMessage}</p>
+
+              {/* Show demo metal balances if any */}
+              {demoBalance && (demoBalance.auxg > 0 || demoBalance.auxs > 0 || demoBalance.auxpt > 0 || demoBalance.auxpd > 0) && (
+                <div className="mb-6">
+                  <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 mb-3">{dt.demoMetalBalance}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-md mx-auto">
+                    {demoBalance.auxg > 0 && (
+                      <div className="p-3 rounded-xl bg-[#C6A15B]/10 border border-[#C6A15B]/20">
+                        <p className="text-xs text-slate-500">AUXG</p>
+                        <p className="text-sm font-bold text-[#C6A15B]">{demoBalance.auxg.toFixed(2)}g</p>
+                      </div>
+                    )}
+                    {demoBalance.auxs > 0 && (
+                      <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <p className="text-xs text-slate-500">AUXS</p>
+                        <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{demoBalance.auxs.toFixed(2)}g</p>
+                      </div>
+                    )}
+                    {demoBalance.auxpt > 0 && (
+                      <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <p className="text-xs text-slate-500">AUXPT</p>
+                        <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{demoBalance.auxpt.toFixed(2)}g</p>
+                      </div>
+                    )}
+                    {demoBalance.auxpd > 0 && (
+                      <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <p className="text-xs text-slate-500">AUXPD</p>
+                        <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{demoBalance.auxpd.toFixed(2)}g</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-sm mx-auto">
+                <Link
+                  href="/allocate"
+                  className="flex-1 px-6 py-3 rounded-xl bg-[#BFA181] text-white font-semibold text-sm transition-colors text-center"
+                >
+                  {t.step1Title}
+                </Link>
+                <Link
+                  href="/vault"
+                  className="flex-1 px-6 py-3 rounded-xl bg-stone-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-colors text-center border border-stone-200 dark:border-slate-700"
+                >
+                  {dt.backToVault}
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : isWalletConnected && localWalletAddress ? (
           <LeasingDashboard walletAddress={localWalletAddress} />
         ) : (
           <div className="space-y-6">

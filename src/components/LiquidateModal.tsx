@@ -38,6 +38,10 @@ interface SellModalProps {
   metal: SellMetalInfo;
   address: string;
   onSuccess?: () => void;
+  /** When true, trades are routed through the demo API */
+  demoMode?: boolean;
+  /** Demo trade executor function — required when demoMode is true */
+  onDemoTrade?: (params: { fromAsset: string; toAsset: string; fromAmount: number }) => Promise<{ success: boolean; transaction?: any; error?: string }>;
 }
 
 type SettlementType = "AUXM" | "USDT" | "BTC" | "ETH";
@@ -381,7 +385,7 @@ const metalIcons: Record<string, string> = {
 // MAIN COMPONENT
 // ============================================
 
-export default function LiquidateModal({ isOpen, onClose, metal, address, onSuccess }: SellModalProps) {
+export default function LiquidateModal({ isOpen, onClose, metal, address, onSuccess, demoMode, onDemoTrade }: SellModalProps) {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
 
@@ -581,42 +585,64 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
       let fromToken = metal.symbol;
       let toToken = settlement === "AUXM" ? "AUXM" : settlement;
 
-      const tradeBody: Record<string, unknown> = {
-        address,
-        type: "sell",
-        fromToken,
-        toToken,
-        fromAmount: gramsNum,
-        executeOnChain: true,
-        quoteId: quote?.id,
-      };
+      if (demoMode && onDemoTrade) {
+        // Demo mode: route through demo trade API
+        const result = await onDemoTrade({
+          fromAsset: fromToken,
+          toAsset: toToken,
+          fromAmount: gramsNum,
+        });
 
-      if (twoFAEnabled && twoFACode) {
-        tradeBody.twoFACode = twoFACode;
+        if (!result.success) {
+          setError(result.error || t.executionFailed);
+          return;
+        }
+
+        setSuccessData({
+          proceeds: result.transaction?.toAmount || gramsNum * (executionPrice || metal.price),
+          settlement: toToken,
+        });
+        setStep(3);
+        onSuccess?.();
+      } else {
+        // Real mode: normal trade API
+        const tradeBody: Record<string, unknown> = {
+          address,
+          type: "sell",
+          fromToken,
+          toToken,
+          fromAmount: gramsNum,
+          executeOnChain: true,
+          quoteId: quote?.id,
+        };
+
+        if (twoFAEnabled && twoFACode) {
+          tradeBody.twoFACode = twoFACode;
+        }
+
+        const res = await fetch("/api/trade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(tradeBody),
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+          setError(data.error || t.executionFailed);
+          return;
+        }
+
+        // Success
+        setSuccessData({
+          proceeds: data.transaction.toAmount,
+          settlement: toToken,
+        });
+        setStep(3);
+
+        // Refresh parent balances
+        onSuccess?.();
       }
-
-      const res = await fetch("/api/trade", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(tradeBody),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        setError(data.error || t.executionFailed);
-        return;
-      }
-
-      // Success
-      setSuccessData({
-        proceeds: data.transaction.toAmount,
-        settlement: toToken,
-      });
-      setStep(3);
-
-      // Refresh parent balances
-      onSuccess?.();
     } catch {
       setError(t.executionFailed);
     } finally {
@@ -985,6 +1011,11 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
             {/* Title */}
             <div>
               <h2 className="text-xl font-bold text-slate-800 dark:text-white">{t.sellComplete}</h2>
+              {demoMode && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium">
+                  🎮 Demo
+                </span>
+              )}
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t.successMessage}</p>
             </div>
 

@@ -14,6 +14,7 @@ import LiquidateModal from "@/components/LiquidateModal";
 import { MarketStatusBanner } from "@/components/MarketStatusBanner";
 import { useLanguage } from "@/components/LanguageContext";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
+import { useDemoMode } from "@/hooks/useDemoMode";
 
 // Metal icons
 const metalIcons: Record<string, string> = {
@@ -574,56 +575,11 @@ export default function VaultPage() {
   const [custodyProvider, setCustodyProvider] = useState<string>('');
   const [realVaultId, setRealVaultId] = useState<string | null>(null);
 
-  // Demo Mode State
-  const [demoActive, setDemoActive] = useState(false);
-  const [demoBalance, setDemoBalance] = useState<Record<string, number> | null>(null);
-  const [demoLoading, setDemoLoading] = useState(false);
-  const [demoChecked, setDemoChecked] = useState(false);
+  // Demo Mode — shared hook
+  const { demoActive, demoBalance, demoChecked, demoLoading, activateDemo, executeDemoTrade } = useDemoMode(address);
 
   const vaultId = realVaultId || (address ? `AUX-${address.slice(2, 8).toUpperCase()}` : null);
   const protectionLevel = custodyStatus === 'active' ? 85 : 50;
-
-  // Check demo mode status
-  useEffect(() => {
-    const checkDemoStatus = async () => {
-      if (!address) return;
-      try {
-        const res = await fetch(`/api/demo?address=${address}`);
-        const data = await res.json();
-        setDemoActive(data.active === true);
-        if (data.active && data.balance) {
-          setDemoBalance(data.balance);
-        }
-      } catch {
-        // Demo check failed, continue normally
-      } finally {
-        setDemoChecked(true);
-      }
-    };
-    checkDemoStatus();
-  }, [address]);
-
-  // Activate demo mode
-  const activateDemo = async () => {
-    if (!address || demoLoading) return;
-    setDemoLoading(true);
-    try {
-      const res = await fetch("/api/demo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setDemoActive(true);
-        setDemoBalance(data.balance);
-      }
-    } catch (e) {
-      console.error("Failed to activate demo:", e);
-    } finally {
-      setDemoLoading(false);
-    }
-  };
 
   // Fetch custody vault data
   useEffect(() => {
@@ -1664,6 +1620,8 @@ export default function VaultPage() {
           }}
           address={address || ""}
           onSuccess={fetchVaultData}
+          demoMode={demoActive}
+          onDemoTrade={executeDemoTrade}
         />
       )}
 
