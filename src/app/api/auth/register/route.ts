@@ -161,10 +161,19 @@ export async function POST(request: NextRequest) {
       lastName,
       phone: phone || '',
       language,
+      timezone: timezone || '',
       walletAddress: vaultAddress,
       vaultId: vaultId,
       createdAt: Date.now().toString(),
     });
+
+    // Store timezone in wallet-based info key (for cron lookups)
+    if (timezone) {
+      await redis.hset(`user:${vaultAddress.toLowerCase()}:info`, {
+        email: normalizedEmail,
+        timezone,
+      });
+    }
 
     console.log(`[Register] Wallet assigned for ${userId}: ${vaultAddress}, vault: ${vaultId}`);
 

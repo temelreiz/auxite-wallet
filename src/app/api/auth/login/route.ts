@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (rateLimited) return rateLimited;
 
     const body = await request.json();
-    const { email, password } = body;
+    const { email, password, timezone } = body;
 
     // ══════════════════════════════════════════════════════════════
     // VALIDATION
@@ -96,14 +96,18 @@ export async function POST(request: NextRequest) {
       ua.includes('Expo') || ua.includes('okhttp') || ua.includes('Auxite') ? 'mobile' :
       ua.includes('Mozilla') || ua.includes('Chrome') || ua.includes('Safari') ? 'web' : 'unknown';
 
-    // Reset failed attempts and update last login + platform
-    await redis.hset(`auth:user:${normalizedEmail}`, {
+    // Reset failed attempts and update last login + platform + timezone
+    const loginUpdate: Record<string, unknown> = {
       failedLoginAttempts: 0,
       lockUntil: 0,
       lastLogin: Date.now(),
       lastPlatform,
       platform: userData.platform || lastPlatform,
-    });
+    };
+    if (timezone) {
+      loginUpdate.timezone = timezone;
+    }
+    await redis.hset(`auth:user:${normalizedEmail}`, loginUpdate);
 
     // ══════════════════════════════════════════════════════════════
     // CHECK/CREATE VAULT (for users without vault)
@@ -168,6 +172,19 @@ export async function POST(request: NextRequest) {
         vaultId,
         emailVerified: String(userData.emailVerified === 'true' || userData.emailVerified === true),
         createdAt: (existingProfile?.createdAt || userData.createdAt || Date.now()).toString(),
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // UPDATE TIMEZONE (if provided by client)
+    // ══════════════════════════════════════════════════════════════
+    if (timezone && walletAddress) {
+      // Update user profile hash
+      await redis.hset(`user:${userId}`, { timezone });
+      // Update wallet-based info key (for cron lookups)
+      await redis.hset(`user:${walletAddress.toLowerCase()}:info`, {
+        email: normalizedEmail,
+        timezone,
       });
     }
 
