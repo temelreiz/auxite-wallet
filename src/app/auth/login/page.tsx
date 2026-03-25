@@ -3,10 +3,11 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import Script from 'next/script';
 import { useLanguage } from '@/components/LanguageContext';
 
 // ============================================
@@ -127,15 +128,49 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const renderTurnstile = () => {
+      if (typeof window !== 'undefined' && (window as any).turnstile && turnstileRef.current) {
+        (window as any).turnstile.render(turnstileRef.current, {
+          sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAACv9Q3DdgFyWWkIz',
+          callback: (token: string) => setTurnstileToken(token),
+          theme: 'dark',
+        });
+      }
+    };
+    const timer = setTimeout(renderTurnstile, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
 
+    if (!turnstileToken) {
+      setError('Please complete the security check');
+      return;
+    }
+
     setError('');
     setIsLoading(true);
 
     try {
+      // Verify turnstile
+      const verifyRes = await fetch('/api/auth/verify-turnstile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: turnstileToken }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        setError('Security verification failed. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -300,6 +335,10 @@ export default function LoginPage() {
                 <p className="text-sm text-red-500">{error}</p>
               </div>
             )}
+
+            {/* Cloudflare Turnstile */}
+            <div ref={turnstileRef} className="flex justify-center mb-4" />
+            <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />
 
             {/* Sign In Button - Institutional Gold */}
             <button

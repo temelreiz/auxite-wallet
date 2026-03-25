@@ -3,10 +3,11 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import Script from 'next/script';
 import { Loader2, Mail, Lock, Eye, EyeOff, AlertCircle, User, CheckCircle, Globe } from 'lucide-react';
 import { useLanguage } from "@/components/LanguageContext";
 
@@ -239,6 +240,22 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const renderTurnstile = () => {
+      if (typeof window !== 'undefined' && (window as any).turnstile && turnstileRef.current) {
+        (window as any).turnstile.render(turnstileRef.current, {
+          sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAACv9Q3DdgFyWWkIz',
+          callback: (token: string) => setTurnstileToken(token),
+          theme: 'dark',
+        });
+      }
+    };
+    const timer = setTimeout(renderTurnstile, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Password validation
   const hasMinLength = password.length >= 8;
@@ -250,6 +267,28 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!turnstileToken) {
+      setError('Please complete the security check');
+      return;
+    }
+
+    // Verify turnstile
+    try {
+      const verifyRes = await fetch('/api/auth/verify-turnstile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: turnstileToken }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        setError('Security verification failed. Please try again.');
+        return;
+      }
+    } catch {
+      setError('Security verification failed. Please try again.');
+      return;
+    }
 
     // Validate
     if (!hasMinLength || !hasUppercase || !hasLowercase || !hasNumber) {
@@ -483,6 +522,10 @@ export default function RegisterPage() {
               {' '}{t('and')}{' '}
               <Link href="/privacy" className="text-[#BFA181] hover:underline">{t('privacyPolicy')}</Link>
             </p>
+
+            {/* Cloudflare Turnstile */}
+            <div ref={turnstileRef} className="flex justify-center mb-4" />
+            <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />
 
             {/* Submit - Institutional Gold matching Login */}
             <button

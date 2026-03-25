@@ -888,8 +888,8 @@ export default function VaultPage() {
     ? ((encumberedAssetsValue / totalVaultValue) * 100).toFixed(1)
     : "0.0";
 
-  // Show demo activation card when: no real balance, no demo active, wallet connected, data loaded
-  const showDemoActivation = !loading && !demoActive && demoChecked && address && totalVaultValue <= 0;
+  // Show demo activation card when: no demo active, wallet connected, data loaded
+  const showDemoActivation = !loading && !demoActive && demoChecked && address;
 
   return (
     <div className="min-h-screen bg-stone-100 dark:bg-slate-950">
