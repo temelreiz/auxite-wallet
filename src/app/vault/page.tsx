@@ -581,8 +581,10 @@ export default function VaultPage() {
   const vaultId = realVaultId || (address ? `AUX-${address.slice(2, 8).toUpperCase()}` : null);
   const protectionLevel = custodyStatus === 'active' ? 85 : 50;
 
-  // Fetch custody vault data
+  // Fetch custody vault data — skip in demo mode
   useEffect(() => {
+    if (demoActive) return;
+
     const fetchCustodyData = async () => {
       try {
         const token = localStorage.getItem("authToken");
@@ -605,12 +607,17 @@ export default function VaultPage() {
     };
 
     fetchCustodyData();
-  }, []);
+  }, [demoActive]);
 
-  // Fetch vault data
+  // Fetch vault data — skipped when demo mode is active (demo overlay handles balances)
   const fetchVaultData = useCallback(async () => {
     if (!address) {
       setLoading(false);
+      return;
+    }
+
+    // In demo mode, skip all real API calls — the demo overlay useEffect handles everything
+    if (demoActive) {
       return;
     }
 
@@ -742,7 +749,7 @@ export default function VaultPage() {
     } finally {
       setLoading(false);
     }
-  }, [address]);
+  }, [address, demoActive]);
 
   useEffect(() => {
     fetchVaultData();

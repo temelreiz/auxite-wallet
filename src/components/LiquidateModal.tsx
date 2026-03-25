@@ -420,38 +420,47 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
   }, [isOpen, metal.price]);
 
   // Fetch execution price & 2FA status on mount
+  // In demo mode: only fetch prices (skip 2FA and real trade APIs)
   useEffect(() => {
     if (!isOpen || !address) return;
 
     const fetchData = async () => {
       try {
-        // Fetch execution price
+        // Fetch execution price (prices endpoint is read-only, safe for demo)
         const priceRes = await fetch(`/api/prices?chain=84532`);
         const priceData = await priceRes.json();
         if (priceData.basePrices?.[metal.symbol]) {
           setExecutionPrice(priceData.basePrices[metal.symbol]);
         }
 
-        // Fetch 2FA status
-        const twoFARes = await fetch("/api/security/2fa/status", {
-          headers: { "x-wallet-address": address },
-        });
-        const twoFAData = await twoFARes.json();
-        setTwoFAEnabled(twoFAData.enabled || false);
+        // Skip 2FA status in demo mode — not needed
+        if (!demoMode) {
+          const twoFARes = await fetch("/api/security/2fa/status", {
+            headers: { "x-wallet-address": address },
+          });
+          const twoFAData = await twoFARes.json();
+          setTwoFAEnabled(twoFAData.enabled || false);
+        }
       } catch (err) {
         console.error("Failed to fetch initial data:", err);
       }
     };
 
     fetchData();
-  }, [isOpen, address, metal.symbol]);
+  }, [isOpen, address, metal.symbol, demoMode]);
 
   // Fetch crypto prices for settlement conversion
+  // In demo mode: skip real trade API, use price-based estimation
   useEffect(() => {
     if (!isOpen || settlement === "AUXM") return;
 
     const fetchCryptoPrices = async () => {
       try {
+        if (demoMode) {
+          // In demo mode: don't call real /api/trade — just use price data
+          // The demo trade will compute the correct amount server-side
+          return;
+        }
         const res = await fetch(`/api/trade?type=sell&fromToken=${metal.symbol}&toToken=${settlement}&amount=${parseFloat(grams) || 1}&address=${address}`);
         const data = await res.json();
         if (data.success && data.preview) {
@@ -468,7 +477,7 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
     if (parseFloat(grams) > 0) {
       fetchCryptoPrices();
     }
-  }, [isOpen, settlement, grams, metal.symbol, address]);
+  }, [isOpen, settlement, grams, metal.symbol, address, demoMode]);
 
   // Quote timer countdown
   useEffect(() => {

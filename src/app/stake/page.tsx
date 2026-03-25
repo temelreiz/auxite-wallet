@@ -1,10 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { LeasingDashboard } from "@/components/LeasingDashboard";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
 import { useLeaseRates } from "@/hooks/useLeaseRates";
 import { useDemoMode } from "@/hooks/useDemoMode";
+import type { DemoLease } from "@/hooks/useDemoMode";
 import Link from "next/link";
 
 const STORAGE_KEYS = {
@@ -140,47 +141,444 @@ const translations: Record<string, Record<string, string>> = {
 const demoStakeTranslations: Record<string, Record<string, string>> = {
   en: {
     demoBadge: "Demo Mode",
-    demoYieldTitle: "Yield Programs in Demo Mode",
-    demoYieldMessage: "Structured yield programs are available in real mode. Allocate metals first using your demo balance, then exit demo to enter yield programs.",
+    demoYieldTitle: "Demo Yield Program",
+    demoYieldMessage: "Lease your demo metals to earn simulated yield returns.",
     demoMetalBalance: "Your Demo Metal Holdings",
     backToVault: "Back to Vault",
+    selectMetal: "Select Metal to Lease",
+    amount: "Amount (grams)",
+    selectTerm: "Select Term",
+    months3: "3 Months",
+    months6: "6 Months",
+    months12: "12 Months",
+    estimatedYield: "Estimated Yield",
+    apy: "APY",
+    startLease: "Start Lease",
+    processing: "Processing...",
+    leaseSuccess: "Lease Started",
+    leaseSuccessMsg: "Your {amount}g {metal} has been leased for {term} at {apy}% APY. Estimated yield: {yield}g",
+    leaseAnother: "Lease More",
+    activeLeases: "Active Demo Leases",
+    noLeases: "No active leases",
+    maturityDate: "Maturity",
+    insufficientBalance: "Insufficient demo balance",
+    noMetalHoldings: "No metal holdings to lease. Go to Allocate to buy metals first.",
   },
   tr: {
     demoBadge: "Demo Modu",
-    demoYieldTitle: "Demo Modunda Getiri Programları",
-    demoYieldMessage: "Yapılandırılmış getiri programları gerçek modda kullanılabilir. Demo bakiyenizle metal tahsis edin, ardından getiri programlarına katılmak için demo modundan çıkın.",
-    demoMetalBalance: "Demo Metal Varlıklarınız",
-    backToVault: "Kasaya Dön",
+    demoYieldTitle: "Demo Getiri Programi",
+    demoYieldMessage: "Demo metallerinizi kiralayarak simule edilmis getiri elde edin.",
+    demoMetalBalance: "Demo Metal Varliklariniz",
+    backToVault: "Kasaya Don",
+    selectMetal: "Kiralanacak Metali Secin",
+    amount: "Miktar (gram)",
+    selectTerm: "Vade Secin",
+    months3: "3 Ay",
+    months6: "6 Ay",
+    months12: "12 Ay",
+    estimatedYield: "Tahmini Getiri",
+    apy: "APY",
+    startLease: "Kirayi Baslat",
+    processing: "Isleniyor...",
+    leaseSuccess: "Kira Basladi",
+    leaseSuccessMsg: "{amount}g {metal} metaliniz {term} sureyle %{apy} APY ile kiralanmistir. Tahmini getiri: {yield}g",
+    leaseAnother: "Daha Fazla Kirala",
+    activeLeases: "Aktif Demo Kiralari",
+    noLeases: "Aktif kira yok",
+    maturityDate: "Vade Tarihi",
+    insufficientBalance: "Yetersiz demo bakiye",
+    noMetalHoldings: "Kiralanacak metal yok. Once Tahsis sayfasindan metal alin.",
   },
   de: {
     demoBadge: "Demo-Modus",
-    demoYieldTitle: "Rendite im Demo-Modus",
-    demoYieldMessage: "Strukturierte Rendite-Programme sind im Echtmodus verfügbar. Weisen Sie Metalle mit Ihrem Demo-Guthaben zu.",
-    demoMetalBalance: "Demo-Metallbestände",
-    backToVault: "Zurück zum Tresor",
+    demoYieldTitle: "Demo-Rendite-Programm",
+    demoYieldMessage: "Verleihen Sie Ihre Demo-Metalle fur simulierte Renditen.",
+    demoMetalBalance: "Demo-Metallbestande",
+    backToVault: "Zuruck zum Tresor",
+    selectMetal: "Metall zum Verleihen wahlen",
+    amount: "Betrag (Gramm)",
+    selectTerm: "Laufzeit wahlen",
+    months3: "3 Monate",
+    months6: "6 Monate",
+    months12: "12 Monate",
+    estimatedYield: "Geschatzte Rendite",
+    apy: "APY",
+    startLease: "Leasing starten",
+    processing: "Verarbeitung...",
+    leaseSuccess: "Leasing gestartet",
+    leaseSuccessMsg: "Ihre {amount}g {metal} wurden fur {term} bei {apy}% APY geleast.",
+    leaseAnother: "Mehr leasen",
+    activeLeases: "Aktive Demo-Leasings",
+    noLeases: "Keine aktiven Leasings",
+    maturityDate: "Falligkeit",
+    insufficientBalance: "Unzureichendes Guthaben",
+    noMetalHoldings: "Keine Metalle zum Leasen. Gehen Sie zu Zuweisen.",
   },
   fr: {
-    demoBadge: "Mode Démo",
-    demoYieldTitle: "Programmes de Rendement en Mode Démo",
-    demoYieldMessage: "Les programmes de rendement structuré sont disponibles en mode réel.",
-    demoMetalBalance: "Vos Métaux Démo",
+    demoBadge: "Mode Demo",
+    demoYieldTitle: "Programme de rendement demo",
+    demoYieldMessage: "Louez vos metaux demo pour obtenir des rendements simules.",
+    demoMetalBalance: "Vos Metaux Demo",
     backToVault: "Retour au Coffre",
+    selectMetal: "Selectionnez le metal a louer",
+    amount: "Montant (grammes)",
+    selectTerm: "Selectionnez la duree",
+    months3: "3 Mois",
+    months6: "6 Mois",
+    months12: "12 Mois",
+    estimatedYield: "Rendement estime",
+    apy: "APY",
+    startLease: "Demarrer le bail",
+    processing: "Traitement...",
+    leaseSuccess: "Bail demarre",
+    leaseSuccessMsg: "Vos {amount}g {metal} ont ete loues pour {term} a {apy}% APY.",
+    leaseAnother: "Louer plus",
+    activeLeases: "Baux demo actifs",
+    noLeases: "Aucun bail actif",
+    maturityDate: "Echeance",
+    insufficientBalance: "Solde insuffisant",
+    noMetalHoldings: "Pas de metaux a louer. Allez a Allouer.",
   },
   ar: {
     demoBadge: "الوضع التجريبي",
-    demoYieldTitle: "برامج العائد في الوضع التجريبي",
-    demoYieldMessage: "برامج العائد المهيكل متاحة في الوضع الحقيقي.",
+    demoYieldTitle: "برنامج العائد التجريبي",
+    demoYieldMessage: "قم بتاجير معادنك التجريبية لكسب عوائد محاكاة.",
     demoMetalBalance: "حيازاتك التجريبية",
-    backToVault: "العودة إلى الخزنة",
+    backToVault: "العودة الى الخزنة",
+    selectMetal: "اختر المعدن للتاجير",
+    amount: "الكمية (جرام)",
+    selectTerm: "اختر المدة",
+    months3: "3 اشهر",
+    months6: "6 اشهر",
+    months12: "12 شهر",
+    estimatedYield: "العائد المقدر",
+    apy: "APY",
+    startLease: "بدء التاجير",
+    processing: "جاري المعالجة...",
+    leaseSuccess: "بدا التاجير",
+    leaseSuccessMsg: "تم تاجير {amount}g {metal} لمدة {term} بنسبة {apy}% APY.",
+    leaseAnother: "تاجير المزيد",
+    activeLeases: "التاجيرات التجريبية النشطة",
+    noLeases: "لا توجد تاجيرات نشطة",
+    maturityDate: "تاريخ الاستحقاق",
+    insufficientBalance: "رصيد غير كاف",
+    noMetalHoldings: "لا توجد معادن للتاجير.",
   },
   ru: {
     demoBadge: "Демо-режим",
-    demoYieldTitle: "Программы доходности в демо",
-    demoYieldMessage: "Структурированные программы доходности доступны в реальном режиме.",
+    demoYieldTitle: "Демо программа доходности",
+    demoYieldMessage: "Сдайте демо-металлы в аренду для получения симулированной доходности.",
     demoMetalBalance: "Ваши демо-металлы",
     backToVault: "Назад к хранилищу",
+    selectMetal: "Выберите металл для аренды",
+    amount: "Количество (грамм)",
+    selectTerm: "Выберите срок",
+    months3: "3 месяца",
+    months6: "6 месяцев",
+    months12: "12 месяцев",
+    estimatedYield: "Ожидаемая доходность",
+    apy: "APY",
+    startLease: "Начать аренду",
+    processing: "Обработка...",
+    leaseSuccess: "Аренда начата",
+    leaseSuccessMsg: "Ваши {amount}г {metal} сданы в аренду на {term} под {apy}% APY.",
+    leaseAnother: "Арендовать еще",
+    activeLeases: "Активные демо-аренды",
+    noLeases: "Нет активных аренд",
+    maturityDate: "Дата погашения",
+    insufficientBalance: "Недостаточный баланс",
+    noMetalHoldings: "Нет металлов для аренды.",
   },
 };
+
+// ============================================
+// DEMO LEASE PANEL
+// ============================================
+
+const LEASE_METALS = [
+  { symbol: "AUXG", name: "Gold", key: "auxg", color: "#C6A15B" },
+  { symbol: "AUXS", name: "Silver", key: "auxs", color: "#94A3B8" },
+  { symbol: "AUXPT", name: "Platinum", key: "auxpt", color: "#CBD5E1" },
+  { symbol: "AUXPD", name: "Palladium", key: "auxpd", color: "#64748B" },
+];
+
+const LEASE_TERM_OPTIONS = [
+  { days: 90, apyBase: 2.5 },
+  { days: 180, apyBase: 3.2 },
+  { days: 365, apyBase: 4.1 },
+];
+
+function DemoLeasePanel({
+  dt,
+  demoBalance,
+  executeDemoLease,
+  fetchDemoLeases,
+  refreshDemo,
+  allocateLabel,
+  backToVaultLabel,
+}: {
+  dt: Record<string, string>;
+  demoBalance: import("@/hooks/useDemoMode").DemoBalance | null;
+  executeDemoLease: (params: { fromAsset: string; fromAmount: number; termDays: number }) => Promise<{ success: boolean; lease?: DemoLease; transaction?: any; error?: string }>;
+  fetchDemoLeases: () => Promise<DemoLease[]>;
+  refreshDemo: () => Promise<void>;
+  allocateLabel: string;
+  backToVaultLabel: string;
+}) {
+  const [selectedMetal, setSelectedMetal] = useState("AUXG");
+  const [amount, setAmount] = useState("");
+  const [termDays, setTermDays] = useState(90);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<DemoLease | null>(null);
+  const [leases, setLeases] = useState<DemoLease[]>([]);
+
+  useEffect(() => {
+    fetchDemoLeases().then(setLeases);
+  }, [fetchDemoLeases]);
+
+  const metalKey = selectedMetal.toLowerCase();
+  const available = demoBalance?.[metalKey] || 0;
+  const hasAnyMetal = LEASE_METALS.some(m => (demoBalance?.[m.key] || 0) > 0);
+
+  const termConfig = LEASE_TERM_OPTIONS.find(t => t.days === termDays) || LEASE_TERM_OPTIONS[0];
+  const numAmount = parseFloat(amount) || 0;
+  const estimatedYield = numAmount * (termConfig.apyBase / 100) * (termDays / 365);
+
+  const termLabels: Record<number, string> = {
+    90: dt.months3,
+    180: dt.months6,
+    365: dt.months12,
+  };
+
+  const handleLease = async () => {
+    if (!numAmount || numAmount <= 0) return;
+    if (numAmount > available) {
+      setError(dt.insufficientBalance);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    const result = await executeDemoLease({
+      fromAsset: selectedMetal,
+      fromAmount: numAmount,
+      termDays,
+    });
+
+    setLoading(false);
+
+    if (result.success && result.lease) {
+      setSuccess(result.lease);
+      setAmount("");
+      await refreshDemo();
+      const updated = await fetchDemoLeases();
+      setLeases(updated);
+    } else {
+      setError(result.error || "Lease failed");
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-green-200 dark:border-green-800 p-8 text-center">
+          <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-7 h-7 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">{dt.leaseSuccess}</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-4">
+            {dt.leaseSuccessMsg
+              .replace("{amount}", success.amount.toFixed(2))
+              .replace("{metal}", success.metal)
+              .replace("{term}", success.termLabel)
+              .replace("{apy}", success.apyPercent.toString())
+              .replace("{yield}", success.estimatedYieldGrams.toFixed(4))}
+          </p>
+          <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto mb-6 text-left">
+            <div className="p-3 rounded-lg bg-stone-50 dark:bg-slate-800">
+              <p className="text-xs text-slate-500">{dt.apy}</p>
+              <p className="text-sm font-bold text-[#BFA181]">{success.apyPercent}%</p>
+            </div>
+            <div className="p-3 rounded-lg bg-stone-50 dark:bg-slate-800">
+              <p className="text-xs text-slate-500">{dt.maturityDate}</p>
+              <p className="text-sm font-bold text-slate-700 dark:text-white">{new Date(success.maturityDate).toLocaleDateString()}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setSuccess(null)}
+            className="px-6 py-3 rounded-xl bg-[#BFA181] text-white font-semibold text-sm"
+          >
+            {dt.leaseAnother}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Lease Form */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-purple-200 dark:border-purple-800 p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">🎮</span>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">{dt.demoYieldTitle}</h3>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">{dt.demoYieldMessage}</p>
+
+        {!hasAnyMetal ? (
+          <div className="text-center py-8">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{dt.noMetalHoldings}</p>
+            <Link
+              href="/allocate"
+              className="inline-block px-6 py-3 rounded-xl bg-[#BFA181] text-white font-semibold text-sm"
+            >
+              {allocateLabel}
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* Metal Selection */}
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">
+              {dt.selectMetal}
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              {LEASE_METALS.filter(m => (demoBalance?.[m.key] || 0) > 0).map(metal => (
+                <button
+                  key={metal.symbol}
+                  onClick={() => { setSelectedMetal(metal.symbol); setAmount(""); setError(null); }}
+                  className={`p-3 rounded-xl border text-center transition-all ${
+                    selectedMetal === metal.symbol
+                      ? `border-[${metal.color}] bg-[${metal.color}]/10`
+                      : "border-stone-200 dark:border-slate-700"
+                  }`}
+                  style={selectedMetal === metal.symbol ? { borderColor: metal.color, backgroundColor: `${metal.color}15` } : {}}
+                >
+                  <div className="text-sm font-bold text-slate-800 dark:text-white">{metal.symbol}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">{(demoBalance?.[metal.key] || 0).toFixed(2)}g</div>
+                </button>
+              ))}
+            </div>
+
+            {/* Amount */}
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">
+              {dt.amount}
+            </label>
+            <div className="flex items-center gap-2 mb-4">
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => { setAmount(e.target.value); setError(null); }}
+                placeholder="0.00"
+                className="flex-1 px-4 py-3 rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800 text-slate-800 dark:text-white text-sm font-mono"
+              />
+              <button
+                onClick={() => setAmount(available.toString())}
+                className="px-3 py-3 rounded-xl bg-stone-100 dark:bg-slate-800 text-xs font-semibold text-[#BFA181] border border-stone-200 dark:border-slate-700"
+              >
+                MAX
+              </button>
+            </div>
+
+            {/* Term Selection */}
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">
+              {dt.selectTerm}
+            </label>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {LEASE_TERM_OPTIONS.map(opt => (
+                <button
+                  key={opt.days}
+                  onClick={() => setTermDays(opt.days)}
+                  className={`p-3 rounded-xl border text-center transition-all ${
+                    termDays === opt.days
+                      ? "border-[#BFA181] bg-[#BFA181]/10"
+                      : "border-stone-200 dark:border-slate-700"
+                  }`}
+                >
+                  <div className="text-sm font-bold text-slate-800 dark:text-white">{termLabels[opt.days]}</div>
+                  <div className="text-xs text-[#BFA181] font-semibold mt-0.5">{opt.apyBase}% {dt.apy}</div>
+                </button>
+              ))}
+            </div>
+
+            {/* Yield Preview */}
+            {numAmount > 0 && (
+              <div className="mb-4 p-4 rounded-xl bg-[#BFA181]/5 border border-[#BFA181]/20">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-500">{dt.estimatedYield}</span>
+                  <span className="text-sm font-bold text-[#BFA181]">+{estimatedYield.toFixed(4)}g {selectedMetal}</span>
+                </div>
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-xs text-slate-500">{dt.apy}</span>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-white">{termConfig.apyBase}%</span>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="mb-4 px-4 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              </div>
+            )}
+
+            <button
+              onClick={handleLease}
+              disabled={loading || !numAmount}
+              className="w-full py-3 rounded-xl bg-[#BFA181] text-white font-semibold text-sm disabled:opacity-40 transition-all"
+            >
+              {loading ? dt.processing : dt.startLease}
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Active Demo Leases */}
+      {leases.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-stone-200 dark:border-slate-800 p-6">
+          <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">{dt.activeLeases}</h4>
+          <div className="space-y-3">
+            {leases.map((lease) => (
+              <div key={lease.id} className="flex items-center justify-between py-3 px-4 rounded-xl bg-stone-50 dark:bg-slate-800/50 border border-stone-200 dark:border-slate-700">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-800 dark:text-white">{lease.amount}g {lease.metal}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">{lease.apyPercent}% APY</span>
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    {dt.estimatedYield}: +{lease.estimatedYieldGrams.toFixed(4)}g
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-slate-500">{dt.maturityDate}</div>
+                  <div className="text-sm font-mono text-slate-700 dark:text-slate-300">{new Date(lease.maturityDate).toLocaleDateString()}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Navigation buttons */}
+      <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-sm mx-auto">
+        <Link
+          href="/allocate"
+          className="flex-1 px-6 py-3 rounded-xl bg-[#BFA181] text-white font-semibold text-sm transition-colors text-center"
+        >
+          {allocateLabel}
+        </Link>
+        <Link
+          href="/vault"
+          className="flex-1 px-6 py-3 rounded-xl bg-stone-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-colors text-center border border-stone-200 dark:border-slate-700"
+        >
+          {backToVaultLabel}
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 export default function StakePage() {
   const { lang } = useLanguage();
@@ -201,7 +599,7 @@ export default function StakePage() {
     setIsLoading(false);
   }, []);
 
-  const { demoActive, demoBalance } = useDemoMode(localWalletAddress);
+  const { demoActive, demoBalance, executeDemoLease, fetchDemoLeases, refreshDemo } = useDemoMode(localWalletAddress);
   const isWalletConnected = !!localWalletAddress;
 
   if (isLoading) {
@@ -250,64 +648,16 @@ export default function StakePage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
         {isWalletConnected && localWalletAddress && demoActive ? (
-          /* Demo Mode: Show informational card about yield programs */
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-purple-200 dark:border-purple-800 p-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">🎮</span>
-              </div>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">{dt.demoYieldTitle}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-lg mx-auto mb-6">{dt.demoYieldMessage}</p>
-
-              {/* Show demo metal balances if any */}
-              {demoBalance && (demoBalance.auxg > 0 || demoBalance.auxs > 0 || demoBalance.auxpt > 0 || demoBalance.auxpd > 0) && (
-                <div className="mb-6">
-                  <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 mb-3">{dt.demoMetalBalance}</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-md mx-auto">
-                    {demoBalance.auxg > 0 && (
-                      <div className="p-3 rounded-xl bg-[#C6A15B]/10 border border-[#C6A15B]/20">
-                        <p className="text-xs text-slate-500">AUXG</p>
-                        <p className="text-sm font-bold text-[#C6A15B]">{demoBalance.auxg.toFixed(2)}g</p>
-                      </div>
-                    )}
-                    {demoBalance.auxs > 0 && (
-                      <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                        <p className="text-xs text-slate-500">AUXS</p>
-                        <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{demoBalance.auxs.toFixed(2)}g</p>
-                      </div>
-                    )}
-                    {demoBalance.auxpt > 0 && (
-                      <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                        <p className="text-xs text-slate-500">AUXPT</p>
-                        <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{demoBalance.auxpt.toFixed(2)}g</p>
-                      </div>
-                    )}
-                    {demoBalance.auxpd > 0 && (
-                      <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                        <p className="text-xs text-slate-500">AUXPD</p>
-                        <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{demoBalance.auxpd.toFixed(2)}g</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-sm mx-auto">
-                <Link
-                  href="/allocate"
-                  className="flex-1 px-6 py-3 rounded-xl bg-[#BFA181] text-white font-semibold text-sm transition-colors text-center"
-                >
-                  {t.step1Title}
-                </Link>
-                <Link
-                  href="/vault"
-                  className="flex-1 px-6 py-3 rounded-xl bg-stone-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-sm transition-colors text-center border border-stone-200 dark:border-slate-700"
-                >
-                  {dt.backToVault}
-                </Link>
-              </div>
-            </div>
-          </div>
+          /* Demo Mode: Functional lease form */
+          <DemoLeasePanel
+            dt={dt}
+            demoBalance={demoBalance}
+            executeDemoLease={executeDemoLease}
+            fetchDemoLeases={fetchDemoLeases}
+            refreshDemo={refreshDemo}
+            allocateLabel={t.step1Title}
+            backToVaultLabel={dt.backToVault}
+          />
         ) : isWalletConnected && localWalletAddress ? (
           <LeasingDashboard walletAddress={localWalletAddress} />
         ) : (
