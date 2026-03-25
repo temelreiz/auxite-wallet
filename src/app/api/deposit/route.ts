@@ -232,10 +232,10 @@ export async function GET(request: NextRequest) {
   const coin = searchParams.get("coin");
 
   const addresses: Record<string, { address: string; network: string; memo?: string }> = {
-    BTC: { address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", network: "Bitcoin" },
-    ETH: { address: "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Ethereum / Base" },
-    USDT: { address: "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Ethereum / Tron" },
-    USDC: { address: "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Ethereum" },
+    BTC: { address: process.env.HOT_WALLET_BTC_ADDRESS || "bc1qcvdqwjtsmnl92ldhapmyuvfnlj5gfquvj0w3ke", network: "Bitcoin" },
+    ETH: { address: process.env.HOT_WALLET_ETH_ADDRESS || "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Base" },
+    USDT: { address: process.env.HOT_WALLET_ETH_ADDRESS || "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Base (ERC-20)" },
+    USDC: { address: process.env.HOT_WALLET_ETH_ADDRESS || "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Base (ERC-20)" },
   };
 
   if (coin && addresses[coin]) {
