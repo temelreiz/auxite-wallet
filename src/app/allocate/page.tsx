@@ -201,6 +201,13 @@ export default function AllocatePage() {
   // State
   const [selectedMetal, setSelectedMetal] = useState("AUXG");
   const [selectedSource, setSelectedSource] = useState("AUXM");
+
+  // Demo mode: switch default source to USDT (AUXM is 0 in demo)
+  useEffect(() => {
+    if (demoActive && selectedSource === "AUXM") {
+      setSelectedSource("USDT");
+    }
+  }, [demoActive]);
   const [amount, setAmount] = useState("");
   const [basePrices, setBasePrices] = useState<Record<string, number>>({});
   const [executionPrices, setExecutionPrices] = useState<Record<string, number>>({});
