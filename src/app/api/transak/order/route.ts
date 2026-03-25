@@ -9,12 +9,12 @@ const redis = new Redis({
 
 // Transak configuration
 const TRANSAK_API_KEY = process.env.NEXT_PUBLIC_TRANSAK_API_KEY;
-const TRANSAK_SECRET_KEY = process.env.TRANSAK_SECRET_KEY;
-const TRANSAK_ENVIRONMENT = process.env.TRANSAK_ENVIRONMENT || "STAGING"; // STAGING or PRODUCTION
+const TRANSAK_SECRET_KEY = process.env.TRANSAK_WEBHOOK_SECRET;
+const TRANSAK_ENVIRONMENT = process.env.TRANSAK_ENVIRONMENT || "STAGING";
 
-// Fixed/Whitelisted URLs (not from frontend)
-const REDIRECT_URL = process.env.TRANSAK_REDIRECT_URL || "https://auxite.com/wallet";
-const WEBHOOK_URL = process.env.TRANSAK_WEBHOOK_URL || "https://auxite.com/api/transak/webhook";
+// Fixed/Whitelisted URLs
+const REDIRECT_URL = process.env.TRANSAK_REDIRECT_URL || "https://vault.auxite.io/vault";
+const WEBHOOK_URL = process.env.TRANSAK_WEBHOOK_URL || "https://vault.auxite.io/api/transak/webhook";
 
 // Allowed cryptocurrencies
 const ALLOWED_CRYPTO = ["ETH", "USDT", "USDC", "BTC", "AUXM"];
@@ -116,9 +116,9 @@ export async function POST(request: NextRequest) {
 
     // Network mapping
     const networkMap: Record<string, string> = {
-      ETH: "ethereum",
-      USDT: "ethereum", // or "polygon", "bsc"
-      USDC: "ethereum",
+      ETH: "base",
+      USDT: "base",
+      USDC: "base",
       BTC: "bitcoin",
     };
 
