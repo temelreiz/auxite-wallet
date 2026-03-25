@@ -74,20 +74,36 @@ async function processDeposit(
     return { status: "duplicate" };
   }
 
-  // 2. Kullanıcıyı bul
+  // 2. Custodial mode: All deposits go to shared hot wallet
+  // Try to find user by from address, otherwise mark as pending for admin review
   const userId = await findUserByAddress(redis, deposit.fromAddress);
 
+  // Store as pending deposit for admin to assign
+  const pendingDeposit = {
+    ...deposit,
+    amountUsd: deposit.amount * (prices[deposit.coin] || 1),
+    receivedAt: new Date().toISOString(),
+    source: "direct-scanner",
+    assignedTo: userId || null,
+    status: userId ? "auto-matched" : "pending-assignment",
+  };
+
+  await redis.lpush("deposits:pending", JSON.stringify(pendingDeposit));
+  await redis.ltrim("deposits:pending", 0, 499); // Keep last 500
+
+  // Send admin notification for unmatched deposits
   if (!userId) {
-    // Orphan deposit — kullanıcı eşleşmedi
     await redis.lpush(
-      "deposits:orphan",
+      "admin:notifications",
       JSON.stringify({
-        ...deposit,
-        receivedAt: new Date().toISOString(),
-        source: "direct-scanner",
+        type: "deposit_unmatched",
+        title: `New ${deposit.coin} deposit needs assignment`,
+        body: `${deposit.amount} ${deposit.coin} ($${(deposit.amount * (prices[deposit.coin] || 1)).toFixed(2)}) from ${deposit.fromAddress.slice(0, 10)}...`,
+        txHash: deposit.txHash,
+        timestamp: Date.now(),
       })
     );
-    await redis.set(txKey, "orphan", { ex: 86400 * 30 });
+    await redis.set(txKey, "pending", { ex: 86400 * 30 });
     return { status: "orphan" };
   }
 
