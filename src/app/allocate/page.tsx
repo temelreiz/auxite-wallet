@@ -494,6 +494,14 @@ export default function AllocatePage() {
                 <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">{formatPricePerGram(metalBasePrice)}/g</span>
               </div>
               <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
+                <span className="text-sm text-slate-500">{lang === 'tr' ? 'İşlem Ücreti' : 'Trading Fee'}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-400">0.35%</span>
+              </div>
+              <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
+                <span className="text-sm text-slate-500">{lang === 'tr' ? 'Saklama ve Mutabakat' : 'Custody & Settlement'}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-400">4.00%</span>
+              </div>
+              <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
                 <span className="text-sm text-slate-500">{t.executionPrice}</span>
                 <span className="text-sm font-bold text-slate-800 dark:text-white">{formatPricePerGram(metalExecPrice)}/g</span>
               </div>
