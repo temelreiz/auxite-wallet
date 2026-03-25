@@ -999,16 +999,16 @@ export default function VaultPage() {
           </div>
         </div>
 
-        {/* ═══ PRIMARY CTA: FUND VAULT ═══ */}
-        <a href="/fund-vault" className="block">
+        {/* ═══ PRIMARY CTA: FUND VAULT / ALLOCATE (demo) ═══ */}
+        <a href={demoActive ? "/allocate" : "/fund-vault"} className="block">
           <div className="bg-gradient-to-r from-[#C5A55A] to-[#D4AF37] rounded-xl py-4 px-6 text-center hover:opacity-90 transition-opacity shadow-lg shadow-[#C5A55A]/20">
-            <p className="text-lg font-bold text-[#0B0B0D] tracking-wide">{t.fundVault}</p>
-            <p className="text-xs text-[#0B0B0D]/60 mt-1">{t.noMinDeposit}</p>
+            <p className="text-lg font-bold text-[#0B0B0D] tracking-wide">{demoActive ? t.allocateMetals : t.fundVault}</p>
+            <p className="text-xs text-[#0B0B0D]/60 mt-1">{demoActive ? "🎮 $10,000 USDT virtual balance ready" : t.noMinDeposit}</p>
           </div>
         </a>
 
-        {/* ═══ SECONDARY CTA: ALLOCATE METALS ═══ */}
-        <a href="/allocate" className={`block ${totalVaultValue <= 0 ? 'pointer-events-none opacity-40' : ''}`}>
+        {/* ═══ SECONDARY CTA: ALLOCATE METALS / FUND REAL ═══ */}
+        <a href={demoActive ? "/fund-vault" : "/allocate"} className={`block ${!demoActive && totalVaultValue <= 0 ? 'pointer-events-none opacity-40' : ''}`}>
           <div className={`rounded-xl py-3.5 px-6 text-center border ${totalVaultValue > 0 ? 'border-[#C5A55A]/40 hover:bg-[#C5A55A]/5' : 'border-slate-700'} transition-colors`}>
             <p className={`text-sm font-semibold ${totalVaultValue > 0 ? 'text-[#C5A55A]' : 'text-slate-500'}`}>{t.allocateMetals}</p>
             {totalVaultValue <= 0 && <p className="text-[10px] text-slate-600 mt-0.5">{t.fundFirst}</p>}
