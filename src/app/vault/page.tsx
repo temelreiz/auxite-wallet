@@ -650,12 +650,10 @@ export default function VaultPage() {
       const cPrices: Record<string, number> = { usdt: 1.0 };
       if (cryptoData.bitcoin?.usd) cPrices.btc = cryptoData.bitcoin.usd;
       if (cryptoData.ethereum?.usd) cPrices.eth = cryptoData.ethereum.usd;
-      if (cryptoData.solana?.usd) cPrices.sol = cryptoData.solana.usd;
-      if (cryptoData.ripple?.usd) cPrices.xrp = cryptoData.ripple.usd;
       setCryptoPrices(cPrices);
 
       // Crypto balances from balance API
-      const cryptoSymbols = ["usdt", "btc", "eth", "sol", "xrp"];
+      const cryptoSymbols = ["usdt", "btc", "eth", "usdc"];
       const cBalances: Record<string, number> = {};
       let cryptoTotalValue = 0;
       for (const sym of cryptoSymbols) {

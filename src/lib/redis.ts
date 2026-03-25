@@ -82,9 +82,8 @@ export interface UserBalance {
   auxpd: number;
   eth: number;
   btc: number;
-  xrp: number;
-  sol: number;
   usdt: number;
+  usdc: number;
   usd: number;
 }
 
@@ -99,9 +98,8 @@ const DEFAULT_BALANCE: UserBalance = {
   auxpd: 0,
   eth: 0,
   btc: 0,
-  xrp: 0,
-  sol: 0,
   usdt: 0,
+  usdc: 0,
   usd: 0,
 };
 
@@ -139,9 +137,8 @@ export async function getUserBalance(address: string): Promise<UserBalance> {
       auxpd: parseFloat(String(data.auxpd || 0)),
       eth: parseFloat(String(data.eth || 0)),
       btc: parseFloat(String(data.btc || 0)),
-      xrp: parseFloat(String(data.xrp || 0)),
-      sol: parseFloat(String(data.sol || 0)),
       usdt: parseFloat(String(data.usdt || 0)),
+      usdc: parseFloat(String(data.usdc || 0)),
       usd: parseFloat(String(data.usd || 0)),
     };
 

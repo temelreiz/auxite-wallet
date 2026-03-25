@@ -13,7 +13,7 @@ const redis = new Redis({
 });
 
 const METALS = ["auxg", "auxs", "auxpt", "auxpd"];
-const CRYPTOS = ["eth", "btc", "xrp", "sol", "usdt"];
+const CRYPTOS = ["eth", "btc", "usdt", "usdc"];
 
 const METAL_NAMES: Record<string, string> = {
   AUXG: "Gold",
@@ -57,7 +57,7 @@ async function getServerPrice(asset: string): Promise<{ ask: number; bid: number
   if (CRYPTOS.includes(assetLower)) {
     try {
       const symbols: Record<string, string> = {
-        eth: "ETHUSDT", btc: "BTCUSDT", xrp: "XRPUSDT", sol: "SOLUSDT"
+        eth: "ETHUSDT", btc: "BTCUSDT"
       };
       const symbol = symbols[assetLower];
       if (symbol) {
@@ -70,7 +70,7 @@ async function getServerPrice(asset: string): Promise<{ ask: number; bid: number
       console.error(`Failed to get ${asset} crypto price:`, e);
     }
     // Fallback
-    const fallbacks: Record<string, number> = { eth: 3500, btc: 97000, xrp: 2.2, sol: 235 };
+    const fallbacks: Record<string, number> = { eth: 3500, btc: 97000 };
     const p = fallbacks[assetLower] || 1;
     return { ask: p, bid: p };
   }

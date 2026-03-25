@@ -22,14 +22,12 @@ async function getCryptoPrices(): Promise<Record<string, number>> {
     return {
       ETH: data.ethereum?.usd || 3500,
       BTC: data.bitcoin?.usd || 95000,
-      XRP: data.ripple?.usd || 2.2,
-      SOL: data.solana?.usd || 200,
       USDT: 1,
       USDC: 1,
     };
   } catch {
     // Fallback fiyatlar
-    return { ETH: 3500, BTC: 95000, XRP: 2.2, SOL: 200, USDT: 1, USDC: 1 };
+    return { ETH: 3500, BTC: 95000, USDT: 1, USDC: 1 };
   }
 }
 
