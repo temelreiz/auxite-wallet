@@ -124,26 +124,14 @@ export async function GET() {
   }
 
   try {
-    // Try KuveytTürk first (primary), fall back to GoldAPI
+    // GoldAPI only - international spot prices
     let priceData: Record<string, { price: number; change: number }> | null = null;
     let source = "fallback";
 
-    // Primary: KuveytTürk
-    priceData = await fetchKuveytTurkPrices();
+    priceData = await fetchGoldApiPrices();
     if (priceData && Object.keys(priceData).length >= 3) {
-      source = "kuveytturk";
-      console.log("📊 Price source: KuveytTürk");
-    }
-
-    // Fallback: GoldAPI
-    if (!priceData || Object.keys(priceData).length < 3) {
-      console.log("⚠️ KuveytTürk failed or incomplete, trying GoldAPI...");
-      const goldData = await fetchGoldApiPrices();
-      if (goldData) {
-        // Merge: use KuveytTürk data where available, fill gaps with GoldAPI
-        priceData = { ...goldData, ...(priceData || {}) };
-        source = priceData === goldData ? "goldapi" : "kuveytturk+goldapi";
-      }
+      source = "goldapi";
+      console.log("📊 Price source: GoldAPI");
     }
 
     // Fetch pricing config
