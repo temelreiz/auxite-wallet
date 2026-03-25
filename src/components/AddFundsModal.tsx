@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useLanguage } from "@/components/LanguageContext";
+import { TransakWidget } from "@/components/TransakWidget";
 
 interface AddFundsModalProps {
   isOpen: boolean;
@@ -602,6 +603,31 @@ export function AddFundsModal({
               <div>
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">{t("fundingSources")}</p>
                 <div className="space-y-3">
+                  {/* Buy with Card - Transak */}
+                  <button
+                    onClick={() => setActiveModal("card" as any)}
+                    className="w-full p-4 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[#BFA181]/50 transition-all flex items-center gap-4 text-left"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-[#BFA181]/15 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="font-semibold text-slate-800 dark:text-white">{lang === 'tr' ? 'Kartla Satın Al' : 'Buy with Card'}</p>
+                        <span className="text-xs font-semibold text-[#2F6F62]">Visa / Mastercard</span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{lang === 'tr' ? 'Kredi veya banka kartıyla anında kripto satın alın' : 'Buy crypto instantly with credit or debit card'}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                        {lang === 'tr' ? 'İşlem süresi' : 'Processing'}: <span className="text-[#2F6F62]">{lang === 'tr' ? '1-5 dakika' : '1-5 minutes'}</span>
+                      </p>
+                    </div>
+                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+
                   {/* Bank Wire - Coming Soon */}
                   <div className="w-full p-4 rounded-xl border border-slate-200 dark:border-white/10 flex items-center gap-4 opacity-50 cursor-not-allowed">
                     <div className="w-12 h-12 rounded-xl bg-[#BFA181]/15 flex items-center justify-center">
@@ -835,6 +861,33 @@ export function AddFundsModal({
           )}
 
           {/* ════════════════════════════════════════════════════════════════════ */}
+          {/* CARD PAYMENT MODAL - Transak */}
+          {/* ════════════════════════════════════════════════════════════════════ */}
+          {activeModal === ("card" as any) && (
+            <div>
+              <button
+                onClick={() => setActiveModal("main")}
+                className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 mb-4"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                {lang === 'tr' ? 'Geri' : 'Back'}
+              </button>
+              <TransakWidget
+                defaultCrypto="USDT"
+                defaultFiat="USD"
+                defaultAmount={100}
+                onSuccess={(orderRef) => {
+                  console.log("Transak order:", orderRef);
+                  setActiveModal("main");
+                  setShowConfirmation(true);
+                }}
+                onClose={() => setActiveModal("main")}
+              />
+            </div>
+          )}
+
           {/* CRYPTO DEPOSIT MODAL */}
           {/* ════════════════════════════════════════════════════════════════════ */}
           {activeModal === "crypto" && selectedCrypto && (
