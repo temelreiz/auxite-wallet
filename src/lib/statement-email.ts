@@ -138,7 +138,7 @@ function buildStatementHtml(
     }).join('');
 
   // Crypto/token holdings rows
-  const cryptoKeys = ['auxm', 'eth', 'btc', 'xrp', 'sol', 'usdt', 'usd'] as const;
+  const cryptoKeys = ['auxm', 'eth', 'btc', 'usdt', 'usdc', 'usd'] as const;
   const cryptoRows = cryptoKeys
     .filter(k => (balance[k] || 0) > 0)
     .map(k => {
