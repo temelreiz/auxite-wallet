@@ -36,8 +36,8 @@ const USDT_CONTRACT = "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2";
 // USDC on Base
 const USDC_CONTRACT = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
-// Base chain explorer API
-const BASE_EXPLORER_API = "https://api.basescan.org/api";
+// Base chain explorer API - Blockscout V2 (Basescan V1 deprecated)
+const BASE_BLOCKSCOUT_API = "https://base.blockscout.com/api/v2";
 
 // Minimum deposit amounts (spam prevention)
 const MIN_DEPOSITS: Record<string, number> = {
@@ -55,7 +55,6 @@ const MIN_DEPOSITS: Record<string, number> = {
 export async function scanEthDeposits(): Promise<ScanResult> {
   const redis = getRedis();
   const hotWallet = process.env.HOT_WALLET_ETH_ADDRESS;
-  const apiKey = process.env.ETHERSCAN_API_KEY || "";
 
   if (!hotWallet) {
     return { chain: "eth", deposits: [], lastScanned: 0, error: "HOT_WALLET_ETH_ADDRESS not set" };
@@ -64,85 +63,91 @@ export async function scanEthDeposits(): Promise<ScanResult> {
   const deposits: DepositResult[] = [];
 
   try {
-    // Son taranan bloğu al
-    const lastBlock = ((await redis.get("scanner:eth:lastBlock")) as number) || 0;
-    const startBlock = lastBlock > 0 ? lastBlock + 1 : "latest";
+    // Son taranan TX hash'i al
+    const lastTxHash = ((await redis.get("scanner:eth:lastTxHash")) as string) || "";
 
-    // 1. Native ETH transfers (Base chain)
-    const basescanKey = process.env.BASESCAN_API_KEY || apiKey;
-    const ethUrl = `${BASE_EXPLORER_API}?module=account&action=txlist&address=${hotWallet}&startblock=${startBlock}&endblock=99999999&sort=asc&apikey=${basescanKey}`;
-    const ethRes = await fetch(ethUrl);
-    const ethData = await ethRes.json();
+    // Blockscout V2 API — incoming transactions
+    const url = `${BASE_BLOCKSCOUT_API}/addresses/${hotWallet}/transactions?filter=to&sort=desc&limit=50`;
+    const res = await fetch(url);
+    const data = await res.json();
 
-    let maxBlock = lastBlock;
+    if (!data.items || !Array.isArray(data.items)) {
+      return { chain: "eth", deposits: [], lastScanned: lastTxHash || 0, error: "Invalid Blockscout response" };
+    }
 
-    if (ethData.status === "1" && Array.isArray(ethData.result)) {
-      for (const tx of ethData.result) {
-        // Sadece gelen TX'ler (to = hot wallet)
-        if (tx.to?.toLowerCase() !== hotWallet.toLowerCase()) continue;
-        // Başarılı TX
-        if (tx.isError !== "0" && tx.isError !== "") continue;
+    let newestTxHash = lastTxHash;
 
-        const amount = parseFloat(tx.value) / 1e18;
-        if (amount < MIN_DEPOSITS.ETH) continue;
+    for (const tx of data.items) {
+      // Stop at last seen TX
+      if (tx.hash === lastTxHash) break;
 
-        const block = parseInt(tx.blockNumber);
-        if (block > maxBlock) maxBlock = block;
+      // Track newest
+      if (!newestTxHash || data.items.indexOf(tx) === 0) {
+        newestTxHash = tx.hash;
+      }
 
+      // Only successful TXs
+      if (tx.status !== "ok") continue;
+
+      // Only incoming (to = hot wallet)
+      if (tx.to?.hash?.toLowerCase() !== hotWallet.toLowerCase()) continue;
+
+      // Native ETH transfer
+      const amount = parseFloat(tx.value) / 1e18;
+      if (amount >= MIN_DEPOSITS.ETH) {
         deposits.push({
           chain: "eth",
           coin: "ETH",
           amount,
           txHash: tx.hash,
-          fromAddress: tx.from,
-          toAddress: tx.to,
-          blockNumber: block,
-          timestamp: parseInt(tx.timeStamp) * 1000,
-          confirmations: parseInt(tx.confirmations || "0"),
+          fromAddress: tx.from?.hash || "unknown",
+          toAddress: tx.to?.hash || hotWallet,
+          blockNumber: tx.block || 0,
+          timestamp: tx.timestamp ? new Date(tx.timestamp).getTime() : Date.now(),
         });
       }
     }
 
-    // 2. ERC-20 USDT/USDC transfers (Base chain)
-    const tokenUrl = `${BASE_EXPLORER_API}?module=account&action=tokentx&address=${hotWallet}&startblock=${startBlock}&endblock=99999999&sort=asc&apikey=${basescanKey}`;
-    const tokenRes = await fetch(tokenUrl);
-    const tokenData = await tokenRes.json();
+    // Also check ERC-20 token transfers (USDT/USDC)
+    try {
+      const tokenUrl = `${BASE_BLOCKSCOUT_API}/addresses/${hotWallet}/token-transfers?filter=to&sort=desc&limit=50`;
+      const tokenRes = await fetch(tokenUrl);
+      const tokenData = await tokenRes.json();
 
-    if (tokenData.status === "1" && Array.isArray(tokenData.result)) {
-      for (const tx of tokenData.result) {
-        // Sadece gelen USDT veya USDC
-        if (tx.to?.toLowerCase() !== hotWallet.toLowerCase()) continue;
-        const contractAddr = tx.contractAddress?.toLowerCase();
-        if (contractAddr !== USDT_CONTRACT.toLowerCase() && contractAddr !== USDC_CONTRACT.toLowerCase()) continue;
-        const coinName = contractAddr === USDC_CONTRACT.toLowerCase() ? "USDC" : "USDT";
+      if (tokenData.items && Array.isArray(tokenData.items)) {
+        for (const tx of tokenData.items) {
+          if (tx.tx_hash === lastTxHash) break;
 
-        const decimals = parseInt(tx.tokenDecimal || "6");
-        const amount = parseFloat(tx.value) / Math.pow(10, decimals);
-        if (amount < MIN_DEPOSITS.USDT) continue;
+          const contractAddr = tx.token?.address?.toLowerCase();
+          if (contractAddr !== USDT_CONTRACT.toLowerCase() && contractAddr !== USDC_CONTRACT.toLowerCase()) continue;
+          const coinName = contractAddr === USDC_CONTRACT.toLowerCase() ? "USDC" : "USDT";
 
-        const block = parseInt(tx.blockNumber);
-        if (block > maxBlock) maxBlock = block;
+          const decimals = parseInt(tx.token?.decimals || "6");
+          const amount = parseFloat(tx.total?.value || "0") / Math.pow(10, decimals);
+          if (amount < MIN_DEPOSITS.USDT) continue;
 
-        deposits.push({
-          chain: "eth",
-          coin: coinName,
-          amount,
-          txHash: tx.hash,
-          fromAddress: tx.from,
-          toAddress: tx.to,
-          blockNumber: block,
-          timestamp: parseInt(tx.timeStamp) * 1000,
-          confirmations: parseInt(tx.confirmations || "0"),
-        });
+          deposits.push({
+            chain: "eth",
+            coin: coinName,
+            amount,
+            txHash: tx.tx_hash,
+            fromAddress: tx.from?.hash || "unknown",
+            toAddress: tx.to?.hash || hotWallet,
+            blockNumber: tx.block_number || 0,
+            timestamp: tx.timestamp ? new Date(tx.timestamp).getTime() : Date.now(),
+          });
+        }
       }
+    } catch (tokenError: any) {
+      console.warn("Token transfer scan failed:", tokenError.message);
     }
 
-    // Son bloğu güncelle
-    if (maxBlock > lastBlock) {
-      await redis.set("scanner:eth:lastBlock", maxBlock.toString());
+    // Update last seen TX
+    if (newestTxHash && newestTxHash !== lastTxHash) {
+      await redis.set("scanner:eth:lastTxHash", newestTxHash);
     }
 
-    return { chain: "eth", deposits, lastScanned: maxBlock };
+    return { chain: "eth", deposits, lastScanned: newestTxHash || 0 };
   } catch (error: any) {
     console.error("ETH scanner error:", error.message);
     return { chain: "eth", deposits: [], lastScanned: 0, error: error.message };
