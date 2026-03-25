@@ -15,6 +15,11 @@ const redis = new Redis({
 const METALS = ["auxg", "auxs", "auxpt", "auxpd"];
 const CRYPTOS = ["eth", "btc", "usdt", "usdc"];
 
+// Custody & Settlement Fee for metal transactions (4%)
+const METAL_CUSTODY_FEE_PERCENT = 4.0;
+// Trading fee for crypto-only transactions (0.35%)
+const CRYPTO_TRADING_FEE_PERCENT = 0.35;
+
 const METAL_NAMES: Record<string, string> = {
   AUXG: "Gold",
   AUXS: "Silver",
@@ -85,12 +90,16 @@ async function getServerPrice(asset: string): Promise<{ ask: number; bid: number
   return { ask: 1, bid: 1 };
 }
 
-// Calculate server-side toAmount
+// Calculate server-side toAmount with fee structure:
+// Metal transactions: spot price + 4% Custody & Settlement Fee + 0.35% trading fee
+// Crypto transactions: HTX price + 0.35% trading fee
 async function calculateServerToAmount(
   fromAsset: string,
   toAsset: string,
   fromAmount: number
-): Promise<{ toAmount: number; fromPrice: number; toPrice: number }> {
+): Promise<{ toAmount: number; fromPrice: number; toPrice: number; tradingFee: number; custodyFee: number; totalFeePercent: number }> {
+  const fromKey = fromAsset.toLowerCase();
+  const toKey = toAsset.toLowerCase();
   const fromPrices = await getServerPrice(fromAsset);
   const toPrices = await getServerPrice(toAsset);
 
@@ -99,16 +108,29 @@ async function calculateServerToAmount(
   const fromPrice = fromPrices.bid;
   const toPrice = toPrices.ask;
 
+  // Determine if this is a metal transaction
+  const involvesMetal = METALS.includes(fromKey) || METALS.includes(toKey);
+
+  // Calculate fees
+  const tradingFeePercent = CRYPTO_TRADING_FEE_PERCENT;
+  const custodyFeePercent = involvesMetal ? METAL_CUSTODY_FEE_PERCENT : 0;
+  const totalFeePercent = tradingFeePercent + custodyFeePercent;
+
   // Convert fromAmount to USD value
   const fromValueUSD = fromAmount * fromPrice;
 
-  // Calculate toAmount
-  const toAmount = fromValueUSD / toPrice;
+  // Apply fees: deduct total fee from USD value
+  const feeAmount = fromValueUSD * (totalFeePercent / 100);
+  const netValueUSD = fromValueUSD - feeAmount;
+
+  // Calculate toAmount from net value
+  const toAmount = netValueUSD / toPrice;
 
   console.log(`📊 Server calculation: ${fromAmount} ${fromAsset} (@ $${fromPrice}) = $${fromValueUSD.toFixed(2)} USD`);
-  console.log(`📊 Server calculation: $${fromValueUSD.toFixed(2)} / $${toPrice} = ${toAmount.toFixed(6)} ${toAsset}`);
+  console.log(`📊 Fees: trading ${tradingFeePercent}% + custody ${custodyFeePercent}% = ${totalFeePercent}% ($${feeAmount.toFixed(2)})`);
+  console.log(`📊 Net: $${netValueUSD.toFixed(2)} / $${toPrice} = ${toAmount.toFixed(6)} ${toAsset}`);
 
-  return { toAmount, fromPrice, toPrice };
+  return { toAmount, fromPrice, toPrice, tradingFee: tradingFeePercent, custodyFee: custodyFeePercent, totalFeePercent };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -258,7 +280,7 @@ export async function POST(request: NextRequest) {
     // ═══════════════════════════════════════════════════════════════════════════
     // 🔒 SERVER-SIDE PRICE CALCULATION - Frontend manipulation önleme
     // ═══════════════════════════════════════════════════════════════════════════
-    const { toAmount, fromPrice, toPrice } = await calculateServerToAmount(fromAsset, toAsset, fromAmount);
+    const { toAmount, fromPrice, toPrice, tradingFee, custodyFee, totalFeePercent } = await calculateServerToAmount(fromAsset, toAsset, fromAmount);
 
     // Validate: server calculation vs client request (max 5% tolerance for timing differences)
     if (clientToAmount) {
@@ -523,6 +545,7 @@ export async function POST(request: NextRequest) {
 
     // Log transaction
     const txKey = `user:${normalizedAddress}:transactions`;
+    const feeUsd = (fromAmount * fromPrice) * (totalFeePercent / 100);
     const transaction = {
       id: `exchange_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type: "exchange",
@@ -530,12 +553,37 @@ export async function POST(request: NextRequest) {
       toToken: toAsset,
       fromAmount: fromAmount.toString(),
       toAmount: toAmount.toString(),
+      fromPrice: fromPrice.toFixed(4),
+      toPrice: toPrice.toFixed(4),
+      fees: {
+        tradingFee: tradingFee,
+        custodyFee: custodyFee,
+        totalFeePercent: totalFeePercent,
+        feeUsd: parseFloat(feeUsd.toFixed(4)),
+      },
       allocation: allocationInfo.allocatedGrams ? allocationInfo : undefined,
       release: releaseInfo.releasedGrams ? releaseInfo : undefined,
       status: "completed",
       timestamp: Date.now(),
     };
     await redis.lpush(txKey, JSON.stringify(transaction));
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // FEE TRACKER — Track collected fees for revenue reporting
+    // ═══════════════════════════════════════════════════════════════════════════
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      await redis.incrbyfloat(`fees:daily:${today}`, feeUsd);
+      await redis.incrbyfloat('fees:total', feeUsd);
+      if (custodyFee > 0) {
+        await redis.incrbyfloat(`fees:custody:daily:${today}`, feeUsd * (custodyFee / totalFeePercent));
+        await redis.incrbyfloat('fees:custody:total', feeUsd * (custodyFee / totalFeePercent));
+      }
+      await redis.incrbyfloat(`fees:trading:daily:${today}`, feeUsd * (tradingFee / totalFeePercent));
+      await redis.incrbyfloat('fees:trading:total', feeUsd * (tradingFee / totalFeePercent));
+    } catch (feeErr) {
+      console.warn('Fee tracking error:', feeErr);
+    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // TELEGRAM BİLDİRİMİ + EMAIL — Metal alımlarında admin'e bildirim + kullanıcıya email
