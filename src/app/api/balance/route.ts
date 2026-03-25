@@ -12,6 +12,9 @@ const USE_MOCK = !process.env.UPSTASH_REDIS_REST_URL;
 
 const MOCK_BALANCE = {
   auxm: 1250.5, totalAuxm: 1250.5,
+  auxg: 0, auxs: 0, auxpt: 0, auxpd: 0,
+  eth: 0, btc: 0, usdt: 0, usdc: 0, usd: 0,
+  bonusAuxm: 0, bonusExpiresAt: "",
 };
 
 // Blockchain RPC - Ethereum Mainnet
