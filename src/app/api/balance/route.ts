@@ -12,7 +12,6 @@ const USE_MOCK = !process.env.UPSTASH_REDIS_REST_URL;
 
 const MOCK_BALANCE = {
   auxm: 1250.5, totalAuxm: 1250.5,
-  auxg: 15.75, auxs: 500, auxpt: 2.5, auxpd: 1.25, eth: 0.5, btc: 0.01, xrp: 100, sol: 2.5, usdt: 0,
 };
 
 // Blockchain RPC - Ethereum Mainnet
@@ -194,8 +193,6 @@ async function getHybridBalance(address: string): Promise<{
     // Off-chain from Redis
     auxm: parseFloat(String(redisBalance.auxm || 0)),
     btc: parseFloat(String(redisBalance.btc || 0)),
-    xrp: parseFloat(String(redisBalance.xrp || 0)),
-    sol: parseFloat(String(redisBalance.sol || 0)),
     usd: parseFloat(String(redisBalance.usd || 0)),
 
     // ETH: Custodial uses Redis, External uses Blockchain
@@ -223,8 +220,6 @@ async function getHybridBalance(address: string): Promise<{
     auxm: "redis",
     eth: isCustodial ? "redis" : "blockchain",
     btc: "redis",
-    xrp: "redis",
-    sol: "redis",
     usd: "redis",
     usdt: isCustodial ? "redis" : "blockchain",
     auxg: "redis",  // Metal tokens always from Redis
@@ -262,7 +257,6 @@ export async function GET(request: NextRequest) {
         totalAuxm: MOCK_BALANCE.totalAuxm,
         withdrawableAuxm: MOCK_BALANCE.auxm,
         metals: { auxg: MOCK_BALANCE.auxg, auxs: MOCK_BALANCE.auxs, auxpt: MOCK_BALANCE.auxpt, auxpd: MOCK_BALANCE.auxpd },
-        crypto: { eth: MOCK_BALANCE.eth, btc: MOCK_BALANCE.btc, xrp: MOCK_BALANCE.xrp, sol: MOCK_BALANCE.sol, usdt: MOCK_BALANCE.usdt },
       },
       timestamp: Date.now(),
       source: "mock",
@@ -288,8 +282,6 @@ export async function GET(request: NextRequest) {
         auxpd: parseFloat(String(redisBalance.auxpd || 0)),
         eth: parseFloat(String(redisBalance.eth || 0)),
         btc: parseFloat(String(redisBalance.btc || 0)),
-        xrp: parseFloat(String(redisBalance.xrp || 0)),
-        sol: parseFloat(String(redisBalance.sol || 0)),
         usdt: parseFloat(String(redisBalance.usdt || 0)),
         usd: parseFloat(String(redisBalance.usd || 0)),
       };
@@ -303,8 +295,6 @@ export async function GET(request: NextRequest) {
         eth: blockchainBalances.eth || 0,
         ...blockchainBalances,
         btc: 0,
-        xrp: 0,
-        sol: 0,
         usd: 0,
       };
       responseSource = "blockchain";
@@ -354,8 +344,6 @@ export async function GET(request: NextRequest) {
         crypto: {
           eth: balances.eth,
           btc: balances.btc,
-          xrp: balances.xrp,
-          sol: balances.sol,
           usdt: balances.usdt
         },
         totalValueUsd: balances.totalAuxm || 0,

@@ -12,7 +12,6 @@ const USE_MOCK = !process.env.UPSTASH_REDIS_REST_URL;
 
 const MOCK_BALANCE = {
   auxm: 1250.5, bonusAuxm: 25, totalAuxm: 1275.5, bonusExpiresAt: "2025-03-01T00:00:00Z",
-  auxg: 15.75, auxs: 500, auxpt: 2.5, auxpd: 1.25, eth: 0.5, btc: 0.01, xrp: 100, sol: 2.5, usdt: 0,
 };
 
 // Blockchain RPC - Ethereum Mainnet
@@ -168,8 +167,6 @@ async function getHybridBalance(address: string): Promise<{
     auxm: parseFloat(String(redisBalance.auxm || 0)),
     bonusAuxm: parseFloat(String((redisBalance as any).bonusauxm || redisBalance.bonusAuxm || 0)),
     btc: parseFloat(String(redisBalance.btc || 0)),
-    xrp: parseFloat(String(redisBalance.xrp || 0)),
-    sol: parseFloat(String(redisBalance.sol || 0)),
     usd: parseFloat(String(redisBalance.usd || 0)),
     
     // ETH from Blockchain (mainnet)
@@ -192,8 +189,6 @@ async function getHybridBalance(address: string): Promise<{
     bonusAuxm: "redis",
     eth: "blockchain",  // Now from blockchain!
     btc: "redis",
-    xrp: "redis",
-    sol: "redis",
     usd: "redis",
     usdt: "blockchain",
     auxg: "blockchain",
@@ -231,7 +226,6 @@ export async function GET(request: NextRequest) {
         lockedBonusAuxm: MOCK_BALANCE.bonusAuxm,
         bonusStatus: MOCK_BALANCE.bonusAuxm > 0 ? { amount: MOCK_BALANCE.bonusAuxm, expiresAt: MOCK_BALANCE.bonusExpiresAt } : null,
         metals: { auxg: MOCK_BALANCE.auxg, auxs: MOCK_BALANCE.auxs, auxpt: MOCK_BALANCE.auxpt, auxpd: MOCK_BALANCE.auxpd },
-        crypto: { eth: MOCK_BALANCE.eth, btc: MOCK_BALANCE.btc, xrp: MOCK_BALANCE.xrp, sol: MOCK_BALANCE.sol, usdt: MOCK_BALANCE.usdt },
       },
       timestamp: Date.now(),
       source: "mock",
@@ -257,8 +251,6 @@ export async function GET(request: NextRequest) {
         auxpd: parseFloat(String(redisBalance.auxpd || 0)),
         eth: parseFloat(String(redisBalance.eth || 0)),
         btc: parseFloat(String(redisBalance.btc || 0)),
-        xrp: parseFloat(String(redisBalance.xrp || 0)),
-        sol: parseFloat(String(redisBalance.sol || 0)),
         usdt: parseFloat(String(redisBalance.usdt || 0)),
         usd: parseFloat(String(redisBalance.usd || 0)),
       };
@@ -273,8 +265,6 @@ export async function GET(request: NextRequest) {
         eth: blockchainBalances.eth || 0,
         ...blockchainBalances,
         btc: 0,
-        xrp: 0,
-        sol: 0,
         usd: 0,
       };
       responseSource = "blockchain";
@@ -305,8 +295,6 @@ export async function GET(request: NextRequest) {
         crypto: { 
           eth: balances.eth, 
           btc: balances.btc, 
-          xrp: balances.xrp, 
-          sol: balances.sol, 
           usdt: balances.usdt 
         },
         totalValueUsd: balances.totalAuxm || 0,

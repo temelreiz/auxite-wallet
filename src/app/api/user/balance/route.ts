@@ -259,8 +259,6 @@ async function getHybridBalance(address: string): Promise<{
     auxm: parseFloat(String(redisBalance.auxm || 0)),
     bonusAuxm: parseFloat(String((redisBalance as any).bonusauxm || redisBalance.bonusAuxm || 0)),
     btc: parseFloat(String(redisBalance.btc || 0)),
-    xrp: parseFloat(String(redisBalance.xrp || 0)),
-    sol: parseFloat(String(redisBalance.sol || 0)),
     usd: parseFloat(String(redisBalance.usd || 0)),
 
     // ETH: Custodial users use Redis balance, external wallets use blockchain
@@ -339,7 +337,6 @@ export async function GET(request: NextRequest) {
         lockedBonusAuxm: MOCK_BALANCE.bonusAuxm,
         bonusStatus: MOCK_BALANCE.bonusAuxm > 0 ? { amount: MOCK_BALANCE.bonusAuxm, expiresAt: MOCK_BALANCE.bonusExpiresAt } : null,
         metals: { auxg: MOCK_BALANCE.auxg, auxs: MOCK_BALANCE.auxs, auxpt: MOCK_BALANCE.auxpt, auxpd: MOCK_BALANCE.auxpd },
-        crypto: { eth: MOCK_BALANCE.eth, btc: MOCK_BALANCE.btc, xrp: MOCK_BALANCE.xrp, sol: MOCK_BALANCE.sol, usdt: MOCK_BALANCE.usdt },
       },
       timestamp: Date.now(),
       source: "mock",
@@ -367,9 +364,7 @@ export async function GET(request: NextRequest) {
         auxpd: parseFloat(String(redisBalance.auxpd || 0)),
         eth: parseFloat(String(redisBalance.eth || 0)),
         btc: parseFloat(String(redisBalance.btc || 0)),
-        xrp: parseFloat(String(redisBalance.xrp || 0)),
-        sol: parseFloat(String(redisBalance.sol || 0)),
-        usdt: parseFloat(String(redisBalance.usdt || 0)),
+            usdt: parseFloat(String(redisBalance.usdt || 0)),
         usd: parseFloat(String(redisBalance.usd || 0)),
       };
       responseSource = "redis";
@@ -438,9 +433,7 @@ export async function GET(request: NextRequest) {
         },
         crypto: { 
           eth: balances.eth, 
-          btc: balances.btc, 
-          xrp: balances.xrp, 
-          sol: balances.sol, 
+          btc: balances.btc,
           usdt: balances.usdt 
         },
         totalValueUsd: balances.totalAuxm || 0,

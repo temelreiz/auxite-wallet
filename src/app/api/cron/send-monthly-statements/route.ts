@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         // Check if user has any holdings
         const hasHoldings = balance.auxg > 0 || balance.auxs > 0 || balance.auxpt > 0 ||
           balance.auxpd > 0 || balance.auxm > 0 || balance.eth > 0 || balance.btc > 0 ||
-          balance.xrp > 0 || balance.sol > 0 || balance.usdt > 0 || balance.usd > 0;
+          balance.usdt > 0 || balance.usd > 0;
 
         if (!hasHoldings) {
           // Skip users with zero balance — no need to send empty statement

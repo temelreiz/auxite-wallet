@@ -316,8 +316,6 @@ export async function GET(request: NextRequest) {
       crypto: {
         eth: blockchainBalances.eth || redisBalance.eth || 0,
         btc: redisBalance.btc || 0,
-        xrp: redisBalance.xrp || 0,
-        sol: redisBalance.sol || 0,
         usdt: (blockchainBalances.usdt || 0) + (redisBalance.usdt || 0),
       },
       auxm: redisBalance.auxm || 0,
