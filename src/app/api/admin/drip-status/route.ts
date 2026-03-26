@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       {
         day3_kyc: { sent: 0, pending: 0 },
         day5_market: { sent: 0, pending: 0 },
-        day7_demo: { sent: 0, pending: 0 },
+        day7_features: { sent: 0, pending: 0 },
         day14_urgency: { sent: 0, pending: 0 },
       };
 
