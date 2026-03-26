@@ -829,10 +829,41 @@ export default function VaultPage() {
 
         totalValue += cryptoTotalValue + auxmBalance;
 
+        // Fetch demo leases for encumbered assets
+        let encumberedTotal = 0;
+        try {
+          const addr = localStorage.getItem("auxite_wallet_address") || "";
+          if (addr) {
+            const leaseRes = await fetch(`/api/demo/trade?address=${addr}&type=leases`);
+            const leaseData = await leaseRes.json();
+            if (leaseData.leases && Array.isArray(leaseData.leases)) {
+              for (const lease of leaseData.leases) {
+                const leaseSymbol = lease.metal?.toUpperCase() || "";
+                const leasePrice = priceData.basePrices?.[leaseSymbol] || 0;
+                const leaseValue = (lease.amount || 0) * leasePrice;
+                encumberedTotal += leaseValue;
+
+                // Add staked grams to holdings
+                const holding = holdingsList.find(h => h.symbol === leaseSymbol);
+                if (holding) {
+                  holding.stakedGrams = (holding.stakedGrams || 0) + (lease.amount || 0);
+                  holding.total = holding.allocated + holding.stakedGrams;
+                  holding.value = holding.total * holding.price;
+                }
+              }
+              // Encumbered value adds to total vault value
+              totalValue += encumberedTotal;
+            }
+          }
+        } catch (e) {
+          console.warn("Demo lease fetch error:", e);
+        }
+
         setHoldings(holdingsList);
         setTotalVaultValue(totalValue);
-        setAllocatedHoldings(allocatedValue);
-        setEncumberedAssetsValue(0);
+        setAllocatedHoldings(allocatedValue + encumberedTotal);
+        setEncumberedAssetsValue(encumberedTotal);
+        setEncumberedBreakdown({ yieldPrograms: encumberedTotal, pendingDelivery: 0, tradeSettlement: 0 });
         setLoading(false);
       } catch (error) {
         console.warn("Demo overlay error:", error);
