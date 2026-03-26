@@ -516,13 +516,13 @@ export default function AllocatePage() {
 
             {/* CTAs */}
             <div className="px-6 pb-6 space-y-3">
-              <button className="w-full py-3 bg-[#BFA181] text-white font-semibold rounded-xl">
+              <a href="/documents" className="block w-full py-3 bg-[#BFA181] text-white font-semibold rounded-xl text-center">
                 {t.viewCertificate}
-              </button>
+              </a>
               <div className="grid grid-cols-2 gap-3">
-                <button className="py-3 border border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl text-sm">
+                <a href="/stake" className="block py-3 border border-stone-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl text-sm text-center">
                   {t.enterProgram}
-                </button>
+                </a>
                 <button
                   onClick={() => {
                     setViewState("allocate");
