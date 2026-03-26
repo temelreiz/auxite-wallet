@@ -616,8 +616,12 @@ export default function VaultPage() {
       return;
     }
 
+    // Wait for demo check to complete before fetching real data
+    if (!demoChecked) return;
+
     // In demo mode, skip all real API calls — the demo overlay useEffect handles everything
     if (demoActive) {
+      setLoading(false);
       return;
     }
 
@@ -749,7 +753,7 @@ export default function VaultPage() {
     } finally {
       setLoading(false);
     }
-  }, [address, demoActive]);
+  }, [address, demoActive, demoChecked]);
 
   useEffect(() => {
     fetchVaultData();
