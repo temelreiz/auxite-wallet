@@ -577,6 +577,7 @@ export default function VaultPage() {
 
   // Demo Mode — shared hook
   const { demoActive, demoBalance, demoChecked, demoLoading, activateDemo, deactivateDemo, executeDemoTrade } = useDemoMode(address);
+  const [exitingDemo, setExitingDemo] = useState(false);
 
   const vaultId = realVaultId || (address ? `AUX-${address.slice(2, 8).toUpperCase()}` : null);
   const protectionLevel = custodyStatus === 'active' ? 85 : 50;
@@ -893,7 +894,7 @@ export default function VaultPage() {
       <TopNav />
 
       {/* Demo Mode Persistent Banner */}
-      {demoActive && (
+      {demoActive && !exitingDemo && (
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 px-4">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -901,7 +902,7 @@ export default function VaultPage() {
               <span className="text-sm font-semibold">{t.demoBanner}</span>
             </div>
             <button
-              onClick={async () => { await deactivateDemo(); window.location.reload(); }}
+              onClick={async () => { setExitingDemo(true); await deactivateDemo(); window.location.reload(); }}
               className="px-4 py-1.5 bg-white text-orange-600 text-xs font-bold rounded-lg hover:bg-white/90 transition-colors"
             >
               {t.demoFundReal}
