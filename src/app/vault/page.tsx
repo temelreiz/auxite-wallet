@@ -843,16 +843,13 @@ export default function VaultPage() {
                 const leaseValue = (lease.amount || 0) * leasePrice;
                 encumberedTotal += leaseValue;
 
-                // Add staked grams to holdings
+                // Mark staked grams in holdings (already deducted from balance by lease API)
                 const holding = holdingsList.find(h => h.symbol === leaseSymbol);
                 if (holding) {
                   holding.stakedGrams = (holding.stakedGrams || 0) + (lease.amount || 0);
-                  holding.total = holding.allocated + holding.stakedGrams;
-                  holding.value = holding.total * holding.price;
                 }
               }
               // Encumbered value adds to total vault value
-              totalValue += encumberedTotal;
             }
           }
         } catch (e) {
@@ -861,7 +858,7 @@ export default function VaultPage() {
 
         setHoldings(holdingsList);
         setTotalVaultValue(totalValue);
-        setAllocatedHoldings(allocatedValue + encumberedTotal);
+        setAllocatedHoldings(allocatedValue);
         setEncumberedAssetsValue(encumberedTotal);
         setEncumberedBreakdown({ yieldPrograms: encumberedTotal, pendingDelivery: 0, tradeSettlement: 0 });
         setLoading(false);
