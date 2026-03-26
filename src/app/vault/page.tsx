@@ -576,7 +576,7 @@ export default function VaultPage() {
   const [realVaultId, setRealVaultId] = useState<string | null>(null);
 
   // Demo Mode — shared hook
-  const { demoActive, demoBalance, demoChecked, demoLoading, activateDemo, executeDemoTrade } = useDemoMode(address);
+  const { demoActive, demoBalance, demoChecked, demoLoading, activateDemo, deactivateDemo, executeDemoTrade } = useDemoMode(address);
 
   const vaultId = realVaultId || (address ? `AUX-${address.slice(2, 8).toUpperCase()}` : null);
   const protectionLevel = custodyStatus === 'active' ? 85 : 50;

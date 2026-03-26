@@ -209,6 +209,7 @@ export default function AllocatePage() {
     }
   }, [demoActive]);
   const [amount, setAmount] = useState("");
+  const [userBalances, setUserBalances] = useState<Record<string, number>>({});
   const [basePrices, setBasePrices] = useState<Record<string, number>>({});
   const [executionPrices, setExecutionPrices] = useState<Record<string, number>>({});
   const [spotPricesOz, setSpotPricesOz] = useState<Record<string, number>>({});
@@ -256,6 +257,34 @@ export default function AllocatePage() {
     const interval = setInterval(fetchPrices, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // Fetch user balances (demo or real)
+  useEffect(() => {
+    if (demoActive && demoBalance) {
+      setUserBalances({
+        AUXM: demoBalance.auxm || 0,
+        USDC: demoBalance.usdc || 0,
+        USDT: demoBalance.usdt || 0,
+        ETH: demoBalance.eth || 0,
+        BTC: demoBalance.btc || 0,
+      });
+    } else if (address && !demoActive) {
+      fetch(`/api/user/balance?address=${address}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.balance) {
+            setUserBalances({
+              AUXM: parseFloat(data.balance.auxm || 0),
+              USDC: parseFloat(data.balance.usdc || 0),
+              USDT: parseFloat(data.balance.usdt || 0),
+              ETH: parseFloat(data.balance.eth || 0),
+              BTC: parseFloat(data.balance.btc || 0),
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [address, demoActive, demoBalance]);
 
   // Calculations
   const inputAmount = parseFloat(amount) || 0;
@@ -750,16 +779,11 @@ export default function AllocatePage() {
                 }`}
               >
                 <span className="text-sm font-semibold text-slate-800 dark:text-white">{source.symbol}</span>
-                <span className="text-[11px] text-slate-500 mt-0.5">{source.name}</span>
-                {source.symbol !== "AUXM" && source.symbol !== "USDC" && source.symbol !== "USDT" && cryptoPrices[source.symbol] ? (
-                  <span className="text-[9px] text-slate-400 mt-0.5">
-                    ${cryptoPrices[source.symbol]?.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                  </span>
-                ) : source.symbol === "AUXM" ? (
-                  <span className="text-[10px] text-[#C6A15B] mt-0.5 font-medium text-center leading-tight">
-                    {lang === 'tr' ? 'Tahsis için gerekli' : 'Required for allocation'}
-                  </span>
-                ) : null}
+                <span className="text-[10px] text-green-500 dark:text-green-400 font-mono mt-0.5">
+                  {(userBalances[source.symbol] || 0) > 0
+                    ? (source.symbol === "BTC" ? (userBalances[source.symbol] || 0).toFixed(6) : source.symbol === "ETH" ? (userBalances[source.symbol] || 0).toFixed(4) : (userBalances[source.symbol] || 0).toLocaleString("en-US", { maximumFractionDigits: 2 }))
+                    : "0.00"}
+                </span>
               </button>
             ))}
           </div>
