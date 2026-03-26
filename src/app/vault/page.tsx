@@ -893,8 +893,8 @@ export default function VaultPage() {
     <div className="min-h-screen bg-stone-100 dark:bg-slate-950">
       <TopNav />
 
-      {/* Demo Mode Persistent Banner */}
-      {demoActive && demoChecked && !exitingDemo && (
+      {/* Demo Mode Persistent Banner - only show when fully confirmed */}
+      {demoActive && demoChecked && !exitingDemo && !loading && (
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 px-4">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
