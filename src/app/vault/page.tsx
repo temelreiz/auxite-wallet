@@ -883,8 +883,10 @@ export default function VaultPage() {
     ? ((encumberedAssetsValue / totalVaultValue) * 100).toFixed(1)
     : "0.0";
 
-  // Show demo activation card when: no demo active, wallet connected, data loaded
-  const showDemoActivation = !loading && !demoActive && demoChecked && address;
+  // Show big demo card when: no demo, no real balance, wallet connected, data loaded
+  const showDemoActivation = !loading && !demoActive && demoChecked && address && totalVaultValue === 0;
+  // Show small demo link when: no demo, has real balance (for users who want to try demo)
+  const showDemoLink = !loading && !demoActive && demoChecked && address && totalVaultValue > 0;
 
   return (
     <div className="min-h-screen bg-stone-100 dark:bg-slate-950">
@@ -1645,6 +1647,19 @@ export default function VaultPage() {
           </svg>
         </Link>
       </div>
+
+      {/* Small Demo Link for users with real balance */}
+      {showDemoLink && (
+        <div className="text-center py-4">
+          <button
+            onClick={activateDemo}
+            disabled={demoLoading}
+            className="text-xs text-slate-400 hover:text-amber-500 transition-colors"
+          >
+            🎮 {t.demoActivate}
+          </button>
+        </div>
+      )}
 
       {/* Sell Modal */}
       {sellModal.metal && (
