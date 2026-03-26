@@ -45,6 +45,18 @@
     {
       "path": "/api/cron/execute-all",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/email-drip",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/store-daily-close",
+      "schedule": "0 21 * * 1-5"
+    },
+    {
+      "path": "/api/cron/daily-price-alert",
+      "schedule": "0 * * * *"
     }
   ]
 }
