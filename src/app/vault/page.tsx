@@ -857,7 +857,7 @@ export default function VaultPage() {
         }
 
         setHoldings(holdingsList);
-        setTotalVaultValue(totalValue);
+        setTotalVaultValue(totalValue + encumberedTotal);
         setAllocatedHoldings(allocatedValue);
         setEncumberedAssetsValue(encumberedTotal);
         setEncumberedBreakdown({ yieldPrograms: encumberedTotal, pendingDelivery: 0, tradeSettlement: 0 });
