@@ -10,8 +10,8 @@ const redis = new Redis({
 const METALS = ["auxg", "auxs", "auxpt", "auxpd"];
 const CRYPTOS = ["eth", "btc", "usdt", "usdc"];
 
-// Custody & Settlement Fee for metal transactions (4%)
-const METAL_CUSTODY_FEE_PERCENT = 4.0;
+// Custody & Settlement Fee for metal transactions (2%)
+const METAL_CUSTODY_FEE_PERCENT = 2.0;
 // Trading fee (0.35%)
 const CRYPTO_TRADING_FEE_PERCENT = 0.35;
 
