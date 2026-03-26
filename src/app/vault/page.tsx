@@ -893,30 +893,7 @@ export default function VaultPage() {
     <div className="min-h-screen bg-stone-100 dark:bg-slate-950">
       <TopNav />
 
-      {/* Demo Mode Persistent Banner - only show when fully confirmed */}
-      {demoActive && demoChecked && !exitingDemo && !loading && (
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 px-4">
-          <div className="max-w-5xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🎮</span>
-              <span className="text-sm font-semibold">{t.demoBanner}</span>
-            </div>
-            <button
-              onClick={async () => {
-                setExitingDemo(true);
-                try {
-                  const addr = address || localStorage.getItem("auxite_address") || "";
-                  await fetch(`/api/demo?address=${addr}`, { method: "DELETE" });
-                } catch (e) {}
-                window.location.reload();
-              }}
-              className="px-4 py-1.5 bg-white text-orange-600 text-xs font-bold rounded-lg hover:bg-white/90 transition-colors"
-            >
-              {t.demoFundReal}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Demo banner removed - demo state shown inside vault card instead */}
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
         {/* ═══ TRUST BAR ═══ */}
