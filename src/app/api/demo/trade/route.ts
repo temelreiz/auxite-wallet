@@ -28,15 +28,28 @@ async function getServerPrice(asset: string): Promise<{ ask: number; bid: number
 
   if (METALS.includes(assetLower)) {
     try {
+      // Try internal prices API first (most reliable)
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
+      const priceRes = await fetch(`${baseUrl}/api/prices?chain=84532`, { cache: "no-store" });
+      const priceData = await priceRes.json();
+      if (priceData.success && priceData.executionPrices) {
+        const symbol = asset.toUpperCase();
+        const execPrice = priceData.executionPrices[symbol];
+        const basePrice = priceData.basePrices?.[symbol];
+        if (execPrice && basePrice) {
+          return { ask: execPrice, bid: basePrice };
+        }
+      }
+      // Fallback to getTokenPrices
       const prices = await getTokenPrices(asset);
       return { ask: prices.askPerGram, bid: prices.bidPerGram };
     } catch (e) {
       console.error(`Failed to get ${asset} price:`, e);
       const fallbacks: Record<string, { ask: number; bid: number }> = {
-        auxg: { ask: 170, bid: 160 },
-        auxs: { ask: 3.5, bid: 2.9 },
-        auxpt: { ask: 82, bid: 68 },
-        auxpd: { ask: 60, bid: 56 },
+        auxg: { ask: 145, bid: 143 },
+        auxs: { ask: 2.40, bid: 2.30 },
+        auxpt: { ask: 63, bid: 61 },
+        auxpd: { ask: 46, bid: 44 },
       };
       return fallbacks[assetLower] || { ask: 100, bid: 100 };
     }
