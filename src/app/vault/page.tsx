@@ -902,7 +902,14 @@ export default function VaultPage() {
               <span className="text-sm font-semibold">{t.demoBanner}</span>
             </div>
             <button
-              onClick={async () => { setExitingDemo(true); await deactivateDemo(); window.location.reload(); }}
+              onClick={async () => {
+                setExitingDemo(true);
+                try {
+                  const addr = address || localStorage.getItem("auxite_address") || "";
+                  await fetch(`/api/demo?address=${addr}`, { method: "DELETE" });
+                } catch (e) {}
+                window.location.reload();
+              }}
               className="px-4 py-1.5 bg-white text-orange-600 text-xs font-bold rounded-lg hover:bg-white/90 transition-colors"
             >
               {t.demoFundReal}
@@ -946,12 +953,12 @@ export default function VaultPage() {
                 >
                   {demoLoading ? "..." : t.demoActivate}
                 </button>
-                <button
-                  onClick={async () => { await deactivateDemo(); window.location.reload(); }}
+                <a
+                  href="/fund-vault"
                   className="px-6 py-3 border border-[#C5A55A] text-[#C5A55A] font-bold rounded-xl hover:bg-[#C5A55A]/10 transition-colors text-center"
                 >
                   {t.demoFundReal}
-                </button>
+                </a>
               </div>
             </div>
           </div>
