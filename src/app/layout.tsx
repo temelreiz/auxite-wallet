@@ -175,6 +175,15 @@ export default function RootLayout({
             src="https://www.facebook.com/tr?id=938812332212962&ev=PageView&noscript=1"
           />
         </noscript>
+        {/* Crisp Live Chat */}
+        <Script id="crisp-widget" strategy="afterInteractive">
+          {`
+            window.$crisp=[];window.CRISP_WEBSITE_ID="c330b030-55e6-42b1-b669-f428a2c76665";
+            (function(){d=document;s=d.createElement("script");
+            s.src="https://client.crisp.chat/l.js";s.async=1;
+            d.getElementsByTagName("head")[0].appendChild(s);})();
+          `}
+        </Script>
         <ToastProvider>
           <UIToastProvider>
             <Web3Provider>
