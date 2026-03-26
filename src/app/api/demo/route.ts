@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     // Check if demo mode already active
     const isActive = await redis.get(demoActiveKey);
-    if (isActive === "true") {
+    if (isActive === "true" || isActive === true) {
       return NextResponse.json({ success: true, message: "Demo mode already active" });
     }
 

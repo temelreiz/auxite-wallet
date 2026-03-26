@@ -361,7 +361,7 @@ export async function POST(request: NextRequest) {
 
     // Validate demo mode is active
     const isActive = await redis.get(`demo:${normalizedAddress}:active`);
-    if (isActive !== "true") {
+    if (isActive !== "true" && isActive !== true) {
       return NextResponse.json({ error: "Demo mode is not active" }, { status: 403 });
     }
 
@@ -411,7 +411,7 @@ export async function GET(request: NextRequest) {
     const normalizedAddress = address.toLowerCase();
 
     const isActive = await redis.get(`demo:${normalizedAddress}:active`);
-    if (isActive !== "true") {
+    if (isActive !== "true" && isActive !== true) {
       return NextResponse.json({ error: "Demo mode is not active" }, { status: 403 });
     }
 
