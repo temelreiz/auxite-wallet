@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
     const isActive = await redis.get(demoActiveKey);
 
-    if (isActive !== "true") {
+    if (isActive !== "true" && isActive !== true) {
       return NextResponse.json({ active: false, balance: null });
     }
 
