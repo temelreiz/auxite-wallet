@@ -30,7 +30,7 @@ function buildCsp() {
   // Production'da daha sıkı CSP
   const scriptSrc = isDev
     ? "'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://*.sumsub.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://connect.facebook.net https://global-stg.transak.com https://global.transak.com"
-    : "'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://*.sumsub.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://connect.facebook.net https://global-stg.transak.com https://global.transak.com";
+    : "'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://*.sumsub.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://connect.facebook.net https://global-stg.transak.com https://global.transak.com https://client.crisp.chat https://settings.crisp.chat";
 
   return [
     "default-src 'self'",
@@ -38,8 +38,8 @@ function buildCsp() {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: blob: https: https://www.facebook.com",
-    "frame-src 'self' https://*.sumsub.com https://*.google.com https://global-stg.transak.com https://global.transak.com https://challenges.cloudflare.com",
-    "connect-src 'self' https: wss: https://www.google-analytics.com https://*.analytics.google.com https://connect.facebook.net https://www.facebook.com",
+    "frame-src 'self' https://*.sumsub.com https://*.google.com https://global-stg.transak.com https://global.transak.com https://challenges.cloudflare.com https://game.crisp.chat",
+    "connect-src 'self' https: wss: https://www.google-analytics.com https://*.analytics.google.com https://connect.facebook.net https://www.facebook.com https://*.crisp.chat wss://*.crisp.chat",
     "media-src 'self' blob:",
     "worker-src 'self' blob:",
     "frame-ancestors 'none'",
