@@ -38,10 +38,6 @@ interface SellModalProps {
   metal: SellMetalInfo;
   address: string;
   onSuccess?: () => void;
-  /** When true, trades are routed through the demo API */
-  demoMode?: boolean;
-  /** Demo trade executor function — required when demoMode is true */
-  onDemoTrade?: (params: { fromAsset: string; toAsset: string; fromAmount: number }) => Promise<{ success: boolean; transaction?: any; error?: string }>;
 }
 
 type SettlementType = "AUXM" | "USDT" | "BTC" | "ETH";
@@ -385,7 +381,7 @@ const metalIcons: Record<string, string> = {
 // MAIN COMPONENT
 // ============================================
 
-export default function LiquidateModal({ isOpen, onClose, metal, address, onSuccess, demoMode, onDemoTrade }: SellModalProps) {
+export default function LiquidateModal({ isOpen, onClose, metal, address, onSuccess }: SellModalProps) {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
 
@@ -420,47 +416,37 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
   }, [isOpen, metal.price]);
 
   // Fetch execution price & 2FA status on mount
-  // In demo mode: only fetch prices (skip 2FA and real trade APIs)
   useEffect(() => {
     if (!isOpen || !address) return;
 
     const fetchData = async () => {
       try {
-        // Fetch execution price (prices endpoint is read-only, safe for demo)
+        // Fetch execution price
         const priceRes = await fetch(`/api/prices?chain=84532`);
         const priceData = await priceRes.json();
         if (priceData.basePrices?.[metal.symbol]) {
           setExecutionPrice(priceData.basePrices[metal.symbol]);
         }
 
-        // Skip 2FA status in demo mode — not needed
-        if (!demoMode) {
-          const twoFARes = await fetch("/api/security/2fa/status", {
-            headers: { "x-wallet-address": address },
-          });
-          const twoFAData = await twoFARes.json();
-          setTwoFAEnabled(twoFAData.enabled || false);
-        }
+        const twoFARes = await fetch("/api/security/2fa/status", {
+          headers: { "x-wallet-address": address },
+        });
+        const twoFAData = await twoFARes.json();
+        setTwoFAEnabled(twoFAData.enabled || false);
       } catch (err) {
         console.error("Failed to fetch initial data:", err);
       }
     };
 
     fetchData();
-  }, [isOpen, address, metal.symbol, demoMode]);
+  }, [isOpen, address, metal.symbol]);
 
   // Fetch crypto prices for settlement conversion
-  // In demo mode: skip real trade API, use price-based estimation
   useEffect(() => {
     if (!isOpen || settlement === "AUXM") return;
 
     const fetchCryptoPrices = async () => {
       try {
-        if (demoMode) {
-          // In demo mode: don't call real /api/trade — just use price data
-          // The demo trade will compute the correct amount server-side
-          return;
-        }
         const res = await fetch(`/api/trade?type=sell&fromToken=${metal.symbol}&toToken=${settlement}&amount=${parseFloat(grams) || 1}&address=${address}`);
         const data = await res.json();
         if (data.success && data.preview) {
@@ -477,7 +463,7 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
     if (parseFloat(grams) > 0) {
       fetchCryptoPrices();
     }
-  }, [isOpen, settlement, grams, metal.symbol, address, demoMode]);
+  }, [isOpen, settlement, grams, metal.symbol, address]);
 
   // Quote timer countdown
   useEffect(() => {
@@ -594,27 +580,7 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
       let fromToken = metal.symbol;
       let toToken = settlement === "AUXM" ? "AUXM" : settlement;
 
-      if (demoMode && onDemoTrade) {
-        // Demo mode: route through demo trade API
-        const result = await onDemoTrade({
-          fromAsset: fromToken,
-          toAsset: toToken,
-          fromAmount: gramsNum,
-        });
-
-        if (!result.success) {
-          setError(result.error || t.executionFailed);
-          return;
-        }
-
-        setSuccessData({
-          proceeds: result.transaction?.toAmount || gramsNum * (executionPrice || metal.price),
-          settlement: toToken,
-        });
-        setStep(3);
-        onSuccess?.();
-      } else {
-        // Real mode: normal trade API
+      {
         const tradeBody: Record<string, unknown> = {
           address,
           type: "sell",
@@ -1020,11 +986,6 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
             {/* Title */}
             <div>
               <h2 className="text-xl font-bold text-slate-800 dark:text-white">{t.sellComplete}</h2>
-              {demoMode && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium">
-                  🎮 Demo
-                </span>
-              )}
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t.successMessage}</p>
             </div>
 

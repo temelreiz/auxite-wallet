@@ -14,7 +14,6 @@ import LiquidateModal from "@/components/LiquidateModal";
 import { MarketStatusBanner } from "@/components/MarketStatusBanner";
 import { useLanguage } from "@/components/LanguageContext";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
-import { useDemoMode } from "@/hooks/useDemoMode";
 
 // Metal icons
 const metalIcons: Record<string, string> = {
@@ -119,15 +118,6 @@ const translations: Record<string, Record<string, string>> = {
     kycRequired: "Identity Verification Required", kycRequiredDesc: "Complete KYC & deposit $100 to earn your 10 AUXS Welcome Bonus!",
     kycPending: "KYC Under Review", kycPendingDesc: "Your verification is being reviewed",
     kycAction: "Verify Now",
-    // Demo Mode
-    demoMode: "Demo Mode",
-    demoDescription: "Virtual balance, real market prices",
-    demoActivate: "Try Demo Mode",
-    demoBanner: "Demo Mode — Virtual balance, real prices. Ready to invest?",
-    demoFundReal: "Switch to Real Account",
-    demoBalance: "Virtual Balance",
-    demoTryWith: "Experience Auxite with $10,000 virtual balance",
-    demoNoRisk: "Trade with real market prices — no risk",
   },
   // ══════════════════════════════════════════════════════════════
   // TURKISH — "Teminatlı" → "Bloke" standardized, auxmPeg fixed
@@ -201,15 +191,6 @@ const translations: Record<string, Record<string, string>> = {
     kycRequired: "Kimlik Doğrulama Gerekli", kycRequiredDesc: "KYC'nizi tamamlayın ve $100 yatırın, 10 AUXS Hoş Geldin Bonusu kazanın!",
     kycPending: "KYC İnceleniyor", kycPendingDesc: "Doğrulamanız inceleniyor",
     kycAction: "Doğrula",
-    // Demo Mode
-    demoMode: "Demo Modu",
-    demoDescription: "Sanal bakiye, gerçek piyasa fiyatları",
-    demoActivate: "Demo Modunu Dene",
-    demoBanner: "Demo Modu — Sanal bakiye, gerçek fiyatlar. Yatırım yapmaya hazır mısınız?",
-    demoFundReal: "Gerçek Hesaba Geç",
-    demoBalance: "Sanal Bakiye",
-    demoTryWith: "Auxite'i $10.000 sanal bakiye ile deneyimleyin",
-    demoNoRisk: "Gerçek piyasa fiyatlarıyla işlem yapın — risk yok",
   },
   // ══════════════════════════════════════════════════════════════
   // GERMAN
@@ -283,15 +264,6 @@ const translations: Record<string, Record<string, string>> = {
     kycRequired: "Identitätsprüfung erforderlich", kycRequiredDesc: "KYC abschließen & $100 einzahlen, um 10 AUXS Willkommensbonus zu erhalten!",
     kycPending: "KYC wird überprüft", kycPendingDesc: "Ihre Verifizierung wird überprüft",
     kycAction: "Jetzt verifizieren",
-    // Demo Mode
-    demoMode: "Demo-Modus",
-    demoDescription: "Virtuelles Guthaben, echte Marktpreise",
-    demoActivate: "Demo-Modus testen",
-    demoBanner: "Demo-Modus — Virtuelles Guthaben, echte Preise. Bereit zu investieren?",
-    demoFundReal: "Zum echten Konto wechseln",
-    demoBalance: "Virtuelles Guthaben",
-    demoTryWith: "Erleben Sie Auxite mit $10.000 virtuellem Guthaben",
-    demoNoRisk: "Handeln Sie mit echten Marktpreisen — kein Risiko",
   },
   // ══════════════════════════════════════════════════════════════
   // FRENCH
@@ -365,15 +337,6 @@ const translations: Record<string, Record<string, string>> = {
     kycRequired: "Vérification d'identité requise", kycRequiredDesc: "Complétez le KYC et déposez 100$ pour gagner 10 AUXS de bonus de bienvenue !",
     kycPending: "KYC en cours d'examen", kycPendingDesc: "Votre vérification est en cours",
     kycAction: "Vérifier",
-    // Demo Mode
-    demoMode: "Mode Démo",
-    demoDescription: "Solde virtuel, prix réels du marché",
-    demoActivate: "Essayer le Mode Démo",
-    demoBanner: "Mode Démo — Solde virtuel, prix réels. Prêt à investir ?",
-    demoFundReal: "Passer au compte réel",
-    demoBalance: "Solde Virtuel",
-    demoTryWith: "Découvrez Auxite avec un solde virtuel de 10 000 $",
-    demoNoRisk: "Tradez avec les prix réels du marché — sans risque",
   },
   // ══════════════════════════════════════════════════════════════
   // ARABIC
@@ -447,15 +410,6 @@ const translations: Record<string, Record<string, string>> = {
     kycRequired: "مطلوب التحقق من الهوية", kycRequiredDesc: "أكمل KYC وأودع 100$ لكسب 10 AUXS مكافأة ترحيب!",
     kycPending: "KYC قيد المراجعة", kycPendingDesc: "يتم مراجعة التحقق الخاص بك",
     kycAction: "تحقق الآن",
-    // Demo Mode
-    demoMode: "الوضع التجريبي",
-    demoDescription: "رصيد افتراضي، أسعار سوق حقيقية",
-    demoActivate: "جرّب الوضع التجريبي",
-    demoBanner: "الوضع التجريبي — رصيد افتراضي، أسعار حقيقية. مستعد للاستثمار؟",
-    demoFundReal: "التبديل إلى الحساب الحقيقي",
-    demoBalance: "الرصيد الافتراضي",
-    demoTryWith: "جرّب Auxite برصيد افتراضي قدره 10,000$",
-    demoNoRisk: "تداول بأسعار السوق الحقيقية — بدون مخاطر",
   },
   // ══════════════════════════════════════════════════════════════
   // RUSSIAN
@@ -529,15 +483,6 @@ const translations: Record<string, Record<string, string>> = {
     kycRequired: "Требуется проверка личности", kycRequiredDesc: "Пройдите KYC и внесите $100, чтобы получить 10 AUXS приветственный бонус!",
     kycPending: "KYC на рассмотрении", kycPendingDesc: "Ваша верификация рассматривается",
     kycAction: "Подтвердить",
-    // Demo Mode
-    demoMode: "Демо-режим",
-    demoDescription: "Виртуальный баланс, реальные рыночные цены",
-    demoActivate: "Попробовать Демо",
-    demoBanner: "Демо-режим — Виртуальный баланс, реальные цены. Готовы инвестировать?",
-    demoFundReal: "Перейти на реальный счёт",
-    demoBalance: "Виртуальный Баланс",
-    demoTryWith: "Попробуйте Auxite с виртуальным балансом $10 000",
-    demoNoRisk: "Торгуйте по реальным рыночным ценам — без риска",
   },
 };
 
@@ -575,17 +520,11 @@ export default function VaultPage() {
   const [custodyProvider, setCustodyProvider] = useState<string>('');
   const [realVaultId, setRealVaultId] = useState<string | null>(null);
 
-  // Demo Mode — shared hook
-  const { demoActive, demoBalance, demoChecked, demoLoading, activateDemo, deactivateDemo, executeDemoTrade } = useDemoMode(address);
-  const [exitingDemo, setExitingDemo] = useState(false);
-
   const vaultId = realVaultId || (address ? `AUX-${address.slice(2, 8).toUpperCase()}` : null);
   const protectionLevel = custodyStatus === 'active' ? 85 : 50;
 
-  // Fetch custody vault data — skip in demo mode
+  // Fetch custody vault data
   useEffect(() => {
-    if (demoActive) return;
-
     const fetchCustodyData = async () => {
       try {
         const token = localStorage.getItem("authToken");
@@ -608,20 +547,10 @@ export default function VaultPage() {
     };
 
     fetchCustodyData();
-  }, [demoActive]);
+  }, []);
 
-  // Fetch vault data — skipped when demo mode is active (demo overlay handles balances)
   const fetchVaultData = useCallback(async () => {
     if (!address) {
-      setLoading(false);
-      return;
-    }
-
-    // Wait for demo check to complete before fetching real data
-    if (!demoChecked) return;
-
-    // In demo mode, skip all real API calls — the demo overlay useEffect handles everything
-    if (demoActive) {
       setLoading(false);
       return;
     }
@@ -754,122 +683,13 @@ export default function VaultPage() {
     } finally {
       setLoading(false);
     }
-  }, [address, demoActive, demoChecked]);
+  }, [address]);
 
   useEffect(() => {
     fetchVaultData();
     const interval = setInterval(fetchVaultData, 30000);
     return () => clearInterval(interval);
   }, [fetchVaultData]);
-
-  // Demo mode: override displayed values with demo balance
-  useEffect(() => {
-    if (!demoActive || !demoBalance) return;
-
-    const applyDemoOverlay = async () => {
-      try {
-        // Fetch real prices for display
-        const priceRes = await fetch("/api/prices?chain=84532");
-        const priceData = await priceRes.json().catch(() => ({ success: false, basePrices: {} }));
-        const cryptoRes = await fetch("/api/crypto");
-        const cryptoData = await cryptoRes.json().catch(() => ({}));
-
-        const metalSymbols = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
-        const metalNames: Record<string, string> = {
-          AUXG: "Gold", AUXS: "Silver", AUXPT: "Platinum", AUXPD: "Palladium",
-        };
-
-        let totalValue = 0;
-        let allocatedValue = 0;
-        const holdingsList: MetalHolding[] = [];
-
-        for (const symbol of metalSymbols) {
-          const lowerSymbol = symbol.toLowerCase();
-          const balance = demoBalance[lowerSymbol] || 0;
-          const price = priceData.basePrices?.[symbol] || 0;
-          const value = balance * price;
-
-          holdingsList.push({
-            symbol,
-            name: metalNames[symbol],
-            allocated: balance, // In demo, all metal is "allocated"
-            available: balance,
-            total: balance,
-            price,
-            value,
-            stakedGrams: 0,
-          });
-
-          totalValue += value;
-          allocatedValue += balance * price;
-        }
-
-        // Crypto prices
-        const cPrices: Record<string, number> = { usdt: 1.0 };
-        if (cryptoData.bitcoin?.usd) cPrices.btc = cryptoData.bitcoin.usd;
-        if (cryptoData.ethereum?.usd) cPrices.eth = cryptoData.ethereum.usd;
-        setCryptoPrices(cPrices);
-
-        // Crypto balances from demo
-        const cryptoSymbols = ["usdt", "btc", "eth", "usdc"];
-        const cBalances: Record<string, number> = {};
-        let cryptoTotalValue = 0;
-        for (const sym of cryptoSymbols) {
-          const bal = demoBalance[sym] || 0;
-          cBalances[sym] = bal;
-          cryptoTotalValue += bal * (cPrices[sym] || 0);
-        }
-        setCryptoBalances(cBalances);
-
-        // AUXM Settlement Balance from demo
-        const auxmBalance = demoBalance.auxm || 0;
-        setSettlementBalance(auxmBalance);
-
-        const totalLiquidity = auxmBalance + cryptoTotalValue;
-        setLiquidityValue(totalLiquidity);
-
-        totalValue += cryptoTotalValue + auxmBalance;
-
-        // Fetch demo leases for encumbered assets
-        let encumberedTotal = 0;
-        try {
-          const addr = localStorage.getItem("auxite_wallet_address") || "";
-          if (addr) {
-            const leaseRes = await fetch(`/api/demo/trade?address=${addr}&type=leases`);
-            const leaseData = await leaseRes.json();
-            if (leaseData.leases && Array.isArray(leaseData.leases)) {
-              for (const lease of leaseData.leases) {
-                const leaseSymbol = lease.metal?.toUpperCase() || "";
-                const leasePrice = priceData.basePrices?.[leaseSymbol] || 0;
-                const leaseValue = (lease.amount || 0) * leasePrice;
-                encumberedTotal += leaseValue;
-
-                // Mark staked grams in holdings (already deducted from balance by lease API)
-                const holding = holdingsList.find(h => h.symbol === leaseSymbol);
-                if (holding) {
-                  holding.stakedGrams = (holding.stakedGrams || 0) + (lease.amount || 0);
-                }
-              }
-              // Encumbered value adds to total vault value
-            }
-          }
-        } catch (e) {
-          console.warn("Demo lease fetch error:", e);
-        }
-
-        setHoldings(holdingsList);
-        setTotalVaultValue(totalValue + encumberedTotal);
-        setAllocatedHoldings(allocatedValue);
-        setEncumberedAssetsValue(encumberedTotal);
-        setEncumberedBreakdown({ yieldPrograms: encumberedTotal, pendingDelivery: 0, tradeSettlement: 0 });
-        setLoading(false);
-      } catch (error) {
-        console.warn("Demo overlay error:", error);
-      }
-    };
-
-    applyDemoOverlay();
-  }, [demoActive, demoBalance]);
 
   const formatCurrency = (value: number) => {
     return "$" + value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -884,16 +704,9 @@ export default function VaultPage() {
     ? ((encumberedAssetsValue / totalVaultValue) * 100).toFixed(1)
     : "0.0";
 
-  // Show big demo card when: no demo, no real balance, wallet connected, data loaded
-  const showDemoActivation = !loading && !demoActive && demoChecked && address && totalVaultValue === 0;
-  // Show small demo link when: no demo, has real balance (for users who want to try demo)
-  const showDemoLink = !loading && !demoActive && demoChecked && address && totalVaultValue > 0;
-
   return (
     <div className="min-h-screen bg-stone-100 dark:bg-slate-950">
       <TopNav />
-
-      {/* Demo banner removed - demo state shown inside vault card instead */}
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
         {/* ═══ TRUST BAR ═══ */}
@@ -913,33 +726,6 @@ export default function VaultPage() {
 
         {/* Market Status Banner */}
         <MarketStatusBanner />
-
-        {/* Demo Mode Activation Card */}
-        {showDemoActivation && (
-          <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 rounded-2xl p-6 border border-amber-200 dark:border-amber-800/30">
-            <div className="text-center">
-              <span className="text-4xl mb-3 block">🎮</span>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">{t.demoActivate}</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">{t.demoTryWith}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">{t.demoNoRisk}</p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <button
-                  onClick={activateDemo}
-                  disabled={demoLoading}
-                  className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
-                >
-                  {demoLoading ? "..." : t.demoActivate}
-                </button>
-                <a
-                  href="/fund-vault"
-                  className="px-6 py-3 border border-[#C5A55A] text-[#C5A55A] font-bold rounded-xl hover:bg-[#C5A55A]/10 transition-colors text-center"
-                >
-                  {t.demoFundReal}
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* KYC Warning Banner */}
         {kycStatus !== 'verified' && kycLoaded && (
@@ -981,7 +767,7 @@ export default function VaultPage() {
         {/* Hero Card - Client Assets Under Custody */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-stone-200 dark:border-slate-800">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-2">
-            {demoActive ? t.demoBalance : t.clientAssetsUnderCustody}
+            {t.clientAssetsUnderCustody}
           </p>
           {loading ? (
             <div className="h-12 flex items-center">
@@ -992,7 +778,7 @@ export default function VaultPage() {
               {formatCurrency(totalVaultValue)}
             </p>
           )}
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{demoActive ? t.demoDescription : t.heldWithinBankruptcy}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{t.heldWithinBankruptcy}</p>
 
           {/* Statement Indicator */}
           <div className="flex items-center gap-2 mb-6">
@@ -1025,16 +811,16 @@ export default function VaultPage() {
           </div>
         </div>
 
-        {/* ═══ PRIMARY CTA: FUND VAULT / ALLOCATE (demo) ═══ */}
-        <a href={demoActive ? "/allocate" : "/fund-vault"} className="block">
+        {/* ═══ PRIMARY CTA: FUND VAULT ═══ */}
+        <a href="/fund-vault" className="block">
           <div className="bg-gradient-to-r from-[#C5A55A] to-[#D4AF37] rounded-xl py-4 px-6 text-center hover:opacity-90 transition-opacity shadow-lg shadow-[#C5A55A]/20">
-            <p className="text-lg font-bold text-[#0B0B0D] tracking-wide">{demoActive ? t.allocateMetals : t.fundVault}</p>
-            <p className="text-xs text-[#0B0B0D]/60 mt-1">{demoActive ? "🎮 $10,000 USDT virtual balance ready" : t.noMinDeposit}</p>
+            <p className="text-lg font-bold text-[#0B0B0D] tracking-wide">{t.fundVault}</p>
+            <p className="text-xs text-[#0B0B0D]/60 mt-1">{t.noMinDeposit}</p>
           </div>
         </a>
 
-        {/* ═══ SECONDARY CTA: ALLOCATE METALS / FUND REAL ═══ */}
-        <a href={demoActive ? "/fund-vault" : "/allocate"} className={`block ${!demoActive && totalVaultValue <= 0 ? 'pointer-events-none opacity-40' : ''}`}>
+        {/* ═══ SECONDARY CTA: ALLOCATE METALS ═══ */}
+        <a href="/allocate" className={`block ${totalVaultValue <= 0 ? 'pointer-events-none opacity-40' : ''}`}>
           <div className={`rounded-xl py-3.5 px-6 text-center border ${totalVaultValue > 0 ? 'border-[#C5A55A]/40 hover:bg-[#C5A55A]/5' : 'border-slate-700'} transition-colors`}>
             <p className={`text-sm font-semibold ${totalVaultValue > 0 ? 'text-[#C5A55A]' : 'text-slate-500'}`}>{t.allocateMetals}</p>
             {totalVaultValue <= 0 && <p className="text-[10px] text-slate-600 mt-0.5">{t.fundFirst}</p>}
@@ -1633,19 +1419,6 @@ export default function VaultPage() {
         </Link>
       </div>
 
-      {/* Small Demo Link for users with real balance */}
-      {showDemoLink && (
-        <div className="text-center py-4">
-          <button
-            onClick={activateDemo}
-            disabled={demoLoading}
-            className="text-xs text-slate-400 hover:text-amber-500 transition-colors"
-          >
-            🎮 {t.demoActivate}
-          </button>
-        </div>
-      )}
-
       {/* Sell Modal */}
       {sellModal.metal && (
         <LiquidateModal
@@ -1659,8 +1432,6 @@ export default function VaultPage() {
           }}
           address={address || ""}
           onSuccess={fetchVaultData}
-          demoMode={demoActive}
-          onDemoTrade={executeDemoTrade}
         />
       )}
 
