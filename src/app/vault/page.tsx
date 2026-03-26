@@ -870,12 +870,12 @@ export default function VaultPage() {
               <span className="text-lg">🎮</span>
               <span className="text-sm font-semibold">{t.demoBanner}</span>
             </div>
-            <a
-              href="/fund-vault"
+            <button
+              onClick={async () => { await deactivateDemo(); window.location.reload(); }}
               className="px-4 py-1.5 bg-white text-orange-600 text-xs font-bold rounded-lg hover:bg-white/90 transition-colors"
             >
               {t.demoFundReal}
-            </a>
+            </button>
           </div>
         </div>
       )}
@@ -915,12 +915,12 @@ export default function VaultPage() {
                 >
                   {demoLoading ? "..." : t.demoActivate}
                 </button>
-                <a
-                  href="/fund-vault"
+                <button
+                  onClick={async () => { await deactivateDemo(); window.location.reload(); }}
                   className="px-6 py-3 border border-[#C5A55A] text-[#C5A55A] font-bold rounded-xl hover:bg-[#C5A55A]/10 transition-colors text-center"
                 >
                   {t.demoFundReal}
-                </a>
+                </button>
               </div>
             </div>
           </div>
