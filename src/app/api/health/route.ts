@@ -196,24 +196,35 @@ async function checkDepositScanner(): Promise<CheckResult> {
 async function checkExchangeRoute(): Promise<CheckResult> {
   const start = Date.now();
   try {
-    // Test with a quote calculation (no execution)
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/quote?fromAsset=USDT&toAsset=AUXG&fromAmount=100`, {
+    // Check prices API to verify exchange can calculate
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io";
+    const res = await fetch(`${baseUrl}/api/prices`, {
       signal: AbortSignal.timeout(5000),
       cache: "no-store",
     });
     const latency = Date.now() - start;
 
     if (!res.ok) {
-      // Quote endpoint might not exist, try exchange preview
-      return { status: "warn", latency, error: `Quote returned HTTP ${res.status}` };
+      return { status: "warn", latency, error: `Prices API returned HTTP ${res.status}` };
     }
 
     const data = await res.json();
+    const auxgPrice = data.basePrices?.AUXG || data.executionPrices?.AUXG;
+    if (!auxgPrice || auxgPrice <= 0) {
+      return { status: "fail", latency, error: "No AUXG price available" };
+    }
+
+    // Verify price is in gram range (not ounce)
+    if (auxgPrice > 500) {
+      return { status: "fail", latency, error: `AUXG price $${auxgPrice} appears to be in ounce, not gram` };
+    }
+
     return {
       status: "ok",
       latency,
       canQuote: true,
+      auxgExecPrice: data.executionPrices?.AUXG,
+      source: data.source,
     };
   } catch (error: unknown) {
     return {
@@ -288,37 +299,39 @@ async function checkHtxApi(): Promise<CheckResult> {
 
 async function checkGoldApi(): Promise<CheckResult> {
   const start = Date.now();
-  const apiKey = process.env.GOLDAPI_KEY;
-
-  if (!apiKey) {
-    return { status: "warn", latency: 0, error: "GOLDAPI_KEY not configured" };
-  }
-
   try {
-    const res = await fetch("https://www.goldapi.io/api/XAU/USD", {
-      headers: {
-        "x-access-token": apiKey,
-        "Content-Type": "application/json",
-      },
-      signal: AbortSignal.timeout(5000),
-    });
+    const redis = getRedis();
+    const cached = await redis.get("metal:prices:cache");
+    const stale = await redis.get("metal:prices:stale");
+    const source = cached || stale;
     const latency = Date.now() - start;
 
-    if (!res.ok) {
-      return { status: "fail", latency, error: `HTTP ${res.status}` };
+    if (!source) {
+      return { status: "fail", latency, error: "No cached metal prices in Redis" };
     }
 
-    const data = await res.json();
-    if (!data.price || data.price <= 0) {
-      return { status: "fail", latency, error: "Invalid price data" };
+    const data = typeof source === "string" ? JSON.parse(source) : source;
+    if (!data.gold || data.gold <= 0) {
+      return { status: "fail", latency, error: "Invalid cached gold price" };
     }
 
-    return { status: "ok", latency, goldPriceOz: data.price };
+    const ageMs = data.timestamp ? Date.now() - new Date(data.timestamp).getTime() : 0;
+    const ageMin = Math.round(ageMs / 60000);
+    const isFresh = ageMin < 30;
+
+    return {
+      status: isFresh ? "ok" : "warn",
+      latency,
+      goldPriceOz: data.gold,
+      goldPriceGram: +(data.gold / 31.1035).toFixed(2),
+      cacheAge: `${ageMin} minutes`,
+      source: cached ? "cache" : "stale",
+    };
   } catch (error: unknown) {
     return {
       status: "fail",
       latency: Date.now() - start,
-      error: error instanceof Error ? error.message : "Timeout or network error",
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }
