@@ -570,16 +570,14 @@ export function AllocationWizard({
 
     try {
       // Call allocation API
-      const res = await fetch("/api/trade", {
+      const res = await fetch("/api/exchange", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "buy",
-          fromToken: "AUXM",
-          toToken: selectedAsset.symbol,
+          fromAsset: "AUXM",
+          toAsset: selectedAsset.symbol,
           fromAmount: totalValue,
           address,
-          executeOnChain: true,
         }),
       });
 

@@ -551,7 +551,7 @@ export function MetalTradeModal({
         const auxmAmount = amountNum * displayPrice;
         console.log("🔍 Checking allocation preview - amount:", amountNum, "displayPrice:", displayPrice, "auxm:", auxmAmount, "address:", walletAddress);
         const previewRes = await fetch(
-          `/api/trade?type=buy&fromToken=AUXM&toToken=${metal}&amount=${auxmAmount}&address=${walletAddress}`
+          `/api/exchange?type=buy&fromAsset=AUXM&toAsset=${metal}&amount=${auxmAmount}&address=${walletAddress}`
         );
         const previewData = await previewRes.json();
         console.log("🔍 Preview response:", previewData);
@@ -594,18 +594,15 @@ export function MetalTradeModal({
     try {
       // Quote'tan gelen değerleri kullan
       const tradePayload = {
-        quoteId: quote.id,
-        type: mode, // "buy" veya "sell"
-        fromToken: mode === "buy" ? "AUXM" : metal,
-        toToken: mode === "buy" ? metal : "AUXM",
+        fromAsset: mode === "buy" ? "AUXM" : metal,
+        toAsset: mode === "buy" ? metal : "AUXM",
         fromAmount: mode === "buy" ? quote.totalAUXM : quote.grams,
         address: walletAddress,
-        executeOnChain: true,
       };
-      
-      console.log("🔷 Trade payload:", tradePayload);
-      
-      const tradeRes = await fetch("/api/trade", {
+
+      console.log("🔷 Exchange payload:", tradePayload);
+
+      const tradeRes = await fetch("/api/exchange", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(tradePayload),

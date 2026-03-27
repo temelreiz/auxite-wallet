@@ -289,16 +289,14 @@ export function MetalConvertModal({
         tradeType = "swap";
       }
 
-      const response = await fetch("/api/trade", {
+      const response = await fetch("/api/exchange", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           address,
-          type: tradeType,
-          fromToken: metal,
-          toToken: toAsset,
+          fromAsset: metal,
+          toAsset: toAsset,
           fromAmount: fromAmountNum,
-          price: toAsset === "AUXM" ? metalBidPrice : (metalBidPrice / targetPrice),
         }),
       });
 
