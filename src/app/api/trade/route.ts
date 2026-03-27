@@ -1668,11 +1668,13 @@ export async function POST(request: NextRequest) {
     // ═══════════════════════════════════════════════════════════════════════
     let tradeEmail = email;
     let tradeClientName = holderName;
+    console.log(`📧 Trade email check: body email="${email || 'NONE'}", holderName="${holderName || 'NONE'}"`);
     if (!tradeEmail) {
       try {
         const userInfo = await getUserEmail(normalizedAddress);
         tradeEmail = userInfo.email;
         if (!tradeClientName) tradeClientName = userInfo.name;
+        console.log(`📧 getUserEmail result: email="${tradeEmail || 'NONE'}", name="${tradeClientName || 'NONE'}"`);
       } catch (e) {
         console.warn('Could not retrieve user email for trade confirmation:', e);
       }
