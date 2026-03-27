@@ -126,7 +126,7 @@ function BuyMetalModal({ isOpen, onClose, onSuccess }: BuyMetalModalProps) {
     setIsLoadingPreview(true);
     setError(null);
     try {
-      const url = `/api/exchange?type=buy&fromAsset=${selectedPayment.symbol}&toAsset=${selectedMetal.symbol}&amount=${amount}&address=${address}`;
+      const url = `/api/trade?type=buy&fromToken=${selectedPayment.symbol}&toToken=${selectedMetal.symbol}&amount=${amount}&address=${address}`;
       console.log("🔍 BuyMetalModal fetchPreview URL:", url);
       const res = await fetch(url);
       const data = await res.json();
@@ -198,14 +198,16 @@ function BuyMetalModal({ isOpen, onClose, onSuccess }: BuyMetalModalProps) {
     setIsProcessing(true);
     setError(null);
     try {
-      const payload = {
-        address,
-        fromAsset: selectedPayment.symbol,
-        toAsset: selectedMetal.symbol,
-        fromAmount: parseFloat(amount),
+      const payload = { 
+        address, 
+        type: 'buy', 
+        fromToken: selectedPayment.symbol, 
+        toToken: selectedMetal.symbol, 
+        fromAmount: parseFloat(amount), 
+        executeOnChain: true 
       };
-      console.log('📤 Sending exchange request...', payload);
-      const res = await fetch('/api/exchange', {
+      console.log('📤 Sending trade request...', payload);
+      const res = await fetch('/api/trade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

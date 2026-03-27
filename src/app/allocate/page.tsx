@@ -296,14 +296,16 @@ export default function AllocatePage() {
 
     try {
       {
-        const res = await fetch("/api/exchange", {
+        const res = await fetch("/api/trade", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            fromAsset: selectedSource,
-            toAsset: selectedMetal,
+            type: "buy",
+            fromToken: selectedSource,
+            toToken: selectedMetal,
             fromAmount: isStablecoinSource ? capitalAmount : inputAmount,
             address,
+            executeOnChain: false,
           }),
         });
 

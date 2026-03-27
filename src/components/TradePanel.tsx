@@ -691,7 +691,7 @@ export default function TradePanel({
       try {
         const auxmAmount = amountNum * currentPrice;
         const previewRes = await fetch(
-          `/api/exchange?type=buy&fromAsset=AUXM&toAsset=${metalSymbol}&amount=${auxmAmount}&address=${address}`
+          `/api/trade?type=buy&fromToken=AUXM&toToken=${metalSymbol}&amount=${auxmAmount}&address=${address}`
         );
         const previewData = await previewRes.json();
         
@@ -772,14 +772,16 @@ export default function TradePanel({
             ? amountNum * quote.pricePerGram
             : convertToCurrency(amountNum * quote.pricePerGram, cryptoPrices, selectedCurrency);
 
-          const res = await fetch("/api/exchange", {
+          const res = await fetch("/api/trade", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              fromAsset: selectedCurrency,
-              toAsset: metalSymbol,
+              type: "buy",
+              fromToken: selectedCurrency,
+              toToken: metalSymbol,
               fromAmount,
               address,
+              executeOnChain: true,
             }),
           });
           const data = await res.json();
@@ -793,14 +795,16 @@ export default function TradePanel({
           // Sell mode - use API for custodial wallets
           setIsAuxmTrading(true);
           console.log("🟣 Sell via API", { amountNum, metalSymbol, address });
-          const res = await fetch("/api/exchange", {
+          const res = await fetch("/api/trade", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              fromAsset: metalSymbol,
-              toAsset: "AUXM",
+              type: "sell",
+              fromToken: metalSymbol,
+              toToken: "AUXM",
               fromAmount: amountNum,
               address,
+              executeOnChain: true,
             }),
           });
           const data = await res.json();

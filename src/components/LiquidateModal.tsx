@@ -447,7 +447,7 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
 
     const fetchCryptoPrices = async () => {
       try {
-        const res = await fetch(`/api/exchange?type=sell&fromAsset=${metal.symbol}&toAsset=${settlement}&amount=${parseFloat(grams) || 1}&address=${address}`);
+        const res = await fetch(`/api/trade?type=sell&fromToken=${metal.symbol}&toToken=${settlement}&amount=${parseFloat(grams) || 1}&address=${address}`);
         const data = await res.json();
         if (data.success && data.preview) {
           setCryptoPrices((prev) => ({
@@ -583,12 +583,19 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
       {
         const tradeBody: Record<string, unknown> = {
           address,
-          fromAsset: fromToken,
-          toAsset: toToken,
+          type: "sell",
+          fromToken,
+          toToken,
           fromAmount: gramsNum,
+          executeOnChain: true,
+          quoteId: quote?.id,
         };
 
-        const res = await fetch("/api/exchange", {
+        if (twoFAEnabled && twoFACode) {
+          tradeBody.twoFACode = twoFACode;
+        }
+
+        const res = await fetch("/api/trade", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(tradeBody),
@@ -603,7 +610,7 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
 
         // Success
         setSuccessData({
-          proceeds: data.exchange?.toAmount || data.transaction?.toAmount,
+          proceeds: data.transaction.toAmount,
           settlement: toToken,
         });
         setStep(3);

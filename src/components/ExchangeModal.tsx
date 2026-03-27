@@ -488,15 +488,24 @@ export function ExchangeModal({ isOpen, onClose }: ExchangeModalProps) {
     setShowAllocationWarning(false);
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/exchange', {
+      // API'ye spread bilgilerini de gönder
+      // Determine trade type based on asset categories
+      const tradeType = METALS.includes(toAsset) ? "buy"
+        : METALS.includes(fromAsset) ? "sell"
+        : "swap";
+
+      const response = await fetch('/api/trade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           address,
-          fromAsset,
-          toAsset,
+          type: tradeType,
+          fromToken: fromAsset,
+          toToken: toAsset,
           fromAmount: fromAmountNum,
-          toAmount: toAmount,
+          expectedToAmount: toAmount,
+          executeOnChain: false,
+          slippage: 2,
         }),
       });
       
