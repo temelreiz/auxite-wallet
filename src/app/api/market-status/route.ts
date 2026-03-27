@@ -11,10 +11,10 @@ const redis = new Redis({
 });
 
 const FALLBACK_PRICES: Record<string, number> = {
-  auxg: 162.4,
-  auxs: 2.86,
-  auxpt: 73.3,
-  auxpd: 58.5,
+  auxg: 143.3,
+  auxs: 2.30,
+  auxpt: 62.0,
+  auxpd: 46.0,
 };
 
 export async function GET() {
