@@ -817,16 +817,10 @@ export async function POST(request: NextRequest) {
     const isCustodial = await isCustodialWallet(normalizedAddress);
     console.log(`   Wallet type: ${isCustodial ? 'custodial' : 'external'}`);
 
-    // ETH: Custodial uses Redis, external uses blockchain
+    // ETH: Always use Redis balance
     if (fromTokenLower === "eth") {
-      if (isCustodial) {
-        fromBalance = parseFloat(currentBalance.eth as string || "0");
-        console.log(`   ETH from Redis (custodial): ${fromBalance}`);
-      } else {
-        const blockchainBalance = await getBlockchainBalance(normalizedAddress, fromTokenLower);
-        console.log(`   ETH from Blockchain: ${blockchainBalance}`);
-        fromBalance = blockchainBalance;
-      }
+      fromBalance = parseFloat(currentBalance.eth as string || "0");
+      console.log(`   ETH from Redis: ${fromBalance}`);
     }
 
     // Metals (AUXG, AUXS, AUXPT, AUXPD): Redis + Allocation (consistent with balance endpoint)
@@ -840,16 +834,10 @@ export async function POST(request: NextRequest) {
       console.log(`   Metal ${fromTokenLower} from Redis: ${redisBalance}, Allocation: ${allocBalance}, Total: ${fromBalance}`);
     }
 
-    // USDT: Custodial uses Redis, external uses blockchain
+    // USDT: Always use Redis balance
     if (fromTokenLower === "usdt") {
-      if (isCustodial) {
-        fromBalance = parseFloat(currentBalance.usdt as string || "0");
-        console.log(`   USDT from Redis (custodial): ${fromBalance}`);
-      } else {
-        const blockchainBalance = await getBlockchainBalance(normalizedAddress, fromTokenLower);
-        console.log(`   USDT from Blockchain: ${blockchainBalance}`);
-        fromBalance = blockchainBalance;
-      }
+      fromBalance = parseFloat(currentBalance.usdt as string || "0");
+      console.log(`   USDT from Redis: ${fromBalance}`);
     }
 
     // AUXM: Use Redis balance (off-chain token)
@@ -1482,23 +1470,11 @@ export async function POST(request: NextRequest) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // DEDUCT FROM USER BALANCE
+    // DEDUCT FROM USER BALANCE — Always deduct from Redis
+    // All balances (ETH, metals, crypto) are tracked in Redis
     // ─────────────────────────────────────────────────────────────────────────
-    // For ETH: Custodial wallets use Redis, external wallets use blockchain
-    // For metals and other tokens: Always deduct from Redis
-    if (fromTokenLower === "eth" && type === "buy") {
-      if (isCustodial) {
-        // Custodial wallet: ETH is managed in Redis, always deduct
-        multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
-        console.log(`   Deducting ${fromAmount} ETH from Redis (custodial wallet)`);
-      } else {
-        // External wallet: ETH should be transferred on-chain, skip Redis
-        console.log(`   Skipping Redis deduction for ETH - external wallet uses blockchain`);
-      }
-    } else {
-      multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
-      console.log(`   Deducting ${fromAmount} ${fromTokenLower} from Redis`);
-    }
+    multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
+    console.log(`   Deducting ${fromAmount} ${fromTokenLower} from Redis`);
 
     // ─────────────────────────────────────────────────────────────────────────
     // AUTO ALLOCATION FOR METALS (before Redis update)
@@ -1509,7 +1485,10 @@ export async function POST(request: NextRequest) {
     if (type === "buy" && METALS.includes(toTokenLower) && toAmount > 0) {
       console.log("🔍 Allocation check:", { type, toTokenLower, toAmount });
       try {
-        const allocRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://auxite-wallet.vercel.app"}/api/allocations`, {
+        const allocBaseUrl = request.headers.get('host')
+          ? `https://${request.headers.get('host')}`
+          : process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io";
+        const allocRes = await fetch(`${allocBaseUrl}/api/allocations`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1531,19 +1510,19 @@ export async function POST(request: NextRequest) {
           certificateNumber = allocData.certificateNumber;
           console.log(`📜 Certificate issued: ${certificateNumber}`);
         }
+        if (!allocData.success) {
+          console.error("📦 Allocation API returned error:", JSON.stringify(allocData));
+        }
       } catch (allocErr: any) {
-        console.error("Auto-allocation failed:", allocErr.message);
+        console.error("📦 Auto-allocation failed:", allocErr.message, "URL:", allocBaseUrl);
       }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // ADD TO USER BALANCE
     // ─────────────────────────────────────────────────────────────────────────
-    // For ETH: Don't add to Redis if sent via blockchain
-    const ON_CHAIN_TO_TOKENS = ["eth"];
-    if (ON_CHAIN_TO_TOKENS.includes(toTokenLower) && blockchainResult?.executed && blockchainResult?.ethTransferTxHash) {
-      console.log(`   Skipping Redis credit for ${toTokenLower} - sent via blockchain`);
-    } else if (METALS.includes(toTokenLower) && allocationInfo.allocatedGrams) {
+    // All balances tracked in Redis
+    if (METALS.includes(toTokenLower) && allocationInfo.allocatedGrams) {
       // Metal with allocation: only add nonAllocatedGrams (fractional) to Redis
       const fractionalGrams = allocationInfo.nonAllocatedGrams || 0;
       if (fractionalGrams > 0) {

@@ -261,25 +261,17 @@ async function getHybridBalance(address: string): Promise<{
     btc: parseFloat(String(redisBalance.btc || 0)),
     usd: parseFloat(String(redisBalance.usd || 0)),
 
-    // ETH: Custodial users use Redis balance, external wallets use blockchain
-    eth: isCustodial ? redisEth : (blockchainBalances.eth || 0),
+    // ETH: Always use Redis (all balances are managed in Redis)
+    eth: redisEth,
 
-    // ERC20 tokens: Custodial uses Redis + Allocation, external uses blockchain + Redis + Allocation
-    usdt: isCustodial ? redisUsdt : ((blockchainBalances.usdt || 0) + redisUsdt),
+    // USDT: Redis balance
+    usdt: redisUsdt,
 
     // Metal tokens: Redis (küsurat) + Allocation (tam gram) - Staked
-    auxg: isCustodial
-      ? Math.max(0, redisAuxg + allocAuxg - (stakedAmounts.auxg || 0))
-      : Math.max(0, (blockchainBalances.auxg || 0) + redisAuxg + allocAuxg - (stakedAmounts.auxg || 0)),
-    auxs: isCustodial
-      ? Math.max(0, redisAuxs + allocAuxs - (stakedAmounts.auxs || 0))
-      : Math.max(0, (blockchainBalances.auxs || 0) + redisAuxs + allocAuxs - (stakedAmounts.auxs || 0)),
-    auxpt: isCustodial
-      ? Math.max(0, redisAuxpt + allocAuxpt - (stakedAmounts.auxpt || 0))
-      : Math.max(0, (blockchainBalances.auxpt || 0) + redisAuxpt + allocAuxpt - (stakedAmounts.auxpt || 0)),
-    auxpd: isCustodial
-      ? Math.max(0, redisAuxpd + allocAuxpd - (stakedAmounts.auxpd || 0))
-      : Math.max(0, (blockchainBalances.auxpd || 0) + redisAuxpd + allocAuxpd - (stakedAmounts.auxpd || 0)),
+    auxg: Math.max(0, redisAuxg + allocAuxg - (stakedAmounts.auxg || 0)),
+    auxs: Math.max(0, redisAuxs + allocAuxs - (stakedAmounts.auxs || 0)),
+    auxpt: Math.max(0, redisAuxpt + allocAuxpt - (stakedAmounts.auxpt || 0)),
+    auxpd: Math.max(0, redisAuxpd + allocAuxpd - (stakedAmounts.auxpd || 0)),
   };
 
   // Calculate totalAuxm
@@ -289,16 +281,16 @@ async function getHybridBalance(address: string): Promise<{
   const sources: Record<string, "blockchain" | "redis"> = {
     auxm: "redis",
     bonusAuxm: "redis",
-    eth: isCustodial ? "redis" : "blockchain",
+    eth: "redis",
     btc: "redis",
     xrp: "redis",
     sol: "redis",
     usd: "redis",
-    usdt: isCustodial ? "redis" : "blockchain",
-    auxg: isCustodial ? "redis" : "blockchain",
-    auxs: isCustodial ? "redis" : "blockchain",
-    auxpt: isCustodial ? "redis" : "blockchain",
-    auxpd: isCustodial ? "redis" : "blockchain",
+    usdt: "redis",
+    auxg: "redis",
+    auxs: "redis",
+    auxpt: "redis",
+    auxpd: "redis",
   };
 
   return {
