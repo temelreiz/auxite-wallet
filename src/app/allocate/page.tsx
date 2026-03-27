@@ -243,13 +243,14 @@ export default function AllocatePage() {
       fetch(`/api/user/balance?address=${address}`)
         .then(res => res.json())
         .then(data => {
-          if (data.success && data.balance) {
+          const bal = data.balances || data.balance;
+          if (data.success && bal) {
             setUserBalances({
-              AUXM: parseFloat(data.balance.auxm || 0),
-              USDC: parseFloat(data.balance.usdc || 0),
-              USDT: parseFloat(data.balance.usdt || 0),
-              ETH: parseFloat(data.balance.eth || 0),
-              BTC: parseFloat(data.balance.btc || 0),
+              AUXM: parseFloat(bal.auxm || 0),
+              USDC: parseFloat(bal.usdc || 0),
+              USDT: parseFloat(bal.usdt || 0),
+              ETH: parseFloat(bal.eth || 0),
+              BTC: parseFloat(bal.btc || 0),
             });
           }
         })
