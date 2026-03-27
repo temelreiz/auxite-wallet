@@ -49,10 +49,10 @@ async function getServerPrice(asset: string): Promise<{ ask: number; bid: number
       console.error(`Failed to get ${asset} price:`, e);
       // Fallback prices (should never be used in production)
       const fallbacks: Record<string, { ask: number; bid: number }> = {
-        auxg: { ask: 170, bid: 160 },
-        auxs: { ask: 3.5, bid: 2.9 },
-        auxpt: { ask: 82, bid: 68 },
-        auxpd: { ask: 60, bid: 56 },
+        auxg: { ask: 148, bid: 143 },
+        auxs: { ask: 2.40, bid: 2.20 },
+        auxpt: { ask: 62, bid: 58 },
+        auxpd: { ask: 46, bid: 43 },
       };
       return fallbacks[assetLower] || { ask: 100, bid: 100 };
     }
