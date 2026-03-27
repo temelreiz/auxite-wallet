@@ -817,10 +817,12 @@ export async function POST(request: NextRequest) {
     const isCustodial = await isCustodialWallet(normalizedAddress);
     console.log(`   Wallet type: ${isCustodial ? 'custodial' : 'external'}`);
 
-    // ETH: Always use Redis balance
+    // ETH: Redis + Blockchain (user may have on-chain ETH)
     if (fromTokenLower === "eth") {
-      fromBalance = parseFloat(currentBalance.eth as string || "0");
-      console.log(`   ETH from Redis: ${fromBalance}`);
+      const redisEthBal = parseFloat(currentBalance.eth as string || "0");
+      const blockchainEthBal = await getBlockchainBalance(normalizedAddress, "eth");
+      fromBalance = redisEthBal + blockchainEthBal;
+      console.log(`   ETH from Redis: ${redisEthBal}, Blockchain: ${blockchainEthBal}, Total: ${fromBalance}`);
     }
 
     // Metals (AUXG, AUXS, AUXPT, AUXPD): Redis + Allocation (consistent with balance endpoint)
@@ -834,10 +836,12 @@ export async function POST(request: NextRequest) {
       console.log(`   Metal ${fromTokenLower} from Redis: ${redisBalance}, Allocation: ${allocBalance}, Total: ${fromBalance}`);
     }
 
-    // USDT: Always use Redis balance
+    // USDT: Redis + Blockchain
     if (fromTokenLower === "usdt") {
-      fromBalance = parseFloat(currentBalance.usdt as string || "0");
-      console.log(`   USDT from Redis: ${fromBalance}`);
+      const redisUsdtBal = parseFloat(currentBalance.usdt as string || "0");
+      const blockchainUsdtBal = await getBlockchainBalance(normalizedAddress, "usdt");
+      fromBalance = redisUsdtBal + blockchainUsdtBal;
+      console.log(`   USDT from Redis: ${redisUsdtBal}, Blockchain: ${blockchainUsdtBal}, Total: ${fromBalance}`);
     }
 
     // AUXM: Use Redis balance (off-chain token)

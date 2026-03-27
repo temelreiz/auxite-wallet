@@ -261,11 +261,11 @@ async function getHybridBalance(address: string): Promise<{
     btc: parseFloat(String(redisBalance.btc || 0)),
     usd: parseFloat(String(redisBalance.usd || 0)),
 
-    // ETH: Always use Redis (all balances are managed in Redis)
-    eth: redisEth,
+    // ETH: Redis + Blockchain (user may have on-chain ETH from direct transfers)
+    eth: redisEth + (blockchainBalances.eth || 0),
 
-    // USDT: Redis balance
-    usdt: redisUsdt,
+    // USDT: Redis + Blockchain
+    usdt: redisUsdt + (blockchainBalances.usdt || 0),
 
     // Metal tokens: On-chain (minted) + Redis (küsurat) + Allocation (tam gram) - Staked
     // Metals are minted on-chain via buyMetalToken, so blockchain balance is authoritative
