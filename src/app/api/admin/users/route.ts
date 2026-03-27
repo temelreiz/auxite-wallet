@@ -97,8 +97,9 @@ export async function GET(request: NextRequest) {
       // Get tier info
       const tierInfo = await redis.hgetall(`user:${normalizedAddress}:tier`);
 
-      // Calculate total value (uses live prices from outer scope)
-      const prices = livePrices;
+      // Calculate total value
+      const { getLivePrices: getPrices } = await import('@/lib/live-prices');
+      const prices = await getPrices();
 
       let totalValueUsd = 0;
       if (balance) {
