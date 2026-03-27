@@ -2,6 +2,7 @@
 import { sendCertificateEmail, sendTradeExecutionEmail } from "@/lib/email";
 import { getUserLanguage } from "@/lib/user-language";
 import { formatAmount } from "@/lib/format";
+import { createAllocation } from "@/lib/allocation-service";
 export const maxDuration = 60;
 // V6 BLOCKCHAIN ENTEGRASYONLU - Gerçek token mint/burn işlemleri
 // ✅ AUXITEER TIER BAZLI FEE ENTEGRASYONU
@@ -1484,23 +1485,15 @@ export async function POST(request: NextRequest) {
 
     if (type === "buy" && METALS.includes(toTokenLower) && toAmount > 0) {
       console.log("🔍 Allocation check:", { type, toTokenLower, toAmount });
-      const allocBaseUrl = request.headers.get('host')
-        ? `https://${request.headers.get('host')}`
-        : process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io";
       try {
-        const allocRes = await fetch(`${allocBaseUrl}/api/allocations`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            address: normalizedAddress,
-            metal: toToken.toUpperCase(),
-            grams: toAmount,
-            txHash,
-            email,
-            holderName,
-          }),
+        const allocData = await createAllocation({
+          address: normalizedAddress,
+          metal: toToken.toUpperCase(),
+          grams: toAmount,
+          txHash,
+          email,
+          holderName,
         });
-        const allocData = await allocRes.json();
         if (allocData.success) {
           console.log("📦 Allocation response:", JSON.stringify(allocData));
           allocationInfo = {
@@ -1509,12 +1502,11 @@ export async function POST(request: NextRequest) {
           };
           certificateNumber = allocData.certificateNumber;
           console.log(`📜 Certificate issued: ${certificateNumber}`);
-        }
-        if (!allocData.success) {
-          console.error("📦 Allocation API returned error:", JSON.stringify(allocData));
+        } else {
+          console.error("📦 Allocation returned error:", allocData.error);
         }
       } catch (allocErr: any) {
-        console.error("📦 Auto-allocation failed:", allocErr.message, "URL:", allocBaseUrl);
+        console.error("📦 Auto-allocation failed:", allocErr.message);
       }
     }
 
