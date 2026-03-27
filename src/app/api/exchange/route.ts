@@ -40,22 +40,10 @@ async function getServerPrice(asset: string): Promise<{ ask: number; bid: number
     return { ask: 1, bid: 1 };
   }
 
-  // Metals - get from API/Oracle
+  // Metals - get from API/Oracle (no fallback - fail if price unavailable)
   if (METALS.includes(assetLower)) {
-    try {
-      const prices = await getTokenPrices(asset);
-      return { ask: prices.askPerGram, bid: prices.bidPerGram };
-    } catch (e) {
-      console.error(`Failed to get ${asset} price:`, e);
-      // Fallback prices (should never be used in production)
-      const fallbacks: Record<string, { ask: number; bid: number }> = {
-        auxg: { ask: 148, bid: 143 },
-        auxs: { ask: 2.40, bid: 2.20 },
-        auxpt: { ask: 62, bid: 58 },
-        auxpd: { ask: 46, bid: 43 },
-      };
-      return fallbacks[assetLower] || { ask: 100, bid: 100 };
-    }
+    const prices = await getTokenPrices(asset);
+    return { ask: prices.askPerGram, bid: prices.bidPerGram };
   }
 
   // Cryptos - fetch from HTX (primary) with Binance fallback
