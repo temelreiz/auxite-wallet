@@ -27,7 +27,8 @@ export async function GET(request: NextRequest) {
     // ═══════════════════════════════════════════════════════════════════════
     
     const feeTokens = ["auxm", "eth", "usd", "usdt"];
-    const prices: Record<string, number> = { auxm: 1, usd: 1, usdt: 1, eth: 2900 };
+    const { getLivePrices } = await import('@/lib/live-prices');
+    const prices = await getLivePrices();
     
     let totalFeesUsd = 0;
     let pendingFeesUsd = 0;

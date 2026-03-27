@@ -97,20 +97,9 @@ export async function GET(request: NextRequest) {
     const fees: Record<string, any> = {};
     let totalValueUsd = 0;
 
-    // Approximate USD prices for calculation
-    const prices: Record<string, number> = {
-      auxm: 1,
-      usd: 1,
-      usdt: 1,
-      eth: 2900,
-      btc: 95000,
-      xrp: 2.3,
-      sol: 200,
-      auxg: 95,
-      auxs: 1.1,
-      auxpt: 32,
-      auxpd: 35,
-    };
+    // Get live USD prices
+    const { getLivePrices } = await import('@/lib/live-prices');
+    const prices = await getLivePrices();
 
     for (const t of feeTokens) {
       if (token && t !== token.toLowerCase()) continue;

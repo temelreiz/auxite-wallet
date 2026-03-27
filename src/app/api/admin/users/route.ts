@@ -97,11 +97,8 @@ export async function GET(request: NextRequest) {
       // Get tier info
       const tierInfo = await redis.hgetall(`user:${normalizedAddress}:tier`);
 
-      // Calculate total value
-      const prices: Record<string, number> = {
-        auxm: 1, usd: 1, usdt: 1, eth: 2900, btc: 95000,
-        auxg: 95, auxs: 1.1, auxpt: 32, auxpd: 35,
-      };
+      // Calculate total value (uses live prices from outer scope)
+      const prices = livePrices;
 
       let totalValueUsd = 0;
       if (balance) {
@@ -142,10 +139,9 @@ export async function GET(request: NextRequest) {
     // Build a map of all users: address -> user data
     const userMap = new Map<string, any>();
 
-    const prices: Record<string, number> = {
-      auxm: 1, usd: 1, usdt: 1, eth: 2900, btc: 95000,
-      auxg: 95, auxs: 1.1, auxpt: 32, auxpd: 35,
-    };
+    const { getLivePrices } = await import('@/lib/live-prices');
+    const livePrices = await getLivePrices();
+    const prices = livePrices;
 
     // Process registered users (auth:user:{email})
     for (const authKey of authKeys) {

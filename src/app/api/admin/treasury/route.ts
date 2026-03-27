@@ -58,7 +58,8 @@ async function getAuxmFloatData() {
 
 async function getOperatingCapital() {
   const feeTokens = ['auxm', 'usd', 'usdt', 'eth', 'btc'];
-  const prices: Record<string, number> = { auxm: 1, usd: 1, usdt: 1, eth: 2900, btc: 85000 };
+  const { getLivePrices } = await import('@/lib/live-prices');
+  const prices = await getLivePrices();
 
   let totalOperatingUsd = 0;
   const breakdown: Record<string, { amount: number; pending: number; transferred: number; valueUsd: number }> = {};
