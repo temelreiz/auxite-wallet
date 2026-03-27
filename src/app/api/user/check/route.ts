@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'address required' }, { status: 400 });
     }
 
-    const uid = await redis.get(`user:address:${address.toLowerCase()}:uid`);
+    const uid = await redis.get(`user:address:${address.toLowerCase()}`);
     
     return NextResponse.json({
       success: true,

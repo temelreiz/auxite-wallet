@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Kullanıcı UID'sini bul
-    const userUid = await redis.get(`user:address:${address.toLowerCase()}:uid`) as string;
+    const userUid = await redis.get(`user:address:${address.toLowerCase()}`) as string;
     if (!userUid) {
       return NextResponse.json({ success: true, certificates: [] });
     }
