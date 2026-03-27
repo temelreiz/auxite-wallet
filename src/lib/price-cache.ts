@@ -23,8 +23,14 @@ export async function getMetalPrices(): Promise<CachedPrices> {
   
   if (cached) {
     const data = typeof cached === 'string' ? JSON.parse(cached) : cached;
-    console.log(`📦 Using cached prices (${((Date.now() - data.timestamp) / 1000).toFixed(0)}s old)`);
-    return data;
+    // Safety: reject cache if it has ounce prices (gold > 500 $/g is impossible)
+    if (data.gold > 500) {
+      console.warn('🚨 Cache has ounce prices, discarding');
+      await redis.del('metal:prices:cache');
+    } else {
+      console.log(`📦 Using cached prices (${((Date.now() - data.timestamp) / 1000).toFixed(0)}s old)`);
+      return data;
+    }
   }
 
   // Fetch fresh prices
@@ -88,17 +94,29 @@ async function getFallbackPrices(): Promise<CachedPrices> {
   const stale = await redis.get('metal:prices:stale');
   if (stale) {
     const data = typeof stale === 'string' ? JSON.parse(stale) : stale;
+
+    // Safety: if stale data has ounce prices (gold > 500), convert to grams
+    if (data.gold > 500) {
+      console.warn('🚨 Stale cache has ounce prices, converting to grams');
+      data.gold = data.gold / TROY_OUNCE_TO_GRAMS;
+      data.silver = data.silver / TROY_OUNCE_TO_GRAMS;
+      data.platinum = data.platinum / TROY_OUNCE_TO_GRAMS;
+      data.palladium = data.palladium / TROY_OUNCE_TO_GRAMS;
+      // Fix the stale cache so this doesn't happen again
+      await redis.set('metal:prices:stale', JSON.stringify({ ...data, timestamp: Date.now() }));
+    }
+
     console.log('📦 Using stale fallback prices');
     return { ...data, timestamp: Date.now() };
   }
 
-  // Last resort - hardcoded
+  // Last resort - hardcoded (per gram)
   console.warn('⚠️ Using hardcoded fallback prices');
   return {
-    gold: 135.80,
-    silver: 1.88,
-    platinum: 53.25,
-    palladium: 47.29,
+    gold: 145.00,
+    silver: 2.26,
+    platinum: 60.00,
+    palladium: 45.00,
     timestamp: Date.now(),
   };
 }
