@@ -76,6 +76,10 @@ interface UserDetailData {
     info: Record<string, any>;
     balance: Record<string, any>;
     totalValueUsd: number;
+    liquidityUsd?: number;
+    allocatedUsd?: number;
+    yieldUsd?: number;
+    allocatedGrams?: Record<string, number>;
     tier: { id: string; name: string };
     transactionCount: number;
     allocationCount: number;
