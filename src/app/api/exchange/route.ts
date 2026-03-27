@@ -668,6 +668,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Push notification (non-blocking)
+    const { notifyTransactionRich } = await import('@/lib/notification-sender');
+    notifyTransactionRich(normalizedAddress, {
+      type: isBuyingMetal ? 'buy' : isSellingMetal ? 'sell' : 'swap',
+      fromToken: fromAsset.toUpperCase(),
+      toToken: toAsset.toUpperCase(),
+      amount: toAmount,
+      token: toAsset.toUpperCase(),
+      certificateNumber: allocationInfo.certificateNumber,
+      channel: 'trades',
+    }).catch(err => console.error('[Push] exchange notification error:', err));
+
     return NextResponse.json({
       success: true,
       exchange: {

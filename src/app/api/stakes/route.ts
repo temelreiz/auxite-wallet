@@ -237,6 +237,14 @@ export async function POST(request: NextRequest) {
       console.warn(`⚠️ No email found for ${address} — staking agreement email skipped`);
     }
 
+    // Push notification (non-blocking)
+    const { notifyTransactionRich } = await import('@/lib/notification-sender');
+    notifyTransactionRich(address.toLowerCase(), {
+      type: 'stake', amount: amountNum, token: metal.toUpperCase(),
+      apy: String(apyPercent), duration: `${durationMonths || Math.round(lockDays / 30)}m`,
+      channel: 'default',
+    }).catch(err => console.error('[Push] stake notification error:', err));
+
     return NextResponse.json({
       success: true,
       stake: newStake,

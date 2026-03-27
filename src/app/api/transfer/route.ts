@@ -8,6 +8,7 @@ import { getUserIdFromAddress, sendETH, sendERC20 } from "@/lib/kms-wallet";
 import { sendTransferSentEmail, sendTransferReceivedEmail } from "@/lib/email-service";
 import { getUserLanguage } from "@/lib/user-language";
 import { checkTransferAllowed } from "@/lib/bonus-guard";
+import { notifyTransactionRich } from "@/lib/notification-sender";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -163,6 +164,15 @@ async function getUserEmail(address: string): Promise<{ email?: string; name?: s
 }
 
 // Helper: Send transfer emails (non-blocking)
+function sendTransferPush(fromAddress: string, toAddress: string, amount: number, token: string) {
+  notifyTransactionRich(fromAddress, {
+    type: 'transfer', amount, token, toAddress, channel: 'default',
+  }).catch(err => console.error('[Push] transfer-sent error:', err));
+  notifyTransactionRich(toAddress, {
+    type: 'receive', amount, token, fromAddress, channel: 'default',
+  }).catch(err => console.error('[Push] transfer-received error:', err));
+}
+
 async function sendTransferEmails(fromAddress: string, toAddress: string, amount: number, token: string) {
   try {
     const [sender, receiver, senderLang, receiverLang] = await Promise.all([
@@ -440,6 +450,7 @@ export async function POST(request: NextRequest) {
 
         // Send email notifications (non-blocking)
         sendTransferEmails(normalizedFrom, normalizedTo, amount, "ETH");
+        sendTransferPush(normalizedFrom, normalizedTo, amount, "ETH");
 
         // Get updated balance
         const updatedFromBalance = await redis.hgetall(fromBalanceKey);
@@ -494,6 +505,7 @@ export async function POST(request: NextRequest) {
 
         // Send email notifications (non-blocking)
         sendTransferEmails(normalizedFrom, normalizedTo, amount, "ETH");
+        sendTransferPush(normalizedFrom, normalizedTo, amount, "ETH");
 
         return NextResponse.json({
           success: true,
@@ -601,6 +613,7 @@ export async function POST(request: NextRequest) {
 
       // Send email notifications (non-blocking)
       sendTransferEmails(normalizedFrom, normalizedTo, amount, tokenUpper);
+      sendTransferPush(normalizedFrom, normalizedTo, amount, tokenUpper);
 
       return NextResponse.json({
         success: true,
@@ -682,6 +695,7 @@ export async function POST(request: NextRequest) {
 
       // Send email notifications (non-blocking)
       sendTransferEmails(normalizedFrom, normalizedTo, amount, tokenUpper);
+      sendTransferPush(normalizedFrom, normalizedTo, amount, tokenUpper);
 
       return NextResponse.json({
         success: true,

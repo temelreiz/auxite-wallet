@@ -3,6 +3,7 @@ import { sendCertificateEmail, sendTradeExecutionEmail } from "@/lib/email";
 import { getUserLanguage } from "@/lib/user-language";
 import { formatAmount } from "@/lib/format";
 import { createAllocation } from "@/lib/allocation-service";
+import { notifyTransactionRich } from "@/lib/notification-sender";
 export const maxDuration = 60;
 // V6 BLOCKCHAIN ENTEGRASYONLU - Gerçek token mint/burn işlemleri
 // ✅ AUXITEER TIER BAZLI FEE ENTEGRASYONU
@@ -1702,6 +1703,18 @@ export async function POST(request: NextRequest) {
     } else {
       console.warn(`⚠️ No email found for ${normalizedAddress} — trade execution email skipped`);
     }
+
+    // Push notification (non-blocking)
+    notifyTransactionRich(normalizedAddress, {
+      type: type === 'buy' ? 'buy' : 'sell',
+      fromToken: fromToken.toUpperCase(),
+      toToken: toToken.toUpperCase(),
+      amount: parseFloat(toAmount.toFixed(4)),
+      token: METALS.includes(toTokenLower) ? toToken.toUpperCase() : fromToken.toUpperCase(),
+      certificateNumber,
+      txHash,
+      channel: 'trades',
+    }).catch(err => console.error('[Push] trade notification error:', err));
 
     return NextResponse.json({
       success: true,

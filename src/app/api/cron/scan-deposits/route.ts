@@ -181,6 +181,15 @@ async function processDeposit(
     { ex: 86400 * 365 }
   );
 
+  // Push notification (non-blocking)
+  try {
+    const { notifyTransactionRich } = await import('@/lib/notification-sender');
+    notifyTransactionRich(userId, {
+      type: 'deposit', amount: deposit.amount, token: deposit.coin.toUpperCase(),
+      txHash: deposit.txHash, channel: 'default',
+    }).catch(err => console.error('[Push] deposit notification error:', err));
+  } catch {}
+
   return { status: "credited", auxmAmount, bonusAmount };
 }
 

@@ -433,6 +433,154 @@ export async function notifyPriceAlert(
  * Note: Security alerts use fallback to 'en' if language unavailable.
  * Per institutional standard: security > localization for alerts.
  */
+// ─── Rich Transaction Notifications ─────────────────────────────────────────
+
+const richTitles: Record<string, Record<LangCode, string>> = {
+  buy: { en: '🪙 Purchase Confirmed', tr: '🪙 Alım Onaylandı', de: '🪙 Kauf bestätigt', fr: '🪙 Achat confirmé', ar: '🪙 تم تأكيد الشراء', ru: '🪙 Покупка подтверждена' },
+  sell: { en: '💰 Sale Confirmed', tr: '💰 Satış Onaylandı', de: '💰 Verkauf bestätigt', fr: '💰 Vente confirmée', ar: '💰 تم تأكيد البيع', ru: '💰 Продажа подтверждена' },
+  swap: { en: '🔄 Exchange Complete', tr: '🔄 Takas Tamamlandı', de: '🔄 Tausch abgeschlossen', fr: '🔄 Échange terminé', ar: '🔄 اكتمل التبادل', ru: '🔄 Обмен завершён' },
+  deposit: { en: '✅ Deposit Confirmed', tr: '✅ Yatırım Onaylandı', de: '✅ Einzahlung bestätigt', fr: '✅ Dépôt confirmé', ar: '✅ تم تأكيد الإيداع', ru: '✅ Депозит подтверждён' },
+  withdrawal: { en: '💸 Withdrawal Initiated', tr: '💸 Çekim Başlatıldı', de: '💸 Auszahlung eingeleitet', fr: '💸 Retrait initié', ar: '💸 تم بدء السحب', ru: '💸 Вывод инициирован' },
+  transfer: { en: '📤 Transfer Sent', tr: '📤 Transfer Gönderildi', de: '📤 Überweisung gesendet', fr: '📤 Transfert envoyé', ar: '📤 تم إرسال التحويل', ru: '📤 Перевод отправлен' },
+  receive: { en: '📥 Funds Received', tr: '📥 Ödeme Alındı', de: '📥 Geld erhalten', fr: '📥 Fonds reçus', ar: '📥 تم استلام الأموال', ru: '📥 Средства получены' },
+  stake: { en: '📊 Staking Active', tr: '📊 Getiri Aktif', de: '📊 Staking aktiv', fr: '📊 Staking actif', ar: '📊 التخزين نشط', ru: '📊 Стейкинг активен' },
+  metal_conversion: { en: '🔄 Conversion Complete', tr: '🔄 Dönüşüm Tamamlandı', de: '🔄 Umwandlung abgeschlossen', fr: '🔄 Conversion terminée', ar: '🔄 اكتملت عملية التحويل', ru: '🔄 Конвертация завершена' },
+};
+
+function truncateAddress(addr: string): string {
+  if (!addr || addr.length < 12) return addr || '';
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
+
+function buildRichBody(
+  type: string,
+  lang: LangCode,
+  data: { amount: number; token: string; fromToken?: string; toToken?: string; toAddress?: string; fromAddress?: string; certificateNumber?: string; apy?: string; duration?: string }
+): string {
+  const { amount, token, fromToken, toToken, toAddress, fromAddress, certificateNumber, apy, duration } = data;
+  const amt = amount < 0.01 ? amount.toFixed(6) : amount < 1 ? amount.toFixed(4) : amount.toFixed(2);
+  const cert = certificateNumber ? ` (${certificateNumber})` : '';
+
+  const bodies: Record<string, Record<LangCode, string>> = {
+    buy: {
+      en: `${amt}g ${token} purchased with ${fromToken}${cert}`,
+      tr: `${fromToken} ile ${amt}g ${token} satın alındı${cert}`,
+      de: `${amt}g ${token} mit ${fromToken} gekauft${cert}`,
+      fr: `${amt}g ${token} acheté avec ${fromToken}${cert}`,
+      ar: `تم شراء ${amt}غ ${token} بـ ${fromToken}${cert}`,
+      ru: `Куплено ${amt}г ${token} за ${fromToken}${cert}`,
+    },
+    sell: {
+      en: `Sold ${amt}g ${fromToken} for ${toToken}`,
+      tr: `${amt}g ${fromToken} satıldı, ${toToken} alındı`,
+      de: `${amt}g ${fromToken} für ${toToken} verkauft`,
+      fr: `${amt}g ${fromToken} vendu pour ${toToken}`,
+      ar: `تم بيع ${amt}غ ${fromToken} مقابل ${toToken}`,
+      ru: `Продано ${amt}г ${fromToken} за ${toToken}`,
+    },
+    swap: {
+      en: `Swapped ${fromToken} for ${amt}g ${toToken}${cert}`,
+      tr: `${fromToken} ile ${amt}g ${toToken} takas edildi${cert}`,
+      de: `${fromToken} gegen ${amt}g ${toToken} getauscht${cert}`,
+      fr: `${fromToken} échangé contre ${amt}g ${toToken}${cert}`,
+      ar: `تم تبادل ${fromToken} بـ ${amt}غ ${toToken}${cert}`,
+      ru: `Обмен ${fromToken} на ${amt}г ${toToken}${cert}`,
+    },
+    deposit: {
+      en: `${amt} ${token} deposit confirmed`,
+      tr: `${amt} ${token} yatırımı onaylandı`,
+      de: `${amt} ${token} Einzahlung bestätigt`,
+      fr: `Dépôt de ${amt} ${token} confirmé`,
+      ar: `تم تأكيد إيداع ${amt} ${token}`,
+      ru: `Депозит ${amt} ${token} подтверждён`,
+    },
+    withdrawal: {
+      en: `Withdrawal of ${amt} ${token} initiated${toAddress ? ` to ${truncateAddress(toAddress)}` : ''}`,
+      tr: `${amt} ${token} çekim başlatıldı${toAddress ? ` → ${truncateAddress(toAddress)}` : ''}`,
+      de: `Auszahlung von ${amt} ${token} eingeleitet${toAddress ? ` an ${truncateAddress(toAddress)}` : ''}`,
+      fr: `Retrait de ${amt} ${token} initié${toAddress ? ` vers ${truncateAddress(toAddress)}` : ''}`,
+      ar: `تم بدء سحب ${amt} ${token}${toAddress ? ` إلى ${truncateAddress(toAddress)}` : ''}`,
+      ru: `Вывод ${amt} ${token} инициирован${toAddress ? ` на ${truncateAddress(toAddress)}` : ''}`,
+    },
+    transfer: {
+      en: `Sent ${amt} ${token} to ${truncateAddress(toAddress || '')}`,
+      tr: `${amt} ${token} gönderildi → ${truncateAddress(toAddress || '')}`,
+      de: `${amt} ${token} an ${truncateAddress(toAddress || '')} gesendet`,
+      fr: `${amt} ${token} envoyé à ${truncateAddress(toAddress || '')}`,
+      ar: `تم إرسال ${amt} ${token} إلى ${truncateAddress(toAddress || '')}`,
+      ru: `Отправлено ${amt} ${token} на ${truncateAddress(toAddress || '')}`,
+    },
+    receive: {
+      en: `Received ${amt} ${token} from ${truncateAddress(fromAddress || '')}`,
+      tr: `${amt} ${token} alındı ← ${truncateAddress(fromAddress || '')}`,
+      de: `${amt} ${token} von ${truncateAddress(fromAddress || '')} erhalten`,
+      fr: `${amt} ${token} reçu de ${truncateAddress(fromAddress || '')}`,
+      ar: `تم استلام ${amt} ${token} من ${truncateAddress(fromAddress || '')}`,
+      ru: `Получено ${amt} ${token} от ${truncateAddress(fromAddress || '')}`,
+    },
+    stake: {
+      en: `Staked ${amt}g ${token}${apy ? ` at ${apy}% APY` : ''}${duration ? ` for ${duration}` : ''}`,
+      tr: `${amt}g ${token} stake edildi${apy ? ` %${apy} APY` : ''}${duration ? ` ${duration}` : ''}`,
+      de: `${amt}g ${token} gestaked${apy ? ` mit ${apy}% APY` : ''}${duration ? ` für ${duration}` : ''}`,
+      fr: `${amt}g ${token} staké${apy ? ` à ${apy}% APY` : ''}${duration ? ` pour ${duration}` : ''}`,
+      ar: `تم تخزين ${amt}غ ${token}${apy ? ` بنسبة ${apy}% APY` : ''}${duration ? ` لمدة ${duration}` : ''}`,
+      ru: `Стейкинг ${amt}г ${token}${apy ? ` под ${apy}% APY` : ''}${duration ? ` на ${duration}` : ''}`,
+    },
+    metal_conversion: {
+      en: `Converted ${fromToken} to ${amt}g ${toToken}${cert}`,
+      tr: `${fromToken} → ${amt}g ${toToken} dönüştürüldü${cert}`,
+      de: `${fromToken} in ${amt}g ${toToken} umgewandelt${cert}`,
+      fr: `${fromToken} converti en ${amt}g ${toToken}${cert}`,
+      ar: `تم تحويل ${fromToken} إلى ${amt}غ ${toToken}${cert}`,
+      ru: `Конвертация ${fromToken} в ${amt}г ${toToken}${cert}`,
+    },
+  };
+
+  return bodies[type]?.[lang] || bodies[type]?.en || `${amt} ${token}`;
+}
+
+/**
+ * Rich transaction push notification — multilingual, detailed body, non-blocking
+ */
+export async function notifyTransactionRich(
+  walletAddress: string,
+  data: {
+    type: 'buy' | 'sell' | 'swap' | 'deposit' | 'withdrawal' | 'transfer' | 'receive' | 'metal_conversion' | 'stake';
+    amount: number;
+    token: string;
+    fromToken?: string;
+    toToken?: string;
+    toAddress?: string;
+    fromAddress?: string;
+    certificateNumber?: string;
+    apy?: string;
+    duration?: string;
+    txHash?: string;
+    channel?: 'trades' | 'default' | 'security';
+  }
+): Promise<void> {
+  const lang = getLang(await getUserLanguage(walletAddress));
+  const title = richTitles[data.type]?.[lang] || richTitles[data.type]?.en || transactionFallbackTitle[lang];
+  const body = buildRichBody(data.type, lang, data);
+  const channelId = data.channel || (
+    ['buy', 'sell', 'swap', 'metal_conversion'].includes(data.type) ? 'trades' : 'default'
+  );
+
+  await sendNotification(walletAddress, 'transaction', {
+    title,
+    body,
+    icon: '/icons/icon-192x192.png',
+    tag: `tx-${data.txHash || Date.now()}`,
+    data: {
+      type: 'transaction',
+      txType: data.type,
+      txHash: data.txHash,
+      token: data.token,
+      amount: data.amount,
+    },
+  });
+}
+
 export async function notifySecurityEvent(
   walletAddress: string,
   data: {

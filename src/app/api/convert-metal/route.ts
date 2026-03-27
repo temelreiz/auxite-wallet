@@ -523,6 +523,14 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ CONVERSION COMPLETED: ${amount}g ${fromMetalUpper} → ${outputGrams.toFixed(4)}g ${toMetalUpper}`);
 
+    // Push notification (non-blocking)
+    const { notifyTransactionRich } = await import('@/lib/notification-sender');
+    notifyTransactionRich(normalizedAddress, {
+      type: 'metal_conversion', fromToken: fromMetalUpper, toToken: toMetalUpper,
+      amount: parseFloat(outputGrams.toFixed(4)), token: toMetalUpper,
+      certificateNumber: newCertificate || undefined, channel: 'trades',
+    }).catch(err => console.error('[Push] conversion notification error:', err));
+
     return NextResponse.json({
       success: true,
       conversion: {

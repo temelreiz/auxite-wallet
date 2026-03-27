@@ -406,6 +406,13 @@ export async function POST(request: NextRequest) {
 
       const updatedBalance = await redis.hgetall(balanceKey);
 
+      // Push notification (non-blocking)
+      const { notifyTransactionRich } = await import('@/lib/notification-sender');
+      notifyTransactionRich(normalizedAddress, {
+        type: 'withdrawal', amount: netAmount, token: coin.toUpperCase(),
+        toAddress: withdrawAddress, txHash: withdrawResult.txHash, channel: 'default',
+      }).catch(err => console.error('[Push] withdraw notification error:', err));
+
       return NextResponse.json({
         success: true,
         withdrawal: {
