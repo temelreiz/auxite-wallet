@@ -30,9 +30,9 @@ const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
 };
 
 // Which tokens are on-chain vs off-chain
-// Metal tokens are on Base Mainnet, USDT is off-chain (no official USDT on Base)
-const ON_CHAIN_TOKENS = ["auxg", "auxs", "auxpt", "auxpd"];
-const OFF_CHAIN_TOKENS = ["auxm", "bonusauxm", "btc", "xrp", "sol", "usdt"];
+// Metal tokens + USDT on Base Mainnet, ETH on Mainnet
+const ON_CHAIN_TOKENS = ["auxg", "auxs", "auxpt", "auxpd", "usdt"];
+const OFF_CHAIN_TOKENS = ["auxm", "bonusauxm", "btc", "xrp", "sol"];
 
 // ERC20 ABI (minimal)
 const ERC20_ABI = [
