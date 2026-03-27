@@ -1484,10 +1484,10 @@ export async function POST(request: NextRequest) {
 
     if (type === "buy" && METALS.includes(toTokenLower) && toAmount > 0) {
       console.log("🔍 Allocation check:", { type, toTokenLower, toAmount });
+      const allocBaseUrl = request.headers.get('host')
+        ? `https://${request.headers.get('host')}`
+        : process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io";
       try {
-        const allocBaseUrl = request.headers.get('host')
-          ? `https://${request.headers.get('host')}`
-          : process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io";
         const allocRes = await fetch(`${allocBaseUrl}/api/allocations`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
