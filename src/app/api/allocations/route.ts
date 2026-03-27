@@ -2,7 +2,8 @@
 // Kullanıcı Metal Allocation API - Bar Size Based Allocation
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
-import { createAllocation } from '@/lib/allocation-service';
+import { createHash } from 'crypto';
+import { createAllocation, generateUID, METAL_NAMES, anchorCertificateBackground } from '@/lib/allocation-service';
 
 export const dynamic = 'force-dynamic';
 

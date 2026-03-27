@@ -6,7 +6,7 @@ import { sendCertificateEmail } from '@/lib/email';
 import { getUserLanguage } from '@/lib/user-language';
 
 // 12 haneli alfanümerik UID oluştur
-function generateUID(): string {
+export function generateUID(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let uid = '';
   for (let i = 0; i < 12; i++) {
@@ -22,7 +22,7 @@ const VAULT_NAMES: Record<string, string> = {
   LN: 'London',
 };
 
-const METAL_NAMES: Record<string, string> = {
+export const METAL_NAMES: Record<string, string> = {
   AUXG: "Gold",
   AUXS: "Silver",
   AUXPT: "Platinum",
@@ -58,7 +58,7 @@ function splitIntoBarSizes(grams: number, metal: string): number[] {
 }
 
 // Arka planda certificate anchor (non-blocking)
-async function anchorCertificateBackground(certNumber: string, certHash: string) {
+export async function anchorCertificateBackground(certNumber: string, certHash: string) {
   try {
     const { anchorCertificate } = await import("@/lib/blockchain");
     console.log(`⛓️ Anchoring certificate ${certNumber}...`);
