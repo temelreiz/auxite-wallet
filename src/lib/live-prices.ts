@@ -37,14 +37,18 @@ export async function getLivePrices(): Promise<LivePrices> {
       if (item.symbol === 'BTCUSDT') prices.btc = parseFloat(item.price);
     }
 
-    // Fetch metal prices from cache
+    // Fetch metal prices from cache (per gram)
+    const TROY_OUNCE_TO_GRAMS = 31.1035;
     const metalPrices = await redis.get('metal:prices:cache');
     if (metalPrices) {
       const mp = typeof metalPrices === 'string' ? JSON.parse(metalPrices) : metalPrices;
-      if (mp.gold) prices.auxg = mp.gold;
-      if (mp.silver) prices.auxs = mp.silver;
-      if (mp.platinum) prices.auxpt = mp.platinum;
-      if (mp.palladium) prices.auxpd = mp.palladium;
+      // Safety: if gold > 500, cache has ounce prices — convert to grams
+      const isOunce = mp.gold > 500;
+      const div = isOunce ? TROY_OUNCE_TO_GRAMS : 1;
+      if (mp.gold) prices.auxg = mp.gold / div;
+      if (mp.silver) prices.auxs = mp.silver / div;
+      if (mp.platinum) prices.auxpt = mp.platinum / div;
+      if (mp.palladium) prices.auxpd = mp.palladium / div;
     }
   } catch (e) {
     console.warn('Failed to fetch live prices, using defaults');
