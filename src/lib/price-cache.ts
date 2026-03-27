@@ -37,9 +37,15 @@ export async function getMetalPrices(): Promise<CachedPrices> {
   console.log('🌐 Fetching fresh prices from GoldAPI...');
   const prices = await fetchFromGoldAPI();
   
+  // Safety: never cache ounce prices (gold > $500/g is impossible)
+  if (prices.gold > 500) {
+    console.error('🚨 Refusing to cache ounce prices! gold =', prices.gold);
+    return getFallbackPrices();
+  }
+
   // Cache it
   await redis.setex('metal:prices:cache', CACHE_TTL, JSON.stringify(prices));
-  
+
   // Also save as stale backup
   await redis.set('metal:prices:stale', JSON.stringify(prices));
   
