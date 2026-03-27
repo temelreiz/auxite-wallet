@@ -1368,13 +1368,21 @@ export async function POST(request: NextRequest) {
     // COLLECT PLATFORM FEES
     // ─────────────────────────────────────────────────────────────────────────
     if (fee > 0) {
-      // Determine fee token (usually the fromToken for buys, USD value for sells)
+      // Determine fee token
       let feeToken = fromTokenLower;
       let feeAmount = fee;
-      
-      // For metal sales, fee is in USD value - convert to appropriate token
-      if (METALS.includes(fromTokenLower) && (toTokenLower === "auxm" || CRYPTOS.includes(toTokenLower))) {
-        feeToken = "usd"; // Fee collected in USD equivalent
+
+      // CRYPTO → METAL: fee is calculated in USD (from usdValue), store as USD
+      if (CRYPTOS.includes(fromTokenLower) && METALS.includes(toTokenLower)) {
+        feeToken = "usd"; // Fee was calculated on USD value, not crypto amount
+      }
+      // METAL → AUXM/CRYPTO: fee is in USD value
+      else if (METALS.includes(fromTokenLower) && (toTokenLower === "auxm" || CRYPTOS.includes(toTokenLower))) {
+        feeToken = "usd";
+      }
+      // AUXM → METAL: fee is in AUXM (=USD)
+      else if (fromTokenLower === "auxm") {
+        feeToken = "usd";
       }
       
       // Store fee in platform account
