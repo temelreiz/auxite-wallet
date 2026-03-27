@@ -3139,7 +3139,7 @@ export default function AdminDashboard() {
                           </div>
 
                           {/* Asset Breakdown */}
-                          {(selectedUserDetail.user.allocatedUsd > 0 || selectedUserDetail.user.yieldUsd > 0) && (
+                          {((selectedUserDetail.user.allocatedUsd || 0) > 0 || (selectedUserDetail.user.yieldUsd || 0) > 0) && (
                             <div className="grid grid-cols-3 gap-2 mt-2">
                               <div className="bg-slate-800 rounded-lg p-3 border border-slate-700">
                                 <p className="text-xs text-slate-500">Likidite</p>
