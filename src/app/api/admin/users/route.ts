@@ -102,15 +102,46 @@ export async function GET(request: NextRequest) {
       const prices = await getPrices();
 
       const KNOWN_TOKENS_DETAIL = ['auxm', 'eth', 'btc', 'usdt', 'usdc', 'usd', 'xrp', 'sol', 'auxg', 'auxs', 'auxpt', 'auxpd'];
-      let totalValueUsd = 0;
+      let liquidityUsd = 0;
+      let allocatedUsd = 0;
+      let yieldUsd = 0;
+
       if (balance) {
         for (const token of KNOWN_TOKENS_DETAIL) {
           const val = parseFloat(balance[token] as string || "0");
           if (isNaN(val) || val <= 0) continue;
           const price = prices[token] || 0;
-          totalValueUsd += val * price;
+          liquidityUsd += val * price;
         }
       }
+
+      // Calculate allocated value from allocations
+      const allocatedGrams: Record<string, number> = {};
+      for (const alloc of parsedAlloc) {
+        const metalKey = (alloc.metal || '').toLowerCase();
+        const grams = parseFloat(alloc.grams || alloc.allocatedGrams || '0');
+        if (grams > 0) {
+          allocatedGrams[metalKey] = (allocatedGrams[metalKey] || 0) + grams;
+          allocatedUsd += grams * (prices[metalKey] || 0);
+        }
+      }
+
+      // Calculate staked/yield value
+      try {
+        const stakes = await redis.lrange(`user:${normalizedAddress}:stakes`, 0, -1);
+        for (const s of stakes) {
+          const stake = typeof s === 'string' ? JSON.parse(s) : s;
+          if (stake.status === 'active') {
+            const metalKey = (stake.metal || stake.token || '').toLowerCase();
+            const grams = parseFloat(stake.grams || stake.amount || '0');
+            if (grams > 0 && prices[metalKey]) {
+              yieldUsd += grams * prices[metalKey];
+            }
+          }
+        }
+      } catch {}
+
+      const totalValueUsd = liquidityUsd + allocatedUsd + yieldUsd;
 
       return NextResponse.json({
         success: true,
@@ -119,6 +150,10 @@ export async function GET(request: NextRequest) {
           info: mergedInfo,
           balance: balance || {},
           totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
+          liquidityUsd: parseFloat(liquidityUsd.toFixed(2)),
+          allocatedUsd: parseFloat(allocatedUsd.toFixed(2)),
+          yieldUsd: parseFloat(yieldUsd.toFixed(2)),
+          allocatedGrams,
           tier: tierInfo || { id: "regular", name: "Regular" },
           transactionCount: parsedTx.length,
           allocationCount: parsedAlloc.length,
@@ -167,6 +202,19 @@ export async function GET(request: NextRequest) {
             totalValueUsd += val * price;
           }
         }
+
+        // Add allocation values
+        try {
+          const allocations = await redis.lrange(`user:${walletAddr}:allocations`, 0, -1);
+          for (const a of allocations) {
+            const alloc = typeof a === 'string' ? JSON.parse(a) : a;
+            const metalKey = (alloc.metal || '').toLowerCase();
+            const grams = parseFloat(alloc.grams || alloc.allocatedGrams || '0');
+            if (grams > 0 && prices[metalKey]) {
+              totalValueUsd += grams * prices[metalKey];
+            }
+          }
+        } catch {}
 
         // Also get user:{userId} profile for extra info
         const userId = (userData?.id as string) || null;
@@ -220,15 +268,29 @@ export async function GET(request: NextRequest) {
       const balance = await redis.hgetall(key);
       const userInfo = await redis.hgetall(`user:${addr}:info`);
 
+      const KNOWN_TOKENS2 = ['auxm', 'eth', 'btc', 'usdt', 'usdc', 'usd', 'xrp', 'sol', 'auxg', 'auxs', 'auxpt', 'auxpd'];
       let totalValueUsd = 0;
       if (balance) {
-        for (const [token, amount] of Object.entries(balance)) {
-          const val = parseFloat(amount as string || "0");
-          if (isNaN(val)) continue; // Skip NaN values
-          const price = prices[token.toLowerCase()] || 0;
+        for (const token of KNOWN_TOKENS2) {
+          const val = parseFloat(balance[token] as string || "0");
+          if (isNaN(val) || val <= 0) continue;
+          const price = prices[token] || 0;
           totalValueUsd += val * price;
         }
       }
+
+      // Add allocation values
+      try {
+        const allocations2 = await redis.lrange(`user:${addr}:allocations`, 0, -1);
+        for (const a of allocations2) {
+          const alloc = typeof a === 'string' ? JSON.parse(a) : a;
+          const metalKey = (alloc.metal || '').toLowerCase();
+          const grams = parseFloat(alloc.grams || alloc.allocatedGrams || '0');
+          if (grams > 0 && prices[metalKey]) {
+            totalValueUsd += grams * prices[metalKey];
+          }
+        }
+      } catch {}
 
       // Get KYC status
       const kycData2 = await redis.get(`kyc:${addr}`);
