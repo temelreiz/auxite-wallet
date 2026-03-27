@@ -267,11 +267,12 @@ async function getHybridBalance(address: string): Promise<{
     // USDT: Redis balance
     usdt: redisUsdt,
 
-    // Metal tokens: Redis (küsurat) + Allocation (tam gram) - Staked
-    auxg: Math.max(0, redisAuxg + allocAuxg - (stakedAmounts.auxg || 0)),
-    auxs: Math.max(0, redisAuxs + allocAuxs - (stakedAmounts.auxs || 0)),
-    auxpt: Math.max(0, redisAuxpt + allocAuxpt - (stakedAmounts.auxpt || 0)),
-    auxpd: Math.max(0, redisAuxpd + allocAuxpd - (stakedAmounts.auxpd || 0)),
+    // Metal tokens: On-chain (minted) + Redis (küsurat) + Allocation (tam gram) - Staked
+    // Metals are minted on-chain via buyMetalToken, so blockchain balance is authoritative
+    auxg: Math.max(0, (blockchainBalances.auxg || 0) + redisAuxg + allocAuxg - (stakedAmounts.auxg || 0)),
+    auxs: Math.max(0, (blockchainBalances.auxs || 0) + redisAuxs + allocAuxs - (stakedAmounts.auxs || 0)),
+    auxpt: Math.max(0, (blockchainBalances.auxpt || 0) + redisAuxpt + allocAuxpt - (stakedAmounts.auxpt || 0)),
+    auxpd: Math.max(0, (blockchainBalances.auxpd || 0) + redisAuxpd + allocAuxpd - (stakedAmounts.auxpd || 0)),
   };
 
   // Calculate totalAuxm
