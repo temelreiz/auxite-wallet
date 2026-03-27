@@ -303,10 +303,8 @@ export default function AllocatePage() {
             fromToken: selectedSource,
             toToken: selectedMetal,
             fromAmount: capitalAmount,
-            expectedToAmount: estimatedGrams,
             address,
             executeOnChain: false,
-            slippage: 2,
           }),
         });
 
