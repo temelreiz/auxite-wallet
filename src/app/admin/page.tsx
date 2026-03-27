@@ -3126,13 +3126,38 @@ export default function AdminDashboard() {
                             </div>
                             <div className="bg-slate-800 rounded-lg p-3">
                               <p className="text-xs text-slate-500">Toplam USD</p>
-                              <p className="text-sm text-green-400 font-semibold">${selectedUserDetail.user.totalValueUsd.toFixed(2)}</p>
+                              <p className="text-sm text-green-400 font-semibold">${selectedUserDetail.user.totalValueUsd?.toFixed(2) || "0.00"}</p>
                             </div>
                             <div className="bg-slate-800 rounded-lg p-3">
                               <p className="text-xs text-slate-500">Giriş Yöntemi</p>
                               <p className="text-sm text-white capitalize">{selectedUserDetail.user.info?.authProvider || "—"}</p>
                             </div>
                           </div>
+
+                          {/* Asset Breakdown */}
+                          {(selectedUserDetail.user.allocatedUsd > 0 || selectedUserDetail.user.yieldUsd > 0) && (
+                            <div className="grid grid-cols-3 gap-2 mt-2">
+                              <div className="bg-slate-800 rounded-lg p-3 border border-slate-700">
+                                <p className="text-xs text-slate-500">Likidite</p>
+                                <p className="text-sm text-blue-400 font-semibold">${selectedUserDetail.user.liquidityUsd?.toFixed(2) || "0.00"}</p>
+                              </div>
+                              <div className="bg-slate-800 rounded-lg p-3 border border-orange-900/30">
+                                <p className="text-xs text-slate-500">Tahsis Edilmiş</p>
+                                <p className="text-sm text-orange-400 font-semibold">${selectedUserDetail.user.allocatedUsd?.toFixed(2) || "0.00"}</p>
+                                {selectedUserDetail.user.allocatedGrams && Object.keys(selectedUserDetail.user.allocatedGrams).length > 0 && (
+                                  <p className="text-[10px] text-slate-500 mt-1">
+                                    {Object.entries(selectedUserDetail.user.allocatedGrams).map(([metal, g]: [string, any]) =>
+                                      `${Number(g).toFixed(2)}g ${metal.toUpperCase()}`
+                                    ).join(', ')}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="bg-slate-800 rounded-lg p-3 border border-emerald-900/30">
+                                <p className="text-xs text-slate-500">Getiri (Yield)</p>
+                                <p className="text-sm text-emerald-400 font-semibold">${selectedUserDetail.user.yieldUsd?.toFixed(2) || "0.00"}</p>
+                              </div>
+                            </div>
+                          )}
 
                           {/* Balances */}
                           <div>
