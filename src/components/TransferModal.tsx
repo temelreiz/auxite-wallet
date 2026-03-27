@@ -286,19 +286,9 @@ export function TransferModal({ isOpen, onClose, lang: propLang }: TransferModal
   const isMetal = METAL_TOKENS.includes(selectedToken);
   
   const getAvailableBalance = (token: TokenType): number => {
-    const info = TOKEN_INFO[token];
     const key = token.toLowerCase();
-
-    // First check onChainBalances (from API fetch)
-    const onChainBal = onChainBalances[key] || 0;
-    // Then check balances prop (from useWallet)
-    const walletBal = balances ? parseFloat(String((balances as any)[key] || 0)) : 0;
-
-    // Use whichever has a value
-    const finalBal = onChainBal > 0 ? onChainBal : walletBal;
-
-    console.log(`TransferModal.getAvailableBalance(${token}):`, { onChainBal, walletBal, finalBal });
-    return finalBal;
+    // All balances from Redis (custodial ledger)
+    return balances ? parseFloat(String((balances as any)[key] || 0)) : 0;
   };
 
   const availableBalance = getAvailableBalance(selectedToken);

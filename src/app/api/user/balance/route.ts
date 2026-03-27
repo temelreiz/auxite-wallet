@@ -29,10 +29,10 @@ const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
   auxpd: { address: METAL_TOKENS.AUXPD, decimals: 3 },
 };
 
-// Which tokens are on-chain vs off-chain
-// Metal tokens + USDT on Base Mainnet, ETH on Mainnet
-const ON_CHAIN_TOKENS = ["auxg", "auxs", "auxpt", "auxpd", "usdt"];
-const OFF_CHAIN_TOKENS = ["auxm", "bonusauxm", "btc", "xrp", "sol"];
+// On-chain tokens (for debug/info only — not used in balance calculation)
+// All balances come from Redis. Blockchain data is for admin visibility.
+const ON_CHAIN_TOKENS = ["auxg", "auxs", "auxpt", "auxpd"];
+const OFF_CHAIN_TOKENS = ["auxm", "bonusauxm", "btc", "xrp", "sol", "usdt"];
 
 // ERC20 ABI (minimal)
 const ERC20_ABI = [
@@ -261,18 +261,17 @@ async function getHybridBalance(address: string): Promise<{
     btc: parseFloat(String(redisBalance.btc || 0)),
     usd: parseFloat(String(redisBalance.usd || 0)),
 
-    // ETH: Redis + Blockchain (user may have on-chain ETH from direct transfers)
-    eth: redisEth + (blockchainBalances.eth || 0),
+    // ETH: Redis only (deposits go to platform address, scanner credits Redis)
+    eth: redisEth,
 
-    // USDT: Redis + Blockchain
-    usdt: redisUsdt + (blockchainBalances.usdt || 0),
+    // USDT: Redis only
+    usdt: redisUsdt,
 
-    // Metal tokens: On-chain (minted) + Redis (küsurat) + Allocation (tam gram) - Staked
-    // Metals are minted on-chain via buyMetalToken, so blockchain balance is authoritative
-    auxg: Math.max(0, (blockchainBalances.auxg || 0) + redisAuxg + allocAuxg - (stakedAmounts.auxg || 0)),
-    auxs: Math.max(0, (blockchainBalances.auxs || 0) + redisAuxs + allocAuxs - (stakedAmounts.auxs || 0)),
-    auxpt: Math.max(0, (blockchainBalances.auxpt || 0) + redisAuxpt + allocAuxpt - (stakedAmounts.auxpt || 0)),
-    auxpd: Math.max(0, (blockchainBalances.auxpd || 0) + redisAuxpd + allocAuxpd - (stakedAmounts.auxpd || 0)),
+    // Metal tokens: Redis (küsurat) + Allocation (tam gram) - Staked
+    auxg: Math.max(0, redisAuxg + allocAuxg - (stakedAmounts.auxg || 0)),
+    auxs: Math.max(0, redisAuxs + allocAuxs - (stakedAmounts.auxs || 0)),
+    auxpt: Math.max(0, redisAuxpt + allocAuxpt - (stakedAmounts.auxpt || 0)),
+    auxpd: Math.max(0, redisAuxpd + allocAuxpd - (stakedAmounts.auxpd || 0)),
   };
 
   // Calculate totalAuxm
