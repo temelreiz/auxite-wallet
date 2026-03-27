@@ -282,16 +282,17 @@ export async function POST(request: NextRequest) {
     // ═══════════════════════════════════════════════════════════════════════════
     const { toAmount, fromPrice, toPrice, tradingFee, custodyFee, totalFeePercent } = await calculateServerToAmount(fromAsset, toAsset, fromAmount);
 
-    // Validate: server calculation vs client request (max 5% tolerance for timing differences)
+    // Validate: server calculation vs client request (max 10% tolerance for timing/price differences)
     if (clientToAmount) {
       const diff = Math.abs(toAmount - clientToAmount) / toAmount;
-      if (diff > 0.05) {
+      if (diff > 0.10) {
         console.error(`⚠️ PRICE MANIPULATION DETECTED!`);
         console.error(`   Client requested: ${clientToAmount} ${toAsset}`);
         console.error(`   Server calculated: ${toAmount} ${toAsset}`);
         console.error(`   Difference: ${(diff * 100).toFixed(2)}%`);
         return NextResponse.json({
-          error: "Price changed. Please refresh and try again.",
+          error: "PRICE_CHANGED",
+          message: "Price changed. Please refresh and try again.",
           serverToAmount: toAmount,
           clientToAmount,
         }, { status: 400 });
