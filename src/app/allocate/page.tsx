@@ -303,7 +303,7 @@ export default function AllocatePage() {
             type: "buy",
             fromToken: selectedSource,
             toToken: selectedMetal,
-            fromAmount: capitalAmount,
+            fromAmount: isStablecoinSource ? capitalAmount : inputAmount,
             address,
             executeOnChain: false,
           }),
