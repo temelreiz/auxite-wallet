@@ -101,12 +101,13 @@ export async function GET(request: NextRequest) {
       const { getLivePrices: getPrices } = await import('@/lib/live-prices');
       const prices = await getPrices();
 
+      const KNOWN_TOKENS_DETAIL = ['auxm', 'eth', 'btc', 'usdt', 'usdc', 'usd', 'xrp', 'sol', 'auxg', 'auxs', 'auxpt', 'auxpd'];
       let totalValueUsd = 0;
       if (balance) {
-        for (const [token, amount] of Object.entries(balance)) {
-          const val = parseFloat(amount as string || "0");
-          if (isNaN(val)) continue; // Skip NaN values (e.g. bonusExpiresat)
-          const price = prices[token.toLowerCase()] || 0;
+        for (const token of KNOWN_TOKENS_DETAIL) {
+          const val = parseFloat(balance[token] as string || "0");
+          if (isNaN(val) || val <= 0) continue;
+          const price = prices[token] || 0;
           totalValueUsd += val * price;
         }
       }
@@ -156,12 +157,13 @@ export async function GET(request: NextRequest) {
         const balance = await redis.hgetall(`user:${walletAddr}:balance`);
         const userInfo = await redis.hgetall(`user:${walletAddr}:info`);
 
+        const KNOWN_TOKENS = ['auxm', 'eth', 'btc', 'usdt', 'usdc', 'usd', 'xrp', 'sol', 'auxg', 'auxs', 'auxpt', 'auxpd'];
         let totalValueUsd = 0;
         if (balance) {
-          for (const [token, amount] of Object.entries(balance)) {
-            const val = parseFloat(amount as string || "0");
-            if (isNaN(val)) continue; // Skip NaN values
-            const price = prices[token.toLowerCase()] || 0;
+          for (const token of KNOWN_TOKENS) {
+            const val = parseFloat(balance[token] as string || "0");
+            if (isNaN(val) || val <= 0) continue;
+            const price = prices[token] || 0;
             totalValueUsd += val * price;
           }
         }
