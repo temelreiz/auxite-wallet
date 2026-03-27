@@ -84,15 +84,20 @@ export async function GET(request: NextRequest) {
         }
       });
 
-      // Get allocations
-      const allocations = await redis.lrange(`user:${normalizedAddress}:allocations`, 0, -1);
-      const parsedAlloc = allocations.map((a: any) => {
-        try {
-          return typeof a === "string" ? JSON.parse(a) : a;
-        } catch {
-          return a;
-        }
-      });
+      // Get allocations (key: allocation:user:{uid}:list)
+      const detailUid = await redis.get(`user:address:${normalizedAddress}`) as string;
+      let parsedAlloc: any[] = [];
+      if (detailUid) {
+        const allocRawDetail = await redis.get(`allocation:user:${detailUid}:list`);
+        parsedAlloc = allocRawDetail ? (typeof allocRawDetail === 'string' ? JSON.parse(allocRawDetail) : allocRawDetail) : [];
+      }
+      // Fallback: also check legacy key
+      if (parsedAlloc.length === 0) {
+        const legacyAllocs = await redis.lrange(`user:${normalizedAddress}:allocations`, 0, -1);
+        parsedAlloc = legacyAllocs.map((a: any) => {
+          try { return typeof a === "string" ? JSON.parse(a) : a; } catch { return a; }
+        });
+      }
 
       // Get tier info
       const tierInfo = await redis.hgetall(`user:${normalizedAddress}:tier`);
@@ -203,15 +208,19 @@ export async function GET(request: NextRequest) {
           }
         }
 
-        // Add allocation values
+        // Add allocation values (key: allocation:user:{uid}:list)
         try {
-          const allocations = await redis.lrange(`user:${walletAddr}:allocations`, 0, -1);
-          for (const a of allocations) {
-            const alloc = typeof a === 'string' ? JSON.parse(a) : a;
-            const metalKey = (alloc.metal || '').toLowerCase();
-            const grams = parseFloat(alloc.grams || alloc.allocatedGrams || '0');
-            if (grams > 0 && prices[metalKey]) {
-              totalValueUsd += grams * prices[metalKey];
+          const userUid = await redis.get(`user:address:${walletAddr}`) as string;
+          if (userUid) {
+            const allocRaw = await redis.get(`allocation:user:${userUid}:list`);
+            const allocs = allocRaw ? (typeof allocRaw === 'string' ? JSON.parse(allocRaw) : allocRaw) : [];
+            for (const alloc of (allocs as any[])) {
+              if (alloc.status !== 'active') continue;
+              const metalKey = (alloc.metal || '').toLowerCase();
+              const grams = parseFloat(alloc.grams || '0');
+              if (grams > 0 && prices[metalKey]) {
+                totalValueUsd += grams * prices[metalKey];
+              }
             }
           }
         } catch {}
@@ -279,15 +288,19 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Add allocation values
+      // Add allocation values (key: allocation:user:{uid}:list)
       try {
-        const allocations2 = await redis.lrange(`user:${addr}:allocations`, 0, -1);
-        for (const a of allocations2) {
-          const alloc = typeof a === 'string' ? JSON.parse(a) : a;
-          const metalKey = (alloc.metal || '').toLowerCase();
-          const grams = parseFloat(alloc.grams || alloc.allocatedGrams || '0');
-          if (grams > 0 && prices[metalKey]) {
-            totalValueUsd += grams * prices[metalKey];
+        const userUid2 = await redis.get(`user:address:${addr}`) as string;
+        if (userUid2) {
+          const allocRaw2 = await redis.get(`allocation:user:${userUid2}:list`);
+          const allocs2 = allocRaw2 ? (typeof allocRaw2 === 'string' ? JSON.parse(allocRaw2) : allocRaw2) : [];
+          for (const alloc of (allocs2 as any[])) {
+            if (alloc.status !== 'active') continue;
+            const metalKey = (alloc.metal || '').toLowerCase();
+            const grams = parseFloat(alloc.grams || '0');
+            if (grams > 0 && prices[metalKey]) {
+              totalValueUsd += grams * prices[metalKey];
+            }
           }
         }
       } catch {}
