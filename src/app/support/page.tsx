@@ -27,6 +27,13 @@ const translations: Record<string, Record<string, string>> = {
     priorityEmailDesc: "Doğrudan ilişki yöneticinize e-posta gönderin",
     emergencyLine: "Acil Hat",
     emergencyLineDesc: "7/24 acil destek hattı",
+    emergencyOnlyFor: "Bu hat yalnızca aşağıdaki durumlar için kullanılmalıdır:",
+    emergencyUnauthorized: "Hesabınıza yetkisiz erişim şüphesi",
+    emergencyHighValue: "Büyük tutarlı işlem sorunları",
+    emergencyUrgent: "Acil çekim/yatırım problemleri",
+    emergencyGeneral: "Genel sorularınız için lütfen Telegram destek botumuzu kullanın.",
+    emergencyMisuse: "Bu hattın kötüye kullanımı, acil destek hizmetlerine erişimin kısıtlanmasına neden olabilir.",
+    emergencyCall: "Ara",
     allocationInquiry: "Tahsis Sorgusu",
     yieldQuestion: "Getiri Sorusu",
     documentRequest: "Belge Talebi",
@@ -77,6 +84,13 @@ const translations: Record<string, Record<string, string>> = {
     priorityEmailDesc: "Send an email directly to your relationship manager",
     emergencyLine: "Emergency Line",
     emergencyLineDesc: "24/7 emergency support line",
+    emergencyOnlyFor: "This line should only be used for:",
+    emergencyUnauthorized: "Suspected unauthorized access to your account",
+    emergencyHighValue: "High-value transaction issues",
+    emergencyUrgent: "Urgent deposit/withdrawal problems",
+    emergencyGeneral: "For general inquiries, please use our Telegram support bot.",
+    emergencyMisuse: "Misuse of this line may result in restricted access to emergency services.",
+    emergencyCall: "Call Now",
     allocationInquiry: "Allocation Inquiry",
     yieldQuestion: "Yield Question",
     documentRequest: "Document Request",
@@ -118,6 +132,7 @@ const translations: Record<string, Record<string, string>> = {
     secureMessage: "Sichere Nachricht", secureMessageDesc: "Senden Sie eine verschlüsselte Nachricht",
     priorityEmail: "Prioritäts-E-Mail", priorityEmailDesc: "E-Mail an Ihren Beziehungsmanager",
     emergencyLine: "Notfall-Leitung", emergencyLineDesc: "24/7 Notfall-Support",
+    emergencyOnlyFor: "Diese Leitung sollte nur verwendet werden für:", emergencyUnauthorized: "Verdacht auf unbefugten Zugriff auf Ihr Konto", emergencyHighValue: "Probleme mit hochwertigen Transaktionen", emergencyUrgent: "Dringende Ein-/Auszahlungsprobleme", emergencyGeneral: "Für allgemeine Anfragen nutzen Sie bitte unseren Telegram-Support-Bot.", emergencyMisuse: "Missbrauch dieser Leitung kann zu eingeschränktem Zugang zu Notfalldiensten führen.", emergencyCall: "Jetzt anrufen",
     allocationInquiry: "Allokationsanfrage", yieldQuestion: "Renditefrage",
     documentRequest: "Dokumentenanfrage", accountChange: "Kontoänderung",
     operatingHours: "Öffnungszeiten", monFri: "Mo-Fr 09:00-18:00 CET",
@@ -140,6 +155,7 @@ const translations: Record<string, Record<string, string>> = {
     secureMessage: "Message sécurisé", secureMessageDesc: "Envoyez un message chiffré",
     priorityEmail: "E-mail prioritaire", priorityEmailDesc: "E-mail direct à votre gestionnaire",
     emergencyLine: "Ligne d'urgence", emergencyLineDesc: "Support d'urgence 24/7",
+    emergencyOnlyFor: "Cette ligne ne doit être utilisée que pour :", emergencyUnauthorized: "Suspicion d'accès non autorisé à votre compte", emergencyHighValue: "Problèmes de transactions de grande valeur", emergencyUrgent: "Problèmes urgents de dépôt/retrait", emergencyGeneral: "Pour les demandes générales, veuillez utiliser notre bot Telegram.", emergencyMisuse: "L'utilisation abusive de cette ligne peut entraîner un accès restreint aux services d'urgence.", emergencyCall: "Appeler",
     allocationInquiry: "Demande d'allocation", yieldQuestion: "Question rendement",
     documentRequest: "Demande de document", accountChange: "Modification de compte",
     operatingHours: "Heures d'ouverture", monFri: "Lun-Ven 09:00-18:00 CET",
@@ -162,6 +178,7 @@ const translations: Record<string, Record<string, string>> = {
     secureMessage: "رسالة آمنة", secureMessageDesc: "إرسال رسالة مشفرة",
     priorityEmail: "بريد إلكتروني أولوية", priorityEmailDesc: "بريد مباشر لمدير العلاقات",
     emergencyLine: "خط الطوارئ", emergencyLineDesc: "دعم طوارئ 24/7",
+    emergencyOnlyFor: "يجب استخدام هذا الخط فقط في الحالات التالية:", emergencyUnauthorized: "الاشتباه في وصول غير مصرح به إلى حسابك", emergencyHighValue: "مشاكل في المعاملات ذات القيمة العالية", emergencyUrgent: "مشاكل عاجلة في الإيداع/السحب", emergencyGeneral: "للاستفسارات العامة، يرجى استخدام بوت الدعم على تيليجرام.", emergencyMisuse: "قد يؤدي إساءة استخدام هذا الخط إلى تقييد الوصول إلى خدمات الطوارئ.", emergencyCall: "اتصل الآن",
     allocationInquiry: "استفسار التخصيص", yieldQuestion: "سؤال العائد",
     documentRequest: "طلب وثيقة", accountChange: "تغيير الحساب",
     operatingHours: "ساعات العمل", monFri: "الاثنين-الجمعة 09:00-18:00 CET",
@@ -184,6 +201,7 @@ const translations: Record<string, Record<string, string>> = {
     secureMessage: "Безопасное сообщение", secureMessageDesc: "Отправить зашифрованное сообщение",
     priorityEmail: "Приоритетный email", priorityEmailDesc: "Email менеджеру отношений",
     emergencyLine: "Экстренная линия", emergencyLineDesc: "Экстренная поддержка 24/7",
+    emergencyOnlyFor: "Эта линия должна использоваться только для:", emergencyUnauthorized: "Подозрение на несанкционированный доступ к вашему аккаунту", emergencyHighValue: "Проблемы с крупными транзакциями", emergencyUrgent: "Срочные проблемы с депозитом/выводом", emergencyGeneral: "Для общих вопросов используйте наш Telegram бот поддержки.", emergencyMisuse: "Злоупотребление этой линией может привести к ограничению доступа к экстренным услугам.", emergencyCall: "Позвонить",
     allocationInquiry: "Запрос аллокации", yieldQuestion: "Вопрос о доходности",
     documentRequest: "Запрос документа", accountChange: "Изменение аккаунта",
     operatingHours: "Часы работы", monFri: "Пн-Пт 09:00-18:00 CET",
@@ -492,23 +510,23 @@ export default function SupportPage() {
                       <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t.emergencyLine}</h3>
                     </div>
                     <div className="text-sm text-slate-600 dark:text-zinc-400 space-y-2 mb-4">
-                      <p className="font-medium text-slate-800 dark:text-white">{lang === "tr" ? "Bu hat yalnızca aşağıdaki durumlar için kullanılmalıdır:" : "This line should only be used for:"}</p>
+                      <p className="font-medium text-slate-800 dark:text-white">{t.emergencyOnlyFor}</p>
                       <ul className="list-disc pl-5 space-y-1">
-                        <li>{lang === "tr" ? "Hesabınıza yetkisiz erişim şüphesi" : "Suspected unauthorized access to your account"}</li>
-                        <li>{lang === "tr" ? "Büyük tutarlı işlem sorunları" : "High-value transaction issues"}</li>
-                        <li>{lang === "tr" ? "Acil çekim/yatırım problemleri" : "Urgent deposit/withdrawal problems"}</li>
+                        <li>{t.emergencyUnauthorized}</li>
+                        <li>{t.emergencyHighValue}</li>
+                        <li>{t.emergencyUrgent}</li>
                       </ul>
-                      <p className="text-xs">{lang === "tr" ? "Genel sorularınız için lütfen Telegram destek botumuzu kullanın." : "For general inquiries, please use our Telegram support bot."}</p>
+                      <p className="text-xs">{t.emergencyGeneral}</p>
                     </div>
                     <p className="text-xs text-red-500 dark:text-red-400 mb-5 text-center font-medium">
-                      {lang === "tr" ? "Bu hattın kötüye kullanımı, acil destek hizmetlerine erişimin kısıtlanmasına neden olabilir." : "Misuse of this line may result in restricted access to emergency services."}
+                      {t.emergencyMisuse}
                     </p>
                     <div className="flex gap-3">
                       <button onClick={() => setShowEmergencyConfirm(false)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-stone-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition">
-                        {lang === "tr" ? "İptal" : "Cancel"}
+                        {t.cancel}
                       </button>
                       <a href="tel:+447520637591" onClick={() => setShowEmergencyConfirm(false)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-red-500 text-white text-center hover:bg-red-600 transition">
-                        {lang === "tr" ? "Ara" : "Call Now"}
+                        {t.emergencyCall}
                       </a>
                     </div>
                   </div>
