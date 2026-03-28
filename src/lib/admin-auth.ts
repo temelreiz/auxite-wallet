@@ -20,20 +20,6 @@ const ADMIN_ADDRESSES = (process.env.ADMIN_ADDRESSES || "")
   .map((a) => a.trim())
   .filter(Boolean);
 
-// IP Whitelist - sadece bu IP'lerden admin erişimi
-const ADMIN_IP_WHITELIST = (process.env.ADMIN_IP_WHITELIST || "")
-  .split(",")
-  .map((ip) => ip.trim())
-  .filter(Boolean);
-
-/**
- * Check if IP is whitelisted for admin access
- */
-function isIPAllowed(ip: string): boolean {
-  // Whitelist boşsa tüm IP'lere izin ver (geriye uyumluluk)
-  if (ADMIN_IP_WHITELIST.length === 0) return true;
-  return ADMIN_IP_WHITELIST.includes(ip);
-}
 
 interface AdminSession {
   address: string;
@@ -79,19 +65,6 @@ export async function createAdminSession(
   }
 
   const ip = getClientIP(request);
-
-  // IP Whitelist kontrolü
-  if (!isIPAllowed(ip)) {
-    console.warn(`🚨 ADMIN LOGIN BLOCKED - IP not whitelisted: ${ip}`);
-    await redis.lpush("admin:audit:blocked", JSON.stringify({
-      address: address.toLowerCase(),
-      ip,
-      timestamp: Date.now(),
-      reason: "IP not whitelisted",
-      userAgent: request.headers.get("user-agent") || "unknown",
-    }));
-    return null;
-  }
 
   const token = generateSessionToken();
   const now = Date.now();
@@ -226,19 +199,6 @@ export async function requireAdmin(
 ): Promise<{ authorized: boolean; address?: string; response?: NextResponse }> {
   const authHeader = request.headers.get("Authorization");
   const token = authHeader?.replace("Bearer ", "");
-
-  // IP Whitelist kontrolü - session'dan önce
-  const ip = getClientIP(request);
-  if (!isIPAllowed(ip)) {
-    console.warn(`🚨 ADMIN ACCESS BLOCKED - IP not whitelisted: ${ip} on ${request.url}`);
-    await redis.lpush("admin:audit:blocked", JSON.stringify({
-      ip, timestamp: Date.now(), path: new URL(request.url).pathname, reason: "IP not whitelisted",
-    }));
-    return {
-      authorized: false,
-      response: NextResponse.json({ error: "Access denied" }, { status: 403 }),
-    };
-  }
 
   if (!token || token === "null" || token === "undefined") {
     return {
