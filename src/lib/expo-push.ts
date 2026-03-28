@@ -81,6 +81,7 @@ export async function sendExpoPushBatch(
     });
 
     const result = await response.json();
+    console.log(`[ExpoPush] Batch response (${chunk.length} msgs):`, JSON.stringify(result).slice(0, 500));
     if (result.data) {
       tickets.push(...result.data);
     }
@@ -132,7 +133,9 @@ export async function sendPushToUser(
     priority: options?.priority ?? "high",
   }));
 
+  console.log(`[ExpoPush] Sending to ${walletAddress}, ${tokens.length} device(s), tokens: ${tokens.map(t => t.token.slice(0, 30)).join(', ')}`);
   const tickets = await sendExpoPushBatch(messages);
+  console.log(`[ExpoPush] Tickets for ${walletAddress}:`, JSON.stringify(tickets).slice(0, 500));
 
   let sent = 0;
   let failed = 0;
