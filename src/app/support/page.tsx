@@ -467,7 +467,7 @@ export default function SupportPage() {
 
               {/* Emergency Line */}
               <a
-                href={assignedRM?.phone ? `tel:${assignedRM.phone}` : "#"}
+                href="tel:+447520637591"
                 className="bg-white dark:bg-zinc-800/50 rounded-xl border border-stone-200 dark:border-zinc-700/50 p-4 flex items-center gap-3 cursor-pointer hover:shadow-sm transition block"
               >
                 <div className="w-10 h-10 rounded-full flex items-center justify-center bg-red-500/10">
