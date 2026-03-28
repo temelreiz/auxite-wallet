@@ -73,7 +73,7 @@ function generateDripEmailHTML({
 // DRIP EMAIL TYPES
 // ══════════════════════════════════════════════════════════════════════════════
 
-export type DripStage = "day3_kyc" | "day5_market" | "day7_features" | "day14_urgency";
+export type DripStage = "day3_kyc" | "day5_market" | "day14_urgency";
 
 export interface DripEmail {
   subject: string;
@@ -369,14 +369,12 @@ ${highlight("Пройдите KYC-верификацию и внесите пе�
 const stageContentMap: Record<DripStage, Record<string, DripContent>> = {
   day3_kyc: day3Content,
   day5_market: day5Content,
-  day7_features: day7Content,
   day14_urgency: day14Content,
 };
 
 export const DRIP_SCHEDULE: { stage: DripStage; daysSinceRegistration: number }[] = [
   { stage: "day3_kyc", daysSinceRegistration: 3 },
   { stage: "day5_market", daysSinceRegistration: 5 },
-  { stage: "day7_features", daysSinceRegistration: 7 },
   { stage: "day14_urgency", daysSinceRegistration: 14 },
 ];
 
