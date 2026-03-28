@@ -210,7 +210,7 @@ export async function requireAdmin(
   const validation = await validateAdminSession(token, request);
 
   if (!validation.valid) {
-    console.warn(`🚨 FAILED ADMIN AUTH (requireAdmin): ${validation.error} from IP ${ip}`);
+    console.warn(`🚨 FAILED ADMIN AUTH (requireAdmin): ${validation.error} from IP ${getClientIP(request)}`);
     return {
       authorized: false,
       response: NextResponse.json(
@@ -224,7 +224,7 @@ export async function requireAdmin(
   try {
     await redis.lpush("admin:audit:actions", JSON.stringify({
       address: validation.address,
-      ip,
+      ip: getClientIP(request),
       method: request.method,
       path: new URL(request.url).pathname,
       timestamp: Date.now(),
