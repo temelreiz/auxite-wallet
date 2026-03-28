@@ -226,6 +226,7 @@ export default function SupportPage() {
   const t = translations[lang] || translations.en;
 
   const [activeTab, setActiveTab] = useState<"contact" | "messages">("contact");
+  const [showEmergencyConfirm, setShowEmergencyConfirm] = useState(false);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [showNewMessage, setShowNewMessage] = useState(false);
   const [newTicket, setNewTicket] = useState({ subject: "", category: "general", message: "" });
@@ -466,9 +467,9 @@ export default function SupportPage() {
               </a>
 
               {/* Emergency Line */}
-              <a
-                href="tel:+447520637591"
-                className="bg-white dark:bg-zinc-800/50 rounded-xl border border-stone-200 dark:border-zinc-700/50 p-4 flex items-center gap-3 cursor-pointer hover:shadow-sm transition block"
+              <button
+                onClick={() => setShowEmergencyConfirm(true)}
+                className="w-full bg-white dark:bg-zinc-800/50 rounded-xl border border-stone-200 dark:border-zinc-700/50 p-4 flex items-center gap-3 cursor-pointer hover:shadow-sm transition text-left"
               >
                 <div className="w-10 h-10 rounded-full flex items-center justify-center bg-red-500/10">
                   <span className="text-lg">🚨</span>
@@ -478,7 +479,41 @@ export default function SupportPage() {
                   <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{t.emergencyLineDesc}</p>
                 </div>
                 <svg className="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-              </a>
+              </button>
+
+              {/* Emergency Confirm Modal */}
+              {showEmergencyConfirm && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowEmergencyConfirm(false)}>
+                  <div className="bg-white dark:bg-zinc-900 rounded-2xl max-w-sm w-full p-6 border border-stone-200 dark:border-zinc-700" onClick={e => e.stopPropagation()}>
+                    <div className="text-center mb-4">
+                      <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-3">
+                        <span className="text-2xl">🚨</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t.emergencyLine}</h3>
+                    </div>
+                    <div className="text-sm text-slate-600 dark:text-zinc-400 space-y-2 mb-4">
+                      <p className="font-medium text-slate-800 dark:text-white">{lang === "tr" ? "Bu hat yalnızca aşağıdaki durumlar için kullanılmalıdır:" : "This line should only be used for:"}</p>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>{lang === "tr" ? "Hesabınıza yetkisiz erişim şüphesi" : "Suspected unauthorized access to your account"}</li>
+                        <li>{lang === "tr" ? "Büyük tutarlı işlem sorunları" : "High-value transaction issues"}</li>
+                        <li>{lang === "tr" ? "Acil çekim/yatırım problemleri" : "Urgent deposit/withdrawal problems"}</li>
+                      </ul>
+                      <p className="text-xs">{lang === "tr" ? "Genel sorularınız için lütfen Telegram destek botumuzu kullanın." : "For general inquiries, please use our Telegram support bot."}</p>
+                    </div>
+                    <p className="text-xs text-red-500 dark:text-red-400 mb-5 text-center font-medium">
+                      {lang === "tr" ? "Bu hattın kötüye kullanımı, acil destek hizmetlerine erişimin kısıtlanmasına neden olabilir." : "Misuse of this line may result in restricted access to emergency services."}
+                    </p>
+                    <div className="flex gap-3">
+                      <button onClick={() => setShowEmergencyConfirm(false)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-stone-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition">
+                        {lang === "tr" ? "İptal" : "Cancel"}
+                      </button>
+                      <a href="tel:+447520637591" onClick={() => setShowEmergencyConfirm(false)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-red-500 text-white text-center hover:bg-red-600 transition">
+                        {lang === "tr" ? "Ara" : "Call Now"}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Quick Actions Grid */}
