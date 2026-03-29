@@ -51,8 +51,16 @@ export async function POST(req: NextRequest) {
     const walletLower = walletAddress.toLowerCase();
 
     // Get existing tokens for this user
-    const existingData = await redis.get(`push:mobile:${walletLower}`) as string | null;
-    const existingTokens = existingData ? JSON.parse(existingData) : [];
+    const existingData = await redis.get(`push:mobile:${walletLower}`);
+    // Upstash SDK auto-parses JSON, so existingData may already be an array
+    let existingTokens: any[] = [];
+    if (existingData) {
+      if (typeof existingData === 'string') {
+        try { existingTokens = JSON.parse(existingData); } catch { existingTokens = []; }
+      } else if (Array.isArray(existingData)) {
+        existingTokens = existingData;
+      }
+    }
 
     // Check if token already registered
     const tokenExists = existingTokens.some((t: { token: string }) => t.token === token);
@@ -103,9 +111,9 @@ export async function DELETE(req: NextRequest) {
 
       if (walletAddress) {
         const walletLower = walletAddress.toLowerCase();
-        const existingData = await redis.get(`push:mobile:${walletLower}`) as string | null;
+        const existingData = await redis.get(`push:mobile:${walletLower}`);
         if (existingData) {
-          const tokens = JSON.parse(existingData);
+          const tokens = typeof existingData === 'string' ? JSON.parse(existingData) : Array.isArray(existingData) ? existingData : [];
           const filtered = tokens.filter((t: { token: string }) => t.token !== token);
           if (filtered.length > 0) {
             await redis.set(`push:mobile:${walletLower}`, JSON.stringify(filtered));
