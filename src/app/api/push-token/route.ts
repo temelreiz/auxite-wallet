@@ -14,26 +14,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Token required" }, { status: 400 });
     }
 
-    // Get JWT from auth header
+    // Get wallet address: try JWT first, fallback to body
+    let walletAddress: string | null = null;
+
     const authHeader = req.headers.get("authorization");
     const jwtToken = authHeader?.replace("Bearer ", "");
 
-    if (!jwtToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (jwtToken) {
+      try {
+        const decoded: any = jwt.verify(jwtToken, JWT_SECRET);
+        walletAddress = decoded?.walletAddress;
+      } catch {
+        // JWT invalid, try body
+      }
     }
 
-    // Decode JWT to get wallet address
-    let decoded: any;
-    try {
-      decoded = jwt.verify(jwtToken, JWT_SECRET);
-    } catch {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    // Fallback: accept walletAddress from body (for mobile where auth token may not be ready)
+    if (!walletAddress && body.walletAddress) {
+      walletAddress = body.walletAddress;
     }
-
-    const walletAddress = decoded?.walletAddress;
 
     if (!walletAddress) {
-      return NextResponse.json({ error: "No wallet in token" }, { status: 401 });
+      return NextResponse.json({ error: "Wallet address required" }, { status: 400 });
     }
 
     // Store push token
