@@ -17,8 +17,8 @@ import { formatAmount, getDecimalPlaces } from '@/lib/format';
 // ============================================
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    title: "Metal Tahsisi",
-    subtitle: "Sermayenizi tam tahsisli, ayrılmış fiziksel metallere dönüştürün",
+    title: "Al / Sat",
+    subtitle: "Değerli metal alım ve satımı",
     selectMetal: "HEDEF METAL",
     goldDesc: "London Good Delivery",
     silverDesc: "LBMA Good Delivery",
@@ -62,8 +62,8 @@ const translations: Record<string, Record<string, string>> = {
     connectionError: "Bağlantı hatası. Lütfen tekrar deneyin.",
   },
   en: {
-    title: "Metal Allocation",
-    subtitle: "Deploy capital into fully allocated, segregated physical metals",
+    title: "Trade",
+    subtitle: "Buy and sell precious metals",
     selectMetal: "TARGET METAL",
     goldDesc: "London Good Delivery",
     silverDesc: "LBMA Good Delivery",
@@ -184,6 +184,16 @@ export default function AllocatePage() {
     if (savedAddress) setAddress(savedAddress);
   }, []);
 
+  // Buy / Sell mode
+  const [tradeMode, setTradeMode] = useState<"buy" | "sell">("buy");
+
+  // Sell state
+  const [sellGrams, setSellGrams] = useState("");
+  const [sellLoading, setSellLoading] = useState(false);
+  const [sellResult, setSellResult] = useState<any>(null);
+  const [sellError, setSellError] = useState<string | null>(null);
+  const [allocatedGrams, setAllocatedGrams] = useState<Record<string, number>>({});
+
   // State
   const [selectedMetal, setSelectedMetal] = useState("AUXG");
   const [selectedSource, setSelectedSource] = useState("AUXM");
@@ -251,6 +261,12 @@ export default function AllocatePage() {
               USDT: parseFloat(bal.usdt || 0),
               ETH: parseFloat(bal.eth || 0),
               BTC: parseFloat(bal.btc || 0),
+            });
+            setAllocatedGrams({
+              AUXG: parseFloat(bal.auxg || 0),
+              AUXS: parseFloat(bal.auxs || 0),
+              AUXPT: parseFloat(bal.auxpt || 0),
+              AUXPD: parseFloat(bal.auxpd || 0),
             });
           }
         })
@@ -606,10 +622,171 @@ export default function AllocatePage() {
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">{t.title}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t.subtitle}</p>
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">
+            {lang === "tr" ? "Al / Sat" : "Trade"}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {lang === "tr" ? "Değerli metal alım ve satımı" : "Buy and sell precious metals"}
+          </p>
         </div>
+
+        {/* Buy / Sell Tab Switcher */}
+        <div className="flex gap-1 p-1 bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 mb-4">
+          <button
+            onClick={() => { setTradeMode("buy"); setSellResult(null); setSellError(null); setSellGrams(""); }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+              tradeMode === "buy"
+                ? "bg-[#BFA181]/20 text-[#BFA181]"
+                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+            {lang === "tr" ? "Metal Alımı" : "Buy Metal"}
+          </button>
+          <button
+            onClick={() => { setTradeMode("sell"); setSellResult(null); setSellError(null); }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+              tradeMode === "sell"
+                ? "bg-red-500/20 text-red-500"
+                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
+            {lang === "tr" ? "Metal Satışı" : "Sell Metal"}
+          </button>
+        </div>
+
+        {tradeMode === "sell" ? (
+          <>
+            {/* ── SELL MODE ── */}
+            {/* Metal Selection */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-stone-200 dark:border-slate-800 mb-4">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-4">
+                {lang === "tr" ? "SATILACAK METAL" : "METAL TO SELL"}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                {METALS.map((metal) => {
+                  const isSelected = selectedMetal === metal.symbol;
+                  const available = allocatedGrams[metal.symbol] || 0;
+                  const price = basePrices[metal.symbol] || 0;
+                  return (
+                    <button
+                      key={metal.symbol}
+                      onClick={() => { setSelectedMetal(metal.symbol); setSellGrams(""); setSellError(null); setSellResult(null); }}
+                      className={`flex flex-col items-start p-4 rounded-xl border transition-all text-left ${
+                        isSelected
+                          ? "border-red-500 bg-red-500/5"
+                          : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 mb-1">
+                        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/10" style={{ background: `${metal.color}15` }}>
+                          <img src={metal.icon} alt={metal.name} className="w-full h-full object-cover scale-[0.85]" style={{ opacity: isSelected ? 1 : 0.65 }} />
+                        </div>
+                        <p className="font-bold text-slate-800 dark:text-white text-sm">{metal.name}</p>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {available > 0 ? `${available.toFixed(2)}g` : (lang === "tr" ? "Bakiye yok" : "No balance")}
+                      </p>
+                      {available > 0 && price > 0 && (
+                        <p className="text-xs text-[#BFA181] mt-0.5">≈ ${(available * price).toFixed(0)}</p>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Sell Amount */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-stone-200 dark:border-slate-800 mb-4">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">
+                {lang === "tr" ? "SATIŞ MİKTARI (GRAM)" : "AMOUNT TO SELL (GRAMS)"}
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  value={sellGrams}
+                  onChange={(e) => setSellGrams(e.target.value)}
+                  placeholder="0.00"
+                  className="flex-1 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg px-4 py-3 text-lg font-mono text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#BFA181]"
+                />
+                <button
+                  onClick={() => setSellGrams((allocatedGrams[selectedMetal] || 0).toFixed(2))}
+                  className="bg-[#BFA181]/20 text-[#BFA181] px-4 py-3 rounded-lg text-sm font-semibold hover:bg-[#BFA181]/30 transition-colors"
+                >
+                  MAX
+                </button>
+              </div>
+              {parseFloat(sellGrams) > 0 && basePrices[selectedMetal] && (
+                <p className="text-sm text-slate-500 mt-2">
+                  ≈ ${(parseFloat(sellGrams) * basePrices[selectedMetal]).toFixed(2)} USD
+                </p>
+              )}
+            </div>
+
+            {/* Sell Error */}
+            {sellError && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-4">
+                <p className="text-red-500 text-sm text-center">{sellError}</p>
+              </div>
+            )}
+
+            {/* Sell Result */}
+            {sellResult ? (
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-8 text-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                </div>
+                <h3 className="text-xl font-bold text-emerald-500 mb-2">{lang === "tr" ? "Satış Tamamlandı" : "Sale Complete"}</h3>
+                <p className="text-slate-600 dark:text-slate-300">
+                  {sellResult.grams.toFixed(2)}g {sellResult.metal} → ${sellResult.proceeds.toFixed(2)}
+                </p>
+                <button
+                  onClick={() => { setSellResult(null); setSellGrams(""); }}
+                  className="mt-4 bg-[#BFA181] text-black px-6 py-2.5 rounded-lg font-semibold hover:bg-[#a88b6d] transition-colors"
+                >
+                  {lang === "tr" ? "Yeni Satış" : "New Sale"}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={async () => {
+                  const gramsNum = parseFloat(sellGrams);
+                  if (!gramsNum || gramsNum <= 0 || !address) return;
+                  const available = allocatedGrams[selectedMetal] || 0;
+                  if (gramsNum > available) {
+                    setSellError(lang === "tr" ? "Yetersiz bakiye" : "Insufficient balance");
+                    return;
+                  }
+                  setSellLoading(true);
+                  setSellError(null);
+                  try {
+                    const price = basePrices[selectedMetal] || 0;
+                    const res = await fetch("/api/trade", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ address, type: "sell", fromToken: selectedMetal, toToken: "AUXM", fromAmount: gramsNum, executeOnChain: true }),
+                    });
+                    const data = await res.json();
+                    if (data?.success) {
+                      setSellResult({ grams: gramsNum, metal: selectedMetal, proceeds: data.transaction?.toAmount || gramsNum * price, price });
+                    } else {
+                      setSellError(data.error || (lang === "tr" ? "Satış başarısız" : "Sale failed"));
+                    }
+                  } catch { setSellError(lang === "tr" ? "Bağlantı hatası" : "Connection error"); }
+                  finally { setSellLoading(false); }
+                }}
+                disabled={!parseFloat(sellGrams) || parseFloat(sellGrams) <= 0 || parseFloat(sellGrams) > (allocatedGrams[selectedMetal] || 0) || sellLoading}
+                className="w-full bg-red-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-red-600 disabled:opacity-50 transition-colors"
+              >
+                {sellLoading ? "..." : (lang === "tr" ? `${selectedMetal.replace("AUX", "")} Sat` : `Sell ${selectedMetal.replace("AUX", "")}`)}
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+        {/* ── BUY MODE (existing) ── */}
 
         {/* Metal Selection — Institutional Card Style */}
         <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-stone-200 dark:border-slate-800">
@@ -794,6 +971,8 @@ export default function AllocatePage() {
           </svg>
           {requiresRFQ ? t.requestQuote : t.reviewAllocation}
         </button>
+          </>
+        )}
       </div>
     </div>
   );

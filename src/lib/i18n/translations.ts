@@ -23,7 +23,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.yield": "Kıymetli Maden Yapılandırılmış Getiri Programı",
     "nav.profile": "Profil",
     "nav.admin": "Yönetim",
-    "nav.allocate": "Tahsis Et",
+    "nav.allocate": "Al / Sat",
 
     // Common
     "common.loading": "Yükleniyor...",
@@ -218,7 +218,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.yield": "Precious Metals Structured Yield Program",
     "nav.profile": "Profile",
     "nav.admin": "Admin",
-    "nav.allocate": "Allocate",
+    "nav.allocate": "Trade",
 
     // Common
     "common.loading": "Loading...",
