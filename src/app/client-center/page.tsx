@@ -440,6 +440,9 @@ export default function ClientCenterPage() {
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneCountryCode, setPhoneCountryCode] = useState("+90");
   const [phoneSaving, setPhoneSaving] = useState(false);
+  const [phoneStep, setPhoneStep] = useState<"input" | "verify">("input");
+  const [verifyCode, setVerifyCode] = useState("");
+  const [verifyError, setVerifyError] = useState("");
 
   // Real user data from API
   const [userProfile, setUserProfile] = useState<{
@@ -1111,91 +1114,168 @@ export default function ClientCenterPage() {
         />
       )}
 
-      {/* Phone Number Modal */}
+      {/* Phone Number Modal with SMS Verification */}
       {showPhoneModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center" onClick={() => setShowPhoneModal(false)}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center" onClick={() => { setShowPhoneModal(false); setPhoneStep("input"); setVerifyCode(""); setVerifyError(""); }}>
           <div className="bg-white dark:bg-slate-900 w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-6 border border-stone-200 dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t.phoneModalTitle}</h3>
-              <button onClick={() => setShowPhoneModal(false)} className="p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-slate-800">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                {phoneStep === "input" ? t.phoneModalTitle : (lang === "tr" ? "Doğrulama Kodu" : "Verification Code")}
+              </h3>
+              <button onClick={() => { setShowPhoneModal(false); setPhoneStep("input"); setVerifyCode(""); setVerifyError(""); }} className="p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-slate-800">
                 <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <p className="text-sm text-slate-500 mb-4">{t.phoneModalDesc}</p>
-            <div className="flex gap-2 mb-4">
-              <select
-                value={phoneCountryCode}
-                onChange={(e) => setPhoneCountryCode(e.target.value)}
-                className="w-24 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg px-2 py-3 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-[#BFA181]"
-              >
-                <option value="+90">+90</option>
-                <option value="+44">+44</option>
-                <option value="+1">+1</option>
-                <option value="+49">+49</option>
-                <option value="+33">+33</option>
-                <option value="+971">+971</option>
-                <option value="+966">+966</option>
-                <option value="+7">+7</option>
-                <option value="+86">+86</option>
-                <option value="+81">+81</option>
-                <option value="+82">+82</option>
-                <option value="+91">+91</option>
-                <option value="+55">+55</option>
-                <option value="+34">+34</option>
-                <option value="+39">+39</option>
-                <option value="+31">+31</option>
-                <option value="+46">+46</option>
-                <option value="+41">+41</option>
-                <option value="+61">+61</option>
-                <option value="+65">+65</option>
-              </select>
-              <input
-                type="tel"
-                value={phoneInput}
-                onChange={(e) => setPhoneInput(e.target.value.replace(/[^0-9\s]/g, ""))}
-                placeholder={t.phoneModalPlaceholder}
-                className="flex-1 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#BFA181]"
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowPhoneModal(false)}
-                className="flex-1 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 border border-stone-200 dark:border-slate-700 rounded-xl"
-              >
-                {t.phoneModalCancel}
-              </button>
-              <button
-                onClick={async () => {
-                  if (!phoneInput.trim() || !address) return;
-                  setPhoneSaving(true);
-                  try {
-                    const fullPhone = `${phoneCountryCode}${phoneInput.replace(/\s/g, "")}`;
-                    const res = await fetch("/api/user/profile", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ address, phone: fullPhone }),
-                    });
-                    if (res.ok) {
-                      const maskedPhone = fullPhone.replace(/(.{4})(.*)(.{4})/, "$1 *** $3");
-                      setUserProfile(prev => ({ ...prev, phone: maskedPhone }));
-                      setCommPrefs(prev => ({ ...prev, phone: true }));
-                      setShowPhoneModal(false);
-                      setPhoneInput("");
-                    }
-                  } catch (err) {
-                    console.error("Phone save error:", err);
-                  } finally {
-                    setPhoneSaving(false);
-                  }
-                }}
-                disabled={!phoneInput.trim() || phoneSaving}
+
+            {phoneStep === "input" ? (
+              <>
+                <p className="text-sm text-slate-500 mb-4">{t.phoneModalDesc}</p>
+                <div className="flex gap-2 mb-4">
+                  <select
+                    value={phoneCountryCode}
+                    onChange={(e) => setPhoneCountryCode(e.target.value)}
+                    className="w-24 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg px-2 py-3 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-[#BFA181]"
+                  >
+                    <option value="+90">+90</option>
+                    <option value="+44">+44</option>
+                    <option value="+1">+1</option>
+                    <option value="+49">+49</option>
+                    <option value="+33">+33</option>
+                    <option value="+971">+971</option>
+                    <option value="+966">+966</option>
+                    <option value="+7">+7</option>
+                    <option value="+86">+86</option>
+                    <option value="+81">+81</option>
+                    <option value="+82">+82</option>
+                    <option value="+91">+91</option>
+                    <option value="+55">+55</option>
+                    <option value="+34">+34</option>
+                    <option value="+39">+39</option>
+                    <option value="+31">+31</option>
+                    <option value="+46">+46</option>
+                    <option value="+41">+41</option>
+                    <option value="+61">+61</option>
+                    <option value="+65">+65</option>
+                  </select>
+                  <input
+                    type="tel"
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(e.target.value.replace(/[^0-9\s]/g, ""))}
+                    placeholder={t.phoneModalPlaceholder}
+                    className="flex-1 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#BFA181]"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { setShowPhoneModal(false); setPhoneStep("input"); }}
+                    className="flex-1 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 border border-stone-200 dark:border-slate-700 rounded-xl"
+                  >
+                    {t.phoneModalCancel}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!phoneInput.trim()) return;
+                      setPhoneSaving(true);
+                      setVerifyError("");
+                      try {
+                        const fullPhone = `${phoneCountryCode}${phoneInput.replace(/\s/g, "")}`;
+                        const res = await fetch("/api/verify/send", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ phone: fullPhone }),
+                        });
+                        if (res.ok) {
+                          setPhoneStep("verify");
+                        } else {
+                          const data = await res.json();
+                          setVerifyError(data.error || "Failed to send code");
+                        }
+                      } catch (err) {
+                        setVerifyError("Network error");
+                      } finally {
+                        setPhoneSaving(false);
+                      }
+                    }}
+                    disabled={!phoneInput.trim() || phoneSaving}
+                    className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#BFA181] rounded-xl hover:bg-[#a88b6d] disabled:opacity-50 transition-colors"
+                  >
+                    {phoneSaving ? "..." : (lang === "tr" ? "Kod Gönder" : "Send Code")}
+                  </button>
+                </div>
+                {verifyError && (
+                  <p className="text-xs text-red-500 mt-2 text-center">{verifyError}</p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-slate-500 mb-2">
+                  {lang === "tr"
+                    ? `${phoneCountryCode}${phoneInput} numarasına doğrulama kodu gönderildi.`
+                    : `A verification code has been sent to ${phoneCountryCode}${phoneInput}.`}
+                </p>
+                <p className="text-xs text-slate-400 mb-4">
+                  {lang === "tr" ? "Lütfen 6 haneli kodu giriniz." : "Please enter the 6-digit code."}
+                </p>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={verifyCode}
+                  onChange={(e) => { setVerifyCode(e.target.value.replace(/[^0-9]/g, "")); setVerifyError(""); }}
+                  placeholder="000000"
+                  className="w-full bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg px-4 py-3 text-center text-2xl font-mono tracking-[0.5em] text-slate-800 dark:text-white placeholder-slate-300 focus:outline-none focus:border-[#BFA181] mb-4"
+                  autoFocus
+                />
+                {verifyError && (
+                  <p className="text-xs text-red-500 mb-3 text-center">{verifyError}</p>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { setPhoneStep("input"); setVerifyCode(""); setVerifyError(""); }}
+                    className="flex-1 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 border border-stone-200 dark:border-slate-700 rounded-xl"
+                  >
+                    {lang === "tr" ? "Geri" : "Back"}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (verifyCode.length !== 6 || !address) return;
+                      setPhoneSaving(true);
+                      setVerifyError("");
+                      try {
+                        const fullPhone = `${phoneCountryCode}${phoneInput.replace(/\s/g, "")}`;
+                        const res = await fetch("/api/verify/check", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ phone: fullPhone, code: verifyCode, walletAddress: address }),
+                        });
+                        if (res.ok) {
+                          const maskedPhone = fullPhone.replace(/(.{4})(.*)(.{4})/, "$1 *** $3");
+                          setUserProfile(prev => ({ ...prev, phone: maskedPhone }));
+                          setCommPrefs(prev => ({ ...prev, phone: true }));
+                          setShowPhoneModal(false);
+                          setPhoneStep("input");
+                          setPhoneInput("");
+                          setVerifyCode("");
+                        } else {
+                          const data = await res.json();
+                          setVerifyError(lang === "tr" ? "Geçersiz veya süresi dolmuş kod" : "Invalid or expired code");
+                        }
+                      } catch (err) {
+                        setVerifyError("Network error");
+                      } finally {
+                        setPhoneSaving(false);
+                      }
+                    }}
+                    disabled={verifyCode.length !== 6 || phoneSaving}
                 className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#BFA181] rounded-xl hover:bg-[#BFA181]/80 disabled:opacity-50 transition-colors"
               >
-                {phoneSaving ? "..." : t.phoneModalSave}
-              </button>
-            </div>
+                    {phoneSaving ? "..." : (lang === "tr" ? "Doğrula" : "Verify")}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
