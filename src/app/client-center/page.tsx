@@ -25,7 +25,7 @@ const translations: Record<string, Record<string, string>> = {
     contactOptions: "İletişim Seçenekleri",
     sendSecureMessage: "Güvenli Mesaj Gönder",
     emailManager: "E-posta ile İletişim",
-    whatsappChat: "WhatsApp ile Yazışın",
+    telegramChat: "Telegram ile Yazışın",
     close: "Kapat",
 
     // Account Safeguards
@@ -80,6 +80,16 @@ const translations: Record<string, Record<string, string>> = {
     trustCenter: "Güven Merkezi",
     preferences: "TERCİHLER",
     languageSetting: "Dil",
+    commPreferences: "İletişim Tercihleri",
+    commEmail: "E-posta",
+    commSMS: "SMS",
+    commPhone: "Telefon",
+    commPush: "Bildirim",
+    phoneModalTitle: "Telefon Numaranızı Girin",
+    phoneModalDesc: "Telefon bildirimleri almak için numaranızı kaydedin",
+    phoneModalPlaceholder: "5XX XXX XX XX",
+    phoneModalSave: "Kaydet",
+    phoneModalCancel: "Vazgeç",
     signOut: "Çıkış Yap",
   },
   en: {
@@ -95,7 +105,7 @@ const translations: Record<string, Record<string, string>> = {
     contactOptions: "Contact Options",
     sendSecureMessage: "Send Secure Message",
     emailManager: "Email Relationship Manager",
-    whatsappChat: "WhatsApp Chat",
+    telegramChat: "Telegram Chat",
     close: "Close",
 
     // Account Safeguards
@@ -150,6 +160,16 @@ const translations: Record<string, Record<string, string>> = {
     trustCenter: "Trust Center",
     preferences: "PREFERENCES",
     languageSetting: "Language",
+    commPreferences: "Communication Preferences",
+    commEmail: "Email",
+    commSMS: "SMS",
+    commPhone: "Phone",
+    commPush: "Push",
+    phoneModalTitle: "Enter Your Phone Number",
+    phoneModalDesc: "Register your phone number to receive phone notifications",
+    phoneModalPlaceholder: "5XX XXX XX XX",
+    phoneModalSave: "Save",
+    phoneModalCancel: "Cancel",
     signOut: "Sign Out",
   },
   de: {
@@ -163,7 +183,7 @@ const translations: Record<string, Record<string, string>> = {
     contactOptions: "Kontaktoptionen",
     sendSecureMessage: "Sichere Nachricht senden",
     emailManager: "E-Mail an Beziehungsmanager",
-    whatsappChat: "WhatsApp Chat",
+    telegramChat: "Telegram Chat",
     close: "Schließen",
     accountSafeguards: "KONTOSICHERUNGEN",
     fullyAllocated: "Vollständig zugewiesen",
@@ -197,6 +217,16 @@ const translations: Record<string, Record<string, string>> = {
     trustCenter: "Vertrauenszentrum",
     preferences: "EINSTELLUNGEN",
     languageSetting: "Sprache",
+    commPreferences: "Kommunikationspräferenzen",
+    commEmail: "E-Mail",
+    commSMS: "SMS",
+    commPhone: "Telefon",
+    commPush: "Push",
+    phoneModalTitle: "Geben Sie Ihre Telefonnummer ein",
+    phoneModalDesc: "Registrieren Sie Ihre Telefonnummer, um Telefonbenachrichtigungen zu erhalten",
+    phoneModalPlaceholder: "5XX XXX XX XX",
+    phoneModalSave: "Speichern",
+    phoneModalCancel: "Abbrechen",
     signOut: "Abmelden",
   },
   fr: {
@@ -210,7 +240,7 @@ const translations: Record<string, Record<string, string>> = {
     contactOptions: "Options de contact",
     sendSecureMessage: "Envoyer un message sécurisé",
     emailManager: "Email au gestionnaire",
-    whatsappChat: "Chat WhatsApp",
+    telegramChat: "Chat Telegram",
     close: "Fermer",
     accountSafeguards: "GARANTIES DU COMPTE",
     fullyAllocated: "Entièrement alloué",
@@ -244,6 +274,16 @@ const translations: Record<string, Record<string, string>> = {
     trustCenter: "Centre de confiance",
     preferences: "PRÉFÉRENCES",
     languageSetting: "Langue",
+    commPreferences: "Préférences de communication",
+    commEmail: "E-mail",
+    commSMS: "SMS",
+    commPhone: "Téléphone",
+    commPush: "Push",
+    phoneModalTitle: "Entrez votre numéro de téléphone",
+    phoneModalDesc: "Enregistrez votre numéro pour recevoir des notifications téléphoniques",
+    phoneModalPlaceholder: "5XX XXX XX XX",
+    phoneModalSave: "Enregistrer",
+    phoneModalCancel: "Annuler",
     signOut: "Déconnexion",
   },
   ar: {
@@ -257,7 +297,7 @@ const translations: Record<string, Record<string, string>> = {
     contactOptions: "خيارات الاتصال",
     sendSecureMessage: "إرسال رسالة آمنة",
     emailManager: "بريد إلكتروني لمدير العلاقات",
-    whatsappChat: "محادثة واتساب",
+    telegramChat: "محادثة تيليجرام",
     close: "إغلاق",
     accountSafeguards: "ضمانات الحساب",
     fullyAllocated: "مخصص بالكامل",
@@ -291,6 +331,16 @@ const translations: Record<string, Record<string, string>> = {
     trustCenter: "مركز الثقة",
     preferences: "التفضيلات",
     languageSetting: "اللغة",
+    commPreferences: "تفضيلات الاتصال",
+    commEmail: "البريد الإلكتروني",
+    commSMS: "رسالة نصية",
+    commPhone: "هاتف",
+    commPush: "إشعار",
+    phoneModalTitle: "أدخل رقم هاتفك",
+    phoneModalDesc: "سجل رقم هاتفك لتلقي إشعارات الهاتف",
+    phoneModalPlaceholder: "5XX XXX XX XX",
+    phoneModalSave: "حفظ",
+    phoneModalCancel: "إلغاء",
     signOut: "تسجيل الخروج",
   },
   ru: {
@@ -304,7 +354,7 @@ const translations: Record<string, Record<string, string>> = {
     contactOptions: "Варианты связи",
     sendSecureMessage: "Отправить защищённое сообщение",
     emailManager: "Написать менеджеру",
-    whatsappChat: "Чат WhatsApp",
+    telegramChat: "Чат Telegram",
     close: "Закрыть",
     accountSafeguards: "ГАРАНТИИ АККАУНТА",
     fullyAllocated: "Полностью распределено",
@@ -338,6 +388,16 @@ const translations: Record<string, Record<string, string>> = {
     trustCenter: "Центр доверия",
     preferences: "НАСТРОЙКИ",
     languageSetting: "Язык",
+    commPreferences: "Настройки связи",
+    commEmail: "Email",
+    commSMS: "SMS",
+    commPhone: "Телефон",
+    commPush: "Push",
+    phoneModalTitle: "Введите номер телефона",
+    phoneModalDesc: "Зарегистрируйте номер телефона для получения уведомлений",
+    phoneModalPlaceholder: "5XX XXX XX XX",
+    phoneModalSave: "Сохранить",
+    phoneModalCancel: "Отмена",
     signOut: "Выйти",
   },
 };
@@ -368,11 +428,18 @@ export default function ClientCenterPage() {
 
   // Relationship Manager
   const [assignedRM, setAssignedRM] = useState<{
-    name: string; title: string; email: string; phone: string; whatsapp: string;
+    name: string; title: string; email: string; phone: string; telegram: string;
     initials: string; available: boolean; languages: string[];
   } | null>(null);
   const [showContactModal, setShowContactModal] = useState(false);
   const [documentCount, setDocumentCount] = useState(0);
+
+  // Communication Preferences
+  const [commPrefs, setCommPrefs] = useState({ email: true, sms: false, phone: false, push: true });
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [phoneCountryCode, setPhoneCountryCode] = useState("+90");
+  const [phoneSaving, setPhoneSaving] = useState(false);
 
   // Real user data from API
   const [userProfile, setUserProfile] = useState<{
@@ -978,6 +1045,44 @@ export default function ClientCenterPage() {
               ))}
             </select>
           </div>
+
+          {/* Communication Preferences */}
+          <div className="mt-5 pt-4 border-t border-stone-100 dark:border-slate-800">
+            <p className="text-[11px] font-semibold text-slate-500 tracking-wider mb-3">
+              {t.commPreferences}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { key: "email" as const, label: t.commEmail, icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
+                { key: "sms" as const, label: t.commSMS, icon: "M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" },
+                { key: "phone" as const, label: t.commPhone, icon: "M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" },
+                { key: "push" as const, label: t.commPush, icon: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" },
+              ]).map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => {
+                    if (item.key === "phone" && !commPrefs.phone && userProfile.phone === "—") {
+                      setShowPhoneModal(true);
+                      return;
+                    }
+                    setCommPrefs(prev => ({ ...prev, [item.key]: !prev[item.key] }));
+                  }}
+                  className={`flex items-center gap-2 p-2.5 rounded-lg border transition-colors ${
+                    commPrefs[item.key]
+                      ? "border-[#BFA181] bg-[#BFA181]/10"
+                      : "border-stone-200 dark:border-slate-700 hover:bg-stone-50 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <svg className={`w-4 h-4 ${commPrefs[item.key] ? "text-[#BFA181]" : "text-slate-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                  </svg>
+                  <span className={`text-xs font-medium ${commPrefs[item.key] ? "text-[#BFA181]" : "text-slate-500"}`}>
+                    {item.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Sign Out Section */}
@@ -1004,6 +1109,95 @@ export default function ClientCenterPage() {
           walletAddress={address}
           onClose={handleKycClose}
         />
+      )}
+
+      {/* Phone Number Modal */}
+      {showPhoneModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center" onClick={() => setShowPhoneModal(false)}>
+          <div className="bg-white dark:bg-slate-900 w-full sm:w-96 rounded-t-2xl sm:rounded-2xl p-6 border border-stone-200 dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t.phoneModalTitle}</h3>
+              <button onClick={() => setShowPhoneModal(false)} className="p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-slate-800">
+                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-sm text-slate-500 mb-4">{t.phoneModalDesc}</p>
+            <div className="flex gap-2 mb-4">
+              <select
+                value={phoneCountryCode}
+                onChange={(e) => setPhoneCountryCode(e.target.value)}
+                className="w-24 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg px-2 py-3 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-[#BFA181]"
+              >
+                <option value="+90">+90</option>
+                <option value="+44">+44</option>
+                <option value="+1">+1</option>
+                <option value="+49">+49</option>
+                <option value="+33">+33</option>
+                <option value="+971">+971</option>
+                <option value="+966">+966</option>
+                <option value="+7">+7</option>
+                <option value="+86">+86</option>
+                <option value="+81">+81</option>
+                <option value="+82">+82</option>
+                <option value="+91">+91</option>
+                <option value="+55">+55</option>
+                <option value="+34">+34</option>
+                <option value="+39">+39</option>
+                <option value="+31">+31</option>
+                <option value="+46">+46</option>
+                <option value="+41">+41</option>
+                <option value="+61">+61</option>
+                <option value="+65">+65</option>
+              </select>
+              <input
+                type="tel"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value.replace(/[^0-9\s]/g, ""))}
+                placeholder={t.phoneModalPlaceholder}
+                className="flex-1 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#BFA181]"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPhoneModal(false)}
+                className="flex-1 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 border border-stone-200 dark:border-slate-700 rounded-xl"
+              >
+                {t.phoneModalCancel}
+              </button>
+              <button
+                onClick={async () => {
+                  if (!phoneInput.trim() || !address) return;
+                  setPhoneSaving(true);
+                  try {
+                    const fullPhone = `${phoneCountryCode}${phoneInput.replace(/\s/g, "")}`;
+                    const res = await fetch("/api/user/profile", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json", "x-wallet-address": address },
+                      body: JSON.stringify({ phone: fullPhone }),
+                    });
+                    if (res.ok) {
+                      const maskedPhone = fullPhone.replace(/(.{4})(.*)(.{4})/, "$1 *** $3");
+                      setUserProfile(prev => ({ ...prev, phone: maskedPhone }));
+                      setCommPrefs(prev => ({ ...prev, phone: true }));
+                      setShowPhoneModal(false);
+                      setPhoneInput("");
+                    }
+                  } catch (err) {
+                    console.error("Phone save error:", err);
+                  } finally {
+                    setPhoneSaving(false);
+                  }
+                }}
+                disabled={!phoneInput.trim() || phoneSaving}
+                className="flex-1 py-2.5 text-sm font-semibold text-white bg-[#BFA181] rounded-xl hover:bg-[#BFA181]/80 disabled:opacity-50 transition-colors"
+              >
+                {phoneSaving ? "..." : t.phoneModalSave}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Contact Team Modal */}
@@ -1064,26 +1258,23 @@ export default function ClientCenterPage() {
                 </div>
               </a>
 
-              {/* WhatsApp */}
-              {assignedRM?.whatsapp && (
-                <a
-                  href={`https://wa.me/${assignedRM.whatsapp.replace(/[^0-9]/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <div className="w-10 h-10 rounded-full bg-green-500/15 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                      <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a8 8 0 01-4.093-1.121l-.293-.174-2.87.853.853-2.87-.174-.293A8 8 0 1112 20z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">{t.whatsappChat}</p>
-                    <p className="text-xs text-slate-500">{assignedRM.phone || assignedRM.whatsapp}</p>
-                  </div>
-                </a>
-              )}
+              {/* Telegram */}
+              <a
+                href="https://t.me/AuxiteSupportbot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#0088cc]/15 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-[#0088cc]" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white">{t.telegramChat}</p>
+                  <p className="text-xs text-slate-500">@AuxiteSupportbot</p>
+                </div>
+              </a>
             </div>
 
             <button

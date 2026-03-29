@@ -421,41 +421,29 @@ export default function SecurityPage() {
           const data = await sessionsRes.json();
           setSessions(data.sessions || []);
         } else {
-          // Mock sessions
-          setSessions([
-            { id: "s1", deviceName: "Chrome - MacBook Pro", location: "Istanbul, Turkey", isCurrent: true },
-            { id: "s2", deviceName: "Safari - iPhone 15", location: "Istanbul, Turkey", isCurrent: false },
-          ]);
+          setSessions([]);
         }
 
+        let devicesList: any[] = [];
         if (devicesRes?.ok) {
           const data = await devicesRes.json();
-          setDevices(data.devices || []);
+          devicesList = data.devices || [];
+          setDevices(devicesList);
         } else {
-          // Mock devices
-          setDevices([
-            { id: "d1", name: "MacBook Pro", type: "desktop", location: "Istanbul, Turkey", ip: "78.***.***.12", isCurrent: true },
-            { id: "d2", name: "iPhone 15 Pro", type: "mobile", location: "Istanbul, Turkey", ip: "78.***.***.12", isCurrent: false },
-          ]);
+          setDevices([]);
         }
 
         if (logsRes?.ok) {
           const data = await logsRes.json();
           setActivityLogs(data.logs || []);
         } else {
-          // Mock activity
-          setActivityLogs([
-            { action: "Login", device: "Chrome - MacBook Pro", time: "2 min ago", icon: "login" },
-            { action: "Address Whitelisted", device: "MacBook Pro", time: "1 day ago", icon: "shield" },
-            { action: "2FA Verified", device: "iPhone 15 Pro", time: "2 days ago", icon: "key" },
-          ]);
+          setActivityLogs([]);
         }
 
-        // Update checks
+        // Update checks based on real API data
         setSecurityChecks(prev => ({
           ...prev,
-          emailVerified: true,
-          deviceRegistered: true,
+          deviceRegistered: devicesList.length > 0,
         }));
       } catch (err) {
         console.error("Security fetch error:", err);

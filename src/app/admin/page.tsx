@@ -685,10 +685,8 @@ export default function AdminDashboard() {
 
   // Support Contact Settings
   const [supportContactSettings, setSupportContactSettings] = useState({
-    whatsappNumber: '447520637591',
     telegramLink: '',
     supportEmail: 'support@auxite.io',
-    phoneNumber: '',
     businessHours: 'Mon-Fri 9:00-18:00 CET',
   });
   const [supportSettingsLoading, setSupportSettingsLoading] = useState(false);
@@ -700,7 +698,7 @@ export default function AdminDashboard() {
   const [rmLoading, setRmLoading] = useState(false);
   const [showRmForm, setShowRmForm] = useState(false);
   const [editingRm, setEditingRm] = useState<any>(null);
-  const [rmFormData, setRmFormData] = useState({ name: '', title: 'Relationship Manager', email: '', phone: '', whatsapp: '', capacity: 100, languages: 'en', specializations: '' });
+  const [rmFormData, setRmFormData] = useState({ name: '', title: 'Relationship Manager', email: '', phone: '', telegram: '', capacity: 100, languages: 'en', specializations: '' });
   const [rmSaving, setRmSaving] = useState(false);
   const [rmClients, setRmClients] = useState<string[]>([]);
   const [viewingRmClients, setViewingRmClients] = useState<string | null>(null);
@@ -768,7 +766,7 @@ export default function AdminDashboard() {
       if (res.ok) {
         setShowRmForm(false);
         setEditingRm(null);
-        setRmFormData({ name: '', title: 'Relationship Manager', email: '', phone: '', whatsapp: '', capacity: 100, languages: 'en', specializations: '' });
+        setRmFormData({ name: '', title: 'Relationship Manager', email: '', phone: '', telegram: '', capacity: 100, languages: 'en', specializations: '' });
         loadRelationshipManagers();
       }
     } catch (e) { console.error("RM save error:", e); }
@@ -5887,7 +5885,7 @@ export default function AdminDashboard() {
                     </button>
                   )}
                   <button
-                    onClick={() => { setEditingRm(null); setRmFormData({ name: '', title: 'Relationship Manager', email: '', phone: '', whatsapp: '', capacity: 100, languages: 'en', specializations: '' }); setShowRmForm(true); }}
+                    onClick={() => { setEditingRm(null); setRmFormData({ name: '', title: 'Relationship Manager', email: '', phone: '', telegram: '', capacity: 100, languages: 'en', specializations: '' }); setShowRmForm(true); }}
                     className="px-4 py-2 bg-[#2F6F62] text-white font-semibold rounded-lg text-sm hover:bg-[#2F6F62]/80"
                   >
                     + Yeni RM Ekle
@@ -5986,7 +5984,7 @@ export default function AdminDashboard() {
                             setEditingRm(rm);
                             setRmFormData({
                               name: rm.name, title: rm.title, email: rm.email, phone: rm.phone || '',
-                              whatsapp: rm.whatsapp || '', capacity: rm.capacity || 100,
+                              telegram: rm.telegram || '', capacity: rm.capacity || 100,
                               languages: (rm.languages || []).join(', '),
                               specializations: (rm.specializations || []).join(', '),
                             });
@@ -6038,8 +6036,8 @@ export default function AdminDashboard() {
                           <input value={rmFormData.phone} onChange={(e) => setRmFormData(p => ({ ...p, phone: e.target.value }))} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="+90 5xx xxx xx xx" />
                         </div>
                         <div>
-                          <label className="text-xs text-slate-400 mb-1 block">WhatsApp</label>
-                          <input value={rmFormData.whatsapp} onChange={(e) => setRmFormData(p => ({ ...p, whatsapp: e.target.value }))} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="905xxxxxxxxx" />
+                          <label className="text-xs text-slate-400 mb-1 block">Telegram</label>
+                          <input value={rmFormData.telegram} onChange={(e) => setRmFormData(p => ({ ...p, telegram: e.target.value }))} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm" placeholder="@username" />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
@@ -6321,28 +6319,6 @@ export default function AdminDashboard() {
                 <div className="text-center py-12 text-slate-400">Yükleniyor...</div>
               ) : (
                 <>
-                  {/* WhatsApp */}
-                  <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-full bg-[#25D366]/15 flex items-center justify-center text-lg">📱</div>
-                      <div>
-                        <h3 className="font-semibold text-white">WhatsApp Numarası</h3>
-                        <p className="text-xs text-slate-500">Uluslararası format: ülke kodu + numara (örn: 447520637591)</p>
-                      </div>
-                    </div>
-                    <input
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500"
-                      value={supportContactSettings.whatsappNumber}
-                      onChange={(e) => setSupportContactSettings({ ...supportContactSettings, whatsappNumber: e.target.value })}
-                      placeholder="447520637591"
-                    />
-                    {supportContactSettings.whatsappNumber && (
-                      <p className="text-xs text-slate-500 mt-2">
-                        Link: <span className="text-[#25D366]">wa.me/{supportContactSettings.whatsappNumber}</span>
-                      </p>
-                    )}
-                  </div>
-
                   {/* Telegram */}
                   <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
                     <div className="flex items-center gap-3 mb-4">
@@ -6385,23 +6361,6 @@ export default function AdminDashboard() {
                     />
                   </div>
 
-                  {/* Phone */}
-                  <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center text-lg">📞</div>
-                      <div>
-                        <h3 className="font-semibold text-white">Telefon Numarası</h3>
-                        <p className="text-xs text-slate-500">Destek hattı telefon numarası</p>
-                      </div>
-                    </div>
-                    <input
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 px-4 text-white placeholder-slate-500"
-                      value={supportContactSettings.phoneNumber}
-                      onChange={(e) => setSupportContactSettings({ ...supportContactSettings, phoneNumber: e.target.value })}
-                      placeholder="+90 533 506 28 56"
-                    />
-                  </div>
-
                   {/* Business Hours */}
                   <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
                     <div className="flex items-center gap-3 mb-4">
@@ -6424,20 +6383,12 @@ export default function AdminDashboard() {
                     <h3 className="font-semibold text-[#BFA181] mb-4">Önizleme</h3>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-[#25D366]">WhatsApp:</span>
-                        <span className="text-white">{supportContactSettings.whatsappNumber || '—'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
                         <span className="text-[#0088cc]">Telegram:</span>
                         <span className="text-white">{supportContactSettings.telegramLink || '—'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-purple-400">Email:</span>
                         <span className="text-white">{supportContactSettings.supportEmail || '—'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-red-400">Telefon:</span>
-                        <span className="text-white">{supportContactSettings.phoneNumber || '—'}</span>
                       </div>
                       <div className="flex items-center gap-2 col-span-2">
                         <span className="text-[#BFA181]">Saatler:</span>
