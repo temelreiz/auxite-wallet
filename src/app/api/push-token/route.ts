@@ -87,9 +87,9 @@ export async function POST(req: NextRequest) {
     console.log(`[Push Token] Registered: ${token.slice(0, 20)}... for ${walletAddress.slice(0, 10)}... (${platform}/${deviceName})`);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("[Push Token] Error:", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  } catch (error: any) {
+    console.error("[Push Token] Error:", error?.message || error, error?.stack);
+    return NextResponse.json({ error: "Internal error", detail: error?.message || String(error) }, { status: 500 });
   }
 }
 
