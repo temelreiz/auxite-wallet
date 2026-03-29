@@ -1173,9 +1173,9 @@ export default function ClientCenterPage() {
                   try {
                     const fullPhone = `${phoneCountryCode}${phoneInput.replace(/\s/g, "")}`;
                     const res = await fetch("/api/user/profile", {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json", "x-wallet-address": address },
-                      body: JSON.stringify({ phone: fullPhone }),
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ address, phone: fullPhone }),
                     });
                     if (res.ok) {
                       const maskedPhone = fullPhone.replace(/(.{4})(.*)(.{4})/, "$1 *** $3");
