@@ -940,7 +940,7 @@ export default function AllocatePage() {
                 disabled={!parseFloat(sellGrams) || parseFloat(sellGrams) <= 0 || parseFloat(sellGrams) > (allocatedGrams[selectedMetal] || 0) || sellLoading}
                 className="w-full bg-red-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-red-600 disabled:opacity-50 transition-colors"
               >
-                {sellLoading ? "..." : (lang === "tr" ? `${selectedMetal.replace("AUX", "")} Sat` : `Sell ${selectedMetal.replace("AUX", "")}`)}
+                {sellLoading ? "..." : (lang === "tr" ? `${selectedMetal} Sat` : `Sell ${selectedMetal}`)}
               </button>
             )}
           </>

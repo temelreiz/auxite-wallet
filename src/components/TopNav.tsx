@@ -18,7 +18,7 @@ const translations: Record<string, Record<string, string>> = {
   tr: {
     // Core Navigation - Institutional
     vault: "Kasa",
-    allocate: "Tahsis",
+    allocate: "Al / Sat",
     yield: "Getiri",
     transfers: "Transferler",
     fundingWithdrawals: "Fonlama",
@@ -58,7 +58,7 @@ const translations: Record<string, Record<string, string>> = {
   en: {
     // Core Navigation - Institutional
     vault: "Vault",
-    allocate: "Allocate",
+    allocate: "Trade",
     yield: "Yield",
     transfers: "Transfers",
     fundingWithdrawals: "Transfers",
@@ -97,7 +97,7 @@ const translations: Record<string, Record<string, string>> = {
   },
   de: {
     vault: "Tresor",
-    allocate: "Zuweisung",
+    allocate: "Handel",
     yield: "Rendite",
     transfers: "Überweisungen",
     fundingWithdrawals: "Ein-/Auszahlung",
@@ -128,7 +128,7 @@ const translations: Record<string, Record<string, string>> = {
   },
   fr: {
     vault: "Coffre",
-    allocate: "Allouer",
+    allocate: "Trading",
     yield: "Rendement",
     transfers: "Transferts",
     fundingWithdrawals: "Transferts",
@@ -159,7 +159,7 @@ const translations: Record<string, Record<string, string>> = {
   },
   ar: {
     vault: "الخزنة",
-    allocate: "تخصيص",
+    allocate: "تداول",
     yield: "العائد",
     transfers: "التحويلات",
     fundingWithdrawals: "التمويل",
@@ -190,7 +190,7 @@ const translations: Record<string, Record<string, string>> = {
   },
   ru: {
     vault: "Хранилище",
-    allocate: "Распределить",
+    allocate: "Торговля",
     yield: "Доходность",
     transfers: "Переводы",
     fundingWithdrawals: "Переводы",
