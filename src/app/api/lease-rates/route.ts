@@ -6,6 +6,27 @@ import {
   recordYieldHistory,
 } from "@/lib/leasing/yield-builder";
 import { smoothAllYields } from "@/lib/leasing/yield-smoother";
+import { computeAbaxxYields, type AbaxxYieldSnapshot } from "@/lib/abaxx-yield";
+import { Redis } from "@upstash/redis";
+
+const redisYield = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
+
+async function getAbaxxYields(): Promise<AbaxxYieldSnapshot | null> {
+  try {
+    // Try cached first
+    const cached = await redisYield.get("abaxx:yields:latest");
+    if (cached) {
+      return typeof cached === "string" ? JSON.parse(cached) : cached as AbaxxYieldSnapshot;
+    }
+    // Compute fresh
+    return await computeAbaxxYields();
+  } catch {
+    return null;
+  }
+}
 
 // NY Fed API for SOFR (no key required)
 const NY_FED_RATES_URL = "https://markets.newyorkfed.org/api/rates/secured/sofr/last/1.json";
@@ -161,8 +182,30 @@ export async function GET() {
       console.warn('Yield builder failed, falling back to SOFR-GOFO calculation:', yieldError);
     }
 
-    // Fallback: Legacy SOFR-GOFO calculation
+    // Try Abaxx futures-implied yields before legacy fallback
+    const abaxxYields = await getAbaxxYields();
     const goldSpot = await fetchGoldSpot();
+
+    if (abaxxYields?.gold) {
+      const rates = { ...calculateLegacyRates(sofr, goldSpot) };
+
+      // Override gold rates with Abaxx implied yields if available
+      if (abaxxYields.gold["3m"]?.rate) rates.gold["3m"] = round(abaxxYields.gold["3m"].rate);
+      if (abaxxYields.gold["6m"]?.rate) rates.gold["6m"] = round(abaxxYields.gold["6m"].rate);
+      if (abaxxYields.gold["12m"]?.rate) rates.gold["12m"] = round(abaxxYields.gold["12m"].rate);
+      rates.source = "abaxx_futures + legacy";
+      rates.lastUpdated = new Date().toISOString();
+
+      return NextResponse.json({
+        success: true,
+        rates,
+        engine: 'abaxx_futures',
+        abaxxImpliedYield: abaxxYields,
+        debug: { sofr, goldSpot, spotPerOz: abaxxYields.spotPricePerOz },
+      });
+    }
+
+    // Final fallback: Legacy SOFR-GOFO calculation
     const rates = calculateLegacyRates(sofr, goldSpot);
 
     return NextResponse.json({
