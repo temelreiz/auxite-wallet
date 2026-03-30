@@ -141,11 +141,22 @@ export async function GET() {
       const legacyRates = transformSnapshotToLegacyFormat(snapshot);
       legacyRates.sofr = round(sofr);
 
+      // Override gold rates with Abaxx futures-implied yields if available
+      const abaxxData = await getAbaxxYields();
+      if (abaxxData?.gold) {
+        if (abaxxData.gold["3m"]?.rate) legacyRates.gold["3m"] = round(abaxxData.gold["3m"].rate);
+        if (abaxxData.gold["6m"]?.rate) legacyRates.gold["6m"] = round(abaxxData.gold["6m"].rate);
+        if (abaxxData.gold["12m"]?.rate) legacyRates.gold["12m"] = round(abaxxData.gold["12m"].rate);
+        legacyRates.source = "abaxx_futures + yield_builder";
+        legacyRates.lastUpdated = new Date().toISOString();
+      }
+
       return NextResponse.json({
         success: true,
         rates: legacyRates,
-        engine: 'yield_builder',
-        source: snapshot.source,
+        engine: abaxxData?.gold ? 'abaxx_futures' : 'yield_builder',
+        source: abaxxData?.gold ? 'abaxx_futures' : snapshot.source,
+        abaxxImpliedYield: abaxxData || undefined,
         debug: { sofr, computedAt: snapshot.computedAt },
       });
     }
