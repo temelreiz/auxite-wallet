@@ -1,3 +1,14 @@
 {
-  "expo": {}
+  "expo": {
+    "name": "Auxite Wallet",
+    "slug": "auxite-wallet",
+    "android": {
+      "package": "io.auxite.wallet"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3de906b5-bf2b-45f7-8054-7dabdc858ac1"
+      }
+    }
+  }
 }
