@@ -10,6 +10,11 @@ import { getMetalPrices } from "./price-cache";
 // Troy ounce to grams conversion
 const TROY_OUNCE_TO_GRAMS = 31.1035;
 
+// Auxite spreads (basis points)
+const AUXITE_SPREAD_BPS = 50; // 0.50% platform margin
+const RISK_BUFFER_BPS = 25;   // 0.25% risk buffer
+const TOTAL_SPREAD = (AUXITE_SPREAD_BPS + RISK_BUFFER_BPS) / 100; // 0.75%
+
 export interface ImpliedYield {
   tenor: "3m" | "6m" | "12m";
   rate: number; // Annualized yield %
@@ -178,11 +183,14 @@ export async function computeAbaxxYields(): Promise<AbaxxYieldSnapshot | null> {
       const contract = findBestContract(futures, targetDays);
 
       if (contract && contract.midPrice) {
-        const rate = calculateImpliedYield(
+        const rawRate = calculateImpliedYield(
           spotPerOz,
           contract.midPrice,
           contract.daysToExpiry
         );
+
+        // Deduct Auxite spread + risk buffer
+        const rate = Math.max(0, rawRate - TOTAL_SPREAD);
 
         yieldMap.set(tenor, {
           tenor: tenor as ImpliedYield["tenor"],
