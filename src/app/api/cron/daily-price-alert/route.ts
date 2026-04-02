@@ -159,9 +159,9 @@ export async function GET(request: NextRequest) {
         tz = "Europe/Istanbul";
       }
 
-      // Check if it's 9 AM in user's timezone
+      // Check if it's 12 PM (noon) in user's timezone
       const localHour = getLocalHour(tz);
-      if (localHour === 9) {
+      if (localHour === 12) {
         eligibleUsers.push({ walletAddress: addr, timezone: tz });
       }
     }
@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
       try {
         const result = await sendPushToUser(
           user.walletAddress,
-          "Market Open \u2014 Daily Price Update",
+          "📊 Daily Price Update",
           notificationBody,
           {
             type: "daily_price_alert",
