@@ -6,7 +6,7 @@
  *
  * Bonus Types:
  *   1. Deposit Bonus: 2% on deposits over $50
- *   2. Welcome Bonus: 10 AUXS (KYC + $100 deposit required)
+ *   2. Welcome Gold: 5 AUXG (unlocked after first demo trade, activated after KYC)
  *   3. Referral Bonus: 0.5% for both parties on first deposit
  *
  * Unlock: 30 days OR 5x trade volume (whichever comes first)
@@ -27,8 +27,9 @@ export const BONUS_CONFIG = {
   depositBonusPercent: parseFloat(process.env.DEPOSIT_BONUS_PERCENT || '2'),
   minDepositForBonus: parseFloat(process.env.MIN_DEPOSIT_FOR_BONUS || '50'),
 
-  // Welcome Bonus
-  welcomeBonusAuxs: parseFloat(process.env.WELCOME_BONUS_AUXS || '10'),
+  // Welcome Gold (Start With Gold campaign)
+  welcomeBonusAuxg: parseFloat(process.env.WELCOME_BONUS_AUXG || '5'),
+  welcomeBonusAuxs: parseFloat(process.env.WELCOME_BONUS_AUXS || '10'), // Legacy
   minDepositForWelcome: parseFloat(process.env.MIN_DEPOSIT_FOR_WELCOME || '100'),
 
   // Referral Bonus
@@ -138,11 +139,20 @@ export async function checkWelcomeBonusEligibility(
 }
 
 /**
- * Get welcome bonus amount (in AUXS grams).
+ * Get welcome bonus amount (in AUXS grams). Legacy.
  */
 export function getWelcomeBonusAmount(silverPricePerGram: number): { bonusGrams: number; bonusValueUsd: number } {
   const bonusGrams = BONUS_CONFIG.welcomeBonusAuxs;
   const bonusValueUsd = bonusGrams * silverPricePerGram;
+  return { bonusGrams, bonusValueUsd };
+}
+
+/**
+ * Get Welcome Gold amount (in AUXG grams). Start With Gold campaign.
+ */
+export function getWelcomeGoldAmount(goldPricePerGram: number): { bonusGrams: number; bonusValueUsd: number } {
+  const bonusGrams = BONUS_CONFIG.welcomeBonusAuxg;
+  const bonusValueUsd = bonusGrams * goldPricePerGram;
   return { bonusGrams, bonusValueUsd };
 }
 
@@ -445,6 +455,7 @@ export async function getCampaignInfo(): Promise<{
     globalCapUsd: BONUS_CONFIG.globalCapUsd,
     globalRemaining: BONUS_CONFIG.globalCapUsd - globalCostUsd,
     depositBonusPercent: BONUS_CONFIG.depositBonusPercent,
+    welcomeBonusAuxg: BONUS_CONFIG.welcomeBonusAuxg,
     welcomeBonusAuxs: BONUS_CONFIG.welcomeBonusAuxs,
     referralBonusPercent: BONUS_CONFIG.referralBonusPercent,
   };

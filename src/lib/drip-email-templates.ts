@@ -94,57 +94,57 @@ interface DripContent {
 
 const day3Content: Record<string, DripContent> = {
   en: {
-    subject: "Complete Verification — Earn 10 AUXS",
-    title: "You're Almost There",
-    body: `<p>You registered with Auxite but haven't completed your verification yet.</p>
-${highlight("Complete KYC verification and deposit <strong>$100 or more</strong> to receive your <strong>10 AUXS Welcome Bonus</strong>. Liquidity Credits unlock after 30 days or 5x trading volume.")}
-<p>The process takes less than 2 minutes. All you need is a valid ID document.</p>`,
-    ctaText: "VERIFY NOW",
+    subject: "Activate Your Welcome Gold — 5g AUXG Waiting",
+    title: "Your Gold Is Waiting",
+    body: `<p>You registered with Auxite and unlocked your Welcome Gold.</p>
+${highlight("Complete KYC verification to <strong>activate your 5 AUXG Welcome Gold</strong> and unlock full platform access. Your gold is available for use within the platform.")}
+<p>Verification takes less than 2 minutes. All you need is a valid ID document.</p>`,
+    ctaText: "ACTIVATE GOLD",
     ctaUrl: VAULT_URL,
   },
   tr: {
-    subject: "Doğrulamayı Tamamlayın — 10 AUXS Kazanın",
-    title: "Neredeyse Tamam",
-    body: `<p>Auxite'e kayıt oldunuz ancak doğrulamanızı henüz tamamlamadınız.</p>
-${highlight("KYC doğrulamasını tamamlayın ve <strong>100$ veya üzeri</strong> yatırım yaparak <strong>10 AUXS Hoş Geldin Bonusu</strong> kazanın. Likidite Kredileri 30 gün sonra veya 5x işlem hacmiyle açılır.")}
-<p>İşlem 2 dakikadan kısa sürer. Tek ihtiyacınız geçerli bir kimlik belgesi.</p>`,
-    ctaText: "ŞİMDİ DOĞRULA",
+    subject: "Hoş Geldin Altınınızı Aktive Edin — 5g AUXG Bekliyor",
+    title: "Altınınız Sizi Bekliyor",
+    body: `<p>Auxite'e kayıt oldunuz ve Hoş Geldin Altınınızı açtınız.</p>
+${highlight("KYC doğrulamasını tamamlayarak <strong>5 AUXG Hoş Geldin Altınınızı aktive edin</strong> ve platform özelliklerinin tamamına erişin. Altınınız platform içi kullanım için hazır.")}
+<p>Doğrulama işlemi 2 dakikadan kısa sürer. Tek ihtiyacınız geçerli bir kimlik belgesi.</p>`,
+    ctaText: "ALTINI AKTİVE ET",
     ctaUrl: VAULT_URL,
   },
   de: {
-    subject: "Verifizierung abschließen — 10 AUXS verdienen",
-    title: "Fast geschafft",
-    body: `<p>Sie haben sich bei Auxite registriert, aber Ihre Verifizierung noch nicht abgeschlossen.</p>
-${highlight("Schließen Sie die KYC-Verifizierung ab und zahlen Sie <strong>100$ oder mehr</strong> ein, um Ihren <strong>10 AUXS Willkommensbonus</strong> zu erhalten. Liquiditätsguthaben werden nach 30 Tagen oder 5-fachem Handelsvolumen freigeschaltet.")}
-<p>Der Vorgang dauert weniger als 2 Minuten. Sie benötigen lediglich ein gültiges Ausweisdokument.</p>`,
-    ctaText: "JETZT VERIFIZIEREN",
+    subject: "Aktivieren Sie Ihr Willkommensgold — 5g AUXG wartet",
+    title: "Ihr Gold wartet",
+    body: `<p>Sie haben sich bei Auxite registriert und Ihr Willkommensgold freigeschaltet.</p>
+${highlight("Schließen Sie die KYC-Verifizierung ab, um <strong>Ihre 5 AUXG Willkommensgold zu aktivieren</strong> und vollen Zugang zur Plattform zu erhalten. Ihr Gold ist für die Nutzung innerhalb der Plattform verfügbar.")}
+<p>Die Verifizierung dauert weniger als 2 Minuten. Sie benötigen lediglich ein gültiges Ausweisdokument.</p>`,
+    ctaText: "GOLD AKTIVIEREN",
     ctaUrl: VAULT_URL,
   },
   fr: {
-    subject: "Complétez la vérification — Gagnez 10 AUXS",
-    title: "Vous y êtes presque",
-    body: `<p>Vous vous êtes inscrit sur Auxite mais n'avez pas encore complété votre vérification.</p>
-${highlight("Complétez la vérification KYC et déposez <strong>100$ ou plus</strong> pour recevoir votre <strong>Bonus de Bienvenue de 10 AUXS</strong>. Les Crédits de Liquidité se débloquent après 30 jours ou 5x volume de trading.")}
-<p>Le processus prend moins de 2 minutes. Il vous suffit d'un document d'identité valide.</p>`,
-    ctaText: "VÉRIFIER MAINTENANT",
+    subject: "Activez votre Or de Bienvenue — 5g AUXG en attente",
+    title: "Votre Or vous attend",
+    body: `<p>Vous vous êtes inscrit sur Auxite et avez débloqué votre Or de Bienvenue.</p>
+${highlight("Complétez la vérification KYC pour <strong>activer vos 5 AUXG d'Or de Bienvenue</strong> et débloquer l'accès complet à la plateforme. Votre or est disponible pour utilisation au sein de la plateforme.")}
+<p>La vérification prend moins de 2 minutes. Il vous suffit d'un document d'identité valide.</p>`,
+    ctaText: "ACTIVER L'OR",
     ctaUrl: VAULT_URL,
   },
   ar: {
-    subject: "أكمل التحقق — اربح 10 AUXS",
-    title: "أنت على وشك الانتهاء",
-    body: `<p>لقد سجلت في Auxite ولكنك لم تكمل التحقق بعد.</p>
-${highlight("أكمل التحقق من هويتك (KYC) وأودع <strong>100$ أو أكثر</strong> للحصول على <strong>مكافأة ترحيبية 10 AUXS</strong>. تُفتح اعتمادات السيولة بعد 30 يوماً أو 5 أضعاف حجم التداول.")}
-<p>العملية تستغرق أقل من دقيقتين. كل ما تحتاجه هو وثيقة هوية صالحة.</p>`,
-    ctaText: "تحقق الآن",
+    subject: "فعّل ذهب الترحيب — 5غ AUXG في انتظارك",
+    title: "ذهبك في انتظارك",
+    body: `<p>لقد سجلت في Auxite وفتحت ذهب الترحيب الخاص بك.</p>
+${highlight("أكمل التحقق من هويتك (KYC) لـ<strong>تفعيل 5 AUXG ذهب الترحيب</strong> وفتح الوصول الكامل للمنصة. ذهبك متاح للاستخدام داخل المنصة.")}
+<p>التحقق يستغرق أقل من دقيقتين. كل ما تحتاجه هو وثيقة هوية صالحة.</p>`,
+    ctaText: "فعّل الذهب",
     ctaUrl: VAULT_URL,
   },
   ru: {
-    subject: "Завершите верификацию — Получите 10 AUXS",
-    title: "Почти готово",
-    body: `<p>Вы зарегистрировались в Auxite, но ещё не прошли верификацию.</p>
-${highlight("Пройдите KYC-верификацию и внесите депозит от <strong>100$</strong> для получения <strong>Приветственного бонуса 10 AUXS</strong>. Кредиты ликвидности разблокируются через 30 дней или при 5-кратном торговом объёме.")}
-<p>Процесс занимает менее 2 минут. Вам понадобится только действующий документ, удостоверяющий личность.</p>`,
-    ctaText: "ВЕРИФИЦИРОВАТЬ",
+    subject: "Активируйте приветственное золото — 5г AUXG ждёт",
+    title: "Ваше золото ждёт",
+    body: `<p>Вы зарегистрировались в Auxite и разблокировали приветственное золото.</p>
+${highlight("Пройдите KYC-верификацию, чтобы <strong>активировать ваши 5 AUXG приветственного золота</strong> и получить полный доступ к платформе. Ваше золото доступно для использования внутри платформы.")}
+<p>Верификация занимает менее 2 минут. Вам понадобится только действующий документ.</p>`,
+    ctaText: "АКТИВИРОВАТЬ ЗОЛОТО",
     ctaUrl: VAULT_URL,
   },
 };
@@ -277,87 +277,87 @@ ${highlight("Торгуйте по <strong>рыночным ценам в реа
 
 const day14Content: Record<string, DripContent> = {
   en: {
-    subject: "Your Welcome Bonus Is Expiring Soon",
-    title: "Don't Miss Your Bonus",
-    body: `<p>It's been two weeks since you joined Auxite. Your <strong>10 AUXS Welcome Bonus</strong> offer is expiring soon.</p>
-${highlight("Complete KYC verification and make your first deposit of <strong>$100 or more</strong> before the offer expires. This is a limited-time offer for new members.")}
+    subject: "Your Welcome Gold Expires Soon — Activate Now",
+    title: "Don't Miss Your Gold",
+    body: `<p>It's been two weeks since you joined Auxite. Your <strong>5 AUXG Welcome Gold</strong> is waiting to be activated.</p>
+${highlight("Complete KYC verification to <strong>activate your Welcome Gold</strong> and unlock full platform access. Add funds to grow your position beyond your welcome gold.")}
 <p>Once verified, you'll also unlock:</p>
 <ul style="color:#444;font-size:13px;line-height:2">
   <li><strong>2% deposit bonus</strong> in metal credits</li>
-  <li><strong>0.5% referral bonus</strong> on referred deposits</li>
-  <li><strong>Structured Yield</strong> — lease metals to institutions</li>
+  <li><strong>Structured Yield</strong> — earn on your metals</li>
+  <li><strong>Full trading</strong> — buy, sell, convert all metals</li>
 </ul>`,
-    ctaText: "CLAIM BONUS",
+    ctaText: "ACTIVATE GOLD",
     ctaUrl: VAULT_URL,
   },
   tr: {
-    subject: "Hoş Geldin Bonusunuzun Süresi Doluyor",
-    title: "Bonusunuzu Kaçırmayın",
-    body: `<p>Auxite'e katılmanızın üzerinden iki hafta geçti. <strong>10 AUXS Hoş Geldin Bonusu</strong> teklifinizin süresi yakında doluyor.</p>
-${highlight("Teklif sona ermeden önce KYC doğrulamasını tamamlayın ve <strong>100$ veya üzeri</strong> ilk yatırımınızı yapın. Bu, yeni üyeler için sınırlı süreli bir tekliftir.")}
+    subject: "Hoş Geldin Altınınızın Süresi Doluyor — Şimdi Aktive Edin",
+    title: "Altınınızı Kaçırmayın",
+    body: `<p>Auxite'e katılmanızın üzerinden iki hafta geçti. <strong>5 AUXG Hoş Geldin Altınız</strong> aktive edilmeyi bekliyor.</p>
+${highlight("KYC doğrulamasını tamamlayarak <strong>Hoş Geldin Altınınızı aktive edin</strong> ve platformun tüm özelliklerine erişin. Yatırım yaparak pozisyonunuzu büyütün.")}
 <p>Doğrulandıktan sonra ayrıca şunların kilidini açarsınız:</p>
 <ul style="color:#444;font-size:13px;line-height:2">
   <li>Metal kredilerinde <strong>%2 yatırım bonusu</strong></li>
-  <li>Yönlendirilen yatırımlarda <strong>%0,5 referans bonusu</strong></li>
-  <li><strong>Yapılandırılmış Getiri</strong> — metalleri kurumlara kiralayın</li>
+  <li><strong>Yapılandırılmış Getiri</strong> — metallerinizden kazanç elde edin</li>
+  <li><strong>Tam ticaret</strong> — tüm metalleri alın, satın, dönüştürün</li>
 </ul>`,
-    ctaText: "BONUSU AL",
+    ctaText: "ALTINI AKTİVE ET",
     ctaUrl: VAULT_URL,
   },
   de: {
-    subject: "Ihr Willkommensbonus läuft bald ab",
-    title: "Verpassen Sie Ihren Bonus nicht",
-    body: `<p>Es sind zwei Wochen seit Ihrer Registrierung bei Auxite vergangen. Ihr Angebot für den <strong>10 AUXS Willkommensbonus</strong> läuft bald ab.</p>
-${highlight("Schließen Sie die KYC-Verifizierung ab und tätigen Sie Ihre erste Einzahlung von <strong>100$ oder mehr</strong>, bevor das Angebot abläuft. Dies ist ein zeitlich begrenztes Angebot für neue Mitglieder.")}
+    subject: "Ihr Willkommensgold läuft bald ab — Jetzt aktivieren",
+    title: "Verpassen Sie Ihr Gold nicht",
+    body: `<p>Es sind zwei Wochen seit Ihrer Registrierung bei Auxite vergangen. Ihre <strong>5 AUXG Willkommensgold</strong> wartet auf Aktivierung.</p>
+${highlight("Schließen Sie die KYC-Verifizierung ab, um <strong>Ihr Willkommensgold zu aktivieren</strong> und vollen Zugang zur Plattform zu erhalten. Zahlen Sie ein, um Ihre Position auszubauen.")}
 <p>Nach der Verifizierung schalten Sie außerdem frei:</p>
 <ul style="color:#444;font-size:13px;line-height:2">
   <li><strong>2% Einzahlungsbonus</strong> in Metallguthaben</li>
-  <li><strong>0,5% Empfehlungsbonus</strong> auf empfohlene Einzahlungen</li>
-  <li><strong>Strukturierte Rendite</strong> — Metalle an Institutionen leasen</li>
+  <li><strong>Strukturierte Rendite</strong> — verdienen Sie mit Ihren Metallen</li>
+  <li><strong>Voller Handel</strong> — kaufen, verkaufen, konvertieren Sie alle Metalle</li>
 </ul>`,
-    ctaText: "BONUS SICHERN",
+    ctaText: "GOLD AKTIVIEREN",
     ctaUrl: VAULT_URL,
   },
   fr: {
-    subject: "Votre bonus de bienvenue expire bientôt",
-    title: "Ne manquez pas votre bonus",
-    body: `<p>Cela fait deux semaines que vous avez rejoint Auxite. Votre offre de <strong>Bonus de Bienvenue de 10 AUXS</strong> expire bientôt.</p>
-${highlight("Complétez la vérification KYC et effectuez votre premier dépôt de <strong>100$ ou plus</strong> avant l'expiration de l'offre. C'est une offre limitée pour les nouveaux membres.")}
+    subject: "Votre Or de Bienvenue expire bientôt — Activez maintenant",
+    title: "Ne manquez pas votre Or",
+    body: `<p>Cela fait deux semaines que vous avez rejoint Auxite. Vos <strong>5 AUXG d'Or de Bienvenue</strong> attendent d'être activés.</p>
+${highlight("Complétez la vérification KYC pour <strong>activer votre Or de Bienvenue</strong> et débloquer l'accès complet à la plateforme. Ajoutez des fonds pour développer votre position.")}
 <p>Une fois vérifié, vous débloquerez également :</p>
 <ul style="color:#444;font-size:13px;line-height:2">
   <li><strong>Bonus de dépôt de 2%</strong> en crédits métal</li>
-  <li><strong>Bonus de parrainage de 0,5%</strong> sur les dépôts parrainés</li>
-  <li><strong>Rendement Structuré</strong> — louez vos métaux à des institutions</li>
+  <li><strong>Rendement Structuré</strong> — gagnez sur vos métaux</li>
+  <li><strong>Trading complet</strong> — achetez, vendez, convertissez tous les métaux</li>
 </ul>`,
-    ctaText: "RÉCLAMER LE BONUS",
+    ctaText: "ACTIVER L'OR",
     ctaUrl: VAULT_URL,
   },
   ar: {
-    subject: "مكافأة الترحيب الخاصة بك ستنتهي قريباً",
-    title: "لا تفوّت مكافأتك",
-    body: `<p>مرّ أسبوعان منذ انضمامك إلى Auxite. عرض <strong>مكافأة الترحيب 10 AUXS</strong> سينتهي قريباً.</p>
-${highlight("أكمل التحقق من هويتك وقم بأول إيداع بقيمة <strong>100$ أو أكثر</strong> قبل انتهاء العرض. هذا عرض محدود المدة للأعضاء الجدد.")}
+    subject: "ذهب الترحيب سينتهي قريباً — فعّله الآن",
+    title: "لا تفوّت ذهبك",
+    body: `<p>مرّ أسبوعان منذ انضمامك إلى Auxite. <strong>5 AUXG ذهب الترحيب</strong> في انتظار التفعيل.</p>
+${highlight("أكمل التحقق من هويتك لـ<strong>تفعيل ذهب الترحيب</strong> وفتح الوصول الكامل للمنصة. أضف الأموال لتوسيع مركزك.")}
 <p>بعد التحقق، ستفتح أيضاً:</p>
 <ul style="color:#444;font-size:13px;line-height:2;direction:rtl;text-align:right">
   <li><strong>مكافأة إيداع 2%</strong> في اعتمادات المعادن</li>
-  <li><strong>مكافأة إحالة 0.5%</strong> على الإيداعات المُحالة</li>
-  <li><strong>العائد المهيكل</strong> — أجّر المعادن للمؤسسات</li>
+  <li><strong>العائد المهيكل</strong> — اربح من معادنك</li>
+  <li><strong>تداول كامل</strong> — اشترِ وبع وحوّل جميع المعادن</li>
 </ul>`,
-    ctaText: "احصل على المكافأة",
+    ctaText: "فعّل الذهب",
     ctaUrl: VAULT_URL,
   },
   ru: {
-    subject: "Ваш приветственный бонус скоро истекает",
-    title: "Не упустите бонус",
-    body: `<p>Прошло две недели с момента вашей регистрации в Auxite. Срок действия предложения <strong>Приветственного бонуса 10 AUXS</strong> скоро истечёт.</p>
-${highlight("Пройдите KYC-верификацию и внесите первый депозит от <strong>100$</strong> до истечения предложения. Это предложение ограничено по времени для новых участников.")}
+    subject: "Ваше приветственное золото скоро истечёт — Активируйте сейчас",
+    title: "Не упустите золото",
+    body: `<p>Прошло две недели с момента вашей регистрации в Auxite. Ваши <strong>5 AUXG приветственного золота</strong> ждут активации.</p>
+${highlight("Пройдите KYC-верификацию, чтобы <strong>активировать приветственное золото</strong> и получить полный доступ к платформе. Пополните счёт, чтобы расширить свою позицию.")}
 <p>После верификации вы также разблокируете:</p>
 <ul style="color:#444;font-size:13px;line-height:2">
   <li><strong>2% бонус на депозит</strong> в металлических кредитах</li>
-  <li><strong>0,5% реферальный бонус</strong> от депозитов рефералов</li>
-  <li><strong>Структурированная доходность</strong> — сдавайте металлы институциям</li>
+  <li><strong>Структурированная доходность</strong> — зарабатывайте на металлах</li>
+  <li><strong>Полный трейдинг</strong> — покупайте, продавайте, конвертируйте все металлы</li>
 </ul>`,
-    ctaText: "ПОЛУЧИТЬ БОНУС",
+    ctaText: "АКТИВИРОВАТЬ ЗОЛОТО",
     ctaUrl: VAULT_URL,
   },
 };

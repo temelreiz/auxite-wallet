@@ -581,6 +581,83 @@ export async function notifyTransactionRich(
   });
 }
 
+// ─── Welcome Gold Notifications ─────────────────────────────────────────
+
+const welcomeGoldTitles: Record<string, Record<LangCode, string>> = {
+  unlocked: {
+    en: '🏆 Gold Unlocked!',
+    tr: '🏆 Altın Açıldı!',
+    de: '🏆 Gold freigeschaltet!',
+    fr: '🏆 Or débloqué !',
+    ar: '🏆 تم فتح الذهب!',
+    ru: '🏆 Золото разблокировано!',
+  },
+  reminder: {
+    en: '🪙 Your Gold Is Waiting',
+    tr: '🪙 Altınınız Bekliyor',
+    de: '🪙 Ihr Gold wartet',
+    fr: '🪙 Votre Or vous attend',
+    ar: '🪙 ذهبك في انتظارك',
+    ru: '🪙 Ваше золото ждёт',
+  },
+  activate: {
+    en: '✨ Activate Your Gold',
+    tr: '✨ Altınınızı Aktive Edin',
+    de: '✨ Aktivieren Sie Ihr Gold',
+    fr: '✨ Activez votre Or',
+    ar: '✨ فعّل ذهبك',
+    ru: '✨ Активируйте золото',
+  },
+};
+
+const welcomeGoldBodies: Record<string, Record<LangCode, string>> = {
+  unlocked: {
+    en: '5 AUXG Welcome Gold has been added to your vault. Complete KYC to activate full access.',
+    tr: '5 AUXG Hoş Geldin Altını kasanıza eklendi. Tam erişim için KYC doğrulamasını tamamlayın.',
+    de: '5 AUXG Willkommensgold wurde Ihrem Tresor hinzugefügt. Schließen Sie KYC ab, um vollen Zugang zu erhalten.',
+    fr: '5 AUXG d\'Or de Bienvenue ont été ajoutés à votre coffre. Complétez le KYC pour un accès complet.',
+    ar: 'تمت إضافة 5 AUXG ذهب ترحيب إلى خزنتك. أكمل KYC للوصول الكامل.',
+    ru: '5 AUXG приветственного золота добавлено в ваше хранилище. Пройдите KYC для полного доступа.',
+  },
+  reminder: {
+    en: 'Complete a demo trade to unlock 5g of Welcome Gold in your vault.',
+    tr: 'Kasanızda 5g Hoş Geldin Altını açmak için demo işlem yapın.',
+    de: 'Führen Sie einen Demo-Trade durch, um 5g Willkommensgold freizuschalten.',
+    fr: 'Effectuez une transaction démo pour débloquer 5g d\'Or de Bienvenue.',
+    ar: 'قم بتداول تجريبي لفتح 5غ من ذهب الترحيب في خزنتك.',
+    ru: 'Совершите демо-сделку, чтобы разблокировать 5г приветственного золота.',
+  },
+  activate: {
+    en: 'Verify your account to unlock full access to your 5 AUXG Welcome Gold.',
+    tr: 'Hesabınızı doğrulayarak 5 AUXG Hoş Geldin Altınınıza tam erişim sağlayın.',
+    de: 'Verifizieren Sie Ihr Konto, um vollen Zugang zu Ihren 5 AUXG zu erhalten.',
+    fr: 'Vérifiez votre compte pour débloquer l\'accès complet à vos 5 AUXG.',
+    ar: 'تحقق من حسابك لفتح الوصول الكامل إلى 5 AUXG ذهب الترحيب.',
+    ru: 'Подтвердите аккаунт для полного доступа к 5 AUXG приветственного золота.',
+  },
+};
+
+/**
+ * Welcome Gold push notification — multilingual
+ */
+export async function notifyWelcomeGold(
+  walletAddress: string,
+  stage: 'unlocked' | 'reminder' | 'activate',
+): Promise<void> {
+  const lang = getLang(await getUserLanguage(walletAddress));
+
+  await sendNotification(walletAddress, 'system', {
+    title: welcomeGoldTitles[stage]?.[lang] || welcomeGoldTitles[stage]?.en || 'Welcome Gold',
+    body: welcomeGoldBodies[stage]?.[lang] || welcomeGoldBodies[stage]?.en || '',
+    icon: '/icons/icon-192x192.png',
+    tag: `welcome-gold-${stage}-${Date.now()}`,
+    data: {
+      type: 'welcome_gold',
+      stage,
+    },
+  });
+}
+
 export async function notifySecurityEvent(
   walletAddress: string,
   data: {
