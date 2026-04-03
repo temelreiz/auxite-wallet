@@ -443,6 +443,7 @@ export async function getCampaignInfo(): Promise<{
   globalCapUsd: number;
   globalRemaining: number;
   depositBonusPercent: number;
+  welcomeBonusAuxg: number;
   welcomeBonusAuxs: number;
   referralBonusPercent: number;
 }> {
