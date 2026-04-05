@@ -719,7 +719,7 @@ export default function VaultPage() {
               <div>
                 <span className="font-bold text-sm">Demo Mode</span>
                 <span className="text-xs ml-2 opacity-70">
-                  {{ tr: 'Sanal bakiye — gerçek varlık yok', de: 'Virtuelles Guthaben', fr: 'Solde virtuel', ar: 'رصيد افتراضي', ru: 'Виртуальный баланс' }[lang] || 'Virtual balance — no real assets'}
+                  {{ en: 'Virtual balance — no real assets', tr: 'Sanal bakiye — gerçek varlık yok', de: 'Virtuelles Guthaben', fr: 'Solde virtuel', ar: 'رصيد افتراضي', ru: 'Виртуальный баланс' }[lang] || 'Virtual balance — no real assets'}
                 </span>
               </div>
             </div>
@@ -727,7 +727,7 @@ export default function VaultPage() {
               onClick={() => { exitDemoMode(); window.location.href = '/auth/register'; }}
               className="px-4 py-1.5 bg-[#0B0B0D]/20 rounded-lg text-xs font-bold hover:bg-[#0B0B0D]/30 transition-colors"
             >
-              {{ tr: 'Gerçek Hesap Aç', de: 'Live starten', fr: 'Passer au réel', ar: 'ابدأ الحقيقي', ru: 'Начать' }[lang] || 'Go Live'}
+              {{ en: 'Go Live', tr: 'Gerçek Hesap Aç', de: 'Live starten', fr: 'Passer au réel', ar: 'ابدأ الحقيقي', ru: 'Начать' }[lang] || 'Go Live'}
             </button>
           </div>
         )}
@@ -740,14 +740,14 @@ export default function VaultPage() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-[#BFA181]">
-                {{ tr: '5 AUXG Hoş Geldin Altını', de: '5 AUXG Willkommensgold', fr: '5 AUXG Or de Bienvenue', ar: '5 AUXG ذهب الترحيب', ru: '5 AUXG приветственное золото' }[lang] || '5 AUXG Welcome Gold'}
+                {{ en: '5 AUXG Welcome Gold', tr: '5 AUXG Hoş Geldin Altını', de: '5 AUXG Willkommensgold', fr: '5 AUXG Or de Bienvenue', ar: '5 AUXG ذهب الترحيب', ru: '5 AUXG приветственное золото' }[lang] || '5 AUXG Welcome Gold'}
               </p>
               <p className="text-xs text-slate-400">
-                {{ tr: 'İlk işleminizi yaparak altınınızı açın', de: 'Machen Sie Ihren ersten Trade', fr: 'Faites votre premier trade', ar: 'قم بأول تداول لفتح ذهبك', ru: 'Совершите первую сделку' }[lang] || 'Make your first trade to unlock'}
+                {{ en: 'Make your first trade to unlock', tr: 'İlk işleminizi yaparak altınınızı açın', de: 'Machen Sie Ihren ersten Trade', fr: 'Faites votre premier trade', ar: 'قم بأول تداول لفتح ذهبك', ru: 'Совершите первую сделку' }[lang] || 'Make your first trade to unlock'}
               </p>
             </div>
             <a href="/allocate" className="px-3 py-1.5 bg-[#BFA181] text-[#0B0B0D] rounded-lg text-xs font-bold hover:opacity-90">
-              {{ tr: 'İşlem Yap', de: 'Handeln', fr: 'Négocier', ar: 'تداول', ru: 'Торговать' }[lang] || 'Trade'}
+              {{ en: 'Trade', tr: 'İşlem Yap', de: 'Handeln', fr: 'Négocier', ar: 'تداول', ru: 'Торговать' }[lang] || 'Trade'}
             </a>
           </div>
         )}
@@ -759,14 +759,14 @@ export default function VaultPage() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-[#BFA181]">
-                {{ tr: '5 AUXG Hoş Geldin Altını', de: '5 AUXG Willkommensgold', fr: '5 AUXG Or de Bienvenue', ar: '5 AUXG ذهب الترحيب', ru: '5 AUXG приветственное золото' }[lang] || '5 AUXG Welcome Gold'}
+                {{ en: '5 AUXG Welcome Gold', tr: '5 AUXG Hoş Geldin Altını', de: '5 AUXG Willkommensgold', fr: '5 AUXG Or de Bienvenue', ar: '5 AUXG ذهب الترحيب', ru: '5 AUXG приветственное золото' }[lang] || '5 AUXG Welcome Gold'}
               </p>
               <p className="text-xs text-slate-400">
-                {{ tr: 'Platform içi kullanım', de: 'Plattformnutzung', fr: 'Utilisation plateforme', ar: 'استخدام المنصة', ru: 'Использование на платформе' }[lang] || 'Platform use only'}
+                {{ en: 'Platform use only', tr: 'Platform içi kullanım', de: 'Plattformnutzung', fr: 'Utilisation plateforme', ar: 'استخدام المنصة', ru: 'Использование на платформе' }[lang] || 'Platform use only'}
               </p>
             </div>
             <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-bold">
-              {{ tr: 'Aktif', de: 'Aktiv', fr: 'Actif', ar: 'نشط', ru: 'Активно' }[lang] || 'Active'}
+              {{ en: 'Active', tr: 'Aktif', de: 'Aktiv', fr: 'Actif', ar: 'نشط', ru: 'Активно' }[lang] || 'Active'}
             </span>
           </div>
         )}
