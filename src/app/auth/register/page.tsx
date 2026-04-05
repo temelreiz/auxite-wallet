@@ -10,6 +10,7 @@ import Image from 'next/image';
 import Script from 'next/script';
 import { Loader2, Mail, Lock, Eye, EyeOff, AlertCircle, User, CheckCircle, Globe } from 'lucide-react';
 import { useLanguage } from "@/components/LanguageContext";
+import { useWallet } from "@/components/WalletContext";
 
 const LANGUAGE_OPTIONS = [
   { code: 'en', label: 'English' },
@@ -53,6 +54,8 @@ const translations: Record<string, Record<string, string>> = {
     privacyPolicy: "Gizlilik Politikası",
     preferredLanguage: "Tercih Edilen İletişim Dili",
     languageHint: "Yasal belgeler ve saklama kayıtları için kullanılır",
+    startWithGold: "Altınla Başla",
+    tryDemoDesc: "5g Hoş Geldin Altını ile demo deneyin",
   },
   en: {
     checkYourEmail: "Check Your Email",
@@ -86,6 +89,8 @@ const translations: Record<string, Record<string, string>> = {
     privacyPolicy: "Privacy Policy",
     preferredLanguage: "Preferred Communication Language",
     languageHint: "Used for legal documents and custody records",
+    startWithGold: "Start with Gold",
+    tryDemoDesc: "Try demo with 5g Welcome Gold",
   },
   de: {
     checkYourEmail: "Überprüfen Sie Ihre E-Mail",
@@ -119,6 +124,8 @@ const translations: Record<string, Record<string, string>> = {
     privacyPolicy: "Datenschutzrichtlinie",
     preferredLanguage: "Bevorzugte Kommunikationssprache",
     languageHint: "Für rechtliche Dokumente und Verwahrungsunterlagen",
+    startWithGold: "Start mit Gold",
+    tryDemoDesc: "Demo mit 5g Willkommensgold testen",
   },
   fr: {
     checkYourEmail: "Vérifiez votre e-mail",
@@ -152,6 +159,8 @@ const translations: Record<string, Record<string, string>> = {
     privacyPolicy: "Politique de confidentialité",
     preferredLanguage: "Langue de communication préférée",
     languageHint: "Utilisée pour les documents juridiques et les registres de conservation",
+    startWithGold: "Commencer avec l'Or",
+    tryDemoDesc: "Essayez la demo avec 5g d'Or de Bienvenue",
   },
   ar: {
     checkYourEmail: "تحقق من بريدك الإلكتروني",
@@ -185,6 +194,8 @@ const translations: Record<string, Record<string, string>> = {
     privacyPolicy: "سياسة الخصوصية",
     preferredLanguage: "لغة التواصل المفضلة",
     languageHint: "تُستخدم للمستندات القانونية وسجلات الحفظ",
+    startWithGold: "ابدأ بالذهب",
+    tryDemoDesc: "جرب العرض التوضيحي مع 5غ ذهب ترحيب",
   },
   ru: {
     checkYourEmail: "Проверьте вашу почту",
@@ -218,6 +229,8 @@ const translations: Record<string, Record<string, string>> = {
     privacyPolicy: "Политика конфиденциальности",
     preferredLanguage: "Предпочтительный язык общения",
     languageHint: "Используется для юридических документов и записей хранения",
+    startWithGold: "Начать с золота",
+    tryDemoDesc: "Попробуйте демо с 5г приветственного золота",
   },
 };
 
@@ -225,6 +238,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { lang } = useLanguage();
+  const { enterDemoMode } = useWallet();
 
   // Capture UTM parameters from URL
   const utmSource = searchParams.get('source') || searchParams.get('utm_source') || '';
@@ -579,8 +593,18 @@ export default function RegisterPage() {
             </button>
           </div>
 
+          {/* Start with Gold — Demo */}
+          <button
+            onClick={() => { enterDemoMode(); router.push('/vault'); }}
+            className="w-full mt-6 py-3.5 bg-gradient-to-r from-[#BFA181] to-[#D4B47A] text-[#0B0B0D] font-bold rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-3"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            {t('startWithGold')}
+          </button>
+          <p className="text-center text-xs text-slate-400 mt-1">{t('tryDemoDesc')}</p>
+
           {/* Login Link */}
-          <div className="flex items-center justify-center gap-2 mt-8">
+          <div className="flex items-center justify-center gap-2 mt-6">
             <span className="text-slate-500 dark:text-slate-400">{t('alreadyHaveAccount')}</span>
             <Link
               href="/auth/login"
