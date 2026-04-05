@@ -190,6 +190,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // ─── Demo Mode State ───────────────────────────────────────────
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [demoBalance, setDemoBalance] = useState(1000);
+  const [demoAllocations, setDemoAllocations] = useState<DemoAllocations>({ auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 });
+  const [welcomeGoldStatus, setWelcomeGoldStatus] = useState<'none' | 'pending' | 'demo_unlocked' | 'unlocked' | 'activated'>('none');
+  const [hasCompletedFirstDemoTrade, setHasCompletedFirstDemoTrade] = useState(false);
+
   // Determine effective address and connection status
   const isLocalWallet = walletMode === "local" && !!localWalletAddress;
   const isConnected = isLocalWallet || isExternalConnected || isDemoMode;
@@ -212,13 +219,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   // WalletConnectModal gibi yerler seçilmiş wallet tipini tutmak istiyorsa (compat)
   const [walletType, setWalletType] = useState<WalletType>(null);
-
-  // ─── Demo Mode State ───────────────────────────────────────────
-  const [isDemoMode, setIsDemoMode] = useState(false);
-  const [demoBalance, setDemoBalance] = useState(1000);
-  const [demoAllocations, setDemoAllocations] = useState<DemoAllocations>({ auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 });
-  const [welcomeGoldStatus, setWelcomeGoldStatus] = useState<'none' | 'pending' | 'demo_unlocked' | 'unlocked' | 'activated'>('none');
-  const [hasCompletedFirstDemoTrade, setHasCompletedFirstDemoTrade] = useState(false);
 
   // Check localStorage for demo mode on mount
   useEffect(() => {
