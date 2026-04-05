@@ -8,8 +8,8 @@ import { autoAssignRM } from "@/lib/relationship-manager";
 // ═══════════════════════════════════════════════════════════════
 const EARLY_BIRD_ENABLED = process.env.EARLY_BIRD_ENABLED !== "false"; // default: enabled
 const EARLY_BIRD_LIMIT = parseInt(process.env.EARLY_BIRD_LIMIT || "50"); // first 50 users
-const EARLY_BIRD_AMOUNT = parseFloat(process.env.EARLY_BIRD_AMOUNT || "10"); // 10 AUXS
-const EARLY_BIRD_ASSET = process.env.EARLY_BIRD_ASSET || "AUXS"; // silver
+const EARLY_BIRD_AMOUNT = parseFloat(process.env.EARLY_BIRD_AMOUNT || "5"); // 5 AUXG Welcome Gold
+const EARLY_BIRD_ASSET = process.env.EARLY_BIRD_ASSET || "AUXG"; // gold
 const EARLY_BIRD_EXPIRY_DAYS = parseInt(process.env.EARLY_BIRD_EXPIRY_DAYS || "90"); // 90 gün
 
 // 12 haneli alfanümerik UID oluştur

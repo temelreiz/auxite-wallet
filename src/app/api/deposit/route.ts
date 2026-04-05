@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // 2. WELCOME BONUS: 10 AUXS (KYC + first deposit >= $100)
+          // 2. WELCOME BONUS: 5 AUXG Welcome Gold (KYC + first deposit >= $100)
           if (amountUsd >= BONUS_CONFIG.minDepositForWelcome) {
             const welcomeCheck = await checkWelcomeBonusEligibility(userId, normalizedAddress);
             if (welcomeCheck.eligible) {

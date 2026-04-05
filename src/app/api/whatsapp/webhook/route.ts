@@ -28,7 +28,7 @@ DEPOSIT:
 - Crypto only: USDT, USDC, ETH, BTC on Base network
 - Bank wire: Coming soon
 - No minimum deposit required
-- Deposit $100+ to earn 10 AUXS Welcome Bonus (limited time)
+- Complete KYC to activate your 5 AUXG Welcome Gold
 
 PRICING:
 - Live market prices during weekdays

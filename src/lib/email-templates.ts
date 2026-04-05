@@ -25,12 +25,12 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
   // EXISTING TEMPLATES
   // ═══════════════════════════════════════════════════════════════
   kycReminder: {
-    subject: "Complete Your Verification — Earn 10 AUXS Bonus",
-    html: wrap(`<p style="font-size:13px;color:#444;line-height:1.7">Complete your identity verification (KYC) and make your first deposit of $100 or more to receive <strong>10 AUXS Welcome Bonus</strong>.</p><p style="font-size:13px;color:#444;line-height:1.7">Your bonus credits will unlock after 30 days or upon reaching 5x trading volume.</p>${cta("https://vault.auxite.io", "VERIFY NOW")}`),
+    subject: "Complete Your Verification — Earn 5 AUXG Bonus",
+    html: wrap(`<p style="font-size:13px;color:#444;line-height:1.7">Complete your identity verification (KYC) and make your first deposit of $100 or more to receive <strong>5 AUXG Welcome Bonus</strong>.</p><p style="font-size:13px;color:#444;line-height:1.7">Your bonus credits will unlock after 30 days or upon reaching 5x trading volume.</p>${cta("https://vault.auxite.io", "VERIFY NOW")}`),
   },
   welcomeBonus: {
-    subject: "Welcome to Auxite — Your 10 AUXS Bonus Awaits",
-    html: wrap(`<p style="font-size:13px;color:#444;line-height:1.7">Thank you for joining Auxite. You are now enrolled in our <strong>Liquidity Credits Programme</strong>.</p><p style="font-size:13px;color:#444;line-height:1.7"><strong>Welcome Bonus:</strong> 10 AUXS upon KYC + $100 deposit<br/><strong>Deposit Bonus:</strong> 2% in metal credits<br/><strong>Referral Bonus:</strong> 0.5% of referred deposit</p>${cta("https://vault.auxite.io", "ACCESS YOUR VAULT")}`),
+    subject: "Welcome to Auxite — Your 5 AUXG Bonus Awaits",
+    html: wrap(`<p style="font-size:13px;color:#444;line-height:1.7">Thank you for joining Auxite. You are now enrolled in our <strong>Liquidity Credits Programme</strong>.</p><p style="font-size:13px;color:#444;line-height:1.7"><strong>Welcome Bonus:</strong> 5 AUXG upon KYC + $100 deposit<br/><strong>Deposit Bonus:</strong> 2% in metal credits<br/><strong>Referral Bonus:</strong> 0.5% of referred deposit</p>${cta("https://vault.auxite.io", "ACCESS YOUR VAULT")}`),
   },
   marketUpdate: {
     subject: "Precious Metals Market Update — Auxite",
@@ -53,7 +53,7 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
         ${step("4", "Structured Yield", "Lease your allocated metals to verified institutional counterparties through our Yield Architecture. Earn periodic returns (paid in the same metal or USD equivalent) while your metal remains fully allocated and insured in custody. Lease terms range from 90 to 365 days.")}
         ${step("5", "Redeem", "Convert back to crypto or request physical delivery at any time.")}
       </table>
-      ${bonus("LIMITED TIME OFFER", "Complete KYC verification + deposit $100 minimum to receive <strong>10 AUXS Welcome Bonus</strong>. Liquidity Credits unlock after 30 days or 5x trading volume.")}
+      ${bonus("LIMITED TIME OFFER", "Complete KYC verification + deposit $100 minimum to receive <strong>5 AUXG Welcome Bonus</strong>. Liquidity Credits unlock after 30 days or 5x trading volume.")}
       ${cta("https://vault.auxite.io", "GET STARTED")}
     `),
   },
@@ -71,7 +71,7 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
         ${step("4", "Yapılandırılmış Getiri", "Tahsis edilmiş metallerinizi doğrulanmış kurumsal karşı taraflara Getiri Mimarisi aracılığıyla kiralayın. Metaliniz tam tahsisli ve sigortalı olarak saklamada kalırken periyodik getiri (aynı metal veya USD eşdeğeri) kazanın. Kiralama süreleri 90 ile 365 gün arasındadır.")}
         ${step("5", "Geri Alım", "İstediğiniz zaman kriptoya dönüştürün veya fiziksel teslimat talep edin.")}
       </table>
-      ${bonus("SINIRLI SÜRE TEKLİFİ", "KYC doğrulamasını tamamlayın + minimum 100$ yatırım yaparak <strong>10 AUXS Hoş Geldin Bonusu</strong> kazanın. Likidite Kredileri 30 gün sonra veya 5x işlem hacmiyle açılır.")}
+      ${bonus("SINIRLI SÜRE TEKLİFİ", "KYC doğrulamasını tamamlayın + minimum 100$ yatırım yaparak <strong>5 AUXG Hoş Geldin Bonusu</strong> kazanın. Likidite Kredileri 30 gün sonra veya 5x işlem hacmiyle açılır.")}
       ${cta("https://vault.auxite.io", "BAŞLAYIN")}
     `),
   },
@@ -89,7 +89,7 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
         ${step("4", "Rendement Structuré", "Louez vos métaux alloués à des contreparties institutionnelles vérifiées via notre Architecture de Rendement. Percevez des rendements périodiques (payés dans le même métal ou en équivalent USD) pendant que votre métal reste entièrement alloué et assuré en dépôt. Durées de location de 90 à 365 jours.")}
         ${step("5", "Rachat", "Convertissez en crypto ou demandez une livraison physique à tout moment.")}
       </table>
-      ${bonus("OFFRE LIMITÉE", "Complétez votre vérification KYC + dépôt minimum de 100$ pour recevoir un <strong>Bonus de Bienvenue de 10 AUXS</strong>. Les Crédits de Liquidité se débloquent après 30 jours ou 5x volume de trading.")}
+      ${bonus("OFFRE LIMITÉE", "Complétez votre vérification KYC + dépôt minimum de 100$ pour recevoir un <strong>Bonus de Bienvenue de 5 AUXG</strong>. Les Crédits de Liquidité se débloquent après 30 jours ou 5x volume de trading.")}
       ${cta("https://vault.auxite.io", "COMMENCEZ")}
     `),
   },
@@ -107,7 +107,7 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
         ${step("4", "Strukturierte Rendite", "Leasen Sie Ihre zugewiesenen Metalle an verifizierte institutionelle Gegenparteien über unsere Rendite-Architektur. Erzielen Sie periodische Erträge (ausgezahlt im gleichen Metall oder USD-Äquivalent), während Ihr Metall vollständig zugewiesen und versichert in Verwahrung bleibt. Laufzeiten von 90 bis 365 Tagen.")}
         ${step("5", "Einlösung", "Jederzeit in Krypto umwandeln oder physische Lieferung anfordern.")}
       </table>
-      ${bonus("ZEITLICH BEGRENZTES ANGEBOT", "KYC-Verifizierung abschließen + Mindesteinzahlung von 100$ für einen <strong>Willkommensbonus von 10 AUXS</strong>. Liquiditätsguthaben werden nach 30 Tagen oder 5-fachem Handelsvolumen freigeschaltet.")}
+      ${bonus("ZEITLICH BEGRENZTES ANGEBOT", "KYC-Verifizierung abschließen + Mindesteinzahlung von 100$ für einen <strong>Willkommensbonus von 5 AUXG</strong>. Liquiditätsguthaben werden nach 30 Tagen oder 5-fachem Handelsvolumen freigeschaltet.")}
       ${cta("https://vault.auxite.io", "LOSLEGEN")}
     `),
   },
@@ -125,7 +125,7 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
         ${step("4", "العائد المهيكل", "أجّر معادنك المخصصة لأطراف مؤسسية معتمدة عبر هندسة العوائد. احصل على عوائد دورية (تُدفع بنفس المعدن أو ما يعادله بالدولار) بينما يبقى معدنك مخصصاً بالكامل ومؤمناً عليه في الحفظ. فترات الإيجار من 90 إلى 365 يوماً.")}
         ${step("5", "الاسترداد", "حوّل إلى عملات مشفرة أو اطلب التسليم الفعلي في أي وقت.")}
       </table>
-      ${bonus("عرض لفترة محدودة", "أكمل التحقق من هويتك (KYC) + إيداع 100$ كحد أدنى للحصول على <strong>مكافأة ترحيبية 10 AUXS</strong>. تُفتح اعتمادات السيولة بعد 30 يوماً أو 5 أضعاف حجم التداول.")}
+      ${bonus("عرض لفترة محدودة", "أكمل التحقق من هويتك (KYC) + إيداع 100$ كحد أدنى للحصول على <strong>مكافأة ترحيبية 5 AUXG</strong>. تُفتح اعتمادات السيولة بعد 30 يوماً أو 5 أضعاف حجم التداول.")}
       ${cta("https://vault.auxite.io", "ابدأ الآن")}
     `),
   },
@@ -143,7 +143,7 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
         ${step("4", "Структурированная доходность", "Сдавайте выделенные металлы верифицированным институциональным контрагентам через нашу Архитектуру Доходности. Получайте периодический доход (выплачиваемый тем же металлом или эквивалентом в USD), пока ваш металл остаётся полностью выделенным и застрахованным на хранении. Сроки аренды от 90 до 365 дней.")}
         ${step("5", "Выкуп", "Конвертируйте обратно в криптовалюту или запросите физическую доставку.")}
       </table>
-      ${bonus("ОГРАНИЧЕННОЕ ПРЕДЛОЖЕНИЕ", "Пройдите верификацию KYC + внесите депозит от 100$ для получения <strong>Приветственного бонуса 10 AUXS</strong>. Кредиты ликвидности разблокируются через 30 дней или при 5-кратном торговом объёме.")}
+      ${bonus("ОГРАНИЧЕННОЕ ПРЕДЛОЖЕНИЕ", "Пройдите верификацию KYC + внесите депозит от 100$ для получения <strong>Приветственного бонуса 5 AUXG</strong>. Кредиты ликвидности разблокируются через 30 дней или при 5-кратном торговом объёме.")}
       ${cta("https://vault.auxite.io", "НАЧНИТЕ")}
     `),
   },
