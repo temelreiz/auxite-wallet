@@ -13,6 +13,7 @@ import TopNav from "@/components/TopNav";
 import LiquidateModal from "@/components/LiquidateModal";
 import { MarketStatusBanner } from "@/components/MarketStatusBanner";
 import { useLanguage } from "@/components/LanguageContext";
+import { useWallet } from "@/components/WalletContext";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 // Metal icons
@@ -489,6 +490,7 @@ const translations: Record<string, Record<string, string>> = {
 export default function VaultPage() {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
+  const { isDemoMode, demoBalance, demoAllocations, welcomeGoldStatus, exitDemoMode } = useWallet();
 
   // Auxite Vault Wallet - no external wallet connect
   const [address, setAddress] = useState<string | null>(null);
@@ -709,6 +711,66 @@ export default function VaultPage() {
       <TopNav />
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+        {/* ═══ DEMO MODE BANNER ═══ */}
+        {isDemoMode && (
+          <div className="flex items-center justify-between gap-3 py-3 px-4 rounded-xl bg-[#BFA181] text-[#0B0B0D]">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">⚗️</span>
+              <div>
+                <span className="font-bold text-sm">Demo Mode</span>
+                <span className="text-xs ml-2 opacity-70">
+                  {{ tr: 'Sanal bakiye — gerçek varlık yok', de: 'Virtuelles Guthaben', fr: 'Solde virtuel', ar: 'رصيد افتراضي', ru: 'Виртуальный баланс' }[lang] || 'Virtual balance — no real assets'}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => { exitDemoMode(); window.location.href = '/auth/register'; }}
+              className="px-4 py-1.5 bg-[#0B0B0D]/20 rounded-lg text-xs font-bold hover:bg-[#0B0B0D]/30 transition-colors"
+            >
+              {{ tr: 'Gerçek Hesap Aç', de: 'Live starten', fr: 'Passer au réel', ar: 'ابدأ الحقيقي', ru: 'Начать' }[lang] || 'Go Live'}
+            </button>
+          </div>
+        )}
+
+        {/* ═══ WELCOME GOLD WIDGET ═══ */}
+        {welcomeGoldStatus === 'pending' && (
+          <div className="flex items-center gap-3 py-3 px-4 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/30">
+            <div className="w-10 h-10 rounded-full bg-[#BFA181]/20 flex items-center justify-center">
+              <span className="text-lg">💎</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-[#BFA181]">
+                {{ tr: '5 AUXG Hoş Geldin Altını', de: '5 AUXG Willkommensgold', fr: '5 AUXG Or de Bienvenue', ar: '5 AUXG ذهب الترحيب', ru: '5 AUXG приветственное золото' }[lang] || '5 AUXG Welcome Gold'}
+              </p>
+              <p className="text-xs text-slate-400">
+                {{ tr: 'İlk işleminizi yaparak altınınızı açın', de: 'Machen Sie Ihren ersten Trade', fr: 'Faites votre premier trade', ar: 'قم بأول تداول لفتح ذهبك', ru: 'Совершите первую сделку' }[lang] || 'Make your first trade to unlock'}
+              </p>
+            </div>
+            <a href="/allocate" className="px-3 py-1.5 bg-[#BFA181] text-[#0B0B0D] rounded-lg text-xs font-bold hover:opacity-90">
+              {{ tr: 'İşlem Yap', de: 'Handeln', fr: 'Négocier', ar: 'تداول', ru: 'Торговать' }[lang] || 'Trade'}
+            </a>
+          </div>
+        )}
+
+        {(welcomeGoldStatus === 'demo_unlocked' || welcomeGoldStatus === 'unlocked') && (
+          <div className="flex items-center gap-3 py-3 px-4 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/30">
+            <div className="w-10 h-10 rounded-full bg-[#BFA181]/25 flex items-center justify-center">
+              <span className="text-lg">💎</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-[#BFA181]">
+                {{ tr: '5 AUXG Hoş Geldin Altını', de: '5 AUXG Willkommensgold', fr: '5 AUXG Or de Bienvenue', ar: '5 AUXG ذهب الترحيب', ru: '5 AUXG приветственное золото' }[lang] || '5 AUXG Welcome Gold'}
+              </p>
+              <p className="text-xs text-slate-400">
+                {{ tr: 'Platform içi kullanım', de: 'Plattformnutzung', fr: 'Utilisation plateforme', ar: 'استخدام المنصة', ru: 'Использование на платформе' }[lang] || 'Platform use only'}
+              </p>
+            </div>
+            <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-bold">
+              {{ tr: 'Aktif', de: 'Aktiv', fr: 'Actif', ar: 'نشط', ru: 'Активно' }[lang] || 'Active'}
+            </span>
+          </div>
+        )}
+
         {/* ═══ TRUST BAR ═══ */}
         <a href="/trust-center" className="block">
           <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#C5A55A]/5 border border-[#C5A55A]/20 hover:bg-[#C5A55A]/10 transition-colors cursor-pointer">

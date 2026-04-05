@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useLanguage, LANGUAGES, getLanguageData } from "@/components/LanguageContext";
 import { GlobalTrustBar } from "@/components/GlobalTrustBar";
+import { useWallet } from "@/components/WalletContext";
 
 // ============================================
 // 6-LANGUAGE TRANSLATIONS
@@ -235,6 +236,7 @@ export default function TopNav({
   const { lang, setLang } = useLanguage();
   const pathname = usePathname();
   const t = translations[lang] || translations.en;
+  const { isDemoMode } = useWallet();
   const currentLangData = getLanguageData(lang);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -372,6 +374,9 @@ export default function TopNav({
                   className="h-10 md:h-12 w-auto"
                 />
               </Link>
+              {isDemoMode && (
+                <span className="px-2 py-0.5 bg-[#BFA181] text-[#0B0B0D] text-[10px] font-bold rounded tracking-wider">DEMO</span>
+              )}
 
               {/* Desktop Navigation */}
               <nav className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
