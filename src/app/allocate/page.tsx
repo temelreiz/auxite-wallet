@@ -338,7 +338,7 @@ type ViewState = "allocate" | "preview" | "completed" | "rfq";
 export default function AllocatePage() {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
-  const { isDemoMode, demoBalance, demoTrade, hasCompletedFirstDemoTrade } = useWallet();
+  const { isDemoMode, demoBalance, demoAllocations, demoTrade, hasCompletedFirstDemoTrade } = useWallet();
   // Wallet address — read from localStorage (same pattern as vault page)
   const [address, setAddress] = useState<string | null>(null);
   useEffect(() => {
@@ -411,6 +411,23 @@ export default function AllocatePage() {
 
   // Fetch user balances
   useEffect(() => {
+    // Demo mode — use demo balance
+    if (isDemoMode) {
+      setUserBalances({
+        AUXM: demoBalance,
+        USDC: 0,
+        USDT: 0,
+        ETH: 0,
+        BTC: 0,
+      });
+      setAllocatedGrams({
+        AUXG: demoAllocations.auxg || 0,
+        AUXS: demoAllocations.auxs || 0,
+        AUXPT: demoAllocations.auxpt || 0,
+        AUXPD: demoAllocations.auxpd || 0,
+      });
+      return;
+    }
     if (address) {
       fetch(`/api/user/balance?address=${address}`)
         .then(res => res.json())
@@ -434,7 +451,7 @@ export default function AllocatePage() {
         })
         .catch(() => {});
     }
-  }, [address]);
+  }, [address, isDemoMode, demoBalance]);
 
   // Calculations
   const inputAmount = parseFloat(amount) || 0;
