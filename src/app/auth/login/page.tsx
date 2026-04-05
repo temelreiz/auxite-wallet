@@ -142,6 +142,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showDemoModal, setShowDemoModal] = useState(false);
+  const [demoEmail, setDemoEmail] = useState('');
+  const [demoEmailError, setDemoEmailError] = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
   const turnstileRef = useRef<HTMLDivElement>(null);
 
@@ -410,7 +413,7 @@ export default function LoginPage() {
 
           {/* Start with Gold — Demo */}
           <button
-            onClick={() => { enterDemoMode(); router.push('/vault'); }}
+            onClick={() => setShowDemoModal(true)}
             className="w-full mt-6 py-4 bg-gradient-to-r from-[#BFA181] to-[#D4B47A] text-[#0B0B0D] font-bold rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-3 shadow-lg"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
@@ -430,6 +433,70 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* Demo Email Modal */}
+      {showDemoModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowDemoModal(false)}>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 max-w-sm w-full border border-stone-200 dark:border-slate-700 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowDemoModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-[#BFA181]/15 border border-[#BFA181]/30 flex items-center justify-center">
+                <svg className="w-8 h-8 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-center text-slate-800 dark:text-white mb-2">
+              {{ en: 'Enter your email', tr: 'E-postanızı girin', de: 'E-Mail eingeben', fr: 'Entrez votre email', ar: 'أدخل بريدك الإلكتروني', ru: 'Введите email' }[lang] || 'Enter your email'}
+            </h3>
+            <p className="text-sm text-center text-slate-500 dark:text-slate-400 mb-5">
+              {{ en: 'Start with the demo, and when you\'re ready to go live, your account will be waiting.', tr: 'Demo ile başlayın, gerçek hesaba geçmeye hazır olduğunuzda hesabınız sizi bekliyor olacak.', de: 'Starten Sie mit der Demo, Ihr Konto wartet auf Sie.', fr: 'Commencez avec la démo, votre compte vous attend.', ar: 'ابدأ بالعرض التوضيحي، حسابك سيكون في انتظارك.', ru: 'Начните с демо, ваш аккаунт будет ждать вас.' }[lang] || 'Start with the demo, and when you\'re ready to go live, your account will be waiting.'}
+            </p>
+            <input
+              type="email"
+              value={demoEmail}
+              onChange={(e) => { setDemoEmail(e.target.value); setDemoEmailError(''); }}
+              placeholder="you@example.com"
+              className="w-full px-4 py-3 bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#BFA181] mb-2"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const trimmed = demoEmail.trim().toLowerCase();
+                  if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+                    setDemoEmailError(lang === 'tr' ? 'Geçerli bir e-posta girin' : 'Please enter a valid email');
+                    return;
+                  }
+                  enterDemoMode(trimmed);
+                  setShowDemoModal(false);
+                  router.push('/vault');
+                }
+              }}
+            />
+            {demoEmailError && <p className="text-xs text-red-500 mb-2">{demoEmailError}</p>}
+            <button
+              onClick={() => {
+                const trimmed = demoEmail.trim().toLowerCase();
+                if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+                  setDemoEmailError(lang === 'tr' ? 'Geçerli bir e-posta girin' : 'Please enter a valid email');
+                  return;
+                }
+                enterDemoMode(trimmed);
+                setShowDemoModal(false);
+                router.push('/vault');
+              }}
+              className="w-full py-3 bg-[#BFA181] text-[#0B0B0D] font-bold rounded-xl hover:opacity-90 transition-all mt-2"
+            >
+              {{ en: 'Start Demo', tr: 'Demo Başlat', de: 'Demo starten', fr: 'Démarrer la démo', ar: 'بدء العرض', ru: 'Начать демо' }[lang] || 'Start Demo'}
+            </button>
+            <button
+              onClick={() => { enterDemoMode(); setShowDemoModal(false); router.push('/vault'); }}
+              className="w-full text-center text-sm text-slate-400 mt-3 hover:text-slate-600"
+            >
+              {{ en: 'Skip for now', tr: 'Şimdilik atla', de: 'Jetzt überspringen', fr: 'Passer pour le moment', ar: 'تخطي الآن', ru: 'Пропустить' }[lang] || 'Skip for now'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
