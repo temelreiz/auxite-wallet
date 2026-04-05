@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback } from "react";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
+import { useWallet } from "@/components/WalletContext";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
 
 // ============================================
@@ -337,6 +338,7 @@ type ViewState = "allocate" | "preview" | "completed" | "rfq";
 export default function AllocatePage() {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
+  const { isDemoMode, demoBalance, demoTrade, hasCompletedFirstDemoTrade } = useWallet();
   // Wallet address — read from localStorage (same pattern as vault page)
   const [address, setAddress] = useState<string | null>(null);
   useEffect(() => {
@@ -471,6 +473,23 @@ export default function AllocatePage() {
     setError(null);
 
     try {
+      // Demo mode — execute locally without API
+      if (isDemoMode) {
+        const metalKey = selectedMetal.toLowerCase();
+        demoTrade(metalKey, 'buy', capitalAmount || 0, metalExecPrice || 1);
+        setAllocationResult({
+          id: `DEMO-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+          grams: estimatedGrams,
+          metal: selectedMetal,
+          capitalDeployed: capitalAmount,
+          executionPrice: metalExecPrice,
+          vault: "Zurich, Switzerland (Demo)",
+        });
+        setViewState("completed");
+        setIsExecuting(false);
+        return;
+      }
+
       {
         const res = await fetch("/api/trade", {
           method: "POST",
@@ -923,6 +942,14 @@ export default function AllocatePage() {
                   setSellError(null);
                   try {
                     const price = basePrices[selectedMetal] || 0;
+                    // Demo mode — sell locally
+                    if (isDemoMode) {
+                      const metalKey = selectedMetal.toLowerCase();
+                      demoTrade(metalKey, 'sell', gramsNum * price, price);
+                      setSellResult({ grams: gramsNum, metal: selectedMetal, proceeds: gramsNum * price, price });
+                      setSellLoading(false);
+                      return;
+                    }
                     const res = await fetch("/api/trade", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
