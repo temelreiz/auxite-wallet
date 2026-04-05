@@ -552,6 +552,37 @@ export default function VaultPage() {
   }, []);
 
   const fetchVaultData = useCallback(async () => {
+    // Demo mode — show demo balance without API calls
+    if (isDemoMode && !address) {
+      try {
+        const priceRes = await fetch('/api/oracle');
+        const priceData = await priceRes.json().catch(() => ({ prices: {} }));
+        const priceMap: Record<string, number> = {
+          AUXG: priceData.prices?.gold || 0,
+          AUXS: priceData.prices?.silver || 0,
+          AUXPT: priceData.prices?.platinum || 0,
+          AUXPD: priceData.prices?.palladium || 0,
+        };
+        const metalSymbols = ['AUXG', 'AUXS', 'AUXPT', 'AUXPD'];
+        const metalNames: Record<string, string> = { AUXG: 'Gold', AUXS: 'Silver', AUXPT: 'Platinum', AUXPD: 'Palladium' };
+        const holdingsList: MetalHolding[] = metalSymbols.map(sym => {
+          const price = priceMap[sym] || 0;
+          const allocKey = sym.toLowerCase() as keyof typeof demoAllocations;
+          const grams = demoAllocations[allocKey] || 0;
+          return { symbol: sym, name: metalNames[sym], allocated: grams, available: 0, total: grams, price, value: grams * price, stakedGrams: 0 };
+        });
+        const allocatedValue = holdingsList.reduce((s, h) => s + h.value, 0);
+        setHoldings(holdingsList);
+        setTotalVaultValue(demoBalance + allocatedValue);
+        setAllocatedHoldings(allocatedValue);
+        setLiquidityValue(demoBalance);
+        setSettlementBalance(demoBalance);
+        setEncumberedAssetsValue(0);
+      } catch {}
+      setLoading(false);
+      return;
+    }
+
     if (!address) {
       setLoading(false);
       return;
@@ -685,7 +716,7 @@ export default function VaultPage() {
     } finally {
       setLoading(false);
     }
-  }, [address]);
+  }, [address, isDemoMode, demoBalance, demoAllocations]);
 
   useEffect(() => {
     fetchVaultData();
