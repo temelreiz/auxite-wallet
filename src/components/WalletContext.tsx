@@ -65,6 +65,13 @@ export interface AllocationAmounts {
   auxpd: number;
 }
 
+export interface DemoAllocations {
+  auxg: number;
+  auxs: number;
+  auxpt: number;
+  auxpd: number;
+}
+
 export interface WalletContextType {
   // wallet
   isConnected: boolean;
@@ -90,6 +97,16 @@ export interface WalletContextType {
   balancesLoading: boolean;
   balancesError: string | null;
   refreshBalances: () => Promise<void>;
+
+  // Demo Mode (Start With Gold)
+  isDemoMode: boolean;
+  demoBalance: number;
+  demoAllocations: DemoAllocations;
+  welcomeGoldStatus: 'none' | 'pending' | 'demo_unlocked' | 'unlocked' | 'activated';
+  hasCompletedFirstDemoTrade: boolean;
+  enterDemoMode: (email?: string) => void;
+  exitDemoMode: () => void;
+  demoTrade: (metal: string, action: 'buy' | 'sell', amountUsd: number, price: number) => void;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -175,7 +192,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   // Determine effective address and connection status
   const isLocalWallet = walletMode === "local" && !!localWalletAddress;
-  const isConnected = isLocalWallet || isExternalConnected;
+  const isConnected = isLocalWallet || isExternalConnected || isDemoMode;
   const address = isLocalWallet ? localWalletAddress : externalAddress;
 
   // Disconnect function - handles both local and external
@@ -195,6 +212,95 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   // WalletConnectModal gibi yerler seçilmiş wallet tipini tutmak istiyorsa (compat)
   const [walletType, setWalletType] = useState<WalletType>(null);
+
+  // ─── Demo Mode State ───────────────────────────────────────────
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [demoBalance, setDemoBalance] = useState(1000);
+  const [demoAllocations, setDemoAllocations] = useState<DemoAllocations>({ auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 });
+  const [welcomeGoldStatus, setWelcomeGoldStatus] = useState<'none' | 'pending' | 'demo_unlocked' | 'unlocked' | 'activated'>('none');
+  const [hasCompletedFirstDemoTrade, setHasCompletedFirstDemoTrade] = useState(false);
+
+  // Check localStorage for demo mode on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('auxite_demo_mode');
+      if (saved === 'true') {
+        setIsDemoMode(true);
+        setWelcomeGoldStatus('pending');
+        const savedBalance = localStorage.getItem('auxite_demo_balance');
+        if (savedBalance) setDemoBalance(parseFloat(savedBalance));
+        const savedAlloc = localStorage.getItem('auxite_demo_allocations');
+        if (savedAlloc) {
+          try { setDemoAllocations(JSON.parse(savedAlloc)); } catch {}
+        }
+        const savedFirstTrade = localStorage.getItem('auxite_demo_first_trade');
+        if (savedFirstTrade === 'true') {
+          setHasCompletedFirstDemoTrade(true);
+          setWelcomeGoldStatus('demo_unlocked');
+        }
+      }
+    }
+  }, []);
+
+  const enterDemoMode = useCallback((email?: string) => {
+    setIsDemoMode(true);
+    setDemoBalance(1000);
+    setDemoAllocations({ auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 });
+    setWelcomeGoldStatus('pending');
+    setHasCompletedFirstDemoTrade(false);
+    localStorage.setItem('auxite_demo_mode', 'true');
+    localStorage.removeItem('auxite_demo_balance');
+    localStorage.removeItem('auxite_demo_allocations');
+    localStorage.removeItem('auxite_demo_first_trade');
+    // Save email for re-engagement
+    if (email) {
+      fetch('/api/demo-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      }).catch(() => {});
+    }
+  }, []);
+
+  const exitDemoMode = useCallback(() => {
+    setIsDemoMode(false);
+    setDemoBalance(1000);
+    setDemoAllocations({ auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 });
+    localStorage.removeItem('auxite_demo_mode');
+    localStorage.removeItem('auxite_demo_balance');
+    localStorage.removeItem('auxite_demo_allocations');
+    localStorage.removeItem('auxite_demo_first_trade');
+  }, []);
+
+  const demoTrade = useCallback((metal: string, action: 'buy' | 'sell', amountUsd: number, price: number) => {
+    const grams = amountUsd / price;
+    const key = metal.toLowerCase() as keyof DemoAllocations;
+
+    if (action === 'buy') {
+      if (amountUsd > demoBalance) return;
+      const newBalance = demoBalance - amountUsd;
+      const newAlloc = { ...demoAllocations, [key]: demoAllocations[key] + grams };
+      setDemoBalance(newBalance);
+      setDemoAllocations(newAlloc);
+      localStorage.setItem('auxite_demo_balance', newBalance.toString());
+      localStorage.setItem('auxite_demo_allocations', JSON.stringify(newAlloc));
+    } else {
+      if (demoAllocations[key] < grams) return;
+      const newBalance = demoBalance + amountUsd;
+      const newAlloc = { ...demoAllocations, [key]: demoAllocations[key] - grams };
+      setDemoBalance(newBalance);
+      setDemoAllocations(newAlloc);
+      localStorage.setItem('auxite_demo_balance', newBalance.toString());
+      localStorage.setItem('auxite_demo_allocations', JSON.stringify(newAlloc));
+    }
+
+    // First trade detection
+    if (!hasCompletedFirstDemoTrade) {
+      setHasCompletedFirstDemoTrade(true);
+      setWelcomeGoldStatus('demo_unlocked');
+      localStorage.setItem('auxite_demo_first_trade', 'true');
+    }
+  }, [demoBalance, demoAllocations, hasCompletedFirstDemoTrade]);
 
   const [balances, setBalances] = useState<UserBalances | null>(null);
   const [stakedAmounts, setStakedAmounts] = useState<StakedAmounts | null>(null);
@@ -285,12 +391,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [address, fetchBalances]);
 
   useEffect(() => {
-    if (!isConnected || !address) return;
+    if (!isConnected || !address || isDemoMode) return;
 
     fetchBalances(address);
     const interval = setInterval(() => fetchBalances(address), 30000);
     return () => clearInterval(interval);
-  }, [isConnected, address, fetchBalances]);
+  }, [isConnected, address, isDemoMode, fetchBalances]);
 
   return (
     <WalletContext.Provider
@@ -316,6 +422,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         balancesLoading,
         balancesError,
         refreshBalances,
+
+        // Demo Mode
+        isDemoMode,
+        demoBalance,
+        demoAllocations,
+        welcomeGoldStatus,
+        hasCompletedFirstDemoTrade,
+        enterDemoMode,
+        exitDemoMode,
+        demoTrade,
       }}
     >
       {children}

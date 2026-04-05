@@ -9,6 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Script from 'next/script';
 import { useLanguage } from '@/components/LanguageContext';
+import { useWallet } from '@/components/WalletContext';
 
 // ============================================
 // TRANSLATIONS - Synced with Mobile
@@ -30,6 +31,8 @@ const translations: Record<string, Record<string, string>> = {
     connectionError: "Bağlantı hatası. Tekrar deneyin.",
     signingIn: "Giriş yapılıyor...",
     brandTagline: "DİJİTAL VARLIK SAKLAMA",
+    startWithGold: "Altınla Başla",
+    tryDemoDesc: "5g Hoş Geldin Altını ile demo deneyin",
   },
   en: {
     title: "Client Sign In",
@@ -47,6 +50,8 @@ const translations: Record<string, Record<string, string>> = {
     connectionError: "Connection error. Please try again.",
     signingIn: "Signing in...",
     brandTagline: "DIGITAL ASSET CUSTODY",
+    startWithGold: "Start with Gold",
+    tryDemoDesc: "Try demo with 5g Welcome Gold",
   },
   de: {
     title: "Kundenlogin",
@@ -64,6 +69,8 @@ const translations: Record<string, Record<string, string>> = {
     connectionError: "Verbindungsfehler. Bitte erneut versuchen.",
     signingIn: "Anmeldung...",
     brandTagline: "DIGITALE VERMÖGENSVERWALTUNG",
+    startWithGold: "Start mit Gold",
+    tryDemoDesc: "Demo mit 5g Willkommensgold testen",
   },
   fr: {
     title: "Connexion Client",
@@ -81,6 +88,8 @@ const translations: Record<string, Record<string, string>> = {
     connectionError: "Erreur de connexion. Veuillez réessayer.",
     signingIn: "Connexion...",
     brandTagline: "GARDE D'ACTIFS NUMÉRIQUES",
+    startWithGold: "Commencer avec l'Or",
+    tryDemoDesc: "Essayez la demo avec 5g d'Or de Bienvenue",
   },
   ar: {
     title: "تسجيل دخول العميل",
@@ -98,6 +107,8 @@ const translations: Record<string, Record<string, string>> = {
     connectionError: "خطأ في الاتصال. حاول مرة أخرى.",
     signingIn: "جاري تسجيل الدخول...",
     brandTagline: "حفظ الأصول الرقمية",
+    startWithGold: "ابدأ بالذهب",
+    tryDemoDesc: "جرب العرض التوضيحي مع 5غ ذهب ترحيب",
   },
   ru: {
     title: "Вход клиента",
@@ -115,6 +126,8 @@ const translations: Record<string, Record<string, string>> = {
     connectionError: "Ошибка подключения. Попробуйте снова.",
     signingIn: "Вход...",
     brandTagline: "ХРАНЕНИЕ ЦИФРОВЫХ АКТИВОВ",
+    startWithGold: "Начать с золота",
+    tryDemoDesc: "Попробуйте демо с 5г приветственного золота",
   },
 };
 
@@ -122,6 +135,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
+  const { enterDemoMode } = useWallet();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -394,8 +408,18 @@ export default function LoginPage() {
             </button>
           </div>
 
+          {/* Start with Gold — Demo */}
+          <button
+            onClick={() => { enterDemoMode(); router.push('/vault'); }}
+            className="w-full mt-6 py-4 bg-gradient-to-r from-[#BFA181] to-[#D4B47A] text-[#0B0B0D] font-bold rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-3 shadow-lg"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            {t.startWithGold}
+          </button>
+          <p className="text-center text-xs text-slate-400 mt-2">{t.tryDemoDesc}</p>
+
           {/* New Client */}
-          <div className="flex items-center justify-center gap-2 mt-8">
+          <div className="flex items-center justify-center gap-2 mt-6">
             <span className="text-slate-500 dark:text-slate-400">{t.newClient}</span>
             <Link
               href="/auth/register"
