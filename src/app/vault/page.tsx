@@ -908,7 +908,9 @@ export default function VaultPage() {
         <a href="/fund-vault" className="block">
           <div className="bg-gradient-to-r from-[#C5A55A] to-[#D4AF37] rounded-xl py-4 px-6 text-center hover:opacity-90 transition-opacity shadow-lg shadow-[#C5A55A]/20">
             <p className="text-lg font-bold text-[#0B0B0D] tracking-wide">{t.fundVault}</p>
-            <p className="text-xs text-[#0B0B0D]/60 mt-1">{t.noMinDeposit}</p>
+            <p className="text-xs text-[#0B0B0D]/60 mt-1">
+              {{ en: 'Send USDT/USDC from Binance, Coinbase or any exchange', tr: 'Binance, Coinbase veya herhangi bir borsadan USDT/USDC gönderin', de: 'USDT/USDC von Binance, Coinbase senden', fr: 'Envoyez USDT/USDC depuis Binance, Coinbase', ar: 'أرسل USDT/USDC من Binance أو Coinbase', ru: 'Отправьте USDT/USDC с Binance, Coinbase' }[lang] || 'Send USDT/USDC from Binance, Coinbase or any exchange'}
+            </p>
           </div>
         </a>
 
