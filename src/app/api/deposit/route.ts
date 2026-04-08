@@ -234,8 +234,8 @@ export async function GET(request: NextRequest) {
   const addresses: Record<string, { address: string; network: string; memo?: string }> = {
     BTC: { address: process.env.HOT_WALLET_BTC_ADDRESS || "bc1qcvdqwjtsmnl92ldhapmyuvfnlj5gfquvj0w3ke", network: "Bitcoin" },
     ETH: { address: process.env.HOT_WALLET_ETH_ADDRESS || "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Base" },
-    USDT: { address: process.env.HOT_WALLET_ETH_ADDRESS || "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Base (ERC-20)" },
-    USDC: { address: process.env.HOT_WALLET_ETH_ADDRESS || "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Base (ERC-20)" },
+    USDT: { address: process.env.HOT_WALLET_ETH_ADDRESS || "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Base" },
+    USDC: { address: process.env.HOT_WALLET_ETH_ADDRESS || "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Base" },
   };
 
   if (coin && addresses[coin]) {

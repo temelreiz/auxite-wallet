@@ -361,6 +361,7 @@ export function FundTab() {
     },
     {
       id: "bank",
+      disabled: true,
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -547,6 +548,40 @@ export function FundTab() {
               </svg>
               <p className="text-xs text-slate-500 dark:text-slate-400">{t.travelRule}</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════ */}
+      {/* HOW TO FUND GUIDE                      */}
+      {/* ═══════════════════════════════════════ */}
+      {selectedRail === "crypto" && (
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6 mb-6">
+          <h3 className="text-sm font-bold text-[#BFA181] tracking-wider mb-4">
+            {{ en: 'HOW TO FUND YOUR VAULT', tr: 'KASANIZI NASIL FONLAYABİLİRSİNİZ', de: 'SO FINANZIEREN SIE IHREN TRESOR', fr: 'COMMENT FINANCER', ar: 'كيف تموّل خزنتك', ru: 'КАК ПОПОЛНИТЬ' }[lang] || 'HOW TO FUND YOUR VAULT'}
+          </h3>
+          <div className="space-y-3">
+            {[
+              { step: '1', en: 'Open Binance, Coinbase or any crypto exchange', tr: 'Binance, Coinbase veya herhangi bir kripto borsası açın' },
+              { step: '2', en: 'Select Withdraw → Choose USDT or USDC on Base Network', tr: 'Çekim seçin → Base Ağında USDT veya USDC seçin' },
+              { step: '3', en: 'Paste the deposit address shown above', tr: 'Yukarıda gösterilen deposit adresini yapıştırın' },
+              { step: '4', en: 'Your balance updates automatically in minutes', tr: 'Bakiyeniz dakikalar içinde otomatik güncellenir' },
+            ].map((item) => (
+              <div key={item.step} className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-[#BFA181]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-[#BFA181]">{item.step}</span>
+                </div>
+                <p className="text-sm text-slate-700 dark:text-slate-300">{lang === 'tr' ? item.tr : item.en}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 p-3 rounded-lg bg-[#2F6F62]/10 flex items-center gap-2">
+            <svg className="w-4 h-4 text-[#2F6F62] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {{ en: 'All deposits are automatically detected and credited to your vault.', tr: 'Tüm yatırımlar otomatik olarak tespit edilir ve kasanıza eklenir.' }[lang] || 'All deposits are automatically detected and credited to your vault.'}
+            </p>
           </div>
         </div>
       )}
