@@ -18,6 +18,8 @@ const translations: Record<string, Record<string, string>> = {
     bankWireDesc: "Uluslararası banka transferi",
     otcDesk: "OTC Masa",
     otcDeskDesc: "Kurumsal yüksek hacim",
+    cardPurchase: "Kartla Al",
+    cardPurchaseDesc: "Kredi/banka kartı ile",
     comingSoon: "Yakında",
     // Deposit addresses
     depositAddresses: "Yatırım Adresleri",
@@ -57,6 +59,8 @@ const translations: Record<string, Record<string, string>> = {
     bankWireDesc: "International bank transfer",
     otcDesk: "OTC Desk",
     otcDeskDesc: "Institutional high-volume",
+    cardPurchase: "Buy with Card",
+    cardPurchaseDesc: "Credit/debit card",
     comingSoon: "Coming Soon",
     depositAddresses: "Deposit Addresses",
     depositAddressesDesc: "All deposits must be sent to the platform addresses below.",
@@ -93,6 +97,8 @@ const translations: Record<string, Record<string, string>> = {
     bankWireDesc: "Internationale Überweisung",
     otcDesk: "OTC Desk",
     otcDeskDesc: "Institutionelles Volumen",
+    cardPurchase: "Mit Karte kaufen",
+    cardPurchaseDesc: "Kredit-/Debitkarte",
     comingSoon: "Demnächst",
     depositAddresses: "Einzahlungsadressen",
     depositAddressesDesc: "Alle Einzahlungen müssen an die Plattformadressen gesendet werden.",
@@ -129,6 +135,8 @@ const translations: Record<string, Record<string, string>> = {
     bankWireDesc: "Virement international",
     otcDesk: "Bureau OTC",
     otcDeskDesc: "Volume institutionnel",
+    cardPurchase: "Acheter par carte",
+    cardPurchaseDesc: "Carte de crédit/débit",
     comingSoon: "Bientôt",
     depositAddresses: "Adresses de Dépôt",
     depositAddressesDesc: "Tous les dépôts doivent être envoyés aux adresses ci-dessous.",
@@ -165,6 +173,8 @@ const translations: Record<string, Record<string, string>> = {
     bankWireDesc: "تحويل بنكي دولي",
     otcDesk: "مكتب OTC",
     otcDeskDesc: "حجم مؤسسي",
+    cardPurchase: "شراء بالبطاقة",
+    cardPurchaseDesc: "بطاقة ائتمان/خصم",
     comingSoon: "قريباً",
     depositAddresses: "عناوين الإيداع",
     depositAddressesDesc: "يجب إرسال جميع الإيداعات إلى عناوين المنصة أدناه.",
@@ -201,6 +211,8 @@ const translations: Record<string, Record<string, string>> = {
     bankWireDesc: "Международный перевод",
     otcDesk: "OTC Стол",
     otcDeskDesc: "Институциональный объем",
+    cardPurchase: "Купить картой",
+    cardPurchaseDesc: "Кредитная/дебетовая карта",
     comingSoon: "Скоро",
     depositAddresses: "Адреса Депозитов",
     depositAddressesDesc: "Все депозиты должны быть отправлены на адреса платформы ниже.",
@@ -258,7 +270,7 @@ interface TransactionRecord {
   txHash?: string;
 }
 
-type FundingRail = "crypto" | "bank" | "otc";
+type FundingRail = "crypto" | "bank" | "card" | "otc";
 
 export function FundTab() {
   const { lang } = useLanguage();
@@ -356,6 +368,15 @@ export function FundTab() {
       ),
     },
     {
+      id: "card",
+      disabled: true,
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+      ),
+    },
+    {
       id: "otc",
       disabled: true,
       icon: (
@@ -369,12 +390,14 @@ export function FundTab() {
   const railLabels: Record<FundingRail, string> = {
     crypto: t.cryptoFunding,
     bank: t.bankWire,
+    card: t.cardPurchase,
     otc: t.otcDesk,
   };
 
   const railDescs: Record<FundingRail, string> = {
     crypto: t.cryptoFundingDesc,
     bank: t.bankWireDesc,
+    card: t.cardPurchaseDesc,
     otc: t.otcDeskDesc,
   };
 
@@ -388,7 +411,7 @@ export function FundTab() {
         <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">
           {t.selectFundingRail}
         </h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {rails.map((rail) => (
             <button
               key={rail.id}
