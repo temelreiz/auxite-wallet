@@ -821,7 +821,7 @@ export default function VaultPage() {
         <MarketStatusBanner />
 
         {/* KYC Warning Banner */}
-        {kycStatus !== 'verified' && kycLoaded && (
+        {false && kycStatus !== 'verified' && kycLoaded && (
           <Link href="/profile" className="block">
             <div className={`flex items-center gap-3 p-4 rounded-xl border ${
               kycStatus === 'pending'

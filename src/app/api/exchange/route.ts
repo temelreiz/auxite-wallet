@@ -201,43 +201,8 @@ export async function POST(request: NextRequest) {
     const normalizedAddress = address.toLowerCase();
     const balanceKey = `user:${normalizedAddress}:balance`;
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // 🛡️ KYC/EMAIL CHECK - Metal alımı için zorunlu
-    // ═══════════════════════════════════════════════════════════════════════════
-    const isBuyingMetalCheck = METALS.includes(toAsset.toLowerCase());
-    if (isBuyingMetalCheck) {
-      try {
-        const userUid = await redis.get(`user:address:${normalizedAddress}`) as string;
-        if (userUid) {
-          const userData = await redis.hgetall(`user:${userUid}`);
-          const email = (userData?.email as string) || "";
-          const kycStatus = (userData?.kycStatus as string) || "";
-
-          if (!email) {
-            return NextResponse.json({
-              error: "Metal alımı için email adresi gereklidir. Lütfen profil ayarlarından email adresinizi ekleyin.",
-              code: "EMAIL_REQUIRED",
-            }, { status: 403 });
-          }
-
-          if (kycStatus !== "verified") {
-            console.warn(`⚠️ KYC not verified for ${normalizedAddress} (status: ${kycStatus || "none"})`);
-          }
-        } else {
-          // Legacy format check
-          const legacyInfo = await redis.hgetall(`user:${normalizedAddress}:info`);
-          const email = (legacyInfo?.email as string) || "";
-          if (!email) {
-            return NextResponse.json({
-              error: "Metal alımı için email adresi gereklidir. Lütfen profil ayarlarından email adresinizi ekleyin.",
-              code: "EMAIL_REQUIRED",
-            }, { status: 403 });
-          }
-        }
-      } catch (e) {
-        console.warn("KYC/Email check error (non-blocking):", e);
-      }
-    }
+    // KYC/Email check removed — users can trade without KYC or email
+    // KYC will only be required for withdrawals (enforced in withdraw route if needed)
 
     // ═══════════════════════════════════════════════════════════════════════════
     // 🔒 BONUS TOKEN SELL PROTECTION
