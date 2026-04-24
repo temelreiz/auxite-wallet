@@ -513,6 +513,9 @@ export default function VaultPage() {
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
   const [trustBadgeModal, setTrustBadgeModal] = useState<string | null>(null);
   const [showEncumberedModal, setShowEncumberedModal] = useState(false);
+  const [showAllocatedModal, setShowAllocatedModal] = useState(false);
+  const [showLiquidityModal, setShowLiquidityModal] = useState(false);
+  const [showUtilizationModal, setShowUtilizationModal] = useState(false);
   const [encumberedBreakdown, setEncumberedBreakdown] = useState({ yieldPrograms: 0, pendingDelivery: 0, tradeSettlement: 0 });
   const [sellModal, setSellModal] = useState<{ open: boolean; metal: MetalHolding | null }>({ open: false, metal: null });
   const [kycStatus, setKycStatus] = useState<'none' | 'pending' | 'verified'>('none');
@@ -884,22 +887,28 @@ export default function VaultPage() {
           {/* Stats Row — Mini Balance Sheet: Allocated | Liquidity | Encumbered | Utilization */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-stone-200 dark:border-slate-700">
             <div className="text-center">
-              <p className="text-base sm:text-lg font-semibold text-[#BFA181]">{formatCurrency(allocatedHoldings)}</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.allocatedAssets}</p>
+              <button onClick={() => setShowAllocatedModal(true)} className="w-full hover:opacity-80 transition-opacity">
+                <p className="text-base sm:text-lg font-semibold text-[#BFA181]">{formatCurrency(allocatedHoldings)}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide underline decoration-dotted underline-offset-2">{t.allocatedAssets}</p>
+              </button>
             </div>
             <div className="text-center sm:border-x border-stone-200 dark:border-slate-700">
-              <p className="text-base sm:text-lg font-semibold text-[#2F6F62]">{formatCurrency(liquidityValue)}</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.availableLiquidity}</p>
+              <button onClick={() => setShowLiquidityModal(true)} className="w-full hover:opacity-80 transition-opacity">
+                <p className="text-base sm:text-lg font-semibold text-[#2F6F62]">{formatCurrency(liquidityValue)}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide underline decoration-dotted underline-offset-2">{t.availableLiquidity}</p>
+              </button>
             </div>
             <div className="text-center sm:border-r border-stone-200 dark:border-slate-700">
-              <button onClick={() => setShowEncumberedModal(true)} className="hover:opacity-80 transition-opacity">
+              <button onClick={() => setShowEncumberedModal(true)} className="w-full hover:opacity-80 transition-opacity">
                 <p className="text-base sm:text-lg font-semibold text-orange-500">{formatCurrency(encumberedAssetsValue)}</p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.encumberedAssets}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide underline decoration-dotted underline-offset-2">{t.encumberedAssets}</p>
               </button>
             </div>
             <div className="text-center">
-              <p className="text-base sm:text-lg font-semibold text-slate-500">{utilizationRatio}%</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide">{t.assetUtilization}</p>
+              <button onClick={() => setShowUtilizationModal(true)} className="w-full hover:opacity-80 transition-opacity">
+                <p className="text-base sm:text-lg font-semibold text-slate-500">{utilizationRatio}%</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 tracking-wide underline decoration-dotted underline-offset-2">{t.assetUtilization}</p>
+              </button>
             </div>
           </div>
         </div>
@@ -1613,6 +1622,205 @@ export default function VaultPage() {
           </div>
         </div>
       )}
+
+      {/* Allocated Assets Breakdown Modal */}
+      {showAllocatedModal && (() => {
+        const allocatedList = holdings.filter(h => h.allocated > 0);
+        return (
+          <div
+            className="fixed inset-0 bg-black/60 flex items-center justify-center p-6 z-50"
+            onClick={() => setShowAllocatedModal(false)}
+          >
+            <div
+              className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-16 h-16 rounded-full bg-[#BFA181]/15 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1 text-center">{t.allocatedAssets}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 text-center mb-6">{t.allocatedAssetsDesc}</p>
+
+              <div className="space-y-3">
+                {allocatedList.length === 0 ? (
+                  <div className="text-center py-6">
+                    <p className="text-sm text-slate-500">{t.noHoldings}</p>
+                  </div>
+                ) : (
+                  allocatedList.map((h) => (
+                    <div key={h.symbol} className="flex items-center justify-between p-3 bg-[#BFA181]/5 rounded-lg">
+                      <div>
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{h.name}</span>
+                        <span className="block text-[10px] text-slate-500">{formatGrams(h.allocated, h.symbol)} · {h.symbol}</span>
+                      </div>
+                      <span className="text-sm font-bold text-[#BFA181]">{formatCurrency(h.allocated * h.price)}</span>
+                    </div>
+                  ))
+                )}
+                <div className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border-t-2 border-[#BFA181]">
+                  <span className="text-sm font-semibold text-slate-800 dark:text-white">{t.total}</span>
+                  <span className="text-lg font-bold text-[#BFA181]">{formatCurrency(allocatedHoldings)}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowAllocatedModal(false)}
+                className="w-full mt-6 px-6 py-2.5 bg-[#BFA181] text-white font-semibold rounded-xl hover:bg-[#BFA181]/80 transition-colors"
+              >
+                {t.close}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Available Liquidity Breakdown Modal */}
+      {showLiquidityModal && (() => {
+        const unallocatedMetalList = holdings.filter(h => h.available > 0);
+        const cryptoOrder: Array<{ key: string; label: string }> = [
+          { key: 'usdt', label: 'USDT' },
+          { key: 'usdc', label: 'USDC' },
+          { key: 'btc', label: 'BTC' },
+          { key: 'eth', label: 'ETH' },
+        ];
+        const cryptoList = cryptoOrder
+          .map(c => ({ ...c, balance: cryptoBalances[c.key] || 0, price: cryptoPrices[c.key] || 0 }))
+          .filter(c => c.balance > 0);
+        return (
+          <div
+            className="fixed inset-0 bg-black/60 flex items-center justify-center p-6 z-50"
+            onClick={() => setShowLiquidityModal(false)}
+          >
+            <div
+              className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-16 h-16 rounded-full bg-[#2F6F62]/15 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1 text-center">{t.availableLiquidity}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 text-center mb-6">{t.availableLiquidityDesc}</p>
+
+              <div className="space-y-3">
+                {settlementBalance > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-[#2F6F62]/5 rounded-lg">
+                    <div>
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t.settlementBalance}</span>
+                      <span className="block text-[10px] text-slate-500">{t.auxmUnit} · {t.auxmPeg}</span>
+                    </div>
+                    <span className="text-sm font-bold text-[#2F6F62]">{formatCurrency(settlementBalance)}</span>
+                  </div>
+                )}
+                {cryptoList.map(c => (
+                  <div key={c.key} className="flex items-center justify-between p-3 bg-[#2F6F62]/5 rounded-lg">
+                    <div>
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{c.label}</span>
+                      <span className="block text-[10px] text-slate-500">{c.balance.toLocaleString('en-US', { maximumFractionDigits: 6 })} {c.label}</span>
+                    </div>
+                    <span className="text-sm font-bold text-[#2F6F62]">{formatCurrency(c.balance * c.price)}</span>
+                  </div>
+                ))}
+                {unallocatedMetalList.map(h => (
+                  <div key={h.symbol} className="flex items-center justify-between p-3 bg-[#2F6F62]/5 rounded-lg">
+                    <div>
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{h.name} ({t.available})</span>
+                      <span className="block text-[10px] text-slate-500">{formatGrams(h.available, h.symbol)} · {h.symbol}</span>
+                    </div>
+                    <span className="text-sm font-bold text-[#2F6F62]">{formatCurrency(h.available * h.price)}</span>
+                  </div>
+                ))}
+                {settlementBalance === 0 && cryptoList.length === 0 && unallocatedMetalList.length === 0 && (
+                  <div className="text-center py-6">
+                    <p className="text-sm text-slate-500">{t.noLiquidity}</p>
+                  </div>
+                )}
+                <div className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border-t-2 border-[#2F6F62]">
+                  <span className="text-sm font-semibold text-slate-800 dark:text-white">{t.total}</span>
+                  <span className="text-lg font-bold text-[#2F6F62]">{formatCurrency(liquidityValue)}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowLiquidityModal(false)}
+                className="w-full mt-6 px-6 py-2.5 bg-[#2F6F62] text-white font-semibold rounded-xl hover:bg-[#2F6F62]/80 transition-colors"
+              >
+                {t.close}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Utilization Ratio Breakdown Modal */}
+      {showUtilizationModal && (() => {
+        const freeValue = Math.max(0, totalVaultValue - encumberedAssetsValue);
+        const freePct = totalVaultValue > 0 ? ((freeValue / totalVaultValue) * 100).toFixed(1) : '0.0';
+        return (
+          <div
+            className="fixed inset-0 bg-black/60 flex items-center justify-center p-6 z-50"
+            onClick={() => setShowUtilizationModal(false)}
+          >
+            <div
+              className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-16 h-16 rounded-full bg-slate-500/15 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1 text-center">{t.assetUtilization}</h3>
+              <p className="text-4xl font-bold text-slate-700 dark:text-white text-center mb-6">{utilizationRatio}%</p>
+
+              <div className="relative w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-6">
+                <div
+                  className="absolute left-0 top-0 h-full bg-orange-500"
+                  style={{ width: `${Math.min(100, Number(utilizationRatio))}%` }}
+                />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-orange-500/5 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-orange-500" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">{t.encumberedAssets}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-bold text-orange-500">{formatCurrency(encumberedAssetsValue)}</span>
+                    <span className="block text-[10px] text-slate-500">{utilizationRatio}%</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-[#2F6F62]/5 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-[#2F6F62]" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">{t.available}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-bold text-[#2F6F62]">{formatCurrency(freeValue)}</span>
+                    <span className="block text-[10px] text-slate-500">{freePct}%</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border-t-2 border-slate-500">
+                  <span className="text-sm font-semibold text-slate-800 dark:text-white">{t.total}</span>
+                  <span className="text-lg font-bold text-slate-700 dark:text-white">{formatCurrency(totalVaultValue)}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowUtilizationModal(false)}
+                className="w-full mt-6 px-6 py-2.5 bg-slate-600 text-white font-semibold rounded-xl hover:bg-slate-700 transition-colors"
+              >
+                {t.close}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
