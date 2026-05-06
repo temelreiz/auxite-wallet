@@ -1029,7 +1029,24 @@ export async function POST(request: NextRequest) {
         
         console.log(`✅ Blockchain sell complete: ${txHash}`);
       } else {
-        blockchainResult = { executed: false, reason: "Blockchain disabled or off-chain" };
+        // Off-chain mode: queue for later on-chain reconciliation when hot
+        // wallet has gas. Reconciliation cron picks these up.
+        blockchainResult = { executed: false, reason: "deferred_onchain", deferred: true };
+        try {
+          const { Redis: _Redis } = await import("@upstash/redis");
+          const _redis = _Redis.fromEnv();
+          await _redis.lpush("pending:onchain:sells", JSON.stringify({
+            kind: "metal_sell",
+            address: normalizedAddress,
+            fromToken: fromTokenLower,
+            fromAmount,
+            toAmount,
+            queuedAt: Date.now(),
+          }));
+          console.log(`⏸  Sell queued for deferred on-chain burn: ${fromAmount}g ${fromToken}`);
+        } catch (e) {
+          console.error("Failed to enqueue deferred sell:", e);
+        }
       }
     }
     // ───────────────────────────────────────────────────────────────────────
