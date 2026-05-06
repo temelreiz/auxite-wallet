@@ -15,8 +15,8 @@
     },
     {
       "name": "auxite-website",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "3002"],
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/bs/Desktop/auxite-website && npm run dev -- --port 3002"],
       "port": 3002
     },
     {
@@ -24,6 +24,18 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-c", "cd /Users/bs/Desktop/auxite-vault && npx expo start --web --port 8082"],
       "port": 8082
+    },
+    {
+      "name": "carnivon",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/bs/Desktop/carnivon && pnpm next dev --turbo -p 3003"],
+      "port": 3003
+    },
+    {
+      "name": "carnivon-mobile-expo",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/bs/Desktop/carnivon-mobile && npx expo start --web --port 8083"],
+      "port": 8083
     }
   ]
 }

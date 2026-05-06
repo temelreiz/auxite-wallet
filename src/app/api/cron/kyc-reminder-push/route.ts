@@ -83,19 +83,22 @@ export async function GET(request: NextRequest) {
     const body = BODIES[lang] || BODIES.en;
 
     try {
-      const result = await sendPushToUser(addr, {
+      const result = await sendPushToUser(
+        addr,
         title,
         body,
-        type: "kyc_reminder",
-        data: { screen: "/kyc-verification", day: days },
-      });
-      if (result.success) {
+        { type: "kyc_reminder", screen: "/kyc-verification", day: days },
+      );
+      if (result.sent > 0) {
         sent++;
         // 30 day TTL on dedupe flag (well past 7 day window)
         await redis.set(flagKey, "1", { ex: 30 * 24 * 60 * 60 });
-      } else {
+      } else if (result.failed > 0) {
         failed++;
-        failures.push({ walletAddress: addr, reason: result.error || "send failed" });
+        failures.push({ walletAddress: addr, reason: `expo: ${result.failed} failed deliveries` });
+      } else {
+        // No devices registered — count as skip, not failure
+        skipped++;
       }
     } catch (e: any) {
       failed++;
