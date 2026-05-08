@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { sellMetalToken } from "@/lib/v6-token-service";
+import { processWithdraw } from "@/lib/blockchain-service";
 import { ethers } from "ethers";
 
 const redis = Redis.fromEnv();
@@ -142,18 +143,101 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // ─────────────────────────────────────────────────────────────────
+  // Also drain pending AUXM redemption withdrawals.
+  // Each item: { txId, address, payoutAsset, payoutAmount, withdrawAddress, retries? }
+  // ─────────────────────────────────────────────────────────────────
+  const wQueueLen = await redis.llen("pending:onchain:withdraws");
+  let wProcessed = 0, wSucceeded = 0, wFailed = 0;
+  const wFailures: { txId?: string; reason: string }[] = [];
+
+  for (let i = 0; i < Math.min(wQueueLen, MAX_OPS_PER_RUN); i++) {
+    const raw = await redis.rpop("pending:onchain:withdraws");
+    if (!raw) break;
+
+    let op: any;
+    try {
+      op = typeof raw === "string" ? JSON.parse(raw) : raw;
+    } catch {
+      wFailed++;
+      wFailures.push({ reason: "malformed queue item" });
+      continue;
+    }
+    wProcessed++;
+
+    try {
+      const result = await processWithdraw(op.payoutAsset, op.withdrawAddress, op.payoutAmount);
+      if (result.success) {
+        wSucceeded++;
+        await redis.lpush("audit:reconciled-withdraws", JSON.stringify({
+          ...op,
+          reconciledAt: Date.now(),
+          txHash: result.txHash,
+        }));
+        await redis.ltrim("audit:reconciled-withdraws", 0, 999);
+
+        // Update user transaction record from "processing"/"queued" to "completed"
+        if (op.address && op.txId) {
+          try {
+            const txKey = `user:${op.address}:transactions`;
+            const txs = await redis.lrange(txKey, 0, 100);
+            const updated = txs.map((t: any) => {
+              const p = typeof t === "string" ? JSON.parse(t) : t;
+              if (p.id === op.txId) {
+                return JSON.stringify({ ...p, status: "completed", txHash: result.txHash, completedAt: Date.now() });
+              }
+              return typeof t === "string" ? t : JSON.stringify(t);
+            });
+            await redis.del(txKey);
+            if (updated.length) await redis.rpush(txKey, ...updated.reverse());
+          } catch (e) {
+            console.warn("[reconcile] failed to update user tx record:", e);
+          }
+        }
+      } else {
+        wFailed++;
+        const retries = (op.retries || 0) + 1;
+        wFailures.push({ txId: op.txId, reason: result.error || "processWithdraw returned !success" });
+        if (retries < 5) {
+          await redis.lpush("pending:onchain:withdraws", JSON.stringify({ ...op, retries }));
+        } else {
+          await redis.lpush("dead-letter:onchain:withdraws", JSON.stringify({
+            ...op, failedAt: Date.now(), lastError: result.error,
+          }));
+        }
+      }
+    } catch (e: any) {
+      wFailed++;
+      const retries = (op.retries || 0) + 1;
+      wFailures.push({ txId: op.txId, reason: e?.message || String(e) });
+      if (retries < 5) {
+        await redis.lpush("pending:onchain:withdraws", JSON.stringify({ ...op, retries }));
+      } else {
+        await redis.lpush("dead-letter:onchain:withdraws", JSON.stringify({
+          ...op, failedAt: Date.now(), lastError: e?.message,
+        }));
+      }
+    }
+  }
+
   await redis.lpush("cron:reconcile-deferred:log", JSON.stringify({
     timestamp: Date.now(),
-    processed, succeeded, failed,
+    sells: { processed, succeeded, failed },
+    withdraws: { processed: wProcessed, succeeded: wSucceeded, failed: wFailed },
   }));
   await redis.ltrim("cron:reconcile-deferred:log", 0, 49);
 
   return NextResponse.json({
     success: true,
-    processed,
-    succeeded,
-    failed,
-    failures: failures.slice(0, 10),
-    queueLength: await redis.llen("pending:onchain:sells"),
+    sells: {
+      processed, succeeded, failed,
+      failures: failures.slice(0, 10),
+      queueLength: await redis.llen("pending:onchain:sells"),
+    },
+    withdraws: {
+      processed: wProcessed, succeeded: wSucceeded, failed: wFailed,
+      failures: wFailures.slice(0, 10),
+      queueLength: await redis.llen("pending:onchain:withdraws"),
+    },
   });
 }

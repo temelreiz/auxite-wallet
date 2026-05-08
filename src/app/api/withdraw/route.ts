@@ -51,7 +51,13 @@ const BALANCE_KEYS: Record<string, string> = {
   ETH: "eth",
   XRP: "xrp",
   SOL: "sol",
+  AUXM: "auxm",
 };
+
+// AUXM is a USD-pegged settlement token. Withdrawals convert it 1:1 to
+// the user-selected payout asset. ETH conversion uses live USD price.
+const AUXM_PAYOUT_ASSETS = ["USDC", "USDT", "ETH"] as const;
+type AuxmPayoutAsset = typeof AUXM_PAYOUT_ASSETS[number];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 2FA VERIFICATION
@@ -173,9 +179,177 @@ export async function POST(request: NextRequest) {
     }
 
     // Desteklenen coinler
-    const supportedCoins = ["USDT", "USDC", "ETH", "XRP", "SOL", "BTC"];
+    const supportedCoins = ["USDT", "USDC", "ETH", "XRP", "SOL", "BTC", "AUXM"];
     if (!supportedCoins.includes(coin)) {
       return NextResponse.json({ error: "Unsupported cryptocurrency" }, { status: 400 });
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // AUXM REDEMPTION — convert settlement balance to chosen crypto + send.
+    // Body: { coin: "AUXM", payoutAsset: "USDC"|"USDT"|"ETH", amount, ... }
+    // ═════════════════════════════════════════════════════════════════════════
+    if (coin === "AUXM") {
+      const payoutAsset = String(body.payoutAsset || "USDC").toUpperCase() as AuxmPayoutAsset;
+      if (!AUXM_PAYOUT_ASSETS.includes(payoutAsset)) {
+        return NextResponse.json({
+          error: `Unsupported payout asset for AUXM. Choose one of: ${AUXM_PAYOUT_ASSETS.join(", ")}`,
+        }, { status: 400 });
+      }
+
+      // Min withdrawal in AUXM (= USD)
+      if (amount < 10) {
+        return NextResponse.json({ error: "Minimum AUXM withdrawal is 10 AUXM ($10)" }, { status: 400 });
+      }
+
+      const normalizedAddr = address.toLowerCase();
+
+      // Read AUXM balance from same source as other coins
+      const baseUrl = request.headers.get("host")
+        ? `https://${request.headers.get("host")}`
+        : process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io";
+      let auxmBalance = 0;
+      try {
+        const balanceRes = await fetch(`${baseUrl}/api/user/balance?address=${normalizedAddr}`);
+        const balanceData = await balanceRes.json();
+        if (balanceData.success && balanceData.balances) {
+          auxmBalance = parseFloat(balanceData.balances.auxm || "0");
+        }
+      } catch (e) {
+        console.warn("Balance API failed for AUXM redeem, falling back to redis:", e);
+        const cur = await redis.hgetall(`user:${normalizedAddr}:balance`);
+        auxmBalance = parseFloat((cur?.auxm as string) || "0");
+      }
+
+      if (amount > auxmBalance) {
+        return NextResponse.json({
+          error: "Insufficient AUXM balance",
+          required: amount,
+          available: auxmBalance,
+        }, { status: 400 });
+      }
+
+      // Convert AUXM (USD) → payout asset amount
+      // 1 AUXM = 1 USD; USDC/USDT = 1 USD; ETH = market price
+      let payoutAmount: number;
+      let ethPriceUsd: number | undefined;
+      if (payoutAsset === "USDC" || payoutAsset === "USDT") {
+        payoutAmount = amount; // 1:1
+      } else {
+        // ETH: fetch live price
+        try {
+          const priceRes = await fetch(`${baseUrl}/api/prices?chain=84532`);
+          const priceData = await priceRes.json();
+          ethPriceUsd = parseFloat(priceData?.spotPrices?.ETH || "0");
+          if (!ethPriceUsd || ethPriceUsd <= 0) throw new Error("ETH price unavailable");
+        } catch (e) {
+          // fallback to a conservative rate
+          ethPriceUsd = 3000;
+          console.warn("Using fallback ETH price 3000:", e);
+        }
+        payoutAmount = amount / ethPriceUsd;
+      }
+
+      // Apply payout-asset network fee (same schedule as direct withdrawal)
+      const payoutFee = NETWORK_FEES[payoutAsset] || 0;
+      const netPayout = payoutAmount - payoutFee;
+      if (netPayout <= 0) {
+        return NextResponse.json({
+          error: `AUXM amount too small after fees. Minimum payout: ${payoutFee} ${payoutAsset}`,
+        }, { status: 400 });
+      }
+
+      // Burn AUXM from user's balance immediately so they don't double-spend.
+      // If on-chain transfer fails, we re-credit (refund handled in catch below).
+      const balanceKey = `user:${normalizedAddr}:balance`;
+      await redis.hincrbyfloat(balanceKey, "auxm", -amount);
+
+      // Record transaction (processing)
+      const txId = `withdraw_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const transaction = {
+        id: txId,
+        type: "withdraw",
+        subType: "auxm_redemption",
+        coin: "AUXM",
+        payoutAsset,
+        payoutAmount: netPayout.toString(),
+        amount: amount.toString(),
+        netAmount: netPayout.toString(),
+        fee: payoutFee.toString() + " " + payoutAsset,
+        ethPriceUsd: ethPriceUsd?.toString(),
+        withdrawAddress,
+        memo: memo || null,
+        status: "processing",
+        timestamp: Date.now(),
+      };
+      const txKey = `user:${normalizedAddr}:transactions`;
+      await redis.lpush(txKey, JSON.stringify(transaction));
+
+      console.log(`💱 AUXM redemption: ${amount} AUXM → ${netPayout} ${payoutAsset} → ${withdrawAddress.slice(0, 10)}...`);
+
+      // Try direct on-chain transfer of payout asset.
+      // If hot wallet doesn't have enough, processWithdraw returns failure;
+      // we then queue the redemption to pending:onchain:withdraws for the
+      // reconcile cron to process once the treasury is funded.
+      const direct = await processWithdraw(payoutAsset, withdrawAddress, netPayout);
+
+      if (direct.success) {
+        // Mark tx completed
+        const txs = await redis.lrange(txKey, 0, 50);
+        const updated = txs.map((t: any) => {
+          const p = typeof t === "string" ? JSON.parse(t) : t;
+          if (p.id === txId) {
+            return JSON.stringify({ ...p, status: "completed", txHash: direct.txHash, completedAt: Date.now() });
+          }
+          return typeof t === "string" ? t : JSON.stringify(t);
+        });
+        await redis.del(txKey);
+        if (updated.length) await redis.rpush(txKey, ...updated.reverse());
+
+        return NextResponse.json({
+          success: true,
+          withdrawal: {
+            id: txId,
+            coin: "AUXM",
+            payoutAsset,
+            amount,
+            payoutAmount: netPayout,
+            fee: payoutFee,
+            withdrawAddress,
+            txHash: direct.txHash,
+            status: "completed",
+            explorerUrl: getExplorerUrl(payoutAsset, direct.txHash || ""),
+          },
+        });
+      }
+
+      // Treasury empty / on-chain failed — queue for deferred reconciliation.
+      await redis.lpush("pending:onchain:withdraws", JSON.stringify({
+        kind: "auxm_redemption",
+        txId,
+        address: normalizedAddr,
+        payoutAsset,
+        payoutAmount: netPayout,
+        withdrawAddress,
+        queuedAt: Date.now(),
+        directError: direct.error,
+      }));
+      console.log(`⏸  AUXM redemption queued (treasury low/error): ${direct.error}`);
+
+      return NextResponse.json({
+        success: true,
+        deferred: true,
+        withdrawal: {
+          id: txId,
+          coin: "AUXM",
+          payoutAsset,
+          amount,
+          payoutAmount: netPayout,
+          fee: payoutFee,
+          withdrawAddress,
+          status: "queued",
+          message: "Withdrawal queued. Settlement within 24-72 hours pending treasury reconciliation.",
+        },
+      });
     }
 
     // Minimum çekim kontrolü
