@@ -16,8 +16,10 @@ import { ethers } from "ethers";
 const redis = Redis.fromEnv();
 const SECRET = process.env.CRON_SECRET || "";
 
-// Minimum ETH balance required to safely execute a sell tx (~3x typical gas)
-const MIN_ETH_BALANCE = ethers.parseEther("0.002");
+// Minimum ETH balance required to safely execute a sell tx.
+// Single tx ~0.00068 ETH on Base; we keep 7x buffer to survive gas spikes
+// and multi-op batches without mid-run exhaustion.
+const MIN_ETH_BALANCE = ethers.parseEther("0.005");
 // Max ops to process per run (avoid timeout / runaway)
 const MAX_OPS_PER_RUN = 20;
 
