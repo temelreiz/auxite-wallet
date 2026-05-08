@@ -59,6 +59,10 @@
       "schedule": "*/10 * * * *"
     },
     {
+      "path": "/api/cron/hot-wallet-alert",
+      "schedule": "*/30 * * * *"
+    },
+    {
       "path": "/api/cron/store-daily-close",
       "schedule": "0 21 * * 1-5"
     },
