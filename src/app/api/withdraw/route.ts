@@ -56,7 +56,7 @@ const BALANCE_KEYS: Record<string, string> = {
 
 // AUXM is a USD-pegged settlement token. Withdrawals convert it 1:1 to
 // the user-selected payout asset. ETH conversion uses live USD price.
-const AUXM_PAYOUT_ASSETS = ["USDC", "USDT", "ETH"] as const;
+const AUXM_PAYOUT_ASSETS = ["USDC", "USDT", "ETH", "BTC"] as const;
 type AuxmPayoutAsset = typeof AUXM_PAYOUT_ASSETS[number];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -229,24 +229,36 @@ export async function POST(request: NextRequest) {
       }
 
       // Convert AUXM (USD) → payout asset amount
-      // 1 AUXM = 1 USD; USDC/USDT = 1 USD; ETH = market price
+      // 1 AUXM = 1 USD; USDC/USDT = 1 USD; ETH/BTC = market price
       let payoutAmount: number;
       let ethPriceUsd: number | undefined;
+      let btcPriceUsd: number | undefined;
       if (payoutAsset === "USDC" || payoutAsset === "USDT") {
         payoutAmount = amount; // 1:1
-      } else {
-        // ETH: fetch live price
+      } else if (payoutAsset === "ETH") {
+        // ETH: fetch live price from /api/prices (oracle, GoldAPI/CoinGecko)
         try {
           const priceRes = await fetch(`${baseUrl}/api/prices?chain=84532`);
           const priceData = await priceRes.json();
           ethPriceUsd = parseFloat(priceData?.spotPrices?.ETH || "0");
           if (!ethPriceUsd || ethPriceUsd <= 0) throw new Error("ETH price unavailable");
         } catch (e) {
-          // fallback to a conservative rate
           ethPriceUsd = 3000;
           console.warn("Using fallback ETH price 3000:", e);
         }
         payoutAmount = amount / ethPriceUsd;
+      } else {
+        // BTC: fetch live price from /api/crypto (multi-source: HTX/Binance/CoinGecko)
+        try {
+          const cryptoRes = await fetch(`${baseUrl}/api/crypto`);
+          const cryptoData = await cryptoRes.json();
+          btcPriceUsd = parseFloat(cryptoData?.bitcoin?.usd || "0");
+          if (!btcPriceUsd || btcPriceUsd <= 0) throw new Error("BTC price unavailable");
+        } catch (e) {
+          btcPriceUsd = 90000;
+          console.warn("Using fallback BTC price 90000:", e);
+        }
+        payoutAmount = amount / btcPriceUsd;
       }
 
       // Apply payout-asset network fee (same schedule as direct withdrawal)
@@ -276,6 +288,7 @@ export async function POST(request: NextRequest) {
         netAmount: netPayout.toString(),
         fee: payoutFee.toString() + " " + payoutAsset,
         ethPriceUsd: ethPriceUsd?.toString(),
+        btcPriceUsd: btcPriceUsd?.toString(),
         withdrawAddress,
         memo: memo || null,
         status: "processing",

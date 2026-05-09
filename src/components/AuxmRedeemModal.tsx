@@ -3,7 +3,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 // AUXM REDEEM MODAL
 // User redeems internal AUXM settlement balance to on-chain crypto
-// (USDC / USDT / ETH; BTC coming soon).
+// (USDC / USDT / ETH / BTC).
 //
 // Flow: form → confirm → 2fa → result
 // API:  POST /api/withdraw
@@ -56,7 +56,7 @@ const translations: Record<string, Record<string, string>> = {
     comingSoon: "Yakında",
     auxmInfo: "AUXM, Auxite içinde dahili takas birimidir. Çekim sırasında seçtiğin kripto'ya 1 AUXM = 1 USD oranıyla çevrilir ve adresine gönderilir.",
     notTransferable: "AUXM doğrudan transfer edilemez",
-    redeemableAs: "USDC/USDT/ETH olarak çekilebilir",
+    redeemableAs: "USDC/USDT/ETH/BTC olarak çekilebilir",
   },
   en: {
     title: "Convert & Withdraw",
@@ -90,7 +90,7 @@ const translations: Record<string, Record<string, string>> = {
     comingSoon: "Coming Soon",
     auxmInfo: "AUXM is an internal settlement unit within Auxite. On withdrawal it is converted to your selected crypto at 1 AUXM = 1 USD and sent to your address.",
     notTransferable: "AUXM is not directly transferable",
-    redeemableAs: "Redeemable as USDC/USDT/ETH",
+    redeemableAs: "Redeemable as USDC/USDT/ETH/BTC",
   },
   de: {
     title: "Umwandeln & Abheben", subtitle: "AUXM-Guthaben als Krypto auf Ihre Wallet abheben",
@@ -106,7 +106,7 @@ const translations: Record<string, Record<string, string>> = {
     error: "Fehler!", txComplete: "10-30 Minuten", close: "Schließen", max: "MAX", back: "Zurück",
     usdValue: "USD-Wert", rate: "Umrechnungskurs", comingSoon: "Demnächst",
     auxmInfo: "AUXM ist eine interne Verrechnungseinheit innerhalb von Auxite. Bei Abhebung wird sie zu 1 AUXM = 1 USD in die gewählte Krypto umgerechnet.",
-    notTransferable: "AUXM ist nicht direkt übertragbar", redeemableAs: "Einlösbar als USDC/USDT/ETH",
+    notTransferable: "AUXM ist nicht direkt übertragbar", redeemableAs: "Einlösbar als USDC/USDT/ETH/BTC",
   },
   fr: {
     title: "Convertir & Retirer", subtitle: "Convertir votre solde AUXM en crypto sur votre portefeuille",
@@ -122,7 +122,7 @@ const translations: Record<string, Record<string, string>> = {
     error: "Erreur!", txComplete: "10-30 minutes", close: "Fermer", max: "MAX", back: "Retour",
     usdValue: "Valeur USD", rate: "Taux de conversion", comingSoon: "Bientôt disponible",
     auxmInfo: "AUXM est une unité de règlement interne au sein d'Auxite. Lors du retrait, il est converti en crypto choisi au taux de 1 AUXM = 1 USD.",
-    notTransferable: "AUXM n'est pas directement transférable", redeemableAs: "Convertible en USDC/USDT/ETH",
+    notTransferable: "AUXM n'est pas directement transférable", redeemableAs: "Convertible en USDC/USDT/ETH/BTC",
   },
   ar: {
     title: "تحويل وسحب", subtitle: "استرداد رصيد AUXM كعملة مشفرة إلى محفظتك",
@@ -138,7 +138,7 @@ const translations: Record<string, Record<string, string>> = {
     error: "خطأ!", txComplete: "10-30 دقيقة", close: "إغلاق", max: "الأقصى", back: "رجوع",
     usdValue: "القيمة بالدولار", rate: "سعر التحويل", comingSoon: "قريباً",
     auxmInfo: "AUXM هي وحدة تسوية داخلية ضمن Auxite. عند السحب يتم تحويلها إلى العملة المشفرة المختارة بسعر 1 AUXM = 1 USD.",
-    notTransferable: "AUXM غير قابل للتحويل المباشر", redeemableAs: "قابل للاسترداد كـ USDC/USDT/ETH",
+    notTransferable: "AUXM غير قابل للتحويل المباشر", redeemableAs: "قابل للاسترداد كـ USDC/USDT/ETH/BTC",
   },
   ru: {
     title: "Конвертация и вывод", subtitle: "Вывести баланс AUXM как криптовалюту на ваш кошелек",
@@ -154,7 +154,7 @@ const translations: Record<string, Record<string, string>> = {
     error: "Ошибка!", txComplete: "10-30 минут", close: "Закрыть", max: "МАКС", back: "Назад",
     usdValue: "Стоимость в USD", rate: "Курс конвертации", comingSoon: "Скоро",
     auxmInfo: "AUXM — это внутренняя расчетная единица в Auxite. При выводе конвертируется в выбранную криптовалюту по курсу 1 AUXM = 1 USD.",
-    notTransferable: "AUXM напрямую не передается", redeemableAs: "Можно вывести как USDC/USDT/ETH",
+    notTransferable: "AUXM напрямую не передается", redeemableAs: "Можно вывести как USDC/USDT/ETH/BTC",
   },
 };
 
@@ -174,7 +174,7 @@ const PAYOUT_ASSETS: Record<PayoutAsset, {
   USDC: { name: "USD Coin",  icon: "$", color: "#2775CA", network: "Base / Ethereum", networkFee: 1,     enabled: true  },
   USDT: { name: "Tether",    icon: "₮", color: "#26A17B", network: "Ethereum / Tron", networkFee: 1,     enabled: true  },
   ETH:  { name: "Ethereum",  icon: "Ξ", color: "#627EEA", network: "Base / Ethereum", networkFee: 0.001, enabled: true  },
-  BTC:  { name: "Bitcoin",   icon: "₿", color: "#F7931A", network: "Bitcoin",         networkFee: 0.0001, enabled: false },
+  BTC:  { name: "Bitcoin",   icon: "₿", color: "#F7931A", network: "Bitcoin",         networkFee: 0.0001, enabled: true  },
 };
 
 // AUXM is USD-pegged 1:1
