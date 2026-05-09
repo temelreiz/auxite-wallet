@@ -22,8 +22,10 @@ if (!process.env.STRIPE_SECRET_KEY) {
   console.warn("[stripe] STRIPE_SECRET_KEY not set — Stripe endpoints will fail.");
 }
 
+// No explicit apiVersion: Stripe SDK 22.x uses its built-in default and
+// types-checks against that exact version. Pinning manually with a stale
+// LatestApiVersion symbol breaks the build across SDK upgrades.
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "noop", {
-  apiVersion: "2024-12-18.acacia" as Stripe.LatestApiVersion,
   typescript: true,
 });
 
