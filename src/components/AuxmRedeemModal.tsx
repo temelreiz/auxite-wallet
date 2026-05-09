@@ -25,7 +25,7 @@ import { useLanguage } from "@/components/LanguageContext";
 // ────────────────────────────────────────────────────────────────────────────
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    title: "AUXM Çek",
+    title: "Dönüştür & Çek",
     subtitle: "AUXM bakiyesini kripto olarak cüzdanına çek",
     confirmTx: "İşlemi onayla",
     auxmBalance: "AUXM Bakiyesi",
@@ -59,7 +59,7 @@ const translations: Record<string, Record<string, string>> = {
     redeemableAs: "USDC/USDT/ETH olarak çekilebilir",
   },
   en: {
-    title: "Withdraw AUXM",
+    title: "Convert & Withdraw",
     subtitle: "Redeem your AUXM balance as crypto to your wallet",
     confirmTx: "Confirm transaction",
     auxmBalance: "AUXM Balance",
@@ -93,7 +93,7 @@ const translations: Record<string, Record<string, string>> = {
     redeemableAs: "Redeemable as USDC/USDT/ETH",
   },
   de: {
-    title: "AUXM Abheben", subtitle: "AUXM-Guthaben als Krypto auf Ihre Wallet abheben",
+    title: "Umwandeln & Abheben", subtitle: "AUXM-Guthaben als Krypto auf Ihre Wallet abheben",
     confirmTx: "Transaktion bestätigen", auxmBalance: "AUXM-Guthaben",
     receiveAs: "Als welche Krypto erhalten?", amount: "AUXM-Betrag",
     walletAddress: "Wallet-Adresse", network: "Netzwerk", youWillReceive: "Sie erhalten",
@@ -109,7 +109,7 @@ const translations: Record<string, Record<string, string>> = {
     notTransferable: "AUXM ist nicht direkt übertragbar", redeemableAs: "Einlösbar als USDC/USDT/ETH",
   },
   fr: {
-    title: "Retirer AUXM", subtitle: "Convertir votre solde AUXM en crypto sur votre portefeuille",
+    title: "Convertir & Retirer", subtitle: "Convertir votre solde AUXM en crypto sur votre portefeuille",
     confirmTx: "Confirmer la transaction", auxmBalance: "Solde AUXM",
     receiveAs: "Recevoir en quelle crypto?", amount: "Montant AUXM",
     walletAddress: "Adresse du portefeuille", network: "Réseau", youWillReceive: "Vous recevrez",
@@ -125,7 +125,7 @@ const translations: Record<string, Record<string, string>> = {
     notTransferable: "AUXM n'est pas directement transférable", redeemableAs: "Convertible en USDC/USDT/ETH",
   },
   ar: {
-    title: "سحب AUXM", subtitle: "استرداد رصيد AUXM كعملة مشفرة إلى محفظتك",
+    title: "تحويل وسحب", subtitle: "استرداد رصيد AUXM كعملة مشفرة إلى محفظتك",
     confirmTx: "تأكيد المعاملة", auxmBalance: "رصيد AUXM",
     receiveAs: "استلم بأي عملة مشفرة؟", amount: "كمية AUXM",
     walletAddress: "عنوان المحفظة", network: "الشبكة", youWillReceive: "ستستلم",
@@ -141,7 +141,7 @@ const translations: Record<string, Record<string, string>> = {
     notTransferable: "AUXM غير قابل للتحويل المباشر", redeemableAs: "قابل للاسترداد كـ USDC/USDT/ETH",
   },
   ru: {
-    title: "Вывод AUXM", subtitle: "Вывести баланс AUXM как криптовалюту на ваш кошелек",
+    title: "Конвертация и вывод", subtitle: "Вывести баланс AUXM как криптовалюту на ваш кошелек",
     confirmTx: "Подтвердить транзакцию", auxmBalance: "Баланс AUXM",
     receiveAs: "Получить в какой криптовалюте?", amount: "Сумма AUXM",
     walletAddress: "Адрес кошелька", network: "Сеть", youWillReceive: "Вы получите",

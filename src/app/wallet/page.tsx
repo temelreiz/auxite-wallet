@@ -94,7 +94,7 @@ const translations: Record<string, Record<string, string>> = {
     fullyReserved: "Tam Rezervli",
     offBalanceSheet: "Bilanço Dışı",
     fundVault: "Kasayı Fonla",
-    withdrawAuxm: "AUXM Çek",
+    withdrawAuxm: "Dönüştür & Çek",
     auxmDisclaimer: "AUXM, Auxite altyapısı içinde kullanılan dahili takas birimidir. Doğrudan transfer edilemez; cüzdanına çekmek istersen USDC, USDT veya ETH olarak gönderilir (1 AUXM = 1 USD).",
 
     // Capital Clarity
@@ -152,7 +152,7 @@ const translations: Record<string, Record<string, string>> = {
     fullyReserved: "Fully Reserved",
     offBalanceSheet: "Off-Balance Sheet",
     fundVault: "Fund Vault",
-    withdrawAuxm: "Withdraw AUXM",
+    withdrawAuxm: "Convert & Withdraw",
     auxmDisclaimer: "AUXM is an internal settlement unit used within the Auxite infrastructure. It is not directly transferable; when you withdraw, it is sent to your wallet as USDC, USDT, or ETH (1 AUXM = 1 USD).",
     capitalClarity: "CAPITAL STATUS",
     settledCapital: "Settled",
