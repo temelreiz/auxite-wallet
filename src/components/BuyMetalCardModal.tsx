@@ -24,11 +24,18 @@ import { useWallet } from "@/components/WalletContext";
 import { useLanguage } from "@/components/LanguageContext";
 import { formatAmount } from "@/lib/format";
 
-// ── Stripe.js singleton ────────────────────────────────────────────────────
-const STRIPE_PK = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-const stripePromise: Promise<StripeJS | null> = STRIPE_PK
-  ? loadStripe(STRIPE_PK)
-  : Promise.resolve(null);
+// ── Stripe.js singleton (lazy, browser-only) ───────────────────────────────
+// loadStripe must only run in the browser (it injects a <script>). Even
+// inside a "use client" file, top-level evaluation can run during SSR/build
+// in some configurations. Defer initialization until first access.
+let _stripePromise: Promise<StripeJS | null> | null = null;
+function getStripePromise(): Promise<StripeJS | null> {
+  if (typeof window === "undefined") return Promise.resolve(null);
+  if (_stripePromise) return _stripePromise;
+  const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  _stripePromise = pk ? loadStripe(pk) : Promise.resolve(null);
+  return _stripePromise;
+}
 
 // ── i18n ───────────────────────────────────────────────────────────────────
 const t = {
@@ -313,7 +320,7 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
           {step === "pay" && quote && clientSecret && elementsOptions && (
             <>
               <QuoteSummary quote={quote} L={L} />
-              <Elements stripe={stripePromise} options={elementsOptions}>
+              <Elements stripe={getStripePromise()} options={elementsOptions}>
                 <PaymentForm
                   L={L}
                   paymentIntentId={paymentIntentId!}
