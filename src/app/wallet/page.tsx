@@ -12,6 +12,7 @@ import Image from "next/image";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
+import { AuxmRedeemModal } from "@/components/AuxmRedeemModal";
 
 // Metal icons
 const metalIcons: Record<string, string> = {
@@ -93,7 +94,8 @@ const translations: Record<string, Record<string, string>> = {
     fullyReserved: "Tam Rezervli",
     offBalanceSheet: "Bilanço Dışı",
     fundVault: "Kasayı Fonla",
-    auxmDisclaimer: "AUXM, yalnızca Auxite altyapısı içinde kullanılan dahili takas birimidir. Kripto para veya transfer edilebilir varlık değildir.",
+    withdrawAuxm: "AUXM Çek",
+    auxmDisclaimer: "AUXM, Auxite altyapısı içinde kullanılan dahili takas birimidir. Doğrudan transfer edilemez; cüzdanına çekmek istersen USDC, USDT veya ETH olarak gönderilir (1 AUXM = 1 USD).",
 
     // Capital Clarity
     capitalClarity: "SERMAYE DURUMU",
@@ -150,7 +152,8 @@ const translations: Record<string, Record<string, string>> = {
     fullyReserved: "Fully Reserved",
     offBalanceSheet: "Off-Balance Sheet",
     fundVault: "Fund Vault",
-    auxmDisclaimer: "AUXM is an internal settlement unit used exclusively within the Auxite infrastructure. It is not a cryptocurrency or a transferable asset.",
+    withdrawAuxm: "Withdraw AUXM",
+    auxmDisclaimer: "AUXM is an internal settlement unit used within the Auxite infrastructure. It is not directly transferable; when you withdraw, it is sent to your wallet as USDC, USDT, or ETH (1 AUXM = 1 USD).",
     capitalClarity: "CAPITAL STATUS",
     settledCapital: "Settled",
     allocatedMetals: "Allocated",
@@ -185,6 +188,7 @@ export default function VaultPage() {
   const [encumberedAssets, setEncumberedAssets] = useState(0);
   const [holdings, setHoldings] = useState<MetalHolding[]>([]);
   const [settlementBalance, setSettlementBalance] = useState(0);
+  const [showAuxmRedeemModal, setShowAuxmRedeemModal] = useState(false);
   const [trustBadgeModal, setTrustBadgeModal] = useState<string | null>(null);
 
   const vaultId = address ? `AUX-${address.slice(2, 8).toUpperCase()}` : null;
@@ -497,16 +501,28 @@ export default function VaultPage() {
           {/* AUXM Disclaimer */}
           <p className="text-[11px] text-slate-500 dark:text-slate-400 italic mb-4">{t.auxmDisclaimer}</p>
 
-          {/* Fund Vault Button */}
-          <Link
-            href="/fund-vault"
-            className="flex items-center justify-center gap-2 w-full py-3 border border-indigo-500 rounded-xl text-indigo-500 font-semibold hover:bg-indigo-500/10 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            {t.fundVault}
-          </Link>
+          {/* Fund Vault + Withdraw AUXM Buttons */}
+          <div className="grid grid-cols-2 gap-2">
+            <Link
+              href="/fund-vault"
+              className="flex items-center justify-center gap-2 py-3 border border-indigo-500 rounded-xl text-indigo-500 font-semibold hover:bg-indigo-500/10 transition-colors text-sm"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              {t.fundVault}
+            </Link>
+            <button
+              onClick={() => setShowAuxmRedeemModal(true)}
+              disabled={settlementBalance < 10}
+              className="flex items-center justify-center gap-2 py-3 border border-indigo-500 rounded-xl text-indigo-500 font-semibold hover:bg-indigo-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              {t.withdrawAuxm}
+            </button>
+          </div>
         </div>
 
         {/* Trust Messages */}
@@ -676,6 +692,12 @@ export default function VaultPage() {
           </div>
         </div>
       )}
+
+      {/* AUXM Redeem Modal */}
+      <AuxmRedeemModal
+        isOpen={showAuxmRedeemModal}
+        onClose={() => setShowAuxmRedeemModal(false)}
+      />
     </div>
   );
 }
