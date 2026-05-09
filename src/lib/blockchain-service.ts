@@ -232,6 +232,83 @@ export async function withdrawUSDT(
 }
 
 // =====================
+// USDC WITHDRAW (Base Network)
+// USDC on Base is the primary deposit/withdraw rail (cheapest gas, modern).
+// =====================
+export async function withdrawUSDC(
+  toAddress: string,
+  amount: number
+): Promise<WithdrawResult> {
+  try {
+    const secrets = await getSecrets();
+    const privateKey = secrets.HOT_WALLET_ETH_PRIVATE_KEY;
+
+    if (!privateKey) {
+      return { success: false, error: "ETH private key not configured" };
+    }
+
+    const provider = new ethers.JsonRpcProvider(BASE_RPC);
+    const wallet = new ethers.Wallet(privateKey, provider);
+
+    // USDC on Base mainnet (Circle official)
+    const USDC_CONTRACT = process.env.NEXT_PUBLIC_USDC_ADDRESS_BASE
+      || '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+    const usdcContract = new ethers.Contract(USDC_CONTRACT, ERC20_ABI, wallet);
+
+    console.log(`💵 USDC Withdraw (Base): ${amount} USDC to ${toAddress}`);
+    console.log(`   Hot Wallet: ${wallet.address}`);
+
+    const decimals = await usdcContract.decimals(); // USDC = 6
+    const usdcBalance = await usdcContract.balanceOf(wallet.address);
+    const amountInUnits = ethers.parseUnits(amount.toFixed(2), decimals);
+
+    console.log(`   USDC Balance: ${ethers.formatUnits(usdcBalance, decimals)} USDC`);
+
+    if (usdcBalance < amountInUnits) {
+      return {
+        success: false,
+        error: `Insufficient USDC balance. Available: ${ethers.formatUnits(usdcBalance, decimals)} USDC`,
+      };
+    }
+
+    const ethBalance = await provider.getBalance(wallet.address);
+    const feeData = await provider.getFeeData();
+    const gasLimit = 100000n;
+    const maxFeePerGas = feeData.maxFeePerGas || ethers.parseUnits('1', 'gwei'); // Base is cheap
+    const estimatedGasCost = gasLimit * maxFeePerGas;
+
+    console.log(`   ETH for gas (Base): ${ethers.formatEther(ethBalance)} ETH`);
+    console.log(`   Gas needed: ${ethers.formatEther(estimatedGasCost)} ETH`);
+
+    if (ethBalance < estimatedGasCost) {
+      return {
+        success: false,
+        error: `Insufficient ETH on Base for gas. Required: ${ethers.formatEther(estimatedGasCost)} ETH, Available: ${ethers.formatEther(ethBalance)} ETH`,
+      };
+    }
+
+    const tx = await usdcContract.transfer(toAddress.trim(), amountInUnits, {
+      maxFeePerGas,
+      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas || ethers.parseUnits('0.1', 'gwei'),
+      gasLimit,
+    });
+
+    console.log(`   TX Hash: ${tx.hash}`);
+    const receipt = await tx.wait(1);
+    console.log(`   ✅ Confirmed in block ${receipt?.blockNumber}`);
+
+    return {
+      success: true,
+      txHash: receipt?.hash || tx.hash,
+      fee: parseFloat(ethers.formatEther(estimatedGasCost)),
+    };
+  } catch (error: any) {
+    console.error('USDC withdraw error:', error);
+    return { success: false, error: error.message || 'USDC transfer failed' };
+  }
+}
+
+// =====================
 // METAL TOKEN (ERC20) WITHDRAW
 // AUXG, AUXS, AUXPT, AUXPD
 // =====================
@@ -528,6 +605,8 @@ export async function processWithdraw(
       return withdrawETH(toAddress, amount);
     case 'USDT':
       return withdrawUSDT(toAddress, amount);
+    case 'USDC':
+      return withdrawUSDC(toAddress, amount);
     case 'XRP':
       return withdrawXRP(toAddress, amount, tag);
     case 'SOL':

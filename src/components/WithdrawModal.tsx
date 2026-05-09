@@ -6,6 +6,7 @@ import { useWallet } from "@/components/WalletContext";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { TwoFactorGate } from "@/components/TwoFactorGate";
 import { useLanguage } from "@/components/LanguageContext";
+import { getWithdrawFee, NETWORK_LABELS, DEFAULT_NETWORK } from "@/lib/withdraw-fees";
 
 const translations: Record<string, Record<string, string>> = {
   tr: {
@@ -119,20 +120,28 @@ interface WithdrawModalProps {
   onClose: () => void;
 }
 
-type WithdrawCrypto = "USDT" | "BTC" | "ETH" | "XRP" | "SOL";
+type WithdrawCrypto = "USDT" | "USDC" | "BTC" | "ETH" | "XRP" | "SOL";
 
-const WITHDRAW_CRYPTOS: Record<WithdrawCrypto, { 
+// Network labels + fees + minimums sourced from src/lib/withdraw-fees.ts.
+// Modal currently uses DEFAULT_NETWORK per asset (no network picker yet).
+const networkLabelFor = (asset: WithdrawCrypto): string => {
+  const def = DEFAULT_NETWORK[asset];
+  return def ? NETWORK_LABELS[def] : NETWORK_LABELS[getWithdrawFee(asset).network];
+};
+
+const WITHDRAW_CRYPTOS: Record<WithdrawCrypto, {
   name: string; icon: string; color: string; network: string; minWithdraw: number; fee: number;
 }> = {
-  USDT: { name: "Tether", icon: "₮", color: "#26A17B", network: "Ethereum / Tron", minWithdraw: 10, fee: 1 },
-  BTC: { name: "Bitcoin", icon: "₿", color: "#F7931A", network: "Bitcoin Network", minWithdraw: 0.0005, fee: 0.0001 },
-  ETH: { name: "Ethereum", icon: "Ξ", color: "#627EEA", network: "Ethereum / Base", minWithdraw: 0.005, fee: 0.001 },
-  XRP: { name: "Ripple", icon: "✕", color: "#23292F", network: "XRP Ledger", minWithdraw: 10, fee: 0.1 },
-  SOL: { name: "Solana", icon: "◎", color: "#9945FF", network: "Solana", minWithdraw: 0.1, fee: 0.01 },
+  USDT: { name: "Tether",    icon: "₮", color: "#26A17B", network: networkLabelFor("USDT"), minWithdraw: getWithdrawFee("USDT").minWithdraw, fee: getWithdrawFee("USDT").fee },
+  USDC: { name: "USD Coin",  icon: "$", color: "#2775CA", network: networkLabelFor("USDC"), minWithdraw: getWithdrawFee("USDC").minWithdraw, fee: getWithdrawFee("USDC").fee },
+  BTC:  { name: "Bitcoin",   icon: "₿", color: "#F7931A", network: networkLabelFor("BTC"),  minWithdraw: getWithdrawFee("BTC").minWithdraw,  fee: getWithdrawFee("BTC").fee  },
+  ETH:  { name: "Ethereum",  icon: "Ξ", color: "#627EEA", network: networkLabelFor("ETH"),  minWithdraw: getWithdrawFee("ETH").minWithdraw,  fee: getWithdrawFee("ETH").fee  },
+  XRP:  { name: "Ripple",    icon: "✕", color: "#23292F", network: networkLabelFor("XRP"),  minWithdraw: getWithdrawFee("XRP").minWithdraw,  fee: getWithdrawFee("XRP").fee  },
+  SOL:  { name: "Solana",    icon: "◎", color: "#9945FF", network: networkLabelFor("SOL"),  minWithdraw: getWithdrawFee("SOL").minWithdraw,  fee: getWithdrawFee("SOL").fee  },
 };
 
 const BALANCE_KEYS: Record<WithdrawCrypto, string> = {
-  USDT: "usdt", BTC: "btc", ETH: "eth", XRP: "xrp", SOL: "sol",
+  USDT: "usdt", USDC: "usdc", BTC: "btc", ETH: "eth", XRP: "xrp", SOL: "sol",
 };
 
 export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
@@ -161,7 +170,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const crypto = WITHDRAW_CRYPTOS[selectedCrypto];
 
   const realCryptoPrices: Record<WithdrawCrypto, number> = {
-    USDT: 1, BTC: cryptoPrices?.btc ?? 95000, ETH: cryptoPrices?.eth ?? 3500,
+    USDT: 1, USDC: 1, BTC: cryptoPrices?.btc ?? 95000, ETH: cryptoPrices?.eth ?? 3500,
     XRP: cryptoPrices?.xrp ?? 2.2, SOL: cryptoPrices?.sol ?? 200,
   };
 
@@ -246,7 +255,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     }
   };
 
-  const cryptoList: WithdrawCrypto[] = ["USDT", "ETH", "XRP", "SOL", "BTC"];
+  const cryptoList: WithdrawCrypto[] = ["USDT", "USDC", "ETH", "XRP", "SOL", "BTC"];
 
   // 2FA Modal
   if (flowStep === "2fa") {

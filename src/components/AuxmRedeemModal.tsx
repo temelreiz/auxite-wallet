@@ -19,6 +19,7 @@ import { useWallet } from "@/components/WalletContext";
 import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { TwoFactorGate } from "@/components/TwoFactorGate";
 import { useLanguage } from "@/components/LanguageContext";
+import { getWithdrawFee, NETWORK_LABELS, DEFAULT_NETWORK } from "@/lib/withdraw-fees";
 
 // ────────────────────────────────────────────────────────────────────────────
 // i18n
@@ -163,18 +164,28 @@ const translations: Record<string, Record<string, string>> = {
 // ────────────────────────────────────────────────────────────────────────────
 type PayoutAsset = "USDC" | "USDT" | "ETH" | "BTC";
 
+// Fees + default network sourced from src/lib/withdraw-fees.ts (single source of truth).
+// Modal always uses the DEFAULT_NETWORK for each asset; if you later add a network
+// picker, swap getWithdrawFee(asset) → getWithdrawFee(asset, selectedNetwork).
+const networkLabelFor = (asset: PayoutAsset): string => {
+  const net = DEFAULT_NETWORK[asset];
+  // Single-network assets (BTC) have no DEFAULT_NETWORK entry; fall back to the
+  // helper's `network` field directly.
+  return net ? NETWORK_LABELS[net] : NETWORK_LABELS[getWithdrawFee(asset).network];
+};
+
 const PAYOUT_ASSETS: Record<PayoutAsset, {
   name: string;
   icon: string;
   color: string;
   network: string;
-  networkFee: number;          // in payout asset units
-  enabled: boolean;            // false = "coming soon"
+  networkFee: number;
+  enabled: boolean;
 }> = {
-  USDC: { name: "USD Coin",  icon: "$", color: "#2775CA", network: "Base / Ethereum", networkFee: 1,     enabled: true  },
-  USDT: { name: "Tether",    icon: "₮", color: "#26A17B", network: "Ethereum / Tron", networkFee: 1,     enabled: true  },
-  ETH:  { name: "Ethereum",  icon: "Ξ", color: "#627EEA", network: "Base / Ethereum", networkFee: 0.001, enabled: true  },
-  BTC:  { name: "Bitcoin",   icon: "₿", color: "#F7931A", network: "Bitcoin",         networkFee: 0.0001, enabled: true  },
+  USDC: { name: "USD Coin", icon: "$", color: "#2775CA", network: networkLabelFor("USDC"), networkFee: getWithdrawFee("USDC").fee, enabled: true },
+  USDT: { name: "Tether",   icon: "₮", color: "#26A17B", network: networkLabelFor("USDT"), networkFee: getWithdrawFee("USDT").fee, enabled: true },
+  ETH:  { name: "Ethereum", icon: "Ξ", color: "#627EEA", network: networkLabelFor("ETH"),  networkFee: getWithdrawFee("ETH").fee,  enabled: true },
+  BTC:  { name: "Bitcoin",  icon: "₿", color: "#F7931A", network: networkLabelFor("BTC"),  networkFee: getWithdrawFee("BTC").fee,  enabled: true },
 };
 
 // AUXM is USD-pegged 1:1

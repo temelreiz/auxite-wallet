@@ -5,6 +5,7 @@ import { processWithdraw } from "@/lib/blockchain-service";
 import { sendWithdrawConfirmedEmail, sendWithdrawRequestedEmail } from "@/lib/email-service";
 import { getUserLanguage } from "@/lib/user-language";
 import { checkTradingAllowed } from "@/lib/trading-guard";
+import { getWithdrawFee, getMinWithdraw } from "@/lib/withdraw-fees";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
 
@@ -23,25 +24,8 @@ interface WithdrawRequest {
   memo?: string;
 }
 
-// Network fee (kripto cinsinden)
-const NETWORK_FEES: Record<string, number> = {
-  USDT: 1,      // 1 USDT gas fee
-  USDC: 1,      // 1 USDC gas fee
-  ETH: 0.001,   // 0.001 ETH gas fee
-  XRP: 0.1,     // 0.1 XRP fee
-  SOL: 0.01,    // 0.01 SOL fee
-  BTC: 0.0001,  // 0.0001 BTC fee
-};
-
-// Minimum çekim miktarları
-const MIN_WITHDRAW: Record<string, number> = {
-  USDT: 10,
-  USDC: 10,
-  ETH: 0.001,
-  XRP: 10,
-  SOL: 0.1,
-  BTC: 0.0005,
-};
+// Fees and minimums centralized in src/lib/withdraw-fees.ts.
+// Use getWithdrawFee(coin, network) and getMinWithdraw(coin, network).
 
 // Balance key mapping
 const BALANCE_KEYS: Record<string, string> = {
@@ -261,8 +245,9 @@ export async function POST(request: NextRequest) {
         payoutAmount = amount / btcPriceUsd;
       }
 
-      // Apply payout-asset network fee (same schedule as direct withdrawal)
-      const payoutFee = NETWORK_FEES[payoutAsset] || 0;
+      // Apply payout-asset network fee (uses default network for the asset
+      // — see DEFAULT_NETWORK in lib/withdraw-fees.ts).
+      const payoutFee = getWithdrawFee(payoutAsset).fee;
       const netPayout = payoutAmount - payoutFee;
       if (netPayout <= 0) {
         return NextResponse.json({
@@ -365,8 +350,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Minimum çekim kontrolü
-    const minAmount = MIN_WITHDRAW[coin] || 0;
+    // Minimum çekim kontrolü (network-aware: USDT/USDC/ETH on Ethereum has higher minimum)
+    const minAmount = (() => {
+      try { return getMinWithdraw(coin, network); } catch { return 0; }
+    })();
     if (amount < minAmount) {
       return NextResponse.json({
         error: `Minimum withdrawal is ${minAmount} ${coin}`
@@ -457,7 +444,9 @@ export async function POST(request: NextRequest) {
       cryptoBalance = parseFloat(currentBalance[balanceFieldKey] as string || "0");
     }
 
-    const networkFee = NETWORK_FEES[coin] || 0;
+    const networkFee = (() => {
+      try { return getWithdrawFee(coin, network).fee; } catch { return 0; }
+    })();
 
     console.log(`📊 Withdraw check - Coin: ${coin}, Balance: ${cryptoBalance}, Requested: ${amount}, Fee: ${networkFee}`);
 
