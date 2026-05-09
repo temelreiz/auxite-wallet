@@ -11,6 +11,7 @@ import Link from "next/link";
 import Image from "next/image";
 import TopNav from "@/components/TopNav";
 import LiquidateModal from "@/components/LiquidateModal";
+import { AuxmRedeemModal } from "@/components/AuxmRedeemModal";
 import { MarketStatusBanner } from "@/components/MarketStatusBanner";
 import { useLanguage } from "@/components/LanguageContext";
 import { useWallet } from "@/components/WalletContext";
@@ -91,8 +92,8 @@ const translations: Record<string, Record<string, string>> = {
     settlementBalance: "Settlement Balance", auxmUnit: "AUXM",
     auxmPrimaryCapital: "Internal settlement unit for capital movement",
     auxmPeg: "USD equivalent", fullyReserved: "Fully Reserved",
-    offBalanceSheet: "Off-Balance Sheet", fundVault: "Fund Vault",
-    auxmDisclaimer: "AUXM is an internal settlement unit used exclusively within the Auxite infrastructure. It is not a cryptocurrency or a transferable asset.",
+    offBalanceSheet: "Off-Balance Sheet", fundVault: "Fund Vault", withdrawAuxm: "Withdraw AUXM",
+    auxmDisclaimer: "AUXM is an internal settlement unit used within the Auxite infrastructure. It is not directly transferable; on withdrawal it is sent to your wallet as USDC, USDT, or ETH (1 AUXM = 1 USD).",
     transferToSettlement: "Transfer to Settlement",
     capitalClarity: "CAPITAL STATUS", settledCapital: "Settled", encumbered: "Encumbered",
     institutionalArchitecture: "Built on institutional custody architecture.",
@@ -164,8 +165,8 @@ const translations: Record<string, Record<string, string>> = {
     settlementBalance: "Takas Bakiyesi", auxmUnit: "AUXM",
     auxmPrimaryCapital: "Sermaye hareketi için dahili takas birimi",
     auxmPeg: "USD eşdeğeri", fullyReserved: "Tam Rezervli",
-    offBalanceSheet: "Bilanço Dışı", fundVault: "Kasayı Fonla",
-    auxmDisclaimer: "AUXM, yalnızca Auxite altyapısı içinde kullanılan dahili takas birimidir. Kripto para veya transfer edilebilir varlık değildir.",
+    offBalanceSheet: "Bilanço Dışı", fundVault: "Kasayı Fonla", withdrawAuxm: "AUXM Çek",
+    auxmDisclaimer: "AUXM, Auxite altyapısı içinde kullanılan dahili takas birimidir. Doğrudan transfer edilemez; cüzdanına çekmek istersen USDC, USDT veya ETH olarak gönderilir (1 AUXM = 1 USD).",
     transferToSettlement: "Takasa Transfer Et",
     capitalClarity: "SERMAYE DURUMU", settledCapital: "Takas Edilmiş", encumbered: "Bloke",
     institutionalArchitecture: "Kurumsal saklama mimarisi üzerine inşa edilmiştir.",
@@ -237,8 +238,8 @@ const translations: Record<string, Record<string, string>> = {
     settlementBalance: "Abwicklungssaldo", auxmUnit: "AUXM",
     auxmPrimaryCapital: "Interne Abwicklungseinheit für Kapitalbewegung",
     auxmPeg: "USD-Äquivalent", fullyReserved: "Vollständig reserviert",
-    offBalanceSheet: "Außerbilanziell", fundVault: "Tresor finanzieren",
-    auxmDisclaimer: "AUXM ist eine interne Abwicklungseinheit, die ausschließlich innerhalb der Auxite-Infrastruktur verwendet wird. Es ist keine Kryptowährung oder übertragbarer Vermögenswert.",
+    offBalanceSheet: "Außerbilanziell", fundVault: "Tresor finanzieren", withdrawAuxm: "AUXM abheben",
+    auxmDisclaimer: "AUXM ist eine interne Verrechnungseinheit innerhalb der Auxite-Infrastruktur. Es ist nicht direkt übertragbar; bei einer Abhebung wird es als USDC, USDT oder ETH an Ihre Wallet gesendet (1 AUXM = 1 USD).",
     transferToSettlement: "Zur Abwicklung überweisen",
     capitalClarity: "KAPITALSTATUS", settledCapital: "Abgewickelt", encumbered: "Belastet",
     institutionalArchitecture: "Aufgebaut auf institutioneller Verwahrungsarchitektur.",
@@ -310,8 +311,8 @@ const translations: Record<string, Record<string, string>> = {
     settlementBalance: "Solde de règlement", auxmUnit: "AUXM",
     auxmPrimaryCapital: "Unité de règlement interne pour les mouvements de capitaux",
     auxmPeg: "Équivalent USD", fullyReserved: "Entièrement réservé",
-    offBalanceSheet: "Hors bilan", fundVault: "Financer le coffre",
-    auxmDisclaimer: "AUXM est une unité de règlement interne utilisée exclusivement au sein de l'infrastructure Auxite. Ce n'est pas une cryptomonnaie ni un actif transférable.",
+    offBalanceSheet: "Hors bilan", fundVault: "Financer le coffre", withdrawAuxm: "Retirer AUXM",
+    auxmDisclaimer: "AUXM est une unité de règlement interne au sein de l'infrastructure Auxite. Il n'est pas directement transférable ; lors d'un retrait, il est envoyé à votre portefeuille en USDC, USDT ou ETH (1 AUXM = 1 USD).",
     transferToSettlement: "Transférer au règlement",
     capitalClarity: "STATUT DU CAPITAL", settledCapital: "Réglé", encumbered: "Grevé",
     institutionalArchitecture: "Construit sur une architecture de conservation institutionnelle.",
@@ -383,8 +384,8 @@ const translations: Record<string, Record<string, string>> = {
     settlementBalance: "رصيد التسوية", auxmUnit: "AUXM",
     auxmPrimaryCapital: "وحدة تسوية داخلية لحركة رأس المال",
     auxmPeg: "معادل الدولار", fullyReserved: "محجوز بالكامل",
-    offBalanceSheet: "خارج الميزانية", fundVault: "تمويل الخزنة",
-    auxmDisclaimer: "AUXM هي وحدة تسوية داخلية تُستخدم حصرياً ضمن بنية Auxite التحتية. ليست عملة مشفرة أو أصل قابل للتحويل.",
+    offBalanceSheet: "خارج الميزانية", fundVault: "تمويل الخزنة", withdrawAuxm: "سحب AUXM",
+    auxmDisclaimer: "AUXM هي وحدة تسوية داخلية ضمن بنية Auxite. ليست قابلة للتحويل مباشرة؛ عند السحب تُرسل إلى محفظتك كـ USDC أو USDT أو ETH (1 AUXM = 1 USD).",
     transferToSettlement: "تحويل إلى التسوية",
     capitalClarity: "حالة رأس المال", settledCapital: "مسوّى", encumbered: "مرهون",
     institutionalArchitecture: "مبني على بنية حفظ مؤسسية.",
@@ -456,8 +457,8 @@ const translations: Record<string, Record<string, string>> = {
     settlementBalance: "Расчётный баланс", auxmUnit: "AUXM",
     auxmPrimaryCapital: "Внутренняя расчётная единица для движения капитала",
     auxmPeg: "Эквивалент USD", fullyReserved: "Полностью зарезервировано",
-    offBalanceSheet: "Внебалансовый", fundVault: "Пополнить хранилище",
-    auxmDisclaimer: "AUXM — внутренняя расчётная единица, используемая исключительно в инфраструктуре Auxite. Это не криптовалюта и не передаваемый актив.",
+    offBalanceSheet: "Внебалансовый", fundVault: "Пополнить хранилище", withdrawAuxm: "Вывод AUXM",
+    auxmDisclaimer: "AUXM — внутренняя расчётная единица в инфраструктуре Auxite. Не передаётся напрямую; при выводе отправляется на ваш кошелёк как USDC, USDT или ETH (1 AUXM = 1 USD).",
     transferToSettlement: "Перевести на расчёт",
     capitalClarity: "СТАТУС КАПИТАЛА", settledCapital: "Рассчитано", encumbered: "Обременено",
     institutionalArchitecture: "Построено на институциональной архитектуре хранения.",
@@ -509,6 +510,7 @@ export default function VaultPage() {
   const [liquidityValue, setLiquidityValue] = useState(0);
   const [holdings, setHoldings] = useState<MetalHolding[]>([]);
   const [settlementBalance, setSettlementBalance] = useState(0);
+  const [showAuxmRedeemModal, setShowAuxmRedeemModal] = useState(false);
   const [cryptoBalances, setCryptoBalances] = useState<Record<string, number>>({});
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
   const [trustBadgeModal, setTrustBadgeModal] = useState<string | null>(null);
@@ -1132,16 +1134,28 @@ export default function VaultPage() {
           {/* AUXM Disclaimer */}
           <p className="text-[11px] text-slate-500 dark:text-slate-400 italic mb-4">{t.auxmDisclaimer}</p>
 
-          {/* Fund Vault Button */}
-          <Link
-            href="/fund-vault"
-            className="flex items-center justify-center gap-2 w-full py-3 border border-indigo-500 rounded-xl text-indigo-500 font-semibold hover:bg-indigo-500/10 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            {t.fundVault}
-          </Link>
+          {/* Fund Vault + Withdraw AUXM Buttons */}
+          <div className="grid grid-cols-2 gap-2">
+            <Link
+              href="/fund-vault"
+              className="flex items-center justify-center gap-2 py-3 border border-indigo-500 rounded-xl text-indigo-500 font-semibold hover:bg-indigo-500/10 transition-colors text-sm"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              {t.fundVault}
+            </Link>
+            <button
+              onClick={() => setShowAuxmRedeemModal(true)}
+              disabled={settlementBalance < 10}
+              className="flex items-center justify-center gap-2 py-3 border border-indigo-500 rounded-xl text-indigo-500 font-semibold hover:bg-indigo-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              {t.withdrawAuxm}
+            </button>
+          </div>
         </div>
 
         {/* Trust Messages */}
@@ -1821,6 +1835,12 @@ export default function VaultPage() {
           </div>
         );
       })()}
+
+      {/* AUXM Redeem Modal */}
+      <AuxmRedeemModal
+        isOpen={showAuxmRedeemModal}
+        onClose={() => setShowAuxmRedeemModal(false)}
+      />
     </div>
   );
 }
