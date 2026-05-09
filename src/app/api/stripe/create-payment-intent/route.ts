@@ -28,11 +28,19 @@ import { checkTradingAllowed } from "@/lib/trading-guard";
 
 export async function POST(req: NextRequest) {
   try {
-    // Honor admin-controlled trading kill switch
-    const guard = await checkTradingAllowed("metalBuy");
-    if (!guard.allowed) {
+    // Honor admin-controlled kill switches: both fiat deposit (card onramp)
+    // and metal trading (the underlying allocation) must be allowed.
+    const fiatGuard = await checkTradingAllowed("fiatDeposit");
+    if (!fiatGuard.allowed) {
       return NextResponse.json(
-        { error: guard.message?.en || "Metal purchases temporarily disabled", reason: guard.reason },
+        { error: fiatGuard.message?.en || "Card purchases temporarily disabled", reason: fiatGuard.reason },
+        { status: 503 }
+      );
+    }
+    const metalGuard = await checkTradingAllowed("metalTrading");
+    if (!metalGuard.allowed) {
+      return NextResponse.json(
+        { error: metalGuard.message?.en || "Metal trading temporarily disabled", reason: metalGuard.reason },
         { status: 503 }
       );
     }
