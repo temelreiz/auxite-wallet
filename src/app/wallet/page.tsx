@@ -13,6 +13,7 @@ import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
 import { AuxmRedeemModal } from "@/components/AuxmRedeemModal";
+import { BuyMetalCardModal } from "@/components/BuyMetalCardModal";
 
 // Metal icons
 const metalIcons: Record<string, string> = {
@@ -95,6 +96,9 @@ const translations: Record<string, Record<string, string>> = {
     offBalanceSheet: "Bilanço Dışı",
     fundVault: "Kasayı Fonla",
     withdrawAuxm: "Dönüştür & Çek",
+    buyMetalCardTitle: "Kredi Kartı ile Değerli Metal Al",
+    buyMetalCardDesc: "Anında altın, gümüş, platin ve paladyum alımı. Kasana doğrudan tahsis edilir.",
+    buyMetalCardCta: "Kart ile Al",
     auxmDisclaimer: "AUXM, Auxite altyapısı içinde kullanılan dahili takas birimidir. Doğrudan transfer edilemez; cüzdanına çekmek istersen USDC, USDT, ETH veya BTC olarak gönderilir (1 AUXM = 1 USD).",
 
     // Capital Clarity
@@ -153,6 +157,9 @@ const translations: Record<string, Record<string, string>> = {
     offBalanceSheet: "Off-Balance Sheet",
     fundVault: "Fund Vault",
     withdrawAuxm: "Convert & Withdraw",
+    buyMetalCardTitle: "Buy Precious Metals with Card",
+    buyMetalCardDesc: "Instant gold, silver, platinum & palladium purchase. Allocated to your vault.",
+    buyMetalCardCta: "Buy with Card",
     auxmDisclaimer: "AUXM is an internal settlement unit used within the Auxite infrastructure. It is not directly transferable; when you withdraw, it is sent to your wallet as USDC, USDT, ETH, or BTC (1 AUXM = 1 USD).",
     capitalClarity: "CAPITAL STATUS",
     settledCapital: "Settled",
@@ -189,6 +196,7 @@ export default function VaultPage() {
   const [holdings, setHoldings] = useState<MetalHolding[]>([]);
   const [settlementBalance, setSettlementBalance] = useState(0);
   const [showAuxmRedeemModal, setShowAuxmRedeemModal] = useState(false);
+  const [showBuyMetalCardModal, setShowBuyMetalCardModal] = useState(false);
   const [trustBadgeModal, setTrustBadgeModal] = useState<string | null>(null);
 
   const vaultId = address ? `AUX-${address.slice(2, 8).toUpperCase()}` : null;
@@ -525,6 +533,29 @@ export default function VaultPage() {
           </div>
         </div>
 
+        {/* Buy Metal with Card — Hero CTA */}
+        <button
+          onClick={() => setShowBuyMetalCardModal(true)}
+          className="w-full text-left bg-gradient-to-br from-[#BFA181]/15 via-[#D4B47A]/10 to-[#BFA181]/5 dark:from-[#BFA181]/20 dark:via-[#D4B47A]/15 dark:to-[#BFA181]/10 hover:from-[#BFA181]/25 hover:via-[#D4B47A]/20 hover:to-[#BFA181]/15 transition-all rounded-xl p-4 border border-[#BFA181]/40 group"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="w-12 h-12 rounded-full bg-[#BFA181]/20 flex items-center justify-center flex-shrink-0">
+                <svg className="w-6 h-6 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-slate-800 dark:text-white truncate">{t.buyMetalCardTitle}</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2">{t.buyMetalCardDesc}</p>
+              </div>
+            </div>
+            <div className="flex-shrink-0 px-3 py-1.5 bg-[#BFA181] text-white text-xs font-bold rounded-lg group-hover:bg-[#D4B47A] transition-colors">
+              {t.buyMetalCardCta}
+            </div>
+          </div>
+        </button>
+
         {/* Trust Messages */}
         <div className="space-y-2">
           <div className="flex items-center gap-3 p-3 bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 rounded-xl border border-[#2F6F62]/30 dark:border-[#2F6F62]/30/50">
@@ -697,6 +728,12 @@ export default function VaultPage() {
       <AuxmRedeemModal
         isOpen={showAuxmRedeemModal}
         onClose={() => setShowAuxmRedeemModal(false)}
+      />
+
+      {/* Buy Metal with Card Modal */}
+      <BuyMetalCardModal
+        isOpen={showBuyMetalCardModal}
+        onClose={() => setShowBuyMetalCardModal(false)}
       />
     </div>
   );

@@ -12,6 +12,7 @@ import Image from "next/image";
 import TopNav from "@/components/TopNav";
 import LiquidateModal from "@/components/LiquidateModal";
 import { AuxmRedeemModal } from "@/components/AuxmRedeemModal";
+import { BuyMetalCardModal } from "@/components/BuyMetalCardModal";
 import { MarketStatusBanner } from "@/components/MarketStatusBanner";
 import { useLanguage } from "@/components/LanguageContext";
 import { useWallet } from "@/components/WalletContext";
@@ -93,6 +94,9 @@ const translations: Record<string, Record<string, string>> = {
     auxmPrimaryCapital: "Internal settlement unit for capital movement",
     auxmPeg: "USD equivalent", fullyReserved: "Fully Reserved",
     offBalanceSheet: "Off-Balance Sheet", fundVault: "Fund Vault", withdrawAuxm: "Convert & Withdraw",
+    buyMetalCardTitle: "Buy Precious Metals with Card",
+    buyMetalCardDesc: "Instant gold, silver, platinum & palladium purchase. Allocated to your vault.",
+    buyMetalCardCta: "Buy with Card",
     auxmDisclaimer: "AUXM is an internal settlement unit used within the Auxite infrastructure. It is not directly transferable; on withdrawal it is sent to your wallet as USDC, USDT, ETH, or BTC (1 AUXM = 1 USD).",
     transferToSettlement: "Transfer to Settlement",
     capitalClarity: "CAPITAL STATUS", settledCapital: "Settled", encumbered: "Encumbered",
@@ -166,6 +170,9 @@ const translations: Record<string, Record<string, string>> = {
     auxmPrimaryCapital: "Sermaye hareketi için dahili takas birimi",
     auxmPeg: "USD eşdeğeri", fullyReserved: "Tam Rezervli",
     offBalanceSheet: "Bilanço Dışı", fundVault: "Kasayı Fonla", withdrawAuxm: "Dönüştür & Çek",
+    buyMetalCardTitle: "Kredi Kartı ile Değerli Metal Al",
+    buyMetalCardDesc: "Anında altın, gümüş, platin ve paladyum alımı. Kasana doğrudan tahsis edilir.",
+    buyMetalCardCta: "Kart ile Al",
     auxmDisclaimer: "AUXM, Auxite altyapısı içinde kullanılan dahili takas birimidir. Doğrudan transfer edilemez; cüzdanına çekmek istersen USDC, USDT, ETH veya BTC olarak gönderilir (1 AUXM = 1 USD).",
     transferToSettlement: "Takasa Transfer Et",
     capitalClarity: "SERMAYE DURUMU", settledCapital: "Takas Edilmiş", encumbered: "Bloke",
@@ -239,6 +246,9 @@ const translations: Record<string, Record<string, string>> = {
     auxmPrimaryCapital: "Interne Abwicklungseinheit für Kapitalbewegung",
     auxmPeg: "USD-Äquivalent", fullyReserved: "Vollständig reserviert",
     offBalanceSheet: "Außerbilanziell", fundVault: "Tresor finanzieren", withdrawAuxm: "Umwandeln & Abheben",
+    buyMetalCardTitle: "Edelmetalle mit Karte kaufen",
+    buyMetalCardDesc: "Sofortiger Kauf von Gold, Silber, Platin & Palladium. Direkt in Ihren Tresor allokiert.",
+    buyMetalCardCta: "Mit Karte kaufen",
     auxmDisclaimer: "AUXM ist eine interne Verrechnungseinheit innerhalb der Auxite-Infrastruktur. Es ist nicht direkt übertragbar; bei einer Abhebung wird es als USDC, USDT, ETH oder BTC an Ihre Wallet gesendet (1 AUXM = 1 USD).",
     transferToSettlement: "Zur Abwicklung überweisen",
     capitalClarity: "KAPITALSTATUS", settledCapital: "Abgewickelt", encumbered: "Belastet",
@@ -312,6 +322,9 @@ const translations: Record<string, Record<string, string>> = {
     auxmPrimaryCapital: "Unité de règlement interne pour les mouvements de capitaux",
     auxmPeg: "Équivalent USD", fullyReserved: "Entièrement réservé",
     offBalanceSheet: "Hors bilan", fundVault: "Financer le coffre", withdrawAuxm: "Convertir & Retirer",
+    buyMetalCardTitle: "Acheter des métaux précieux par carte",
+    buyMetalCardDesc: "Achat instantané d'or, d'argent, de platine et de palladium. Alloué à votre coffre.",
+    buyMetalCardCta: "Acheter par carte",
     auxmDisclaimer: "AUXM est une unité de règlement interne au sein de l'infrastructure Auxite. Il n'est pas directement transférable ; lors d'un retrait, il est envoyé à votre portefeuille en USDC, USDT, ETH ou BTC (1 AUXM = 1 USD).",
     transferToSettlement: "Transférer au règlement",
     capitalClarity: "STATUT DU CAPITAL", settledCapital: "Réglé", encumbered: "Grevé",
@@ -385,6 +398,9 @@ const translations: Record<string, Record<string, string>> = {
     auxmPrimaryCapital: "وحدة تسوية داخلية لحركة رأس المال",
     auxmPeg: "معادل الدولار", fullyReserved: "محجوز بالكامل",
     offBalanceSheet: "خارج الميزانية", fundVault: "تمويل الخزنة", withdrawAuxm: "تحويل وسحب",
+    buyMetalCardTitle: "اشترِ المعادن الثمينة بالبطاقة",
+    buyMetalCardDesc: "شراء فوري للذهب والفضة والبلاتين والبالاديوم. يُخصص مباشرة إلى خزنتك.",
+    buyMetalCardCta: "اشترِ بالبطاقة",
     auxmDisclaimer: "AUXM هي وحدة تسوية داخلية ضمن بنية Auxite. ليست قابلة للتحويل مباشرة؛ عند السحب تُرسل إلى محفظتك كـ USDC أو USDT أو ETH أو BTC (1 AUXM = 1 USD).",
     transferToSettlement: "تحويل إلى التسوية",
     capitalClarity: "حالة رأس المال", settledCapital: "مسوّى", encumbered: "مرهون",
@@ -458,6 +474,9 @@ const translations: Record<string, Record<string, string>> = {
     auxmPrimaryCapital: "Внутренняя расчётная единица для движения капитала",
     auxmPeg: "Эквивалент USD", fullyReserved: "Полностью зарезервировано",
     offBalanceSheet: "Внебалансовый", fundVault: "Пополнить хранилище", withdrawAuxm: "Конвертация и вывод",
+    buyMetalCardTitle: "Купите драгоценные металлы картой",
+    buyMetalCardDesc: "Мгновенная покупка золота, серебра, платины и палладия. Зачисляется в ваше хранилище.",
+    buyMetalCardCta: "Купить картой",
     auxmDisclaimer: "AUXM — внутренняя расчётная единица в инфраструктуре Auxite. Не передаётся напрямую; при выводе отправляется на ваш кошелёк как USDC, USDT, ETH или BTC (1 AUXM = 1 USD).",
     transferToSettlement: "Перевести на расчёт",
     capitalClarity: "СТАТУС КАПИТАЛА", settledCapital: "Рассчитано", encumbered: "Обременено",
@@ -511,6 +530,7 @@ export default function VaultPage() {
   const [holdings, setHoldings] = useState<MetalHolding[]>([]);
   const [settlementBalance, setSettlementBalance] = useState(0);
   const [showAuxmRedeemModal, setShowAuxmRedeemModal] = useState(false);
+  const [showBuyMetalCardModal, setShowBuyMetalCardModal] = useState(false);
   const [cryptoBalances, setCryptoBalances] = useState<Record<string, number>>({});
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
   const [trustBadgeModal, setTrustBadgeModal] = useState<string | null>(null);
@@ -1157,6 +1177,29 @@ export default function VaultPage() {
             </button>
           </div>
         </div>
+
+        {/* Buy Metal with Card — Hero CTA */}
+        <button
+          onClick={() => setShowBuyMetalCardModal(true)}
+          className="w-full text-left bg-gradient-to-br from-[#BFA181]/15 via-[#D4B47A]/10 to-[#BFA181]/5 dark:from-[#BFA181]/20 dark:via-[#D4B47A]/15 dark:to-[#BFA181]/10 hover:from-[#BFA181]/25 hover:via-[#D4B47A]/20 hover:to-[#BFA181]/15 transition-all rounded-xl p-4 border border-[#BFA181]/40 group"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="w-12 h-12 rounded-full bg-[#BFA181]/20 flex items-center justify-center flex-shrink-0">
+                <svg className="w-6 h-6 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-slate-800 dark:text-white truncate">{t.buyMetalCardTitle}</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2">{t.buyMetalCardDesc}</p>
+              </div>
+            </div>
+            <div className="flex-shrink-0 px-3 py-1.5 bg-[#BFA181] text-white text-xs font-bold rounded-lg group-hover:bg-[#D4B47A] transition-colors">
+              {t.buyMetalCardCta}
+            </div>
+          </div>
+        </button>
 
         {/* Trust Messages */}
         <div className="space-y-2">
@@ -1840,6 +1883,12 @@ export default function VaultPage() {
       <AuxmRedeemModal
         isOpen={showAuxmRedeemModal}
         onClose={() => setShowAuxmRedeemModal(false)}
+      />
+
+      {/* Buy Metal with Card Modal */}
+      <BuyMetalCardModal
+        isOpen={showBuyMetalCardModal}
+        onClose={() => setShowBuyMetalCardModal(false)}
       />
     </div>
   );
