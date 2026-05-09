@@ -164,6 +164,14 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
     }
   }, [isOpen]);
 
+  // Stripe Elements options memoized for stable reference.
+  // MUST be declared above the early-return — Rules of Hooks: hooks
+  // must run in the same order on every render.
+  const elementsOptions = useMemo(
+    () => (clientSecret ? { clientSecret, appearance: { theme: "stripe" as const } } : undefined),
+    [clientSecret]
+  );
+
   if (!isOpen) return null;
 
   const amountNum = parseFloat(amountInput) || 0;
@@ -198,12 +206,6 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
       setQuoting(false);
     }
   };
-
-  // Stripe Elements options memoized for stable reference
-  const elementsOptions = useMemo(
-    () => (clientSecret ? { clientSecret, appearance: { theme: "stripe" as const } } : undefined),
-    [clientSecret]
-  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
