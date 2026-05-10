@@ -14,6 +14,7 @@ import { useLanguage } from "@/components/LanguageContext";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
 import { AuxmRedeemModal } from "@/components/AuxmRedeemModal";
 import { BuyMetalCardModal } from "@/components/BuyMetalCardModal";
+import { logEvent } from "@/lib/analytics";
 
 // Metal icons
 const metalIcons: Record<string, string> = {
@@ -535,7 +536,10 @@ export default function VaultPage() {
 
         {/* Buy Metal with Card — Hero CTA */}
         <button
-          onClick={() => setShowBuyMetalCardModal(true)}
+          onClick={() => {
+            logEvent("card_purchase_cta_clicked", { surface: "web", source: "wallet_hero" });
+            setShowBuyMetalCardModal(true);
+          }}
           className="w-full text-left bg-gradient-to-br from-[#BFA181]/15 via-[#D4B47A]/10 to-[#BFA181]/5 dark:from-[#BFA181]/20 dark:via-[#D4B47A]/15 dark:to-[#BFA181]/10 hover:from-[#BFA181]/25 hover:via-[#D4B47A]/20 hover:to-[#BFA181]/15 transition-all rounded-xl p-4 border border-[#BFA181]/40 group"
         >
           <div className="flex items-center justify-between gap-3">

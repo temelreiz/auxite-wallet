@@ -23,6 +23,7 @@ import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-
 import { useWallet } from "@/components/WalletContext";
 import { useLanguage } from "@/components/LanguageContext";
 import { formatAmount } from "@/lib/format";
+import { logEvent } from "@/lib/analytics";
 
 // ── Stripe.js singleton (lazy, browser-only) ───────────────────────────────
 // loadStripe must only run in the browser (it injects a <script>). Even
@@ -149,7 +150,7 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  // Reset on open
+  // Reset on open + analytics: modal opened
   useEffect(() => {
     if (isOpen) {
       setStep("form");
@@ -161,6 +162,7 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
       setPaymentIntentId(null);
       setError(null);
       setResult(null);
+      logEvent("card_purchase_modal_opened", { surface: "web" });
     }
   }, [isOpen]);
 
@@ -181,6 +183,7 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
     if (!canSubmit) return;
     setError(null);
     setQuoting(true);
+    logEvent("card_purchase_quote_requested", { surface: "web", metal, mode, amount: amountNum });
     try {
       const res = await fetch("/api/stripe/create-payment-intent", {
         method: "POST",
@@ -200,8 +203,13 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
       setPaymentIntentId(data.paymentIntentId);
       setQuote(data.breakdown);
       setStep("pay");
+      logEvent("card_purchase_quote_received", {
+        surface: "web", metal, grams: data.breakdown?.grams, amountUSD: data.breakdown?.amountUSD,
+      });
     } catch (e: any) {
-      setError(e?.message || tr(L, "quoteError"));
+      const msg = e?.message || tr(L, "quoteError");
+      setError(msg);
+      logEvent("card_purchase_quote_failed", { surface: "web", metal, error: msg });
     } finally {
       setQuoting(false);
     }
@@ -334,9 +342,17 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
                       message: `${quote.grams.toFixed(4)}g ${METAL_INFO[quote.metal][L === "tr" ? "nameTr" : "name"]}`,
                     });
                     setStep("result");
+                    logEvent("card_purchase_succeeded", {
+                      surface: "web", metal: quote.metal, grams: quote.grams, amountUSD: quote.amountUSD,
+                    });
                     await refreshBalances();
                   }}
-                  onError={(msg) => setResult({ success: false, message: msg })}
+                  onError={(msg) => {
+                    setResult({ success: false, message: msg });
+                    logEvent("card_purchase_failed", {
+                      surface: "web", metal: quote.metal, grams: quote.grams, error: msg,
+                    });
+                  }}
                 />
               </Elements>
               <p className="text-[10px] text-slate-500 italic px-1">{tr(L, "paymentInfo")}</p>
@@ -450,6 +466,7 @@ function PaymentForm({
     if (!stripe || !elements) return;
 
     setSubmitting(true);
+    logEvent("card_purchase_payment_attempted", { surface: "web", metal, grams });
     try {
       const result = await stripe.confirmPayment({
         elements,

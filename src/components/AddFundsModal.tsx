@@ -611,6 +611,10 @@ export function AddFundsModal({
                   {/* Buy with Card — Stripe (when onCardPurchase provided) or Transak fallback */}
                   <button
                     onClick={() => {
+                      // Lazy import to avoid pulling analytics into SSR critical path
+                      import("@/lib/analytics").then(({ logEvent }) =>
+                        logEvent("card_purchase_cta_clicked", { surface: "web", source: "fund_vault_modal" })
+                      );
                       if (onCardPurchase) {
                         onClose();
                         onCardPurchase();
