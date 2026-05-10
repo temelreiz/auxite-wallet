@@ -212,6 +212,85 @@ export async function POST(req: NextRequest) {
     const usdValue = await convertToUsd(amount, currency);
     const auxmCredit = +usdValue.toFixed(2);
 
+    // ── KYC GATE ──────────────────────────────────────────────────────────
+    // High-value wires require approved KYC. Below threshold we still
+    // auto-credit (low-risk onboarding wires). Above threshold we hold
+    // the credit, push to admin queue, and notify the user to complete KYC.
+    const KYC_REQUIRED_USD = Number(process.env.WISE_KYC_THRESHOLD_USD || "5000");
+    if (usdValue >= KYC_REQUIRED_USD) {
+      let kycApproved = false;
+      try {
+        const kycRaw = await redis.get(`kyc:${userAddress}`);
+        const kyc: any = kycRaw
+          ? (typeof kycRaw === "string" ? JSON.parse(kycRaw) : kycRaw)
+          : null;
+        kycApproved = kyc?.status === "approved";
+      } catch (e) {
+        console.warn("[wise/webhook] KYC lookup failed:", e);
+      }
+
+      if (!kycApproved) {
+        console.warn(
+          `[wise/webhook] ⚠️ KYC gate held wire: ${userAddress.slice(0, 10)}... ` +
+          `${amount} ${currency} (~$${usdValue.toFixed(2)}) — KYC not approved`
+        );
+        await redis.lpush("wise:webhook:kyc-pending", JSON.stringify({
+          at: Date.now(),
+          resourceId,
+          userAddress,
+          amount,
+          currency,
+          usdValue,
+          auxmCredit,
+          refShort,
+          senderName,
+          reason: "kyc_not_approved",
+        }));
+        await redis.ltrim("wise:webhook:kyc-pending", 0, 199);
+
+        // Notify user (push) — please complete KYC to release the credit
+        try {
+          const { sendNotification } = await import("@/lib/notification-sender");
+          sendNotification(userAddress, "deposit", {
+            title: "🔒 KYC Required for Wire",
+            body: `Your ${amount} ${currency} wire is on hold pending KYC verification. Complete KYC to release ${auxmCredit} AUXM.`,
+            icon: "/icons/icon-192x192.png",
+            tag: `wire-kyc-${resourceId}`,
+            data: {
+              type: "transaction",
+              txType: "deposit",
+              subType: "wire_kyc_pending",
+              txHash: resourceId,
+              amount: auxmCredit,
+              fiatAmount: amount,
+              fiatCurrency: currency,
+            },
+          } as any).catch((e: any) => console.warn("[wise/webhook] kyc-pending push failed:", e));
+        } catch {}
+
+        // Telegram alert to admin
+        try {
+          const { sendTelegramMessage } = await import("@/lib/telegram");
+          sendTelegramMessage(
+            `⚠️ <b>Wise wire HELD — KYC required</b>\n\n` +
+            `User: <code>${userAddress.slice(0, 10)}...${userAddress.slice(-4)}</code>\n` +
+            `Amount: <b>${amount} ${currency}</b> (~$${usdValue.toFixed(2)})\n` +
+            `Sender: ${senderName || "(unknown)"}\n` +
+            `Resource: <code>${resourceId}</code>\n\n` +
+            `Review at /admin/wise → KYC Pending tab.`
+          ).catch((e: any) => console.warn("[wise/webhook] telegram kyc alert failed:", e));
+        } catch {}
+
+        return NextResponse.json({
+          received: true,
+          held: true,
+          reason: "kyc_required",
+          threshold: KYC_REQUIRED_USD,
+          usdValue,
+        });
+      }
+    }
+
     const balanceKey = `user:${userAddress}:balance`;
     const newBalance = await redis.hincrbyfloat(balanceKey, "auxm", auxmCredit);
 
