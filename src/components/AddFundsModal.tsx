@@ -650,8 +650,16 @@ export function AddFundsModal({
                     </svg>
                   </button>
 
-                  {/* Bank Wire - Coming Soon */}
-                  <div className="w-full p-4 rounded-xl border border-slate-200 dark:border-white/10 flex items-center gap-4 opacity-50 cursor-not-allowed">
+                  {/* Bank Wire — active (Wise USD/EUR receiving accounts) */}
+                  <button
+                    onClick={() => {
+                      import("@/lib/analytics").then(({ logEvent }) =>
+                        logEvent("deposit_bank_wire_opened", { surface: "web" })
+                      );
+                      setActiveModal("bank");
+                    }}
+                    className="w-full p-4 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[#BFA181]/50 transition-all flex items-center gap-4 text-left"
+                  >
                     <div className="w-12 h-12 rounded-xl bg-[#BFA181]/15 flex items-center justify-center">
                       <svg className="w-6 h-6 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -660,11 +668,17 @@ export function AddFundsModal({
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <p className="font-semibold text-slate-800 dark:text-white">{t("bankWire")}</p>
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#BFA181]/15 text-[#BFA181]">Coming Soon</span>
+                        <span className="text-xs font-semibold text-[#2F6F62]">USD · EUR</span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{t("bankWireDesc")}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                        {lang === 'tr' ? 'İşlem süresi' : 'Processing'}: <span className="text-[#2F6F62]">{lang === 'tr' ? '1-3 iş günü' : '1-3 business days'}</span>
+                      </p>
                     </div>
-                  </div>
+                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
 
                   {/* AUXM */}
                   <button
@@ -738,63 +752,14 @@ export function AddFundsModal({
           {/* ════════════════════════════════════════════════════════════════════ */}
           {/* BANK WIRE MODAL */}
           {/* ════════════════════════════════════════════════════════════════════ */}
-          {activeModal === "bank" && (
-            <div>
-              <button
-                onClick={() => setActiveModal("main")}
-                className="flex items-center gap-2 text-slate-500 hover:text-slate-700 dark:hover:text-white mb-4 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span className="text-sm font-medium">{t("back")}</span>
-              </button>
-
-              <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-4">{t("bankDetails")}</h4>
-
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("beneficiary")}</p>
-                  <p className="font-medium text-slate-800 dark:text-white">Auxite Custody Ltd.</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("iban")}</p>
-                  <p className="font-medium text-slate-800 dark:text-white font-mono">CH93 0076 2011 6238 5295 7</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("swift")}</p>
-                  <p className="font-medium text-slate-800 dark:text-white font-mono">UBSWCHZH80A</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("bank")}</p>
-                  <p className="font-medium text-slate-800 dark:text-white">UBS Switzerland AG</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t("reference")}</p>
-                  <p className="font-medium text-[#BFA181]">{vaultId || "AX-VLT-XXXX-XXXX"}</p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/20">
-                  <p className="text-xs font-bold text-[#BFA181] mb-1">{t("importantNote")}</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">{t("referenceNote")}</p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => {
-                  const details = `Beneficiary: Auxite Custody Ltd.\nIBAN: CH93 0076 2011 6238 5295 7\nSWIFT: UBSWCHZH80A\nBank: UBS Switzerland AG\nReference: ${vaultId || "AX-VLT-XXXX-XXXX"}`;
-                  copyToClipboard(details, "bank");
-                  setShowConfirmation(true);
-                }}
-                className="w-full mt-6 py-4 rounded-xl bg-[#BFA181] text-black font-bold hover:bg-[#D4B47A] transition-colors flex items-center justify-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                {t("copyAll")}
-              </button>
-            </div>
-          )}
+          {activeModal === "bank" && <BankWirePanel
+            vaultId={vaultId}
+            walletAddress={walletAddress}
+            t={t}
+            lang={lang}
+            onBack={() => setActiveModal("main")}
+            onCopy={(text, field) => copyToClipboard(text, field)}
+          />}
 
           {/* ════════════════════════════════════════════════════════════════════ */}
           {/* AUXM FUNDING MODAL */}
@@ -1043,6 +1008,206 @@ export function AddFundsModal({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// BANK WIRE PANEL — Wise USD/EUR receiving accounts (Aurum Ledger HK)
+// ════════════════════════════════════════════════════════════════════════════
+//
+// Account details are read from public env vars (NEXT_PUBLIC_WISE_*) so they
+// can be rotated without a code deploy. Reference is dynamic per user — must
+// match the regex in /api/wise/webhook (AUX-{6 hex from wallet address}).
+// ────────────────────────────────────────────────────────────────────────────
+
+type BankWireCurrency = "USD" | "EUR";
+
+interface WireAccount {
+  beneficiary: string;
+  beneficiaryAddress?: string;
+  bankName: string;
+  bankAddress?: string;
+  // USD has account number + routing + (Wise typically) Wire SWIFT
+  accountNumber?: string;
+  routingNumber?: string;
+  // EUR uses IBAN
+  iban?: string;
+  swift?: string;
+}
+
+function getWireAccount(currency: BankWireCurrency): WireAccount | null {
+  // Shared
+  const beneficiary = process.env.NEXT_PUBLIC_WISE_BENEFICIARY_NAME || "Aurum Ledger Limited";
+  const beneficiaryAddress = process.env.NEXT_PUBLIC_WISE_BENEFICIARY_ADDRESS || "";
+
+  if (currency === "USD") {
+    const acct = process.env.NEXT_PUBLIC_WISE_USD_ACCOUNT;
+    const routing = process.env.NEXT_PUBLIC_WISE_USD_ROUTING;
+    const swift = process.env.NEXT_PUBLIC_WISE_USD_SWIFT;
+    const bankName = process.env.NEXT_PUBLIC_WISE_USD_BANK_NAME || "Wise (Community Federal Savings Bank)";
+    const bankAddress = process.env.NEXT_PUBLIC_WISE_USD_BANK_ADDRESS || "";
+    if (!acct || !routing) return null;
+    return { beneficiary, beneficiaryAddress, accountNumber: acct, routingNumber: routing, swift, bankName, bankAddress };
+  }
+  if (currency === "EUR") {
+    const iban = process.env.NEXT_PUBLIC_WISE_EUR_IBAN;
+    const swift = process.env.NEXT_PUBLIC_WISE_EUR_SWIFT;
+    const bankName = process.env.NEXT_PUBLIC_WISE_EUR_BANK_NAME || "Wise Europe SA";
+    const bankAddress = process.env.NEXT_PUBLIC_WISE_EUR_BANK_ADDRESS || "";
+    if (!iban) return null;
+    return { beneficiary, beneficiaryAddress, iban, swift, bankName, bankAddress };
+  }
+  return null;
+}
+
+function buildWireReference(walletAddress: string | undefined, currency: BankWireCurrency): string {
+  if (!walletAddress || !walletAddress.startsWith("0x") || walletAddress.length < 8) {
+    return "AUX-XXXXXX";
+  }
+  // Matches the regex in /api/wise/webhook (AUX-{6 hex})
+  return `AUX-${walletAddress.slice(2, 8).toUpperCase()}`;
+}
+
+function BankWirePanel({
+  vaultId, walletAddress, t, lang, onBack, onCopy,
+}: {
+  vaultId?: string;
+  walletAddress: string;
+  t: (k: string) => string;
+  lang: string;
+  onBack: () => void;
+  onCopy: (text: string, field: string) => void;
+}) {
+  const [currency, setCurrency] = useState<BankWireCurrency>("USD");
+  const account = getWireAccount(currency);
+  const reference = buildWireReference(walletAddress, currency);
+
+  const Field = ({ label, value, field }: { label: string; value?: string; field: string }) => {
+    if (!value) return null;
+    return (
+      <div className="flex items-start justify-between gap-3 py-2 border-b border-slate-100 dark:border-white/5">
+        <div className="min-w-0">
+          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">{label}</p>
+          <p className="font-mono text-sm text-slate-800 dark:text-white break-all">{value}</p>
+        </div>
+        <button
+          onClick={() => onCopy(value, `address_${field}`)}
+          className="text-xs text-[#BFA181] hover:text-[#D4B47A] font-semibold whitespace-nowrap"
+        >
+          {t("copied") /* fallback */}
+        </button>
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      <button
+        onClick={onBack}
+        className="flex items-center gap-2 text-slate-500 hover:text-slate-700 dark:hover:text-white mb-4 transition-colors"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        <span className="text-sm font-medium">{t("back")}</span>
+      </button>
+
+      {/* Currency tabs */}
+      <div className="flex gap-1 mb-4 p-1 rounded-xl bg-slate-100 dark:bg-white/5">
+        {(["USD", "EUR"] as BankWireCurrency[]).map((c) => (
+          <button
+            key={c}
+            onClick={() => setCurrency(c)}
+            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
+              currency === c
+                ? "bg-white dark:bg-slate-900 text-[#BFA181] shadow-sm"
+                : "text-slate-500 hover:text-slate-700 dark:hover:text-white"
+            }`}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+
+      <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-2">{t("bankDetails")}</h4>
+
+      {!account ? (
+        <div className="p-4 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/30">
+          <p className="text-sm text-[#BFA181] font-semibold mb-1">{t("warningTitle")}</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">
+            {lang === "tr"
+              ? `${currency} hesap detayları henüz yapılandırılmamış. Lütfen destek ile iletişime geçin.`
+              : `${currency} account details not yet configured. Please contact support.`}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-1">
+            <Field label={t("beneficiary")} value={account.beneficiary} field="beneficiary" />
+            <Field label={lang === "tr" ? "Lehtar Adresi" : "Beneficiary Address"} value={account.beneficiaryAddress} field="beneficiary_address" />
+            <Field label={t("iban")} value={account.iban} field="iban" />
+            <Field label={lang === "tr" ? "Hesap No" : "Account Number"} value={account.accountNumber} field="account_number" />
+            <Field label={lang === "tr" ? "Routing (ABA)" : "Routing Number"} value={account.routingNumber} field="routing_number" />
+            <Field label={t("swift")} value={account.swift} field="swift" />
+            <Field label={t("bank")} value={account.bankName} field="bank_name" />
+            <Field label={lang === "tr" ? "Banka Adresi" : "Bank Address"} value={account.bankAddress} field="bank_address" />
+          </div>
+
+          {/* Reference — critical, highlighted */}
+          <div className="mt-4 p-4 rounded-xl bg-[#BFA181]/10 border-2 border-[#BFA181]/40">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-[#BFA181] font-bold mb-1">
+                  {t("reference")} {lang === "tr" ? "(ZORUNLU)" : "(REQUIRED)"}
+                </p>
+                <p className="font-mono text-xl text-[#BFA181] font-bold">{reference}</p>
+              </div>
+              <button
+                onClick={() => onCopy(reference, "address_reference")}
+                className="text-xs text-[#BFA181] hover:text-[#D4B47A] font-semibold whitespace-nowrap"
+              >
+                {t("copyAddress")}
+              </button>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              {lang === "tr"
+                ? "Bu referansı havale memo/açıklama alanına MUTLAKA yazın. Yazılmadığı takdirde havale eşleştirilemez ve hesabınıza işlenmez."
+                : "You MUST include this reference in the wire memo/description. Without it, your wire cannot be matched and credited."}
+            </p>
+          </div>
+
+          <div className="mt-4 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              {lang === "tr"
+                ? "Havale geldiğinde otomatik olarak AUXM bakiyenize 1 USD = 1 AUXM kuruyla işlenir. EUR için günlük FX kuru uygulanır. İşlem süresi: 1-3 iş günü."
+                : "Once the wire arrives, it is automatically credited to your AUXM balance at 1 USD = 1 AUXM. EUR is converted at the daily FX rate. Processing time: 1-3 business days."}
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              const lines: string[] = [];
+              lines.push(`Beneficiary: ${account.beneficiary}`);
+              if (account.beneficiaryAddress) lines.push(`Beneficiary Address: ${account.beneficiaryAddress}`);
+              if (account.iban) lines.push(`IBAN: ${account.iban}`);
+              if (account.accountNumber) lines.push(`Account Number: ${account.accountNumber}`);
+              if (account.routingNumber) lines.push(`Routing: ${account.routingNumber}`);
+              if (account.swift) lines.push(`SWIFT/BIC: ${account.swift}`);
+              lines.push(`Bank: ${account.bankName}`);
+              if (account.bankAddress) lines.push(`Bank Address: ${account.bankAddress}`);
+              lines.push(`Reference: ${reference}`);
+              onCopy(lines.join("\n"), "address_bank_all");
+            }}
+            className="w-full mt-6 py-4 rounded-xl bg-[#BFA181] text-black font-bold hover:bg-[#D4B47A] transition-colors flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            {t("copyAll")}
+          </button>
+        </>
+      )}
     </div>
   );
 }
