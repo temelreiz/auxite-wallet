@@ -91,6 +91,17 @@ export async function POST(req: NextRequest) {
 
 // ── Handlers ───────────────────────────────────────────────────────────────
 
+// Look up user email + name from Redis (mirrors getUserEmail in /api/trade).
+async function lookupUserContact(address: string): Promise<{ email?: string; name?: string }> {
+  const userId = await redis.get(`user:address:${address}`);
+  if (userId) {
+    const userData = await redis.hgetall(`user:${userId}`);
+    return { email: userData?.email as string, name: (userData?.name as string) || undefined };
+  }
+  const directUserData = await redis.hgetall(`user:${address}`);
+  return { email: directUserData?.email as string, name: (directUserData?.name as string) || undefined };
+}
+
 async function handlePaymentSucceeded(pi: Stripe.PaymentIntent): Promise<void> {
   const md = pi.metadata || {};
   if (md.type !== "metal_purchase") {
@@ -107,6 +118,8 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent): Promise<void> {
 
   const userAddress = String(md.userAddress || "").trim().toLowerCase();
   const grams = parseFloat(md.grams || "0");
+  const amountUSD = pi.amount_received / 100;
+  const pricePerGramUSD = parseFloat(md.pricePerGramUSD || "0");
   if (!userAddress || !grams || grams <= 0) {
     console.error(`[stripe/webhook] PI ${pi.id} missing userAddress or grams`, md);
     return;
@@ -120,20 +133,61 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent): Promise<void> {
     return;
   }
 
-  // Credit metal balance (grams)
+  const txId = `stripe_${pi.id}`;
   const balanceKey = `user:${userAddress}:balance`;
-  const newBalance = await redis.hincrbyfloat(balanceKey, balanceField, grams);
+
+  // Pull contact info (best-effort) for allocation cert + emails
+  const { email, name: holderName } = await lookupUserContact(userAddress);
+
+  // ── Allocation: turn whole grams into bar allocations + certificate ──
+  // Only the FRACTIONAL part (sub-1g) stays in Redis balance. Whole grams
+  // move to the allocation system which mints a certificate.
+  let certificateNumber: string | undefined;
+  let allocatedGrams = 0;
+  let nonAllocatedGrams = grams; // default: whole amount as fractional
+  try {
+    const { createAllocation } = await import("@/lib/allocation-service");
+    const allocData = await createAllocation({
+      address: userAddress,
+      metal,
+      grams,
+      txHash: pi.id, // use PI id as the on-source reference
+      email,
+      holderName,
+    });
+    if (allocData.success) {
+      allocatedGrams = allocData.allocatedGrams || 0;
+      nonAllocatedGrams = allocData.nonAllocatedGrams ?? grams;
+      certificateNumber = allocData.certificateNumber;
+      if (certificateNumber) {
+        console.log(`[stripe/webhook] 📜 Certificate ${certificateNumber} for ${allocatedGrams}g ${metal}`);
+      } else {
+        console.log(`[stripe/webhook] ${grams}g < 1g whole — no certificate, ${nonAllocatedGrams}g fractional`);
+      }
+    } else {
+      console.warn("[stripe/webhook] createAllocation returned !success:", allocData.error);
+    }
+  } catch (e) {
+    console.warn("[stripe/webhook] createAllocation failed (non-blocking):", e);
+  }
+
+  // Credit metal balance — only the FRACTIONAL portion (sub-1g remainder).
+  // Whole grams already accounted for via allocation system.
+  const newBalance = await redis.hincrbyfloat(balanceKey, balanceField, nonAllocatedGrams);
 
   // Record transaction
   const tx = {
-    id: `stripe_${pi.id}`,
+    id: txId,
     type: "buy",
     subType: "card_purchase",
     metal,
     grams,
-    amountUSD: pi.amount_received / 100,
+    allocatedGrams,
+    nonAllocatedGrams,
+    certificateNumber,
+    amountUSD,
     currency: pi.currency,
-    pricePerGramUSD: parseFloat(md.pricePerGramUSD || "0"),
+    pricePerGramUSD,
     baseAskPerGram: parseFloat(md.baseAskPerGram || "0"),
     metalSpreadPct: parseFloat(md.metalSpreadPct || "0"),
     cardBufferPct: parseFloat(md.cardBufferPct || "0"),
@@ -146,21 +200,114 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent): Promise<void> {
 
   console.log(
     `[stripe/webhook] ✅ ${userAddress.slice(0, 10)}... +${grams.toFixed(4)}g ${metal} ` +
-    `(PI ${pi.id}, $${(pi.amount_received / 100).toFixed(2)}, new bal: ${newBalance})`
+    `(PI ${pi.id}, $${amountUSD.toFixed(2)}, fractional bal: ${newBalance}, alloc: ${allocatedGrams}g, cert: ${certificateNumber || "—"})`
   );
 
-  // Notify procurement pipeline (opportunistic — non-blocking on failure)
+  // ── Side-effects (all best-effort, non-blocking) ──
+
+  // Telegram admin notification
+  try {
+    const { notifyTrade } = await import("@/lib/telegram");
+    notifyTrade({
+      type: "buy",
+      userAddress,
+      fromToken: "USD-CARD",            // payment source (Stripe)
+      toToken: metal,
+      fromAmount: amountUSD,
+      toAmount: grams,
+      txHash: pi.id,
+      certificateNumber,
+      email,
+    }).catch((err) => console.error("[stripe/webhook] Telegram notify error:", err));
+  } catch (e) {
+    console.warn("[stripe/webhook] Telegram import failed:", e);
+  }
+
+  // Procurement pipeline queue (we owe spot metal to cover this purchase)
   try {
     const { queueTradeForProcurement } = await import("@/lib/procurement-pipeline");
-    await queueTradeForProcurement({
+    queueTradeForProcurement({
+      tradeId: txId,
+      userAddress,
       type: "buy",
-      coin: metal,
-      amount: grams,
-      address: userAddress,
-      timestamp: Date.now(),
-    } as any);
+      fromToken: "USD",
+      fromAmount: amountUSD,
+      toToken: metal,
+      toAmount: grams,
+      pricePerGram: pricePerGramUSD,
+      fee: 0, // Stripe fee already baked into pricePerGramUSD via cardBufferPct
+    }).catch((err) => console.error("[stripe/webhook] Procurement queue error:", err));
   } catch (e) {
-    console.warn("[stripe/webhook] procurement queue failed (non-blocking):", e);
+    console.warn("[stripe/webhook] Procurement import failed:", e);
+  }
+
+  // Trade execution email (institutional confirmation)
+  if (email) {
+    try {
+      const { sendTradeExecutionEmail } = await import("@/lib/email");
+      const { getUserLanguage } = await import("@/lib/user-language");
+      const metalNameMap: Record<string, string> = {
+        AUXG: "Gold (LBMA Good Delivery)",
+        AUXS: "Silver",
+        AUXPT: "Platinum",
+        AUXPD: "Palladium",
+      };
+      const tradeLang = await getUserLanguage(userAddress);
+      sendTradeExecutionEmail(email, {
+        clientName: holderName,
+        transactionType: "Buy",
+        metal,
+        metalName: metalNameMap[metal] || metal,
+        grams: grams.toFixed(4),
+        executionPrice: `USD ${pricePerGramUSD.toFixed(2)} / g`,
+        grossConsideration: `USD ${amountUSD.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+        executionTime: new Date().toISOString().replace("T", ", ").replace(/\.\d+Z/, " UTC"),
+        referenceId: txId,
+        language: tradeLang,
+      } as any).catch((err: any) => console.error("[stripe/webhook] Trade execution email error:", err));
+    } catch (e) {
+      console.warn("[stripe/webhook] Trade email import failed:", e);
+    }
+  }
+
+  // Push notification (mobile/web)
+  try {
+    const { notifyTransactionRich } = await import("@/lib/notification-sender");
+    notifyTransactionRich(userAddress, {
+      type: "buy",
+      fromToken: "USD",
+      toToken: metal,
+      amount: parseFloat(grams.toFixed(4)),
+      token: metal,
+      certificateNumber,
+      txHash: pi.id,
+      channel: "trades",
+    }).catch((err) => console.error("[stripe/webhook] Push notify error:", err));
+  } catch (e) {
+    console.warn("[stripe/webhook] Push import failed:", e);
+  }
+
+  // Audit log
+  try {
+    const { logTrade } = await import("@/lib/security/audit-logger");
+    await logTrade(userAddress, "stripe-webhook", "stripe-webhook", "USD", metal, amountUSD, grams);
+  } catch (e) {
+    console.warn("[stripe/webhook] Audit log failed:", e);
+  }
+
+  // Bonus volume tracking (toward 500 AUXS-equiv unlock threshold)
+  try {
+    const userId = (await redis.get(`user:address:${userAddress}`)) as string | null;
+    if (userId) {
+      const { recordVolume } = await import("@/lib/bonus-guard");
+      const tradeValueUsd = amountUSD;
+      const volumeResult = await recordVolume(userId, tradeValueUsd);
+      console.log(
+        `[stripe/webhook] 🎁 Bonus tracking: $${volumeResult.currentVolumeUsd.toFixed(0)} volume, ${volumeResult.unlockPercent.toFixed(0)}% unlocked`
+      );
+    }
+  } catch (e) {
+    console.warn("[stripe/webhook] Bonus volume tracking failed:", e);
   }
 }
 
