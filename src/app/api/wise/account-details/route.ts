@@ -138,6 +138,18 @@ export async function GET() {
     };
   }
 
+  const chfIban = readEnv("NEXT_PUBLIC_WISE_CHF_IBAN");
+  if (chfIban) {
+    accounts.CHF = {
+      beneficiary,
+      beneficiaryAddress,
+      bankName: readEnv("NEXT_PUBLIC_WISE_CHF_BANK_NAME") || "Wise Europe SA",
+      bankAddress: readEnv("NEXT_PUBLIC_WISE_CHF_BANK_ADDRESS"),
+      iban: chfIban,
+      swift: readEnv("NEXT_PUBLIC_WISE_CHF_SWIFT"),
+    };
+  }
+
   return NextResponse.json({
     success: true,
     accounts,
