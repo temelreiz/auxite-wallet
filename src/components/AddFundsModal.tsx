@@ -1013,55 +1013,31 @@ export function AddFundsModal({
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// BANK WIRE PANEL — Wise USD/EUR receiving accounts (Aurum Ledger HK)
+// BANK WIRE PANEL — Wise multi-currency receiving accounts (Aurum Ledger HK)
 // ════════════════════════════════════════════════════════════════════════════
 //
-// Account details are read from public env vars (NEXT_PUBLIC_WISE_*) so they
-// can be rotated without a code deploy. Reference is dynamic per user — must
-// match the regex in /api/wise/webhook (AUX-{6 hex from wallet address}).
+// Fetches available currencies + account details from /api/wise/account-details
+// (single source of truth shared with mobile). Currency tabs render dynamically
+// — adding a new Wise balance only needs env vars, no code change.
+// Reference is dynamic per user — must match the regex in /api/wise/webhook
+// (AUX-{6 hex from wallet address}).
 // ────────────────────────────────────────────────────────────────────────────
 
-type BankWireCurrency = "USD" | "EUR";
-
 interface WireAccount {
-  beneficiary: string;
-  beneficiaryAddress?: string;
-  bankName: string;
-  bankAddress?: string;
-  // USD has account number + routing + (Wise typically) Wire SWIFT
-  accountNumber?: string;
-  routingNumber?: string;
-  // EUR uses IBAN
-  iban?: string;
-  swift?: string;
+  beneficiary: string | null;
+  beneficiaryAddress?: string | null;
+  bankName: string | null;
+  bankAddress?: string | null;
+  iban?: string | null;
+  accountNumber?: string | null;
+  routingNumber?: string | null;
+  sortCode?: string | null;
+  bsb?: string | null;
+  bankCode?: string | null;
+  swift?: string | null;
 }
 
-function getWireAccount(currency: BankWireCurrency): WireAccount | null {
-  // Shared
-  const beneficiary = process.env.NEXT_PUBLIC_WISE_BENEFICIARY_NAME || "Aurum Ledger Limited";
-  const beneficiaryAddress = process.env.NEXT_PUBLIC_WISE_BENEFICIARY_ADDRESS || "";
-
-  if (currency === "USD") {
-    const acct = process.env.NEXT_PUBLIC_WISE_USD_ACCOUNT;
-    const routing = process.env.NEXT_PUBLIC_WISE_USD_ROUTING;
-    const swift = process.env.NEXT_PUBLIC_WISE_USD_SWIFT;
-    const bankName = process.env.NEXT_PUBLIC_WISE_USD_BANK_NAME || "Wise (Community Federal Savings Bank)";
-    const bankAddress = process.env.NEXT_PUBLIC_WISE_USD_BANK_ADDRESS || "";
-    if (!acct || !routing) return null;
-    return { beneficiary, beneficiaryAddress, accountNumber: acct, routingNumber: routing, swift, bankName, bankAddress };
-  }
-  if (currency === "EUR") {
-    const iban = process.env.NEXT_PUBLIC_WISE_EUR_IBAN;
-    const swift = process.env.NEXT_PUBLIC_WISE_EUR_SWIFT;
-    const bankName = process.env.NEXT_PUBLIC_WISE_EUR_BANK_NAME || "Wise Europe SA";
-    const bankAddress = process.env.NEXT_PUBLIC_WISE_EUR_BANK_ADDRESS || "";
-    if (!iban) return null;
-    return { beneficiary, beneficiaryAddress, iban, swift, bankName, bankAddress };
-  }
-  return null;
-}
-
-function buildWireReference(walletAddress: string | undefined, currency: BankWireCurrency): string {
+function buildWireReference(walletAddress: string | undefined): string {
   if (!walletAddress || !walletAddress.startsWith("0x") || walletAddress.length < 8) {
     return "AUX-XXXXXX";
   }
@@ -1079,9 +1055,39 @@ function BankWirePanel({
   onBack: () => void;
   onCopy: (text: string, field: string) => void;
 }) {
-  const [currency, setCurrency] = useState<BankWireCurrency>("USD");
-  const account = getWireAccount(currency);
-  const reference = buildWireReference(walletAddress, currency);
+  const [accounts, setAccounts] = useState<Record<string, WireAccount> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currency, setCurrency] = useState<string>("USD");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch("/api/wise/account-details");
+        const json = await res.json();
+        if (cancelled) return;
+        if (json?.success && json.accounts) {
+          setAccounts(json.accounts);
+          const first = Object.keys(json.accounts)[0];
+          if (first) setCurrency((c) => (json.accounts[c] ? c : first));
+        } else {
+          setError("Failed to load account details");
+        }
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message || "Network error");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const currencies = accounts ? Object.keys(accounts) : [];
+  const account = accounts?.[currency] || null;
+  const reference = buildWireReference(walletAddress);
 
   const Field = ({ label, value, field }: { label: string; value?: string; field: string }) => {
     if (!value) return null;
@@ -1095,7 +1101,7 @@ function BankWirePanel({
           onClick={() => onCopy(value, `address_${field}`)}
           className="text-xs text-[#BFA181] hover:text-[#D4B47A] font-semibold whitespace-nowrap"
         >
-          {t("copied") /* fallback */}
+          {t("copyAddress")}
         </button>
       </div>
     );
@@ -1113,26 +1119,37 @@ function BankWirePanel({
         <span className="text-sm font-medium">{t("back")}</span>
       </button>
 
-      {/* Currency tabs */}
-      <div className="flex gap-1 mb-4 p-1 rounded-xl bg-slate-100 dark:bg-white/5">
-        {(["USD", "EUR"] as BankWireCurrency[]).map((c) => (
-          <button
-            key={c}
-            onClick={() => setCurrency(c)}
-            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-              currency === c
-                ? "bg-white dark:bg-slate-900 text-[#BFA181] shadow-sm"
-                : "text-slate-500 hover:text-slate-700 dark:hover:text-white"
-            }`}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
+      {/* Currency tabs (dynamic) */}
+      {currencies.length > 0 && (
+        <div className="flex gap-1 mb-4 p-1 rounded-xl bg-slate-100 dark:bg-white/5 overflow-x-auto">
+          {currencies.map((c) => (
+            <button
+              key={c}
+              onClick={() => setCurrency(c)}
+              className={`flex-1 min-w-[60px] py-2 rounded-lg text-sm font-semibold transition-all ${
+                currency === c
+                  ? "bg-white dark:bg-slate-900 text-[#BFA181] shadow-sm"
+                  : "text-slate-500 hover:text-slate-700 dark:hover:text-white"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
 
       <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-2">{t("bankDetails")}</h4>
 
-      {!account ? (
+      {loading ? (
+        <div className="py-12 text-center">
+          <div className="animate-spin w-8 h-8 border-2 border-[#BFA181] border-t-transparent rounded-full mx-auto" />
+        </div>
+      ) : error ? (
+        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
+          <p className="text-sm text-red-500 font-semibold mb-1">{t("warningTitle")}</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">{error}</p>
+        </div>
+      ) : !account ? (
         <div className="p-4 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/30">
           <p className="text-sm text-[#BFA181] font-semibold mb-1">{t("warningTitle")}</p>
           <p className="text-xs text-slate-600 dark:text-slate-400">
@@ -1144,14 +1161,17 @@ function BankWirePanel({
       ) : (
         <>
           <div className="space-y-1">
-            <Field label={t("beneficiary")} value={account.beneficiary} field="beneficiary" />
-            <Field label={lang === "tr" ? "Lehtar Adresi" : "Beneficiary Address"} value={account.beneficiaryAddress} field="beneficiary_address" />
-            <Field label={t("iban")} value={account.iban} field="iban" />
-            <Field label={lang === "tr" ? "Hesap No" : "Account Number"} value={account.accountNumber} field="account_number" />
-            <Field label={lang === "tr" ? "Routing (ABA)" : "Routing Number"} value={account.routingNumber} field="routing_number" />
-            <Field label={t("swift")} value={account.swift} field="swift" />
-            <Field label={t("bank")} value={account.bankName} field="bank_name" />
-            <Field label={lang === "tr" ? "Banka Adresi" : "Bank Address"} value={account.bankAddress} field="bank_address" />
+            <Field label={t("beneficiary")} value={account.beneficiary || undefined} field="beneficiary" />
+            <Field label={lang === "tr" ? "Lehtar Adresi" : "Beneficiary Address"} value={account.beneficiaryAddress || undefined} field="beneficiary_address" />
+            <Field label={t("iban")} value={account.iban || undefined} field="iban" />
+            <Field label={lang === "tr" ? "Hesap No" : "Account Number"} value={account.accountNumber || undefined} field="account_number" />
+            <Field label={lang === "tr" ? "Routing (ABA)" : "Routing Number"} value={account.routingNumber || undefined} field="routing_number" />
+            <Field label={lang === "tr" ? "Sort Code" : "Sort Code"} value={account.sortCode || undefined} field="sort_code" />
+            <Field label="BSB" value={account.bsb || undefined} field="bsb" />
+            <Field label={lang === "tr" ? "Banka Kodu" : "Bank Code"} value={account.bankCode || undefined} field="bank_code" />
+            <Field label={t("swift")} value={account.swift || undefined} field="swift" />
+            <Field label={t("bank")} value={account.bankName || undefined} field="bank_name" />
+            <Field label={lang === "tr" ? "Banka Adresi" : "Bank Address"} value={account.bankAddress || undefined} field="bank_address" />
           </div>
 
           {/* Reference — critical, highlighted */}
@@ -1180,21 +1200,28 @@ function BankWirePanel({
           <div className="mt-4 p-3 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               {lang === "tr"
-                ? "Havale geldiğinde otomatik olarak AUXM bakiyenize 1 USD = 1 AUXM kuruyla işlenir. EUR için günlük FX kuru uygulanır. İşlem süresi: 1-3 iş günü."
-                : "Once the wire arrives, it is automatically credited to your AUXM balance at 1 USD = 1 AUXM. EUR is converted at the daily FX rate. Processing time: 1-3 business days."}
+                ? currency === "USD"
+                  ? "Havale geldiğinde otomatik olarak AUXM bakiyenize 1 USD = 1 AUXM kuruyla işlenir. İşlem süresi: 1-3 iş günü."
+                  : `Havale geldiğinde otomatik olarak AUXM bakiyenize işlenir. ${currency} için günlük FX kuru uygulanır (1 AUXM = 1 USD). İşlem süresi: 1-3 iş günü.`
+                : currency === "USD"
+                  ? "Once the wire arrives, it is automatically credited to your AUXM balance at 1 USD = 1 AUXM. Processing time: 1-3 business days."
+                  : `Once the wire arrives, it is automatically credited to your AUXM balance. ${currency} is converted at the daily FX rate (1 AUXM = 1 USD). Processing time: 1-3 business days.`}
             </p>
           </div>
 
           <button
             onClick={() => {
               const lines: string[] = [];
-              lines.push(`Beneficiary: ${account.beneficiary}`);
+              if (account.beneficiary) lines.push(`Beneficiary: ${account.beneficiary}`);
               if (account.beneficiaryAddress) lines.push(`Beneficiary Address: ${account.beneficiaryAddress}`);
               if (account.iban) lines.push(`IBAN: ${account.iban}`);
               if (account.accountNumber) lines.push(`Account Number: ${account.accountNumber}`);
               if (account.routingNumber) lines.push(`Routing: ${account.routingNumber}`);
+              if (account.sortCode) lines.push(`Sort Code: ${account.sortCode}`);
+              if (account.bsb) lines.push(`BSB: ${account.bsb}`);
+              if (account.bankCode) lines.push(`Bank Code: ${account.bankCode}`);
               if (account.swift) lines.push(`SWIFT/BIC: ${account.swift}`);
-              lines.push(`Bank: ${account.bankName}`);
+              if (account.bankName) lines.push(`Bank: ${account.bankName}`);
               if (account.bankAddress) lines.push(`Bank Address: ${account.bankAddress}`);
               lines.push(`Reference: ${reference}`);
               onCopy(lines.join("\n"), "address_bank_all");

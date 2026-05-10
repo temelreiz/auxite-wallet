@@ -256,15 +256,12 @@ export async function POST(req: NextRequest) {
     } catch {}
 
     try {
-      const { notifyTransactionRich } = await import("@/lib/notification-sender");
-      notifyTransactionRich(userAddress, {
-        type: "deposit",
-        amount: auxmCredit,
-        token: "AUXM",
-        fromToken: currency,
-        toToken: "AUXM",
-        txHash: resourceId,
-        channel: "trades",
+      const { notifyWireCredit } = await import("@/lib/notification-sender");
+      notifyWireCredit(userAddress, {
+        fiatAmount: amount,
+        fiatCurrency: currency,
+        auxmCredited: auxmCredit,
+        resourceId,
       }).catch((e) => console.warn("[wise/webhook] push failed:", e));
     } catch {}
 

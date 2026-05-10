@@ -13,6 +13,7 @@ import TopNav from "@/components/TopNav";
 import LiquidateModal from "@/components/LiquidateModal";
 import { AuxmRedeemModal } from "@/components/AuxmRedeemModal";
 import { BuyMetalCardModal } from "@/components/BuyMetalCardModal";
+import { WireActivityCard } from "@/components/WireActivityCard";
 import { logEvent } from "@/lib/analytics";
 import { MarketStatusBanner } from "@/components/MarketStatusBanner";
 import { useLanguage } from "@/components/LanguageContext";
@@ -953,6 +954,9 @@ export default function VaultPage() {
             {totalVaultValue <= 0 && <p className="text-[10px] text-slate-600 mt-0.5">{t.fundFirst}</p>}
           </div>
         </a>
+
+        {/* ═══ WIRE ACTIVITY ═══ */}
+        {address && <WireActivityCard walletAddress={address} />}
 
         {/* ═══ HOW IT WORKS - 3 STEPS ═══ */}
         <div className="grid grid-cols-3 gap-3">

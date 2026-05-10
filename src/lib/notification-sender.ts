@@ -581,6 +581,70 @@ export async function notifyTransactionRich(
   });
 }
 
+// ─── Wire Credit Notifications (Wise → AUXM auto-credit) ──────────────────
+
+const wireCreditTitles: Record<LangCode, string> = {
+  en: '🏦 Wire Credited',
+  tr: '🏦 Havale Yatırıldı',
+  de: '🏦 Überweisung gutgeschrieben',
+  fr: '🏦 Virement crédité',
+  ar: '🏦 تم قيد الحوالة',
+  ru: '🏦 Перевод зачислен',
+};
+
+function fmtMoney(amt: number): string {
+  return amt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function buildWireCreditBody(
+  lang: LangCode,
+  data: { fiatAmount: number; fiatCurrency: string; auxmCredited: number },
+): string {
+  const fiat = `${fmtMoney(data.fiatAmount)} ${data.fiatCurrency}`;
+  const auxm = `${fmtMoney(data.auxmCredited)} AUXM`;
+  switch (lang) {
+    case 'tr': return `${fiat} havale alındı, ${auxm} bakiyenize eklendi.`;
+    case 'de': return `${fiat} Überweisung empfangen, ${auxm} Ihrem Guthaben gutgeschrieben.`;
+    case 'fr': return `Virement de ${fiat} reçu, ${auxm} crédités sur votre solde.`;
+    case 'ar': return `تم استلام حوالة ${fiat} وإضافة ${auxm} إلى رصيدك.`;
+    case 'ru': return `Получен перевод ${fiat}, ${auxm} зачислены на ваш баланс.`;
+    default:   return `Wire of ${fiat} received, ${auxm} added to your balance.`;
+  }
+}
+
+/**
+ * Wire-credit push: fired by /api/wise/webhook when an incoming wire is
+ * matched to a user and AUXM is auto-credited. Surfaces both the original
+ * fiat amount and the resulting AUXM credit so the user sees the conversion.
+ */
+export async function notifyWireCredit(
+  walletAddress: string,
+  data: {
+    fiatAmount: number;
+    fiatCurrency: string;
+    auxmCredited: number;
+    resourceId: string;
+  },
+): Promise<void> {
+  const lang = getLang(await getUserLanguage(walletAddress));
+  await sendNotification(walletAddress, 'deposit', {
+    title: wireCreditTitles[lang] || wireCreditTitles.en,
+    body: buildWireCreditBody(lang, data),
+    icon: '/icons/icon-192x192.png',
+    tag: `wire-${data.resourceId}`,
+    data: {
+      type: 'transaction',
+      txType: 'deposit',
+      subType: 'wire_credit',
+      txHash: data.resourceId,
+      token: 'AUXM',
+      amount: data.auxmCredited,
+      fiatAmount: data.fiatAmount,
+      fiatCurrency: data.fiatCurrency,
+    },
+  });
+}
+
 // ─── Welcome Gold Notifications ─────────────────────────────────────────
 
 const welcomeGoldTitles: Record<string, Record<LangCode, string>> = {
