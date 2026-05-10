@@ -289,3 +289,130 @@ export function getKycAuxgPromoTemplate(lang: string): { subject: string; html: 
   };
   return emailTemplates[langMap[lang] || "kycAuxgPromoEN"];
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CARD LAUNCH — "Buy precious metals with card" launch announcement
+// ═══════════════════════════════════════════════════════════════════════════
+
+const cardLaunchEN = {
+  subject: "New: Buy Gold, Silver, Platinum & Palladium with Card",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Card payments are now live.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">You can now buy <strong>physically allocated precious metals</strong> with any Visa or Mastercard, directly from the Auxite vault interface. No more crypto onboarding required.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">WHAT'S NEW</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("1", "Pick a metal", "Gold (AUXG), Silver (AUXS), Platinum (AUXPT), or Palladium (AUXPD).")}
+      ${step("2", "Enter amount in USD", "Minimum $30. The card processes the charge instantly.")}
+      ${step("3", "Metal lands in your vault", "Allocated bar + LBMA certificate when ≥ 1 gram.")}
+    </table>
+    ${bonus("HOW IT APPEARS", "Card statement shows AURUM LEDGER. Processing fee included in the displayed total. Refund is available through the vault interface.")}
+    ${cta("https://vault.auxite.io/vault", "BUY METAL WITH CARD")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Available now on web (vault.auxite.io) and Android. iOS app rolling out shortly.</p>
+  `),
+};
+
+const cardLaunchTR = {
+  subject: "Yeni: Kart ile Altın, Gümüş, Platin & Paladyum Al",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Kart ile metal alımı artık aktif.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Artık Auxite kasa arayüzünden doğrudan herhangi bir Visa veya Mastercard ile <strong>fiziksel olarak ayrılmış değerli metal</strong> alabilirsiniz. Kripto'ya geçiş zorunlu değil.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">YENİLİKLER</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("1", "Bir metal seçin", "Altın (AUXG), Gümüş (AUXS), Platin (AUXPT) veya Paladyum (AUXPD).")}
+      ${step("2", "USD tutarını girin", "Minimum $30. Kart anında işlenir.")}
+      ${step("3", "Metal kasanıza yansır", "1 gram ve üzeri için tahsisli bar + LBMA sertifikası.")}
+    </table>
+    ${bonus("KART EKSTRESİ", "Kart ekstresinde AURUM LEDGER görünür. İşlem ücreti gösterilen toplama dahildir. İade kasa arayüzünden mümkün.")}
+    ${cta("https://vault.auxite.io/vault", "KART İLE METAL AL")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Web (vault.auxite.io) ve Android'de aktif. iOS uygulaması yakında.</p>
+  `),
+};
+
+const cardLaunchDE = {
+  subject: "Neu: Edelmetalle mit Karte kaufen",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Kartenzahlungen sind jetzt aktiv.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Sie können nun direkt aus der Auxite-Tresoroberfläche <strong>physisch alloziertes Edelmetall</strong> mit jeder Visa- oder Mastercard kaufen. Kein Krypto-Onboarding mehr erforderlich.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">NEUERUNGEN</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("1", "Metall wählen", "Gold (AUXG), Silber (AUXS), Platin (AUXPT) oder Palladium (AUXPD).")}
+      ${step("2", "USD-Betrag eingeben", "Mindestens $30. Karte wird sofort belastet.")}
+      ${step("3", "Metall landet im Tresor", "Allozierter Barren + LBMA-Zertifikat ab 1 Gramm.")}
+    </table>
+    ${bonus("KARTENABRECHNUNG", "Auf Ihrer Kartenabrechnung erscheint AURUM LEDGER. Bearbeitungsgebühr ist im angezeigten Betrag enthalten. Rückerstattung über die Tresoroberfläche möglich.")}
+    ${cta("https://vault.auxite.io/vault", "METALL MIT KARTE KAUFEN")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Verfügbar im Web (vault.auxite.io) und Android. iOS-App folgt in Kürze.</p>
+  `),
+};
+
+const cardLaunchFR = {
+  subject: "Nouveau : Achetez des métaux précieux par carte",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Le paiement par carte est désormais actif.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Vous pouvez désormais acheter des <strong>métaux précieux physiquement alloués</strong> avec n'importe quelle Visa ou Mastercard, directement depuis l'interface du coffre Auxite. Plus besoin de passer par les cryptomonnaies.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">NOUVEAUTÉS</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("1", "Choisissez un métal", "Or (AUXG), Argent (AUXS), Platine (AUXPT) ou Palladium (AUXPD).")}
+      ${step("2", "Saisissez le montant en USD", "Minimum 30 $. La carte est débitée instantanément.")}
+      ${step("3", "Le métal arrive dans votre coffre", "Lingot alloué + certificat LBMA dès 1 gramme.")}
+    </table>
+    ${bonus("RELEVÉ DE CARTE", "Le relevé affiche AURUM LEDGER. Les frais de traitement sont inclus dans le total affiché. Le remboursement est possible via l'interface du coffre.")}
+    ${cta("https://vault.auxite.io/vault", "ACHETER DU MÉTAL PAR CARTE")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Disponible sur le web (vault.auxite.io) et Android. L'application iOS arrive bientôt.</p>
+  `),
+};
+
+const cardLaunchAR = {
+  subject: "جديد: اشترِ المعادن الثمينة بالبطاقة",
+  html: wrap(`
+    <div dir="rtl" style="text-align:right">
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">الدفع بالبطاقة أصبح مفعّلاً الآن.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">يمكنك الآن شراء <strong>المعادن الثمينة المخصصة فعليًا</strong> بأي بطاقة Visa أو Mastercard مباشرة من واجهة خزنة Auxite. لا حاجة للدخول إلى عالم العملات المشفرة.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">ما الجديد</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("1", "اختر معدنًا", "ذهب (AUXG)، فضة (AUXS)، بلاتين (AUXPT)، أو بالاديوم (AUXPD).")}
+      ${step("2", "أدخل المبلغ بالدولار", "الحد الأدنى 30$. تُعالج البطاقة فوراً.")}
+      ${step("3", "يصل المعدن إلى خزنتك", "سبيكة مخصصة + شهادة LBMA من 1 جرام فما فوق.")}
+    </table>
+    ${bonus("كشف البطاقة", "يظهر AURUM LEDGER على كشف البطاقة. رسوم المعالجة مضمنة في المجموع المعروض. الاسترداد متاح عبر واجهة الخزنة.")}
+    ${cta("https://vault.auxite.io/vault", "اشترِ المعدن بالبطاقة")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">متوفر الآن على الويب (vault.auxite.io) وAndroid. تطبيق iOS قادم قريباً.</p>
+    </div>
+  `),
+};
+
+const cardLaunchRU = {
+  subject: "Новинка: Купите драгоценные металлы картой",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Оплата картой теперь активна.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Теперь вы можете покупать <strong>физически выделенные драгоценные металлы</strong> любой картой Visa или Mastercard прямо из интерфейса хранилища Auxite. Подключение криптовалют больше не требуется.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">ЧТО НОВОГО</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("1", "Выберите металл", "Золото (AUXG), Серебро (AUXS), Платина (AUXPT) или Палладий (AUXPD).")}
+      ${step("2", "Введите сумму в USD", "Минимум 30 $. Карта обрабатывается мгновенно.")}
+      ${step("3", "Металл поступает в хранилище", "Выделенный слиток + сертификат LBMA при покупке от 1 грамма.")}
+    </table>
+    ${bonus("ВЫПИСКА ПО КАРТЕ", "В выписке отображается AURUM LEDGER. Комиссия за обработку включена в итоговую сумму. Возврат доступен через интерфейс хранилища.")}
+    ${cta("https://vault.auxite.io/vault", "КУПИТЬ МЕТАЛЛ КАРТОЙ")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Доступно на вебе (vault.auxite.io) и Android. Приложение iOS появится вскоре.</p>
+  `),
+};
+
+emailTemplates.cardLaunchEN = cardLaunchEN;
+emailTemplates.cardLaunchTR = cardLaunchTR;
+emailTemplates.cardLaunchDE = cardLaunchDE;
+emailTemplates.cardLaunchFR = cardLaunchFR;
+emailTemplates.cardLaunchAR = cardLaunchAR;
+emailTemplates.cardLaunchRU = cardLaunchRU;
+
+export function getCardLaunchTemplate(lang: string): { subject: string; html: string } {
+  const langMap: Record<string, string> = {
+    en: "cardLaunchEN",
+    tr: "cardLaunchTR",
+    de: "cardLaunchDE",
+    fr: "cardLaunchFR",
+    ar: "cardLaunchAR",
+    ru: "cardLaunchRU",
+  };
+  return emailTemplates[langMap[lang] || "cardLaunchEN"];
+}
