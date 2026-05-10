@@ -16,6 +16,10 @@ interface AddFundsModalProps {
   onAuxmTransfer?: (amount: number) => boolean;
   defaultTab?: "crypto" | "card" | "bank";
   bankOnly?: boolean;
+  /** When provided, the "Buy with Card" button closes this modal and
+   *  invokes the callback. Use to open the Stripe-powered card-purchase
+   *  flow. Falls back to internal Transak modal when not provided. */
+  onCardPurchase?: () => void;
 }
 
 // Crypto sources for funding
@@ -396,6 +400,7 @@ export function AddFundsModal({
   onAuxmTransfer,
   defaultTab,
   bankOnly = false,
+  onCardPurchase,
 }: AddFundsModalProps) {
   const { lang } = useLanguage();
   const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
@@ -603,9 +608,16 @@ export function AddFundsModal({
               <div>
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">{t("fundingSources")}</p>
                 <div className="space-y-3">
-                  {/* Buy with Card - Transak */}
+                  {/* Buy with Card — Stripe (when onCardPurchase provided) or Transak fallback */}
                   <button
-                    onClick={() => setActiveModal("card" as any)}
+                    onClick={() => {
+                      if (onCardPurchase) {
+                        onClose();
+                        onCardPurchase();
+                      } else {
+                        setActiveModal("card" as any);
+                      }
+                    }}
                     className="w-full p-4 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[#BFA181]/50 transition-all flex items-center gap-4 text-left"
                   >
                     <div className="w-12 h-12 rounded-xl bg-[#BFA181]/15 flex items-center justify-center">

@@ -3,15 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AddFundsModal } from "@/components/AddFundsModal";
+import { BuyMetalCardModal } from "@/components/BuyMetalCardModal";
 import { useWallet } from "@/components/WalletContext";
-import { useLanguage } from "@/components/LanguageContext";
-import TopNav from "@/components/TopNav";
 
 export default function FundVaultPage() {
   const router = useRouter();
   const { address, balances } = useWallet();
-  const { lang } = useLanguage();
   const [showModal, setShowModal] = useState(true);
+  const [showBuyMetalCardModal, setShowBuyMetalCardModal] = useState(false);
 
   // Real AUXM balance from wallet context
   const auxmBalance = balances?.auxm ?? 0;
@@ -21,7 +20,11 @@ export default function FundVaultPage() {
 
   const handleClose = () => {
     setShowModal(false);
-    router.push("/vault");
+    // If the card modal is open, stay on /fund-vault until it closes;
+    // otherwise return to vault.
+    if (!showBuyMetalCardModal) {
+      router.push("/vault");
+    }
   };
 
   const handleAuxmTransfer = (amount: number): boolean => {
@@ -39,6 +42,15 @@ export default function FundVaultPage() {
         vaultId={vaultId}
         auxmBalance={auxmBalance}
         onAuxmTransfer={handleAuxmTransfer}
+        onCardPurchase={() => setShowBuyMetalCardModal(true)}
+      />
+      <BuyMetalCardModal
+        isOpen={showBuyMetalCardModal}
+        onClose={() => {
+          setShowBuyMetalCardModal(false);
+          // After the card flow closes, send the user back to /vault.
+          router.push("/vault");
+        }}
       />
     </div>
   );
