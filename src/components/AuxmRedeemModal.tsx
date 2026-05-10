@@ -20,6 +20,7 @@ import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { TwoFactorGate } from "@/components/TwoFactorGate";
 import { useLanguage } from "@/components/LanguageContext";
 import { getWithdrawFee, NETWORK_LABELS, DEFAULT_NETWORK } from "@/lib/withdraw-fees";
+import { logEvent } from "@/lib/analytics";
 
 // ────────────────────────────────────────────────────────────────────────────
 // i18n
@@ -287,6 +288,7 @@ export function AuxmRedeemModal({ isOpen, onClose }: AuxmRedeemModalProps) {
     setFlowStep("result");
     setIsProcessing(true);
     setResult(null);
+    logEvent("auxm_redeem_attempted", { surface: "web", payoutAsset, amount: amountNum });
 
     try {
       const response = await fetch("/api/withdraw", {
@@ -315,6 +317,7 @@ export function AuxmRedeemModal({ isOpen, onClose }: AuxmRedeemModalProps) {
           payoutAmount: data.withdrawal?.payoutAmount ?? netReceive,
           payoutAsset,
         });
+        logEvent("auxm_redeem_queued", { surface: "web", payoutAsset, amount: amountNum });
       } else {
         setResult({
           type: "success",
@@ -323,14 +326,17 @@ export function AuxmRedeemModal({ isOpen, onClose }: AuxmRedeemModalProps) {
           payoutAmount: data.withdrawal?.payoutAmount ?? netReceive,
           payoutAsset,
         });
+        logEvent("auxm_redeem_succeeded", {
+          surface: "web", payoutAsset, amount: amountNum,
+          payoutAmount: data.withdrawal?.payoutAmount,
+        });
       }
       await refreshBalances();
     } catch (err) {
       console.error("AUXM redeem error:", err);
-      setResult({
-        type: "error",
-        message: err instanceof Error ? err.message : t("error"),
-      });
+      const msg = err instanceof Error ? err.message : t("error");
+      setResult({ type: "error", message: msg });
+      logEvent("auxm_redeem_failed", { surface: "web", payoutAsset, amount: amountNum, error: msg });
     } finally {
       setIsProcessing(false);
     }

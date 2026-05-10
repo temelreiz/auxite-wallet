@@ -9,6 +9,7 @@ import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { useTrade } from "@/hooks/useTrade";
 import { isLaunchCampaignActive, calculateAuxmBonus } from "@/lib/auxm-bonus-service";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
+import { logEvent } from '@/lib/analytics';
 import { LimitOrdersList } from "./LimitOrdersList";
 import { useLanguage } from "@/components/LanguageContext";
 
@@ -786,7 +787,11 @@ export default function TradePanel({
           });
           const data = await res.json();
           console.log("🟣 API Response:", data);
-          if (!data.success) throw new Error(data.error || t("tradeFailed"));
+          if (!data.success) {
+            logEvent("trade_failed", { surface: "web", side: "buy", metal: metalSymbol, error: data.error });
+            throw new Error(data.error || t("tradeFailed"));
+          }
+          logEvent("trade_succeeded", { surface: "web", side: "buy", metal: metalSymbol, fromToken: selectedCurrency, fromAmount, grams: amountNum });
           toast.success(t("tradeSuccess"));
           setShowConfirmation(false);
           setQuote(null);
@@ -809,7 +814,11 @@ export default function TradePanel({
           });
           const data = await res.json();
           console.log("🟣 Sell API Response:", data);
-          if (!data.success) throw new Error(data.error || t("tradeFailed"));
+          if (!data.success) {
+            logEvent("trade_failed", { surface: "web", side: "sell", metal: metalSymbol, error: data.error });
+            throw new Error(data.error || t("tradeFailed"));
+          }
+          logEvent("trade_succeeded", { surface: "web", side: "sell", metal: metalSymbol, grams: amountNum });
           toast.success(t("tradeSuccess"));
           setShowConfirmation(false);
           setQuote(null);

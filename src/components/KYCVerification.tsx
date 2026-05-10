@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLanguage } from "@/components/LanguageContext";
+import { logEvent } from "@/lib/analytics";
 
 interface KYCData {
   walletAddress: string;
@@ -242,6 +243,7 @@ export function KYCVerification({ walletAddress, onClose }: Props) {
     setSdkLoading(true);
     setErrorMessage("");
     setSdkActive(true);
+    logEvent("kyc_started", { surface: "web" });
 
     try {
       // Access token al
@@ -317,6 +319,7 @@ export function KYCVerification({ walletAddress, onClose }: Props) {
         .onMessage((type: string, payload: any) => {
           console.log("SDK message:", type, payload);
           if (type === "idCheck.onApplicantSubmitted") {
+            logEvent("kyc_submitted", { surface: "web" });
             fetchKYC();
           }
           if (type === "idCheck.onApplicantLoaded") {
@@ -329,11 +332,13 @@ export function KYCVerification({ walletAddress, onClose }: Props) {
       sdkInstanceRef.current = sdk;
       sdk.launch(containerRef.current);
       console.log("SDK launched");
+      logEvent("kyc_sdk_opened", { surface: "web" });
 
     } catch (err: any) {
       console.error("SDK launch error:", err);
       setErrorMessage(err.message || t("error"));
       setSdkActive(false);
+      logEvent("kyc_sdk_failed", { surface: "web", error: err?.message || String(err) });
     } finally {
       setSdkLoading(false);
     }

@@ -7,6 +7,7 @@ import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 import { TwoFactorGate } from "@/components/TwoFactorGate";
 import { useLanguage } from "@/components/LanguageContext";
 import { getWithdrawFee, NETWORK_LABELS, DEFAULT_NETWORK } from "@/lib/withdraw-fees";
+import { logEvent } from "@/lib/analytics";
 
 const translations: Record<string, Record<string, string>> = {
   tr: {
@@ -219,6 +220,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     setFlowStep("result");
     setIsProcessing(true);
     setResult(null);
+    logEvent("crypto_withdraw_attempted", { surface: "web", coin: selectedCrypto, amount: amountNum });
 
     try {
       const response = await fetch("/api/withdraw", {
@@ -240,16 +242,19 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         throw new Error(data.error || t("withdrawalFailed"));
       }
 
-      setResult({ 
-        type: "success", 
+      setResult({
+        type: "success",
         message: `${data.withdrawal?.netAmount ? formatAmount(data.withdrawal.netAmount, selectedCrypto) : formatAmount(amountNum, selectedCrypto)} ${selectedCrypto}`,
         txHash: data.withdrawal?.txHash
       });
+      logEvent("crypto_withdraw_succeeded", { surface: "web", coin: selectedCrypto, amount: amountNum });
       await refreshBalances();
-      
+
     } catch (err) {
       console.error("Withdraw error:", err);
-      setResult({ type: "error", message: err instanceof Error ? err.message : t("error") });
+      const msg = err instanceof Error ? err.message : t("error");
+      setResult({ type: "error", message: msg });
+      logEvent("crypto_withdraw_failed", { surface: "web", coin: selectedCrypto, amount: amountNum, error: msg });
     } finally {
       setIsProcessing(false);
     }

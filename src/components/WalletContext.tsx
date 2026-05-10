@@ -395,6 +395,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     fetchBalances(address);
     const interval = setInterval(() => fetchBalances(address), 30000);
+
+    // GA4 user identification — set once per connection so all subsequent
+    // events attribute to a stable user_id (lowercase wallet address).
+    import("@/lib/analytics").then(({ setUserId, logEvent }) => {
+      setUserId(address.toLowerCase());
+      logEvent("wallet_connected", { surface: "web" });
+    });
+
     return () => clearInterval(interval);
   }, [isConnected, address, isDemoMode, fetchBalances]);
 

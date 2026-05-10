@@ -443,6 +443,12 @@ export function AddFundsModal({
       await navigator.clipboard.writeText(text);
       setCopiedField(field);
       setTimeout(() => setCopiedField(null), 2000);
+      // Funnel signal: user copied a deposit address (crypto deposit intent)
+      if (field.startsWith("address_") || field === "iban" || field === "swift") {
+        import("@/lib/analytics").then(({ logEvent }) =>
+          logEvent("deposit_address_copied", { surface: "web", field })
+        );
+      }
     } catch (e) {
       console.error("Copy failed:", e);
     }
