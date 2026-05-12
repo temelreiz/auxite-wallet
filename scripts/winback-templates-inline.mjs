@@ -101,7 +101,7 @@ ${highlight("You can now fund your vault in three ways. Pick the one that fits."
 <p>Your 5 AUXG Welcome Gold is already in your vault. Add to your position whenever you're ready.</p>
 <p style="font-size:12px;color:#888;font-style:italic">Most first-time buyers start small to see how it works. There's no minimum to start exploring.</p>`,
     ctaText: "OPEN FUND VAULT",
-    ctaUrl: `${VAULT_URL}/fund?utm_source=email&utm_medium=winback&utm_campaign=cohort3_kycdone_v1`,
+    ctaUrl: `${VAULT_URL}/fund-vault?utm_source=email&utm_medium=winback&utm_campaign=cohort3_kycdone_v1`,
   },
   tr: {
     subject: "Doğrulanmış vault'unuz hazır — ilk $50 yatırımı deneyin",
@@ -127,7 +127,7 @@ ${highlight("Şimdi vault'unuzu üç farklı yolla fonlayabilirsiniz. Size uyan�
 <p>5 AUXG Hoş Geldin Altınınız zaten vault'unuzda. Hazır olduğunuzda pozisyonunuza ekleyebilirsiniz.</p>
 <p style="font-size:12px;color:#888;font-style:italic">İlk kez yatırım yapanlar genellikle küçük başlıyor. Keşfetmeye başlamak için minimum tutar yok.</p>`,
     ctaText: "FUND VAULT'A GİT",
-    ctaUrl: `${VAULT_URL}/fund?utm_source=email&utm_medium=winback&utm_campaign=cohort3_kycdone_v1`,
+    ctaUrl: `${VAULT_URL}/fund-vault?utm_source=email&utm_medium=winback&utm_campaign=cohort3_kycdone_v1`,
   },
 };
 

@@ -168,13 +168,44 @@ async function filterSendable(recipients) {
 }
 
 // ── Send ─────────────────────────────────────────────────────────────────────
+
+// Strip HTML to plain text for the multipart alternative. Spam filters
+// (esp. Gmail) score significantly higher when only HTML is present.
+function htmlToPlainText(html) {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<\/h\d>/gi, "\n\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&").replace(/&middot;/g, "·")
+    .replace(/&nbsp;/g, " ").replace(/&mdash;/g, "—").replace(/&ndash;/g, "–")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, "\n\n")
+    .split("\n").map((l) => l.trim()).join("\n")
+    .trim();
+}
+
 async function sendOne(template, recipient, stage) {
+  const unsubToken = unsubscribeToken(recipient.email);
   const { subject, html } = template.getWinbackEmail(
     stage,
     recipient.lang,
     recipient.email,
-    unsubscribeToken(recipient.email)
+    unsubToken
   );
+  const text = htmlToPlainText(html);
+
+  // Gmail bulk-sender compliance (Feb 2024):
+  // - List-Unsubscribe must include BOTH mailto and https
+  // - List-Unsubscribe-Post must be "List-Unsubscribe=One-Click"
+  const unsubUrl = `https://vault.auxite.io/unsubscribe?email=${encodeURIComponent(recipient.email)}&token=${unsubToken}`;
+  const headers = {
+    "List-Unsubscribe": `<mailto:unsubscribe@auxite.io?subject=unsubscribe&body=${encodeURIComponent(recipient.email)}>, <${unsubUrl}>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  };
 
   if (DRY_RUN) {
     console.log(`[DRY] would send to ${recipient.email} (lang=${recipient.lang}, stage=${stage})`);
@@ -187,6 +218,8 @@ async function sendOne(template, recipient, stage) {
       to: recipient.email,
       subject,
       html,
+      text,
+      headers,
     });
     if (error) return { ok: false, error: error.message || String(error) };
     await markSent(recipient.email, stage);
