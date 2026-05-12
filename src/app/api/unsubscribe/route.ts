@@ -26,7 +26,7 @@ function unsubscribeSecret(): string {
   );
 }
 
-export function unsubscribeToken(email: string): string {
+function unsubscribeToken(email: string): string {
   return createHmac("sha256", unsubscribeSecret())
     .update(email.trim().toLowerCase())
     .digest("hex")
