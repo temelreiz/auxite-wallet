@@ -31,6 +31,22 @@ export async function POST(request: NextRequest) {
           bodyLength: body.length,
           hasSecret: !!process.env.SUMSUB_WEBHOOK_SECRET,
         });
+
+        // TEMP DIAGNOSTIC (2026-05-13) — capture failed webhook to Redis for offline analysis.
+        // No secret data, but raw body + received signature, so we can recompute locally and
+        // pinpoint whether secret mismatches or body bytes differ.
+        try {
+          const { redis } = await import('@/lib/redis');
+          const ts = Date.now();
+          await redis.set(
+            `kyc:webhook:debug:${ts}`,
+            JSON.stringify({ algorithm, signature, body, ts }),
+            { ex: 24 * 60 * 60 } // 24h TTL
+          );
+          await redis.lpush('kyc:webhook:debug:index', String(ts));
+          await redis.ltrim('kyc:webhook:debug:index', 0, 19); // keep last 20
+        } catch {}
+
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
       }
     }
