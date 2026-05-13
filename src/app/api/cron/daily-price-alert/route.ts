@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { sendPushToUser } from "@/lib/expo-push";
+import { getUserLanguage } from "@/lib/user-language";
 
 const redis = Redis.fromEnv();
 
@@ -18,10 +19,22 @@ interface ClosingPrices {
   date: string;
 }
 
-interface UserTimezoneInfo {
+interface UserDeliveryInfo {
   walletAddress: string;
   timezone: string;
+  language: string;
 }
+
+// Localized title per supported language. Body uses AUXG/AUXS/AUXPT/AUXPD
+// token symbols which are brand-universal — no translation needed.
+const TITLE_BY_LANG: Record<string, string> = {
+  en: "📊 Daily Price Update",
+  tr: "📊 Günlük Fiyat Güncellemesi",
+  de: "📊 Tägliches Preisupdate",
+  fr: "📊 Mise à jour quotidienne des prix",
+  ar: "📊 تحديث الأسعار اليومي",
+  ru: "📊 Ежедневное обновление цен",
+};
 
 /**
  * Get the current hour in a given IANA timezone.
@@ -123,11 +136,13 @@ export async function GET(request: NextRequest) {
     const currentNorm = normalize(currentPrices, "current");
 
     // ─── 3. Build notification body ───
+    // Use AUXG/AUXS/AUXPT/AUXPD token symbols (brand-universal, language-agnostic).
+    // Body is the same for all users; title is per-language below.
     const parts = [
-      formatChange("Gold", currentNorm.gold, closeNorm.gold),
-      formatChange("Silver", currentNorm.silver, closeNorm.silver),
-      formatChange("Platinum", currentNorm.platinum, closeNorm.platinum),
-      formatChange("Palladium", currentNorm.palladium, closeNorm.palladium),
+      formatChange("AUXG", currentNorm.gold, closeNorm.gold),
+      formatChange("AUXS", currentNorm.silver, closeNorm.silver),
+      formatChange("AUXPT", currentNorm.platinum, closeNorm.platinum),
+      formatChange("AUXPD", currentNorm.palladium, closeNorm.palladium),
     ].filter(Boolean);
 
     const notificationBody = parts.join(" | ");
@@ -140,65 +155,78 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // ─── 4. Find users whose local time is 09:00 ───
-    // Get all users with push tokens registered
+    // ─── 4. Find users whose local time is 12:00 AND opted in for priceAlerts ───
     const allPushUsers = await redis.smembers("push:mobile:all_users");
 
-    const eligibleUsers: UserTimezoneInfo[] = [];
+    const eligibleUsers: UserDeliveryInfo[] = [];
+    let skippedOptOut = 0;
 
     for (const walletAddr of allPushUsers) {
       const addr = (walletAddr as string).toLowerCase();
 
-      // Try to get timezone from user:{walletAddress}:info
-      let tz: string | null = null;
+      // ── 4a. Push preference check — respect explicit opt-out ──
+      // Default is to allow priceAlerts (priceAlerts !== false). If user
+      // has explicitly toggled it off, skip them.
+      const prefsRaw = await redis.get(`push:preferences:${addr}`);
+      if (prefsRaw) {
+        try {
+          const prefs = typeof prefsRaw === "string" ? JSON.parse(prefsRaw) : prefsRaw;
+          if (prefs.enabled === false || prefs.priceAlerts === false) {
+            skippedOptOut++;
+            continue;
+          }
+        } catch {
+          // malformed prefs — treat as default (allow)
+        }
+      }
 
+      // ── 4b. Timezone lookup ──
+      let tz: string | null = null;
       const userInfo = (await redis.hgetall(
         `user:${addr}:info`
       )) as Record<string, string> | null;
-      if (userInfo?.timezone) {
-        tz = userInfo.timezone;
-      }
+      if (userInfo?.timezone) tz = userInfo.timezone;
 
       if (!tz) {
-        // Try to find timezone from auth:user hash via email lookup
         const email = await redis.get(`wallet:${addr}`);
         if (email) {
           const authUser = (await redis.hgetall(
             `auth:user:${email}`
           )) as Record<string, string> | null;
-          if (authUser?.timezone) {
-            tz = authUser.timezone;
-          }
+          if (authUser?.timezone) tz = authUser.timezone;
         }
       }
 
-      // Default timezone if none set
-      if (!tz) {
-        tz = "Europe/Istanbul";
-      }
+      if (!tz) tz = "Europe/Istanbul";
 
-      // Check if it's 12 PM (noon) in user's timezone
+      // ── 4c. Only continue if it's 12 PM in user's tz ──
       const localHour = getLocalHour(tz);
-      if (localHour === 12) {
-        eligibleUsers.push({ walletAddress: addr, timezone: tz });
-      }
+      if (localHour !== 12) continue;
+
+      // ── 4d. Fetch user language for localized title ──
+      const language = await getUserLanguage(addr);
+
+      eligibleUsers.push({ walletAddress: addr, timezone: tz, language });
     }
 
-    // ─── 5. Send push notifications ───
+    // ─── 5. Send push notifications (per-user localized title) ───
     let totalSent = 0;
     let totalFailed = 0;
 
     for (const user of eligibleUsers) {
+      const title = TITLE_BY_LANG[user.language] || TITLE_BY_LANG.en;
       try {
         const result = await sendPushToUser(
           user.walletAddress,
-          "📊 Daily Price Update",
+          title,
           notificationBody,
           {
             type: "daily_price_alert",
             closingDate: closingPrices.date,
           },
-          { priority: "high", channelId: "price-alerts" }
+          // 'default' is registered in mobile app's setupNotificationChannels.
+          // 'price-alerts' was a phantom channel — Android fell back to no-sound silent delivery.
+          { priority: "high", channelId: "default" }
         );
         totalSent += result.sent;
         totalFailed += result.failed;
@@ -212,7 +240,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(
-      `[DailyPriceAlert] Completed: ${eligibleUsers.length} eligible users, ${totalSent} sent, ${totalFailed} failed`
+      `[DailyPriceAlert] Completed: ${eligibleUsers.length} eligible, ${totalSent} sent, ${totalFailed} failed, ${skippedOptOut} opted out`
     );
 
     return NextResponse.json({
@@ -221,6 +249,7 @@ export async function GET(request: NextRequest) {
       closingDate: closingPrices.date,
       eligibleUsers: eligibleUsers.length,
       totalPushUsers: allPushUsers.length,
+      skippedOptOut,
       sent: totalSent,
       failed: totalFailed,
       body: notificationBody,
