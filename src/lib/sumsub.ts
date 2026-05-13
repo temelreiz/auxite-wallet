@@ -87,8 +87,26 @@ export async function getApplicantByExternalId(externalUserId: string): Promise<
   }
 }
 
-export function verifyWebhookSignature(payload: string, signature: string): boolean {
-  const expectedSignature = crypto.createHmac('sha256', SUMSUB_WEBHOOK_SECRET).update(payload).digest('hex');
+// Sumsub sends one of HMAC_SHA1_HEX / HMAC_SHA256_HEX / HMAC_SHA512_HEX via the
+// `x-payload-digest-alg` header. We must use the matching algorithm or the
+// signature never matches — caused 72h of 401s + Sumsub auto-disabling the
+// webhook (2026-05-13). Defaults to sha256 when header absent.
+const ALGO_MAP: Record<string, string> = {
+  HMAC_SHA1_HEX: 'sha1',
+  HMAC_SHA256_HEX: 'sha256',
+  HMAC_SHA512_HEX: 'sha512',
+};
+
+export function verifyWebhookSignature(
+  payload: string,
+  signature: string,
+  algorithm: string = 'HMAC_SHA256_HEX'
+): boolean {
+  const cryptoAlgo = ALGO_MAP[algorithm] || 'sha256';
+  const expectedSignature = crypto
+    .createHmac(cryptoAlgo, SUMSUB_WEBHOOK_SECRET)
+    .update(payload)
+    .digest('hex');
   return signature === expectedSignature;
 }
 

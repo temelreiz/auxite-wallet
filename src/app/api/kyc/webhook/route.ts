@@ -20,11 +20,17 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
     const signature = request.headers.get('x-payload-digest') || '';
+    const algorithm = request.headers.get('x-payload-digest-alg') || 'HMAC_SHA256_HEX';
 
     // İmza doğrulama (production'da aktif et)
     if (process.env.NODE_ENV === 'production') {
-      if (!verifyWebhookSignature(body, signature)) {
-        console.error('Invalid webhook signature');
+      if (!verifyWebhookSignature(body, signature, algorithm)) {
+        console.error('Invalid webhook signature', {
+          algorithm,
+          signatureLength: signature.length,
+          bodyLength: body.length,
+          hasSecret: !!process.env.SUMSUB_WEBHOOK_SECRET,
+        });
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
       }
     }
