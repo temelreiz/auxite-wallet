@@ -47,8 +47,8 @@ SECURITY:
 
 SUPPORT:
 - Email: support@auxite.io
-- WhatsApp: +44 7520 637591
-- Telegram: t.me/auxite
+- WhatsApp: +44 7520 603300
+- Telegram: t.me/AuxiteSupportbot
 
 RULES:
 - Be concise and helpful (WhatsApp messages should be short)
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse Twilio webhook (form-urlencoded)
     const formData = await request.formData();
-    const from = formData.get("From") as string; // whatsapp:+447520637591
+    const from = formData.get("From") as string; // e.g. whatsapp:+447520603300
     const body = (formData.get("Body") as string || "").trim();
     const profileName = formData.get("ProfileName") as string || "";
 
