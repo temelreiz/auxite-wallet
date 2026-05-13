@@ -100,6 +100,26 @@ export async function GET(request: NextRequest) {
     const currentPrices =
       typeof currentRaw === "string" ? JSON.parse(currentRaw) : currentRaw;
 
+    // ─── Unit-mismatch guard ───
+    // System standard is USD/GRAM (gold ~$150/g). If either dataset has
+    // gold > $500/g it's ounce-tainted. Sending a -96.8% push to 800+ users
+    // is worse than not sending. Abort + alert via error log.
+    const isOunce = (p: any) => p && p.gold > 500;
+    if (isOunce(closingPrices) || isOunce(currentPrices)) {
+      console.error(
+        "[DailyPriceAlert] ABORT — unit mismatch detected",
+        { closeGold: closingPrices.gold, currentGold: currentPrices.gold }
+      );
+      return NextResponse.json({
+        success: true,
+        message: "Skipped: unit mismatch (ounce vs gram) detected, send aborted to prevent false alerts",
+        sent: 0,
+        skipped: "unit_mismatch",
+        closeGold: closingPrices.gold,
+        currentGold: currentPrices.gold,
+      });
+    }
+
     // ─── 3. Build notification body ───
     const parts = [
       formatChange("Gold", currentPrices.gold, closingPrices.gold),

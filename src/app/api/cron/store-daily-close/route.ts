@@ -37,8 +37,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const prices =
+    const rawPrices =
       typeof priceData === "string" ? JSON.parse(priceData) : priceData;
+
+    // ─── Unit normalization ───
+    // System standard is USD/GRAM. price-cache.ts rejects gold > $500/g as
+    // ounce-tainted data. This cron historically bypassed that check, which
+    // led to 2026-05-12 storing ounce prices and the daily-price-alert push
+    // showing -96.8% for every metal (Cause: gram current vs. ounce close).
+    const TROY_OUNCE_TO_GRAMS = 31.1034768;
+    let prices = { ...rawPrices };
+    if (rawPrices.gold > 500) {
+      console.warn(
+        `[StoreDailyClose] Ounce-unit prices detected (gold=$${rawPrices.gold.toFixed(2)}), normalizing to gram`
+      );
+      prices = {
+        gold: rawPrices.gold / TROY_OUNCE_TO_GRAMS,
+        silver: rawPrices.silver / TROY_OUNCE_TO_GRAMS,
+        platinum: rawPrices.platinum / TROY_OUNCE_TO_GRAMS,
+        palladium: rawPrices.palladium / TROY_OUNCE_TO_GRAMS,
+      };
+    }
 
     // Format today's date as YYYY-MM-DD
     const now = new Date();
