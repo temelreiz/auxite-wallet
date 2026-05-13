@@ -25,11 +25,17 @@ export async function POST(request: NextRequest) {
     // İmza doğrulama (production'da aktif et)
     if (process.env.NODE_ENV === 'production') {
       if (!verifyWebhookSignature(body, signature, algorithm)) {
+        const secret = process.env.SUMSUB_WEBHOOK_SECRET || '';
         console.error('Invalid webhook signature', {
           algorithm,
           signatureLength: signature.length,
+          signaturePrefix: signature.slice(0, 8),
           bodyLength: body.length,
-          hasSecret: !!process.env.SUMSUB_WEBHOOK_SECRET,
+          bodyPrefix: body.slice(0, 60),
+          secretLength: secret.length,
+          secretPrefix: secret.slice(0, 4),
+          secretHasWhitespace: secret !== secret.trim(),
+          secretHasQuotes: secret.startsWith('"') || secret.endsWith('"'),
         });
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
       }
