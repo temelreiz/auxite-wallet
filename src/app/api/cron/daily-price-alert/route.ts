@@ -100,36 +100,34 @@ export async function GET(request: NextRequest) {
     const currentPrices =
       typeof currentRaw === "string" ? JSON.parse(currentRaw) : currentRaw;
 
-    // ─── Unit-mismatch guard ───
-    // System standard is USD/GRAM (gold ~$150/g). If either dataset has
-    // gold > $500/g it's ounce-tainted. Sending a -96.8% push to 800+ users
-    // is worse than not sending. Abort + alert via error log.
-    const isOunce = (p: any) => p && p.gold > 500;
-    if (isOunce(closingPrices) || isOunce(currentPrices)) {
-      console.error(
-        "[DailyPriceAlert] ABORT — unit mismatch detected",
-        { closeGold: closingPrices.gold, currentGold: currentPrices.gold }
-      );
-      return NextResponse.json({
-        success: true,
-        message: "Skipped: unit mismatch (ounce vs gram) detected, send aborted to prevent false alerts",
-        sent: 0,
-        skipped: "unit_mismatch",
-        closeGold: closingPrices.gold,
-        currentGold: currentPrices.gold,
-      });
-    }
+    // ─── Unit normalization ───
+    // System standard is USD/GRAM (price-cache.ts enforces gold < $500/g).
+    // The bare redis.get() bypass in cron context means we sometimes receive
+    // ounce-unit data (gold ~$4700) when other writers update the cache.
+    // Normalize inline so push still ships, but with correct % values.
+    const TROY_OUNCE_TO_GRAMS = 31.1034768;
+    const normalize = (p: any, label: string) => {
+      if (p && p.gold > 500) {
+        console.warn(`[DailyPriceAlert] Normalizing ${label} oz→g (gold=$${p.gold.toFixed(2)})`);
+        return {
+          ...p,
+          gold: p.gold / TROY_OUNCE_TO_GRAMS,
+          silver: p.silver / TROY_OUNCE_TO_GRAMS,
+          platinum: p.platinum / TROY_OUNCE_TO_GRAMS,
+          palladium: p.palladium / TROY_OUNCE_TO_GRAMS,
+        };
+      }
+      return p;
+    };
+    const closeNorm = normalize(closingPrices, "close");
+    const currentNorm = normalize(currentPrices, "current");
 
     // ─── 3. Build notification body ───
     const parts = [
-      formatChange("Gold", currentPrices.gold, closingPrices.gold),
-      formatChange("Silver", currentPrices.silver, closingPrices.silver),
-      formatChange("Platinum", currentPrices.platinum, closingPrices.platinum),
-      formatChange(
-        "Palladium",
-        currentPrices.palladium,
-        closingPrices.palladium
-      ),
+      formatChange("Gold", currentNorm.gold, closeNorm.gold),
+      formatChange("Silver", currentNorm.silver, closeNorm.silver),
+      formatChange("Platinum", currentNorm.platinum, closeNorm.platinum),
+      formatChange("Palladium", currentNorm.palladium, closeNorm.palladium),
     ].filter(Boolean);
 
     const notificationBody = parts.join(" | ");
