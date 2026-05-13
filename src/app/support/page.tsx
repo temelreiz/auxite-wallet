@@ -525,7 +525,7 @@ export default function SupportPage() {
                       <button onClick={() => setShowEmergencyConfirm(false)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-stone-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800 transition">
                         {t.cancel}
                       </button>
-                      <a href="tel:+447520637591" onClick={() => setShowEmergencyConfirm(false)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-red-500 text-white text-center hover:bg-red-600 transition">
+                      <a href="tel:+447520603300" onClick={() => setShowEmergencyConfirm(false)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-red-500 text-white text-center hover:bg-red-600 transition">
                         {t.emergencyCall}
                       </a>
                     </div>
