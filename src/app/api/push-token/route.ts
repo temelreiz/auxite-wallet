@@ -62,9 +62,42 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Check if token already registered
-    const tokenExists = existingTokens.some((t: { token: string }) => t.token === token);
-    if (!tokenExists) {
+    // Reinstall-aware token registration:
+    // A new Expo token is generated on every app reinstall, but the old
+    // token in Redis stays "valid" from Expo's perspective for days until
+    // DeviceNotRegistered is returned. Result: backend fan-outs each push
+    // to both tokens — and if both still route to the same device, the
+    // user sees the notification twice.
+    //
+    // Strategy: when a new token comes in, drop any prior entries for the
+    // same (platform, deviceName) before pushing the new one. The risk
+    // (two different physical devices with identical model name and OS
+    // belonging to the same user) is rare enough that a single dropped
+    // delivery is an acceptable trade-off vs. the recurring duplicate.
+    const incomingPlatform = (platform || "unknown").toLowerCase();
+    const incomingDevice = (deviceName || "Unknown").toLowerCase();
+
+    const tokenExistsIdx = existingTokens.findIndex(
+      (t: { token: string }) => t.token === token,
+    );
+
+    if (tokenExistsIdx >= 0) {
+      // Same token re-registering — just refresh timestamp.
+      existingTokens[tokenExistsIdx].updatedAt = new Date().toISOString();
+    } else {
+      // Remove any stale tokens from the same (platform, deviceName) slot.
+      const beforeCount = existingTokens.length;
+      existingTokens = existingTokens.filter((t: { token: string; platform?: string; deviceName?: string }) => {
+        const sameSlot =
+          (t.platform || "").toLowerCase() === incomingPlatform &&
+          (t.deviceName || "").toLowerCase() === incomingDevice;
+        return !sameSlot;
+      });
+      if (existingTokens.length < beforeCount) {
+        console.log(
+          `[Push Token] Pruned ${beforeCount - existingTokens.length} stale token(s) for slot ${incomingPlatform}/${incomingDevice}`,
+        );
+      }
       existingTokens.push({
         token,
         platform: platform || "unknown",
@@ -72,10 +105,6 @@ export async function POST(req: NextRequest) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-    } else {
-      // Update existing token's timestamp
-      const idx = existingTokens.findIndex((t: { token: string }) => t.token === token);
-      if (idx >= 0) existingTokens[idx].updatedAt = new Date().toISOString();
     }
 
     // Save tokens for this wallet (format expo-push.ts expects)
