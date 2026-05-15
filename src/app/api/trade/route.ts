@@ -1722,11 +1722,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Push notification (non-blocking)
+    // notification template renders "{amt}g {METAL}" — `amount` must always
+    // be the grams of metal involved in the trade:
+    //   buy  (from=AUXM, to=METAL) → grams received   = toAmount
+    //   sell (from=METAL, to=AUXM) → grams sold       = fromAmount
+    // Earlier this used toAmount for both, so a 0.1g AUXG sell at ~$140/g
+    // was announced as "14g AUXG satıldı" (proceeds USD treated as grams).
+    const notifAmount = type === 'sell'
+      ? parseFloat(Number(fromAmount).toFixed(4))
+      : parseFloat(toAmount.toFixed(4));
     notifyTransactionRich(normalizedAddress, {
       type: type === 'buy' ? 'buy' : 'sell',
       fromToken: fromToken.toUpperCase(),
       toToken: toToken.toUpperCase(),
-      amount: parseFloat(toAmount.toFixed(4)),
+      amount: notifAmount,
       token: METALS.includes(toTokenLower) ? toToken.toUpperCase() : fromToken.toUpperCase(),
       certificateNumber,
       txHash,
