@@ -3,6 +3,7 @@ import { redis } from "@/lib/redis";
 import { sendStakingAgreementEmail } from "@/lib/email";
 import { stakeOnChain, getUserStakesOnChain, checkDelegationApproval } from "@/lib/staking-service";
 import { getUserLanguage } from "@/lib/user-language";
+import { recordExposureChange, type MetalSymbol } from "@/lib/treasury-exposure";
 
 const METAL_NAMES: Record<string, string> = {
   AUXG: "Gold",
@@ -197,6 +198,22 @@ export async function POST(request: NextRequest) {
       ...newStake,
       userAddress: address.toLowerCase(),
     });
+
+    // Treasury exposure ledger — record the lock so Phase 2 hedge engine and
+    // /api/admin/treasury/exposure can see it. Best-effort; never block the
+    // stake creation if the ledger write itself fails.
+    try {
+      await recordExposureChange({
+        metal: metal as MetalSymbol,
+        type: "stake",
+        amount: amountNum,
+        refId: stakeId,
+        walletAddress: address,
+        reason: `stake-create:${durationMonths}m:apy=${apyPercent}`,
+      });
+    } catch (expErr: any) {
+      console.warn(`[treasury] exposure record failed (non-fatal):`, expErr?.message);
+    }
 
     console.log(`✅ Stake saved: ${stakeId} - ${amount} ${metal} for ${lockDays} days (onChain: ${newStake.onChain})`);
 

@@ -5,6 +5,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { recordExposureChange, type MetalSymbol } from "@/lib/treasury-exposure";
+import { getAccruedReward } from "@/lib/yield-accounting";
 
 const redis = Redis.fromEnv();
 
@@ -69,7 +71,16 @@ export async function GET(request: NextRequest) {
           // ─── MATURITY: Vadesi dolmuş pozisyonları tamamla ───
           if (pos.endDate <= now) {
             try {
-              const reward = pos.expectedReward;
+              // Prefer the new accrual ledger when it has positive grams
+              // (Phase 2/3 hedge income), otherwise fall back to the
+              // legacy promised `expectedReward`. This keeps existing
+              // stakes paying out exactly as before until real income
+              // sources come online.
+              let reward = pos.expectedReward;
+              try {
+                const accrued = await getAccruedReward(pos.id);
+                if (accrued > 0) reward = accrued;
+              } catch { /* best-effort */ }
               const totalReturn = pos.amount + reward;
 
               // Bakiyeye geri ekle (principal + full reward)
@@ -103,6 +114,23 @@ export async function GET(request: NextRequest) {
               }));
 
               await multi.exec();
+
+              // Treasury exposure ledger — locked balance shrinks by
+              // principal, total grows by the reward we just minted to
+              // the user. Best-effort; doesn't block the maturity flow.
+              try {
+                await recordExposureChange({
+                  metal: pos.metal.toUpperCase() as MetalSymbol,
+                  type: "unstake",
+                  amount: pos.amount,
+                  rewardGrams: reward,
+                  refId: pos.id,
+                  walletAddress: address,
+                  reason: `maturity:reward=${reward.toFixed(6)}g`,
+                });
+              } catch (expErr: any) {
+                console.warn(`[treasury] exposure record failed (non-fatal):`, expErr?.message);
+              }
 
               // Pozisyonu güncelle
               pos.status = "completed";
