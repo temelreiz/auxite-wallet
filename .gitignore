@@ -12,3 +12,6 @@ node_modules/
 # KuveytTürk RSA Keys
 keys/
 .next 2/
+
+# Claude Code worktrees (auto-generated, never committed)
+.claude/worktrees/
