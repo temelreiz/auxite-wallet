@@ -1026,6 +1026,27 @@ export interface SendEmailOptions {
   data: EmailData;
 }
 
+// Strip HTML to plain text so we send multipart. Gmail/Yahoo spam-score
+// HTML-only mail significantly higher since their Feb 2024 bulk-sender
+// changes. A working text alternative reliably moves us from Spam → Inbox.
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<\/h\d>/gi, '\n\n')
+    .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/gi, '$2 ($1)')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&').replace(/&middot;/g, '·')
+    .replace(/&nbsp;/g, ' ').replace(/&mdash;/g, '—').replace(/&ndash;/g, '–')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, '\n\n')
+    .split('\n').map((l) => l.trim()).join('\n')
+    .trim();
+}
+
 export async function sendEmail(options: SendEmailOptions): Promise<{ success: boolean; error?: string; id?: string }> {
   try {
     if (!resend) {
@@ -1040,12 +1061,26 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
     }
 
     const { subject, html } = template(options.data);
+    const text = htmlToPlainText(html);
+
+    // Gmail bulk-sender compliance (Feb 2024) — even transactional mail
+    // benefits from a List-Unsubscribe + One-Click header set, because
+    // spam filters now treat its presence as a positive sender signal.
+    // The unsubscribe link is informational for transactional users
+    // (they'd be deleting their account, not "unsubscribing"); we point
+    // it at the existing /unsubscribe page so it's a valid endpoint.
+    const headers: Record<string, string> = {
+      'List-Unsubscribe': `<mailto:unsubscribe@auxite.io?subject=unsubscribe&body=${encodeURIComponent(options.to)}>, <https://vault.auxite.io/unsubscribe?email=${encodeURIComponent(options.to)}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    };
 
     const { data, error } = await resend.emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: options.to,
       subject: options.subject || subject,
       html,
+      text,
+      headers,
     });
 
     if (error) {
