@@ -33,7 +33,7 @@
 //   treasury:hedge:state               hash  { lastRunAt, lastSignalId }
 // ============================================================================
 
-import { redis } from "@/lib/redis";
+import { redis, getRedis } from "@/lib/redis";
 import { getAllExposures, type MetalSymbol } from "@/lib/treasury-exposure";
 import { getAllCachedFutures, type AbaxxFuturesData } from "@/lib/abaxx-client";
 
@@ -133,7 +133,8 @@ function newSignalId(): string {
  * on every call.
  */
 async function getOpenPositions(): Promise<PositionRow[]> {
-  const keys = await redis.keys("treasury:hedge:positions:*");
+  // KEYS isn't proxied via our redis wrapper, so use the raw client.
+  const keys = await getRedis().keys("treasury:hedge:positions:*");
   const positions: PositionRow[] = [];
   for (const key of keys) {
     const data = await redis.hgetall(key);
@@ -374,12 +375,12 @@ async function moveSignal(
   }
   if (!target) return null;
 
-  const multi = redis.multi();
-  multi.del(fromKey);
-  if (remaining.length > 0) multi.rpush(fromKey, ...remaining);
-  multi.lpush(toKey, JSON.stringify(target));
-  multi.ltrim(toKey, 0, 499);
-  await multi.exec();
+  const pipe = getRedis().pipeline();
+  pipe.del(fromKey);
+  if (remaining.length > 0) pipe.rpush(fromKey, ...remaining);
+  pipe.lpush(toKey, JSON.stringify(target));
+  pipe.ltrim(toKey, 0, 499);
+  await pipe.exec();
 
   return target;
 }

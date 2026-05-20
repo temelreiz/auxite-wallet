@@ -31,7 +31,7 @@
 //   matches how a real bullion lease pool prices commitments.
 // ============================================================================
 
-import { redis } from "@/lib/redis";
+import { redis, getRedis } from "@/lib/redis";
 import type { MetalSymbol } from "@/lib/treasury-exposure";
 import { METALS } from "@/lib/treasury-exposure";
 
@@ -102,14 +102,14 @@ export async function recordDailyIncome(params: {
     recordedAt: now,
   };
 
-  // Bump per-day income tally + global pool counter
-  const multi = redis.multi();
-  multi.hincrbyfloat(incomeKey(metal, date), source, grams);
-  multi.hincrbyfloat(incomeKey(metal, date), "total", grams);
-  multi.hincrbyfloat(poolKey(metal), "accrued", grams);
-  multi.lpush(`treasury:income:log`, JSON.stringify(entry));
-  multi.ltrim(`treasury:income:log`, 0, 9999);
-  await multi.exec();
+  // Bump per-day income tally + global pool counter via raw client pipeline.
+  const pipe = getRedis().pipeline();
+  pipe.hincrbyfloat(incomeKey(metal, date), source, grams);
+  pipe.hincrbyfloat(incomeKey(metal, date), "total", grams);
+  pipe.hincrbyfloat(poolKey(metal), "accrued", grams);
+  pipe.lpush(`treasury:income:log`, JSON.stringify(entry));
+  pipe.ltrim(`treasury:income:log`, 0, 9999);
+  await pipe.exec();
 
   return entry;
 }
@@ -155,14 +155,14 @@ export async function creditStakeReward(
   reason: string,
 ): Promise<void> {
   if (!(grams > 0)) return;
-  const multi = redis.multi();
-  multi.incrbyfloat(`stake:${stakeId}:accruedReward`, grams);
-  multi.lpush(`stake:${stakeId}:accrualLog`, JSON.stringify({
+  const pipe = getRedis().pipeline();
+  pipe.incrbyfloat(`stake:${stakeId}:accruedReward`, grams);
+  pipe.lpush(`stake:${stakeId}:accrualLog`, JSON.stringify({
     grams, reason, at: Date.now(),
   }));
-  multi.ltrim(`stake:${stakeId}:accrualLog`, 0, 364);
-  multi.hincrbyfloat(poolKey(metal), "distributed", grams);
-  await multi.exec();
+  pipe.ltrim(`stake:${stakeId}:accrualLog`, 0, 364);
+  pipe.hincrbyfloat(poolKey(metal), "distributed", grams);
+  await pipe.exec();
 }
 
 // ── Distribution (daily cron will call this) ─────────────────────────────────
@@ -196,8 +196,9 @@ export async function distributePoolToStakes(params: {
   // Iterate every wallet's stake list. For Phase 1 we accept the O(N)
   // SCAN cost — staker count is small. Phase 4 will switch to an indexed
   // `treasury:stakers:active` set updated on each stake create/mature.
+  // KEYS isn't proxied through our redis wrapper, so use the raw client.
   const stakeKeyPrefix = "stakes:";
-  const stakeKeys = await redis.keys(`${stakeKeyPrefix}*`);
+  const stakeKeys = await getRedis().keys(`${stakeKeyPrefix}*`);
   const candidates: StakeAccrual[] = [];
   const now = Date.now();
 

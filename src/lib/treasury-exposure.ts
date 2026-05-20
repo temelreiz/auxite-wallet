@@ -21,7 +21,7 @@
 // reality is a treasury operations alert (reconciler will flag it).
 // ============================================================================
 
-import { redis } from "@/lib/redis";
+import { redis, getRedis } from "@/lib/redis";
 
 export type MetalSymbol = "AUXG" | "AUXS" | "AUXPT" | "AUXPD";
 
@@ -151,12 +151,14 @@ export async function recordExposureChange(params: {
   const key = exposureKey(metal);
 
   // Apply deltas atomically. hincrbyfloat preserves precision better than
-  // read-modify-write for high-frequency stake events.
-  const multi = redis.multi();
-  if (deltaLocked !== 0) multi.hincrbyfloat(key, "locked", deltaLocked);
-  if (deltaTotal !== 0) multi.hincrbyfloat(key, "total", deltaTotal);
-  multi.hset(key, { lastUpdated: now });
-  await multi.exec();
+  // read-modify-write for high-frequency stake events. We use the raw
+  // Upstash client's pipeline() since our redis wrapper doesn't proxy it
+  // with the full method surface.
+  const pipe = getRedis().pipeline();
+  if (deltaLocked !== 0) pipe.hincrbyfloat(key, "locked", deltaLocked);
+  if (deltaTotal !== 0) pipe.hincrbyfloat(key, "total", deltaTotal);
+  pipe.hset(key, { lastUpdated: now });
+  await pipe.exec();
 
   const event: ExposureEvent = {
     metal,
