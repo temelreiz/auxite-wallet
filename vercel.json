@@ -77,6 +77,10 @@
     {
       "path": "/api/cron/abaxx-sync",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/hedge-signal",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
