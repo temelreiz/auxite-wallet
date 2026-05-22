@@ -373,6 +373,12 @@ const OZ_PER_GRAM = 1 / 31.1035;
 export default function ProofOfReservesPage() {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
+  // String.prototype.toUpperCase() uses Unicode default case mapping —
+  // it's locale-independent (does NOT apply the Turkish dotless-i rule
+  // even when the page lang attribute is tr). Replaces CSS
+  // text-transform: uppercase which DID inherit the global <html lang="tr">
+  // and produced "İ" instead of "I" on English labels (e.g. "CİRCULATİON").
+  const upper = (s?: string) => (s ?? "").toUpperCase();
 
   const [data, setData] = useState<CustodyData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -510,17 +516,17 @@ export default function ProofOfReservesPage() {
           <div className="flex justify-center gap-8 mt-8 text-center">
             <div>
               <div className="text-2xl font-bold text-slate-800 dark:text-white">{formatOz(totalOunces / OZ_PER_GRAM)}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">{t.statOunces}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 tracking-wider mt-1">{upper(t.statOunces)}</div>
             </div>
             <div className="w-px bg-slate-200 dark:bg-slate-800" />
             <div>
               <div className="text-2xl font-bold text-slate-800 dark:text-white">3</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">{t.statPartners}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 tracking-wider mt-1">{upper(t.statPartners)}</div>
             </div>
             <div className="w-px bg-slate-200 dark:bg-slate-800" />
             <div>
               <div className="text-2xl font-bold text-slate-800 dark:text-white">4</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">{t.statCountries}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 tracking-wider mt-1">{upper(t.statCountries)}</div>
             </div>
           </div>
         </section>
@@ -528,7 +534,7 @@ export default function ProofOfReservesPage() {
         {/* ═══ 2. LIVE RESERVE SNAPSHOT ═══ */}
         <section className="mb-16">
           <div className="bg-gradient-to-br from-[#2F6F62] to-[#1a4a40] rounded-2xl p-8 text-white text-center mb-8">
-            <p className="text-sm uppercase tracking-wider text-white/70 mb-2">{t.snapshotTitle}</p>
+            <p className="text-sm tracking-wider text-white/70 mb-2">{upper(t.snapshotTitle)}</p>
             <p className="text-sm text-white/60 mb-6">{t.snapshotNote}</p>
             {/* Reserve Ratio */}
             <div className="max-w-md mx-auto">
@@ -550,7 +556,7 @@ export default function ProofOfReservesPage() {
                   <div className="w-4 h-4 rounded-full" style={{ backgroundColor: metalColors[m.symbol] }} />
                 </div>
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white mb-1">{metalName(m.symbol)}</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">{t.holdings}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 tracking-wider mb-3">{upper(t.holdings)}</p>
                 <p className="text-xl font-bold text-slate-800 dark:text-white">{formatKg(m.custodyHoldingsG)}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">kg</p>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{formatOz(m.custodyHoldingsG)} oz</p>
@@ -624,7 +630,7 @@ export default function ProofOfReservesPage() {
                 }`} />
               </div>
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t.reconciliationStatus}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 tracking-wider">{upper(t.reconciliationStatus)}</p>
                 <p className="text-sm font-semibold text-slate-800 dark:text-white">
                   {layers.reconciliation.status === "Reconciled" ? t.statusReconciled :
                    layers.reconciliation.status === "Pending" ? t.statusPending : t.statusMismatch}
@@ -636,7 +642,7 @@ export default function ProofOfReservesPage() {
                 <svg className="w-5 h-5 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               </div>
               <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t.nextAudit}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 tracking-wider">{upper(t.nextAudit)}</p>
                 <p className="text-sm font-semibold text-slate-800 dark:text-white">{layers.reconciliation.nextScheduledAudit || "Q2 2026"}</p>
               </div>
             </div>
