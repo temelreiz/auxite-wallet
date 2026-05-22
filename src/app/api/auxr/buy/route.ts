@@ -35,6 +35,10 @@ export const runtime = "nodejs";
 const BodySchema = z.object({
   address: z.string().min(10),
   usdAmount: z.number().positive(),
+  // Payment rail. Mirrors how AUXG/AUXS/AUXPT/AUXPD purchases work — user
+  // funds the vault first, then picks any of these tokens for settlement.
+  // All three are 1:1 USD-pegged, so usdAmount maps directly to token debit.
+  paymentToken: z.enum(["auxm", "usdt", "usdc"]).optional().default("auxm"),
   source: z.string().optional(), // 'lite' | 'pro' | 'web' — analytics only
   refId: z.string().min(4).max(64).optional(),
 });
@@ -74,7 +78,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { address, usdAmount, source, refId } = body;
+  const { address, usdAmount, paymentToken, source, refId } = body;
   const normalizedAddress = address.toLowerCase();
 
   // Min ticket guard (also enforced by quoteBuy, redundant for clear errors).
@@ -113,17 +117,31 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Balance check. AUXR settles in AUXM (the in-platform unit) — user must
-  // hold ≥ usdAmount of total AUXM (paid + bonus).
+  // Balance check on the chosen rail. All three settlement tokens are
+  // USD-pegged 1:1 so usdAmount maps directly to token debit.
   const balance = await getUserBalance(normalizedAddress);
-  const totalAuxm = balance.auxm + balance.bonusAuxm;
-  if (totalAuxm < usdAmount) {
+
+  let availableForRail = 0;
+  let railLabel = "";
+  if (paymentToken === "auxm") {
+    availableForRail = balance.auxm + balance.bonusAuxm;
+    railLabel = "AUXM";
+  } else if (paymentToken === "usdt") {
+    availableForRail = balance.usdt;
+    railLabel = "USDT";
+  } else if (paymentToken === "usdc") {
+    availableForRail = balance.usdc;
+    railLabel = "USDC";
+  }
+
+  if (availableForRail < usdAmount) {
     return NextResponse.json(
       {
         success: false,
-        error: "insufficient_auxm",
-        availableAuxm: totalAuxm,
-        requiredAuxm: usdAmount,
+        error: `insufficient_${paymentToken}`,
+        paymentToken,
+        available: availableForRail,
+        required: usdAmount,
       },
       { status: 400 }
     );
@@ -135,23 +153,29 @@ export async function POST(request: NextRequest) {
   // for 30s; same horizon as this quote.
   const quote = await quoteBuy(usdAmount);
 
-  // Execute the swap atomically: debit AUXM (paid balance first, then
-  // bonus) and credit AUXR. Use a pipeline so the two writes can't drift.
+  // Execute the swap atomically: debit the chosen rail, credit AUXR.
   const balanceKey = `user:${normalizedAddress}:balance`;
   const pipe = getRedis().pipeline();
 
-  // Debit AUXM. Prefer to drain paid `auxm` before `bonusAuxm` because
-  // bonusAuxm has an expiry — using it first protects against forfeiture.
-  const auxmDebit = Math.min(balance.auxm, usdAmount);
-  const bonusDebit = usdAmount - auxmDebit;
-  if (auxmDebit > 0) pipe.hincrbyfloat(balanceKey, "auxm", -auxmDebit);
-  if (bonusDebit > 0) pipe.hincrbyfloat(balanceKey, "bonusAuxm", -bonusDebit);
+  if (paymentToken === "auxm") {
+    // AUXM rail. Prefer to drain paid `auxm` before `bonusAuxm` because
+    // bonusAuxm has an expiry — using it first protects against forfeiture.
+    const auxmDebit = Math.min(balance.auxm, usdAmount);
+    const bonusDebit = usdAmount - auxmDebit;
+    if (auxmDebit > 0) pipe.hincrbyfloat(balanceKey, "auxm", -auxmDebit);
+    if (bonusDebit > 0) pipe.hincrbyfloat(balanceKey, "bonusAuxm", -bonusDebit);
+    // Keep totalAuxm consistent — readers may use it directly.
+    pipe.hset(balanceKey, {
+      totalAuxm: balance.auxm + balance.bonusAuxm - usdAmount,
+    });
+  } else if (paymentToken === "usdt") {
+    pipe.hincrbyfloat(balanceKey, "usdt", -usdAmount);
+  } else if (paymentToken === "usdc") {
+    pipe.hincrbyfloat(balanceKey, "usdc", -usdAmount);
+  }
 
   // Credit AUXR.
   pipe.hincrbyfloat(balanceKey, "auxr", quote.unitsAUXR);
-
-  // Keep totalAuxm consistent — readers may use it directly.
-  pipe.hset(balanceKey, { totalAuxm: totalAuxm - usdAmount });
 
   await pipe.exec();
 
@@ -163,7 +187,7 @@ export async function POST(request: NextRequest) {
       unitsAUXR: quote.unitsAUXR,
       refId,
       walletAddress: normalizedAddress,
-      reason: `buy via ${source || "unknown"} — $${usdAmount.toFixed(2)}`,
+      reason: `buy via ${source || "unknown"} (${railLabel}) — $${usdAmount.toFixed(2)}`,
     });
   } catch (e) {
     console.error("[/api/auxr/buy] reserve mint failed:", e);
@@ -172,12 +196,13 @@ export async function POST(request: NextRequest) {
   // Transaction record (for user history screen).
   const txId = await addTransaction(normalizedAddress, {
     type: "swap",
-    fromToken: "AUXM",
+    fromToken: railLabel,
     toToken: "AUXR",
     fromAmount: usdAmount,
     toAmount: quote.unitsAUXR,
     status: "completed",
     metadata: {
+      paymentToken,
       navUSD: quote.navUSD,
       buyPriceUSD: quote.buyPriceUSD,
       spreadUSD: quote.spreadUSD,
