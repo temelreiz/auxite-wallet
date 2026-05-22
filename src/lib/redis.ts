@@ -80,6 +80,10 @@ export interface UserBalance {
   auxs: number;
   auxpt: number;
   auxpd: number;
+  // AUXR — basket reserve token (55/30/10/5 Au/Ag/Pt/Pd). Off-chain in
+  // Phase 1A; mint/burn flows through /api/auxr/buy + sell endpoints,
+  // tracked by src/lib/auxr-reserve.ts.
+  auxr: number;
   eth: number;
   btc: number;
   usdt: number;
@@ -96,6 +100,7 @@ const DEFAULT_BALANCE: UserBalance = {
   auxs: 0,
   auxpt: 0,
   auxpd: 0,
+  auxr: 0,
   eth: 0,
   btc: 0,
   usdt: 0,
@@ -135,6 +140,7 @@ export async function getUserBalance(address: string): Promise<UserBalance> {
       auxs: parseFloat(String(data.auxs || 0)),
       auxpt: parseFloat(String(data.auxpt || 0)),
       auxpd: parseFloat(String(data.auxpd || 0)),
+      auxr: parseFloat(String(data.auxr || 0)),
       eth: parseFloat(String(data.eth || 0)),
       btc: parseFloat(String(data.btc || 0)),
       usdt: parseFloat(String(data.usdt || 0)),

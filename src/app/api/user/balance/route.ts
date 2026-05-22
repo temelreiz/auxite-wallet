@@ -272,6 +272,10 @@ async function getHybridBalance(address: string): Promise<{
     auxs: Math.max(0, redisAuxs + allocAuxs - (stakedAmounts.auxs || 0)),
     auxpt: Math.max(0, redisAuxpt + allocAuxpt - (stakedAmounts.auxpt || 0)),
     auxpd: Math.max(0, redisAuxpd + allocAuxpd - (stakedAmounts.auxpd || 0)),
+
+    // AUXR — basket reserve token (off-chain in Phase 1A, no allocation
+    // table or staking yet).
+    auxr: parseFloat(String((redisBalance as any).auxr || 0)),
   };
 
   // Calculate totalAuxm
@@ -291,6 +295,7 @@ async function getHybridBalance(address: string): Promise<{
     auxs: "redis",
     auxpt: "redis",
     auxpd: "redis",
+    auxr: "redis",
   };
 
   return {
