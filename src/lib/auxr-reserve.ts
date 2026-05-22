@@ -34,6 +34,22 @@ import {
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
+/**
+ * Reserved address that represents the Auxite operations treasury — the
+ * "house" account that holds AUXR backed by inventory we've already
+ * procured. Used for:
+ *   - Initial Phase 1A seed (pre-launch reserve booking)
+ *   - Future market-maker balance (Phase 2)
+ *   - Buffer for instant fulfillment when user buys faster than we
+ *     can procure
+ *
+ * Off-chain only. Hex-shaped (valid 40-char address) for compatibility
+ * with the wallet-address validators, but never holds real on-chain
+ * tokens.
+ */
+export const AUXR_TREASURY_ADDRESS =
+  "0x0000000000000000000000000000000000a11a11";
+
 export type AuxrBasketMetal = "gold" | "silver" | "platinum" | "palladium";
 
 export type ReserveAction = "mint" | "burn" | "manual_adjust";
