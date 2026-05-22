@@ -121,7 +121,11 @@ export default function ProofOfReservesPage() {
   const weakest = reserves?.backing.ratio.weakest ?? 1;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    // lang="en" forces CSS `text-transform: uppercase` to apply English
+    // casing rules. Without this, the global <html lang="tr"> at the root
+    // turns lowercase 'i' into Turkish dotted 'İ' (e.g. "CİRCULATİON"),
+    // even though our strings are English.
+    <div lang="en" className="min-h-screen bg-zinc-950 text-white">
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-5 max-w-6xl mx-auto">
         <Link href="/" className="flex items-center gap-3">

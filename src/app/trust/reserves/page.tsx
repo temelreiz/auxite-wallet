@@ -456,7 +456,12 @@ export default function ProofOfReservesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-stone-100 dark:bg-slate-950">
+    // Dynamic lang attribute so CSS `text-transform: uppercase` applies the
+    // correct casing rules. The global <html lang="tr"> at the root was
+    // making English strings render as "CİRCULATİON" (Turkish dotted İ) in
+    // uppercase labels. Scoping lang to the active i18n state fixes both
+    // EN ("CIRCULATION") and TR strings.
+    <div lang={lang} className="min-h-screen bg-stone-100 dark:bg-slate-950">
       <TopNav />
 
       <main className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
