@@ -147,7 +147,7 @@ const T = {
   },
 } as const;
 
-const BUY_PRESETS = [100, 250, 500, 1000];
+const BUY_PRESETS = [30, 100, 250, 500];
 const METAL_KEYS = ["gold", "silver", "platinum", "palladium"] as const;
 const SYMBOLS = { gold: "Au", silver: "Ag", platinum: "Pt", palladium: "Pd" };
 const COLORS = { gold: "#D4AF37", silver: "#C0C0C0", platinum: "#E5E4E2", palladium: "#CED0DD" };

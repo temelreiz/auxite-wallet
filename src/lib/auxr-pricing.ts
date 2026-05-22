@@ -77,8 +77,13 @@ export const AUXR_GRAMS_PER_UNIT = {
 export const AUXR_BUY_SPREAD = 0.0050;  // +50 bps
 export const AUXR_SELL_SPREAD = 0.0050; // -50 bps
 
-/** Minimum purchase = 1 AUXR ($100 at reference NAV). Stops dust positions. */
-export const AUXR_MIN_PURCHASE_USD = 100;
+/**
+ * Minimum purchase in USD. Lowered from $100 to $30 to widen the top of
+ * the funnel — $100 was a meaningful barrier for first-time / emerging-market
+ * buyers, and AUXR units are fractional anyway (no whole-unit constraint).
+ * $30 still clears dust-position economics on the off-chain ledger.
+ */
+export const AUXR_MIN_PURCHASE_USD = 30;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
