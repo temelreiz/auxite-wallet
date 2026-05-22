@@ -31,12 +31,15 @@ const BodySchema = z.object({
   refId: z.string().min(4).max(64).optional(),
 });
 
+// Canonical KYC check — reads kyc:{address}.status (same source as
+// /api/user/profile + the mobile client). See buy route for the rationale.
+const VERIFIED_KYC_STATUSES = new Set(["approved", "verified", "enhanced"]);
 async function isKycVerified(walletAddress: string): Promise<boolean> {
   try {
-    const userId = await redis.get(`user:address:${walletAddress.toLowerCase()}`);
-    if (!userId) return false;
-    const userData = await redis.hgetall(`user:${userId}`);
-    return userData?.kycVerified === "true";
+    const raw = await redis.get(`kyc:${walletAddress.toLowerCase()}`);
+    if (!raw) return false;
+    const kyc = typeof raw === "string" ? JSON.parse(raw) : raw;
+    return VERIFIED_KYC_STATUSES.has(String(kyc?.status || "").toLowerCase());
   } catch {
     return false;
   }
