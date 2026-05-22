@@ -20,6 +20,7 @@ const translations: Record<string, Record<string, string>> = {
     // Core Navigation - Institutional
     vault: "Kasa",
     allocate: "Al / Sat",
+    auxr: "AUXR",
     yield: "Getiri",
     transfers: "Transferler",
     fundingWithdrawals: "Fonlama",
@@ -60,6 +61,7 @@ const translations: Record<string, Record<string, string>> = {
     // Core Navigation - Institutional
     vault: "Vault",
     allocate: "Trade",
+    auxr: "AUXR",
     yield: "Yield",
     transfers: "Transfers",
     fundingWithdrawals: "Transfers",
@@ -99,6 +101,7 @@ const translations: Record<string, Record<string, string>> = {
   de: {
     vault: "Tresor",
     allocate: "Handel",
+    auxr: "AUXR",
     yield: "Rendite",
     transfers: "Überweisungen",
     fundingWithdrawals: "Ein-/Auszahlung",
@@ -130,6 +133,7 @@ const translations: Record<string, Record<string, string>> = {
   fr: {
     vault: "Coffre",
     allocate: "Trading",
+    auxr: "AUXR",
     yield: "Rendement",
     transfers: "Transferts",
     fundingWithdrawals: "Transferts",
@@ -161,6 +165,7 @@ const translations: Record<string, Record<string, string>> = {
   ar: {
     vault: "الخزنة",
     allocate: "تداول",
+    auxr: "AUXR",
     yield: "العائد",
     transfers: "التحويلات",
     fundingWithdrawals: "التمويل",
@@ -192,6 +197,7 @@ const translations: Record<string, Record<string, string>> = {
   ru: {
     vault: "Хранилище",
     allocate: "Торговля",
+    auxr: "AUXR",
     yield: "Доходность",
     transfers: "Переводы",
     fundingWithdrawals: "Переводы",
@@ -313,6 +319,7 @@ export default function TopNav({
   const navLinks = [
     { href: "/vault", label: t.vault, key: "vault" },
     { href: "/allocate", label: t.allocate, key: "allocate" },
+    { href: "/auxr", label: t.auxr, key: "auxr" },
     { href: "/stake", label: t.yield, key: "yield" },
     { href: "/transfers", label: t.fundingWithdrawals, key: "transfers" },
     { href: "/ledger", label: t.ledger, key: "ledger" },
