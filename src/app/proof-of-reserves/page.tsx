@@ -329,30 +329,21 @@ export default function ProofOfReservesPage() {
 
       {/* Footer */}
       <footer className="max-w-6xl mx-auto px-6 py-10 text-xs text-slate-500 border-t border-white/5">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div>
-            Live data via{" "}
-            <code className="bg-zinc-800 px-2 py-0.5 rounded text-slate-300">/api/auxr/reserves</code>{" "}
-            and{" "}
-            <code className="bg-zinc-800 px-2 py-0.5 rounded text-slate-300">/api/auxr/price</code>.
-            Updates every 60 seconds.
-          </div>
-          <div>
-            {lastFetched > 0 && (
-              <>
-                Last refresh:{" "}
-                <span className="text-slate-400">
-                  {new Date(lastFetched).toLocaleString()}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-        <p className="mt-4 max-w-3xl">
-          Operated by Aurum Ledger Limited (HK). Physical bullion held under LBMA Good Delivery
-          custody. This page is updated in real time from the production reserve ledger. For audit
-          inquiries: <a className="text-[#BFA181] underline" href="mailto:audit@auxite.io">audit@auxite.io</a>.
+        <p className="max-w-3xl leading-relaxed">
+          Operated by Aurum Ledger Limited (HK). Physical bullion held under LBMA Good
+          Delivery custody. Reserve figures above are read in real time from the
+          production reserve ledger and auto-refresh every 60 seconds. For audit
+          inquiries:{" "}
+          <a className="text-[#BFA181] underline" href="mailto:audit@auxite.io">
+            audit@auxite.io
+          </a>
+          .
         </p>
+        {lastFetched > 0 && (
+          <p className="mt-3 text-[11px] text-slate-600">
+            Last refresh: {new Date(lastFetched).toLocaleString()}
+          </p>
+        )}
       </footer>
     </div>
   );
