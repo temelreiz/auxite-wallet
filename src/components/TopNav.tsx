@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useLanguage, LANGUAGES, getLanguageData } from "@/components/LanguageContext";
 import { GlobalTrustBar } from "@/components/GlobalTrustBar";
 import { useWallet } from "@/components/WalletContext";
+import FlashingNewBadge from "@/components/FlashingNewBadge";
 
 // ============================================
 // 6-LANGUAGE TRANSLATIONS
@@ -396,8 +397,16 @@ export default function TopNav({
                         ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574]"
                         : "text-slate-600 dark:text-slate-400 hover:bg-stone-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                     }`}
+                    onClick={() => {
+                      if (link.key === "auxr" && typeof window !== "undefined") {
+                        try { localStorage.setItem("auxr_web_nav_seen_v1", "1"); } catch {}
+                      }
+                    }}
                   >
                     {link.label}
+                    {link.key === "auxr" && (
+                      <FlashingNewBadge storageKey="auxr_web_nav_seen_v1" dismissed={isActive(link.href)} />
+                    )}
                   </Link>
                 ))}
 
@@ -562,7 +571,12 @@ export default function TopNav({
               <Link
                 key={link.key}
                 href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (link.key === "auxr" && typeof window !== "undefined") {
+                    try { localStorage.setItem("auxr_web_nav_seen_v1", "1"); } catch {}
+                  }
+                }}
                 className={`block px-4 py-3 rounded-lg font-medium text-sm ${
                   isActive(link.href)
                     ? "bg-[#d4a574]/20 text-[#d4a574] dark:text-[#d4a574] border border-[#2F6F62]/30"
@@ -570,6 +584,9 @@ export default function TopNav({
                 }`}
               >
                 {link.label}
+                {link.key === "auxr" && (
+                  <FlashingNewBadge storageKey="auxr_web_nav_seen_v1" dismissed={isActive(link.href)} />
+                )}
               </Link>
             ))}
 
