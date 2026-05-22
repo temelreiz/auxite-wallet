@@ -144,7 +144,12 @@ export default function ProofOfReservesPage() {
       {/* Header */}
       <header className="max-w-6xl mx-auto px-6 pt-8 pb-12">
         <div className="flex items-center gap-3 mb-3">
-          <span className="text-xs text-slate-500 uppercase tracking-widest">AUXR Basket</span>
+          {/* All labels here are hardcoded uppercase rather than relying on
+              CSS `text-transform: uppercase`. The global <html lang="tr">
+              made browsers apply Turkish casing rules to lowercase letters
+              ("CİRCULATİON" instead of "CIRCULATION"). Hardcoding sidesteps
+              the locale dependency entirely. */}
+          <span className="text-xs text-slate-500 tracking-widest">AUXR BASKET</span>
           <span
             className={`text-xs px-2 py-0.5 rounded-full font-medium ${
               fullyBacked
@@ -171,22 +176,22 @@ export default function ProofOfReservesPage() {
       {/* Top stats */}
       <section className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
         <Stat
-          label="AUXR in Circulation"
+          label="AUXR IN CIRCULATION"
           value={reserves ? reserves.supply.unitsAUXR.toLocaleString(undefined, { maximumFractionDigits: 4 }) : "—"}
           sub="units"
         />
         <Stat
-          label="Market Cap"
+          label="MARKET CAP"
           value={reserves ? fmtUSD(reserves.supply.marketCapUSD) : "—"}
           sub={pricing ? `NAV ${fmtUSD(pricing.navUSD)} / unit` : ""}
         />
         <Stat
-          label="Reserves Value"
+          label="RESERVES VALUE"
           value={reserves ? fmtUSD(reserves.reserves.totalValueUSD) : "—"}
           sub="at spot prices"
         />
         <Stat
-          label="Weakest Backing"
+          label="WEAKEST BACKING"
           value={reserves ? fmtPct(weakest) : "—"}
           sub={fullyBacked ? "≥ 100%" : "needs review"}
           accent={fullyBacked ? "ok" : "warn"}
@@ -195,7 +200,7 @@ export default function ProofOfReservesPage() {
 
       {/* Per-metal grid */}
       <section className="max-w-6xl mx-auto px-6 mb-10">
-        <h2 className="text-xs uppercase tracking-widest text-slate-500 mb-3">Backing Detail</h2>
+        <h2 className="text-xs tracking-widest text-slate-500 mb-3">BACKING DETAIL</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {METALS.map(({ key, label, symbol, color }) => {
             const ratio = reserves?.backing.ratio[key] ?? 1;
@@ -278,16 +283,16 @@ export default function ProofOfReservesPage() {
 
       {/* Basket composition table */}
       <section className="max-w-6xl mx-auto px-6 mb-10">
-        <h2 className="text-xs uppercase tracking-widest text-slate-500 mb-3">Basket Composition (Immutable)</h2>
+        <h2 className="text-xs tracking-widest text-slate-500 mb-3">BASKET COMPOSITION (IMMUTABLE)</h2>
         <div className="rounded-2xl bg-zinc-900/80 border border-white/5 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-white/[0.02] text-slate-500 text-xs uppercase tracking-wider">
+            <thead className="bg-white/[0.02] text-slate-500 text-xs tracking-wider">
               <tr>
-                <th className="text-left py-3 px-5">Metal</th>
-                <th className="text-right py-3 px-5">Grams / AUXR</th>
-                <th className="text-right py-3 px-5">Spot (live)</th>
-                <th className="text-right py-3 px-5">USD value</th>
-                <th className="text-right py-3 px-5">Live weight</th>
+                <th className="text-left py-3 px-5">METAL</th>
+                <th className="text-right py-3 px-5">GRAMS / AUXR</th>
+                <th className="text-right py-3 px-5">SPOT (LIVE)</th>
+                <th className="text-right py-3 px-5">USD VALUE</th>
+                <th className="text-right py-3 px-5">LIVE WEIGHT</th>
               </tr>
             </thead>
             <tbody>
@@ -368,7 +373,7 @@ function Stat({
       : "text-white";
   return (
     <div className="rounded-2xl bg-zinc-900/80 border border-white/5 p-5">
-      <div className="text-xs uppercase tracking-wider text-slate-500 mb-1">{label}</div>
+      <div className="text-xs tracking-wider text-slate-500 mb-1">{label}</div>
       <div className={`text-2xl font-bold ${accentClass}`}>{value}</div>
       {sub && <div className="text-xs text-slate-500 mt-1">{sub}</div>}
     </div>
