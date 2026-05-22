@@ -581,6 +581,61 @@ export async function notifyTransactionRich(
   });
 }
 
+// ─── AUXR (basket reserve token) trade push ──────────────────────────────
+// Separate from notifyTransactionRich because AUXR is denominated in UNITS,
+// not grams — buildRichBody hardcodes a "g" suffix that would render
+// "61.25g AUXR". This sends a units-correct body.
+const auxrTitles: Record<LangCode, string> = {
+  en: 'AUXR Trade Confirmed',
+  tr: 'AUXR İşlemi Onaylandı',
+  de: 'AUXR-Handel bestätigt',
+  fr: 'Transaction AUXR confirmée',
+  ar: 'تم تأكيد صفقة AUXR',
+  ru: 'Сделка AUXR подтверждена',
+};
+
+export async function notifyAuxrTradePush(
+  walletAddress: string,
+  data: {
+    side: 'buy' | 'sell';
+    unitsAUXR: number;
+    usdAmount: number;
+    paymentToken?: string;
+  }
+): Promise<void> {
+  const lang = getLang(await getUserLanguage(walletAddress));
+  const units = data.unitsAUXR < 1 ? data.unitsAUXR.toFixed(6) : data.unitsAUXR.toFixed(4);
+  const usd = data.usdAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const pay = (data.paymentToken || 'AUXM').toUpperCase();
+
+  const bodies: Record<'buy' | 'sell', Record<LangCode, string>> = {
+    buy: {
+      en: `${units} AUXR purchased with ${pay} ($${usd})`,
+      tr: `${pay} ile ${units} AUXR alındı ($${usd})`,
+      de: `${units} AUXR mit ${pay} gekauft ($${usd})`,
+      fr: `${units} AUXR acheté avec ${pay} ($${usd})`,
+      ar: `تم شراء ${units} AUXR بـ ${pay} ($${usd})`,
+      ru: `Куплено ${units} AUXR за ${pay} ($${usd})`,
+    },
+    sell: {
+      en: `${units} AUXR sold for $${usd} AUXM`,
+      tr: `${units} AUXR satıldı, $${usd} AUXM alındı`,
+      de: `${units} AUXR für $${usd} AUXM verkauft`,
+      fr: `${units} AUXR vendu pour $${usd} AUXM`,
+      ar: `تم بيع ${units} AUXR مقابل $${usd} AUXM`,
+      ru: `Продано ${units} AUXR за $${usd} AUXM`,
+    },
+  };
+
+  await sendNotification(walletAddress, 'transaction', {
+    title: auxrTitles[lang] || auxrTitles.en,
+    body: bodies[data.side][lang] || bodies[data.side].en,
+    icon: '/icons/icon-192x192.png',
+    tag: `auxr-${Date.now()}`,
+    data: { type: 'transaction', txType: data.side, token: 'AUXR', amount: data.unitsAUXR },
+  });
+}
+
 // ─── Wire Credit Notifications (Wise → AUXM auto-credit) ──────────────────
 
 const wireCreditTitles: Record<LangCode, string> = {

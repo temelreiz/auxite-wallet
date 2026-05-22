@@ -20,6 +20,8 @@ import {
 } from "@/lib/redis";
 import { quoteSell } from "@/lib/auxr-pricing";
 import { recordBurn } from "@/lib/auxr-reserve";
+import { notifyAuxrTrade } from "@/lib/telegram";
+import { notifyAuxrTradePush } from "@/lib/notification-sender";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -133,6 +135,23 @@ export async function POST(request: NextRequest) {
       metalsReleasedGrams: quote.metalsReleasedGrams,
     },
   });
+
+  // Notifications (best-effort, non-blocking). AUXR burn releases basket
+  // metals back to the free pool — ops sees it via Telegram. User gets push.
+  notifyAuxrTrade({
+    side: "sell",
+    userAddress: normalizedAddress,
+    usdAmount: quote.proceedsUSD,
+    unitsAUXR,
+    navUSD: quote.navUSD,
+    basketGrams: quote.metalsReleasedGrams,
+  }).catch((e) => console.error("[auxr/sell] telegram notify failed:", e));
+
+  notifyAuxrTradePush(normalizedAddress, {
+    side: "sell",
+    unitsAUXR,
+    usdAmount: quote.proceedsUSD,
+  }).catch((e) => console.error("[auxr/sell] push notify failed:", e));
 
   const result = {
     txId,

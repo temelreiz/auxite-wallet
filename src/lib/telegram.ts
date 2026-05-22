@@ -160,6 +160,53 @@ ${trade.txHash ? `<b>TxHash:</b> <code>${trade.txHash.slice(0, 16)}...</code>` :
 }
 
 /**
+ * AUXR (basket reserve token) alım/satım bildirimi — admin'e.
+ * notifyTrade() yalnızca tek-metal alımlarına bildirim gönderdiği için
+ * (toToken ∈ AUXG/AUXS/AUXPT/AUXPD), AUXR'ın kendi bildirimi gerekiyor.
+ * AUXR mint edildiğinde sepet metalleri (Au/Ag/Pt/Pd) fiziksel olarak
+ * tedarik edilmeli — bildirim ops ekibini tetikler.
+ */
+export async function notifyAuxrTrade(n: {
+  side: "buy" | "sell";
+  userAddress: string;
+  usdAmount: number;
+  unitsAUXR: number;
+  navUSD: number;
+  paymentToken?: string;
+  email?: string;
+  basketGrams?: { gold: number; silver: number; platinum: number; palladium: number };
+}): Promise<boolean> {
+  const shortAddress = `${n.userAddress.slice(0, 6)}...${n.userAddress.slice(-4)}`;
+  const time = new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" });
+  const verb = n.side === "buy" ? "ALIMI" : "SATIŞI";
+  const emoji = n.side === "buy" ? "🧺" : "💸";
+
+  const grams = n.basketGrams
+    ? `\n<b>Sepet (g):</b> Au ${n.basketGrams.gold.toFixed(4)} · Ag ${n.basketGrams.silver.toFixed(3)} · Pt ${n.basketGrams.platinum.toFixed(4)} · Pd ${n.basketGrams.palladium.toFixed(4)}`
+    : "";
+
+  const ops = n.side === "buy"
+    ? `\n⚠️ <b>Yapılacak:</b> Sepet metallerini (Au/Ag/Pt/Pd) fiziksel tedarik et — oranlar yukarıda.`
+    : "";
+
+  const message = `
+${emoji} <b>YENİ AUXR ${verb}</b> ${emoji}
+
+<b>Birim:</b> ${n.unitsAUXR.toFixed(6)} AUXR
+<b>USD Değer:</b> $${n.usdAmount.toFixed(2)}
+<b>NAV:</b> $${n.navUSD.toFixed(4)} / AUXR
+<b>Ödeme:</b> ${(n.paymentToken || "AUXM").toUpperCase()}
+<b>Kullanıcı:</b> <code>${shortAddress}</code>
+${n.email ? `<b>Email:</b> ${n.email}` : ""}
+<b>Zaman:</b> ${time}${grams}${ops}
+
+📊 <a href="https://vault.auxite.io/admin/auxr">AUXR Admin Panel</a>
+`;
+
+  return sendTelegramMessage(message.trim());
+}
+
+/**
  * Günlük özet gönder
  */
 export async function sendDailySummary(stats: {

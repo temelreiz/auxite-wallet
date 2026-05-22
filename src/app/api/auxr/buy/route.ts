@@ -28,6 +28,24 @@ import {
 } from "@/lib/redis";
 import { quoteBuy, AUXR_MIN_PURCHASE_USD } from "@/lib/auxr-pricing";
 import { recordMint } from "@/lib/auxr-reserve";
+import { notifyAuxrTrade } from "@/lib/telegram";
+import { notifyAuxrTradePush } from "@/lib/notification-sender";
+import { sendTradeExecutionEmail } from "@/lib/email";
+
+// Resolve a user's email + display name from the user record, mirroring the
+// /api/trade pattern. Best-effort; returns empty when unavailable.
+async function getUserEmailName(walletAddress: string): Promise<{ email?: string; name?: string }> {
+  try {
+    const userId = await redis.get(`user:address:${walletAddress.toLowerCase()}`);
+    if (userId) {
+      const u = await redis.hgetall(`user:${userId}`);
+      if (u?.email) return { email: String(u.email), name: u?.name ? String(u.name) : undefined };
+    }
+    const direct = await redis.hgetall(`auth:user:${walletAddress.toLowerCase()}`);
+    if (direct?.email) return { email: String(direct.email), name: direct?.name ? String(direct.name) : undefined };
+  } catch {}
+  return {};
+}
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -216,6 +234,47 @@ export async function POST(request: NextRequest) {
       metalsReservedGrams: quote.metalsReservedGrams,
     },
   });
+
+  // ── Notifications (all best-effort, non-blocking) ──────────────────────
+  // 1) Telegram → admin/ops (basket metals must be physically procured)
+  // 2) Push → user's device
+  // 3) Email → user's inbox (execution confirmation)
+  // Mirrors the metal-buy notification stack in /api/trade.
+  (async () => {
+    const { email, name } = await getUserEmailName(normalizedAddress);
+
+    notifyAuxrTrade({
+      side: "buy",
+      userAddress: normalizedAddress,
+      usdAmount,
+      unitsAUXR: quote.unitsAUXR,
+      navUSD: quote.navUSD,
+      paymentToken,
+      email,
+      basketGrams: quote.metalsReservedGrams,
+    }).catch((e) => console.error("[auxr/buy] telegram notify failed:", e));
+
+    notifyAuxrTradePush(normalizedAddress, {
+      side: "buy",
+      unitsAUXR: quote.unitsAUXR,
+      usdAmount,
+      paymentToken,
+    }).catch((e) => console.error("[auxr/buy] push notify failed:", e));
+
+    if (email) {
+      sendTradeExecutionEmail(email, {
+        clientName: name,
+        transactionType: "Buy",
+        metal: "AUXR",
+        metalName: "Auxite Reserve — 55/30/10/5 Au·Ag·Pt·Pd basket",
+        grams: `${quote.unitsAUXR.toFixed(6)} AUXR`,
+        executionPrice: `USD ${quote.buyPriceUSD.toFixed(4)} / AUXR`,
+        grossConsideration: `USD ${usdAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+        executionTime: new Date().toISOString().replace("T", ", ").replace(/\.\d+Z/, " UTC"),
+        referenceId: txId,
+      }).catch((e: any) => console.error("[auxr/buy] email failed:", e));
+    }
+  })().catch(() => { /* notification orchestration is best-effort */ });
 
   const result = {
     txId,
