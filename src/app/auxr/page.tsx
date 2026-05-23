@@ -183,13 +183,14 @@ export default function AuxrPage() {
 
   const [pricing, setPricing] = useState<Pricing | null>(null);
   const [reserves, setReserves] = useState<Reserves | null>(null);
-  const [balances, setBalances] = useState({ auxm: 0, bonus: 0, usdt: 0, usdc: 0, auxr: 0 });
+  const [balances, setBalances] = useState({ auxm: 0, bonus: 0, usdt: 0, usdc: 0, usd: 0, btc: 0, eth: 0, auxr: 0 });
+  const [cryptoPx, setCryptoPx] = useState({ btc: 0, eth: 0 });
   const [kycVerified, setKycVerified] = useState(false);
 
   const [mode, setMode] = useState<"buy" | "sell">("buy");
   const [buyAmount, setBuyAmount] = useState("100");
   const [sellUnits, setSellUnits] = useState("");
-  const [paymentToken, setPaymentToken] = useState<"auxm" | "usdt" | "usdc">("auxm");
+  const [paymentToken, setPaymentToken] = useState<"auxm" | "usdt" | "usdc" | "usd" | "btc" | "eth">("auxm");
 
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -210,6 +211,12 @@ export default function AuxrPage() {
       if (j?.success) setReserves(j);
     } catch {}
   }, []);
+  const loadCrypto = useCallback(async () => {
+    try {
+      const d = await (await fetch("/api/crypto", { cache: "no-store" })).json();
+      setCryptoPx({ btc: Number(d.bitcoin?.usd || 0), eth: Number(d.ethereum?.usd || 0) });
+    } catch {}
+  }, []);
   const loadUser = useCallback(async () => {
     if (!address) return;
     try {
@@ -225,6 +232,9 @@ export default function AuxrPage() {
         bonus: parseFloat(String(b.bonusAuxm || 0)) || 0,
         usdt: parseFloat(String(b.usdt || 0)) || 0,
         usdc: parseFloat(String(b.usdc || 0)) || 0,
+        usd: parseFloat(String(b.usd || 0)) || 0,
+        btc: parseFloat(String(b.btc || 0)) || 0,
+        eth: parseFloat(String(b.eth || 0)) || 0,
         auxr: parseFloat(String(b.auxr || 0)) || 0,
       });
       const k = profJ?.profile?.kycStatus || profJ?.profile?.kycLevel || "none";
@@ -236,20 +246,30 @@ export default function AuxrPage() {
     loadPricing();
     loadReserves();
     loadUser();
-    const interval = setInterval(() => { loadPricing(); loadReserves(); }, 30_000);
+    loadCrypto();
+    const interval = setInterval(() => { loadPricing(); loadReserves(); loadCrypto(); }, 30_000);
     return () => clearInterval(interval);
-  }, [loadPricing, loadReserves, loadUser]);
+  }, [loadPricing, loadReserves, loadUser, loadCrypto]);
 
   // ── Derived ─────────────────────────────────────────────────────────────────
   const buyAmountNum = parseFloat(buyAmount) || 0;
   const sellUnitsNum = parseFloat(sellUnits) || 0;
   const minUSD = pricing?.constraints.minPurchaseUSD ?? 100;
   const totalAuxm = balances.auxm + balances.bonus;
+  // railBalance is always the USD value available on the chosen rail.
   const railBalance =
     paymentToken === "auxm" ? totalAuxm
     : paymentToken === "usdt" ? balances.usdt
-    : balances.usdc;
-  const railLabel = paymentToken === "auxm" ? "AUXM" : paymentToken === "usdt" ? "USDT" : "USDC";
+    : paymentToken === "usdc" ? balances.usdc
+    : paymentToken === "usd" ? balances.usd
+    : paymentToken === "btc" ? balances.btc * cryptoPx.btc
+    : balances.eth * cryptoPx.eth;
+  const railLabel =
+    paymentToken === "auxm" ? "AUXM"
+    : paymentToken === "usdt" ? "USDT"
+    : paymentToken === "usdc" ? "USDC"
+    : paymentToken === "usd" ? "USD"
+    : paymentToken.toUpperCase();
   const expectedUnits = pricing && pricing.buyPriceUSD > 0 ? buyAmountNum / pricing.buyPriceUSD : 0;
   const expectedProceeds = pricing ? sellUnitsNum * pricing.sellPriceUSD : 0;
   const canBuy = !!pricing && !!address && !isDemoMode && kycVerified && buyAmountNum >= minUSD && buyAmountNum <= railBalance;
@@ -457,6 +477,9 @@ export default function AuxrPage() {
                     { key: "auxm" as const, label: "AUXM", bal: totalAuxm },
                     { key: "usdt" as const, label: "USDT", bal: balances.usdt },
                     { key: "usdc" as const, label: "USDC", bal: balances.usdc },
+                    { key: "usd" as const, label: "USD", bal: balances.usd },
+                    { key: "btc" as const, label: "BTC", bal: balances.btc * cryptoPx.btc },
+                    { key: "eth" as const, label: "ETH", bal: balances.eth * cryptoPx.eth },
                   ]).map((r) => {
                     const active = paymentToken === r.key;
                     const aff = r.bal >= buyAmountNum && r.bal > 0;

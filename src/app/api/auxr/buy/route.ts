@@ -47,16 +47,28 @@ async function getUserEmailName(walletAddress: string): Promise<{ email?: string
   return {};
 }
 
+// Spot USD prices for volatile rails (BTC/ETH). Same source the vault/crypto
+// screens use, so the quote the user sees matches the debit.
+async function getCryptoSpot(): Promise<{ btc: number; eth: number }> {
+  try {
+    const base = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io";
+    const d = await (await fetch(`${base}/api/crypto`, { cache: "no-store" })).json();
+    return { btc: Number(d.bitcoin?.usd || 0), eth: Number(d.ethereum?.usd || 0) };
+  } catch {
+    return { btc: 0, eth: 0 };
+  }
+}
+
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const BodySchema = z.object({
   address: z.string().min(10),
   usdAmount: z.number().positive(),
-  // Payment rail. Mirrors how AUXG/AUXS/AUXPT/AUXPD purchases work — user
-  // funds the vault first, then picks any of these tokens for settlement.
-  // All three are 1:1 USD-pegged, so usdAmount maps directly to token debit.
-  paymentToken: z.enum(["auxm", "usdt", "usdc"]).optional().default("auxm"),
+  // Payment rail. User funds the vault first, then picks any held asset:
+  //   auxm/usdt/usdc/usd → 1:1 USD-pegged (usdAmount maps directly to debit)
+  //   btc/eth            → spot-valued (debit = usdAmount / spotPrice)
+  paymentToken: z.enum(["auxm", "usdt", "usdc", "usd", "btc", "eth"]).optional().default("auxm"),
   source: z.string().optional(), // 'lite' | 'pro' | 'web' — analytics only
   refId: z.string().min(4).max(64).optional(),
 });
@@ -140,12 +152,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Balance check on the chosen rail. All three settlement tokens are
-  // USD-pegged 1:1 so usdAmount maps directly to token debit.
+  // Balance check on the chosen rail. Pegged tokens (auxm/usdt/usdc/usd) map
+  // 1:1 to USD; btc/eth are valued at spot and debited in token units.
   const balance = await getUserBalance(normalizedAddress);
 
-  let availableForRail = 0;
+  let availableForRail = 0; // always in USD, compared against usdAmount
   let railLabel = "";
+  let tokenDebit = usdAmount; // amount to subtract from the rail balance
+  let spotPrice = 1;
   if (paymentToken === "auxm") {
     availableForRail = balance.auxm + balance.bonusAuxm;
     railLabel = "AUXM";
@@ -155,6 +169,22 @@ export async function POST(request: NextRequest) {
   } else if (paymentToken === "usdc") {
     availableForRail = balance.usdc;
     railLabel = "USDC";
+  } else if (paymentToken === "usd") {
+    availableForRail = balance.usd;
+    railLabel = "USD";
+  } else if (paymentToken === "btc" || paymentToken === "eth") {
+    const spot = await getCryptoSpot();
+    spotPrice = paymentToken === "btc" ? spot.btc : spot.eth;
+    if (!spotPrice || spotPrice <= 0) {
+      return NextResponse.json(
+        { success: false, error: "price_unavailable", paymentToken },
+        { status: 503 }
+      );
+    }
+    const tokenBal = paymentToken === "btc" ? balance.btc : balance.eth;
+    availableForRail = tokenBal * spotPrice; // USD value of the holding
+    tokenDebit = usdAmount / spotPrice; // token units for $usdAmount
+    railLabel = paymentToken.toUpperCase();
   }
 
   if (availableForRail < usdAmount) {
@@ -195,6 +225,12 @@ export async function POST(request: NextRequest) {
     pipe.hincrbyfloat(balanceKey, "usdt", -usdAmount);
   } else if (paymentToken === "usdc") {
     pipe.hincrbyfloat(balanceKey, "usdc", -usdAmount);
+  } else if (paymentToken === "usd") {
+    pipe.hincrbyfloat(balanceKey, "usd", -usdAmount);
+  } else if (paymentToken === "btc") {
+    pipe.hincrbyfloat(balanceKey, "btc", -tokenDebit);
+  } else if (paymentToken === "eth") {
+    pipe.hincrbyfloat(balanceKey, "eth", -tokenDebit);
   }
 
   // Credit AUXR.
@@ -226,6 +262,8 @@ export async function POST(request: NextRequest) {
     status: "completed",
     metadata: {
       paymentToken,
+      paidAmount: tokenDebit, // token units actually debited (= usdAmount for pegged rails)
+      spotPrice, // 1 for pegged rails; live BTC/ETH price otherwise
       navUSD: quote.navUSD,
       buyPriceUSD: quote.buyPriceUSD,
       spreadUSD: quote.spreadUSD,
