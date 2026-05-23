@@ -264,8 +264,9 @@ async function getHybridBalance(address: string): Promise<{
     // ETH: Redis only (deposits go to platform address, scanner credits Redis)
     eth: redisEth,
 
-    // USDT: Redis only
+    // USDT / USDC: Redis only (deposits credited by the watcher)
     usdt: redisUsdt,
+    usdc: parseFloat(String(redisBalance.usdc || 0)),
 
     // Metal tokens: Redis (küsurat) + Allocation (tam gram) - Staked
     auxg: Math.max(0, redisAuxg + allocAuxg - (stakedAmounts.auxg || 0)),

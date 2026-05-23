@@ -33,12 +33,12 @@ async function getCryptoPrices(): Promise<Record<string, number>> {
 
 // Kullanıcının auto-convert tercihini al
 async function getUserAutoConvert(redis: ReturnType<typeof getRedis>, address: string): Promise<boolean> {
+  // Default OFF — hold the deposited crypto; only convert if the user opted in.
   try {
     const settings = await redis.hgetall(`user:${address.toLowerCase()}:settings`);
-    if (!settings || Object.keys(settings).length === 0) return true; // Default: auto-convert
-    return String(settings.autoConvertToAuxm) !== "false";
+    return String((settings as any)?.autoConvertToAuxm) === "true";
   } catch {
-    return true;
+    return false;
   }
 }
 

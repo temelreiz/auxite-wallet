@@ -34,12 +34,15 @@ async function getUserAutoConvert(
   redis: ReturnType<typeof getRedis>,
   address: string
 ): Promise<boolean> {
+  // Default OFF: deposits are held as the crypto the user sent (shown in the
+  // Liquidity / Cash & Crypto screen). Conversion to AUXM happens later at
+  // purchase time, which is where the fee/spread is captured. Only auto-convert
+  // when the user has explicitly opted in.
   try {
     const settings = await redis.hgetall(`user:${address.toLowerCase()}:settings`);
-    if (!settings || Object.keys(settings).length === 0) return true; // default on
-    return String((settings as any).autoConvertToAuxm) !== "false";
+    return String((settings as any)?.autoConvertToAuxm) === "true";
   } catch {
-    return true;
+    return false;
   }
 }
 

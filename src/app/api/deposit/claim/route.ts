@@ -40,12 +40,12 @@ const REASON_HTTP: Record<string, number> = {
 };
 
 async function getUserAutoConvert(redis: ReturnType<typeof getRedis>, address: string): Promise<boolean> {
+  // Default OFF — hold the deposited crypto; only convert if the user opted in.
   try {
     const settings = await redis.hgetall(`user:${address.toLowerCase()}:settings`);
-    if (!settings || Object.keys(settings).length === 0) return true; // default on
-    return String((settings as any).autoConvertToAuxm) !== "false";
+    return String((settings as any)?.autoConvertToAuxm) === "true";
   } catch {
-    return true;
+    return false;
   }
 }
 
