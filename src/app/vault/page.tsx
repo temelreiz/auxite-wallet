@@ -618,13 +618,14 @@ export default function VaultPage() {
     }
 
     try {
-      const [balanceRes, allocRes, priceRes, stakeRes, cryptoRes, profileRes] = await Promise.all([
+      const [balanceRes, allocRes, priceRes, stakeRes, cryptoRes, profileRes, auxrPriceRes] = await Promise.all([
         fetch(`/api/user/balance?address=${address}`),
         fetch(`/api/allocations?address=${address}`),
         fetch(`/api/prices?chain=84532`),
         fetch(`/api/stakes?address=${address}`),
         fetch(`/api/crypto`),
         fetch(`/api/user/profile?address=${address}`),
+        fetch(`/api/auxr/price`),
       ]);
 
       const balanceData = await balanceRes.json().catch(() => ({ success: false, balances: {} }));
@@ -633,6 +634,7 @@ export default function VaultPage() {
       const stakeData = await stakeRes.json().catch(() => ({ success: false, stakes: [] }));
       const cryptoData = await cryptoRes.json().catch(() => ({}));
       const profileData = await profileRes.json().catch(() => ({ profile: { kycStatus: 'not_started' } }));
+      const auxrPriceData = await auxrPriceRes.json().catch(() => ({ navUSD: 0 }));
 
       // KYC status (API returns { profile: { kycStatus, kycLevel } })
       const kycSt = profileData.profile?.kycStatus || profileData.profile?.kycLevel || 'none';
@@ -725,16 +727,39 @@ export default function VaultPage() {
       setCryptoBalances(cBalances);
 
       // AUXM Settlement Balance
-      const auxmBalance = balanceData.balances?.auxm || balanceData.balances?.AUXM || 0;
-      setSettlementBalance(auxmBalance);
+      const auxmBalance = parseFloat(String(balanceData.balances?.auxm || balanceData.balances?.AUXM || 0));
+      const bonusAuxm = parseFloat(String(balanceData.balances?.bonusAuxm || balanceData.balances?.bonusauxm || 0));
+      const totalAuxm = auxmBalance + bonusAuxm; // matches mobile (includes bonus)
+      setSettlementBalance(totalAuxm);
 
-      // Liquidity = AUXM + crypto + unallocated metal balance
+      // AUXR — basket reserve token: units × live NAV (matches mobile; web used
+      // to omit AUXR, causing web/mobile total mismatches).
+      const auxrUnits = parseFloat(String(balanceData.balances?.auxr || 0)) || 0;
+      const auxrNav = Number(auxrPriceData?.navUSD || 0) || 0;
+      const auxrValue = auxrUnits * auxrNav;
+
+      // Unallocated metal value (metals only — before adding AUXR as a holding)
       const unallocatedMetalValue = holdingsList.reduce((sum, h) => sum + (h.available * h.price), 0);
-      const totalLiquidity = auxmBalance + cryptoTotalValue + unallocatedMetalValue;
+
+      if (auxrUnits > 0) {
+        holdingsList.push({
+          symbol: "AUXR",
+          name: "Auxite Reserve",
+          allocated: 0,
+          available: auxrUnits,
+          total: auxrUnits,
+          price: auxrNav,
+          value: auxrValue,
+          stakedGrams: 0,
+        });
+      }
+
+      // Liquidity = AUXM(+bonus) + crypto + unallocated metals + AUXR
+      const totalLiquidity = totalAuxm + cryptoTotalValue + unallocatedMetalValue + auxrValue;
       setLiquidityValue(totalLiquidity);
 
-      // Total vault value = metals + crypto + AUXM
-      totalValue += cryptoTotalValue + auxmBalance;
+      // Total vault value = metals + crypto + AUXM(+bonus) + AUXR
+      totalValue += cryptoTotalValue + totalAuxm + auxrValue;
 
       setHoldings(holdingsList);
       setTotalVaultValue(totalValue);
