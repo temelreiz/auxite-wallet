@@ -99,6 +99,47 @@ export default function Home() {
             Client Sign In
           </Link>
         </div>
+
+        {/* App store badges — Google Play live, iOS coming soon */}
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <p className="text-xs text-slate-500 sm:mr-2">Get the mobile app</p>
+          <div className="flex items-center gap-3">
+            {/* Google Play — active */}
+            <a
+              href="https://play.google.com/store/apps/details?id=io.auxite.vault"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 px-5 py-2.5 rounded-xl bg-black border border-zinc-700 hover:border-zinc-500 transition-colors"
+              aria-label="Get it on Google Play"
+            >
+              <svg className="w-6 h-6" viewBox="0 0 512 512" aria-hidden="true">
+                <path fill="#00D2FF" d="M47 12.7C42.3 17.6 39.6 25.3 39.6 35.2v441.6c0 9.9 2.7 17.6 7.4 22.5l1.5 1.4 247.4-247.4v-5.8L48.5 11.3z" />
+                <path fill="#FFCE00" d="M378.6 338.4l-82.6-82.6v-5.8l82.7-82.7 1.9 1.1 97.9 55.6c28 15.9 28 41.9 0 57.9l-97.9 55.6z" />
+                <path fill="#FF3B30" d="M380.5 337.3L296 252.8 47 501.8c9.2 9.8 24.5 11 41.7 1.2l291.8-165.7" />
+                <path fill="#00C853" d="M380.5 168.3L88.7 2.6C71.5-7.2 56.2-6 47 3.8l249 249z" />
+              </svg>
+              <span className="text-left leading-tight">
+                <span className="block text-[9px] text-slate-300 uppercase tracking-wide">Get it on</span>
+                <span className="block text-base font-semibold text-white -mt-0.5">Google Play</span>
+              </span>
+            </a>
+
+            {/* App Store — coming soon (inactive) */}
+            <div
+              className="relative inline-flex items-center gap-3 px-5 py-2.5 rounded-xl bg-black border border-zinc-800 opacity-50 cursor-not-allowed select-none"
+              aria-label="iOS App Store — coming soon"
+              title="Coming soon"
+            >
+              <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.19 0 3.26 2.854 4.42 2.955 4.45z" />
+              </svg>
+              <span className="text-left leading-tight">
+                <span className="block text-[9px] text-slate-400 uppercase tracking-wide">Coming soon</span>
+                <span className="block text-base font-semibold text-slate-300 -mt-0.5">App Store</span>
+              </span>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Features Grid */}
