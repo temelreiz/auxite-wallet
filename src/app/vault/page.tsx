@@ -30,10 +30,11 @@ const metalIcons: Record<string, string> = {
 
 // Crypto asset definitions — institutional liquidity instruments
 const cryptoAssets = [
+  { symbol: "USDC", name: "USD Coin", color: "#2775CA", icon: "$" },
   { symbol: "USDT", name: "Tether", color: "#26A17B", icon: "₮" },
+  { symbol: "USD", name: "US Dollar", color: "#2F6F62", icon: "$" },
   { symbol: "BTC", name: "Bitcoin", color: "#F7931A", icon: "₿" },
   { symbol: "ETH", name: "Ethereum", color: "#627EEA", icon: "Ξ" },
-  { symbol: "USDC", name: "USD Coin", color: "#2775CA", icon: "$" },
 ];
 
 interface MetalHolding {
@@ -706,13 +707,13 @@ export default function VaultPage() {
       });
 
       // Crypto prices
-      const cPrices: Record<string, number> = { usdt: 1.0 };
+      const cPrices: Record<string, number> = { usdt: 1.0, usdc: 1.0, usd: 1.0 };
       if (cryptoData.bitcoin?.usd) cPrices.btc = cryptoData.bitcoin.usd;
       if (cryptoData.ethereum?.usd) cPrices.eth = cryptoData.ethereum.usd;
       setCryptoPrices(cPrices);
 
       // Crypto balances from balance API
-      const cryptoSymbols = ["usdt", "btc", "eth", "usdc"];
+      const cryptoSymbols = ["usdt", "usdc", "usd", "btc", "eth"];
       const cBalances: Record<string, number> = {};
       let cryptoTotalValue = 0;
       for (const sym of cryptoSymbols) {
@@ -1745,8 +1746,9 @@ export default function VaultPage() {
       {showLiquidityModal && (() => {
         const unallocatedMetalList = holdings.filter(h => h.available > 0);
         const cryptoOrder: Array<{ key: string; label: string }> = [
-          { key: 'usdt', label: 'USDT' },
           { key: 'usdc', label: 'USDC' },
+          { key: 'usdt', label: 'USDT' },
+          { key: 'usd', label: 'USD' },
           { key: 'btc', label: 'BTC' },
           { key: 'eth', label: 'ETH' },
         ];
