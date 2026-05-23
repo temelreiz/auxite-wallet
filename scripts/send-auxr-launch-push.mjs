@@ -165,6 +165,21 @@ async function main() {
       continue;
     }
 
+    // Flush BEFORE adding this wallet's tokens if doing so would push the
+    // batch over Expo's hard 100-message limit. (Previously we added first
+    // and checked >=100 after, which could overshoot to 100+N and get the
+    // whole batch rejected with HTTP 400.)
+    if (batch.length + tokens.length > 100 && batch.length > 0) {
+      const tickets = await sendExpoBatch(batch);
+      tickets.forEach((t) => { if (t.status === "ok") totalSent++; else totalFailed++; });
+      const batchOk = tickets.every((t) => t.status === "ok");
+      batch.length = 0;
+      // Only mark sent if the batch actually delivered — failed wallets stay
+      // unmarked so a re-run retries them.
+      if (batchOk) for (const w of flushedWallets) await markSent(w);
+      flushedWallets.length = 0;
+    }
+
     for (const t of tokens) {
       batch.push({
         to: t.token,
@@ -183,26 +198,14 @@ async function main() {
       });
     }
     flushedWallets.push(wallet);
-
-    if (batch.length >= 100) {
-      const tickets = await sendExpoBatch(batch);
-      tickets.forEach((t) => {
-        if (t.status === "ok") totalSent++;
-        else totalFailed++;
-      });
-      batch.length = 0;
-      for (const w of flushedWallets) await markSent(w);
-      flushedWallets.length = 0;
-    }
   }
 
+  // Final flush
   if (!DRY_RUN && batch.length > 0) {
     const tickets = await sendExpoBatch(batch);
-    tickets.forEach((t) => {
-      if (t.status === "ok") totalSent++;
-      else totalFailed++;
-    });
-    for (const w of flushedWallets) await markSent(w);
+    tickets.forEach((t) => { if (t.status === "ok") totalSent++; else totalFailed++; });
+    const batchOk = tickets.every((t) => t.status === "ok");
+    if (batchOk) for (const w of flushedWallets) await markSent(w);
   }
 
   console.log(`\n${"━".repeat(72)}`);
