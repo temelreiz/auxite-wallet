@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isHdConfigured, getUserDepositAddresses, armWatch } from "@/lib/hd-deposit";
+import { isKmsConfigured, getOrCreateEvmDepositAddress } from "@/lib/deposit-address";
 
 // POST is intentionally DISABLED. It previously credited a client-supplied
 // amount/coin with no on-chain verification or authentication — i.e. anyone
@@ -36,21 +36,21 @@ export async function GET(request: NextRequest) {
   };
   let perUser = false;
 
-  // Per-user derived addresses — the basis for automatic crediting. Any
-  // failure falls back to the shared wallet so the deposit screen never breaks.
-  if (userAddress && /^0x[0-9a-fA-F]{40}$/.test(userAddress) && isHdConfigured()) {
+  // Per-user EVM deposit address (KMS custodial wallet) — the basis for
+  // automatic crediting. BTC stays on the shared wallet for now (KMS is
+  // EVM-only); BTC deposits are attributed via the txid-claim flow. Any failure
+  // falls back to the shared wallet so the deposit screen never breaks.
+  if (userAddress && /^0x[0-9a-fA-F]{40}$/.test(userAddress) && isKmsConfigured()) {
     try {
-      const { evm, btc } = await getUserDepositAddresses(userAddress);
-      await armWatch(evm, btc);
-      addresses = {
-        BTC: { address: btc, network: "Bitcoin" },
-        ETH: { address: evm, network: "Base" },
-        USDT: { address: evm, network: "Base" },
-        USDC: { address: evm, network: "Base" },
-      };
-      perUser = true;
+      const evm = await getOrCreateEvmDepositAddress(userAddress);
+      if (evm) {
+        addresses.ETH = { address: evm, network: "Base" };
+        addresses.USDT = { address: evm, network: "Base" };
+        addresses.USDC = { address: evm, network: "Base" };
+        perUser = true;
+      }
     } catch (e) {
-      console.error("[/api/deposit] per-user derive failed, using shared:", e);
+      console.error("[/api/deposit] per-user KMS address failed, using shared:", e);
     }
   }
 
