@@ -536,6 +536,7 @@ export default function VaultPage() {
   const [showBuyMetalCardModal, setShowBuyMetalCardModal] = useState(false);
   const [cryptoBalances, setCryptoBalances] = useState<Record<string, number>>({});
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
+  const [buyChooser, setBuyChooser] = useState<{ symbol: string; name: string; color: string } | null>(null);
   const [trustBadgeModal, setTrustBadgeModal] = useState<string | null>(null);
   const [showEncumberedModal, setShowEncumberedModal] = useState(false);
   const [showAllocatedModal, setShowAllocatedModal] = useState(false);
@@ -1532,7 +1533,10 @@ export default function VaultPage() {
                       return (
                         <div
                           key={crypto.symbol}
-                          className="flex items-center justify-between p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => setBuyChooser({ symbol: crypto.symbol, name: crypto.name, color: crypto.color })}
+                          className="flex items-center justify-between p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                         >
                           <div className="flex items-center gap-3">
                             <div
@@ -1566,6 +1570,52 @@ export default function VaultPage() {
             </div>
           )}
         </div>
+
+        {/* Liquidity Buy Chooser — click a held crypto → buy AUXR / metals, or withdraw */}
+        {buyChooser && (
+          <div
+            className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center sm:p-6 z-50"
+            onClick={() => setBuyChooser(null)}
+          >
+            <div
+              className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1">
+                {buyChooser.symbol} — {lang === "tr" ? "ne yapmak istersin?" : "what would you like to do?"}
+              </h3>
+              <p className="text-sm text-slate-500 mb-5">
+                {lang === "tr" ? "Bakiyenle metal veya AUXR al, ya da dışarı çek." : "Use your balance to buy metals or AUXR, or withdraw."}
+              </p>
+
+              <a href="/auxr" className="flex items-center gap-4 p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:border-[#BFA181] transition-colors mb-3">
+                <div className="w-11 h-11 rounded-full bg-[#BFA181]/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-slate-800 dark:text-white">{lang === "tr" ? "AUXR Al" : "Buy AUXR"}</p>
+                  <p className="text-xs text-slate-500">{lang === "tr" ? "Sepet rezerv token (4 metal)" : "Basket reserve token (4 metals)"}</p>
+                </div>
+                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </a>
+
+              <a href="/allocate" className="flex items-center gap-4 p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:border-[#BFA181] transition-colors mb-2">
+                <div className="w-11 h-11 rounded-full bg-[#BFA181]/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-slate-800 dark:text-white">{lang === "tr" ? "Metal Al" : "Buy Metals"}</p>
+                  <p className="text-xs text-slate-500">{lang === "tr" ? "Altın · Gümüş · Platin · Paladyum" : "Gold · Silver · Platinum · Palladium"}</p>
+                </div>
+                <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </a>
+
+              <a href={`/withdraw?asset=${buyChooser.symbol}`} className="block w-full text-center py-3 text-sm text-slate-500 dark:text-slate-400 font-semibold hover:text-slate-700 dark:hover:text-slate-200">
+                {lang === "tr" ? "Çek (Withdraw)" : "Withdraw"}
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* Physical Redemption Card */}
         <Link
