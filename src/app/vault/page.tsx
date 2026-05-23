@@ -537,6 +537,7 @@ export default function VaultPage() {
   const [cryptoBalances, setCryptoBalances] = useState<Record<string, number>>({});
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
   const [buyChooser, setBuyChooser] = useState<{ symbol: string; name: string; color: string } | null>(null);
+  const [showProtection, setShowProtection] = useState(false);
   const [trustBadgeModal, setTrustBadgeModal] = useState<string | null>(null);
   const [showEncumberedModal, setShowEncumberedModal] = useState(false);
   const [showAllocatedModal, setShowAllocatedModal] = useState(false);
@@ -856,21 +857,6 @@ export default function VaultPage() {
           </div>
         )}
 
-        {/* ═══ TRUST BAR ═══ */}
-        <a href="/trust-center" className="block">
-          <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#C5A55A]/5 border border-[#C5A55A]/20 hover:bg-[#C5A55A]/10 transition-colors cursor-pointer">
-            <svg className="w-4 h-4 text-[#C5A55A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span className="text-[10px] font-semibold text-[#C5A55A] tracking-[2px]">
-              {t.trustBar}
-            </span>
-            <svg className="w-3 h-3 text-[#C5A55A]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </a>
-
         {/* Market Status Banner */}
         <MarketStatusBanner />
 
@@ -982,9 +968,6 @@ export default function VaultPage() {
           </div>
         </a>
 
-        {/* ═══ WIRE ACTIVITY ═══ */}
-        {address && <WireActivityCard walletAddress={address} />}
-
         {/* ═══ HOW IT WORKS - 3 STEPS ═══ */}
         <div className="grid grid-cols-3 gap-3">
           {[
@@ -999,16 +982,6 @@ export default function VaultPage() {
           ))}
         </div>
 
-        {/* ═══ TRUST MICROCOPY ═══ */}
-        <div className="flex items-start gap-3 py-3 px-4 bg-white dark:bg-slate-900 rounded-xl border border-[#BFA181]/20">
-          <svg className="w-5 h-5 text-[#BFA181] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
-          <p className="text-xs text-[#BFA181] leading-relaxed">
-            {t.trustMicrocopy}
-          </p>
-        </div>
-
         {/* Institutional Architecture Message */}
         <div className="flex items-center justify-center gap-3 py-3 px-4 bg-white dark:bg-slate-900 rounded-xl border border-[#BFA181]/30">
           <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1017,37 +990,17 @@ export default function VaultPage() {
           <span className="text-sm font-semibold text-[#BFA181]">{t.institutionalArchitecture}</span>
         </div>
 
-        {/* Capital Clarity Bar — Allocated | Liquidity | Encumbered */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-stone-200 dark:border-slate-800">
-          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">
-            {t.capitalClarity}
-          </p>
-          <div className="flex flex-wrap gap-x-6 gap-y-3 sm:grid sm:grid-cols-3 sm:gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-[#BFA181]" />
-              <div>
-                <p className="text-sm font-bold text-slate-800 dark:text-white">{formatCurrency(allocatedHoldings)}</p>
-                <p className="text-[10px] text-slate-500">{t.allocatedAssets}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-[#2F6F62]" />
-              <div>
-                <p className="text-sm font-bold text-slate-800 dark:text-white">{formatCurrency(liquidityValue)}</p>
-                <p className="text-[10px] text-slate-500">{t.availableLiquidity}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-orange-500" />
-              <div>
-                <p className="text-sm font-bold text-slate-800 dark:text-white">{formatCurrency(encumberedAssetsValue)}</p>
-                <p className="text-[10px] text-slate-500">{t.encumberedAssets}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Protection Status Widget */}
+        {/* Protection Status — collapsible (folded by default to reduce clutter) */}
+        <button
+          onClick={() => setShowProtection((v) => !v)}
+          className="w-full flex items-center justify-between py-2.5 px-4 bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 hover:border-[#BFA181]/50 transition-colors"
+        >
+          <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider">{t.protectionStatus}</span>
+          <svg className={`w-4 h-4 text-slate-400 transition-transform ${showProtection ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {showProtection && (
         <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-stone-200 dark:border-slate-800">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -1107,28 +1060,7 @@ export default function VaultPage() {
             ))}
           </div>
         </div>
-
-        {/* Trust Strip - 4 Badges */}
-        <div className="flex items-center justify-center gap-2 py-3 px-4 bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 rounded-xl border border-[#2F6F62]/30 dark:border-[#2F6F62]/30">
-          {[
-            { key: "fullyAllocated", label: t.fullyAllocated },
-            { key: "segregated", label: t.segregated },
-            { key: "bankruptcyRemote", label: t.bankruptcyRemote },
-            { key: "audited", label: t.audited },
-          ].map((badge, i) => (
-            <button
-              key={badge.key}
-              onClick={() => setTrustBadgeModal(badge.key)}
-              className="flex items-center gap-1 px-2 py-1 hover:bg-[#2F6F62]/20 dark:hover:bg-[#2F6F62]/20 rounded transition-colors"
-            >
-              <svg className="w-3 h-3 text-[#2F6F62]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">{badge.label}</span>
-              {i < 3 && <span className="ml-2 text-slate-300 dark:text-slate-600">|</span>}
-            </button>
-          ))}
-        </div>
+        )}
 
         {/* Unallocated Capital (AUXM) */}
         <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-stone-200 dark:border-slate-800">
@@ -1207,48 +1139,6 @@ export default function VaultPage() {
               </svg>
               {t.withdrawAuxm}
             </button>
-          </div>
-        </div>
-
-        {/* Buy Metal with Card — Hero CTA */}
-        <button
-          onClick={() => {
-            logEvent("card_purchase_cta_clicked", { surface: "web", source: "vault_hero" });
-            setShowBuyMetalCardModal(true);
-          }}
-          className="w-full text-left bg-gradient-to-br from-[#BFA181]/15 via-[#D4B47A]/10 to-[#BFA181]/5 dark:from-[#BFA181]/20 dark:via-[#D4B47A]/15 dark:to-[#BFA181]/10 hover:from-[#BFA181]/25 hover:via-[#D4B47A]/20 hover:to-[#BFA181]/15 transition-all rounded-xl p-4 border border-[#BFA181]/40 group"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="w-12 h-12 rounded-full bg-[#BFA181]/20 flex items-center justify-center flex-shrink-0">
-                <svg className="w-6 h-6 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-slate-800 dark:text-white truncate">{t.buyMetalCardTitle}</p>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2">{t.buyMetalCardDesc}</p>
-              </div>
-            </div>
-            <div className="flex-shrink-0 px-3 py-1.5 bg-[#BFA181] text-white text-xs font-bold rounded-lg group-hover:bg-[#D4B47A] transition-colors">
-              {t.buyMetalCardCta}
-            </div>
-          </div>
-        </button>
-
-        {/* Trust Messages */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-3 p-3 bg-[#2F6F62]/10 dark:bg-[#2F6F62]/10 rounded-xl border border-[#2F6F62]/30 dark:border-[#2F6F62]/30">
-            <svg className="w-4 h-4 text-[#2F6F62] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span className="text-xs font-semibold text-[#2F6F62] dark:text-[#2F6F62]">{t.custodySeparation}</span>
-          </div>
-          <div className="flex items-center gap-3 p-3 bg-[#BFA181]/10 dark:bg-[#BFA181]/10 rounded-xl border border-[#BFA181]/30 dark:border-[#BFA181]/30">
-            <svg className="w-4 h-4 text-[#BFA181] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <span className="text-xs font-semibold text-[#BFA181] dark:text-[#BFA181]">{t.notRehypothecated}</span>
           </div>
         </div>
 
