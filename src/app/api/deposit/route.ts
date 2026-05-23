@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isHdConfigured, getUserDepositAddresses, armWatch } from "@/lib/hd-deposit";
 import { isKmsConfigured, getOrCreateEvmDepositAddress } from "@/lib/deposit-address";
 
 // POST is intentionally DISABLED. It previously credited a client-supplied
@@ -36,21 +37,40 @@ export async function GET(request: NextRequest) {
   };
   let perUser = false;
 
-  // Per-user EVM deposit address (KMS custodial wallet) — the basis for
-  // automatic crediting. BTC stays on the shared wallet for now (KMS is
-  // EVM-only); BTC deposits are attributed via the txid-claim flow. Any failure
-  // falls back to the shared wallet so the deposit screen never breaks.
-  if (userAddress && /^0x[0-9a-fA-F]{40}$/.test(userAddress) && isKmsConfigured()) {
-    try {
-      const evm = await getOrCreateEvmDepositAddress(userAddress);
-      if (evm) {
-        addresses.ETH = { address: evm, network: "Base" };
-        addresses.USDT = { address: evm, network: "Base" };
-        addresses.USDC = { address: evm, network: "Base" };
+  // Per-user deposit address — the basis for automatic crediting. Precedence:
+  //   1. HD seed (DEPOSIT_HD_MNEMONIC) — vendor-free; covers EVM + BTC.
+  //   2. KMS custodial wallet — EVM only (BTC stays shared, attributed by claim).
+  //   3. shared hot wallet fallback (below) so the screen never breaks.
+  // HD is preferred so that setting the seed migrates new addresses off AWS
+  // with no gap; addresses already issued via KMS keep working (the watcher is
+  // address-based and KMS keys still decrypt).
+  if (userAddress && /^0x[0-9a-fA-F]{40}$/.test(userAddress)) {
+    if (isHdConfigured()) {
+      try {
+        const { evm, btc } = await getUserDepositAddresses(userAddress);
+        await armWatch(evm, btc);
+        addresses = {
+          BTC: { address: btc, network: "Bitcoin" },
+          ETH: { address: evm, network: "Base" },
+          USDT: { address: evm, network: "Base" },
+          USDC: { address: evm, network: "Base" },
+        };
         perUser = true;
+      } catch (e) {
+        console.error("[/api/deposit] HD derive failed, using shared:", e);
       }
-    } catch (e) {
-      console.error("[/api/deposit] per-user KMS address failed, using shared:", e);
+    } else if (isKmsConfigured()) {
+      try {
+        const evm = await getOrCreateEvmDepositAddress(userAddress);
+        if (evm) {
+          addresses.ETH = { address: evm, network: "Base" };
+          addresses.USDT = { address: evm, network: "Base" };
+          addresses.USDC = { address: evm, network: "Base" };
+          perUser = true;
+        }
+      } catch (e) {
+        console.error("[/api/deposit] KMS address failed, using shared:", e);
+      }
     }
   }
 
