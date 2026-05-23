@@ -21,7 +21,10 @@ import { getRedis } from "./redis";
 const WATCH_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days armed after viewing
 
 function getMnemonic(): string {
-  return (process.env.DEPOSIT_HD_MNEMONIC || process.env.HOT_WALLET_MNEMONIC || "").trim();
+  // Gate strictly on the dedicated DEPOSIT_HD_MNEMONIC so the feature stays
+  // dormant until the operator explicitly provisions (and has verified) this
+  // seed — never auto-activate off an unrelated treasury mnemonic.
+  return (process.env.DEPOSIT_HD_MNEMONIC || "").trim();
 }
 
 export function isHdConfigured(): boolean {
