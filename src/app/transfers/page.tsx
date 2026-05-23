@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
 import { FundTab } from "@/components/funding/FundTab";
@@ -66,6 +66,12 @@ export default function FundingWithdrawalsPage() {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
   const [activeTab, setActiveTab] = useState<ActiveTab>("fund");
+
+  // Honor ?tab=withdraw|convert|fund (deep-link from the vault Liquidity chooser)
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "withdraw" || tab === "convert" || tab === "fund") setActiveTab(tab);
+  }, []);
 
   return (
     <div className="min-h-screen bg-stone-100 dark:bg-slate-950">

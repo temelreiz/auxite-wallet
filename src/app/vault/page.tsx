@@ -1635,7 +1635,7 @@ export default function VaultPage() {
                 <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </a>
 
-              <a href={`/withdraw?asset=${buyChooser.symbol}`} className="block w-full text-center py-3 text-sm text-slate-500 dark:text-slate-400 font-semibold hover:text-slate-700 dark:hover:text-slate-200">
+              <a href="/transfers?tab=withdraw" className="block w-full text-center py-3 text-sm text-slate-500 dark:text-slate-400 font-semibold hover:text-slate-700 dark:hover:text-slate-200">
                 {lang === "tr" ? "Çek (Withdraw)" : "Withdraw"}
               </a>
             </div>
