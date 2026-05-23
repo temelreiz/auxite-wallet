@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isHdConfigured, getUserDepositAddresses, armWatch } from "@/lib/hd-deposit";
+import { getOrCreateTronDepositAddress } from "@/lib/tron-deposit";
 import { isKmsConfigured, getOrCreateEvmDepositAddress } from "@/lib/deposit-address";
 
 // POST is intentionally DISABLED. It previously credited a client-supplied
@@ -49,11 +50,16 @@ export async function GET(request: NextRequest) {
       try {
         const { evm, btc } = await getUserDepositAddresses(userAddress);
         await armWatch(evm, btc);
+        // USDT → Tron (TRC20): the network exchanges actually offer for USDT
+        // (Binance has no Base-USDT). USDC/ETH stay on Base.
+        const tron = await getOrCreateTronDepositAddress(userAddress);
         addresses = {
           BTC: { address: btc, network: "Bitcoin" },
           ETH: { address: evm, network: "Base" },
-          USDT: { address: evm, network: "Base" },
           USDC: { address: evm, network: "Base" },
+          USDT: tron
+            ? { address: tron, network: "Tron (TRC20)" }
+            : { address: evm, network: "Base" },
         };
         perUser = true;
       } catch (e) {

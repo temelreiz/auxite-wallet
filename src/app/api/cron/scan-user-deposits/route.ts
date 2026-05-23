@@ -15,6 +15,12 @@ import {
   userForBtcAddress,
   keepWatching,
 } from "@/lib/hd-deposit";
+import {
+  getArmedTron,
+  userForTronAddress,
+  keepWatchingTron,
+  TRON_USDT_CONTRACT,
+} from "@/lib/tron-deposit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -103,6 +109,27 @@ async function scanEvmAddress(
   return out;
 }
 
+async function scanTronAddress(addr: string): Promise<Detected[]> {
+  const out: Detected[] = [];
+  try {
+    const url = `https://api.trongrid.io/v1/accounts/${addr}/transactions/trc20?only_to=true&limit=50&contract_address=${TRON_USDT_CONTRACT}`;
+    const headers: Record<string, string> = {};
+    if (process.env.TRONGRID_API_KEY) headers["TRON-PRO-API-KEY"] = process.env.TRONGRID_API_KEY;
+    const data = await (await fetch(url, { headers, cache: "no-store" })).json();
+    for (const t of data?.data || []) {
+      if (t.to !== addr) continue;
+      if (t.token_info?.address !== TRON_USDT_CONTRACT) continue;
+      const decimals = Number(t.token_info?.decimals ?? 6);
+      const amount = Number(t.value) / Math.pow(10, decimals);
+      if (amount < MIN.USDT) continue;
+      out.push({ coin: "USDT", amount, amountUsd: amount, txHash: t.transaction_id, from: t.from });
+    }
+  } catch (e) {
+    console.error(`[scan-user] tron ${addr}:`, e);
+  }
+  return out;
+}
+
 async function scanBtcAddress(
   addr: string,
   prices: { ETH: number; BTC: number }
@@ -139,6 +166,7 @@ export async function GET(request: NextRequest) {
 
   const armedEvm = await getArmedEvm();
   const armedBtc = await getArmedBtc();
+  const armedTron = await getArmedTron();
 
   let detected = 0;
   let credited = 0;
@@ -199,10 +227,37 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  for (const addr of armedTron) {
+    const user = await userForTronAddress(addr);
+    if (!user) continue;
+    const deps = await scanTronAddress(addr);
+    for (const d of deps) {
+      detected++;
+      if (dry) {
+        sample.push({ user: user.slice(0, 10) + "…", ...d, addr: addr.slice(0, 12) + "…" });
+        continue;
+      }
+      const res = await creditUserDeposit({
+        userWallet: user,
+        coin: d.coin,
+        amount: d.amount,
+        amountUsd: d.amountUsd,
+        chain: "tron",
+        txHash: d.txHash,
+        fromAddress: d.from,
+        source: "auto-watcher",
+      });
+      if (res.status === "credited") {
+        credited++;
+        await keepWatchingTron(addr);
+      } else duplicate++;
+    }
+  }
+
   return NextResponse.json({
     success: true,
     dry,
-    armed: { evm: armedEvm.length, btc: armedBtc.length },
+    armed: { evm: armedEvm.length, btc: armedBtc.length, tron: armedTron.length },
     detected,
     credited,
     duplicate,

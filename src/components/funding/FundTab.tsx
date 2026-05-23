@@ -735,7 +735,7 @@ export function FundTab() {
           <div className="space-y-3">
             {[
               { step: '1', en: 'Open Binance, Coinbase or any crypto exchange', tr: 'Binance, Coinbase veya herhangi bir kripto borsası açın' },
-              { step: '2', en: 'Select Withdraw → Choose USDT or USDC on Base Network', tr: 'Çekim seçin → Base Ağında USDT veya USDC seçin' },
+              { step: '2', en: 'Withdraw USDC on Base, or USDT on Tron (TRC20) — match the network to the address shown', tr: 'USDC için Base, USDT için Tron (TRC20) ağını seçin — gösterilen adresin ağıyla aynı olsun' },
               { step: '3', en: 'Paste the deposit address shown above and send', tr: 'Yukarıda gösterilen deposit adresini yapıştırın ve gönderin' },
               { step: '4', en: 'After sending, paste your transaction ID below to credit your vault', tr: 'Gönderdikten sonra işlem kimliğinizi (TX ID) aşağıya yapıştırarak kasanıza ekleyin' },
             ].map((item) => (

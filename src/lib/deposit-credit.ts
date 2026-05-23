@@ -13,7 +13,7 @@ export interface CreditParams {
   coin: "ETH" | "USDT" | "USDC" | "BTC";
   amount: number;
   amountUsd: number;
-  chain: "eth" | "btc";
+  chain: "eth" | "btc" | "tron";
   txHash: string;
   fromAddress: string;
   source: string; // "auto-watcher" | "user-claim" | ...
