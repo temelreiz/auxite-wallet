@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { sendDepositConfirmedEmail } from "@/lib/email-service";
+import { isHdConfigured, getUserDepositAddresses, armWatch } from "@/lib/hd-deposit";
 import {
   calculateDepositBonus,
   checkWelcomeBonusEligibility,
@@ -230,16 +231,40 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const coin = searchParams.get("coin");
+  const userAddress = searchParams.get("address");
 
-  const addresses: Record<string, { address: string; network: string; memo?: string }> = {
-    BTC: { address: process.env.HOT_WALLET_BTC_ADDRESS || "bc1qcvdqwjtsmnl92ldhapmyuvfnlj5gfquvj0w3ke", network: "Bitcoin" },
-    ETH: { address: process.env.HOT_WALLET_ETH_ADDRESS || "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Base" },
-    USDT: { address: process.env.HOT_WALLET_ETH_ADDRESS || "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Base" },
-    USDC: { address: process.env.HOT_WALLET_ETH_ADDRESS || "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6", network: "Base" },
+  // Shared hot-wallet fallback (used when no user address or HD not configured).
+  const sharedBtc = process.env.HOT_WALLET_BTC_ADDRESS || "bc1qcvdqwjtsmnl92ldhapmyuvfnlj5gfquvj0w3ke";
+  const sharedEvm = process.env.HOT_WALLET_ETH_ADDRESS || "0x2A6007a15A7B04FEAdd64f0d002A10A6867587F6";
+
+  let addresses: Record<string, { address: string; network: string; memo?: string }> = {
+    BTC: { address: sharedBtc, network: "Bitcoin" },
+    ETH: { address: sharedEvm, network: "Base" },
+    USDT: { address: sharedEvm, network: "Base" },
+    USDC: { address: sharedEvm, network: "Base" },
   };
+  let perUser = false;
+
+  // Per-user derived addresses — the basis for automatic crediting. Any
+  // failure falls back to the shared wallet so the deposit screen never breaks.
+  if (userAddress && /^0x[0-9a-fA-F]{40}$/.test(userAddress) && isHdConfigured()) {
+    try {
+      const { evm, btc } = await getUserDepositAddresses(userAddress);
+      await armWatch(evm, btc);
+      addresses = {
+        BTC: { address: btc, network: "Bitcoin" },
+        ETH: { address: evm, network: "Base" },
+        USDT: { address: evm, network: "Base" },
+        USDC: { address: evm, network: "Base" },
+      };
+      perUser = true;
+    } catch (e) {
+      console.error("[/api/deposit] per-user derive failed, using shared:", e);
+    }
+  }
 
   if (coin && addresses[coin]) {
-    return NextResponse.json({ success: true, ...addresses[coin] });
+    return NextResponse.json({ success: true, perUser, ...addresses[coin] });
   }
-  return NextResponse.json({ success: true, addresses });
+  return NextResponse.json({ success: true, perUser, addresses });
 }

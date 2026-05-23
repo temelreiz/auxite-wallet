@@ -423,11 +423,12 @@ export function FundTab() {
   const [claiming, setClaiming] = useState(false);
   const [claimMsg, setClaimMsg] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
 
-  // Load deposit addresses
+  // Load deposit addresses (per-user when wallet is known)
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("/api/deposit");
+        const qs = address ? `?address=${encodeURIComponent(address)}` : "";
+        const res = await fetch(`/api/deposit${qs}`);
         const data = await res.json();
         if (data.success && data.addresses) setDepositAddresses(data.addresses);
       } catch (error) {
@@ -437,7 +438,7 @@ export function FundTab() {
       }
     };
     load();
-  }, []);
+  }, [address]);
 
   // Load deposit history
   const loadHistory = useCallback(async () => {
