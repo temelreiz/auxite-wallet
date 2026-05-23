@@ -1503,7 +1503,7 @@ export default function VaultPage() {
                 {lang === "tr" ? "Bakiyenle metal veya AUXR al, ya da dışarı çek." : "Use your balance to buy metals or AUXR, or withdraw."}
               </p>
 
-              <a href="/auxr" className="flex items-center gap-4 p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:border-[#BFA181] transition-colors mb-3">
+              <a href={`/auxr?fund=${buyChooser.symbol.toLowerCase()}`} className="flex items-center gap-4 p-4 rounded-xl border border-stone-200 dark:border-slate-700 hover:border-[#BFA181] transition-colors mb-3">
                 <div className="w-11 h-11 rounded-full bg-[#BFA181]/20 flex items-center justify-center">
                   <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                 </div>

@@ -251,6 +251,14 @@ export default function AuxrPage() {
     return () => clearInterval(interval);
   }, [loadPricing, loadReserves, loadUser, loadCrypto]);
 
+  // Pre-select the rail the user tapped in the vault Liquidity chooser (?fund=).
+  useEffect(() => {
+    const f = new URLSearchParams(window.location.search).get("fund")?.toLowerCase();
+    if (f && ["auxm", "usdt", "usdc", "usd", "btc", "eth"].includes(f)) {
+      setPaymentToken(f as "auxm" | "usdt" | "usdc" | "usd" | "btc" | "eth");
+    }
+  }, []);
+
   // ── Derived ─────────────────────────────────────────────────────────────────
   const buyAmountNum = parseFloat(buyAmount) || 0;
   const sellUnitsNum = parseFloat(sellUnits) || 0;
