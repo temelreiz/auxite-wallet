@@ -243,6 +243,139 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
+// Claim-flow copy (deposit confirmation by txid). Errors keyed by API code.
+interface ClaimStrings {
+  title: string;
+  desc: string;
+  placeholder: string;
+  button: string;
+  checking: string;
+  success: string;
+  errors: Record<string, string>;
+}
+const claimTranslations: Record<string, ClaimStrings> = {
+  en: {
+    title: "Already sent? Confirm your deposit",
+    desc: "Sent from an exchange (Binance, Coinbase…)? Paste the transaction ID (hash) of your transfer and we'll credit your vault.",
+    placeholder: "Transaction ID / hash (0x… or BTC txid)",
+    button: "Confirm Deposit",
+    checking: "Checking on-chain…",
+    success: "Deposit credited",
+    errors: {
+      tx_not_found: "We couldn't find that transaction yet. If you just sent it, wait a minute and try again.",
+      pending_confirmations: "Transaction found but still confirming on-chain. Try again shortly.",
+      not_to_hot_wallet: "This transaction wasn't sent to your deposit address.",
+      below_minimum: "That amount is below the minimum deposit.",
+      already_claimed: "This deposit has already been credited.",
+      processing: "This deposit is already being processed.",
+      user_not_found: "Account not recognized. Please sign in again.",
+      invalid_txhash: "That doesn't look like a valid transaction ID.",
+      invalid_request: "That doesn't look like a valid transaction ID.",
+      default: "Couldn't confirm this deposit. Please try again or contact support.",
+    },
+  },
+  tr: {
+    title: "Gönderdiniz mi? Yatırımınızı onaylayın",
+    desc: "Borsadan mı gönderdiniz (Binance, Coinbase…)? Transferinizin işlem kimliğini (hash) yapıştırın, kasanıza ekleyelim.",
+    placeholder: "İşlem kimliği / hash (0x… veya BTC txid)",
+    button: "Yatırımı Onayla",
+    checking: "Zincirde kontrol ediliyor…",
+    success: "Yatırım eklendi",
+    errors: {
+      tx_not_found: "Bu işlemi henüz bulamadık. Az önce gönderdiyseniz bir dakika bekleyip tekrar deneyin.",
+      pending_confirmations: "İşlem bulundu ama hâlâ onaylanıyor. Birazdan tekrar deneyin.",
+      not_to_hot_wallet: "Bu işlem sizin yatırım adresinize gönderilmemiş.",
+      below_minimum: "Bu tutar minimum yatırımın altında.",
+      already_claimed: "Bu yatırım zaten eklenmiş.",
+      processing: "Bu yatırım zaten işleniyor.",
+      user_not_found: "Hesap tanınmadı. Lütfen tekrar giriş yapın.",
+      invalid_txhash: "Bu geçerli bir işlem kimliği gibi görünmüyor.",
+      invalid_request: "Bu geçerli bir işlem kimliği gibi görünmüyor.",
+      default: "Bu yatırım onaylanamadı. Tekrar deneyin veya destek ile iletişime geçin.",
+    },
+  },
+  de: {
+    title: "Bereits gesendet? Einzahlung bestätigen",
+    desc: "Von einer Börse gesendet (Binance, Coinbase…)? Fügen Sie die Transaktions-ID (Hash) ein, und wir schreiben sie gut.",
+    placeholder: "Transaktions-ID / Hash (0x… oder BTC-txid)",
+    button: "Einzahlung Bestätigen",
+    checking: "On-Chain-Prüfung…",
+    success: "Einzahlung gutgeschrieben",
+    errors: {
+      tx_not_found: "Wir konnten diese Transaktion noch nicht finden. Bitte warten Sie kurz und versuchen Sie es erneut.",
+      pending_confirmations: "Transaktion gefunden, wird noch bestätigt. Bitte gleich erneut versuchen.",
+      not_to_hot_wallet: "Diese Transaktion ging nicht an Ihre Einzahlungsadresse.",
+      below_minimum: "Dieser Betrag liegt unter der Mindesteinzahlung.",
+      already_claimed: "Diese Einzahlung wurde bereits gutgeschrieben.",
+      processing: "Diese Einzahlung wird bereits verarbeitet.",
+      user_not_found: "Konto nicht erkannt. Bitte erneut anmelden.",
+      invalid_txhash: "Das sieht nicht nach einer gültigen Transaktions-ID aus.",
+      invalid_request: "Das sieht nicht nach einer gültigen Transaktions-ID aus.",
+      default: "Einzahlung konnte nicht bestätigt werden. Bitte erneut versuchen oder Support kontaktieren.",
+    },
+  },
+  fr: {
+    title: "Déjà envoyé ? Confirmez votre dépôt",
+    desc: "Envoyé depuis une plateforme (Binance, Coinbase…) ? Collez l'ID de transaction (hash) et nous créditerons votre coffre.",
+    placeholder: "ID de transaction / hash (0x… ou txid BTC)",
+    button: "Confirmer le Dépôt",
+    checking: "Vérification on-chain…",
+    success: "Dépôt crédité",
+    errors: {
+      tx_not_found: "Transaction introuvable pour l'instant. Si vous venez de l'envoyer, attendez une minute et réessayez.",
+      pending_confirmations: "Transaction trouvée mais en cours de confirmation. Réessayez bientôt.",
+      not_to_hot_wallet: "Cette transaction n'a pas été envoyée à votre adresse de dépôt.",
+      below_minimum: "Ce montant est inférieur au dépôt minimum.",
+      already_claimed: "Ce dépôt a déjà été crédité.",
+      processing: "Ce dépôt est déjà en cours de traitement.",
+      user_not_found: "Compte non reconnu. Veuillez vous reconnecter.",
+      invalid_txhash: "Cela ne ressemble pas à un ID de transaction valide.",
+      invalid_request: "Cela ne ressemble pas à un ID de transaction valide.",
+      default: "Impossible de confirmer ce dépôt. Réessayez ou contactez le support.",
+    },
+  },
+  ar: {
+    title: "هل أرسلت بالفعل؟ أكّد إيداعك",
+    desc: "أرسلت من منصة (Binance، Coinbase…)؟ الصق معرّف المعاملة (hash) وسنضيفه إلى خزنتك.",
+    placeholder: "معرّف المعاملة / hash (‏0x… أو BTC txid)",
+    button: "تأكيد الإيداع",
+    checking: "جارٍ التحقق على السلسلة…",
+    success: "تمت إضافة الإيداع",
+    errors: {
+      tx_not_found: "لم نعثر على هذه المعاملة بعد. إذا أرسلتها للتو، انتظر دقيقة وحاول مجدداً.",
+      pending_confirmations: "تم العثور على المعاملة لكنها قيد التأكيد. حاول بعد قليل.",
+      not_to_hot_wallet: "لم تُرسل هذه المعاملة إلى عنوان الإيداع الخاص بك.",
+      below_minimum: "هذا المبلغ أقل من الحد الأدنى للإيداع.",
+      already_claimed: "تمت إضافة هذا الإيداع بالفعل.",
+      processing: "هذا الإيداع قيد المعالجة بالفعل.",
+      user_not_found: "الحساب غير معروف. يرجى تسجيل الدخول مجدداً.",
+      invalid_txhash: "لا يبدو هذا معرّف معاملة صالحاً.",
+      invalid_request: "لا يبدو هذا معرّف معاملة صالحاً.",
+      default: "تعذّر تأكيد هذا الإيداع. حاول مجدداً أو تواصل مع الدعم.",
+    },
+  },
+  ru: {
+    title: "Уже отправили? Подтвердите депозит",
+    desc: "Отправили с биржи (Binance, Coinbase…)? Вставьте ID транзакции (hash), и мы зачислим средства в ваше хранилище.",
+    placeholder: "ID транзакции / hash (0x… или BTC txid)",
+    button: "Подтвердить Депозит",
+    checking: "Проверка в сети…",
+    success: "Депозит зачислен",
+    errors: {
+      tx_not_found: "Пока не нашли эту транзакцию. Если только что отправили — подождите минуту и повторите.",
+      pending_confirmations: "Транзакция найдена, но ещё подтверждается. Повторите чуть позже.",
+      not_to_hot_wallet: "Эта транзакция была отправлена не на ваш адрес для депозита.",
+      below_minimum: "Сумма ниже минимального депозита.",
+      already_claimed: "Этот депозит уже зачислен.",
+      processing: "Этот депозит уже обрабатывается.",
+      user_not_found: "Аккаунт не распознан. Войдите снова.",
+      invalid_txhash: "Это не похоже на корректный ID транзакции.",
+      invalid_request: "Это не похоже на корректный ID транзакции.",
+      default: "Не удалось подтвердить депозит. Повторите или обратитесь в поддержку.",
+    },
+  },
+};
+
 // Asset info for deposit addresses
 const depositAssetInfo: Record<string, { icon: string; name: string; color: string; confirmations: string; minDeposit: string; creditTime: string }> = {
   BTC: { icon: "₿", name: "Bitcoin", color: "bg-orange-500", confirmations: "3", minDeposit: "0.0005 BTC", creditTime: "~30 min" },
@@ -276,6 +409,7 @@ export function FundTab() {
   const { lang } = useLanguage();
   const { address } = useWallet();
   const t = translations[lang] || translations.en;
+  const ct = claimTranslations[lang] || claimTranslations.en;
 
   const [selectedRail, setSelectedRail] = useState<FundingRail>("crypto");
   const [depositAddresses, setDepositAddresses] = useState<Record<string, DepositAddressInfo>>({});
@@ -283,6 +417,11 @@ export function FundTab() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+
+  // Deposit claim (confirm by txid)
+  const [claimTx, setClaimTx] = useState("");
+  const [claiming, setClaiming] = useState(false);
+  const [claimMsg, setClaimMsg] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
 
   // Load deposit addresses
   useEffect(() => {
@@ -316,6 +455,38 @@ export function FundTab() {
   }, [address]);
 
   useEffect(() => { loadHistory(); }, [loadHistory]);
+
+  const submitClaim = async () => {
+    const tx = claimTx.trim();
+    if (!tx) return;
+    if (!address) { setClaimMsg({ type: "error", text: ct.errors.user_not_found }); return; }
+    setClaiming(true);
+    setClaimMsg(null);
+    try {
+      const res = await fetch("/api/deposit/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, txHash: tx }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const credited = data.autoConverted
+          ? `${Number(data.amountUsd).toFixed(2)} AUXM`
+          : `${data.amount} ${data.coin}`;
+        setClaimMsg({ type: "success", text: `${ct.success}: +${credited}` });
+        setClaimTx("");
+        loadHistory();
+      } else {
+        const code = String(data?.error || "default");
+        const soft = code === "pending_confirmations" || code === "tx_not_found" || code === "processing";
+        setClaimMsg({ type: soft ? "info" : "error", text: ct.errors[code] || ct.errors.default });
+      }
+    } catch {
+      setClaimMsg({ type: "error", text: ct.errors.default });
+    } finally {
+      setClaiming(false);
+    }
+  };
 
   const copyToClipboard = async (text: string, field: string) => {
     try {
@@ -564,8 +735,8 @@ export function FundTab() {
             {[
               { step: '1', en: 'Open Binance, Coinbase or any crypto exchange', tr: 'Binance, Coinbase veya herhangi bir kripto borsası açın' },
               { step: '2', en: 'Select Withdraw → Choose USDT or USDC on Base Network', tr: 'Çekim seçin → Base Ağında USDT veya USDC seçin' },
-              { step: '3', en: 'Paste the deposit address shown above', tr: 'Yukarıda gösterilen deposit adresini yapıştırın' },
-              { step: '4', en: 'Your balance updates automatically in minutes', tr: 'Bakiyeniz dakikalar içinde otomatik güncellenir' },
+              { step: '3', en: 'Paste the deposit address shown above and send', tr: 'Yukarıda gösterilen deposit adresini yapıştırın ve gönderin' },
+              { step: '4', en: 'After sending, paste your transaction ID below to credit your vault', tr: 'Gönderdikten sonra işlem kimliğinizi (TX ID) aşağıya yapıştırarak kasanıza ekleyin' },
             ].map((item) => (
               <div key={item.step} className="flex items-start gap-3">
                 <div className="w-6 h-6 rounded-full bg-[#BFA181]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -580,9 +751,60 @@ export function FundTab() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {{ en: 'All deposits are automatically detected and credited to your vault.', tr: 'Tüm yatırımlar otomatik olarak tespit edilir ve kasanıza eklenir.', de: 'Alle Einzahlungen werden automatisch erkannt und gutgeschrieben.', fr: 'Tous les dépôts sont automatiquement détectés et crédités.', ar: 'يتم اكتشاف جميع الإيداعات وإضافتها تلقائياً.', ru: 'Все депозиты автоматически обнаруживаются и зачисляются.' }[lang] || 'All deposits are automatically detected and credited to your vault.'}
+              {{ en: 'Sent from an exchange? Confirm it below with your transaction ID — it credits in seconds.', tr: 'Borsadan mı gönderdiniz? İşlem kimliğinizle aşağıdan onaylayın — saniyeler içinde eklenir.', de: 'Von einer Börse gesendet? Unten mit Ihrer Transaktions-ID bestätigen — Gutschrift in Sekunden.', fr: 'Envoyé depuis une plateforme ? Confirmez ci-dessous avec votre ID de transaction — crédité en quelques secondes.', ar: 'أرسلت من منصة؟ أكّد أدناه بمعرّف المعاملة — يُضاف خلال ثوانٍ.', ru: 'Отправили с биржи? Подтвердите ниже по ID транзакции — зачисление за секунды.' }[lang] || 'Sent from an exchange? Confirm it below with your transaction ID — it credits in seconds.'}
             </p>
           </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════ */}
+      {/* DEPOSIT CLAIM (confirm by txid)        */}
+      {/* ═══════════════════════════════════════ */}
+      {selectedRail === "crypto" && (
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6 mb-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full bg-[#BFA181]/15 flex items-center justify-center">
+              <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-slate-800 dark:text-white">{ct.title}</h3>
+            </div>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{ct.desc}</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={claimTx}
+              onChange={(e) => setClaimTx(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !claiming) submitClaim(); }}
+              placeholder={ct.placeholder}
+              spellCheck={false}
+              autoComplete="off"
+              className="flex-1 px-4 py-3 rounded-lg bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-sm font-mono text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:border-[#BFA181]"
+            />
+            <button
+              onClick={submitClaim}
+              disabled={claiming || !claimTx.trim()}
+              className="px-5 py-3 rounded-lg bg-[#BFA181] text-white text-sm font-semibold hover:bg-[#a98f6f] disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+            >
+              {claiming ? ct.checking : ct.button}
+            </button>
+          </div>
+          {claimMsg && (
+            <div
+              className={`mt-3 px-3 py-2 rounded-lg text-sm ${
+                claimMsg.type === "success"
+                  ? "bg-[#2F6F62]/10 text-[#2F6F62]"
+                  : claimMsg.type === "info"
+                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                  : "bg-red-500/10 text-red-600 dark:text-red-400"
+              }`}
+            >
+              {claimMsg.text}
+            </div>
+          )}
         </div>
       )}
 
