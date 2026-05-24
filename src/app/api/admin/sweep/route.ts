@@ -79,13 +79,27 @@ async function resolveSigner(
   return null;
 }
 
-async function balancesOf(addr: string) {
-  const [wei, u, t] = await Promise.all([
-    provider.getBalance(addr),
-    new ethers.Contract(USDC, ERC20, provider).balanceOf(addr) as Promise<bigint>,
-    new ethers.Contract(USDT, ERC20, provider).balanceOf(addr) as Promise<bigint>,
-  ]);
-  return { wei, usdc: u as bigint, usdt: t as bigint };
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Sequential reads with retry — the public Base RPC rate-limits parallel
+// (Promise.all) batches and returns "missing revert data", which would make
+// funded addresses look empty.
+async function balancesOf(addr: string): Promise<{ wei: bigint; usdc: bigint; usdt: bigint }> {
+  const usdcC = new ethers.Contract(USDC, ERC20, provider);
+  const usdtC = new ethers.Contract(USDT, ERC20, provider);
+  let lastErr: any;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const wei = await provider.getBalance(addr); await sleep(50);
+      const usdc = (await usdcC.balanceOf(addr)) as bigint; await sleep(50);
+      const usdt = (await usdtC.balanceOf(addr)) as bigint;
+      return { wei, usdc, usdt };
+    } catch (e) {
+      lastErr = e;
+      await sleep(400);
+    }
+  }
+  throw lastErr || new Error("rpc_failed");
 }
 
 async function fundedEvmAddresses(): Promise<string[]> {
@@ -105,11 +119,13 @@ export async function GET(request: NextRequest) {
   if (!HOT) return NextResponse.json({ error: "hot_wallet_not_configured" }, { status: 503 });
 
   const plan: any[] = [];
+  const errors: any[] = [];
   for (const addr of await fundedEvmAddresses()) {
     let bal;
     try {
       bal = await balancesOf(addr);
-    } catch {
+    } catch (e: any) {
+      errors.push({ address: addr, error: e?.shortMessage || e?.message || "rpc_error" });
       continue;
     }
     const eth = Number(ethers.formatEther(bal.wei));
@@ -133,6 +149,7 @@ export async function GET(request: NextRequest) {
     destination: HOT,
     fundedCount: plan.length,
     plan,
+    ...(errors.length ? { rpcErrors: errors } : {}),
     note: "Tron USDT is not swept here (needs tronweb).",
   });
 }
