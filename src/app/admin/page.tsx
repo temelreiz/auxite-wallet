@@ -408,7 +408,6 @@ const TABS = [
   { id: "leasing", label: "Leasing", icon: "🏦" },
   { id: "treasury", label: "AUXM Treasury", icon: "🏛️" },
   { id: "depositMonitor", label: "Deposits & Sweep", icon: "💸" },
-  { id: "cashSettlement", label: "Cash Settlement", icon: "💰" },
   { id: "relationshipManagers", label: "RM / CRM", icon: "🤝" },
   { id: "emailCampaigns", label: "Email Kampanya", icon: "📧" },
   { id: "statements", label: "Raporlar", icon: "📑" },
@@ -869,6 +868,9 @@ export default function AdminDashboard() {
     if (activeTab === "supportSettings") {
       loadSupportSettings();
     }
+    if (activeTab === "oracle") {
+      loadOraclePrices();
+    }
 
     return () => intervals.forEach(clearInterval);
   }, [authenticated, activeTab]);
@@ -930,6 +932,7 @@ export default function AdminDashboard() {
     loadAuxiteerConfig();
     loadSovereignInvitations();
     loadWebsiteData();
+    loadOraclePrices();
   };
 
   const loadStats = async () => {
@@ -1633,6 +1636,26 @@ export default function AdminDashboard() {
     } finally {
       setSpreadSaving(null);
     }
+  };
+
+  // Preload the CURRENT live (on-chain) oracle prices into the inputs so the tab
+  // reflects reality instead of stale hardcoded defaults. getOraclePrices returns
+  // per-gram USD for metals (×1000 → per-kg, matching the input magnitudes) + ETH USD.
+  const loadOraclePrices = async () => {
+    try {
+      const res = await fetch("/api/admin/update-oracle", { headers: getAuthHeaders() });
+      if (!res.ok) return;
+      const data = await res.json();
+      const o = data?.oracle;
+      if (!o) return;
+      setOraclePrices({
+        AUXG: Math.round((Number(o.gold) || 0) * 1000),
+        AUXS: Math.round((Number(o.silver) || 0) * 1000),
+        AUXPT: Math.round((Number(o.platinum) || 0) * 1000),
+        AUXPD: Math.round((Number(o.palladium) || 0) * 1000),
+        ETH: Math.round(Number(o.ethUsd) || 0),
+      });
+    } catch {}
   };
 
   const handleOracleUpdate = async () => {
@@ -4440,12 +4463,16 @@ export default function AdminDashboard() {
           {/* Oracle Tab */}
           {activeTab === "oracle" && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold">🔮 Oracle Fiyatları</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">🔮 Oracle Fiyatları</h2>
+                <button onClick={loadOraclePrices} className="px-3 py-1.5 text-xs font-semibold bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">↻ Yenile</button>
+              </div>
+              <p className="text-xs text-slate-500">Mevcut on-chain oracle değerleri gösteriliyor. &quot;Oracle Güncelle&quot; canlı fiyat kaynağından (GoldAPI / KuveytTurk) çekip zincire yazar — yukarıdaki kutular bilgi amaçlıdır.</p>
               <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {Object.entries(oraclePrices).map(([key, value]) => (
                     <div key={key} className="p-4 bg-slate-800/50 rounded-xl">
-                      <label className="block text-sm text-slate-400 mb-2">{key} ($/oz)</label>
+                      <label className="block text-sm text-slate-400 mb-2">{key} {key === "ETH" ? "($/USD)" : "($/kg)"}</label>
                       <input
                         type="number"
                         value={value}
@@ -5340,129 +5367,6 @@ export default function AdminDashboard() {
             <DepositsSweepTab />
           )}
 
-          {/* ═══════════════════════════════════════════ */}
-          {/* CASH SETTLEMENT TAB */}
-          {/* ═══════════════════════════════════════════ */}
-          {activeTab === "cashSettlement" && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-bold text-white">Cash Settlement Controls</h2>
-                  <p className="text-sm text-slate-400">Custody unwind — LBMA spot minus exit spread, T+1 settlement</p>
-                </div>
-                <button
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors"
-                  onClick={async () => {
-                    if (confirm('EMERGENCY FREEZE: Disable all cash settlements?')) {
-                      try {
-                        await fetch('/api/admin/settlement', {
-                          method: 'POST',
-                          headers: getAuthHeaders(),
-                          body: JSON.stringify({ action: 'emergency_freeze' }),
-                        });
-                        alert('Cash settlement FROZEN');
-                      } catch {}
-                    }
-                  }}
-                >
-                  🚨 Emergency Freeze
-                </button>
-              </div>
-
-              {/* Feature Flag Toggles */}
-              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-                <h3 className="text-sm font-bold text-slate-300 mb-4">Feature Flags</h3>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { key: 'cash_settlement_enabled', label: 'Cash Settlement', desc: 'Global on/off', icon: '💰' },
-                    { key: 'rail_auxm', label: 'AUXM Rail', desc: 'Internal settlement unit', icon: '🪙' },
-                    { key: 'rail_usdt', label: 'USDT Rail', desc: 'Tether stablecoin', icon: '💵' },
-                    { key: 'instant_settlement', label: 'Instant Mode', desc: 'Phase 2 — skip T+1', icon: '⚡' },
-                  ].map((flag) => (
-                    <div key={flag.key} className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-slate-400">{flag.icon} {flag.label}</span>
-                        <div className="w-10 h-5 bg-green-600 rounded-full relative cursor-pointer">
-                          <div className="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5" />
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-slate-500">{flag.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Exit Spread Configuration */}
-              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-                <h3 className="text-sm font-bold text-slate-300 mb-4">Exit Spread Configuration</h3>
-                <p className="text-xs text-slate-500 mb-4">Settlement Price = LBMA Spot − Exit Spread%. Separate from trading spreads.</p>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-slate-400 text-xs border-b border-slate-700">
-                      <th className="text-left py-2 px-3">Metal</th>
-                      <th className="text-left py-2 px-3">Exit Spread %</th>
-                      <th className="text-left py-2 px-3">vs Trading Spread</th>
-                      <th className="text-left py-2 px-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { sym: 'AUXG', name: 'Gold', spread: '0.65%', trading: '1.50%' },
-                      { sym: 'AUXS', name: 'Silver', spread: '0.80%', trading: '2.00%' },
-                      { sym: 'AUXPT', name: 'Platinum', spread: '0.80%', trading: '2.00%' },
-                      { sym: 'AUXPD', name: 'Palladium', spread: '0.80%', trading: '2.50%' },
-                    ].map((m) => (
-                      <tr key={m.sym} className="border-b border-slate-700/50">
-                        <td className="py-3 px-3 text-white font-semibold">{m.sym} <span className="text-slate-500 text-xs">{m.name}</span></td>
-                        <td className="py-3 px-3 text-[#D4B47A] font-bold">{m.spread}</td>
-                        <td className="py-3 px-3 text-slate-500">{m.trading}</td>
-                        <td className="py-3 px-3"><span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#2F6F62]/20 text-[#2F6F62]">Active</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Daily Cap & Quote TTL */}
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-                  <h3 className="text-sm font-bold text-slate-300 mb-3">Daily Settlement Cap</h3>
-                  <div className="text-2xl font-bold text-[#D4B47A]">$500,000</div>
-                  <p className="text-xs text-slate-500 mt-1">Today: $0 / 0 orders</p>
-                  <div className="mt-3 w-full h-2 bg-slate-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#2F6F62] rounded-full" style={{ width: '0%' }} />
-                  </div>
-                </div>
-                <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-                  <h3 className="text-sm font-bold text-slate-300 mb-3">Settlement Parameters</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-400">Quote TTL</span>
-                      <span className="text-white font-semibold">120 seconds</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-400">Settlement Cycle</span>
-                      <span className="text-white font-semibold">T+1 (24h)</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-400">Cancelable</span>
-                      <span className="text-red-400 font-semibold">No</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-400">Price Source</span>
-                      <span className="text-white font-semibold">LBMA / GoldAPI</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Pending Settlements */}
-              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-                <h3 className="text-sm font-bold text-slate-300 mb-4">Pending Settlements (T+1 Queue)</h3>
-                <p className="text-sm text-slate-500 text-center py-6">No pending settlements. Orders auto-complete after T+1.</p>
-              </div>
-            </div>
-          )}
 
           {/* Website Edit Modal */}
           {showWebsiteModal && (
