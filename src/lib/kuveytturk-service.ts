@@ -197,12 +197,16 @@ function getPrivateKey(): string {
  * For GET: sign(accessToken + queryString)
  * For POST: sign(accessToken + requestBody)
  */
-function createSignature(accessToken: string, payload: string): string {
+function createSignature(payload: string): string {
   const key = getPrivateKey();
-  const dataToSign = accessToken + payload;
+  // Per KuveytTürk's official SignatureGenerator: the signed input is
+  // CLIENT_ID + payload (their utility's "accessToken" arg is documented as
+  // "the clientId provided when the application is created"), NOT the OAuth
+  // bearer token. SHA256withRSA, standard base64.
+  const dataToSign = (CONFIG.clientId || '').trim() + payload;
 
   const sign = crypto.createSign('RSA-SHA256');
-  sign.update(dataToSign);
+  sign.update(dataToSign, 'utf8');
   sign.end();
 
   return sign.sign(key, 'base64');
@@ -222,12 +226,13 @@ interface ApiRequestOptions {
 async function kuveytTurkRequest<T>(options: ApiRequestOptions): Promise<T> {
   const accessToken = await getAccessToken();
 
-  // Create signature
+  // Signature payload: POST → JSON body; GET → query string WITH leading '?'
+  // (matches KuveytTürk's getQueryParamsString). Empty for GET with no params.
   let signaturePayload = '';
   if (options.method === 'POST' && options.body) {
     signaturePayload = JSON.stringify(options.body);
   } else if (options.method === 'GET' && options.queryString) {
-    signaturePayload = options.queryString;
+    signaturePayload = '?' + options.queryString;
   }
 
   const url = `${CONFIG.baseUrl}${options.path}${options.queryString ? '?' + options.queryString : ''}`;
@@ -248,7 +253,7 @@ async function kuveytTurkRequest<T>(options: ApiRequestOptions): Promise<T> {
   // RSA signature — OPTIONAL. Only sign if a usable private key is configured.
   // Some API Market endpoints authenticate with the subscription key alone.
   try {
-    headers['Signature'] = createSignature(accessToken, signaturePayload);
+    headers['Signature'] = createSignature(signaturePayload);
   } catch (e: any) {
     console.warn('[kuveytturk] RSA signature skipped (no/invalid private key):', e?.message);
   }
