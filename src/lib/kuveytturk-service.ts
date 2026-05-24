@@ -147,7 +147,7 @@ export async function getAccessToken(): Promise<string> {
   if (!response.ok) {
     const errorText = await response.text();
     console.error('❌ KuveytTürk token error:', response.status, errorText);
-    throw new Error(`KuveytTürk token request failed: ${response.status}`);
+    throw new Error(`KuveytTürk token request failed: ${response.status} ${String(errorText).slice(0, 300)}`);
   }
 
   const data = await response.json();
