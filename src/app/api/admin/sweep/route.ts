@@ -23,7 +23,9 @@ export const maxDuration = 60;
 const CRON_SECRET = process.env.CRON_SECRET;
 const HOT = (process.env.HOT_WALLET_ETH_ADDRESS || "").toLowerCase();
 const HOT_PK = process.env.HOT_WALLET_ETH_PRIVATE_KEY || "";
-const RPC = process.env.NEXT_PUBLIC_BASE_RPC_URL || "https://mainnet.base.org";
+// Prefer a server-only RPC (keyed provider — never NEXT_PUBLIC_, so the key
+// isn't exposed in client bundles). Falls back to the public RPC.
+const RPC = process.env.BASE_RPC_URL || process.env.NEXT_PUBLIC_BASE_RPC_URL || "https://mainnet.base.org";
 const USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 const USDT = "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2";
 const ERC20 = [
