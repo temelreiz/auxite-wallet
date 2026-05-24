@@ -34,7 +34,7 @@ export default function FundVaultPage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100 dark:bg-[#0D1421]">
+    <div className="min-h-screen bg-stone-100 dark:bg-[#020617]">
       <AddFundsModal
         isOpen={showModal}
         onClose={handleClose}

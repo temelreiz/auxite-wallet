@@ -111,7 +111,7 @@ export function CookieConsent() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[9999] p-4 animate-in slide-in-from-bottom duration-500">
-      <div className="max-w-2xl mx-auto bg-[#0D1421] border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/40 overflow-hidden">
+      <div className="max-w-2xl mx-auto bg-[#0f172a] border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/40 overflow-hidden">
         {/* Main Banner */}
         {!showSettings && (
           <div className="p-5">

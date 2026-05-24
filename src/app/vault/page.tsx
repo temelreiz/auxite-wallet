@@ -1212,7 +1212,7 @@ export default function VaultPage() {
         {bonusData?.hasBonus && !loading && (
           <div className="relative overflow-hidden rounded-2xl border border-[#BFA181]/30">
             {/* Premium gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#1a1207] via-[#2a1f10] to-[#0D1421] dark:from-[#1a1207] dark:via-[#2a1f10] dark:to-[#0D1421]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1a1207] via-[#2a1f10] to-[#020617] dark:from-[#1a1207] dark:via-[#2a1f10] dark:to-[#020617]" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#BFA181]/10 via-transparent to-[#D4B47A]/10" />
             {/* Subtle shimmer line */}
             <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#BFA181]/50 to-transparent" />
