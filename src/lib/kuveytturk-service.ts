@@ -105,6 +105,10 @@ const CONFIG = {
   baseUrl: process.env.KUVEYTTURK_BASE_URL || 'https://prep-gateway.kuveytturk.com.tr',
   tokenUrl: process.env.KUVEYTTURK_TOKEN_URL || 'https://prep-identity.kuveytturk.com.tr/connect/token',
   rsaKeyPath: process.env.KUVEYTTURK_RSA_PRIVATE_KEY_PATH || './keys/private.pem',
+  // Serverless (Vercel) has no persistent file — prefer the PEM passed inline
+  // via env. Falls back to rsaKeyPath for local dev.
+  rsaKeyInline: process.env.KUVEYTTURK_RSA_PRIVATE_KEY || '',
+  scope: process.env.KUVEYTTURK_SCOPE || 'public',
 };
 
 // ============================================
@@ -127,7 +131,7 @@ export async function getAccessToken(): Promise<string> {
 
   const body = new URLSearchParams({
     grant_type: 'client_credentials',
-    scope: 'public',
+    scope: CONFIG.scope,
     client_id: CONFIG.clientId,
     client_secret: CONFIG.clientSecret,
   });
@@ -168,13 +172,23 @@ let privateKey: string | null = null;
 function getPrivateKey(): string {
   if (privateKey) return privateKey;
 
+  // 1) Prefer inline PEM from env (Vercel serverless — no persistent file).
+  //    Supports both real newlines and \n-escaped single-line values.
+  if (CONFIG.rsaKeyInline) {
+    privateKey = CONFIG.rsaKeyInline.includes("\\n")
+      ? CONFIG.rsaKeyInline.replace(/\\n/g, "\n")
+      : CONFIG.rsaKeyInline;
+    return privateKey;
+  }
+
+  // 2) Fall back to a file path (local dev).
   try {
     const keyPath = path.resolve(CONFIG.rsaKeyPath);
     privateKey = fs.readFileSync(keyPath, 'utf-8');
     return privateKey;
   } catch (error) {
-    console.error('❌ RSA private key not found at:', CONFIG.rsaKeyPath);
-    throw new Error('RSA private key not found. Generate with: openssl genrsa -out keys/private.pem 2048');
+    console.error('❌ RSA private key not found (env KUVEYTTURK_RSA_PRIVATE_KEY or file):', CONFIG.rsaKeyPath);
+    throw new Error('RSA private key not found. Set KUVEYTTURK_RSA_PRIVATE_KEY env, or generate: openssl genrsa -out keys/private.pem 2048');
   }
 }
 
