@@ -43,6 +43,21 @@ export async function GET(request: NextRequest) {
     username: process.env.KUVEYTTURK_USERNAME ? "(set)" : null,
   };
 
+  // Safe RSA key diagnostics — header/footer lines + structure only, NEVER the
+  // base64 body. Tells us if the PEM lost its newlines or is the wrong type.
+  const rawKey = process.env.KUVEYTTURK_RSA_PRIVATE_KEY || "";
+  const normKey = rawKey.includes("\\n") ? rawKey.replace(/\\n/g, "\n") : rawKey;
+  const keyLines = normKey.split("\n").filter((l) => l.length > 0);
+  const keyDiag = {
+    present: !!rawKey,
+    rawLength: rawKey.length,
+    hadEscapedNewlines: rawKey.includes("\\n"),
+    lineCount: keyLines.length,
+    firstLine: keyLines[0] || null,           // e.g. "-----BEGIN PRIVATE KEY-----"
+    lastLine: keyLines[keyLines.length - 1] || null, // e.g. "-----END PRIVATE KEY-----"
+    looksFlattened: keyLines.length <= 3,      // PEM should be ~20+ lines
+  };
+
   // Step 1: OAuth token
   let tokenOk = false;
   let tokenErr: string | null = null;
@@ -67,6 +82,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     success: tokenOk && !ratesErr,
     env,
+    keyDiag,
     token: { ok: tokenOk, error: tokenErr },
     rates: {
       ok: !ratesErr,
