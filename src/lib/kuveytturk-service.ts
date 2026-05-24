@@ -222,7 +222,7 @@ interface ApiRequestOptions {
   queryString?: string;
 }
 
-async function kuveytTurkRequest<T>(options: ApiRequestOptions): Promise<T> {
+async function kuveytTurkRequest<T>(options: ApiRequestOptions, _canRetry = true): Promise<T> {
   const accessToken = await getAccessToken();
 
   // Signature payload: POST → JSON body; GET → query string WITH leading '?'
@@ -271,6 +271,12 @@ async function kuveytTurkRequest<T>(options: ApiRequestOptions): Promise<T> {
 
   if (!response.ok) {
     const errorText = await response.text();
+    // A warm serverless instance can hold a stale cached token → 401 "expired".
+    // Drop the cache and retry once with a freshly-minted (and re-signed) token.
+    if (response.status === 401 && /expire|token/i.test(errorText) && _canRetry) {
+      cachedToken = null;
+      return kuveytTurkRequest<T>(options, false);
+    }
     console.error(`❌ KuveytTürk API error [${options.path}]:`, response.status, errorText);
     throw new Error(`KuveytTürk API error: ${response.status} - ${errorText}`);
   }
