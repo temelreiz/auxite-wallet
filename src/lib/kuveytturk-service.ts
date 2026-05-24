@@ -197,13 +197,12 @@ function getPrivateKey(): string {
  * For GET: sign(accessToken + queryString)
  * For POST: sign(accessToken + requestBody)
  */
-function createSignature(payload: string): string {
+function createSignature(accessToken: string, payload: string): string {
   const key = getPrivateKey();
-  // Per KuveytTürk's official SignatureGenerator: the signed input is
-  // CLIENT_ID + payload (their utility's "accessToken" arg is documented as
-  // "the clientId provided when the application is created"), NOT the OAuth
-  // bearer token. SHA256withRSA, standard base64.
-  const dataToSign = (CONFIG.clientId || '').trim() + payload;
+  // Per KuveytTürk's official SignatureGenerator UI/util: signed input is
+  // accessToken.trim() + payload (GET) / accessToken + body (POST).
+  // SHA256withRSA, standard base64.
+  const dataToSign = (accessToken || '').trim() + payload;
 
   const sign = crypto.createSign('RSA-SHA256');
   sign.update(dataToSign, 'utf8');
@@ -253,7 +252,7 @@ async function kuveytTurkRequest<T>(options: ApiRequestOptions): Promise<T> {
   // RSA signature — OPTIONAL. Only sign if a usable private key is configured.
   // Some API Market endpoints authenticate with the subscription key alone.
   try {
-    headers['Signature'] = createSignature(signaturePayload);
+    headers['Signature'] = createSignature(accessToken, signaturePayload);
   } catch (e: any) {
     console.warn('[kuveytturk] RSA signature skipped (no/invalid private key):', e?.message);
   }
