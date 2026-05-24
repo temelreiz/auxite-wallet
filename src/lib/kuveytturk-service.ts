@@ -230,15 +230,28 @@ async function kuveytTurkRequest<T>(options: ApiRequestOptions): Promise<T> {
     signaturePayload = options.queryString;
   }
 
-  const signature = createSignature(accessToken, signaturePayload);
-
   const url = `${CONFIG.baseUrl}${options.path}${options.queryString ? '?' + options.queryString : ''}`;
 
   const headers: Record<string, string> = {
     'Authorization': `Bearer ${accessToken}`,
-    'Signature': signature,
     'Content-Type': 'application/json',
   };
+
+  // APIM gateway subscription key (KuveytTürk API Market). Sent under the common
+  // header names so we don't have to guess which the gateway expects.
+  const subKey = process.env.KUVEYTTURK_SUBSCRIPTION_KEY || '';
+  if (subKey) {
+    headers['Ocp-Apim-Subscription-Key'] = subKey;
+    headers['apikey'] = subKey;
+  }
+
+  // RSA signature — OPTIONAL. Only sign if a usable private key is configured.
+  // Some API Market endpoints authenticate with the subscription key alone.
+  try {
+    headers['Signature'] = createSignature(accessToken, signaturePayload);
+  } catch (e: any) {
+    console.warn('[kuveytturk] RSA signature skipped (no/invalid private key):', e?.message);
+  }
 
   const fetchOptions: RequestInit = {
     method: options.method,

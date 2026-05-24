@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
     clientIdSet: !!process.env.KUVEYTTURK_CLIENT_ID,
     clientSecretSet: !!process.env.KUVEYTTURK_CLIENT_SECRET,
     rsaKeySet: !!process.env.KUVEYTTURK_RSA_PRIVATE_KEY,
+    subscriptionKeySet: !!process.env.KUVEYTTURK_SUBSCRIPTION_KEY,
     scope: process.env.KUVEYTTURK_SCOPE || "public",
     accountTL: process.env.KUVEYTTURK_ACCOUNT_TL || null,
     accountUSD: process.env.KUVEYTTURK_ACCOUNT_USD || null,
