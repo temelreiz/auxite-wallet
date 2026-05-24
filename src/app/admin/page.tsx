@@ -407,6 +407,7 @@ const TABS = [
   { id: "risk", label: "Risk", icon: "🛡️" },
   { id: "leasing", label: "Leasing", icon: "🏦" },
   { id: "treasury", label: "AUXM Treasury", icon: "🏛️" },
+  { id: "reserveControl", label: "Reserve Control", icon: "⚖️" },
   { id: "depositMonitor", label: "Deposits & Sweep", icon: "💸" },
   { id: "relationshipManagers", label: "RM / CRM", icon: "🤝" },
   { id: "emailCampaigns", label: "Email Kampanya", icon: "📧" },
@@ -5362,6 +5363,10 @@ export default function AdminDashboard() {
             <AuxmTreasuryTab />
           )}
 
+          {activeTab === "reserveControl" && (
+            <ReserveControlTab />
+          )}
+
           {activeTab === "depositMonitor" && (
             <DepositsSweepTab />
           )}
@@ -6427,6 +6432,157 @@ function RiskDashboardTab() {
         <p className="text-sm text-slate-400 font-mono">
           Match first. Hedge immediately. Allocate physically. Lease what is idle. Never bet on price.
         </p>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RESERVE CONTROL TAB — treasury balances + client AUM/AUXR + physical coverage
+// ═══════════════════════════════════════════════════════════════════════════════
+function ReserveControlTab() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const adminToken = typeof window !== "undefined" ? sessionStorage.getItem("auxite_admin_token") : null;
+
+  const load = useCallback(async () => {
+    if (!adminToken) return;
+    try {
+      setLoading(true);
+      const res = await fetch("/api/admin/reserve-control", { headers: { Authorization: `Bearer ${adminToken}` } });
+      const d = await res.json();
+      if (!res.ok) { setErr(d.error || "failed"); return; }
+      setData(d);
+      setErr("");
+    } catch (e: any) {
+      setErr(e?.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [adminToken]);
+
+  useEffect(() => {
+    load();
+    const i = setInterval(load, 60000);
+    return () => clearInterval(i);
+  }, [load]);
+
+  if (loading && !data) return <div className="text-center py-20 text-slate-400">Yükleniyor...</div>;
+
+  const t = data?.treasury || {};
+  const c = data?.clients || {};
+  const rc = data?.auxrReserve;
+  const usd = (n: any, d = 2) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d })}`;
+  const g = (n: any) => `${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 3 })} g`;
+  const short = (s: any, n = 8) => (s ? `${String(s).slice(0, n)}…${String(s).slice(-4)}` : "—");
+  const metalLabel: Record<string, string> = { gold: "Gold (Au)", silver: "Silver (Ag)", platinum: "Platinum (Pt)", palladium: "Palladium (Pd)" };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-white">⚖️ Reserve Control</h2>
+        <button onClick={load} className="px-3 py-1.5 text-xs font-semibold bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">↻ Refresh</button>
+      </div>
+      {err && <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-3 text-red-300 text-sm">{err}</div>}
+
+      {/* Treasury balances */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+        <h3 className="text-sm font-bold text-slate-300 mb-4">Treasury (what we hold)</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500">USDC (Base)</p>
+            <p className="text-lg font-bold text-white">{Number(t.base?.usdc || 0).toFixed(2)}</p>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500">USDT</p>
+            <p className="text-lg font-bold text-white">{(Number(t.base?.usdt || 0) + Number(t.tron?.usdt || 0)).toFixed(2)}</p>
+            <p className="text-[9px] text-slate-500">Base {Number(t.base?.usdt || 0).toFixed(2)} · Tron {Number(t.tron?.usdt || 0).toFixed(2)}</p>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500">USD (cash)</p>
+            <p className="text-lg font-bold text-white">{t.usd != null ? Number(t.usd).toFixed(2) : "—"}</p>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500">ETH (Base)</p>
+            <p className="text-lg font-bold text-white">{Number(t.base?.eth || 0).toFixed(5)}</p>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500">BTC</p>
+            <p className="text-lg font-bold text-white">{Number(t.btc?.btc || 0).toFixed(6)}</p>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500">Tron TRX (gas)</p>
+            <p className="text-lg font-bold text-white">{Number(t.tron?.trx || 0).toFixed(1)}</p>
+            <p className="text-[9px] font-mono text-slate-500">{short(t.tron?.address, 6)}</p>
+          </div>
+        </div>
+        {data?.meta && (!data.meta.baseOk || !data.meta.tronOk) && (
+          <p className="text-[11px] text-amber-400 mt-3">⚠️ Bazı bakiye okumaları başarısız (base:{String(data.meta.baseOk)} tron:{String(data.meta.tronOk)}).</p>
+        )}
+      </div>
+
+      {/* Client aggregate */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+        <h3 className="text-sm font-bold text-slate-300 mb-4">Client aggregate (what we owe clients)</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500">Total AUM</p>
+            <p className="text-2xl font-bold text-[#BFA181]">{usd(c.totalAumUSD)}</p>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500">Clients</p>
+            <p className="text-2xl font-bold text-white">{c.userCount ?? 0}</p>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500">AUXR outstanding</p>
+            <p className="text-2xl font-bold text-white">{Number(c.totalAuxrUnits || 0).toFixed(4)}</p>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500">AUXR market cap</p>
+            <p className="text-2xl font-bold text-white">{usd(c.auxrMarketCapUSD)}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* AUXR physical reserve coverage */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-sm font-bold text-slate-300">AUXR physical reserve — neyimiz var / neyimiz yok</h3>
+          {rc && <span className={`text-xs font-bold px-2 py-0.5 rounded ${rc.weakestBackingPct >= 100 ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>Backing {Number(rc.weakestBackingPct || 0).toFixed(1)}%</span>}
+        </div>
+        <p className="text-[11px] text-slate-500 mb-4">AUXR satışı arttıkça owe edilen fiziksel metal büyür. Açık (gap) = procure etmemiz gereken miktar. NAV {usd(rc?.nav, 4)}.</p>
+        {!rc || rc.supplyUnits === 0 ? (
+          <p className="text-slate-500 text-sm text-center py-6">Henüz AUXR satışı yok — owe edilen fiziksel metal $0. Satış başlayınca kırılım burada görünür.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-slate-400 text-xs uppercase border-b border-slate-700">
+                  <th className="text-left py-2">Metal</th>
+                  <th className="text-right py-2">Owe (g)</th>
+                  <th className="text-right py-2">Held (g)</th>
+                  <th className="text-right py-2">Gap (g)</th>
+                  <th className="text-right py-2">Coverage</th>
+                  <th className="text-right py-2">Gap $</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rc.metals.map((m: any) => (
+                  <tr key={m.metal} className="border-b border-slate-800">
+                    <td className="py-2 text-white font-semibold">{metalLabel[m.metal] || m.metal}</td>
+                    <td className="py-2 text-right text-slate-300">{g(m.owedGrams)}</td>
+                    <td className="py-2 text-right text-slate-300">{g(m.heldGrams)}</td>
+                    <td className="py-2 text-right text-amber-300">{g(m.gapGrams)}</td>
+                    <td className={`py-2 text-right font-semibold ${m.backingPct >= 100 ? "text-emerald-400" : "text-amber-400"}`}>{Number(m.backingPct || 0).toFixed(1)}%</td>
+                    <td className="py-2 text-right text-slate-300">{usd(m.gapUSD)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-[11px] text-slate-500 mt-3">Reserve USD: {usd(rc.reservesUSD)} · Market cap: {usd(rc.marketCapUSD)}. &quot;Held&quot; gramlar reserve ledger'dan gelir (procure edince güncellenir).</p>
+          </div>
+        )}
       </div>
     </div>
   );

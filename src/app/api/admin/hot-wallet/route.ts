@@ -126,16 +126,7 @@ const HOT_WALLETS = {
     network: 'Bitcoin Mainnet',
     explorer: 'https://blockstream.info/address/',
   },
-  SOL: {
-    address: process.env.HOT_WALLET_SOL_ADDRESS || '',
-    network: 'Solana Mainnet',
-    explorer: 'https://solscan.io/account/',
-  },
-  XRP: {
-    address: process.env.HOT_WALLET_XRP_ADDRESS || '',
-    network: 'XRP Ledger',
-    explorer: 'https://xrpscan.com/account/',
-  },
+  // SOL & XRP retired — not supported by the deposit/custody stack.
 };
 
 export async function GET(request: NextRequest) {
