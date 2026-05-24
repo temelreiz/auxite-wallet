@@ -120,7 +120,10 @@ export async function GET(request: NextRequest) {
 
   const plan: any[] = [];
   const errors: any[] = [];
-  const all = await fundedEvmAddresses();
+  // ?address= limits the scan to one address — reliable on the public RPC,
+  // which rate-limits the full multi-address scan.
+  const only = new URL(request.url).searchParams.get("address");
+  const all = only ? [only.toLowerCase()] : await fundedEvmAddresses();
   let chainId = "unknown";
   try { chainId = String((await provider.getNetwork()).chainId); } catch {}
   let rpcHost = "unknown";
