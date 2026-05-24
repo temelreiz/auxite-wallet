@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // tronweb is a heavy server-only lib (used by /api/admin/sweep-tron); keep it
+  // out of the bundle so the build doesn't choke on its node deps.
+  experimental: {
+    serverComponentsExternalPackages: ["tronweb"],
+  },
+
   async redirects() {
     return [
       {
