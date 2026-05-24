@@ -21,8 +21,14 @@ async function probeSignatureVariants() {
   const rawKey = process.env.KUVEYTTURK_RSA_PRIVATE_KEY || "";
   const pem = rawKey.includes("\\n") ? rawKey.replace(/\\n/g, "\n") : rawKey;
 
+  // Derive the public key from the env PRIVATE key. THIS is exactly what must be
+  // registered at the bank for signatures to validate — compare it to the portal.
+  let derivedPublicKey = "";
+  try { derivedPublicKey = crypto.createPublicKey(pem).export({ type: "spki", format: "pem" }) as string; }
+  catch (e: any) { derivedPublicKey = `ERR ${e?.message}`; }
+
   let token = "";
-  try { token = await getAccessToken(); } catch (e: any) { return { tokenError: e?.message }; }
+  try { token = await getAccessToken(); } catch (e: any) { return { derivedPublicKey, tokenError: e?.message }; }
 
   const sign = (input: string) => {
     const s = crypto.createSign("RSA-SHA256");
@@ -59,7 +65,7 @@ async function probeSignatureVariants() {
       out.push({ variant: name, fetchError: e?.message });
     }
   }
-  return { tokenLen: token.length, results: out };
+  return { tokenLen: token.length, derivedPublicKey, results: out };
 }
 
 export const dynamic = "force-dynamic";
