@@ -120,7 +120,12 @@ export async function GET(request: NextRequest) {
 
   const plan: any[] = [];
   const errors: any[] = [];
-  for (const addr of await fundedEvmAddresses()) {
+  const all = await fundedEvmAddresses();
+  let chainId = "unknown";
+  try { chainId = String((await provider.getNetwork()).chainId); } catch {}
+  let rpcHost = "unknown";
+  try { rpcHost = new URL(RPC).host; } catch {}
+  for (const addr of all) {
     let bal;
     try {
       bal = await balancesOf(addr);
@@ -147,6 +152,7 @@ export async function GET(request: NextRequest) {
     success: true,
     dry: true,
     destination: HOT,
+    diag: { rpcHost, chainId, scanned: all.length },
     fundedCount: plan.length,
     plan,
     ...(errors.length ? { rpcErrors: errors } : {}),
