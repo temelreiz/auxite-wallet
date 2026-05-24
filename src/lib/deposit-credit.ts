@@ -109,6 +109,28 @@ export async function creditUserDeposit(params: CreditParams): Promise<CreditRes
       { ex: 86400 * 365 }
     );
 
+    // Recent-credits feed for the /admin Deposits panel (best-effort).
+    try {
+      await redis.lpush(
+        "deposit:credits:recent",
+        JSON.stringify({
+          walletAddress: address,
+          coin,
+          amount,
+          amountUsd,
+          creditedToken,
+          creditedAmount,
+          autoConverted: autoConvert,
+          chain,
+          txHash,
+          fromAddress,
+          source,
+          at: Date.now(),
+        })
+      );
+      await redis.ltrim("deposit:credits:recent", 0, 199);
+    } catch {}
+
     // Push (best-effort, non-blocking)
     try {
       const { notifyTransactionRich } = await import("./notification-sender");

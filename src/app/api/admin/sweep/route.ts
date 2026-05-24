@@ -15,6 +15,7 @@ import { ethers } from "ethers";
 import { getRedis } from "@/lib/redis";
 import { isHdConfigured, deriveEvmPrivateKey } from "@/lib/hd-deposit";
 import { getUserIdFromAddress, getDecryptedWallet } from "@/lib/kms-wallet";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -110,14 +111,21 @@ async function fundedEvmAddresses(): Promise<string[]> {
   return [...new Set([...hd, ...kms])];
 }
 
-function authed(request: NextRequest): boolean {
-  if (!CRON_SECRET) return false;
-  return request.headers.get("authorization") === `Bearer ${CRON_SECRET}`;
+// Accept either the CRON_SECRET bearer (cron jobs / ops scripts) OR a valid
+// admin session (so the /admin Deposits & Sweep panel can call this directly).
+async function authed(request: NextRequest): Promise<boolean> {
+  if (CRON_SECRET && request.headers.get("authorization") === `Bearer ${CRON_SECRET}`) return true;
+  try {
+    const a = await requireAdmin(request);
+    return a.authorized;
+  } catch {
+    return false;
+  }
 }
 
 // ── Dry-run: report what would be swept ─────────────────────────────────────
 export async function GET(request: NextRequest) {
-  if (!authed(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await authed(request))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!HOT) return NextResponse.json({ error: "hot_wallet_not_configured" }, { status: 503 });
 
   const plan: any[] = [];
@@ -167,7 +175,7 @@ export async function GET(request: NextRequest) {
 
 // ── Execute: gas-station + sweep to hot wallet ──────────────────────────────
 export async function POST(request: NextRequest) {
-  if (!authed(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await authed(request))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!HOT || !HOT_PK) return NextResponse.json({ error: "hot_wallet_not_configured" }, { status: 503 });
 
   let body: any = {};

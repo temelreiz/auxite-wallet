@@ -398,7 +398,6 @@ const TABS = [
   { id: "alerts", label: "Duyuru", icon: "📢" },
   { id: "news", label: "Haberler", icon: "📰" },
   { id: "users", label: "Kullanıcı", icon: "👥" },
-  { id: "withdraws", label: "Çekim", icon: "📤" },
   { id: "mobile", label: "Mobil", icon: "📱" },
   { id: "mint", label: "Platform Stok", icon: "📦" },
   { id: "website", label: "Website", icon: "🌐" },
@@ -408,8 +407,7 @@ const TABS = [
   { id: "risk", label: "Risk", icon: "🛡️" },
   { id: "leasing", label: "Leasing", icon: "🏦" },
   { id: "treasury", label: "AUXM Treasury", icon: "🏛️" },
-  { id: "depositMonitor", label: "Deposit Scanner", icon: "📡" },
-  { id: "redemption", label: "Redemption", icon: "📦" },
+  { id: "depositMonitor", label: "Deposits & Sweep", icon: "💸" },
   { id: "cashSettlement", label: "Cash Settlement", icon: "💰" },
   { id: "relationshipManagers", label: "RM / CRM", icon: "🤝" },
   { id: "emailCampaigns", label: "Email Kampanya", icon: "📧" },
@@ -5339,103 +5337,7 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "depositMonitor" && (
-            <DepositMonitorTab />
-          )}
-
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {/* REDEMPTION TAB */}
-          {/* ═══════════════════════════════════════════════════════════ */}
-          {activeTab === "redemption" && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-bold text-white">Physical Redemption Controls</h2>
-                  <p className="text-sm text-slate-400">Manage physical redemption settings, toggles, and pending requests</p>
-                </div>
-              </div>
-
-              {/* Global Toggles */}
-              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-                <h3 className="text-sm font-bold text-slate-300 mb-4">Global Settings</h3>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { key: 'redemption_enabled', label: 'Redemption Enabled', desc: 'Global kill switch', active: true },
-                    { key: 'courier_enabled', label: 'Courier Enabled', desc: 'Insured delivery option', active: true },
-                    { key: 'manual_approval', label: 'Manual Approval', desc: 'Require admin approval', active: true },
-                    { key: 'soft_launch', label: 'Soft Launch Mode', desc: 'Request-only mode', active: true },
-                  ].map((toggle) => (
-                    <div key={toggle.key} className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-slate-400">{toggle.label}</span>
-                        <div className={`w-10 h-5 ${toggle.active ? 'bg-green-600' : 'bg-slate-600'} rounded-full relative cursor-pointer`}>
-                          <div className={`w-4 h-4 bg-white rounded-full absolute ${toggle.active ? 'right-0.5' : 'left-0.5'} top-0.5`} />
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-slate-500">{toggle.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Per-Metal Config */}
-              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-                <h3 className="text-sm font-bold text-slate-300 mb-4">Per-Metal Configuration</h3>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-slate-400 text-xs border-b border-slate-700">
-                      <th className="text-left py-2 px-3">Metal</th>
-                      <th className="text-left py-2 px-3">Min Threshold</th>
-                      <th className="text-left py-2 px-3">Fee %</th>
-                      <th className="text-left py-2 px-3">SLA (days)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { sym: 'AUXG', name: 'Gold', min: '100g', fee: '0.75%', sla: '5-15' },
-                      { sym: 'AUXS', name: 'Silver', min: '31,000g', fee: '1.25%', sla: '10-25' },
-                      { sym: 'AUXPT', name: 'Platinum', min: '100g', fee: '1.50%', sla: '5-20' },
-                      { sym: 'AUXPD', name: 'Palladium', min: '100g', fee: '1.50%', sla: '5-20' },
-                    ].map((m) => (
-                      <tr key={m.sym} className="border-b border-slate-700/50">
-                        <td className="py-3 px-3 text-white font-semibold">{m.sym} <span className="text-slate-500 text-xs">{m.name}</span></td>
-                        <td className="py-3 px-3 text-slate-300">{m.min}</td>
-                        <td className="py-3 px-3 text-[#D4B47A]">{m.fee}</td>
-                        <td className="py-3 px-3 text-slate-300">{m.sla}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Vault Locations */}
-              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-                <h3 className="text-sm font-bold text-slate-300 mb-4">Vault Locations</h3>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { id: 'zurich', name: 'Zurich', country: 'Switzerland', active: true },
-                    { id: 'dubai', name: 'Dubai', country: 'UAE', active: true },
-                    { id: 'london', name: 'London', country: 'UK', active: false },
-                    { id: 'singapore', name: 'Singapore', country: 'Singapore', active: false },
-                  ].map((v) => (
-                    <div key={v.id} className={`bg-slate-900/50 rounded-lg p-4 border ${v.active ? 'border-[#2F6F62]/40' : 'border-slate-700'}`}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-bold text-white">{v.name}</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${v.active ? 'bg-[#2F6F62]/20 text-[#2F6F62]' : 'bg-slate-700 text-slate-400'}`}>
-                          {v.active ? 'Active' : 'Soon'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500">{v.country}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Pending Redemptions */}
-              <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
-                <h3 className="text-sm font-bold text-slate-300 mb-4">Pending Redemption Requests</h3>
-                <p className="text-sm text-slate-500 text-center py-6">No pending redemption requests</p>
-              </div>
-            </div>
+            <DepositsSweepTab />
           )}
 
           {/* ═══════════════════════════════════════════ */}
@@ -6635,265 +6537,208 @@ function RiskDashboardTab() {
 // ═══════════════════════════════════════════════════════════════════════════════
 // DEPOSIT MONITOR TAB
 // ═══════════════════════════════════════════════════════════════════════════════
-function DepositMonitorTab() {
-  const [scannerData, setScannerData] = useState<any>(null);
-  const [recentDeposits, setRecentDeposits] = useState<any[]>([]);
-  const [orphanDeposits, setOrphanDeposits] = useState<any[]>([]);
-  const [stats, setStats] = useState<any[]>([]);
+function DepositsSweepTab() {
+  const [info, setInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [actionMsg, setActionMsg] = useState('');
-  const [reconcileAddress, setReconcileAddress] = useState('');
+  const [msg, setMsg] = useState('');
+
+  const [evmDry, setEvmDry] = useState<any>(null);
+  const [evmResult, setEvmResult] = useState<any>(null);
+  const [evmBusy, setEvmBusy] = useState(false);
+
+  const [tronDry, setTronDry] = useState<any>(null);
+  const [tronResult, setTronResult] = useState<any>(null);
+  const [tronBusy, setTronBusy] = useState(false);
 
   const adminToken = typeof window !== 'undefined' ? sessionStorage.getItem('auxite_admin_token') : null;
+  const authHeaders = { Authorization: `Bearer ${adminToken}` };
 
-  const fetchData = useCallback(async () => {
+  const flash = (m: string, ms = 5000) => {
+    setMsg(m);
+    setTimeout(() => setMsg(''), ms);
+  };
+
+  const loadInfo = useCallback(async () => {
     if (!adminToken) return;
     try {
       setLoading(true);
-      const headers = { Authorization: `Bearer ${adminToken}` };
-
-      const [scannerRes, recentRes, orphanRes, statsRes] = await Promise.all([
-        fetch('/api/admin/deposit-monitor?type=scanner', { headers }),
-        fetch('/api/admin/deposit-monitor?type=recent', { headers }),
-        fetch('/api/admin/deposit-monitor?type=orphan', { headers }),
-        fetch('/api/admin/deposit-monitor?type=stats', { headers }),
-      ]);
-
-      const [scanner, recent, orphan, statsData] = await Promise.all([
-        scannerRes.json(),
-        recentRes.json(),
-        orphanRes.json(),
-        statsRes.json(),
-      ]);
-
-      setScannerData(scanner);
-      setRecentDeposits(recent.deposits || []);
-      setOrphanDeposits(orphan.orphans || []);
-      setStats(statsData.stats || []);
+      const res = await fetch('/api/admin/deposits', { headers: { Authorization: `Bearer ${adminToken}` } });
+      const data = await res.json();
+      setInfo(data);
     } catch (err) {
-      console.error('Deposit monitor fetch error:', err);
+      console.error('deposits info error:', err);
     } finally {
       setLoading(false);
     }
   }, [adminToken]);
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 30000);
+    loadInfo();
+    const interval = setInterval(loadInfo, 30000);
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, [loadInfo]);
 
-  const toggleScanner = async () => {
+  const evmDryRun = async () => {
     if (!adminToken) return;
+    setEvmBusy(true); setEvmResult(null);
     try {
-      const res = await fetch('/api/admin/deposit-monitor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
-        body: JSON.stringify({ action: 'toggle' }),
-      });
+      const res = await fetch('/api/admin/sweep?dry=1', { headers: authHeaders });
       const data = await res.json();
-      setActionMsg(data.message || 'Done');
-      fetchData();
-      setTimeout(() => setActionMsg(''), 3000);
-    } catch (err) {
-      setActionMsg('Error toggling scanner');
+      setEvmDry(data);
+      if (!res.ok) flash(`EVM dry-run: ${data.error || 'failed'}`);
+    } catch (err: any) {
+      flash(`EVM dry-run error: ${err?.message || err}`);
+    } finally {
+      setEvmBusy(false);
     }
   };
 
-  const resetChain = async (chain: string) => {
+  const evmExecute = async () => {
     if (!adminToken) return;
+    const typed = window.prompt('FUND MOVEMENT — sweep all controllable EVM (Base) deposits to the hot wallet.\nType SWEEP to confirm:');
+    if (typed !== 'SWEEP') { flash('EVM sweep cancelled'); return; }
+    setEvmBusy(true); setEvmResult(null);
     try {
-      const res = await fetch('/api/admin/deposit-monitor', {
+      const res = await fetch('/api/admin/sweep', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
-        body: JSON.stringify({ action: 'rescan', chain }),
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: 'SWEEP' }),
       });
       const data = await res.json();
-      setActionMsg(data.message || 'Done');
-      fetchData();
-      setTimeout(() => setActionMsg(''), 3000);
-    } catch (err) {
-      setActionMsg('Error resetting chain');
+      setEvmResult(data);
+      flash(res.ok ? 'EVM sweep executed — see results below' : `EVM sweep: ${data.error || 'failed'}`);
+      loadInfo();
+    } catch (err: any) {
+      flash(`EVM sweep error: ${err?.message || err}`);
+    } finally {
+      setEvmBusy(false);
     }
   };
 
-  const reconcileOrphan = async (txHash: string) => {
-    if (!adminToken || !reconcileAddress) {
-      setActionMsg('Enter user address');
-      return;
-    }
+  const tronDryRun = async () => {
+    if (!adminToken) return;
+    setTronBusy(true); setTronResult(null);
     try {
-      const res = await fetch('/api/admin/deposit-monitor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
-        body: JSON.stringify({ action: 'reconcile', txHash, userAddress: reconcileAddress }),
-      });
+      const res = await fetch('/api/admin/sweep-tron?dry=1', { headers: authHeaders });
       const data = await res.json();
-      setActionMsg(data.message || 'Reconciled');
-      setReconcileAddress('');
-      fetchData();
-      setTimeout(() => setActionMsg(''), 5000);
-    } catch (err) {
-      setActionMsg('Error reconciling');
+      setTronDry(data);
+      if (!res.ok) flash(`Tron dry-run: ${data.error || 'failed'}`);
+    } catch (err: any) {
+      flash(`Tron dry-run error: ${err?.message || err}`);
+    } finally {
+      setTronBusy(false);
     }
   };
 
-  if (loading && !scannerData) {
+  const tronExecute = async () => {
+    if (!adminToken) return;
+    const typed = window.prompt('FUND MOVEMENT — sweep all controllable Tron (TRC20 USDT) deposits to the treasury.\nRequires TRX in the treasury for energy. Type SWEEP to confirm:');
+    if (typed !== 'SWEEP') { flash('Tron sweep cancelled'); return; }
+    setTronBusy(true); setTronResult(null);
+    try {
+      const res = await fetch('/api/admin/sweep-tron', {
+        method: 'POST',
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: 'SWEEP' }),
+      });
+      const data = await res.json();
+      setTronResult(data);
+      flash(res.ok ? 'Tron sweep executed — see results below' : `Tron sweep: ${data.error || 'failed'}`);
+      loadInfo();
+    } catch (err: any) {
+      flash(`Tron sweep error: ${err?.message || err}`);
+    } finally {
+      setTronBusy(false);
+    }
+  };
+
+  if (loading && !info) {
     return <div className="text-center py-20 text-slate-400">Yükleniyor...</div>;
   }
 
-  const scannerEnabled = scannerData?.scanner?.enabled !== false;
-  const lastRun = scannerData?.scanner?.lastRun;
-  const chains = scannerData?.chains || {};
+  const cfg = info?.config || {};
+  const armed = info?.armed || {};
+  const recent: any[] = info?.recentCredits || [];
+  const short = (s: any, n = 8) => (s ? `${String(s).slice(0, n)}…${String(s).slice(-4)}` : '—');
 
   return (
     <div className="space-y-6">
-      {/* Action Message */}
-      {actionMsg && (
-        <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-3 text-emerald-400 text-sm text-center">
-          {actionMsg}
+      {msg && (
+        <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-3 text-emerald-300 text-sm text-center">
+          {msg}
         </div>
       )}
 
-      {/* Scanner Status */}
+      {/* Deposit system status */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            📡 Deposit Scanner
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${
-              scannerEnabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
-            }`}>
-              <span className={`w-2 h-2 rounded-full ${scannerEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
-              {scannerEnabled ? 'ACTIVE' : 'PAUSED'}
-            </span>
-          </h3>
-          <button
-            onClick={toggleScanner}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              scannerEnabled
-                ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
-            }`}
-          >
-            {scannerEnabled ? '⏸ Pause' : '▶ Activate'}
-          </button>
+          <h3 className="text-lg font-semibold flex items-center gap-2">💸 Deposit System</h3>
+          <button onClick={loadInfo} className="px-3 py-1.5 text-xs font-semibold bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">↻ Refresh</button>
         </div>
-
-        {lastRun && (
-          <p className="text-xs text-slate-500 mb-4">
-            Last scan: {new Date(lastRun).toLocaleString()} —
-            Deposits: {scannerData?.scanner?.depositCount || 0} |
-            Orphan: {scannerData?.scanner?.orphanCount || 0} |
-            Errors: {scannerData?.scanner?.errorCount || 0}
-          </p>
-        )}
-
-        {/* Chain Status Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {(['eth', 'btc', 'xrp', 'sol'] as const).map((chain) => (
-            <div key={chain} className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-bold uppercase text-slate-400">{chain}</span>
-                <button
-                  onClick={() => resetChain(chain)}
-                  className="text-[10px] text-slate-500 hover:text-amber-400 transition-colors"
-                  title="Reset scanner state"
-                >
-                  🔄
-                </button>
-              </div>
-              <p className="text-xs text-slate-500 truncate">
-                {chain === 'eth' && `Block: ${chains.eth?.lastBlock || '—'}`}
-                {chain === 'btc' && `TX: ${String(chains.btc?.lastTxid || '—').slice(0, 12)}...`}
-                {chain === 'xrp' && `Ledger: ${chains.xrp?.lastLedger || '—'}`}
-                {chain === 'sol' && `Sig: ${String(chains.sol?.lastSignature || '—').slice(0, 12)}...`}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Daily Stats */}
-      {stats.length > 0 && (
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-          <h3 className="text-lg font-semibold mb-4">📊 Daily Stats (7 days)</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-slate-400 text-xs uppercase">
-                  <th className="text-left py-2">Date</th>
-                  <th className="text-right py-2">Total</th>
-                  <th className="text-right py-2">ETH</th>
-                  <th className="text-right py-2">BTC</th>
-                  <th className="text-right py-2">XRP</th>
-                  <th className="text-right py-2">SOL</th>
-                  <th className="text-right py-2">AUXM</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stats.map((day: any) => (
-                  <tr key={day.date} className="border-t border-slate-800">
-                    <td className="py-2 text-slate-300">{day.date}</td>
-                    <td className="py-2 text-right text-white font-semibold">{day.total || 0}</td>
-                    <td className="py-2 text-right text-slate-400">{day.eth || 0}</td>
-                    <td className="py-2 text-right text-slate-400">{day.btc || 0}</td>
-                    <td className="py-2 text-right text-slate-400">{day.xrp || 0}</td>
-                    <td className="py-2 text-right text-slate-400">{day.sol || 0}</td>
-                    <td className="py-2 text-right text-[#BFA181]">{formatAmount(Number(day.totalAuxm || 0), 'AUXM')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500 mb-1">Addresses issued</p>
+            <p className="text-2xl font-bold text-white">{info?.addressesIssued ?? 0}</p>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500 mb-1">Armed — EVM / BTC / Tron</p>
+            <p className="text-2xl font-bold text-white">{armed.evm ?? 0} / {armed.btc ?? 0} / {armed.tron ?? 0}</p>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500 mb-1">Key sources</p>
+            <p className="text-sm font-semibold mt-1">
+              <span className={cfg.hdConfigured ? 'text-emerald-400' : 'text-red-400'}>HD seed {cfg.hdConfigured ? '✓' : '✗'}</span>
+              <span className="mx-1 text-slate-600">·</span>
+              <span className={cfg.tronConfigured ? 'text-emerald-400' : 'text-red-400'}>Tron {cfg.tronConfigured ? '✓' : '✗'}</span>
+            </p>
+            <p className={`text-xs mt-1 ${cfg.baseRpcConfigured ? 'text-emerald-400' : 'text-amber-400'}`}>Base RPC {cfg.baseRpcConfigured ? 'set ✓' : 'public (rate-limited)'}</p>
+          </div>
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4">
+            <p className="text-[10px] uppercase text-slate-500 mb-1">Hot wallets</p>
+            <p className="text-xs font-mono text-slate-300">EVM: {short(cfg.hotWalletEvm, 10)}</p>
+            <p className="text-xs font-mono text-slate-300 mt-1">Tron: {short(cfg.hotWalletTron, 8)}</p>
           </div>
         </div>
-      )}
+        <p className="text-[11px] text-slate-500 mt-4">
+          Deposits auto-credit via the per-minute watcher (per-user HD/KMS addresses). Held as the crypto sent — no auto-convert unless the user opts in.
+        </p>
+      </div>
 
-      {/* Recent Deposits */}
+      {/* Recent auto-credits */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold mb-4">📥 Recent Deposits ({recentDeposits.length})</h3>
-        {recentDeposits.length === 0 ? (
-          <p className="text-slate-500 text-sm text-center py-8">No deposits detected yet</p>
+        <h3 className="text-lg font-semibold mb-4">📥 Recent auto-credits ({recent.length})</h3>
+        {recent.length === 0 ? (
+          <p className="text-slate-500 text-sm text-center py-8">No auto-credits recorded yet</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase">
                   <th className="text-left py-2">Time</th>
+                  <th className="text-left py-2">User</th>
                   <th className="text-left py-2">Chain</th>
                   <th className="text-left py-2">Coin</th>
                   <th className="text-right py-2">Amount</th>
                   <th className="text-right py-2">USD</th>
-                  <th className="text-right py-2">AUXM</th>
-                  <th className="text-left py-2">From</th>
+                  <th className="text-left py-2">Credited</th>
                   <th className="text-left py-2">TX</th>
                 </tr>
               </thead>
               <tbody>
-                {recentDeposits.slice(0, 20).map((d: any, i: number) => (
+                {recent.slice(0, 30).map((d: any, i: number) => (
                   <tr key={i} className="border-t border-slate-800 hover:bg-slate-800/30">
-                    <td className="py-2 text-slate-400 text-xs">
-                      {d.processedAt ? new Date(d.processedAt).toLocaleString() : '—'}
-                    </td>
-                    <td className="py-2">
-                      <span className="px-1.5 py-0.5 rounded text-xs font-bold uppercase bg-slate-700">
-                        {d.chain}
-                      </span>
-                    </td>
+                    <td className="py-2 text-slate-400 text-xs">{d.at ? new Date(d.at).toLocaleString() : '—'}</td>
+                    <td className="py-2 text-xs font-mono text-slate-400">{short(d.walletAddress, 8)}</td>
+                    <td className="py-2"><span className="px-1.5 py-0.5 rounded text-xs font-bold uppercase bg-slate-700">{d.chain}</span></td>
                     <td className="py-2 text-white font-semibold">{d.coin}</td>
-                    <td className="py-2 text-right text-slate-300">{formatAmount(Number(d.amount), d.coin || 'ETH')}</td>
+                    <td className="py-2 text-right text-slate-300">{Number(d.amount || 0)}</td>
                     <td className="py-2 text-right text-slate-300">${Number(d.amountUsd || 0).toFixed(2)}</td>
-                    <td className="py-2 text-right text-[#BFA181] font-semibold">
-                      {formatAmount(Number(d.auxmCredited || 0), 'AUXM')}
-                      {d.bonusCredited > 0 && (
-                        <span className="text-emerald-400 text-xs ml-1">+{formatAmount(Number(d.bonusCredited), 'AUXM')}</span>
-                      )}
+                    <td className="py-2 text-xs">
+                      {d.autoConverted
+                        ? <span className="text-[#BFA181]">{Number(d.creditedAmount || 0).toFixed(2)} AUXM</span>
+                        : <span className="text-emerald-400">{Number(d.creditedAmount || 0)} {d.creditedToken}</span>}
                     </td>
-                    <td className="py-2 text-xs text-slate-500 font-mono truncate max-w-[100px]">
-                      {d.fromAddress?.slice(0, 8)}...
-                    </td>
-                    <td className="py-2 text-xs text-slate-500 font-mono truncate max-w-[100px]">
-                      {d.txHash?.slice(0, 10)}...
-                    </td>
+                    <td className="py-2 text-xs text-slate-500 font-mono">{short(d.txHash, 8)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -6902,49 +6747,124 @@ function DepositMonitorTab() {
         )}
       </div>
 
-      {/* Orphan Deposits */}
+      {/* EVM Sweep */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold mb-4">⚠️ Orphan Deposits ({orphanDeposits.length})</h3>
-        <p className="text-xs text-slate-500 mb-4">
-          Kullanıcı ile eşleşemeyen deposit&apos;ler. Manuel olarak kullanıcıya atayabilirsiniz.
-        </p>
-        {orphanDeposits.length === 0 ? (
-          <p className="text-slate-500 text-sm text-center py-4">No orphan deposits</p>
-        ) : (
-          <div className="space-y-3">
-            {orphanDeposits.map((d: any, i: number) => (
-              <div key={i} className="bg-slate-900/50 border border-amber-500/20 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="px-1.5 py-0.5 rounded text-xs font-bold uppercase bg-slate-700">
-                      {d.chain}
-                    </span>
-                    <span className="text-white font-semibold">{d.coin}</span>
-                    <span className="text-slate-300">{formatAmount(Number(d.amount), d.coin || 'ETH')}</span>
-                  </div>
-                  <span className="text-xs text-slate-500">
-                    {d.receivedAt ? new Date(d.receivedAt).toLocaleString() : '—'}
-                  </span>
-                </div>
-                <div className="text-xs text-slate-500 font-mono mb-2">
-                  From: {d.fromAddress} | TX: {d.txHash?.slice(0, 20)}...
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="User address (0x...)"
-                    value={reconcileAddress}
-                    onChange={(e) => setReconcileAddress(e.target.value)}
-                    className="flex-1 bg-slate-800 border border-slate-700 rounded-lg py-1.5 px-3 text-sm text-white"
-                  />
-                  <button
-                    onClick={() => reconcileOrphan(d.txHash)}
-                    className="px-3 py-1.5 bg-amber-500/20 text-amber-400 rounded-lg text-sm font-semibold hover:bg-amber-500/30 transition-colors"
-                  >
-                    Reconcile
-                  </button>
-                </div>
-              </div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold">🟦 Sweep — EVM (Base): USDC / USDT / ETH</h3>
+          <div className="flex gap-2">
+            <button onClick={evmDryRun} disabled={evmBusy} className="px-3 py-1.5 text-xs font-semibold bg-slate-700 hover:bg-slate-600 rounded-lg disabled:opacity-50 transition-colors">{evmBusy ? '…' : 'Dry-run'}</button>
+            <button onClick={evmExecute} disabled={evmBusy} className="px-3 py-1.5 text-xs font-semibold bg-red-500/20 text-red-300 hover:bg-red-500/30 rounded-lg disabled:opacity-50 transition-colors">Execute sweep →</button>
+          </div>
+        </div>
+        <p className="text-[11px] text-slate-500 mb-3">Gas-stations each address, then transfers tokens to the hot wallet. Dry-run first to see what would move.</p>
+
+        {evmDry && (
+          <div className="text-xs text-slate-400 mb-3 space-y-1">
+            <p>Destination: <span className="font-mono text-slate-300">{evmDry.destination}</span></p>
+            {evmDry.diag && <p>RPC: {evmDry.diag.rpcHost} · chainId {evmDry.diag.chainId} · scanned {evmDry.diag.scanned}</p>}
+            {Array.isArray(evmDry.rpcErrors) && evmDry.rpcErrors.length > 0 && (
+              <p className="text-amber-400">{evmDry.rpcErrors.length} RPC error(s) — funded addresses may be hidden. Set a keyed BASE_RPC_URL.</p>
+            )}
+            {evmDry.fundedCount === 0 && <p className="text-slate-500">No funded EVM addresses.</p>}
+          </div>
+        )}
+        {evmDry?.plan?.length > 0 && (
+          <div className="overflow-x-auto mb-3">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-slate-400 text-xs uppercase">
+                  <th className="text-left py-2">Address</th>
+                  <th className="text-right py-2">USDC</th>
+                  <th className="text-right py-2">USDT</th>
+                  <th className="text-right py-2">ETH</th>
+                  <th className="text-left py-2">Key</th>
+                  <th className="text-left py-2">Gas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {evmDry.plan.map((p: any, i: number) => (
+                  <tr key={i} className="border-t border-slate-800">
+                    <td className="py-2 text-xs font-mono text-slate-300">{short(p.address, 10)}</td>
+                    <td className="py-2 text-right text-slate-300">{p.usdc}</td>
+                    <td className="py-2 text-right text-slate-300">{p.usdt}</td>
+                    <td className="py-2 text-right text-slate-300">{p.eth}</td>
+                    <td className="py-2 text-xs">{p.controllable ? <span className="text-emerald-400">{p.keySource}</span> : <span className="text-red-400">no key</span>}</td>
+                    <td className="py-2 text-xs">{p.needsGasStation ? <span className="text-amber-400">needs gas</span> : <span className="text-slate-500">ok</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {evmResult?.results && (
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-3 space-y-1">
+            <p className="text-xs uppercase text-slate-500 mb-1">Execution result</p>
+            {evmResult.results.map((r: any, i: number) => (
+              <p key={i} className="text-xs font-mono text-slate-300">
+                {short(r.address, 10)} — <span className={r.status === 'swept' ? 'text-emerald-400' : 'text-amber-400'}>{r.status}</span>
+                {Array.isArray(r.swept) && r.swept.map((s: any, j: number) => <span key={j} className="text-slate-400"> · {s.amount} {s.token} {short(s.txHash, 8)}</span>)}
+                {r.error && <span className="text-red-400"> · {r.error}</span>}
+              </p>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Tron Sweep */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold">🔴 Sweep — Tron (TRC20 USDT)</h3>
+          <div className="flex gap-2">
+            <button onClick={tronDryRun} disabled={tronBusy} className="px-3 py-1.5 text-xs font-semibold bg-slate-700 hover:bg-slate-600 rounded-lg disabled:opacity-50 transition-colors">{tronBusy ? '…' : 'Dry-run'}</button>
+            <button onClick={tronExecute} disabled={tronBusy} className="px-3 py-1.5 text-xs font-semibold bg-red-500/20 text-red-300 hover:bg-red-500/30 rounded-lg disabled:opacity-50 transition-colors">Execute sweep →</button>
+          </div>
+        </div>
+        <p className="text-[11px] text-slate-500 mb-3">TRC20 transfers burn energy paid in TRX. The treasury must hold TRX (≈40+ per gasless address) or execution returns insufficient_treasury_trx.</p>
+
+        {tronDry && (
+          <div className="text-xs text-slate-400 mb-3 space-y-1">
+            <p>Treasury: <span className="font-mono text-slate-300">{tronDry.treasury}</span></p>
+            <p>Treasury TRX: <span className={tronDry.gasReady ? 'text-emerald-400' : 'text-amber-400'}>{tronDry.treasuryTrx} {tronDry.gasReady ? '(gas ready)' : '(needs TRX)'}</span></p>
+            {tronDry.note && <p className="text-slate-500">{tronDry.note}</p>}
+            {tronDry.fundedCount === 0 && <p className="text-slate-500">No funded Tron addresses.</p>}
+          </div>
+        )}
+        {tronDry?.plan?.length > 0 && (
+          <div className="overflow-x-auto mb-3">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-slate-400 text-xs uppercase">
+                  <th className="text-left py-2">Address</th>
+                  <th className="text-right py-2">USDT</th>
+                  <th className="text-right py-2">TRX</th>
+                  <th className="text-left py-2">Key</th>
+                  <th className="text-left py-2">Top-up</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tronDry.plan.map((p: any, i: number) => (
+                  <tr key={i} className="border-t border-slate-800">
+                    <td className="py-2 text-xs font-mono text-slate-300">{short(p.address, 10)}</td>
+                    <td className="py-2 text-right text-slate-300">{p.usdt}</td>
+                    <td className="py-2 text-right text-slate-300">{p.trx}</td>
+                    <td className="py-2 text-xs">{p.controllable ? <span className="text-emerald-400">ok</span> : <span className="text-red-400">no key</span>}</td>
+                    <td className="py-2 text-xs">{p.needsTrxTopup ? <span className="text-amber-400">needs TRX</span> : <span className="text-slate-500">ok</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {tronResult?.results && (
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-3 space-y-1">
+            <p className="text-xs uppercase text-slate-500 mb-1">Execution result</p>
+            {tronResult.results.map((r: any, i: number) => (
+              <p key={i} className="text-xs font-mono text-slate-300">
+                {short(r.address, 10)} — <span className={r.status === 'swept' ? 'text-emerald-400' : 'text-amber-400'}>{r.status}</span>
+                {r.txid && <span className="text-slate-400"> · {short(r.txid, 8)}</span>}
+                {r.error && <span className="text-red-400"> · {r.error}</span>}
+                {r.treasuryTrx !== undefined && <span className="text-amber-400"> · treasury {r.treasuryTrx} TRX</span>}
+              </p>
             ))}
           </div>
         )}
