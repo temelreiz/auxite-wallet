@@ -32,7 +32,7 @@ import {
   needsConversion,
   createLiquidationOrder,
   executeLiquidation,
-  getBinancePrice,
+  getCryptoSpotPrice,
 } from './crypto-liquidation-service';
 
 import {
@@ -385,8 +385,8 @@ export async function queueTradeForProcurement(params: {
   let fromValueUSD = params.fromAmount;
 
   if (params.fromToken.toUpperCase() !== 'AUXM' && params.fromToken.toUpperCase() !== 'USDT') {
-    // For crypto payments, get current price
-    const price = await getBinancePrice(params.fromToken);
+    // For crypto payments, get current price from the active liquidation venue
+    const price = await getCryptoSpotPrice(params.fromToken);
     if (price > 0) {
       fromValueUSD = params.fromAmount * price;
     }
