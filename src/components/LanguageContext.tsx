@@ -1,5 +1,7 @@
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { isPublicMarketingPath } from "@/lib/public-routes";
 
 // ============================================
 // LANGUAGE TYPES & CONFIG
@@ -914,6 +916,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [lang, setLangState] = useState<LanguageCode>("tr");
   const [mounted, setMounted] = useState(false);
 
@@ -956,7 +959,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const isRTL = lang === "ar";
 
-  if (!mounted) {
+  // Public marketing pages must be server-rendered for SEO, so render them
+  // immediately with the default language (client swaps to the saved language
+  // after mount). Authenticated paths keep the original mount gate.
+  if (!mounted && !isPublicMarketingPath(pathname)) {
     return null;
   }
 

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { useAccount, useSwitchChain } from "wagmi";
 import { APP_CHAIN } from "@/config/chains";
 import { useLanguage } from "@/components/LanguageContext";
+import { isPublicMarketingPath } from "@/lib/public-routes";
 
 const translations = {
   tr: {
@@ -50,7 +52,16 @@ const translations = {
   },
 };
 
+// No need to run the wrong-network banner or 1s chain polling on public
+// marketing pages — they have no wallet UX. Skip the wallet-dependent body
+// there.
 export function ChainGuard() {
+  const pathname = usePathname();
+  if (isPublicMarketingPath(pathname)) return null;
+  return <ChainGuardInner />;
+}
+
+function ChainGuardInner() {
   const { lang } = useLanguage();
   const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const { isConnected } = useAccount();

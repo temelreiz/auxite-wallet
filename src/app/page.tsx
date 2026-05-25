@@ -1,44 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    // If user is already logged in, redirect to vault
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      setIsLoggedIn(true);
+    // Client-side enhancement: send already-authenticated users straight to
+    // their vault. The landing markup below is always server-rendered so that
+    // crawlers (and pre-hydration users) get real, indexable content instead
+    // of a loading spinner.
+    if (localStorage.getItem("authToken")) {
       router.replace("/vault");
-    } else {
-      setChecked(true);
     }
   }, [router]);
 
-  // Show loading while checking auth
-  if (!checked && !isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">
-        <div className="animate-spin w-6 h-6 border-2 border-stone-300 dark:border-zinc-600 border-t-[#BFA181] rounded-full" />
-      </div>
-    );
-  }
-
-  // If logged in, show loading (redirecting)
-  if (isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">
-        <div className="animate-spin w-6 h-6 border-2 border-stone-300 dark:border-zinc-600 border-t-[#BFA181] rounded-full" />
-      </div>
-    );
-  }
-
-  // Public landing page for non-authenticated users
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       {/* Navigation */}

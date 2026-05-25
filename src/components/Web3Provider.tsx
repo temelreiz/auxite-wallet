@@ -1,6 +1,8 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { isPublicMarketingPath } from "@/lib/public-routes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, http, createConfig } from "wagmi";
 import { mainnet, sepolia, baseSepolia } from "wagmi/chains";
@@ -44,6 +46,7 @@ const config = createConfig({
 });
 
 export function Web3Provider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [storageError, setStorageError] = useState(false);
 
@@ -61,7 +64,14 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  if (!mounted) {
+  // Authenticated app waits for client mount before rendering (avoids
+  // wallet-related SSR/hydration issues). Public marketing pages skip this
+  // gate so their content is server-rendered and indexable — they still get
+  // the provider tree below, so shared components (e.g. TopNav) that read
+  // wallet context keep working.
+  const isPublic = isPublicMarketingPath(pathname);
+
+  if (!mounted && !isPublic) {
     return (
       <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-2 border-stone-300 dark:border-zinc-600 border-t-[#BFA181] rounded-full"></div>
@@ -69,7 +79,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     );
   }
 
-  if (storageError) {
+  if (storageError && !isPublic) {
     return (
       <div className="min-h-screen bg-stone-100 dark:bg-zinc-950 flex items-center justify-center p-4">
         <div className="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md text-center shadow-lg">
