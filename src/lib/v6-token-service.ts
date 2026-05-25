@@ -133,14 +133,17 @@ export async function getTokenPrices(token: string): Promise<{
   spreadPercent: { buy: number; sell: number };
 }> {
   try {
-    // Import spread functions
-    const { getMetalPrice } = await import('./price-cache');
+    // Import pricing functions
+    const { getMetalUsdPrice } = await import('./price-cache');
     const { getMetalSpread, applySpread } = await import('./spread-config');
 
     const tokenUpper = token.toUpperCase();
 
-    // Get base price (without spread) - should be in $/gram
-    const basePrice = await getMetalPrice(tokenUpper);
+    // Cost-basis prices from KuveytTürk ($/gram): buy = bank ask (what we pay
+    // to procure), sell = bank bid (what we get selling back). Falls back to
+    // GoldAPI international spot inside getMetalUsdPrice if KT is unavailable.
+    const buyBase = await getMetalUsdPrice(tokenUpper, 'buy');
+    const sellBase = await getMetalUsdPrice(tokenUpper, 'sell');
 
     // SAFETY CHECK: Prices should be per gram, not per ounce
     // Gold max ~$300/g, Silver max ~$10/g, Platinum max ~$200/g, Palladium max ~$200/g
@@ -148,20 +151,22 @@ export async function getTokenPrices(token: string): Promise<{
       AUXG: 500, AUXS: 20, AUXPT: 300, AUXPD: 300,
     };
     const maxPrice = maxGramPrices[tokenUpper] || 500;
-    if (basePrice > maxPrice) {
-      console.error(`🚨 PRICE SAFETY: ${tokenUpper} price $${basePrice.toFixed(2)} exceeds max $${maxPrice}/gram - likely ounce price!`);
-      throw new Error(`Price safety check failed: ${tokenUpper} $${basePrice.toFixed(2)} exceeds $${maxPrice}/gram limit`);
+    if (buyBase > maxPrice) {
+      console.error(`🚨 PRICE SAFETY: ${tokenUpper} price $${buyBase.toFixed(2)} exceeds max $${maxPrice}/gram - likely ounce price!`);
+      throw new Error(`Price safety check failed: ${tokenUpper} $${buyBase.toFixed(2)} exceeds $${maxPrice}/gram limit`);
     }
 
     // Get spread config for this metal
     const spreadConfig = await getMetalSpread(tokenUpper);
 
-    // Apply spread: askPrice = base + spread%, bidPrice = base - spread%
-    const askUSD = applySpread(basePrice, 'buy', spreadConfig.buy);
-    const bidUSD = applySpread(basePrice, 'sell', spreadConfig.sell);
+    // Apply margin spread ON TOP of the cost basis:
+    //   ask (buy)  = KT buy-base  × (1 + buySpread%)
+    //   bid (sell) = KT sell-base × (1 − sellSpread%)
+    const askUSD = applySpread(buyBase, 'buy', spreadConfig.buy);
+    const bidUSD = applySpread(sellBase, 'sell', spreadConfig.sell);
 
     console.log(`📊 ${tokenUpper} PRICES WITH SPREAD:`);
-    console.log(`   Base: $${basePrice.toFixed(2)}`);
+    console.log(`   Base (KT buy/sell): $${buyBase.toFixed(2)} / $${sellBase.toFixed(2)}`);
     console.log(`   Spread: buy=${spreadConfig.buy}%, sell=${spreadConfig.sell}%`);
     console.log(`   Ask (buy): $${askUSD.toFixed(2)}`);
     console.log(`   Bid (sell): $${bidUSD.toFixed(2)}`);

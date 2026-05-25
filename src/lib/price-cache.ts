@@ -1,5 +1,6 @@
 // Price Cache - Cache metal prices to avoid API rate limits
 import { Redis } from '@upstash/redis';
+import { getMetalPricesInUsd } from './kuveytturk-service';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -129,7 +130,7 @@ async function getFallbackPrices(): Promise<CachedPrices> {
 
 export async function getMetalPrice(metal: string): Promise<number> {
   const prices = await getMetalPrices();
-  
+
   switch (metal.toUpperCase()) {
     case 'AUXG': case 'GOLD': return prices.gold;
     case 'AUXS': case 'SILVER': return prices.silver;
@@ -137,4 +138,39 @@ export async function getMetalPrice(metal: string): Promise<number> {
     case 'AUXPD': case 'PALLADIUM': return prices.palladium;
     default: throw new Error(`Unknown metal: ${metal}`);
   }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// COST-BASIS PRICE — KuveytTürk (the venue we actually trade on), $/gram.
+// Used for the BUY/SELL *charge* so the quote reflects real procurement cost:
+//   buy  → KT buyRate-USD  (bank ask = what we pay to procure)
+//   sell → KT sellRate-USD (bank bid = what we get when we sell back)
+// Falls back to GoldAPI international spot (getMetalPrice) if KT is unavailable.
+// NOTE: valuation/display consumers still use getMetalPrices (spot) — this is
+// only for the trade charge path.
+// ════════════════════════════════════════════════════════════════════════════
+function toAuxSymbol(metal: string): 'AUXG' | 'AUXS' | 'AUXPT' | 'AUXPD' | null {
+  switch (metal.toUpperCase()) {
+    case 'AUXG': case 'GOLD': return 'AUXG';
+    case 'AUXS': case 'SILVER': return 'AUXS';
+    case 'AUXPT': case 'PLATINUM': return 'AUXPT';
+    case 'AUXPD': case 'PALLADIUM': return 'AUXPD';
+    default: return null;
+  }
+}
+
+export async function getMetalUsdPrice(metal: string, type: 'buy' | 'sell'): Promise<number> {
+  const symbol = toAuxSymbol(metal);
+  if (symbol) {
+    try {
+      const kt = await getMetalPricesInUsd(); // 15s-cached inside kuveytturk-service
+      const r = kt[symbol];
+      const p = r ? (type === 'buy' ? r.buyRateUSD : r.sellRateUSD) : 0;
+      if (p && p > 0) return p;
+    } catch (e) {
+      console.warn(`⚠️ KT price unavailable for ${metal} (${type}), falling back to spot:`, e);
+    }
+  }
+  // Fallback: GoldAPI international spot (single mid price, no bid/ask split)
+  return getMetalPrice(metal);
 }

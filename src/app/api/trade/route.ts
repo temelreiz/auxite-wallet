@@ -35,6 +35,7 @@ import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
 import { notifyTrade } from "@/lib/telegram";
 import { createCryptoPayout, checkPayoutBalance } from "@/lib/nowpayments-service";
 import { queueTradeForProcurement } from "@/lib/procurement-pipeline";
+import { getCryptoSpotPrice } from "@/lib/crypto-liquidation-service";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CRYPTO PRICE HELPER - Direkt Binance'den fiyat al
@@ -57,27 +58,38 @@ const FALLBACK_CRYPTO_PRICES: Record<string, number> = {
 
 async function getCryptoPrice(symbol: string): Promise<number> {
   const symbolLower = symbol.toLowerCase();
-  
+
   // USDT her zaman 1
   if (symbolLower === "usdt") return 1;
-  
-  const binanceSymbol = BINANCE_SYMBOLS[symbolLower];
-  if (!binanceSymbol) return FALLBACK_CRYPTO_PRICES[symbolLower] || 0;
-  
+
+  // PRIMARY: active liquidation venue (HTX by default). Keeps the USD value we
+  // credit a user's crypto aligned with the venue where we actually sell it.
   try {
-    const response = await fetch(
-      `https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`,
-      { cache: "no-store" }
-    );
-    
-    if (response.ok) {
-      const data = await response.json();
-      return parseFloat(data.price) || FALLBACK_CRYPTO_PRICES[symbolLower];
-    }
+    const venuePrice = await getCryptoSpotPrice(symbolLower);
+    if (venuePrice > 0) return venuePrice;
   } catch (error) {
-    console.error(`Binance price fetch error for ${symbol}:`, error);
+    console.error(`Venue (HTX) price fetch error for ${symbol}:`, error);
   }
-  
+
+  // FALLBACK: Binance ticker (covers symbols the venue adapter doesn't list)
+  const binanceSymbol = BINANCE_SYMBOLS[symbolLower];
+  if (binanceSymbol) {
+    try {
+      const response = await fetch(
+        `https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`,
+        { cache: "no-store" }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        const p = parseFloat(data.price);
+        if (p > 0) return p;
+      }
+    } catch (error) {
+      console.error(`Binance price fetch error for ${symbol}:`, error);
+    }
+  }
+
+  // LAST RESORT: hardcoded fallback
   return FALLBACK_CRYPTO_PRICES[symbolLower] || 0;
 }
 

@@ -229,6 +229,36 @@ async function processOrder(
     const totalTL = buyRateTL * order.metalGrams;
     const usdEquivalent = totalTL / usdTlRate.sell;
 
+    // ── Cost-coverage guard ──
+    // Verify the price we charged the user covers the all-in procurement cost
+    // (KT ask + HTX fee + USD/TL FX spread + fixed transfer fee). If margin is
+    // below the configured minimum, hold the order for manual review instead
+    // of buying at a loss. Skipped when the charged price is unknown (0).
+    const cm = config.costModel;
+    if (cm?.blockOnNegativeMargin && order.tradePricePerGram > 0) {
+      const ktCostPerGramUSD = buyRateTL / usdTlRate.sell;                 // KT ask, USD/g
+      const feeFactor = 1 + (cm.htxFeePct + cm.fxSpreadPct) / 100;         // HTX + USD/TL FX
+      const allInPerGram =
+        ktCostPerGramUSD * feeFactor + cm.withdrawFeeUSD / Math.max(order.metalGrams, 1e-9);
+      const revenuePerGram = order.tradePricePerGram;                      // USD/g charged
+      const marginPct = allInPerGram > 0 ? ((revenuePerGram - allInPerGram) / allInPerGram) * 100 : 0;
+      const marginUSD = (revenuePerGram - allInPerGram) * order.metalGrams;
+
+      if (marginPct < cm.minMarginPct) {
+        await updateProcurementStatus(order.id, 'manual_review',
+          `Low/negative margin ${marginPct.toFixed(2)}% (min ${cm.minMarginPct}%): charged $${revenuePerGram.toFixed(2)}/g vs all-in cost $${allInPerGram.toFixed(2)}/g (KT $${ktCostPerGramUSD.toFixed(2)} + HTX ${cm.htxFeePct}% + FX ${cm.fxSpreadPct}%). Held before purchase.`,
+          { ktCostPerGramUSD, allInPerGram, revenuePerGram, marginPct, marginUSD },
+        );
+        try {
+          await notifyTrade({
+            type: 'procurement_margin_alert',
+            message: `⚠️ MARGIN HOLD: ${order.metalGrams.toFixed(3)}g ${order.metal} — margin ${marginPct.toFixed(2)}% (charged $${revenuePerGram.toFixed(2)}/g, all-in cost $${allInPerGram.toFixed(2)}/g). Order ${order.id} → manual_review.`,
+          } as any);
+        } catch { /* telegram best-effort */ }
+        return { success: false, skipped: true, error: `Low margin ${marginPct.toFixed(2)}%` };
+      }
+    }
+
     console.log(`🏦 KuveytTürk buy: ${order.metalGrams.toFixed(3)}g ${order.metal}`);
     console.log(`   Rate: ${buyRateTL.toFixed(2)} TL/gram`);
     console.log(`   Total: ${totalTL.toFixed(2)} TL (~$${usdEquivalent.toFixed(2)})`);

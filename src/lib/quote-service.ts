@@ -1,6 +1,6 @@
 // Quote Service - Lock prices for trades with dynamic spread
 import { Redis } from '@upstash/redis';
-import { getMetalPrices } from './price-cache';
+import { getMetalUsdPrice } from './price-cache';
 import { getMetalSpread, applySpread } from './spread-config';
 import crypto from 'crypto';
 
@@ -34,17 +34,12 @@ export async function createQuote(
   grams: number,
   userAddress: string
 ): Promise<Quote> {
-  // Fetch live price
-  const prices = await getMetalPrices();
-  
-  let basePrice: number;
-  switch (metal.toUpperCase()) {
-    case 'AUXG': basePrice = prices.gold; break;
-    case 'AUXS': basePrice = prices.silver; break;
-    case 'AUXPT': basePrice = prices.platinum; break;
-    case 'AUXPD': basePrice = prices.palladium; break;
-    default: throw new Error('Invalid metal');
+  // Fetch live cost-basis price from KuveytTürk (buy=ask, sell=bid), $/gram.
+  // Falls back to GoldAPI spot inside getMetalUsdPrice if KT is unavailable.
+  if (!['AUXG', 'AUXS', 'AUXPT', 'AUXPD'].includes(metal.toUpperCase())) {
+    throw new Error('Invalid metal');
   }
+  const basePrice = await getMetalUsdPrice(metal, type);
 
   // Get admin-configured spread
   const spread = await getMetalSpread(metal);

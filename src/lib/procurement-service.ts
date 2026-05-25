@@ -139,6 +139,16 @@ const KEYS = {
 // CONFIGURATION
 // ============================================
 
+// Cost model — used to verify each procurement is profitable before buying.
+// All values are admin-tunable; numbers are a starting default, not advice.
+export interface ProcurementCostModel {
+  htxFeePct: number;            // crypto→USDT trading fee on HTX (~0.2%)
+  fxSpreadPct: number;          // USD→TL conversion spread (rail-dependent)
+  withdrawFeeUSD: number;       // fixed transfer/withdrawal fee per procurement
+  minMarginPct: number;         // require net margin ≥ this (else hold)
+  blockOnNegativeMargin: boolean; // true → hold low-margin orders for review
+}
+
 export interface ProcurementConfig {
   enabled: boolean;
   batchIntervalMs: number;        // How often to run batch processing
@@ -146,6 +156,7 @@ export interface ProcurementConfig {
   maxRetries: number;
   autoConvertCrypto: boolean;     // Auto-sell crypto to USDT
   autoPurchaseMetal: boolean;     // Auto-buy from KuveytTürk
+  costModel: ProcurementCostModel;
 }
 
 const DEFAULT_CONFIG: ProcurementConfig = {
@@ -160,6 +171,13 @@ const DEFAULT_CONFIG: ProcurementConfig = {
   maxRetries: 3,
   autoConvertCrypto: true,
   autoPurchaseMetal: true,
+  costModel: {
+    htxFeePct: 0.2,
+    fxSpreadPct: 0.5,
+    withdrawFeeUSD: 0,
+    minMarginPct: 0,
+    blockOnNegativeMargin: true,
+  },
 };
 
 export async function getProcurementConfig(): Promise<ProcurementConfig> {
