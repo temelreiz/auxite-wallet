@@ -39,6 +39,7 @@ import {
   buyPreciousMetal,
   getPreciousMetalRates,
   getUsdTlRate,
+  getMetalAccountSuffix,
   AUXITE_TO_KT_MAP,
   type PreciousMetalRate,
 } from './kuveytturk-service';
@@ -232,15 +233,17 @@ async function processOrder(
     console.log(`   Rate: ${buyRateTL.toFixed(2)} TL/gram`);
     console.log(`   Total: ${totalTL.toFixed(2)} TL (~$${usdEquivalent.toFixed(2)})`);
 
-    // Execute KuveytTürk purchase
+    // Execute KuveytTürk purchase.
+    // From = funding account (TL); To = the metal's OWN account
+    // (Gold 101 / Silver 103 / Platinum 104 / Palladium 105), resolved per metal.
     const ktAccountFrom = parseInt(process.env.KUVEYTTURK_ACCOUNT_TL || '0');
-    const ktAccountTo = parseInt(process.env.KUVEYTTURK_ACCOUNT_METAL || '0');
+    const ktAccountTo = getMetalAccountSuffix(order.metal);
     const ktUsername = process.env.KUVEYTTURK_USERNAME || '';
 
     if (!ktAccountFrom || !ktAccountTo || !ktUsername) {
       // KuveytTürk accounts not configured — mark for manual review
       await updateProcurementStatus(order.id, 'manual_review',
-        `KuveytTürk accounts not configured. Manual purchase needed: ${order.metalGrams.toFixed(3)}g ${order.metal} @ ${buyRateTL.toFixed(2)} TL/g = ${totalTL.toFixed(2)} TL`,
+        `KuveytTürk accounts not configured (from=${ktAccountFrom || 'unset'}, to[${order.metal}]=${ktAccountTo || 'unset'}). Manual purchase needed: ${order.metalGrams.toFixed(3)}g ${order.metal} @ ${buyRateTL.toFixed(2)} TL/g = ${totalTL.toFixed(2)} TL`,
         { buyRateTL, totalTL, usdEquivalent },
       );
 

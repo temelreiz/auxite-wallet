@@ -96,6 +96,35 @@ export const AUXITE_TO_KT_MAP: Record<string, string> = {
 };
 
 // ============================================
+// KuveytTürk per-metal account suffixes
+// ============================================
+// Each metal sits in its OWN KuveytTürk account ("hesap suffix"):
+//   Gold 101 · Silver 103 · Platinum 104 · Palladium 105
+// (Funding accounts are separate: TL suffix 1, USD 102 — see
+// KUVEYTTURK_ACCOUNT_TL in the procurement pipeline.)
+// Defaults below are the confirmed production suffixes; each can be
+// overridden via env (KUVEYTTURK_ACCOUNT_AUXG / _AUXS / _AUXPT / _AUXPD)
+// if the bank ever reassigns them.
+const DEFAULT_METAL_ACCOUNT_SUFFIX: Record<string, number> = {
+  AUXG: 101,
+  AUXS: 103,
+  AUXPT: 104,
+  AUXPD: 105,
+};
+
+/**
+ * Resolve the KuveytTürk account suffix that holds a given metal.
+ * Env override (KUVEYTTURK_ACCOUNT_<SYMBOL>) wins over the default.
+ * Returns 0 if the metal is unknown / not configured.
+ */
+export function getMetalAccountSuffix(metal: string): number {
+  const symbol = metal.toUpperCase();
+  const envVal = process.env[`KUVEYTTURK_ACCOUNT_${symbol}`];
+  if (envVal && Number(envVal) > 0) return Number(envVal);
+  return DEFAULT_METAL_ACCOUNT_SUFFIX[symbol] || 0;
+}
+
+// ============================================
 // CONFIG
 // ============================================
 
