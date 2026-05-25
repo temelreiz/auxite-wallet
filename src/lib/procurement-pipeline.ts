@@ -264,9 +264,15 @@ async function processOrder(
     console.log(`   Total: ${totalTL.toFixed(2)} TL (~$${usdEquivalent.toFixed(2)})`);
 
     // Execute KuveytTürk purchase.
-    // From = funding account (TL); To = the metal's OWN account
+    // From = funding account: USD account (suffix 102) per treasury decision;
+    // falls back to a TL account if USD env unset. To = the metal's OWN account
     // (Gold 101 / Silver 103 / Platinum 104 / Palladium 105), resolved per metal.
-    const ktAccountFrom = parseInt(process.env.KUVEYTTURK_ACCOUNT_TL || '0');
+    // NOTE: BuyRate below is KT's TL/gram rate. If KT requires the funding
+    // currency to match the rate when buying from the USD account, verify on
+    // sandbox whether a USD rate / different param is needed.
+    const ktAccountFrom = parseInt(
+      process.env.KUVEYTTURK_ACCOUNT_USD || process.env.KUVEYTTURK_ACCOUNT_TL || '0',
+    );
     const ktAccountTo = getMetalAccountSuffix(order.metal);
     const ktUsername = process.env.KUVEYTTURK_USERNAME || '';
 

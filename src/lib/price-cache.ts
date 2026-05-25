@@ -34,10 +34,30 @@ export async function getMetalPrices(): Promise<CachedPrices> {
     }
   }
 
-  // Fetch fresh prices
-  console.log('🌐 Fetching fresh prices from GoldAPI...');
-  const prices = await fetchFromGoldAPI();
-  
+  // Fetch fresh prices — KuveytTürk first (the venue we actually trade on),
+  // GoldAPI international spot as fallback. Headline/display price uses the KT
+  // buy rate ($/gram), so what users see matches what we sell at.
+  let prices: CachedPrices | null = null;
+  try {
+    const kt = await getMetalPricesInUsd();
+    if (kt.AUXG?.buyRateUSD && kt.AUXS?.buyRateUSD && kt.AUXPT?.buyRateUSD && kt.AUXPD?.buyRateUSD) {
+      prices = {
+        gold: kt.AUXG.buyRateUSD,
+        silver: kt.AUXS.buyRateUSD,
+        platinum: kt.AUXPT.buyRateUSD,
+        palladium: kt.AUXPD.buyRateUSD,
+        timestamp: Date.now(),
+      };
+      console.log('📊 Price source: KuveytTürk (buy $/g)');
+    }
+  } catch (e) {
+    console.warn('⚠️ KT prices unavailable, falling back to GoldAPI:', e);
+  }
+  if (!prices) {
+    console.log('🌐 Fetching fresh prices from GoldAPI...');
+    prices = await fetchFromGoldAPI();
+  }
+
   // Safety: never cache ounce prices (gold > $500/g is impossible)
   if (prices.gold > 500) {
     console.error('🚨 Refusing to cache ounce prices! gold =', prices.gold);

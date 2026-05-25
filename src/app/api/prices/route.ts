@@ -124,14 +124,21 @@ export async function GET() {
   }
 
   try {
-    // GoldAPI only - international spot prices
+    // KuveytTürk first (the venue we trade on → users see the real price we
+    // sell at), GoldAPI international spot as fallback.
     let priceData: Record<string, { price: number; change: number }> | null = null;
     let source = "fallback";
 
-    priceData = await fetchGoldApiPrices();
+    priceData = await fetchKuveytTurkPrices();
     if (priceData && Object.keys(priceData).length >= 3) {
-      source = "goldapi";
-      console.log("📊 Price source: GoldAPI");
+      source = "kuveytturk";
+      console.log("📊 Price source: KuveytTürk");
+    } else {
+      priceData = await fetchGoldApiPrices();
+      if (priceData && Object.keys(priceData).length >= 3) {
+        source = "goldapi";
+        console.log("📊 Price source: GoldAPI");
+      }
     }
 
     // Fetch pricing config
