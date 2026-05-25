@@ -14,6 +14,8 @@
 // ============================================
 
 import { Redis } from '@upstash/redis';
+import { getMarketTicker } from './htx-client';
+import { exchangeCryptoToUsd } from './htx-treasury';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -61,27 +63,21 @@ const BINANCE_SELL_PAIRS: Record<string, string> = {
 };
 
 // ============================================
-// HTX (Huobi) API CONFIG
+// HTX (Huobi) LIQUIDATION VENUE
 // ============================================
 // HTX is the primary liquidation venue: Binance TR enforces a 48h TL
 // withdrawal hold, so crypto→USDT is done on HTX (corporate account).
 // Switch venues with LIQUIDATION_VENUE = 'htx' (default) | 'binance'.
+// The actual HTX calls reuse the shared htx-client / htx-treasury (one HTX
+// client, env HTX_ACCESS_KEY/HTX_SECRET_KEY, fee + audit tracking) — no
+// private adapter here.
 
 const LIQUIDATION_VENUE = (process.env.LIQUIDATION_VENUE || 'htx').toLowerCase();
 
-const HTX_CONFIG = {
-  apiKey: process.env.HTX_API_KEY || '',
-  apiSecret: process.env.HTX_API_SECRET || '',
-  baseUrl: process.env.HTX_API_URL || 'https://api.huobi.pro',
-};
-const HTX_HOST = HTX_CONFIG.baseUrl.replace(/^https?:\/\//, '');
-
-// HTX uses lowercase symbols
-const HTX_SELL_PAIRS: Record<string, string> = {
+// HTX uses lowercase USDT-quote symbols. Kept in sync with htx-treasury.
+const HTX_PRICE_PAIRS: Record<string, string> = {
   BTC: 'btcusdt',
   ETH: 'ethusdt',
-  XRP: 'xrpusdt',
-  SOL: 'solusdt',
 };
 
 // Tokens that don't need conversion (already USD-denominated)
@@ -219,113 +215,25 @@ export async function executeBinanceSell(
 }
 
 // ============================================
-// HTX: SIGNATURE (Huobi v2 — HMAC-SHA256, base64)
+// HTX: PRICE + SELL (via shared htx-client / htx-treasury)
 // ============================================
-// Signed string = METHOD\nHOST\nPATH\n<sorted url-encoded query params>.
-// The 4 auth params (AccessKeyId, SignatureMethod, SignatureVersion,
-// Timestamp) are always part of the query, even for POST (whose JSON body
-// is NOT signed).
-
-async function htxSign(
-  method: 'GET' | 'POST',
-  path: string,
-  extraParams: Record<string, string> = {},
-): Promise<string> {
-  const { createHmac } = await import('crypto');
-
-  const params: Record<string, string> = {
-    AccessKeyId: HTX_CONFIG.apiKey,
-    SignatureMethod: 'HmacSHA256',
-    SignatureVersion: '2',
-    Timestamp: new Date().toISOString().slice(0, 19), // UTC, seconds, no ms/Z
-    ...extraParams,
-  };
-
-  const encode = (s: string) => encodeURIComponent(s);
-  const canonical = Object.keys(params)
-    .sort()
-    .map((k) => `${encode(k)}=${encode(params[k])}`)
-    .join('&');
-
-  const signPayload = `${method}\n${HTX_HOST}\n${path}\n${canonical}`;
-  const signature = createHmac('sha256', HTX_CONFIG.apiSecret).update(signPayload, 'utf8').digest('base64');
-
-  return `${canonical}&Signature=${encode(signature)}`;
-}
-
-// ============================================
-// HTX: PUBLIC PRICE
-// ============================================
+// No private HTX adapter here — reuse the canonical client/treasury so there
+// is a single HTX integration (one signing impl, env HTX_ACCESS_KEY, fee +
+// Redis audit tracking).
 
 export async function getHtxPrice(symbol: string): Promise<number> {
-  const pair = HTX_SELL_PAIRS[symbol.toUpperCase()];
+  const pair = HTX_PRICE_PAIRS[symbol.toUpperCase()];
   if (!pair) return 0;
   try {
-    const res = await fetch(`${HTX_CONFIG.baseUrl}/market/detail/merged?symbol=${pair}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTX price API error: ${res.status}`);
-    const data = await res.json();
-    const close = data?.tick?.close;
-    return close ? parseFloat(String(close)) : 0;
+    const ticker = await getMarketTicker(pair);
+    return ticker?.close ? Number(ticker.close) : 0;
   } catch (error) {
     console.error(`❌ HTX price error for ${symbol}:`, error);
     return 0;
   }
 }
 
-// ============================================
-// HTX: SPOT ACCOUNT ID (cached)
-// ============================================
-
-let htxSpotAccountId: string | null = null;
-
-async function getHtxSpotAccountId(): Promise<string> {
-  if (htxSpotAccountId) return htxSpotAccountId;
-  const path = '/v1/account/accounts';
-  const query = await htxSign('GET', path);
-  const res = await fetch(`${HTX_CONFIG.baseUrl}${path}?${query}`, { cache: 'no-store' });
-  const data = await res.json();
-  if (data.status !== 'ok' || !Array.isArray(data.data)) {
-    throw new Error(`HTX accounts error: ${JSON.stringify(data).slice(0, 200)}`);
-  }
-  const spot =
-    data.data.find((a: any) => a.type === 'spot' && a.state === 'working') ||
-    data.data.find((a: any) => a.type === 'spot');
-  if (!spot) throw new Error('HTX spot account not found');
-  htxSpotAccountId = String(spot.id);
-  return htxSpotAccountId;
-}
-
-// ============================================
-// HTX: POLL ORDER UNTIL FILLED
-// ============================================
-// Market orders return only an order id; the fill must be read from the
-// order detail (field-cash-amount = quote/USDT filled, field-fees = fee in
-// quote for a sell).
-
-async function pollHtxOrder(orderId: string, maxTries = 8): Promise<any> {
-  const path = `/v1/order/orders/${orderId}`;
-  for (let i = 0; i < maxTries; i++) {
-    const query = await htxSign('GET', path);
-    const res = await fetch(`${HTX_CONFIG.baseUrl}${path}?${query}`, { cache: 'no-store' });
-    const data = await res.json();
-    if (data.status === 'ok' && data.data) {
-      const st = data.data.state;
-      if (st === 'filled' || st === 'partial-canceled' || st === 'canceled') return data.data;
-    }
-    await new Promise((r) => setTimeout(r, 1000));
-  }
-  // Timed out waiting for terminal state — return last known detail
-  const query = await htxSign('GET', path);
-  const res = await fetch(`${HTX_CONFIG.baseUrl}${path}?${query}`, { cache: 'no-store' });
-  const data = await res.json();
-  return data?.data || {};
-}
-
-// ============================================
-// HTX: EXECUTE SPOT MARKET SELL
-// ============================================
-
-export async function executeHtxSell(
+async function executeHtxSell(
   symbol: string,
   amount: number,
 ): Promise<{
@@ -336,62 +244,25 @@ export async function executeHtxSell(
   avgPrice?: number;
   error?: string;
 }> {
-  const pair = HTX_SELL_PAIRS[symbol.toUpperCase()];
-  if (!pair) return { success: false, error: `Unknown symbol: ${symbol}` };
-
-  if (!HTX_CONFIG.apiKey || !HTX_CONFIG.apiSecret) {
+  // Keys missing → standard sentinel so executeLiquidation keeps it pending
+  // for manual processing (rather than throwing).
+  if (!process.env.HTX_ACCESS_KEY || !process.env.HTX_SECRET_KEY) {
     console.warn('⚠️ HTX API keys not configured. Recording as manual liquidation.');
     return { success: false, error: 'HTX_API_NOT_CONFIGURED' };
   }
 
-  try {
-    const accountId = await getHtxSpotAccountId();
+  // Delegate to the canonical treasury path: market sell + fill poll + fee
+  // capture + Redis audit are all handled there.
+  const r = await exchangeCryptoToUsd(symbol, amount);
+  if (!r.success) return { success: false, error: r.error };
 
-    // For sell-market, `amount` is the base-currency quantity to sell.
-    const path = '/v1/order/orders/place';
-    const query = await htxSign('POST', path);
-    const body = {
-      'account-id': accountId,
-      symbol: pair,
-      type: 'sell-market',
-      amount: amount.toString(),
-      source: 'spot-api',
-      // Idempotency: protects against duplicate fills on pipeline retry.
-      'client-order-id': `liq-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    };
-
-    const res = await fetch(`${HTX_CONFIG.baseUrl}${path}?${query}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-
-    if (data.status !== 'ok' || !data.data) {
-      return { success: false, error: data['err-msg'] || `HTX order error: ${JSON.stringify(data).slice(0, 200)}` };
-    }
-
-    const orderId = String(data.data);
-    const detail = await pollHtxOrder(orderId);
-
-    const filledQuote = parseFloat(detail?.['field-cash-amount'] || '0'); // gross USDT
-    const fees = parseFloat(detail?.['field-fees'] || '0');               // fee in USDT (sell)
-    const filledQty = parseFloat(detail?.['field-amount'] || '0');
-    const receivedUSDT = filledQuote - fees;
-
-    console.log(`✅ HTX SELL executed: ${amount} ${symbol} → ${(receivedUSDT > 0 ? receivedUSDT : filledQuote).toFixed(2)} USDT (order: ${orderId})`);
-
-    return {
-      success: true,
-      orderId,
-      executedQty: filledQty || amount,
-      receivedUSDT: receivedUSDT > 0 ? receivedUSDT : filledQuote,
-      avgPrice: filledQty > 0 ? filledQuote / filledQty : 0,
-    };
-  } catch (error: any) {
-    console.error('❌ HTX sell execution error:', error);
-    return { success: false, error: error.message || 'HTX API error' };
-  }
+  return {
+    success: true,
+    orderId: r.orderId,
+    executedQty: r.fromAmount,
+    receivedUSDT: r.toAmount,
+    avgPrice: r.rate,
+  };
 }
 
 // ============================================
