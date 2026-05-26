@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { redis } from "@/lib/redis";
-import { sendPushToUser, broadcastPush } from "@/lib/expo-push";
+import { sendPushToUser, broadcastPush, broadcastAnonPush } from "@/lib/expo-push";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (!auth.authorized) return auth.response!;
 
     const body = await request.json();
-    const { walletAddress, title, body: messageBody, type, data, broadcast } = body;
+    const { walletAddress, title, body: messageBody, type, data, broadcast, anon } = body;
 
     if (!title || !messageBody) {
       return NextResponse.json(
@@ -49,6 +49,16 @@ export async function POST(request: NextRequest) {
       // Also try web push to all known subscriptions
       // (web push broadcast would need iteration over all web subscriptions)
       // For now, mobile-only broadcast
+    } else if (anon) {
+      // Broadcast to anonymous devices (downloaded/exploring, not signed up)
+      const result = await broadcastAnonPush(title, messageBody, {
+        type,
+        category: type,
+        ...data,
+      });
+      mobileSent = result.totalSent;
+      mobileFailed = result.totalFailed;
+      recipients = result.deviceCount;
     } else if (walletAddress) {
       // Send to specific user
       const mobileResult = await sendPushToUser(

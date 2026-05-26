@@ -202,3 +202,47 @@ export async function broadcastPush(
 
   return { totalSent, totalFailed, userCount: allUsers.length };
 }
+
+/**
+ * Broadcast to anonymous devices (downloaded/exploring, not signed up).
+ * Tokens live in the `push:anon:tokens` set. Invalid tokens are pruned.
+ */
+export async function broadcastAnonPush(
+  title: string,
+  body: string,
+  data?: Record<string, unknown>
+): Promise<{ totalSent: number; totalFailed: number; deviceCount: number }> {
+  const tokens = (await redis.smembers("push:anon:tokens")) as string[];
+  if (!tokens || tokens.length === 0) {
+    return { totalSent: 0, totalFailed: 0, deviceCount: 0 };
+  }
+
+  const messages: ExpoPushMessage[] = tokens.map((t) => ({
+    to: t,
+    title,
+    body,
+    data: { ...data, timestamp: Date.now() },
+    sound: "default",
+    channelId: "default",
+    priority: "high",
+  }));
+
+  const tickets = await sendExpoPushBatch(messages);
+
+  let totalSent = 0;
+  let totalFailed = 0;
+  tickets.forEach((ticket, i) => {
+    if (ticket.status === "ok") {
+      totalSent++;
+    } else {
+      totalFailed++;
+      if (ticket.details?.error === "DeviceNotRegistered") {
+        // Prune dead token
+        redis.srem("push:anon:tokens", tokens[i]);
+        redis.del(`push:anon:meta:${tokens[i]}`);
+      }
+    }
+  });
+
+  return { totalSent, totalFailed, deviceCount: tokens.length };
+}

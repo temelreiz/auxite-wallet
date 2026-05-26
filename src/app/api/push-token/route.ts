@@ -35,7 +35,21 @@ export async function POST(req: NextRequest) {
     }
 
     if (!walletAddress) {
-      return NextResponse.json({ error: "Wallet address required" }, { status: 400 });
+      // Anonymous device — downloaded/exploring but not signed up yet. Store
+      // so we can send onboarding re-engagement push (gets linked to a wallet
+      // once the user signs up and re-registers with the same token).
+      await redis.sadd("push:anon:tokens", token);
+      await redis.set(
+        `push:anon:meta:${token}`,
+        JSON.stringify({
+          token,
+          platform: platform || "unknown",
+          deviceName: deviceName || "Unknown",
+          registeredAt: new Date().toISOString(),
+        }),
+      );
+      console.log(`[Push Token] Registered ANON: ${token.slice(0, 20)}... (${platform}/${deviceName})`);
+      return NextResponse.json({ success: true, anon: true });
     }
 
     // Store push token
@@ -113,6 +127,11 @@ export async function POST(req: NextRequest) {
     // Add wallet to global users set (for broadcast)
     await redis.sadd("push:mobile:all_users", walletLower);
 
+    // This token now belongs to a known user — drop any anonymous entry for it
+    // so we don't double-send (anon broadcast + per-user).
+    await redis.srem("push:anon:tokens", token);
+    await redis.del(`push:anon:meta:${token}`);
+
     console.log(`[Push Token] Registered: ${token.slice(0, 20)}... for ${walletAddress.slice(0, 10)}... (${platform}/${deviceName})`);
 
     return NextResponse.json({ success: true });
@@ -167,8 +186,8 @@ export async function DELETE(req: NextRequest) {
 export async function GET() {
   try {
     const members = await redis.smembers("push:mobile:all_users");
-    const count = members?.length || 0;
-    return NextResponse.json({ count });
+    const anonMembers = await redis.smembers("push:anon:tokens");
+    return NextResponse.json({ count: members?.length || 0, anonCount: anonMembers?.length || 0 });
   } catch (error) {
     console.error("[Push Token] Count error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
