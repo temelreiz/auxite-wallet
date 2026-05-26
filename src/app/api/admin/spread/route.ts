@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/admin-auth';
 import { getSpreadConfig, setSpreadConfig, setFullSpreadConfig } from '@/lib/spread-config';
+import { getProcurementConfig, setProcurementConfig } from '@/lib/procurement-service';
 
 // GET - Get current spread config
 export async function GET(request: NextRequest) {
@@ -9,8 +10,8 @@ export async function GET(request: NextRequest) {
     const auth = await requireAdmin(request);
     if (!auth.authorized) return auth.response!;
 
-    const config = await getSpreadConfig();
-    return NextResponse.json({ success: true, config });
+    const [config, proc] = await Promise.all([getSpreadConfig(), getProcurementConfig()]);
+    return NextResponse.json({ success: true, config, costModel: proc.costModel });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -23,7 +24,39 @@ export async function POST(request: NextRequest) {
     if (!auth.authorized) return auth.response!;
 
     const body = await request.json();
-    
+
+    // Cost model / margin-guard update (stored in procurement config)
+    if (body.costModel) {
+      const cm = body.costModel;
+      const num = (v: any) => (typeof v === 'number' && isFinite(v) ? v : null);
+      const htxFeePct = num(cm.htxFeePct);
+      const fxSpreadPct = num(cm.fxSpreadPct);
+      const withdrawFeeUSD = num(cm.withdrawFeeUSD);
+      const minMarginPct = num(cm.minMarginPct);
+      if (htxFeePct === null || fxSpreadPct === null || withdrawFeeUSD === null || minMarginPct === null) {
+        return NextResponse.json({ error: 'costModel fields must be numbers' }, { status: 400 });
+      }
+      if (
+        htxFeePct < 0 || htxFeePct > 5 ||
+        fxSpreadPct < 0 || fxSpreadPct > 10 ||
+        withdrawFeeUSD < 0 || withdrawFeeUSD > 1000 ||
+        minMarginPct < -100 || minMarginPct > 100
+      ) {
+        return NextResponse.json({ error: 'costModel value out of range' }, { status: 400 });
+      }
+      await setProcurementConfig({
+        costModel: {
+          htxFeePct,
+          fxSpreadPct,
+          withdrawFeeUSD,
+          minMarginPct,
+          blockOnNegativeMargin: cm.blockOnNegativeMargin !== false,
+        },
+      });
+      const proc = await getProcurementConfig();
+      return NextResponse.json({ success: true, message: 'Cost model updated', costModel: proc.costModel });
+    }
+
     // Check if it's a full config update
     if (body.metals || body.crypto) {
       await setFullSpreadConfig(body);

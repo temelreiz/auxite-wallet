@@ -950,6 +950,15 @@ export default function AdminDashboard() {
     }
   };
 
+  const [costModel, setCostModel] = useState({
+    htxFeePct: 0.2,
+    fxSpreadPct: 0.5,
+    withdrawFeeUSD: 0,
+    minMarginPct: 0,
+    blockOnNegativeMargin: true,
+  });
+  const [costModelSaving, setCostModelSaving] = useState(false);
+
   const loadSpreadConfig = async () => {
     setSpreadLoading(true);
     try {
@@ -957,6 +966,7 @@ export default function AdminDashboard() {
       if (res.ok) {
         const data = await res.json();
         if (data.config) setSpreadConfigState(data.config);
+        if (data.costModel) setCostModel(data.costModel);
       }
     } catch (e) {
       console.error("Failed to load spread:", e);
@@ -1635,6 +1645,29 @@ export default function AdminDashboard() {
       setMessage({ type: "error", text: "Bağlantı hatası" });
     } finally {
       setSpreadSaving(null);
+    }
+  };
+
+  const handleCostModelSave = async () => {
+    setCostModelSaving(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const res = await fetch("/api/admin/spread", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ costModel }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage({ type: "success", text: "Maliyet modeli güncellendi" });
+        if (data.costModel) setCostModel(data.costModel);
+      } else {
+        setMessage({ type: "error", text: data.error || "Güncelleme başarısız" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Bağlantı hatası" });
+    } finally {
+      setCostModelSaving(false);
     }
   };
 
@@ -3996,6 +4029,50 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Cost Model / Margin Guard */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-1">🛡️ Maliyet Modeli / Marj Guard</h3>
+                <p className="text-xs text-slate-500 mb-4">
+                  Her procurement öncesi tüm-dahil maliyeti (KT + HTX fee + FX + çekim) gelirle karşılaştırır;
+                  marj eşiğin altındaysa alımı bekletir. HTX fee ~%0.2; USD hesabından (102) fonladığın için FX KT kuruyla yapılır (fxSpread'i düşük tut).
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">HTX fee %</label>
+                    <input type="number" step="0.05" value={costModel.htxFeePct}
+                      onChange={(e) => setCostModel({ ...costModel, htxFeePct: parseFloat(e.target.value) })}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">FX spread %</label>
+                    <input type="number" step="0.05" value={costModel.fxSpreadPct}
+                      onChange={(e) => setCostModel({ ...costModel, fxSpreadPct: parseFloat(e.target.value) })}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Çekim fee (USD)</label>
+                    <input type="number" step="0.5" value={costModel.withdrawFeeUSD}
+                      onChange={(e) => setCostModel({ ...costModel, withdrawFeeUSD: parseFloat(e.target.value) })}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Min marj %</label>
+                    <input type="number" step="0.1" value={costModel.minMarginPct}
+                      onChange={(e) => setCostModel({ ...costModel, minMarginPct: parseFloat(e.target.value) })}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white text-sm" />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 mt-4 text-sm text-slate-300">
+                  <input type="checkbox" checked={costModel.blockOnNegativeMargin}
+                    onChange={(e) => setCostModel({ ...costModel, blockOnNegativeMargin: e.target.checked })} />
+                  Marj eşiğin altındaki alımları beklet (manual review)
+                </label>
+                <button onClick={handleCostModelSave} disabled={costModelSaving}
+                  className="mt-4 w-full py-2 bg-[#BFA181]/20 hover:bg-[#BFA181]/30 text-[#BFA181] rounded-lg text-sm font-medium disabled:opacity-50">
+                  {costModelSaving ? "Kaydediliyor..." : "Maliyet Modelini Kaydet"}
+                </button>
               </div>
             </div>
           )}
