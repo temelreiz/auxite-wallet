@@ -35,6 +35,7 @@ const ASSETS: { id: string; metal: string; leaseKey: string; fallbackApy: number
   { id: "AUXG", metal: "AUXG", leaseKey: "gold", fallbackApy: 2.53 },
   { id: "AUXS", metal: "AUXS", leaseKey: "silver", fallbackApy: 2.23 },
   { id: "AUXPT", metal: "AUXPT", leaseKey: "platinum", fallbackApy: 3.03 },
+  { id: "AUXPD", metal: "AUXPD", leaseKey: "palladium", fallbackApy: 2.83 },
 ];
 
 function baseUrl(): string {
