@@ -70,24 +70,24 @@ const translations: Record<string, Record<string, string>> = {
     palladium: "Palladium",
     holdings: "Holdings",
     // Allocation Integrity
-    allocationTitle: "100% Allocated Reserve Model",
-    allocationText: "All client metals are individually allocated and held in bankruptcy-remote custody structures. No fractional reserve practices are employed. Each unit of tokenized metal is backed by vaulted physical bullion held in independent custody environments.",
+    allocationTitle: "Fully Allocated Reserve Model",
+    allocationText: "All metals are individually allocated and held as dedicated, segregated reserves. No fractional reserve practices are employed. Each unit of tokenized metal is backed by vaulted physical bullion.",
     // Custody Architecture
-    architectureTitle: "Institutional Custody Architecture",
+    architectureTitle: "Custody Architecture",
     vaultingTitle: "Vaulting",
-    vaultingDesc: "Physical metals secured in LBMA-certified vaults operated by independent custodians including Brink's Global Services.",
+    vaultingDesc: "Physical metals secured in professional vault custody under Auxite's metal entities. LBMA-grade custody onboarding is in progress.",
     legalTitle: "Legal Layer",
-    legalDesc: "Bankruptcy-remote structures ensure client metals remain legally separated from corporate assets and creditor claims.",
+    legalDesc: "Reserves are held through dedicated metal entities, structured toward bankruptcy-remote segregation (being formalized with counsel).",
     oversightTitle: "Oversight",
-    oversightDesc: "Independent verification through third-party auditors and continuous reconciliation processes.",
+    oversightDesc: "Continuous internal reconciliation. Independent third-party attestation is being onboarded (engagement with The Network Firm).",
     // Verification
-    verificationTitle: "Independent Verification",
-    vaultConfirmations: "Third-Party Vault Confirmations",
-    vaultConfirmationsDesc: "Independent custodians provide periodic confirmations of physical metal held in allocated storage.",
+    verificationTitle: "Verification",
+    vaultConfirmations: "Vault Confirmations",
+    vaultConfirmationsDesc: "Periodic confirmations of physical metal held in allocated storage.",
     reconciliation: "Internal Reconciliation",
     reconciliationDesc: "Continuous ledger alignment between tokenized supply and physical reserves.",
-    publicStatements: "Public Statement Releases",
-    publicStatementsDesc: "Periodic transparency reports made available to all stakeholders.",
+    publicStatements: "Independent Attestation (Onboarding)",
+    publicStatementsDesc: "Third-party attestation engagement in progress; reserve positions shown here in real time.",
     reconciliationStatus: "Reconciliation Status",
     statusReconciled: "Reconciled",
     statusPending: "Pending",
@@ -102,7 +102,7 @@ const translations: Record<string, Record<string, string>> = {
     // How We Verify
     verifyTitle: "How We Verify Reserves",
     step1Title: "Metal Acquisition",
-    step1Desc: "Sourced via LBMA-aligned suppliers with full provenance documentation.",
+    step1Desc: "Sourced via established bullion suppliers with provenance documentation.",
     step2Title: "Vault Allocation",
     step2Desc: "Serialized, client-tagged storage in independent certified vaults.",
     step3Title: "Internal Reconciliation",
@@ -111,7 +111,7 @@ const translations: Record<string, Record<string, string>> = {
     step4Desc: "Periodic statements and custody reports published for transparency.",
     // Legal Safeguards
     safeguardsTitle: "Legal Protection Model",
-    safeguardsText: "Client metals are not recorded as balance sheet assets and remain outside insolvency estates. Metals held in custody are legally segregated and cannot be claimed by creditors of the custodian or the platform operator.",
+    safeguardsText: "Reserves are held through dedicated metal entities (Auxite Precious Metals LLC, Dubai; Auxite Kıymetli Madenler Tic. A.Ş., Istanbul). A bankruptcy-remote segregation structure — ring-fencing reserves from operating-company creditors — is being formalized with legal counsel.",
     // Transparency Policy
     policyTitle: "Transparency Policy",
     monthly: "Monthly",
@@ -123,9 +123,9 @@ const translations: Record<string, Record<string, string>> = {
     // FAQ
     faqTitle: "Frequently Asked Questions",
     faq1Q: "Are reserves fractional?",
-    faq1A: "No. Auxite operates on a fully allocated model. Every tokenized unit is backed 1:1 by physical metal held in independent custody.",
+    faq1A: "No. Auxite operates a fully allocated model. Every tokenized unit is backed 1:1 (or better) by vaulted physical metal.",
     faq2Q: "Can reserves be independently verified?",
-    faq2A: "Yes. Custody statements and audit confirmations are published periodically. Authenticated clients can verify their individual allocations via the client dashboard.",
+    faq2A: "Independent third-party attestation is being onboarded (The Network Firm). Reserve positions are reflected on this page in real time; authenticated clients can view their allocations in the dashboard.",
     faq3Q: "Are client assets rehypothecated?",
     faq3A: "No. Client metals are never used for corporate purposes. Encumbrance occurs only through explicit opt-in structured yield programs.",
     // Trust Footer
@@ -157,22 +157,22 @@ const translations: Record<string, Record<string, string>> = {
     platinum: "Platin",
     palladium: "Paladyum",
     holdings: "Varliklar",
-    allocationTitle: "%100 Tahsisli Rezerv Modeli",
-    allocationText: "Tum musteri metalleri bireysel olarak tahsis edilmis ve iflas korunakli saklama yapilarinda tutulmaktadir. Kesirli rezerv uygulamasi yapilmamaktadir. Tokenize edilmis her birim, bagimsiz saklama ortamlarinda tutulan kasalanmis fiziksel kulce ile desteklenmektedir.",
-    architectureTitle: "Kurumsal Saklama Mimarisi",
+    allocationTitle: "Tam Tahsisli Rezerv Modeli",
+    allocationText: "Tum metaller bireysel olarak tahsis edilmis ve ayrilmis (segregated) rezerv olarak tutulmaktadir. Kesirli rezerv uygulamasi yapilmamaktadir. Tokenize edilmis her birim, kasalanmis fiziksel kulce ile desteklenmektedir.",
+    architectureTitle: "Saklama Mimarisi",
     vaultingTitle: "Kasalama",
-    vaultingDesc: "Fiziksel metaller, Brink's Global Services dahil bagimsiz saklamacilar tarafindan isletilen LBMA sertifikali kasalarda guvence altindadir.",
+    vaultingDesc: "Fiziksel metaller, Auxite metal sirketleri uhdesinde profesyonel kasa saklamasinda guvence altindadir. LBMA seviyesi saklama entegrasyonu surmektedir.",
     legalTitle: "Hukuki Katman",
-    legalDesc: "Iflas korunakli yapilar, musteri metallerinin kurumsal varliklardan ve alacakli taleplerinden yasal olarak ayrilmasini saglar.",
+    legalDesc: "Rezervler, ozel metal tuzel kisilikleri uzerinden tutulur; iflas-korunakli segregasyon yapisi hukukcu ile resmilestirilmektedir.",
     oversightTitle: "Denetim",
-    oversightDesc: "Ucuncu taraf denetciler ve surekli uzlastirma surecleri araciligiyla bagimsiz dogrulama.",
-    verificationTitle: "Bagimsiz Dogrulama",
-    vaultConfirmations: "Ucuncu Taraf Kasa Onaylari",
-    vaultConfirmationsDesc: "Bagimsiz saklamacilar, tahsisli depolamada tutulan fiziksel metalin periyodik onaylarini saglar.",
+    oversightDesc: "Surekli ic uzlastirma. Bagimsiz ucuncu taraf attestation entegrasyonu surmektedir (The Network Firm ile gorusme).",
+    verificationTitle: "Dogrulama",
+    vaultConfirmations: "Kasa Onaylari",
+    vaultConfirmationsDesc: "Tahsisli depolamada tutulan fiziksel metalin periyodik onaylari.",
     reconciliation: "Ic Uzlastirma",
     reconciliationDesc: "Tokenize arz ile fiziksel rezervler arasinda surekli defter uyumu.",
-    publicStatements: "Kamuya Acik Aciklamalar",
-    publicStatementsDesc: "Tum paydaslara sunulan periyodik seffaflik raporlari.",
+    publicStatements: "Bagimsiz Attestation (Entegrasyon)",
+    publicStatementsDesc: "Ucuncu taraf attestation gorusmesi surmektedir; rezerv pozisyonlari bu sayfada gercek zamanli yansir.",
     reconciliationStatus: "Uzlastirma Durumu",
     statusReconciled: "Uzlastirildi",
     statusPending: "Beklemede",
@@ -184,8 +184,8 @@ const translations: Record<string, Record<string, string>> = {
     q1Report: "Q1 2026 — Ceyreklik Saklama Raporu",
     annualReport: "2025 — Yillik Saklama Ozeti",
     verifyTitle: "Rezervleri Nasil Dogruluyoruz",
-    step1Title: "Metal Tedariqi",
-    step1Desc: "LBMA uyumlu tedarikcilerden tam koken belgesiyle temin edilir.",
+    step1Title: "Metal Tedariki",
+    step1Desc: "Yerlesik kulce tedarikcilerinden koken belgesiyle temin edilir.",
     step2Title: "Kasa Tahsisi",
     step2Desc: "Bagimsiz sertifikali kasalarda seri numarali, musteriye ozel depolama.",
     step3Title: "Ic Uzlastirma",
@@ -193,7 +193,7 @@ const translations: Record<string, Record<string, string>> = {
     step4Title: "Kamuya Aciklama",
     step4Desc: "Seffaflik icin periyodik raporlar ve saklama raporlari yayinlanir.",
     safeguardsTitle: "Hukuki Koruma Modeli",
-    safeguardsText: "Musteri metalleri bilanco varligi olarak kaydedilmez ve iflas masasinin disinda kalir. Saklamada tutulan metaller yasal olarak ayrilmistir ve saklamaci veya platform isletmecisinin alacaklilari tarafindan talep edilemez.",
+    safeguardsText: "Rezervler, ozel metal tuzel kisilikleri uzerinden tutulur (Auxite Precious Metals LLC, Dubai; Auxite Kiymetli Madenler Tic. A.S., Istanbul). Rezervleri operasyon sirketinin alacaklilarindan ayiran iflas-korunakli (bankruptcy-remote) segregasyon yapisi hukukcu ile resmilestirilmektedir.",
     policyTitle: "Seffaflik Politikasi",
     monthly: "Aylik",
     monthlyDesc: "Metal bazinda donum iceren saklama pozisyon raporlari.",
@@ -203,9 +203,9 @@ const translations: Record<string, Record<string, string>> = {
     annualDesc: "Bagimsiz denetci bulgulari ve rezerv teyidi ile tam yil saklama ozeti.",
     faqTitle: "Sikca Sorulan Sorular",
     faq1Q: "Rezervler kesirli mi?",
-    faq1A: "Hayir. Auxite tam tahsisli model ile calisir. Tokenize edilen her birim, bagimsiz saklamada tutulan fiziksel metal ile 1:1 oraninda desteklenir.",
+    faq1A: "Hayir. Auxite tam tahsisli model ile calisir. Tokenize edilen her birim, kasalanmis fiziksel metal ile 1:1 (veya uzeri) desteklenir.",
     faq2Q: "Rezervler bagimsiz olarak dogrulanabilir mi?",
-    faq2A: "Evet. Saklama raporlari ve denetim onaylari periyodik olarak yayinlanir. Dogrulanmis musteriler bireysel tahsislerini musteri panelinden dogrulayabilir.",
+    faq2A: "Bagimsiz ucuncu taraf attestation entegrasyonu surmektedir (The Network Firm). Rezerv pozisyonlari bu sayfada gercek zamanli yansir; dogrulanmis musteriler tahsislerini panelden gorebilir.",
     faq3Q: "Musteri varliklari yeniden ipotek edilir mi?",
     faq3A: "Hayir. Musteri metalleri kurumsal amaclarla kullanilamaz. Yukumluluk yalnizca acik katilimli yapilandirilmis getiri programlari araciligiyla gerceklesir.",
     footerText: "Seffaflik oncelikli ilkeler uzerine insa edilmistir. Auxite, kurumsal duzeyde saklama standartlariyla calisir.",
@@ -222,9 +222,9 @@ const translations: Record<string, Record<string, string>> = {
     reserveRatio: "Reservequote", gold: "Gold", silver: "Silber", platinum: "Platin", palladium: "Palladium", holdings: "Bestande",
     allocationTitle: "100% Zugewiesenes Reservemodell", allocationText: "Alle Kundenmetalle sind individuell zugewiesen und in insolvenzfernen Verwahrungsstrukturen gehalten.",
     architectureTitle: "Institutionelle Verwahrungsarchitektur",
-    vaultingTitle: "Verwahrung", vaultingDesc: "Physische Metalle in LBMA-zertifizierten Tresoren gesichert.",
-    legalTitle: "Rechtliche Ebene", legalDesc: "Insolvenzferne Strukturen gewahrleisten rechtliche Trennung.",
-    oversightTitle: "Aufsicht", oversightDesc: "Unabhangige Verifizierung durch Drittprufung.",
+    vaultingTitle: "Verwahrung", vaultingDesc: "Physische Metalle in professioneller Tresor-Verwahrung gesichert.",
+    legalTitle: "Rechtliche Ebene", legalDesc: "Reserven werden uber dedizierte Metall-Gesellschaften gehalten; insolvenzferne Segregation wird mit Anwalten formalisiert.",
+    oversightTitle: "Aufsicht", oversightDesc: "Kontinuierliche interne Abstimmung; unabhangige Attestierung in Vorbereitung (The Network Firm).",
     verificationTitle: "Unabhangige Verifizierung",
     vaultConfirmations: "Tresor-Bestatigungen", vaultConfirmationsDesc: "Periodische Bestatigungen unabhangiger Verwahrer.",
     reconciliation: "Interne Abstimmung", reconciliationDesc: "Kontinuierlicher Abgleich zwischen Token und Reserven.",
@@ -243,7 +243,7 @@ const translations: Record<string, Record<string, string>> = {
     monthly: "Monatlich", monthlyDesc: "Positionsberichte.", quarterly: "Vierteljahrlich", quarterlyDesc: "Umfassende Berichte.", annual: "Jahrlich", annualDesc: "Jahresubersicht.",
     faqTitle: "Haufig gestellte Fragen",
     faq1Q: "Sind Reserven teilweise?", faq1A: "Nein. Vollstandig zugewiesenes Modell.",
-    faq2Q: "Konnen Reserven verifiziert werden?", faq2A: "Ja. Berichte werden periodisch veroffentlicht.",
+    faq2Q: "Konnen Reserven verifiziert werden?", faq2A: "Unabhangige Attestierung wird vorbereitet (The Network Firm); Reservepositionen werden hier in Echtzeit angezeigt.",
     faq3Q: "Werden Kundenmetalle weiterverliehen?", faq3A: "Nein. Nur uber Opt-in-Programme.",
     footerText: "Aufgebaut auf Transparenz-Prinzipien.", verifiedBadge: "Verifiziertes Verwahrungsmodell",
     legalDisclaimer: "Nur zu Informationszwecken. Keine Anlageberatung.",
@@ -258,9 +258,9 @@ const translations: Record<string, Record<string, string>> = {
     reserveRatio: "Ratio de Reserve", gold: "Or", silver: "Argent", platinum: "Platine", palladium: "Palladium", holdings: "Avoirs",
     allocationTitle: "Modele de Reserve 100% Alloue", allocationText: "Tous les metaux clients sont individuellement alloues dans des structures hors faillite.",
     architectureTitle: "Architecture de Conservation Institutionnelle",
-    vaultingTitle: "Coffrage", vaultingDesc: "Metaux physiques en coffres certifies LBMA.",
-    legalTitle: "Couche Juridique", legalDesc: "Structures hors faillite pour separation legale.",
-    oversightTitle: "Supervision", oversightDesc: "Verification independante par des tiers.",
+    vaultingTitle: "Coffrage", vaultingDesc: "Metaux physiques en garde professionnelle en coffre.",
+    legalTitle: "Couche Juridique", legalDesc: "Reserves detenues via des entites metaux dediees; segregation hors faillite en cours de formalisation avec conseil juridique.",
+    oversightTitle: "Supervision", oversightDesc: "Reconciliation interne continue; attestation independante en cours (The Network Firm).",
     verificationTitle: "Verification Independante",
     vaultConfirmations: "Confirmations de Coffre", vaultConfirmationsDesc: "Confirmations periodiques des conservateurs.",
     reconciliation: "Reconciliation Interne", reconciliationDesc: "Alignement continu du registre.",
@@ -279,7 +279,7 @@ const translations: Record<string, Record<string, string>> = {
     monthly: "Mensuel", monthlyDesc: "Etats de position.", quarterly: "Trimestriel", quarterlyDesc: "Rapports complets.", annual: "Annuel", annualDesc: "Resume annuel.",
     faqTitle: "Questions Frequentes",
     faq1Q: "Les reserves sont-elles fractionnaires?", faq1A: "Non. Modele entierement alloue.",
-    faq2Q: "Les reserves sont-elles verifiables?", faq2A: "Oui. Rapports publies periodiquement.",
+    faq2Q: "Les reserves sont-elles verifiables?", faq2A: "Attestation independante en cours (The Network Firm); positions de reserve affichees ici en temps reel.",
     faq3Q: "Les actifs sont-ils rehypothques?", faq3A: "Non. Uniquement via programmes opt-in.",
     footerText: "Construit sur des principes de transparence.", verifiedBadge: "Modele de Conservation Verifie",
     legalDisclaimer: "Page a titre informatif uniquement.",
@@ -294,9 +294,9 @@ const translations: Record<string, Record<string, string>> = {
     reserveRatio: "نسبة الاحتياطي", gold: "ذهب", silver: "فضة", platinum: "بلاتين", palladium: "بالاديوم", holdings: "الحيازات",
     allocationTitle: "نموذج احتياطي مخصص 100%", allocationText: "جميع معادن العملاء مخصصة بشكل فردي في هياكل حفظ بعيدة عن الإفلاس.",
     architectureTitle: "هيكل الحفظ المؤسسي",
-    vaultingTitle: "التخزين", vaultingDesc: "معادن مادية في خزائن معتمدة من LBMA.",
-    legalTitle: "الطبقة القانونية", legalDesc: "هياكل بعيدة عن الإفلاس للفصل القانوني.",
-    oversightTitle: "الرقابة", oversightDesc: "تحقق مستقل من طرف ثالث.",
+    vaultingTitle: "التخزين", vaultingDesc: "معادن مادية في حفظ احترافي داخل خزائن.",
+    legalTitle: "الطبقة القانونية", legalDesc: "تُحفظ الاحتياطيات عبر كيانات معادن مخصصة؛ ويجري تكوين هيكل فصل بعيد عن الإفلاس مع المستشار القانوني.",
+    oversightTitle: "الرقابة", oversightDesc: "مطابقة داخلية مستمرة؛ ويجري إعداد تصديق مستقل من طرف ثالث (The Network Firm).",
     verificationTitle: "التحقق المستقل",
     vaultConfirmations: "تأكيدات الخزائن", vaultConfirmationsDesc: "تأكيدات دورية من الحافظين.",
     reconciliation: "المطابقة الداخلية", reconciliationDesc: "مواءمة مستمرة بين التوكنات والاحتياطيات.",
@@ -315,7 +315,7 @@ const translations: Record<string, Record<string, string>> = {
     monthly: "شهري", monthlyDesc: "تقارير المواقف.", quarterly: "ربع سنوي", quarterlyDesc: "تقارير شاملة.", annual: "سنوي", annualDesc: "ملخص سنوي.",
     faqTitle: "أسئلة شائعة",
     faq1Q: "هل الاحتياطيات جزئية؟", faq1A: "لا. نموذج مخصص بالكامل.",
-    faq2Q: "هل يمكن التحقق من الاحتياطيات؟", faq2A: "نعم. التقارير تُنشر دورياً.",
+    faq2Q: "هل يمكن التحقق من الاحتياطيات؟", faq2A: "يجري إعداد تصديق مستقل من طرف ثالث (The Network Firm)؛ وتظهر مراكز الاحتياطي هنا في الوقت الفعلي.",
     faq3Q: "هل يُعاد رهن الأصول؟", faq3A: "لا. فقط عبر برامج اختيارية.",
     footerText: "مبني على مبادئ الشفافية أولاً.", verifiedBadge: "نموذج حفظ موثق",
     legalDisclaimer: "هذه الصفحة لأغراض إعلامية فقط.",
@@ -330,9 +330,9 @@ const translations: Record<string, Record<string, string>> = {
     reserveRatio: "Коэффициент Резерва", gold: "Золото", silver: "Серебро", platinum: "Платина", palladium: "Палладий", holdings: "Активы",
     allocationTitle: "Модель 100% Выделенного Резерва", allocationText: "Все клиентские металлы индивидуально выделены в банкротство-защищённых структурах.",
     architectureTitle: "Институциональная Архитектура Хранения",
-    vaultingTitle: "Хранение", vaultingDesc: "Физические металлы в LBMA-сертифицированных хранилищах.",
-    legalTitle: "Правовой Уровень", legalDesc: "Банкротство-защищённые структуры для правового разделения.",
-    oversightTitle: "Надзор", oversightDesc: "Независимая верификация третьей стороной.",
+    vaultingTitle: "Хранение", vaultingDesc: "Физические металлы в профессиональном хранилищном хранении.",
+    legalTitle: "Правовой Уровень", legalDesc: "Резервы хранятся через выделенные металл-компании; банкротство-защищённая сегрегация формализуется с юристами.",
+    oversightTitle: "Надзор", oversightDesc: "Непрерывная внутренняя сверка; независимая аттестация в процессе подключения (The Network Firm).",
     verificationTitle: "Независимая Верификация",
     vaultConfirmations: "Подтверждения Хранилищ", vaultConfirmationsDesc: "Периодические подтверждения.",
     reconciliation: "Внутренняя Сверка", reconciliationDesc: "Непрерывное согласование.",
@@ -351,7 +351,7 @@ const translations: Record<string, Record<string, string>> = {
     monthly: "Ежемесячно", monthlyDesc: "Отчёты о позициях.", quarterly: "Ежеквартально", quarterlyDesc: "Комплексные отчёты.", annual: "Ежегодно", annualDesc: "Годовой обзор.",
     faqTitle: "Часто Задаваемые Вопросы",
     faq1Q: "Резервы частичные?", faq1A: "Нет. Полностью выделенная модель.",
-    faq2Q: "Можно ли проверить резервы?", faq2A: "Да. Отчёты публикуются периодически.",
+    faq2Q: "Можно ли проверить резервы?", faq2A: "Идёт подключение независимой аттестации (The Network Firm); позиции резервов отображаются здесь в реальном времени.",
     faq3Q: "Активы перезакладываются?", faq3A: "Нет. Только через opt-in программы.",
     footerText: "Построено на принципах прозрачности.", verifiedBadge: "Подтверждённая Модель Хранения",
     legalDisclaimer: "Только для информационных целей.",
@@ -520,12 +520,7 @@ export default function ProofOfReservesPage() {
             </div>
             <div className="w-px bg-slate-200 dark:bg-slate-800" />
             <div>
-              <div className="text-2xl font-bold text-slate-800 dark:text-white">3</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 tracking-wider mt-1">{upper(t.statPartners)}</div>
-            </div>
-            <div className="w-px bg-slate-200 dark:bg-slate-800" />
-            <div>
-              <div className="text-2xl font-bold text-slate-800 dark:text-white">4</div>
+              <div className="text-2xl font-bold text-slate-800 dark:text-white">2</div>
               <div className="text-xs text-slate-500 dark:text-slate-400 tracking-wider mt-1">{upper(t.statCountries)}</div>
             </div>
           </div>
@@ -646,22 +641,6 @@ export default function ProofOfReservesPage() {
                 <p className="text-sm font-semibold text-slate-800 dark:text-white">{layers.reconciliation.nextScheduledAudit || "Q2 2026"}</p>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* ═══ 6. STATEMENTS ═══ */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6">{t.statementsTitle}</h2>
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
-            {[t.feb2026, t.q1Report, t.annualReport].map((stmt, i) => (
-              <div key={i} className="flex items-center justify-between px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                  <span className="text-sm text-slate-700 dark:text-slate-300">{stmt}</span>
-                </div>
-                <span className="text-xs text-slate-400 font-mono">PDF</span>
-              </div>
-            ))}
           </div>
         </section>
 
