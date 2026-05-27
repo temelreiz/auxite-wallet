@@ -34,6 +34,7 @@ const YIELD_TENOR = process.env.RWA_NAV_YIELD_TENOR || "12m";
 const ASSETS: { id: string; metal: string; leaseKey: string; fallbackApy: number }[] = [
   { id: "AUXG", metal: "AUXG", leaseKey: "gold", fallbackApy: 2.53 },
   { id: "AUXS", metal: "AUXS", leaseKey: "silver", fallbackApy: 2.23 },
+  { id: "AUXPT", metal: "AUXPT", leaseKey: "platinum", fallbackApy: 3.03 },
 ];
 
 function baseUrl(): string {
