@@ -85,6 +85,10 @@
     {
       "path": "/api/cron/hedge-signal",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/rwa-nav-push",
+      "schedule": "0 7 * * *"
     }
   ]
 }
