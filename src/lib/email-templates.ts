@@ -56,7 +56,7 @@ export function getYieldPromoTemplate(lang: string): { subject: string; html: st
     `<p style="font-size:10px;letter-spacing:1px;color:#888;text-transform:uppercase;margin:0 0 4px;text-align:center">${c.gridLabel}</p>` +
     METAL_GRID +
     `<p style="font-size:12px;color:#666;line-height:1.7;margin:0 0 4px;text-align:${align}"${rtl ? ' dir="rtl"' : ""}>${c.note}</p>` +
-    `<div style="text-align:center">${cta("https://vault.auxite.io/stake", c.cta)}</div>`
+    `<div style="text-align:center">${cta("https://vault.auxite.io/open?to=yield", c.cta)}</div>`
   );
   return { subject: c.subject, html };
 }
