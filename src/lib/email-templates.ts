@@ -20,6 +20,47 @@ function bonus(title: string, text: string) {
   return `<div style="background:#fafafa;border-left:3px solid #C5A55A;padding:14px 18px;margin:18px 0"><p style="font-size:11px;letter-spacing:1px;color:#888;margin:0 0 6px">${title}</p><p style="font-size:13px;color:#444;margin:0;line-height:1.7">${text}</p></div>`;
 }
 
+// ── Yield promo visual ───────────────────────────────────────────────────────
+function yieldHero(sub: string, headline: string) {
+  return `<div style="background:linear-gradient(135deg,#C5A55A 0%,#9c7d39 100%);border-radius:6px;padding:32px 24px;text-align:center;margin:4px 0 20px">
+    <p style="font-size:11px;letter-spacing:2px;color:#fff;opacity:.9;margin:0 0 8px;text-transform:uppercase">${sub}</p>
+    <p style="font-size:40px;line-height:1.05;color:#fff;font-weight:700;margin:0">${headline}</p>
+  </div>`;
+}
+function metalCell(sym: string, name: string, apy: string) {
+  return `<td style="padding:12px 6px;border:1px solid #eee;width:25%;text-align:center;vertical-align:top">
+    <div style="font-size:20px;font-weight:700;color:#C5A55A">${sym}</div>
+    <div style="font-size:10px;color:#999;letter-spacing:.5px">${name}</div>
+    <div style="font-size:15px;font-weight:700;color:#1a1a1a;margin-top:5px">${apy}</div></td>`;
+}
+const METAL_GRID = `<table role="presentation" width="100%" style="border-collapse:collapse;margin:14px 0 18px"><tr>
+  ${metalCell("Au", "Gold", "2.53%")}${metalCell("Ag", "Silver", "2.23%")}${metalCell("Pt", "Platinum", "3.03%")}${metalCell("Pd", "Palladium", "2.83%")}
+</tr></table>`;
+
+const YIELD_PROMO: Record<string, { subject: string; sub: string; headline: string; intro: string; gridLabel: string; note: string; cta: string }> = {
+  en: { subject: "Earn up to ~3% a year on your precious metals", sub: "Earn on your metals", headline: "Up to ~3% APY", intro: "Your gold, silver, platinum and palladium can now work for you. Stake your metals on Auxite for fixed-term yield — paid in additional metal.", gridLabel: "Current annual yield (12-month term)", note: "Yields are lease-rate based and vary by metal and term (3 / 6 / 12 months). Simply holding does not accrue yield — staking does.", cta: "START EARNING" },
+  tr: { subject: "Değerli metallerinizden yılda ~%3'e varan getiri", sub: "Metalleriniz kazansın", headline: "~%3'e varan getiri", intro: "Altın, gümüş, platin ve paladyumunuz artık size çalışabilir. Auxite'te metallerinizi stake ederek sabit vadeli getiri kazanın — ek metal olarak ödenir.", gridLabel: "Güncel yıllık getiri (12 aylık vade)", note: "Getiriler lease-rate bazlıdır; metale ve vadeye (3 / 6 / 12 ay) göre değişir. Sadece tutmak getiri vermez — stake etmek verir.", cta: "GETİRİ KAZAN" },
+  de: { subject: "Bis zu ~3% Jahresrendite auf Ihre Edelmetalle", sub: "Mit Ihren Metallen verdienen", headline: "Bis zu ~3% p.a.", intro: "Ihr Gold, Silber, Platin und Palladium kann jetzt für Sie arbeiten. Staken Sie Ihre Metalle auf Auxite für eine feste Rendite — ausgezahlt in zusätzlichem Metall.", gridLabel: "Aktuelle Jahresrendite (12 Monate)", note: "Renditen sind lease-rate-basiert und variieren je nach Metall und Laufzeit (3 / 6 / 12 Monate). Reines Halten bringt keine Rendite — Staken schon.", cta: "JETZT VERDIENEN" },
+  fr: { subject: "Jusqu'à ~3% par an sur vos métaux précieux", sub: "Faites fructifier vos métaux", headline: "Jusqu'à ~3% / an", intro: "Votre or, argent, platine et palladium peuvent désormais travailler pour vous. Stakez vos métaux sur Auxite pour un rendement à terme fixe — versé en métal supplémentaire.", gridLabel: "Rendement annuel actuel (terme 12 mois)", note: "Les rendements sont basés sur les taux de lease et varient selon le métal et le terme (3 / 6 / 12 mois). La simple détention ne génère pas de rendement — le staking oui.", cta: "COMMENCER" },
+  ar: { subject: "اربح حتى ~3% سنويًا على معادنك الثمينة", sub: "اربح من معادنك", headline: "حتى ~3% سنويًا", intro: "ذهبك وفضتك وبلاتينك وبالاديومك يمكن أن تعمل لصالحك الآن. قم بعمل ستيك لمعادنك على Auxite للحصول على عائد بأجل ثابت — يُدفع بمعدن إضافي.", gridLabel: "العائد السنوي الحالي (مدة 12 شهرًا)", note: "العوائد مبنية على معدلات الـ lease وتختلف حسب المعدن والمدة (3 / 6 / 12 شهرًا). مجرد الاحتفاظ لا يحقق عائدًا — الستيك يحقق.", cta: "ابدأ الربح" },
+  ru: { subject: "До ~3% годовых на ваши драгоценные металлы", sub: "Зарабатывайте на металлах", headline: "До ~3% годовых", intro: "Ваше золото, серебро, платина и палладий теперь могут работать на вас. Стейкайте металлы на Auxite для фиксированного дохода — выплачивается дополнительным металлом.", gridLabel: "Текущая годовая доходность (срок 12 мес.)", note: "Доходность основана на lease-ставках и зависит от металла и срока (3 / 6 / 12 мес.). Простое хранение не приносит доход — стейкинг приносит.", cta: "НАЧАТЬ" },
+};
+
+export function getYieldPromoTemplate(lang: string): { subject: string; html: string } {
+  const c = YIELD_PROMO[(lang || "en").toLowerCase()] || YIELD_PROMO.en;
+  const rtl = (lang || "").toLowerCase() === "ar";
+  const align = rtl ? "right" : "left";
+  const html = wrap(
+    yieldHero(c.sub, c.headline) +
+    `<p style="font-size:14px;color:#1a1a1a;font-weight:600;margin:0 0 12px;text-align:${align}"${rtl ? ' dir="rtl"' : ""}>${c.intro}</p>` +
+    `<p style="font-size:10px;letter-spacing:1px;color:#888;text-transform:uppercase;margin:0 0 4px;text-align:center">${c.gridLabel}</p>` +
+    METAL_GRID +
+    `<p style="font-size:12px;color:#666;line-height:1.7;margin:0 0 4px;text-align:${align}"${rtl ? ' dir="rtl"' : ""}>${c.note}</p>` +
+    `<div style="text-align:center">${cta("https://vault.auxite.io/stake", c.cta)}</div>`
+  );
+  return { subject: c.subject, html };
+}
+
 export const emailTemplates: Record<string, { subject: string; html: string }> = {
   // ═══════════════════════════════════════════════════════════════
   // EXISTING TEMPLATES
