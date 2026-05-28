@@ -28,7 +28,10 @@ export default function OpenAppPage() {
     const isIOS = /iphone|ipad|ipod/i.test(ua);
     setPlatform(isAndroid ? "android" : isIOS ? "ios" : "desktop");
 
-    const deepLink = `${SCHEME}://${safe}`;
+    // Triple slash → empty host + "/safe" path, so Expo Router resolves it to
+    // the route (e.g. /yield) instead of treating "yield" as the host (which
+    // lands on the index/vault screen).
+    const deepLink = `${SCHEME}:///${safe}`;
     const storeOrWeb = isAndroid ? PLAY_URL : WEB_FALLBACK;
 
     if (isAndroid || isIOS) {
@@ -51,7 +54,7 @@ export default function OpenAppPage() {
     }
   }, []);
 
-  const deepLink = `${SCHEME}://${target}`;
+  const deepLink = `${SCHEME}:///${target}`;
 
   return (
     <div style={{ fontFamily: "Georgia, serif", background: "#f5f5f5", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
