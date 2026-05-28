@@ -89,6 +89,10 @@
     {
       "path": "/api/cron/rwa-nav-push",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/kyc-pending-blast",
+      "schedule": "0 14 * * *"
     }
   ]
 }
