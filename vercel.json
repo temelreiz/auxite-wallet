@@ -68,7 +68,7 @@
     },
     {
       "path": "/api/cron/store-daily-close",
-      "schedule": "0 21 * * 1-5"
+      "schedule": "0 21 * * *"
     },
     {
       "path": "/api/cron/daily-price-alert",

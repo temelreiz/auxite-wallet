@@ -73,90 +73,29 @@ function isHoliday(date: Date): boolean {
  * - Closes: Friday 21:00 UTC (Saturday 00:00 Turkey time)
  * - Also closed on major holidays
  */
-export function isMarketOpen(now?: Date): boolean {
-  const date = now || new Date();
-  const dayOfWeek = date.getUTCDay(); // 0 = Sunday, 6 = Saturday
-  const hour = date.getUTCHours();
-
-  // Saturday: always closed
-  if (dayOfWeek === 6) {
-    return false;
-  }
-
-  // Sunday: closed until 22:00 UTC
-  if (dayOfWeek === 0) {
-    return hour >= 22;
-  }
-
-  // Friday: closed after 21:00 UTC
-  if (dayOfWeek === 5 && hour >= 21) {
-    return false;
-  }
-
-  // Monday-Friday (before Friday 21:00): check holidays
-  if (isHoliday(date)) {
-    return false;
-  }
-
+export function isMarketOpen(_now?: Date): boolean {
+  // KuveytTürk publishes precious-metal rates 7 days a week (incl. weekends
+  // and Turkish/holidays), and our trade pricing is KT-primary. So from the
+  // platform's perspective the metals market is always open. The previous
+  // London/NY weekend close + holiday calendar was a leftover from when we
+  // relied solely on a forex-style spot feed. Returning `true` here also
+  // disables the weekend-order queueing path and lets trades execute live
+  // every day.
   return true;
 }
 
 /**
  * Get market status with label.
  */
-export function getMarketStatus(now?: Date): MarketStatus {
-  const date = now || new Date();
-  const dayOfWeek = date.getUTCDay();
-
-  // Check weekend
-  if (dayOfWeek === 6 || (dayOfWeek === 0 && date.getUTCHours() < 22)) {
-    return {
-      open: false,
-      label: "Weekend Prices Applied",
-    };
-  }
-
-  // Friday after close
-  if (dayOfWeek === 5 && date.getUTCHours() >= 21) {
-    return {
-      open: false,
-      label: "Weekend Prices Applied",
-    };
-  }
-
-  // Check holiday
-  if (isHoliday(date)) {
-    return {
-      open: false,
-      label: "Holiday Prices Applied",
-    };
-  }
-
-  // Market is open
-  return {
-    open: true,
-    label: "Live Market Prices",
-  };
+export function getMarketStatus(_now?: Date): MarketStatus {
+  // KT-driven 7/24 pricing (see isMarketOpen).
+  return { open: true, label: "Live Market Prices" };
 }
 
 /**
  * Determine the price type string for API responses.
  */
-export function getPriceType(now?: Date): "live" | "weekend" | "holiday" {
-  const date = now || new Date();
-  const dayOfWeek = date.getUTCDay();
-
-  if (dayOfWeek === 6 || (dayOfWeek === 0 && date.getUTCHours() < 22)) {
-    return "weekend";
-  }
-
-  if (dayOfWeek === 5 && date.getUTCHours() >= 21) {
-    return "weekend";
-  }
-
-  if (isHoliday(date)) {
-    return "holiday";
-  }
-
+export function getPriceType(_now?: Date): "live" | "weekend" | "holiday" {
+  // KT-driven 7/24 pricing (see isMarketOpen).
   return "live";
 }
