@@ -6,7 +6,18 @@ import { SUPPORT_CONTACT } from "@/lib/support-knowledge";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const T = {
+type Strings = {
+  title: string;
+  greeting: string;
+  placeholder: string;
+  human: string;
+  open: string;
+  close: string;
+  disclaimer: string;
+  error: string;
+};
+
+const T: Record<string, Strings> = {
   en: {
     title: "Auxite Support",
     greeting: "Hi! I can help with questions about Auxite — accounts, buying & selling metals, deposits, withdrawals and more.",
@@ -15,6 +26,7 @@ const T = {
     open: "Open support chat",
     close: "Close",
     disclaimer: "AI assistant. For account-specific issues we'll connect you to a person.",
+    error: "Something went wrong. Please try again or contact us.",
   },
   tr: {
     title: "Auxite Destek",
@@ -24,12 +36,54 @@ const T = {
     open: "Destek sohbetini aç",
     close: "Kapat",
     disclaimer: "Yapay zekâ asistanı. Hesaba özel konularda sizi bir kişiye bağlarız.",
+    error: "Bir hata oluştu. Lütfen tekrar deneyin veya bize ulaşın.",
+  },
+  de: {
+    title: "Auxite Support",
+    greeting: "Hallo! Ich helfe bei Fragen zu Auxite – Konten, Kauf & Verkauf von Edelmetallen, Einzahlungen, Auszahlungen und mehr.",
+    placeholder: "Nachricht eingeben…",
+    human: "Mit einem Menschen sprechen",
+    open: "Support-Chat öffnen",
+    close: "Schließen",
+    disclaimer: "KI-Assistent. Bei kontospezifischen Anliegen verbinden wir Sie mit einer Person.",
+    error: "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder kontaktieren Sie uns.",
+  },
+  fr: {
+    title: "Support Auxite",
+    greeting: "Bonjour ! Je peux répondre à vos questions sur Auxite — comptes, achat & vente de métaux, dépôts, retraits et plus encore.",
+    placeholder: "Écrivez votre message…",
+    human: "Parler à un humain",
+    open: "Ouvrir le chat d'assistance",
+    close: "Fermer",
+    disclaimer: "Assistant IA. Pour les questions liées à votre compte, nous vous mettrons en relation avec une personne.",
+    error: "Une erreur s'est produite. Veuillez réessayer ou nous contacter.",
+  },
+  ar: {
+    title: "دعم Auxite",
+    greeting: "مرحبًا! يمكنني المساعدة في الأسئلة حول Auxite — الحسابات، شراء وبيع المعادن، الإيداعات، عمليات السحب والمزيد.",
+    placeholder: "اكتب رسالتك…",
+    human: "التحدث إلى شخص",
+    open: "فتح محادثة الدعم",
+    close: "إغلاق",
+    disclaimer: "مساعد ذكاء اصطناعي. للمسائل المتعلقة بحسابك، سنوصلك بشخص.",
+    error: "حدث خطأ ما. يرجى المحاولة مرة أخرى أو الاتصال بنا.",
+  },
+  ru: {
+    title: "Поддержка Auxite",
+    greeting: "Здравствуйте! Помогу с вопросами об Auxite — аккаунты, покупка и продажа металлов, пополнения, выводы и не только.",
+    placeholder: "Введите сообщение…",
+    human: "Связаться с человеком",
+    open: "Открыть чат поддержки",
+    close: "Закрыть",
+    disclaimer: "ИИ-ассистент. По вопросам, связанным с аккаунтом, мы свяжем вас с человеком.",
+    error: "Произошла ошибка. Пожалуйста, попробуйте снова или свяжитесь с нами.",
   },
 };
 
 export default function SupportChat() {
   const { lang } = useLanguage();
-  const t = lang === "tr" ? T.tr : T.en;
+  const t = T[lang] ?? T.en;
+  const rtl = lang === "ar";
 
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -73,13 +127,7 @@ export default function SupportChat() {
     } catch {
       setMessages((prev) => {
         const next = [...prev];
-        next[next.length - 1] = {
-          role: "assistant",
-          content:
-            lang === "tr"
-              ? "Bağlantı hatası oldu. Lütfen tekrar deneyin veya bize ulaşın."
-              : "Something went wrong. Please try again or contact us.",
-        };
+        next[next.length - 1] = { role: "assistant", content: t.error };
         return next;
       });
     } finally {
@@ -104,7 +152,7 @@ export default function SupportChat() {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-5 right-5 z-[60] flex h-[min(560px,calc(100vh-2.5rem))] w-[min(380px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/40">
+        <div dir={rtl ? "rtl" : "ltr"} className="fixed bottom-5 right-5 z-[60] flex h-[min(560px,calc(100vh-2.5rem))] w-[min(380px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/40">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-700 bg-slate-800/80 px-4 py-3">
             <div className="flex items-center gap-2">
