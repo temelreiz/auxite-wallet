@@ -11,6 +11,7 @@ import { LanguageProvider } from "@/components/LanguageContext";
 import { ChainGuard } from "@/components/ChainGuard";
 import { SecurityBanner } from "@/components/SecurityBanner";
 import { CookieConsent } from "@/components/CookieConsent";
+import SupportChat from "@/components/SupportChat";
 import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -175,15 +176,6 @@ export default function RootLayout({
             src="https://www.facebook.com/tr?id=875602632179249&ev=PageView&noscript=1"
           />
         </noscript>
-        {/* Crisp Live Chat */}
-        <Script id="crisp-widget" strategy="afterInteractive">
-          {`
-            window.$crisp=[];window.CRISP_WEBSITE_ID="c330b030-55e6-42b1-b669-f428a2c76665";
-            (function(){d=document;s=d.createElement("script");
-            s.src="https://client.crisp.chat/l.js";s.async=1;
-            d.getElementsByTagName("head")[0].appendChild(s);})();
-          `}
-        </Script>
         <ToastProvider>
           <UIToastProvider>
             <Web3Provider>
@@ -192,6 +184,7 @@ export default function RootLayout({
                 <ChainGuard />
                 {children}
                 <CookieConsent />
+                <SupportChat />
               </LanguageProvider>
             </Web3Provider>
           </UIToastProvider>
