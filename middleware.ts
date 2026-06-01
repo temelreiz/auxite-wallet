@@ -31,17 +31,17 @@ function buildCsp() {
   // Stripe payments: https://js.stripe.com (script), https://hooks.stripe.com
   // (3DS frame), https://api.stripe.com (already covered by `https:` wildcard).
   const scriptSrc = isDev
-    ? "'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://*.sumsub.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://connect.facebook.net https://global-stg.transak.com https://global.transak.com https://client.crisp.chat https://settings.crisp.chat https://js.stripe.com"
-    : "'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://*.sumsub.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://connect.facebook.net https://global-stg.transak.com https://global.transak.com https://client.crisp.chat https://settings.crisp.chat https://js.stripe.com";
+    ? "'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://*.sumsub.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://connect.facebook.net https://global-stg.transak.com https://global.transak.com https://js.stripe.com"
+    : "'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://*.sumsub.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://connect.facebook.net https://global-stg.transak.com https://global.transak.com https://js.stripe.com";
 
   return [
     "default-src 'self'",
     `script-src ${scriptSrc}`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://client.crisp.chat",
-    "font-src 'self' https://fonts.gstatic.com https://client.crisp.chat data:",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: blob: https: https://www.facebook.com",
-    "frame-src 'self' https://*.sumsub.com https://*.google.com https://global-stg.transak.com https://global.transak.com https://challenges.cloudflare.com https://game.crisp.chat https://js.stripe.com https://hooks.stripe.com",
-    "connect-src 'self' https: wss: https://www.google-analytics.com https://*.analytics.google.com https://connect.facebook.net https://www.facebook.com https://*.crisp.chat wss://*.crisp.chat https://api.stripe.com https://merchant-ui-api.stripe.com",
+    "frame-src 'self' https://*.sumsub.com https://*.google.com https://global-stg.transak.com https://global.transak.com https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com",
+    "connect-src 'self' https: wss: https://www.google-analytics.com https://*.analytics.google.com https://connect.facebook.net https://www.facebook.com https://api.stripe.com https://merchant-ui-api.stripe.com",
     "media-src 'self' blob:",
     "worker-src 'self' blob:",
     "frame-ancestors 'none'",

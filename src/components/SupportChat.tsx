@@ -15,6 +15,7 @@ type Strings = {
   close: string;
   disclaimer: string;
   error: string;
+  rateLimited: string;
 };
 
 const T: Record<string, Strings> = {
@@ -27,6 +28,7 @@ const T: Record<string, Strings> = {
     close: "Close",
     disclaimer: "AI assistant. For account-specific issues we'll connect you to a person.",
     error: "Something went wrong. Please try again or contact us.",
+    rateLimited: "You're sending messages too quickly. Please wait a moment and try again.",
   },
   tr: {
     title: "Auxite Destek",
@@ -37,6 +39,7 @@ const T: Record<string, Strings> = {
     close: "Kapat",
     disclaimer: "Yapay zekâ asistanı. Hesaba özel konularda sizi bir kişiye bağlarız.",
     error: "Bir hata oluştu. Lütfen tekrar deneyin veya bize ulaşın.",
+    rateLimited: "Çok hızlı mesaj gönderiyorsunuz. Lütfen biraz bekleyip tekrar deneyin.",
   },
   de: {
     title: "Auxite Support",
@@ -47,6 +50,7 @@ const T: Record<string, Strings> = {
     close: "Schließen",
     disclaimer: "KI-Assistent. Bei kontospezifischen Anliegen verbinden wir Sie mit einer Person.",
     error: "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder kontaktieren Sie uns.",
+    rateLimited: "Sie senden zu schnell Nachrichten. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
   },
   fr: {
     title: "Support Auxite",
@@ -57,6 +61,7 @@ const T: Record<string, Strings> = {
     close: "Fermer",
     disclaimer: "Assistant IA. Pour les questions liées à votre compte, nous vous mettrons en relation avec une personne.",
     error: "Une erreur s'est produite. Veuillez réessayer ou nous contacter.",
+    rateLimited: "Vous envoyez des messages trop rapidement. Veuillez patienter un instant et réessayer.",
   },
   ar: {
     title: "دعم Auxite",
@@ -67,6 +72,7 @@ const T: Record<string, Strings> = {
     close: "إغلاق",
     disclaimer: "مساعد ذكاء اصطناعي. للمسائل المتعلقة بحسابك، سنوصلك بشخص.",
     error: "حدث خطأ ما. يرجى المحاولة مرة أخرى أو الاتصال بنا.",
+    rateLimited: "أنت ترسل الرسائل بسرعة كبيرة. يرجى الانتظار قليلاً والمحاولة مرة أخرى.",
   },
   ru: {
     title: "Поддержка Auxite",
@@ -77,6 +83,7 @@ const T: Record<string, Strings> = {
     close: "Закрыть",
     disclaimer: "ИИ-ассистент. По вопросам, связанным с аккаунтом, мы свяжем вас с человеком.",
     error: "Произошла ошибка. Пожалуйста, попробуйте снова или свяжитесь с нами.",
+    rateLimited: "Вы отправляете сообщения слишком быстро. Пожалуйста, подождите немного и повторите попытку.",
   },
 };
 
@@ -109,6 +116,14 @@ export default function SupportChat() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: history }),
       });
+      if (res.status === 429) {
+        setMessages((prev) => {
+          const next = [...prev];
+          next[next.length - 1] = { role: "assistant", content: t.rateLimited };
+          return next;
+        });
+        return;
+      }
       if (!res.ok || !res.body) throw new Error("request failed");
 
       const reader = res.body.getReader();

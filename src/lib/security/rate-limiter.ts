@@ -60,6 +60,22 @@ export const priceLimiter = new Ratelimit({
   prefix: 'ratelimit:price',
 });
 
+// AI destek sohbeti — burst limiti (IP başına)
+export const supportChatLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(15, '1 m'), // 15 mesaj/dakika
+  analytics: true,
+  prefix: 'ratelimit:support-chat',
+});
+
+// AI destek sohbeti — günlük tavan (kötüye kullanım/maliyet koruması)
+export const supportChatDailyLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(200, '1 d'), // 200 mesaj/gün
+  analytics: true,
+  prefix: 'ratelimit:support-chat:daily',
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
