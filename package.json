@@ -12,7 +12,11 @@
     "test:coverage": "jest --coverage",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
-    "e2e:report": "playwright show-report"
+    "e2e:report": "playwright show-report",
+    "contracts:compile": "TS_NODE_PROJECT=tsconfig.hardhat.json hardhat compile",
+    "contracts:test": "TS_NODE_PROJECT=tsconfig.hardhat.json hardhat test",
+    "contracts:deploy:sepolia": "TS_NODE_PROJECT=tsconfig.hardhat.json hardhat run scripts/deploy-auxr.ts --network baseSepolia",
+    "contracts:deploy:base": "TS_NODE_PROJECT=tsconfig.hardhat.json hardhat run scripts/deploy-auxr.ts --network base"
   },
   "overrides": {
     "elliptic": "6.5.7"
@@ -39,6 +43,7 @@
     "@transak/transak-sdk": "^4.0.2",
     "@upstash/ratelimit": "^2.0.7",
     "@upstash/redis": "^1.35.7",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/kv": "^3.0.0",
     "@vercel/speed-insights": "^1.3.1",
     "@walletconnect/ethereum-provider": "^2.21.10",
