@@ -1348,14 +1348,36 @@ export default function AdminDashboard() {
   // USERS FUNCTIONS
   // ═══════════════════════════════════════════════════════════════════════════════
   const loadUsers = async () => {
+    // Paginated load: ask for chunks until we've drained `total`. Frontend
+    // grows automatically — no need to bump backend caps when the user base
+    // crosses 1k / 5k / 10k. First call reveals total, then parallel-fetches
+    // remaining pages so the UI doesn't wait sequentially. ~500/page keeps
+    // each response under Vercel's serverless 4.5 MB limit even at full
+    // payload size (~500 B per user). Hard safety cap at 100 pages (50k users).
+    const LIMIT = 500;
+    const MAX_PAGES = 100;
     try {
-      const res = await fetch("/api/admin/users", { headers: getAuthHeaders() });
-      const data = await res.json();
-      if (res.ok && data.users) {
-        setUsers(data.users);
-      } else {
-        console.error("Users API error:", res.status, data);
+      const first = await fetch(`/api/admin/users?page=1&limit=${LIMIT}`, { headers: getAuthHeaders() });
+      const firstData = await first.json();
+      if (!first.ok || !firstData.users) {
+        console.error("Users API error:", first.status, firstData);
+        return;
       }
+      const total: number = firstData.pagination?.total ?? firstData.users.length;
+      const pageCount = Math.min(MAX_PAGES, Math.ceil(total / LIMIT));
+      const all = [...firstData.users];
+      if (pageCount > 1) {
+        const rest = await Promise.all(
+          Array.from({ length: pageCount - 1 }, (_, i) =>
+            fetch(`/api/admin/users?page=${i + 2}&limit=${LIMIT}`, { headers: getAuthHeaders() })
+              .then(r => r.json())
+              .then(d => (d?.users as any[]) || [])
+              .catch(() => [] as any[])
+          )
+        );
+        for (const batch of rest) all.push(...batch);
+      }
+      setUsers(all);
     } catch (e) {
       console.error("Failed to load users:", e);
     }
