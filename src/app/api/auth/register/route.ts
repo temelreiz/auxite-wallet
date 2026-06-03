@@ -37,7 +37,13 @@ export async function POST(request: NextRequest) {
     if (rateLimited) return rateLimited;
 
     const body = await request.json();
-    const { email, password, name, phone, language = 'en', timezone, platform: clientPlatform, source, utm_source, utm_medium, utm_campaign } = body;
+    const { email, password, name, phone, language = 'en', country: rawCountry, timezone, platform: clientPlatform, source, utm_source, utm_medium, utm_campaign } = body;
+    // ISO-2 (e.g. TR, US). Optional — drives timezone-aware notifications +
+    // pre-fills KYC. Stored uppercase; any non-2-letter input is discarded.
+    const country =
+      typeof rawCountry === 'string' && /^[A-Za-z]{2}$/.test(rawCountry.trim())
+        ? rawCountry.trim().toUpperCase()
+        : '';
 
     // Detect platform from User-Agent or client-sent field
     const ua = request.headers.get('user-agent') || '';
@@ -106,6 +112,7 @@ export async function POST(request: NextRequest) {
       lastName,
       phone: phone || '',
       language,
+      country,
       timezone: timezone || '',
       walletAddress: '',
       authProvider: 'email',
@@ -161,6 +168,7 @@ export async function POST(request: NextRequest) {
       lastName,
       phone: phone || '',
       language,
+      country,
       timezone: timezone || '',
       walletAddress: vaultAddress,
       vaultId: vaultId,
