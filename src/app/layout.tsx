@@ -14,6 +14,7 @@ import { CookieConsent } from "@/components/CookieConsent";
 import SupportChat from "@/components/SupportChat";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -190,6 +191,9 @@ export default function RootLayout({
                     Package was installed but never mounted, so the dashboard
                     showed "No data available" for 7 days. */}
                 <SpeedInsights />
+                {/* Vercel Audience Analytics — pageviews + unique visitors,
+                    shown in the Analytics tab of the Vercel project. */}
+                <Analytics />
               </LanguageProvider>
             </Web3Provider>
           </UIToastProvider>
