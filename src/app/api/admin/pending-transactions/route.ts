@@ -112,7 +112,9 @@ export async function GET(request: NextRequest) {
           const o: any = typeof raw === "string" ? JSON.parse(raw) : raw;
           // Map to the same shape the existing admin UI consumes so
           // procurement orders render in the Pending TX table without UI
-          // changes. Extra structured fields stay alongside.
+          // changes. fromAmount keeps the ORIGINAL token units (0.01 ETH,
+          // not the $19.84 USD value) — using USD here makes the UI label
+          // it as "19.84 ETH" which is wrong by 6 orders of magnitude.
           allTransactions.push({
             id: o.id,
             txId: o.id,
@@ -122,11 +124,11 @@ export async function GET(request: NextRequest) {
             address: o.userAddress,
             fromToken: o.fromToken || "USD",
             toToken: o.metal,
-            fromAmount: o.fromValueUSD ?? o.fromAmount,
+            fromAmount: o.fromAmount,
             toAmount: o.metalGrams,
             metal: o.metal,
             grams: o.metalGrams,
-            amountUSD: o.fromValueUSD ?? o.fromAmount,
+            amountUSD: o.fromValueUSD ?? (o.fromToken === "USD" ? o.fromAmount : null),
             tradeId: o.tradeId,
             tradePricePerGram: o.tradePricePerGram,
             status: bucket === "manual_review" ? "failed" : "pending_confirmation",
