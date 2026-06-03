@@ -96,8 +96,55 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // ── Procurement queue (KuveytTürk metal buys waiting to fire) ────────
+    // Pull both auto-pending and items already kicked to manual_review so
+    // the admin sees BOTH "queued for cron" and "needs my eyes" in one list.
+    try {
+      const buckets: Array<{ key: string; bucket: string }> = [
+        { key: "procurement:queue:pending", bucket: "pending" },
+        { key: "procurement:queue:manual_review", bucket: "manual_review" },
+      ];
+      for (const { key, bucket } of buckets) {
+        const ids = await redis.lrange(key, 0, 99);
+        for (const id of ids) {
+          const raw = await redis.get(`procurement:order:${id as string}`);
+          if (!raw) continue;
+          const o: any = typeof raw === "string" ? JSON.parse(raw) : raw;
+          // Map to the same shape the existing admin UI consumes so
+          // procurement orders render in the Pending TX table without UI
+          // changes. Extra structured fields stay alongside.
+          allTransactions.push({
+            id: o.id,
+            txId: o.id,
+            kind: "procurement",
+            procurementBucket: bucket,
+            type: "metal_procurement",
+            address: o.userAddress,
+            fromToken: o.fromToken || "USD",
+            toToken: o.metal,
+            fromAmount: o.fromValueUSD ?? o.fromAmount,
+            toAmount: o.metalGrams,
+            metal: o.metal,
+            grams: o.metalGrams,
+            amountUSD: o.fromValueUSD ?? o.fromAmount,
+            tradeId: o.tradeId,
+            tradePricePerGram: o.tradePricePerGram,
+            status: bucket === "manual_review" ? "failed" : "pending_confirmation",
+            rawStatus: o.status || bucket,
+            statusReason: o.statusReason || o.error || null,
+            timestamp: o.createdAt,
+            updatedAt: o.updatedAt,
+          });
+        }
+      }
+    } catch (e) {
+      console.error("procurement queue read failed (non-blocking):", e);
+    }
+
     // Sort by timestamp (newest first)
     allTransactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+    const procurementCount = allTransactions.filter((t: any) => t.kind === "procurement").length;
 
     return NextResponse.json({
       success: true,
@@ -107,6 +154,7 @@ export async function GET(request: NextRequest) {
         pending: allTransactions.filter(t => t.status === 'pending_confirmation').length,
         completed: allTransactions.filter(t => t.status === 'completed').length,
         failed: allTransactions.filter(t => t.status === 'failed').length,
+        procurement: procurementCount,
       },
       timestamp: Date.now(),
     });
