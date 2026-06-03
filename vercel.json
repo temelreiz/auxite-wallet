@@ -92,7 +92,7 @@
     },
     {
       "path": "/api/cron/kyc-pending-blast",
-      "schedule": "0 14 * * *"
+      "schedule": "0 * * * *"
     }
   ]
 }
