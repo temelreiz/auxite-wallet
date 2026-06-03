@@ -93,6 +93,10 @@
     {
       "path": "/api/cron/kyc-pending-blast",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/kyc-pending-email-blast",
+      "schedule": "0 * * * *"
     }
   ]
 }
