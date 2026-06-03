@@ -203,6 +203,34 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent): Promise<void> {
     `(PI ${pi.id}, $${amountUSD.toFixed(2)}, fractional bal: ${newBalance}, alloc: ${allocatedGrams}g, cert: ${certificateNumber || "—"})`
   );
 
+  // ── Fee ledger ─────────────────────────────────────────────────────────
+  // Card purchases were previously invisible to platform:fees:* — only
+  // /api/trade was writing there. That meant our biggest fee channel (card
+  // markup) didn't show up in the admin Fees panel.
+  //
+  // We attribute two distinct fee streams:
+  //   1. Metal spread (collected in metal) → platform:fees:{metal}
+  //         spread fraction × grams sold
+  //   2. Card buffer (collected in USD)    → platform:fees:usd
+  //         buffer fraction × amountUSD ÷ (1 + buffer fraction)
+  //         (the markup portion of what the user paid — separated cleanly
+  //          from baseAsk so Stripe's actual cut nets against the USD pool)
+  try {
+    const spreadFrac = metalSpreadPct / 100;
+    const bufferFrac = cardBufferPct / 100;
+    const metalSpreadGrams = grams * spreadFrac;
+    const cardBufferUsd = (amountUSD * bufferFrac) / (1 + bufferFrac);
+    const metalKey = `platform:fees:${metal.toLowerCase()}`;
+    await redis.hincrbyfloat(metalKey, "pending", metalSpreadGrams);
+    await redis.hincrbyfloat(metalKey, "total", metalSpreadGrams);
+    await redis.hincrby("platform:fees:count", metal.toLowerCase(), 1);
+    await redis.hincrbyfloat("platform:fees:usd", "pending", cardBufferUsd);
+    await redis.hincrbyfloat("platform:fees:usd", "total", cardBufferUsd);
+    await redis.hincrby("platform:fees:count", "usd", 1);
+  } catch (e) {
+    console.warn("[stripe/webhook] fee ledger write failed (non-blocking):", e);
+  }
+
   // ── Side-effects (all best-effort, non-blocking) ──
 
   // Telegram admin notification
@@ -385,5 +413,27 @@ async function handleChargeRefunded(charge: Stripe.Charge): Promise<void> {
     await redis.lpush("stripe:refund:negative-balance", JSON.stringify({
       userAddress, metal, balance: newBalance, chargeId: charge.id, timestamp: Date.now(),
     }));
+  }
+
+  // ── Fee ledger reversal ────────────────────────────────────────────────
+  // Mirror the buy-side accrual so refunds don't leave phantom fee balances.
+  // Uses the SAME PI metadata the original buy used (metalSpreadPct/cardBufferPct).
+  try {
+    const refundUSD = charge.amount_refunded / 100;
+    const isPartial = refundUSD < (charge.amount / 100) - 0.01;
+    // For partial refunds, prorate by the refund/charge ratio. Most card
+    // refunds are full, but Stripe partial refunds are allowed.
+    const refundRatio = isPartial ? refundUSD / (charge.amount / 100) : 1;
+    const spreadFrac = parseFloat(md.metalSpreadPct || "0") / 100;
+    const bufferFrac = parseFloat(md.cardBufferPct || "0") / 100;
+    const metalSpreadGramsBack = grams * spreadFrac * refundRatio;
+    const cardBufferUsdBack = (refundUSD * bufferFrac) / (1 + bufferFrac);
+    const metalKey = `platform:fees:${metal.toLowerCase()}`;
+    await redis.hincrbyfloat(metalKey, "pending", -metalSpreadGramsBack);
+    await redis.hincrbyfloat(metalKey, "total", -metalSpreadGramsBack);
+    await redis.hincrbyfloat("platform:fees:usd", "pending", -cardBufferUsdBack);
+    await redis.hincrbyfloat("platform:fees:usd", "total", -cardBufferUsdBack);
+  } catch (e) {
+    console.warn("[stripe/webhook] fee ledger refund reversal failed (non-blocking):", e);
   }
 }

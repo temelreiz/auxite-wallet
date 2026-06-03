@@ -31,7 +31,9 @@ const DEFAULT_SPREAD: SpreadConfig = {
     gold: { buy: 1.5, sell: 1.5 },
     silver: { buy: 2.0, sell: 2.0 },
     platinum: { buy: 2.0, sell: 2.0 },
-    palladium: { buy: 2.5, sell: 2.5 },
+    // Pd was 2.5% — anomalously low vs Pt (10%). Pd is even less liquid than
+    // Pt, so its spread should match or exceed Pt. Bumped to 10% to align.
+    palladium: { buy: 10, sell: 10 },
   },
   crypto: {
     btc: { buy: 1.0, sell: 1.0 },
