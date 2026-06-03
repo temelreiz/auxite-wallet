@@ -42,8 +42,10 @@ export const MIN_CHARGE_USD = 30;
 export const MAX_CHARGE_USD = 5000;
 
 // Card processing buffer added on top of metal spread. Covers Stripe HK
-// fees (~2.5-3.5% international cards) + small margin.
-export const CARD_PROCESSING_BUFFER = 0.03; // 3%
+// fees (~2-3% domestic, 3.4%+ international) + ~2% net margin for us.
+// Was 3% — left us net ~1% after Stripe fee. Bumped to 5% so the card
+// surcharge is genuinely passed to the buyer instead of eaten by Stripe.
+export const CARD_PROCESSING_BUFFER = 0.05; // 5%
 
 // Pretty metal names for descriptors / statement
 export const METAL_NAME: Record<SupportedMetal, string> = {
