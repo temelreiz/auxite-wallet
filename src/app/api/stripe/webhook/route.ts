@@ -216,8 +216,8 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent): Promise<void> {
   //         (the markup portion of what the user paid — separated cleanly
   //          from baseAsk so Stripe's actual cut nets against the USD pool)
   try {
-    const spreadFrac = metalSpreadPct / 100;
-    const bufferFrac = cardBufferPct / 100;
+    const spreadFrac = parseFloat(md.metalSpreadPct || "0") / 100;
+    const bufferFrac = parseFloat(md.cardBufferPct || "0") / 100;
     const metalSpreadGrams = grams * spreadFrac;
     const cardBufferUsd = (amountUSD * bufferFrac) / (1 + bufferFrac);
     const metalKey = `platform:fees:${metal.toLowerCase()}`;
