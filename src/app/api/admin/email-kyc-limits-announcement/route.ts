@@ -24,7 +24,9 @@ import { isKycVerified } from "@/lib/kyc-limits";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 300;
+// 1794 sends at ~3.6 req/sec ≈ 8 min. Vercel Pro allows 900s; we set 800
+// to give a margin. The marker SET makes any partial-run safe to resume.
+export const maxDuration = 800;
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
