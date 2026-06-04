@@ -33,8 +33,10 @@ const redis = new Redis({
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = "Auxite <noreply@auxite.io>";
 
-const CHUNK = 25; // walk auth keys in parallel batches
-const SEND_PARALLELISM = 8; // Resend rate-friendly
+const CHUNK = 25;          // walk auth keys in parallel batches
+const SEND_PARALLELISM = 4; // Resend hard limit is 5 req/sec — stay under
+const SEND_BATCH_DELAY_MS = 1100; // ~3.6 req/sec sustained, well under 5
+const DUPE_MARKER_KEY = "email:campaign:kyc-limits-announcement:sent"; // SET
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -47,11 +49,14 @@ export async function GET(req: NextRequest) {
   const confirmed = sp.get("confirm") === "yes";
 
   // 1. Walk every registered user, resolve language + KYC status + email.
+  //    Also skip anyone already in the "sent" SET — protects against the
+  //    same campaign blasting twice if we have to re-run after a partial
+  //    rate-limit failure.
   const authKeys = await redis.keys("auth:user:*");
   type Entry = { email: string; lang: string; wallet: string };
   const entries: Entry[] = [];
   const byLang: Record<string, number> = {};
-  let skippedVerified = 0, skippedNoEmail = 0;
+  let skippedVerified = 0, skippedNoEmail = 0, skippedAlreadySent = 0;
 
   for (let i = 0; i < authKeys.length; i += CHUNK) {
     const slice = authKeys.slice(i, i + CHUNK);
@@ -63,6 +68,7 @@ export async function GET(req: NextRequest) {
           const email = String(u?.email || k.replace("auth:user:", "")).trim().toLowerCase();
           if (!email || !email.includes("@")) { skippedNoEmail++; return; }
           if (wallet && (await isKycVerified(wallet))) { skippedVerified++; return; }
+          if (await redis.sismember(DUPE_MARKER_KEY, email)) { skippedAlreadySent++; return; }
           const lang = wallet ? await getUserLanguage(wallet) : "en";
           byLang[lang] = (byLang[lang] || 0) + 1;
           entries.push({ email, lang, wallet });
@@ -76,6 +82,7 @@ export async function GET(req: NextRequest) {
     targetedRecipients: entries.length,
     skippedVerified,
     skippedNoEmail,
+    skippedAlreadySent,
     byLang,
     sampleSubjectsByLang: Object.fromEntries(
       Object.keys(byLang).map((l) => [l, getKycLimitsAnnouncementTemplate(l).subject])
@@ -92,10 +99,15 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // 2. Send in chunks of SEND_PARALLELISM. Resend tolerates bursts but
-  // throttle-friendly. Track per-result outcome.
+  // 2. Send in chunks of SEND_PARALLELISM with a sustained pacing that
+  // stays under Resend's 5 req/sec hard cap. After each batch we sleep
+  // SEND_BATCH_DELAY_MS so the steady-state is ~3.6 req/sec. On every
+  // successful send we mark the address in DUPE_MARKER_KEY so re-running
+  // this endpoint (e.g. to recover from a transient failure) doesn't
+  // double-mail the people we already reached.
   let sent = 0, failed = 0;
   const failures: { email: string; reason: string }[] = [];
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   for (let i = 0; i < entries.length; i += SEND_PARALLELISM) {
     const batch = entries.slice(i, i + SEND_PARALLELISM);
     await Promise.all(
@@ -113,6 +125,8 @@ export async function GET(req: NextRequest) {
             failures.push({ email: e.email, reason: String((r as any).error.message || (r as any).error) });
           } else {
             sent++;
+            // Mark sent so a retry run will skip this address.
+            try { await redis.sadd(DUPE_MARKER_KEY, e.email); } catch {}
           }
         } catch (err: any) {
           failed++;
@@ -120,7 +134,14 @@ export async function GET(req: NextRequest) {
         }
       })
     );
+    if (i + SEND_PARALLELISM < entries.length) {
+      await sleep(SEND_BATCH_DELAY_MS);
+    }
   }
+  // Keep the dupe set tidy: TTL ~30 days. Long enough to cover any retry
+  // run we'd want; short enough that future campaigns can reuse the key
+  // namespace without colliding.
+  try { await redis.expire(DUPE_MARKER_KEY, 30 * 24 * 60 * 60); } catch {}
 
   // 3. Log
   await redis.lpush(
