@@ -142,12 +142,21 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // KYC gate. AUXR is a real metal claim; demo / KYC-pending users buy
-  // through the existing demo flow (or get prompted to verify).
-  const kycVerified = await isKycVerified(normalizedAddress);
-  if (!kycVerified) {
+  // Soft KYC gate — aligned with Stripe and Wise rails. Below
+  // NO_KYC_LIMIT_USD ($500) we let any email-verified user buy AUXR;
+  // above that, KYC is mandatory because the buy results in a real
+  // metal claim that may eventually be redeemed on-chain.
+  const { checkKycLimit } = await import("@/lib/kyc-limits");
+  const kycDecision = await checkKycLimit(normalizedAddress, usdAmount);
+  if (!kycDecision.allowed) {
     return NextResponse.json(
-      { success: false, error: "kyc_required" },
+      {
+        success: false,
+        error: "kyc_required",
+        reason: kycDecision.reason,
+        limitUSD: kycDecision.limitUSD,
+        requestedUSD: kycDecision.requestedUSD,
+      },
       { status: 403 }
     );
   }

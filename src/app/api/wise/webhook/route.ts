@@ -213,11 +213,15 @@ export async function POST(req: NextRequest) {
     const auxmCredit = +usdValue.toFixed(2);
 
     // ── KYC GATE ──────────────────────────────────────────────────────────
-    // High-value wires require approved KYC. Below threshold we still
-    // auto-credit (low-risk onboarding wires). Above threshold we hold
-    // the credit, push to admin queue, and notify the user to complete KYC.
-    const KYC_REQUIRED_USD = Number(process.env.WISE_KYC_THRESHOLD_USD || "5000");
-    if (usdValue >= KYC_REQUIRED_USD) {
+    // Soft AML threshold: wires up to NO_KYC_LIMIT_USD (currently $500)
+    // auto-credit. Above that we hold the credit, push to admin queue, and
+    // notify the user to complete KYC. Env var WISE_KYC_THRESHOLD_USD lets
+    // ops override without a deploy (e.g. raise to $5000 for a known
+    // promo cohort) but the default tracks the shared limit so all rails
+    // — card, AUXR buy, wire — feel consistent to the user.
+    const { NO_KYC_LIMIT_USD } = await import("@/lib/kyc-limits");
+    const KYC_REQUIRED_USD = Number(process.env.WISE_KYC_THRESHOLD_USD || String(NO_KYC_LIMIT_USD));
+    if (usdValue > KYC_REQUIRED_USD) {
       let kycApproved = false;
       try {
         const kycRaw = await redis.get(`kyc:${userAddress}`);

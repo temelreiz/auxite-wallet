@@ -25,6 +25,7 @@ import {
   type SupportedMetal,
 } from "@/lib/stripe";
 import { checkTradingAllowed } from "@/lib/trading-guard";
+import { checkKycLimit } from "@/lib/kyc-limits";
 
 export async function POST(req: NextRequest) {
   try {
@@ -97,6 +98,24 @@ export async function POST(req: NextRequest) {
       baseAskPerGram = q.baseAskPerGram;
       metalSpreadPct = q.metalSpreadPct;
       cardBufferPct = q.cardBufferPct;
+    }
+
+    // Soft KYC gate. Below NO_KYC_LIMIT_USD (currently $500) any user with
+    // an email can buy; above it we require KYC. Run AFTER pricing so the
+    // limit checks against the actual USD charge, not the user's input
+    // (matters for byGrams mode where USD is derived).
+    const kycDecision = await checkKycLimit(userAddress, amountUSD);
+    if (!kycDecision.allowed) {
+      return NextResponse.json(
+        {
+          error: "KYC verification required for purchases above the limit.",
+          code: "kyc_required",
+          reason: kycDecision.reason,
+          limitUSD: kycDecision.limitUSD,
+          requestedUSD: kycDecision.requestedUSD,
+        },
+        { status: 403 }
+      );
     }
 
     // Stripe metadata: keep keys/values short (limit 50 chars value, 500 chars total)
