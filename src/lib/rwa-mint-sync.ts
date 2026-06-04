@@ -215,12 +215,22 @@ async function sendMint(
   asset: AssetConfig,
   rawUnits: bigint,
 ): Promise<{ txHash: string }> {
-  const rpcUrl = process.env.BASE_RPC_URL;
-  const privateKey = process.env.RWA_MINT_SYNC_PRIVATE_KEY;
-  const treasury = process.env.RWA_MINT_SYNC_TREASURY;
+  const rpcUrl = process.env.BASE_RPC_URL?.trim();
+  // Normalize PK: strip whitespace + accidental quotes + add 0x if missing.
+  // Vercel env-var paste often gains a trailing newline or a wrapping pair
+  // of quotes; viem rejects either silently with "invalid private key".
+  let privateKey = process.env.RWA_MINT_SYNC_PRIVATE_KEY?.trim().replace(/^["']|["']$/g, "");
+  if (privateKey && !privateKey.startsWith("0x")) privateKey = `0x${privateKey}`;
+  const treasury = process.env.RWA_MINT_SYNC_TREASURY?.trim().replace(/^["']|["']$/g, "");
   if (!rpcUrl) throw new Error("BASE_RPC_URL not set");
   if (!privateKey) throw new Error("RWA_MINT_SYNC_PRIVATE_KEY not set");
+  if (!/^0x[a-fA-F0-9]{64}$/.test(privateKey)) {
+    throw new Error(`RWA_MINT_SYNC_PRIVATE_KEY malformed: expected 0x + 64 hex chars, got ${privateKey.length} chars`);
+  }
   if (!treasury) throw new Error("RWA_MINT_SYNC_TREASURY not set");
+  if (!/^0x[a-fA-F0-9]{40}$/.test(treasury)) {
+    throw new Error(`RWA_MINT_SYNC_TREASURY malformed: expected 0x + 40 hex chars`);
+  }
 
   // Lazy import so non-prod runs (and the cron's typecheck) don't pull
   // viem's full chain build.
