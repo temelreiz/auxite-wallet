@@ -91,10 +91,6 @@
       "schedule": "0 7 * * *"
     },
     {
-      "path": "/api/cron/rwa-mint-sync",
-      "schedule": "0 3 * * *"
-    },
-    {
       "path": "/api/cron/kyc-pending-email-blast",
       "schedule": "0 * * * *"
     },
