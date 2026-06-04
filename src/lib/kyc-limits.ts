@@ -23,6 +23,8 @@ const redis = new Redis({
 });
 
 export const NO_KYC_LIMIT_USD = 500;
+export const NO_KYC_CUMULATIVE_30D_USD = 1000;
+const ROLLING_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 // Statuses that count as "KYC done" — superset of provider-specific labels
 // returned by Sumsub / other vendors. Matches /api/auxr/buy gate.
@@ -39,36 +41,97 @@ export async function isKycVerified(walletAddress: string): Promise<boolean> {
   }
 }
 
-export interface KycLimitDecision {
-  allowed: boolean;
-  kycVerified: boolean;
-  limitUSD: number;
-  requestedUSD: number;
-  reason?: "amount_exceeds_no_kyc_limit";
+/**
+ * Sum of USD purchases the user has made WITHOUT KYC over the last 30 days.
+ * Reads `kyc:nokyc:30d:{wallet}` — a list of {ts, usd} entries written by
+ * recordNoKycSpend after each successful unverified purchase.
+ */
+export async function getRecentNoKycSpendUSD(walletAddress: string): Promise<number> {
+  try {
+    const key = `kyc:nokyc:30d:${walletAddress.toLowerCase()}`;
+    const raw = await redis.lrange(key, 0, 199);
+    const cutoff = Date.now() - ROLLING_WINDOW_MS;
+    let total = 0;
+    for (const r of raw) {
+      try {
+        const e = typeof r === "string" ? JSON.parse(r) : r;
+        if (e && typeof e.ts === "number" && typeof e.usd === "number" && e.ts > cutoff) {
+          total += e.usd;
+        }
+      } catch { /* skip bad entry */ }
+    }
+    return total;
+  } catch {
+    return 0;
+  }
 }
 
 /**
- * Decide whether a USD-denominated purchase may proceed without KYC.
+ * Record an unverified-user purchase against the rolling 30d window. Call
+ * from every successful purchase path (Stripe webhook, AUXR buy, Wise wire)
+ * AFTER the credit has landed. Safe to no-op for KYC-verified users — they
+ * don't have a limit to track.
+ */
+export async function recordNoKycSpend(walletAddress: string, usd: number): Promise<void> {
+  if (!Number.isFinite(usd) || usd <= 0) return;
+  try {
+    const key = `kyc:nokyc:30d:${walletAddress.toLowerCase()}`;
+    await redis.lpush(key, JSON.stringify({ ts: Date.now(), usd }));
+    // Hard cap the list size so a long-running unverified user can't grow
+    // the key unbounded. 200 entries / 30d = ~7/day, way past realistic.
+    await redis.ltrim(key, 0, 199);
+    // TTL slightly past the rolling window so stale keys disappear when the
+    // user stops buying. Reset on every write — naturally rolls forward.
+    await redis.expire(key, Math.ceil(ROLLING_WINDOW_MS / 1000) + 86400);
+  } catch (e) {
+    console.warn("[kyc-limits] recordNoKycSpend failed (non-blocking):", e);
+  }
+}
+
+export interface KycLimitDecision {
+  allowed: boolean;
+  kycVerified: boolean;
+  limitUSD: number;                     // per-tx ceiling (NO_KYC_LIMIT_USD)
+  cumulativeLimit30dUSD: number;        // 30d ceiling (NO_KYC_CUMULATIVE_30D_USD)
+  recentSpendUSD: number;               // user's last-30d unverified spend
+  remainingUSD: number;                 // how much they can still spend in 30d
+  requestedUSD: number;
+  reason?: "amount_exceeds_no_kyc_limit" | "amount_exceeds_30d_cumulative_limit";
+}
+
+/**
+ * Two-tier gate for unverified users:
+ *   1. Per-transaction ceiling: requested > NO_KYC_LIMIT_USD → reject
+ *   2. 30-day cumulative ceiling: requested + recentSpend > 30d limit → reject
  *
- * - Verified users: always allowed (caller still owns balance/spread checks).
- * - Unverified users: allowed when requestedUSD <= NO_KYC_LIMIT_USD.
- *
- * Caller should surface `decision.reason` to the client so the UI can deep
- * link into the KYC flow with the exact threshold in the message.
+ * Verified users always pass. The shape of the returned decision is the same
+ * either way so the UI can show "$X remaining" copy even on success.
  */
 export async function checkKycLimit(
   walletAddress: string,
   requestedUSD: number,
 ): Promise<KycLimitDecision> {
   const kycVerified = await isKycVerified(walletAddress);
-  if (kycVerified || requestedUSD <= NO_KYC_LIMIT_USD) {
-    return { allowed: true, kycVerified, limitUSD: NO_KYC_LIMIT_USD, requestedUSD };
-  }
-  return {
-    allowed: false,
-    kycVerified: false,
+  const recentSpendUSD = kycVerified ? 0 : await getRecentNoKycSpendUSD(walletAddress);
+  const remainingUSD = kycVerified
+    ? Number.POSITIVE_INFINITY
+    : Math.max(0, NO_KYC_CUMULATIVE_30D_USD - recentSpendUSD);
+
+  const base = {
+    kycVerified,
     limitUSD: NO_KYC_LIMIT_USD,
+    cumulativeLimit30dUSD: NO_KYC_CUMULATIVE_30D_USD,
+    recentSpendUSD,
+    remainingUSD,
     requestedUSD,
-    reason: "amount_exceeds_no_kyc_limit",
   };
+
+  if (kycVerified) return { allowed: true, ...base };
+  if (requestedUSD > NO_KYC_LIMIT_USD) {
+    return { allowed: false, ...base, reason: "amount_exceeds_no_kyc_limit" };
+  }
+  if (requestedUSD > remainingUSD) {
+    return { allowed: false, ...base, reason: "amount_exceeds_30d_cumulative_limit" };
+  }
+  return { allowed: true, ...base };
 }

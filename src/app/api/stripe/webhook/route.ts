@@ -203,6 +203,20 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent): Promise<void> {
     `(PI ${pi.id}, $${amountUSD.toFixed(2)}, fractional bal: ${newBalance}, alloc: ${allocatedGrams}g, cert: ${certificateNumber || "—"})`
   );
 
+  // ── KYC 30d cumulative tracking ────────────────────────────────────────
+  // Verified users have no limit; only the unverified buys count toward
+  // the rolling $1000/30d ceiling. Status is re-checked here (not at PI
+  // creation) so a user who KYC'd mid-flight doesn't get charged twice
+  // against their cumulative cap.
+  try {
+    const { isKycVerified, recordNoKycSpend } = await import("@/lib/kyc-limits");
+    if (!(await isKycVerified(userAddress))) {
+      await recordNoKycSpend(userAddress, amountUSD);
+    }
+  } catch (e) {
+    console.warn("[stripe/webhook] no-kyc spend record failed (non-blocking):", e);
+  }
+
   // ── Fee ledger ─────────────────────────────────────────────────────────
   // Card purchases were previously invisible to platform:fees:* — only
   // /api/trade was writing there. That meant our biggest fee channel (card

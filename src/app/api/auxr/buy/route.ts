@@ -337,5 +337,18 @@ export async function POST(request: NextRequest) {
     await markRefIdProcessed(refId, JSON.stringify(result));
   }
 
+  // Record toward 30d cumulative cap if user remained unverified (KYC could
+  // have flipped mid-flight but we already let the buy through under the
+  // checked decision; recheck here so we don't double-charge a freshly
+  // verified user against the no-kyc bucket).
+  try {
+    const { recordNoKycSpend } = await import("@/lib/kyc-limits");
+    if (!kycDecision.kycVerified) {
+      await recordNoKycSpend(normalizedAddress, usdAmount);
+    }
+  } catch (e) {
+    console.warn("[auxr/buy] no-kyc spend record failed (non-blocking):", e);
+  }
+
   return NextResponse.json({ success: true, ...result });
 }

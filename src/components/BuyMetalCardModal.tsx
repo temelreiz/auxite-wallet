@@ -149,6 +149,13 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  // KYC limit state — mirrors server. null = haven't fetched yet.
+  const [kycState, setKycState] = useState<{
+    kycVerified: boolean;
+    perTxLimitUSD: number;
+    cumulativeLimit30dUSD: number;
+    remainingUSD: number | null;
+  } | null>(null);
 
   // Reset on open + analytics: modal opened
   useEffect(() => {
@@ -163,8 +170,16 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
       setError(null);
       setResult(null);
       logEvent("card_purchase_modal_opened", { surface: "web" });
+      // Fetch this user's KYC limit state so we can display proactive
+      // "$X left without verification" copy and pre-block the form.
+      if (address) {
+        fetch(`/api/user/kyc-limits?address=${address}`)
+          .then(r => r.ok ? r.json() : null)
+          .then(d => { if (d) setKycState(d); })
+          .catch(() => { /* silent — copy just falls back to defaults */ });
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, address]);
 
   // Stripe Elements options memoized for stable reference.
   // MUST be declared above the early-return — Rules of Hooks: hooks
@@ -181,6 +196,19 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
 
   const handleQuote = async () => {
     if (!canSubmit) return;
+    // Pre-check soft KYC ceilings so the user doesn't see Stripe Elements
+    // mount for an amount the server will reject anyway. Server still
+    // enforces both gates (defense in depth).
+    if (kycState && !kycState.kycVerified && mode === "byUsd") {
+      if (amountNum > kycState.perTxLimitUSD) {
+        setError(`Verify your identity to buy more than $${kycState.perTxLimitUSD}.`);
+        return;
+      }
+      if (kycState.remainingUSD !== null && amountNum > kycState.remainingUSD) {
+        setError(`You've used $${(kycState.cumulativeLimit30dUSD - kycState.remainingUSD).toFixed(0)} of your $${kycState.cumulativeLimit30dUSD} 30-day cap. Verify to continue.`);
+        return;
+      }
+    }
     setError(null);
     setQuoting(true);
     logEvent("card_purchase_quote_requested", { surface: "web", metal, mode, amount: amountNum });
@@ -312,8 +340,51 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
                 />
                 <p className="text-[10px] text-slate-500 mt-1">
                   {tr(L, "minAmount")} · {tr(L, "maxAmount")}
+                  {kycState && !kycState.kycVerified && mode === "byUsd" && (
+                    <>
+                      {" · "}
+                      <span className="text-[#BFA181]">
+                        {kycState.remainingUSD === null
+                          ? `Up to $${kycState.perTxLimitUSD}/tx without verification`
+                          : `$${kycState.remainingUSD.toFixed(0)} left this month without verification`}
+                      </span>
+                    </>
+                  )}
                 </p>
               </div>
+
+              {/* Soft KYC nudge — same gating logic as mobile: per-tx OR
+                  30d cumulative. Hidden in byGrams mode (we'd need a spot
+                  conversion to gate accurately; backend still 403's). */}
+              {kycState && !kycState.kycVerified && mode === "byUsd" && (() => {
+                const overPerTx = amountNum > kycState.perTxLimitUSD;
+                const over30d = kycState.remainingUSD !== null && amountNum > kycState.remainingUSD && !overPerTx;
+                if (!overPerTx && !over30d) return null;
+                return (
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-[#BFA181]/40 bg-[#BFA181]/10">
+                    <div className="text-xl">🛡️</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-white">
+                        {overPerTx
+                          ? `Verify ID for purchases over $${kycState.perTxLimitUSD}`
+                          : `You've hit your $${kycState.cumulativeLimit30dUSD}/30-day no-KYC cap`}
+                      </div>
+                      <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
+                        {overPerTx
+                          ? "Single tx limit. Verify (3 min) to remove the cap."
+                          : "Verify once to lift the rolling 30-day limit. 3 minutes."}
+                      </div>
+                    </div>
+                    <a
+                      href="/kyc-verification"
+                      onClick={() => logEvent("kyc_cta_from_buy_modal", { surface: "web", amountUSD: amountNum, reason: overPerTx ? "per_tx" : "30d" })}
+                      className="px-3 py-1.5 rounded-md bg-[#BFA181] text-black text-xs font-bold hover:bg-[#D4B47A] transition-colors whitespace-nowrap"
+                    >
+                      Verify
+                    </a>
+                  </div>
+                );
+              })()}
 
               {error && (
                 <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30">

@@ -213,26 +213,21 @@ export async function POST(req: NextRequest) {
     const auxmCredit = +usdValue.toFixed(2);
 
     // ── KYC GATE ──────────────────────────────────────────────────────────
-    // Soft AML threshold: wires up to NO_KYC_LIMIT_USD (currently $500)
-    // auto-credit. Above that we hold the credit, push to admin queue, and
-    // notify the user to complete KYC. Env var WISE_KYC_THRESHOLD_USD lets
-    // ops override without a deploy (e.g. raise to $5000 for a known
-    // promo cohort) but the default tracks the shared limit so all rails
-    // — card, AUXR buy, wire — feel consistent to the user.
-    const { NO_KYC_LIMIT_USD } = await import("@/lib/kyc-limits");
-    const KYC_REQUIRED_USD = Number(process.env.WISE_KYC_THRESHOLD_USD || String(NO_KYC_LIMIT_USD));
-    if (usdValue > KYC_REQUIRED_USD) {
-      let kycApproved = false;
-      try {
-        const kycRaw = await redis.get(`kyc:${userAddress}`);
-        const kyc: any = kycRaw
-          ? (typeof kycRaw === "string" ? JSON.parse(kycRaw) : kycRaw)
-          : null;
-        kycApproved = kyc?.status === "approved";
-      } catch (e) {
-        console.warn("[wise/webhook] KYC lookup failed:", e);
-      }
-
+    // Two-tier soft AML threshold (shared with card + AUXR rails):
+    //   - per-tx ceiling: NO_KYC_LIMIT_USD ($500)
+    //   - 30d cumulative: NO_KYC_CUMULATIVE_30D_USD ($1000)
+    // Above either, we hold the credit, push the wire to admin queue, and
+    // notify the user to complete KYC. WISE_KYC_THRESHOLD_USD env override
+    // still works for the per-tx leg — useful for whitelisted partner
+    // wires that should auto-credit at higher tickets.
+    const { checkKycLimit, NO_KYC_LIMIT_USD } = await import("@/lib/kyc-limits");
+    const decision = await checkKycLimit(userAddress, usdValue);
+    const perTxOverride = process.env.WISE_KYC_THRESHOLD_USD
+      ? usdValue <= Number(process.env.WISE_KYC_THRESHOLD_USD)
+      : false;
+    if (!decision.allowed && !perTxOverride) {
+      const kycApproved = decision.kycVerified;
+      const KYC_REQUIRED_USD = NO_KYC_LIMIT_USD;
       if (!kycApproved) {
         console.warn(
           `[wise/webhook] ⚠️ KYC gate held wire: ${userAddress.slice(0, 10)}... ` +
@@ -323,6 +318,18 @@ export async function POST(req: NextRequest) {
       `[wise/webhook] ✅ wire credited: ${userAddress.slice(0, 10)}... ` +
       `+${auxmCredit} AUXM (from ${amount} ${currency}, ref ${refShort})`
     );
+
+    // Record toward the 30d cumulative no-KYC cap so the next wire (or
+    // card buy, or AUXR buy) sees the right "remaining" balance. We
+    // already passed the per-tx gate above; this is the bookkeeping leg.
+    try {
+      const { isKycVerified, recordNoKycSpend } = await import("@/lib/kyc-limits");
+      if (!(await isKycVerified(userAddress))) {
+        await recordNoKycSpend(userAddress, usdValue);
+      }
+    } catch (e) {
+      console.warn("[wise/webhook] no-kyc spend record failed (non-blocking):", e);
+    }
 
     // Side-effects: Telegram + email + push (best-effort, non-blocking)
     try {
