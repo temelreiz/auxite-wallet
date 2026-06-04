@@ -31,12 +31,9 @@ interface ConversionOpts {
   transactionId?: string;
 }
 
-declare global {
-  // gtag is injected by the GA4 + Google Ads <Script> tags in the root layout.
-  interface Window {
-    gtag?: (...args: any[]) => void;
-  }
-}
+// Window.gtag is already typed by src/lib/analytics.ts — re-declaring it
+// here would collide ("Subsequent property declarations must have the same
+// type"). We just access it through the existing global.
 
 function labelFor(event: ConversionEvent): string | undefined {
   switch (event) {
