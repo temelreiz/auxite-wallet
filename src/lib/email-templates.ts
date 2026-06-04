@@ -457,3 +457,130 @@ export function getCardLaunchTemplate(lang: string): { subject: string; html: st
   };
   return emailTemplates[langMap[lang] || "cardLaunchEN"];
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KYC LIMITS ANNOUNCEMENT — "$500/tx without KYC" easing
+// ═══════════════════════════════════════════════════════════════════════════
+
+const kycLimitsEN = {
+  subject: "Now buy without KYC — up to $500",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Skip the paperwork. Start buying.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">You can now buy <strong>gold, silver, platinum or palladium</strong> with just your email — no identity verification needed for transactions up to $500.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">THE NEW LIMITS</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("•", "Up to $500 per purchase", "Single transaction ceiling — no KYC required.")}
+      ${step("•", "Up to $1,000 over 30 days", "Rolling cumulative cap. Resets day by day.")}
+      ${step("•", "Verify to remove all caps", "Full access in about 3 minutes. Higher tickets, all rails.")}
+    </table>
+    ${bonus("WHY THIS MATTERS", "We heard you: identity verification is friction. For most buyers exploring precious metals, $500 is enough to start. Begin with what you can today; verify when you're ready to size up.")}
+    ${cta("https://vault.auxite.io/vault", "BUY METAL NOW")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Applies to card, bank wire, and AUXR purchases. Verified users have no limit.</p>
+  `),
+};
+
+const kycLimitsTR = {
+  subject: "Artık KYC'siz alım — $500'a kadar",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Belge yok. Alıma başla.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Artık <strong>altın, gümüş, platin veya paladyum</strong>u sadece e-postanla satın alabilirsin — $500'a kadar olan işlemler için kimlik doğrulama gerekmiyor.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">YENİ LİMİTLER</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("•", "İşlem başına $500'a kadar", "Tek işlem tavanı — KYC gerekmez.")}
+      ${step("•", "30 günde toplam $1.000'a kadar", "Aylık kümülatif sınır. Gün gün yenilenir.")}
+      ${step("•", "Kimlik doğrula → tüm limitler kalkar", "3 dakikada tam erişim. Daha yüksek tutar, tüm yöntemler.")}
+    </table>
+    ${bonus("NEDEN DEĞİŞTİRDİK", "Sizi dinledik: kimlik doğrulama bir engel. Değerli metallere ilk adımı atan çoğu alıcı için $500 başlamak için yeterli. Bugün yapabildiğinle başla; büyütmek istediğinde doğrula.")}
+    ${cta("https://vault.auxite.io/vault", "HEMEN METAL AL")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Kart, havale ve AUXR alımları için geçerli. Doğrulanmış kullanıcıların limiti yoktur.</p>
+  `),
+};
+
+const kycLimitsDE = {
+  subject: "Jetzt ohne KYC kaufen — bis zu $500",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Keine Papiere. Kauf direkt.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Sie können nun <strong>Gold, Silber, Platin oder Palladium</strong> nur mit Ihrer E-Mail kaufen — keine Identitätsprüfung für Transaktionen bis $500 erforderlich.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">DIE NEUEN LIMITS</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("•", "Bis $500 pro Kauf", "Obergrenze pro Transaktion — kein KYC erforderlich.")}
+      ${step("•", "Bis $1.000 in 30 Tagen", "Rollende Gesamtobergrenze. Setzt sich Tag für Tag zurück.")}
+      ${step("•", "KYC abschließen → alle Limits weg", "Vollzugriff in ca. 3 Minuten. Höhere Tickets, alle Zahlungswege.")}
+    </table>
+    ${bonus("WARUM DAS WICHTIG IST", "Wir haben Ihnen zugehört: Identitätsprüfung ist eine Hürde. Für die meisten Käufer, die Edelmetalle erkunden, sind $500 ein guter Anfang. Beginnen Sie heute; verifizieren Sie, wenn Sie größer skalieren möchten.")}
+    ${cta("https://vault.auxite.io/vault", "JETZT METALL KAUFEN")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Gilt für Karte, Banküberweisung und AUXR-Käufe. Verifizierte Nutzer haben keine Grenze.</p>
+  `),
+};
+
+const kycLimitsFR = {
+  subject: "Achetez sans KYC — jusqu'à 500 $",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Pas de paperasse. Achetez maintenant.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Vous pouvez désormais acheter <strong>or, argent, platine ou palladium</strong> avec votre seul e-mail — aucune vérification d'identité requise pour les transactions jusqu'à 500 $.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">LES NOUVELLES LIMITES</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("•", "Jusqu'à 500 $ par achat", "Plafond par transaction — sans KYC.")}
+      ${step("•", "Jusqu'à 1 000 $ sur 30 jours", "Plafond cumulatif glissant. Se réinitialise jour après jour.")}
+      ${step("•", "Vérifiez votre identité → plus de plafond", "Accès complet en environ 3 minutes. Tickets plus élevés, tous les canaux.")}
+    </table>
+    ${bonus("POURQUOI", "Nous vous avons écouté : la vérification d'identité est un frein. Pour la plupart des acheteurs qui découvrent les métaux précieux, 500 $ suffisent pour démarrer. Commencez aujourd'hui ; vérifiez quand vous voudrez monter en échelle.")}
+    ${cta("https://vault.auxite.io/vault", "ACHETER DU MÉTAL MAINTENANT")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">S'applique aux achats par carte, virement bancaire et AUXR. Les utilisateurs vérifiés n'ont aucune limite.</p>
+  `),
+};
+
+const kycLimitsAR = {
+  subject: "اشترِ الآن بدون KYC — حتى 500 دولار",
+  html: wrap(`
+    <div dir="rtl" style="text-align:right">
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">بدون أوراق. ابدأ الشراء.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">يمكنك الآن شراء <strong>الذهب أو الفضة أو البلاتين أو البلاديوم</strong> ببريدك الإلكتروني فقط — لا حاجة للتحقق من الهوية للمعاملات حتى 500 دولار.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">الحدود الجديدة</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("•", "حتى 500 دولار لكل شراء", "سقف المعاملة الواحدة — بدون KYC.")}
+      ${step("•", "حتى 1000 دولار خلال 30 يومًا", "سقف تراكمي متجدد. يتجدد يومًا بيوم.")}
+      ${step("•", "تحقق من هويتك → إزالة جميع الحدود", "وصول كامل في حوالي 3 دقائق. مبالغ أعلى، جميع الوسائل.")}
+    </table>
+    ${bonus("لماذا غيّرنا هذا", "سمعناكم: التحقق من الهوية عائق. لمعظم المشترين الذين يستكشفون المعادن الثمينة، 500 دولار كافية للبدء. ابدأ بما تستطيع اليوم؛ تحقق عندما تريد التوسع.")}
+    ${cta("https://vault.auxite.io/vault", "اشترِ المعدن الآن")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">يسري على البطاقة والحوالة المصرفية ومشتريات AUXR. المستخدمون المتحققون بلا حدود.</p>
+    </div>
+  `),
+};
+
+const kycLimitsRU = {
+  subject: "Покупайте без KYC — до $500",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Без бумаг. Начните покупать.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Теперь вы можете покупать <strong>золото, серебро, платину или палладий</strong> только по email — без проверки личности для транзакций до $500.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">НОВЫЕ ЛИМИТЫ</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("•", "До $500 за покупку", "Потолок одной транзакции — без KYC.")}
+      ${step("•", "До $1 000 за 30 дней", "Скользящий совокупный лимит. Обнуляется день за днём.")}
+      ${step("•", "Пройдите KYC → все лимиты сняты", "Полный доступ примерно за 3 минуты. Крупнее, по всем каналам.")}
+    </table>
+    ${bonus("ПОЧЕМУ ЭТО ВАЖНО", "Мы вас услышали: проверка личности — это барьер. Для большинства, кто только начинает с драгоценными металлами, $500 достаточно. Начните сегодня; верифицируйтесь, когда захотите масштабироваться.")}
+    ${cta("https://vault.auxite.io/vault", "КУПИТЬ МЕТАЛЛ СЕЙЧАС")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Применяется к покупкам картой, банковским переводом и AUXR. У верифицированных пользователей лимита нет.</p>
+  `),
+};
+
+emailTemplates.kycLimitsEN = kycLimitsEN;
+emailTemplates.kycLimitsTR = kycLimitsTR;
+emailTemplates.kycLimitsDE = kycLimitsDE;
+emailTemplates.kycLimitsFR = kycLimitsFR;
+emailTemplates.kycLimitsAR = kycLimitsAR;
+emailTemplates.kycLimitsRU = kycLimitsRU;
+
+export function getKycLimitsAnnouncementTemplate(lang: string): { subject: string; html: string } {
+  const langMap: Record<string, string> = {
+    en: "kycLimitsEN",
+    tr: "kycLimitsTR",
+    de: "kycLimitsDE",
+    fr: "kycLimitsFR",
+    ar: "kycLimitsAR",
+    ru: "kycLimitsRU",
+  };
+  return emailTemplates[langMap[lang] || "kycLimitsEN"];
+}
