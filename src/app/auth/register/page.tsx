@@ -11,6 +11,7 @@ import Script from 'next/script';
 import { Loader2, Mail, Lock, Eye, EyeOff, AlertCircle, User, CheckCircle, Globe } from 'lucide-react';
 import { useLanguage } from "@/components/LanguageContext";
 import { useWallet } from "@/components/WalletContext";
+import { fireConversion } from "@/lib/google-ads-conversion";
 
 const LANGUAGE_OPTIONS = [
   { code: 'en', label: 'English' },
@@ -333,6 +334,10 @@ export default function RegisterPage() {
 
       // Show success message
       setSuccess(true);
+      // Google Ads conversion — fired on the client right after the API
+      // returns success. No-op if NEXT_PUBLIC_GOOGLE_ADS_LABEL_SIGNUP is
+      // unset, so this is safe to ship before the env vars land.
+      fireConversion("signup", { transactionId: data?.user?.id });
 
     } catch (err) {
       setError(t('connectionError'));

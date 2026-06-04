@@ -21,6 +21,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const dynamic = "force-dynamic";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "";
+// Google Ads conversion tag (AW-XXXXXXXXXX). Set in Vercel env; if empty
+// the tag never loads and src/lib/google-ads-conversion.ts no-ops.
+const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID || "";
 
 export const metadata: Metadata = {
   title: {
@@ -157,6 +160,18 @@ export default function RootLayout({
               `}
             </Script>
           </>
+        )}
+        {/* Google Ads conversion tag — shares the gtag() global with GA4.
+            Loaded only when NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID is set so
+            ad-blocker users / dev environments don't see extra requests. */}
+        {GOOGLE_ADS_ID && (
+          <Script id="google-ads-init" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('config', '${GOOGLE_ADS_ID}');
+            `}
+          </Script>
         )}
         {/* Meta Pixel */}
         <Script id="meta-pixel" strategy="afterInteractive">
