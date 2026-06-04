@@ -91,16 +91,16 @@
       "schedule": "0 7 * * *"
     },
     {
-      "path": "/api/cron/kyc-pending-blast",
-      "schedule": "0 * * * *"
-    },
-    {
       "path": "/api/cron/kyc-pending-email-blast",
       "schedule": "0 * * * *"
     },
     {
       "path": "/api/cron/procure",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/scan-auxr-deposits",
+      "schedule": "* * * * *"
     }
   ]
 }
