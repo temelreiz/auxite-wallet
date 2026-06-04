@@ -108,11 +108,14 @@ export async function readTotalClaimsByMetal(): Promise<Record<string, number>> 
   const totals: Record<string, number> = { auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 };
 
   // SCAN balance hashes — cap iterations at ~50k users to avoid runaway.
-  let cursor: string | number = 0;
+  // `cursor` typed as `any` because @upstash/redis's overloaded scan signature
+  // makes TS think the return shape depends on the input type, and we're
+  // happy to take whatever string-or-number form it hands back.
+  let cursor: any = 0;
   let walls = 0;
   const SCAN_BATCH = 500;
   do {
-    const res = await redis.scan(cursor, { match: "user:0x*:balance", count: SCAN_BATCH });
+    const res: [any, string[]] = await redis.scan(cursor, { match: "user:0x*:balance", count: SCAN_BATCH }) as any;
     cursor = res[0];
     for (const key of res[1]) {
       walls++;
@@ -125,13 +128,13 @@ export async function readTotalClaimsByMetal(): Promise<Record<string, number>> 
       } catch { /* skip bad row */ }
     }
     if (walls > 50_000) break; // hard backstop
-  } while (cursor !== 0 && cursor !== "0");
+  } while (String(cursor) !== "0");
 
   // Add allocations on top of liquid balance.
   // allocation:user:{uid}:list = JSON array of { metal, grams, status }.
   cursor = 0;
   do {
-    const res = await redis.scan(cursor, { match: "allocation:user:*:list", count: SCAN_BATCH });
+    const res: [any, string[]] = await redis.scan(cursor, { match: "allocation:user:*:list", count: SCAN_BATCH }) as any;
     cursor = res[0];
     for (const key of res[1]) {
       try {
@@ -147,7 +150,7 @@ export async function readTotalClaimsByMetal(): Promise<Record<string, number>> 
         }
       } catch { /* skip */ }
     }
-  } while (cursor !== 0 && cursor !== "0");
+  } while (String(cursor) !== "0");
 
   return totals;
 }
