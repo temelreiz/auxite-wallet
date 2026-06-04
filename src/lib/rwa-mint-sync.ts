@@ -56,11 +56,17 @@ interface AssetConfig {
   contractAddress: string;
 }
 
+// Production contract addresses on Base mainnet — these are the ones
+// rwa.xyz indexes for Total Supply / Holders. They intentionally differ
+// from NEXT_PUBLIC_AUX*_ADDRESS in .env.local, which point at older or
+// staging contracts. Don't replace these with the env vars unless you've
+// confirmed rwa.xyz is tracking the new address (their indexer is slow
+// to retarget). Same fallback set used by blockchain-service.ts.
 const ASSETS: AssetConfig[] = [
-  { id: "AUXG", balanceField: "auxg", metalKey: "AUXG", contractAddress: process.env.NEXT_PUBLIC_AUXG_ADDRESS || "" },
-  { id: "AUXS", balanceField: "auxs", metalKey: "AUXS", contractAddress: process.env.NEXT_PUBLIC_AUXS_ADDRESS || "" },
-  { id: "AUXPT", balanceField: "auxpt", metalKey: "AUXPT", contractAddress: process.env.NEXT_PUBLIC_AUXPT_ADDRESS || "" },
-  { id: "AUXPD", balanceField: "auxpd", metalKey: "AUXPD", contractAddress: process.env.NEXT_PUBLIC_AUXPD_ADDRESS || "" },
+  { id: "AUXG",  balanceField: "auxg",  metalKey: "AUXG",  contractAddress: "0x390164702040b509a3d752243f92c2ac0318989d" },
+  { id: "AUXS",  balanceField: "auxs",  metalKey: "AUXS",  contractAddress: "0x82f6eb8ba5c84c8fd395b25a7a40ade08f0868aa" },
+  { id: "AUXPT", balanceField: "auxpt", metalKey: "AUXPT", contractAddress: "0x119de594170b68561b1761ae1246c5154f94705d" },
+  { id: "AUXPD", balanceField: "auxpd", metalKey: "AUXPD", contractAddress: "0xe051b2603617277ab50c509f5a38c16056c1c908" },
 ];
 
 export interface AssetDelta {
