@@ -202,7 +202,7 @@ export default function SupportChat() {
           {/* Human handoff */}
           <div className="border-t border-slate-800 px-4 py-2">
             <a
-              href={SUPPORT_CONTACT.whatsappUrl}
+              href={SUPPORT_CONTACT.telegramUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs font-medium text-gold-400 hover:text-gold-300"

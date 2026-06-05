@@ -6,8 +6,12 @@
 // contact details accurate here — the bot will not invent them.
 
 export const SUPPORT_CONTACT = {
-  whatsapp: "+44 7520 603300",
-  whatsappUrl: "https://wa.me/447520603300",
+  // Primary public channels. WhatsApp was retired from customer-facing
+  // surfaces because the number was being abused for off-hours calls;
+  // Telegram bot has no voice capability by design and is now the
+  // chat-with-a-human escalation path.
+  telegram: "@AuxiteSupportbot",
+  telegramUrl: "https://t.me/AuxiteSupportbot",
   email: "support@auxite.io",
 };
 
@@ -92,7 +96,7 @@ SECURITY:
   details private.
 
 HUMAN HANDOFF:
-- When handing off, share: WhatsApp ${SUPPORT_CONTACT.whatsapp} (${SUPPORT_CONTACT.whatsappUrl}) and email ${SUPPORT_CONTACT.email}.
+- When handing off, share: Telegram ${SUPPORT_CONTACT.telegram} (${SUPPORT_CONTACT.telegramUrl}) and email ${SUPPORT_CONTACT.email}.
 
 STYLE:
 - Be brief and friendly. Short paragraphs or tight bullet points. No emojis
