@@ -56,17 +56,17 @@ interface AssetConfig {
   contractAddress: string;
 }
 
-// Production contract addresses on Base mainnet — these are the ones
-// rwa.xyz indexes for Total Supply / Holders. They intentionally differ
-// from NEXT_PUBLIC_AUX*_ADDRESS in .env.local, which point at older or
-// staging contracts. Don't replace these with the env vars unless you've
-// confirmed rwa.xyz is tracking the new address (their indexer is slow
-// to retarget). Same fallback set used by blockchain-service.ts.
+// Mirror contracts on Base mainnet — deployed fresh for rwa.xyz
+// visibility because the original V8 token contracts at
+// 0x390164…/0x82f6eb…/0x119de5…/0xe051b2… have no admin-mint surface
+// (only USDC-funded buy()). The mirrors are thin ERC-20s with admin
+// mint, used purely to mirror our off-chain custodial ledger onto a
+// chain rwa.xyz can index — they hold no value and accept no payment.
 const ASSETS: AssetConfig[] = [
-  { id: "AUXG",  balanceField: "auxg",  metalKey: "AUXG",  contractAddress: "0x390164702040b509a3d752243f92c2ac0318989d" },
-  { id: "AUXS",  balanceField: "auxs",  metalKey: "AUXS",  contractAddress: "0x82f6eb8ba5c84c8fd395b25a7a40ade08f0868aa" },
-  { id: "AUXPT", balanceField: "auxpt", metalKey: "AUXPT", contractAddress: "0x119de594170b68561b1761ae1246c5154f94705d" },
-  { id: "AUXPD", balanceField: "auxpd", metalKey: "AUXPD", contractAddress: "0xe051b2603617277ab50c509f5a38c16056c1c908" },
+  { id: "AUXG",  balanceField: "auxg",  metalKey: "AUXG",  contractAddress: "0x24acdf6dbc53e4e257d1812077e7ba1960b02019" },
+  { id: "AUXS",  balanceField: "auxs",  metalKey: "AUXS",  contractAddress: "0xb03471ba1616c8c1f772afcfc05966bbd298014e" },
+  { id: "AUXPT", balanceField: "auxpt", metalKey: "AUXPT", contractAddress: "0xe5640dcbcb1de6316f9baa8654cfd0e51f3bdd19" },
+  { id: "AUXPD", balanceField: "auxpd", metalKey: "AUXPD", contractAddress: "0x1c99a4979d34871d1c4fff0761a2863ec8610cf2" },
 ];
 
 export interface AssetDelta {

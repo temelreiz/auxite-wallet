@@ -15,3 +15,9 @@ keys/
 
 # Claude Code worktrees (auto-generated, never committed)
 .claude/worktrees/
+
+# Hardhat
+artifacts/
+cache/
+typechain-types/
+dist-hardhat/

@@ -36,6 +36,18 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-c", "cd /Users/bs/Desktop/carnivon-mobile && npx expo start --web --port 8083"],
       "port": 8083
+    },
+    {
+      "name": "auxite-nexus",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/bs/Desktop/auxite-nexus && npm run dev -- --port 3005"],
+      "port": 3005
+    },
+    {
+      "name": "auxite-nexus-landing",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/bs/Desktop/auxite-nexus-landing && npm run dev -- --port 3006"],
+      "port": 3006
     }
   ]
 }

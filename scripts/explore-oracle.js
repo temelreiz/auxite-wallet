@@ -1,7 +1,7 @@
 const { ethers } = require("ethers");
 
 const SEPOLIA_RPC = "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
-const OWNER_PRIVATE_KEY = "0xce3400bebcef2d7603216e8340b7ee29bcb493edb8f7b30d088c3edec63bc401";
+const OWNER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
 const ORACLE = "0x45677fc1bE2F59937Fd6A93145Db76beB38a7CcA";
 
 // Daha geniş ABI

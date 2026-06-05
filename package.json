@@ -15,6 +15,7 @@
     "e2e:report": "playwright show-report",
     "contracts:compile": "TS_NODE_PROJECT=tsconfig.hardhat.json hardhat compile",
     "contracts:test": "TS_NODE_PROJECT=tsconfig.hardhat.json hardhat test",
+    "contracts:wallets": "TS_NODE_PROJECT=tsconfig.hardhat.json ts-node scripts/generate-auxr-wallets.ts",
     "contracts:deploy:sepolia": "TS_NODE_PROJECT=tsconfig.hardhat.json hardhat run scripts/deploy-auxr.ts --network baseSepolia",
     "contracts:deploy:base": "TS_NODE_PROJECT=tsconfig.hardhat.json hardhat run scripts/deploy-auxr.ts --network base"
   },

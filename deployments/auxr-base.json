@@ -1,0 +1,11 @@
+{
+  "network": "base",
+  "chainId": 8453,
+  "contract": "AUXR",
+  "address": "0xB145B8e9C02193d55454f534f917Cabe704FA042",
+  "admin": "0xEdC9163c5f8A2a76BD1CdDa6BAA4Eb576B481070",
+  "deployer": "0xD4ceCfdf73ccCD0517F576e75BE469D75E0a1658",
+  "txHash": "0xd6023627395a33758a4dc98f3bc7db4d7781ee581d734b6410d9753905740eb6",
+  "blockNumber": 46868725,
+  "deployedAt": "2026-06-03T22:46:36.831Z"
+}

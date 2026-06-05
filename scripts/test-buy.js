@@ -1,7 +1,7 @@
 const { ethers } = require("ethers");
 
 const SEPOLIA_RPC = "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
-const PRIVATE_KEY = "0xce3400bebcef2d7603216e8340b7ee29bcb493edb8f7b30d088c3edec63bc401";
+const PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
 const AUXG = "0xD14D32B1e03B3027D1f8381EeeC567e147De9CCe";
 
 const TOKEN_ABI = [

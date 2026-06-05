@@ -1,7 +1,7 @@
 const { ethers } = require("ethers");
 
 const SEPOLIA_RPC = "https://sepolia.infura.io/v3/06f4a3d8bae44ffb889975d654d8a680";
-const OWNER_PRIVATE_KEY = "0xce3400bebcef2d7603216e8340b7ee29bcb493edb8f7b30d088c3edec63bc401";
+const OWNER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
 
 // Simple Oracle Contract Bytecode
 // Returns hardcoded prices: Gold=$95/g, Silver=$1.1/g, Platinum=$32/g, Palladium=$33/g, ETH=$3500

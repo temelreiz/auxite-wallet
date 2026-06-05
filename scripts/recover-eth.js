@@ -2,7 +2,7 @@ const { ethers } = require('ethers');
 
 async function recoverETH() {
   // Wrong address private key (from .env.vercel)
-  const WRONG_WALLET_PRIVATE_KEY = '0x73eb48b0bf95acbaa7074a0d33fff2c8b6698bf6b0791096af84c2664f01033e';
+  const WRONG_WALLET_PRIVATE_KEY = process.env.WRONG_WALLET_PRIVATE_KEY;
   
   // Correct hot wallet address (production)
   const CORRECT_HOT_WALLET = '0xaE4d3eb67558423f74E8D80F56fbdfc1F91F3213';
