@@ -382,7 +382,7 @@ export async function fetchDepositsInRange(params: {
     args: { to: AUXR_DEPOSIT_ADDRESS },
   });
 
-  return logs.map((log) => ({
+  return logs.map((log: any) => ({
     from: log.args.from!,
     to: log.args.to!,
     value: log.args.value!,
