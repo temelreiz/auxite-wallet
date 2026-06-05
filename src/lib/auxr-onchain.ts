@@ -172,9 +172,13 @@ const DEPOSIT_PK = process.env.AUXR_DEPOSIT_PRIVATE_KEY || "";
 // annotation, which avoids the strict authorizationList requirement that
 // surfaces on the abstract PublicClient interface.
 
-let _publicClient: ReturnType<typeof createPublicClient> | null = null;
-let _minterClient: ReturnType<typeof createWalletClient> | null = null;
-let _depositClient: ReturnType<typeof createWalletClient> | null = null;
+// `any` here because viem narrows getBlock() return types by chain in a
+// way TS can't widen at the cache slot — concrete chain literal vs the
+// generic Chain that ReturnType infers diverges in `transactions`.
+// We don't care about that field; widen at the seam.
+let _publicClient: any = null;
+let _minterClient: any = null;
+let _depositClient: any = null;
 
 export function publicClient() {
   if (!_publicClient) {
