@@ -11,6 +11,7 @@ import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { METAL_TOKENS, ORACLE_ADDRESS } from "@/config/contracts-v8";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
+import BlogManager from "@/components/admin/BlogManager";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -415,6 +416,7 @@ const TABS = [
   { id: "pushNotifications", label: "Push Bildirim", icon: "🔔" },
   { id: "notificationHistory", label: "Bildirim Geçmişi", icon: "📋" },
   { id: "supportSettings", label: "Destek", icon: "💬" },
+  { id: "blog", label: "Blog", icon: "✍️" },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -6311,6 +6313,21 @@ export default function AdminDashboard() {
                   </button>
                 </>
               )}
+            </div>
+          )}
+
+          {/* BLOG MANAGER — manages /blog posts on auxite.io via GitHub API.
+              Requires GITHUB_REPO_TOKEN env var on Vercel (fine-grained PAT,
+              contents:write on temelreiz/auxite-website). */}
+          {activeTab === "blog" && (
+            <div className="bg-slate-900/40 border border-slate-700 rounded-2xl p-6">
+              <BlogManager
+                adminToken={
+                  typeof window !== 'undefined'
+                    ? sessionStorage.getItem('auxite_admin_token') || ''
+                    : ''
+                }
+              />
             </div>
           )}
 
