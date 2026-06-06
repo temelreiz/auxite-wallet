@@ -16,6 +16,7 @@ import { BuyMetalCardModal } from "@/components/BuyMetalCardModal";
 import { WireActivityCard } from "@/components/WireActivityCard";
 import { logEvent } from "@/lib/analytics";
 import { MarketStatusBanner } from "@/components/MarketStatusBanner";
+import CampaignBannerCarousel from "@/components/CampaignBannerCarousel";
 import { useLanguage } from "@/components/LanguageContext";
 import { useWallet } from "@/components/WalletContext";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
@@ -859,6 +860,11 @@ export default function VaultPage() {
 
         {/* Market Status Banner */}
         <MarketStatusBanner />
+
+        {/* Campaign banners — same /api/mobile/banners feed the mobile
+            app reads, so admin 📢 lands here too. Auto-collapses on
+            quiet weeks (no active campaigns). */}
+        <CampaignBannerCarousel language={language} />
 
         {/* KYC Warning Banner */}
         {false && kycStatus !== 'verified' && kycLoaded && (
