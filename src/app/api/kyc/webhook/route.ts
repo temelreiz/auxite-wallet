@@ -8,6 +8,7 @@ import { redis } from '@/lib/redis';
 import { verifyWebhookSignature, mapReviewStatusToLevel, mapReviewStatusToKYCStatus, getApplicantByExternalId } from '@/lib/sumsub';
 import { sendKYCApprovalEmail, sendKYCRejectionEmail } from '@/lib/email';
 import { getUserLanguage } from '@/lib/user-language';
+import { sendPushToUser } from '@/lib/expo-push';
 
 const KYC_LIMITS = {
   none: { dailyWithdraw: 100, monthlyWithdraw: 500, singleTransaction: 50 },
@@ -241,25 +242,28 @@ export async function POST(request: NextRequest) {
         console.error('Failed to send KYC email:', emailErr);
       }
 
-      // Push notification gönder
+      // Push notification — call Expo push directly instead of an
+      // internal HTTP roundtrip. The fetch() version above depended on
+      // both NEXT_PUBLIC_BASE_URL being correct in production AND
+      // INTERNAL_API_KEY matching across both runtimes; in practice the
+      // call was silently 401'ing or DNS-failing and the approval push
+      // never reached the user. Calling sendPushToUser() in-process
+      // skips both env dependencies.
       try {
-        await fetch(process.env.NEXT_PUBLIC_BASE_URL + '/api/notifications/send', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': process.env.INTERNAL_API_KEY || '',
-          },
-          body: JSON.stringify({
-            walletAddress: externalUserId,
-            title: isApproved ? 'KYC Onaylandı!' : 'KYC Reddedildi',
-            body: isApproved
-              ? 'Kimlik doğrulamanız başarıyla tamamlandı.'
-              : 'Kimlik doğrulamanız reddedildi. Lütfen tekrar deneyin.',
-            type: 'kyc_result',
-          }),
-        });
+        const pushResult = await sendPushToUser(
+          externalUserId,
+          isApproved ? 'KYC Onaylandı! 🎉' : 'KYC Reddedildi',
+          isApproved
+            ? 'Kimlik doğrulamanız tamamlandı — hesabın işlem için hazır.'
+            : 'Kimlik doğrulamanız reddedildi. Lütfen tekrar deneyin.',
+          { type: 'kyc_result', isApproved, category: 'kyc_result' },
+          { channelId: 'default' },
+        );
+        console.log(
+          `📱 KYC push sent (sent=${pushResult.sent} failed=${pushResult.failed}) to ${externalUserId}`,
+        );
       } catch (err) {
-        console.error('Failed to send KYC notification:', err);
+        console.error('Failed to send KYC push:', err);
       }
     }
 
