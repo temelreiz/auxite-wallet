@@ -156,15 +156,50 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ─── TELEGRAM (ops chat — not per-user yet) ─────────────────────────
+  // ─── TELEGRAM ──────────────────────────────────────────────────────
+  // Fires two messages on the same Telegram channel click:
+  //   1) Ops chat (TELEGRAM_CHAT_ID) — internal "campaign just went live"
+  //      receipt for the operations team.
+  //   2) Public community channel (TELEGRAM_CHANNEL_ID, e.g. @auxite_community)
+  //      — public-facing announcement. Skipped silently if not configured;
+  //      bot must be an admin of that channel with "Post Messages" enabled.
   if (channels.includes("telegram")) {
+    const opsMsg = `📢 <b>YENİ KAMPANYA</b>\n\n<b>${title}</b>\n\n${text}\n\nKampanya ID: <code>${c.id}</code>`;
+    // Public copy is plain Markdown-style, no HTML tags, since channel
+    // subscribers shouldn't see internal IDs or chrome.
+    const publicMsg = `🎁 ${title}\n\n${text}\n\n🔗 https://vault.auxite.io`;
+
+    const sub: Record<string, unknown> = {};
     try {
-      const msg = `📢 <b>YENİ KAMPANYA</b>\n\n<b>${title}</b>\n\n${text}\n\nKampanya ID: <code>${c.id}</code>`;
-      await sendTelegramMessage(msg);
-      results.telegram = { ok: true };
+      await sendTelegramMessage(opsMsg);
+      sub.ops = { ok: true };
     } catch (err) {
-      results.telegram = { error: err instanceof Error ? err.message : String(err) };
+      sub.ops = { error: err instanceof Error ? err.message : String(err) };
     }
+
+    const channelId = process.env.TELEGRAM_CHANNEL_ID;
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (channelId && botToken) {
+      try {
+        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        const r = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: channelId,
+            text: publicMsg,
+            disable_web_page_preview: false,
+          }),
+        });
+        const j = (await r.json()) as { ok?: boolean; description?: string };
+        sub.public = j.ok ? { ok: true } : { error: j.description ?? "send failed" };
+      } catch (err) {
+        sub.public = { error: err instanceof Error ? err.message : String(err) };
+      }
+    } else {
+      sub.public = { skipped: "TELEGRAM_CHANNEL_ID not configured" };
+    }
+    results.telegram = sub;
   }
 
   // ─── EMAIL ──────────────────────────────────────────────────────────
