@@ -17,7 +17,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { requireAdmin } from "@/lib/admin-auth";
 import { broadcastPush, broadcastAnonPush } from "@/lib/expo-push";
-import { sendTelegramMessage } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -181,25 +180,14 @@ export async function POST(request: NextRequest) {
   }
 
   // ─── TELEGRAM ──────────────────────────────────────────────────────
-  // Fires two messages on the same Telegram channel click:
-  //   1) Ops chat (TELEGRAM_CHAT_ID) — internal "campaign just went live"
-  //      receipt for the operations team.
-  //   2) Public community channel (TELEGRAM_CHANNEL_ID, e.g. @auxite_community)
-  //      — public-facing announcement. Skipped silently if not configured;
-  //      bot must be an admin of that channel with "Post Messages" enabled.
+  // Publishes the campaign as a single post on the public @auxite
+  // channel via TELEGRAM_CHANNEL_BOT_TOKEN (falls back to
+  // TELEGRAM_BOT_TOKEN). The old ops-DM receipt was removed once we
+  // confirmed it was just an internal duplicate; the admin panel
+  // already shows the campaign as live, so the DM was noise.
   if (channels.includes("telegram")) {
-    const opsMsg = `📢 <b>YENİ KAMPANYA</b>\n\n<b>${title}</b>\n\n${text}\n\nKampanya ID: <code>${c.id}</code>`;
-    // Public copy is plain Markdown-style, no HTML tags, since channel
-    // subscribers shouldn't see internal IDs or chrome.
     const publicMsg = `🎁 ${title}\n\n${text}\n\n🔗 https://vault.auxite.io`;
-
     const sub: Record<string, unknown> = {};
-    try {
-      await sendTelegramMessage(opsMsg);
-      sub.ops = { ok: true };
-    } catch (err) {
-      sub.ops = { error: err instanceof Error ? err.message : String(err) };
-    }
 
     const channelId = process.env.TELEGRAM_CHANNEL_ID;
     // The public @auxite channel uses its own dedicated bot
