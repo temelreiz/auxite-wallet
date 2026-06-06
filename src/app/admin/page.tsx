@@ -448,6 +448,22 @@ export default function AdminDashboard() {
   // Tab State
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
 
+  // ─── Campaign announcement modal ────────────────────────────────────
+  // The 📢 button used to fire push + banner + telegram in one
+  // confirm() call; testing it twice would spam every push device twice.
+  // The modal lets the admin pick exactly which channels go out per
+  // send; push defaults to OFF because it's the loud channel.
+  const [announceModal, setAnnounceModal] = useState<{
+    campaignId: string;
+    campaignName: string;
+  } | null>(null);
+  const [announceChannels, setAnnounceChannels] = useState<{
+    push: boolean;
+    banner: boolean;
+    telegram: boolean;
+  }>({ push: false, banner: true, telegram: true });
+  const [announcing, setAnnouncing] = useState(false);
+
   // Dashboard Stats
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -2117,30 +2133,48 @@ export default function AdminDashboard() {
   };
 
   // Fires the one-shot Volume Bonus announcement (push + banner + ops
-  // Telegram). Confirmed first so a stray click doesn't blast every
-  // device in production. After success we refresh campaigns so the
-  // "Duyuru gönderildi: HH:MM" badge appears on the card.
-  const handleAnnounceCampaign = async (campaignId: string) => {
-    if (!confirm("Push bildirimi + in-app banner + Telegram ops chat'e duyuru göndereceğim. Onaylıyor musun?")) return;
+  // Telegram). The single-button "blast everything" behaviour was
+  // landing 3 identical push pings on every test press; now the
+  // admin picks channels per send via a modal. Defaults are
+  // intentionally conservative: push OFF, banner + telegram ON.
+  // Push is the loud channel — opt-in only.
+  const handleOpenAnnounceModal = (campaignId: string, campaignName: string) => {
+    setAnnounceChannels({ push: false, banner: true, telegram: true });
+    setAnnounceModal({ campaignId, campaignName });
+  };
+
+  const handleSendAnnounce = async () => {
+    if (!announceModal) return;
+    const channels = (Object.entries(announceChannels) as Array<[string, boolean]>)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+    if (channels.length === 0) {
+      setMessage({ type: "error", text: "En az bir kanal seç" });
+      return;
+    }
+    setAnnouncing(true);
     try {
       const res = await fetch("/api/admin/campaigns/announce", {
         method: "POST",
         headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-        body: JSON.stringify({ campaignId, channels: ["push", "banner", "telegram"] }),
+        body: JSON.stringify({ campaignId: announceModal.campaignId, channels }),
       });
       const json = await res.json();
       if (json.ok) {
         setMessage({
           type: "success",
-          text: `Duyuru gönderildi. Push: ${JSON.stringify(json.results?.push ?? {}).slice(0, 80)}…`,
+          text: `Duyuru gönderildi (${channels.join(", ")})`,
         });
         loadCampaigns();
+        setAnnounceModal(null);
       } else {
         setMessage({ type: "error", text: `Duyuru hatası: ${json.error ?? "bilinmiyor"}` });
       }
     } catch (e) {
       console.error("Announce failed:", e);
       setMessage({ type: "error", text: "Duyuru gönderilemedi (network)" });
+    } finally {
+      setAnnouncing(false);
     }
   };
 
@@ -3662,10 +3696,10 @@ export default function AdminDashboard() {
                           <div className="flex items-center gap-2">
                             {campaign.type === 'volume_bonus' && campaign.active && (
                               <button
-                                onClick={() => handleAnnounceCampaign(campaign.id)}
+                                onClick={() => handleOpenAnnounceModal(campaign.id, campaign.name?.tr || 'Kampanya')}
                                 title={campaign.announcementSentAt
                                   ? `Son duyuru: ${new Date(campaign.announcementSentAt).toLocaleString('tr')}. Yeniden gönder.`
-                                  : "Push + banner + Telegram duyurusu gönder"}
+                                  : "Duyuru gönder — kanal seç"}
                                 className="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 flex items-center justify-center"
                               >
                                 📢
@@ -6487,6 +6521,133 @@ export default function AdminDashboard() {
 
         </div>
       </div>
+
+      {/* ═════════════════════════════════════════════════════════════════ */}
+      {/* CAMPAIGN ANNOUNCEMENT MODAL                                       */}
+      {/* Rendered at the page root so the campaign list scroll position    */}
+      {/* doesn't affect its layering. Click on the backdrop dismisses;     */}
+      {/* clicks inside the panel are stopped so the modal stays open      */}
+      {/* while the admin ticks channels.                                   */}
+      {/* ═════════════════════════════════════════════════════════════════ */}
+      {announceModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={() => !announcing && setAnnounceModal(null)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <h3 className="text-lg font-semibold text-white">📢 Duyuru Gönder</h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  &quot;{announceModal.campaignName}&quot; — hangi kanallara?
+                </p>
+              </div>
+              {!announcing && (
+                <button
+                  onClick={() => setAnnounceModal(null)}
+                  className="text-slate-400 hover:text-white text-xl leading-none"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-2 mt-5">
+              {/* Each row is a card-style checkbox so the click target is generous. */}
+              <label
+                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${
+                  announceChannels.push
+                    ? "border-emerald-500/60 bg-emerald-500/5"
+                    : "border-slate-700 hover:bg-slate-800/50"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={announceChannels.push}
+                  onChange={(e) =>
+                    setAnnounceChannels({ ...announceChannels, push: e.target.checked })
+                  }
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-white">📱 Push Notification</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">
+                    Mobil app kullanıcılarına anlık bildirim — kayıtlı + anonim cihazlar.
+                    Her gönderim TEKRAR bildirim yollar (idempotent değil).
+                  </div>
+                </div>
+              </label>
+
+              <label
+                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${
+                  announceChannels.banner
+                    ? "border-emerald-500/60 bg-emerald-500/5"
+                    : "border-slate-700 hover:bg-slate-800/50"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={announceChannels.banner}
+                  onChange={(e) =>
+                    setAnnounceChannels({ ...announceChannels, banner: e.target.checked })
+                  }
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-white">🎨 In-app Banner</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">
+                    App&apos;i açan kullanıcılara banner gösterir; kampanyanın endDate&apos;i
+                    dolana kadar kalır. Aynı banner upsert (yenilenir, tekrar bildirim yok).
+                  </div>
+                </div>
+              </label>
+
+              <label
+                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${
+                  announceChannels.telegram
+                    ? "border-emerald-500/60 bg-emerald-500/5"
+                    : "border-slate-700 hover:bg-slate-800/50"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={announceChannels.telegram}
+                  onChange={(e) =>
+                    setAnnounceChannels({ ...announceChannels, telegram: e.target.checked })
+                  }
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-white">📡 Telegram</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">
+                    Public kanal (@auxite) + ops chat. Public abone sayısı kadar erişir.
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => setAnnounceModal(null)}
+                disabled={announcing}
+                className="flex-1 py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-medium disabled:opacity-50"
+              >
+                İptal
+              </button>
+              <button
+                onClick={handleSendAnnounce}
+                disabled={announcing}
+                className="flex-1 py-2.5 rounded-lg bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30 text-sm font-semibold border border-emerald-500/40 disabled:opacity-50"
+              >
+                {announcing ? "Gönderiliyor…" : "Seçili Kanallara Gönder"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
