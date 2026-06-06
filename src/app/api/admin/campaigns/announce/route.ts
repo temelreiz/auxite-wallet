@@ -202,7 +202,14 @@ export async function POST(request: NextRequest) {
     }
 
     const channelId = process.env.TELEGRAM_CHANNEL_ID;
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    // The public @auxite channel uses its own dedicated bot
+    // (@auxite_support_bot — different from the support webhook bot
+    // @AuxiteSupportbot). Channel-only bot keeps its scope minimal:
+    // no DM/support traffic, just channel posts. Fall back to the
+    // default TELEGRAM_BOT_TOKEN if the channel-specific one isn't
+    // set so single-bot setups still work.
+    const botToken =
+      process.env.TELEGRAM_CHANNEL_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
     if (channelId && botToken) {
       try {
         const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
