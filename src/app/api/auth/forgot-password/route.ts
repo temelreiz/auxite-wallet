@@ -90,7 +90,10 @@ export async function POST(request: NextRequest) {
     // logged but we still return success to preserve enumeration
     // protection.
     // ══════════════════════════════════════════════════════════════
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io'}/reset-password?token=${resetToken}&email=${encodeURIComponent(normalizedEmail)}`;
+    // Reset page lives at /auth/reset-password (Next.js route), not
+    // /reset-password — every link from the old code hit 404 because of
+    // the missing /auth segment.
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io'}/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(normalizedEmail)}`;
 
     try {
       const result = await sendPasswordResetEmail(
