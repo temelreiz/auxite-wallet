@@ -493,7 +493,39 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
 
         {/* Footer */}
         {step === "form" && (
-          <div className="p-3 sm:p-4 border-t border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <div className="p-3 sm:p-4 border-t border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+            {/* Pre-emptive crypto-alt nudge. A third of failed Stripe
+                attempts come back as "transaction not allowed" — banks
+                reject before we see the auth call. Flagging the USDT
+                path up-front means a user whose bank turns them down
+                doesn't bounce in confusion; some users tap straight
+                through to crypto from here. */}
+            <a
+              href="/fund-vault"
+              onClick={() => {
+                logEvent("card_form_crypto_alt_tapped", { surface: "web" });
+              }}
+              className="flex items-start gap-2 px-3 py-2 rounded-lg bg-[#BFA181]/10 border border-[#BFA181]/30 text-[11px] sm:text-xs text-slate-700 dark:text-slate-300 hover:bg-[#BFA181]/15 transition-colors"
+            >
+              <span>💡</span>
+              <span>
+                {L === "tr" ? "Bazı bankalar bu işleme izin vermez. Kart reddedilirse "
+                  : L === "de" ? "Manche Banken lehnen diese Transaktion ab. Wenn Ihre Karte abgelehnt wird, "
+                  : L === "fr" ? "Certaines banques refusent cette transaction. Si votre carte est refusée, "
+                  : L === "ar" ? "بعض البنوك ترفض هذه المعاملة. إذا رُفضت بطاقتك "
+                  : L === "ru" ? "Некоторые банки отклоняют такие операции. Если карта не пройдёт, "
+                  : "Some banks decline this transaction. If your card doesn't go through, "}
+                <span className="text-[#BFA181] font-semibold whitespace-nowrap">
+                  {L === "tr" ? "USDT ile devam edebilirsin →"
+                    : L === "de" ? "können Sie mit USDT fortfahren →"
+                    : L === "fr" ? "continuez en USDT →"
+                    : L === "ar" ? "يمكنك المتابعة بـ USDT ←"
+                    : L === "ru" ? "продолжайте через USDT →"
+                    : "continue with USDT →"}
+                </span>
+              </span>
+            </a>
+
             <button
               onClick={handleQuote}
               disabled={!canSubmit}
