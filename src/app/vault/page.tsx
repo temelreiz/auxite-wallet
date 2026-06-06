@@ -864,7 +864,7 @@ export default function VaultPage() {
         {/* Campaign banners — same /api/mobile/banners feed the mobile
             app reads, so admin 📢 lands here too. Auto-collapses on
             quiet weeks (no active campaigns). */}
-        <CampaignBannerCarousel language={language} />
+        <CampaignBannerCarousel language={lang} />
 
         {/* KYC Warning Banner */}
         {false && kycStatus !== 'verified' && kycLoaded && (
