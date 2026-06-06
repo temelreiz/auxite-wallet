@@ -43,20 +43,8 @@
       "schedule": "0 8 1 * *"
     },
     {
-      "path": "/api/cron/staking-reminders",
-      "schedule": "0 6 * * *"
-    },
-    {
       "path": "/api/cron/execute-all",
       "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/email-drip",
-      "schedule": "0 10 * * *"
-    },
-    {
-      "path": "/api/cron/kyc-reminder-push",
-      "schedule": "0 11 * * *"
     },
     {
       "path": "/api/cron/reconcile-deferred-onchain",
@@ -93,10 +81,6 @@
     {
       "path": "/api/cron/rwa-mint-sync",
       "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/kyc-pending-email-blast",
-      "schedule": "0 * * * *"
     },
     {
       "path": "/api/cron/procure",

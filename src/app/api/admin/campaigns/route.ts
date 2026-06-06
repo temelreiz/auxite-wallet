@@ -8,7 +8,7 @@ interface Campaign {
   id: string;
   name: { tr: string; en: string };
   description: { tr: string; en: string };
-  type: 'discount' | 'bonus' | 'cashback' | 'referral' | 'limited';
+  type: 'discount' | 'bonus' | 'cashback' | 'referral' | 'limited' | 'volume_bonus';
   value: number;
   valueType: 'percentage' | 'fixed';
   code?: string;
@@ -23,6 +23,15 @@ interface Campaign {
   endDate: string;
   active: boolean;
   createdAt: string;
+  // ─── Volume Bonus only (admin-defined "trade $X → Y grams" campaign) ───
+  // Filled in when type === 'volume_bonus'. Storage matches the shape used
+  // by src/lib/volume-bonus.ts so the trade-route hook can read these
+  // straight off the saved campaign record.
+  bonusAsset?: 'AUXG' | 'AUXS' | 'AUXPT' | 'AUXPD';
+  bonusAmountGrams?: number;
+  minTradeUsd?: number;
+  poolCap?: number;
+  eligibility?: 'all' | 'kyc_verified' | 'no_kyc' | 'dormant_60d';
 }
 
 const CAMPAIGNS_KEY = "auxite:campaigns";
@@ -74,6 +83,32 @@ export async function GET(request: NextRequest) {
           maxPerUserUsd: 100,
         },
       });
+    }
+
+    // Volume bonus live stats — usage count + pool remaining per campaign.
+    // Reads the per-campaign Redis counters maintained by
+    // src/lib/volume-bonus.ts so the admin progress cards stay in sync
+    // with what users actually claimed (not just the saved usageCount).
+    const volumeStats = searchParams.get("volume_stats");
+    if (volumeStats === "1") {
+      const { getVolumeBonusStats } = await import("@/lib/volume-bonus");
+      const all = (await kv.get<Campaign[]>(CAMPAIGNS_KEY)) || [];
+      const volume = all.filter((c) => c.type === 'volume_bonus');
+      const stats = await Promise.all(
+        volume.map(async (c) => ({
+          id: c.id,
+          name: c.name,
+          active: c.active,
+          startDate: c.startDate,
+          endDate: c.endDate,
+          minTradeUsd: c.minTradeUsd ?? 0,
+          bonusAmountGrams: c.bonusAmountGrams ?? 0,
+          eligibility: c.eligibility ?? 'all',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ...(await getVolumeBonusStats(c as any)),
+        })),
+      );
+      return NextResponse.json({ success: true, campaigns: stats });
     }
 
     let campaigns: Campaign[] = [];

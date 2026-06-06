@@ -1694,6 +1694,36 @@ export async function POST(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // 11.7 VOLUME BONUS — Apply active "trade $X get Y grams" campaigns.
+    // Non-blocking: campaign-claim failures must not roll back the trade.
+    // ═══════════════════════════════════════════════════════════════════════
+    if (type === "buy" && METALS.includes(toTokenLower)) {
+      try {
+        const { applyVolumeBonusIfEligible } = await import("@/lib/volume-bonus");
+        const userId = (await redis.get(`user:address:${normalizedAddress}`) as string) || normalizedAddress;
+        const tradeValueUsd = toAmount * price;
+        // KYC status is consulted by eligibility filters; treat missing
+        // value as unverified so we don't accidentally widen the audience.
+        const kycVerified = ((await redis.get(`user:${userId}:kyc:status`)) as string) === "verified";
+        const grants = await applyVolumeBonusIfEligible({
+          userId,
+          walletAddress: normalizedAddress,
+          tradeUsdValue: tradeValueUsd,
+          kycVerified,
+        });
+        if (grants.length > 0) {
+          for (const g of grants) {
+            console.log(
+              `🎁 Volume bonus granted: campaign=${g.campaignId} +${g.bonusAmountGrams}g ${g.bonusAsset} → ${normalizedAddress}`,
+            );
+          }
+        }
+      } catch (vbErr) {
+        console.error("Volume bonus apply error (non-blocking):", vbErr);
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // 12. TRADE EXECUTION EMAIL — Institutional confirmation
     // ═══════════════════════════════════════════════════════════════════════
     let tradeEmail = email;

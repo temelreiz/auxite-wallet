@@ -170,7 +170,7 @@ interface Campaign {
   id: string;
   name: { tr: string; en: string };
   description: { tr: string; en: string };
-  type: 'discount' | 'bonus' | 'cashback' | 'referral' | 'limited';
+  type: 'discount' | 'bonus' | 'cashback' | 'referral' | 'limited' | 'volume_bonus';
   value: number; // Percentage or fixed amount
   valueType: 'percentage' | 'fixed';
   code?: string;
@@ -185,6 +185,16 @@ interface Campaign {
   endDate: string;
   active: boolean;
   createdAt: string;
+  // Volume Bonus extension — only set when type === 'volume_bonus'. Maps
+  // 1:1 onto the shape consumed by src/lib/volume-bonus.ts at trade time.
+  bonusAsset?: 'AUXG' | 'AUXS' | 'AUXPT' | 'AUXPD';
+  bonusAmountGrams?: number;
+  minTradeUsd?: number;
+  poolCap?: number;
+  eligibility?: 'all' | 'kyc_verified' | 'no_kyc' | 'dormant_60d';
+  // Announcement tracking — set when admin fires the one-shot blast.
+  announcementSentAt?: string;
+  announcementChannels?: ('push' | 'email' | 'banner' | 'telegram')[];
 }
 
 // NEW: Alert/Announcement Type
@@ -2092,7 +2102,7 @@ export default function AdminDashboard() {
 
   const handleDeleteCampaign = async (campaignId: string) => {
     if (!confirm("Bu kampanyayı silmek istediğinize emin misiniz?")) return;
-    
+
     try {
       await fetch("/api/admin/campaigns", {
         method: "POST",
@@ -2103,6 +2113,34 @@ export default function AdminDashboard() {
       setMessage({ type: "success", text: "Kampanya silindi" });
     } catch (e) {
       console.error("Delete failed:", e);
+    }
+  };
+
+  // Fires the one-shot Volume Bonus announcement (push + banner + ops
+  // Telegram). Confirmed first so a stray click doesn't blast every
+  // device in production. After success we refresh campaigns so the
+  // "Duyuru gönderildi: HH:MM" badge appears on the card.
+  const handleAnnounceCampaign = async (campaignId: string) => {
+    if (!confirm("Push bildirimi + in-app banner + Telegram ops chat'e duyuru göndereceğim. Onaylıyor musun?")) return;
+    try {
+      const res = await fetch("/api/admin/campaigns/announce", {
+        method: "POST",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ campaignId, channels: ["push", "banner", "telegram"] }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        setMessage({
+          type: "success",
+          text: `Duyuru gönderildi. Push: ${JSON.stringify(json.results?.push ?? {}).slice(0, 80)}…`,
+        });
+        loadCampaigns();
+      } else {
+        setMessage({ type: "error", text: `Duyuru hatası: ${json.error ?? "bilinmiyor"}` });
+      }
+    } catch (e) {
+      console.error("Announce failed:", e);
+      setMessage({ type: "error", text: "Duyuru gönderilemedi (network)" });
     }
   };
 
@@ -3582,13 +3620,14 @@ export default function AdminDashboard() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-xl">
-                                {campaign.type === 'discount' ? '🏷️' : campaign.type === 'bonus' ? '🎁' : campaign.type === 'cashback' ? '💰' : campaign.type === 'referral' ? '👥' : '⭐'}
+                                {campaign.type === 'discount' ? '🏷️' : campaign.type === 'bonus' ? '🎁' : campaign.type === 'cashback' ? '💰' : campaign.type === 'referral' ? '👥' : campaign.type === 'volume_bonus' ? '💎' : '⭐'}
                               </span>
                               <p className="font-semibold">{campaign.name.tr}</p>
                               <span className={`px-2 py-0.5 rounded text-xs ${
                                 campaign.type === 'discount' ? 'bg-red-500/20 text-red-400' :
                                 campaign.type === 'bonus' ? 'bg-[#2F6F62]/20 text-[#2F6F62]' :
                                 campaign.type === 'cashback' ? 'bg-[#BFA181]/20 text-[#BFA181]' :
+                                campaign.type === 'volume_bonus' ? 'bg-emerald-500/20 text-emerald-300' :
                                 'bg-purple-500/20 text-purple-400'
                               }`}>
                                 {campaign.type}
@@ -3597,16 +3636,41 @@ export default function AdminDashboard() {
                             <p className="text-sm text-slate-400 mb-2">{campaign.description.tr}</p>
                             <div className="flex flex-wrap items-center gap-3 text-xs">
                               <span className="px-2 py-1 bg-[#BFA181]/20 text-[#BFA181] rounded font-bold">
-                                {campaign.valueType === 'percentage' ? `%${campaign.value}` : `$${campaign.value}`}
+                                {campaign.type === 'volume_bonus'
+                                  ? `${campaign.bonusAmountGrams ?? 0}g ${campaign.bonusAsset ?? '—'}`
+                                  : campaign.valueType === 'percentage' ? `%${campaign.value}` : `$${campaign.value}`}
                               </span>
                               {campaign.code && <span className="px-2 py-1 bg-slate-700 rounded font-mono">{campaign.code}</span>}
                               <span className="text-slate-500">
                                 {new Date(campaign.startDate).toLocaleDateString('tr')} - {new Date(campaign.endDate).toLocaleDateString('tr')}
                               </span>
-                              <span className="text-slate-500">Kullanım: {campaign.usageCount}{campaign.usageLimit ? `/${campaign.usageLimit}` : ''}</span>
+                              <span className="text-slate-500">Kullanım: {campaign.usageCount}{
+                                campaign.type === 'volume_bonus'
+                                  ? `/${campaign.poolCap ?? '∞'}`
+                                  : campaign.usageLimit ? `/${campaign.usageLimit}` : ''
+                              }</span>
+                              {campaign.type === 'volume_bonus' && campaign.minTradeUsd != null && (
+                                <span className="text-slate-500">Min trade: ${campaign.minTradeUsd}</span>
+                              )}
+                              {campaign.type === 'volume_bonus' && campaign.eligibility && (
+                                <span className="px-2 py-0.5 bg-slate-700 rounded text-[10px] uppercase">
+                                  {campaign.eligibility.replace('_', ' ')}
+                                </span>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
+                            {campaign.type === 'volume_bonus' && campaign.active && (
+                              <button
+                                onClick={() => handleAnnounceCampaign(campaign.id)}
+                                title={campaign.announcementSentAt
+                                  ? `Son duyuru: ${new Date(campaign.announcementSentAt).toLocaleString('tr')}. Yeniden gönder.`
+                                  : "Push + banner + Telegram duyurusu gönder"}
+                                className="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 flex items-center justify-center"
+                              >
+                                📢
+                              </button>
+                            )}
                             <button onClick={() => handleToggleCampaign(campaign.id)} className={`w-10 h-10 rounded-lg flex items-center justify-center ${campaign.active ? "bg-[#2F6F62]/20 text-[#2F6F62]" : "bg-slate-700 text-slate-400"}`}>
                               {campaign.active ? "✓" : "○"}
                             </button>
@@ -3638,6 +3702,7 @@ export default function AdminDashboard() {
                     <label className="block text-xs text-slate-400 mb-1">Kampanya Tipi</label>
                     <select value={newCampaign.type || 'bonus'} onChange={(e) => setNewCampaign({ ...newCampaign, type: e.target.value as any })} className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm">
                       <option value="bonus">🎁 Bonus</option>
+                      <option value="volume_bonus">💎 Volume Bonus (trade-based)</option>
                       <option value="discount">🏷️ İndirim</option>
                       <option value="cashback">💰 Cashback</option>
                       <option value="referral">👥 Referral</option>
@@ -3676,6 +3741,91 @@ export default function AdminDashboard() {
                     <input type="number" value={newCampaign.usageLimit || ''} onChange={(e) => setNewCampaign({ ...newCampaign, usageLimit: parseInt(e.target.value) || undefined })} placeholder="Sınırsız" className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm" />
                   </div>
                 </div>
+
+                {/* Volume Bonus specific fields — only render when this campaign
+                    is a "trade $X get Y grams" type. These map 1:1 onto the
+                    fields VolumeBonusCampaign expects in src/lib/volume-bonus.ts. */}
+                {newCampaign.type === 'volume_bonus' && (
+                  <div className="mt-6 p-4 bg-emerald-950/30 border border-emerald-700/40 rounded-xl">
+                    <h4 className="font-semibold text-emerald-300 mb-3 text-sm">💎 Volume Bonus Ayarları</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-1">Bonus Metali *</label>
+                        <select
+                          value={(newCampaign as any).bonusAsset || 'AUXG'}
+                          onChange={(e) => setNewCampaign({ ...newCampaign, bonusAsset: e.target.value as any })}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
+                        >
+                          <option value="AUXG">🥇 AUXG (Gold)</option>
+                          <option value="AUXS">🥈 AUXS (Silver)</option>
+                          <option value="AUXPT">⚪ AUXPT (Platinum)</option>
+                          <option value="AUXPD">💠 AUXPD (Palladium)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-1">Bonus (gram) *</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={(newCampaign as any).bonusAmountGrams ?? ''}
+                          onChange={(e) => setNewCampaign({ ...newCampaign, bonusAmountGrams: parseFloat(e.target.value) })}
+                          placeholder="0.1"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-1">Min Trade ($) *</label>
+                        <input
+                          type="number"
+                          value={(newCampaign as any).minTradeUsd ?? ''}
+                          onChange={(e) => setNewCampaign({ ...newCampaign, minTradeUsd: parseFloat(e.target.value) })}
+                          placeholder="100"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-400 mb-1">Pool (kişi) *</label>
+                        <input
+                          type="number"
+                          value={(newCampaign as any).poolCap ?? ''}
+                          onChange={(e) => setNewCampaign({ ...newCampaign, poolCap: parseInt(e.target.value) })}
+                          placeholder="200"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
+                        />
+                      </div>
+                      <div className="md:col-span-2 lg:col-span-2">
+                        <label className="block text-xs text-slate-400 mb-1">Hedef Kitle</label>
+                        <select
+                          value={(newCampaign as any).eligibility || 'all'}
+                          onChange={(e) => setNewCampaign({ ...newCampaign, eligibility: e.target.value as any })}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm"
+                        >
+                          <option value="all">Herkes (KYC'ye bakılmaz)</option>
+                          <option value="kyc_verified">Sadece KYC tamamlanmış</option>
+                          <option value="no_kyc">Sadece KYC olmamış (alt-tier)</option>
+                          <option value="dormant_60d">Sadece dormant 60+ gün</option>
+                        </select>
+                      </div>
+                      <div className="md:col-span-2 lg:col-span-2 p-3 bg-slate-900/60 rounded-lg text-xs">
+                        <span className="text-slate-400">Toplam bonus bütçesi: </span>
+                        <span className="text-emerald-300 font-semibold">
+                          {((newCampaign as any).poolCap || 0) * ((newCampaign as any).bonusAmountGrams || 0)}g{' '}
+                          {(newCampaign as any).bonusAsset || 'AUXG'}
+                        </span>
+                        <span className="text-slate-500"> · </span>
+                        <span className="text-slate-400">Hedef hacim: </span>
+                        <span className="text-emerald-300 font-semibold">
+                          ${((newCampaign as any).poolCap || 0) * ((newCampaign as any).minTradeUsd || 0)}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-[11px] text-slate-500 leading-relaxed">
+                      💡 Volume Bonus tradede tetiklenir. Kullanıcı min ${(newCampaign as any).minTradeUsd || 'X'} işlem
+                      yaptığında {(newCampaign as any).bonusAmountGrams || 'Y'}g {(newCampaign as any).bonusAsset || 'AUXG'} alır.
+                      Her kullanıcı 1 kez kazanabilir; pool dolunca otomatik kapanır.
+                    </p>
+                  </div>
+                )}
 
                 <button onClick={handleAddCampaign} disabled={campaignSaving} className="mt-4 px-6 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-lg text-black font-medium disabled:opacity-50">
                   {campaignSaving ? "Oluşturuluyor..." : "Kampanya Oluştur"}
