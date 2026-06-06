@@ -55,13 +55,23 @@ export async function GET(request: NextRequest) {
         } catch { /* skip */ }
       }
 
-      // Toplam trade sayısı — tüm kullanıcıların işlem listelerini say
+      // Toplam trade sayısı — tüm kullanıcıların işlem listelerini say.
+      // Demo-mode addresses get the same user:0x*:transactions key
+      // family but no auth:user:* record (no email, no real money).
+      // Filter to only addresses that resolve to a real registered
+      // user so the dashboard number reflects actual activity instead
+      // of someone clicking "Try demo balance" in the app.
       const tradeCountStr = await redis.get('stats:total:trades');
       totalTrades = tradeCountStr ? parseInt(tradeCountStr as string) : 0;
-      // Alternatif: bireysel transaction listelerinden hesapla
       if (totalTrades === 0) {
         const txKeys = await redis.keys('user:0x*:transactions');
+        // Build the set of addresses that belong to registered users.
+        // addressSet is already populated above (auth-walletAddress +
+        // balance-key addresses), so reuse it as the "real users"
+        // filter — no extra Redis round trips.
         for (const txKey of txKeys) {
+          const addr = txKey.split(':')[1]?.toLowerCase();
+          if (!addr || !addressSet.has(addr)) continue;
           const len = await redis.llen(txKey);
           totalTrades += len;
         }
