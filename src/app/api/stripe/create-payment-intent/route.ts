@@ -16,6 +16,8 @@
 // payment_intent.succeeded to credit the user's metal balance.
 
 import { NextRequest, NextResponse } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 import {
   stripe,
   quoteMetalChargeUSD,
@@ -26,9 +28,50 @@ import {
 } from "@/lib/stripe";
 import { checkTradingAllowed } from "@/lib/trading-guard";
 import { checkKycLimit } from "@/lib/kyc-limits";
+import { getClientIP } from "@/lib/security/rate-limiter";
+
+// Anti-card-testing rate limiter. Fraudsters create one PI per stolen
+// card to probe validity; this caps PI creation to 8/hr per IP +
+// 20/day per IP. Real shoppers comfortably under both.
+const redis = Redis.fromEnv();
+const piHourlyLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(8, "1 h"),
+  analytics: true,
+  prefix: "ratelimit:stripe:pi-create:hourly",
+});
+const piDailyLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(20, "1 d"),
+  analytics: true,
+  prefix: "ratelimit:stripe:pi-create:daily",
+});
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate-limit FIRST — keeps Stripe and Upstash from being beaten on by
+    // a script that hits this endpoint in a loop. Two windows so a
+    // legitimate user re-quoting throughout the day isn't blocked by
+    // the hourly limit, but a bot grinding 24/7 still hits the daily wall.
+    const ip = getClientIP(req);
+    const [hourly, daily] = await Promise.all([
+      piHourlyLimiter.limit(ip),
+      piDailyLimiter.limit(ip),
+    ]);
+    if (!hourly.success || !daily.success) {
+      console.warn(
+        `[stripe/create-payment-intent] rate-limited ip=${ip} ` +
+          `hourly=${hourly.remaining}/${hourly.limit} daily=${daily.remaining}/${daily.limit}`,
+      );
+      return NextResponse.json(
+        {
+          error: "Too many quote requests. Please wait a few minutes and try again.",
+          code: "rate_limited",
+        },
+        { status: 429 },
+      );
+    }
+
     // Honor admin-controlled kill switches: both fiat deposit (card onramp)
     // and metal trading (the underlying allocation) must be allowed.
     const fiatGuard = await checkTradingAllowed("fiatDeposit");
