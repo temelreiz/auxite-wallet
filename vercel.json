@@ -51,6 +51,10 @@
       "schedule": "15 * * * *"
     },
     {
+      "path": "/api/cron/card-recovery-email",
+      "schedule": "0 10 * * *"
+    },
+    {
       "path": "/api/cron/reconcile-deferred-onchain",
       "schedule": "*/10 * * * *"
     },

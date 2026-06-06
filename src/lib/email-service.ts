@@ -957,6 +957,114 @@ const templates = {
       }),
     };
   },
+
+  // ─────────────────────────────────────────────────────────────────
+  // Card-recovery email — sent ~24h after a user started but never
+  // completed a card purchase. Frames the failure as bank-side
+  // (which it usually is for international CNP transactions), and
+  // pivots them to the crypto deposit rail (USDT / USDC / ETH / BTC),
+  // which routes around the issuing bank entirely.
+  // ─────────────────────────────────────────────────────────────────
+  'card-recovery': (data: EmailData) => {
+    const { name, amountUSD, metalName, language = 'en' } = data;
+    const greetName = name ? `, ${name}` : '';
+
+    const content = {
+      en: {
+        subject: 'Need help completing your Auxite purchase?',
+        title: 'Saw your purchase didn’t go through',
+        intro: `Hi${greetName} — you started a ${metalName ? metalName + ' ' : ''}purchase${amountUSD ? ` for around $${amountUSD}` : ''} on Auxite Vault but the card payment didn’t complete. Most often that’s the issuing bank declining international card-not-present transactions, not anything wrong with your card itself.`,
+        pivot: 'If you’d like to finish what you started, crypto deposit is the fastest path. Same gold, same vault, lower fees, your bank stays out of it. Funds arrive in minutes.',
+        railsHead: 'Supported deposit rails:',
+        cta: 'Fund with Crypto →',
+        secondary: 'Prefer card? Try a smaller test amount first ($30–$50) so you know it works before committing to a larger buy. Some banks unlock after one successful authorization.',
+        help: 'Questions? Reply to this email or message us on Telegram',
+      },
+      tr: {
+        subject: 'Auxite alımını tamamlayamadın mı?',
+        title: 'Alımının tamamlanmadığını gördük',
+        intro: `Merhaba${greetName} — Auxite Vault'ta bir ${metalName ? metalName + ' ' : ''}alımı başlattın${amountUSD ? ` (yaklaşık $${amountUSD})` : ''} ama kart ödemesi tamamlanmamış. Genelde bunun sebebi kartını veren bankanın uluslararası "kart-yokken" işlemleri reddetmesidir — kartında bir sorun yok.`,
+        pivot: 'Devam etmek istersen en hızlı yol kripto yatırımı. Aynı altın, aynı vault, daha düşük komisyon, bankan devreye girmiyor. Dakikalar içinde geliyor.',
+        railsHead: 'Desteklenen kripto yatırım kanalları:',
+        cta: 'Kripto ile Devam Et →',
+        secondary: 'Yine kart denemek istersen önce küçük bir test tutarı ($30–$50) yap. Bazı bankalar tek başarılı yetkilendirme sonrası kilidini açıyor.',
+        help: 'Sorun mu var? Bu maile yanıt ver veya bize Telegram\'dan yaz',
+      },
+      de: {
+        subject: 'Brauchst du Hilfe bei deinem Auxite-Kauf?',
+        title: 'Dein Kauf wurde nicht abgeschlossen',
+        intro: `Hallo${greetName} — du hast einen ${metalName ? metalName + '-' : ''}Kauf${amountUSD ? ` über etwa $${amountUSD}` : ''} auf Auxite Vault gestartet, aber die Kartenzahlung wurde nicht abgeschlossen. Meistens lehnt die ausgebende Bank internationale CNP-Transaktionen ab — nichts liegt an deiner Karte.`,
+        pivot: 'Wenn du fortfahren möchtest, ist Krypto-Einzahlung der schnellste Weg. Selbes Gold, selber Tresor, geringere Gebühren, die Bank bleibt außen vor. Geldeingang in Minuten.',
+        railsHead: 'Unterstützte Einzahlungs-Rails:',
+        cta: 'Mit Krypto fortfahren →',
+        secondary: 'Lieber Karte? Versuche zuerst einen kleinen Testbetrag ($30–$50). Manche Banken entsperren nach einer erfolgreichen Autorisierung.',
+        help: 'Fragen? Antworte auf diese E-Mail oder schreib uns auf Telegram',
+      },
+      fr: {
+        subject: 'Besoin d’aide pour finaliser votre achat Auxite ?',
+        title: 'Votre achat n’a pas abouti',
+        intro: `Bonjour${greetName} — vous avez démarré un achat ${metalName ? 'de ' + metalName + ' ' : ''}sur Auxite Vault${amountUSD ? ` (environ $${amountUSD})` : ''}, mais le paiement par carte n’est pas allé jusqu’au bout. Le plus souvent c’est la banque émettrice qui refuse les transactions internationales CNP, pas un problème côté carte.`,
+        pivot: 'Si vous voulez aller au bout, le dépôt crypto est le chemin le plus rapide. Même or, même coffre, frais inférieurs, votre banque n’intervient pas. Réception en quelques minutes.',
+        railsHead: 'Rails de dépôt supportés :',
+        cta: 'Déposer en crypto →',
+        secondary: 'Vous préférez la carte ? Essayez d’abord un petit montant ($30–$50). Certaines banques se débloquent après une première autorisation réussie.',
+        help: 'Des questions ? Répondez à cet e-mail ou écrivez-nous sur Telegram',
+      },
+      ar: {
+        subject: 'هل تحتاج مساعدة لإتمام عملية الشراء على Auxite؟',
+        title: 'لاحظنا أن عملية الشراء لم تكتمل',
+        intro: `مرحباً${greetName} — لقد بدأت عملية شراء ${metalName ? metalName + ' ' : ''}على Auxite Vault${amountUSD ? ` بحوالي $${amountUSD}` : ''} لكن الدفع بالبطاقة لم يُكمل. في الغالب يكون السبب رفض البنك المُصدر للمعاملات الدولية بدون حضور البطاقة، وليس مشكلة في البطاقة نفسها.`,
+        pivot: 'إذا أردت إكمال ما بدأت، فإن الإيداع بالعملة الرقمية هو الطريق الأسرع. نفس الذهب، نفس الخزينة، عمولات أقل، ولن يتدخل البنك. تصل الأموال خلال دقائق.',
+        railsHead: 'قنوات الإيداع المدعومة:',
+        cta: 'الإيداع بالعملة الرقمية ←',
+        secondary: 'تفضل البطاقة؟ جرّب أولاً مبلغاً صغيراً ($30–$50). بعض البنوك تفتح الحظر بعد أول تفويض ناجح.',
+        help: 'لديك أسئلة؟ رد على هذا البريد أو راسلنا على Telegram',
+      },
+      ru: {
+        subject: 'Помочь завершить покупку на Auxite?',
+        title: 'Ваша покупка не завершилась',
+        intro: `Привет${greetName} — вы начали покупку ${metalName ? metalName + ' ' : ''}на Auxite Vault${amountUSD ? ` (примерно $${amountUSD})` : ''}, но платёж картой не прошёл. Чаще всего банк-эмитент блокирует международные операции без присутствия карты — с вашей картой всё в порядке.`,
+        pivot: 'Если хотите завершить — самый быстрый путь крипто-депозит. То же золото, то же хранилище, ниже комиссии, банк не вмешивается. Зачисление за минуты.',
+        railsHead: 'Поддерживаемые крипто-каналы:',
+        cta: 'Пополнить в крипте →',
+        secondary: 'Хотите снова картой? Попробуйте сначала маленькую сумму ($30–$50). Многие банки разблокируются после первой успешной авторизации.',
+        help: 'Вопросы? Ответьте на это письмо или напишите в Telegram',
+      },
+    };
+
+    const t = content[language as keyof typeof content] || content.en;
+    const link = 'https://vault.auxite.io/fund-vault?utm_source=email&utm_medium=outreach&utm_campaign=card_recovery';
+
+    return {
+      subject: t.subject,
+      html: generateEmailHTML({
+        title: t.title,
+        language,
+        content: `
+          <p>${t.intro}</p>
+          <p>${t.pivot}</p>
+          <div style="background: #fafafa; border-left: 3px solid #C5A55A; padding: 14px 18px; margin: 18px 0;">
+            <p style="margin: 0 0 6px 0; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">${t.railsHead}</p>
+            <table cellpadding="0" cellspacing="0" style="margin-top: 6px;">
+              <tr>
+                <td style="padding-right: 18px; font-size: 13px; color: #1a1a1a;"><strong>USDT</strong> <span style="color:#888;">(ERC-20 · TRC-20)</span></td>
+                <td style="padding-right: 18px; font-size: 13px; color: #1a1a1a;"><strong>USDC</strong> <span style="color:#888;">(ERC-20)</span></td>
+              </tr>
+              <tr>
+                <td style="padding-top: 4px; font-size: 13px; color: #1a1a1a;"><strong>ETH</strong> <span style="color:#888;">(Ethereum)</span></td>
+                <td style="padding-top: 4px; font-size: 13px; color: #1a1a1a;"><strong>BTC</strong> <span style="color:#888;">(Bitcoin)</span></td>
+              </tr>
+            </table>
+          </div>
+          <div style="text-align: center; margin: 28px 0 16px;">
+            <a href="${link}" style="background-color: #C5A55A; color: #1a1a1a; padding: 14px 30px; text-decoration: none; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; display: inline-block; border-radius: 4px;">${t.cta}</a>
+          </div>
+          <p style="color: #64748b; font-size: 13px;">${t.secondary}</p>
+          <p style="color: #94a3b8; font-size: 12px; margin-top: 22px;">${t.help}: <a href="https://t.me/AuxiteSupportbot" style="color: #C5A55A;">@AuxiteSupportbot</a></p>
+        `,
+      }),
+    };
+  },
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
