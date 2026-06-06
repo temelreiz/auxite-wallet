@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import jwt from 'jsonwebtoken';
+import { sendWelcomeEmail } from '@/lib/email-service';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -104,17 +105,21 @@ export async function GET(request: NextRequest) {
 
     // ══════════════════════════════════════════════════════════════
     // SEND WELCOME EMAIL
+    // Previously pushed onto email:queue, but nothing was draining
+    // that queue — welcome mails sat in Redis forever. Sending direct
+    // via Resend (matches every other auth flow). Wrapped in try/catch
+    // so a transient Resend error doesn't fail the verification call
+    // — verification succeeds, welcome is best-effort.
     // ══════════════════════════════════════════════════════════════
-    await redis.lpush('email:queue', JSON.stringify({
-      type: 'welcome',
-      to: normalizedEmail,
-      subject: 'Welcome to Auxite!',
-      data: {
-        name: userData.name || normalizedEmail.split('@')[0],
-        language: userData.language || 'en',
-      },
-      createdAt: Date.now(),
-    }));
+    try {
+      await sendWelcomeEmail(
+        normalizedEmail,
+        userData.name || normalizedEmail.split('@')[0],
+        userData.language || 'en',
+      );
+    } catch (mailErr) {
+      console.error('[verify-email] sendWelcomeEmail threw:', mailErr);
+    }
 
     // ══════════════════════════════════════════════════════════════
     // RESPONSE

@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { randomBytes } from 'crypto';
 import { authLimiter, withRateLimit } from '@/lib/security/rate-limiter';
+import { sendPasswordResetEmail } from '@/lib/email-service';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -82,21 +83,28 @@ export async function POST(request: NextRequest) {
 
     // ══════════════════════════════════════════════════════════════
     // SEND RESET EMAIL
+    // The old code lpush()'d onto an email:queue that nothing was
+    // consuming — reset mails sat in Redis forever and users gave up.
+    // Sending directly via Resend (same call every other auth flow
+    // already uses) so the link lands within seconds. Failures are
+    // logged but we still return success to preserve enumeration
+    // protection.
     // ══════════════════════════════════════════════════════════════
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io'}/reset-password?token=${resetToken}&email=${encodeURIComponent(normalizedEmail)}`;
 
-    await redis.lpush('email:queue', JSON.stringify({
-      type: 'password-reset',
-      to: normalizedEmail,
-      subject: 'Reset your Auxite password',
-      data: {
-        name: userData.name || normalizedEmail.split('@')[0],
+    try {
+      const result = await sendPasswordResetEmail(
+        normalizedEmail,
+        userData.name || normalizedEmail.split('@')[0],
         resetUrl,
-        expiryMinutes: 60,
-        language: userData.language || 'en',
-      },
-      createdAt: Date.now(),
-    }));
+        userData.language || 'en',
+      );
+      if (!result.success) {
+        console.error('[forgot-password] Resend failure:', result.error);
+      }
+    } catch (mailErr) {
+      console.error('[forgot-password] sendPasswordResetEmail threw:', mailErr);
+    }
 
     // ══════════════════════════════════════════════════════════════
     // RESPONSE
