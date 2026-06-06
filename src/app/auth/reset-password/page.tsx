@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, Lock, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Lock, AlertCircle, CheckCircle, Eye, EyeOff, Smartphone, ExternalLink } from 'lucide-react';
 import { useLanguage } from '@/components/LanguageContext';
 
 const translations: Record<string, Record<string, string>> = {
@@ -172,30 +172,26 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [appOpening, setAppOpening] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Mobile auto-redirect into the app. Users who land here from the
-  // email link almost always do so on a phone; we'd rather they finish
-  // the reset inside the Auxite Vault app where they originally tapped
-  // "Forgot Password". The custom scheme deep-links to the mobile
-  // reset-password screen. If the OS doesn't honour it (desktop, web
-  // mail clients, or the app isn't installed) the page just stays on
-  // the web form and the user finishes there.
+  // Detect mobile UA on mount so we can render a prominent "Open in
+  // App" CTA at the top of the page. We used to fire
+  // window.location.href to the custom scheme automatically on mount,
+  // but modern mobile browsers (especially in-app Gmail/Outlook
+  // webviews) silently block scheme launches that aren't triggered by
+  // a user gesture — so users ended up stuck on the web form not
+  // realising the deep link existed. A real tap on the CTA below
+  // bypasses that restriction.
   useEffect(() => {
-    if (!token || !email) return;
-    const ua = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
-    const isMobile = /iPhone|iPad|iPod|Android/.test(ua);
-    if (!isMobile) return;
-    setAppOpening(true);
-    const url = `auxite-vault://onboarding/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
-    // Fire-and-forget — the scheme handler doesn't surface success/
-    // failure to JS, so we just attempt it. Bail out of the loading
-    // state after 2.5s so users without the app installed see the web
-    // form instead of a perpetual spinner.
-    window.location.href = url;
-    const timer = setTimeout(() => setAppOpening(false), 2500);
-    return () => clearTimeout(timer);
-  }, [token, email]);
+    if (typeof navigator === 'undefined') return;
+    const ua = navigator.userAgent || '';
+    setIsMobile(/iPhone|iPad|iPod|Android/.test(ua));
+  }, []);
+
+  const deepLink =
+    token && email
+      ? `auxite-vault://onboarding/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`
+      : '';
 
   // Password validation
   const hasMinLength = password.length >= 8;
@@ -254,46 +250,6 @@ export default function ResetPasswordPage() {
       setIsLoading(false);
     }
   };
-
-  // Brief "Opening in app…" view while the deep-link redirect fires.
-  // Self-clears after 2.5s in case the user doesn't have the app
-  // installed, dropping them onto the web reset form normally.
-  if (appOpening) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <div className="text-center max-w-sm">
-          <Loader2 className="w-10 h-10 text-[#BFA181] animate-spin mx-auto mb-5" />
-          <h1 className="text-xl font-bold text-white mb-2">
-            {lang === 'tr' ? 'Uygulamada açılıyor…'
-              : lang === 'de' ? 'In der App öffnen…'
-              : lang === 'fr' ? "Ouverture dans l'app…"
-              : lang === 'ar' ? 'يفتح في التطبيق…'
-              : lang === 'ru' ? 'Открытие в приложении…'
-              : 'Opening in the app…'}
-          </h1>
-          <p className="text-sm text-slate-400 mb-6">
-            {lang === 'tr' ? 'Auxite Vault yüklü değilse buradan devam edebilirsin.'
-              : lang === 'de' ? 'Wenn Auxite Vault nicht installiert ist, hier fortfahren.'
-              : lang === 'fr' ? "Si Auxite Vault n'est pas installée, continuez ici."
-              : lang === 'ar' ? 'إذا لم يكن Auxite Vault مثبتًا، تابع هنا.'
-              : lang === 'ru' ? 'Если Auxite Vault не установлен, продолжите здесь.'
-              : "If Auxite Vault isn't installed, continue here."}
-          </p>
-          <button
-            onClick={() => setAppOpening(false)}
-            className="text-sm text-[#BFA181] hover:underline"
-          >
-            {lang === 'tr' ? 'Tarayıcıdan devam et'
-              : lang === 'de' ? 'Im Browser fortfahren'
-              : lang === 'fr' ? 'Continuer dans le navigateur'
-              : lang === 'ar' ? 'متابعة في المتصفح'
-              : lang === 'ru' ? 'Продолжить в браузере'
-              : 'Continue in browser'}
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   // Success State — most users who hit this page came from a mobile
   // app email link. Show "Open App" as the primary action so they get
@@ -378,8 +334,49 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-start p-4 pt-6">
       <div className="w-full max-w-md">
+        {/* Mobile deep-link CTA — pinned above the form so users
+            arriving from the email link on their phone can jump
+            straight into the native Auxite Vault app where their
+            session lives. We can't auto-fire the scheme (mobile
+            browsers block scheme launches without a user gesture and
+            silently swallow them in in-app email webviews) so we make
+            this CTA loud and unmissable. If the user doesn't have the
+            app installed the tap silently no-ops and they can finish
+            on the web form below. */}
+        {isMobile && deepLink && (
+          <a
+            href={deepLink}
+            className="block w-full mb-6 rounded-xl bg-gradient-to-r from-[#BFA181] to-[#D4B47A] p-4 hover:opacity-95 transition-all shadow-lg shadow-[#BFA181]/20"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-black/20 flex items-center justify-center">
+                <Smartphone className="w-5 h-5 text-black" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-[13px] font-bold text-black leading-tight">
+                  {lang === 'tr' ? 'Uygulamada Sıfırla'
+                    : lang === 'de' ? 'In der App zurücksetzen'
+                    : lang === 'fr' ? "Réinitialiser dans l'app"
+                    : lang === 'ar' ? 'إعادة التعيين في التطبيق'
+                    : lang === 'ru' ? 'Сбросить в приложении'
+                    : 'Reset in the App'}
+                </p>
+                <p className="text-[11px] text-black/70 mt-0.5 leading-tight">
+                  {lang === 'tr' ? 'Auxite Vault yüklüyse buraya dokun — oturumun orada'
+                    : lang === 'de' ? 'Wenn Auxite Vault installiert ist — Sitzung dort'
+                    : lang === 'fr' ? 'Si Auxite Vault est installée — session là-bas'
+                    : lang === 'ar' ? 'إذا كان Auxite Vault مثبتًا — جلستك هناك'
+                    : lang === 'ru' ? 'Если Auxite Vault установлен — сессия там'
+                    : 'If Auxite Vault is installed, your session lives there'}
+                </p>
+              </div>
+              <ExternalLink className="w-4 h-4 text-black flex-shrink-0" />
+            </div>
+          </a>
+        )}
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#2F6F62]/20 mb-4">
