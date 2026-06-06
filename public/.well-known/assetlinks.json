@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.auxite.vault",
+      "sha256_cert_fingerprints": [
+        "DC:8C:00:E4:04:A2:8F:A1:3A:C6:4A:EC:DC:F5:95:21:EA:55:4F:3E:B6:69:36:DF:19:DE:79:B7:70:2E:E3:2C"
+      ]
+    }
+  }
+]

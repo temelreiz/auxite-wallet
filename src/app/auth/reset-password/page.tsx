@@ -188,9 +188,13 @@ export default function ResetPasswordPage() {
     setIsMobile(/iPhone|iPad|iPod|Android/.test(ua));
   }, []);
 
+  // Path mirrors this web route (/auth/reset-password) so the same
+  // route file in the mobile app handles both the scheme deep-link
+  // (this banner) and the Apple/Android App-Link (email URL tapped
+  // when the OS has verified vault.auxite.io for the app).
   const deepLink =
     token && email
-      ? `auxite-vault://onboarding/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`
+      ? `auxite-vault://auth/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`
       : '';
 
   // Password validation

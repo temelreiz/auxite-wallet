@@ -1,0 +1,26 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "54XQBZWG85.com.auxite.wallet"
+        ],
+        "components": [
+          {
+            "/": "/auth/reset-password",
+            "comment": "Reset-password email links open the app directly"
+          },
+          {
+            "/": "/auth/verify-email",
+            "comment": "Email verification links open the app directly"
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "54XQBZWG85.com.auxite.wallet"
+    ]
+  }
+}

@@ -70,6 +70,28 @@ const nextConfig = {
           },
         ],
       },
+      {
+        // Apple Universal Links: AASA file must be served as
+        // application/json, has no .json extension, and must be
+        // reachable at /.well-known/apple-app-site-association (no
+        // redirects, no auth). iOS fetches this once on app install
+        // to verify the app may handle https://vault.auxite.io links.
+        source: "/.well-known/apple-app-site-association",
+        headers: [
+          { key: "Content-Type", value: "application/json" },
+          { key: "Cache-Control", value: "public, max-age=300" },
+        ],
+      },
+      {
+        // Android App Links: assetlinks.json. Next.js serves .json
+        // files as application/json by default; setting explicitly
+        // so future global header changes don't accidentally clobber it.
+        source: "/.well-known/assetlinks.json",
+        headers: [
+          { key: "Content-Type", value: "application/json" },
+          { key: "Cache-Control", value: "public, max-age=300" },
+        ],
+      },
     ];
   },
 
