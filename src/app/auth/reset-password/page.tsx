@@ -188,13 +188,17 @@ export default function ResetPasswordPage() {
     setIsMobile(/iPhone|iPad|iPod|Android/.test(ua));
   }, []);
 
-  // Path mirrors this web route (/auth/reset-password) so the same
-  // route file in the mobile app handles both the scheme deep-link
-  // (this banner) and the Apple/Android App-Link (email URL tapped
-  // when the OS has verified vault.auxite.io for the app).
+  // Use a top-level path segment (auxite-vault://reset-password?…) instead
+  // of the auth-host form. Build 129's Android intent filter still has
+  // pathPrefix=/callback on the host=auth filter, which strips the path
+  // for any other host=auth deep link (the user lands on "Unmatched
+  // Route" with auxite-vault:///). The top-level form sidesteps that
+  // filter entirely and hits expo's catch-all scheme handler.
+  // Build 130 fixes the underlying filter; once that's live on enough
+  // devices we can collapse this back to /auth/reset-password.
   const deepLink =
     token && email
-      ? `auxite-vault://auth/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`
+      ? `auxite-vault://reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`
       : '';
 
   // Password validation
