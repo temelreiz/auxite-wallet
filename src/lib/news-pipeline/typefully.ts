@@ -11,7 +11,17 @@
 
 import type { SummarizedItem } from "./llm";
 
-const API = "https://api.typefully.com/v1";
+// Typefully's v2 API is `Bearer <key>`-authenticated. The v1 docs
+// floating around the internet are stale; the working endpoints
+// are /v2/social-sets and /v2/social-sets/<id>/drafts.
+const API = "https://api.typefully.com/v2";
+
+function authHeaders(): Record<string, string> {
+  return {
+    Authorization: `Bearer ${process.env.TYPEFULLY_API_KEY!}`,
+    "Content-Type": "application/json",
+  };
+}
 
 interface TypefullyDraftResponse {
   id: number;
@@ -36,8 +46,8 @@ async function listSocialSetIds(): Promise<number[]> {
       .filter((n) => Number.isFinite(n));
   }
 
-  const res = await fetch(`${API}/social-sets/`, {
-    headers: { "X-API-KEY": process.env.TYPEFULLY_API_KEY! },
+  const res = await fetch(`${API}/social-sets?limit=50`, {
+    headers: authHeaders(),
   });
   if (!res.ok) {
     throw new Error(`Typefully social-sets ${res.status}`);
@@ -51,8 +61,8 @@ async function createDraft(
   options: {
     sourceLink?: string;
     threadify?: boolean;
-    socialSetId?: number;
-  } = {},
+    socialSetId: number; // now required — the URL needs it
+  },
 ): Promise<TypefullyDraftResponse> {
   // For single tweets we append a source footer the founder can
   // verify against before publishing (Typefully's editor lets
@@ -73,17 +83,13 @@ async function createDraft(
     // which respects their per-tweet character math better than
     // anything we'd write here.
     ...(options.threadify ? { threadify: true } : {}),
-    // Target a specific social set when supplied; omitted means
-    // the account's default set (set in Typefully UI).
-    ...(options.socialSetId ? { social_set_id: options.socialSetId } : {}),
   });
 
-  const res = await fetch(`${API}/drafts/`, {
+  // Drafts in v2 are nested under the social set in the URL path
+  // rather than passed in the body. One endpoint per identity.
+  const res = await fetch(`${API}/social-sets/${options.socialSetId}/drafts`, {
     method: "POST",
-    headers: {
-      "X-API-KEY": process.env.TYPEFULLY_API_KEY!,
-      "Content-Type": "application/json",
-    },
+    headers: authHeaders(),
     body,
   });
   if (!res.ok) {
@@ -101,14 +107,6 @@ async function createDraft(
 export async function pushThreadDraft(
   content: string,
 ): Promise<Array<{ ok: boolean; draftId?: number; url?: string; socialSetId?: number; error?: string }>> {
-  let socialSetIds: number[] = [];
-  try {
-    socialSetIds = await listSocialSetIds();
-  } catch (err: any) {
-    console.warn("[news-pipeline] could not list social sets for thread, using default:", err?.message);
-    socialSetIds = [0];
-  }
-
   const results: Array<{
     ok: boolean;
     draftId?: number;
@@ -117,11 +115,21 @@ export async function pushThreadDraft(
     error?: string;
   }> = [];
 
+  let socialSetIds: number[] = [];
+  try {
+    socialSetIds = await listSocialSetIds();
+  } catch (err: any) {
+    return [{ ok: false, error: `Failed to list social sets: ${err?.message}` }];
+  }
+  if (socialSetIds.length === 0) {
+    return [{ ok: false, error: "No social sets configured on Typefully account" }];
+  }
+
   for (const socialSetId of socialSetIds) {
     try {
       const draft = await createDraft(content, {
         threadify: true,
-        ...(socialSetId ? { socialSetId } : {}),
+        socialSetId,
       });
       results.push({ ok: true, draftId: draft.id, url: draft.url, socialSetId });
     } catch (err: any) {
@@ -143,21 +151,27 @@ export async function pushDrafts(items: SummarizedItem[]): Promise<
     error?: string;
   }> = [];
 
-  // Fan out: one draft per item per social set. With AuxiteGlobal
-  // (X) + auxiteofficial (LinkedIn + Mastodon + Bluesky) connected,
-  // a single news item produces 2 review cards in Typefully — one
-  // per identity. The founder can publish, edit, or skip each one
-  // independently.
+  // Fan out: one draft per item per social set. v2 nests drafts
+  // under their social set in the URL, so we must know each ID at
+  // call time — no "use default" fallback any more.
   let socialSetIds: number[] = [];
   try {
     socialSetIds = await listSocialSetIds();
   } catch (err: any) {
-    // If we can't list (rare — API outage), fall back to the
-    // account's default set so we never silently produce zero
-    // drafts on the day. The fallback path doesn't include
-    // social_set_id which causes Typefully to use the default.
-    console.warn("[news-pipeline] could not list social sets, using default:", err?.message);
-    socialSetIds = [0]; // 0 = sentinel for "use default"
+    console.warn("[news-pipeline] could not list social sets:", err?.message);
+    // Bail with explicit errors per item so the cron response
+    // tells us exactly what's wrong (vs. silently producing
+    // nothing on the day).
+    for (const item of items) {
+      results.push({ ok: false, item, error: `Failed to list social sets: ${err?.message}` });
+    }
+    return results;
+  }
+  if (socialSetIds.length === 0) {
+    for (const item of items) {
+      results.push({ ok: false, item, error: "No social sets configured on Typefully account" });
+    }
+    return results;
   }
 
   for (const item of items) {
@@ -165,7 +179,7 @@ export async function pushDrafts(items: SummarizedItem[]): Promise<
       try {
         const draft = await createDraft(item.auxitePost, {
           sourceLink: item.link,
-          ...(socialSetId ? { socialSetId } : {}),
+          socialSetId,
         });
         results.push({ ok: true, draftId: draft.id, url: draft.url, item, socialSetId });
       } catch (err: any) {
