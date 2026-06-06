@@ -139,8 +139,13 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
   const { lang } = useLanguage();
   const L = (lang as Lang) in t ? (lang as Lang) : "en";
 
-  type Step = "form" | "pay" | "result";
+  // New review step sits between form and pay. The PI is created when
+  // the user leaves review (clicks "Pay with Card"), not when they
+  // first ask for a quote — this stops Stripe from filling up with
+  // incomplete PaymentIntents from users who get the quote and bail.
+  type Step = "form" | "review" | "pay" | "result";
   const [step, setStep] = useState<Step>("form");
+  const [creatingPI, setCreatingPI] = useState(false);
   const [metal, setMetal] = useState<Metal>("AUXG");
   const [mode, setMode] = useState<"byGrams" | "byUsd">("byUsd");
   const [amountInput, setAmountInput] = useState<string>("100"); // default $100 USD
@@ -214,7 +219,12 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
     setQuoting(true);
     logEvent("card_purchase_quote_requested", { surface: "web", metal, mode, amount: amountNum });
     try {
-      const res = await fetch("/api/stripe/create-payment-intent", {
+      // Quote endpoint is server-side priced (same lib as the PI
+      // creator) but DOESN'T create a Stripe PaymentIntent. Stripe
+      // dashboards used to fill with incomplete PIs from people who
+      // got a quote and bailed — now PI creation is deferred until
+      // the user actually clicks "Pay with Card" on the review screen.
+      const res = await fetch("/api/stripe/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -228,10 +238,8 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || tr(L, "quoteError"));
 
-      setClientSecret(data.clientSecret);
-      setPaymentIntentId(data.paymentIntentId);
       setQuote(data.breakdown);
-      setStep("pay");
+      setStep("review");
       logEvent("card_purchase_quote_received", {
         surface: "web", metal, grams: data.breakdown?.grams, amountUSD: data.breakdown?.amountUSD,
       });
@@ -244,6 +252,49 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
     }
   };
 
+  // Called when the user clicks "Pay with Card" on the review step.
+  // This is where the PaymentIntent is finally created — i.e. when
+  // the user has actually committed to paying. Price may have drifted
+  // since the quote was fetched; the PI returns its own (fresh)
+  // breakdown which overwrites the prior quote so the Stripe summary
+  // panel matches what's actually being charged.
+  const handleStartPayment = async () => {
+    if (!quote || !address) return;
+    setError(null);
+    setCreatingPI(true);
+    logEvent("card_purchase_pi_create_requested", {
+      surface: "web", metal: quote.metal, amount: quote.amountUSD,
+    });
+    try {
+      const res = await fetch("/api/stripe/create-payment-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          metal: quote.metal,
+          mode: "byUsd",
+          amountUSD: quote.amountUSD,
+          userAddress: address,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || tr(L, "quoteError"));
+
+      setClientSecret(data.clientSecret);
+      setPaymentIntentId(data.paymentIntentId);
+      setQuote(data.breakdown);
+      setStep("pay");
+      logEvent("card_purchase_pi_created", {
+        surface: "web", metal, grams: data.breakdown?.grams, amountUSD: data.breakdown?.amountUSD,
+      });
+    } catch (e: any) {
+      const msg = e?.message || tr(L, "quoteError");
+      setError(msg);
+      logEvent("card_purchase_pi_create_failed", { surface: "web", metal, error: msg });
+    } finally {
+      setCreatingPI(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-sm" onClick={onClose} />
@@ -252,7 +303,7 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between p-3 sm:p-4 border-b border-stone-200 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            {step === "pay" && (
+            {(step === "review" || step === "pay") && (
               <button
                 onClick={() => { setStep("form"); setClientSecret(null); setPaymentIntentId(null); }}
                 className="p-1 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400"
@@ -396,6 +447,52 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
               <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 italic px-1 leading-relaxed">
                 {tr(L, "metalPurchaseDisclaimer")}
               </p>
+            </>
+          )}
+
+          {step === "review" && quote && (
+            <>
+              <QuoteSummary quote={quote} L={L} />
+              {error && (
+                <div className="p-2 rounded-lg bg-red-100 dark:bg-red-500/20 text-xs text-red-700 dark:text-red-300">
+                  {error}
+                </div>
+              )}
+              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 italic px-1 leading-relaxed">
+                {tr(L, "metalPurchaseDisclaimer")}
+              </p>
+              <button
+                onClick={handleStartPayment}
+                disabled={creatingPI}
+                className="w-full py-2.5 rounded-lg font-semibold text-sm sm:text-base text-white bg-gradient-to-r from-[#BFA181] to-[#D4B47A] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {creatingPI
+                  ? tr(L, "processing")
+                  : ({
+                      tr: "💳 Kart ile Öde",
+                      en: "💳 Pay with Card",
+                      de: "💳 Mit Karte zahlen",
+                      fr: "💳 Payer par carte",
+                      ar: "💳 الدفع بالبطاقة",
+                      ru: "💳 Оплатить картой",
+                    } as Record<string, string>)[L as string] ?? "💳 Pay with Card"}
+              </button>
+              <a
+                href="/fund-vault"
+                onClick={() => {
+                  logEvent("card_review_crypto_alt_tapped", { surface: "web", metal: quote.metal });
+                }}
+                className="block w-full text-center py-2 rounded-lg text-xs sm:text-sm text-[#BFA181] hover:bg-[#BFA181]/10 transition-colors"
+              >
+                {({
+                  tr: "💎 Yerine USDT ile öde",
+                  en: "💎 Pay with USDT instead",
+                  de: "💎 Stattdessen mit USDT zahlen",
+                  fr: "💎 Payer avec USDT à la place",
+                  ar: "💎 ادفع بـ USDT بدلاً من ذلك",
+                  ru: "💎 Оплатить USDT вместо",
+                } as Record<string, string>)[L as string] ?? "💎 Pay with USDT instead"}
+              </a>
             </>
           )}
 
