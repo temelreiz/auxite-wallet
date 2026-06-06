@@ -113,8 +113,11 @@ export async function POST(request: NextRequest) {
         campaignId: c.id,
       });
       results.push = {
+        // broadcastPush counts at user level; broadcastAnonPush counts at
+        // device level (no auth means no user attribution) — keep the
+        // field names accurate so the dashboard summary doesn't lie.
         registered: { sent: r1.totalSent, failed: r1.totalFailed, recipients: r1.userCount },
-        anon: { sent: r2.totalSent, failed: r2.totalFailed, recipients: r2.userCount },
+        anon: { sent: r2.totalSent, failed: r2.totalFailed, devices: r2.deviceCount },
       };
     } catch (err) {
       results.push = { error: err instanceof Error ? err.message : String(err) };
