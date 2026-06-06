@@ -196,8 +196,33 @@ export default function VerifyEmailPage() {
     } else if (mode === 'code' && !email) {
       setStatus('error');
       setError(t('invalidLink'));
+    } else if (mode === 'code' && email) {
+      // Auto-fire a fresh verification code on landing. Users get
+      // here either from registration (code already sent — duplicate
+      // is fine, the old one gets superseded) or from a sign-in
+      // attempt where the existing code is stale/expired/forgotten.
+      // Without this, users sat staring at an empty 6-digit input
+      // waiting for a mail that never came; the "Resend Code" button
+      // was easy to miss.
+      autoSendCode();
     }
   }, [token, email]);
+
+  // Sends a code on landing, only once per page-mount (the resend-code
+  // backend is rate-limited too, but burning a couple of attempts on
+  // an accidental remount is wasteful). Silent on success — the input
+  // grid + "Code sent" line on the page already communicate state.
+  const autoSendCode = async () => {
+    try {
+      await fetch('/api/auth/resend-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+    } catch {
+      // Don't surface — user can still tap "Resend Code" manually.
+    }
+  };
 
   // Token-based verification (from email link)
   const verifyEmail = async () => {
