@@ -115,16 +115,16 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Push as a single Typefully draft with threadify=true.
-  const result = await pushThreadDraft(threadText);
+  // Push as one Typefully draft per connected social set —
+  // founder reviews one card per identity (X vs. LinkedIn/Bluesky/
+  // Mastodon set) and schedules each independently.
+  const results = await pushThreadDraft(threadText);
 
   return NextResponse.json({
-    ok: result.ok,
+    ok: results.some((r) => r.ok),
     shortlisted: shortlist.length,
     rewritten: rewritten.length,
     threadText,
-    draftId: result.draftId,
-    url: result.url,
-    error: result.error,
+    drafts: results,
   });
 }

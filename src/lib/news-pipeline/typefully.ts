@@ -19,11 +19,39 @@ interface TypefullyDraftResponse {
   status: string;
 }
 
+// Fetch every social set on the account. Each set typically maps
+// to one identity that can be connected to multiple platforms
+// (X + LinkedIn + Mastodon + Bluesky on one set is common). We
+// draft into ALL of them by default so the founder gets a single
+// review surface for every channel they've linked.
+async function listSocialSetIds(): Promise<number[]> {
+  // Allow an explicit override via env var when the founder wants
+  // to draft to a subset, e.g. for a single-platform test:
+  //   TYPEFULLY_SOCIAL_SET_IDS=312287
+  const fromEnv = process.env.TYPEFULLY_SOCIAL_SET_IDS;
+  if (fromEnv) {
+    return fromEnv
+      .split(",")
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isFinite(n));
+  }
+
+  const res = await fetch(`${API}/social-sets/`, {
+    headers: { "X-API-KEY": process.env.TYPEFULLY_API_KEY! },
+  });
+  if (!res.ok) {
+    throw new Error(`Typefully social-sets ${res.status}`);
+  }
+  const data = (await res.json()) as { results?: Array<{ id: number }> };
+  return (data.results || []).map((s) => s.id);
+}
+
 async function createDraft(
   content: string,
   options: {
     sourceLink?: string;
     threadify?: boolean;
+    socialSetId?: number;
   } = {},
 ): Promise<TypefullyDraftResponse> {
   // For single tweets we append a source footer the founder can
@@ -45,6 +73,9 @@ async function createDraft(
     // which respects their per-tweet character math better than
     // anything we'd write here.
     ...(options.threadify ? { threadify: true } : {}),
+    // Target a specific social set when supplied; omitted means
+    // the account's default set (set in Typefully UI).
+    ...(options.socialSetId ? { social_set_id: options.socialSetId } : {}),
   });
 
   const res = await fetch(`${API}/drafts/`, {
@@ -62,37 +93,84 @@ async function createDraft(
   return (await res.json()) as TypefullyDraftResponse;
 }
 
-// Push a single thread draft — used by the Friday weekly recap.
-// Content should already be the assembled thread text; Typefully's
-// threadify=true splits it into tweets respecting their char limits.
+// Push a single thread draft to every connected social set — used
+// by the Friday weekly recap. Typefully's threadify=true splits the
+// content into tweets respecting per-platform character limits.
+// One draft per social set: founder reviews 2 thread cards (X vs.
+// LinkedIn/Mastodon/Bluesky) and can publish independently.
 export async function pushThreadDraft(
   content: string,
-): Promise<{ ok: boolean; draftId?: number; url?: string; error?: string }> {
+): Promise<Array<{ ok: boolean; draftId?: number; url?: string; socialSetId?: number; error?: string }>> {
+  let socialSetIds: number[] = [];
   try {
-    const draft = await createDraft(content, { threadify: true });
-    return { ok: true, draftId: draft.id, url: draft.url };
+    socialSetIds = await listSocialSetIds();
   } catch (err: any) {
-    return { ok: false, error: err?.message || "unknown" };
+    console.warn("[news-pipeline] could not list social sets for thread, using default:", err?.message);
+    socialSetIds = [0];
   }
+
+  const results: Array<{
+    ok: boolean;
+    draftId?: number;
+    url?: string;
+    socialSetId?: number;
+    error?: string;
+  }> = [];
+
+  for (const socialSetId of socialSetIds) {
+    try {
+      const draft = await createDraft(content, {
+        threadify: true,
+        ...(socialSetId ? { socialSetId } : {}),
+      });
+      results.push({ ok: true, draftId: draft.id, url: draft.url, socialSetId });
+    } catch (err: any) {
+      results.push({ ok: false, socialSetId, error: err?.message || "unknown" });
+    }
+  }
+  return results;
 }
 
 export async function pushDrafts(items: SummarizedItem[]): Promise<
-  Array<{ ok: boolean; draftId?: number; url?: string; item: SummarizedItem; error?: string }>
+  Array<{ ok: boolean; draftId?: number; url?: string; item: SummarizedItem; socialSetId?: number; error?: string }>
 > {
   const results: Array<{
     ok: boolean;
     draftId?: number;
     url?: string;
     item: SummarizedItem;
+    socialSetId?: number;
     error?: string;
   }> = [];
 
+  // Fan out: one draft per item per social set. With AuxiteGlobal
+  // (X) + auxiteofficial (LinkedIn + Mastodon + Bluesky) connected,
+  // a single news item produces 2 review cards in Typefully — one
+  // per identity. The founder can publish, edit, or skip each one
+  // independently.
+  let socialSetIds: number[] = [];
+  try {
+    socialSetIds = await listSocialSetIds();
+  } catch (err: any) {
+    // If we can't list (rare — API outage), fall back to the
+    // account's default set so we never silently produce zero
+    // drafts on the day. The fallback path doesn't include
+    // social_set_id which causes Typefully to use the default.
+    console.warn("[news-pipeline] could not list social sets, using default:", err?.message);
+    socialSetIds = [0]; // 0 = sentinel for "use default"
+  }
+
   for (const item of items) {
-    try {
-      const draft = await createDraft(item.auxitePost, { sourceLink: item.link });
-      results.push({ ok: true, draftId: draft.id, url: draft.url, item });
-    } catch (err: any) {
-      results.push({ ok: false, item, error: err?.message || "unknown" });
+    for (const socialSetId of socialSetIds) {
+      try {
+        const draft = await createDraft(item.auxitePost, {
+          sourceLink: item.link,
+          ...(socialSetId ? { socialSetId } : {}),
+        });
+        results.push({ ok: true, draftId: draft.id, url: draft.url, item, socialSetId });
+      } catch (err: any) {
+        results.push({ ok: false, item, socialSetId, error: err?.message || "unknown" });
+      }
     }
   }
   return results;
