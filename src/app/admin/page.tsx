@@ -3709,9 +3709,13 @@ export default function AdminDashboard() {
                       <option value="limited">⭐ Sınırlı</option>
                     </select>
                   </div>
-                  <div className="md:col-span-2">
+                  <div>
                     <label className="block text-xs text-slate-400 mb-1">Açıklama (TR)</label>
-                    <input type="text" value={newCampaign.description?.tr || ''} onChange={(e) => setNewCampaign({ ...newCampaign, description: { ...newCampaign.description!, tr: e.target.value } })} className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm" />
+                    <input type="text" value={newCampaign.description?.tr || ''} onChange={(e) => setNewCampaign({ ...newCampaign, description: { ...(newCampaign.description ?? { tr: '', en: '' }), tr: e.target.value } })} placeholder="Min $100 al, 1g gümüş kazan" className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Açıklama (EN)</label>
+                    <input type="text" value={newCampaign.description?.en || ''} onChange={(e) => setNewCampaign({ ...newCampaign, description: { ...(newCampaign.description ?? { tr: '', en: '' }), en: e.target.value } })} placeholder="Buy any metal $100+ and earn 1g of silver" className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs text-slate-400 mb-1">Değer Tipi</label>
