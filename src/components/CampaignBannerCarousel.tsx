@@ -58,17 +58,25 @@ function pickLocale(localized: BannerLocale | undefined, language: string): stri
 function resolveRoute(actionValue: string | undefined): string | null {
   if (!actionValue) return null;
   const map: Record<string, string> = {
-    trade: "/markets",
-    buy: "/markets",
-    markets: "/markets",
+    trade: "/allocate",
+    buy: "/allocate",
+    allocate: "/allocate",
+    markets: "/allocate",
     convert: "/allocate",
     withdraw: "/redeem",
+    redeem: "/redeem",
     fund: "/fund-vault",
     "fund-vault": "/fund-vault",
     stake: "/stake",
     yield: "/stake",
     profile: "/profile",
+    account: "/profile",
     vault: "/vault",
+    auxr: "/auxr",
+    trust: "/trust",
+    support: "/support",
+    transfers: "/transfers",
+    ledger: "/ledger",
   };
   return map[actionValue.toLowerCase()] || `/${actionValue}`;
 }
