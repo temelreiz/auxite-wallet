@@ -461,6 +461,26 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
                   ? `${result.message} ${tr(L, "metalAllocated")}`
                   : result.message}
               </p>
+              {!result.success && (
+                <a
+                  href="/fund-vault"
+                  onClick={() => {
+                    logEvent("card_purchase_fallback_to_crypto", {
+                      surface: "web",
+                      metal: quote?.metal,
+                      error: result.message,
+                    });
+                  }}
+                  className="block w-full mb-3 px-4 py-2.5 rounded-lg bg-[#BFA181]/20 text-[#BFA181] font-semibold text-sm hover:bg-[#BFA181]/30 transition-colors"
+                >
+                  {L === "tr" ? "💎 Crypto ile devam et (USDT)"
+                    : L === "de" ? "💎 Mit Crypto fortfahren (USDT)"
+                    : L === "fr" ? "💎 Continuer avec crypto (USDT)"
+                    : L === "ar" ? "💎 المتابعة بالعملة الرقمية (USDT)"
+                    : L === "ru" ? "💎 Продолжить с криптой (USDT)"
+                    : "💎 Continue with crypto (USDT)"}
+                </a>
+              )}
               <button
                 onClick={onClose}
                 className="px-6 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
