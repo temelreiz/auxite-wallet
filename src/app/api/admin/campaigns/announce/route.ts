@@ -125,32 +125,56 @@ export async function POST(request: NextRequest) {
   }
 
   // ─── BANNER ─────────────────────────────────────────────────────────
-  // Sets a banner record that the mobile/web banner readers already
-  // poll. Banner lives until the campaign's endDate so it self-expires
-  // without an extra cleanup cron.
+  // Banner lives in the canonical mobile:banners key with the same
+  // shape (BannersData wrapper + multi-locale title/subtitle) that
+  // /api/admin/banners and /api/mobile/banners read. Earlier code was
+  // writing a flat array under auxite:banners, which is why the
+  // banner never showed up in the app on test pushes.
   if (channels.includes("banner")) {
     try {
+      const bannerId = `vb-${c.id}`;
       const banner = {
-        id: `vb-${c.id}`,
-        title: c.name?.tr || title,
-        titleEn: c.name?.en || title,
-        message: c.description?.tr || text,
-        messageEn: c.description?.en || text,
-        type: "campaign",
-        priority: "high",
+        id: bannerId,
+        // Multi-locale at minimum has tr+en; the app falls back
+        // gracefully but the admin banner reader expects both keys.
+        title: {
+          tr: c.name?.tr || title,
+          en: c.name?.en || title,
+        },
+        subtitle: {
+          tr: c.description?.tr || text,
+          en: c.description?.en || text,
+        },
+        backgroundColor: "#10b981", // emerald — matches volume-bonus chrome
+        textColor: "#ffffff",
+        // Tapping the banner deep-links to the trade screen so users
+        // land where they can earn the bonus immediately.
+        actionType: "screen",
+        actionValue: "trade",
         active: true,
+        priority: 90, // above the standard 50 so campaign banner ranks first
         startDate: new Date().toISOString(),
         endDate: c.endDate ?? new Date(Date.now() + 14 * 86400_000).toISOString(),
-        campaignId: c.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
-      // Existing banners list lives under "auxite:banners" — same shape
-      // the admin Banner tab writes. Keep schemas in sync if either side
-      // changes.
-      const existing = (await kv.get<unknown[]>("auxite:banners")) ?? [];
-      const dedup = (existing as Array<{ id?: string }>).filter((b) => b.id !== banner.id);
-      dedup.unshift(banner);
-      await kv.set("auxite:banners", dedup);
-      results.banner = { ok: true };
+
+      const BANNERS_KEY = "mobile:banners";
+      type BannerEntry = { id?: string };
+      type BannersData = { banners: BannerEntry[]; lastUpdated: string };
+      const existing = (await kv.get<BannersData>(BANNERS_KEY)) ?? {
+        banners: [] as BannerEntry[],
+        lastUpdated: new Date().toISOString(),
+      };
+      // Upsert by id so re-firing the announcement refreshes the same
+      // banner instead of stacking duplicates.
+      const banners = existing.banners.filter((b) => b.id !== bannerId);
+      banners.unshift(banner);
+      await kv.set(BANNERS_KEY, {
+        banners,
+        lastUpdated: new Date().toISOString(),
+      });
+      results.banner = { ok: true, bannerId };
     } catch (err) {
       results.banner = { error: err instanceof Error ? err.message : String(err) };
     }
