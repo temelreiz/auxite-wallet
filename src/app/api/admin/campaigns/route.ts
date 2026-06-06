@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
+import { requireAdmin } from "@/lib/admin-auth";
 
 interface Campaign {
   id: string;
@@ -36,11 +37,14 @@ interface Campaign {
 
 const CAMPAIGNS_KEY = "auxite:campaigns";
 
-// Auth helper
-const verifyAuth = (request: NextRequest): boolean => {
-  const authHeader = request.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
-  return token === process.env.ADMIN_PASSWORD;
+// Auth — same Redis-session check the rest of the admin endpoints use.
+// The old verifyAuth() compared the bearer to ADMIN_PASSWORD verbatim,
+// but the admin UI sends session tokens (auxite_admin_token), so writes
+// silently 401'd and the form looked dead. requireAdmin() handles both
+// path and signature correctly.
+const verifyAuth = async (request: NextRequest): Promise<boolean> => {
+  const result = await requireAdmin(request);
+  return result.authorized;
 };
 
 // GET - Kampanyaları getir
@@ -179,7 +183,7 @@ export async function GET(request: NextRequest) {
 // POST - Kampanya işlemleri
 export async function POST(request: NextRequest) {
   try {
-    if (!verifyAuth(request)) {
+    if (!(await verifyAuth(request))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
