@@ -231,8 +231,18 @@ export default function ResetPasswordPage() {
     }
   };
 
-  // Success State
+  // Success State — most users who hit this page came from a mobile
+  // app email link. Show "Open App" as the primary action so they get
+  // dropped back into the native signin instead of having to switch
+  // to web. Browsers that can't honor the custom scheme silently no-op,
+  // and the web "Sign In" link below catches that case.
   if (success) {
+    // Heuristic: anyone on iOS/Android UA is almost certainly here from
+    // a tap inside the email client on their phone. Show the deep link
+    // as the hero CTA for them; keep web-only Sign In as a secondary.
+    const isMobile =
+      typeof navigator !== 'undefined' &&
+      /iPhone|iPad|iPod|Android/.test(navigator.userAgent || '');
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
@@ -243,11 +253,37 @@ export default function ResetPasswordPage() {
           <p className="text-slate-400 mb-8">
             {t('passwordChangedDesc')}
           </p>
+          {isMobile && (
+            <a
+              href="auxite-vault://onboarding/login"
+              className="inline-flex items-center justify-center w-full px-8 py-3 mb-3 bg-gradient-to-r from-[#BFA181] to-[#D4B47A] text-black font-semibold rounded-xl hover:opacity-90 transition-all"
+            >
+              📱 {t('openAppToSignIn') || (
+                lang === 'tr' ? 'Uygulamada Giriş Yap'
+                : lang === 'de' ? 'In der App anmelden'
+                : lang === 'fr' ? "Se connecter dans l'app"
+                : lang === 'ar' ? 'سجّل الدخول في التطبيق'
+                : lang === 'ru' ? 'Войти в приложении'
+                : 'Sign In in the App'
+              )}
+            </a>
+          )}
           <Link
             href="/auth/login"
-            className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] text-white font-semibold rounded-xl hover:from-[#2F6F62] hover:to-[#2F6F62]/80 transition-all"
+            className={
+              isMobile
+                ? 'inline-flex items-center justify-center px-8 py-2 text-slate-400 text-sm hover:text-white transition-colors'
+                : 'inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] text-white font-semibold rounded-xl hover:from-[#2F6F62] hover:to-[#2F6F62]/80 transition-all'
+            }
           >
-            {t('signIn')}
+            {isMobile
+              ? (lang === 'tr' ? 'Veya tarayıcıdan devam et'
+                : lang === 'de' ? 'Oder im Browser fortfahren'
+                : lang === 'fr' ? 'Ou continuer dans le navigateur'
+                : lang === 'ar' ? 'أو متابعة في المتصفح'
+                : lang === 'ru' ? 'Или продолжить в браузере'
+                : 'Or continue in browser')
+              : t('signIn')}
           </Link>
         </div>
       </div>
