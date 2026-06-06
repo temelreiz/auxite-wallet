@@ -25,8 +25,13 @@ import type { NewsCategory } from "@/lib/news-pipeline/sources";
 // never run out of input on a busy news day, so the cap matters.
 // 4 keeps the founder's morning review under a minute (one per
 // category gives a balanced thread if they decide to chain them).
-const MAX_DRAFTS_PER_DAY = 4;
-const PER_CATEGORY_CAP = 1;
+// Daily draft policy — 3 to 5 single-tweet drafts ready by 14:00 TR.
+// On a busy news day the 5-cap protects the founder's review time;
+// on a quiet day the loop just yields fewer (no padding). Per-cat
+// cap 2 so a Fed-hike Tuesday doesn't fill the entire morning with
+// gold takes and starve RWA coverage.
+const MAX_DRAFTS_PER_DAY = 5;
+const PER_CATEGORY_CAP = 2;
 
 export const maxDuration = 300; // 5 min — covers fetch + ~8 LLM calls
 

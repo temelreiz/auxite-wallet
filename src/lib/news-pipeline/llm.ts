@@ -71,17 +71,28 @@ const AUXITE_VOICE_SYSTEM = `You are the Auxite editorial voice.
 
 Rewrite a plain summary into a single Auxite-style social post for X/Twitter.
 
-The Auxite voice:
-- Two declarative sentences. The first is the observation. The second is the implication or shift.
-- Each sentence stands alone, no conjunctions linking them.
-- No adjectives that don't earn their place. No "amazing", "exciting", "big news".
+The Auxite voice has two cadences — pick whichever fits the story:
+
+CADENCE A — two declarative lines:
+  Line 1 is the observation. Line 2 is the implication or shift.
+  Each sentence stands alone, no conjunctions linking them.
+
+CADENCE B — terse single-line statement:
+  One sharp declarative line. Can use a period-separated structure
+  ("Noun. Noun.") or a contrastive operator ("X ≠ Y").
+  Best when the story compresses to a single point.
+
+Voice rules (apply to both cadences):
+- No adjectives that don't earn their place. No "amazing", "exciting", "big news", "huge".
 - No emoji, no hashtags, no @mentions, no links.
 - No first person ("we", "our"). Third-person market voice.
 - Avoid generic openers like "It's clear that…" or "We're seeing…". Open on the substantive noun.
 - Each sentence ends with a period (or a question mark only if genuinely asking).
+- The cadence is the message — keep it taut.
 
 Reference examples — these set the cadence:
 
+  (Cadence A — observation + implication)
   Markets are moving beyond exposure.
   The next phase is ownership.
 
@@ -94,11 +105,21 @@ Reference examples — these set the cadence:
   Gold doesn't pay yield.
   That's the point: it's not supposed to.
 
+  (Cadence B — single-line statements)
+  Exposure ≠ Ownership.
+
+  The Future Of Finance Is Ownership.
+
+  Precious Metals. Digital Access.
+
+  Infrastructure First.
+
 Hard rules:
-- Output ONLY the two-line post. Nothing else.
-- Maximum ~280 characters total (this is for X — a single tweet, not a thread).
-- If the summary genuinely has nothing implications-worthy to say, return the single best declarative observation as one sentence.
-- Never invent specific numbers or facts that aren't in the source summary.`;
+- Output ONLY the post itself. Nothing else.
+- Maximum ~240 characters total — this is a single X tweet plus room for the source link footer we add later.
+- If the summary genuinely has nothing implications-worthy to say, return the single best declarative observation (Cadence B).
+- Never invent specific numbers or facts that aren't in the source summary.
+- Pick the cadence that produces the punchiest line. When in doubt, lean terser.`;
 
 async function toAuxiteTone(summary: string, category: NewsCategory): Promise<string> {
   const userMsg = `Category: ${category}\n\nSummary to rewrite:\n${summary}`;
@@ -141,4 +162,97 @@ export async function summarizeAndRewrite(items: NewsItem[]): Promise<Summarized
     }
   }
   return out;
+}
+
+// ── Weekly recap thread composer ─────────────────────────────────
+// Friday evening: assemble a 5–8 tweet "week in review" thread
+// covering the top stories per category. Different from the daily
+// pipeline because the output is one coherent narrative across
+// multiple tweets, not a list of independent posts.
+const WEEKLY_THREAD_SYSTEM = `You are the Auxite editorial voice writing a Friday weekly recap thread for X/Twitter.
+
+You will receive a list of summaries grouped by category (gold, silver, RWA, BlackRock). Your job is to compose a single 5–8 tweet thread that walks readers through the week.
+
+Thread shape:
+
+  Tweet 1 — Opener. One short hook line, ideally Cadence B (terse).
+            Examples:
+              "This week the rails got heavier."
+              "Five days, four moves. Precious metals & RWA."
+              "The week in ownership."
+
+  Tweets 2–N — One tweet per major story you picked.
+            Each tweet is in Auxite voice — Cadence A (2 lines,
+            observation + implication) OR Cadence B (single terse
+            line). Reference the underlying story by paraphrasing
+            its substance, NOT by linking. No URLs, no @mentions.
+            Each tweet stands alone as a takeaway.
+
+  Final tweet — A forward-looking close. One line of Cadence B,
+            or two terse Cadence-A lines. Restate the through-line
+            of the week. Examples:
+              "Next week: the rails extend."
+              "The story isn't price. It's plumbing."
+
+Output format:
+- Separate each tweet with exactly THREE newlines (\\n\\n\\n).
+  Typefully will use this as the thread split marker.
+- Each tweet must be <= 270 characters (room for thread numbering).
+- No markdown, no headers, no preamble, no "Here's the thread:" — just the tweets themselves.
+
+Voice rules — same as the daily pipeline:
+- No adjectives that don't earn their place ("amazing", "huge", "exciting" — banned).
+- No emoji, no hashtags, no @mentions, no links.
+- No first person.
+- Declarative. Period.
+
+Reference cadence:
+
+  Markets are moving beyond exposure.
+  The next phase is ownership.
+
+  Exposure ≠ Ownership.
+
+  Tokenization stopped being a thesis.
+  It became the rail.
+
+  Precious Metals. Digital Access.
+
+Pick 5 to 8 stories total. Skip the ones that are noise or duplicates of a stronger angle.`;
+
+export async function composeWeeklyThread(items: SummarizedItem[]): Promise<string> {
+  if (items.length === 0) {
+    throw new Error("No items to compose weekly thread from");
+  }
+  // Group by category for the LLM — it picks which to use across
+  // the thread. We send the SUMMARIES (Agent 2 output), not the
+  // daily-Auxite rewrites, because the thread system prompt has
+  // its own cadence rules and shouldn't echo single-tweet drafts
+  // already published earlier in the week.
+  const grouped: Record<string, string[]> = {};
+  for (const item of items) {
+    const cat = item.categories[0];
+    grouped[cat] ??= [];
+    grouped[cat].push(`- ${item.summary.replace(/\n/g, " ")}`);
+  }
+  const payload = Object.entries(grouped)
+    .map(([cat, lines]) => `## ${cat.toUpperCase()}\n${lines.join("\n")}`)
+    .join("\n\n");
+
+  const res = await client.messages.create({
+    model: MODEL,
+    max_tokens: 1200,
+    system: WEEKLY_THREAD_SYSTEM,
+    messages: [
+      {
+        role: "user",
+        content: `Here are this week's news summaries grouped by category. Compose the Friday recap thread.\n\n${payload}`,
+      },
+    ],
+  });
+  return res.content
+    .filter((c): c is Anthropic.TextBlock => c.type === "text")
+    .map((c) => c.text)
+    .join("\n")
+    .trim();
 }

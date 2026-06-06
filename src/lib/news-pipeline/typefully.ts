@@ -19,19 +19,32 @@ interface TypefullyDraftResponse {
   status: string;
 }
 
-async function createDraft(content: string, sourceLink: string): Promise<TypefullyDraftResponse> {
-  // We attach a short footer with the source URL so the founder
-  // can verify the facts before publishing without having to
-  // hunt for the article in another tab. Typefully's editor lets
-  // the user delete the footer in one click if they don't want
-  // the source attribution on the actual post.
+async function createDraft(
+  content: string,
+  options: {
+    sourceLink?: string;
+    threadify?: boolean;
+  } = {},
+): Promise<TypefullyDraftResponse> {
+  // For single tweets we append a source footer the founder can
+  // verify against before publishing (Typefully's editor lets
+  // them delete it in one click). Threads pass their own content
+  // verbatim — sources live inside the thread copy itself.
+  const finalContent = options.sourceLink
+    ? `${content}\n\nSource: ${options.sourceLink}`
+    : content;
+
   const body = JSON.stringify({
-    content: `${content}\n\nSource: ${sourceLink}`,
+    content: finalContent,
     // share = true returns a shareable draft URL — useful when
     // we list the drafts in Slack/email for the morning review.
     share: true,
-    // auto_retweet_enabled / auto_plug_enabled left default; the
-    // founder controls these per-account in Typefully settings.
+    // threadify on the Typefully side splits long content into
+    // a thread by inserting tweet boundaries. We pass it through
+    // for the weekly recap and let Typefully do the splitting,
+    // which respects their per-tweet character math better than
+    // anything we'd write here.
+    ...(options.threadify ? { threadify: true } : {}),
   });
 
   const res = await fetch(`${API}/drafts/`, {
@@ -49,6 +62,20 @@ async function createDraft(content: string, sourceLink: string): Promise<Typeful
   return (await res.json()) as TypefullyDraftResponse;
 }
 
+// Push a single thread draft — used by the Friday weekly recap.
+// Content should already be the assembled thread text; Typefully's
+// threadify=true splits it into tweets respecting their char limits.
+export async function pushThreadDraft(
+  content: string,
+): Promise<{ ok: boolean; draftId?: number; url?: string; error?: string }> {
+  try {
+    const draft = await createDraft(content, { threadify: true });
+    return { ok: true, draftId: draft.id, url: draft.url };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "unknown" };
+  }
+}
+
 export async function pushDrafts(items: SummarizedItem[]): Promise<
   Array<{ ok: boolean; draftId?: number; url?: string; item: SummarizedItem; error?: string }>
 > {
@@ -62,7 +89,7 @@ export async function pushDrafts(items: SummarizedItem[]): Promise<
 
   for (const item of items) {
     try {
-      const draft = await createDraft(item.auxitePost, item.link);
+      const draft = await createDraft(item.auxitePost, { sourceLink: item.link });
       results.push({ ok: true, draftId: draft.id, url: draft.url, item });
     } catch (err: any) {
       results.push({ ok: false, item, error: err?.message || "unknown" });
