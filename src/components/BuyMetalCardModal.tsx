@@ -473,12 +473,14 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
                   }}
                   className="block w-full mb-3 px-4 py-2.5 rounded-lg bg-[#BFA181]/20 text-[#BFA181] font-semibold text-sm hover:bg-[#BFA181]/30 transition-colors"
                 >
-                  {L === "tr" ? "💎 Crypto ile devam et (USDT)"
-                    : L === "de" ? "💎 Mit Crypto fortfahren (USDT)"
-                    : L === "fr" ? "💎 Continuer avec crypto (USDT)"
-                    : L === "ar" ? "💎 المتابعة بالعملة الرقمية (USDT)"
-                    : L === "ru" ? "💎 Продолжить с криптой (USDT)"
-                    : "💎 Continue with crypto (USDT)"}
+                  {({
+                    tr: "💎 Crypto ile devam et (USDT)",
+                    en: "💎 Continue with crypto (USDT)",
+                    de: "💎 Mit Crypto fortfahren (USDT)",
+                    fr: "💎 Continuer avec crypto (USDT)",
+                    ar: "💎 المتابعة بالعملة الرقمية (USDT)",
+                    ru: "💎 Продолжить с криптой (USDT)",
+                  } as Record<string, string>)[L as string] ?? "💎 Continue with crypto (USDT)"}
                 </a>
               )}
               <button
@@ -509,19 +511,23 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
             >
               <span>💡</span>
               <span>
-                {L === "tr" ? "Bazı bankalar bu işleme izin vermez. Kart reddedilirse "
-                  : L === "de" ? "Manche Banken lehnen diese Transaktion ab. Wenn Ihre Karte abgelehnt wird, "
-                  : L === "fr" ? "Certaines banques refusent cette transaction. Si votre carte est refusée, "
-                  : L === "ar" ? "بعض البنوك ترفض هذه المعاملة. إذا رُفضت بطاقتك "
-                  : L === "ru" ? "Некоторые банки отклоняют такие операции. Если карта не пройдёт, "
-                  : "Some banks decline this transaction. If your card doesn't go through, "}
+                {({
+                  tr: "Bazı bankalar bu işleme izin vermez. Kart reddedilirse ",
+                  en: "Some banks decline this transaction. If your card doesn't go through, ",
+                  de: "Manche Banken lehnen diese Transaktion ab. Wenn Ihre Karte abgelehnt wird, ",
+                  fr: "Certaines banques refusent cette transaction. Si votre carte est refusée, ",
+                  ar: "بعض البنوك ترفض هذه المعاملة. إذا رُفضت بطاقتك ",
+                  ru: "Некоторые банки отклоняют такие операции. Если карта не пройдёт, ",
+                } as Record<string, string>)[L as string] ?? "Some banks decline this transaction. If your card doesn't go through, "}
                 <span className="text-[#BFA181] font-semibold whitespace-nowrap">
-                  {L === "tr" ? "USDT ile devam edebilirsin →"
-                    : L === "de" ? "können Sie mit USDT fortfahren →"
-                    : L === "fr" ? "continuez en USDT →"
-                    : L === "ar" ? "يمكنك المتابعة بـ USDT ←"
-                    : L === "ru" ? "продолжайте через USDT →"
-                    : "continue with USDT →"}
+                  {({
+                    tr: "USDT ile devam edebilirsin →",
+                    en: "continue with USDT →",
+                    de: "können Sie mit USDT fortfahren →",
+                    fr: "continuez en USDT →",
+                    ar: "يمكنك المتابعة بـ USDT ←",
+                    ru: "продолжайте через USDT →",
+                  } as Record<string, string>)[L as string] ?? "continue with USDT →"}
                 </span>
               </span>
             </a>
