@@ -245,6 +245,20 @@ export default function RegisterPage() {
   const utmSource = searchParams.get('source') || searchParams.get('utm_source') || '';
   const utmMedium = searchParams.get('utm_medium') || '';
   const utmCampaign = searchParams.get('utm_campaign') || '';
+  // Promo code from URL — landed via ?promo=PHGOLD20 (Product Hunt,
+  // X drop, partner link). Falls back to localStorage so a visitor
+  // who hit a landing page with the param can still register on a
+  // separate tab/session and have the code forwarded.
+  const promoFromUrl = searchParams.get('promo') || '';
+  const promoCode = (
+    promoFromUrl ||
+    (typeof window !== 'undefined' ? localStorage.getItem('auxite_promo') || '' : '')
+  ).toUpperCase();
+  useEffect(() => {
+    if (promoFromUrl && typeof window !== 'undefined') {
+      localStorage.setItem('auxite_promo', promoFromUrl.toUpperCase());
+    }
+  }, [promoFromUrl]);
   const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -322,7 +336,7 @@ export default function RegisterPage() {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name, language: preferredLang, source: utmSource, utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign }),
+        body: JSON.stringify({ email, password, name, language: preferredLang, source: utmSource, utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign, promoCode: promoCode || undefined }),
       });
 
       const data = await response.json();
@@ -394,6 +408,23 @@ export default function RegisterPage() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col justify-center px-6 pb-8">
         <div className="max-w-md w-full mx-auto">
+          {/* Promo code chip — shown when arriving via ?promo=... or a
+              previously captured code is in localStorage. Tells the
+              user the offer will activate after their first qualifying
+              purchase, so they have a concrete goal post-signup. */}
+          {promoCode && (
+            <div className="mb-5 rounded-xl border border-[#BFA181]/40 bg-[#BFA181]/10 px-4 py-3 flex items-start gap-3">
+              <div className="text-2xl leading-none mt-0.5">🎁</div>
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-[#BFA181]">
+                  Promo code <span className="font-mono">{promoCode}</span> applied
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                  Your bonus will activate after your first $100+ purchase.
+                </div>
+              </div>
+            </div>
+          )}
           {/* Form */}
           <form onSubmit={handleRegister} className="space-y-4">
             {/* Name */}
