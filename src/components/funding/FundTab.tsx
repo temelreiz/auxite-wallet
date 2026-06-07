@@ -418,6 +418,51 @@ export function FundTab() {
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
+  // Promo code redemption — for users who didn't land via ?promo= URL
+  // but heard about the code post-signup. The same endpoint that the
+  // signup flow uses; attaches as pending if the user hasn't yet hit
+  // the minPurchaseUSD floor, credits immediately if they have.
+  const [promoInput, setPromoInput] = useState("");
+  const [promoSubmitting, setPromoSubmitting] = useState(false);
+  const [promoResult, setPromoResult] = useState<{
+    type: "success" | "error" | "info";
+    text: string;
+  } | null>(null);
+  const handleApplyPromo = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code || !address || promoSubmitting) return;
+    setPromoSubmitting(true);
+    setPromoResult(null);
+    try {
+      const res = await fetch("/api/promo/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, emailOrWallet: address }),
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        const terms = data.terms || {};
+        setPromoResult({
+          type: data.status === "credited" ? "success" : "info",
+          text:
+            data.status === "credited"
+              ? `${data.grams?.toFixed(4) ?? "?"}g ${data.asset} credited.`
+              : `Code applied. Make a single $${terms.minPurchaseUSD ?? "?"}+ purchase to unlock $${terms.amountUSD ?? "?"} in ${terms.asset ?? "metal"}.`,
+        });
+        setPromoInput("");
+      } else {
+        setPromoResult({
+          type: "error",
+          text: data?.error || data?.message || "Could not apply promo code.",
+        });
+      }
+    } catch {
+      setPromoResult({ type: "error", text: "Network error. Try again." });
+    } finally {
+      setPromoSubmitting(false);
+    }
+  };
+
   // Deposit claim (confirm by txid)
   const [claimTx, setClaimTx] = useState("");
   const [claiming, setClaiming] = useState(false);
@@ -578,6 +623,58 @@ export function FundTab() {
     <div>
       {/* Funding Overview */}
       <FundingOverviewPanel />
+
+      {/* Promo code input — for users who heard about a campaign code
+          (Product Hunt, X drop, partner) AFTER signing up. Code stays
+          collapsed by default to avoid distracting users with no code;
+          a small chevron-button reveals the input. The hint text on the
+          collapsed row matches the Auxite voice. */}
+      <div className="mb-6 rounded-xl border border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 overflow-hidden">
+        <details className="group">
+          <summary className="flex items-center justify-between cursor-pointer px-4 py-3 text-sm select-none">
+            <span className="flex items-center gap-2">
+              <span className="text-base leading-none">🎁</span>
+              <span className="text-slate-700 dark:text-slate-300">Have a promo code?</span>
+            </span>
+            <span className="text-xs text-slate-400 group-open:rotate-180 transition-transform">▾</span>
+          </summary>
+          <div className="px-4 pb-4 pt-1 border-t border-stone-200 dark:border-slate-800">
+            <div className="flex gap-2">
+              <input
+                value={promoInput}
+                onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                placeholder="PHGOLD20"
+                className="flex-1 px-3 py-2 rounded-lg bg-stone-100 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 text-sm font-mono tracking-wider text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#BFA181] focus:ring-1 focus:ring-[#BFA181]"
+                maxLength={32}
+                disabled={promoSubmitting}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleApplyPromo();
+                }}
+              />
+              <button
+                onClick={handleApplyPromo}
+                disabled={!promoInput.trim() || promoSubmitting || !address}
+                className="px-4 py-2 rounded-lg bg-[#BFA181] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+              >
+                {promoSubmitting ? "…" : "Apply"}
+              </button>
+            </div>
+            {promoResult && (
+              <div
+                className={`mt-2 text-xs px-3 py-2 rounded-lg ${
+                  promoResult.type === "success"
+                    ? "bg-[#2F6F62]/10 text-[#2F6F62]"
+                    : promoResult.type === "error"
+                      ? "bg-red-500/10 text-red-500"
+                      : "bg-[#BFA181]/10 text-[#BFA181]"
+                }`}
+              >
+                {promoResult.text}
+              </div>
+            )}
+          </div>
+        </details>
+      </div>
 
       {/* Funding Rail Selector */}
       <div className="mb-6">
