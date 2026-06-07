@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     if (rateLimited) return rateLimited;
 
     const body = await request.json();
-    const { email, password, name, phone, language = 'en', country: rawCountry, timezone, platform: clientPlatform, source, utm_source, utm_medium, utm_campaign } = body;
+    const { email, password, name, phone, language = 'en', country: rawCountry, timezone, platform: clientPlatform, source, utm_source, utm_medium, utm_campaign, promoCode } = body;
     // ISO-2 (e.g. TR, US). Optional — drives timezone-aware notifications +
     // pre-fills KYC. Stored uppercase; any non-2-letter input is discarded.
     const country =
@@ -133,6 +133,23 @@ export async function POST(request: NextRequest) {
 
     // Create email index for lookup
     await redis.set(`auth:email:${normalizedEmail}`, userId);
+
+    // Attach promo code from signup body — e.g. PH visitors land on
+    // /?promo=PHGOLD20 and the client forwards it here. We stash it
+    // on the user record; the stripe + crypto purchase hooks redeem
+    // it after the first qualifying buy. Best-effort: bad/expired
+    // codes log and continue without aborting registration.
+    if (promoCode && typeof promoCode === 'string') {
+      try {
+        const { attachPendingPromo } = await import('@/lib/promo');
+        const result = await attachPendingPromo(normalizedEmail, promoCode);
+        if (!result.attached) {
+          console.warn(`[register] promo ${promoCode} not attached: ${result.reason}`);
+        }
+      } catch (err: any) {
+        console.warn('[register] promo attach failed (non-blocking):', err?.message);
+      }
+    }
 
     // ══════════════════════════════════════════════════════════════
     // CREATE WALLET ADDRESS & VAULT ID

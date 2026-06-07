@@ -217,6 +217,35 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent): Promise<void> {
     console.warn("[stripe/webhook] no-kyc spend record failed (non-blocking):", e);
   }
 
+  // ── Promo code redemption ──────────────────────────────────────────────
+  // If the user attached a promo code (e.g. PHGOLD20 from the Product
+  // Hunt launch) during signup, and this purchase meets the code's
+  // minPurchaseUSD floor, credit the bonus metal now and clear the
+  // pending flag. Non-blocking — a flaky promo write must never
+  // prevent the actual purchase from being recorded.
+  try {
+    if (email) {
+      const { tryRedeemPendingPromo } = await import("@/lib/promo");
+      const userId = (await redis.get<string>(`user:address:${userAddress}`)) || "";
+      if (userId) {
+        const result = await tryRedeemPendingPromo({
+          userId,
+          userEmail: email,
+          userAddress,
+          thisPurchaseUSD: amountUSD,
+        });
+        if (result?.ok && result.status === "credited") {
+          console.log(
+            `[stripe/webhook] ✅ promo ${result.code} credited +${result.grams}g ${result.asset} ` +
+              `to ${userAddress.slice(0, 10)}... ($${result.amountUSD})`,
+          );
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[stripe/webhook] promo redemption failed (non-blocking):", e);
+  }
+
   // ── Fee ledger ─────────────────────────────────────────────────────────
   // Card purchases were previously invisible to platform:fees:* — only
   // /api/trade was writing there. That meant our biggest fee channel (card
