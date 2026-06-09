@@ -172,13 +172,16 @@ export async function withdrawUSDT(
       return { success: false, error: "ETH private key not configured" };
     }
 
-    const provider = new ethers.JsonRpcProvider(ETH_MAINNET_RPC);
+    // USDT on BASE (Tether official). Was Ethereum L1 via a dead Infura key +
+    // an unfunded mainnet hot wallet → every withdraw failed. Base matches the
+    // USDC rail: cheap gas, hot wallet already holds Base ETH, public RPC works.
+    const provider = new ethers.JsonRpcProvider(BASE_RPC);
     const wallet = new ethers.Wallet(privateKey, provider);
-    
-    const USDT_CONTRACT = process.env.USDT_CONTRACT_ADDRESS || '0xdAC17F958D2ee523a2206206994597C13D831ec7';
+
+    const USDT_CONTRACT = process.env.USDT_BASE_CONTRACT_ADDRESS || '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2';
     const usdtContract = new ethers.Contract(USDT_CONTRACT, ERC20_ABI, wallet);
 
-    console.log(`💵 USDT Withdraw: ${amount} USDT to ${toAddress}`);
+    console.log(`💵 USDT Withdraw (Base): ${amount} USDT to ${toAddress}`);
     console.log(`   Hot Wallet: ${wallet.address}`);
 
     const decimals = await usdtContract.decimals();
