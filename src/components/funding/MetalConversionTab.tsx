@@ -604,7 +604,7 @@ export function MetalConversionTab() {
         // executeOnChain:false → conversion returns instantly after the Redis
         // balance update; the on-chain mint/burn is reconciled in the background
         // by the reconcile-deferred-onchain cron. (Custodial: Redis = truth.)
-        body: JSON.stringify({ type, fromToken: fromMetal, toToken: toMetal, amount: parsedAmount, address, executeOnChain: false }),
+        body: JSON.stringify({ type, fromToken: fromMetal, toToken: toMetal, fromAmount: parsedAmount, address, executeOnChain: false }),
       });
       const data = await res.json();
       if (data.success) {
