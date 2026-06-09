@@ -320,6 +320,21 @@ function getMainnetWalletClient() {
   });
 }
 
+// ETH payouts go out on BASE (cheap gas, working public RPC, and where the hot
+// wallet actually holds ETH) — consistent with withdrawETH/USDT/USDC. Mainnet
+// ETH via the demo Alchemy key was unreliable + the mainnet hot wallet is empty.
+function getBaseWalletClient() {
+  if (!HOT_WALLET_PRIVATE_KEY) {
+    throw new Error("HOT_WALLET_ETH_PRIVATE_KEY not configured");
+  }
+  const account = privateKeyToAccount(HOT_WALLET_PRIVATE_KEY as `0x${string}`);
+  return createWalletClient({
+    account,
+    chain: base,
+    transport: http(BASE_RPC_URL, { timeout: 30000 }),
+  });
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // ETH TRANSFER FUNCTION (Hot Wallet → User)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -329,19 +344,19 @@ async function sendEthToUser(
   amountEth: number
 ): Promise<{ success: boolean; txHash?: string; error?: string }> {
   try {
-    const walletClient = getMainnetWalletClient();
+    const walletClient = getBaseWalletClient();
     const account = walletClient.account;
-    
+
     if (!account) {
       return { success: false, error: "Wallet account not found" };
     }
-    
-    // Check hot wallet balance
-    const hotWalletBalance = await mainnetClient.getBalance({ address: account.address });
+
+    // Check hot wallet balance (Base)
+    const hotWalletBalance = await baseClient.getBalance({ address: account.address });
     const amountWei = parseEther(amountEth.toString());
-    
-    // Estimate gas
-    const gasPrice = await mainnetClient.getGasPrice();
+
+    // Estimate gas (Base)
+    const gasPrice = await baseClient.getGasPrice();
     const gasLimit = BigInt(21000);
     const gasCost = gasLimit * gasPrice;
     
