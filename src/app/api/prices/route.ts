@@ -72,42 +72,49 @@ async function fetchGoldApiPrices(): Promise<Record<string, { price: number; cha
 
   const results: Record<string, { price: number; change: number }> = {};
   const metals = Object.entries(GOLDAPI_SYMBOLS);
-  let successCount = 0;
 
-  for (const [symbol, goldSymbol] of metals) {
-    try {
-      const response = await fetch(`${GOLDAPI_URL}/${goldSymbol}/USD`, {
-        headers: {
-          "x-access-token": GOLDAPI_KEY,
-          "Content-Type": "application/json",
-        },
-        cache: "no-store",
-      });
+  // Fetch all metals in PARALLEL. Previously this looped sequentially with a
+  // 300ms sleep between each call → ~4.6s for 4 metals, which stalled every
+  // cache-miss of /api/prices (and anything that depends on it). GoldAPI
+  // tolerates a handful of concurrent requests; a 6s per-request timeout caps
+  // the worst case instead of letting one slow call hang the whole response.
+  await Promise.all(
+    metals.map(async ([symbol, goldSymbol]) => {
+      try {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 6000);
+        const response = await fetch(`${GOLDAPI_URL}/${goldSymbol}/USD`, {
+          headers: {
+            "x-access-token": GOLDAPI_KEY,
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+          signal: ctrl.signal,
+        });
+        clearTimeout(to);
 
-      if (response.ok) {
-        const data = await response.json();
-        const priceOz = data.price || 0;
-        const changePercent = data.chg_percent || (data.ch && data.prev_close_price ? (data.ch / data.prev_close_price) * 100 : 0);
+        if (response.ok) {
+          const data = await response.json();
+          const priceOz = data.price || 0;
+          const changePercent = data.chg_percent || (data.ch && data.prev_close_price ? (data.ch / data.prev_close_price) * 100 : 0);
 
-        if (priceOz > 0) {
-          results[symbol] = {
-            price: priceOz,
-            change: Math.round(changePercent * 100) / 100,
-          };
-          successCount++;
-          console.log(`✅ GoldAPI ${symbol}: $${priceOz}/oz (${changePercent > 0 ? '+' : ''}${changePercent.toFixed(2)}%)`);
+          if (priceOz > 0) {
+            results[symbol] = {
+              price: priceOz,
+              change: Math.round(changePercent * 100) / 100,
+            };
+            console.log(`✅ GoldAPI ${symbol}: $${priceOz}/oz (${changePercent > 0 ? '+' : ''}${changePercent.toFixed(2)}%)`);
+          }
+        } else {
+          console.warn(`⚠️ GoldAPI ${symbol} error: ${response.status}`);
         }
-      } else {
-        console.warn(`⚠️ GoldAPI ${symbol} error: ${response.status}`);
+      } catch (error) {
+        console.error(`❌ GoldAPI ${symbol} fetch error:`, error);
       }
+    })
+  );
 
-      await new Promise(resolve => setTimeout(resolve, 300));
-    } catch (error) {
-      console.error(`❌ GoldAPI ${symbol} fetch error:`, error);
-    }
-  }
-
-  if (successCount === 0) return null;
+  if (Object.keys(results).length === 0) return null;
   return results;
 }
 
