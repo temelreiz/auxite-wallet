@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import Stripe from "stripe";
 import { stripe, type SupportedMetal, METAL_NAME } from "@/lib/stripe";
+import { recordCardFundingHold, releaseCardHoldByPaymentIntent } from "@/lib/withdrawal-guard";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -197,6 +198,14 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent): Promise<void> {
   };
   await redis.lpush(`user:${userAddress}:transactions`, JSON.stringify(tx));
   await redis.ltrim(`user:${userAddress}:transactions`, 0, 499);
+
+  // ── Card-funded hold: lock this USD value from withdrawal until it settles
+  // (anti-chargeback-fraud + bridges Stripe→bank payout delay). Non-blocking.
+  try {
+    await recordCardFundingHold(userAddress, amountUSD, pi.id);
+  } catch (e) {
+    console.error("[stripe/webhook] recordCardFundingHold failed (non-blocking):", e);
+  }
 
   console.log(
     `[stripe/webhook] ✅ ${userAddress.slice(0, 10)}... +${grams.toFixed(4)}g ${metal} ` +
@@ -430,6 +439,13 @@ async function handleChargeRefunded(charge: Stripe.Charge): Promise<void> {
   // and surface for admin (user may have already spent some).
   const balanceKey = `user:${userAddress}:balance`;
   const newBalance = await redis.hincrbyfloat(balanceKey, balanceField, -grams);
+
+  // Drop the card-funded hold tied to this refunded payment.
+  try {
+    await releaseCardHoldByPaymentIntent(userAddress, piId);
+  } catch (e) {
+    console.error("[stripe/webhook] releaseCardHoldByPaymentIntent failed (non-blocking):", e);
+  }
 
   await redis.lpush(`user:${userAddress}:transactions`, JSON.stringify({
     id: `stripe_refund_${charge.id}`,

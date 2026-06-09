@@ -6,6 +6,7 @@ import { sendWithdrawConfirmedEmail, sendWithdrawRequestedEmail } from "@/lib/em
 import { getUserLanguage } from "@/lib/user-language";
 import { checkTradingAllowed } from "@/lib/trading-guard";
 import { getWithdrawFee, getMinWithdraw } from "@/lib/withdraw-fees";
+import { requireKycForWithdraw, assertCardHoldAllows, usdValueOf } from "@/lib/withdrawal-guard";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
 
@@ -168,6 +169,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unsupported cryptocurrency" }, { status: 400 });
     }
 
+    // ── P1: KYC GATE — only identity-verified accounts can move value out.
+    // Covers every path in this route (AUXM redemption + crypto withdrawal).
+    const kycGate = await requireKycForWithdraw(address);
+    if (!kycGate.ok) {
+      return NextResponse.json({ error: kycGate.error, code: kycGate.code }, { status: 403 });
+    }
+
     // ═════════════════════════════════════════════════════════════════════════
     // AUXM REDEMPTION — convert settlement balance to chosen crypto + send.
     // Body: { coin: "AUXM", payoutAsset: "USDC"|"USDT"|"ETH", amount, ... }
@@ -253,6 +261,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           error: `AUXM amount too small after fees. Minimum payout: ${payoutFee} ${payoutAsset}`,
         }, { status: 400 });
+      }
+
+      // ── P2: CARD-FUNDED HOLD — block extracting unsettled card value.
+      // AUXM is USD-pegged 1:1, so the withdraw USD value is `amount`.
+      const auxmHold = await assertCardHoldAllows(normalizedAddr, amount);
+      if (!auxmHold.ok) {
+        return NextResponse.json({ error: auxmHold.error, code: auxmHold.code, details: auxmHold.details }, { status: 403 });
       }
 
       // Burn AUXM from user's balance immediately so they don't double-spend.
@@ -486,6 +501,12 @@ export async function POST(request: NextRequest) {
     };
 
     const txKey = `user:${normalizedAddress}:transactions`;
+
+    // ── P2: CARD-FUNDED HOLD — block extracting unsettled card value.
+    const cryptoHold = await assertCardHoldAllows(normalizedAddress, await usdValueOf(coin, amount));
+    if (!cryptoHold.ok) {
+      return NextResponse.json({ error: cryptoHold.error, code: cryptoHold.code, details: cryptoHold.details }, { status: 403 });
+    }
 
     // Önce bakiyeyi düş
     await redis.hincrbyfloat(balanceKey, balanceFieldKey, -amount);

@@ -9,6 +9,7 @@ import { Redis } from '@upstash/redis';
 import { sendEmail } from '@/lib/email';
 import { getUserBalance } from '@/lib/redis';
 import { checkTradingAllowed } from '@/lib/trading-guard';
+import { requireKycForWithdraw } from '@/lib/withdrawal-guard';
 import { ethers } from 'ethers';
 import { METAL_TOKENS } from '@/config/contracts-v8';
 
@@ -238,6 +239,12 @@ export async function POST(request: NextRequest) {
 
     if (!address || !metal || !amount || !method) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // KYC gate — physical/cash redemption moves real value out.
+    const kycGate = await requireKycForWithdraw(address);
+    if (!kycGate.ok) {
+      return NextResponse.json({ error: kycGate.error, code: kycGate.code }, { status: 403 });
     }
 
     const upperMetal = metal.toUpperCase();
