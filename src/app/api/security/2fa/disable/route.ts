@@ -87,9 +87,9 @@ export async function POST(request: NextRequest) {
     // Get 2FA data
     const data = await redis.hgetall(key);
     
-    if (!data || data.enabled !== "true" || !data.secret) {
-      return NextResponse.json({ 
-        error: "2FA zaten devre dışı" 
+    if (!data || (data.enabled !== true && data.enabled !== "true") || !data.secret) {
+      return NextResponse.json({
+        error: "2FA zaten devre dışı"
       }, { status: 400 });
     }
 

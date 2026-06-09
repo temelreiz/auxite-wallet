@@ -74,7 +74,12 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      enabled: data.enabled === "true",
+      // Upstash hgetall auto-deserializes the stored "true" into a boolean, so
+      // a strict `=== "true"` check returned false → the status endpoint always
+      // reported 2FA disabled. The mobile app hid the 2FA input on that basis
+      // while the server still enforced 2FA → "2FA kodu gerekli" deadlock.
+      // Accept both the boolean and string forms.
+      enabled: data.enabled === true || data.enabled === "true",
       setupRequired: !data.secret,
       backupCodesRemaining,
       enabledAt: data.enabledAt || null,
@@ -113,9 +118,9 @@ export async function POST(request: NextRequest) {
       }
 
       const data = await redis.hgetall(key);
-      
-      if (!data || data.enabled !== "true" || !data.secret) {
-        return NextResponse.json({ 
+
+      if (!data || (data.enabled !== true && data.enabled !== "true") || !data.secret) {
+        return NextResponse.json({
           error: "2FA aktif değil",
           enabled: false,
         }, { status: 400 });

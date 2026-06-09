@@ -37,9 +37,9 @@ export async function POST(request: NextRequest) {
     const key = get2FAKey(address);
     const normalizedAddress = address.toLowerCase();
 
-    // Check if already enabled
+    // Check if already enabled (Upstash may return boolean or string "true").
     const existing = await redis.hget(key, "enabled");
-    if (existing === "true") {
+    if (existing === true || existing === "true") {
       return NextResponse.json({ 
         error: "2FA zaten aktif. Önce devre dışı bırakın." 
       }, { status: 400 });
