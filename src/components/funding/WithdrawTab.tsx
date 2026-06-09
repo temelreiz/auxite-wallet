@@ -518,11 +518,19 @@ const METAL_GLOW: Record<string, string> = {
 
 type WithdrawCrypto = "USDT" | "USDC" | "BTC" | "ETH";
 
+// IMPORTANT: the backend (processWithdraw → withdrawUSDT/USDC/...) ignores the
+// selected network and ALWAYS sends each coin on a FIXED chain. The options
+// here MUST match that chain exactly, otherwise a user sends to a wrong-network
+// deposit address and loses funds.
+//   USDT  → Base   (withdrawUSDT)
+//   USDC  → Base   (withdrawUSDC)
+//   ETH   → Ethereum L1 (withdrawETH)  [currently broken — separate fix]
+//   BTC   → Bitcoin (withdrawBTC)
 const WITHDRAW_NETWORKS: Record<string, { networks: { id: string; name: string }[]; minWithdraw: number; fee: number; eta: string }> = {
-  USDT: { networks: [{ id: "ethereum", name: "Ethereum" }, { id: "tron", name: "Tron" }, { id: "base", name: "Base" }], minWithdraw: 10, fee: 1, eta: "15-30" },
-  USDC: { networks: [{ id: "ethereum", name: "Ethereum" }], minWithdraw: 10, fee: 1, eta: "15-30" },
+  USDT: { networks: [{ id: "base", name: "Base" }], minWithdraw: 10, fee: 1, eta: "15-30" },
+  USDC: { networks: [{ id: "base", name: "Base" }], minWithdraw: 10, fee: 1, eta: "15-30" },
   BTC: { networks: [{ id: "bitcoin", name: "Bitcoin Network" }], minWithdraw: 0.0005, fee: 0.0001, eta: "30-60" },
-  ETH: { networks: [{ id: "ethereum", name: "Ethereum" }, { id: "base", name: "Base" }], minWithdraw: 0.005, fee: 0.001, eta: "15-30" },
+  ETH: { networks: [{ id: "ethereum", name: "Ethereum" }], minWithdraw: 0.005, fee: 0.001, eta: "15-30" },
 };
 
 // Internal-eligible assets (all)
