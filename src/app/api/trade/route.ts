@@ -2,7 +2,7 @@
 import { sendCertificateEmail, sendTradeExecutionEmail } from "@/lib/email";
 import { getUserLanguage } from "@/lib/user-language";
 import { formatAmount } from "@/lib/format";
-import { createAllocation } from "@/lib/allocation-service";
+import { createAllocation, reduceAllocations } from "@/lib/allocation-service";
 import { notifyTransactionRich } from "@/lib/notification-sender";
 export const maxDuration = 60;
 // V6 BLOCKCHAIN ENTEGRASYONLU - Gerçek token mint/burn işlemleri
@@ -1611,10 +1611,34 @@ export async function POST(request: NextRequest) {
 
     // ─────────────────────────────────────────────────────────────────────────
     // DEDUCT FROM USER BALANCE — Always deduct from Redis
-    // All balances (ETH, metals, crypto) are tracked in Redis
+    // For METALS the holding is split: whole grams in allocations (certs + bar
+    // reservations), fractional in the Redis balance. A naive `-fromAmount` on
+    // the Redis balance alone drives it negative while allocations stay
+    // overstated. Instead RE-NORMALIZE: after the sale, the remaining true
+    // holding (balance + allocations - fromAmount) is re-split into whole grams
+    // (allocations) + fractional (balance). The whole-gram delta is de-allocated
+    // (certs redeemed, bars freed). This also self-heals any prior negative.
     // ─────────────────────────────────────────────────────────────────────────
-    multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
-    console.log(`   Deducting ${fromAmount} ${fromTokenLower} from Redis`);
+    if (METALS.includes(fromTokenLower)) {
+      const redisBal = parseFloat((currentBalance[fromTokenLower] as string) || "0");
+      const allocAmt = (await getAllocationAmounts(normalizedAddress))[fromTokenLower] || 0;
+      const remainingHolding = redisBal + allocAmt - fromAmount; // guaranteed ≥ 0 by the earlier balance check
+      const newWhole = Math.max(0, Math.floor(remainingHolding + 1e-9));
+      const newFrac = parseFloat(Math.max(0, remainingHolding - newWhole).toFixed(6));
+      const deAlloc = parseFloat((allocAmt - newWhole).toFixed(6));
+      if (deAlloc > 1e-6) {
+        try {
+          await reduceAllocations(normalizedAddress, fromTokenLower.toUpperCase(), deAlloc);
+        } catch (e: any) {
+          console.error(`De-allocation failed for ${fromTokenLower}:`, e?.message);
+        }
+      }
+      multi.hset(balanceKey, { [fromTokenLower]: newFrac.toString() });
+      console.log(`   Metal sell ${fromAmount}${fromTokenLower}: holding ${(redisBal + allocAmt).toFixed(4)}→${remainingHolding.toFixed(4)} (alloc ${allocAmt}→${newWhole}, bal→${newFrac}, de-alloc ${deAlloc})`);
+    } else {
+      multi.hincrbyfloat(balanceKey, fromTokenLower, -fromAmount);
+      console.log(`   Deducting ${fromAmount} ${fromTokenLower} from Redis`);
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // AUTO ALLOCATION FOR METALS (before Redis update)

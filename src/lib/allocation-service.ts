@@ -325,3 +325,97 @@ export async function createAllocation(params: CreateAllocationParams): Promise<
     certificateNumber: certNumber,
   };
 }
+
+// ============================================================================
+// DE-ALLOCATION — the reverse of createAllocation. Called when a user SELLS or
+// converts metal whose whole grams are held in allocations (certificates + bar
+// reservations). Consumes `gramsToReduce` whole grams oldest-first:
+//   • frees the physical bar reservation (reserve:bar.allocatedGrams -=),
+//   • marks the certificate redeemed (or partially_redeemed),
+//   • marks/zeros the allocation entry.
+// Without this, sells only debited the Redis fractional balance → it went
+// negative while allocations + bar reservations stayed overstated (corrupting
+// reserve proof). gramsToReduce is always whole by the caller's design.
+// ============================================================================
+export async function reduceAllocations(
+  address: string,
+  metal: string,
+  gramsToReduce: number,
+): Promise<{ reduced: number; freedBars: string[]; redeemedCerts: string[] }> {
+  const m = (metal || "").toUpperCase();
+  let remaining = Math.round((gramsToReduce || 0) * 1e6) / 1e6; // strip float dust
+  const freedBars: string[] = [];
+  const redeemedCerts = new Set<string>();
+  if (remaining <= 0) return { reduced: 0, freedBars: [], redeemedCerts: [] };
+
+  const userUid = (await redis.get(`user:address:${address.toLowerCase()}`)) as string;
+  if (!userUid) return { reduced: 0, freedBars: [], redeemedCerts: [] };
+
+  const listKey = `allocation:user:${userUid}:list`;
+  const raw = await redis.get(listKey);
+  const list: any[] = raw ? (typeof raw === "string" ? JSON.parse(raw) : raw) : [];
+
+  // Active entries of this metal, oldest-first.
+  const targets = list
+    .map((a, i) => ({ a, i }))
+    .filter((x) => (x.a.metal || "").toUpperCase() === m && (x.a.status || "active") === "active" && (parseFloat(x.a.grams) || 0) > 0)
+    .sort((x, y) => new Date(x.a.allocatedAt || 0).getTime() - new Date(y.a.allocatedAt || 0).getTime());
+
+  const certConsumed: Record<string, number> = {};
+  const now = new Date().toISOString();
+
+  for (const { a, i } of targets) {
+    if (remaining <= 1e-6) break;
+    const entryGrams = parseFloat(a.grams) || 0;
+    const take = Math.min(entryGrams, remaining);
+
+    // Free the bar reservation.
+    if (a.serialNumber) {
+      const barKey = `reserve:bar:${a.serialNumber}`;
+      const bar = await redis.hgetall(barKey);
+      if (bar && Object.keys(bar).length) {
+        const barGrams = parseFloat(bar.grams as string) || 0;
+        const barAlloc = parseFloat(bar.allocatedGrams as string) || 0;
+        const newAlloc = Math.max(0, barAlloc - take);
+        await redis.hset(barKey, {
+          allocatedGrams: newAlloc.toString(),
+          status: newAlloc >= barGrams ? "fully_allocated" : "available",
+        });
+        if (newAlloc < barGrams) await redis.sadd("reserve:index:available", a.serialNumber);
+        freedBars.push(a.serialNumber);
+      }
+    }
+
+    // Reduce / redeem the allocation entry.
+    const newEntryGrams = parseFloat((entryGrams - take).toFixed(6));
+    list[i].grams = newEntryGrams.toString();
+    if (newEntryGrams <= 1e-6) {
+      list[i].status = "redeemed";
+      list[i].redeemedAt = now;
+    }
+
+    if (a.certificateNumber) certConsumed[a.certificateNumber] = (certConsumed[a.certificateNumber] || 0) + take;
+    remaining = parseFloat((remaining - take).toFixed(6));
+  }
+
+  // Update certificates (redeemed when fully consumed, else partially_redeemed).
+  for (const [certNum, consumed] of Object.entries(certConsumed)) {
+    const certKey = `certificate:${certNum}`;
+    const cert = await redis.hgetall(certKey);
+    if (!cert || !Object.keys(cert).length) continue;
+    const certGrams = parseFloat(cert.grams as string) || 0;
+    const newCertGrams = Math.max(0, parseFloat((certGrams - consumed).toFixed(6)));
+    await redis.hset(certKey, {
+      grams: newCertGrams.toString(),
+      status: newCertGrams <= 1e-6 ? "redeemed" : "partially_redeemed",
+      redeemedAt: now,
+    });
+    redeemedCerts.add(certNum);
+  }
+
+  await redis.set(listKey, JSON.stringify(list));
+
+  const reduced = parseFloat(((Math.round((gramsToReduce || 0) * 1e6) / 1e6) - remaining).toFixed(6));
+  console.log(`📉 De-allocated ${reduced}g ${m} for ${address.slice(0, 10)}… (freed ${freedBars.length} bar(s), ${redeemedCerts.size} cert(s))`);
+  return { reduced, freedBars, redeemedCerts: [...redeemedCerts] };
+}
