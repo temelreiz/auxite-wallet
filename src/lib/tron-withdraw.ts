@@ -14,7 +14,11 @@ import { deriveTronAddress, deriveTronPrivateKey, TRON_USDT_CONTRACT } from "@/l
 const FULL_HOST = "https://api.trongrid.io";
 const SUN = 1_000_000; // 1 TRX = 1e6 sun; USDT-TRC20 also has 6 decimals
 const FEE_LIMIT_SUN = 60 * SUN; // max TRX a transfer may burn for energy
-const MIN_TREASURY_TRX = 30; // need TRX on hand to pay energy for the transfer
+// Min TRX the treasury must hold to attempt a transfer. A TRC20 transfer burns
+// ~13 TRX (recipient already holds USDT) to ~27 TRX (fresh recipient) of energy
+// when unstaked. Env-tunable without a redeploy. On-chain failure re-credits the
+// user's balance (withdraw route), so a too-low value fails safe.
+const MIN_TREASURY_TRX = parseFloat(process.env.TRON_MIN_TRX || "15");
 
 export interface TronWithdrawResult {
   success: boolean;
