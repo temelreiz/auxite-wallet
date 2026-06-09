@@ -1,0 +1,41 @@
+{
+  "name": "Auxite",
+  "timestamp": "2026-06-09T00:00:00.000Z",
+  "version": { "major": 1, "minor": 0, "patch": 0 },
+  "keywords": ["auxite", "rwa", "precious-metals", "base"],
+  "logoURI": "https://vault.auxite.io/auxite.png",
+  "tokens": [
+    {
+      "chainId": 8453,
+      "address": "0xCef9D7593E8Ba796eE05C54B8983B7749bB1218a",
+      "name": "Auxite Gold",
+      "symbol": "AUXG",
+      "decimals": 3,
+      "logoURI": "https://vault.auxite.io/auxg_icon.png"
+    },
+    {
+      "chainId": 8453,
+      "address": "0xB0aC63aeD12b5A0Ee710618D99444bf126068c1a",
+      "name": "Auxite Silver",
+      "symbol": "AUXS",
+      "decimals": 3,
+      "logoURI": "https://vault.auxite.io/auxs_icon.png"
+    },
+    {
+      "chainId": 8453,
+      "address": "0x39F314fb20668997A2ADDaB1eA9236e0072D5E2D",
+      "name": "Auxite Platinum",
+      "symbol": "AUXPT",
+      "decimals": 3,
+      "logoURI": "https://vault.auxite.io/auxpt_icon.png"
+    },
+    {
+      "chainId": 8453,
+      "address": "0x6e4837fCf158D15ABFdf90b3954D041D452BE832",
+      "name": "Auxite Palladium",
+      "symbol": "AUXPD",
+      "decimals": 3,
+      "logoURI": "https://vault.auxite.io/auxpd_icon.png"
+    }
+  ]
+}
