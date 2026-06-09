@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const VAULTS = {
   IST: { name: 'Istanbul', country: 'Turkey', code: 'IST' },
+  SG: { name: 'Singapore', country: 'Singapore', code: 'SG' },
   DB: { name: 'Dubai', country: 'UAE', code: 'DB' },
   ZH: { name: 'Zurich', country: 'Switzerland', code: 'ZH' },
   LN: { name: 'London', country: 'UK', code: 'LN' },

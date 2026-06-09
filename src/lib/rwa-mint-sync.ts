@@ -1,42 +1,32 @@
 // ============================================================================
-// RWA on-chain mint sync
+// RWA on-chain sync (canonical AuxiteMetal — per-investor + treasury)
 // ----------------------------------------------------------------------------
-// Daily reconciliation between our off-chain Redis ledger and the metal
-// token contracts on Base. Goal: rwa.xyz's view of Total Supply / Holders
-// reflects real AUM, not just the tiny on-chain footprint.
+// Keeps the canonical metal token contracts on Base in lockstep with our
+// off-chain ledger using a FULL-STATE reconciler (not the old append-only
+// "mint delta to treasury" model, which only ratcheted up and never burned).
 //
-// What it does:
-//   1. For each metal (AUXG/AUXS/AUXPT/AUXPD):
-//        - Read `rwa:onchain:synced:{metal}` (last-synced gram total)
-//        - Sum every user's off-chain balance + allocations (current claim)
-//        - delta = current - lastSynced
-//        - If delta > 0  → mint(treasury, delta) on Base
-//          If delta < 0  → log only (we don't burn from treasury in v0)
-//          If delta == 0 → nothing to do
-//        - On success, write current as the new synced value
+// Invariant per metal:   totalSupply = vault metal = treasury + Σ user claims
+//   - desired user balance[addr] = that user's off-chain claim (liquid + alloc)
+//   - desired treasury balance    = vault metal − Σ claims (unsold reserve)
 //
-// Dry-run mode: if RWA_MINT_SYNC_DRYRUN=true (or no minter key configured),
-// every "would mint" is logged but no transaction is sent. Lets us validate
-// the deltas for a few days before flipping the live switch.
+// Each run: read desired state, read on-chain balances, mint/burn the diffs.
+//   user buys  → mint to user  + burn from treasury (ownership moves, total flat)
+//   user redeem→ burn from user (vault shrinks, total down)
+//   issuer buys→ raise RWA_VAULT_*_G → mint to treasury (total up)
 //
-// Required env vars (production):
-//   RWA_MINT_SYNC_TREASURY      0x… address that receives the mints. The
-//                               same wallet across all 4 metals is fine.
-//   RWA_MINT_SYNC_PRIVATE_KEY   0x…  Holds MINTER_ROLE on every metal
-//                                    contract listed in ASSETS below. In
-//                                    production this should be replaced with
-//                                    a KMS-backed signer.
-//   BASE_RPC_URL                Mainnet Base RPC. e.g.
-//                               https://mainnet.base.org or your Alchemy URL
-//   NEXT_PUBLIC_AUXG_ADDRESS    Already set in .env.local; we reuse it.
-//   NEXT_PUBLIC_AUXS_ADDRESS    "
-//   NEXT_PUBLIC_AUXPT_ADDRESS   "
-//   NEXT_PUBLIC_AUXPD_ADDRESS   "
+// SAFETY: hard dry-run by default. Nothing is sent on-chain unless
+// RWA_SYNC_EXECUTE=true. Review the logged plan first (same discipline as the
+// one-time backfill in scripts/backfill-metal-tokens.ts).
 //
-// Decimals: every Auxite metal token uses 3 decimals (1g = 1000 raw units).
-// Verified against on-chain `decimals()` calls; do NOT change without
-// double-checking.
-
+// Required env (execute mode):
+//   RWA_MINT_SYNC_PRIVATE_KEY  signer holding MINTER_ROLE on the canonical
+//                              contracts (deployer pre-handoff, reconciler after)
+//   BASE_RPC_URL               Base mainnet RPC
+//   NEXT_PUBLIC_AUX*_CANONICAL canonical addresses (fallback: deployed consts)
+//   RWA_VAULT_AUX*_G           total physical vault grams per metal (AUM)
+//   RWA_TREASURY_ADDRESS       Safe holding unsold reserve (fallback: known Safe)
+//
+// Decimals: 3 (1g = 1000 raw units).
 import { Redis } from "@upstash/redis";
 
 const redis = new Redis({
@@ -46,259 +36,221 @@ const redis = new Redis({
 
 const TOKEN_DECIMALS = 3;
 
-interface AssetConfig {
-  id: "AUXG" | "AUXS" | "AUXPT" | "AUXPD";
-  /** Lowercase balance field on user:{addr}:balance hash. */
-  balanceField: "auxg" | "auxs" | "auxpt" | "auxpd";
-  /** Lowercase metal key used by allocation:user:* JSON entries. */
-  metalKey: string;
-  /** On-chain contract address on Base mainnet. */
-  contractAddress: string;
+type Metal = "AUXG" | "AUXS" | "AUXPT" | "AUXPD";
+const METALS: Metal[] = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
+const FIELD: Record<Metal, string> = { AUXG: "auxg", AUXS: "auxs", AUXPT: "auxpt", AUXPD: "auxpd" };
+
+// Canonical AuxiteMetal addresses (Base mainnet, deployed 2026-06-09).
+const CANONICAL_FALLBACK: Record<Metal, string> = {
+  AUXG: "0xcef9d7593e8ba796ee05c54b8983b7749bb1218a",
+  AUXS: "0xb0ac63aed12b5a0ee710618d99444bf126068c1a",
+  AUXPT: "0x39f314fb20668997a2addab1ea9236e0072d5e2d",
+  AUXPD: "0x6e4837fcf158d15abfdf90b3954d041d452be832",
+};
+function tokenAddr(m: Metal): string {
+  return (process.env[`NEXT_PUBLIC_${m}_CANONICAL`] || CANONICAL_FALLBACK[m]).toLowerCase();
 }
 
-// Mirror contracts on Base mainnet — deployed fresh for rwa.xyz
-// visibility because the original V8 token contracts at
-// 0x390164…/0x82f6eb…/0x119de5…/0xe051b2… have no admin-mint surface
-// (only USDC-funded buy()). The mirrors are thin ERC-20s with admin
-// mint, used purely to mirror our off-chain custodial ledger onto a
-// chain rwa.xyz can index — they hold no value and accept no payment.
-const ASSETS: AssetConfig[] = [
-  { id: "AUXG",  balanceField: "auxg",  metalKey: "AUXG",  contractAddress: "0x24acdf6dbc53e4e257d1812077e7ba1960b02019" },
-  { id: "AUXS",  balanceField: "auxs",  metalKey: "AUXS",  contractAddress: "0xb03471ba1616c8c1f772afcfc05966bbd298014e" },
-  { id: "AUXPT", balanceField: "auxpt", metalKey: "AUXPT", contractAddress: "0xe5640dcbcb1de6316f9baa8654cfd0e51f3bdd19" },
-  { id: "AUXPD", balanceField: "auxpd", metalKey: "AUXPD", contractAddress: "0x1c99a4979d34871d1c4fff0761a2863ec8610cf2" },
-];
+const TREASURY = (
+  process.env.RWA_TREASURY_ADDRESS || "0xEdC9163c5f8A2a76BD1CdDa6BAA4Eb576B481070"
+).toLowerCase();
 
-export interface AssetDelta {
-  id: string;
-  contractAddress: string;
-  currentClaimsGrams: number;
-  lastSyncedGrams: number;
-  deltaGrams: number;
-  /** Will we attempt an on-chain mint this run? */
-  willMint: boolean;
-  /** Reason a mint was skipped, if any. */
-  skipReason?: string;
+// Total physical vault metal per metal (grams) = canonical totalSupply target.
+const VAULT_TARGET_G: Record<Metal, number> = {
+  AUXG: Number(process.env.RWA_VAULT_AUXG_G ?? "7400"),
+  AUXS: Number(process.env.RWA_VAULT_AUXS_G ?? "72000"),
+  AUXPT: Number(process.env.RWA_VAULT_AUXPT_G ?? "230"),
+  AUXPD: Number(process.env.RWA_VAULT_AUXPD_G ?? "382"),
+};
+
+// Set of on-chain holder addresses we've minted to (so we can burn users who
+// dropped to zero). Seeded by the backfill (rwa:backfill:minted:{METAL}).
+const holdersKey = (m: Metal) => `rwa:onchain:holders:${m}`;
+const legacyBackfillKey = (m: Metal) => `rwa:backfill:minted:${m}`;
+
+export interface ReconcileOp {
+  metal: Metal;
+  account: string;
+  kind: "mint" | "burn";
+  grams: number;
+  isTreasury: boolean;
 }
-
-export interface MintResult {
-  id: string;
-  delta: number;
-  txHash?: string;
-  ok: boolean;
-  error?: string;
-}
-
 export interface SyncResult {
   dryRun: boolean;
   date: string;
-  deltas: AssetDelta[];
-  mints: MintResult[];
+  ops: ReconcileOp[];
+  errors: { metal: Metal; account: string; error: string }[];
 }
 
-// ── Step 1: read total off-chain claims ───────────────────────────────────────
-
-/**
- * Walks every user:{address}:balance hash plus their allocations and returns
- * a per-metal total in grams. Allocation entries are treated as additive on
- * top of liquid balance: a user with 5g balance + 100g allocation has 105g
- * of total claim against us.
- */
-export async function readTotalClaimsByMetal(): Promise<Record<string, number>> {
-  const totals: Record<string, number> = { auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 };
-
-  // SCAN balance hashes — cap iterations at ~50k users to avoid runaway.
-  // `cursor` typed as `any` because @upstash/redis's overloaded scan signature
-  // makes TS think the return shape depends on the input type, and we're
-  // happy to take whatever string-or-number form it hands back.
-  let cursor: any = 0;
-  let walls = 0;
-  const SCAN_BATCH = 500;
-  do {
-    const res: [any, string[]] = await redis.scan(cursor, { match: "user:0x*:balance", count: SCAN_BATCH }) as any;
-    cursor = res[0];
-    for (const key of res[1]) {
-      walls++;
-      try {
-        const bal = await redis.hgetall(key);
-        for (const f of ["auxg", "auxs", "auxpt", "auxpd"] as const) {
-          const v = parseFloat((bal as any)?.[f] as string || "0");
-          if (Number.isFinite(v) && v > 0) totals[f] += v;
-        }
-      } catch { /* skip bad row */ }
-    }
-    if (walls > 50_000) break; // hard backstop
-  } while (String(cursor) !== "0");
-
-  // Add allocations on top of liquid balance.
-  // allocation:user:{uid}:list = JSON array of { metal, grams, status }.
-  cursor = 0;
-  do {
-    const res: [any, string[]] = await redis.scan(cursor, { match: "allocation:user:*:list", count: SCAN_BATCH }) as any;
-    cursor = res[0];
-    for (const key of res[1]) {
-      try {
-        const raw = await redis.get(key);
-        const allocs = typeof raw === "string" ? JSON.parse(raw) : Array.isArray(raw) ? raw : [];
-        for (const a of (allocs as any[])) {
-          if (a?.status !== "active") continue;
-          const metal = String(a.metal || "").toLowerCase();
-          const grams = parseFloat(a.grams || a.allocatedGrams || "0");
-          if (totals[metal] !== undefined && Number.isFinite(grams) && grams > 0) {
-            totals[metal] += grams;
-          }
-        }
-      } catch { /* skip */ }
-    }
-  } while (String(cursor) !== "0");
-
-  return totals;
-}
-
-// ── Step 2: compute per-asset delta ───────────────────────────────────────────
-
-function syncedKey(metalId: string): string {
-  return `rwa:onchain:synced:${metalId.toLowerCase()}`;
-}
-
-/**
- * Returns each metal's (currentClaims, lastSynced, delta) trio. Does NOT mint
- * yet — used both by the dry-run preview and the live runner.
- */
-export async function computeDeltas(): Promise<AssetDelta[]> {
-  const totals = await readTotalClaimsByMetal();
-  const out: AssetDelta[] = [];
-
-  for (const asset of ASSETS) {
-    const current = totals[asset.balanceField] || 0;
-    const prevRaw = await redis.get(syncedKey(asset.id));
-    const previous = parseFloat(prevRaw as string || "0") || 0;
-    const delta = +(current - previous).toFixed(TOKEN_DECIMALS);
-
-    out.push({
-      id: asset.id,
-      contractAddress: asset.contractAddress,
-      currentClaimsGrams: current,
-      lastSyncedGrams: previous,
-      deltaGrams: delta,
-      willMint: delta > 0 && asset.contractAddress !== "",
-      skipReason:
-        !asset.contractAddress
-          ? "no contract address in env"
-          : delta < 0
-          ? "negative delta (off-chain shrunk) — no burn in v0"
-          : delta === 0
-          ? "no change"
-          : undefined,
-    });
-  }
-  return out;
-}
-
-// ── Step 3: send the on-chain mint ────────────────────────────────────────────
-
-function gramsToRawUnits(grams: number): bigint {
-  // 3 decimals: 1g = 1000 raw. Use string arithmetic to avoid float drift
-  // for values like 12.345g.
-  const fixed = grams.toFixed(TOKEN_DECIMALS);
+const gramsToRaw = (g: number): bigint => {
+  const fixed = g.toFixed(TOKEN_DECIMALS);
   const [whole, frac = ""] = fixed.split(".");
   const padded = (frac + "0".repeat(TOKEN_DECIMALS)).slice(0, TOKEN_DECIMALS);
   return BigInt(whole + padded);
+};
+const rawToGrams = (r: bigint) => Number(r) / 1000;
+
+// ── Desired per-user claims (liquid balance + active allocations), per metal ──
+async function readClaimsByUser(): Promise<Map<string, Record<Metal, number>>> {
+  const byUser = new Map<string, Record<Metal, number>>();
+  const add = (addr: string, m: Metal, g: number) => {
+    if (!g || g <= 0) return;
+    const a = addr.toLowerCase();
+    if (!byUser.has(a)) byUser.set(a, { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 });
+    byUser.get(a)![m] += g;
+  };
+
+  let cursor: any = 0;
+  do {
+    const res: [any, string[]] = (await redis.scan(cursor, { match: "user:0x*:balance", count: 500 })) as any;
+    cursor = res[0];
+    for (const key of res[1]) {
+      const addr = key.slice("user:".length, key.length - ":balance".length);
+      const h = await redis.hgetall(key);
+      if (!h) continue;
+      for (const m of METALS) add(addr, m, parseFloat(String((h as any)[FIELD[m]] ?? "0")) || 0);
+    }
+  } while (String(cursor) !== "0");
+
+  cursor = 0;
+  do {
+    const res: [any, string[]] = (await redis.scan(cursor, { match: "allocation:user:*:list", count: 500 })) as any;
+    cursor = res[0];
+    for (const key of res[1]) {
+      const uid = key.slice("allocation:user:".length, key.length - ":list".length);
+      const u = await redis.hgetall(`user:${uid}`);
+      const addr = (u as any)?.walletAddress;
+      if (!addr) continue;
+      const raw = await redis.get(key);
+      const allocs = typeof raw === "string" ? JSON.parse(raw) : Array.isArray(raw) ? raw : [];
+      for (const a of allocs as any[]) {
+        if (a?.status !== "active") continue;
+        const metal = String(a.metal || "").toUpperCase() as Metal;
+        if (!METALS.includes(metal)) continue;
+        add(addr, metal, parseFloat(String(a.grams ?? a.allocatedGrams ?? "0")) || 0);
+      }
+    }
+  } while (String(cursor) !== "0");
+
+  return byUser;
 }
 
-/**
- * Sign + send a `mint(treasury, rawUnits)` call. Returns the tx hash on
- * success. Implementation is intentionally minimal: when we move to a
- * KMS-backed signer this is where the change lands.
- */
-async function sendMint(
-  asset: AssetConfig,
-  rawUnits: bigint,
-): Promise<{ txHash: string }> {
-  const rpcUrl = process.env.BASE_RPC_URL?.trim();
-  // Normalize PK: strip whitespace + accidental quotes + add 0x if missing.
-  // Vercel env-var paste often gains a trailing newline or a wrapping pair
-  // of quotes; viem rejects either silently with "invalid private key".
-  let privateKey = process.env.RWA_MINT_SYNC_PRIVATE_KEY?.trim().replace(/^["']|["']$/g, "");
-  if (privateKey && !privateKey.startsWith("0x")) privateKey = `0x${privateKey}`;
-  const treasury = process.env.RWA_MINT_SYNC_TREASURY?.trim().replace(/^["']|["']$/g, "");
-  if (!rpcUrl) throw new Error("BASE_RPC_URL not set");
-  if (!privateKey) throw new Error("RWA_MINT_SYNC_PRIVATE_KEY not set");
-  if (!/^0x[a-fA-F0-9]{64}$/.test(privateKey)) {
-    throw new Error(`RWA_MINT_SYNC_PRIVATE_KEY malformed: expected 0x + 64 hex chars, got ${privateKey.length} chars`);
-  }
-  if (!treasury) throw new Error("RWA_MINT_SYNC_TREASURY not set");
-  if (!/^0x[a-fA-F0-9]{40}$/.test(treasury)) {
-    throw new Error(`RWA_MINT_SYNC_TREASURY malformed: expected 0x + 40 hex chars`);
-  }
-
-  // Lazy import so non-prod runs (and the cron's typecheck) don't pull
-  // viem's full chain build.
-  const { createWalletClient, createPublicClient, http, encodeFunctionData } = await import("viem");
-  const { privateKeyToAccount } = await import("viem/accounts");
-  const { base } = await import("viem/chains");
-
-  const account = privateKeyToAccount(privateKey as `0x${string}`);
-  const wallet = createWalletClient({ account, chain: base, transport: http(rpcUrl) });
-  const publicClient = createPublicClient({ chain: base, transport: http(rpcUrl) });
-
-  const data = encodeFunctionData({
-    abi: [{ name: "mint", type: "function", inputs: [{ name: "to", type: "address" }, { name: "amount", type: "uint256" }], outputs: [], stateMutability: "nonpayable" }],
-    functionName: "mint",
-    args: [treasury as `0x${string}`, rawUnits],
-  });
-
-  const txHash = await wallet.sendTransaction({
-    to: asset.contractAddress as `0x${string}`,
-    data,
-    value: 0n,
-  });
-
-  // Wait for receipt so a revert surfaces here, not silently three blocks later.
-  const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 90_000 });
-  if (receipt.status !== "success") {
-    throw new Error(`mint reverted: ${txHash}`);
-  }
-  return { txHash };
-}
-
-// ── Step 4: orchestrate ───────────────────────────────────────────────────────
-
+// ── Orchestrate ───────────────────────────────────────────────────────────────
 export async function runMintSync(opts: { dryRun?: boolean } = {}): Promise<SyncResult> {
-  const dryRun =
-    opts.dryRun ??
-    (process.env.RWA_MINT_SYNC_DRYRUN === "true" ||
-      !process.env.RWA_MINT_SYNC_PRIVATE_KEY ||
-      !process.env.RWA_MINT_SYNC_TREASURY ||
-      !process.env.BASE_RPC_URL);
-
+  const execute = process.env.RWA_SYNC_EXECUTE === "true";
+  const dryRun = opts.dryRun ?? !execute;
   const date = new Date().toISOString().slice(0, 10);
-  const deltas = await computeDeltas();
-  const mints: MintResult[] = [];
+  const ops: ReconcileOp[] = [];
+  const errors: SyncResult["errors"] = [];
 
-  for (const d of deltas) {
-    if (!d.willMint) {
-      mints.push({ id: d.id, delta: d.deltaGrams, ok: true });
+  for (const m of METALS) {
+    if (!Number.isFinite(VAULT_TARGET_G[m])) {
+      errors.push({ metal: m, account: "-", error: `RWA_VAULT_${m}_G not set` });
       continue;
-    }
-    if (dryRun) {
-      console.log(`[rwa-mint-sync] DRY-RUN would mint ${d.deltaGrams}g ${d.id} to treasury (${d.contractAddress})`);
-      mints.push({ id: d.id, delta: d.deltaGrams, ok: true });
-      continue;
-    }
-    const asset = ASSETS.find((a) => a.id === d.id)!;
-    try {
-      const raw = gramsToRawUnits(d.deltaGrams);
-      const { txHash } = await sendMint(asset, raw);
-      // Persist NEW synced total so the next run computes a fresh delta.
-      await redis.set(syncedKey(d.id), d.currentClaimsGrams.toString());
-      mints.push({ id: d.id, delta: d.deltaGrams, ok: true, txHash });
-      console.log(`[rwa-mint-sync] ✅ minted ${d.deltaGrams}g ${d.id} → tx ${txHash}`);
-    } catch (e: any) {
-      mints.push({ id: d.id, delta: d.deltaGrams, ok: false, error: e?.message || String(e) });
-      console.error(`[rwa-mint-sync] ❌ ${d.id} mint failed:`, e?.message);
     }
   }
 
-  return { dryRun, date, deltas, mints };
+  const claims = await readClaimsByUser();
+
+  // viem clients (lazy import). Public client always; wallet only when executing.
+  const viem = await import("viem");
+  const { base } = await import("viem/chains");
+  const encodeFunctionData = viem.encodeFunctionData;
+  const rpcUrl = process.env.BASE_RPC_URL?.trim() || "https://mainnet.base.org";
+  const publicClient = viem.createPublicClient({ chain: base, transport: viem.http(rpcUrl) });
+  let signer: any = null;
+  if (!dryRun) {
+    let pk = process.env.RWA_MINT_SYNC_PRIVATE_KEY?.trim().replace(/^["']|["']$/g, "");
+    if (pk && !pk.startsWith("0x")) pk = `0x${pk}`;
+    if (!process.env.BASE_RPC_URL || !pk || !/^0x[a-fA-F0-9]{64}$/.test(pk)) {
+      throw new Error("RWA_SYNC_EXECUTE set but BASE_RPC_URL / RWA_MINT_SYNC_PRIVATE_KEY missing/malformed");
+    }
+    const { privateKeyToAccount } = await import("viem/accounts");
+    const account = privateKeyToAccount(pk as `0x${string}`);
+    signer = viem.createWalletClient({ account, chain: base, transport: viem.http(rpcUrl) });
+  }
+
+  const BAL_ABI = [{ name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "a", type: "address" }], outputs: [{ type: "uint256" }] }] as const;
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  // Retry + throttle: public RPCs (mainnet.base.org) rate-limit sequential
+  // reads with 429. Production should use a dedicated BASE_RPC_URL; this keeps
+  // the reconciler robust either way.
+  const readBal = async (addr: string, token: string): Promise<bigint> => {
+    for (let i = 0; ; i++) {
+      try {
+        const v = (await publicClient.readContract({
+          address: token as `0x${string}`,
+          abi: BAL_ABI,
+          functionName: "balanceOf",
+          args: [addr as `0x${string}`],
+        })) as bigint;
+        await sleep(120);
+        return v;
+      } catch (e: any) {
+        if (i >= 6) throw e;
+        await sleep(600 * (i + 1));
+      }
+    }
+  };
+
+  const applyDiff = async (m: Metal, account: string, current: bigint, target: bigint, isTreasury: boolean) => {
+    if (current === target) return;
+    const kind: "mint" | "burn" = target > current ? "mint" : "burn";
+    const amount = kind === "mint" ? target - current : current - target;
+    ops.push({ metal: m, account, kind, grams: rawToGrams(amount), isTreasury });
+    if (dryRun) {
+      console.log(`[rwa-sync] DRY-RUN ${kind} ${rawToGrams(amount)}g ${m} ${isTreasury ? "TREASURY" : account}`);
+      return;
+    }
+    try {
+      const fn = kind === "mint" ? "mint" : "burnFrom";
+      const data = encodeFunctionData({
+        abi: [{ name: fn, type: "function", stateMutability: "nonpayable", inputs: [{ name: "a", type: "address" }, { name: "amount", type: "uint256" }], outputs: [] }],
+        functionName: fn,
+        args: [account as `0x${string}`, amount],
+      });
+      const hash = await signer.sendTransaction({ to: tokenAddr(m) as `0x${string}`, data, value: 0n });
+      const rcpt = await publicClient.waitForTransactionReceipt({ hash, timeout: 90_000 });
+      if (rcpt.status !== "success") throw new Error(`reverted ${hash}`);
+      console.log(`[rwa-sync] ✅ ${kind} ${rawToGrams(amount)}g ${m} ${isTreasury ? "TREASURY" : account} → ${hash}`);
+    } catch (e: any) {
+      errors.push({ metal: m, account, error: e?.message || String(e) });
+      console.error(`[rwa-sync] ❌ ${m} ${kind} ${account}:`, e?.message);
+    }
+  };
+
+  for (const m of METALS) {
+    if (!Number.isFinite(VAULT_TARGET_G[m])) continue;
+    const token = tokenAddr(m);
+
+    // Holder universe = past holders ∪ current claimants.
+    const past = new Set<string>([
+      ...((await redis.smembers(holdersKey(m))) as string[]),
+      ...((await redis.smembers(legacyBackfillKey(m))) as string[]),
+    ].map((a) => a.toLowerCase()));
+    for (const [addr, bal] of claims) if (bal[m] > 0) past.add(addr);
+    past.delete(TREASURY);
+
+    let totalClaimRaw = 0n;
+    for (const addr of past) {
+      const targetRaw = gramsToRaw(claims.get(addr)?.[m] ?? 0);
+      totalClaimRaw += targetRaw;
+      const current = await readBal(addr, token);
+      await applyDiff(m, addr, current, targetRaw, false);
+      if (!dryRun && targetRaw > 0n) await redis.sadd(holdersKey(m), addr);
+    }
+
+    // Treasury holds the unsold remainder: vault − Σ claims.
+    const vaultRaw = gramsToRaw(VAULT_TARGET_G[m]);
+    const treasuryTarget = vaultRaw - totalClaimRaw;
+    if (treasuryTarget < 0n) {
+      errors.push({ metal: m, account: TREASURY, error: `claims exceed vault (${VAULT_TARGET_G[m]}g)` });
+      continue;
+    }
+    const treasuryCurrent = await readBal(TREASURY, token);
+    await applyDiff(m, TREASURY, treasuryCurrent, treasuryTarget, true);
+  }
+
+  if (ops.length === 0) console.log("[rwa-sync] in sync — no ops");
+  return { dryRun, date, ops, errors };
 }

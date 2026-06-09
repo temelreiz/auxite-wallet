@@ -46,7 +46,9 @@ export const ACTIVE_NETWORK =
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // BASE MAINNET Adresleri (V8) - Deployed 2026-02-02
-const BASE_V8_TOKENS = {
+// NOT: Bunlar kanonik on-chain adreslerdir. Public/listeleme uçları (örn. /api/supply)
+// env override'a tabi METAL_TOKENS yerine doğrudan bunu kullanmalı.
+export const BASE_V8_TOKENS = {
   AUXG: "0x390164702040B509A3D752243F92C2Ac0318989D",
   AUXS: "0x82F6EB8Ba5C84c8Fd395b25a7A40ade08F0868aa",
   AUXPT: "0x119de594170b68561b1761ae1246C5154F94705d",
@@ -87,6 +89,42 @@ export const METAL_TOKENS_V5 = {
 
 // Aktif token adresleri (V8 kullan)
 export const METAL_TOKENS = METAL_TOKENS_V8;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MIRROR TOKEN ADRESLERİ (Base Mainnet) — DIŞ VERİ / AUM RAPORLAMA KATMANI
+// ═══════════════════════════════════════════════════════════════════════════════
+// V8 buy() yalnızca on-chain USDC karşılığı mint ediyor → V8 totalSupply gerçek
+// AUM'un sadece bir dilimini gösterir. Mirror kontratlar (symbol AUXx-M, non-
+// upgradeable, Safe multisig yönetiminde) custodian allocation kaydına GÜNLÜK
+// reconcile edilir; totalSupply() = vault'taki gerçek toplam gram = platform AUM.
+// rwa.xyz bunları okur; CoinGecko gibi dış veri tüketicileri için KANONIK SUPPLY
+// KAYNAĞI budur. NAV oracle her 24h Base'e push edilir (totalSupply × NAV = AUM).
+export const MIRROR_TOKENS = {
+  AUXG: "0x24acdf6dbc53e4e257d1812077e7ba1960b02019" as `0x${string}`,
+  AUXS: "0xb03471ba1616c8c1f772afcfc05966bbd298014e" as `0x${string}`,
+  AUXPT: "0xe5640dcbcb1de6316f9baa8654cfd0e51f3bdd19" as `0x${string}`,
+  AUXPD: "0x1c99a4979d34871d1c4fff0761a2863ec8610cf2" as `0x${string}`,
+} as const;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CANONICAL TOKENS (AuxiteMetal — per-investor on-chain ownership)
+// ═══════════════════════════════════════════════════════════════════════════════
+// Yeni kanonik kontratlar mirror katmanını DEĞİŞTİRİR: supply per-investor mint
+// edilir → zincir sahipliğin kaydı olur (rwa.xyz "On-chain Represented").
+// Adresler env-driven: yeni kontratlar deploy edilip 4 env set edilince
+// CANONICAL_READY true olur ve public uçlar (örn. /api/supply) otomatik olarak
+// interim mirror feed'inden canonical'a geçer. Env set DEĞİLSE mirror'a düşer →
+// bugünkü davranış aynen korunur, hiçbir şey bozulmaz.
+export const CANONICAL_TOKENS = {
+  AUXG: process.env.NEXT_PUBLIC_AUXG_CANONICAL || "",
+  AUXS: process.env.NEXT_PUBLIC_AUXS_CANONICAL || "",
+  AUXPT: process.env.NEXT_PUBLIC_AUXPT_CANONICAL || "",
+  AUXPD: process.env.NEXT_PUBLIC_AUXPD_CANONICAL || "",
+};
+
+export const CANONICAL_READY = Object.values(CANONICAL_TOKENS).every((a) =>
+  /^0x[0-9a-fA-F]{40}$/.test(a),
+);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ORACLE & EXCHANGE
