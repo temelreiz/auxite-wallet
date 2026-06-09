@@ -584,13 +584,23 @@ export function MetalConversionTab() {
   // ── Execute Conversion ──
   const handleConvert = async () => {
     if (!address || !fromMetal || !toMetal || parsedAmount <= 0) return;
+    // Close the 2FA gate first. onVerified fires this while the gate is still
+    // open; if we don't close it, the wizard (and any error it renders) stays
+    // hidden behind the gate — so a failed/slow request looked like an endless
+    // spinner with no feedback.
+    setShow2FA(false);
     setLoading(true);
     setError(null);
+    // Hard timeout so the request can never hang forever (server maxDuration is
+    // 60s; abort at 30s and surface a retryable error instead of a dead spinner).
+    const ctrl = new AbortController();
+    const timeoutId = setTimeout(() => ctrl.abort(), 30000);
     try {
       const type = tradeType(fromMetal, toMetal);
       const res = await fetch("/api/trade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: ctrl.signal,
         // executeOnChain:false → conversion returns instantly after the Redis
         // balance update; the on-chain mint/burn is reconciled in the background
         // by the reconcile-deferred-onchain cron. (Custodial: Redis = truth.)
@@ -608,8 +618,13 @@ export function MetalConversionTab() {
         setError(data.error || t.conversionFailed);
       }
     } catch (e: any) {
-      setError(e.message || t.conversionFailed);
+      if (e?.name === "AbortError") {
+        setError(t.conversionFailed + " (timeout)");
+      } else {
+        setError(e?.message || t.conversionFailed);
+      }
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
