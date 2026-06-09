@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
-import { sellMetalToken } from "@/lib/v6-token-service";
+import { sellMetalToken, buyMetalToken } from "@/lib/v6-token-service";
 import { processWithdraw } from "@/lib/blockchain-service";
 import { ethers } from "ethers";
 
@@ -144,6 +144,69 @@ export async function GET(request: NextRequest) {
   }
 
   // ─────────────────────────────────────────────────────────────────
+  // Drain pending on-chain BUYS (mints) from deferred conversions.
+  // Each item: { kind:"metal_buy", address, toToken, toAmount, queuedAt, retries? }
+  // ─────────────────────────────────────────────────────────────────
+  const buyQueueLen = await redis.llen("pending:onchain:buys");
+  let bProcessed = 0, bSucceeded = 0, bFailed = 0;
+  const bFailures: { address?: string; reason: string }[] = [];
+
+  for (let i = 0; i < Math.min(buyQueueLen, MAX_OPS_PER_RUN); i++) {
+    const raw = await redis.rpop("pending:onchain:buys");
+    if (!raw) break;
+
+    let op: any;
+    try {
+      op = typeof raw === "string" ? JSON.parse(raw) : raw;
+    } catch {
+      bFailed++;
+      bFailures.push({ reason: "malformed queue item" });
+      continue;
+    }
+    bProcessed++;
+
+    // Re-check balance — mint loop could exhaust gas
+    const liveBalance = await getHotWalletEthBalance();
+    if (liveBalance < MIN_ETH_BALANCE) {
+      await redis.lpush("pending:onchain:buys", JSON.stringify(op));
+      break; // bail; next run picks up
+    }
+
+    try {
+      const result = await buyMetalToken(op.toToken, op.toAmount, op.address);
+      if (result.success) {
+        bSucceeded++;
+        await redis.lpush("audit:reconciled-buys", JSON.stringify({
+          ...op, reconciledAt: Date.now(), txHash: result.txHash,
+        }));
+        await redis.ltrim("audit:reconciled-buys", 0, 999);
+      } else {
+        bFailed++;
+        const retries = (op.retries || 0) + 1;
+        bFailures.push({ address: op.address, reason: result.error || "buyMetalToken returned !success" });
+        if (retries < 3) {
+          await redis.lpush("pending:onchain:buys", JSON.stringify({ ...op, retries }));
+        } else {
+          await redis.lpush("dead-letter:onchain:buys", JSON.stringify({
+            ...op, failedAt: Date.now(), lastError: result.error,
+          }));
+        }
+      }
+    } catch (e: any) {
+      bFailed++;
+      const retries = (op.retries || 0) + 1;
+      bFailures.push({ address: op.address, reason: e?.message || String(e) });
+      if (retries < 3) {
+        await redis.lpush("pending:onchain:buys", JSON.stringify({ ...op, retries }));
+      } else {
+        await redis.lpush("dead-letter:onchain:buys", JSON.stringify({
+          ...op, failedAt: Date.now(), lastError: e?.message,
+        }));
+      }
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
   // Also drain pending AUXM redemption withdrawals.
   // Each item: { txId, address, payoutAsset, payoutAmount, withdrawAddress, retries? }
   // ─────────────────────────────────────────────────────────────────
@@ -223,6 +286,7 @@ export async function GET(request: NextRequest) {
   await redis.lpush("cron:reconcile-deferred:log", JSON.stringify({
     timestamp: Date.now(),
     sells: { processed, succeeded, failed },
+    buys: { processed: bProcessed, succeeded: bSucceeded, failed: bFailed },
     withdraws: { processed: wProcessed, succeeded: wSucceeded, failed: wFailed },
   }));
   await redis.ltrim("cron:reconcile-deferred:log", 0, 49);
@@ -233,6 +297,11 @@ export async function GET(request: NextRequest) {
       processed, succeeded, failed,
       failures: failures.slice(0, 10),
       queueLength: await redis.llen("pending:onchain:sells"),
+    },
+    buys: {
+      processed: bProcessed, succeeded: bSucceeded, failed: bFailed,
+      failures: bFailures.slice(0, 10),
+      queueLength: await redis.llen("pending:onchain:buys"),
     },
     withdraws: {
       processed: wProcessed, succeeded: wSucceeded, failed: wFailed,

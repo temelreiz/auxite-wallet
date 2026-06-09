@@ -591,7 +591,10 @@ export function MetalConversionTab() {
       const res = await fetch("/api/trade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, fromToken: fromMetal, toToken: toMetal, amount: parsedAmount, address }),
+        // executeOnChain:false → conversion returns instantly after the Redis
+        // balance update; the on-chain mint/burn is reconciled in the background
+        // by the reconcile-deferred-onchain cron. (Custodial: Redis = truth.)
+        body: JSON.stringify({ type, fromToken: fromMetal, toToken: toMetal, amount: parsedAmount, address, executeOnChain: false }),
       });
       const data = await res.json();
       if (data.success) {

@@ -250,6 +250,42 @@ async function checkAndAlertLowStock(metal: string, newAvailable: number, total:
 // Feature flag: Enable/disable blockchain execution
 const BLOCKCHAIN_ENABLED = process.env.ENABLE_BLOCKCHAIN_TRADES === "true";
 
+// ── Deferred on-chain queues ──────────────────────────────────────────────
+// Custodial model: Redis balance is the source of truth; on-chain tokens are a
+// mirror. We DON'T block the user's conversion on a chain round-trip. When a
+// conversion runs with executeOnChain:false, we enqueue the mint/burn and the
+// reconcile-deferred-onchain cron executes it in the background (when the hot
+// wallet has gas). This keeps "Processing" instant.
+async function enqueueDeferredBuy(op: { address: string; toToken: string; toAmount: number }) {
+  try {
+    await redis.lpush("pending:onchain:buys", JSON.stringify({
+      kind: "metal_buy",
+      address: op.address,
+      toToken: op.toToken,
+      toAmount: op.toAmount,
+      queuedAt: Date.now(),
+    }));
+    console.log(`⏸  Buy queued for deferred on-chain mint: ${op.toAmount}g ${op.toToken}`);
+  } catch (e) {
+    console.error("Failed to enqueue deferred buy:", e);
+  }
+}
+async function enqueueDeferredSell(op: { address: string; fromToken: string; fromAmount: number; toAmount: number }) {
+  try {
+    await redis.lpush("pending:onchain:sells", JSON.stringify({
+      kind: "metal_sell",
+      address: op.address,
+      fromToken: op.fromToken,
+      fromAmount: op.fromAmount,
+      toAmount: op.toAmount,
+      queuedAt: Date.now(),
+    }));
+    console.log(`⏸  Sell queued for deferred on-chain burn: ${op.fromAmount}g ${op.fromToken}`);
+  } catch (e) {
+    console.error("Failed to enqueue deferred sell:", e);
+  }
+}
+
 // Blockchain clients
 // Base Mainnet for ERC-20 tokens (metals)
 const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || "https://mainnet.base.org";
@@ -1050,6 +1086,10 @@ export async function POST(request: NextRequest) {
         };
         
         console.log(`✅ Blockchain buy complete: ${txHash}`);
+      } else if (BLOCKCHAIN_ENABLED) {
+        // Off-chain mode: defer the mint to the reconciliation cron.
+        blockchainResult = { executed: false, reason: "deferred_onchain", deferred: true };
+        await enqueueDeferredBuy({ address: normalizedAddress, toToken: toTokenLower, toAmount });
       } else {
         blockchainResult = { executed: false, reason: "Blockchain disabled or off-chain" };
       }
@@ -1146,6 +1186,11 @@ export async function POST(request: NextRequest) {
           sellTxHash: sellResult.txHash,
           buyTxHash: buyResult.txHash,
         };
+      } else if (BLOCKCHAIN_ENABLED) {
+        // Off-chain mode: defer both legs (burn A, mint B) to the cron.
+        blockchainResult = { executed: false, reason: "deferred_onchain", deferred: true };
+        await enqueueDeferredSell({ address: normalizedAddress, fromToken: fromTokenLower, fromAmount, toAmount: auxmValue });
+        await enqueueDeferredBuy({ address: normalizedAddress, toToken: toTokenLower, toAmount });
       }
     }
     // ───────────────────────────────────────────────────────────────────────
@@ -1181,6 +1226,10 @@ export async function POST(request: NextRequest) {
         }
         txHash = buyResult.txHash;
         blockchainResult = { executed: true, txHash, costETH: buyResult.costETH, cryptoPrice, usdValue };
+      } else if (BLOCKCHAIN_ENABLED) {
+        // Off-chain mode: defer the mint to the reconciliation cron.
+        blockchainResult = { executed: false, reason: "deferred_onchain", deferred: true, cryptoPrice, usdValue };
+        await enqueueDeferredBuy({ address: normalizedAddress, toToken: toTokenLower, toAmount });
       }
     }
     // ───────────────────────────────────────────────────────────────────────
