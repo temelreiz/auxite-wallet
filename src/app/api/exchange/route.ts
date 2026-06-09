@@ -401,8 +401,19 @@ export async function POST(request: NextRequest) {
             
             // Save updated allocations
             await redis.set(`allocation:user:${userUid}:list`, JSON.stringify(updatedAllocations));
-            releaseInfo = { releasedGrams: fromAmount, metal: fromAsset };
+            const actuallyReleased = fromAmount - remainingToRelease;
+            releaseInfo = { releasedGrams: actuallyReleased, metal: fromAsset };
             deductedFromAllocation = true;
+
+            // Holding = active allocations + Redis (fractional) balance. The active
+            // allocations may not cover the full sale; the uncovered remainder MUST
+            // still be debited from the balance. Previously `deductedFromAllocation`
+            // was set true regardless, so the remainder was silently never deducted
+            // (under-deduct → balance/ledger drift).
+            if (remainingToRelease > 0.0001) {
+              await redis.hincrbyfloat(balanceKey, fromKey, -remainingToRelease);
+              console.log(`📉 Debited uncovered remainder ${remainingToRelease}g ${fromAsset} from balance`);
+            }
 
             // ── INVENTORY: Record client de-allocation ──
             try {
