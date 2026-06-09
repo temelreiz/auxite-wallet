@@ -45,8 +45,24 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Generate new secret
-    const secretObj = generateSecret();
+    // Idempotent setup: if a temp secret was started recently (and 2FA not yet
+    // enabled), REUSE it instead of rotating. Rotating on every call breaks the
+    // flow when the user already scanned the earlier QR (their authenticator
+    // still holds the old secret → every code is rejected).
+    const SETUP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+    const existingTemp = await redis.hget(key, "tempSecret");
+    const existingStarted = await redis.hget(key, "setupStarted");
+    const startedAt = existingStarted ? parseInt(String(existingStarted), 10) : 0;
+    const reuse =
+      typeof existingTemp === "string" &&
+      existingTemp.length > 0 &&
+      startedAt > 0 &&
+      Date.now() - startedAt < SETUP_TTL_MS;
+
+    // Generate new secret (or reuse the in-progress one)
+    const secretObj = reuse
+      ? OTPAuth.Secret.fromBase32(String(existingTemp))
+      : generateSecret();
     const secretBase32 = secretObj.base32;
 
     // Create TOTP for QR code — secret obje olarak verilmeli (encoding tutarlılığı)
@@ -71,14 +87,26 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Generate backup codes (plain text - will be shown once)
-    const backupCodes = generateBackupCodes();
+    // Generate backup codes (plain text - will be shown once).
+    // On reuse, keep the originally-issued codes so they stay consistent.
+    let backupCodes: string[];
+    const existingBackup = reuse ? await redis.hget(key, "tempBackupCodes") : null;
+    try {
+      backupCodes =
+        reuse && typeof existingBackup === "string"
+          ? JSON.parse(existingBackup)
+          : generateBackupCodes();
+    } catch {
+      backupCodes = generateBackupCodes();
+    }
 
-    // Store temp secret as base32 string (not enabled yet)
+    // Store temp secret as base32 string (not enabled yet).
+    // Preserve the original setupStarted on reuse so the TTL window doesn't
+    // keep extending on every re-open.
     await redis.hset(key, {
       tempSecret: secretBase32,
       tempBackupCodes: JSON.stringify(backupCodes),
-      setupStarted: Date.now().toString(),
+      setupStarted: reuse && startedAt > 0 ? startedAt.toString() : Date.now().toString(),
     });
 
     console.log("2FA Setup:", {
