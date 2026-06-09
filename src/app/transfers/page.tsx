@@ -14,14 +14,14 @@ import { MetalConversionTab } from "@/components/funding/MetalConversionTab";
 const translations: Record<string, Record<string, string>> = {
   tr: {
     title: "Fonlama & Çekim",
-    subtitle: "Saklama hesabınıza sermaye ekleyin, varlıklarınızı çekin veya metaller arası dönüşüm yapın",
+    subtitle: "Saklama hesabınıza sermaye ekleyin, varlıklarınızı çekin veya varlıklar arası dönüşüm yapın",
     fundTab: "Fonlama",
     withdrawTab: "Çekim",
     convertTab: "Dönüşüm",
   },
   en: {
     title: "Funding & Withdrawals",
-    subtitle: "Add capital to your custody account, withdraw your assets, or convert between metals",
+    subtitle: "Add capital to your custody account, withdraw your assets, or convert between assets",
     fundTab: "Fund",
     withdrawTab: "Withdraw",
     convertTab: "Convert",

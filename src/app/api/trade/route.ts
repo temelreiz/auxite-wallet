@@ -628,6 +628,52 @@ export async function GET(request: NextRequest) {
       };
     }
     // ───────────────────────────────────────────────────────────────────────
+    // METAL → CRYPTO (sell metal for crypto)
+    // ───────────────────────────────────────────────────────────────────────
+    else if (type === "sell" && METALS.includes(fromTokenLower) && CRYPTOS.includes(toTokenLower)) {
+      const prices = await getTokenPrices(fromToken);
+      spreadPercent = prices.spreadPercent;
+      const metalPricePerGram = prices.bidPerGram;
+      const cryptoPrice = await getCryptoPrice(toTokenLower);
+      if (cryptoPrice === 0) return NextResponse.json({ error: `${toToken} fiyatı alınamadı` }, { status: 400 });
+      const metalValueUsd = amount * metalPricePerGram;
+      fee = calculateTierFee(metalValueUsd, tierFeePercent);
+      const netValueUsd = metalValueUsd - fee;
+      toAmount = netValueUsd / cryptoPrice;
+      price = metalPricePerGram / cryptoPrice;
+      blockchainData = { metalPricePerGram, cryptoPrice, metalValueUsd, netValueUsd };
+    }
+    // ───────────────────────────────────────────────────────────────────────
+    // CRYPTO → AUXM (USDT/USDC ≈ 1; BTC/ETH/XRP/SOL at spot)
+    // ───────────────────────────────────────────────────────────────────────
+    else if (CRYPTOS.includes(fromTokenLower) && toTokenLower === "auxm") {
+      const cryptoPrice = await getCryptoPrice(fromTokenLower);
+      if (cryptoPrice === 0) return NextResponse.json({ error: `${fromToken} fiyatı alınamadı` }, { status: 400 });
+      const usdValue = amount * cryptoPrice;
+      fee = calculateTierFee(usdValue, tierFeePercent);
+      toAmount = usdValue - fee;
+      price = cryptoPrice;
+      blockchainData = { cryptoPrice, usdValue };
+    }
+    // ───────────────────────────────────────────────────────────────────────
+    // AUXM → CRYPTO
+    // ───────────────────────────────────────────────────────────────────────
+    else if (fromTokenLower === "auxm" && CRYPTOS.includes(toTokenLower)) {
+      const cryptoPrice = await getCryptoPrice(toTokenLower);
+      if (cryptoPrice === 0) return NextResponse.json({ error: `${toToken} fiyatı alınamadı` }, { status: 400 });
+      fee = calculateTierFee(amount, tierFeePercent);
+      const netAuxm = amount - fee;
+      toAmount = netAuxm / cryptoPrice;
+      price = 1 / cryptoPrice;
+      blockchainData = { cryptoPrice, netAuxm };
+    }
+    // ───────────────────────────────────────────────────────────────────────
+    // CRYPTO → CRYPTO (blocked — not a crypto exchange)
+    // ───────────────────────────────────────────────────────────────────────
+    else if (CRYPTOS.includes(fromTokenLower) && CRYPTOS.includes(toTokenLower)) {
+      return NextResponse.json({ error: "Crypto-Crypto dönüşüm desteklenmiyor" }, { status: 400 });
+    }
+    // ───────────────────────────────────────────────────────────────────────
     // Fallback (non-metal trades)
     // ───────────────────────────────────────────────────────────────────────
     else {
@@ -1267,9 +1313,15 @@ export async function POST(request: NextRequest) {
     // CRYPTO → AUXM - TIER BAZLI FEE
     // ───────────────────────────────────────────────────────────────────────
     else if (CRYPTOS.includes(fromTokenLower) && toTokenLower === "auxm") {
-      price = 1;
-      fee = calculateTierFee(fromAmount, tierFeePercent);
-      toAmount = fromAmount - fee;
+      // Price the crypto in USD (USDT/USDC ≈ 1; BTC/ETH/XRP/SOL at spot). AUXM is 1:1 USD.
+      const cryptoPrice = await getCryptoPrice(fromTokenLower);
+      if (cryptoPrice === 0) {
+        return NextResponse.json({ error: `${fromToken} fiyatı alınamadı` }, { status: 400 });
+      }
+      const usdValue = fromAmount * cryptoPrice;
+      fee = calculateTierFee(usdValue, tierFeePercent);
+      toAmount = usdValue - fee;
+      price = cryptoPrice;
       blockchainResult = { executed: false, reason: "Off-chain AUXM conversion" };
     }
     // ───────────────────────────────────────────────────────────────────────
