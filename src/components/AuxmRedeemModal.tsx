@@ -306,6 +306,12 @@ export function AuxmRedeemModal({ isOpen, onClose }: AuxmRedeemModalProps) {
 
       const data = await response.json();
 
+      // KYC gate → route to identity verification instead of a dead error.
+      if (data?.code === "kyc_required" && typeof window !== "undefined") {
+        window.location.href = "/kyc";
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(data.error || t("error"));
       }

@@ -843,6 +843,12 @@ export function WithdrawTab() {
       const data = await res.json();
       console.log(`📡 Withdraw response:`, data);
 
+      // KYC gate → route the user to identity verification instead of a dead error.
+      if (data?.code === "kyc_required" && typeof window !== "undefined") {
+        window.location.href = "/kyc";
+        return;
+      }
+
       if (!res.ok) throw new Error(data.error || t.withdrawalFailed);
 
       setSuccess(t.withdrawalSuccess);
