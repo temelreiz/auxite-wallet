@@ -545,7 +545,8 @@ export async function POST(request: NextRequest) {
       coin,
       withdrawAddress,
       netAmount,
-      coin === "XRP" && memo ? parseInt(memo) : undefined
+      coin === "XRP" && memo ? parseInt(memo) : undefined,
+      network
     );
 
     // Log detailed result for debugging

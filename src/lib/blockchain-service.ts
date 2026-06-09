@@ -6,6 +6,8 @@ import * as xrpl from 'xrpl';
 import { Connection, Keypair, PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
 
+import { withdrawUSDT_TRC20 } from "@/lib/tron-withdraw";
+
 // Base Mainnet RPC with fallback
 const BASE_RPC = process.env.NEXT_PUBLIC_BASE_RPC_URL ||
   process.env.NEXT_PUBLIC_RPC_URL ||
@@ -597,16 +599,21 @@ export async function processWithdraw(
   coin: string,
   toAddress: string,
   amount: number,
-  tag?: number
+  tag?: number,
+  network?: string
 ): Promise<WithdrawResult> {
+  const net = (network || "").toLowerCase();
   console.log(`\n${'='.repeat(50)}`);
-  console.log(`Processing ${coin} withdrawal: ${amount} to ${toAddress}`);
+  console.log(`Processing ${coin} withdrawal: ${amount} to ${toAddress} (network: ${net || 'default'})`);
   console.log(`${'='.repeat(50)}`);
 
   switch (coin.toUpperCase()) {
     case 'ETH':
       return withdrawETH(toAddress, amount);
     case 'USDT':
+      // USDT is multi-rail: TRC20 (Tron) for external/exchange withdrawals,
+      // Base for internal. Route by the requested network.
+      if (net === 'tron' || net === 'trc20') return withdrawUSDT_TRC20(toAddress, amount);
       return withdrawUSDT(toAddress, amount);
     case 'USDC':
       return withdrawUSDC(toAddress, amount);

@@ -527,7 +527,7 @@ type WithdrawCrypto = "USDT" | "USDC" | "BTC" | "ETH";
 //   ETH   → Ethereum L1 (withdrawETH)  [currently broken — separate fix]
 //   BTC   → Bitcoin (withdrawBTC)
 const WITHDRAW_NETWORKS: Record<string, { networks: { id: string; name: string }[]; minWithdraw: number; fee: number; eta: string }> = {
-  USDT: { networks: [{ id: "base", name: "Base" }], minWithdraw: 10, fee: 1, eta: "15-30" },
+  USDT: { networks: [{ id: "tron", name: "Tron (TRC20)" }, { id: "base", name: "Base" }], minWithdraw: 10, fee: 1, eta: "15-30" },
   USDC: { networks: [{ id: "base", name: "Base" }], minWithdraw: 10, fee: 1, eta: "15-30" },
   BTC: { networks: [{ id: "bitcoin", name: "Bitcoin Network" }], minWithdraw: 0.0005, fee: 0.0001, eta: "30-60" },
   ETH: { networks: [{ id: "ethereum", name: "Ethereum" }], minWithdraw: 0.005, fee: 0.001, eta: "15-30" },
