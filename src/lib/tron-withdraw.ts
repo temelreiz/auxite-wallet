@@ -36,7 +36,11 @@ function treasuryAddress(): string {
   return process.env.HOT_WALLET_TRON_ADDRESS || deriveTronAddress(0);
 }
 function treasuryPrivateKey(): string {
-  return process.env.HOT_WALLET_TRON_KEY || deriveTronPrivateKey(0);
+  // TronWeb wants a raw 64-char hex key. TronLink/other wallets often export it
+  // with a "0x" prefix or trailing whitespace/newline, which throws "Invalid
+  // private key provided". Normalize before use.
+  const raw = (process.env.HOT_WALLET_TRON_KEY || "").trim().replace(/^0x/i, "");
+  return raw || deriveTronPrivateKey(0);
 }
 
 export async function withdrawUSDT_TRC20(toAddress: string, amount: number): Promise<TronWithdrawResult> {
@@ -53,21 +57,36 @@ export async function withdrawUSDT_TRC20(toAddress: string, amount: number): Pro
     }
 
     const treasury = treasuryAddress();
+    const pk = treasuryPrivateKey();
+    if (!/^[0-9a-fA-F]{64}$/.test(pk)) {
+      return { success: false, error: "Tron hot wallet private key geçersiz/eksik (64-hex bekleniyor). HOT_WALLET_TRON_KEY env'ini kontrol et." };
+    }
     const reader = new TronWeb(tronOpts());
-    const tw = new TronWeb({ ...tronOpts(), privateKey: treasuryPrivateKey() });
+    const tw = new TronWeb({ ...tronOpts(), privateKey: pk });
 
-    // Treasury USDT balance check.
-    reader.setAddress(treasury);
+    // The SENDER is whatever wallet the key controls — that's where the transfer
+    // actually originates. Check balances on THAT address (not the env address)
+    // so we never report the wrong wallet. Warn if it differs from the config.
+    const sender = tw.address.fromPrivateKey(pk);
+    if (!sender) {
+      return { success: false, error: "Tron private key'den adres türetilemedi (key bozuk)." };
+    }
+    if (sender !== treasury) {
+      console.warn(`[tron-withdraw] key→${sender} ≠ HOT_WALLET_TRON_ADDRESS ${treasury}; sending from the key's address`);
+    }
+
+    // USDT balance check (on the actual sender).
+    reader.setAddress(sender);
     const usdtContract = await reader.contract().at(TRON_USDT_CONTRACT);
-    const balRaw = await usdtContract.balanceOf(treasury).call();
+    const balRaw = await usdtContract.balanceOf(sender).call();
     const usdtBal = Number(balRaw.toString()) / SUN;
     const raw = Math.round(amount * SUN);
     if (usdtBal * SUN < raw) {
-      return { success: false, error: `Yetersiz USDT (TRC20) bakiyesi. Mevcut: ${usdtBal.toFixed(2)} USDT` };
+      return { success: false, error: `Yetersiz USDT (TRC20) bakiyesi. Mevcut: ${usdtBal.toFixed(2)} USDT (cüzdan ${sender})` };
     }
 
-    // Treasury TRX (energy gas) check — TRC20 transfers burn energy paid in TRX.
-    const treasuryTrx = Number(await reader.trx.getBalance(treasury)) / SUN;
+    // TRX (energy gas) check — TRC20 transfers burn energy paid in TRX.
+    const treasuryTrx = Number(await reader.trx.getBalance(sender)) / SUN;
     if (treasuryTrx < MIN_TREASURY_TRX) {
       return {
         success: false,
@@ -75,7 +94,7 @@ export async function withdrawUSDT_TRC20(toAddress: string, amount: number): Pro
       };
     }
 
-    console.log(`💵 USDT-TRC20 Withdraw: ${amount} USDT → ${dest} (treasury ${treasury})`);
+    console.log(`💵 USDT-TRC20 Withdraw: ${amount} USDT → ${dest} (from ${sender})`);
 
     const c = await tw.contract().at(TRON_USDT_CONTRACT);
     const txid: string = await c.transfer(dest, raw).send({ feeLimit: FEE_LIMIT_SUN });
