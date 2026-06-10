@@ -56,9 +56,10 @@ const TREASURY = (
 ).toLowerCase();
 
 // Total physical vault metal per metal (grams) = canonical totalSupply target.
+// 2026-06-10: vault top-up — AUXG +12830g (7400→20230), AUXS +48000g (72000→120000).
 const VAULT_TARGET_G: Record<Metal, number> = {
-  AUXG: Number(process.env.RWA_VAULT_AUXG_G ?? "7400"),
-  AUXS: Number(process.env.RWA_VAULT_AUXS_G ?? "72000"),
+  AUXG: Number(process.env.RWA_VAULT_AUXG_G ?? "20230"),
+  AUXS: Number(process.env.RWA_VAULT_AUXS_G ?? "120000"),
   AUXPT: Number(process.env.RWA_VAULT_AUXPT_G ?? "230"),
   AUXPD: Number(process.env.RWA_VAULT_AUXPD_G ?? "382"),
 };
