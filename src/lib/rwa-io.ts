@@ -93,34 +93,38 @@ async function projectInfo(slug: string): Promise<any[]> {
   } catch { return []; }
 }
 
-async function projectCreateSeries(projectId: string, presetId: string): Promise<string | null> {
+async function projectCreateSeries(projectId: string, presetId: string, dbg?: any): Promise<string | null> {
   try {
     const r = await fetch(`${BASE}/project-time-series/create?projectId=${encodeURIComponent(projectId)}`, {
       method: "POST", headers: headers(),
       body: JSON.stringify({ presets: [{ presetId }] }),
     });
+    const body = await r.text();
+    if (dbg) { dbg.createStatus = r.status; dbg.createBody = body.slice(0, 300); }
     if (!r.ok) return null;
-    const j = await r.json();
+    const j = JSON.parse(body || "{}");
     return j?.infos?.[0]?.id || null;
-  } catch { return null; }
+  } catch (e: any) { if (dbg) dbg.createErr = String(e?.message); return null; }
 }
 
-async function projectAddData(slug: string, tsId: string, timestampMs: number, value: number): Promise<boolean> {
+async function projectAddData(slug: string, tsId: string, timestampMs: number, value: number, dbg?: any): Promise<boolean> {
   try {
     const r = await fetch(`${BASE}/project-time-series/data/add?slug=${encodeURIComponent(slug)}`, {
       method: "POST", headers: headers(),
       body: JSON.stringify({ tsId, records: [{ timestamp: timestampMs, value: String(value) }] }),
     });
+    if (dbg) { dbg.addStatus = r.status; if (!r.ok) dbg.addBody = (await r.text()).slice(0, 300); }
     return r.ok;
-  } catch { return false; }
+  } catch (e: any) { if (dbg) dbg.addErr = String(e?.message); return false; }
 }
 
-export interface ProjectPushResult { slug: string; projectId: string | null; pushed: string[]; failed: string[]; skipped?: string }
+export interface ProjectPushResult { slug: string; projectId: string | null; pushed: string[]; failed: string[]; skipped?: string; debug?: any }
 
 // Push aggregate project metrics (market-cap, tvl, aum, holders, unique-wallets…).
 export async function pushProjectMetrics(
   metrics: { presetId: ProjectPreset; value: number }[],
   slug: string = PROJECT_SLUG,
+  debug = false,
 ): Promise<ProjectPushResult> {
   const pushed: string[] = [];
   const failed: string[] = [];
@@ -129,16 +133,20 @@ export async function pushProjectMetrics(
   const hourMs = Math.floor(Date.now() / 3600000) * 3600000;
   const infos = await projectInfo(slug);
   const projectId: string | null = infos.find((i) => i.projectId)?.projectId || null;
+  const dbgOut: any = debug ? { existing: infos.map((i) => ({ presetId: i.presetId, canUploadData: i.canUploadData, id: i.id })), steps: {} } : null;
 
   for (const m of metrics) {
     if (!(m.value > 0)) { failed.push(`${m.presetId}(no-value)`); continue; }
+    const dbg = dbgOut ? (dbgOut.steps[m.presetId] = {}) : undefined;
     let tsId: string | null =
       infos.find((i) => i.presetId === m.presetId && i.canUploadData)?.id || null;
-    if (!tsId && projectId) tsId = await projectCreateSeries(projectId, m.presetId);
-    if (tsId && (await projectAddData(slug, tsId, hourMs, m.value))) pushed.push(m.presetId);
+    if (dbg) dbg.existingTsId = tsId;
+    if (!tsId && projectId) tsId = await projectCreateSeries(projectId, m.presetId, dbg);
+    if (dbg) dbg.tsId = tsId;
+    if (tsId && (await projectAddData(slug, tsId, hourMs, m.value, dbg))) pushed.push(m.presetId);
     else failed.push(m.presetId);
   }
-  return { slug, projectId, pushed, failed };
+  return { slug, projectId, pushed, failed, ...(dbgOut ? { debug: dbgOut } : {}) };
 }
 
 export interface PushResult { symbol: string; assetId: string; pushed: string[]; failed: string[]; skipped?: string }

@@ -106,7 +106,8 @@ export async function GET(request: NextRequest) {
     projectMetrics.push({ presetId: "holders", value: totalWallets });
     projectMetrics.push({ presetId: "unique-wallets", value: totalWallets });
   }
-  const project = projectMetrics.length ? await pushProjectMetrics(projectMetrics) : null;
+  const debug = new URL(request.url).searchParams.get("debug") === "1";
+  const project = projectMetrics.length ? await pushProjectMetrics(projectMetrics, undefined, debug) : null;
 
   return NextResponse.json({ success: true, ts: Date.now(), holders, totalWallets, project, results });
 }
