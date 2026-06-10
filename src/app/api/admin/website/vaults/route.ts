@@ -6,49 +6,60 @@ const redis = Redis.fromEnv();
 const VAULTS_KEY = 'website:vaults';
 
 const DEFAULT_VAULTS = [
-  { 
-    id: 'zurich', 
-    city: 'Zurich', 
-    country: 'Switzerland', 
-    flag: '🇨🇭', 
-    status: 'active', 
-    capacity: '10,000 kg', 
-    metals: ['AUXG', 'AUXS', 'AUXPT', 'AUXPD'], 
+  {
+    id: 'zurich',
+    city: 'Zurich',
+    country: 'Switzerland',
+    flag: '🇨🇭',
+    status: 'active',
+    capacity: '10,000 kg',
+    metals: ['AUXG', 'AUXS', 'AUXPT', 'AUXPD'],
     coordinates: { x: 52, y: 35 },
-    description: { en: 'Primary vault in Switzerland', tr: 'İsviçre\'deki ana kasa' }
-  },
-  { 
-    id: 'london', 
-    city: 'London', 
-    country: 'United Kingdom', 
-    flag: '🇬🇧', 
-    status: 'active', 
-    capacity: '15,000 kg', 
-    metals: ['AUXG', 'AUXS'], 
-    coordinates: { x: 48, y: 32 },
-    description: { en: 'LBMA certified London vault', tr: 'LBMA sertifikalı Londra kasası' }
+    description: { en: 'Primary vault in Switzerland', tr: 'İsviçre ana kasası' }
   },
   {
     id: 'istanbul',
     city: 'Istanbul',
-    country: 'Turkey',
+    country: 'Türkiye',
     flag: '🇹🇷',
     status: 'active',
     capacity: '8,000 kg',
-    metals: ['AUXG', 'AUXPT'],
-    coordinates: { x: 58, y: 38 },
-    description: { en: 'Borsa Istanbul approved, LBMA regulated', tr: 'Borsa İstanbul onaylı, LBMA düzenlemeli' }
+    metals: ['AUXG', 'AUXS', 'AUXPT', 'AUXPD'],
+    coordinates: { x: 56, y: 37 },
+    description: { en: 'Istanbul vault', tr: 'İstanbul kasası' }
   },
-  { 
-    id: 'dubai', 
-    city: 'Dubai', 
-    country: 'UAE', 
-    flag: '🇦🇪', 
-    status: 'coming', 
-    capacity: '12,000 kg', 
-    metals: ['AUXG', 'AUXS', 'AUXPT', 'AUXPD'], 
+  {
+    id: 'dubai',
+    city: 'Dubai',
+    country: 'UAE',
+    flag: '🇦🇪',
+    status: 'active',
+    capacity: '12,000 kg',
+    metals: ['AUXG', 'AUXS', 'AUXPT', 'AUXPD'],
     coordinates: { x: 63, y: 45 },
-    description: { en: 'Coming soon - Middle East hub', tr: 'Yakında - Orta Doğu merkezi' }
+    description: { en: 'Middle East hub', tr: 'Orta Doğu merkezi' }
+  },
+  {
+    id: 'singapore',
+    city: 'Singapore',
+    country: 'Singapore',
+    flag: '🇸🇬',
+    status: 'active',
+    capacity: '20,000 kg',
+    metals: ['AUXG', 'AUXS', 'AUXPT', 'AUXPD'],
+    coordinates: { x: 80, y: 58 },
+    description: { en: 'Silver Bullion — Asia-Pacific custodian', tr: 'Silver Bullion — Asya-Pasifik custodian' }
+  },
+  {
+    id: 'london',
+    city: 'London',
+    country: 'United Kingdom',
+    flag: '🇬🇧',
+    status: 'inactive',
+    capacity: '15,000 kg',
+    metals: ['AUXG', 'AUXS'],
+    coordinates: { x: 48, y: 32 },
+    description: { en: 'LBMA certified London vault (inactive)', tr: 'LBMA sertifikalı Londra kasası (inaktif)' }
   },
 ];
 

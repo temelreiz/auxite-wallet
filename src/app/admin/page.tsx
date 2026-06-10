@@ -5734,9 +5734,10 @@ export default function AdminDashboard() {
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                         vault.status === 'active' ? 'bg-green-500/20 text-green-400' :
                         vault.status === 'maintenance' ? 'bg-red-500/20 text-red-400' :
+                        vault.status === 'inactive' ? 'bg-slate-600/40 text-slate-400' :
                         'bg-[#BFA181]/20 text-[#BFA181]'
                       }`}>
-                        {vault.status === 'active' ? 'Aktif' : vault.status === 'maintenance' ? 'Bakımda' : 'Yakında'}
+                        {vault.status === 'active' ? 'Aktif' : vault.status === 'maintenance' ? 'Bakımda' : vault.status === 'inactive' ? 'İnaktif' : 'Yakında'}
                       </span>
                     </div>
                     
@@ -6023,6 +6024,7 @@ export default function AdminDashboard() {
                             <option value="active">Aktif</option>
                             <option value="coming">Yakında</option>
                             <option value="maintenance">Bakımda</option>
+                            <option value="inactive">İnaktif</option>
                           </select>
                         </div>
                       </div>
