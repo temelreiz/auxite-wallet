@@ -194,6 +194,12 @@ export async function runMintSync(opts: { dryRun?: boolean } = {}): Promise<Sync
     }
   };
 
+  // Explicit nonce management: viem defaults to the provider's nonce, which can
+  // race across the burn/mint/mint txs of a single run on a busy/cached RPC and
+  // produce "replacement transaction underpriced". Track the nonce locally,
+  // seeded from pending, and advance it per accepted tx.
+  let nextNonce: number | undefined;
+
   const applyDiff = async (m: Metal, account: string, current: bigint, target: bigint, isTreasury: boolean) => {
     if (current === target) return;
     const kind: "mint" | "burn" = target > current ? "mint" : "burn";
@@ -210,7 +216,11 @@ export async function runMintSync(opts: { dryRun?: boolean } = {}): Promise<Sync
         functionName: fn,
         args: [account as `0x${string}`, amount],
       });
-      const hash = await signer.sendTransaction({ to: tokenAddr(m) as `0x${string}`, data, value: 0n });
+      if (nextNonce === undefined) {
+        nextNonce = await publicClient.getTransactionCount({ address: signer.account.address, blockTag: "pending" });
+      }
+      const hash = await signer.sendTransaction({ to: tokenAddr(m) as `0x${string}`, data, value: 0n, nonce: nextNonce });
+      nextNonce++; // accepted into the mempool with this nonce
       const rcpt = await publicClient.waitForTransactionReceipt({ hash, timeout: 90_000 });
       if (rcpt.status !== "success") throw new Error(`reverted ${hash}`);
       console.log(`[rwa-sync] ✅ ${kind} ${rawToGrams(amount)}g ${m} ${isTreasury ? "TREASURY" : account} → ${hash}`);
