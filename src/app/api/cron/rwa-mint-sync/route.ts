@@ -27,7 +27,11 @@ export async function GET(req: NextRequest) {
 
   const sp = new URL(req.url).searchParams;
   const forceDry = sp.get("force-dry") === "true";
-  const requireLive = sp.get("live") === "true";
+  // ?force-execute=true → execute THIS call on-chain regardless of the
+  // RWA_SYNC_EXECUTE env, so the daily cron can stay dry (no standing auto-mint)
+  // while the founder mints on demand. Gated by CRON_SECRET (checked above).
+  const forceExecute = sp.get("force-execute") === "true";
+  const requireLive = forceExecute || sp.get("live") === "true";
 
   if (requireLive) {
     const missing: string[] = [];
@@ -39,6 +43,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const result = await runMintSync({ dryRun: forceDry || undefined });
+  const dryRun = forceDry ? true : forceExecute ? false : undefined;
+  const result = await runMintSync({ dryRun });
   return NextResponse.json({ success: true, ...result });
 }
