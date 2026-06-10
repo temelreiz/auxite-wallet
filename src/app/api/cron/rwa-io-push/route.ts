@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
-import { pushTokenMetrics, type RwaPreset } from "@/lib/rwa-io";
+import { pushTokenMetrics, pushProjectMetrics, type RwaPreset, type ProjectPreset } from "@/lib/rwa-io";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -69,6 +69,8 @@ export async function GET(request: NextRequest) {
   // Real holder counts (distinct addresses with a >0 balance per metal).
   const { perMetal: holders, totalWallets } = await countHolders();
 
+  let projectAum = 0; // Σ USD value across all tokens
+
   const results = [];
   for (const tok of supplyRes.tokens) {
     const sym: string = tok.symbol;
@@ -82,6 +84,7 @@ export async function GET(request: NextRequest) {
     ];
     if (price > 0) {
       const aum = supply * price; // total USD value of metal tokenized
+      projectAum += aum;
       metrics.push({ presetId: "price", value: price });
       metrics.push({ presetId: "aum", value: aum });
       metrics.push({ presetId: "tokenized-value", value: aum }); // = AUM (1:1 metal-backed)
@@ -92,5 +95,18 @@ export async function GET(request: NextRequest) {
     results.push(await pushTokenMetrics(sym, String(tok.chainId || 8453), metrics));
   }
 
-  return NextResponse.json({ success: true, ts: Date.now(), holders, totalWallets, results });
+  // ── Project-level aggregate (auxite-gold profile) ──
+  const projectMetrics: { presetId: ProjectPreset; value: number }[] = [];
+  if (projectAum > 0) {
+    projectMetrics.push({ presetId: "market-cap", value: projectAum });
+    projectMetrics.push({ presetId: "tvl", value: projectAum });
+    projectMetrics.push({ presetId: "aum", value: projectAum });
+  }
+  if (totalWallets > 0) {
+    projectMetrics.push({ presetId: "holders", value: totalWallets });
+    projectMetrics.push({ presetId: "unique-wallets", value: totalWallets });
+  }
+  const project = projectMetrics.length ? await pushProjectMetrics(projectMetrics) : null;
+
+  return NextResponse.json({ success: true, ts: Date.now(), holders, totalWallets, project, results });
 }

@@ -75,6 +75,72 @@ async function addData(assetId: string, tsId: string, timestampMs: number, value
   } catch { return false; }
 }
 
+// ── PROJECT-LEVEL time series (aggregate across all tokens) ─────────────────
+// Endpoints: info/data/add use ?slug=, create uses ?projectId= (derived from the
+// info response, so the slug alone is enough).
+export type ProjectPreset =
+  | "price" | "volume-24h" | "market-cap" | "circulating-supply" | "total-supply"
+  | "tvl" | "aum" | "unique-wallets" | "daily-tx" | "holders" | "daily-active-addresses";
+
+const PROJECT_SLUG = process.env.RWA_IO_PROJECT_SLUG || "auxite-gold";
+
+async function projectInfo(slug: string): Promise<any[]> {
+  try {
+    const r = await fetch(`${BASE}/project-time-series/info?slug=${encodeURIComponent(slug)}`, { headers: headers() });
+    if (!r.ok) return [];
+    const j = await r.json();
+    return Array.isArray(j?.infos) ? j.infos : [];
+  } catch { return []; }
+}
+
+async function projectCreateSeries(projectId: string, presetId: string): Promise<string | null> {
+  try {
+    const r = await fetch(`${BASE}/project-time-series/create?projectId=${encodeURIComponent(projectId)}`, {
+      method: "POST", headers: headers(),
+      body: JSON.stringify({ presets: [{ presetId }] }),
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j?.infos?.[0]?.id || null;
+  } catch { return null; }
+}
+
+async function projectAddData(slug: string, tsId: string, timestampMs: number, value: number): Promise<boolean> {
+  try {
+    const r = await fetch(`${BASE}/project-time-series/data/add?slug=${encodeURIComponent(slug)}`, {
+      method: "POST", headers: headers(),
+      body: JSON.stringify({ tsId, records: [{ timestamp: timestampMs, value: String(value) }] }),
+    });
+    return r.ok;
+  } catch { return false; }
+}
+
+export interface ProjectPushResult { slug: string; projectId: string | null; pushed: string[]; failed: string[]; skipped?: string }
+
+// Push aggregate project metrics (market-cap, tvl, aum, holders, unique-wallets…).
+export async function pushProjectMetrics(
+  metrics: { presetId: ProjectPreset; value: number }[],
+  slug: string = PROJECT_SLUG,
+): Promise<ProjectPushResult> {
+  const pushed: string[] = [];
+  const failed: string[] = [];
+  if (!KEY) return { slug, projectId: null, pushed, failed, skipped: "RWA_IO_API_KEY not set" };
+
+  const hourMs = Math.floor(Date.now() / 3600000) * 3600000;
+  const infos = await projectInfo(slug);
+  const projectId: string | null = infos.find((i) => i.projectId)?.projectId || null;
+
+  for (const m of metrics) {
+    if (!(m.value > 0)) { failed.push(`${m.presetId}(no-value)`); continue; }
+    let tsId: string | null =
+      infos.find((i) => i.presetId === m.presetId && i.canUploadData)?.id || null;
+    if (!tsId && projectId) tsId = await projectCreateSeries(projectId, m.presetId);
+    if (tsId && (await projectAddData(slug, tsId, hourMs, m.value))) pushed.push(m.presetId);
+    else failed.push(m.presetId);
+  }
+  return { slug, projectId, pushed, failed };
+}
+
 export interface PushResult { symbol: string; assetId: string; pushed: string[]; failed: string[]; skipped?: string }
 
 // Push a set of metrics for one token at the current (hourly-floored) timestamp.
