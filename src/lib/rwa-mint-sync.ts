@@ -56,13 +56,41 @@ const TREASURY = (
 ).toLowerCase();
 
 // Total physical vault metal per metal (grams) = canonical totalSupply target.
-// 2026-06-10: vault top-up — AUXG +12830g (7400→20230), AUXS +48000g (72000→120000).
-const VAULT_TARGET_G: Record<Metal, number> = {
+// Source of truth is the Redis hash `config:vault:targets` (editable from the
+// admin Vault page, no redeploy). Falls back to env, then these defaults.
+const VAULT_DEFAULTS: Record<Metal, number> = {
   AUXG: Number(process.env.RWA_VAULT_AUXG_G ?? "20230"),
   AUXS: Number(process.env.RWA_VAULT_AUXS_G ?? "120000"),
   AUXPT: Number(process.env.RWA_VAULT_AUXPT_G ?? "230"),
   AUXPD: Number(process.env.RWA_VAULT_AUXPD_G ?? "382"),
 };
+const VAULT_TARGETS_KEY = "config:vault:targets";
+
+// Current vault targets: Redis override (admin-set) ?? env/default.
+export async function getVaultTargets(): Promise<Record<Metal, number>> {
+  const out: Record<Metal, number> = { ...VAULT_DEFAULTS };
+  try {
+    const cfg = (await redis.hgetall(VAULT_TARGETS_KEY)) as Record<string, unknown> | null;
+    if (cfg) for (const m of METALS) {
+      const v = parseFloat(String(cfg[m]));
+      if (Number.isFinite(v) && v >= 0) out[m] = v;
+    }
+  } catch (e) {
+    console.error("[vault] getVaultTargets failed, using defaults:", e);
+  }
+  return out;
+}
+
+// Persist admin-set vault targets (grams). Only valid non-negative numbers.
+export async function setVaultTargets(targets: Partial<Record<Metal, number>>): Promise<Record<Metal, number>> {
+  const upd: Record<string, string> = {};
+  for (const m of METALS) {
+    const v = targets[m];
+    if (typeof v === "number" && Number.isFinite(v) && v >= 0) upd[m] = String(v);
+  }
+  if (Object.keys(upd).length) await redis.hset(VAULT_TARGETS_KEY, upd);
+  return getVaultTargets();
+}
 
 // Set of on-chain holder addresses we've minted to (so we can burn users who
 // dropped to zero). Seeded by the backfill (rwa:backfill:minted:{METAL}).
@@ -144,8 +172,11 @@ export async function runMintSync(opts: { dryRun?: boolean } = {}): Promise<Sync
   const ops: ReconcileOp[] = [];
   const errors: SyncResult["errors"] = [];
 
+  // Vault targets from Redis (admin-editable) ?? env/default.
+  const vaultTargets = await getVaultTargets();
+
   for (const m of METALS) {
-    if (!Number.isFinite(VAULT_TARGET_G[m])) {
+    if (!Number.isFinite(vaultTargets[m])) {
       errors.push({ metal: m, account: "-", error: `RWA_VAULT_${m}_G not set` });
       continue;
     }
@@ -231,7 +262,7 @@ export async function runMintSync(opts: { dryRun?: boolean } = {}): Promise<Sync
   };
 
   for (const m of METALS) {
-    if (!Number.isFinite(VAULT_TARGET_G[m])) continue;
+    if (!Number.isFinite(vaultTargets[m])) continue;
     const token = tokenAddr(m);
 
     // Holder universe = past holders ∪ current claimants.
@@ -252,10 +283,10 @@ export async function runMintSync(opts: { dryRun?: boolean } = {}): Promise<Sync
     }
 
     // Treasury holds the unsold remainder: vault − Σ claims.
-    const vaultRaw = gramsToRaw(VAULT_TARGET_G[m]);
+    const vaultRaw = gramsToRaw(vaultTargets[m]);
     const treasuryTarget = vaultRaw - totalClaimRaw;
     if (treasuryTarget < 0n) {
-      errors.push({ metal: m, account: TREASURY, error: `claims exceed vault (${VAULT_TARGET_G[m]}g)` });
+      errors.push({ metal: m, account: TREASURY, error: `claims exceed vault (${vaultTargets[m]}g)` });
       continue;
     }
     const treasuryCurrent = await readBal(TREASURY, token);
