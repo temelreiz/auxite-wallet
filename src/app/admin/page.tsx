@@ -570,9 +570,10 @@ export default function AdminDashboard() {
     LDN: { name: 'London Vault', country: 'UK', code: 'LDN' },
   });
 
-  // ── Kasa supply / on-chain reconciler (mint/burn to hit vault targets) ──
+  // ── Kasa supply / on-chain reconciler (mint/burn to hit Σ vault holdings) ──
   const [vaultRows, setVaultRows] = useState<Array<{ metal: string; target: number; onchain: number; delta: number }>>([]);
-  const [vaultEdits, setVaultEdits] = useState<Record<string, string>>({});
+  const [vaultInv, setVaultInv] = useState<Array<{ vaultId: string; metals: Record<string, { held: number; sold: number; available: number }> }>>([]);
+  const [holdingEdits, setHoldingEdits] = useState<Record<string, string>>({}); // key `${metal}:${vaultId}`
   const [vaultLoading, setVaultLoading] = useState(false);
   const [vaultBusy, setVaultBusy] = useState<string | null>(null);
   const [vaultMsg, setVaultMsg] = useState<{ type: string; text: string }>({ type: "", text: "" });
@@ -962,9 +963,10 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (res.ok) {
         setVaultRows(data.rows || []);
+        setVaultInv(data.vaults || []);
         const e: Record<string, string> = {};
-        for (const r of data.rows || []) e[r.metal] = String(r.target);
-        setVaultEdits(e);
+        for (const v of data.vaults || []) for (const m of VAULT_METALS) e[`${m}:${v.vaultId}`] = String(v.metals?.[m]?.held ?? 0);
+        setHoldingEdits(e);
       } else setVaultMsg({ type: "error", text: data.error || "Kasa verisi yüklenemedi" });
     } catch { setVaultMsg({ type: "error", text: "Bağlantı hatası" }); }
     finally { setVaultLoading(false); }
@@ -973,13 +975,17 @@ export default function AdminDashboard() {
     const res = await fetch("/api/admin/vault", { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(body) });
     return { res, data: await res.json() };
   };
-  const saveVaultTargets = async () => {
+  const saveHoldings = async () => {
     setVaultBusy("save"); setVaultMsg({ type: "", text: "" }); setVaultPlan(null);
     try {
-      const targets: Record<string, number> = {};
-      for (const m of VAULT_METALS) if (vaultEdits[m] !== undefined && vaultEdits[m] !== "") targets[m] = Number(vaultEdits[m]);
-      const { res, data } = await postVault({ action: "save", targets });
-      if (res.ok) { setVaultMsg({ type: "success", text: "Hedefler kaydedildi ✓" }); loadVaultTargets(); }
+      const holdings: Record<string, Record<string, number>> = {};
+      for (const [key, val] of Object.entries(holdingEdits)) {
+        if (val === "") continue;
+        const [m, vid] = key.split(":");
+        (holdings[m] ||= {})[vid] = Number(val);
+      }
+      const { res, data } = await postVault({ action: "save-holdings", holdings });
+      if (res.ok) { setVaultMsg({ type: "success", text: "Kasa stokları kaydedildi ✓" }); loadVaultTargets(); }
       else setVaultMsg({ type: "error", text: data.error || "Kaydedilemedi" });
     } finally { setVaultBusy(null); }
   };
@@ -5634,25 +5640,21 @@ export default function AdminDashboard() {
                         <tr>
                           <th className="text-left px-4 py-3">Metal</th>
                           <th className="text-right px-4 py-3">On-chain (g)</th>
-                          <th className="text-right px-4 py-3">Hedef (g)</th>
+                          <th className="text-right px-4 py-3">Toplam Hedef = Σ kasa (g)</th>
                           <th className="text-right px-4 py-3">Fark</th>
                         </tr>
                       </thead>
                       <tbody>
                         {vaultRows.map((r) => {
-                          const d = (Number(vaultEdits[r.metal]) || 0) - r.onchain;
+                          // Σ held across vaults from current (unsaved) edits.
+                          const sumHeld = vaultInv.reduce((acc, v) => acc + (Number(holdingEdits[`${r.metal}:${v.vaultId}`]) || 0), 0);
+                          const d = sumHeld - r.onchain;
                           const name: Record<string, string> = { AUXG: "Altın", AUXS: "Gümüş", AUXPT: "Platin", AUXPD: "Paladyum" };
                           return (
                             <tr key={r.metal} className="border-b border-slate-800/50">
                               <td className="px-4 py-3 font-semibold">{r.metal} <span className="text-slate-500 font-normal">{name[r.metal]}</span></td>
                               <td className="px-4 py-3 text-right font-mono text-slate-300">{r.onchain.toLocaleString()}</td>
-                              <td className="px-4 py-3 text-right">
-                                <input
-                                  type="number" value={vaultEdits[r.metal] ?? ""}
-                                  onChange={(e) => setVaultEdits({ ...vaultEdits, [r.metal]: e.target.value })}
-                                  className="w-32 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-right font-mono focus:border-amber-500 outline-none text-white"
-                                />
-                              </td>
+                              <td className="px-4 py-3 text-right font-mono text-amber-300">{sumHeld.toLocaleString()}</td>
                               <td className={`px-4 py-3 text-right font-mono ${d > 0 ? "text-emerald-400" : d < 0 ? "text-red-400" : "text-slate-500"}`}>
                                 {d > 0 ? `+${d.toLocaleString()} mint` : d < 0 ? `${d.toLocaleString()} burn` : "—"}
                               </td>
@@ -5663,9 +5665,9 @@ export default function AdminDashboard() {
                     </table>
                   </div>
                 )}
+                <p className="text-xs text-slate-500 mt-2">Hedef = aşağıdaki kasaların toplam stoğu. Gram girişini <b>kasa kartlarından</b> yap, <b>Stoğu Kaydet</b>, sonra burada <b>Önizle → Çalıştır</b>.</p>
 
                 <div className="flex flex-wrap gap-3 mt-4">
-                  <button onClick={saveVaultTargets} disabled={!!vaultBusy} className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-50 font-semibold text-sm">{vaultBusy === "save" ? "Kaydediliyor…" : "Hedefleri Kaydet"}</button>
                   <button onClick={previewVault} disabled={!!vaultBusy} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 font-semibold text-sm">{vaultBusy === "preview" ? "Önizleniyor…" : "Önizle (dry-run)"}</button>
                   <button onClick={executeVault} disabled={!!vaultBusy} className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 font-semibold text-sm text-black">{vaultBusy === "execute" ? "Çalıştırılıyor…" : "Çalıştır (mint)"}</button>
                 </div>
@@ -5694,24 +5696,33 @@ export default function AdminDashboard() {
 
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">🏛️ Kasa Lokasyonları</h2>
-                <button
-                  onClick={() => {
-                    setEditingItem({
-                      id: '',
-                      city: '',
-                      country: '',
-                      flag: '🏳️',
-                      status: 'coming',
-                      capacity: '',
-                      metals: ['AUXG'],
-                      coordinates: { x: 50, y: 50 }
-                    });
-                    setShowWebsiteModal('vault');
-                  }}
-                  className="px-4 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-lg text-black font-medium"
-                >
-                  + Yeni Kasa Ekle
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={saveHoldings}
+                    disabled={!!vaultBusy}
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 rounded-lg text-black font-medium"
+                  >
+                    {vaultBusy === "save" ? "Kaydediliyor…" : "💾 Stoğu Kaydet"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingItem({
+                        id: '',
+                        city: '',
+                        country: '',
+                        flag: '🏳️',
+                        status: 'coming',
+                        capacity: '',
+                        metals: ['AUXG'],
+                        coordinates: { x: 50, y: 50 }
+                      });
+                      setShowWebsiteModal('vault');
+                    }}
+                    className="px-4 py-2 bg-[#2F6F62] hover:bg-[#2F6F62] rounded-lg text-black font-medium"
+                  >
+                    + Yeni Kasa Ekle
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -5752,14 +5763,37 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {vault.metals?.map((metal: string) => (
-                        <span key={metal} className="px-2 py-1 bg-[#BFA181]/10 rounded text-[#BFA181] text-xs">
-                          {metal}
-                        </span>
-                      ))}
+                    {/* ── Per-metal stok (held / müsait) ── */}
+                    <div className="mb-4 bg-slate-950/40 rounded-lg border border-slate-800 p-3">
+                      <p className="text-xs text-slate-400 mb-2">Stok (gram) — düzenle, sonra alttan <b>Stoğu Kaydet</b></p>
+                      <div className="space-y-1.5">
+                        {VAULT_METALS.map((metal) => {
+                          const inv = vaultInv.find((v) => v.vaultId === vault.id)?.metals?.[metal];
+                          const held = Number(holdingEdits[`${metal}:${vault.id}`]) || 0;
+                          const sold = inv?.sold || 0;
+                          const avail = held - sold;
+                          return (
+                            <div key={metal} className="flex items-center gap-2 text-xs">
+                              <span className="w-12 font-semibold text-[#BFA181]">{metal}</span>
+                              <input
+                                type="number"
+                                value={holdingEdits[`${metal}:${vault.id}`] ?? ""}
+                                onChange={(e) => setHoldingEdits({ ...holdingEdits, [`${metal}:${vault.id}`]: e.target.value })}
+                                className="w-24 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-right font-mono focus:border-amber-500 outline-none text-white"
+                                placeholder="0"
+                              />
+                              <span className="text-slate-500">stok</span>
+                              <span className="ml-auto font-mono">
+                                <span className={avail < 0 ? "text-red-400" : "text-emerald-400"}>{avail.toLocaleString()}</span>
+                                <span className="text-slate-500"> müsait</span>
+                                {sold > 0 && <span className="text-slate-500"> · {sold.toLocaleString()} satıldı</span>}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <button
                         onClick={() => { setEditingItem(vault); setShowWebsiteModal('vault'); }}

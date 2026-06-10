@@ -28,6 +28,7 @@
 //
 // Decimals: 3 (1g = 1000 raw units).
 import { Redis } from "@upstash/redis";
+import { getVaultTotals, isInitialized, seedHoldingsIfEmpty } from "./vault-inventory";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -66,8 +67,9 @@ const VAULT_DEFAULTS: Record<Metal, number> = {
 };
 const VAULT_TARGETS_KEY = "config:vault:targets";
 
-// Current vault targets: Redis override (admin-set) ?? env/default.
-export async function getVaultTargets(): Promise<Record<Metal, number>> {
+// Legacy per-metal targets (config:vault:targets) — kept as the fallback when
+// per-vault holdings haven't been seeded yet.
+async function getLegacyTargets(): Promise<Record<Metal, number>> {
   const out: Record<Metal, number> = { ...VAULT_DEFAULTS };
   try {
     const cfg = (await redis.hgetall(VAULT_TARGETS_KEY)) as Record<string, unknown> | null;
@@ -76,9 +78,27 @@ export async function getVaultTargets(): Promise<Record<Metal, number>> {
       if (Number.isFinite(v) && v >= 0) out[m] = v;
     }
   } catch (e) {
-    console.error("[vault] getVaultTargets failed, using defaults:", e);
+    console.error("[vault] getLegacyTargets failed, using defaults:", e);
   }
   return out;
+}
+
+// Current vault targets = Σ per-vault held (admin enters grams per vault). Falls
+// back to the legacy per-metal targets until per-vault holdings are seeded. The
+// per-vault holdings are seeded once from the legacy targets so the reconciler
+// stays a no-op on first run (founder then redistributes across vaults).
+export async function getVaultTargets(): Promise<Record<Metal, number>> {
+  try {
+    const legacy = await getLegacyTargets();
+    if (!(await isInitialized())) {
+      await seedHoldingsIfEmpty(legacy);
+      return legacy;
+    }
+    return await getVaultTotals();
+  } catch (e) {
+    console.error("[vault] getVaultTargets failed, using legacy:", e);
+    return getLegacyTargets();
+  }
 }
 
 // Persist admin-set vault targets (grams). Only valid non-negative numbers.

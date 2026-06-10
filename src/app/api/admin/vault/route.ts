@@ -1,17 +1,18 @@
 // src/app/api/admin/vault/route.ts
-// Admin Vault control: read/edit the per-metal vault targets (grams) and run the
-// on-chain reconciler (preview = dry-run, execute = mint/burn). Replaces the
-// env-var + curl flow with an admin-panel button.
+// Admin Vault control: edit per-vault metal holdings (grams), see the rolled-up
+// on-chain target (Σ held), and run the on-chain reconciler (preview = dry-run,
+// execute = mint/burn). Replaces the env-var + curl flow with admin buttons.
 //
-// GET                          → { targets, onchain }  (targets vs current supply)
-// POST { action:"save", targets } → persist new targets to Redis
-// POST { action:"preview" }    → reconciler dry-run (the plan, no on-chain writes)
-// POST { action:"execute" }    → reconciler live (mint/burn to hit targets)
+// GET                                → { rows (metal totals vs supply), vaults (per-vault held/sold/available) }
+// POST { action:"save-holdings", holdings } → persist per-vault held grams to Redis
+// POST { action:"preview" }          → reconciler dry-run (the plan, no on-chain writes)
+// POST { action:"execute" }          → reconciler live (mint/burn to hit Σ held)
 // Auth: admin session (requireAdmin).
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
-import { getVaultTargets, setVaultTargets, runMintSync } from "@/lib/rwa-mint-sync";
+import { getVaultTargets, runMintSync } from "@/lib/rwa-mint-sync";
+import { getInventoryView, setHeldBulk, METALS as INV_METALS, type Metal } from "@/lib/vault-inventory";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -36,14 +37,18 @@ export async function GET(request: NextRequest) {
   if (!auth.authorized) return auth.response!;
 
   const origin = new URL(request.url).origin;
-  const [targets, onchain] = await Promise.all([getVaultTargets(), currentSupply(origin)]);
+  const [targets, onchain, vaults] = await Promise.all([
+    getVaultTargets(),       // Σ held per metal (seeds holdings on first call)
+    currentSupply(origin),
+    getInventoryView(),      // per-vault held/sold/available
+  ]);
   const rows = METALS.map((m) => ({
     metal: m,
     target: targets[m] ?? 0,
     onchain: onchain[m] ?? 0,
     delta: (targets[m] ?? 0) - (onchain[m] ?? 0),
   }));
-  return NextResponse.json({ success: true, rows });
+  return NextResponse.json({ success: true, rows, vaults });
 }
 
 export async function POST(request: NextRequest) {
@@ -54,21 +59,28 @@ export async function POST(request: NextRequest) {
   try { body = await request.json(); } catch {}
   const action = body?.action;
 
-  if (action === "save") {
-    const targets: Record<string, number> = {};
-    for (const m of METALS) {
-      const v = body?.targets?.[m];
-      if (v !== undefined && v !== null && v !== "") {
-        const n = Number(v);
+  if (action === "save-holdings") {
+    // holdings: { [metal]: { [vaultId]: grams } }
+    const holdings: Partial<Record<Metal, Record<string, number>>> = {};
+    const src = body?.holdings || {};
+    for (const m of INV_METALS) {
+      const byVault = src[m];
+      if (!byVault || typeof byVault !== "object") continue;
+      const clean: Record<string, number> = {};
+      for (const [vid, raw] of Object.entries(byVault)) {
+        if (raw === "" || raw === null || raw === undefined) continue;
+        const n = Number(raw);
         if (!Number.isFinite(n) || n < 0) {
-          return NextResponse.json({ error: `Geçersiz ${m} değeri` }, { status: 400 });
+          return NextResponse.json({ error: `Geçersiz ${m}/${vid} değeri` }, { status: 400 });
         }
-        targets[m] = n;
+        clean[vid] = n;
       }
+      if (Object.keys(clean).length) holdings[m] = clean;
     }
-    const updated = await setVaultTargets(targets);
-    console.log(`[admin/vault] targets saved by ${auth.address}:`, updated);
-    return NextResponse.json({ success: true, targets: updated });
+    await setHeldBulk(holdings);
+    console.log(`[admin/vault] holdings saved by ${auth.address}`);
+    const targets = await getVaultTargets();
+    return NextResponse.json({ success: true, targets });
   }
 
   if (action === "preview") {

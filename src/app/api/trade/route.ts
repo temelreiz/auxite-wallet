@@ -3,6 +3,7 @@ import { sendCertificateEmail, sendTradeExecutionEmail } from "@/lib/email";
 import { getUserLanguage } from "@/lib/user-language";
 import { formatAmount } from "@/lib/format";
 import { createAllocation, reduceAllocations } from "@/lib/allocation-service";
+import { routeAndDeductSale, returnSaleToVault, type Metal as VaultMetal } from "@/lib/vault-inventory";
 import { notifyTransactionRich } from "@/lib/notification-sender";
 export const maxDuration = 60;
 // V6 BLOCKCHAIN ENTEGRASYONLU - Gerçek token mint/burn işlemleri
@@ -1755,6 +1756,42 @@ export async function POST(request: NextRequest) {
     }
 
     await multi.exec();
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 🏛️ VAULT INVENTORY ROUTING (best-effort, never blocks the trade)
+    // Metal BUY  → allocate the bought grams to a vault by the buyer's region
+    //              (KYC country), walking outward to the nearest available vault.
+    // Metal SELL → return the grams to a vault (decrement sold).
+    // ─────────────────────────────────────────────────────────────────────────
+    (async () => {
+      try {
+        const isBuyMetal = type === "buy" && METALS.includes(toTokenLower) && toAmount > 0;
+        const isSellMetal = (type === "sell" || type === "swap") && METALS.includes(fromTokenLower) && fromAmount > 0;
+        if (!isBuyMetal && !isSellMetal) return;
+
+        if (isBuyMetal) {
+          // Buyer region from KYC address.country (try a few key casings).
+          let country: string | null = null;
+          for (const key of [`kyc:${normalizedAddress}`, `kyc:${address}`]) {
+            try {
+              const raw = await redis.get(key);
+              const kyc: any = typeof raw === "string" ? JSON.parse(raw) : raw;
+              const c = kyc?.address?.country || kyc?.personalInfo?.nationality;
+              if (c) { country = String(c); break; }
+            } catch { /* ignore */ }
+          }
+          const r = await routeAndDeductSale(toTokenLower.toUpperCase() as VaultMetal, toAmount, country);
+          console.log(`🏛️ Vault route ${toAmount}g ${toTokenLower.toUpperCase()} (${country || "?"}→${r.homeVault || "nearest"}):`,
+            r.allocations.map(a => `${a.vaultId}:${a.grams}`).join(", ") + (r.shortfall ? ` [shortfall ${r.shortfall}]` : ""));
+        }
+        if (isSellMetal) {
+          await returnSaleToVault(fromTokenLower.toUpperCase() as VaultMetal, fromAmount);
+          console.log(`🏛️ Vault return ${fromAmount}g ${fromTokenLower.toUpperCase()}`);
+        }
+      } catch (e) {
+        console.error("🏛️ Vault inventory hook failed (non-blocking):", e);
+      }
+    })();
 
     // 9. Audit log
     await logTrade(
