@@ -23,6 +23,10 @@
   ],
   "crons": [
     {
+      "path": "/api/cron/rwa-io-push",
+      "schedule": "0 7 * * *"
+    },
+    {
       "path": "/api/oracle",
       "schedule": "*/5 * * * *"
     },
