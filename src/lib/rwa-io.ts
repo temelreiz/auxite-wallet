@@ -29,7 +29,9 @@ export const RWA_IO_ASSET_IDS: Record<string, string> = {
 
 // Uploadable presets we provide (presetId → units). The rest (price/volume/etc.
 // at project level) RWA.io sources from CoinGecko/DefiLlama automatically.
-export type RwaPreset = "circulating-supply" | "total-supply" | "price" | "aum" | "nav" | "holders";
+export type RwaPreset =
+  | "circulating-supply" | "total-supply" | "price" | "aum" | "nav"
+  | "holders" | "tokenized-value" | "volume-24h" | "daily-tx" | "daily-active-addresses";
 
 const headers = () => ({ "x-api-key": KEY, "content-type": "application/json", accept: "application/json" });
 
