@@ -18,12 +18,13 @@
 const BASE = "https://api.rwa.io";
 const KEY = process.env.RWA_IO_API_KEY || "";
 
-// RWA.io internal assetId per token. AUXG confirmed; others via env once known.
+// RWA.io internal assetId per token (from the issuer dashboard asset-token URL:
+// app.rwa.io/asset-token/<slug>/<assetId>). Env overrides allowed.
 export const RWA_IO_ASSET_IDS: Record<string, string> = {
   AUXG: process.env.RWA_IO_ASSET_AUXG || "6a280ee965c50906f83fc01e",
-  AUXS: process.env.RWA_IO_ASSET_AUXS || "",
-  AUXPT: process.env.RWA_IO_ASSET_AUXPT || "",
-  AUXPD: process.env.RWA_IO_ASSET_AUXPD || "",
+  AUXS: process.env.RWA_IO_ASSET_AUXS || "6a2811d965c50906f83fc022",
+  AUXPT: process.env.RWA_IO_ASSET_AUXPT || "6a2812b465c50906f83fc026",
+  AUXPD: process.env.RWA_IO_ASSET_AUXPD || "6a28141b65c50906f83fc02a",
 };
 
 // Uploadable presets we provide (presetId → units). The rest (price/volume/etc.
