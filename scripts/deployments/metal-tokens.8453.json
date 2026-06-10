@@ -1,0 +1,28 @@
+{
+  "chainId": 8453,
+  "deployer": "0xD4ceCfdf73ccCD0517F576e75BE469D75E0a1658",
+  "reserveInfoURI": "https://vault.auxite.io/trust/reserves",
+  "deployedAt": "2026-06-08T22:40:08.510Z",
+  "tokens": [
+    {
+      "symbol": "AUXG",
+      "address": "0xCef9D7593E8Ba796eE05C54B8983B7749bB1218a",
+      "txHash": "0x5e4a07e846313a7ce85fa331dae18f052767c92eef515f5255f33416c73507a0"
+    },
+    {
+      "symbol": "AUXS",
+      "address": "0xB0aC63aeD12b5A0Ee710618D99444bf126068c1a",
+      "txHash": "0x58d8e3699b0876cb05a8645e0fabd24abb13f0b1d8cf92a8c70baced6f896dd4"
+    },
+    {
+      "symbol": "AUXPT",
+      "address": "0x39F314fb20668997A2ADDaB1eA9236e0072D5E2D",
+      "txHash": "0x662bd880a15e3ea09283bd326ff2105153d3980be8579174e8153f56738fb0e1"
+    },
+    {
+      "symbol": "AUXPD",
+      "address": "0x6e4837fCf158D15ABFdf90b3954D041D452BE832",
+      "txHash": "0x64472675cee27e372b85adf85173b3870b2383a5da6574dba5c74c2773a18d5e"
+    }
+  ]
+}

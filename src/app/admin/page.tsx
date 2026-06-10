@@ -570,6 +570,14 @@ export default function AdminDashboard() {
     LDN: { name: 'London Vault', country: 'UK', code: 'LDN' },
   });
 
+  // ── Kasa supply / on-chain reconciler (mint/burn to hit vault targets) ──
+  const [vaultRows, setVaultRows] = useState<Array<{ metal: string; target: number; onchain: number; delta: number }>>([]);
+  const [vaultEdits, setVaultEdits] = useState<Record<string, string>>({});
+  const [vaultLoading, setVaultLoading] = useState(false);
+  const [vaultBusy, setVaultBusy] = useState<string | null>(null);
+  const [vaultMsg, setVaultMsg] = useState<{ type: string; text: string }>({ type: "", text: "" });
+  const [vaultPlan, setVaultPlan] = useState<{ dryRun: boolean; ops: any[]; errors: any[] } | null>(null);
+
   // Mobile Config
   const [mobileAppConfig, setMobileAppConfig] = useState<MobileAppConfig>({
     ios: { minVersion: "1.0.0", currentVersion: "1.0.0", forceUpdate: false, storeUrl: "" },
@@ -899,6 +907,9 @@ export default function AdminDashboard() {
     if (activeTab === "oracle") {
       loadOraclePrices();
     }
+    if (activeTab === "siteVaults") {
+      loadVaultTargets();
+    }
 
     return () => intervals.forEach(clearInterval);
   }, [authenticated, activeTab]);
@@ -941,6 +952,57 @@ export default function AdminDashboard() {
   "Authorization": `Bearer ${sessionStorage.getItem("auxite_admin_token")}`,
   "x-admin-address": "0x101bD08219773E0ff8cD3805542c0A2835Fec0FF",
   });
+
+  // ── Kasa supply reconciler actions ──
+  const VAULT_METALS = ["AUXG", "AUXS", "AUXPT", "AUXPD"] as const;
+  const loadVaultTargets = async () => {
+    setVaultLoading(true); setVaultPlan(null);
+    try {
+      const res = await fetch("/api/admin/vault", { headers: getAuthHeaders() });
+      const data = await res.json();
+      if (res.ok) {
+        setVaultRows(data.rows || []);
+        const e: Record<string, string> = {};
+        for (const r of data.rows || []) e[r.metal] = String(r.target);
+        setVaultEdits(e);
+      } else setVaultMsg({ type: "error", text: data.error || "Kasa verisi yüklenemedi" });
+    } catch { setVaultMsg({ type: "error", text: "Bağlantı hatası" }); }
+    finally { setVaultLoading(false); }
+  };
+  const postVault = async (body: any) => {
+    const res = await fetch("/api/admin/vault", { method: "POST", headers: getAuthHeaders(), body: JSON.stringify(body) });
+    return { res, data: await res.json() };
+  };
+  const saveVaultTargets = async () => {
+    setVaultBusy("save"); setVaultMsg({ type: "", text: "" }); setVaultPlan(null);
+    try {
+      const targets: Record<string, number> = {};
+      for (const m of VAULT_METALS) if (vaultEdits[m] !== undefined && vaultEdits[m] !== "") targets[m] = Number(vaultEdits[m]);
+      const { res, data } = await postVault({ action: "save", targets });
+      if (res.ok) { setVaultMsg({ type: "success", text: "Hedefler kaydedildi ✓" }); loadVaultTargets(); }
+      else setVaultMsg({ type: "error", text: data.error || "Kaydedilemedi" });
+    } finally { setVaultBusy(null); }
+  };
+  const previewVault = async () => {
+    setVaultBusy("preview"); setVaultMsg({ type: "", text: "" }); setVaultPlan(null);
+    try {
+      const { res, data } = await postVault({ action: "preview" });
+      if (res.ok) setVaultPlan({ dryRun: true, ops: data.ops || [], errors: data.errors || [] });
+      else setVaultMsg({ type: "error", text: data.error || "Önizleme başarısız" });
+    } finally { setVaultBusy(null); }
+  };
+  const executeVault = async () => {
+    if (!confirm("ZİNCİRE MINT/BURN yapılacak (geri alınamaz). Devam edilsin mi?")) return;
+    setVaultBusy("execute"); setVaultMsg({ type: "", text: "" });
+    try {
+      const { res, data } = await postVault({ action: "execute" });
+      if (res.ok) {
+        setVaultPlan({ dryRun: false, ops: data.ops || [], errors: data.errors || [] });
+        setVaultMsg({ type: data.errors?.length ? "error" : "success", text: data.errors?.length ? `${data.errors.length} hata oluştu` : "Mint tamamlandı ✅" });
+        loadVaultTargets();
+      } else setVaultMsg({ type: "error", text: data.error || "Execute başarısız" });
+    } finally { setVaultBusy(null); }
+  };
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // DATA LOADING FUNCTIONS
@@ -5550,6 +5612,86 @@ export default function AdminDashboard() {
           {/* Vaults Tab */}
           {activeTab === "siteVaults" && (
             <div className="space-y-6">
+              {/* ── Kasa Arzı / On-chain Mint ── */}
+              <div className="bg-slate-900/50 border border-amber-500/20 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-2xl font-bold">🪙 Kasa Arzı & Mint</h2>
+                  <button onClick={loadVaultTargets} disabled={vaultLoading} className="text-sm text-slate-400 hover:text-white disabled:opacity-50">↻ Yenile</button>
+                </div>
+                <p className="text-sm text-slate-400 mb-4">
+                  Kasaya metal ekleyince ilgili tokenin <b>hedef gramını</b> gir → <b>Kaydet</b> → <b>Önizle</b> (ne mint/burn olacak) → <b>Çalıştır</b> (zincire mint).
+                  Sonrası otomatik: supply <code className="text-amber-300">/api/supply</code> + RWA.io / rwa.xyz crontan güncellenir.
+                </p>
+
+                {vaultMsg.text && (
+                  <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${vaultMsg.type === "success" ? "bg-emerald-500/15 text-emerald-300" : "bg-red-500/15 text-red-300"}`}>{vaultMsg.text}</div>
+                )}
+
+                {vaultLoading ? <p className="text-slate-400 text-sm">Yükleniyor…</p> : (
+                  <div className="bg-slate-950/60 rounded-lg border border-slate-800 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="text-slate-400 border-b border-slate-800">
+                        <tr>
+                          <th className="text-left px-4 py-3">Metal</th>
+                          <th className="text-right px-4 py-3">On-chain (g)</th>
+                          <th className="text-right px-4 py-3">Hedef (g)</th>
+                          <th className="text-right px-4 py-3">Fark</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {vaultRows.map((r) => {
+                          const d = (Number(vaultEdits[r.metal]) || 0) - r.onchain;
+                          const name: Record<string, string> = { AUXG: "Altın", AUXS: "Gümüş", AUXPT: "Platin", AUXPD: "Paladyum" };
+                          return (
+                            <tr key={r.metal} className="border-b border-slate-800/50">
+                              <td className="px-4 py-3 font-semibold">{r.metal} <span className="text-slate-500 font-normal">{name[r.metal]}</span></td>
+                              <td className="px-4 py-3 text-right font-mono text-slate-300">{r.onchain.toLocaleString()}</td>
+                              <td className="px-4 py-3 text-right">
+                                <input
+                                  type="number" value={vaultEdits[r.metal] ?? ""}
+                                  onChange={(e) => setVaultEdits({ ...vaultEdits, [r.metal]: e.target.value })}
+                                  className="w-32 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-right font-mono focus:border-amber-500 outline-none text-white"
+                                />
+                              </td>
+                              <td className={`px-4 py-3 text-right font-mono ${d > 0 ? "text-emerald-400" : d < 0 ? "text-red-400" : "text-slate-500"}`}>
+                                {d > 0 ? `+${d.toLocaleString()} mint` : d < 0 ? `${d.toLocaleString()} burn` : "—"}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-3 mt-4">
+                  <button onClick={saveVaultTargets} disabled={!!vaultBusy} className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-50 font-semibold text-sm">{vaultBusy === "save" ? "Kaydediliyor…" : "Hedefleri Kaydet"}</button>
+                  <button onClick={previewVault} disabled={!!vaultBusy} className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 font-semibold text-sm">{vaultBusy === "preview" ? "Önizleniyor…" : "Önizle (dry-run)"}</button>
+                  <button onClick={executeVault} disabled={!!vaultBusy} className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 font-semibold text-sm text-black">{vaultBusy === "execute" ? "Çalıştırılıyor…" : "Çalıştır (mint)"}</button>
+                </div>
+
+                {vaultPlan && (
+                  <div className="mt-4 bg-slate-950/60 rounded-lg border border-slate-800 p-4">
+                    <h3 className="font-semibold mb-3 text-sm">{vaultPlan.dryRun ? "Önizleme (dry-run) — yapılacaklar:" : "Sonuç:"}</h3>
+                    {vaultPlan.ops.length === 0 && vaultPlan.errors.length === 0 && <p className="text-slate-400 text-sm">Değişiklik yok (her şey hedefte).</p>}
+                    <ul className="space-y-1 text-sm font-mono">
+                      {vaultPlan.ops.map((o, i) => (
+                        <li key={i} className={o.kind === "mint" ? "text-emerald-300" : "text-amber-300"}>
+                          {o.kind === "mint" ? "↑ MINT" : "↓ BURN"} {o.grams}g {o.metal} {o.isTreasury ? "→ Treasury" : `→ ${String(o.account).slice(0, 10)}…`}
+                          {o.txHash && <a href={`https://basescan.org/tx/${o.txHash}`} target="_blank" rel="noreferrer" className="ml-2 text-blue-400 underline">tx</a>}
+                        </li>
+                      ))}
+                    </ul>
+                    {vaultPlan.errors.length > 0 && (
+                      <div className="mt-3 text-sm text-red-400">
+                        <p className="font-semibold">Hatalar:</p>
+                        {vaultPlan.errors.map((e: any, i: number) => <p key={i}>{e.metal}: {String(e.error).slice(0, 140)}</p>)}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">🏛️ Kasa Lokasyonları</h2>
                 <button
