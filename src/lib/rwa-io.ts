@@ -137,7 +137,7 @@ export async function pushProjectMetrics(
 
   for (const m of metrics) {
     if (!(m.value > 0)) { failed.push(`${m.presetId}(no-value)`); continue; }
-    const dbg = dbgOut ? (dbgOut.steps[m.presetId] = {}) : undefined;
+    const dbg: any = dbgOut ? (dbgOut.steps[m.presetId] = {}) : undefined;
     let tsId: string | null =
       infos.find((i) => i.presetId === m.presetId && i.canUploadData)?.id || null;
     if (dbg) dbg.existingTsId = tsId;
