@@ -40,6 +40,7 @@ const nextConfig = {
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
           "font-src 'self' https://fonts.gstatic.com data:",
           "img-src 'self' data: blob: https: https://www.facebook.com",
+          "media-src 'self' blob: data: https://*.mubert.com https://*.gcp.mubert.com https://static-eu.gcp.mubert.com https://stream.mubert.com",
           "connect-src 'self' https: wss: https://*.auxite.io https://*.upstash.io https://*.walletconnect.com https://*.walletconnect.org wss://*.walletconnect.com wss://*.walletconnect.org https://*.infura.io https://*.alchemy.com https://cloudflare-eth.com https://api.coingecko.com https://api.goldapi.io https://*.sentry.io https://*.coinbase.com https://*.nowpayments.io https://api.transak.com https://*.sumsub.com https://www.google-analytics.com https://*.analytics.google.com https://connect.facebook.net https://www.facebook.com https://api.stripe.com https://merchant-ui-api.stripe.com",
           "frame-src 'self' https://challenges.cloudflare.com https://verify.walletconnect.com https://global-stg.transak.com https://global.transak.com https://*.sumsub.com https://*.google.com https://js.stripe.com https://hooks.stripe.com",
           "object-src 'none'",

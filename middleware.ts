@@ -42,7 +42,7 @@ function buildCsp() {
     "img-src 'self' data: blob: https: https://www.facebook.com",
     "frame-src 'self' https://*.sumsub.com https://*.google.com https://global-stg.transak.com https://global.transak.com https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com",
     "connect-src 'self' https: wss: https://www.google-analytics.com https://*.analytics.google.com https://connect.facebook.net https://www.facebook.com https://api.stripe.com https://merchant-ui-api.stripe.com",
-    "media-src 'self' blob:",
+    "media-src 'self' blob: data: https://*.mubert.com https://*.gcp.mubert.com https://static-eu.gcp.mubert.com https://stream.mubert.com",
     "worker-src 'self' blob:",
     "frame-ancestors 'none'",
     "base-uri 'self'",
