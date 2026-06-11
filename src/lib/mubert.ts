@@ -34,7 +34,6 @@ export const MOODS: Record<string, string> = {
 export type Mood = keyof typeof MOODS;
 
 const ACCESS_KEY = "mubert:access";        // cached customer creds
-const poolKey = (mood: string) => `mubert:pool:${mood}`;
 
 interface CustomerAccess { customerId: string; accessToken: string; expMs: number }
 
@@ -82,7 +81,7 @@ async function generateTrack(mood: Mood, durationSec = 240): Promise<{ url: stri
   const id = (await gen.json())?.data?.id;
   if (!id) return null;
 
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 24; i++) {
     const pr = await fetch(`${BASE}/public/tracks/${id}`, { headers: authHeaders(a) });
     if (pr.ok) {
       const g = (await pr.json())?.data?.generations?.[0];
@@ -96,30 +95,15 @@ async function generateTrack(mood: Mood, durationSec = 240): Promise<{ url: stri
   return null;
 }
 
-// Return a ready music-track URL for a mood, from the pool (instant) or freshly
-// generated (cold start). Keeps the pool topped up best-effort.
+// Return a ready music-track URL for a mood. Generates one fresh track per call
+// (unlimited quota → maximum variety); the widget prefetches the next during
+// playback, so only the very first track has any wait.
 export async function getMusicUrl(mood: Mood = "chill"): Promise<string | null> {
-  const key = poolKey(mood);
   try {
-    const raw = (await redis.lrange(key, 0, -1)) as unknown as Array<{ url: string; expMs: number }>;
-    const fresh = (raw || []).filter((x) => x && x.expMs - Date.now() > 60000);
-    if (fresh.length) {
-      // consume one, persist the rest, and top up if running low
-      const [pick, ...rest] = fresh;
-      await redis.del(key);
-      if (rest.length) await redis.rpush(key, ...rest);
-      if (rest.length < 2) { const t = await generateTrack(mood); if (t) await redis.rpush(key, t); }
-      return pick.url;
-    }
-    // cold: generate two — serve one, pool one
-    const t1 = await generateTrack(mood);
-    const t2 = await generateTrack(mood).catch(() => null);
-    await redis.del(key);
-    if (t2) await redis.rpush(key, t2);
-    return t1?.url || null;
+    const t = await generateTrack(mood);
+    return t?.url || null;
   } catch (e) {
     console.error("[mubert] getMusicUrl failed:", e);
-    const t = await generateTrack(mood).catch(() => null);
-    return t?.url || null;
+    return null;
   }
 }
