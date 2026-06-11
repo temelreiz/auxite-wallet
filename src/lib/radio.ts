@@ -129,6 +129,33 @@ export async function getRadioAudio(lang: RadioLang, origin: string): Promise<{ 
   return { mp3, cached: false };
 }
 
+// ── Quick snapshot (the 📢 Now button — short, ~15–20s) ─────────────────────
+export async function getQuickUpdate(lang: RadioLang, origin: string): Promise<{ mp3: Buffer } | { error: string }> {
+  if (!ELEVEN_KEY) return { error: "ELEVENLABS_API_KEY not set" };
+  const key = `radio:quick:v1:${lang}:${hourBucket()}`;
+  const cached = (await redis.get(key)) as string | null;
+  if (cached) return { mp3: Buffer.from(cached, "base64") };
+
+  const prices = await priceLine(origin);
+  const res = await anthropic.messages.create({
+    model: MODEL, max_tokens: 250,
+    system: `You host Auxite Radio. Output ONLY a spoken ~15-second market snapshot in ${LANG_NAME[lang]} — the four metals' current per-gram prices and today's % change, read naturally and quickly, no intro or outro, no fabricated data.`,
+    messages: [{ role: "user", content: `PRICES:\n${prices || "(unavailable)"}` }],
+  });
+  const script = res.content.filter((c): c is Anthropic.TextBlock => c.type === "text").map((c) => c.text).join(" ").trim();
+  if (!script) return { error: "no script" };
+
+  const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+    method: "POST",
+    headers: { "xi-api-key": ELEVEN_KEY, "Content-Type": "application/json", accept: "audio/mpeg" },
+    body: JSON.stringify({ text: script, model_id: "eleven_multilingual_v2", voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.2 } }),
+  });
+  if (!r.ok) return { error: `ElevenLabs ${r.status}` };
+  const mp3 = Buffer.from(await r.arrayBuffer());
+  await redis.set(key, mp3.toString("base64"), { ex: 3600 });
+  return { mp3 };
+}
+
 // ── Welcome greeting (static, played on every radio open) ───────────────────
 const WELCOME: Record<RadioLang, string> = {
   en: "Welcome to Auxite. Enjoy the music and the market updates while you're with us.",

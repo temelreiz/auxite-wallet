@@ -77,6 +77,8 @@ export default function RadioWidget() {
 
   const playWelcome = useCallback(() => playVoice(`/api/radio/audio?kind=welcome&lang=${lang}`), [lang, playVoice]);
   const playStationId = useCallback(() => { setSegTitle(""); return playVoice(`/api/radio/audio?kind=stationid&lang=${lang}`); }, [lang, playVoice]);
+  // 📢 Now → short market snapshot (not the long scheduled segment).
+  const playQuick = useCallback(() => { setSegTitle("Market snapshot"); return playVoice(`/api/radio/audio?kind=quick&lang=${lang}&h=${Math.floor(Date.now() / 3600000)}`); }, [lang, playVoice]);
   // Programmed segment: fetch its title, then play it over ducked music.
   const playSegment = useCallback(async () => {
     try {
@@ -162,8 +164,8 @@ export default function RadioWidget() {
                 : on ? <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
                 : <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>}
             </button>
-            <button onClick={playSegment} disabled={!on || speaking}
-              className="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-xs font-medium" title="Play the current segment now">📢 Now</button>
+            <button onClick={playQuick} disabled={!on || speaking}
+              className="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-xs font-medium" title="Quick market snapshot">📢 Now</button>
             <div className="flex gap-1 ml-auto">
               {LANGS.map((l) => (
                 <button key={l.id} onClick={() => pickLang(l.id)}

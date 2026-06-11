@@ -1,6 +1,6 @@
 // GET /api/radio/audio?lang=en|de|ar → MP3 of the current radio broadcast.
 import { NextRequest, NextResponse } from "next/server";
-import { getRadioAudio, getWelcomeAudio, getStaticClip, RADIO_LANGS, type RadioLang } from "@/lib/radio";
+import { getRadioAudio, getWelcomeAudio, getStaticClip, getQuickUpdate, RADIO_LANGS, type RadioLang } from "@/lib/radio";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
   const kind = sp.get("kind");
   const res = kind === "welcome" ? await getWelcomeAudio(lang)
     : kind === "stationid" ? await getStaticClip("stationid", lang)
+    : kind === "quick" ? await getQuickUpdate(lang, origin)
     : await getRadioAudio(lang, origin);
   if ("error" in res) {
     return NextResponse.json({ success: false, error: res.error }, { status: 502 });
