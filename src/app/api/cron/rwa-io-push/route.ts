@@ -107,7 +107,14 @@ export async function GET(request: NextRequest) {
     projectMetrics.push({ presetId: "unique-wallets", value: totalWallets });
   }
   const debug = new URL(request.url).searchParams.get("debug") === "1";
-  const project = projectMetrics.length ? await pushProjectMetrics(projectMetrics, undefined, debug) : null;
+  // Project-level series need a "project token" set in the RWA.io dashboard
+  // (otherwise data/add → 400 "Project token is not set"). Gated off until then;
+  // set RWA_IO_PUSH_PROJECT=1 (or pass ?project=1) to enable. Token-level push is
+  // unaffected and always runs.
+  const projectEnabled = process.env.RWA_IO_PUSH_PROJECT === "1" || new URL(request.url).searchParams.get("project") === "1";
+  const project = (projectEnabled && projectMetrics.length)
+    ? await pushProjectMetrics(projectMetrics, undefined, debug)
+    : (projectMetrics.length ? { skipped: "project push disabled (set RWA_IO_PUSH_PROJECT=1 after setting the project token in RWA.io)" } : null);
 
   return NextResponse.json({ success: true, ts: Date.now(), holders, totalWallets, project, results });
 }
