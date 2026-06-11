@@ -21,8 +21,7 @@ const TAGLINE: Record<Lang, string> = {
 };
 const MUSIC_VOL = 0.5;
 const DUCK_VOL = 0.1;
-const FIRST_UPDATE_MS = 90 * 1000;     // first spoken update ~1.5 min in
-const UPDATE_EVERY_MS = 5 * 60 * 1000; // then every ~5 min
+const SEGMENT_EVERY_MS = 2 * 60 * 60 * 1000; // a programmed segment every ~2h (welcome covers the open)
 
 export default function RadioWidget() {
   const [open, setOpen] = useState(false);
@@ -31,6 +30,7 @@ export default function RadioWidget() {
   const [on, setOn] = useState(false);
   const [buffering, setBuffering] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [segTitle, setSegTitle] = useState("");
   const [script, setScript] = useState("");
 
   const musicRef = useRef<HTMLAudioElement | null>(null);
@@ -63,16 +63,26 @@ export default function RadioWidget() {
     return () => { alive = false; };
   }, [open, lang]);
 
-  const playUpdate = useCallback(async () => {
+  const playVoice = useCallback(async (src: string) => {
     const v = voiceRef.current; if (!v) return;
     lastUpdate.current = Date.now();
     try {
-      v.src = `/api/radio/audio?lang=${lang}&h=${Math.floor(Date.now() / 3600000)}`;
+      v.src = src;
       if (musicRef.current) musicRef.current.volume = DUCK_VOL;
       setSpeaking(true);
       await v.play();
     } catch { setSpeaking(false); if (musicRef.current) musicRef.current.volume = MUSIC_VOL; }
-  }, [lang]);
+  }, []);
+
+  const playWelcome = useCallback(() => playVoice(`/api/radio/audio?kind=welcome&lang=${lang}`), [lang, playVoice]);
+  // Programmed segment: fetch its title, then play it over ducked music.
+  const playSegment = useCallback(async () => {
+    try {
+      const m = await fetch(`/api/radio/segment?lang=${lang}&meta=1`).then((r) => r.json());
+      if (m?.title) setSegTitle(m.title);
+    } catch {}
+    playVoice(`/api/radio/segment?lang=${lang}&t=${Math.floor(Date.now() / 600000)}`);
+  }, [lang, playVoice]);
 
   const start = useCallback(async () => {
     const m = musicRef.current; if (!m) return;
@@ -86,7 +96,8 @@ export default function RadioWidget() {
     catch { setBuffering(false); return; }
     setBuffering(false);
     fetchMusicUrl().then((u) => { nextUrl.current = u; }); // prefetch next
-  }, [fetchMusicUrl]);
+    playWelcome(); // greet on every open, ducking the music
+  }, [fetchMusicUrl, playWelcome]);
 
   const stop = useCallback(() => {
     musicRef.current?.pause(); voiceRef.current?.pause();
@@ -108,16 +119,14 @@ export default function RadioWidget() {
     if (musicRef.current) musicRef.current.volume = MUSIC_VOL;
   }, []);
 
-  // Auto market update: first ~1.5 min in, then every ~5 min, while playing.
+  // Programmed segment every ~2h while playing (welcome covers the open).
   useEffect(() => {
     if (!on) return;
     const t = setInterval(() => {
-      const since = Date.now() - lastUpdate.current;
-      const due = lastUpdate.current === 0 ? FIRST_UPDATE_MS : UPDATE_EVERY_MS;
-      if (since >= due && !speaking) playUpdate();
-    }, 20000);
+      if (Date.now() - lastUpdate.current >= SEGMENT_EVERY_MS && !speaking) playSegment();
+    }, 60000);
     return () => clearInterval(t);
-  }, [on, speaking, playUpdate]);
+  }, [on, speaking, playSegment]);
 
   const pickLang = (l: Lang) => { setLang(l); sessionStorage.setItem("auxite_radio_lang", l); };
 
@@ -132,7 +141,7 @@ export default function RadioWidget() {
               <span className={`text-lg ${on ? "animate-pulse" : ""}`}>📻</span>
               <div>
                 <div className="text-sm font-semibold leading-none">Auxite Radio</div>
-                <div className="text-[10px] text-[#BFA181] mt-0.5">{speaking ? "Market update…" : on ? "♪ Music" : TAGLINE[lang]}</div>
+                <div className="text-[10px] text-[#BFA181] mt-0.5">{speaking ? (segTitle || "On air…") : on ? "♪ Music" : TAGLINE[lang]}</div>
               </div>
             </div>
             <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-white text-sm" aria-label="Minimize">▾</button>
@@ -145,8 +154,8 @@ export default function RadioWidget() {
                 : on ? <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
                 : <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>}
             </button>
-            <button onClick={playUpdate} disabled={!on || speaking}
-              className="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-xs font-medium" title="Play market update now">📢 Update</button>
+            <button onClick={playSegment} disabled={!on || speaking}
+              className="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-xs font-medium" title="Play the current segment now">📢 Now</button>
             <div className="flex gap-1 ml-auto">
               {LANGS.map((l) => (
                 <button key={l.id} onClick={() => pickLang(l.id)}
