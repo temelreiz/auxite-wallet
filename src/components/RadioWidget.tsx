@@ -21,7 +21,9 @@ const TAGLINE: Record<Lang, string> = {
 };
 const MUSIC_VOL = 0.5;
 const DUCK_VOL = 0.1;
-const SEGMENT_EVERY_MS = 2 * 60 * 60 * 1000; // a programmed segment every ~2h (welcome covers the open)
+const SEGMENT_EVERY_MS = 2 * 60 * 60 * 1000; // a programmed segment every ~2h
+const STATION_EVERY_MS = 30 * 60 * 1000;     // station ID ("You're listening to Auxite Radio") every ~30 min
+const VOICE_BUFFER_MS = 5 * 60 * 1000;       // never two voice clips within 5 min (no clash with the flow)
 
 export default function RadioWidget() {
   const [open, setOpen] = useState(false);
@@ -35,7 +37,9 @@ export default function RadioWidget() {
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const voiceRef = useRef<HTMLAudioElement | null>(null);
   const nextUrl = useRef<string | null>(null);
-  const lastUpdate = useRef<number>(0);
+  const lastUpdate = useRef<number>(0);   // last ANY voice clip
+  const lastSegment = useRef<number>(0);  // last programmed segment
+  const lastStation = useRef<number>(0);  // last station ID
 
   const fetchMusicUrl = useCallback(async (): Promise<string | null> => {
     try {
@@ -72,6 +76,7 @@ export default function RadioWidget() {
   }, []);
 
   const playWelcome = useCallback(() => playVoice(`/api/radio/audio?kind=welcome&lang=${lang}`), [lang, playVoice]);
+  const playStationId = useCallback(() => { setSegTitle(""); return playVoice(`/api/radio/audio?kind=stationid&lang=${lang}`); }, [lang, playVoice]);
   // Programmed segment: fetch its title, then play it over ducked music.
   const playSegment = useCallback(async () => {
     try {
@@ -89,7 +94,7 @@ export default function RadioWidget() {
     if (!url) url = await fetchMusicUrl();
     if (!url) { setBuffering(false); return; }
     m.volume = MUSIC_VOL; m.src = url;
-    try { await m.play(); setOn(true); lastUpdate.current = Date.now(); }
+    try { await m.play(); setOn(true); const t = Date.now(); lastUpdate.current = t; lastSegment.current = t; lastStation.current = t; }
     catch { setBuffering(false); return; }
     setBuffering(false);
     fetchMusicUrl().then((u) => { nextUrl.current = u; }); // prefetch next
@@ -116,14 +121,20 @@ export default function RadioWidget() {
     if (musicRef.current) musicRef.current.volume = MUSIC_VOL;
   }, []);
 
-  // Programmed segment every ~2h while playing (welcome covers the open).
+  // Voice scheduler: a programmed segment every ~2h and a short station ID every
+  // ~30 min, with a 5-min buffer so two clips never play back-to-back (segments
+  // take priority — the station ID is skipped if anything aired recently).
   useEffect(() => {
     if (!on) return;
     const t = setInterval(() => {
-      if (Date.now() - lastUpdate.current >= SEGMENT_EVERY_MS && !speaking) playSegment();
+      if (speaking) return;
+      const now = Date.now();
+      if (now - lastUpdate.current < VOICE_BUFFER_MS) return;
+      if (now - lastSegment.current >= SEGMENT_EVERY_MS) { lastSegment.current = now; playSegment(); return; }
+      if (now - lastStation.current >= STATION_EVERY_MS) { lastStation.current = now; playStationId(); return; }
     }, 60000);
     return () => clearInterval(t);
-  }, [on, speaking, playSegment]);
+  }, [on, speaking, playSegment, playStationId]);
 
   const pickLang = (l: Lang) => { setLang(l); sessionStorage.setItem("auxite_radio_lang", l); };
 

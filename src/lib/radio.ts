@@ -136,9 +136,19 @@ const WELCOME: Record<RadioLang, string> = {
   ar: "مرحباً بكم في أوكسايت. استمتعوا بالموسيقى وتحديثات الأسواق أثناء وجودكم معنا.",
 };
 
-export async function getWelcomeAudio(lang: RadioLang): Promise<{ mp3: Buffer } | { error: string }> {
+// Short station ID ("You're listening to Auxite Radio.") — played on a cadence.
+const STATION_ID: Record<RadioLang, string> = {
+  en: "You're listening to Auxite Radio.",
+  de: "Sie hören Auxite Radio.",
+  ar: "أنتم تستمعون إلى راديو أوكسايت.",
+};
+
+// Static voice clips (welcome / station id), generated once per language and
+// cached 30 days.
+export async function getStaticClip(kind: "welcome" | "stationid", lang: RadioLang): Promise<{ mp3: Buffer } | { error: string }> {
   if (!ELEVEN_KEY) return { error: "ELEVENLABS_API_KEY not set" };
-  const key = `radio:welcome:v2:${lang}`;
+  const text = kind === "stationid" ? STATION_ID[lang] : WELCOME[lang];
+  const key = `radio:${kind}:v2:${lang}`;
   const cached = (await redis.get(key)) as string | null;
   if (cached) return { mp3: Buffer.from(cached, "base64") };
 
@@ -146,16 +156,18 @@ export async function getWelcomeAudio(lang: RadioLang): Promise<{ mp3: Buffer } 
     method: "POST",
     headers: { "xi-api-key": ELEVEN_KEY, "Content-Type": "application/json", accept: "audio/mpeg" },
     body: JSON.stringify({
-      text: WELCOME[lang],
+      text,
       model_id: "eleven_multilingual_v2",
       voice_settings: { stability: 0.55, similarity_boost: 0.75, style: 0.25 },
     }),
   });
   if (!r.ok) return { error: `ElevenLabs ${r.status}: ${(await r.text()).slice(0, 120)}` };
   const mp3 = Buffer.from(await r.arrayBuffer());
-  await redis.set(key, mp3.toString("base64"), { ex: 30 * 86400 }); // static → 30 days
+  await redis.set(key, mp3.toString("base64"), { ex: 30 * 86400 });
   return { mp3 };
 }
+
+export const getWelcomeAudio = (lang: RadioLang) => getStaticClip("welcome", lang);
 
 // ── Programmed schedule: rotating segments + end-of-day report ───────────────
 // Music is the bed; every ~2h a segment plays. The TYPE is chosen by the clock
