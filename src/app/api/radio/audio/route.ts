@@ -15,11 +15,12 @@ export async function GET(request: NextRequest) {
   if ("error" in res) {
     return NextResponse.json({ success: false, error: res.error }, { status: 502 });
   }
-  return new NextResponse(res.mp3, {
+  const body = new Uint8Array(res.mp3);
+  return new NextResponse(body, {
     status: 200,
     headers: {
       "Content-Type": "audio/mpeg",
-      "Content-Length": String(res.mp3.length),
+      "Content-Length": String(body.length),
       "Cache-Control": "public, max-age=1800",
       "X-Radio-Cached": String(res.cached),
     },
