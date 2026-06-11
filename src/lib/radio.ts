@@ -132,14 +132,14 @@ export async function getRadioAudio(lang: RadioLang, origin: string): Promise<{ 
 // ── Quick snapshot (the 📢 Now button — short, ~15–20s) ─────────────────────
 export async function getQuickUpdate(lang: RadioLang, origin: string): Promise<{ mp3: Buffer } | { error: string }> {
   if (!ELEVEN_KEY) return { error: "ELEVENLABS_API_KEY not set" };
-  const key = `radio:quick:v1:${lang}:${hourBucket()}`;
+  const key = `radio:quick:v2:${lang}:${hourBucket()}`;
   const cached = (await redis.get(key)) as string | null;
   if (cached) return { mp3: Buffer.from(cached, "base64") };
 
   const prices = await priceLine(origin);
   const res = await anthropic.messages.create({
-    model: MODEL, max_tokens: 250,
-    system: `You host Auxite Radio. Output ONLY a spoken ~15-second market snapshot in ${LANG_NAME[lang]} — the four metals' current per-gram prices and today's % change, read naturally and quickly, no intro or outro, no fabricated data.`,
+    model: MODEL, max_tokens: 120,
+    system: `You host Auxite Radio. Output ONLY a very brief spoken snapshot in ${LANG_NAME[lang]}: the four metals' per-gram prices with today's % change, as ONE tight run-through (e.g. "Gold one thirty-seven, flat. Silver two twenty-seven, up point one. Platinum fifty-eight. Palladium fifty-three."). HARD LIMIT: under 35 words total. No intro, no outro, no commentary, no fabricated data.`,
     messages: [{ role: "user", content: `PRICES:\n${prices || "(unavailable)"}` }],
   });
   const script = res.content.filter((c): c is Anthropic.TextBlock => c.type === "text").map((c) => c.text).join(" ").trim();
