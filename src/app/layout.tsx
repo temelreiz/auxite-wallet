@@ -12,6 +12,7 @@ import { ChainGuard } from "@/components/ChainGuard";
 import { SecurityBanner } from "@/components/SecurityBanner";
 import { CookieConsent } from "@/components/CookieConsent";
 import SupportChat from "@/components/SupportChat";
+import RadioWidget from "@/components/RadioWidget";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
@@ -202,6 +203,7 @@ export default function RootLayout({
                 {children}
                 <CookieConsent />
                 <SupportChat />
+                <RadioWidget />
                 {/* Vercel Speed Insights — sends Core Web Vitals back to Vercel.
                     Package was installed but never mounted, so the dashboard
                     showed "No data available" for 7 days. */}
