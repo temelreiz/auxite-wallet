@@ -95,13 +95,26 @@ async function generateTrack(mood: Mood, durationSec = 240): Promise<{ url: stri
   return null;
 }
 
-// Return a ready music-track URL for a mood. Generates one fresh track per call
-// (unlimited quota → maximum variety); the widget prefetches the next during
-// playback, so only the very first track has any wait.
-export async function getMusicUrl(mood: Mood = "chill"): Promise<string | null> {
+// Return a ready music-track URL for a mood. Generation takes ~10–30s, so we
+// cache the "current" track URL per mood for a short window: concurrent/repeat
+// listeners share it instantly (radio-style), and it rotates to a fresh track
+// each window. A warm cron (/api/cron/radio-warm) keeps the window populated so
+// the first listener rarely waits. Track URLs are valid ~14 min.
+const CURRENT_KEY = (m: string) => `mubert:current:${m}`;
+const WINDOW_SEC = 210; // ~3.5 min — shorter than the 4-min track
+
+export async function getMusicUrl(mood: Mood = "chill", forceNew = false): Promise<string | null> {
   try {
+    if (!forceNew) {
+      const cached = (await redis.get(CURRENT_KEY(mood))) as { url: string; expMs: number } | null;
+      if (cached?.url && cached.expMs - Date.now() > 30000) return cached.url;
+    }
     const t = await generateTrack(mood);
-    return t?.url || null;
+    if (t?.url) {
+      await redis.set(CURRENT_KEY(mood), { url: t.url, expMs: t.expMs }, { ex: WINDOW_SEC });
+      return t.url;
+    }
+    return null;
   } catch (e) {
     console.error("[mubert] getMusicUrl failed:", e);
     return null;
