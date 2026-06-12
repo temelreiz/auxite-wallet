@@ -33,6 +33,10 @@ export default function RadioWidget() {
   const [buffering, setBuffering] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [segTitle, setSegTitle] = useState("");
+  // Deep-link from ads/campaigns: ?radio=1 auto-opens the widget and pulses the
+  // play button ("tap to listen"). Browsers block autoplay with sound, so the
+  // listener must tap once — this gets them one tap away.
+  const [highlight, setHighlight] = useState(false);
 
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const voiceRef = useRef<HTMLAudioElement | null>(null);
@@ -50,11 +54,14 @@ export default function RadioWidget() {
   }, []);
 
   // Restore last language + prefetch a music URL so the first play is instant.
+  // Also honor the ?radio=1 deep-link (open + highlight the play button).
   useEffect(() => {
     if (typeof window === "undefined") return;
     const l = sessionStorage.getItem("auxite_radio_lang") as Lang | null;
     if (l && LANGS.some((x) => x.id === l)) setLang(l);
     if (!nextUrl.current) fetchMusicUrl().then((u) => { nextUrl.current = u; });
+    const r = new URLSearchParams(window.location.search).get("radio");
+    if (r === "1" || r === "open" || r === "true") { setOpen(true); setHighlight(true); }
   }, [fetchMusicUrl]);
 
   // When embedded in an iframe (auxite.io etc.), tell the parent to resize the
@@ -94,6 +101,7 @@ export default function RadioWidget() {
     if (!url) url = await fetchMusicUrl();
     if (!url) { setBuffering(false); return; }
     m.volume = MUSIC_VOL; m.src = url;
+    setHighlight(false);
     try { await m.play(); setOn(true); const t = Date.now(); lastUpdate.current = t; lastSegment.current = t; lastStation.current = t; }
     catch { setBuffering(false); return; }
     setBuffering(false);
@@ -149,7 +157,7 @@ export default function RadioWidget() {
               <span className={`text-lg ${on ? "animate-pulse" : ""}`}>📻</span>
               <div>
                 <div className="text-sm font-semibold leading-none">Auxite Radio</div>
-                <div className="text-[10px] text-[#BFA181] mt-0.5">{speaking ? (segTitle || "On air…") : on ? "♪ Music" : TAGLINE[lang]}</div>
+                <div className="text-[10px] text-[#BFA181] mt-0.5">{speaking ? (segTitle || "On air…") : on ? "♪ Music" : highlight ? "👇 Tap play to listen" : TAGLINE[lang]}</div>
               </div>
             </div>
             <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-white text-sm" aria-label="Minimize">▾</button>
@@ -157,7 +165,7 @@ export default function RadioWidget() {
 
           <div className="flex items-center gap-2 mb-3">
             <button onClick={toggle} disabled={buffering}
-              className="w-11 h-11 shrink-0 rounded-full bg-[#BFA181] hover:bg-[#cdb393] disabled:opacity-60 text-black flex items-center justify-center transition" aria-label={on ? "Pause" : "Play"}>
+              className={`w-11 h-11 shrink-0 rounded-full bg-[#BFA181] hover:bg-[#cdb393] disabled:opacity-60 text-black flex items-center justify-center transition ${highlight && !on ? "ring-4 ring-[#BFA181]/60 animate-pulse" : ""}`} aria-label={on ? "Pause" : "Play"}>
               {buffering ? <span className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />
                 : on ? <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
                 : <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>}
