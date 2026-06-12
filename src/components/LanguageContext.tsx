@@ -917,7 +917,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [lang, setLangState] = useState<LanguageCode>("tr");
+  const [lang, setLangState] = useState<LanguageCode>("en");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -926,6 +926,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       setLangState(savedLang);
       // Set RTL for Arabic
       document.documentElement.dir = savedLang === "ar" ? "rtl" : "ltr";
+    } else {
+      // No explicit choice yet → detect from the browser language, falling back
+      // to English. Previously this defaulted to Turkish for EVERYONE, so any
+      // non-TR visitor (e.g. from Romania) saw Turkish login/signup/privacy.
+      const browser = (navigator.language || "en").slice(0, 2).toLowerCase();
+      const detected = LANGUAGES.some((l) => l.code === browser) ? (browser as LanguageCode) : "en";
+      setLangState(detected);
+      document.documentElement.dir = detected === "ar" ? "rtl" : "ltr";
     }
     setMounted(true);
   }, []);

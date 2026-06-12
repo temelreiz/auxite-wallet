@@ -88,7 +88,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="tr" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Default PWA icons (ensure these files exist in /public) */}
         <link rel="apple-touch-icon" href="/icon-192.png" />
