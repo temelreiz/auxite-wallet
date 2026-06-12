@@ -102,7 +102,17 @@ export default function RadioWidget() {
     if (!url) { setBuffering(false); return; }
     m.volume = MUSIC_VOL; m.src = url;
     setHighlight(false);
-    try { await m.play(); setOn(true); const t = Date.now(); lastUpdate.current = t; lastSegment.current = t; lastStation.current = t; }
+    try {
+      await m.play(); setOn(true); const t = Date.now(); lastUpdate.current = t; lastSegment.current = t; lastStation.current = t;
+      // Analytics: the radio actually started playing → push to GTM dataLayer +
+      // gtag. GA4 attributes this to the session's UTM source automatically, so
+      // you can see "Instagram visits → radio plays" with no extra tagging.
+      try {
+        const w = window as unknown as { dataLayer?: unknown[]; gtag?: (...a: unknown[]) => void };
+        (w.dataLayer = w.dataLayer || []).push({ event: "radio_play" });
+        if (typeof w.gtag === "function") w.gtag("event", "radio_play", { event_category: "radio" });
+      } catch {}
+    }
     catch { setBuffering(false); return; }
     setBuffering(false);
     fetchMusicUrl().then((u) => { nextUrl.current = u; }); // prefetch next
