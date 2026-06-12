@@ -95,26 +95,26 @@ async function generateTrack(mood: Mood, durationSec = 240): Promise<{ url: stri
   return null;
 }
 
-// Return a ready music-track URL for a mood. Generation takes ~10–30s, so we
-// cache the "current" track URL per mood for a short window: concurrent/repeat
-// listeners share it instantly (radio-style), and it rotates to a fresh track
-// each window. A warm cron (/api/cron/radio-warm) keeps the window populated so
-// the first listener rarely waits. Track URLs are valid ~14 min.
-const CURRENT_KEY = (m: string) => `mubert:current:${m}`;
-const WINDOW_SEC = 210; // ~3.5 min — shorter than the 4-min track
+// Return a CONTINUOUS streaming URL for a mood. We stream rather than generate
+// finite tracks because the license caps track generation at 100/month — but
+// streaming duration is unlimited. The stream is infinite (real radio); the
+// widget just plays it. The link carries a customer access-token (music-only,
+// low value) and is stable for the customer's token lifetime, so we cache it.
+const STREAM_KEY = (m: string) => `mubert:stream:${m}`;
 
-export async function getMusicUrl(mood: Mood = "chill", forceNew = false): Promise<string | null> {
+export async function getMusicUrl(mood: Mood = "chill", _forceNew = false): Promise<string | null> {
   try {
-    if (!forceNew) {
-      const cached = (await redis.get(CURRENT_KEY(mood))) as { url: string; expMs: number } | null;
-      if (cached?.url && cached.expMs - Date.now() > 30000) return cached.url;
-    }
-    const t = await generateTrack(mood);
-    if (t?.url) {
-      await redis.set(CURRENT_KEY(mood), { url: t.url, expMs: t.expMs }, { ex: WINDOW_SEC });
-      return t.url;
-    }
-    return null;
+    const cached = (await redis.get(STREAM_KEY(mood))) as { url: string; expMs: number } | null;
+    if (cached?.url && cached.expMs - Date.now() > 86400000) return cached.url; // >1 day left
+
+    const a = await getAccess();
+    const playlist = MOODS[mood] || MOODS.chill;
+    const r = await fetch(`${BASE}/public/streaming/get-link?playlist_index=${playlist}&bitrate=128&intensity=medium`, { headers: authHeaders(a) });
+    if (!r.ok) { console.error("[mubert] get-link", r.status, (await r.text()).slice(0, 120)); return null; }
+    const url = (await r.json())?.data?.link;
+    if (!url) return null;
+    await redis.set(STREAM_KEY(mood), { url, expMs: a.expMs }, { ex: 25 * 86400 });
+    return url;
   } catch (e) {
     console.error("[mubert] getMusicUrl failed:", e);
     return null;

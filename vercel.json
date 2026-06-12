@@ -115,10 +115,6 @@
     {
       "path": "/api/cron/scan-auxr-deposits",
       "schedule": "* * * * *"
-    },
-    {
-      "path": "/api/cron/radio-warm",
-      "schedule": "*/3 * * * *"
     }
   ]
 }
