@@ -149,18 +149,23 @@ export default function LoginPage() {
   const turnstileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let widgetId: string | undefined;
     const renderTurnstile = () => {
       if (typeof window !== 'undefined' && (window as any).turnstile && turnstileRef.current) {
-        (window as any).turnstile.render(turnstileRef.current, {
+        widgetId = (window as any).turnstile.render(turnstileRef.current, {
           sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAACv9Q3DdgFyWWkIz',
           callback: (token: string) => setTurnstileToken(token),
           theme: 'dark',
+          language: lang, // match the app language (else Turnstile auto-picks the browser locale)
         });
       }
     };
     const timer = setTimeout(renderTurnstile, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    return () => {
+      clearTimeout(timer);
+      try { if (widgetId && (window as any).turnstile) (window as any).turnstile.remove(widgetId); } catch {}
+    };
+  }, [lang]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
