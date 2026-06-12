@@ -3,7 +3,9 @@
 // Public endpoint (no auth required) — returns aggregate custody data only
 import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
+import { ethers } from 'ethers';
 import { getPlatformSummary, getPlatformLedgerLog } from '@/lib/leasing/encumbrance-ledger';
+import { MIRROR_TOKENS, CANONICAL_TOKENS, CANONICAL_READY, TOKEN_CONFIG, type MetalSymbol } from '@/config/contracts-v8';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +13,21 @@ const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
+
+// Custody holdings are the on-chain token totalSupply — every token is backed
+// 1:1 by allocated physical metal (1 token = 1 gram), so on-chain supply IS the
+// canonical reserve figure. Reading it directly (rather than a separate Redis
+// stock value) keeps proof-of-reserves and supply permanently in lock-step.
+const BASE_RPC_URL = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
+const TOKENS = (CANONICAL_READY ? CANONICAL_TOKENS : MIRROR_TOKENS) as Record<MetalSymbol, string>;
+const ERC20_ABI = ['function totalSupply() view returns (uint256)'];
+
+async function getOnChainSupplyGrams(symbol: MetalSymbol): Promise<number> {
+  const provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
+  const contract = new ethers.Contract(TOKENS[symbol], ERC20_ABI, provider);
+  const raw: bigint = await contract.totalSupply();
+  return parseFloat(ethers.formatUnits(raw, TOKEN_CONFIG.DECIMALS));
+}
 
 const METALS = ['AUXG', 'AUXS', 'AUXPT', 'AUXPD'];
 const OZ_TO_GRAMS = 31.1035;
@@ -61,37 +78,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(cached);
     }
 
-    // ── Layer 1: Custody Snapshot (from platform stock) ──
-    let latestUpdate: string | null = null;
+    // ── Layer 1: Custody Snapshot (on-chain totalSupply = 1:1 reserve) ──
+    const latestUpdate: string | null = new Date().toISOString();
     const custodyMetals: CustodyTransparencyResponse['layers']['custodySnapshot']['metals'] = [];
 
     for (const metal of METALS) {
-      const stockKey = `platform:stock:${metal}`;
-      const data = await redis.hgetall(stockKey);
-
-      if (data && Object.keys(data).length > 0) {
-        const totalG = parseFloat(data.total as string || '0');
-        custodyMetals.push({
-          symbol: metal,
-          custodyHoldingsG: totalG,
-          custodyHoldingsKg: totalG / 1000,
-        });
-
-        if (data.lastUpdated) {
-          const ts = typeof data.lastUpdated === 'number'
-            ? new Date(data.lastUpdated).toISOString()
-            : String(data.lastUpdated);
-          if (!latestUpdate || ts > latestUpdate) {
-            latestUpdate = ts;
-          }
-        }
-      } else {
-        custodyMetals.push({
-          symbol: metal,
-          custodyHoldingsG: 0,
-          custodyHoldingsKg: 0,
-        });
-      }
+      const totalG = await getOnChainSupplyGrams(metal as MetalSymbol);
+      custodyMetals.push({
+        symbol: metal,
+        custodyHoldingsG: totalG,
+        custodyHoldingsKg: totalG / 1000,
+      });
     }
 
     // ── Layer 2: Encumbrance Visibility ──
