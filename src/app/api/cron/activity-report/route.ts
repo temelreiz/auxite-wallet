@@ -128,11 +128,45 @@ export async function GET(req: NextRequest) {
       Object.values(a.grams).reduce((x, y) => x + y, 0),
   );
 
+  // ── 3) Resolve identity (email/name/KYC) for metal holders via auth:user:* ─
+  const idMap = new Map<string, Record<string, any>>();
+  if (metalHolders.length) {
+    const wanted = new Set(metalHolders.map((h) => h.address));
+    let aCursor: any = 0;
+    do {
+      const [next, keys] = (await redis.scan(aCursor, { match: "auth:user:*", count: 500 })) as [any, string[]];
+      aCursor = next;
+      if (keys.length) {
+        const pipe = redis.pipeline();
+        keys.forEach((k) => pipe.hgetall(k));
+        const rows = (await pipe.exec()) as Array<Record<string, any> | null>;
+        rows.forEach((d) => {
+          const wa = d?.walletAddress ? String(d.walletAddress).toLowerCase() : null;
+          if (wa && wanted.has(wa) && !idMap.has(wa)) {
+            const name = (d.name || `${d.firstName || ""} ${d.lastName || ""}`.trim()) || null;
+            idMap.set(wa, {
+              email: d.email || null,
+              name: name || null,
+              kycStatus: d.kycStatus || null,
+              authProvider: d.authProvider || null,
+              createdAt: d.createdAt || null,
+            });
+          }
+        });
+      }
+      if (idMap.size >= wanted.size) break;
+    } while (String(aCursor) !== "0");
+  }
+
+  const metalHoldersWithId = metalHolders
+    .slice(0, 50)
+    .map((h) => ({ ...h, identity: idMap.get(h.address) || null }));
+
   return NextResponse.json({
     success: true,
     excludedDemo: [...EXCLUDED],
     balances: { scanned, capped, usersWithBalance, usersWithMetal, usersWithCrypto, demoSkipped },
-    metalHolders: metalHolders.slice(0, 50),
+    metalHolders: metalHoldersWithId,
     transactions: { scanned: txScanned, capped: txCapped, usersWithTx, totalTx },
     ts: Date.now(),
   });
