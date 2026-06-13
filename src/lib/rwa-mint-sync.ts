@@ -117,6 +117,20 @@ export async function setVaultTargets(targets: Partial<Record<Metal, number>>): 
 const holdersKey = (m: Metal) => `rwa:onchain:holders:${m}`;
 const legacyBackfillKey = (m: Metal) => `rwa:backfill:minted:${m}`;
 
+// Addresses excluded from on-chain reconciliation: test/demo accounts whose
+// balances are LOADED for review (App Store demo, internal QA), not real
+// purchases — they must never be minted as on-chain holders. Comma-separated
+// RWA_SYNC_EXCLUDE env extends the list.
+const EXCLUDED = new Set(
+  [
+    "0x7cffdf3cda3350cc727049b0aba34af6dc6821ed", // App Store / Apple review demo account
+    ...(process.env.RWA_SYNC_EXCLUDE || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+  ].map((a) => a.toLowerCase()),
+);
+
 export interface ReconcileOp {
   metal: Metal;
   account: string;
@@ -145,6 +159,7 @@ async function readClaimsByUser(): Promise<Map<string, Record<Metal, number>>> {
   const add = (addr: string, m: Metal, g: number) => {
     if (!g || g <= 0) return;
     const a = addr.toLowerCase();
+    if (EXCLUDED.has(a)) return; // skip demo/test accounts — never mint them on-chain
     if (!byUser.has(a)) byUser.set(a, { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 });
     byUser.get(a)![m] += g;
   };
