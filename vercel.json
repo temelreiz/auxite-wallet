@@ -29,6 +29,10 @@
       "schedule": "0 7 * * *"
     },
     {
+      "path": "/api/cron/activity-report?notify=1",
+      "schedule": "0 21 * * *"
+    },
+    {
       "path": "/api/oracle",
       "schedule": "*/5 * * * *"
     },

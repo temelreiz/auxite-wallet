@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { Resend } from "resend";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -202,12 +203,64 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  return NextResponse.json({
+  const date = new Date().toISOString().slice(0, 10);
+  const payload = {
     success: true,
+    date,
     excludedDemo: [...EXCLUDED],
     balances: { scanned, capped, usersWithBalance, usersWithMetal, usersWithCrypto, demoSkipped },
     metalHolders: metalHoldersWithId,
     transactions: { scanned: txScanned, capped: txCapped, usersWithTx, totalTx },
     ts: Date.now(),
-  });
+  };
+
+  // ── 4) ?notify=1 → store snapshot + email a CSV report (daily EOD cron) ─────
+  let emailed = false;
+  if (new URL(req.url).searchParams.get("notify") === "1") {
+    try {
+      await redis.set(`activity:report:${date}`, JSON.stringify(payload), { ex: 60 * 60 * 24 * 90 });
+    } catch { /* snapshot is best-effort */ }
+
+    const csvEsc = (v: unknown) => {
+      const s = v == null ? "" : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const COLS = ["address", "auxg", "auxs", "auxpt", "auxpd", "email", "name", "userId", "kycStatus", "authProvider", "createdAt"];
+    const lines = metalHoldersWithId.map((h) => {
+      const id: Record<string, any> = h.identity || {};
+      return [
+        h.address,
+        h.grams.auxg ?? "", h.grams.auxs ?? "", h.grams.auxpt ?? "", h.grams.auxpd ?? "",
+        id.email ?? "", id.name ?? "", id.userId ?? "", id.kycStatus ?? "", id.authProvider ?? "", id.createdAt ?? "",
+      ].map(csvEsc).join(",");
+    });
+    const csv = [COLS.join(","), ...lines].join("\n");
+
+    const html =
+      `<h2>Auxite Gün Sonu — ${date}</h2>` +
+      `<ul>` +
+      `<li>Bakiyeli kullanıcı: <b>${usersWithBalance}</b> (metal ${usersWithMetal}, kripto ${usersWithCrypto})</li>` +
+      `<li>İşlem yapan: <b>${usersWithTx}</b> &middot; toplam <b>${totalTx}</b> işlem</li>` +
+      `<li>Metal holder: <b>${usersWithMetal}</b></li>` +
+      `<li>Taranan kayıt: ${scanned}${capped ? " (capped)" : ""} &middot; demo hariç</li>` +
+      `</ul>` +
+      `<p>Detaylı metal holder listesi ekteki CSV dosyasında.</p>`;
+
+    const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+    const to = process.env.EOD_REPORT_TO || "bs@auxite.io";
+    if (resend) {
+      try {
+        const { error } = await resend.emails.send({
+          from: `${process.env.FROM_NAME || "Auxite"} <${process.env.FROM_EMAIL || "noreply@auxite.io"}>`,
+          to,
+          subject: `Auxite Gün Sonu Raporu — ${date}`,
+          html,
+          attachments: [{ filename: `auxite-activity-${date}.csv`, content: Buffer.from(csv, "utf8") }],
+        });
+        emailed = !error;
+      } catch { emailed = false; }
+    }
+  }
+
+  return NextResponse.json({ ...payload, emailed });
 }
