@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  try {
   // ── 1) Balances ──────────────────────────────────────────────────────────
   let cursor: any = 0;
   let scanned = 0;
@@ -263,4 +264,10 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ ...payload, emailed });
+  } catch (e: any) {
+    return NextResponse.json(
+      { error: e?.message || String(e), stack: String(e?.stack || "").split("\n").slice(0, 6) },
+      { status: 500 },
+    );
+  }
 }
