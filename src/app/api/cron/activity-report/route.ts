@@ -156,10 +156,28 @@ export async function GET(req: NextRequest) {
       merge(addr, (await redis.hgetall(`user:${uid}`)) as Record<string, any> | null);
     }
     merge(addr, (await redis.hgetall(`user:${addr}:info`)) as Record<string, any> | null);
-    const k = (await redis.hgetall(`kyc:${addr}`)) as Record<string, any> | null;
-    if (k) {
-      const st = k.status ?? k.kycStatus ?? k.level ?? k.state ?? null;
+    // kyc:{addr} may be a string, JSON string, or object (NOT a hash) — read
+    // with get() and normalize. Wrapped so a wrong-type key never 500s the run.
+    try {
+      const kraw = await redis.get(`kyc:${addr}`);
+      let st: any = null;
+      if (kraw != null) {
+        if (typeof kraw === "object") {
+          const o = kraw as Record<string, any>;
+          st = o.status ?? o.kycStatus ?? o.level ?? o.state ?? null;
+        } else {
+          const s = String(kraw);
+          try {
+            const o = JSON.parse(s);
+            st = o?.status ?? o?.kycStatus ?? o?.level ?? o?.state ?? s;
+          } catch {
+            st = s;
+          }
+        }
+      }
       if (st != null) kycByAddr.set(addr, String(st));
+    } catch {
+      /* kyc key type/availability is best-effort */
     }
   }
 
