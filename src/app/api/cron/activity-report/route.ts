@@ -128,10 +128,44 @@ export async function GET(req: NextRequest) {
       Object.values(a.grams).reduce((x, y) => x + y, 0),
   );
 
-  // ── 3) Resolve identity (email/name/KYC) for metal holders via auth:user:* ─
+  // ── 3) Resolve identity for metal holders (try every key shape) ───────────
+  const holders = metalHolders.slice(0, 50);
   const idMap = new Map<string, Record<string, any>>();
-  if (metalHolders.length) {
-    const wanted = new Set(metalHolders.map((h) => h.address));
+
+  const pick = (src: Record<string, any>, uid: string | null) => {
+    const name = (src.name || `${src.firstName || ""} ${src.lastName || ""}`.trim()) || null;
+    const has = uid || src.email || name || src.phone;
+    return has
+      ? {
+          userId: uid || src.id || null,
+          email: src.email || null,
+          name,
+          phone: src.phone || null,
+          kycStatus: src.kycStatus || null,
+          authProvider: src.authProvider || null,
+          createdAt: src.createdAt || null,
+        }
+      : null;
+  };
+
+  // (a) direct: user:address:{addr} -> userId -> user:{userId}, plus user:{addr}:info
+  for (const h of holders) {
+    const addr = h.address;
+    let src: Record<string, any> = {};
+    const uid = (await redis.get(`user:address:${addr}`)) as string | null;
+    if (uid) {
+      const prof = (await redis.hgetall(`user:${uid}`)) as Record<string, any> | null;
+      if (prof) src = { ...src, ...prof };
+    }
+    const info = (await redis.hgetall(`user:${addr}:info`)) as Record<string, any> | null;
+    if (info) src = { ...info, ...src }; // profile wins over legacy info
+    const id = pick(src, uid);
+    if (id) idMap.set(addr, id);
+  }
+
+  // (b) fallback: scan auth:user:* matched by walletAddress for the rest
+  const unresolved = new Set(holders.map((h) => h.address).filter((a) => !idMap.has(a)));
+  if (unresolved.size) {
     let aCursor: any = 0;
     do {
       const [next, keys] = (await redis.scan(aCursor, { match: "auth:user:*", count: 500 })) as [any, string[]];
@@ -140,28 +174,23 @@ export async function GET(req: NextRequest) {
         const pipe = redis.pipeline();
         keys.forEach((k) => pipe.hgetall(k));
         const rows = (await pipe.exec()) as Array<Record<string, any> | null>;
-        rows.forEach((d) => {
-          if (!d) return;
+        for (const d of rows) {
+          if (!d) continue;
           const wa = d.walletAddress ? String(d.walletAddress).toLowerCase() : null;
-          if (wa && wanted.has(wa) && !idMap.has(wa)) {
-            const name = (d.name || `${d.firstName || ""} ${d.lastName || ""}`.trim()) || null;
-            idMap.set(wa, {
-              email: d.email || null,
-              name: name || null,
-              kycStatus: d.kycStatus || null,
-              authProvider: d.authProvider || null,
-              createdAt: d.createdAt || null,
-            });
+          if (wa && unresolved.has(wa)) {
+            const id = pick(d, d.id || null);
+            if (id) {
+              idMap.set(wa, id);
+              unresolved.delete(wa);
+            }
           }
-        });
+        }
       }
-      if (idMap.size >= wanted.size) break;
+      if (!unresolved.size) break;
     } while (String(aCursor) !== "0");
   }
 
-  const metalHoldersWithId = metalHolders
-    .slice(0, 50)
-    .map((h) => ({ ...h, identity: idMap.get(h.address) || null }));
+  const metalHoldersWithId = holders.map((h) => ({ ...h, identity: idMap.get(h.address) || null }));
 
   return NextResponse.json({
     success: true,
