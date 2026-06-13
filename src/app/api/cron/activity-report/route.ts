@@ -141,7 +141,8 @@ export async function GET(req: NextRequest) {
         keys.forEach((k) => pipe.hgetall(k));
         const rows = (await pipe.exec()) as Array<Record<string, any> | null>;
         rows.forEach((d) => {
-          const wa = d?.walletAddress ? String(d.walletAddress).toLowerCase() : null;
+          if (!d) return;
+          const wa = d.walletAddress ? String(d.walletAddress).toLowerCase() : null;
           if (wa && wanted.has(wa) && !idMap.has(wa)) {
             const name = (d.name || `${d.firstName || ""} ${d.lastName || ""}`.trim()) || null;
             idMap.set(wa, {
