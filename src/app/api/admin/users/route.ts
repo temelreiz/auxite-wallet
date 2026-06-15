@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { requireAdmin } from "@/lib/admin-auth";
+import { isDemoAccount } from "@/lib/demo-accounts";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -328,8 +329,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Convert to array
-    let users = Array.from(userMap.values());
+    // Convert to array, hiding test/demo accounts (App Store review, QA).
+    // Single-user lookup (?address=) above is NOT filtered, so demo accounts
+    // stay accessible directly when needed.
+    let users = Array.from(userMap.values()).filter((u) => !isDemoAccount(u.address));
 
     // Filter by search if provided
     if (search) {

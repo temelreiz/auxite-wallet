@@ -29,6 +29,7 @@
 // Decimals: 3 (1g = 1000 raw units).
 import { Redis } from "@upstash/redis";
 import { getVaultTotals, isInitialized, seedHoldingsIfEmpty } from "./vault-inventory";
+import { DEMO_ACCOUNTS } from "./demo-accounts";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -119,17 +120,9 @@ const legacyBackfillKey = (m: Metal) => `rwa:backfill:minted:${m}`;
 
 // Addresses excluded from on-chain reconciliation: test/demo accounts whose
 // balances are LOADED for review (App Store demo, internal QA), not real
-// purchases — they must never be minted as on-chain holders. Comma-separated
-// RWA_SYNC_EXCLUDE env extends the list.
-const EXCLUDED = new Set(
-  [
-    "0x7cffdf3cda3350cc727049b0aba34af6dc6821ed", // App Store / Apple review demo account
-    ...(process.env.RWA_SYNC_EXCLUDE || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean),
-  ].map((a) => a.toLowerCase()),
-);
+// purchases — they must never be minted as on-chain holders. Shared source of
+// truth lives in ./demo-accounts (extend via the RWA_SYNC_EXCLUDE env var).
+const EXCLUDED = DEMO_ACCOUNTS;
 
 export interface ReconcileOp {
   metal: Metal;
