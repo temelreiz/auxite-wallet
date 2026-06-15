@@ -467,6 +467,53 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // ─────────────────────────────────────────────────────────────────────
+      // UPDATE NAME — sync across auth:user / user:{userId} / user:{addr}:info
+      // ─────────────────────────────────────────────────────────────────────
+      case "update_name": {
+        const rawName = (params.name as string || "").trim();
+        if (!rawName) {
+          return NextResponse.json({ error: "Name required" }, { status: 400 });
+        }
+        // Split into first / last on first space
+        const spaceIdx = rawName.indexOf(" ");
+        const firstName = spaceIdx === -1 ? rawName : rawName.slice(0, spaceIdx).trim();
+        const lastName = spaceIdx === -1 ? "" : rawName.slice(spaceIdx + 1).trim();
+
+        const updatedKeys: string[] = [];
+
+        // 1. user:{addr}:info
+        await redis.hset(`user:${normalizedAddress}:info`, { name: rawName });
+        updatedKeys.push(`user:${normalizedAddress}:info`);
+
+        // 2. auth:user:{email} (located by matching walletAddress) + user:{userId}
+        try {
+          const authKeys = await redis.keys("auth:user:*");
+          for (const authKey of authKeys) {
+            const data = await redis.hgetall(authKey);
+            if (data && (data as any).walletAddress?.toLowerCase() === normalizedAddress) {
+              await redis.hset(authKey, { name: rawName, firstName, lastName });
+              updatedKeys.push(authKey);
+              const userId = (data as any).id;
+              if (userId) {
+                await redis.hset(`user:${userId}`, { name: rawName, firstName, lastName });
+                updatedKeys.push(`user:${userId}`);
+              }
+              break;
+            }
+          }
+        } catch { /* best-effort */ }
+
+        return NextResponse.json({
+          success: true,
+          action: "update_name",
+          name: rawName,
+          firstName,
+          lastName,
+          updatedKeys,
+        });
+      }
+
       default:
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
     }

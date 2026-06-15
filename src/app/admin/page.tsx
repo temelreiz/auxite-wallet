@@ -547,6 +547,9 @@ export default function AdminDashboard() {
   const USERS_PER_PAGE = 100;
   const [selectedUserDetail, setSelectedUserDetail] = useState<UserDetailData | null>(null);
   const [userDetailLoading, setUserDetailLoading] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
 
   // Pending Withdraws
   const [pendingWithdraws, setPendingWithdraws] = useState<PendingWithdraw[]>([]);
@@ -1490,6 +1493,30 @@ export default function AdminDashboard() {
       console.error("Failed to load user detail:", e);
     } finally {
       setUserDetailLoading(false);
+    }
+  };
+  const saveUserName = async (address: string) => {
+    const name = nameDraft.trim();
+    if (!name) return;
+    setSavingName(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "update_name", address, name }),
+      });
+      if (res.ok) {
+        setEditingName(false);
+        await loadUserDetail(address);
+        await loadUsers();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert("İsim güncellenemedi: " + (err.error || res.status));
+      }
+    } catch (e: any) {
+      alert("İsim güncellenemedi: " + (e?.message || e));
+    } finally {
+      setSavingName(false);
     }
   };
 
@@ -3298,15 +3325,38 @@ export default function AdminDashboard() {
                         {/* Header */}
                         <div className="flex items-center justify-between p-5 border-b border-slate-700">
                           <div>
-                            <h3 className="text-lg font-bold text-white">
-                              {selectedUserDetail.user.info?.name || "Kullanıcı Detayı"}
-                            </h3>
+                            {editingName ? (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  autoFocus
+                                  value={nameDraft}
+                                  onChange={(e) => setNameDraft(e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === "Enter") saveUserName(selectedUserDetail.user.address); if (e.key === "Escape") setEditingName(false); }}
+                                  className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-lg font-bold text-white"
+                                  placeholder="Ad Soyad"
+                                />
+                                <button
+                                  onClick={() => saveUserName(selectedUserDetail.user.address)}
+                                  disabled={savingName || !nameDraft.trim()}
+                                  className="text-xs px-2 py-1 rounded bg-[#BFA181] text-black font-semibold disabled:opacity-50"
+                                >{savingName ? "..." : "Kaydet"}</button>
+                                <button onClick={() => setEditingName(false)} className="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">İptal</button>
+                              </div>
+                            ) : (
+                              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                {selectedUserDetail.user.info?.name || "Kullanıcı Detayı"}
+                                <button
+                                  onClick={() => { setNameDraft(selectedUserDetail.user.info?.name || ""); setEditingName(true); }}
+                                  className="text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300 hover:text-white font-normal"
+                                >Düzenle</button>
+                              </h3>
+                            )}
                             <p className="font-mono text-sm text-slate-400 mt-1">{selectedUserDetail.user.address}</p>
                             {selectedUserDetail.user.info?.vaultId && (
                               <p className="text-xs text-[#BFA181] mt-0.5">Vault: {selectedUserDetail.user.info.vaultId}</p>
                             )}
                           </div>
-                          <button onClick={() => setSelectedUserDetail(null)} className="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+                          <button onClick={() => { setSelectedUserDetail(null); setEditingName(false); }} className="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
                         </div>
 
                         {/* Info */}
