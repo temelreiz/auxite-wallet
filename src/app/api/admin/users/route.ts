@@ -83,6 +83,80 @@ function scatter(n: number, idx: number[], values: any[]): any[] {
   return out;
 }
 
+// Build one user-list row from its raw Redis pieces. Single source of truth
+// shared by the full-list build and the direct (scan-free) search lookups.
+function summarize(o: {
+  addr: string; email: string | null; userData: any; balance: any;
+  userInfo: any; profile: any; kycRaw: any; allocRaw: any; prices: Record<string, number>;
+}) {
+  const userData = o.userData || {};
+  const userInfo = o.userInfo || {};
+  const profileData = (o.profile || {}) as Record<string, any>;
+  const kyc = parseKyc(o.kycRaw);
+  const balance = o.balance as any;
+  const totalValueUsd = computeValue(balance, o.allocRaw, o.prices);
+  const userName = (userData.name as string) || profileData.name ||
+    (profileData.firstName ? `${profileData.firstName} ${profileData.lastName || ''}`.trim() : null) ||
+    (userInfo.name as string) || null;
+  return {
+    address: o.addr,
+    email: o.email || (userInfo.email as string) || null,
+    name: userName,
+    phone: (userData.phone as string) || profileData.phone || (userInfo.phone as string) || null,
+    platform: (userData.lastPlatform as string) || (userData.platform as string) || null,
+    source: (userData.source as string) || null,
+    kycStatus: kyc?.status || (userData.kycVerified === 'true' ? 'approved' : 'none'),
+    kycLevel: kyc?.level || (userData.kycVerified === 'true' ? 'verified' : 'none'),
+    totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
+    auxmBalance: parseFloat(balance?.auxm as string || "0"),
+    ethBalance: parseFloat(balance?.eth as string || "0"),
+    btcBalance: parseFloat(balance?.btc as string || "0"),
+    auxgBalance: parseFloat(balance?.auxg as string || "0"),
+    auxsBalance: parseFloat(balance?.auxs as string || "0"),
+    auxptBalance: parseFloat(balance?.auxpt as string || "0"),
+    auxpdBalance: parseFloat(balance?.auxpd as string || "0"),
+    createdAt: (userData.createdAt as string) || profileData.createdAt || (userInfo.createdAt as string) || null,
+    vaultId: (userData.vaultId as string) || profileData.vaultId || null,
+    userId: (userData.id as string) || null,
+  };
+}
+
+// Direct, scan-free lookup by email — auth:user:{email} is a 1:1 key, so this
+// never touches the full-list build (works even when that's slow/cold).
+async function lookupByEmail(email: string, prices: Record<string, number>) {
+  const userData = await redis.hgetall(`auth:user:${email}`) as any;
+  if (!userData || Object.keys(userData).length === 0) return null;
+  const addr = ((userData.walletAddress as string) || "").toLowerCase().trim();
+  if (!addr) return null;
+  const userId = (userData.id as string) || null;
+  const uid = await redis.get(`user:address:${addr}`) as string;
+  const [balance, userInfo, profile, kycRaw, allocRaw] = await Promise.all([
+    redis.hgetall(`user:${addr}:balance`),
+    redis.hgetall(`user:${addr}:info`),
+    userId ? redis.hgetall(`user:${userId}`) : Promise.resolve(null),
+    redis.get(`kyc:${addr}`),
+    uid ? redis.get(`allocation:user:${uid}:list`) : Promise.resolve(null),
+  ]);
+  if (isDemoAccount(addr)) return null;
+  return summarize({ addr, email, userData, balance, userInfo, profile, kycRaw, allocRaw, prices });
+}
+
+// Direct, scan-free lookup by wallet address.
+async function lookupByAddress(address: string, prices: Record<string, number>) {
+  const addr = address.toLowerCase().trim();
+  if (isDemoAccount(addr)) return null;
+  const uid = await redis.get(`user:address:${addr}`) as string;
+  const [balance, userInfo, kycRaw, allocRaw] = await Promise.all([
+    redis.hgetall(`user:${addr}:balance`),
+    redis.hgetall(`user:${addr}:info`),
+    redis.get(`kyc:${addr}`),
+    uid ? redis.get(`allocation:user:${uid}:list`) : Promise.resolve(null),
+  ]);
+  const hasAny = (balance && Object.keys(balance).length) || (userInfo && Object.keys(userInfo).length);
+  if (!hasAny) return null;
+  return summarize({ addr, email: null, userData: {}, balance, userInfo, profile: null, kycRaw, allocRaw, prices });
+}
+
 // Build the full, sorted, demo-filtered user list. Parallelised per user.
 async function buildAllUsers(): Promise<any[]> {
   const authKeys = await redis.keys("auth:user:*");
@@ -382,25 +456,44 @@ export async function GET(request: NextRequest) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // LIST ALL USERS — served from the cached, sorted, demo-filtered full list.
-    // The single-user lookup (?address=) above is NOT filtered/cached.
+    // SEARCH BY EMAIL / ADDRESS — direct, scan-free lookup. Independent of the
+    // full-list build so it stays fast (and works) even when the cache is cold.
+    // ─────────────────────────────────────────────────────────────────────────
+    if (search) {
+      const q = search.trim().toLowerCase();
+      if (q.includes("@") || q.startsWith("0x")) {
+        const { getLivePrices } = await import('@/lib/live-prices');
+        const prices = await getLivePrices();
+        const hit = q.includes("@") ? await lookupByEmail(q, prices) : await lookupByAddress(q, prices);
+        const arr = hit ? [hit] : [];
+        return NextResponse.json({
+          success: true,
+          users: arr,
+          pagination: { page: 1, limit, total: arr.length, pages: arr.length ? 1 : 0 },
+        });
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LIST USERS — served from the cached, sorted, demo-filtered full list.
     // ─────────────────────────────────────────────────────────────────────────
     let users = await getAllUsersCached();
 
-    // Filter by search if provided
     if (search) {
+      // Name search (email/address handled above) — match across the full set.
       const q = search.toLowerCase();
       users = users.filter(u =>
-        u.address?.toLowerCase().includes(q) ||
+        u.name?.toLowerCase().includes(q) ||
         u.email?.toLowerCase().includes(q) ||
-        u.name?.toLowerCase().includes(q)
+        u.address?.toLowerCase().includes(q)
       );
+    } else if (searchParams.get("includeEmpty") !== "1") {
+      // Default view hides zero-value / no-activity (demo) accounts. Pass
+      // ?includeEmpty=1 to see everyone.
+      users = users.filter(u => (u.totalValueUsd || 0) > 0);
     }
 
-    // Sort by total value
-    users.sort((a: any, b: any) => b.totalValueUsd - a.totalValueUsd);
-
-    // Paginate
+    // Paginate (list is already sorted by total value in the cache).
     const total = users.length;
     const startIndex = (page - 1) * limit;
     const paginatedUsers = users.slice(startIndex, startIndex + limit);
