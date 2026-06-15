@@ -6,6 +6,11 @@ import { Redis } from "@upstash/redis";
 import { requireAdmin } from "@/lib/admin-auth";
 import { isDemoAccount } from "@/lib/demo-accounts";
 
+// Building the full user list scans the whole user base; give it room beyond
+// the default serverless timeout so it never gets cut off mid-build.
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
@@ -23,14 +28,58 @@ let usersBuildInFlight: Promise<any[]> | null = null;
 
 const KNOWN_TOKENS = ['auxm', 'eth', 'btc', 'usdt', 'usdc', 'usd', 'xrp', 'sol', 'auxg', 'auxs', 'auxpt', 'auxpd'];
 
-// Run an async mapper over items in bounded-concurrency chunks so we don't fire
-// thousands of Redis round-trips at once, while still parallelising heavily.
-async function mapChunked<T, R>(items: T[], size: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-  const out: R[] = [];
-  for (let i = 0; i < items.length; i += size) {
-    const batch = items.slice(i, i + size);
-    out.push(...(await Promise.all(batch.map(fn))));
+// Run a Redis pipeline over `keys` in parallel batches, returning results in
+// the same order as `keys`. This collapses one-HTTP-request-per-key into one
+// request per batch — the key to building the list fast at scale.
+async function pipeAll(keys: string[], add: (p: any, k: string) => void, batch = 256): Promise<any[]> {
+  if (keys.length === 0) return [];
+  const batches: string[][] = [];
+  for (let i = 0; i < keys.length; i += batch) batches.push(keys.slice(i, i + batch));
+  // Bounded parallelism so we never open too many Upstash connections at once.
+  const CONCURRENCY = 8;
+  const out: any[] = [];
+  for (let i = 0; i < batches.length; i += CONCURRENCY) {
+    const wave = batches.slice(i, i + CONCURRENCY);
+    const res = await Promise.all(
+      wave.map(async (slice) => {
+        const p = redis.pipeline();
+        for (const k of slice) add(p, k);
+        return (await p.exec()) as any[];
+      }),
+    );
+    for (const r of res) out.push(...r);
   }
+  return out;
+}
+
+// USD value of a balance hash + active allocations.
+function computeValue(balance: any, allocRaw: any, prices: Record<string, number>): number {
+  let total = 0;
+  if (balance) {
+    for (const token of KNOWN_TOKENS) {
+      const val = parseFloat(balance[token] as string || "0");
+      if (isNaN(val) || val <= 0) continue;
+      total += val * (prices[token] || 0);
+    }
+  }
+  try {
+    const allocs = allocRaw ? (typeof allocRaw === 'string' ? JSON.parse(allocRaw) : allocRaw) : [];
+    for (const alloc of (allocs as any[])) {
+      if (alloc.status !== 'active') continue;
+      const metalKey = (alloc.metal || '').toLowerCase();
+      const grams = parseFloat(alloc.grams || '0');
+      if (grams > 0 && prices[metalKey]) total += grams * prices[metalKey];
+    }
+  } catch {}
+  return total;
+}
+
+const parseKyc = (raw: any) => (raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null);
+
+// Build a sparse array aligned to `n` from values gathered only for some indices.
+function scatter(n: number, idx: number[], values: any[]): any[] {
+  const out: any[] = new Array(n).fill(null);
+  idx.forEach((origI, j) => { out[origI] = values[j]; });
   return out;
 }
 
@@ -44,56 +93,54 @@ async function buildAllUsers(): Promise<any[]> {
 
   const userMap = new Map<string, any>();
 
-  // Registered users (auth:user:{email}) — processed in parallel chunks.
-  const authUsers = await mapChunked(authKeys, 100, async (authKey) => {
+  // ── Registered users (auth:user:{email}) ──────────────────────────────────
+  // Pull all auth hashes in batched pipelines, then keep only those with a wallet.
+  const authDatas = await pipeAll(authKeys, (p, k) => p.hgetall(k));
+  const reg = authKeys
+    .map((k, i) => ({ email: k.replace("auth:user:", ""), data: (authDatas[i] || {}) as any }))
+    .filter((x) => ((x.data.walletAddress as string) || "").trim())
+    .map((x) => ({ ...x, addr: (x.data.walletAddress as string).toLowerCase().trim() }));
+  const regAddrs = reg.map((x) => x.addr);
+
+  // Fan out the per-user reads as 4 batched pipelines (one per key family).
+  const [regBalances, regInfos, regKycs, regUids] = await Promise.all([
+    pipeAll(regAddrs.map((a) => `user:${a}:balance`), (p, k) => p.hgetall(k)),
+    pipeAll(regAddrs.map((a) => `user:${a}:info`), (p, k) => p.hgetall(k)),
+    pipeAll(regAddrs.map((a) => `kyc:${a}`), (p, k) => p.get(k)),
+    pipeAll(regAddrs.map((a) => `user:address:${a}`), (p, k) => p.get(k)),
+  ]);
+
+  // Profiles (only where an id exists) + allocation lists (only where a uid
+  // resolved) — fetched sparsely and scattered back into per-user alignment.
+  const profileIdx: number[] = [];
+  const profileKeys: string[] = [];
+  reg.forEach((x, i) => { if (x.data.id) { profileIdx.push(i); profileKeys.push(`user:${x.data.id}`); } });
+  const allocIdx: number[] = [];
+  const allocKeys: string[] = [];
+  regUids.forEach((uid, i) => { if (uid) { allocIdx.push(i); allocKeys.push(`allocation:user:${uid}:list`); } });
+  const [profilesRaw, allocsRaw] = await Promise.all([
+    pipeAll(profileKeys, (p, k) => p.hgetall(k)),
+    pipeAll(allocKeys, (p, k) => p.get(k)),
+  ]);
+  const profiles = scatter(reg.length, profileIdx, profilesRaw);
+  const allocs = scatter(reg.length, allocIdx, allocsRaw);
+
+  reg.forEach((x, i) => {
     try {
-      const userData = await redis.hgetall(authKey);
-      const walletAddr = ((userData?.walletAddress as string) || "").toLowerCase().trim();
-      if (!walletAddr) return null;
-      const email = authKey.replace("auth:user:", "");
-
-      const userId = (userData?.id as string) || null;
-      const userUid = await redis.get(`user:address:${walletAddr}`) as string;
-
-      // Fan out this user's reads together.
-      const [balance, userInfo, profile, allocRaw, kycData] = await Promise.all([
-        redis.hgetall(`user:${walletAddr}:balance`),
-        redis.hgetall(`user:${walletAddr}:info`),
-        userId ? redis.hgetall(`user:${userId}`) : Promise.resolve(null),
-        userUid ? redis.get(`allocation:user:${userUid}:list`) : Promise.resolve(null),
-        redis.get(`kyc:${walletAddr}`),
-      ]);
-
-      let totalValueUsd = 0;
-      if (balance) {
-        for (const token of KNOWN_TOKENS) {
-          const val = parseFloat(balance[token] as string || "0");
-          if (isNaN(val) || val <= 0) continue;
-          totalValueUsd += val * (prices[token] || 0);
-        }
-      }
-      try {
-        const allocs = allocRaw ? (typeof allocRaw === 'string' ? JSON.parse(allocRaw) : allocRaw) : [];
-        for (const alloc of (allocs as any[])) {
-          if (alloc.status !== 'active') continue;
-          const metalKey = (alloc.metal || '').toLowerCase();
-          const grams = parseFloat(alloc.grams || '0');
-          if (grams > 0 && prices[metalKey]) totalValueUsd += grams * prices[metalKey];
-        }
-      } catch {}
-
-      const profileData: Record<string, any> = (profile as Record<string, any>) || {};
+      const userData = x.data;
+      const balance = regBalances[i] as any;
+      const userInfo = (regInfos[i] || {}) as any;
+      const profileData = (profiles[i] || {}) as Record<string, any>;
+      const kyc = parseKyc(regKycs[i]);
+      const totalValueUsd = computeValue(balance, allocs[i], prices);
       const userName = (userData?.name as string) || profileData.name ||
         (profileData.firstName ? `${profileData.firstName} ${profileData.lastName || ''}`.trim() : null) ||
         (userInfo?.name as string) || null;
-
-      const kyc = kycData ? (typeof kycData === 'string' ? JSON.parse(kycData) : kycData) : null;
       const kycStatus = kyc?.status || (userData?.kycVerified === 'true' ? 'approved' : 'none');
       const kycLevel = kyc?.level || (userData?.kycVerified === 'true' ? 'verified' : 'none');
-
-      return {
-        address: walletAddr,
-        email: email || (userInfo?.email as string) || null,
+      userMap.set(x.addr, {
+        address: x.addr,
+        email: x.email || (userInfo?.email as string) || null,
         name: userName,
         phone: (userData?.phone as string) || profileData.phone || (userInfo?.phone as string) || null,
         platform: (userData?.lastPlatform as string) || (userData?.platform as string) || null,
@@ -110,50 +157,36 @@ async function buildAllUsers(): Promise<any[]> {
         auxpdBalance: parseFloat(balance?.auxpd as string || "0"),
         createdAt: (userData?.createdAt as string) || profileData.createdAt || (userInfo?.createdAt as string) || null,
         vaultId: (userData?.vaultId as string) || profileData.vaultId || null,
-        userId,
-      };
+        userId: (userData?.id as string) || null,
+      });
     } catch (e) {
-      console.warn(`Failed to process ${authKey}:`, e);
-      return null;
+      console.warn(`Failed to process auth user ${x.email}:`, e);
     }
   });
-  for (const u of authUsers) if (u) userMap.set(u.address, u);
 
-  // Balance-only users (not registered) — processed in parallel chunks.
-  const balanceUsers = await mapChunked(balanceKeys, 100, async (key) => {
-    const addr = key.split(":")[1];
-    if (userMap.has(addr)) return null;
+  // ── Balance-only users (not registered) ───────────────────────────────────
+  const balOnly = balanceKeys
+    .map((key) => ({ key, addr: key.split(":")[1] }))
+    .filter((x) => !userMap.has(x.addr));
+  const balAddrs = balOnly.map((x) => x.addr);
+  const [balBalances, balInfos, balKycs, balUids] = await Promise.all([
+    pipeAll(balOnly.map((x) => x.key), (p, k) => p.hgetall(k)),
+    pipeAll(balAddrs.map((a) => `user:${a}:info`), (p, k) => p.hgetall(k)),
+    pipeAll(balAddrs.map((a) => `kyc:${a}`), (p, k) => p.get(k)),
+    pipeAll(balAddrs.map((a) => `user:address:${a}`), (p, k) => p.get(k)),
+  ]);
+  const balAllocIdx: number[] = [];
+  const balAllocKeys: string[] = [];
+  balUids.forEach((uid, i) => { if (uid) { balAllocIdx.push(i); balAllocKeys.push(`allocation:user:${uid}:list`); } });
+  const balAllocs = scatter(balOnly.length, balAllocIdx, await pipeAll(balAllocKeys, (p, k) => p.get(k)));
 
-    const userUid2 = await redis.get(`user:address:${addr}`) as string;
-    const [balance, userInfo, allocRaw2, kycData2] = await Promise.all([
-      redis.hgetall(key),
-      redis.hgetall(`user:${addr}:info`),
-      userUid2 ? redis.get(`allocation:user:${userUid2}:list`) : Promise.resolve(null),
-      redis.get(`kyc:${addr}`),
-    ]);
-
-    let totalValueUsd = 0;
-    if (balance) {
-      for (const token of KNOWN_TOKENS) {
-        const val = parseFloat(balance[token] as string || "0");
-        if (isNaN(val) || val <= 0) continue;
-        totalValueUsd += val * (prices[token] || 0);
-      }
-    }
-    try {
-      const allocs2 = allocRaw2 ? (typeof allocRaw2 === 'string' ? JSON.parse(allocRaw2) : allocRaw2) : [];
-      for (const alloc of (allocs2 as any[])) {
-        if (alloc.status !== 'active') continue;
-        const metalKey = (alloc.metal || '').toLowerCase();
-        const grams = parseFloat(alloc.grams || '0');
-        if (grams > 0 && prices[metalKey]) totalValueUsd += grams * prices[metalKey];
-      }
-    } catch {}
-
-    const kyc2 = kycData2 ? (typeof kycData2 === 'string' ? JSON.parse(kycData2) : kycData2) : null;
-
-    return {
-      address: addr,
+  balOnly.forEach((x, i) => {
+    const balance = balBalances[i] as any;
+    const userInfo = (balInfos[i] || {}) as any;
+    const kyc2 = parseKyc(balKycs[i]);
+    const totalValueUsd = computeValue(balance, balAllocs[i], prices);
+    userMap.set(x.addr, {
+      address: x.addr,
       email: (userInfo?.email as string) || null,
       name: (userInfo?.name as string) || null,
       phone: (userInfo?.phone as string) || null,
@@ -168,9 +201,8 @@ async function buildAllUsers(): Promise<any[]> {
       auxptBalance: parseFloat(balance?.auxpt as string || "0"),
       auxpdBalance: parseFloat(balance?.auxpd as string || "0"),
       createdAt: (userInfo?.createdAt as string) || null,
-    };
+    });
   });
-  for (const u of balanceUsers) if (u) userMap.set(u.address, u);
 
   // Hide test/demo accounts, then sort by total value.
   const users = Array.from(userMap.values()).filter((u) => !isDemoAccount(u.address));
