@@ -11,6 +11,186 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
+// ───────────────────────────────────────────────────────────────────────────
+// Full-list cache. Building the list scans every user with several Redis reads
+// each; without a cache the frontend's page-by-page fan-out re-runs that full
+// scan for every page. We build once, cache the sorted+demo-filtered array, and
+// serve all pages (and search) from it. Busted on any mutating POST action.
+// ───────────────────────────────────────────────────────────────────────────
+const USERS_CACHE_KEY = "admin:users:cache:v1";
+const USERS_CACHE_TTL = 120; // seconds
+let usersBuildInFlight: Promise<any[]> | null = null;
+
+const KNOWN_TOKENS = ['auxm', 'eth', 'btc', 'usdt', 'usdc', 'usd', 'xrp', 'sol', 'auxg', 'auxs', 'auxpt', 'auxpd'];
+
+// Run an async mapper over items in bounded-concurrency chunks so we don't fire
+// thousands of Redis round-trips at once, while still parallelising heavily.
+async function mapChunked<T, R>(items: T[], size: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = [];
+  for (let i = 0; i < items.length; i += size) {
+    const batch = items.slice(i, i + size);
+    out.push(...(await Promise.all(batch.map(fn))));
+  }
+  return out;
+}
+
+// Build the full, sorted, demo-filtered user list. Parallelised per user.
+async function buildAllUsers(): Promise<any[]> {
+  const authKeys = await redis.keys("auth:user:*");
+  const balanceKeys = await redis.keys("user:0x*:balance");
+
+  const { getLivePrices } = await import('@/lib/live-prices');
+  const prices = await getLivePrices();
+
+  const userMap = new Map<string, any>();
+
+  // Registered users (auth:user:{email}) — processed in parallel chunks.
+  const authUsers = await mapChunked(authKeys, 100, async (authKey) => {
+    try {
+      const userData = await redis.hgetall(authKey);
+      const walletAddr = ((userData?.walletAddress as string) || "").toLowerCase().trim();
+      if (!walletAddr) return null;
+      const email = authKey.replace("auth:user:", "");
+
+      const userId = (userData?.id as string) || null;
+      const userUid = await redis.get(`user:address:${walletAddr}`) as string;
+
+      // Fan out this user's reads together.
+      const [balance, userInfo, profile, allocRaw, kycData] = await Promise.all([
+        redis.hgetall(`user:${walletAddr}:balance`),
+        redis.hgetall(`user:${walletAddr}:info`),
+        userId ? redis.hgetall(`user:${userId}`) : Promise.resolve(null),
+        userUid ? redis.get(`allocation:user:${userUid}:list`) : Promise.resolve(null),
+        redis.get(`kyc:${walletAddr}`),
+      ]);
+
+      let totalValueUsd = 0;
+      if (balance) {
+        for (const token of KNOWN_TOKENS) {
+          const val = parseFloat(balance[token] as string || "0");
+          if (isNaN(val) || val <= 0) continue;
+          totalValueUsd += val * (prices[token] || 0);
+        }
+      }
+      try {
+        const allocs = allocRaw ? (typeof allocRaw === 'string' ? JSON.parse(allocRaw) : allocRaw) : [];
+        for (const alloc of (allocs as any[])) {
+          if (alloc.status !== 'active') continue;
+          const metalKey = (alloc.metal || '').toLowerCase();
+          const grams = parseFloat(alloc.grams || '0');
+          if (grams > 0 && prices[metalKey]) totalValueUsd += grams * prices[metalKey];
+        }
+      } catch {}
+
+      const profileData: Record<string, any> = (profile as Record<string, any>) || {};
+      const userName = (userData?.name as string) || profileData.name ||
+        (profileData.firstName ? `${profileData.firstName} ${profileData.lastName || ''}`.trim() : null) ||
+        (userInfo?.name as string) || null;
+
+      const kyc = kycData ? (typeof kycData === 'string' ? JSON.parse(kycData) : kycData) : null;
+      const kycStatus = kyc?.status || (userData?.kycVerified === 'true' ? 'approved' : 'none');
+      const kycLevel = kyc?.level || (userData?.kycVerified === 'true' ? 'verified' : 'none');
+
+      return {
+        address: walletAddr,
+        email: email || (userInfo?.email as string) || null,
+        name: userName,
+        phone: (userData?.phone as string) || profileData.phone || (userInfo?.phone as string) || null,
+        platform: (userData?.lastPlatform as string) || (userData?.platform as string) || null,
+        source: (userData?.source as string) || null,
+        kycStatus,
+        kycLevel,
+        totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
+        auxmBalance: parseFloat(balance?.auxm as string || "0"),
+        ethBalance: parseFloat(balance?.eth as string || "0"),
+        btcBalance: parseFloat(balance?.btc as string || "0"),
+        auxgBalance: parseFloat(balance?.auxg as string || "0"),
+        auxsBalance: parseFloat(balance?.auxs as string || "0"),
+        auxptBalance: parseFloat(balance?.auxpt as string || "0"),
+        auxpdBalance: parseFloat(balance?.auxpd as string || "0"),
+        createdAt: (userData?.createdAt as string) || profileData.createdAt || (userInfo?.createdAt as string) || null,
+        vaultId: (userData?.vaultId as string) || profileData.vaultId || null,
+        userId,
+      };
+    } catch (e) {
+      console.warn(`Failed to process ${authKey}:`, e);
+      return null;
+    }
+  });
+  for (const u of authUsers) if (u) userMap.set(u.address, u);
+
+  // Balance-only users (not registered) — processed in parallel chunks.
+  const balanceUsers = await mapChunked(balanceKeys, 100, async (key) => {
+    const addr = key.split(":")[1];
+    if (userMap.has(addr)) return null;
+
+    const userUid2 = await redis.get(`user:address:${addr}`) as string;
+    const [balance, userInfo, allocRaw2, kycData2] = await Promise.all([
+      redis.hgetall(key),
+      redis.hgetall(`user:${addr}:info`),
+      userUid2 ? redis.get(`allocation:user:${userUid2}:list`) : Promise.resolve(null),
+      redis.get(`kyc:${addr}`),
+    ]);
+
+    let totalValueUsd = 0;
+    if (balance) {
+      for (const token of KNOWN_TOKENS) {
+        const val = parseFloat(balance[token] as string || "0");
+        if (isNaN(val) || val <= 0) continue;
+        totalValueUsd += val * (prices[token] || 0);
+      }
+    }
+    try {
+      const allocs2 = allocRaw2 ? (typeof allocRaw2 === 'string' ? JSON.parse(allocRaw2) : allocRaw2) : [];
+      for (const alloc of (allocs2 as any[])) {
+        if (alloc.status !== 'active') continue;
+        const metalKey = (alloc.metal || '').toLowerCase();
+        const grams = parseFloat(alloc.grams || '0');
+        if (grams > 0 && prices[metalKey]) totalValueUsd += grams * prices[metalKey];
+      }
+    } catch {}
+
+    const kyc2 = kycData2 ? (typeof kycData2 === 'string' ? JSON.parse(kycData2) : kycData2) : null;
+
+    return {
+      address: addr,
+      email: (userInfo?.email as string) || null,
+      name: (userInfo?.name as string) || null,
+      phone: (userInfo?.phone as string) || null,
+      kycStatus: kyc2?.status || 'none',
+      kycLevel: kyc2?.level || 'none',
+      totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
+      auxmBalance: parseFloat(balance?.auxm as string || "0"),
+      ethBalance: parseFloat(balance?.eth as string || "0"),
+      btcBalance: parseFloat(balance?.btc as string || "0"),
+      auxgBalance: parseFloat(balance?.auxg as string || "0"),
+      auxsBalance: parseFloat(balance?.auxs as string || "0"),
+      auxptBalance: parseFloat(balance?.auxpt as string || "0"),
+      auxpdBalance: parseFloat(balance?.auxpd as string || "0"),
+      createdAt: (userInfo?.createdAt as string) || null,
+    };
+  });
+  for (const u of balanceUsers) if (u) userMap.set(u.address, u);
+
+  // Hide test/demo accounts, then sort by total value.
+  const users = Array.from(userMap.values()).filter((u) => !isDemoAccount(u.address));
+  users.sort((a: any, b: any) => b.totalValueUsd - a.totalValueUsd);
+  return users;
+}
+
+// Get the full list from cache, or build (single-flight) and cache it.
+async function getAllUsersCached(): Promise<any[]> {
+  const cached = await redis.get(USERS_CACHE_KEY);
+  if (cached) return (typeof cached === 'string' ? JSON.parse(cached) : cached) as any[];
+
+  if (!usersBuildInFlight) {
+    usersBuildInFlight = buildAllUsers().finally(() => { usersBuildInFlight = null; });
+  }
+  const users = await usersBuildInFlight;
+  try { await redis.set(USERS_CACHE_KEY, JSON.stringify(users), { ex: USERS_CACHE_TTL }); } catch {}
+  return users;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // GET - List users or get single user details
 // ═══════════════════════════════════════════════════════════════════════════
@@ -170,169 +350,10 @@ export async function GET(request: NextRequest) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // LIST ALL USERS — auth:user:* (registered) + user:0x*:balance (with funds)
+    // LIST ALL USERS — served from the cached, sorted, demo-filtered full list.
+    // The single-user lookup (?address=) above is NOT filtered/cached.
     // ─────────────────────────────────────────────────────────────────────────
-
-    // 1. Get all registered users from auth:user:* keys
-    const authKeys = await redis.keys("auth:user:*");
-
-    // 2. Also get balance-based users (legacy or direct)
-    const balanceKeys = await redis.keys("user:0x*:balance");
-
-    // Build a map of all users: address -> user data
-    const userMap = new Map<string, any>();
-
-    const { getLivePrices } = await import('@/lib/live-prices');
-    const livePrices = await getLivePrices();
-    const prices = livePrices;
-
-    // Process registered users (auth:user:{email})
-    for (const authKey of authKeys) {
-      try {
-        const userData = await redis.hgetall(authKey);
-        const walletAddr = ((userData?.walletAddress as string) || "").toLowerCase().trim();
-        if (!walletAddr) continue;
-        const email = authKey.replace("auth:user:", "");
-
-        // Get balance
-        const balance = await redis.hgetall(`user:${walletAddr}:balance`);
-        const userInfo = await redis.hgetall(`user:${walletAddr}:info`);
-
-        const KNOWN_TOKENS = ['auxm', 'eth', 'btc', 'usdt', 'usdc', 'usd', 'xrp', 'sol', 'auxg', 'auxs', 'auxpt', 'auxpd'];
-        let totalValueUsd = 0;
-        if (balance) {
-          for (const token of KNOWN_TOKENS) {
-            const val = parseFloat(balance[token] as string || "0");
-            if (isNaN(val) || val <= 0) continue;
-            const price = prices[token] || 0;
-            totalValueUsd += val * price;
-          }
-        }
-
-        // Add allocation values (key: allocation:user:{uid}:list)
-        try {
-          const userUid = await redis.get(`user:address:${walletAddr}`) as string;
-          if (userUid) {
-            const allocRaw = await redis.get(`allocation:user:${userUid}:list`);
-            const allocs = allocRaw ? (typeof allocRaw === 'string' ? JSON.parse(allocRaw) : allocRaw) : [];
-            for (const alloc of (allocs as any[])) {
-              if (alloc.status !== 'active') continue;
-              const metalKey = (alloc.metal || '').toLowerCase();
-              const grams = parseFloat(alloc.grams || '0');
-              if (grams > 0 && prices[metalKey]) {
-                totalValueUsd += grams * prices[metalKey];
-              }
-            }
-          }
-        } catch {}
-
-        // Also get user:{userId} profile for extra info
-        const userId = (userData?.id as string) || null;
-        let profileData: Record<string, any> = {};
-        if (userId) {
-          const profile = await redis.hgetall(`user:${userId}`);
-          if (profile) profileData = profile as Record<string, any>;
-        }
-
-        const userName = (userData?.name as string) || profileData.name ||
-          (profileData.firstName ? `${profileData.firstName} ${profileData.lastName || ''}`.trim() : null) ||
-          (userInfo?.name as string) || null;
-
-        // Get KYC status
-        const kycData = await redis.get(`kyc:${walletAddr}`);
-        const kyc = kycData ? (typeof kycData === 'string' ? JSON.parse(kycData) : kycData) : null;
-        const kycStatus = kyc?.status || (userData?.kycVerified === 'true' ? 'approved' : 'none');
-        const kycLevel = kyc?.level || (userData?.kycVerified === 'true' ? 'verified' : 'none');
-
-        userMap.set(walletAddr, {
-          address: walletAddr,
-          email: email || (userInfo?.email as string) || null,
-          name: userName,
-          phone: (userData?.phone as string) || profileData.phone || (userInfo?.phone as string) || null,
-          platform: (userData?.lastPlatform as string) || (userData?.platform as string) || null,
-          source: (userData?.source as string) || null,
-          kycStatus,
-          kycLevel,
-          totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
-          auxmBalance: parseFloat(balance?.auxm as string || "0"),
-          ethBalance: parseFloat(balance?.eth as string || "0"),
-          btcBalance: parseFloat(balance?.btc as string || "0"),
-          auxgBalance: parseFloat(balance?.auxg as string || "0"),
-          auxsBalance: parseFloat(balance?.auxs as string || "0"),
-          auxptBalance: parseFloat(balance?.auxpt as string || "0"),
-          auxpdBalance: parseFloat(balance?.auxpd as string || "0"),
-          createdAt: (userData?.createdAt as string) || profileData.createdAt || (userInfo?.createdAt as string) || null,
-          vaultId: (userData?.vaultId as string) || profileData.vaultId || null,
-          userId,
-        });
-      } catch (e) {
-        console.warn(`Failed to process ${authKey}:`, e);
-      }
-    }
-
-    // Process balance-only users (not in auth:user:*)
-    for (const key of balanceKeys) {
-      const addr = key.split(":")[1];
-      if (userMap.has(addr)) continue; // Already added from auth
-
-      const balance = await redis.hgetall(key);
-      const userInfo = await redis.hgetall(`user:${addr}:info`);
-
-      const KNOWN_TOKENS2 = ['auxm', 'eth', 'btc', 'usdt', 'usdc', 'usd', 'xrp', 'sol', 'auxg', 'auxs', 'auxpt', 'auxpd'];
-      let totalValueUsd = 0;
-      if (balance) {
-        for (const token of KNOWN_TOKENS2) {
-          const val = parseFloat(balance[token] as string || "0");
-          if (isNaN(val) || val <= 0) continue;
-          const price = prices[token] || 0;
-          totalValueUsd += val * price;
-        }
-      }
-
-      // Add allocation values (key: allocation:user:{uid}:list)
-      try {
-        const userUid2 = await redis.get(`user:address:${addr}`) as string;
-        if (userUid2) {
-          const allocRaw2 = await redis.get(`allocation:user:${userUid2}:list`);
-          const allocs2 = allocRaw2 ? (typeof allocRaw2 === 'string' ? JSON.parse(allocRaw2) : allocRaw2) : [];
-          for (const alloc of (allocs2 as any[])) {
-            if (alloc.status !== 'active') continue;
-            const metalKey = (alloc.metal || '').toLowerCase();
-            const grams = parseFloat(alloc.grams || '0');
-            if (grams > 0 && prices[metalKey]) {
-              totalValueUsd += grams * prices[metalKey];
-            }
-          }
-        }
-      } catch {}
-
-      // Get KYC status
-      const kycData2 = await redis.get(`kyc:${addr}`);
-      const kyc2 = kycData2 ? (typeof kycData2 === 'string' ? JSON.parse(kycData2) : kycData2) : null;
-
-      userMap.set(addr, {
-        address: addr,
-        email: (userInfo?.email as string) || null,
-        name: (userInfo?.name as string) || null,
-        phone: (userInfo?.phone as string) || null,
-        kycStatus: kyc2?.status || 'none',
-        kycLevel: kyc2?.level || 'none',
-        totalValueUsd: parseFloat(totalValueUsd.toFixed(2)),
-        auxmBalance: parseFloat(balance?.auxm as string || "0"),
-        ethBalance: parseFloat(balance?.eth as string || "0"),
-        btcBalance: parseFloat(balance?.btc as string || "0"),
-        auxgBalance: parseFloat(balance?.auxg as string || "0"),
-        auxsBalance: parseFloat(balance?.auxs as string || "0"),
-        auxptBalance: parseFloat(balance?.auxpt as string || "0"),
-        auxpdBalance: parseFloat(balance?.auxpd as string || "0"),
-        createdAt: (userInfo?.createdAt as string) || null,
-      });
-    }
-
-    // Convert to array, hiding test/demo accounts (App Store review, QA).
-    // Single-user lookup (?address=) above is NOT filtered, so demo accounts
-    // stay accessible directly when needed.
-    let users = Array.from(userMap.values()).filter((u) => !isDemoAccount(u.address));
+    let users = await getAllUsersCached();
 
     // Filter by search if provided
     if (search) {
@@ -385,6 +406,10 @@ export async function POST(request: NextRequest) {
 
     const normalizedAddress = address.toLowerCase();
     const balanceKey = `user:${normalizedAddress}:balance`;
+
+    // Any admin action below mutates user data → invalidate the list cache so
+    // the next GET rebuilds with fresh values.
+    try { await redis.del(USERS_CACHE_KEY); } catch {}
 
     switch (action) {
       // ─────────────────────────────────────────────────────────────────────
