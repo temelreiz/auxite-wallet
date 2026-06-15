@@ -26,6 +26,10 @@ const USERS_CACHE_KEY = "admin:users:cache:v1";
 const USERS_CACHE_TTL = 120; // seconds
 let usersBuildInFlight: Promise<any[]> | null = null;
 
+// Addresses an admin has marked as demo/test from the panel — hidden from the
+// list. Self-service so new test accounts can be hidden without a code change.
+const HIDDEN_SET_KEY = "admin:demo:hidden";
+
 const KNOWN_TOKENS = ['auxm', 'eth', 'btc', 'usdt', 'usdc', 'usd', 'xrp', 'sol', 'auxg', 'auxs', 'auxpt', 'auxpd'];
 
 // Run a Redis pipeline over `keys` in parallel batches, returning results in
@@ -278,8 +282,9 @@ async function buildAllUsers(): Promise<any[]> {
     });
   });
 
-  // Hide test/demo accounts, then sort by total value.
-  const users = Array.from(userMap.values()).filter((u) => !isDemoAccount(u.address));
+  // Hide test/demo accounts (static list + admin-marked set), then sort by value.
+  const hidden = new Set(((await redis.smembers(HIDDEN_SET_KEY)) as string[]).map((a) => a.toLowerCase()));
+  const users = Array.from(userMap.values()).filter((u) => !isDemoAccount(u.address) && !hidden.has(u.address));
   users.sort((a: any, b: any) => b.totalValueUsd - a.totalValueUsd);
   return users;
 }
@@ -434,6 +439,7 @@ export async function GET(request: NextRequest) {
       } catch {}
 
       const totalValueUsd = liquidityUsd + allocatedUsd + yieldUsd;
+      const hidden = (await redis.sismember(HIDDEN_SET_KEY, normalizedAddress)) === 1;
 
       return NextResponse.json({
         success: true,
@@ -449,6 +455,7 @@ export async function GET(request: NextRequest) {
           tier: tierInfo || { id: "regular", name: "Regular" },
           transactionCount: parsedTx.length,
           allocationCount: parsedAlloc.length,
+          hidden,
         },
         transactions: parsedTx,
         allocations: parsedAlloc,
@@ -665,6 +672,19 @@ export async function POST(request: NextRequest) {
           lastName,
           updatedKeys,
         });
+      }
+
+      // ─────────────────────────────────────────────────────────────────────
+      // HIDE / UNHIDE — mark a demo/test account so it drops out of the list
+      // ─────────────────────────────────────────────────────────────────────
+      case "hide_user": {
+        await redis.sadd(HIDDEN_SET_KEY, normalizedAddress);
+        return NextResponse.json({ success: true, action: "hide_user", address: normalizedAddress, hidden: true });
+      }
+
+      case "unhide_user": {
+        await redis.srem(HIDDEN_SET_KEY, normalizedAddress);
+        return NextResponse.json({ success: true, action: "unhide_user", address: normalizedAddress, hidden: false });
       }
 
       default:

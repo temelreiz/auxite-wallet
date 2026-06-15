@@ -1519,6 +1519,25 @@ export default function AdminDashboard() {
       setSavingName(false);
     }
   };
+  const toggleHideUser = async (address: string, hide: boolean) => {
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ action: hide ? "hide_user" : "unhide_user", address }),
+      });
+      if (res.ok) {
+        if (hide) setSelectedUserDetail(null);
+        else await loadUserDetail(address);
+        await loadUsers();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert("İşlem başarısız: " + (err.error || res.status));
+      }
+    } catch (e: any) {
+      alert("İşlem başarısız: " + (e?.message || e));
+    }
+  };
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // AUXITEER FUNCTIONS
@@ -3356,7 +3375,20 @@ export default function AdminDashboard() {
                               <p className="text-xs text-[#BFA181] mt-0.5">Vault: {selectedUserDetail.user.info.vaultId}</p>
                             )}
                           </div>
-                          <button onClick={() => { setSelectedUserDetail(null); setEditingName(false); }} className="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+                          <div className="flex items-center gap-2">
+                            {(selectedUserDetail.user as any).hidden ? (
+                              <button
+                                onClick={() => toggleHideUser(selectedUserDetail.user.address, false)}
+                                className="text-xs px-3 py-1.5 rounded bg-slate-700 text-slate-200 hover:bg-slate-600"
+                              >Gizlemeyi geri al</button>
+                            ) : (
+                              <button
+                                onClick={() => toggleHideUser(selectedUserDetail.user.address, true)}
+                                className="text-xs px-3 py-1.5 rounded bg-red-600/80 text-white hover:bg-red-600"
+                              >🚫 Demo olarak gizle</button>
+                            )}
+                            <button onClick={() => { setSelectedUserDetail(null); setEditingName(false); }} className="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+                          </div>
                         </div>
 
                         {/* Info */}
