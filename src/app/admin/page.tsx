@@ -445,8 +445,14 @@ export default function AdminDashboard() {
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Tab State
+  // Tab State — initialised from the ?tab= URL param so deep links (e.g. the
+  // weekly blog cron's Telegram link to ?tab=blog) open the right tab.
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const t = new URLSearchParams(window.location.search).get("tab");
+    if (t && TABS.some((tab) => tab.id === t)) setActiveTab(t as TabId);
+  }, []);
 
   // ─── Campaign announcement modal ────────────────────────────────────
   // The 📢 button used to fire push + banner + telegram in one
@@ -2464,7 +2470,7 @@ export default function AdminDashboard() {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-56 min-h-[calc(100vh-57px)] bg-slate-900/50 border-r border-slate-800 p-4 sticky top-[57px]">
+        <aside className="w-56 max-h-[calc(100vh-57px)] overflow-y-auto bg-slate-900/50 border-r border-slate-800 p-4 sticky top-[57px]">
           <nav className="space-y-1">
             {TABS.map((tab) => (
               <button
