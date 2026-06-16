@@ -176,15 +176,23 @@ export default function BlogManager({ adminToken }: { adminToken: string }) {
     );
   }
 
-  async function publish() {
+  // forceDraft: when provided, overrides every translation's draft flag so the
+  // author doesn't have to toggle the per-locale checkbox on each tab. "Publish
+  // Live" passes false (go live), "Save as Draft" passes true.
+  async function publish(forceDraft?: boolean) {
     setPublishMsg(null);
     // Only publish translations that have a body — empty ones are
     // silently dropped so the author doesn't accidentally publish a
     // half-empty page in a locale they haven't translated yet.
-    const filled = translations.filter((t) => t.body.trim().length > 0 && t.frontmatter.title.trim());
+    let filled = translations.filter((t) => t.body.trim().length > 0 && t.frontmatter.title.trim());
     if (filled.length === 0) {
       setPublishMsg('No filled translations to publish — fill in at least one language tab.');
       return;
+    }
+    if (typeof forceDraft === 'boolean') {
+      filled = filled.map((t) => ({ ...t, frontmatter: { ...t.frontmatter, draft: forceDraft } }));
+      // Keep the editor checkboxes in sync with what we just committed.
+      setTranslations((prev) => prev.map((t) => ({ ...t, frontmatter: { ...t.frontmatter, draft: forceDraft } })));
     }
     setPublishing(true);
     try {
@@ -338,13 +346,22 @@ export default function BlogManager({ adminToken }: { adminToken: string }) {
           </button>
           <h2 className="text-xl font-semibold">{slugLocked ? `Edit: ${slug}` : 'New Post'}</h2>
         </div>
-        <button
-          onClick={publish}
-          disabled={publishing}
-          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg font-medium disabled:opacity-50"
-        >
-          {publishing ? 'Publishing…' : 'Publish'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => publish(true)}
+            disabled={publishing}
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium disabled:opacity-50"
+          >
+            {publishing ? '…' : 'Save as Draft'}
+          </button>
+          <button
+            onClick={() => publish(false)}
+            disabled={publishing}
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black rounded-lg font-medium disabled:opacity-50"
+          >
+            {publishing ? 'Publishing…' : '🚀 Publish Live'}
+          </button>
+        </div>
       </div>
 
       {/* Slug + commit message */}
