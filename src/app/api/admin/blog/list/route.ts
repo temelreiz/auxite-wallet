@@ -52,7 +52,10 @@ export async function GET(request: NextRequest) {
       return ad < bd ? 1 : -1;
     });
 
-    return NextResponse.json({ ok: true, posts: items });
+    return NextResponse.json(
+      { ok: true, posts: items },
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } },
+    );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });

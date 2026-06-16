@@ -97,7 +97,10 @@ export default function BlogManager({ adminToken }: { adminToken: string }) {
     setLoadingList(true);
     setListError(null);
     try {
-      const r = await fetch('/api/admin/blog/list', { headers: authHeaders });
+      const r = await fetch(`/api/admin/blog/list?t=${Date.now()}`, {
+        headers: authHeaders,
+        cache: 'no-store',
+      });
       const j = (await r.json()) as { ok: boolean; posts?: PostListItem[]; error?: string };
       if (!j.ok) throw new Error(j.error || 'Failed to load');
       setPosts(j.posts ?? []);
