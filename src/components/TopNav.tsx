@@ -325,6 +325,9 @@ export default function TopNav({
     { href: "/transfers", label: t.fundingWithdrawals, key: "transfers" },
     { href: "/ledger", label: t.ledger, key: "ledger" },
     { href: "/documents", label: t.documents, key: "documents" },
+    ...(process.env.NEXT_PUBLIC_NAV_CLEARING_ENABLED === "true"
+      ? [{ href: "/trade-nav", label: (t as any).tradeNav || "Trade at NAV", key: "tradeNav" }]
+      : []),
   ];
 
   const isActive = (href: string) => {
