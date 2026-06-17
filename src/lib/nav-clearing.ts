@@ -67,8 +67,10 @@ export async function getNav(metal: string): Promise<number> {
 
 async function acquireLock(metal: string): Promise<boolean> {
   // SET NX EX — only one clear pass per metal at a time.
+  // Upstash returns "OK" when SET NX succeeds, null when the key
+  // already exists (lock held). It never returns a boolean.
   const ok = await redis.set(KEYS.lock(metal), "1", { nx: true, ex: 8 });
-  return ok === "OK" || ok === true;
+  return ok === "OK";
 }
 async function releaseLock(metal: string) {
   await redis.del(KEYS.lock(metal));
