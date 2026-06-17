@@ -7,6 +7,7 @@ import { getUserLanguage } from "@/lib/user-language";
 import { checkTradingAllowed } from "@/lib/trading-guard";
 import { getWithdrawFee, getMinWithdraw } from "@/lib/withdraw-fees";
 import { requireKycForWithdraw, assertCardHoldAllows, usdValueOf } from "@/lib/withdrawal-guard";
+import { recordAuxmEntry } from "@/lib/auxm-ledger";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
 
@@ -277,6 +278,16 @@ export async function POST(request: NextRequest) {
 
       // Record transaction (processing)
       const txId = `withdraw_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // AUXM burn bookkeeping (payout asset is the other leg).
+      await recordAuxmEntry({
+        address: normalizedAddr,
+        delta: -amount,
+        reason: "withdraw",
+        counterAsset: payoutAsset,
+        counterAmount: netPayout,
+        refTxId: txId,
+        meta: { payoutFee },
+      });
       const transaction = {
         id: txId,
         type: "withdraw",

@@ -219,7 +219,13 @@ export async function POST(request: NextRequest) {
       const normalizedAddress = userAddress.toLowerCase();
       
       // AUXM ekle
-      await incrementBalance(normalizedAddress, { auxm: auxmAmount });
+      await incrementBalance(normalizedAddress, { auxm: auxmAmount }, {
+        auxmReason: "nowpayments",
+        counterAsset: payload.pay_currency?.toUpperCase(),
+        counterAmount: Number(payload.actually_paid) || undefined,
+        refTxId: payload.payment_id != null ? String(payload.payment_id) : undefined,
+        meta: { usdValue },
+      });
       
       // Bonus varsa ekle (30 gün geçerli)
       if (bonusAmount > 0) {

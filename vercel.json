@@ -119,6 +119,10 @@
     {
       "path": "/api/cron/scan-auxr-deposits",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/auxm-reconcile",
+      "schedule": "30 8 * * *"
     }
   ]
 }

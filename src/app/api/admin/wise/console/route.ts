@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { requireAdmin } from "@/lib/admin-auth";
+import { recordAuxmEntry } from "@/lib/auxm-ledger";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -150,6 +151,15 @@ export async function POST(req: NextRequest) {
     // Credit balance
     const balanceKey = `user:${userAddress}:balance`;
     const newBalance = await redis.hincrbyfloat(balanceKey, "auxm", auxmCredit);
+    await recordAuxmEntry({
+      address: userAddress,
+      delta: auxmCredit,
+      reason: "wise_wire",
+      counterAsset: currency,
+      counterAmount: amount,
+      refTxId: `wise_manual_${resourceId}`,
+      meta: { source: "wise" },
+    });
 
     // Audit transaction record (subType discriminates manual vs auto)
     const tx = {

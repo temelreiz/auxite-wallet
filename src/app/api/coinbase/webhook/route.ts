@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import crypto from "crypto";
+import { recordAuxmEntry } from "@/lib/auxm-ledger";
 
 export const dynamic = "force-dynamic";
 
@@ -118,6 +119,14 @@ export async function POST(request: NextRequest) {
         if (bonus.amount > 0) {
           await redis.hincrbyfloat(balanceKey, "bonusauxm", bonus.amount);
         }
+        await recordAuxmEntry({
+          address: userAddress,
+          delta: auxmAmount,
+          reason: "coinbase",
+          counterAsset: "USD",
+          counterAmount: paidLocalAmount,
+          refTxId: chargeData?.id ? `cb_${chargeData.id}` : undefined,
+        });
 
         // Record transaction
         const transaction = {

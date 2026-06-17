@@ -37,6 +37,7 @@ import { notifyTrade } from "@/lib/telegram";
 import { createCryptoPayout, checkPayoutBalance } from "@/lib/nowpayments-service";
 import { queueTradeForProcurement } from "@/lib/procurement-pipeline";
 import { getCryptoSpotPrice } from "@/lib/crypto-liquidation-service";
+import { recordAuxmEntry } from "@/lib/auxm-ledger";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CRYPTO PRICE HELPER - Direkt Binance'den fiyat al
@@ -1756,6 +1757,28 @@ export async function POST(request: NextRequest) {
     }
 
     await multi.exec();
+
+    // AUXM mint/burn bookkeeping for the cash leg of the trade.
+    // buy: AUXM spent (burn); sell/swap into AUXM: AUXM received (mint).
+    if (fromTokenLower === "auxm" && fromAmount > 0) {
+      await recordAuxmEntry({
+        address: normalizedAddress,
+        delta: -fromAmount,
+        reason: "trade_buy",
+        counterAsset: toToken.toUpperCase(),
+        counterAmount: toAmount,
+        refTxId: txId,
+      });
+    } else if (toTokenLower === "auxm" && toAmount > 0) {
+      await recordAuxmEntry({
+        address: normalizedAddress,
+        delta: toAmount,
+        reason: "trade_sell",
+        counterAsset: fromToken.toUpperCase(),
+        counterAmount: fromAmount,
+        refTxId: txId,
+      });
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // 🏛️ VAULT INVENTORY ROUTING (best-effort, never blocks the trade)

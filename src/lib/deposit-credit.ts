@@ -67,7 +67,13 @@ export async function creditUserDeposit(params: CreditParams): Promise<CreditRes
     let creditedToken: string;
     let creditedAmount: number;
     if (autoConvert) {
-      await incrementBalance(address, { auxm: amountUsd } as any);
+      await incrementBalance(address, { auxm: amountUsd } as any, {
+        auxmReason: "deposit",
+        counterAsset: coin,
+        counterAmount: amount,
+        refTxHash: txHash,
+        meta: { source, chain, fromAddress },
+      });
       creditedToken = "AUXM";
       creditedAmount = amountUsd;
     } else {

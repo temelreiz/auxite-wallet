@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { sendDepositConfirmedEmail } from "@/lib/email-service";
+import { recordAuxmEntry } from "@/lib/auxm-ledger";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -197,6 +198,16 @@ export async function POST(request: NextRequest) {
       // Update totalAuxm
       const currentAuxm = parseFloat(String(await redis.hget(`user:${normalizedUserAddress}`, "auxm") || 0));
       await redis.hset(`user:${normalizedUserAddress}`, { totalAuxm: currentAuxm });
+
+      await recordAuxmEntry({
+        address: normalizedUserAddress,
+        delta: auxmAmount,
+        reason: "deposit",
+        counterAsset: coin,
+        counterAmount: amount,
+        refTxHash: txHash,
+        meta: { route: "/api/deposits", depositId },
+      });
 
       // Record transaction
       const transaction = {

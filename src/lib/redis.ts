@@ -170,12 +170,47 @@ export async function getUserBalance(address: string): Promise<UserBalance> {
   }
 }
 
+// Optional bookkeeping context for AUXM mint/burn. Lets callers tag the journal
+// entry with a precise reason/counter-asset; defaults to a generic record so no
+// AUXM movement through this chokepoint is ever missed.
+export interface AuxmBookkeeping {
+  auxmReason?: string;
+  counterAsset?: string;
+  counterAmount?: number;
+  refTxId?: string;
+  refTxHash?: string;
+  meta?: Record<string, any>;
+}
+
+// Append an AUXM mint/burn journal entry. Best-effort, never throws — bookkeeping
+// must not break a balance change. Dynamic import avoids a circular dep with
+// auxm-ledger (which imports from this file).
+async function journalAuxm(address: string, delta: number, bk?: AuxmBookkeeping): Promise<void> {
+  if (typeof delta !== "number" || !isFinite(delta) || delta === 0) return;
+  try {
+    const { recordAuxmEntry } = await import("./auxm-ledger");
+    await recordAuxmEntry({
+      address,
+      delta,
+      reason: (bk?.auxmReason as any) || "other",
+      counterAsset: bk?.counterAsset,
+      counterAmount: bk?.counterAmount,
+      refTxId: bk?.refTxId,
+      refTxHash: bk?.refTxHash,
+      meta: bk?.meta,
+    });
+  } catch (e: any) {
+    console.error("journalAuxm failed (non-fatal):", e?.message || e);
+  }
+}
+
 /**
  * Kullanıcı bakiyesini güncelle (increment)
  */
 export async function incrementBalance(
   address: string,
-  updates: Partial<Record<keyof UserBalance, number>>
+  updates: Partial<Record<keyof UserBalance, number>>,
+  bookkeeping?: AuxmBookkeeping
 ): Promise<boolean> {
   try {
     const r = getRedis();
@@ -183,7 +218,7 @@ export async function incrementBalance(
 
     // Her field için increment yap
     const pipeline = r.pipeline();
-    
+
     for (const [field, value] of Object.entries(updates)) {
       if (typeof value === "number" && field !== "totalAuxm") {
         pipeline.hincrbyfloat(key, field, value);
@@ -195,6 +230,11 @@ export async function incrementBalance(
     // totalAuxm'i güncelle
     const balance = await getUserBalance(address);
     await r.hset(key, { totalAuxm: balance.auxm + balance.bonusAuxm });
+
+    // AUXM mint/burn bookkeeping (safety net — catches every auxm change here).
+    if (typeof updates.auxm === "number") {
+      await journalAuxm(address, updates.auxm, bookkeeping);
+    }
 
     return true;
   } catch (error) {
@@ -208,7 +248,8 @@ export async function incrementBalance(
  */
 export async function setBalance(
   address: string,
-  updates: Partial<UserBalance>
+  updates: Partial<UserBalance>,
+  bookkeeping?: AuxmBookkeeping
 ): Promise<boolean> {
   try {
     const r = getRedis();
@@ -223,6 +264,14 @@ export async function setBalance(
 
     // Redis'e kaydet
     await r.hset(key, newBalance as Record<string, unknown>);
+
+    // AUXM bookkeeping: an absolute set is a mint/burn of the delta vs prior.
+    if (typeof updates.auxm === "number") {
+      await journalAuxm(address, updates.auxm - currentBalance.auxm, {
+        auxmReason: bookkeeping?.auxmReason || "admin_adjust",
+        ...bookkeeping,
+      });
+    }
 
     return true;
   } catch (error) {

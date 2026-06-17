@@ -120,7 +120,13 @@ export async function POST(request: NextRequest) {
 
     let credited: { token: string; amount: number };
     if (autoConvert) {
-      await incrementBalance(address, { auxm: amountUsd } as any);
+      await incrementBalance(address, { auxm: amountUsd } as any, {
+        auxmReason: "deposit",
+        counterAsset: v.coin,
+        counterAmount: v.amount,
+        refTxHash: txHash,
+        meta: { source: "user-claim", chain: v.chain, fromAddress: v.fromAddress },
+      });
       credited = { token: "AUXM", amount: amountUsd };
     } else {
       const coinKey = v.coin.toLowerCase();
