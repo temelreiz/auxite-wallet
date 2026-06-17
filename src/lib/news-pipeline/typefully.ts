@@ -105,13 +105,14 @@ async function createDraft(
   // delete it in one click). Threads pass their own content verbatim
   // — sources live inside the thread copy itself when the LLM cares
   // to include them.
-  const finalContent = options.sourceLink
-    ? `${content}\n\nSource: ${options.sourceLink}`
-    : content;
-
+  // Source link lives in the draft's scratchpad (internal note), not
+  // the public post body. The daily pipeline now auto-schedules, so
+  // there's no manual review step to strip the ugly RSS redirect URL
+  // before it goes live — keep the body clean and stash the source
+  // where the founder can still verify it inside Typefully.
   const posts = options.threadify
-    ? splitThread(finalContent)
-    : [{ text: finalContent }];
+    ? splitThread(content)
+    : [{ text: content }];
 
   // Discover which platforms are connected on this set, then build
   // a platforms object with the SAME posts under each. The founder
@@ -125,12 +126,16 @@ async function createDraft(
     platformsObj[p] = { enabled: true, posts };
   }
 
-  const body = JSON.stringify({
+  const draftBody: Record<string, unknown> = {
     platforms: platformsObj,
     // share = true returns a shareable draft URL — useful when we
     // list the drafts in Slack/email for the morning review.
     share: true,
-  });
+  };
+  if (options.sourceLink) {
+    draftBody.scratchpad_text = `Source: ${options.sourceLink}`;
+  }
+  const body = JSON.stringify(draftBody);
 
   const res = await fetch(`${API}/social-sets/${options.socialSetId}/drafts`, {
     method: "POST",
@@ -142,6 +147,27 @@ async function createDraft(
     throw new Error(`Typefully ${res.status}: ${text.slice(0, 240)}`);
   }
   return (await res.json()) as TypefullyDraftResponse;
+}
+
+// Schedule an existing draft into a concrete time. `when` accepts
+// Typefully's "next-free-slot" (drop it into the next open queue slot
+// per the social set's queue schedule) or an ISO datetime. PATCHing
+// publish_at is what flips a draft from "draft" to "scheduled".
+export async function scheduleDraft(
+  socialSetId: number,
+  draftId: number,
+  when: string = "next-free-slot",
+): Promise<{ scheduled_date?: string | null; status?: string }> {
+  const res = await fetch(`${API}/social-sets/${socialSetId}/drafts/${draftId}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ publish_at: when }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Typefully schedule ${res.status}: ${text.slice(0, 240)}`);
+  }
+  return (await res.json()) as { scheduled_date?: string | null; status?: string };
 }
 
 export async function pushDrafts(items: SummarizedItem[]): Promise<

@@ -8,16 +8,20 @@
 //   Agent 1  fetch.ts        Pulls RSS, filters by category
 //   Agent 2  llm.ts          Summarizes each item to 2 lines
 //   Agent 3  llm.ts          Rewrites in Auxite voice
-//   Agent 4  typefully.ts    POSTs drafts (never auto-publishes)
+//   Agent 4  typefully.ts    POSTs drafts
+//   Agent 5  typefully.ts    Schedules up to 2/day into the queue
 //
-// Drafts only — no auto-publish, never. The cron's job ends at
-// "Typefully has a fresh batch waiting". Founder picks which to
-// schedule via Typefully's UI by 14:00 TR.
+// Auto-schedule (NOT instant publish): up to AUTO_SCHEDULE_PER_DAY
+// drafts go into Typefully's next free queue slots (12:00 + 17:00 TR)
+// so daily posting needs no manual step. The remaining drafts stay as
+// drafts the founder can still review, edit, or promote from the UI.
+// Source links are kept out of the public body (stashed in the draft
+// scratchpad) since there's no longer a manual pass to strip them.
 
 import { NextRequest, NextResponse } from "next/server";
 import { fetchMorningNews } from "@/lib/news-pipeline/fetch";
 import { summarizeAndRewrite } from "@/lib/news-pipeline/llm";
-import { pushDrafts } from "@/lib/news-pipeline/typefully";
+import { pushDrafts, scheduleDraft } from "@/lib/news-pipeline/typefully";
 import type { NewsCategory } from "@/lib/news-pipeline/sources";
 
 // How many drafts to ship per day. We aim for one per category
@@ -32,6 +36,14 @@ import type { NewsCategory } from "@/lib/news-pipeline/sources";
 // gold takes and starve RWA coverage.
 const MAX_DRAFTS_PER_DAY = 5;
 const PER_CATEGORY_CAP = 2;
+
+// Of the drafts we push, how many to auto-schedule into the queue's
+// next free slots each run. The queue schedule has two weekday slots
+// (12:00 + 17:00 TR), so 2 fills the day exactly; the rest stay as
+// drafts for the founder to promote manually if they want more out.
+// We schedule at most one per category so a gold-heavy news day
+// doesn't queue two near-identical takes back to back.
+const AUTO_SCHEDULE_PER_DAY = 2;
 
 export const maxDuration = 300; // 5 min — covers fetch + ~8 LLM calls
 
@@ -102,6 +114,33 @@ export async function GET(request: NextRequest) {
   // ─── Agent 4: Push to Typefully ─────────────────────────────────
   const drafts = await pushDrafts(rewritten);
 
+  // ─── Agent 5: Auto-schedule into the queue ──────────────────────
+  // Daily posting no longer needs a manual step. We schedule up to
+  // AUTO_SCHEDULE_PER_DAY drafts (one per category) into Typefully's
+  // next free slots; the remainder stay as drafts the founder can
+  // promote. A schedule failure leaves that item as a draft and is
+  // reported — it never blocks the rest.
+  const scheduled: Array<{
+    draftId: number;
+    title: string;
+    scheduledDate?: string | null;
+    error?: string;
+  }> = [];
+  const seenCategories = new Set<NewsCategory>();
+  for (const d of drafts) {
+    if (scheduled.length >= AUTO_SCHEDULE_PER_DAY) break;
+    if (!d.ok || d.draftId == null || d.socialSetId == null) continue;
+    const cat = d.item.categories[0];
+    if (seenCategories.has(cat)) continue;
+    seenCategories.add(cat);
+    try {
+      const r = await scheduleDraft(d.socialSetId, d.draftId);
+      scheduled.push({ draftId: d.draftId, title: d.item.title, scheduledDate: r.scheduled_date });
+    } catch (err: any) {
+      scheduled.push({ draftId: d.draftId, title: d.item.title, error: err?.message || "schedule failed" });
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     fetched: news.length,
@@ -109,6 +148,8 @@ export async function GET(request: NextRequest) {
     rewritten: rewritten.length,
     pushed_ok: drafts.filter((d) => d.ok).length,
     pushed_errors: drafts.filter((d) => !d.ok).length,
+    auto_scheduled: scheduled.filter((s) => !s.error).length,
+    scheduled,
     drafts: drafts.map((d) => ({
       ok: d.ok,
       title: d.item.title,
