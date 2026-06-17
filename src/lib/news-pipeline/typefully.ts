@@ -64,9 +64,14 @@ async function listSocialSetIds(): Promise<number[]> {
   return (data.results || []).map((s) => s.id);
 }
 
-// GET /social-sets/<id> returns a payload where each platform key
-// only exists when that platform is connected. So we read the
-// object, then pick the connected ones from a known order.
+// GET /social-sets/<id> returns a payload with one key per platform.
+// A platform that's been disconnected (or never connected) is present
+// as an explicit `null` — NOT absent. So a key-existence check (`p in
+// platforms`) wrongly treats it as connected, which makes us enable
+// e.g. Threads on every draft and every publish then errors on it,
+// flagging the whole draft "error" even though the real platforms went
+// out. Require a non-null value so only genuinely connected platforms
+// are enabled.
 async function getConnectedPlatforms(socialSetId: number): Promise<Platform[]> {
   const res = await fetch(`${API}/social-sets/${socialSetId}`, {
     headers: authHeaders(),
@@ -76,7 +81,7 @@ async function getConnectedPlatforms(socialSetId: number): Promise<Platform[]> {
   }
   const data = (await res.json()) as { platforms?: Record<string, unknown> };
   const platforms = data.platforms || {};
-  return SUPPORTED_PLATFORMS.filter((p) => p in platforms);
+  return SUPPORTED_PLATFORMS.filter((p) => platforms[p] != null);
 }
 
 // Split LLM-composed thread content into per-tweet posts. Our
