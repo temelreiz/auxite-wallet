@@ -34,8 +34,11 @@ function extractState(d: any): string {
   return String(d?.state || d?.status || "").toLowerCase();
 }
 
-/** Best-effort net USD delivered to the bank across known field shapes. */
+/** Net USD delivered to the bank. On a Bridge drain this is `amount` (currency
+ *  "usd"); tolerate other field shapes as fallbacks. */
 function extractUsd(d: any): number {
+  const cur = String(d?.currency || "").toLowerCase();
+  if (cur === "usd" && num(d?.amount)) return num(d.amount);
   return (
     num(d?.destination_amount) ||
     num(d?.receipt?.destination_amount) ||
@@ -119,6 +122,7 @@ export async function POST(req: NextRequest) {
       liquidationAddress: la.address,
       amountUsd: usd,
       drainId: String(drain?.id || ""),
+      depositTxHash: drain?.deposit_tx_hash || drain?.source?.tx_hash,
     });
 
     // Best-effort admin alert.

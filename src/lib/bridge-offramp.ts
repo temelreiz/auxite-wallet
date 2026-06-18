@@ -208,29 +208,38 @@ export interface DrainSettlement {
   /** Net fiat amount delivered to the bank (USD). */
   amountUsd: number;
   drainId?: string;
+  /** On-chain hash of the deposit that funded the drain = our sweep's txHash. */
+  depositTxHash?: string;
 }
 
 /**
  * Match a settled drain to an open sweep and move the value from in-flight into
- * treasury USD cash. Matching is FIFO over open sweeps on the same liquidation
- * address — Bridge drains don't carry our sweep id, so oldest-open is the best
- * deterministic link. Unmatched settlements are logged for manual review and the
- * cash is still credited (the USD really did arrive).
+ * treasury USD cash. We match on the drain's `deposit_tx_hash` (= the hash of
+ * the sweep we sent) for an exact link, falling back to the oldest open sweep on
+ * the same liquidation address. Unmatched settlements are logged for review and
+ * the cash is still credited (the USD really did arrive).
  */
 export async function settleDrain(s: DrainSettlement): Promise<{ matched: boolean; sweepId?: string }> {
   const r = getRedis();
 
-  // Find the oldest open ("submitted") sweep for this liquidation address.
   const raw = await r.lrange(BRIDGE_KEYS.sweeps, 0, 4999);
   const list = (raw || []).map((x: any) => {
     try { return typeof x === "string" ? JSON.parse(x) : x; } catch { return null; }
   }).filter(Boolean) as SweepRecord[];
 
+  // Exact match on deposit tx hash; else oldest open sweep on this address.
+  const depHash = (s.depositTxHash || "").toLowerCase();
   const addr = (s.liquidationAddress || "").toLowerCase();
-  const open = list
-    .filter((x) => x.status === "submitted" && (!addr || x.liquidationAddress.toLowerCase() === addr))
-    .sort((a, b) => a.createdAt - b.createdAt);
-  const match = open[0];
+  let match: SweepRecord | undefined;
+  if (depHash) {
+    match = list.find((x) => x.status === "submitted" && (x.txHash || "").toLowerCase() === depHash);
+  }
+  if (!match) {
+    const open = list
+      .filter((x) => x.status === "submitted" && (!addr || x.liquidationAddress.toLowerCase() === addr))
+      .sort((a, b) => a.createdAt - b.createdAt);
+    match = open[0];
+  }
 
   // Credit the USD that actually landed in Wise into treasury cash.
   await r.incrbyfloat("treasury:usd:cash", s.amountUsd);
