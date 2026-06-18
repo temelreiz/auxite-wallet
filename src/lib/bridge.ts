@@ -257,7 +257,8 @@ export async function setStoredLiquidationAddress(la: StoredLiquidationAddress):
 // not set we fail-open with a loud warning — useful to inspect the first real
 // delivery and confirm the payload shape; set the key before relying on it.
 export function verifyBridgeWebhookSignature(rawBody: string, signatureHeader: string): boolean {
-  const pubKey = process.env.BRIDGE_WEBHOOK_PUBLIC_KEY;
+  // Accept both a real multi-line PEM and a single-line form with literal "\n".
+  const pubKey = (process.env.BRIDGE_WEBHOOK_PUBLIC_KEY || "").replace(/\\n/g, "\n").trim();
   if (!pubKey) {
     console.warn("[bridge] BRIDGE_WEBHOOK_PUBLIC_KEY not set — skipping signature verification");
     return true;
