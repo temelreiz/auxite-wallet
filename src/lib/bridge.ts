@@ -247,11 +247,15 @@ export async function setStoredLiquidationAddress(la: StoredLiquidationAddress):
 
 // ── Webhook signature verification ────────────────────────────────────────────
 //
-// Bridge signs webhook deliveries; the signature arrives in `X-Webhook-Signature`.
-// We verify with the RSA public key from the Bridge dashboard, held in
-// BRIDGE_WEBHOOK_PUBLIC_KEY so it can rotate without a deploy. If the key is not
-// set we fail-open with a loud warning (useful to inspect the first delivery and
-// confirm the payload shape) — set the key before relying on the integration.
+// Bridge signs webhook deliveries with the RSA private key paired to a PKI
+// public key (PEM) that Bridge assigns to each webhook endpoint when it is
+// created (shown in the dashboard / returned from POST /v0/webhooks). Put that
+// PEM in BRIDGE_WEBHOOK_PUBLIC_KEY so it can rotate without a deploy.
+//
+// Header `X-Webhook-Signature` is `t=<timestamp_ms>,v0=<base64 signature>`. The
+// signed payload is `<timestamp>.<raw request body>` (RSA-SHA256). If the key is
+// not set we fail-open with a loud warning — useful to inspect the first real
+// delivery and confirm the payload shape; set the key before relying on it.
 export function verifyBridgeWebhookSignature(rawBody: string, signatureHeader: string): boolean {
   const pubKey = process.env.BRIDGE_WEBHOOK_PUBLIC_KEY;
   if (!pubKey) {
@@ -260,12 +264,13 @@ export function verifyBridgeWebhookSignature(rawBody: string, signatureHeader: s
   }
   if (!signatureHeader) return false;
   try {
-    // Header may be "t=<ts>,v0=<base64>" or a bare base64 signature.
-    let sig = signatureHeader;
-    const m = signatureHeader.match(/v0=([^,]+)/);
-    if (m) sig = m[1];
+    const tMatch = signatureHeader.match(/t=([^,]+)/);
+    const vMatch = signatureHeader.match(/v0=([^,]+)/);
+    // Bridge sends "t=...,v0=..."; tolerate a bare base64 sig as a fallback.
+    const sig = vMatch ? vMatch[1] : signatureHeader;
+    const signedPayload = tMatch ? `${tMatch[1]}.${rawBody}` : rawBody;
     const verifier = crypto.createVerify("RSA-SHA256");
-    verifier.update(rawBody);
+    verifier.update(signedPayload);
     verifier.end();
     return verifier.verify(pubKey, sig, "base64");
   } catch (e) {
