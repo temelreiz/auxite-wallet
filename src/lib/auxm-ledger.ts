@@ -202,7 +202,7 @@ const COVERAGE_WARN = 1.0; // alert if backing < 100% of stable liabilities
 export async function reconcileAuxm(): Promise<AuxmReconcileReport> {
   await ensureGenesis();
 
-  const [liabilities, supply, base, tron, btc, spot, cash] = await Promise.all([
+  const [liabilities, supply, base, tron, btc, spot, cash, inflight] = await Promise.all([
     sumLiabilities(),
     getAuxmSupply(),
     baseTreasury(),
@@ -210,9 +210,10 @@ export async function reconcileAuxm(): Promise<AuxmReconcileReport> {
     btcTreasury(),
     cryptoSpot(),
     getRedis().get("treasury:usd:cash").then((v) => (v != null ? Number(v) : 0)).catch(() => 0),
+    getRedis().get("treasury:bridge:inflight_usd").then((v) => (v != null ? Number(v) : 0)).catch(() => 0),
   ]);
 
-  const backing = computeBackingUsd(base, tron, btc, spot, cash);
+  const backing = computeBackingUsd(base, tron, btc, spot, cash, inflight);
 
   const expectedOutstanding =
     supply.genesisOutstanding != null ? supply.genesisOutstanding + supply.minted - supply.burned : null;

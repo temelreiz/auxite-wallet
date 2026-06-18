@@ -113,12 +113,18 @@ export interface BackingUsd {
 }
 
 // Pure: turn already-fetched treasury reads into a USD total + breakdown.
+//
+// `bridgeInflight` = stablecoin already sent to a Bridge liquidation address but
+// whose USD has not yet landed in Wise (and so isn't in `cash` yet). Counting it
+// keeps the backing whole across the off-ramp conversion window — see
+// src/lib/bridge-offramp.ts.
 export function computeBackingUsd(
   base: BaseTreasury,
   tron: TronTreasury,
   btc: BtcTreasury,
   spot: CryptoSpot,
-  cash: number
+  cash: number,
+  bridgeInflight = 0
 ): BackingUsd {
   const breakdown: Record<string, number> = {
     base_usdc: base.usdc || 0,
@@ -127,6 +133,7 @@ export function computeBackingUsd(
     tron_usdt: tron.usdt || 0,
     btc_usd: (btc.btc || 0) * (spot.btc || 0),
     cash_usd: cash || 0,
+    bridge_inflight_usd: bridgeInflight || 0,
   };
   const usd = Object.values(breakdown).reduce((a, b) => a + b, 0);
   // "ok" means we trust the number enough to drive a solvency verdict:
@@ -137,12 +144,13 @@ export function computeBackingUsd(
 
 // Fetch all treasury reads and return the consolidated liquid backing in USD.
 export async function liquidBackingUsd(): Promise<BackingUsd> {
-  const [base, tron, btc, spot, cash] = await Promise.all([
+  const [base, tron, btc, spot, cash, inflight] = await Promise.all([
     baseTreasury(),
     tronTreasuryBalances(),
     btcTreasury(),
     cryptoSpot(),
     getRedis().get("treasury:usd:cash").then((v) => (v != null ? Number(v) : 0)).catch(() => 0),
+    getRedis().get("treasury:bridge:inflight_usd").then((v) => (v != null ? Number(v) : 0)).catch(() => 0),
   ]);
-  return computeBackingUsd(base, tron, btc, spot, cash);
+  return computeBackingUsd(base, tron, btc, spot, cash, inflight);
 }

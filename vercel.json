@@ -123,6 +123,10 @@
     {
       "path": "/api/cron/auxm-reconcile",
       "schedule": "30 8 * * *"
+    },
+    {
+      "path": "/api/cron/bridge-offramp-sweep",
+      "schedule": "*/10 * * * *"
     }
   ]
 }
