@@ -115,8 +115,9 @@ The endpoint quotes and records orders (`redeem:nav:queue`); it deliberately doe
 | NAV-redemption quote engine + route + tests | ✅ built, 7 tests pass |
 | MINTER_ROLE revoke tooling | ✅ built, Safe-calldata planner verified |
 | Pause/cap on metal tokens | ✅ decided: mitigate in place (no V9 — preserves rwa.xyz/rwa.io/DefiLlama listings) |
-| PoR deploy + attestor key + posting cron | ⬜ ops |
-| NAV-redemption settlement worker | ⬜ ops (moves funds — authorized signer) |
-| SPV / bankruptcy-remote + audits | ⬜ founder/legal track |
+| PoR deploy script + posting cron | ✅ built (`deploy-reserve-attestation.ts`, `/api/cron/reserve-attestation-post`); ⬜ deploy + attestor key + schedule |
+| NAV-redemption settlement worker | ✅ built (`/api/cron/nav-redemption-settle`, dry-run default); ⬜ staging dry-run → enable `NAV_SETTLE_EXECUTE` |
+| Security audit (3 contracts) | 🔄 The Network Firm proposal pending |
+| SPV / bankruptcy-remote | ⬜ founder/legal track |
 
 _Last updated: 2026-06-19_
