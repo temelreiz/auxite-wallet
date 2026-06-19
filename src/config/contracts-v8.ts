@@ -46,8 +46,9 @@ export const ACTIVE_NETWORK =
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // BASE MAINNET Adresleri (V8) - Deployed 2026-02-02
-// NOT: Bunlar kanonik on-chain adreslerdir. Public/listeleme uçları (örn. /api/supply)
-// env override'a tabi METAL_TOKENS yerine doğrudan bunu kullanmalı.
+// ⚠️ ESKİ/RETIRED SET. Canlı kanonik tokenlar artık CANONICAL_TOKENS (0xCef9…,
+// deployed 2026-06-09) — rwa.xyz + DefiLlama bunları okur, gerçek AUM onlarda.
+// Bu V8 set (0x3901…) küçük/eski; yeni kod CANONICAL_TOKENS kullanmalı.
 export const BASE_V8_TOKENS = {
   AUXG: "0x390164702040B509A3D752243F92C2Ac0318989D",
   AUXS: "0x82F6EB8Ba5C84c8Fd395b25a7A40ade08F0868aa",
@@ -111,15 +112,24 @@ export const MIRROR_TOKENS = {
 // ═══════════════════════════════════════════════════════════════════════════════
 // Yeni kanonik kontratlar mirror katmanını DEĞİŞTİRİR: supply per-investor mint
 // edilir → zincir sahipliğin kaydı olur (rwa.xyz "On-chain Represented").
-// Adresler env-driven: yeni kontratlar deploy edilip 4 env set edilince
-// CANONICAL_READY true olur ve public uçlar (örn. /api/supply) otomatik olarak
-// interim mirror feed'inden canonical'a geçer. Env set DEĞİLSE mirror'a düşer →
-// bugünkü davranış aynen korunur, hiçbir şey bozulmaz.
+// CANONICAL (live) AuxiteMetal set — Base mainnet, deployed 2026-06-09. These
+// are the REAL per-investor tokens (the ones on rwa.xyz, with full AUM), and
+// the same addresses rwa-mint-sync mints to. They supersede both the V8 set
+// (BASE_V8_TOKENS, 0x3901…, retired) and the interim MIRROR_TOKENS.
+// Env-overridable, but the hardcoded fallback IS the live set so consumers
+// resolve correctly even when the NEXT_PUBLIC_*_CANONICAL env vars are unset
+// (matches rwa-mint-sync's CANONICAL_FALLBACK — single source of truth).
+const CANONICAL_FALLBACK = {
+  AUXG: "0xCef9D7593E8Ba796eE05C54B8983B7749bB1218a",
+  AUXS: "0xB0aC63aeD12b5A0Ee710618D99444bf126068c1a",
+  AUXPT: "0x39F314fb20668997A2ADDaB1eA9236e0072D5E2D",
+  AUXPD: "0x6e4837fCf158D15ABFdf90b3954D041D452BE832",
+} as const;
 export const CANONICAL_TOKENS = {
-  AUXG: process.env.NEXT_PUBLIC_AUXG_CANONICAL || "",
-  AUXS: process.env.NEXT_PUBLIC_AUXS_CANONICAL || "",
-  AUXPT: process.env.NEXT_PUBLIC_AUXPT_CANONICAL || "",
-  AUXPD: process.env.NEXT_PUBLIC_AUXPD_CANONICAL || "",
+  AUXG: process.env.NEXT_PUBLIC_AUXG_CANONICAL || CANONICAL_FALLBACK.AUXG,
+  AUXS: process.env.NEXT_PUBLIC_AUXS_CANONICAL || CANONICAL_FALLBACK.AUXS,
+  AUXPT: process.env.NEXT_PUBLIC_AUXPT_CANONICAL || CANONICAL_FALLBACK.AUXPT,
+  AUXPD: process.env.NEXT_PUBLIC_AUXPD_CANONICAL || CANONICAL_FALLBACK.AUXPD,
 };
 
 export const CANONICAL_READY = Object.values(CANONICAL_TOKENS).every((a) =>
