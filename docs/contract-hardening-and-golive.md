@@ -37,25 +37,34 @@ BACKEND_SIGNER=0x<KMS reconciliation signer> \
 
 ---
 
-## 2. Pause + supply cap on metal tokens (Gate 5) — DECISION REQUIRED
+## 2. Pause + supply cap on metal tokens (Gate 5) — DECIDED: mitigate in place
 
 **The constraint:** `AuxiteMetal` is **deployed and immutable** (no proxy). Unlike
 `AUXR` (which has `ERC20Pausable` + `MAX_SUPPLY`), the metal tokens have **no pause
 and no on-chain cap**, and you cannot retrofit either onto a live immutable
-contract. There are only two honest paths:
+contract.
 
-| Path | What it means | Trade-off |
-|---|---|---|
-| **A. Mitigate in place** (recommended now) | Keep the immutable tokens; reduce risk operationally: admin = Safe multisig, MINTER_ROLE revoked (§1), supply-delta monitoring + alerting on the daily reconciliation, off-chain circuit-breaker | Zero migration; no on-chain pause/cap, so emergency response is operational not contract-enforced |
-| **B. Migrate to a hardened V9** | Deploy `AuxiteMetalV9` with `ERC20Pausable` + supply cap + same mint/burn API, migrate holder balances | True on-chain pause/cap; but a **token migration touches every holder** — real cost, comms, and risk |
+**Decision: do NOT deploy a replacement token contract.** The live metal tokens
+(AUXG/AUXS/AUXPT/AUXPD) are the **canonical addresses registered on rwa.xyz,
+rwa.io, and DefiLlama**. A `V9` migration would change those addresses and forfeit
+the listings, the "On-chain Represented" status, holder continuity, and supply
+history. That cost is not worth an on-chain pause/cap. The gap is closed
+**operationally** instead:
 
-**Recommendation:** do **A now** (it's free and closes most of the risk via §1 +
-monitoring), and treat **B** as a separate, planned decision — ideally folded into
-the same redeploy that adds any other contract changes, so holders migrate once.
+- **MINTER_ROLE revoked** from the deploy admin (§1) — removes the single largest
+  abuse vector with no contract change.
+- **Admin = Safe multisig** (governance) for any remaining role action.
+- **Supply-delta monitoring + alerting** on the daily reconciliation — the
+  off-chain circuit-breaker that substitutes for an on-chain pause.
+- **On-chain PoR feed** (§3a, `ReserveAttestation`) makes any divergence between
+  attested reserves and supply publicly visible and timestamped.
 
-> A ready `AuxiteMetalV9` (ERC20Pausable + cap, mint/burn parity, full test suite)
-> can be authored on green-light. It is intentionally **not** built yet because the
-> migration is a holder-impacting product decision, not a mechanical fix.
+> **Note — additive vs replacement contracts:** the *only* thing ruled out is a new
+> **token** contract that replaces the listed metal tokens. `ReserveAttestation.sol`
+> is an **additive auxiliary** contract at its own address; it does not touch the
+> metal tokens or their listings and is safe to deploy. Net result: on-chain
+> pause/cap is accepted as **operational, not contract-enforced** — a deliberate,
+> defensible trade-off given the rwa.xyz / rwa.io / DefiLlama integrations.
 
 ---
 
@@ -105,7 +114,7 @@ The endpoint quotes and records orders (`redeem:nav:queue`); it deliberately doe
 | Signed attestation lib + API + tests | ✅ built, 7 tests pass |
 | NAV-redemption quote engine + route + tests | ✅ built, 7 tests pass |
 | MINTER_ROLE revoke tooling | ✅ built, Safe-calldata planner verified |
-| Pause/cap on metal tokens | ⚠️ decision: mitigate-in-place vs V9 migration |
+| Pause/cap on metal tokens | ✅ decided: mitigate in place (no V9 — preserves rwa.xyz/rwa.io/DefiLlama listings) |
 | PoR deploy + attestor key + posting cron | ⬜ ops |
 | NAV-redemption settlement worker | ⬜ ops (moves funds — authorized signer) |
 | SPV / bankruptcy-remote + audits | ⬜ founder/legal track |
