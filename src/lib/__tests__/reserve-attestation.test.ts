@@ -1,10 +1,11 @@
 // Unit tests for the signed reserve-attestation library.
-// Mocks the Redis-backed reserve module so we test pure hashing/signing.
+// Mock the heavy on-chain/data imports so we test the pure hashing/signing path.
 
 import { ethers } from "ethers";
 
-jest.mock("@/lib/auxr-reserve", () => ({
-  getReserveSnapshot: jest.fn(),
+jest.mock("@/lib/live-prices", () => ({ getLivePrices: jest.fn() }));
+jest.mock("@/config/contracts-v8", () => ({
+  CANONICAL_TOKENS: { AUXG: "0x0", AUXS: "0x0", AUXPT: "0x0", AUXPD: "0x0" },
 }));
 
 import {
@@ -15,24 +16,16 @@ import {
   toMetalInputs,
   ATTESTATION_VERSION,
   type AttestationReport,
+  type MetalReserveData,
 } from "@/lib/reserve-attestation";
-import type { ReserveSnapshot } from "@/lib/auxr-reserve";
 
-const snapshot: ReserveSnapshot = {
-  supplyUnits: 1000,
-  reservesGrams: { gold: 100.5, silver: 5000, platinum: 200, palladium: 100 },
-  requiredGrams: { gold: 100, silver: 5000, platinum: 200, palladium: 100 },
-  backingRatio: {
-    gold: 1.005,
-    silver: 1.0,
-    platinum: 1.0,
-    palladium: 1.0,
-    weakest: 1.0,
-  },
-  reservesUSD: 1_234_567.89,
-  marketCapUSD: 1_230_000.5,
-  lastUpdated: 1_700_000_000_000,
-};
+// Live-style per-metal data: gold slightly over-backed, rest exactly 1:1.
+const metalData: MetalReserveData[] = [
+  { symbol: "AUXG", supplyGrams: 100, reservesGrams: 100.5, navPerGram: 100 },
+  { symbol: "AUXS", supplyGrams: 5000, reservesGrams: 5000, navPerGram: 1 },
+  { symbol: "AUXPT", supplyGrams: 200, reservesGrams: 200, navPerGram: 30 },
+  { symbol: "AUXPD", supplyGrams: 100, reservesGrams: 100, navPerGram: 20 },
+];
 
 // Deterministic test key (well-known Hardhat account #1) — createRandom()
 // needs crypto entropy that the jest env doesn't reliably provide.
@@ -43,7 +36,7 @@ describe("reserve-attestation", () => {
   const ASOF = 1_750_000_000;
 
   it("builds a canonical report with per-metal mg + bps", () => {
-    const r = buildReport(snapshot, ASOF);
+    const r = buildReport(metalData, ASOF);
     expect(r.version).toBe(ATTESTATION_VERSION);
     expect(r.asOf).toBe(ASOF);
     expect(r.metals).toHaveLength(4);
@@ -53,11 +46,13 @@ describe("reserve-attestation", () => {
     expect(gold.requiredMg).toBe(100_000);
     expect(gold.backingBps).toBe(10_050); // 1.005 * 10000
 
-    expect(r.reservesUSD).toBe(1_234_568); // rounded
+    // reservesUSD = Σ reservesGrams × navPerGram
+    // = 100.5*100 + 5000*1 + 200*30 + 100*20 = 23,050
+    expect(r.reservesUSD).toBe(23_050);
   });
 
   it("hashes deterministically regardless of key order", () => {
-    const r1 = buildReport(snapshot, ASOF);
+    const r1 = buildReport(metalData, ASOF);
     // Same data, shuffled top-level key insertion order.
     const r2: AttestationReport = {
       marketCapUSD: r1.marketCapUSD,
@@ -71,8 +66,8 @@ describe("reserve-attestation", () => {
   });
 
   it("produces a different hash when a figure changes", () => {
-    const r1 = buildReport(snapshot, ASOF);
-    const r2 = buildReport(snapshot, ASOF + 1);
+    const r1 = buildReport(metalData, ASOF);
+    const r2 = buildReport(metalData, ASOF + 1);
     expect(hashReport(r1)).not.toBe(hashReport(r2));
   });
 
@@ -81,7 +76,7 @@ describe("reserve-attestation", () => {
     const prev = process.env.RESERVE_ATTESTOR_KEY;
     process.env.RESERVE_ATTESTOR_KEY = wallet.privateKey;
     try {
-      const att = signReport(buildReport(snapshot, ASOF));
+      const att = signReport(buildReport(metalData, ASOF));
       expect(att.signature).not.toBeNull();
       expect(att.signer).toBe(wallet.address);
       const recovered = verifyAttestation(att);
@@ -95,7 +90,7 @@ describe("reserve-attestation", () => {
     const prev = process.env.RESERVE_ATTESTOR_KEY;
     delete process.env.RESERVE_ATTESTOR_KEY;
     try {
-      const att = signReport(buildReport(snapshot, ASOF));
+      const att = signReport(buildReport(metalData, ASOF));
       expect(att.signature).toBeNull();
       expect(att.signer).toBeNull();
       expect(verifyAttestation(att)).toBeNull();
@@ -109,7 +104,7 @@ describe("reserve-attestation", () => {
     const prev = process.env.RESERVE_ATTESTOR_KEY;
     process.env.RESERVE_ATTESTOR_KEY = wallet.privateKey;
     try {
-      const att = signReport(buildReport(snapshot, ASOF));
+      const att = signReport(buildReport(metalData, ASOF));
       // Mutate a figure after signing.
       att.report.metals[0].reservesMg += 1;
       expect(verifyAttestation(att)).toBeNull();
@@ -119,7 +114,7 @@ describe("reserve-attestation", () => {
   });
 
   it("maps to on-chain MetalInput tuples", () => {
-    const r = buildReport(snapshot, ASOF);
+    const r = buildReport(metalData, ASOF);
     const inputs = toMetalInputs(r);
     expect(inputs).toHaveLength(4);
     const [symbol, reservesMg, requiredMg, backingBps] = inputs[0];

@@ -19,26 +19,33 @@
 // ============================================================================
 
 import { ethers } from "ethers";
-import {
-  getReserveSnapshot,
-  type AuxrBasketMetal,
-  type ReserveSnapshot,
-} from "@/lib/auxr-reserve";
+import { CANONICAL_TOKENS } from "@/config/contracts-v8";
+import { getLivePrices } from "@/lib/live-prices";
 
-// Basket metal → public token symbol used on-chain and in the report.
-const SYMBOL: Record<AuxrBasketMetal, string> = {
-  gold: "AUXG",
-  silver: "AUXS",
-  platinum: "AUXPT",
-  palladium: "AUXPD",
-};
+// The live canonical metal tokens (per-investor AuxiteMetal, 0xCef9…). The PoR
+// attests the REAL on-chain supply of these tokens, not the off-chain AUXR
+// basket ledger. Model: 1 token = 1 gram of allocated physical metal, so
+// on-chain supply IS the reserve figure (100% backed by construction); the
+// independent physical verification is the CPA attestor's job.
+const METAL_SYMBOLS = ["AUXG", "AUXS", "AUXPT", "AUXPD"] as const;
+type MetalSym = (typeof METAL_SYMBOLS)[number];
 
-const METAL_ORDER: AuxrBasketMetal[] = [
-  "gold",
-  "silver",
-  "platinum",
-  "palladium",
-];
+const BASE_RPC_URL =
+  process.env.BASE_RPC_URL ||
+  process.env.NEXT_PUBLIC_BASE_RPC_URL ||
+  "https://mainnet.base.org";
+const TOKEN_DECIMALS = 3; // 1 gram = 1000 raw units
+
+/** Per-metal reserve data sourced from the live canonical token + NAV. */
+export interface MetalReserveData {
+  symbol: string;
+  /** On-chain totalSupply, in grams. */
+  supplyGrams: number;
+  /** Physical metal held, in grams (= supply in the 1:1 allocated model). */
+  reservesGrams: number;
+  /** USD per gram (issuer NAV). */
+  navPerGram: number;
+}
 
 export const ATTESTATION_VERSION = "auxite-por-1";
 
@@ -121,25 +128,35 @@ function ratioToBps(ratio: number): number {
   return Math.round(ratio * 10000);
 }
 
-/** Build the canonical report from a reserve snapshot. */
+/** Build the canonical report from per-metal reserve data. */
 export function buildReport(
-  snapshot: ReserveSnapshot,
+  metals: MetalReserveData[],
   asOfSeconds: number
 ): AttestationReport {
-  const metals: AttestationMetal[] = METAL_ORDER.map((m) => ({
-    symbol: SYMBOL[m],
-    reservesMg: gramsToMg(snapshot.reservesGrams[m]),
-    requiredMg: gramsToMg(snapshot.requiredGrams[m]),
-    backingBps: ratioToBps(snapshot.backingRatio[m]),
+  const lines: AttestationMetal[] = metals.map((m) => ({
+    symbol: m.symbol,
+    reservesMg: gramsToMg(m.reservesGrams),
+    requiredMg: gramsToMg(m.supplyGrams),
+    backingBps:
+      m.supplyGrams > 0 ? ratioToBps(m.reservesGrams / m.supplyGrams) : 10000,
   }));
+
+  const reservesUSD = metals.reduce(
+    (s, m) => s + m.reservesGrams * m.navPerGram,
+    0
+  );
+  const marketCapUSD = metals.reduce(
+    (s, m) => s + m.supplyGrams * m.navPerGram,
+    0
+  );
 
   return {
     version: ATTESTATION_VERSION,
     asOf: asOfSeconds,
     attestor: ATTESTOR_LABEL,
-    metals,
-    reservesUSD: Math.round(snapshot.reservesUSD),
-    marketCapUSD: Math.round(snapshot.marketCapUSD),
+    metals: lines,
+    reservesUSD: Math.round(reservesUSD),
+    marketCapUSD: Math.round(marketCapUSD),
   };
 }
 
@@ -208,13 +225,38 @@ export function toMetalInputs(report: AttestationReport): MetalInputTuple[] {
 // ── High-level entry point ─────────────────────────────────────────────────────
 
 /**
- * Produce a fresh signed attestation from the live reserve snapshot.
+ * Read live reserve data: each canonical metal token's on-chain totalSupply,
+ * priced at the issuer NAV. reserves = supply (1:1 allocated model).
+ */
+export async function readOnChainReserves(): Promise<MetalReserveData[]> {
+  const provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
+  const prices = await getLivePrices();
+  const abi = ["function totalSupply() view returns (uint256)"];
+  const out: MetalReserveData[] = [];
+  for (const sym of METAL_SYMBOLS) {
+    const addr = (CANONICAL_TOKENS as Record<MetalSym, string>)[sym];
+    let supplyGrams = 0;
+    try {
+      const c = new ethers.Contract(addr, abi, provider);
+      const raw: bigint = await c.totalSupply();
+      supplyGrams = parseFloat(ethers.formatUnits(raw, TOKEN_DECIMALS));
+    } catch {
+      supplyGrams = 0;
+    }
+    const navPerGram = Number((prices as Record<string, number>)[sym.toLowerCase()]) || 0;
+    out.push({ symbol: sym, supplyGrams, reservesGrams: supplyGrams, navPerGram });
+  }
+  return out;
+}
+
+/**
+ * Produce a fresh signed attestation from the live on-chain canonical supply.
  * @param asOfSeconds as-of time; defaults to now.
  */
 export async function generateAttestation(
   asOfSeconds?: number
 ): Promise<SignedAttestation> {
-  const snapshot = await getReserveSnapshot();
+  const metals = await readOnChainReserves();
   const asOf = asOfSeconds ?? Math.floor(Date.now() / 1000);
-  return signReport(buildReport(snapshot, asOf));
+  return signReport(buildReport(metals, asOf));
 }
