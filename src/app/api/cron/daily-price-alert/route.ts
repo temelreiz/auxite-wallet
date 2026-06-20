@@ -1,7 +1,8 @@
 // src/app/api/cron/daily-price-alert/route.ts
-// Daily morning price alert push notification
-// Runs every hour. For each user whose local time is 09:00, sends a push
-// notification with day-over-day price changes for AUXG, AUXS, AUXPT, AUXPD.
+// Daily price alert push notification
+// Runs every hour. For each user whose local time is 12:00 ON A WEEKDAY, sends a
+// push with day-over-day price changes for AUXG, AUXS, AUXPT, AUXPD. Weekends are
+// skipped — metals markets are closed, so prices have not moved since Friday.
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
@@ -55,6 +56,21 @@ function getLocalHour(timezone: string): number | null {
     return h === 24 ? 0 : h;
   } catch {
     // Invalid timezone string
+    return null;
+  }
+}
+
+/**
+ * Get the weekday in a given IANA timezone as a short English name
+ * ("Mon".."Sun"). Returns null for an invalid timezone.
+ */
+function getLocalWeekday(timezone: string): string | null {
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      weekday: "short",
+    }).format(new Date());
+  } catch {
     return null;
   }
 }
@@ -160,6 +176,7 @@ export async function GET(request: NextRequest) {
 
     const eligibleUsers: UserDeliveryInfo[] = [];
     let skippedOptOut = 0;
+    let skippedWeekend = 0;
 
     for (const walletAddr of allPushUsers) {
       const addr = (walletAddr as string).toLowerCase();
@@ -203,6 +220,14 @@ export async function GET(request: NextRequest) {
       const localHour = getLocalHour(tz);
       if (localHour !== 12) continue;
 
+      // ── 4c-bis. Weekdays only — metals markets are closed on weekends,
+      //           so skip Saturday/Sunday in the user's local timezone. ──
+      const weekday = getLocalWeekday(tz);
+      if (weekday === "Sat" || weekday === "Sun") {
+        skippedWeekend++;
+        continue;
+      }
+
       // ── 4d. Fetch user language for localized title ──
       const language = await getUserLanguage(addr);
 
@@ -240,7 +265,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(
-      `[DailyPriceAlert] Completed: ${eligibleUsers.length} eligible, ${totalSent} sent, ${totalFailed} failed, ${skippedOptOut} opted out`
+      `[DailyPriceAlert] Completed: ${eligibleUsers.length} eligible, ${totalSent} sent, ${totalFailed} failed, ${skippedOptOut} opted out, ${skippedWeekend} skipped (weekend)`
     );
 
     return NextResponse.json({
@@ -250,6 +275,7 @@ export async function GET(request: NextRequest) {
       eligibleUsers: eligibleUsers.length,
       totalPushUsers: allPushUsers.length,
       skippedOptOut,
+      skippedWeekend,
       sent: totalSent,
       failed: totalFailed,
       body: notificationBody,
