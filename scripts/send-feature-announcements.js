@@ -28,7 +28,19 @@ const BATCH_DELAY_MS = 500;
 // Shared building blocks (mirror src/lib/email-templates.ts aesthetic)
 // ─────────────────────────────────────────────────────────────────
 const HEADER = `<div style="font-family:Georgia,serif;background:#f5f5f5;padding:20px;color:#1a1a1a"><div style="max-width:600px;margin:0 auto;background:#fff"><div style="height:3px;background:#C5A55A"></div><div style="padding:28px 30px"><img src="https://vault.auxite.io/auxite-logo-new.png" alt="Auxite" width="120" style="display:block;width:120px;height:auto;margin-bottom:20px"/>`;
-const FOOTER = `<p style="font-size:10px;color:#999;margin-top:20px;font-style:italic">This message serves as an operational communication. Please do not reply.</p></div><div style="padding:16px 30px;border-top:1px solid #e5e5e5;text-align:center"><p style="font-size:9px;color:#aaa;margin:4px 0">Aurum Ledger Ltd &middot; Hong Kong</p></div><div style="height:2px;background:#C5A55A"></div></div></div>`;
+// "Do not reply" operational line — localized per language (see getTemplate).
+const NOREPLY_EN = "This message serves as an operational communication. Please do not reply.";
+const NOREPLY = {
+  en: NOREPLY_EN,
+  tr: "Bu mesaj operasyonel bir bilgilendirmedir. Lütfen yanıtlamayın.",
+  de: "Diese Nachricht dient der betrieblichen Information. Bitte antworten Sie nicht.",
+  fr: "Ce message constitue une communication opérationnelle. Merci de ne pas y répondre.",
+  ar: "تُعد هذه الرسالة إشعارًا تشغيليًا. يُرجى عدم الرد عليها.",
+  ru: "Это служебное уведомление. Пожалуйста, не отвечайте на него.",
+};
+const noreplyLine = (txt, isRtl) =>
+  `<p style="font-size:10px;color:#999;margin-top:20px;font-style:italic"${isRtl ? ' dir="rtl"' : ""}>${txt}</p>`;
+const FOOTER = `${noreplyLine(NOREPLY_EN, false)}</div><div style="padding:16px 30px;border-top:1px solid #e5e5e5;text-align:center"><p style="font-size:9px;color:#aaa;margin:4px 0">Aurum Ledger Ltd &middot; Hong Kong</p></div><div style="height:2px;background:#C5A55A"></div></div></div>`;
 const wrap = (b) => HEADER + b + FOOTER;
 
 const eyebrow = (t) => `<p style="font-size:11px;letter-spacing:2px;color:#C5A55A;margin:0 0 8px;font-weight:700;text-transform:uppercase">${t}</p>`;
@@ -511,7 +523,16 @@ const FEATURES = {
 function getTemplate(feature, lang) {
   const f = FEATURES[feature];
   if (!f) throw new Error(`Unknown feature "${feature}". Use: ${Object.keys(FEATURES).join(", ")}`);
-  return f[(lang || "en").toLowerCase()] || f.en;
+  const code = (lang || "en").toLowerCase();
+  const t = f[code] || f.en;
+  // Localize the "do not reply" footer line to the recipient's language.
+  if (NOREPLY[code] && NOREPLY[code] !== NOREPLY_EN) {
+    return {
+      subject: t.subject,
+      html: t.html.replace(noreplyLine(NOREPLY_EN, false), noreplyLine(NOREPLY[code], code === "ar")),
+    };
+  }
+  return t;
 }
 
 // ─────────────────────────────────────────────────────────────────
