@@ -8,10 +8,25 @@
 import { useEffect, useState } from "react";
 
 const SCHEME = "auxite-vault";
+const ORIGIN = "https://vault.auxite.io";
 const PLAY_URL = "https://play.google.com/store/apps/details?id=io.auxite.vault";
-const WEB_FALLBACK = "https://vault.auxite.io/stake";
+const WEB_FALLBACK = `${ORIGIN}/stake`;
 // In-app routes we allow deep-linking to (Expo Router paths; tab group omitted).
-const ALLOWED = new Set(["yield", "allocate", "index", "auxr", "fund-vault", "redeem"]);
+const ALLOWED = new Set([
+  "yield", "allocate", "index", "auxr", "fund-vault", "redeem", "convert", "withdraw", "radio",
+]);
+// Some `to` values map to a different in-app Expo Router route than their name.
+// Radio has no dedicated screen — it's a widget on the home/index screen.
+const APP_ROUTE: Record<string, string> = { radio: "index" };
+// Per-destination web fallback (used when the app isn't installed / on desktop).
+// Defaults to WEB_FALLBACK (/stake) for any `to` not listed here.
+const WEB_BY_TO: Record<string, string> = {
+  convert: `${ORIGIN}/transfers?tab=convert`,
+  withdraw: `${ORIGIN}/transfers?tab=withdraw`,
+  radio: `${ORIGIN}/radio`,
+  redeem: `${ORIGIN}/redeem`,
+  yield: `${ORIGIN}/stake`,
+};
 
 export default function OpenAppPage() {
   const [target, setTarget] = useState("yield");
@@ -31,8 +46,8 @@ export default function OpenAppPage() {
     // Triple slash → empty host + "/safe" path, so Expo Router resolves it to
     // the route (e.g. /yield) instead of treating "yield" as the host (which
     // lands on the index/vault screen).
-    const deepLink = `${SCHEME}:///${safe}`;
-    const storeOrWeb = isAndroid ? PLAY_URL : WEB_FALLBACK;
+    const deepLink = `${SCHEME}:///${APP_ROUTE[safe] || safe}`;
+    const storeOrWeb = isAndroid ? PLAY_URL : (WEB_BY_TO[safe] || WEB_FALLBACK);
 
     if (isAndroid || isIOS) {
       // Try the app; if it doesn't grab focus, fall back after a short delay.
@@ -50,11 +65,12 @@ export default function OpenAppPage() {
       return () => { clearTimeout(timer); document.removeEventListener("visibilitychange", onHide); };
     } else {
       // Desktop: go straight to the web app.
-      window.location.href = WEB_FALLBACK;
+      window.location.href = WEB_BY_TO[safe] || WEB_FALLBACK;
     }
   }, []);
 
-  const deepLink = `${SCHEME}:///${target}`;
+  const deepLink = `${SCHEME}:///${APP_ROUTE[target] || target}`;
+  const webFallback = WEB_BY_TO[target] || WEB_FALLBACK;
 
   return (
     <div style={{ fontFamily: "Georgia, serif", background: "#f5f5f5", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
@@ -69,7 +85,7 @@ export default function OpenAppPage() {
           {platform !== "ios" && (
             <a href={PLAY_URL} style={{ display: "block", background: "#fff", color: "#1a1a1a", border: "1px solid #ddd", padding: "13px 20px", textDecoration: "none", fontSize: 13, fontWeight: 600, letterSpacing: 1, borderRadius: 4, marginBottom: 10 }}>GET IT ON GOOGLE PLAY</a>
           )}
-          <a href={WEB_FALLBACK} style={{ display: "block", color: "#C5A55A", padding: "10px", textDecoration: "none", fontSize: 12 }}>Continue on the web →</a>
+          <a href={webFallback} style={{ display: "block", color: "#C5A55A", padding: "10px", textDecoration: "none", fontSize: 12 }}>Continue on the web →</a>
         </div>
         <div style={{ height: 2, background: "#C5A55A" }} />
       </div>
