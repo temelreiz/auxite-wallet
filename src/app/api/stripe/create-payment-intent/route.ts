@@ -176,7 +176,15 @@ export async function POST(req: NextRequest) {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountCents,
       currency: "usd",
-      payment_method_types: ["card"],
+      // Let Stripe surface every eligible inline-confirming method (card,
+      // Apple Pay, Google Pay, Link) per the dashboard config + buyer's
+      // device/region — instead of hard-coding card only. `allow_redirects:
+      // "never"` deliberately EXCLUDES redirect-based methods (Bancontact,
+      // EPS, iDEAL, …): the client confirms with redirect:"if_required" and
+      // shows success inline, so a method that navigates away to a bank page
+      // would have no return-landing handler. Wallets like Apple/Google Pay
+      // and Link tokenize inline and stay within this flow.
+      automatic_payment_methods: { enabled: true, allow_redirects: "never" },
       // Statement on cardholder's bill — keep aligned with Stripe-allowed
       // category (precious metals dealer), no crypto/AUXM language.
       statement_descriptor_suffix: `${METAL_NAME[metal].toUpperCase().slice(0, 22)}`,
