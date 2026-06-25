@@ -592,50 +592,68 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
 
         {/* Footer */}
         {step === "form" && (
-          <div className="p-3 sm:p-4 border-t border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
-            {/* Pre-emptive crypto-alt nudge. A third of failed Stripe
-                attempts come back as "transaction not allowed" — banks
-                reject before we see the auth call. Flagging the USDT
-                path up-front means a user whose bank turns them down
-                doesn't bounce in confusion; some users tap straight
-                through to crypto from here. */}
-            <a
-              href="/fund-vault"
-              onClick={() => {
-                logEvent("card_form_crypto_alt_tapped", { surface: "web" });
-              }}
-              className="flex items-start gap-2 px-3 py-2 rounded-lg bg-[#BFA181]/10 border border-[#BFA181]/30 text-[11px] sm:text-xs text-slate-700 dark:text-slate-300 hover:bg-[#BFA181]/15 transition-colors"
-            >
-              <span>💡</span>
-              <span>
-                {({
-                  tr: "Bazı bankalar bu işleme izin vermez. Kart reddedilirse ",
-                  en: "Some banks decline this transaction. If your card doesn't go through, ",
-                  de: "Manche Banken lehnen diese Transaktion ab. Wenn Ihre Karte abgelehnt wird, ",
-                  fr: "Certaines banques refusent cette transaction. Si votre carte est refusée, ",
-                  ar: "بعض البنوك ترفض هذه المعاملة. إذا رُفضت بطاقتك ",
-                  ru: "Некоторые банки отклоняют такие операции. Если карта не пройдёт, ",
-                } as Record<string, string>)[L as string] ?? "Some banks decline this transaction. If your card doesn't go through, "}
-                <span className="text-[#BFA181] font-semibold whitespace-nowrap">
-                  {({
-                    tr: "USDT ile devam edebilirsin →",
-                    en: "continue with USDT →",
-                    de: "können Sie mit USDT fortfahren →",
-                    fr: "continuez en USDT →",
-                    ar: "يمكنك المتابعة بـ USDT ←",
-                    ru: "продолжайте через USDT →",
-                  } as Record<string, string>)[L as string] ?? "continue with USDT →"}
-                </span>
-              </span>
-            </a>
-
+          <div className="p-3 sm:p-4 border-t border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2.5">
+            {/* Card path (primary) — leads to quote → review → pay. */}
             <button
               onClick={handleQuote}
               disabled={!canSubmit}
               className="w-full py-2.5 rounded-lg font-semibold text-sm sm:text-base text-white bg-gradient-to-r from-[#BFA181] to-[#D4B47A] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {quoting ? tr(L, "processing") : tr(L, "continue")}
+              {quoting
+                ? tr(L, "processing")
+                : ({
+                    tr: "💳 Kart ile Devam Et",
+                    en: "💳 Continue with Card",
+                    de: "💳 Mit Karte fortfahren",
+                    fr: "💳 Continuer par carte",
+                    ar: "💳 المتابعة بالبطاقة",
+                    ru: "💳 Продолжить картой",
+                  } as Record<string, string>)[L as string] ?? "💳 Continue with Card"}
             </button>
+
+            {/* "or" divider — presents USDT as an EQUAL path, not a footnote.
+                Card-blocking declines (GCC debit, precious-metal MCC blocks)
+                never reach our auth call, so a user whose bank refuses cards
+                outright needs the crypto rail surfaced just as prominently. */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-px bg-stone-200 dark:bg-slate-700" />
+              <span className="text-[10px] uppercase tracking-wide text-slate-400">
+                {({ tr: "veya", en: "or", de: "oder", fr: "ou", ar: "أو", ru: "или" } as Record<string, string>)[L as string] ?? "or"}
+              </span>
+              <div className="flex-1 h-px bg-stone-200 dark:bg-slate-700" />
+            </div>
+
+            {/* USDT path (equal weight) — crypto teal so it reads as a
+                distinct-but-equal way to pay, bypassing card rails entirely. */}
+            <a
+              href="/fund-vault"
+              onClick={() => {
+                logEvent("card_form_crypto_alt_tapped", { surface: "web" });
+              }}
+              className="block w-full text-center py-2.5 rounded-lg font-semibold text-sm sm:text-base border-2 border-[#2F6F62]/50 bg-[#2F6F62]/10 text-[#2F6F62] hover:bg-[#2F6F62]/20 transition-colors"
+            >
+              {({
+                tr: "💎 USDT ile Öde",
+                en: "💎 Pay with USDT",
+                de: "💎 Mit USDT zahlen",
+                fr: "💎 Payer avec USDT",
+                ar: "💎 الدفع بـ USDT",
+                ru: "💎 Оплатить через USDT",
+              } as Record<string, string>)[L as string] ?? "💎 Pay with USDT"}
+            </a>
+
+            {/* Tiny rationale kept below — explains WHY two rails exist
+                without burying the USDT action as it did before. */}
+            <p className="text-[10px] text-center text-slate-500 leading-relaxed px-1">
+              {({
+                tr: "Bazı bankalar kart işlemini reddeder — USDT'de banka onayı gerekmez.",
+                en: "Some banks decline card purchases — USDT needs no bank approval.",
+                de: "Manche Banken lehnen Kartenzahlungen ab — USDT braucht keine Bankfreigabe.",
+                fr: "Certaines banques refusent les cartes — l'USDT ne nécessite aucune approbation bancaire.",
+                ar: "بعض البنوك ترفض مدفوعات البطاقة — لا يحتاج USDT إلى موافقة البنك.",
+                ru: "Некоторые банки отклоняют карты — для USDT одобрение банка не нужно.",
+              } as Record<string, string>)[L as string] ?? "Some banks decline card purchases — USDT needs no bank approval."}
+            </p>
           </div>
         )}
       </div>
