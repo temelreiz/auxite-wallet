@@ -250,6 +250,13 @@ export async function POST(request: NextRequest) {
     const upperMetal = metal.toUpperCase();
     const amt = parseFloat(amount);
 
+    // ── LOCK GUARD (Auxite Borrow) — redeeming metal must use AVAILABLE grams.
+    {
+      const { assertAvailable } = await import("@/lib/allocation-service");
+      const guard = await assertAvailable(address, upperMetal, amt);
+      if (!guard.ok) return NextResponse.json({ error: guard.error, available: guard.available, locked: guard.locked, yielding: guard.yielding }, { status: 400 });
+    }
+
     // Validate method
     const validMethods: RedemptionMethod[] = ['cash', 'pickup', 'courier', 'vault_transfer'];
     if (!validMethods.includes(method)) {

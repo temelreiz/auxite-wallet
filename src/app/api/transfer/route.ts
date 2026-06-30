@@ -309,6 +309,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Cannot transfer to yourself" }, { status: 400 });
     }
 
+    // ── LOCK GUARD (Auxite Borrow) — transferring a metal token must use AVAILABLE grams.
+    if (["AUXG", "AUXS", "AUXPT", "AUXPD"].includes((token || "").toUpperCase())) {
+      const { assertAvailable } = await import("@/lib/allocation-service");
+      const guard = await assertAvailable(fromAddress, token, Number(amount));
+      if (!guard.ok) return NextResponse.json({ error: guard.error, available: guard.available, locked: guard.locked, yielding: guard.yielding }, { status: 400 });
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // RATE LIMITING - Brute force ve spam saldırılarını önle
     // ═══════════════════════════════════════════════════════════════════════════

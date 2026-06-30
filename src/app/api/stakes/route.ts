@@ -116,6 +116,19 @@ export async function POST(request: NextRequest) {
 
   try {
     const amountNum = parseFloat(amount);
+
+    // ── LOCK GUARD (Auxite Borrow) ───────────────────────────────────────────
+    // Staking moves metal into the YIELDING state → grams must be AVAILABLE (not
+    // locked as borrow collateral, not already staked). One gram, one job.
+    // (addYielding marking + existing-stake backfill = Phase 4.)
+    {
+      const { assertAvailable } = await import("@/lib/allocation-service");
+      const guard = await assertAvailable(address, metal, amountNum);
+      if (!guard.ok) {
+        return NextResponse.json({ success: false, error: guard.error, available: guard.available, locked: guard.locked, yielding: guard.yielding }, { status: 400 });
+      }
+    }
+
     const durationMonths = duration === 91 ? 3 : duration === 181 ? 6 : duration === 366 ? 12 : duration;
     
     let stakeResult: any = null;

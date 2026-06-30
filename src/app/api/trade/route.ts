@@ -2,7 +2,7 @@
 import { sendCertificateEmail, sendTradeExecutionEmail } from "@/lib/email";
 import { getUserLanguage } from "@/lib/user-language";
 import { formatAmount } from "@/lib/format";
-import { createAllocation, reduceAllocations } from "@/lib/allocation-service";
+import { createAllocation, reduceAllocations, assertAvailable } from "@/lib/allocation-service";
 import { routeAndDeductSale, returnSaleToVault, type Metal as VaultMetal } from "@/lib/vault-inventory";
 import { notifyTransactionRich } from "@/lib/notification-sender";
 export const maxDuration = 60;
@@ -549,6 +549,20 @@ export async function GET(request: NextRequest) {
     // Token validation
     if (!VALID_TOKENS.includes(fromTokenLower) || !VALID_TOKENS.includes(toTokenLower)) {
       return NextResponse.json({ error: "Geçersiz token" }, { status: 400 });
+    }
+
+    // ── LOCK GUARD (Auxite Borrow) ─────────────────────────────────────────────
+    // Selling/swapping FROM a metal moves metal OUT → the grams must be AVAILABLE
+    // (not locked as borrow collateral, not staked/yielding). Metal-IN flows (buy)
+    // are exempt. Behavior-neutral until a loan/stake encumbers grams.
+    if (METALS.includes(fromTokenLower) && address) {
+      const guard = await assertAvailable(address, fromToken, amount);
+      if (!guard.ok) {
+        return NextResponse.json(
+          { error: guard.error, available: guard.available, locked: guard.locked, yielding: guard.yielding },
+          { status: 400 },
+        );
+      }
     }
 
     // ═══════════════════════════════════════════════════════════════════════

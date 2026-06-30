@@ -154,6 +154,13 @@ export async function POST(request: NextRequest) {
 
     console.log(`📤 Withdraw request: coin=${coin}, amount=${amount}, to=${withdrawAddress?.slice(0, 10)}..., network=${network || 'default'}, has2FA=${!!twoFactorCode}`);
 
+    // ── LOCK GUARD (Auxite Borrow) — withdrawing a metal must use AVAILABLE grams.
+    if (["AUXG", "AUXS", "AUXPT", "AUXPD"].includes(coin) && address && Number(amount) > 0) {
+      const { assertAvailable } = await import("@/lib/allocation-service");
+      const guard = await assertAvailable(address, coin, Number(amount));
+      if (!guard.ok) return NextResponse.json({ error: guard.error, available: guard.available, locked: guard.locked, yielding: guard.yielding }, { status: 400 });
+    }
+
     // Validation
     if (!address || !coin || !amount || !withdrawAddress) {
       console.error(`❌ Missing fields: address=${!!address}, coin=${!!coin}, amount=${!!amount}, withdrawAddress=${!!withdrawAddress}`);

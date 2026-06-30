@@ -139,6 +139,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid metal. Allowed: AUXG, AUXS, AUXPT, AUXPD" }, { status: 400 });
     }
 
+    // ── LOCK GUARD (Auxite Borrow) — selling FROM a metal must use AVAILABLE grams.
+    {
+      const { assertAvailable } = await import("@/lib/allocation-service");
+      const guard = await assertAvailable(address, fromMetalUpper, amount);
+      if (!guard.ok) return NextResponse.json({ error: guard.error, available: guard.available, locked: guard.locked, yielding: guard.yielding }, { status: 400 });
+    }
+
     if (fromMetalUpper === toMetalUpper) {
       return NextResponse.json({ error: "Source and target metals must be different" }, { status: 400 });
     }

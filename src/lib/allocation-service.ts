@@ -419,3 +419,170 @@ export async function reduceAllocations(
   console.log(`📉 De-allocated ${reduced}g ${m} for ${address.slice(0, 10)}… (freed ${freedBars.length} bar(s), ${redeemedCerts.size} cert(s))`);
   return { reduced, freedBars, redeemedCerts: [...redeemedCerts] };
 }
+
+// ============================================================================
+// ENCUMBRANCE / LOCK GUARD  (Auxite Borrow — Phase 1: additive, behavior-neutral)
+// A user's metal grams are in one of three states:
+//   Free  ·  Locked (borrow collateral)  ·  Yielding (staked)
+//   available = total(active allocations) − locked − yielding
+// Every metal-OUT flow (sell, convert, withdraw, transfer, redeem, stake-enroll)
+// MUST call assertAvailable() before reducing/moving metal — so locked/yielding
+// grams can never be sold, withdrawn, converted, transferred or re-staked.
+// Until a loan/stake sets an encumbrance, locked = yielding = 0 → available == total
+// → NO behavior change for existing users. State lives in:
+//   encumbrance:user:<uid>:<METAL>  = { locked, yielding }   (hash, grams)
+// ============================================================================
+
+type Encumbrance = { locked: number; yielding: number };
+
+function encKey(userUid: string, metal: string): string {
+  return `encumbrance:user:${userUid}:${(metal || "").toUpperCase()}`;
+}
+
+async function uidFor(address: string): Promise<string | null> {
+  const uid = (await redis.get(`user:address:${(address || "").toLowerCase()}`)) as string;
+  return uid || null;
+}
+
+const r6 = (n: number) => parseFloat((Number(n) || 0).toFixed(6));
+
+/** Raw encumbrance (locked + yielding grams) for a user+metal. */
+export async function getEncumbrance(address: string, metal: string): Promise<Encumbrance> {
+  const uid = await uidFor(address);
+  if (!uid) return { locked: 0, yielding: 0 };
+  const raw = await redis.hgetall(encKey(uid, metal));
+  return {
+    locked: parseFloat((raw?.locked as string) || "0") || 0,
+    yielding: parseFloat((raw?.yielding as string) || "0") || 0,
+  };
+}
+
+/** Sum of ACTIVE allocation grams of a metal — the canonical custodial holding
+ *  that reduceAllocations() operates on. assertAvailable uses the SAME basis. */
+export async function getActiveTotal(address: string, metal: string): Promise<number> {
+  const uid = await uidFor(address);
+  if (!uid) return 0;
+  const raw = await redis.get(`allocation:user:${uid}:list`);
+  const list: any[] = raw ? (typeof raw === "string" ? JSON.parse(raw) : raw) : [];
+  const m = (metal || "").toUpperCase();
+  let total = 0;
+  for (const a of list) {
+    if ((a.metal || "").toUpperCase() === m && (a.status || "active") === "active") {
+      total += parseFloat(a.grams) || 0;
+    }
+  }
+  return r6(total);
+}
+
+/** Full picture: total / locked / yielding / available for a user+metal. */
+export async function getMetalTotals(
+  address: string,
+  metal: string,
+): Promise<{ total: number; locked: number; yielding: number; available: number }> {
+  const [total, enc] = await Promise.all([
+    getActiveTotal(address, metal),
+    getEncumbrance(address, metal),
+  ]);
+  const available = r6(Math.max(0, total - enc.locked - enc.yielding));
+  return { total, locked: enc.locked, yielding: enc.yielding, available };
+}
+
+/** Convenience: available (free) grams of a metal. */
+export async function getAvailable(address: string, metal: string): Promise<number> {
+  return (await getMetalTotals(address, metal)).available;
+}
+
+/** GUARD — call at the top of EVERY metal-out flow before reducing/moving metal.
+ *  { ok:true } if `grams` are free to spend; else { ok:false, error, ...totals }. */
+export async function assertAvailable(
+  address: string,
+  metal: string,
+  grams: number,
+): Promise<{ ok: boolean; available: number; total: number; locked: number; yielding: number; error?: string }> {
+  const t = await getMetalTotals(address, metal);
+  const need = r6(grams);
+  if (need <= t.available + 1e-6) return { ok: true, ...t };
+  return {
+    ok: false,
+    ...t,
+    error: `Insufficient available ${(metal || "").toUpperCase()}: need ${need}g, available ${t.available}g (locked ${t.locked}g, yielding ${t.yielding}g).`,
+  };
+}
+
+/** BORROW — lock `grams` as loan collateral (checks availability first). */
+export async function lockCollateral(
+  address: string,
+  metal: string,
+  grams: number,
+  loanId: string,
+): Promise<{ ok: boolean; locked: number; available: number; error?: string }> {
+  const uid = await uidFor(address);
+  if (!uid) return { ok: false, locked: 0, available: 0, error: "No user UID for address" };
+  const m = (metal || "").toUpperCase();
+  const need = r6(grams);
+  const t = await getMetalTotals(address, metal);
+  if (need <= 0) return { ok: false, locked: t.locked, available: t.available, error: "grams must be > 0" };
+  if (need > t.available + 1e-6) {
+    return { ok: false, locked: t.locked, available: t.available, error: `Insufficient available ${m} to lock: need ${need}g, available ${t.available}g.` };
+  }
+  const newLocked = r6(t.locked + need);
+  await redis.hset(encKey(uid, m), { locked: newLocked.toString() });
+  await redis.hset(`encumbrance:loan:${loanId}`, {
+    address: address.toLowerCase(), metal: m, grams: need.toString(), lockedAt: new Date().toISOString(),
+  });
+  await redis.sadd(`encumbrance:user:${uid}:loans`, loanId);
+  console.log(`🔒 Locked ${need}g ${m} collateral (loan ${loanId}) for ${address.slice(0, 10)}… → locked ${newLocked}g`);
+  return { ok: true, locked: newLocked, available: r6(t.available - need) };
+}
+
+/** BORROW — release `grams` of collateral (on repay / liquidation). */
+export async function releaseCollateral(
+  address: string,
+  metal: string,
+  grams: number,
+  loanId: string,
+): Promise<{ ok: boolean; locked: number }> {
+  const uid = await uidFor(address);
+  if (!uid) return { ok: false, locked: 0 };
+  const m = (metal || "").toUpperCase();
+  const enc = await getEncumbrance(address, metal);
+  const newLocked = r6(Math.max(0, enc.locked - (Number(grams) || 0)));
+  await redis.hset(encKey(uid, m), { locked: newLocked.toString() });
+  await redis.srem(`encumbrance:user:${uid}:loans`, loanId);
+  console.log(`🔓 Released ${r6(grams)}g ${m} collateral (loan ${loanId}) for ${address.slice(0, 10)}… → locked ${newLocked}g`);
+  return { ok: true, locked: newLocked };
+}
+
+/** STAKING — mark `grams` as yielding (call on stake; checks availability). */
+export async function addYielding(
+  address: string,
+  metal: string,
+  grams: number,
+): Promise<{ ok: boolean; yielding: number; error?: string }> {
+  const uid = await uidFor(address);
+  if (!uid) return { ok: false, yielding: 0, error: "No user UID for address" };
+  const m = (metal || "").toUpperCase();
+  const need = r6(grams);
+  const t = await getMetalTotals(address, metal);
+  if (need > t.available + 1e-6) {
+    return { ok: false, yielding: t.yielding, error: `Insufficient available ${m} to stake: need ${need}g, available ${t.available}g.` };
+  }
+  const newY = r6(t.yielding + need);
+  await redis.hset(encKey(uid, m), { yielding: newY.toString() });
+  return { ok: true, yielding: newY };
+}
+
+/** STAKING — release `grams` of yielding (call on unstake / maturity). */
+export async function releaseYielding(
+  address: string,
+  metal: string,
+  grams: number,
+): Promise<{ ok: boolean; yielding: number }> {
+  const uid = await uidFor(address);
+  if (!uid) return { ok: false, yielding: 0 };
+  const m = (metal || "").toUpperCase();
+  const enc = await getEncumbrance(address, metal);
+  const newY = r6(Math.max(0, enc.yielding - (Number(grams) || 0)));
+  await redis.hset(encKey(uid, m), { yielding: newY.toString() });
+  return { ok: true, yielding: newY };
+}
