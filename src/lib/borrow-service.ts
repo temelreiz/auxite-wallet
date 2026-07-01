@@ -12,7 +12,7 @@
 // route; this service owns the loan ledger + collateral lock + pool accounting.
 // ════════════════════════════════════════════════════════════════════════════
 import { redis } from "@/lib/redis";
-import { getTokenPrices } from "@/lib/v6-token-service";
+import { getMetalPrice } from "@/lib/price-cache";
 import { lockCollateral, releaseCollateral, getMetalTotals } from "@/lib/allocation-service";
 import { reduceAllocations } from "@/lib/allocation-service";
 
@@ -54,10 +54,12 @@ const r2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
 const r6 = (n: number) => Math.round((Number(n) || 0) * 1e6) / 1e6;
 const DAY_MS = 86_400_000;
 
-/** Conservative collateral NAV: the per-gram price we could SELL at (bid). */
+/** Collateral NAV = the metal's spot/market price per gram — the SAME valuation
+ *  the app displays for holdings (getMetalPrice = spot), not the buyback bid.
+ *  Risk is controlled by the conservative LTV (borrow) + liq LTV (liquidation
+ *  threshold), so we don't double-haircut by also using the bid price. */
 export async function navPerGram(metal: string): Promise<number> {
-  const p = await getTokenPrices(metal.toUpperCase());
-  return p.bidPerGram;
+  return getMetalPrice(metal.toUpperCase());
 }
 
 /** Quote: given collateral grams + term, what can the customer borrow + at what
