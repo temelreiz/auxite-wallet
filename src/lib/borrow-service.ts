@@ -7,7 +7,7 @@
 // converted/transferred/staked through any metal-out flow. Internal Redis ledger.
 //   loan:<id>                      = hash (the loan)
 //   borrow:user:<address>:loans    = set of loan ids
-//   borrow:pool:outstanding        = total principal currently lent (vs POOL_CAP)
+//   borrow:pool (hash) .outstanding = total principal currently lent (vs POOL_CAP)
 // USDC disbursement/repayment to the user's wallet balance is done by the API
 // route; this service owns the loan ledger + collateral lock + pool accounting.
 // ════════════════════════════════════════════════════════════════════════════
@@ -91,7 +91,7 @@ export async function quoteLoan(
 
 /** Current pool utilisation. */
 export async function getPool(): Promise<{ outstanding: number; cap: number; available: number }> {
-  const outstanding = parseFloat((await redis.get("borrow:pool:outstanding")) as string || "0") || 0;
+  const outstanding = parseFloat((await redis.hget("borrow:pool", "outstanding")) as string || "0") || 0;
   return { outstanding: r2(outstanding), cap: POOL_CAP_USDC, available: r2(Math.max(0, POOL_CAP_USDC - outstanding)) };
 }
 
@@ -160,7 +160,7 @@ export async function createLoan(params: {
 
   await redis.hset(`loan:${id}`, loan as any);
   await redis.sadd(`borrow:user:${address}:loans`, id);
-  await redis.incrbyfloat("borrow:pool:outstanding", principalUSDC);
+  await redis.hincrbyfloat("borrow:pool", "outstanding", principalUSDC);
 
   console.log(`💵 Loan ${id}: ${principalUSDC} USDC vs ${collateralGrams}g ${m} (LTV ${(principalUSDC / collateralValue * 100).toFixed(1)}%, liq @ ${liquidationPrice}/g)`);
   return { ok: true, loan, originationFeeUSDC, netDisbursedUSDC: r2(principalUSDC - originationFeeUSDC) };
@@ -212,7 +212,7 @@ export async function repayLoan(
   const remainingOwed = r2(owed - pay);
 
   // Pool: reduce outstanding by the principal portion repaid (approx: pay capped at owed).
-  await redis.incrbyfloat("borrow:pool:outstanding", -Math.min(pay, loan.principalUSDC));
+  await redis.hincrbyfloat("borrow:pool", "outstanding", -Math.min(pay, loan.principalUSDC));
 
   let closed = false, releasedGrams = 0;
   if (remainingOwed <= 0.01) {
@@ -253,7 +253,7 @@ export async function liquidateLoan(
   await releaseCollateral(loan.address, loan.metal, loan.collateralGrams, loan.id);
   if (soldGrams > 0) await reduceAllocations(loan.address, loan.metal, soldGrams);
 
-  await redis.incrbyfloat("borrow:pool:outstanding", -loan.principalUSDC);
+  await redis.hincrbyfloat("borrow:pool", "outstanding", -loan.principalUSDC);
   await redis.hset(`loan:${loanId}`, {
     status: "liquidated", liquidatedAt: new Date().toISOString(), liquidationReason: reason,
     soldGrams: soldGrams.toString(), returnedGrams: returnedGrams.toString(),
