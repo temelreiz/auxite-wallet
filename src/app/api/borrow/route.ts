@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isKycVerified } from "@/lib/kyc-limits";
 import { incrementBalance, addTransaction } from "@/lib/redis";
 import { getMetalTotals } from "@/lib/allocation-service";
+import { verifyTwoFactor, isUsPerson } from "@/lib/borrow-compliance";
 import {
   BORROW_PARAMS, APR_BY_TERM, VALID_TERMS, POOL_CAP_USDC, MIN_LOAN_USDC,
   ORIGINATION_FEE, LIQUIDATION_FEE,
@@ -69,18 +70,26 @@ export async function POST(request: NextRequest) {
     if (termsAccepted !== true) {
       return NextResponse.json({ error: "You must accept the loan Terms & Conditions" }, { status: 400 });
     }
-    // 2FA — borrowing moves money + locks collateral (same bar as withdrawals).
-    if (!twoFactorCode) {
-      return NextResponse.json({ error: "2FA code required", needs2FA: true }, { status: 400 });
-    }
-    // TODO(pilot): verify twoFactorCode via shared TOTP check (same as /api/withdraw);
-    // and route through manual ops approval before disbursement.
-
     // KYC gate.
     const kyc = await isKycVerified(address);
     if (!kyc) {
       return NextResponse.json({ error: "KYC verification required to borrow", needsKyc: true }, { status: 403 });
     }
+
+    // Geofence — borrowing is not offered to US persons (regulatory).
+    if (await isUsPerson(address)) {
+      return NextResponse.json({ error: "Borrowing is not available in your region.", geoblocked: true }, { status: 403 });
+    }
+
+    // 2FA — borrowing moves money + locks collateral (same bar as withdrawals).
+    const twoFa = await verifyTwoFactor(address, twoFactorCode || "");
+    if (!twoFa.valid) {
+      return NextResponse.json(
+        { error: twoFa.error || "2FA verification failed", needs2FA: true, twoFaEnabled: twoFa.enabled },
+        { status: 400 },
+      );
+    }
+    // TODO(pilot): route through manual ops approval before disbursement.
 
     // Create the loan (LTV + pool + collateral-lock checks happen inside).
     const result = await createLoan({ address, metal, collateralGrams, principalUSDC, termMonths });
