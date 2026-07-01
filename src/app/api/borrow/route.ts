@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isKycVerified } from "@/lib/kyc-limits";
 import { incrementBalance, addTransaction } from "@/lib/redis";
+import { getMetalTotals } from "@/lib/allocation-service";
 import {
   BORROW_PARAMS, APR_BY_TERM, VALID_TERMS, POOL_CAP_USDC, MIN_LOAN_USDC,
   ORIGINATION_FEE, LIQUIDATION_FEE,
@@ -10,6 +11,8 @@ import {
 } from "@/lib/borrow-service";
 
 export const dynamic = "force-dynamic";
+
+const BORROW_METALS = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
 
 // GET /api/borrow?address=0x..               → user's loans + pool + params
 // GET /api/borrow?address=&metal=&grams=&term= → + a live quote
@@ -19,7 +22,14 @@ export async function GET(request: NextRequest) {
     const address = sp.get("address");
     if (!address) return NextResponse.json({ error: "address required" }, { status: 400 });
 
-    const [loans, pool] = await Promise.all([getUserLoans(address), getPool()]);
+    const [loans, pool, balArr] = await Promise.all([
+      getUserLoans(address),
+      getPool(),
+      Promise.all(BORROW_METALS.map((m) => getMetalTotals(address, m))),
+    ]);
+    // Per-metal collateral available to pledge (total − already locked − yielding).
+    const balances: Record<string, { total: number; locked: number; yielding: number; available: number }> =
+      Object.fromEntries(BORROW_METALS.map((m, i) => [m, balArr[i]]));
 
     let quote = null;
     const metal = sp.get("metal");
@@ -30,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      loans, pool, quote,
+      loans, pool, quote, balances,
       params: BORROW_PARAMS,
       aprByTerm: APR_BY_TERM,
       validTerms: VALID_TERMS,
