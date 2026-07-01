@@ -488,6 +488,41 @@ const templates = {
   // ────────────────────────────────────────────────────────────────────────────
   // DEPOSIT CONFIRMED EMAIL
   // ────────────────────────────────────────────────────────────────────────────
+  'borrow-confirmed': (data: EmailData) => {
+    const { name, amount, token, language = 'en' } = data;
+    const collateral = (data as any).collateral as string | undefined;
+
+    const content = {
+      en: { subject: `Loan Confirmed: ${amount} USDC`, title: 'Loan Confirmed', greeting: `Hi ${name},`, message: 'Your loan has been approved and USDC credited to your account. Your metal collateral is locked for the loan term and released in full when you repay.', amountLabel: 'Borrowed', collLabel: 'Collateral locked', viewWallet: 'View in Client Ledger' },
+      tr: { subject: `Kredi Onaylandı: ${amount} USDC`, title: 'Kredi Onaylandı', greeting: `Merhaba ${name},`, message: 'Krediniz onaylandı ve USDC hesabınıza aktarıldı. Metal teminatınız vade boyunca kilitli olup, geri ödemede tamamı serbest bırakılır.', amountLabel: 'Alınan', collLabel: 'Kilitli teminat', viewWallet: 'Müşteri Defterinde Görüntüle' },
+      de: { subject: `Kredit bestätigt: ${amount} USDC`, title: 'Kredit bestätigt', greeting: `Hallo ${name},`, message: 'Ihr Kredit wurde genehmigt und USDC Ihrem Konto gutgeschrieben. Ihre Metallsicherheit ist für die Laufzeit gesperrt und wird bei Rückzahlung vollständig freigegeben.', amountLabel: 'Geliehen', collLabel: 'Gesperrte Sicherheit', viewWallet: 'Im Kundenbuch anzeigen' },
+      fr: { subject: `Prêt confirmé : ${amount} USDC`, title: 'Prêt confirmé', greeting: `Bonjour ${name},`, message: 'Votre prêt a été approuvé et les USDC crédités sur votre compte. Votre garantie métal est bloquée pendant la durée du prêt et libérée intégralement au remboursement.', amountLabel: 'Emprunté', collLabel: 'Garantie bloquée', viewWallet: 'Voir dans le registre client' },
+      ar: { subject: `تم تأكيد القرض: ${amount} USDC`, title: 'تم تأكيد القرض', greeting: `مرحباً ${name},`, message: 'تمت الموافقة على قرضك وإضافة USDC إلى حسابك. ضمانك المعدني مقفل طوال مدة القرض ويُحرَّر بالكامل عند السداد.', amountLabel: 'المقترض', collLabel: 'الضمان المقفل', viewWallet: 'عرض في سجل العميل' },
+      ru: { subject: `Заём подтверждён: ${amount} USDC`, title: 'Заём подтверждён', greeting: `Здравствуйте, ${name},`, message: 'Ваш заём одобрен, USDC зачислены на счёт. Ваш металлический залог заблокирован на срок займа и полностью освобождается при погашении.', amountLabel: 'Занято', collLabel: 'Заблокированный залог', viewWallet: 'Открыть в реестре клиента' },
+    };
+
+    const t = content[language as keyof typeof content] || content.en;
+
+    return {
+      subject: t.subject,
+      html: generateEmailHTML({
+        title: t.title,
+        language,
+        content: `
+          <p>${t.greeting}</p>
+          <p>${t.message}</p>
+          <div style="background: #fafafa; border-left: 3px solid #C5A55A; padding: 16px 18px; margin: 18px 0;">
+            <p style="margin: 0 0 10px 0;"><strong>${t.amountLabel}:</strong> <span style="color: #C5A55A; font-size: 18px; font-weight: 600;">${amount} USDC</span></p>
+            ${collateral ? `<p style="margin: 0; font-size: 13px; color: #64748b;"><strong>${t.collLabel}:</strong> ${collateral}</p>` : ''}
+          </div>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="https://vault.auxite.io/vault" style="background-color: #1a1a1a; color: #fff; padding: 12px 24px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: inline-block;">${t.viewWallet}</a>
+          </div>
+        `,
+      }),
+    };
+  },
+
   'deposit-confirmed': (data: EmailData) => {
     const { name, amount, token, txHash, language = 'en' } = data;
 
@@ -1258,6 +1293,14 @@ export async function sendDepositConfirmedEmail(email: string, name: string, amo
     type: 'deposit-confirmed',
     to: email,
     data: { name, amount, token, txHash, language },
+  });
+}
+
+export async function sendBorrowConfirmedEmail(email: string, name: string, amount: string, collateral: string, language: string = 'en') {
+  return sendEmail({
+    type: 'borrow-confirmed',
+    to: email,
+    data: { name, amount, token: 'USDC', collateral, language } as any,
   });
 }
 

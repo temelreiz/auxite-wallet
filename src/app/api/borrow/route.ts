@@ -5,6 +5,14 @@ import { isKycVerified } from "@/lib/kyc-limits";
 import { incrementBalance, addTransaction } from "@/lib/redis";
 import { getMetalTotals } from "@/lib/allocation-service";
 import { verifyTwoFactor, isUsPerson } from "@/lib/borrow-compliance";
+import { sendBorrowConfirmedEmail } from "@/lib/email-service";
+import { getUserLanguage } from "@/lib/user-language";
+import { Redis } from "@upstash/redis";
+
+const emailRedis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 import {
   BORROW_PARAMS, APR_BY_TERM, VALID_TERMS, POOL_CAP_USDC, MIN_LOAN_USDC,
   ORIGINATION_FEE, LIQUIDATION_FEE,
@@ -117,6 +125,20 @@ export async function POST(request: NextRequest) {
         liquidationPrice: result.loan.liquidationPrice,
       },
     } as any);
+
+    // Confirmation email (non-blocking — never fails the borrow).
+    try {
+      const userId = await emailRedis.get(`user:address:${String(address).toLowerCase()}`);
+      const userData = userId ? await emailRedis.hgetall(`user:${userId}`) : null;
+      const email = (userData as any)?.email as string | undefined;
+      if (email) {
+        const lang = await getUserLanguage(address);
+        const collateral = `${Number(result.loan.collateralGrams).toFixed(3)}g ${result.loan.metal}`;
+        await sendBorrowConfirmedEmail(email, ((userData as any)?.name as string) || "Client", net.toFixed(2), collateral, lang);
+      }
+    } catch (e) {
+      console.error("borrow confirmation email failed:", e);
+    }
 
     return NextResponse.json({
       success: true,
