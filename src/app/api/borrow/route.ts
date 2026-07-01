@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
       const email = (userData as any)?.email as string | undefined;
       if (email) {
         const lang = await getUserLanguage(address);
-        const collateral = `${Number(result.loan.collateralGrams).toFixed(3)}g ${result.loan.metal}`;
+        const collateral = `${Number(result.loan.collateralGrams).toFixed(3)} ${result.loan.metal}`;
         await sendBorrowConfirmedEmail(email, ((userData as any)?.name as string) || "Client", net.toFixed(2), collateral, lang);
       }
     } catch (e) {
