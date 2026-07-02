@@ -55,7 +55,7 @@ type Reserves = {
 const T = {
   en: {
     title: "AUXR — Reserve Basket",
-    subtitle: "55% gold · 30% silver · 10% platinum · 5% palladium · physically allocated",
+    subtitle: "55% gold · 30% silver · 10% platinum · 5% palladium · price-tracked, fully hedged",
     live: "LIVE",
     nav: "NAV per AUXR",
     bid: "Sell",
@@ -74,14 +74,14 @@ const T = {
     minIs: "Minimum",
     insufficient: "Insufficient balance",
     kycRequired: "Identity verification required",
-    kycDesc: "AUXR represents real allocated metal. Complete a 2-minute KYC to trade.",
+    kycDesc: "AUXR tracks a precious-metals basket, hedged 1:1 with metal positions. Complete a 2-minute KYC to trade.",
     verifyNow: "Verify Identity",
     backingPool: "Backing Pool",
-    backingSub: (n: string) => `Physical bullion held for ${n} AUXR in circulation. Backed 1:1.`,
+    backingSub: (n: string) => `Metal-price exposure hedged 1:1 for ${n} AUXR in circulation.`,
     fullyBacked: "FULLY BACKED",
     required: "Required",
     backed: "backed",
-    emptyPool: "Reserves grow as users mint AUXR. We physically procure bullion to back each mint at 1:1.",
+    emptyPool: "As users mint AUXR, we hedge each mint 1:1 with metal positions held via a regulated broker — not allocated physical bullion.",
     composition: "Basket Composition",
     compositionSub: "Fixed grams per unit. Weights drift naturally with spot prices.",
     th_metal: "Metal",
@@ -89,7 +89,7 @@ const T = {
     th_spot: "Spot",
     th_weight: "Weight",
     viewPoR: "View Proof of Reserves →",
-    disclosure: "AUXR is an off-chain reserve token backed by physical bullion in LBMA-compliant custody. Spread is 50 bps each side (1% round-trip). Phase 1A — internal beta. Not yet redeemable for physical bullion.",
+    disclosure: "AUXR is an off-chain basket token whose NAV tracks 55/30/10/5 Au/Ag/Pt/Pd at global spot. Its metal-price exposure is hedged 1:1 through metal derivative and unallocated positions with a regulated metals broker — it is not backed by allocated physical bullion. Spread is 50 bps each side (1% round-trip). Phase 1A — internal beta. Cash-settled at NAV; not physically redeemable.",
     success_buy: "Purchase complete",
     success_sell: "Sale complete",
     boughtSummary: (units: string, usd: string) => `${usd} → ${units} AUXR`,
@@ -101,7 +101,7 @@ const T = {
   },
   tr: {
     title: "AUXR — Rezerv Sepeti",
-    subtitle: "%55 altın · %30 gümüş · %10 platin · %5 paladyum · fiziksel tahsis",
+    subtitle: "%55 altın · %30 gümüş · %10 platin · %5 paladyum · fiyat-endeksli, tam hedge'li",
     live: "CANLI",
     nav: "AUXR Başına NAV",
     bid: "Sat",
@@ -120,14 +120,14 @@ const T = {
     minIs: "Minimum",
     insufficient: "Yetersiz bakiye",
     kycRequired: "Kimlik doğrulaması gerekli",
-    kycDesc: "AUXR gerçek tahsisli metali temsil eder. İşlem için 2 dakikalık KYC tamamlayın.",
+    kycDesc: "AUXR bir değerli metal sepetini izler, metal pozisyonlarıyla 1:1 hedge edilir. İşlem için 2 dakikalık KYC tamamlayın.",
     verifyNow: "Kimlik Doğrula",
     backingPool: "Rezerv Havuzu",
-    backingSub: (n: string) => `Dolaşımdaki ${n} AUXR için tutulan fiziksel külçe. 1:1 desteklenir.`,
+    backingSub: (n: string) => `Dolaşımdaki ${n} AUXR için metal-fiyat exposure'ı 1:1 hedge edilir.`,
     fullyBacked: "TAM DESTEKLİ",
     required: "Gerekli",
     backed: "destekli",
-    emptyPool: "Kullanıcılar AUXR mint ettikçe rezervler büyür. Her mint için 1:1 fiziksel külçe satın alırız.",
+    emptyPool: "Kullanıcılar AUXR mint ettikçe, her mint düzenlenmiş bir broker'daki metal pozisyonlarıyla 1:1 hedge edilir — tahsisli fiziksel külçe değil.",
     composition: "Sepet Bileşimi",
     compositionSub: "Birim başına sabit gram. Ağırlıklar spot fiyatlarla doğal olarak değişir.",
     th_metal: "Metal",
@@ -135,7 +135,7 @@ const T = {
     th_spot: "Spot",
     th_weight: "Ağırlık",
     viewPoR: "Rezerv Kanıtını Gör →",
-    disclosure: "AUXR, LBMA uyumlu saklamada fiziksel külçe ile desteklenen off-chain bir rezerv tokendir. Spread her yönde 50 bps (toplam %1). Phase 1A — iç beta. Henüz fiziksel teslim alınamaz.",
+    disclosure: "AUXR, NAV'ı global spot'ta 55/30/10/5 Au/Ag/Pt/Pd sepetini izleyen off-chain bir token'dır. Metal-fiyat exposure'ı, düzenlenmiş bir metal broker'ı nezdinde metal türev ve unallocated pozisyonlarla 1:1 hedge edilir — tahsisli fiziksel külçe ile desteklenmez. Spread her yönde 50 bps (toplam %1). Phase 1A — iç beta. NAV'dan nakit uzlaşı; fiziksel teslim alınamaz.",
     success_buy: "Alım tamamlandı",
     success_sell: "Satış tamamlandı",
     boughtSummary: (units: string, usd: string) => `${usd} → ${units} AUXR`,
@@ -144,6 +144,190 @@ const T = {
     connect_prompt: "AUXR alıp satmak için hesabınızı bağlayın.",
     demo_prompt: "AUXR alıp satmak için canlı hesaba geçin.",
     metals: { gold: "Altın", silver: "Gümüş", platinum: "Platin", palladium: "Paladyum" },
+  },
+  de: {
+    title: "AUXR — Reservekorb",
+    subtitle: "55% Gold · 30% Silber · 10% Platin · 5% Palladium · preisbasiert, voll abgesichert",
+    live: "LIVE",
+    nav: "NAV pro AUXR",
+    bid: "Verkaufen",
+    ask: "Kaufen",
+    mode_buy: "Kaufen",
+    mode_sell: "Verkaufen",
+    amountUSD: "Betrag (USD)",
+    amountAUXR: "Menge (AUXR)",
+    payWith: "Bezahlen mit",
+    available: "Verfügbar",
+    receive: "Sie erhalten",
+    proceedsLabel: "Sie erhalten",
+    buyCTA: "AUXR kaufen",
+    sellCTA: "AUXR verkaufen",
+    useMax: "Max",
+    minIs: "Minimum",
+    insufficient: "Unzureichendes Guthaben",
+    kycRequired: "Identitätsprüfung erforderlich",
+    kycDesc: "AUXR bildet einen Edelmetallkorb ab und wird 1:1 mit Metallpositionen abgesichert. Schließen Sie eine 2-minütige KYC ab, um zu handeln.",
+    verifyNow: "Identität verifizieren",
+    backingPool: "Deckungspool",
+    backingSub: (n: string) => `Metallpreis-Exposure 1:1 abgesichert für ${n} AUXR im Umlauf.`,
+    fullyBacked: "VOLL GEDECKT",
+    required: "Erforderlich",
+    backed: "gedeckt",
+    emptyPool: "Wenn Nutzer AUXR minten, sichern wir jeden Mint 1:1 mit Metallpositionen bei einem regulierten Broker ab — kein zugewiesenes physisches Metall.",
+    composition: "Korbzusammensetzung",
+    compositionSub: "Feste Gramm pro Einheit. Gewichte verschieben sich natürlich mit den Spotpreisen.",
+    th_metal: "Metall",
+    th_gpu: "Gramm / AUXR",
+    th_spot: "Spot",
+    th_weight: "Gewicht",
+    viewPoR: "Reservenachweis ansehen →",
+    disclosure: "AUXR ist ein Off-Chain-Korb-Token, dessen NAV 55/30/10/5 Au/Ag/Pt/Pd zum globalen Spotpreis abbildet. Das Metallpreis-Exposure wird 1:1 über Metallderivate und nicht zugewiesene Positionen bei einem regulierten Metallbroker abgesichert — es ist nicht durch zugewiesenes physisches Metall gedeckt. Spread 50 bps je Seite (1% Round-Trip). Phase 1A — interne Beta. Barausgleich zum NAV; keine physische Einlösung.",
+    success_buy: "Kauf abgeschlossen",
+    success_sell: "Verkauf abgeschlossen",
+    boughtSummary: (units: string, usd: string) => `${usd} → ${units} AUXR`,
+    soldSummary: (units: string, usd: string) => `${units} AUXR → ${usd}`,
+    done: "Fertig",
+    connect_prompt: "Verbinden Sie Ihr Konto, um AUXR zu handeln.",
+    demo_prompt: "Wechseln Sie zu einem Live-Konto, um AUXR zu handeln.",
+    metals: { gold: "Gold", silver: "Silber", platinum: "Platin", palladium: "Palladium" },
+  },
+  fr: {
+    title: "AUXR — Panier de réserve",
+    subtitle: "55% or · 30% argent · 10% platine · 5% palladium · indexé, entièrement couvert",
+    live: "EN DIRECT",
+    nav: "VNI par AUXR",
+    bid: "Vendre",
+    ask: "Acheter",
+    mode_buy: "Acheter",
+    mode_sell: "Vendre",
+    amountUSD: "Montant (USD)",
+    amountAUXR: "Quantité (AUXR)",
+    payWith: "Payer avec",
+    available: "Disponible",
+    receive: "Vous recevez",
+    proceedsLabel: "Vous recevez",
+    buyCTA: "Acheter AUXR",
+    sellCTA: "Vendre AUXR",
+    useMax: "Max",
+    minIs: "Minimum",
+    insufficient: "Solde insuffisant",
+    kycRequired: "Vérification d'identité requise",
+    kycDesc: "AUXR suit un panier de métaux précieux, couvert 1:1 par des positions sur métaux. Complétez une KYC de 2 minutes pour trader.",
+    verifyNow: "Vérifier l'identité",
+    backingPool: "Pool de couverture",
+    backingSub: (n: string) => `Exposition au prix des métaux couverte 1:1 pour ${n} AUXR en circulation.`,
+    fullyBacked: "ENTIÈREMENT COUVERT",
+    required: "Requis",
+    backed: "couvert",
+    emptyPool: "Lorsque les utilisateurs mintent des AUXR, nous couvrons chaque mint 1:1 avec des positions sur métaux détenues via un courtier réglementé — pas de métal physique alloué.",
+    composition: "Composition du panier",
+    compositionSub: "Grammes fixes par unité. Les poids varient naturellement avec les prix spot.",
+    th_metal: "Métal",
+    th_gpu: "Grammes / AUXR",
+    th_spot: "Spot",
+    th_weight: "Poids",
+    viewPoR: "Voir la preuve de réserves →",
+    disclosure: "AUXR est un token panier off-chain dont la VNI suit 55/30/10/5 Au/Ag/Pt/Pd au spot mondial. Son exposition au prix des métaux est couverte 1:1 via des dérivés et positions non allouées auprès d'un courtier en métaux réglementé — il n'est pas adossé à du métal physique alloué. Spread de 50 pb de chaque côté (1% aller-retour). Phase 1A — bêta interne. Règlement en espèces à la VNI ; non remboursable en physique.",
+    success_buy: "Achat terminé",
+    success_sell: "Vente terminée",
+    boughtSummary: (units: string, usd: string) => `${usd} → ${units} AUXR`,
+    soldSummary: (units: string, usd: string) => `${units} AUXR → ${usd}`,
+    done: "Terminé",
+    connect_prompt: "Connectez votre compte pour trader AUXR.",
+    demo_prompt: "Passez à un compte réel pour trader AUXR.",
+    metals: { gold: "Or", silver: "Argent", platinum: "Platine", palladium: "Palladium" },
+  },
+  ar: {
+    title: "AUXR — سلة الاحتياطي",
+    subtitle: "55% ذهب · 30% فضة · 10% بلاتين · 5% بلاديوم · مُسعّر ومُحوّط بالكامل",
+    live: "مباشر",
+    nav: "صافي قيمة الأصول لكل AUXR",
+    bid: "بيع",
+    ask: "شراء",
+    mode_buy: "شراء",
+    mode_sell: "بيع",
+    amountUSD: "المبلغ (USD)",
+    amountAUXR: "الكمية (AUXR)",
+    payWith: "الدفع بواسطة",
+    available: "متاح",
+    receive: "ستستلم",
+    proceedsLabel: "ستستلم",
+    buyCTA: "شراء AUXR",
+    sellCTA: "بيع AUXR",
+    useMax: "الحد الأقصى",
+    minIs: "الحد الأدنى",
+    insufficient: "رصيد غير كافٍ",
+    kycRequired: "التحقق من الهوية مطلوب",
+    kycDesc: "يتتبع AUXR سلة معادن نفيسة، مُحوّطة 1:1 بمراكز على المعادن. أكمل التحقق (KYC) خلال دقيقتين للتداول.",
+    verifyNow: "التحقق من الهوية",
+    backingPool: "مجمع التغطية",
+    backingSub: (n: string) => `تغطية سعر المعادن 1:1 لعدد ${n} AUXR المتداولة.`,
+    fullyBacked: "مغطى بالكامل",
+    required: "المطلوب",
+    backed: "مغطى",
+    emptyPool: "عندما يقوم المستخدمون بسك AUXR، نقوم بتحويط كل سك 1:1 عبر مراكز على المعادن لدى وسيط منظّم — وليس معدناً مادياً مخصصاً.",
+    composition: "تكوين السلة",
+    compositionSub: "غرامات ثابتة لكل وحدة. تتغير الأوزان طبيعياً مع الأسعار الفورية.",
+    th_metal: "المعدن",
+    th_gpu: "غرام / AUXR",
+    th_spot: "فوري",
+    th_weight: "الوزن",
+    viewPoR: "عرض إثبات الاحتياطي ←",
+    disclosure: "AUXR رمز سلة خارج السلسلة، تتبع قيمته الصافية سلة 55/30/10/5 من الذهب والفضة والبلاتين والبلاديوم بالسعر الفوري العالمي. يتم تحويط تعرضه لسعر المعادن 1:1 عبر مشتقات ومراكز غير مخصصة لدى وسيط معادن منظّم — وهو غير مدعوم بمعدن مادي مخصص. الفارق 50 نقطة أساس لكل جهة (1% ذهاباً وإياباً). المرحلة 1A — نسخة تجريبية داخلية. تسوية نقدية بصافي القيمة؛ غير قابل للاسترداد مادياً.",
+    success_buy: "اكتمل الشراء",
+    success_sell: "اكتمل البيع",
+    boughtSummary: (units: string, usd: string) => `${usd} → ${units} AUXR`,
+    soldSummary: (units: string, usd: string) => `${units} AUXR → ${usd}`,
+    done: "تم",
+    connect_prompt: "اربط حسابك لتداول AUXR.",
+    demo_prompt: "انتقل إلى حساب مباشر لتداول AUXR.",
+    metals: { gold: "ذهب", silver: "فضة", platinum: "بلاتين", palladium: "بلاديوم" },
+  },
+  ru: {
+    title: "AUXR — Резервная корзина",
+    subtitle: "55% золото · 30% серебро · 10% платина · 5% палладий · по рынку, полностью хеджировано",
+    live: "LIVE",
+    nav: "NAV за AUXR",
+    bid: "Продать",
+    ask: "Купить",
+    mode_buy: "Купить",
+    mode_sell: "Продать",
+    amountUSD: "Сумма (USD)",
+    amountAUXR: "Количество (AUXR)",
+    payWith: "Оплата",
+    available: "Доступно",
+    receive: "Вы получите",
+    proceedsLabel: "Вы получите",
+    buyCTA: "Купить AUXR",
+    sellCTA: "Продать AUXR",
+    useMax: "Макс",
+    minIs: "Минимум",
+    insufficient: "Недостаточно средств",
+    kycRequired: "Требуется верификация личности",
+    kycDesc: "AUXR отслеживает корзину драгметаллов, хеджируется 1:1 позициями по металлам. Пройдите 2-минутную KYC для торговли.",
+    verifyNow: "Верифицировать личность",
+    backingPool: "Пул обеспечения",
+    backingSub: (n: string) => `Экспозиция на цену металлов хеджирована 1:1 для ${n} AUXR в обращении.`,
+    fullyBacked: "ПОЛНОСТЬЮ ОБЕСПЕЧЕНО",
+    required: "Требуется",
+    backed: "обеспечено",
+    emptyPool: "Когда пользователи минтят AUXR, мы хеджируем каждый минт 1:1 позициями по металлам у регулируемого брокера — не выделенным физическим металлом.",
+    composition: "Состав корзины",
+    compositionSub: "Фиксированные граммы на единицу. Веса естественно меняются со спот-ценами.",
+    th_metal: "Металл",
+    th_gpu: "Грамм / AUXR",
+    th_spot: "Спот",
+    th_weight: "Вес",
+    viewPoR: "Смотреть подтверждение резервов →",
+    disclosure: "AUXR — офф-чейн токен-корзина, NAV которого отслеживает 55/30/10/5 Au/Ag/Pt/Pd по мировому споту. Его экспозиция на цену металлов хеджируется 1:1 через металлические деривативы и неаллоцированные позиции у регулируемого брокера — он не обеспечен выделенным физическим металлом. Спред 50 бпс с каждой стороны (1% туда-обратно). Фаза 1A — внутренняя бета. Денежный расчёт по NAV; без физического погашения.",
+    success_buy: "Покупка завершена",
+    success_sell: "Продажа завершена",
+    boughtSummary: (units: string, usd: string) => `${usd} → ${units} AUXR`,
+    soldSummary: (units: string, usd: string) => `${units} AUXR → ${usd}`,
+    done: "Готово",
+    connect_prompt: "Подключите аккаунт для торговли AUXR.",
+    demo_prompt: "Переключитесь на реальный аккаунт для торговли AUXR.",
+    metals: { gold: "Золото", silver: "Серебро", platinum: "Платина", palladium: "Палладий" },
   },
 } as const;
 
@@ -164,10 +348,12 @@ function fmtGrams(g: number) {
 
 export default function AuxrPage() {
   const { lang } = useLanguage();
-  const t = T[(lang === "tr" ? "tr" : "en") as "en" | "tr"];
+  const t = T[((lang in T ? lang : "en") as keyof typeof T)];
   const upper = useCallback(
     (s: string) => {
-      try { return s.toLocaleUpperCase(lang === "tr" ? "tr-TR" : "en-US"); }
+      const loc = lang === "tr" ? "tr-TR" : lang === "de" ? "de-DE" : lang === "fr" ? "fr-FR"
+        : lang === "ru" ? "ru-RU" : lang === "ar" ? "ar" : "en-US";
+      try { return s.toLocaleUpperCase(loc); }
       catch { return s.toUpperCase(); }
     },
     [lang]
@@ -642,35 +828,37 @@ export default function AuxrPage() {
             <h2 className="text-base font-semibold">{t.composition}</h2>
             <p className="text-sm text-slate-400 mt-1">{t.compositionSub}</p>
           </div>
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-white/[0.02] text-slate-500 text-xs tracking-wider">
               <tr>
-                <th className="text-left py-3 px-6">{upper(t.th_metal)}</th>
-                <th className="text-right py-3 px-6">{upper(t.th_gpu)}</th>
-                <th className="text-right py-3 px-6">{upper(t.th_spot)}</th>
-                <th className="text-right py-3 px-6">{upper(t.th_weight)}</th>
+                <th className="text-left py-3 px-3 sm:px-6">{upper(t.th_metal)}</th>
+                <th className="text-right py-3 px-3 sm:px-6">{upper(t.th_gpu)}</th>
+                <th className="text-right py-3 px-3 sm:px-6">{upper(t.th_spot)}</th>
+                <th className="text-right py-3 px-3 sm:px-6">{upper(t.th_weight)}</th>
               </tr>
             </thead>
             <tbody>
               {METAL_KEYS.map((m) => (
                 <tr key={m} className="border-t border-white/5">
-                  <td className="py-3 px-6">
+                  <td className="py-3 px-3 sm:px-6">
                     <span className="font-semibold" style={{ color: COLORS[m] }}>{SYMBOLS[m]}</span>
                     <span className="ml-2 text-slate-400">{t.metals[m]}</span>
                   </td>
-                  <td className="text-right py-3 px-6 font-mono text-slate-300">
+                  <td className="text-right py-3 px-3 sm:px-6 font-mono text-slate-300">
                     {pricing?.basket.gramsPerUnit[m].toFixed(5) ?? "—"}
                   </td>
-                  <td className="text-right py-3 px-6 font-mono text-slate-300">
+                  <td className="text-right py-3 px-3 sm:px-6 font-mono text-slate-300">
                     {pricing ? fmtUSD(pricing.components[m].spotUSDPerGram) : "—"}
                   </td>
-                  <td className="text-right py-3 px-6 font-semibold">
+                  <td className="text-right py-3 px-3 sm:px-6 font-semibold">
                     {pricing ? pricing.components[m].weightPct.toFixed(2) + "%" : "—"}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         <p className="text-[11px] text-slate-500 leading-relaxed max-w-3xl">
