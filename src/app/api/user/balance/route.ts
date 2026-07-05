@@ -20,6 +20,13 @@ const ETH_RPC_URL = process.env.ETH_RPC_URL || process.env.BLOCKCHAIN_RPC_URL ||
 // Base Mainnet for metal tokens
 const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || "https://mainnet.base.org";
 
+// AUXR contract (Base mainnet) — the CEX-listed reserve token. On-chain is
+// its real ledger, so the app must reflect the user's on-chain AUXR balance.
+const AUXR_ADDRESS =
+  process.env.NEXT_PUBLIC_AUXR_ADDRESS ||
+  process.env.AUXR_CONTRACT_ADDRESS ||
+  "0xB145B8e9C02193d55454f534f917Cabe704FA042";
+
 // Token Contracts from central config
 const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
   usdt: { address: USDT_ADDRESS, decimals: 6 },
@@ -27,6 +34,7 @@ const TOKEN_CONTRACTS: Record<string, { address: string; decimals: number }> = {
   auxs: { address: METAL_TOKENS.AUXS, decimals: 3 },
   auxpt: { address: METAL_TOKENS.AUXPT, decimals: 3 },
   auxpd: { address: METAL_TOKENS.AUXPD, decimals: 3 },
+  auxr: { address: AUXR_ADDRESS, decimals: 18 },
 };
 
 // On-chain tokens (for debug/info only — not used in balance calculation)
@@ -240,6 +248,13 @@ async function getHybridBalance(address: string): Promise<{
   // 5. Get allocation amounts (physical metal allocations)
   const allocationAmounts = await getAllocationAmounts(address);
 
+  // 5b. AUXR is the CEX-listed token — on-chain is its real ledger. Read the
+  // user's on-chain AUXR balance and surface it. The bridge burns on one side
+  // when it mints on the other, so off-chain + on-chain is the true total and
+  // never double-counts the same tokens.
+  const onChainAuxr = await getBlockchainBalance(address, "auxr");
+  blockchainBalances.auxr = onChainAuxr;
+
   // 6. Merge balances - ALL wallets now use blockchain for ETH and tokens on Base
   const redisEth = parseFloat(String(redisBalance.eth || 0));
   const redisUsdt = parseFloat(String(redisBalance.usdt || 0));
@@ -274,9 +289,9 @@ async function getHybridBalance(address: string): Promise<{
     auxpt: Math.max(0, redisAuxpt + allocAuxpt - (stakedAmounts.auxpt || 0)),
     auxpd: Math.max(0, redisAuxpd + allocAuxpd - (stakedAmounts.auxpd || 0)),
 
-    // AUXR — basket reserve token (off-chain in Phase 1A, no allocation
-    // table or staking yet).
-    auxr: parseFloat(String((redisBalance as any).auxr || 0)),
+    // AUXR — basket reserve token. Off-chain (in-app) balance PLUS the user's
+    // on-chain holdings, since AUXR is CEX-listed and traded on-chain.
+    auxr: parseFloat(String((redisBalance as any).auxr || 0)) + onChainAuxr,
   };
 
   // Calculate totalAuxm
@@ -296,7 +311,7 @@ async function getHybridBalance(address: string): Promise<{
     auxs: "redis",
     auxpt: "redis",
     auxpd: "redis",
-    auxr: "redis",
+    auxr: onChainAuxr > 0 ? "blockchain" : "redis",
   };
 
   return {
