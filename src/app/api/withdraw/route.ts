@@ -8,6 +8,7 @@ import { checkTradingAllowed } from "@/lib/trading-guard";
 import { getWithdrawFee, getMinWithdraw } from "@/lib/withdraw-fees";
 import { requireKycForWithdraw, assertCardHoldAllows, usdValueOf } from "@/lib/withdrawal-guard";
 import { recordAuxmEntry } from "@/lib/auxm-ledger";
+import { blockUSPersonForFeature } from "@/lib/security/us-geofence";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
 
@@ -183,6 +184,11 @@ export async function POST(request: NextRequest) {
     if (!kycGate.ok) {
       return NextResponse.json({ error: kycGate.error, code: kycGate.code }, { status: 403 });
     }
+
+    // ── US-person regulatory geofence — crypto withdrawal is a regulated
+    // money-movement feature; not offered to US persons pending licensing.
+    const usGate = await blockUSPersonForFeature("cryptoWithdraw", address, request);
+    if (usGate) return usGate;
 
     // ═════════════════════════════════════════════════════════════════════════
     // AUXM REDEMPTION — convert settlement balance to chosen crypto + send.

@@ -18,6 +18,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { blockUSPersonForFeature } from "@/lib/security/us-geofence";
 import {
   stripe,
   quoteMetalChargeUSD,
@@ -93,6 +94,11 @@ export async function POST(req: NextRequest) {
     const metal = String(body.metal || "").toUpperCase() as SupportedMetal;
     const mode = String(body.mode || "byGrams") as "byGrams" | "byUsd";
     const userAddress = String(body.userAddress || "").trim().toLowerCase();
+
+    // ── US-person regulatory geofence — card / fiat on-ramp is a regulated
+    // money-movement feature; not offered to US persons pending licensing.
+    const usGate = await blockUSPersonForFeature("fiatOnRamp", userAddress, req);
+    if (usGate) return usGate;
 
     if (!SUPPORTED_METALS.includes(metal)) {
       return NextResponse.json(
