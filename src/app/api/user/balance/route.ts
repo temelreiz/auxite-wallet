@@ -249,10 +249,32 @@ async function getHybridBalance(address: string): Promise<{
   const allocationAmounts = await getAllocationAmounts(address);
 
   // 5b. AUXR is the CEX-listed token — on-chain is its real ledger. Read the
-  // user's on-chain AUXR balance and surface it. The bridge burns on one side
-  // when it mints on the other, so off-chain + on-chain is the true total and
-  // never double-counts the same tokens.
-  const onChainAuxr = await getBlockchainBalance(address, "auxr");
+  // user's on-chain AUXR balance with retry, and cache the last-known value so
+  // a transient Base-RPC rate-limit never makes the balance vanish — on failure
+  // we fall back to the cached value, NOT 0. The bridge burns one side when it
+  // mints the other, so off-chain + on-chain is the true total (no double-count).
+  const onchainAuxrKey = `user:${address.toLowerCase()}:onchain:auxr`;
+  let onChainAuxr = 0;
+  let gotOnChain = false;
+  for (let attempt = 0; attempt < 3 && !gotOnChain; attempt++) {
+    try {
+      const provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
+      const contract = new ethers.Contract(AUXR_ADDRESS, ERC20_ABI, provider);
+      const raw = await contract.balanceOf(address);
+      onChainAuxr = parseFloat(ethers.formatUnits(raw, 18));
+      gotOnChain = true;
+    } catch {
+      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+    }
+  }
+  if (gotOnChain) {
+    // Persist last-known on-chain balance (no TTL — self-corrects on next success).
+    await redisClient.set(onchainAuxrKey, String(onChainAuxr)).catch(() => {});
+  } else {
+    // RPC failed — use last-known cached value instead of vanishing to 0.
+    const cached = await redisClient.get(onchainAuxrKey).catch(() => null);
+    onChainAuxr = cached != null ? parseFloat(String(cached)) || 0 : 0;
+  }
   blockchainBalances.auxr = onChainAuxr;
 
   // 6. Merge balances - ALL wallets now use blockchain for ETH and tokens on Base
