@@ -17,8 +17,11 @@ const MOCK_BALANCE = {
 
 // Ethereum Mainnet for ETH
 const ETH_RPC_URL = process.env.ETH_RPC_URL || process.env.BLOCKCHAIN_RPC_URL || "https://eth-mainnet.g.alchemy.com/v2/demo";
-// Base Mainnet for metal tokens
-const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL || process.env.BASE_RPC_URL || "https://mainnet.base.org";
+// Base Mainnet for metal tokens.
+// Server-side: prefer the PRIVATE BASE_RPC_URL (set in prod env) over the
+// public NEXT_PUBLIC_* endpoint, which rate-limits under load and made
+// on-chain reads intermittently return 0.
+const BASE_RPC_URL = process.env.BASE_RPC_URL || process.env.NEXT_PUBLIC_BASE_RPC_URL || "https://mainnet.base.org";
 
 // AUXR contract (Base mainnet) — the CEX-listed reserve token. On-chain is
 // its real ledger, so the app must reflect the user's on-chain AUXR balance.
