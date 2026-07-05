@@ -1,6 +1,7 @@
 // src/app/api/user/convert-usd-usdt/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getUserBalance, incrementBalance, addTransaction } from "@/lib/redis";
+import { blockUSPersonForFeature } from "@/lib/security/us-geofence";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +13,11 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // ── US-person regulatory geofence — USD↔USDT stablecoin conversion is a
+    // regulated money-movement feature; not offered to US persons pending licensing.
+    const usGate = await blockUSPersonForFeature("stablecoinConvert", address, request);
+    if (usGate) return usGate;
 
     const body = await request.json();
     const { direction, amount, usdtPrice = 1 } = body;
