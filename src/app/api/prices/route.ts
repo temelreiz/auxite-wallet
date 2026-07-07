@@ -197,7 +197,9 @@ export async function GET() {
     // Calculate execution prices using Hybrid Pricing Engine
     const execResults = await withTimeout(calculateAllExecutionPrices(spotPerGram, 0), 5000, {} as any);
 
-    for (const [symbol, result] of Object.entries(execResults)) {
+    for (const [symbol, result] of Object.entries(execResults) as Array<
+      [string, { executionPrice: number }]
+    >) {
       executionPrices[symbol] = roundPrice(result.executionPrice, symbol);
     }
 
