@@ -27,6 +27,22 @@ const FALLBACK_PRICES: Record<string, { oz: number; gram: number }> = {
   AUXPD: { oz: 1430, gram: 46.0 },
 };
 
+// Serverless backstop: never let this route hang the client.
+export const dynamic = "force-dynamic";
+export const maxDuration = 25;
+
+// Bound any upstream promise (KuveytTürk / GoldAPI / oracle) so one hung
+// request can't stall the whole endpoint — resolves to `fallback` after `ms`.
+// Without this, a stuck KuveytTürk call froze /api/prices → empty prices →
+// wallet total showed 0 ("Assets Under Custody" = 0) even though balances were
+// intact. The existing FALLBACK_PRICES path only runs once the awaits return.
+function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    Promise.resolve(p).catch(() => fallback),
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 // ============================================
 // PRIMARY: KuveytTürk API
 // ============================================
@@ -136,12 +152,12 @@ export async function GET() {
     let priceData: Record<string, { price: number; change: number }> | null = null;
     let source = "fallback";
 
-    priceData = await fetchKuveytTurkPrices();
+    priceData = await withTimeout(fetchKuveytTurkPrices(), 6000, null);
     if (priceData && Object.keys(priceData).length >= 3) {
       source = "kuveytturk";
       console.log("📊 Price source: KuveytTürk");
     } else {
-      priceData = await fetchGoldApiPrices();
+      priceData = await withTimeout(fetchGoldApiPrices(), 8000, null);
       if (priceData && Object.keys(priceData).length >= 3) {
         source = "goldapi";
         console.log("📊 Price source: GoldAPI");
@@ -149,7 +165,7 @@ export async function GET() {
     }
 
     // Fetch pricing config
-    const pricingConfig = await getPricingConfig();
+    const pricingConfig = await withTimeout(getPricingConfig(), 4000, { volatilityMode: "normal" } as any);
 
     // If all APIs failed and we have cache, use cache
     if (!priceData && cachedData) {
@@ -179,7 +195,7 @@ export async function GET() {
     }
 
     // Calculate execution prices using Hybrid Pricing Engine
-    const execResults = await calculateAllExecutionPrices(spotPerGram, 0);
+    const execResults = await withTimeout(calculateAllExecutionPrices(spotPerGram, 0), 5000, {} as any);
 
     for (const [symbol, result] of Object.entries(execResults)) {
       executionPrices[symbol] = roundPrice(result.executionPrice, symbol);
