@@ -39,7 +39,7 @@ export type SupportedCurrency = typeof SUPPORTED_CURRENCIES[number];
 // Min/max charge amounts in USD — Stripe min is $0.50, but we set higher
 // floor so card processing fee doesn't dominate the purchase.
 export const MIN_CHARGE_USD = 30;
-export const MAX_CHARGE_USD = 5000;
+export const MAX_CHARGE_USD = 10000;
 
 // Card processing buffer added on top of metal spread. Covers Stripe HK
 // fees (~2-3% domestic, 3.4%+ international) + ~2% net margin for us.
