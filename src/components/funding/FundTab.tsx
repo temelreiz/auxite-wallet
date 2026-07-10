@@ -686,7 +686,13 @@ export function FundTab() {
           {rails.map((rail) => (
             <button
               key={rail.id}
-              onClick={() => !rail.disabled && setSelectedRail(rail.id)}
+              onClick={() => {
+                if (rail.disabled) return;
+                setSelectedRail(rail.id);
+                // Card is a one-shot action → open the purchase modal directly
+                // on selection instead of making the user click again in the panel.
+                if (rail.id === "card") setShowCardModal(true);
+              }}
               disabled={rail.disabled}
               className={`relative p-4 rounded-xl border-2 text-left transition-all ${
                 rail.disabled
