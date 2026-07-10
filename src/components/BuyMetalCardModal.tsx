@@ -62,7 +62,6 @@ const t = {
     close: "Kapat",
     back: "Geri",
     minAmount: "Minimum: $30",
-    maxAmount: "Maksimum: $5,000",
     minGrams: "Çok düşük miktar, en az ~$30 değerinde olmalı",
     quoteError: "Fiyat alınamadı, tekrar dene",
     paymentInfo: "Kart bilgilerin Stripe'a doğrudan gönderilir, Auxite saklamaz.",
@@ -90,7 +89,6 @@ const t = {
     close: "Close",
     back: "Back",
     minAmount: "Minimum: $30",
-    maxAmount: "Maximum: $5,000",
     minGrams: "Amount too small, must be ≥ ~$30",
     quoteError: "Failed to fetch price, please retry",
     paymentInfo: "Your card details are sent directly to Stripe; Auxite never stores them.",
@@ -391,7 +389,7 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
                   className="w-full px-3 sm:px-4 py-2.5 rounded-lg bg-white dark:bg-slate-800 border border-stone-300 dark:border-slate-700 text-slate-800 dark:text-white text-base sm:text-lg font-semibold focus:outline-none focus:border-[#BFA181]"
                 />
                 <p className="text-[10px] text-slate-500 mt-1">
-                  {tr(L, "minAmount")} · {tr(L, "maxAmount")}
+                  {tr(L, "minAmount")}
                   {kycState && !kycState.kycVerified && mode === "byUsd" && (
                     <>
                       {" · "}

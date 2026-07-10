@@ -5,6 +5,7 @@ import { useLanguage } from "@/components/LanguageContext";
 import { useWallet } from "@/components/WalletContext";
 import { FundingOverviewPanel } from "./FundingOverviewPanel";
 import { QRCodeSVG } from "qrcode.react";
+import { BuyMetalCardModal } from "@/components/BuyMetalCardModal";
 
 // ============================================
 // TRANSLATIONS
@@ -412,6 +413,7 @@ export function FundTab() {
   const ct = claimTranslations[lang] || claimTranslations.en;
 
   const [selectedRail, setSelectedRail] = useState<FundingRail>("crypto");
+  const [showCardModal, setShowCardModal] = useState(false);
   const [depositAddresses, setDepositAddresses] = useState<Record<string, DepositAddressInfo>>({});
   const [depositLoading, setDepositLoading] = useState(true);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -587,7 +589,6 @@ export function FundTab() {
     },
     {
       id: "card",
-      disabled: true,
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -944,6 +945,27 @@ export function FundTab() {
       )}
 
       {/* ═══════════════════════════════════════ */}
+      {/* CARD PURCHASE CONTENT                  */}
+      {/* ═══════════════════════════════════════ */}
+      {selectedRail === "card" && (
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-8 mb-6 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#BFA181]/10 flex items-center justify-center">
+            <svg className="w-8 h-8 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-1">{t.cardPurchase}</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-5 max-w-sm mx-auto">{t.cardPurchaseDesc}</p>
+          <button
+            onClick={() => setShowCardModal(true)}
+            className="px-6 py-3 rounded-lg bg-[#BFA181] text-white text-sm font-semibold hover:bg-[#a98f6f] transition-colors"
+          >
+            {t.cardPurchase}
+          </button>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════ */}
       {/* DEPOSIT HISTORY                        */}
       {/* ═══════════════════════════════════════ */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6">
@@ -987,6 +1009,9 @@ export function FundTab() {
           </div>
         )}
       </div>
+
+      {/* Card purchase modal (Stripe) */}
+      <BuyMetalCardModal isOpen={showCardModal} onClose={() => setShowCardModal(false)} />
     </div>
   );
 }
