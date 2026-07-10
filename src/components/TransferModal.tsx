@@ -10,7 +10,11 @@ import { METAL_TOKENS as METAL_TOKEN_ADDRESSES, USDT_ADDRESS } from "@/config/co
 import { TwoFactorGate } from "@/components/TwoFactorGate";
 import { useLanguage } from "@/components/LanguageContext";
 
-type TokenType = "AUXG" | "AUXS" | "AUXPT" | "AUXPD" | "ETH" | "USDT" | "BTC" | "XRP" | "SOL";
+type TokenType = "AUXG" | "AUXS" | "AUXPT" | "AUXPD" | "AUXR" | "ETH" | "USDT" | "BTC" | "XRP" | "SOL";
+
+// AUXR ERC-20 on Base mainnet (public address). Sendable to ANY address
+// (incl. exchange deposit addresses like BitMart) — no Auxite-user restriction.
+const AUXR_ADDRESS = "0xB145B8e9C02193d55454f534f917Cabe704FA042";
 
 interface TransferModalProps {
   isOpen: boolean;
@@ -26,6 +30,11 @@ const TOKEN_INFO: Record<TokenType, {
   AUXS: { name: "Silver", icon: "/auxs_icon.png", iconType: "image", color: "#94A3B8", onChain: true, decimals: 3, address: METAL_TOKEN_ADDRESSES.AUXS, isMetal: true },
   AUXPT: { name: "Platinum", icon: "/auxpt_icon.png", iconType: "image", color: "#CBD5E1", onChain: true, decimals: 3, address: METAL_TOKEN_ADDRESSES.AUXPT, isMetal: true },
   AUXPD: { name: "Palladium", icon: "/auxpd_icon.png", iconType: "image", color: "#64748B", onChain: true, decimals: 3, address: METAL_TOKEN_ADDRESSES.AUXPD, isMetal: true },
+  // AUXR — CEX-listed reserve token. isMetal:false so it skips the metal
+  // recipient-must-be-Auxite-user gate (it can go to any address, e.g. a
+  // BitMart deposit address). Routing is dual: connected wallet → on-chain
+  // ERC-20 transfer of the user's own AUXR; custodial → /api/auxr/withdraw-onchain.
+  AUXR: { name: "AUXR", icon: "/auxr_icon.png", iconType: "image", color: "#BFA181", onChain: true, decimals: 18, address: AUXR_ADDRESS },
   ETH: { name: "Ethereum", icon: "Ξ", iconType: "symbol", color: "#627EEA", onChain: true, decimals: 18 },
   USDT: { name: "Tether", icon: "₮", iconType: "symbol", color: "#26A17B", onChain: true, decimals: 6, address: USDT_ADDRESS },
   BTC: { name: "Bitcoin", icon: "₿", iconType: "symbol", color: "#F7931A", onChain: false, decimals: 8 },
@@ -33,7 +42,7 @@ const TOKEN_INFO: Record<TokenType, {
   SOL: { name: "Solana", icon: "◎", iconType: "symbol", color: "#9945FF", onChain: false, decimals: 9 },
 };
 
-const TRANSFERABLE_TOKENS: TokenType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD", "ETH", "USDT", "BTC", "XRP", "SOL"];
+const TRANSFERABLE_TOKENS: TokenType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD", "AUXR", "ETH", "USDT", "BTC", "XRP", "SOL"];
 const METAL_TOKENS: TokenType[] = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
 
 const ERC20_ABI = [
@@ -50,6 +59,7 @@ const translations: Record<string, Record<string, string>> = {
     insufficientBalance: "Yetersiz bakiye", invalidAddress: "Geçersiz adres", cancel: "Kapat",
     onChainNote: "On-chain transfer - Cüzdanınızda imzalamanız gerekecek",
     metalNote: "Metal transferi sadece kayıtlı Auxite kullanıcılarına yapılabilir",
+    auxrNote: "AUXR herhangi bir cüzdana veya borsa yatırım adresine (örn. BitMart) gönderilebilir. Cüzdan bağlıysa on-chain gönderilir; değilse Auxite bakiyenizden.",
     checkingRecipient: "Kontrol ediliyor...", auxiteUser: "Auxite kullanıcısı ✓",
     notAuxiteUser: "Alıcı Auxite kullanıcısı değil",
     sent: "gönderildi",
@@ -68,6 +78,7 @@ const translations: Record<string, Record<string, string>> = {
     insufficientBalance: "Insufficient balance", invalidAddress: "Invalid address", cancel: "Close",
     onChainNote: "On-chain transfer - You will need to sign in your wallet",
     metalNote: "Metal transfers can only be made to registered Auxite users",
+    auxrNote: "AUXR can be sent to any wallet or exchange deposit address (e.g. BitMart). Connected wallet = on-chain; otherwise sent from your Auxite balance.",
     checkingRecipient: "Checking...", auxiteUser: "Auxite user ✓",
     notAuxiteUser: "Recipient is not an Auxite user",
     sent: "sent",
@@ -336,6 +347,35 @@ export function TransferModal({ isOpen, onClose, lang: propLang }: TransferModal
     });
 
     try {
+      if (selectedToken === "AUXR") {
+        if (isConnected) {
+          // On-chain holder (self-custody): sign an ERC-20 transfer of your own
+          // AUXR to any address (e.g. BitMart). Confirmation via tx useEffects.
+          const amountInUnits = parseUnits(amount, tokenInfo.decimals);
+          writeContract({ address: AUXR_ADDRESS as `0x${string}`, abi: ERC20_ABI, functionName: "transfer", args: [recipientAddress as `0x${string}`, amountInUnits], gas: BigInt(200000) });
+          return;
+        }
+        // Custodial (in-app off-chain balance): the bridge debits off-chain and
+        // mints AUXR on-chain to the destination. Synchronous — the response
+        // carries the mint tx hash.
+        const refId = `auxr-wd-${(address || "").slice(2, 10)}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const response = await fetch("/api/auxr/withdraw-onchain", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address, destination: recipientAddress, unitsAUXR: amountNum, refId, source: "wallet-transfer" }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          if (data.txHash) setTxHash(data.txHash);
+          setResult("success");
+          setFlowStep("result");
+          if (refreshBalances) await refreshBalances();
+        } else {
+          throw new Error(data.error === "insufficient_balance" ? t("insufficientBalance") : (data.details || data.error || t("transferFailed")));
+        }
+        setIsProcessing(false);
+        return;
+      }
       if (isMetal) {
         // Custodial wallet için API transfer
         if (!isConnected) {
@@ -533,7 +573,12 @@ export function TransferModal({ isOpen, onClose, lang: propLang }: TransferModal
             <p className="text-xs text-[#BFA181] dark:text-[#BFA181]">⚠️ {t("metalNote")}</p>
           </div>
         )}
-        {tokenInfo.onChain && !isMetal && (
+        {selectedToken === "AUXR" && (
+          <div className="mb-4 p-2 bg-[#BFA181]/10 dark:bg-[#BFA181]/10 border border-[#BFA181]/30 dark:border-[#BFA181]/30 rounded-lg">
+            <p className="text-xs text-[#BFA181] dark:text-[#BFA181]">🏦 {t("auxrNote")}</p>
+          </div>
+        )}
+        {tokenInfo.onChain && !isMetal && selectedToken !== "AUXR" && (
           <div className="mb-4 p-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg">
             <p className="text-xs text-blue-700 dark:text-blue-400">⚡ {t("onChainNote")}</p>
           </div>
