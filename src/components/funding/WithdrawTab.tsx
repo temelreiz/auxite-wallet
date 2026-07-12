@@ -498,6 +498,7 @@ interface AssetConfig {
 
 const ALL_ASSETS: AssetConfig[] = [
   { symbol: "AUXM", name: "Settlement Balance", icon: "◈", color: "#BFA181", unit: "", balanceKey: "auxm" },
+  { symbol: "AUXR", name: "AUXR", icon: "◆", iconImg: "/auxr_icon.png", color: "#BFA181", unit: "", balanceKey: "auxr" },
   { symbol: "USDT", name: "Tether", icon: "₮", color: "#26A17B", unit: "", balanceKey: "usdt" },
   { symbol: "USDC", name: "USD Coin", icon: "$", color: "#2775CA", unit: "", balanceKey: "usdc" },
   { symbol: "BTC", name: "Bitcoin", icon: "₿", color: "#F7931A", unit: "", balanceKey: "btc" },
@@ -527,6 +528,10 @@ type WithdrawCrypto = "USDT" | "USDC" | "BTC" | "ETH";
 //   ETH   → Base (withdrawETH + sendEthToUser)
 //   BTC   → Bitcoin (withdrawBTC)
 const WITHDRAW_NETWORKS: Record<string, { networks: { id: string; name: string }[]; minWithdraw: number; fee: number; eta: string }> = {
+  // AUXR is a Base-native ERC-20. External send goes through the AUXR bridge
+  // (/api/auxr/withdraw-onchain): off-chain debit + on-chain mint to the
+  // destination (e.g. a BitMart deposit address). No explicit fee (gas absorbed).
+  AUXR: { networks: [{ id: "base", name: "Base" }], minWithdraw: 0.5, fee: 0, eta: "15-30" },
   USDT: { networks: [{ id: "tron", name: "Tron (TRC20)" }, { id: "base", name: "Base" }], minWithdraw: 10, fee: 1, eta: "15-30" },
   USDC: { networks: [{ id: "base", name: "Base" }], minWithdraw: 10, fee: 1, eta: "15-30" },
   BTC: { networks: [{ id: "bitcoin", name: "Bitcoin Network" }], minWithdraw: 0.0005, fee: 0.0001, eta: "30-60" },
@@ -536,7 +541,7 @@ const WITHDRAW_NETWORKS: Record<string, { networks: { id: string; name: string }
 // Internal-eligible assets (all)
 const INTERNAL_ASSETS = ALL_ASSETS.map(a => a.symbol);
 // External-eligible assets (no metals)
-const EXTERNAL_ASSETS = ["AUXM", "USDT", "USDC", "BTC", "ETH"];
+const EXTERNAL_ASSETS = ["AUXM", "AUXR", "USDT", "USDC", "BTC", "ETH"];
 
 interface TransactionRecord {
   id: string;
@@ -833,6 +838,36 @@ export function WithdrawTab() {
 
     try {
       console.log(`🚀 Withdraw request: ${amount} ${selectedAsset} to ${destinationAddress} (network: ${network})`);
+
+      // AUXR external send uses the dedicated bridge (off-chain debit + on-chain
+      // mint to the destination) — not the generic /api/withdraw rail. Destination
+      // is any address, incl. an exchange (BitMart) deposit address.
+      if (selectedAsset === "AUXR") {
+        const refId = `auxr-wd-${(address || "").slice(2, 10)}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        const auxrRes = await fetch("/api/auxr/withdraw-onchain", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            address,
+            destination: destinationAddress,
+            unitsAUXR: parseFloat(amount),
+            refId,
+            source: "web-withdraw",
+          }),
+        });
+        const auxrData = await auxrRes.json();
+        if (!auxrRes.ok || !auxrData.success) {
+          throw new Error(
+            auxrData.error === "insufficient_balance"
+              ? t.insufficientBalance
+              : (auxrData.details || auxrData.error || t.withdrawalFailed),
+          );
+        }
+        setSuccess(t.withdrawalSuccess);
+        await Promise.all([refreshBalances(), fetchDirectBalances(), loadHistory()]);
+        setTimeout(() => resetWizard(), 4000);
+        return;
+      }
 
       const res = await fetch("/api/withdraw", {
         method: "POST",
