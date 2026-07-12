@@ -6,6 +6,7 @@ import { useWallet } from "@/components/WalletContext";
 import { FundingOverviewPanel } from "./FundingOverviewPanel";
 import { QRCodeSVG } from "qrcode.react";
 import { BuyMetalCardModal } from "@/components/BuyMetalCardModal";
+import { BankWirePanel } from "@/components/AddFundsModal";
 
 // ============================================
 // TRANSLATIONS
@@ -43,6 +44,8 @@ const translations: Record<string, Record<string, string>> = {
     referenceNote: "Referans kodunu ödeme açıklamasına eklemeyi unutmayın.",
     copyAll: "Tümünü Kopyala",
     settlement: "Takas: 1-3 iş günü",
+    back: "Geri",
+    warningTitle: "Uyarı",
     // History
     depositHistory: "Yatırım Geçmişi",
     noDeposits: "Henüz yatırım yok",
@@ -82,6 +85,8 @@ const translations: Record<string, Record<string, string>> = {
     referenceNote: "Include the reference code in your payment description.",
     copyAll: "Copy All Details",
     settlement: "Settlement: 1-3 business days",
+    back: "Back",
+    warningTitle: "Notice",
     depositHistory: "Deposit History",
     noDeposits: "No deposits yet",
     pending: "Pending",
@@ -580,7 +585,6 @@ export function FundTab() {
     },
     {
       id: "bank",
-      disabled: true,
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -917,18 +921,15 @@ export function FundTab() {
       {/* BANK WIRE CONTENT                      */}
       {/* ═══════════════════════════════════════ */}
       {selectedRail === "bank" && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-8 mb-6 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#BFA181]/10 flex items-center justify-center">
-            <svg className="w-8 h-8 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
-          <span className="inline-block px-4 py-1.5 rounded-full bg-[#BFA181]/15 text-[#BFA181] text-sm font-semibold mb-3">
-            Coming Soon
-          </span>
-          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-            Bank wire transfers will be available soon. In the meantime, you can fund your vault using cryptocurrency.
-          </p>
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6 mb-6">
+          {/* Live Wise receiving accounts — same source as the Fund Vault modal */}
+          <BankWirePanel
+            walletAddress={address || ""}
+            lang={lang}
+            t={(k: string) => (t as any)[k] || (translations.en as any)[k] || k}
+            onBack={() => setSelectedRail("crypto")}
+            onCopy={copyToClipboard}
+          />
         </div>
       )}
 

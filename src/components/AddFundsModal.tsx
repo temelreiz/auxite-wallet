@@ -1045,7 +1045,7 @@ function buildWireReference(walletAddress: string | undefined): string {
   return `AUX-${walletAddress.slice(2, 8).toUpperCase()}`;
 }
 
-function BankWirePanel({
+export function BankWirePanel({
   vaultId, walletAddress, t, lang, onBack, onCopy,
 }: {
   vaultId?: string;

@@ -295,9 +295,12 @@ export default function LedgerPage() {
           id: tx.id || `tx_${tx.timestamp || Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
           type: tx.type || 'trade',
           event: tx.type || 'trade',
-          asset: tx.coin || tx.token || tx.fromToken || tx.toToken || 'USD',
-          amount: String(tx.amount || tx.fromAmount || tx.toAmount || 0),
-          amountUsd: tx.amountUsd || tx.value || 0,
+          // buy/card_purchase records use metal/grams/amountUSD; transfers use
+          // token/amount; conversions use fromToken/fromAmount. Cover all shapes
+          // so the ledger never shows a spurious "USD 0".
+          asset: tx.coin || tx.token || tx.metal || tx.fromToken || tx.toToken || 'USD',
+          amount: String(tx.amount ?? tx.grams ?? tx.fromAmount ?? tx.toAmount ?? 0),
+          amountUsd: tx.amountUsd ?? tx.amountUSD ?? tx.value ?? 0,
           status: tx.status || 'completed',
           txHash: tx.txHash || '',
           timestamp: tx.timestamp || (tx.createdAt ? new Date(tx.createdAt).getTime() : Date.now()),
