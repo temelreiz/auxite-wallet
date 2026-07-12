@@ -24,6 +24,7 @@ export type WalletType =
 interface UserBalances {
   auxm: number;
   totalAuxm: number;
+  auxr: number;
   auxg: number;
   auxs: number;
   auxpt: number;
@@ -114,6 +115,7 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 const DEFAULT_BALANCES: UserBalances = {
   auxm: 0,
   totalAuxm: 0,
+  auxr: 0,
   auxg: 0,
   auxs: 0,
   auxpt: 0,
@@ -344,6 +346,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const merged: UserBalances = {
         auxm: redisData.balances?.auxm ?? 0,
         totalAuxm: redisData.balances?.auxm ?? 0,
+        // AUXR = off-chain ledger + on-chain (API already combines them)
+        auxr: redisData.balances?.auxr ?? 0,
         // Metaller: Sadece Redis balance (allocations ayrı gösteriliyor)
         auxg: redisData.balances?.auxg ?? 0,
         auxs: redisData.balances?.auxs ?? 0,

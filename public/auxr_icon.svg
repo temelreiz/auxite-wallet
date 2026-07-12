@@ -1,0 +1,52 @@
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="goldR" cx="38%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#FFF7CC"/>
+      <stop offset="40%" stop-color="#F4CE5E"/>
+      <stop offset="74%" stop-color="#D6A41E"/>
+      <stop offset="100%" stop-color="#9C7410"/>
+    </radialGradient>
+    <linearGradient id="ringG" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#FCEFA0"/>
+      <stop offset="22%" stop-color="#E8BE3C"/>
+      <stop offset="50%" stop-color="#C9971A"/>
+      <stop offset="78%" stop-color="#E8BE3C"/>
+      <stop offset="100%" stop-color="#8A6510"/>
+    </linearGradient>
+    <linearGradient id="silverG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#CFCFCF"/>
+      <stop offset="100%" stop-color="#8C8C8C"/>
+    </linearGradient>
+    <linearGradient id="platG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F2F1EE"/>
+      <stop offset="50%" stop-color="#D2D3D1"/>
+      <stop offset="100%" stop-color="#9DA09E"/>
+    </linearGradient>
+    <linearGradient id="pallG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#DFE0DD"/>
+      <stop offset="50%" stop-color="#A9ABA7"/>
+      <stop offset="100%" stop-color="#6F726E"/>
+    </linearGradient>
+  </defs>
+
+  <!-- coin edge -->
+  <circle cx="128" cy="128" r="120" fill="url(#ringG)"/>
+  <circle cx="128" cy="128" r="104" fill="#FBF7EC"/>
+  <circle cx="128" cy="128" r="104" fill="none" stroke="#B8860B" stroke-width="1.5" opacity="0.45"/>
+
+  <!-- 4 metal gems = the reserve basket (gold / platinum / silver / palladium) -->
+  <g stroke="#7A5B0E" stroke-width="2">
+    <circle cx="128" cy="42" r="11" fill="url(#goldR)"/>
+    <circle cx="214" cy="128" r="11" fill="url(#platG)"/>
+    <circle cx="128" cy="214" r="11" fill="url(#silverG)"/>
+    <circle cx="42" cy="128" r="11" fill="url(#pallG)"/>
+  </g>
+
+  <!-- Auxite pyramid "A" mark -->
+  <g stroke-linejoin="round">
+    <path d="M128 70 L182 172 L74 172 Z" fill="none" stroke="url(#ringG)" stroke-width="9"/>
+    <path d="M128 96 L160 158 L96 158 Z" fill="none" stroke="url(#ringG)" stroke-width="6"/>
+    <path d="M128 120 L146 152 L110 152 Z" fill="url(#goldR)"/>
+  </g>
+</svg>
