@@ -10,6 +10,28 @@ const redis = new Redis({
 const CACHE_TTL = 60; // 60 saniye cache
 const TROY_OUNCE_TO_GRAMS = 31.1035;
 
+// ── KuveytTürk circuit breaker ──────────────────────────────────────────────
+// KT has no internal timeout. When it's unresponsive, EVERY price call would
+// wait out the deadline — and the card (Stripe PI) path calls it several times
+// per request, stacking to ~16s+. So: race KT against a 4s deadline, and when
+// it trips, mark KT "down" in Redis for 120s so subsequent calls skip it
+// entirely and go straight to GoldAPI/spot (fast). Restores automatically.
+const KT_DOWN_KEY = 'metal:kt:down';
+async function fetchKtBounded(): Promise<Awaited<ReturnType<typeof getMetalPricesInUsd>>> {
+  if (await redis.get(KT_DOWN_KEY).catch(() => null)) {
+    throw new Error('KT circuit open — skipping');
+  }
+  try {
+    return await Promise.race([
+      getMetalPricesInUsd(),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('KT timeout (4s)')), 4000)),
+    ]);
+  } catch (e) {
+    redis.set(KT_DOWN_KEY, '1', { ex: 120 }).catch(() => {});
+    throw e;
+  }
+}
+
 interface CachedPrices {
   gold: number;
   silver: number;
@@ -44,10 +66,7 @@ export async function getMetalPrices(): Promise<CachedPrices> {
     // errors, not hangs), stalling every caller (e.g. Stripe PI creation) past
     // the 30s client timeout. Race it against a 4s deadline so a hung KT falls
     // through to GoldAPI / stale cache instead of blocking.
-    const kt = await Promise.race([
-      getMetalPricesInUsd(),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('KT timeout (4s)')), 4000)),
-    ]);
+    const kt = await fetchKtBounded();
     if (kt.AUXG?.buyRateUSD && kt.AUXS?.buyRateUSD && kt.AUXPT?.buyRateUSD && kt.AUXPD?.buyRateUSD) {
       prices = {
         gold: kt.AUXG.buyRateUSD,
@@ -196,10 +215,7 @@ export async function getMetalUsdPrice(metal: string, type: 'buy' | 'sell'): Pro
       // Bound KT — no internal timeout, so a hung KT would stall the whole
       // request path (this is the price call on the Stripe PI creation path).
       // Race a 4s deadline so a hang falls through to GoldAPI spot instead.
-      const kt = await Promise.race([
-        getMetalPricesInUsd(), // 15s-cached inside kuveytturk-service
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('KT timeout (4s)')), 4000)),
-      ]);
+      const kt = await fetchKtBounded(); // 15s-cached inside KT + 4s deadline + circuit breaker
       const r = kt[symbol];
       const p = r ? (type === 'buy' ? r.buyRateUSD : r.sellRateUSD) : 0;
       if (p && p > 0) return p;
