@@ -622,7 +622,12 @@ export function AddFundsModal({
                         logEvent("card_purchase_cta_clicked", { surface: "web", source: "fund_vault_modal" })
                       );
                       if (onCardPurchase) {
-                        onClose();
+                        // NOTE: do NOT call onClose() here. onClose runs the
+                        // parent's close handler, which (on /fund-vault)
+                        // navigates to /vault because showBuyMetalCardModal is
+                        // still false at this tick — a stale-closure race that
+                        // meant the card modal never appeared. onCardPurchase
+                        // itself both opens the card modal and closes this one.
                         onCardPurchase();
                       } else {
                         setActiveModal("card" as any);

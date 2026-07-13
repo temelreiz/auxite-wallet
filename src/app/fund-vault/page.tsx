@@ -42,7 +42,12 @@ export default function FundVaultPage() {
         vaultId={vaultId}
         auxmBalance={auxmBalance}
         onAuxmTransfer={handleAuxmTransfer}
-        onCardPurchase={() => setShowBuyMetalCardModal(true)}
+        onCardPurchase={() => {
+          // Close AddFundsModal directly (NOT via onClose/handleClose, which
+          // would navigate to /vault) and open the Stripe card modal.
+          setShowModal(false);
+          setShowBuyMetalCardModal(true);
+        }}
       />
       <BuyMetalCardModal
         isOpen={showBuyMetalCardModal}
