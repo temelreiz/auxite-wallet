@@ -39,7 +39,15 @@ export async function getMetalPrices(): Promise<CachedPrices> {
   // buy rate ($/gram), so what users see matches what we sell at.
   let prices: CachedPrices | null = null;
   try {
-    const kt = await getMetalPricesInUsd();
+    // Bound the KuveytTürk call — it has no internal timeout, so when KT is
+    // unresponsive this await would hang forever (the try/catch only catches
+    // errors, not hangs), stalling every caller (e.g. Stripe PI creation) past
+    // the 30s client timeout. Race it against a 4s deadline so a hung KT falls
+    // through to GoldAPI / stale cache instead of blocking.
+    const kt = await Promise.race([
+      getMetalPricesInUsd(),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('KT timeout (4s)')), 4000)),
+    ]);
     if (kt.AUXG?.buyRateUSD && kt.AUXS?.buyRateUSD && kt.AUXPT?.buyRateUSD && kt.AUXPD?.buyRateUSD) {
       prices = {
         gold: kt.AUXG.buyRateUSD,
@@ -87,7 +95,9 @@ async function fetchFromGoldAPI(): Promise<CachedPrices> {
 
     for (const metal of metals) {
       const res = await fetch(`https://www.goldapi.io/api/${metal}/USD`, {
-        headers: { 'x-access-token': apiKey }
+        headers: { 'x-access-token': apiKey },
+        // Never hang the request path; fall through to stale cache on timeout.
+        signal: AbortSignal.timeout(6000),
       });
       
       if (res.status === 429) {
@@ -183,7 +193,13 @@ export async function getMetalUsdPrice(metal: string, type: 'buy' | 'sell'): Pro
   const symbol = toAuxSymbol(metal);
   if (symbol) {
     try {
-      const kt = await getMetalPricesInUsd(); // 15s-cached inside kuveytturk-service
+      // Bound KT — no internal timeout, so a hung KT would stall the whole
+      // request path (this is the price call on the Stripe PI creation path).
+      // Race a 4s deadline so a hang falls through to GoldAPI spot instead.
+      const kt = await Promise.race([
+        getMetalPricesInUsd(), // 15s-cached inside kuveytturk-service
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('KT timeout (4s)')), 4000)),
+      ]);
       const r = kt[symbol];
       const p = r ? (type === 'buy' ? r.buyRateUSD : r.sellRateUSD) : 0;
       if (p && p > 0) return p;
