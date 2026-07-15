@@ -131,6 +131,10 @@
     {
       "path": "/api/cron/reserve-attestation-post",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/auxr-ops-watch",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
