@@ -23,6 +23,7 @@ import {
   stripe,
   quoteMetalChargeUSD,
   quoteMetalGramsForUSD,
+  maxChargeForAddress,
   SUPPORTED_METALS,
   METAL_NAME,
   type SupportedMetal,
@@ -110,6 +111,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid userAddress" }, { status: 400 });
     }
 
+    // Per-address charge ceiling (founder/ops wallets may exceed retail cap).
+    const maxCharge = maxChargeForAddress(userAddress);
+
     // Build the breakdown depending on mode
     let grams: number;
     let amountUSD: number;
@@ -124,13 +128,13 @@ export async function POST(req: NextRequest) {
       if (!Number.isFinite(inputUsd)) {
         return NextResponse.json({ error: "amountUSD required for byUsd mode" }, { status: 400 });
       }
-      const q = await quoteMetalGramsForUSD(metal, inputUsd);
+      const q = await quoteMetalGramsForUSD(metal, inputUsd, maxCharge);
       grams = q.grams;
       amountUSD = q.amountUSD;
       amountCents = Math.round(amountUSD * 100);
       pricePerGramUSD = q.pricePerGramUSD;
       // Re-derive spread metadata for transparency
-      const full = await quoteMetalChargeUSD(metal, grams);
+      const full = await quoteMetalChargeUSD(metal, grams, maxCharge);
       baseAskPerGram = full.baseAskPerGram;
       metalSpreadPct = full.metalSpreadPct;
       cardBufferPct = full.cardBufferPct;
@@ -139,7 +143,7 @@ export async function POST(req: NextRequest) {
       if (!Number.isFinite(inputGrams)) {
         return NextResponse.json({ error: "grams required for byGrams mode" }, { status: 400 });
       }
-      const q = await quoteMetalChargeUSD(metal, inputGrams);
+      const q = await quoteMetalChargeUSD(metal, inputGrams, maxCharge);
       grams = inputGrams;
       amountUSD = q.amountUSD;
       amountCents = q.amountCents;

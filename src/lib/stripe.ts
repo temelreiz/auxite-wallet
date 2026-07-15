@@ -41,6 +41,18 @@ export type SupportedCurrency = typeof SUPPORTED_CURRENCIES[number];
 export const MIN_CHARGE_USD = 30;
 export const MAX_CHARGE_USD = 10000;
 
+// Per-address overrides of the buffer-inclusive charge ceiling. Founder / ops
+// wallets transact above the default retail cap; keyed by lowercased address.
+// Everyone else falls back to MAX_CHARGE_USD.
+export const MAX_CHARGE_OVERRIDES: Record<string, number> = {
+  "0x8d23e12cac0f1d2a8c609b973f394396a4da5011": 21000, // founder wallet
+};
+
+export function maxChargeForAddress(userAddress?: string): number {
+  if (!userAddress) return MAX_CHARGE_USD;
+  return MAX_CHARGE_OVERRIDES[userAddress.toLowerCase()] ?? MAX_CHARGE_USD;
+}
+
 // Card processing buffer added on top of metal spread. Covers Stripe HK
 // fees (~2-3% domestic, 3.4%+ international) + ~2% net margin for us.
 // Was 3% — left us net ~1% after Stripe fee. Bumped to 5% so the card
@@ -69,7 +81,8 @@ export const METAL_NAME: Record<SupportedMetal, string> = {
  */
 export async function quoteMetalChargeUSD(
   metal: SupportedMetal,
-  grams: number
+  grams: number,
+  maxChargeUSD: number = MAX_CHARGE_USD
 ): Promise<{
   amountUSD: number;
   amountCents: number;
@@ -93,8 +106,8 @@ export async function quoteMetalChargeUSD(
   if (amountUSD < MIN_CHARGE_USD) {
     throw new Error(`Minimum purchase is $${MIN_CHARGE_USD}. Quote: $${amountUSD}`);
   }
-  if (amountUSD > MAX_CHARGE_USD) {
-    throw new Error(`Maximum purchase is $${MAX_CHARGE_USD}. Quote: $${amountUSD}`);
+  if (amountUSD > maxChargeUSD) {
+    throw new Error(`Maximum purchase is $${maxChargeUSD}. Quote: $${amountUSD}`);
   }
 
   return {
@@ -112,7 +125,8 @@ export async function quoteMetalChargeUSD(
  */
 export async function quoteMetalGramsForUSD(
   metal: SupportedMetal,
-  amountUSD: number
+  amountUSD: number,
+  maxChargeUSD: number = MAX_CHARGE_USD
 ): Promise<{ grams: number; pricePerGramUSD: number; amountUSD: number }> {
   if (!SUPPORTED_METALS.includes(metal)) {
     throw new Error(`Unsupported metal: ${metal}`);
@@ -120,8 +134,8 @@ export async function quoteMetalGramsForUSD(
   if (!Number.isFinite(amountUSD) || amountUSD < MIN_CHARGE_USD) {
     throw new Error(`Minimum purchase is $${MIN_CHARGE_USD}`);
   }
-  if (amountUSD > MAX_CHARGE_USD) {
-    throw new Error(`Maximum purchase is $${MAX_CHARGE_USD}`);
+  if (amountUSD > maxChargeUSD) {
+    throw new Error(`Maximum purchase is $${maxChargeUSD}`);
   }
 
   const prices = await getTokenPrices(metal);
