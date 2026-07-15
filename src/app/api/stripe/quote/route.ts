@@ -31,6 +31,7 @@ import { Redis } from "@upstash/redis";
 import {
   quoteMetalChargeUSD,
   quoteMetalGramsForUSD,
+  maxChargeForAddress,
   SUPPORTED_METALS,
   METAL_NAME,
   type SupportedMetal,
@@ -88,6 +89,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "userAddress required" }, { status: 400 });
     }
     const mode = body.mode === "byGrams" ? "byGrams" : "byUsd";
+    const maxCharge = maxChargeForAddress(userAddress);
 
     let amountUSD: number;
     let grams: number;
@@ -101,13 +103,13 @@ export async function POST(req: NextRequest) {
       if (!Number.isFinite(inputUsd) || inputUsd <= 0) {
         return NextResponse.json({ error: "amountUSD required for byUsd mode" }, { status: 400 });
       }
-      const q = await quoteMetalGramsForUSD(metal, inputUsd);
+      const q = await quoteMetalGramsForUSD(metal, inputUsd, maxCharge);
       grams = q.grams;
       amountUSD = q.amountUSD;
       pricePerGramUSD = q.pricePerGramUSD;
       // quoteMetalGramsForUSD doesn't return these — re-derive from the
       // forward quote with the same grams so the panel shows them.
-      const forward = await quoteMetalChargeUSD(metal, grams);
+      const forward = await quoteMetalChargeUSD(metal, grams, maxCharge);
       baseAskPerGram = forward.baseAskPerGram;
       metalSpreadPct = forward.metalSpreadPct;
       cardBufferPct = forward.cardBufferPct;
@@ -116,7 +118,7 @@ export async function POST(req: NextRequest) {
       if (!Number.isFinite(inputGrams) || inputGrams <= 0) {
         return NextResponse.json({ error: "grams required for byGrams mode" }, { status: 400 });
       }
-      const q = await quoteMetalChargeUSD(metal, inputGrams);
+      const q = await quoteMetalChargeUSD(metal, inputGrams, maxCharge);
       grams = inputGrams;
       amountUSD = q.amountUSD;
       pricePerGramUSD = q.pricePerGramUSD;
