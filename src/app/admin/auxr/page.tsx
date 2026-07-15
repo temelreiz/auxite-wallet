@@ -73,6 +73,7 @@ export default function AdminAuxrPage() {
   const adminToken = useAdminToken();
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [events, setEvents] = useState<EventRow[]>([]);
+  const [ops, setOps] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -114,22 +115,37 @@ export default function AdminAuxrPage() {
     }
   }, [adminToken]);
 
+  const loadOps = useCallback(async () => {
+    if (!adminToken) return;
+    try {
+      const r = await fetch("/api/admin/auxr-ops", {
+        headers: { Authorization: `Bearer ${adminToken}` },
+        cache: "no-store",
+      });
+      const j = await r.json();
+      if (j?.success) setOps(j);
+    } catch (e: any) {
+      console.warn("[admin/auxr] ops fetch failed", e);
+    }
+  }, [adminToken]);
+
   useEffect(() => {
     if (!adminToken) return;
     let cancelled = false;
     (async () => {
-      await Promise.all([loadSnapshot(), loadEvents()]);
+      await Promise.all([loadSnapshot(), loadEvents(), loadOps()]);
       if (!cancelled) setLoading(false);
     })();
     const interval = setInterval(() => {
       loadSnapshot();
       loadEvents();
+      loadOps();
     }, 30_000);
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [adminToken, loadSnapshot, loadEvents]);
+  }, [adminToken, loadSnapshot, loadEvents, loadOps]);
 
   // ── Actions ───────────────────────────────────────────────────────────────
   const seedTreasury = async () => {
@@ -273,12 +289,124 @@ export default function AdminAuxrPage() {
         <div className="flex items-center gap-3">
           <Link href="/admin" className="text-sm text-slate-400 hover:text-white">&larr; Admin</Link>
           <span className="text-slate-600">·</span>
-          <h1 className="text-base font-semibold">AUXR Control</h1>
+          <h1 className="text-base font-semibold">AUXR Ops Cockpit</h1>
         </div>
-        <div className="text-xs text-slate-500">Phase 1A · off-chain</div>
+        <div className="text-xs text-slate-500">
+          {ops?.cex?.listed ? (
+            <span className="text-emerald-400">● Live on BitMart</span>
+          ) : (
+            <span className="text-amber-400">● Pre-listing</span>
+          )}
+          <span className="text-slate-600"> · auto-refresh 30s</span>
+        </div>
       </nav>
 
       <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+        {/* ── Ops Cockpit hero ─────────────────────────────────────────── */}
+        {(() => {
+          const nav = ops?.price?.navUSD;
+          const cex = ops?.cex;
+          const dev = cex?.deviationBps;
+          const devPct = dev != null ? dev / 100 : null;
+          const devColor =
+            dev == null ? "text-slate-500"
+              : Math.abs(dev) < 50 ? "text-emerald-400"
+              : Math.abs(dev) < 200 ? "text-amber-400"
+              : "text-red-400";
+          const backingPct = ops?.reserve?.weakestBackingPct;
+          const fullyBacked = ops?.reserve?.fullyBacked;
+          const depth = cex?.depth;
+          return (
+            <section className="rounded-2xl border border-[#BFA181]/30 bg-gradient-to-b from-zinc-900 to-zinc-950 p-6">
+              {/* Price strip */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <div className="text-xs uppercase tracking-widest text-slate-500 mb-1">NAV (fair value)</div>
+                  <div className="text-2xl font-semibold tabular-nums">{nav != null ? fmtUSD(nav) : "—"}</div>
+                  <div className="text-xs text-slate-500 mt-1">bid {ops?.price?.sellPriceUSD != null ? fmtUSD(ops.price.sellPriceUSD) : "—"} · ask {ops?.price?.buyPriceUSD != null ? fmtUSD(ops.price.buyPriceUSD) : "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-widest text-slate-500 mb-1">CEX price (BitMart)</div>
+                  <div className="text-2xl font-semibold tabular-nums">
+                    {cex?.listed && cex.last != null ? fmtUSD(cex.last) : <span className="text-amber-400 text-base">Not listed yet</span>}
+                  </div>
+                  {cex?.listed && (
+                    <div className="text-xs text-slate-500 mt-1">bid {cex.bid != null ? fmtUSD(cex.bid) : "—"} · ask {cex.ask != null ? fmtUSD(cex.ask) : "—"}</div>
+                  )}
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-widest text-slate-500 mb-1">Deviation vs NAV</div>
+                  <div className={`text-2xl font-semibold tabular-nums ${devColor}`}>
+                    {devPct != null ? `${devPct > 0 ? "+" : ""}${devPct.toFixed(2)}%` : "—"}
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">{dev != null ? `${dev.toFixed(0)} bps` : "anchor to NAV"}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-widest text-slate-500 mb-1">Backing (weakest leg)</div>
+                  <div className={`text-2xl font-semibold tabular-nums ${fullyBacked ? "text-emerald-400" : backingPct != null ? "text-red-400" : "text-slate-500"}`}>
+                    {backingPct != null ? `${backingPct.toFixed(2)}%` : "—"}
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">{fullyBacked ? "fully backed" : backingPct != null ? "UNDER-COLLATERALISED" : "—"}</div>
+                </div>
+              </div>
+
+              {/* Secondary metrics */}
+              <div className="mt-5 pt-5 border-t border-white/5 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <div className="text-xs text-slate-500 mb-1">Reserves</div>
+                  <div className="tabular-nums">{ops?.reserve?.reservesUSD != null ? fmtUSD(ops.reserve.reservesUSD) : "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500 mb-1">Liquid treasury backing</div>
+                  <div className={`tabular-nums ${ops?.treasury?.solvent === false ? "text-red-400" : ""}`}>{ops?.treasury?.liquidBackingUSD != null ? fmtUSD(ops.treasury.liquidBackingUSD) : "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500 mb-1">Supply (on / off-chain)</div>
+                  <div className="tabular-nums">
+                    {ops?.supply?.onChain != null ? ops.supply.onChain.toLocaleString() : "—"}
+                    <span className="text-slate-600"> / </span>
+                    {ops?.supply?.offChain != null ? ops.supply.offChain.toLocaleString() : "—"}
+                  </div>
+                  {ops?.supply?.driftUnits != null && Math.abs(ops.supply.driftUnits) > 0.001 && (
+                    <div className="text-xs text-amber-400 mt-0.5">drift {ops.supply.driftUnits.toFixed(3)}</div>
+                  )}
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500 mb-1">Contract</div>
+                  <div className={ops?.supply?.contractPaused ? "text-red-400" : "text-emerald-400"}>
+                    {ops?.supply?.contractPaused == null ? "—" : ops.supply.contractPaused ? "PAUSED" : "Active"}
+                  </div>
+                </div>
+              </div>
+
+              {/* MM depth (only once listed) */}
+              {cex?.listed && depth && (
+                <div className="mt-5 pt-5 border-t border-white/5">
+                  <div className="text-xs uppercase tracking-widest text-slate-500 mb-3">Order-book depth (around NAV) · MM / BML proxy</div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">Spread</div>
+                      <div className="tabular-nums">{depth.spreadBps != null ? `${depth.spreadBps.toFixed(1)} bps` : "—"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">±2% bid / ask</div>
+                      <div className="tabular-nums">{fmtUSD(depth.bidUsdWithin?.["2"] || 0)} / {fmtUSD(depth.askUsdWithin?.["2"] || 0)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">±5% bid / ask</div>
+                      <div className="tabular-nums">{fmtUSD(depth.bidUsdWithin?.["5"] || 0)} / {fmtUSD(depth.askUsdWithin?.["5"] || 0)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">24h volume</div>
+                      <div className="tabular-nums">{cex.quoteVolume24h != null ? fmtUSD(cex.quoteVolume24h) : "—"}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
+          );
+        })()}
+
         {/* Snapshot */}
         <section>
           <h2 className="text-xs uppercase tracking-widest text-slate-500 mb-3">Live Snapshot</h2>
