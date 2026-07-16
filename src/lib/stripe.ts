@@ -59,6 +59,27 @@ export function maxChargeForAddress(userAddress?: string): number {
 // surcharge is genuinely passed to the buyer instead of eaten by Stripe.
 export const CARD_PROCESSING_BUFFER = 0.05; // 5%
 
+// Presentment currency for the card charge. Metal is always priced in USD;
+// this only controls what currency the buyer's card is charged in. HKD is
+// pegged to USD within HKMA's 7.75–7.85 band — charging in HKD (the HK Stripe
+// account's home currency) settles same-currency, so funds clear on the normal
+// schedule instead of the cross-currency conversion hold. Rate is env-overridable.
+export const USD_HKD_RATE = Number(process.env.USD_HKD_RATE) || 7.8;
+
+export type ChargeCurrency = "usd" | "hkd";
+
+// Convert a USD charge into the Stripe amount (minor units) + currency for the
+// selected presentment currency. Both USD and HKD use 2-decimal minor units.
+export function toChargeAmount(
+  amountUSD: number,
+  currency: ChargeCurrency = "usd",
+): { amount: number; currency: ChargeCurrency; rate: number } {
+  if (currency === "hkd") {
+    return { amount: Math.round(amountUSD * USD_HKD_RATE * 100), currency: "hkd", rate: USD_HKD_RATE };
+  }
+  return { amount: Math.round(amountUSD * 100), currency: "usd", rate: 1 };
+}
+
 // Pretty metal names for descriptors / statement
 export const METAL_NAME: Record<SupportedMetal, string> = {
   AUXG: "Gold",

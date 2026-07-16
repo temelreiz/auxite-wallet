@@ -32,9 +32,11 @@ import {
   quoteMetalChargeUSD,
   quoteMetalGramsForUSD,
   maxChargeForAddress,
+  toChargeAmount,
   SUPPORTED_METALS,
   METAL_NAME,
   type SupportedMetal,
+  type ChargeCurrency,
 } from "@/lib/stripe";
 import { checkTradingAllowed } from "@/lib/trading-guard";
 import { checkKycLimit } from "@/lib/kyc-limits";
@@ -90,6 +92,8 @@ export async function POST(req: NextRequest) {
     }
     const mode = body.mode === "byGrams" ? "byGrams" : "byUsd";
     const maxCharge = maxChargeForAddress(userAddress);
+    const chargeCurrency: ChargeCurrency =
+      String(body.currency || "usd").toLowerCase() === "hkd" ? "hkd" : "usd";
 
     let amountUSD: number;
     let grams: number;
@@ -143,6 +147,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const charge = toChargeAmount(amountUSD, chargeCurrency);
     return NextResponse.json({
       breakdown: {
         metal,
@@ -153,6 +158,8 @@ export async function POST(req: NextRequest) {
         baseAskPerGram,
         metalSpreadPct,
         cardBufferPct,
+        chargeCurrency: charge.currency,
+        chargeAmount: charge.amount / 100,
       },
     });
   } catch (err: any) {

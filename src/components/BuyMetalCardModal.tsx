@@ -67,6 +67,8 @@ const t = {
     paymentInfo: "Kart bilgilerin Stripe'a doğrudan gönderilir, Auxite saklamaz.",
     metalPurchaseDisclaimer: "Bu işlem fiziksel olarak ayrılmış altın/gümüş/platin/paladyum alımıdır. Cüzdanına anında gram olarak yansır.",
     statementDescriptor: "Kart ekstresinde \"AURUM LEDGER\" görünür",
+    chargeCurrency: "Ödeme Para Birimi",
+    hkdHint: "HKD ile ödeme hesabına daha hızlı geçer (aynı para birimi, dönüşüm beklemesi yok).",
   },
   en: {
     title: "Buy Metal with Card",
@@ -94,6 +96,8 @@ const t = {
     paymentInfo: "Your card details are sent directly to Stripe; Auxite never stores them.",
     metalPurchaseDisclaimer: "This is a purchase of physically allocated gold/silver/platinum/palladium. Grams are credited to your vault instantly.",
     statementDescriptor: "Will appear as \"AURUM LEDGER\" on your card statement",
+    chargeCurrency: "Charge currency",
+    hkdHint: "Paying in HKD settles faster (same-currency, no conversion hold).",
   },
 };
 
@@ -127,6 +131,8 @@ interface Quote {
   baseAskPerGram: number;
   metalSpreadPct: number;
   cardBufferPct: number;
+  chargeCurrency?: "usd" | "hkd";
+  chargeAmount?: number;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -147,6 +153,9 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
   const [metal, setMetal] = useState<Metal>("AUXG");
   const [mode, setMode] = useState<"byGrams" | "byUsd">("byUsd");
   const [amountInput, setAmountInput] = useState<string>("100"); // default $100 USD
+  // Presentment currency for the card charge. Metal is priced in USD; HKD
+  // (the HK Stripe account's home currency) settles same-currency = faster.
+  const [currency, setCurrency] = useState<"usd" | "hkd">("usd");
   const [quoting, setQuoting] = useState(false);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -168,6 +177,7 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
       setMetal("AUXG");
       setMode("byUsd");
       setAmountInput("100");
+      setCurrency("usd");
       setQuote(null);
       setClientSecret(null);
       setPaymentIntentId(null);
@@ -231,6 +241,7 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
           grams: mode === "byGrams" ? amountNum : undefined,
           amountUSD: mode === "byUsd" ? amountNum : undefined,
           userAddress: address,
+          currency,
         }),
       });
       const data = await res.json();
@@ -272,6 +283,7 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
           mode: "byUsd",
           amountUSD: quote.amountUSD,
           userAddress: address,
+          currency,
         }),
       });
       const data = await res.json();
@@ -373,6 +385,31 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Charge currency — USD (default) or HKD (settles faster) */}
+              <div>
+                <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 font-medium">
+                  {tr(L, "chargeCurrency")}
+                </label>
+                <div className="flex gap-1.5">
+                  {(["usd", "hkd"] as const).map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setCurrency(c)}
+                      className={`flex-1 py-2 rounded-lg border-2 transition-all text-xs font-semibold ${
+                        currency === c
+                          ? "border-[#BFA181] bg-[#BFA181]/10 text-[#BFA181]"
+                          : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                      }`}
+                    >
+                      {c.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+                {currency === "hkd" && (
+                  <p className="text-[10px] text-slate-500 mt-1">{tr(L, "hkdHint")}</p>
+                )}
               </div>
 
               {/* Amount */}

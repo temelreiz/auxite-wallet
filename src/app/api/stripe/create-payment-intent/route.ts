@@ -24,9 +24,11 @@ import {
   quoteMetalChargeUSD,
   quoteMetalGramsForUSD,
   maxChargeForAddress,
+  toChargeAmount,
   SUPPORTED_METALS,
   METAL_NAME,
   type SupportedMetal,
+  type ChargeCurrency,
 } from "@/lib/stripe";
 import { checkTradingAllowed } from "@/lib/trading-guard";
 import { checkKycLimit } from "@/lib/kyc-limits";
@@ -95,6 +97,8 @@ export async function POST(req: NextRequest) {
     const metal = String(body.metal || "").toUpperCase() as SupportedMetal;
     const mode = String(body.mode || "byGrams") as "byGrams" | "byUsd";
     const userAddress = String(body.userAddress || "").trim().toLowerCase();
+    const chargeCurrency: ChargeCurrency =
+      String(body.currency || "usd").toLowerCase() === "hkd" ? "hkd" : "usd";
 
     // ── US-person regulatory geofence — card / fiat on-ramp is a regulated
     // money-movement feature; not offered to US persons pending licensing.
@@ -171,6 +175,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Convert the USD charge into the buyer-selected presentment currency.
+    // Charging in HKD (the HK account's home currency) settles same-currency,
+    // avoiding the cross-currency availability hold. Crediting stays USD-based
+    // (via grams metadata), so downstream webhook logic is unaffected.
+    const charge = toChargeAmount(amountUSD, chargeCurrency);
+
     // Stripe metadata: keep keys/values short (limit 50 chars value, 500 chars total)
     const metadata: Record<string, string> = {
       type: "metal_purchase",
@@ -180,12 +190,14 @@ export async function POST(req: NextRequest) {
       baseAskPerGram: baseAskPerGram.toFixed(4),
       metalSpreadPct: metalSpreadPct.toFixed(2),
       cardBufferPct: cardBufferPct.toFixed(2),
+      chargeCurrency: charge.currency,
+      chargeAmount: (charge.amount / 100).toFixed(2),
       userAddress,
     };
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountCents,
-      currency: "usd",
+      amount: charge.amount,
+      currency: charge.currency,
       // Let Stripe surface every eligible inline-confirming method (card,
       // Apple Pay, Google Pay, Link) per the dashboard config + buyer's
       // device/region — instead of hard-coding card only. `allow_redirects:
@@ -214,6 +226,8 @@ export async function POST(req: NextRequest) {
         baseAskPerGram,
         metalSpreadPct,
         cardBufferPct,
+        chargeCurrency: charge.currency,
+        chargeAmount: charge.amount / 100,
       },
     });
   } catch (err: any) {
