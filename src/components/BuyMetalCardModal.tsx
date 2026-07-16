@@ -69,6 +69,7 @@ const t = {
     statementDescriptor: "Kart ekstresinde \"AURUM LEDGER\" görünür",
     chargeCurrency: "Ödeme Para Birimi",
     hkdHint: "HKD ile ödeme hesabına daha hızlı geçer (aynı para birimi, dönüşüm beklemesi yok).",
+    hkdNote: "HKD üzerinden işlenir; kartınızın para biriminde tahsil edilir",
   },
   en: {
     title: "Buy Metal with Card",
@@ -98,6 +99,7 @@ const t = {
     statementDescriptor: "Will appear as \"AURUM LEDGER\" on your card statement",
     chargeCurrency: "Charge currency",
     hkdHint: "Paying in HKD settles faster (same-currency, no conversion hold).",
+    hkdNote: "settled in HKD; billed in your card's currency",
   },
 };
 
@@ -705,14 +707,14 @@ function QuoteSummary({ quote, L }: { quote: Quote; L: Lang }) {
       </div>
       <div className="flex justify-between items-start text-sm font-semibold pt-1 border-t border-[#BFA181]/20">
         <span className="text-slate-800 dark:text-white">{tr(L, "totalCharge")}</span>
-        {quote.chargeCurrency === "hkd" && quote.chargeAmount != null ? (
-          <span className="text-right">
-            <span className="text-[#BFA181]">HK${quote.chargeAmount.toFixed(2)}</span>
-            <span className="block text-[10px] font-normal text-slate-500">≈ ${quote.amountUSD.toFixed(2)}</span>
-          </span>
-        ) : (
+        <span className="text-right">
           <span className="text-[#BFA181]">${quote.amountUSD.toFixed(2)}</span>
-        )}
+          {quote.chargeCurrency === "hkd" && quote.chargeAmount != null && (
+            <span className="block text-[9px] font-normal text-slate-500 max-w-[170px] leading-tight mt-0.5">
+              ≈ HK${quote.chargeAmount.toFixed(0)} · {tr(L, "hkdNote")}
+            </span>
+          )}
+        </span>
       </div>
     </div>
   );
