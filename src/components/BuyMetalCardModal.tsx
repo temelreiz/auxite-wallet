@@ -153,9 +153,11 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
   const [metal, setMetal] = useState<Metal>("AUXG");
   const [mode, setMode] = useState<"byGrams" | "byUsd">("byUsd");
   const [amountInput, setAmountInput] = useState<string>("100"); // default $100 USD
-  // Presentment currency for the card charge. Metal is priced in USD; HKD
-  // (the HK Stripe account's home currency) settles same-currency = faster.
-  const [currency, setCurrency] = useState<"usd" | "hkd">("usd");
+  // All card charges settle in HKD (the HK Stripe account's home currency) so
+  // funds clear same-currency with no cross-currency hold. Metal stays priced
+  // in USD; only the presentment currency is HKD. Not user-selectable — the
+  // buyer never picks a currency, it always lands in Stripe as HKD.
+  const currency = "hkd" as const;
   const [quoting, setQuoting] = useState(false);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -177,7 +179,6 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
       setMetal("AUXG");
       setMode("byUsd");
       setAmountInput("100");
-      setCurrency("usd");
       setQuote(null);
       setClientSecret(null);
       setPaymentIntentId(null);
@@ -206,13 +207,6 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
   if (!isOpen) return null;
 
   const amountNum = parseFloat(amountInput) || 0;
-  // In byUsd mode the amount is denominated in the SELECTED currency. Metal is
-  // priced and every limit (min, KYC, per-address ceiling) is in USD, so an HKD
-  // input is converted to USD for checks and the API call. Keep USD_HKD_RATE in
-  // sync with the backend (src/lib/stripe.ts).
-  const USD_HKD_RATE = 7.8;
-  const amountUSD =
-    mode === "byUsd" && currency === "hkd" ? amountNum / USD_HKD_RATE : amountNum;
   const canSubmit = amountNum > 0 && address && !quoting;
 
   const handleQuote = async () => {
@@ -221,11 +215,11 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
     // mount for an amount the server will reject anyway. Server still
     // enforces both gates (defense in depth).
     if (kycState && !kycState.kycVerified && mode === "byUsd") {
-      if (amountUSD > kycState.perTxLimitUSD) {
+      if (amountNum > kycState.perTxLimitUSD) {
         setError(`Verify your identity to buy more than $${kycState.perTxLimitUSD}.`);
         return;
       }
-      if (kycState.remainingUSD !== null && amountUSD > kycState.remainingUSD) {
+      if (kycState.remainingUSD !== null && amountNum > kycState.remainingUSD) {
         setError(`You've used $${(kycState.cumulativeLimit30dUSD - kycState.remainingUSD).toFixed(0)} of your $${kycState.cumulativeLimit30dUSD} 30-day cap. Verify to continue.`);
         return;
       }
@@ -246,7 +240,7 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
           metal,
           mode,
           grams: mode === "byGrams" ? amountNum : undefined,
-          amountUSD: mode === "byUsd" ? amountUSD : undefined,
+          amountUSD: mode === "byUsd" ? amountNum : undefined,
           userAddress: address,
           currency,
         }),
@@ -394,47 +388,10 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
                 </div>
               </div>
 
-              {/* Charge currency — USD (default) or HKD (settles faster) */}
-              <div>
-                <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 font-medium">
-                  {tr(L, "chargeCurrency")}
-                </label>
-                <div className="flex gap-1.5">
-                  {(["usd", "hkd"] as const).map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => {
-                        // Preserve the equivalent value when switching so the
-                        // amount doesn't dip under the $30 min or read as a
-                        // different sum in the new currency.
-                        if (c !== currency && mode === "byUsd") {
-                          const n = parseFloat(amountInput) || 0;
-                          if (n > 0) {
-                            const conv = c === "hkd" ? n * USD_HKD_RATE : n / USD_HKD_RATE;
-                            setAmountInput(String(Math.round(conv)));
-                          }
-                        }
-                        setCurrency(c);
-                      }}
-                      className={`flex-1 py-2 rounded-lg border-2 transition-all text-xs font-semibold ${
-                        currency === c
-                          ? "border-[#BFA181] bg-[#BFA181]/10 text-[#BFA181]"
-                          : "border-stone-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                      }`}
-                    >
-                      {c.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-                {currency === "hkd" && (
-                  <p className="text-[10px] text-slate-500 mt-1">{tr(L, "hkdHint")}</p>
-                )}
-              </div>
-
               {/* Amount */}
               <div>
                 <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 font-medium">
-                  {tr(L, "amount")} {mode === "byUsd" ? (currency === "hkd" ? "(HKD)" : "(USD)") : "(g)"}
+                  {tr(L, "amount")} {mode === "byUsd" ? "(USD)" : "(g)"}
                 </label>
                 <input
                   type="number"
