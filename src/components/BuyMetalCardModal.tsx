@@ -206,6 +206,13 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
   if (!isOpen) return null;
 
   const amountNum = parseFloat(amountInput) || 0;
+  // In byUsd mode the amount is denominated in the SELECTED currency. Metal is
+  // priced and every limit (min, KYC, per-address ceiling) is in USD, so an HKD
+  // input is converted to USD for checks and the API call. Keep USD_HKD_RATE in
+  // sync with the backend (src/lib/stripe.ts).
+  const USD_HKD_RATE = 7.8;
+  const amountUSD =
+    mode === "byUsd" && currency === "hkd" ? amountNum / USD_HKD_RATE : amountNum;
   const canSubmit = amountNum > 0 && address && !quoting;
 
   const handleQuote = async () => {
@@ -214,11 +221,11 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
     // mount for an amount the server will reject anyway. Server still
     // enforces both gates (defense in depth).
     if (kycState && !kycState.kycVerified && mode === "byUsd") {
-      if (amountNum > kycState.perTxLimitUSD) {
+      if (amountUSD > kycState.perTxLimitUSD) {
         setError(`Verify your identity to buy more than $${kycState.perTxLimitUSD}.`);
         return;
       }
-      if (kycState.remainingUSD !== null && amountNum > kycState.remainingUSD) {
+      if (kycState.remainingUSD !== null && amountUSD > kycState.remainingUSD) {
         setError(`You've used $${(kycState.cumulativeLimit30dUSD - kycState.remainingUSD).toFixed(0)} of your $${kycState.cumulativeLimit30dUSD} 30-day cap. Verify to continue.`);
         return;
       }
@@ -239,7 +246,7 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
           metal,
           mode,
           grams: mode === "byGrams" ? amountNum : undefined,
-          amountUSD: mode === "byUsd" ? amountNum : undefined,
+          amountUSD: mode === "byUsd" ? amountUSD : undefined,
           userAddress: address,
           currency,
         }),
@@ -396,7 +403,19 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
                   {(["usd", "hkd"] as const).map((c) => (
                     <button
                       key={c}
-                      onClick={() => setCurrency(c)}
+                      onClick={() => {
+                        // Preserve the equivalent value when switching so the
+                        // amount doesn't dip under the $30 min or read as a
+                        // different sum in the new currency.
+                        if (c !== currency && mode === "byUsd") {
+                          const n = parseFloat(amountInput) || 0;
+                          if (n > 0) {
+                            const conv = c === "hkd" ? n * USD_HKD_RATE : n / USD_HKD_RATE;
+                            setAmountInput(String(Math.round(conv)));
+                          }
+                        }
+                        setCurrency(c);
+                      }}
                       className={`flex-1 py-2 rounded-lg border-2 transition-all text-xs font-semibold ${
                         currency === c
                           ? "border-[#BFA181] bg-[#BFA181]/10 text-[#BFA181]"
@@ -415,7 +434,7 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
               {/* Amount */}
               <div>
                 <label className="block text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-1.5 font-medium">
-                  {tr(L, "amount")} {mode === "byUsd" ? "(USD)" : "(g)"}
+                  {tr(L, "amount")} {mode === "byUsd" ? (currency === "hkd" ? "(HKD)" : "(USD)") : "(g)"}
                 </label>
                 <input
                   type="number"
