@@ -703,9 +703,16 @@ function QuoteSummary({ quote, L }: { quote: Quote; L: Lang }) {
         <span className="text-slate-500">{tr(L, "cardFee")}</span>
         <span className="text-slate-700 dark:text-slate-300">~{quote.cardBufferPct.toFixed(1)}%</span>
       </div>
-      <div className="flex justify-between text-sm font-semibold pt-1 border-t border-[#BFA181]/20">
+      <div className="flex justify-between items-start text-sm font-semibold pt-1 border-t border-[#BFA181]/20">
         <span className="text-slate-800 dark:text-white">{tr(L, "totalCharge")}</span>
-        <span className="text-[#BFA181]">${quote.amountUSD.toFixed(2)}</span>
+        {quote.chargeCurrency === "hkd" && quote.chargeAmount != null ? (
+          <span className="text-right">
+            <span className="text-[#BFA181]">HK${quote.chargeAmount.toFixed(2)}</span>
+            <span className="block text-[10px] font-normal text-slate-500">≈ ${quote.amountUSD.toFixed(2)}</span>
+          </span>
+        ) : (
+          <span className="text-[#BFA181]">${quote.amountUSD.toFixed(2)}</span>
+        )}
       </div>
     </div>
   );
