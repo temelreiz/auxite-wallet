@@ -38,8 +38,11 @@ AUXPAY fixes this with one chokepoint.
 | File | Role |
 |------|------|
 | `units.ts` | `Unit` type (AUXP, USD, USDC/USDT, ETH/BTC, metal grams, AUXR) + legacy-field map |
-| `ledger.ts` | `SettlementLedger.post()` — balanced, idempotent, append-only double-entry |
+| `ledger.ts` | `SettlementLedger` interface + `Posting`/`Entry` types + `assertBalanced` |
+| `ledger.redis.ts` | Redis-backed impl + `ledgerMode()` (off/shadow/live) + `createSettlementLedger()` |
 | `rails.ts` | `PaymentRail` adapter interface + registry + map of already-wired rails |
+| `wise-adapter.ts` | first real rail — builds the wire-credit posting, `shadowRecordWireCredit()` |
+| `reconcile.ts` | `compareUserBalances()` — shadow ledger vs legacy drift check |
 
 ### Double-entry model
 
@@ -74,12 +77,22 @@ resolves rails and orders failover candidates so no single provider is a SPOF.
 
 ## Roadmap within Phase 0
 
-1. ✅ Units + ledger interface + rail interface (this skeleton).
-2. ☐ Redis-backed `SettlementLedger` impl (`createSettlementLedger`), mirroring
-   writes to the legacy `user:{addr}:balance` fields during coexistence.
-3. ☐ Adapters for the wired rails (wise, bridge, deposit-credit, withdraw) that
-   call `post()` — behind a flag, shadow-writing first to validate balancing.
-4. ☐ Flip reads (`GET /balance`) to `userBalances()`; retire direct
-   `hincrbyfloat` money mutations.
+1. ✅ Units + ledger interface + rail interface (skeleton).
+2. ✅ Redis-backed `SettlementLedger` impl + mode gate; **first rail (Wise) wired
+   in shadow** — the webhook records a balanced posting alongside its existing
+   credit, writing only to the auxpay journal (no balance change).
+3. ☐ Run in shadow, watch `compareUserBalances()` for AUXP drift on live wires;
+   confirm the double-entry reproduces legacy exactly.
+4. ☐ Add shadow adapters for the remaining rails (bridge OUT, deposit-credit IN,
+   withdraw OUT), each validated the same way.
+5. ☐ Flip `AUXPAY_LEDGER_MODE=live` per route — remove that route's direct
+   `hincrbyfloat`, let the ledger mirror into legacy fields; then point reads
+   (`GET /balance`) at `userBalances()`.
 
 New rails (Reap, Rain) implement `PaymentRail` from the start.
+
+## Operating it
+
+- `AUXPAY_LEDGER_MODE` — `off` | `shadow` (default) | `live`. Unset = shadow.
+- Shadow writes are additive and reversible: `DEL auxpay:journal auxpay:acct` and
+  `DEL auxpay:idem:*` resets the shadow ledger without touching user balances.

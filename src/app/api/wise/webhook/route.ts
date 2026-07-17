@@ -314,6 +314,21 @@ export async function POST(req: NextRequest) {
     await redis.lpush(`user:${userAddress}:transactions`, JSON.stringify(tx));
     await redis.ltrim(`user:${userAddress}:transactions`, 0, 499);
 
+    // AUXPAY shadow ledger (Phase 0, step 2) — record the same credit as a
+    // balanced double-entry posting for validation. No behavior change: in
+    // shadow mode (default) it writes only to the auxpay journal, never to user
+    // balances. Fire-and-forget, fully swallowed on error.
+    try {
+      const { shadowRecordWireCredit } = await import("@/lib/auxpay/wise-adapter");
+      shadowRecordWireCredit({
+        userAddress,
+        amountUsd: auxmCredit,
+        currency,
+        sourceAmount: amount,
+        resourceId,
+      }).catch(() => {});
+    } catch {}
+
     console.log(
       `[wise/webhook] ✅ wire credited: ${userAddress.slice(0, 10)}... ` +
       `+${auxmCredit} AUXM (from ${amount} ${currency}, ref ${refShort})`

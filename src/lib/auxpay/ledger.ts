@@ -42,7 +42,26 @@ export const ACCOUNT = {
   feeIncome: (unit: Unit): AccountId => `fee:income:${unit}`,
   reserve: (unit: Unit): AccountId => `reserve:${unit}`,
   equityGenesis: (unit: Unit): AccountId => `equity:genesis:${unit}`,
+  /**
+   * The system boundary / outside-world contra account, per unit. Its running
+   * balance is the cumulative net that has crossed the edge: e.g. external:USD
+   * goes negative by every dollar of fiat that entered, external:AUXP goes
+   * negative by every AUXP minted. Lets a cross-unit event (fiat in → AUXP out)
+   * balance each unit independently.
+   */
+  external: (unit: Unit): AccountId => `external:${unit}`,
 } as const;
+
+/** Parse a `user:{addr}:{UNIT}` account id, or null if it isn't one. */
+export function parseUserAccount(
+  account: AccountId,
+): { addr: string; unit: string } | null {
+  const parts = account.split(':');
+  if (parts.length === 3 && parts[0] === 'user') {
+    return { addr: parts[1], unit: parts[2] };
+  }
+  return null;
+}
 
 /** One leg of a posting. `delta` is signed: credit to the account is positive. */
 export interface Entry {
@@ -160,19 +179,5 @@ export interface PostingReceipt {
   at: string;
 }
 
-/**
- * TODO(phase-0-impl): Redis-backed implementation.
- *  - journal: LPUSH to `auxpay:journal`, id = monotonic counter
- *  - idempotency: `SET auxpay:idem:{key} <id> NX` gate before applying
- *  - balances: pipeline hincrbyfloat on account-hash keys, mirrored to the
- *    existing `user:{addr}:balance` legacy fields (UNIT_TO_LEGACY_FIELD) during
- *    the coexistence window so current read paths keep working
- *  - wrap apply in a lightweight lock; verify assertBalanced() before any write
- * Until this lands, callers should not import a live instance.
- */
-export function createSettlementLedger(): SettlementLedger {
-  throw new LedgerError(
-    'NOT_IMPLEMENTED',
-    'SettlementLedger Redis impl not wired yet (Phase 0 skeleton)',
-  );
-}
+// The Redis-backed implementation and `createSettlementLedger()` factory live in
+// ./ledger.redis.ts to keep this module free of storage concerns.
