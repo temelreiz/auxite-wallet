@@ -19,7 +19,7 @@ import type { Unit } from './units';
 export type RailId =
   // wired today
   | 'wise' // fiat wire IN  (Aurum Ledger HK) → AUXP
-  | 'bridge' // treasury stablecoin → USD wire OUT
+  | 'bridge' // DEAD — Bridge.xyz rejected Aurum Ledger at KYB; do not build on it
   | 'coinbase' // crypto commerce IN → AUXP
   | 'stripe' // card IN → metal grams
   | 'nowpayments' // crypto IN → AUXP
@@ -28,8 +28,9 @@ export type RailId =
   | 'dex' // 0x Base hot-wallet swap (internal conversion)
   | 'htx' // treasury crypto → USDT (internal)
   | 'kuveyt' // TR bank metal procurement (treasury)
+  | 'frick' // Bank Frick — direct stablecoin deposit → in-house fiat (PRIMARY off-ramp)
   // targeted next
-  | 'reap' // fiat off-ramp (approved)
+  | 'reap' // fiat off-ramp (approved) — alternative to Frick
   | 'rain'; // card program + on/off-ramp + virtual accounts (evaluating)
 
 export type RailDirection = 'in' | 'out' | 'both' | 'internal';
@@ -142,7 +143,12 @@ export const EXISTING_RAIL_MAP: Record<
   { direction: RailDirection; units: Unit[]; note: string }
 > = {
   wise: { direction: 'in', units: ['USD', 'AUXP'], note: 'incoming wire → AUXP 1:1' },
-  bridge: { direction: 'out', units: ['USDC', 'USDT', 'USD'], note: 'treasury stable → USD wire' },
+  // DEAD: Bridge.xyz rejected Aurum Ledger at KYB. The bridge-offramp code
+  // (src/lib/bridge-offramp.ts, api/bridge/*, cron/bridge-offramp-sweep) is
+  // orphaned. Off-ramp is replaced by Bank Frick (accepts stablecoin directly,
+  // converts in-house). Reuse the sweep pattern (treasury stable → deposit
+  // address) but target Frick, not Bridge. Do not add a Bridge adapter.
+  bridge: { direction: 'out', units: ['USDC', 'USDT', 'USD'], note: 'DEAD — KYB rejected; replaced by Frick' },
   coinbase: { direction: 'in', units: ['AUXP'], note: 'commerce charge → AUXP + bonus' },
   stripe: { direction: 'in', units: ['AUXG', 'AUXS', 'AUXPT', 'AUXPD'], note: 'card → metal grams (no AUXP)' },
   nowpayments: { direction: 'in', units: ['AUXP', 'USDT', 'USDC', 'ETH', 'BTC'], note: 'crypto → AUXP or raw' },
@@ -151,6 +157,7 @@ export const EXISTING_RAIL_MAP: Record<
   dex: { direction: 'internal', units: ['USDC', 'USDT', 'ETH'], note: '0x Base swap, treasury cover' },
   htx: { direction: 'internal', units: ['USDT', 'ETH', 'BTC', 'USDC'], note: 'treasury crypto → USDT' },
   kuveyt: { direction: 'internal', units: ['AUXG', 'AUXS', 'AUXPT', 'AUXPD'], note: 'TR bank metal procurement' },
-  reap: { direction: 'out', units: ['USDT', 'USDC'], note: 'fiat off-ramp (approved, not yet coded)' },
+  frick: { direction: 'out', units: ['USDC', 'USDT'], note: 'PRIMARY off-ramp — send treasury stable to BF deposit addr, BF converts to fiat; no API' },
+  reap: { direction: 'out', units: ['USDT', 'USDC'], note: 'off-ramp alternative (approved); needs a non-Wise payout bank' },
   rain: { direction: 'both', units: ['USDC'], note: 'card + ramps + virtual accts (evaluating)' },
 };

@@ -83,8 +83,11 @@ resolves rails and orders failover candidates so no single provider is a SPOF.
    credit, writing only to the auxpay journal (no balance change).
 3. ☐ Run in shadow, watch `compareUserBalances()` for AUXP drift on live wires;
    confirm the double-entry reproduces legacy exactly.
-4. ☐ Add shadow adapters for the remaining rails (bridge OUT, deposit-credit IN,
-   withdraw OUT), each validated the same way.
+4. ☐ Add shadow adapters for the remaining rails: deposit-credit IN, withdraw
+   OUT, and the off-ramp OUT via **Bank Frick** (Bridge.xyz is dead — rejected at
+   KYB). Frick accepts treasury stablecoin directly and converts in-house, so the
+   off-ramp is a plain on-chain send to a BF deposit address — no API. Reap is
+   the alternative but still needs a non-Wise payout bank.
 5. ☐ Flip `AUXPAY_LEDGER_MODE=live` per route — remove that route's direct
    `hincrbyfloat`, let the ledger mirror into legacy fields; then point reads
    (`GET /balance`) at `userBalances()`.
