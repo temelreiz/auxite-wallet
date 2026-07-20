@@ -13,7 +13,7 @@
  * Cost Controls: $100/user, $50K global cap
  */
 
-import { redis } from '@/lib/redis';
+import { redis, getRedis } from '@/lib/redis';
 
 // ═══════════════════════════════════════════════════════════════
 // CONFIGURATION
@@ -31,6 +31,22 @@ export const BONUS_CONFIG = {
   welcomeBonusAuxg: parseFloat(process.env.WELCOME_BONUS_AUXG || '5'),
   welcomeBonusAuxs: parseFloat(process.env.WELCOME_BONUS_AUXS || '10'), // Legacy
   minDepositForWelcome: parseFloat(process.env.MIN_DEPOSIT_FOR_WELCOME || '100'),
+
+  // Split-gate incentive redesign — grant only a portion of the welcome gold at
+  // KYC and reward the rest at first deposit. OFF by default so enabling it is an
+  // explicit, reversible env change (no silent economic shift on deploy).
+  // See grantFirstDepositRewards() for the deposit-side reward.
+  splitGateEnabled: process.env.SPLIT_GATE_ENABLED === 'true',
+  welcomeKycPortionPct: parseFloat(process.env.WELCOME_KYC_PORTION_PCT || '40'),
+
+  // First-deposit match — a boosted, one-time match on the user's first
+  // qualifying deposit (distinct from the ongoing depositBonusPercent). OFF by
+  // default; flip FIRST_DEPOSIT_MATCH_ENABLED=true to activate.
+  firstDepositMatchEnabled: process.env.FIRST_DEPOSIT_MATCH_ENABLED === 'true',
+  firstDepositMatchPercent: parseFloat(process.env.FIRST_DEPOSIT_MATCH_PERCENT || '5'),
+  firstDepositMatchMinUsd: parseFloat(process.env.FIRST_DEPOSIT_MATCH_MIN_USD || '100'),
+  firstDepositMatchCapUsd: parseFloat(process.env.FIRST_DEPOSIT_MATCH_CAP_USD || '50'),
+  firstDepositMatchMetal: (process.env.FIRST_DEPOSIT_MATCH_METAL || 'AUXG') as 'AUXG',
 
   // Referral Bonus
   referralBonusPercent: parseFloat(process.env.REFERRAL_BONUS_PERCENT || '0.5'),
@@ -149,9 +165,14 @@ export function getWelcomeBonusAmount(silverPricePerGram: number): { bonusGrams:
 
 /**
  * Get Welcome Gold amount (in AUXG grams). Start With Gold campaign.
+ * When split-gate is enabled, only the KYC portion is granted here; the rest of
+ * the incentive is delivered at first deposit via the first-deposit match.
  */
 export function getWelcomeGoldAmount(goldPricePerGram: number): { bonusGrams: number; bonusValueUsd: number } {
-  const bonusGrams = BONUS_CONFIG.welcomeBonusAuxg;
+  const portion = BONUS_CONFIG.splitGateEnabled
+    ? Math.max(0, Math.min(100, BONUS_CONFIG.welcomeKycPortionPct)) / 100
+    : 1;
+  const bonusGrams = BONUS_CONFIG.welcomeBonusAuxg * portion;
   const bonusValueUsd = bonusGrams * goldPricePerGram;
   return { bonusGrams, bonusValueUsd };
 }
@@ -460,4 +481,101 @@ export async function getCampaignInfo(): Promise<{
     welcomeBonusAuxs: BONUS_CONFIG.welcomeBonusAuxs,
     referralBonusPercent: BONUS_CONFIG.referralBonusPercent,
   };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FIRST-DEPOSIT MATCH  (split-gate deposit-side reward)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Resolve the bonus userId for a wallet address, mirroring the resolution the
+ * welcome-gold endpoint uses (address index first, then the user's email).
+ * Returns null if it can't be resolved — the bonus is skipped rather than
+ * credited under a mis-keyed id.
+ */
+export async function resolveBonusUserId(walletAddress: string): Promise<string | null> {
+  const addr = walletAddress.toLowerCase();
+  const byAddr = (await redis.get(`user:address:${addr}`)) as string | null;
+  if (byAddr) return String(byAddr);
+  const u = (await redis.hgetall(`user:${addr}`)) as Record<string, string> | null;
+  if (u?.email) return u.email.toLowerCase();
+  return null;
+}
+
+/** True if the wallet has cleared KYC. */
+async function isKycApproved(walletAddress: string): Promise<boolean> {
+  const kycData = await redis.get(`kyc:${walletAddress.toLowerCase()}`);
+  if (!kycData) return false;
+  const kyc = typeof kycData === 'string' ? JSON.parse(kycData) : kycData;
+  return kyc?.status === 'approved' || kyc?.level === 'verified' || kyc?.level === 'enhanced';
+}
+
+/**
+ * Compute the first-deposit match: firstDepositMatchPercent of the deposit,
+ * capped at firstDepositMatchCapUsd, only above firstDepositMatchMinUsd.
+ */
+export function calculateFirstDepositMatch(
+  depositAmountUsd: number,
+  metalPricePerGram: number,
+): { bonusGrams: number; bonusValueUsd: number } {
+  const c = BONUS_CONFIG;
+  if (!c.enabled || !c.firstDepositMatchEnabled) return { bonusGrams: 0, bonusValueUsd: 0 };
+  if (depositAmountUsd < c.firstDepositMatchMinUsd) return { bonusGrams: 0, bonusValueUsd: 0 };
+  if (metalPricePerGram <= 0) return { bonusGrams: 0, bonusValueUsd: 0 };
+  const raw = depositAmountUsd * (c.firstDepositMatchPercent / 100);
+  const bonusValueUsd = Math.min(raw, c.firstDepositMatchCapUsd);
+  const bonusGrams = bonusValueUsd / metalPricePerGram;
+  return { bonusGrams, bonusValueUsd };
+}
+
+/**
+ * Grant the one-time first-deposit reward, idempotently. Safe to call after
+ * every credited deposit: an atomic per-user flag ensures it fires at most once.
+ * No-op unless the match is enabled, the deposit qualifies (>= min), and the
+ * user is KYC-approved. Per-user / global cost caps in grantBonus still apply.
+ */
+export async function grantFirstDepositRewards(
+  walletAddress: string,
+  depositAmountUsd: number,
+  goldPricePerGram: number,
+): Promise<{ granted: boolean; grams: number; reason?: string }> {
+  const c = BONUS_CONFIG;
+  if (!c.enabled || !c.firstDepositMatchEnabled) return { granted: false, grams: 0, reason: 'disabled' };
+  if (depositAmountUsd < c.firstDepositMatchMinUsd) return { granted: false, grams: 0, reason: 'below-min' };
+  if (goldPricePerGram <= 0) return { granted: false, grams: 0, reason: 'no-price' };
+
+  const userId = await resolveBonusUserId(walletAddress);
+  if (!userId) return { granted: false, grams: 0, reason: 'no-userid' };
+
+  // Idempotency — atomic set-if-absent so concurrent credits can't double-grant.
+  // Raw client: the wrapped redis.set() type doesn't expose nx.
+  const flagKey = `user:${userId}:bonus:firstDepositRewarded`;
+  const claimed = await getRedis().set(flagKey, new Date().toISOString(), { nx: true });
+  if (!claimed) return { granted: false, grams: 0, reason: 'already-rewarded' };
+
+  try {
+    if (!(await isKycApproved(walletAddress))) {
+      await redis.del(flagKey); // release so a post-KYC deposit can still earn it
+      return { granted: false, grams: 0, reason: 'kyc-not-approved' };
+    }
+
+    const { bonusGrams, bonusValueUsd } = calculateFirstDepositMatch(depositAmountUsd, goldPricePerGram);
+    if (bonusGrams <= 0) {
+      await redis.del(flagKey);
+      return { granted: false, grams: 0, reason: 'zero-match' };
+    }
+
+    const res = await grantBonus(userId, 'deposit', c.firstDepositMatchMetal, bonusGrams, bonusValueUsd);
+    if (!res.granted) {
+      await redis.del(flagKey); // caps hit etc. — allow a later retry
+      return { granted: false, grams: 0, reason: res.reason };
+    }
+    console.log(
+      `💰 First-deposit match: ${res.grantedGrams.toFixed(3)}g ${c.firstDepositMatchMetal} to ${userId} on $${depositAmountUsd.toFixed(2)} deposit`,
+    );
+    return { granted: true, grams: res.grantedGrams };
+  } catch (e) {
+    await redis.del(flagKey).catch(() => {});
+    throw e;
+  }
 }
