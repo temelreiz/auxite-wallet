@@ -151,8 +151,15 @@ const CHAIN_KEY = (process.env.AUXR_CHAIN || "baseSepolia") as
 
 export const AUXR_CHAIN = CHAIN_KEY === "base" ? base : baseSepolia;
 
+// Base mainnet AUXR — the CEX-listed reserve token. Falling back to the zero
+// address here made every read (paused/totalSupply/balanceOf) revert with
+// "returned no data (0x)" whenever AUXR_CONTRACT_ADDRESS was unset in the
+// environment, which broke the on-chain withdraw path. Mirror the fallback in
+// src/app/api/user/balance/route.ts so a missing env var degrades gracefully
+// to the real contract instead of 0x0.
 export const AUXR_CONTRACT_ADDRESS = (process.env.AUXR_CONTRACT_ADDRESS ||
-  "0x0000000000000000000000000000000000000000") as Address;
+  process.env.NEXT_PUBLIC_AUXR_ADDRESS ||
+  "0xB145B8e9C02193d55454f534f917Cabe704FA042") as Address;
 
 export const AUXR_DEPOSIT_ADDRESS = (process.env.AUXR_DEPOSIT_ADDRESS ||
   "0x0000000000000000000000000000000000000000") as Address;
