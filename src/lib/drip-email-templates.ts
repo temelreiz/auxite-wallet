@@ -41,7 +41,7 @@ function generateDripEmailHTML({
           <tr><td style="height:3px;background:#C5A55A;"></td></tr>
           <tr>
             <td style="padding:24px 30px 16px;border-bottom:1px solid #e5e5e5;">
-              <h1 style="font-size:13px;letter-spacing:5px;color:#1a1a1a;font-weight:700;text-transform:uppercase;margin:0 0 2px 0;">Auxite</h1>
+              <h1 style="font-size:13px;letter-spacing:5px;color:#1a1a1a;font-weight:700;margin:0 0 2px 0;">AUXITE</h1>
               <p style="font-size:11px;color:#888;margin:0;">Custody &amp; Settlement Services</p>
             </td>
           </tr>
@@ -73,7 +73,7 @@ function generateDripEmailHTML({
 // DRIP EMAIL TYPES
 // ══════════════════════════════════════════════════════════════════════════════
 
-export type DripStage = "day3_kyc" | "day5_market" | "day14_urgency";
+export type DripStage = "day3_kyc" | "day5_market" | "day7_demo" | "day14_urgency";
 
 export interface DripEmail {
   subject: string;
@@ -369,12 +369,14 @@ ${highlight("Пройдите KYC-верификацию, чтобы <strong>а�
 const stageContentMap: Record<DripStage, Record<string, DripContent>> = {
   day3_kyc: day3Content,
   day5_market: day5Content,
+  day7_demo: day7Content,
   day14_urgency: day14Content,
 };
 
 export const DRIP_SCHEDULE: { stage: DripStage; daysSinceRegistration: number }[] = [
   { stage: "day3_kyc", daysSinceRegistration: 3 },
   { stage: "day5_market", daysSinceRegistration: 5 },
+  { stage: "day7_demo", daysSinceRegistration: 7 },
   { stage: "day14_urgency", daysSinceRegistration: 14 },
 ];
 

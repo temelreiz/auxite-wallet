@@ -17,6 +17,10 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@auxite.io";
+const SUPPRESSION_SET = "email:suppressed";
+// Per-run send cap so the first cold run (no dedupe history) warms the sending
+// domain instead of blasting the whole backlog at once. Override with ?limit=N.
+const DEFAULT_MAX_PER_RUN = 250;
 
 // ══════════════════════════════════════════════════════════════════════════════
 // HELPERS
@@ -100,6 +104,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const url = new URL(request.url);
+  const maxPerRun = Math.max(
+    1,
+    parseInt(url.searchParams.get("limit") || String(DEFAULT_MAX_PER_RUN), 10) ||
+      DEFAULT_MAX_PER_RUN,
+  );
+
   try {
     // 1. Get all registered users
     const authKeys: string[] = await redis.keys("auth:user:*");
@@ -113,21 +124,34 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Unsubscribe suppression set — never send to opted-out emails
+    const suppressedArr = await redis.smembers(SUPPRESSION_SET);
+    const suppressed = new Set(suppressedArr.map((e) => String(e).toLowerCase()));
+
     let processed = 0;
     let sent = 0;
     let skippedDeposited = 0;
     let skippedAlreadySent = 0;
     let skippedNotReady = 0;
+    let skippedSuppressed = 0;
     const errors: string[] = [];
 
     // Track emails sent today for stats
     const todayKey = `drip:sent:${new Date().toISOString().slice(0, 10)}`;
 
     for (const authKey of authKeys) {
+      // Per-run send cap reached — stop for this run (backlog resumes tomorrow)
+      if (sent >= maxPerRun) break;
       try {
         // Extract email from key: auth:user:{email}
         const email = authKey.replace("auth:user:", "");
         if (!email || !email.includes("@")) continue;
+
+        // Never send to opted-out (unsubscribed) emails
+        if (suppressed.has(email.toLowerCase())) {
+          skippedSuppressed++;
+          continue;
+        }
 
         processed++;
 
@@ -205,22 +229,26 @@ export async function GET(request: NextRequest) {
       "drip:last_run",
       JSON.stringify({
         timestamp: Date.now(),
+        maxPerRun,
         processed,
         sent,
         skippedDeposited,
         skippedAlreadySent,
         skippedNotReady,
+        skippedSuppressed,
         errors: errors.length,
       })
     );
 
     return NextResponse.json({
       success: true,
+      maxPerRun,
       processed,
       sent,
       skippedDeposited,
       skippedAlreadySent,
       skippedNotReady,
+      skippedSuppressed,
       errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
     });
   } catch (err) {
