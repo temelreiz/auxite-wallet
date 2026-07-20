@@ -82,10 +82,16 @@ export default function AdminAuxrPage() {
   // Seed form
   const [seedUnits, setSeedUnits] = useState("50");
 
-  // Grant form
+  // Grant form (off-chain app balance)
   const [grantAddr, setGrantAddr] = useState("");
   const [grantUnits, setGrantUnits] = useState("10");
   const [grantReason, setGrantReason] = useState("Internal beta seed");
+
+  // On-chain mint form (real AUXR to any wallet)
+  const [mintAddr, setMintAddr] = useState("");
+  const [mintUnits, setMintUnits] = useState("100");
+  const [mintReason, setMintReason] = useState("On-chain mint");
+  const [mintTxUrl, setMintTxUrl] = useState<string | null>(null);
 
   // Adjust form
   const [adjMetal, setAdjMetal] = useState<"gold" | "silver" | "platinum" | "palladium">("gold");
@@ -223,6 +229,65 @@ export default function AdminAuxrPage() {
       }
     } catch (e: any) {
       setErr(e?.message || "grant_failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitMintOnchain = async () => {
+    if (!adminToken) return setErr("Admin token missing");
+    const units = parseFloat(mintUnits);
+    if (!mintAddr || !isFinite(units) || units <= 0) {
+      setErr("address + units required");
+      return;
+    }
+    if (!mintReason || mintReason.length < 4) {
+      setErr("reason ≥ 4 chars required");
+      return;
+    }
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(
+        `Mint ${units} REAL AUXR on-chain to ${mintAddr}?\n\nThis signs an irreversible mint() transaction. The tokens land in the recipient's on-chain wallet.`
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    setOkMsg(null);
+    setMintTxUrl(null);
+    try {
+      const r = await fetch("/api/admin/auxr/mint-onchain", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({
+          destination: mintAddr,
+          unitsAUXR: units,
+          reason: mintReason || "On-chain mint",
+        }),
+      });
+      const j = await r.json();
+      if (j?.success) {
+        setOkMsg(
+          `Minted ${units} AUXR on-chain to ${mintAddr.slice(0, 10)}… · tx ${String(
+            j.txHash
+          ).slice(0, 12)}…`
+        );
+        setMintTxUrl(j.explorerUrl || null);
+        setMintAddr("");
+        await loadSnapshot();
+        await loadEvents();
+      } else {
+        setErr(
+          j?.details ? `${j.error}: ${j.details}` : j?.error || "mint_failed"
+        );
+      }
+    } catch (e: any) {
+      setErr(e?.message || "mint_failed");
     } finally {
       setBusy(false);
     }
@@ -449,11 +514,15 @@ export default function AdminAuxrPage() {
 
         {/* Seed Treasury */}
         <section className="rounded-2xl bg-zinc-900/80 border border-[#BFA181]/30 p-6">
-          <h2 className="text-base font-semibold mb-1">Seed Treasury</h2>
+          <h2 className="text-base font-semibold mb-1">
+            Seed Treasury{" "}
+            <span className="text-xs font-normal text-slate-500">(off-chain)</span>
+          </h2>
           <p className="text-sm text-slate-400 mb-4">
-            Mints AUXR to the reserved treasury address{" "}
+            Books off-chain AUXR supply against the reserved treasury address{" "}
             <code className="text-xs bg-zinc-800 px-2 py-0.5 rounded">{TREASURY_ADDRESS}</code>.
-            Use for Phase 1A pre-launch reserve booking. No AUXM debited.
+            Use for Phase 1A pre-launch reserve booking. No AUXM debited. Does
+            NOT mint on-chain.
           </p>
           <div className="flex items-end gap-3">
             <div className="flex-1 max-w-xs">
@@ -477,9 +546,19 @@ export default function AdminAuxrPage() {
 
         {/* Manual Grant */}
         <section className="rounded-2xl bg-zinc-900/80 border border-white/5 p-6">
-          <h2 className="text-base font-semibold mb-1">Manual Grant</h2>
+          <h2 className="text-base font-semibold mb-1">
+            Manual Grant{" "}
+            <span className="text-xs font-normal text-slate-500">
+              (off-chain app balance)
+            </span>
+          </h2>
           <p className="text-sm text-slate-400 mb-4">
-            Credit AUXR to any verified address. For internal beta seeding to test users (5–20 wallets).
+            Credits an in-app AUXR balance for an Auxite user (max 1000). For
+            internal beta seeding to test users (5–20 wallets).{" "}
+            <span className="text-amber-400/80">
+              Does NOT send to on-chain wallets — use “On-chain Mint” for
+              MetaMask/external addresses.
+            </span>
           </p>
           <div className="grid md:grid-cols-3 gap-3 mb-3">
             <input
@@ -511,6 +590,62 @@ export default function AdminAuxrPage() {
           >
             Grant AUXR
           </button>
+        </section>
+
+        {/* On-chain Mint */}
+        <section className="rounded-2xl bg-zinc-900/80 border border-emerald-500/30 p-6">
+          <h2 className="text-base font-semibold mb-1">
+            On-chain Mint{" "}
+            <span className="text-xs font-normal text-emerald-400">
+              (real AUXR → any wallet)
+            </span>
+          </h2>
+          <p className="text-sm text-slate-400 mb-4">
+            Signs a real <code className="text-xs bg-zinc-800 px-1.5 py-0.5 rounded">mint()</code>{" "}
+            on Base and sends AUXR to any on-chain wallet (e.g. a MetaMask
+            address). The tokens are transferable/withdrawable like any ERC-20.
+            Backing is booked after the tx confirms. Irreversible.
+          </p>
+          <div className="grid md:grid-cols-3 gap-3 mb-3">
+            <input
+              type="text"
+              value={mintAddr}
+              onChange={(e) => setMintAddr(e.target.value)}
+              placeholder="0x… destination wallet"
+              className="bg-zinc-800 border border-white/5 rounded-lg px-3 py-2 text-sm font-mono"
+            />
+            <input
+              type="number"
+              value={mintUnits}
+              onChange={(e) => setMintUnits(e.target.value)}
+              placeholder="Units AUXR"
+              className="bg-zinc-800 border border-white/5 rounded-lg px-3 py-2 text-sm"
+            />
+            <input
+              type="text"
+              value={mintReason}
+              onChange={(e) => setMintReason(e.target.value)}
+              placeholder="Reason (required, ≥4 chars)"
+              className="bg-zinc-800 border border-white/5 rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
+          <button
+            disabled={busy}
+            onClick={submitMintOnchain}
+            className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-zinc-950 font-semibold px-5 py-2 rounded-lg text-sm"
+          >
+            {busy ? "Minting…" : "Mint On-chain"}
+          </button>
+          {mintTxUrl && (
+            <a
+              href={mintTxUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block mt-3 text-xs text-emerald-400 hover:underline break-all"
+            >
+              View transaction ↗ {mintTxUrl}
+            </a>
+          )}
         </section>
 
         {/* Manual Reserve Adjust */}
