@@ -191,7 +191,7 @@ function buildStatementHtml(
   <div style="max-width:600px;margin:0 auto;background:#fff;">
     <div style="height:3px;background:#C5A55A;"></div>
     <div style="padding:24px 30px 16px;border-bottom:1px solid #e5e5e5;">
-      <h1 style="font-size:13px;letter-spacing:5px;color:#1a1a1a;font-weight:700;text-transform:uppercase;margin:0 0 2px 0;">Auxite</h1>
+      <h1 style="font-size:13px;letter-spacing:5px;color:#1a1a1a;font-weight:700;margin:0 0 2px 0;">AUXITE</h1>
       <p style="font-size:11px;color:#888;margin:0;">Custody &amp; Settlement Services</p>
     </div>
 
