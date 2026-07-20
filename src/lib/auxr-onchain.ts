@@ -145,7 +145,13 @@ export const AUXR_ABI = [
 
 // ── Network / Config ─────────────────────────────────────────────────────────
 
-const CHAIN_KEY = (process.env.AUXR_CHAIN || "baseSepolia") as
+// Default to Base MAINNET. AUXR is a mainnet-only token (CEX-listed, founder
+// allocation, real reserves), and the AUXR_CONTRACT_ADDRESS fallback below is
+// the mainnet contract — so defaulting the chain to baseSepolia silently
+// pointed prod reads at a network where that address isn't a contract, making
+// paused()/mint() fail with "returned no data (0x)". Set AUXR_CHAIN=baseSepolia
+// explicitly for testnet work.
+const CHAIN_KEY = (process.env.AUXR_CHAIN || "base") as
   | "base"
   | "baseSepolia";
 
