@@ -173,6 +173,26 @@ export async function creditUserDeposit(params: CreditParams): Promise<CreditRes
       console.error("[deposit-credit] email lookup failed:", e);
     }
 
+    // First-deposit match (best-effort, idempotent, flag-gated in BONUS_CONFIG)
+    try {
+      let goldPricePerGram = 0;
+      try {
+        const priceData = await redis.get("metal:prices:cache");
+        if (priceData) {
+          const prices = typeof priceData === "string" ? JSON.parse(priceData) : priceData;
+          if (prices?.gold > 0) goldPricePerGram = prices.gold;
+        }
+      } catch {}
+      if (goldPricePerGram > 0) {
+        const { grantFirstDepositRewards } = await import("./metal-bonus-service");
+        grantFirstDepositRewards(address, amountUsd, goldPricePerGram).catch((e) =>
+          console.error("[deposit-credit] first-deposit reward failed:", e)
+        );
+      }
+    } catch (e) {
+      console.error("[deposit-credit] first-deposit reward import failed:", e);
+    }
+
     return {
       status: "credited",
       coin,
