@@ -28,6 +28,13 @@ export const maxDuration = 30;
 const DEVIATION_ALERT_BPS = Number(process.env.AUXR_DEVIATION_ALERT_BPS || 300); // 3%
 const BACKING_ALERT_PCT = Number(process.env.AUXR_BACKING_ALERT_PCT || 99.99);
 const SUPPLY_DRIFT_ALERT = Number(process.env.AUXR_SUPPLY_DRIFT_ALERT || 1); // units
+// AUXR minted on-chain OUTSIDE the managed off-chain ledger — the founder
+// allocation and MM seed, which are backed externally (founder's own metal) and
+// intentionally never recorded via recordMint. Without accounting for it, the
+// drift check compares total on-chain supply against only the managed off-chain
+// supply and fires forever. Set this to that known external issuance so only
+// NEW, unexplained drift alerts.
+const EXTERNAL_ONCHAIN_SUPPLY = Number(process.env.AUXR_EXTERNAL_ONCHAIN_SUPPLY || 0); // units
 const DEDUPE_TTL = Number(process.env.AUXR_ALERT_DEDUPE_SECONDS || 1800); // 30 min
 
 async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
@@ -89,12 +96,14 @@ export async function GET(request: NextRequest) {
       fired.push("paused");
   }
 
-  // 4. Supply drift (off-chain ledger vs on-chain)
+  // 4. Supply drift (off-chain ledger + known external issuance vs on-chain)
   if (snap?.supplyUnits != null && chainWei != null) {
     const onChain = weiToAuxr(chainWei as bigint);
-    const drift = Math.abs(snap.supplyUnits - onChain);
+    const expected = snap.supplyUnits + EXTERNAL_ONCHAIN_SUPPLY;
+    const drift = Math.abs(expected - onChain);
     if (drift > SUPPLY_DRIFT_ALERT) {
-      if (await alertOnce("supply-drift", `⚠️ <b>AUXR supply drift</b>\nOff-chain ledger: ${snap.supplyUnits} · On-chain: ${onChain}\nDrift: <b>${drift.toFixed(3)} AUXR</b> (threshold ${SUPPLY_DRIFT_ALERT})`))
+      const externalNote = EXTERNAL_ONCHAIN_SUPPLY ? ` (+${EXTERNAL_ONCHAIN_SUPPLY} external)` : "";
+      if (await alertOnce("supply-drift", `⚠️ <b>AUXR supply drift</b>\nOff-chain ledger: ${snap.supplyUnits}${externalNote} · On-chain: ${onChain}\nDrift: <b>${drift.toFixed(3)} AUXR</b> (threshold ${SUPPLY_DRIFT_ALERT})`))
         fired.push("supply-drift");
     }
   }
