@@ -78,6 +78,46 @@ export const AUXR_BUY_SPREAD = 0.0050;  // +50 bps
 export const AUXR_SELL_SPREAD = 0.0050; // -50 bps
 
 /**
+ * Annual management fee (expense ratio), ETF-style. Baked into NAV as a
+ * cumulative daily drag — holders never pay an explicit fee, the published
+ * NAV just grows ~1%/yr slower than the raw metal basket. Identical mechanic
+ * to a physical gold ETF's metal-per-share declining over time.
+ *
+ * Realization: because net NAV < gross basket value, the reserve accumulates
+ * surplus metal each period equal to the accrued fee. The issuer skims that
+ * surplus monthly (supply unchanged, no dilution). This is the recurring
+ * revenue engine for AUXR-as-a-managed-fund — scales with AUM.
+ *
+ * Env override: AUXR_MGMT_FEE_ANNUAL (decimal, e.g. "0.01").
+ */
+export const AUXR_MGMT_FEE_ANNUAL = Number(process.env.AUXR_MGMT_FEE_ANNUAL ?? 0.01);
+
+/**
+ * Fee-accrual inception. NAV drag only applies from this instant forward, so
+ * committing the fee code early has ZERO effect until go-live (no retroactive
+ * fee on founder/early holdings). Default = BitMart listing go-live target.
+ *
+ * Env override: AUXR_FEE_INCEPTION (ISO 8601, e.g. "2026-07-24T14:00:00Z").
+ * Default = BitMart AUXR/USDT trade go-live (announced 2026-07-24 14:00 UTC).
+ */
+export const AUXR_FEE_INCEPTION_MS = Date.parse(
+  process.env.AUXR_FEE_INCEPTION ?? "2026-07-24T14:00:00Z",
+);
+
+const MS_PER_YEAR = 365.25 * 24 * 60 * 60 * 1000;
+
+/**
+ * Cumulative management-fee multiplier applied to gross NAV at time `nowMs`.
+ * Returns 1.0 before inception (no accrual yet); otherwise (1 − fee)^years.
+ */
+export function getAuxrFeeMultiplier(nowMs: number): number {
+  if (!Number.isFinite(AUXR_FEE_INCEPTION_MS)) return 1;
+  const years = (nowMs - AUXR_FEE_INCEPTION_MS) / MS_PER_YEAR;
+  if (years <= 0 || AUXR_MGMT_FEE_ANNUAL <= 0) return 1;
+  return Math.pow(1 - AUXR_MGMT_FEE_ANNUAL, years);
+}
+
+/**
  * Minimum purchase in USD. Lowered from $100 to $30 to widen the top of
  * the funnel — $100 was a meaningful barrier for first-time / emerging-market
  * buyers, and AUXR units are fractional anyway (no whole-unit constraint).
@@ -88,8 +128,17 @@ export const AUXR_MIN_PURCHASE_USD = 30;
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export interface AuxrPricing {
-  /** Net asset value: USD per 1 AUXR, derived from spot. */
+  /** Net asset value: USD per 1 AUXR, net of accrued management fee. This is
+   *  the NAV all consumers (buy/sell, MM feed, PoR, arb) should use. */
   navUSD: number;
+  /** Gross basket value per 1 AUXR before management-fee drag (Σ grams×spot). */
+  grossNavUSD: number;
+  /** Annual management fee (expense ratio) applied to NAV. */
+  mgmtFeeAnnual: number;
+  /** Cumulative fee multiplier in effect (netNAV = grossNAV × this). */
+  feeMultiplier: number;
+  /** Accrued management fee per unit so far, USD (grossNAV − netNAV). */
+  accruedFeePerUnitUSD: number;
   /** Buy price for users (NAV + spread). */
   buyPriceUSD: number;
   /** Sell price for users (NAV − spread). */
@@ -124,12 +173,18 @@ export async function getAuxrPricing(): Promise<AuxrPricing> {
   const platinumValue = AUXR_GRAMS_PER_UNIT.platinum * spot.platinum;
   const palladiumValue = AUXR_GRAMS_PER_UNIT.palladium * spot.palladium;
 
-  const navUSD = goldValue + silverValue + platinumValue + palladiumValue;
+  const grossNavUSD = goldValue + silverValue + platinumValue + palladiumValue;
+  const feeMultiplier = getAuxrFeeMultiplier(spot.timestamp);
+  const navUSD = grossNavUSD * feeMultiplier;
   const buyPriceUSD = navUSD * (1 + AUXR_BUY_SPREAD);
   const sellPriceUSD = navUSD * (1 - AUXR_SELL_SPREAD);
 
   return {
     navUSD,
+    grossNavUSD,
+    mgmtFeeAnnual: AUXR_MGMT_FEE_ANNUAL,
+    feeMultiplier,
+    accruedFeePerUnitUSD: grossNavUSD - navUSD,
     buyPriceUSD,
     sellPriceUSD,
     components: {
@@ -137,25 +192,25 @@ export async function getAuxrPricing(): Promise<AuxrPricing> {
         gramsPerUnit: AUXR_GRAMS_PER_UNIT.gold,
         spotUSDPerGram: spot.gold,
         valueUSD: goldValue,
-        weightPct: navUSD > 0 ? (goldValue / navUSD) * 100 : 0,
+        weightPct: grossNavUSD > 0 ? (goldValue / grossNavUSD) * 100 : 0,
       },
       silver: {
         gramsPerUnit: AUXR_GRAMS_PER_UNIT.silver,
         spotUSDPerGram: spot.silver,
         valueUSD: silverValue,
-        weightPct: navUSD > 0 ? (silverValue / navUSD) * 100 : 0,
+        weightPct: grossNavUSD > 0 ? (silverValue / grossNavUSD) * 100 : 0,
       },
       platinum: {
         gramsPerUnit: AUXR_GRAMS_PER_UNIT.platinum,
         spotUSDPerGram: spot.platinum,
         valueUSD: platinumValue,
-        weightPct: navUSD > 0 ? (platinumValue / navUSD) * 100 : 0,
+        weightPct: grossNavUSD > 0 ? (platinumValue / grossNavUSD) * 100 : 0,
       },
       palladium: {
         gramsPerUnit: AUXR_GRAMS_PER_UNIT.palladium,
         spotUSDPerGram: spot.palladium,
         valueUSD: palladiumValue,
-        weightPct: navUSD > 0 ? (palladiumValue / navUSD) * 100 : 0,
+        weightPct: grossNavUSD > 0 ? (palladiumValue / grossNavUSD) * 100 : 0,
       },
     },
     timestamp: spot.timestamp,
