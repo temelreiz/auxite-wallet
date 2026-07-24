@@ -49,9 +49,19 @@ export async function GET(request: NextRequest) {
   const nav: number | null = pricing?.navUSD ?? null;
   const cexLast: number | null = ticker?.listed ? ticker.last : null;
 
-  // Deviation of CEX price from NAV (the key integrity/abnormal-fluctuation signal)
+  // Deviation of CEX price from NAV (the key integrity/abnormal-fluctuation signal).
+  //
+  // Measured against the bid/ask MID, not `last`. On a thin book `last` is the
+  // price of the most recent trade — which can be hours old — while NAV keeps
+  // moving with metal spot, so the gap widens on its own and misreports a book
+  // that is quoted right on NAV. Falls back to `last` if a side is missing.
+  const cexMid: number | null =
+    ticker?.listed && ticker.bid && ticker.ask && ticker.bid > 0 && ticker.ask > 0
+      ? (ticker.bid + ticker.ask) / 2
+      : cexLast;
+
   let deviationBps: number | null = null;
-  if (nav && cexLast && nav > 0) deviationBps = ((cexLast - nav) / nav) * 10000;
+  if (nav && cexMid && nav > 0) deviationBps = ((cexMid - nav) / nav) * 10000;
 
   // Order-book depth measured around NAV (fair-value anchored)
   const depthMetrics = depth?.listed && nav ? computeDepthMetrics(depth, nav) : null;
@@ -76,6 +86,8 @@ export async function GET(request: NextRequest) {
       symbol: AUXR_SYMBOL,
       listed: !!ticker?.listed,
       last: cexLast,
+      /** Bid/ask mid — the price `deviationBps` is measured from. */
+      mid: cexMid,
       bid: ticker?.bid ?? null,
       ask: ticker?.ask ?? null,
       high24h: ticker?.high24h ?? null,

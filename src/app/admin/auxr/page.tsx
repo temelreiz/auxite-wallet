@@ -55,11 +55,13 @@ function useAdminToken(): string | null {
   return token;
 }
 
+/** Formats a gram figure WITH its unit — callers must not append one, or
+ *  the kilo branch renders as "1.180 kg g". */
 function fmtGrams(g: number): string {
   if (Math.abs(g) >= 1000) return `${(g / 1000).toFixed(3)} kg`;
-  if (g === 0) return "0";
-  if (Math.abs(g) < 0.01) return g.toFixed(5);
-  return g.toFixed(4);
+  if (g === 0) return "0 g";
+  if (Math.abs(g) < 0.01) return `${g.toFixed(5)} g`;
+  return `${g.toFixed(4)} g`;
 }
 function fmtUSD(n: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -78,6 +80,9 @@ export default function AdminAuxrPage() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [okMsg, setOkMsg] = useState<string | null>(null);
+  // Admin sessions expire after 2h. Without surfacing that, every admin-authed
+  // panel silently renders "—" and looks like missing data rather than logout.
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   // Seed form
   const [seedUnits, setSeedUnits] = useState("50");
@@ -128,8 +133,15 @@ export default function AdminAuxrPage() {
         headers: { Authorization: `Bearer ${adminToken}` },
         cache: "no-store",
       });
+      if (r.status === 401 || r.status === 403) {
+        setSessionExpired(true);
+        return;
+      }
       const j = await r.json();
-      if (j?.success) setOps(j);
+      if (j?.success) {
+        setOps(j);
+        setSessionExpired(false);
+      }
     } catch (e: any) {
       console.warn("[admin/auxr] ops fetch failed", e);
     }
@@ -357,7 +369,10 @@ export default function AdminAuxrPage() {
           <h1 className="text-base font-semibold">AUXR Ops Cockpit</h1>
         </div>
         <div className="text-xs text-slate-500">
-          {ops?.cex?.listed ? (
+          {sessionExpired ? (
+            // Don't claim a listing state we can't actually read.
+            <span className="text-red-400">● Session expired</span>
+          ) : ops?.cex?.listed ? (
             <span className="text-emerald-400">● Live on BitMart</span>
           ) : (
             <span className="text-amber-400">● Pre-listing</span>
@@ -367,6 +382,13 @@ export default function AdminAuxrPage() {
       </nav>
 
       <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+        {sessionExpired && (
+          <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <span className="font-semibold">Admin session expired.</span>{" "}
+            Live figures below are stale or blank — log in again to restore them.{" "}
+            <Link href="/admin" className="underline hover:text-white">Go to admin login →</Link>
+          </div>
+        )}
         {/* ── Ops Cockpit hero ─────────────────────────────────────────── */}
         {(() => {
           const nav = ops?.price?.navUSD;
@@ -490,10 +512,10 @@ export default function AdminAuxrPage() {
               <div key={m} className="rounded-xl bg-zinc-900/80 border border-white/5 p-3">
                 <div className="text-xs uppercase text-slate-500 mb-1">{m}</div>
                 <div className="text-sm font-mono">
-                  {snapshot ? fmtGrams(snapshot.reserves.grams[m]) : "—"} g
+                  {snapshot ? fmtGrams(snapshot.reserves.grams[m]) : "—"}
                 </div>
                 <div className="text-xs text-slate-500 mt-1">
-                  req {snapshot ? fmtGrams(snapshot.required.grams[m]) : "—"} g
+                  req {snapshot ? fmtGrams(snapshot.required.grams[m]) : "—"}
                 </div>
               </div>
             ))}

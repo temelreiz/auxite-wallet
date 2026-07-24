@@ -179,6 +179,15 @@ export async function POST(request: NextRequest) {
             to: email,
             subject,
             html: htmlContent,
+            // Bulk marketing mail needs one-click unsubscribe headers. This route
+            // calls Resend directly instead of going through sendEmail(), which
+            // is where those headers normally get attached — so without this a
+            // campaign ships with no List-Unsubscribe at all and Gmail/Yahoo
+            // treat it as a spam signal.
+            headers: {
+              "List-Unsubscribe": `<https://vault.auxite.io/unsubscribe?email=${encodeURIComponent(email)}>, <mailto:unsubscribe@auxite.io?subject=unsubscribe>`,
+              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            },
           });
           sent++;
         } catch (e: any) {

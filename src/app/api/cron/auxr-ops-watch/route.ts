@@ -137,6 +137,25 @@ export async function GET(request: NextRequest) {
   const fired: string[] = [];
   const nav = pricing?.navUSD;
 
+  /**
+   * Reference price for NAV comparison.
+   *
+   * Use the bid/ask MID, not `last`. In a thin book `last` is whatever price
+   * the most recent trade printed at — possibly hours ago — while NAV keeps
+   * moving with metal spot. That stale gap grows until it trips the deviation
+   * threshold and fires an alert about a book that is in fact sitting right on
+   * NAV. The mid reflects where the market is actually quoted right now.
+   * Falls back to `last` only when one side of the book is missing.
+   */
+  const refPrice: number | null = (() => {
+    if (!ticker?.listed) return null;
+    if (ticker.bid && ticker.ask && ticker.bid > 0 && ticker.ask > 0) {
+      return (ticker.bid + ticker.ask) / 2;
+    }
+    return ticker.last ?? null;
+  })();
+  const refLabel = ticker?.bid && ticker?.ask ? "mid" : "last";
+
   // 1. Backing under-collateralised (human must add reserves — always escalate)
   if (snap?.backingRatio?.weakest != null) {
     const weakestPct = snap.backingRatio.weakest * 100;
@@ -147,17 +166,17 @@ export async function GET(request: NextRequest) {
   }
 
   // 2. CEX price deviation from NAV — persistence-gated (give the MM time first)
-  if (ticker?.listed && ticker.last && nav && nav > 0) {
-    const devBps = ((ticker.last - nav) / nav) * 10000;
+  if (refPrice && nav && nav > 0) {
+    const devBps = ((refPrice - nav) / nav) * 10000;
     if (Math.abs(devBps) >= DEVIATION_ALERT_BPS) {
       const streak = await bumpStreak("deviation");
       if (streak >= DEVIATION_PERSIST_RUNS) {
         const mins = streak * 5;
-        if (await alertOnce("deviation", `🟠 <b>AUXR price vs NAV deviation (sustained ${mins}m)</b>\nCEX (BitMart): <b>$${ticker.last}</b>\nNAV: <b>$${nav.toFixed(3)}</b>\nDeviation: <b>${(devBps / 100).toFixed(2)}%</b> (threshold ${(DEVIATION_ALERT_BPS / 100).toFixed(1)}%)\n→ MM hasn't closed it — check Echo Trade / trigger arb top-up.`)) {
+        if (await alertOnce("deviation", `🟠 <b>AUXR price vs NAV deviation (sustained ${mins}m)</b>\nCEX (BitMart) ${refLabel}: <b>$${refPrice.toFixed(3)}</b>\nNAV: <b>$${nav.toFixed(3)}</b>\nDeviation: <b>${(devBps / 100).toFixed(2)}%</b> (threshold ${(DEVIATION_ALERT_BPS / 100).toFixed(1)}%)\n→ MM hasn't closed it — check Echo Trade / trigger arb top-up.`)) {
           fired.push("deviation");
           await notifyMM(
             `⚠️ <b>AUXR/USDT — price vs NAV</b>\n` +
-            `Market: <b>$${ticker.last}</b> · NAV: <b>$${nav.toFixed(3)}</b>\n` +
+            `Market (${refLabel}): <b>$${refPrice.toFixed(3)}</b> · NAV: <b>$${nav.toFixed(3)}</b>\n` +
             `Deviation: <b>${(devBps / 100).toFixed(2)}%</b> (sustained ${mins}m)\n` +
             `→ Please re-centre quotes on the live NAV feed: ${NAV_FEED_URL}\n` +
             `Target band: NAV ±50 bps (outside it a redemption arb opens).`,
@@ -199,14 +218,19 @@ export async function GET(request: NextRequest) {
     const drift = Math.abs(expected - onChainUnits);
     if (drift > SUPPLY_DRIFT_ALERT) {
       const externalNote = EXTERNAL_ONCHAIN_SUPPLY ? ` (+${EXTERNAL_ONCHAIN_SUPPLY} external)` : "";
-      if (await alertOnce("supply-drift", `⚠️ <b>AUXR supply drift</b>\nOff-chain ledger: ${snap.supplyUnits}${externalNote} · On-chain: ${onChainUnits}\nDrift: <b>${drift.toFixed(3)} AUXR</b> (threshold ${SUPPLY_DRIFT_ALERT})`))
+      // Mints made through the cockpit bump BOTH ledgers via recordMint(), so
+      // this figure is normally constant. It only shifts when AUXR is minted
+      // outside the app — which is exactly what this alert exists to catch.
+      // Spell out the implied value so reconciling is a copy-paste, not arithmetic.
+      const implied = (onChainUnits - snap.supplyUnits).toFixed(4);
+      if (await alertOnce("supply-drift", `⚠️ <b>AUXR supply drift</b>\nOff-chain ledger: ${snap.supplyUnits}${externalNote} · On-chain: ${onChainUnits}\nDrift: <b>${drift.toFixed(3)} AUXR</b> (threshold ${SUPPLY_DRIFT_ALERT})\n\nIf this is explained by a mint made outside the app, set <code>AUXR_EXTERNAL_ONCHAIN_SUPPLY=${implied}</code>`))
         fired.push("supply-drift");
     }
   }
 
   // B) Daily digest heartbeat — passive oversight + dead-man's switch
-  const devBps = ticker?.listed && ticker.last && nav && nav > 0
-    ? ((ticker.last - nav) / nav) * 10000 : null;
+  const devBps = refPrice && nav && nav > 0
+    ? ((refPrice - nav) / nav) * 10000 : null;
   const spreadBps = ticker?.listed && ticker.bid && ticker.ask && ticker.bid > 0
     ? ((ticker.ask - ticker.bid) / ((ticker.bid + ticker.ask) / 2)) * 10000 : null;
   const digestSent = await maybeSendDigest([
