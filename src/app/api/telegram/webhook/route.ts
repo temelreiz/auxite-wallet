@@ -94,6 +94,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true }); // ignore non-text or system updates
     }
 
+    // Support auto-reply is for 1:1 customer chats ONLY. The same bot also sits
+    // in internal/partner groups (e.g. the market-maker alert channel), and
+    // without this guard it would answer every group message with an AI support
+    // reply. Log the chat id first — that's how we look up a new group's id.
+    if (message.chat.type && message.chat.type !== "private") {
+      console.log(
+        `[Telegram] Ignoring ${message.chat.type} message (chat_id: ${message.chat.id}) — support auto-reply is private-chat only`,
+      );
+      return NextResponse.json({ ok: true });
+    }
+
     const chatId = message.chat.id;
     const userText = message.text.trim();
     const firstName = message.from?.first_name || "";
