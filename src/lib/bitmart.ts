@@ -19,12 +19,26 @@ async function bmGet(path: string): Promise<any | null> {
     const ctrl = new AbortController();
     const to = setTimeout(() => ctrl.abort(), 6000);
     const res = await fetch(`${BITMART_BASE}${path}`, {
-      headers: { accept: "application/json" },
+      headers: {
+        accept: "application/json",
+        // BitMart's edge returns 403 to any request WITHOUT a User-Agent.
+        // Without this the ticker/depth calls always failed, getBitmartTicker()
+        // fell back to { listed:false }, and the ops watchdog silently stopped
+        // checking NAV deviation and spread — an outage that looks like "all
+        // quiet" because no alert can fire. Any non-empty UA satisfies it, so
+        // we identify ourselves honestly rather than spoofing a browser.
+        "user-agent": "AuxiteOps/1.0 (+https://auxite.io)",
+      },
       cache: "no-store",
       signal: ctrl.signal,
     });
     clearTimeout(to);
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Log rather than swallow: a persistent non-OK here means the market
+      // feed is down and the watchdog is blind.
+      console.error(`[bitmart] GET ${path} -> HTTP ${res.status}`);
+      return null;
+    }
     const json = await res.json();
     // BitMart wraps as { code, message, data }. code 1000 = success.
     if (json && typeof json.code === "number" && json.code !== 1000) return null;
