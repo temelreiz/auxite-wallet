@@ -34,21 +34,29 @@ interface OperationNotification {
 }
 
 /**
- * Telegram'a mesaj gönder
+ * Telegram'a mesaj gönder.
+ *
+ * `chatId` verilirse o sohbete gönderir (ör. market-maker kanalı); verilmezse
+ * varsayılan iç ops kanalına (TELEGRAM_CHAT_ID) düşer. Dış kanallara SADECE
+ * piyasaya açık bilgi gönderin — rezerv/backing/supply gibi iç veriler asla.
  */
-export async function sendTelegramMessage(message: string): Promise<boolean> {
+export async function sendTelegramMessage(
+  message: string,
+  chatId?: string,
+): Promise<boolean> {
   try {
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    const targetChatId = chatId || TELEGRAM_CHAT_ID;
+    if (!TELEGRAM_BOT_TOKEN || !targetChatId) {
       console.error("❌ Telegram credentials not configured — cannot send message");
       return false;
     }
 
-    console.log(`📤 Sending Telegram message to chat ${TELEGRAM_CHAT_ID}...`);
+    console.log(`📤 Sending Telegram message to chat ${targetChatId}...`);
 
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
 
     const body = {
-      chat_id: TELEGRAM_CHAT_ID,
+      chat_id: targetChatId,
       text: message,
       parse_mode: "HTML",
       disable_web_page_preview: true,

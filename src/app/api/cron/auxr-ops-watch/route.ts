@@ -47,6 +47,18 @@ const SUPPLY_DRIFT_ALERT = Number(process.env.AUXR_SUPPLY_DRIFT_ALERT || 1); // 
 const EXTERNAL_ONCHAIN_SUPPLY = Number(process.env.AUXR_EXTERNAL_ONCHAIN_SUPPLY || 0); // units
 const DEDUPE_TTL = Number(process.env.AUXR_ALERT_DEDUPE_SECONDS || 1800); // 30 min
 const DIGEST_HOUR_UTC = Number(process.env.AUXR_DIGEST_HOUR_UTC || 8); // 08:00 UTC daily
+const NAV_FEED_URL = process.env.AUXR_NAV_FEED_URL || "https://vault.auxite.io/api/auxr/price";
+
+/**
+ * Market-maker (Echo Trade) Telegram chat. Optional — unset disables the relay.
+ *
+ * ⚠️ ONLY market-facing alerts are relayed here: NAV deviation and bid/ask
+ * spread. Both are derived from PUBLIC data (the published NAV feed + the live
+ * order book), so nothing confidential leaves. Reserve/backing, on-chain supply
+ * drift, contract-pause and the daily digest are material non-public info and
+ * MUST stay on the internal channel only.
+ */
+const MM_CHAT_ID = process.env.TELEGRAM_MM_CHAT_ID || "";
 
 async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
   try { return await p; } catch { return fallback; }
@@ -79,6 +91,16 @@ async function bumpStreak(key: string): Promise<number> {
 
 async function resetStreak(key: string): Promise<void> {
   try { await getRedis().del(`auxr:streak:${key}`); } catch { /* noop */ }
+}
+
+/**
+ * Relay a market-facing alert to the market maker's channel so they can act
+ * without waiting for us to forward it. No-op when TELEGRAM_MM_CHAT_ID is unset.
+ * Never call this with reserve/backing/supply/fee internals.
+ */
+async function notifyMM(message: string): Promise<void> {
+  if (!MM_CHAT_ID) return;
+  try { await sendTelegramMessage(message, MM_CHAT_ID); } catch { /* noop */ }
 }
 
 /** Fire the once-per-day digest. Redis nx flag keyed by UTC date gates it. */
@@ -131,8 +153,16 @@ export async function GET(request: NextRequest) {
       const streak = await bumpStreak("deviation");
       if (streak >= DEVIATION_PERSIST_RUNS) {
         const mins = streak * 5;
-        if (await alertOnce("deviation", `🟠 <b>AUXR price vs NAV deviation (sustained ${mins}m)</b>\nCEX (BitMart): <b>$${ticker.last}</b>\nNAV: <b>$${nav.toFixed(3)}</b>\nDeviation: <b>${(devBps / 100).toFixed(2)}%</b> (threshold ${(DEVIATION_ALERT_BPS / 100).toFixed(1)}%)\n→ MM hasn't closed it — check Echo Trade / trigger arb top-up.`))
+        if (await alertOnce("deviation", `🟠 <b>AUXR price vs NAV deviation (sustained ${mins}m)</b>\nCEX (BitMart): <b>$${ticker.last}</b>\nNAV: <b>$${nav.toFixed(3)}</b>\nDeviation: <b>${(devBps / 100).toFixed(2)}%</b> (threshold ${(DEVIATION_ALERT_BPS / 100).toFixed(1)}%)\n→ MM hasn't closed it — check Echo Trade / trigger arb top-up.`)) {
           fired.push("deviation");
+          await notifyMM(
+            `⚠️ <b>AUXR/USDT — price vs NAV</b>\n` +
+            `Market: <b>$${ticker.last}</b> · NAV: <b>$${nav.toFixed(3)}</b>\n` +
+            `Deviation: <b>${(devBps / 100).toFixed(2)}%</b> (sustained ${mins}m)\n` +
+            `→ Please re-centre quotes on the live NAV feed: ${NAV_FEED_URL}\n` +
+            `Target band: NAV ±50 bps (outside it a redemption arb opens).`,
+          );
+        }
       }
     } else {
       await resetStreak("deviation");
@@ -144,8 +174,14 @@ export async function GET(request: NextRequest) {
     const mid = (ticker.bid + ticker.ask) / 2;
     const spreadBps = mid > 0 ? ((ticker.ask - ticker.bid) / mid) * 10000 : 0;
     if (spreadBps >= SPREAD_ALERT_BPS) {
-      if (await alertOnce("spread", `🟡 <b>AUXR MM spread wide</b>\nBid $${ticker.bid} / Ask $${ticker.ask} → spread <b>${(spreadBps / 100).toFixed(2)}%</b> (threshold ${(SPREAD_ALERT_BPS / 100).toFixed(1)}%)\n→ Echo Trade may not be quoting. Also hurts BML depth score.`))
+      if (await alertOnce("spread", `🟡 <b>AUXR MM spread wide</b>\nBid $${ticker.bid} / Ask $${ticker.ask} → spread <b>${(spreadBps / 100).toFixed(2)}%</b> (threshold ${(SPREAD_ALERT_BPS / 100).toFixed(1)}%)\n→ Echo Trade may not be quoting. Also hurts BML depth score.`)) {
         fired.push("spread");
+        await notifyMM(
+          `⚠️ <b>AUXR/USDT — spread wide</b>\n` +
+          `Bid <b>$${ticker.bid}</b> / Ask <b>$${ticker.ask}</b> → <b>${(spreadBps / 100).toFixed(2)}%</b>\n` +
+          `→ Quotes look thin or absent. Tightening also lifts the BML depth score.`,
+        );
+      }
     }
   }
 
