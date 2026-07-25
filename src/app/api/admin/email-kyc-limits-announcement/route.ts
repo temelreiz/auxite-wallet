@@ -21,6 +21,7 @@ import { Resend } from "resend";
 import { getKycLimitsAnnouncementTemplate } from "@/lib/email-templates";
 import { getUserLanguage } from "@/lib/user-language";
 import { isKycVerified } from "@/lib/kyc-limits";
+import { loadSuppressedEmails, isEmailSuppressed } from "@/lib/email-suppression";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -55,10 +56,11 @@ export async function GET(req: NextRequest) {
   //    same campaign blasting twice if we have to re-run after a partial
   //    rate-limit failure.
   const authKeys = await redis.keys("auth:user:*");
+  const suppressed = await loadSuppressedEmails(redis);
   type Entry = { email: string; lang: string; wallet: string };
   const entries: Entry[] = [];
   const byLang: Record<string, number> = {};
-  let skippedVerified = 0, skippedNoEmail = 0, skippedAlreadySent = 0;
+  let skippedVerified = 0, skippedNoEmail = 0, skippedAlreadySent = 0, skippedSuppressed = 0;
 
   for (let i = 0; i < authKeys.length; i += CHUNK) {
     const slice = authKeys.slice(i, i + CHUNK);
@@ -69,6 +71,7 @@ export async function GET(req: NextRequest) {
           const wallet = String(u?.walletAddress || "").toLowerCase().trim();
           const email = String(u?.email || k.replace("auth:user:", "")).trim().toLowerCase();
           if (!email || !email.includes("@")) { skippedNoEmail++; return; }
+          if (isEmailSuppressed(suppressed, email)) { skippedSuppressed++; return; } // unsubscribed
           if (wallet && (await isKycVerified(wallet))) { skippedVerified++; return; }
           if (await redis.sismember(DUPE_MARKER_KEY, email)) { skippedAlreadySent++; return; }
           const lang = wallet ? await getUserLanguage(wallet) : "en";
@@ -85,6 +88,7 @@ export async function GET(req: NextRequest) {
     skippedVerified,
     skippedNoEmail,
     skippedAlreadySent,
+    skippedSuppressed,
     byLang,
     sampleSubjectsByLang: Object.fromEntries(
       Object.keys(byLang).map((l) => [l, getKycLimitsAnnouncementTemplate(l).subject])

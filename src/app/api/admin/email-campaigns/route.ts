@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { Resend } from "resend";
 import { requireAdmin } from "@/lib/admin-auth";
+import { loadSuppressedEmails, isEmailSuppressed } from "@/lib/email-suppression";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -124,9 +125,18 @@ export async function POST(request: NextRequest) {
     const authKeys = await redis.keys("auth:user:*");
     const recipients: string[] = [];
 
+    // Never blast anyone who has unsubscribed.
+    const suppressed = await loadSuppressedEmails(redis);
+    let skippedSuppressed = 0;
+
     for (const key of authKeys) {
       const data = await redis.hgetall(key) as any;
       if (!data?.email) continue;
+
+      if (isEmailSuppressed(suppressed, data.email)) {
+        skippedSuppressed++;
+        continue;
+      }
 
       const addr = data.walletAddress || "";
       let include = true;
@@ -211,6 +221,7 @@ export async function POST(request: NextRequest) {
       totalRecipients: recipients.length,
       sent,
       failed,
+      skippedSuppressed,
       sentBy: "admin",
       timestamp: Date.now(),
     }));
@@ -221,6 +232,7 @@ export async function POST(request: NextRequest) {
       sent,
       failed,
       totalRecipients: recipients.length,
+      skippedSuppressed,
     });
   } catch (error: any) {
     console.error("[Email Campaign] Error:", error.message);

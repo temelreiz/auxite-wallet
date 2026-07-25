@@ -15,6 +15,7 @@ import { Redis } from "@upstash/redis";
 import { Resend } from "resend";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getCardLaunchTemplate } from "@/lib/email-templates";
+import { loadSuppressedEmails, isEmailSuppressed } from "@/lib/email-suppression";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -156,11 +157,13 @@ export async function POST(request: NextRequest) {
 // ─────────────────────────────────────────────────────────────────
 async function collectRecipients(): Promise<{ email: string; language: string; walletAddress: string }[]> {
   const authKeys = await redis.keys("auth:user:*");
+  const suppressed = await loadSuppressedEmails(redis);
   const out: { email: string; language: string; walletAddress: string }[] = [];
 
   for (const key of authKeys) {
     const data = (await redis.hgetall(key)) as any;
     if (!data?.email) continue;
+    if (isEmailSuppressed(suppressed, data.email)) continue; // unsubscribed
 
     out.push({
       email: data.email,

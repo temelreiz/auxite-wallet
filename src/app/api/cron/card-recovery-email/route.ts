@@ -24,6 +24,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { stripe, METAL_NAME, type SupportedMetal } from "@/lib/stripe";
 import { sendEmail } from "@/lib/email-service";
+import { loadSuppressedEmails, isEmailSuppressed } from "@/lib/email-suppression";
 
 const redis = Redis.fromEnv();
 
@@ -49,12 +50,17 @@ export async function GET(request: NextRequest) {
     user_not_found: 0,
     already_emailed_recently: 0,
     no_email: 0,
+    suppressed: 0,
     sent: 0,
     send_errors: 0,
   };
   const sentSample: Array<{ pi: string; email: string; metal: string; usd: number }> = [];
 
   try {
+    // Unsubscribe suppression — this cron pulls recipients from Stripe
+    // activity, so it never touched the opt-out set before. Load it once.
+    const suppressed = await loadSuppressedEmails(redis);
+
     let after: string | undefined = undefined;
     let pages = 0;
 
@@ -109,6 +115,11 @@ export async function GET(request: NextRequest) {
         const email = profile?.email;
         if (!email) {
           summary.no_email++;
+          continue;
+        }
+        // Respect unsubscribe — card recovery is marketing, not transactional.
+        if (isEmailSuppressed(suppressed, email)) {
+          summary.suppressed++;
           continue;
         }
 
