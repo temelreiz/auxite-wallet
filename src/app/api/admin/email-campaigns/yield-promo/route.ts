@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { Resend } from "resend";
 import { getYieldPromoTemplate } from "@/lib/email-templates";
+import { loadSuppressedEmails, isEmailSuppressed } from "@/lib/email-suppression";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -28,10 +29,12 @@ const BATCH_DELAY_MS = 500;
 
 async function collectRecipients(): Promise<{ email: string; language: string }[]> {
   const authKeys = await redis.keys("auth:user:*");
+  const suppressed = await loadSuppressedEmails(redis);
   const out: { email: string; language: string }[] = [];
   for (const key of authKeys) {
     const data = (await redis.hgetall(key)) as any;
     if (!data?.email) continue;
+    if (isEmailSuppressed(suppressed, data.email)) continue; // unsubscribed
     out.push({ email: String(data.email), language: String(data.language || "en").toLowerCase() });
   }
   const seen = new Set<string>();
