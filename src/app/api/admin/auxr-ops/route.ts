@@ -32,6 +32,14 @@ async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
   }
 }
 
+/**
+ * CEX tracking toggle. BitMart delisted AUXR (2026-07), so its order book is
+ * dead — `last` sits stale near a phantom ask and misreports as a live price.
+ * Off by default; set AUXR_CEX_ENABLED=1 only when AUXR is listed on a venue
+ * whose ticker we actually trust again.
+ */
+const CEX_ENABLED = process.env.AUXR_CEX_ENABLED === "1";
+
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
   if (!auth.authorized) return auth.response!;
@@ -42,8 +50,8 @@ export async function GET(request: NextRequest) {
     safe(liquidBackingUsd(), null as any),
     safe(getOnChainTotalSupply(), null as unknown as bigint),
     safe(isPaused(), null as any),
-    safe(getBitmartTicker(), null as any),
-    safe(getBitmartDepth(AUXR_SYMBOL, 50), null as any),
+    CEX_ENABLED ? safe(getBitmartTicker(), null as any) : Promise.resolve(null),
+    CEX_ENABLED ? safe(getBitmartDepth(AUXR_SYMBOL, 50), null as any) : Promise.resolve(null),
   ]);
 
   const nav: number | null = pricing?.navUSD ?? null;
@@ -82,8 +90,11 @@ export async function GET(request: NextRequest) {
       components: pricing?.components ?? null,
     },
     cex: {
-      exchange: "BitMart",
+      exchange: CEX_ENABLED ? "BitMart" : null,
       symbol: AUXR_SYMBOL,
+      /** True only when we actively track a live CEX. BitMart delisted → false. */
+      enabled: CEX_ENABLED,
+      delisted: !CEX_ENABLED,
       listed: !!ticker?.listed,
       last: cexLast,
       /** Bid/ask mid — the price `deviationBps` is measured from. */

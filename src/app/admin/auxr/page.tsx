@@ -372,8 +372,10 @@ export default function AdminAuxrPage() {
           {sessionExpired ? (
             // Don't claim a listing state we can't actually read.
             <span className="text-red-400">● Session expired</span>
+          ) : ops?.cex?.delisted ? (
+            <span className="text-slate-400">● Delisted — NAV only</span>
           ) : ops?.cex?.listed ? (
-            <span className="text-emerald-400">● Live on BitMart</span>
+            <span className="text-emerald-400">● Live on {ops.cex.exchange}</span>
           ) : (
             <span className="text-amber-400">● Pre-listing</span>
           )}
@@ -413,11 +415,17 @@ export default function AdminAuxrPage() {
                   <div className="text-xs text-slate-500 mt-1">bid {ops?.price?.sellPriceUSD != null ? fmtUSD(ops.price.sellPriceUSD) : "—"} · ask {ops?.price?.buyPriceUSD != null ? fmtUSD(ops.price.buyPriceUSD) : "—"}</div>
                 </div>
                 <div>
-                  <div className="text-xs uppercase tracking-widest text-slate-500 mb-1">CEX price (BitMart)</div>
+                  <div className="text-xs uppercase tracking-widest text-slate-500 mb-1">CEX price{cex?.exchange ? ` (${cex.exchange})` : ""}</div>
                   <div className="text-2xl font-semibold tabular-nums">
-                    {cex?.listed && cex.last != null ? fmtUSD(cex.last) : <span className="text-amber-400 text-base">Not listed yet</span>}
+                    {cex?.delisted
+                      ? <span className="text-slate-500 text-base">Delisted</span>
+                      : cex?.listed && cex.last != null
+                        ? fmtUSD(cex.last)
+                        : <span className="text-amber-400 text-base">Not listed yet</span>}
                   </div>
-                  {cex?.listed && (
+                  {cex?.delisted ? (
+                    <div className="text-xs text-slate-500 mt-1">no CEX tracked — NAV is the reference</div>
+                  ) : cex?.listed && (
                     <div className="text-xs text-slate-500 mt-1">bid {cex.bid != null ? fmtUSD(cex.bid) : "—"} · ask {cex.ask != null ? fmtUSD(cex.ask) : "—"}</div>
                   )}
                 </div>
