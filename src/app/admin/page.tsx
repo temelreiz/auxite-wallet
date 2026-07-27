@@ -3540,6 +3540,8 @@ export default function AdminDashboard() {
                                           <span className="text-slate-300">{tx.token || tx.asset || tx.fromToken || "—"}</span>
                                           <span className="text-white font-mono">{tx.amount || "—"}</span>
                                           {tx.toToken && <span className="text-slate-500">→ {tx.toToken} {tx.toAmount || ""}</span>}
+                                          {tx.metadata?.chain && <span className="text-slate-500">via {String(tx.metadata.chain).toUpperCase()}</span>}
+                                          {tx.status && tx.status !== "completed" && <span className="text-amber-400">{String(tx.status)}</span>}
                                         </div>
                                         <div className="flex items-center gap-2">
                                           <span className="text-slate-500">
@@ -3553,13 +3555,24 @@ export default function AdminDashboard() {
                                       </div>
                                       <div id={txId} className="hidden border-t border-slate-700 p-2.5 bg-slate-900/50 text-xs">
                                         <div className="grid grid-cols-2 gap-2">
-                                          {Object.entries(tx).map(([key, val]) => (
+                                          {Object.entries(tx)
+                                            // Flatten nested objects (e.g. metadata) one level so
+                                            // deposit details (chain, txHash, fromAddress, amountUsd)
+                                            // render readably instead of "[object Object]".
+                                            .flatMap(([key, val]) =>
+                                              val !== null && typeof val === 'object' && !Array.isArray(val)
+                                                ? Object.entries(val as Record<string, any>).map(([k2, v2]) => [`${key}.${k2}`, v2] as [string, any])
+                                                : [[key, val] as [string, any]]
+                                            )
+                                            .map(([key, val]) => (
                                             <div key={key}>
                                               <span className="text-slate-500">{key}: </span>
                                               <span className="text-slate-300 font-mono break-all">
-                                                {key === 'timestamp' && typeof val === 'number'
+                                                {key.endsWith('timestamp') && typeof val === 'number'
                                                   ? new Date(val).toLocaleString('tr-TR')
-                                                  : String(val)}
+                                                  : val !== null && typeof val === 'object'
+                                                    ? JSON.stringify(val)
+                                                    : String(val)}
                                               </span>
                                             </div>
                                           ))}
