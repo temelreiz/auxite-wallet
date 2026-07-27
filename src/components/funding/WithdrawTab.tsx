@@ -92,6 +92,8 @@ const translations: Record<string, Record<string, string>> = {
     transferFailed: "Transfer başarısız",
     withdrawalFailed: "Çekim başarısız",
     insufficientBalance: "Yetersiz bakiye",
+    auxrOnChainLabel: "Cüzdanınızda (on-chain)",
+    auxrOnChainHint: "Bu AUXR cüzdanınızda on-chain duruyor; Auxite üzerinden çekilemez — kendi cüzdanınızdan (Base ağı) doğrudan gönderin.",
     invalidAddress: "Geçersiz adres",
     invalidRecipient: "Geçersiz alıcı",
     minimumAmount: "Minimum tutar",
@@ -168,6 +170,8 @@ const translations: Record<string, Record<string, string>> = {
     transferFailed: "Transfer failed",
     withdrawalFailed: "Withdrawal failed",
     insufficientBalance: "Insufficient balance",
+    auxrOnChainLabel: "In your wallet (on-chain)",
+    auxrOnChainHint: "This AUXR is on-chain in your own wallet; it can't be withdrawn through Auxite — send it directly from your wallet on the Base network.",
     invalidAddress: "Invalid address",
     invalidRecipient: "Invalid recipient",
     minimumAmount: "Minimum amount",
@@ -591,6 +595,10 @@ export function WithdrawTab() {
   const [directBalances, setDirectBalances] = useState<Record<string, number> | null>(null);
   const [directStaked, setDirectStaked] = useState<Record<string, number> | null>(null);
   const [directAllocations, setDirectAllocations] = useState<Record<string, number> | null>(null);
+  // On-chain portion per asset (currently only AUXR is dual-ledger). Used to
+  // separate the bridge-movable (off-chain) balance from tokens the user
+  // already holds on-chain in their own wallet.
+  const [directOnChain, setDirectOnChain] = useState<Record<string, number> | null>(null);
 
   const fetchDirectBalances = useCallback(async () => {
     if (!address) return;
@@ -609,6 +617,14 @@ export function WithdrawTab() {
           parsed[k] = parseFloat(String(v) || '0');
         }
         setDirectBalances(parsed);
+      }
+
+      if (balanceData?.onChainBalances) {
+        const parsedOnChain: Record<string, number> = {};
+        for (const [k, v] of Object.entries(balanceData.onChainBalances)) {
+          parsedOnChain[k] = parseFloat(String(v) || '0');
+        }
+        setDirectOnChain(parsedOnChain);
       }
 
       if (balanceData?.stakedAmounts) {
@@ -672,6 +688,23 @@ export function WithdrawTab() {
     // balance API zaten staked'ı çıkarmış (total = redis + allocation - staked)
     // Allocation'lar total'e dahil, tekrar çıkartmıyoruz
     return Math.max(0, getBalance(symbol));
+  };
+
+  // On-chain portion the user already holds in their own wallet. For AUXR this
+  // is real ERC-20 the platform cannot move (no custodial key); getBalance
+  // returns off-chain + on-chain combined.
+  const getOnChain = (symbol: string): number => {
+    if (!directOnChain) return 0;
+    const key = ALL_ASSETS.find(a => a.symbol === symbol)?.balanceKey || symbol.toLowerCase();
+    return Math.max(0, parseFloat(String((directOnChain as any)[key] || 0)));
+  };
+
+  // Amount actually movable via Auxite (internal vault transfer or the AUXR
+  // mint-bridge) — both operate on the OFF-CHAIN ledger only. On-chain AUXR must
+  // be sent by the user directly from their wallet, so it is excluded here.
+  const getMovable = (symbol: string): number => {
+    if (symbol === "AUXR") return Math.max(0, getBalance(symbol) - getOnChain(symbol));
+    return getAvailable(symbol);
   };
 
   const formatBal = (amount: number, symbol: string): string => {
@@ -749,8 +782,14 @@ export function WithdrawTab() {
       return false;
     }
 
-    if (amt > getAvailable(selectedAsset!)) {
-      setError(t.insufficientBalance);
+    if (amt > getMovable(selectedAsset!)) {
+      // For AUXR, the shortfall is usually on-chain tokens the platform can't
+      // move — surface a specific hint instead of the generic error.
+      if (selectedAsset === "AUXR" && getOnChain("AUXR") > 0 && amt <= getBalance("AUXR")) {
+        setError((t as any).auxrOnChainHint ?? translations.en.auxrOnChainHint);
+      } else {
+        setError(t.insufficientBalance);
+      }
       return false;
     }
 
@@ -1054,7 +1093,7 @@ export function WithdrawTab() {
     const total = getBalance(selectedAsset);
     const staked = getStaked(selectedAsset);
     const allocated = getAllocated(selectedAsset);
-    const available = getAvailable(selectedAsset);
+    const available = getMovable(selectedAsset);
     const pending = 0; // Future: settlement pending tracking
     const asset = ALL_ASSETS.find(a => a.symbol === selectedAsset)!;
 
@@ -1111,8 +1150,25 @@ export function WithdrawTab() {
             </div>
           </div>
 
-          {/* Zero available warning */}
-          {available <= 0 && (
+          {/* AUXR held on-chain in the user's own wallet — not movable via Auxite */}
+          {selectedAsset === "AUXR" && getOnChain("AUXR") > 0 && (
+            <div className="mt-4 p-3 rounded-lg bg-[#BFA181]/10 border border-[#BFA181]/30">
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-[#BFA181] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-medium text-[#BFA181]">
+                    {(t as any).auxrOnChainLabel ?? translations.en.auxrOnChainLabel}: {formatBal(getOnChain("AUXR"), "AUXR")}
+                  </p>
+                  <p className="text-xs text-[#BFA181]/80 mt-0.5">{(t as any).auxrOnChainHint ?? translations.en.auxrOnChainHint}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Zero available warning (not for AUXR held on-chain — that has its own note) */}
+          {available <= 0 && !(selectedAsset === "AUXR" && getOnChain("AUXR") > 0) && (
             <div className="mt-4 p-3 rounded-lg bg-[#BFA181]/10 border border-[#BFA181]/30">
               <div className="flex items-start gap-2">
                 <svg className="w-4 h-4 text-[#BFA181] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1243,7 +1299,7 @@ export function WithdrawTab() {
   // ══════════════════════════════════════
   const renderStep4 = () => {
     if (!selectedAsset || !transferType) return null;
-    const available = getAvailable(selectedAsset);
+    const available = getMovable(selectedAsset);
     const asset = ALL_ASSETS.find(a => a.symbol === selectedAsset)!;
 
     return (
