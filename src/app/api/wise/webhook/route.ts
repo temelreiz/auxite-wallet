@@ -150,13 +150,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true, state: currentState });
     }
 
-    // Idempotency: refuse to credit twice for same wire
+    // Idempotency is enforced immediately before the balance credit (see
+    // below), NOT here. Setting it at the top of the handler poisoned every
+    // wire that later bailed to a review queue (missing amount, no reference,
+    // KYC hold): the resource was marked "processed" but never credited, so
+    // /admin/wise → manual credit then 409'd and ops could never resolve it.
     const idempKey = `wise:processed:${resourceId}`;
-    const firstTime = await redis.set(idempKey, Date.now().toString(), { nx: true, ex: 60 * 60 * 24 * 90 });
-    if (!firstTime) {
-      console.log(`[wise/webhook] resource ${resourceId} already processed`);
-      return NextResponse.json({ received: true, deduped: true });
-    }
 
     // Fetch full payment details (amount, currency, reference)
     let detail: any = null;
@@ -168,19 +167,30 @@ export async function POST(req: NextRequest) {
       console.warn("[wise/webhook] payment detail fetch failed:", e);
     }
 
-    // Try multiple field names for amount/currency/reference. Wise's exact
-    // shape isn't documented publicly — log what we found for inspection.
+    // Try multiple field names for amount/currency/reference. The v2.0.0
+    // account-details-payment event carries the money leg under
+    // `data.transfer.{amount,currency}` and the payer under `data.sender.name`
+    // — that's the ONLY place amount/currency live in the webhook payload, so
+    // it must be checked (missing it is what silently dropped every real wire).
+    // The `detail?.*` and top-level `data.amount` shapes are kept as fallbacks
+    // in case a callback fetch (tryFetchPaymentByResourceId) ever succeeds.
     const amount = Number(
-      detail?.amount?.value ?? detail?.amount ?? data.amount?.value ?? data.amount ?? 0
+      detail?.amount?.value ?? detail?.amount ??
+      data.transfer?.amount?.value ?? data.transfer?.amount ??
+      data.amount?.value ?? data.amount ?? 0
     );
     const currency = String(
-      detail?.amount?.currency ?? detail?.currency ?? data.amount?.currency ?? data.currency ?? ""
+      detail?.amount?.currency ?? detail?.currency ??
+      data.transfer?.currency ??
+      data.amount?.currency ?? data.currency ?? ""
     ).toUpperCase();
     const referenceRaw = String(
       detail?.reference ?? detail?.referenceText ?? detail?.payment_reference ??
+      data.transfer?.reference ?? data.transfer?.referenceText ??
       data.reference ?? data.referenceText ?? ""
     );
-    const senderName = detail?.sender?.name ?? detail?.payer?.name ?? "";
+    const senderName =
+      detail?.sender?.name ?? detail?.payer?.name ?? data.sender?.name ?? "";
 
     if (!amount || !currency) {
       console.warn(`[wise/webhook] missing amount/currency for ${resourceId}`, { amount, currency });
@@ -288,6 +298,16 @@ export async function POST(req: NextRequest) {
           usdValue,
         });
       }
+    }
+
+    // Idempotency guard — set immediately before the credit so a redelivered
+    // COMPLETED event can't double-credit, while wires that bailed to a review
+    // queue above never leave a "processed" marker that would block manual
+    // crediting from /admin/wise.
+    const firstTime = await redis.set(idempKey, Date.now().toString(), { nx: true, ex: 60 * 60 * 24 * 90 });
+    if (!firstTime) {
+      console.log(`[wise/webhook] resource ${resourceId} already credited`);
+      return NextResponse.json({ received: true, deduped: true });
     }
 
     const balanceKey = `user:${userAddress}:balance`;
