@@ -87,6 +87,28 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/** Locales the wallet renders. Keep in sync with LanguageContext. */
+const LOCALES = ["tr", "en", "de", "fr", "ar", "ru"] as const;
+
+/**
+ * Build a locale record from a full object plus any legacy flat fields
+ * (titleTr/titleEn) the older admin callers still send. Empty strings are
+ * dropped so pickBannerLocale's fallback chain can do its job.
+ */
+function pickLocales(
+  source: Record<string, string> | undefined,
+  legacy: Record<string, string | undefined>,
+): Banner["title"] {
+  // tr and en are required by the Banner type — the render-side fallback
+  // chain starts there — so they're always present, empty string included.
+  const out: Banner["title"] = { tr: "", en: "" };
+  for (const code of LOCALES) {
+    const value = legacy[code] ?? source?.[code];
+    if (typeof value === "string" && value.trim()) out[code] = value.trim();
+  }
+  return out;
+}
+
 // POST - Banner ekle/güncelle/sil
 export async function POST(request: NextRequest) {
   try {
@@ -113,14 +135,17 @@ export async function POST(request: NextRequest) {
       case "add": {
         const newBanner: Banner = {
           id: banner.id || `banner-${Date.now()}`,
-          title: { 
-            tr: banner.titleTr || banner.title?.tr || "", 
-            en: banner.titleEn || banner.title?.en || "" 
-          },
-          subtitle: { 
-            tr: banner.subtitleTr || banner.subtitle?.tr || "", 
-            en: banner.subtitleEn || banner.subtitle?.en || "" 
-          },
+          // Keep every locale the app can render. This used to persist only
+          // tr/en, so a German or Arabic viewer silently fell back to Turkish
+          // even when ops had written a translation.
+          title: pickLocales(banner.title, {
+            tr: banner.titleTr,
+            en: banner.titleEn,
+          }),
+          subtitle: pickLocales(banner.subtitle, {
+            tr: banner.subtitleTr,
+            en: banner.subtitleEn,
+          }),
           backgroundColor: banner.bgColor || banner.backgroundColor || "#10b981",
           textColor: banner.textColor || "#ffffff",
           actionType: banner.actionType || "none",
