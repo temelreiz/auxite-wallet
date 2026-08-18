@@ -12,6 +12,7 @@ import { Loader2, Mail, Lock, Eye, EyeOff, AlertCircle, User, CheckCircle, Globe
 import { useLanguage } from "@/components/LanguageContext";
 import { useWallet } from "@/components/WalletContext";
 import { fireConversion } from "@/lib/google-ads-conversion";
+import { fireXConversion } from "@/lib/x-pixel";
 
 const LANGUAGE_OPTIONS = [
   { code: 'en', label: 'English' },
@@ -357,6 +358,9 @@ export default function RegisterPage() {
       // returns success. No-op if NEXT_PUBLIC_GOOGLE_ADS_LABEL_SIGNUP is
       // unset, so this is safe to ship before the env vars land.
       fireConversion("signup", { transactionId: data?.user?.id });
+      // Same conversion to X — this is the event the Website Conversions
+      // campaign optimises against, so it has to fire from the same place.
+      fireXConversion("signup", { transactionId: data?.user?.id });
 
     } catch (err) {
       setError(t('connectionError'));

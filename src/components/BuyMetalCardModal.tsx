@@ -25,6 +25,7 @@ import { useLanguage } from "@/components/LanguageContext";
 import { formatAmount } from "@/lib/format";
 import { logEvent } from "@/lib/analytics";
 import { fireConversion } from "@/lib/google-ads-conversion";
+import { fireXConversion } from "@/lib/x-pixel";
 
 // ── Stripe.js singleton (lazy, browser-only) ───────────────────────────────
 // loadStripe must only run in the browser (it injects a <script>). Even
@@ -531,6 +532,11 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
                     // the moment the user sees the success screen. paymentIntentId
                     // is the natural dedupe key for Google Ads reports.
                     fireConversion("purchase", {
+                      value: quote.amountUSD,
+                      currency: "USD",
+                      transactionId: paymentIntentId || undefined,
+                    });
+                    fireXConversion("purchase", {
                       value: quote.amountUSD,
                       currency: "USD",
                       transactionId: paymentIntentId || undefined,
