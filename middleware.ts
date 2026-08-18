@@ -31,8 +31,8 @@ function buildCsp() {
   // Stripe payments: https://js.stripe.com (script), https://hooks.stripe.com
   // (3DS frame), https://api.stripe.com (already covered by `https:` wildcard).
   const scriptSrc = isDev
-    ? "'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://*.sumsub.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://connect.facebook.net https://global-stg.transak.com https://global.transak.com https://js.stripe.com"
-    : "'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://*.sumsub.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://connect.facebook.net https://global-stg.transak.com https://global.transak.com https://js.stripe.com";
+    ? "'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://*.sumsub.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://connect.facebook.net https://static.ads-twitter.com https://global-stg.transak.com https://global.transak.com https://js.stripe.com"
+    : "'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://*.sumsub.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://connect.facebook.net https://static.ads-twitter.com https://global-stg.transak.com https://global.transak.com https://js.stripe.com";
 
   return [
     "default-src 'self'",

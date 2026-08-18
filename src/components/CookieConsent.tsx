@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/components/LanguageContext";
+import {
+  CONSENT_STORAGE_KEY,
+  applyConsentToWindow,
+  notifyConsentChanged,
+} from "@/lib/consent";
 
 const translations: Record<string, { banner: string; accept: string; decline: string; settings: string; essential: string; analytics: string; essentialDesc: string; analyticsDesc: string; save: string }> = {
   en: {
@@ -80,8 +85,13 @@ export function CookieConsent() {
   const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
 
   useEffect(() => {
+    // Re-hydrate window.auxite_analytics_consent from the stored record. It
+    // used to be assigned only inside saveConsent(), so on every later page
+    // load a consented user looked un-consented and GA4 denied storage.
+    applyConsentToWindow();
+
     try {
-      const consent = localStorage.getItem("auxite_cookie_consent");
+      const consent = localStorage.getItem(CONSENT_STORAGE_KEY);
       if (!consent) {
         // Small delay so it doesn't flash on first paint
         const timer = setTimeout(() => setVisible(true), 1200);
@@ -97,12 +107,12 @@ export function CookieConsent() {
       timestamp: new Date().toISOString(),
       version: "1.0",
     };
-    localStorage.setItem("auxite_cookie_consent", JSON.stringify(consent));
+    localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(consent));
 
-    // Enable/disable analytics based on consent
-    if (analytics && typeof window !== "undefined") {
-      (window as any).auxite_analytics_consent = true;
-    }
+    // Publish the decision: this sets the window flag AND wakes the marketing
+    // pixels, so accepting starts tracking right away instead of on the next
+    // navigation — and declining leaves them unmounted entirely.
+    notifyConsentChanged();
 
     setVisible(false);
   };

@@ -14,6 +14,7 @@ import { CookieConsent } from "@/components/CookieConsent";
 import SupportChat from "@/components/SupportChat";
 import RadioWidget from "@/components/RadioWidget";
 import Script from "next/script";
+import MarketingPixels from "@/components/MarketingPixels";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -25,11 +26,6 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "";
 // Google Ads conversion tag (AW-XXXXXXXXXX). Set in Vercel env; if empty
 // the tag never loads and src/lib/google-ads-conversion.ts no-ops.
 const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID || "";
-// X (Twitter) Pixel id — the "o..." universal website tag from X Ads events
-// manager. Same env-gated pattern as the Google Ads tag: unset means the
-// script never loads and src/lib/x-pixel.ts no-ops, so dev/preview builds
-// don't pollute conversion data.
-const X_PIXEL_ID = process.env.NEXT_PUBLIC_X_PIXEL_ID || "";
 
 export const metadata: Metadata = {
   title: {
@@ -179,42 +175,9 @@ export default function RootLayout({
             `}
           </Script>
         )}
-        {/* X (Twitter) Pixel — needed for the Website Conversions objective;
-            without it X can only bid on link clicks. Fires PageView on load,
-            then src/lib/x-pixel.ts maps funnel events to X standard events. */}
-        {X_PIXEL_ID && (
-          <Script id="x-pixel" strategy="afterInteractive">
-            {`
-              !function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){
-              s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);
-              },s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,
-              u.src='https://static.ads-twitter.com/uwt.js',
-              a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))
-              }(window,document,'script');
-              twq('config','${X_PIXEL_ID}');
-            `}
-          </Script>
-        )}
-        {/* Meta Pixel */}
-        <Script id="meta-pixel" strategy="afterInteractive">
-          {`
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-            n.queue=[];t=b.createElement(e);t.async=!0;
-            t.src=v;s=b.getElementsByTagName(e)[0];
-            s.parentNode.insertBefore(t,s)}(window, document,'script',
-            'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '875602632179249');
-            fbq('track', 'PageView');
-          `}
-        </Script>
-        <noscript>
-          <img height="1" width="1" style={{display:'none'}}
-            src="https://www.facebook.com/tr?id=875602632179249&ev=PageView&noscript=1"
-          />
-        </noscript>
+        {/* X + Meta advertising pixels — mounted through a client component so
+            they only load once the user has accepted analytics cookies. */}
+        <MarketingPixels />
         <ToastProvider>
           <UIToastProvider>
             <Web3Provider>

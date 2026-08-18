@@ -36,7 +36,7 @@ const nextConfig = {
         key: "Content-Security-Policy",
         value: [
           "default-src 'self'",
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://*.sumsub.com https://connect.facebook.net https://global-stg.transak.com https://global.transak.com https://js.stripe.com",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googletagmanager.com https://*.google-analytics.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://*.sumsub.com https://connect.facebook.net https://static.ads-twitter.com https://global-stg.transak.com https://global.transak.com https://js.stripe.com",
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
           "font-src 'self' https://fonts.gstatic.com data:",
           "img-src 'self' data: blob: https: https://www.facebook.com",
