@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLanguage } from "@/components/LanguageContext";
 import { logEvent } from "@/lib/analytics";
+import { fireXConversion } from "@/lib/x-pixel";
 
 interface KYCData {
   walletAddress: string;
@@ -320,6 +321,10 @@ export function KYCVerification({ walletAddress, onClose }: Props) {
           console.log("SDK message:", type, payload);
           if (type === "idCheck.onApplicantSubmitted") {
             logEvent("kyc_submitted", { surface: "web" });
+            // Mid-funnel conversion for X. Sumsub fires this once the
+            // applicant is actually submitted (not merely when the SDK
+            // opened), so it's the honest signal to report as a Lead.
+            fireXConversion("kyc");
             fetchKYC();
           }
           if (type === "idCheck.onApplicantLoaded") {
