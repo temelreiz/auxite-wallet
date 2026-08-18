@@ -25,6 +25,11 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "";
 // Google Ads conversion tag (AW-XXXXXXXXXX). Set in Vercel env; if empty
 // the tag never loads and src/lib/google-ads-conversion.ts no-ops.
 const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID || "";
+// X (Twitter) Pixel id — the "o..." universal website tag from X Ads events
+// manager. Same env-gated pattern as the Google Ads tag: unset means the
+// script never loads and src/lib/x-pixel.ts no-ops, so dev/preview builds
+// don't pollute conversion data.
+const X_PIXEL_ID = process.env.NEXT_PUBLIC_X_PIXEL_ID || "";
 
 export const metadata: Metadata = {
   title: {
@@ -171,6 +176,22 @@ export default function RootLayout({
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('config', '${GOOGLE_ADS_ID}');
+            `}
+          </Script>
+        )}
+        {/* X (Twitter) Pixel — needed for the Website Conversions objective;
+            without it X can only bid on link clicks. Fires PageView on load,
+            then src/lib/x-pixel.ts maps funnel events to X standard events. */}
+        {X_PIXEL_ID && (
+          <Script id="x-pixel" strategy="afterInteractive">
+            {`
+              !function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){
+              s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);
+              },s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,
+              u.src='https://static.ads-twitter.com/uwt.js',
+              a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))
+              }(window,document,'script');
+              twq('config','${X_PIXEL_ID}');
             `}
           </Script>
         )}
