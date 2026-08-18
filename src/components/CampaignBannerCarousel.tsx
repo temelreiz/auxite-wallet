@@ -8,78 +8,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-interface BannerLocale {
-  tr?: string;
-  en?: string;
-  de?: string;
-  fr?: string;
-  ar?: string;
-  ru?: string;
-}
-
-interface Banner {
-  id: string;
-  title: BannerLocale;
-  subtitle?: BannerLocale;
-  imageUrl?: string;
-  backgroundColor: string;
-  textColor: string;
-  actionType: "none" | "link" | "screen" | "promo";
-  actionValue?: string;
-  active: boolean;
-  priority: number;
-  startDate?: string;
-  endDate?: string;
-}
-
-interface BannersResponse {
-  success: boolean;
-  banners: Banner[];
-}
-
-function pickLocale(localized: BannerLocale | undefined, language: string): string {
-  if (!localized) return "";
-  return (
-    (localized[language as keyof BannerLocale] as string | undefined) ||
-    localized.tr ||
-    localized.en ||
-    localized.de ||
-    localized.fr ||
-    localized.ar ||
-    localized.ru ||
-    ""
-  );
-}
-
-// Mirror the mobile screenMap so the same banner record routes
-// consistently in both apps. Symbolic names stay short ("trade",
-// "convert"); we resolve them to the real /paths here.
-function resolveRoute(actionValue: string | undefined): string | null {
-  if (!actionValue) return null;
-  const map: Record<string, string> = {
-    trade: "/allocate",
-    buy: "/allocate",
-    allocate: "/allocate",
-    markets: "/allocate",
-    convert: "/allocate",
-    withdraw: "/redeem",
-    redeem: "/redeem",
-    fund: "/fund-vault",
-    "fund-vault": "/fund-vault",
-    stake: "/stake",
-    yield: "/stake",
-    profile: "/profile",
-    account: "/profile",
-    vault: "/vault",
-    auxr: "/auxr",
-    trust: "/trust",
-    support: "/support",
-    transfers: "/transfers",
-    ledger: "/ledger",
-  };
-  return map[actionValue.toLowerCase()] || `/${actionValue}`;
-}
+import {
+  type Banner,
+  fetchActiveBanners,
+  pickBannerLocale,
+  resolveBannerRoute,
+} from "@/lib/campaign-banners";
 
 interface Props {
   language: string;
@@ -94,29 +28,8 @@ export default function CampaignBannerCarousel({ language }: Props) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    try {
-      const res = await fetch("/api/mobile/banners?active=true", {
-        cache: "no-store",
-      });
-      const data: BannersResponse = await res.json();
-      if (data.success && Array.isArray(data.banners)) {
-        const now = Date.now();
-        const filtered = data.banners.filter((b) => {
-          if (!b.active) return false;
-          if (b.startDate && Date.parse(b.startDate) > now) return false;
-          if (b.endDate && Date.parse(b.endDate) < now) return false;
-          return true;
-        });
-        setBanners(filtered);
-      } else {
-        setBanners([]);
-      }
-    } catch (err) {
-      console.warn("[BannerCarousel] fetch failed:", err);
-      setBanners([]);
-    } finally {
-      setLoading(false);
-    }
+    setBanners(await fetchActiveBanners());
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -137,7 +50,7 @@ export default function CampaignBannerCarousel({ language }: Props) {
 
   const handleClick = (b: Banner) => {
     if (b.actionType === "screen") {
-      const target = resolveRoute(b.actionValue);
+      const target = resolveBannerRoute(b.actionValue);
       if (target) router.push(target);
     } else if (b.actionType === "link" && b.actionValue) {
       if (b.actionValue.startsWith("http")) {
@@ -156,8 +69,8 @@ export default function CampaignBannerCarousel({ language }: Props) {
           style={{ transform: `translateX(-${active * 100}%)` }}
         >
           {banners.map((b) => {
-            const title = pickLocale(b.title, language);
-            const subtitle = pickLocale(b.subtitle, language);
+            const title = pickBannerLocale(b.title, language);
+            const subtitle = pickBannerLocale(b.subtitle, language);
             return (
               <button
                 key={b.id}
