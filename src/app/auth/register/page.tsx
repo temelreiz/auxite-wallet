@@ -577,9 +577,9 @@ export default function RegisterPage() {
             {/* Terms */}
             <p className="text-xs text-slate-500 text-center">
               {t('bySigningUp')}{' '}
-              <Link href="/terms" className="text-[#BFA181] hover:underline">{t('termsOfService')}</Link>
+              <Link href="/legal/terms" className="text-[#BFA181] hover:underline">{t('termsOfService')}</Link>
               {' '}{t('and')}{' '}
-              <Link href="/privacy" className="text-[#BFA181] hover:underline">{t('privacyPolicy')}</Link>
+              <Link href="/legal/privacy" className="text-[#BFA181] hover:underline">{t('privacyPolicy')}</Link>
             </p>
 
             {/* Cloudflare Turnstile */}
