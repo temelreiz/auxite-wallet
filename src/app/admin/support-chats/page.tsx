@@ -11,6 +11,7 @@
 // page is for support insight and lead visibility, not a green light to email.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 function useAdminToken(): string | null {
   const [token, setToken] = useState<string | null>(null);
@@ -131,6 +132,11 @@ export default function SupportChatsPage() {
   return (
     <div className="min-h-screen bg-slate-950 px-4 py-8 text-slate-200">
       <div className="mx-auto max-w-6xl">
+        <div className="mb-2 text-sm">
+          <Link href="/admin/marketing-leads" className="text-gold-400 hover:text-gold-300">
+            Marketing leads →
+          </Link>
+        </div>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-white">Support Chats</h1>

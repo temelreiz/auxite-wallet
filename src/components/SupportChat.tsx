@@ -87,9 +87,72 @@ const T: Record<string, Strings> = {
   },
 };
 
+type LeadStrings = {
+  prompt: string;
+  placeholder: string;
+  consent: string; // MUST match CONSENT_TEXT in src/lib/marketing-lead.ts
+  submit: string;
+  thanks: string;
+  invalid: string;
+};
+
+const LEAD_T: Record<string, LeadStrings> = {
+  en: {
+    prompt: "Want us to follow up? Leave your email.",
+    placeholder: "you@email.com",
+    consent: "I agree to receive product news and marketing updates from Auxite by email. I can unsubscribe anytime.",
+    submit: "Send",
+    thanks: "Thanks! We'll be in touch.",
+    invalid: "Please enter a valid email.",
+  },
+  tr: {
+    prompt: "Sizinle iletişime geçelim mi? E-postanızı bırakın.",
+    placeholder: "siz@eposta.com",
+    consent: "Auxite'ten ürün haberleri ve pazarlama güncellemelerini e-posta ile almayı kabul ediyorum. İstediğim zaman abonelikten çıkabilirim.",
+    submit: "Gönder",
+    thanks: "Teşekkürler! Sizinle iletişime geçeceğiz.",
+    invalid: "Lütfen geçerli bir e-posta girin.",
+  },
+  de: {
+    prompt: "Sollen wir uns melden? Hinterlassen Sie Ihre E-Mail.",
+    placeholder: "sie@email.com",
+    consent: "Ich stimme zu, Produktneuigkeiten und Marketing-Updates von Auxite per E-Mail zu erhalten. Ich kann mich jederzeit abmelden.",
+    submit: "Senden",
+    thanks: "Danke! Wir melden uns.",
+    invalid: "Bitte geben Sie eine gültige E-Mail ein.",
+  },
+  fr: {
+    prompt: "Vous voulez qu'on vous recontacte ? Laissez votre e-mail.",
+    placeholder: "vous@email.com",
+    consent: "J'accepte de recevoir des actualités produits et des offres marketing d'Auxite par e-mail. Je peux me désabonner à tout moment.",
+    submit: "Envoyer",
+    thanks: "Merci ! Nous vous recontacterons.",
+    invalid: "Veuillez saisir un e-mail valide.",
+  },
+  ar: {
+    prompt: "هل تريد أن نتواصل معك؟ اترك بريدك الإلكتروني.",
+    placeholder: "you@email.com",
+    consent: "أوافق على تلقي أخبار المنتجات وتحديثات التسويق من Auxite عبر البريد الإلكتروني. يمكنني إلغاء الاشتراك في أي وقت.",
+    submit: "إرسال",
+    thanks: "شكرًا! سنتواصل معك.",
+    invalid: "يرجى إدخال بريد إلكتروني صالح.",
+  },
+  ru: {
+    prompt: "Хотите, чтобы мы связались с вами? Оставьте e-mail.",
+    placeholder: "you@email.com",
+    consent: "Я согласен получать новости о продуктах и маркетинговые рассылки от Auxite по электронной почте. Я могу отписаться в любое время.",
+    submit: "Отправить",
+    thanks: "Спасибо! Мы свяжемся с вами.",
+    invalid: "Пожалуйста, введите корректный e-mail.",
+  },
+};
+
+const EMAIL_RE = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+
 export default function SupportChat() {
   const { lang } = useLanguage();
   const t = T[lang] ?? T.en;
+  const lt = LEAD_T[lang] ?? LEAD_T.en;
   const rtl = lang === "ar";
 
   const [open, setOpen] = useState(false);
@@ -97,6 +160,41 @@ export default function SupportChat() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Optional lead capture (Phase 2): email + explicit marketing consent.
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadConsent, setLeadConsent] = useState(false);
+  const [leadSending, setLeadSending] = useState(false);
+  const [leadDone, setLeadDone] = useState(false);
+  const [leadError, setLeadError] = useState<string | null>(null);
+
+  async function submitLead() {
+    const email = leadEmail.trim();
+    if (!EMAIL_RE.test(email)) {
+      setLeadError(lt.invalid);
+      return;
+    }
+    setLeadError(null);
+    setLeadSending(true);
+    try {
+      const res = await fetch("/api/support-lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          marketingConsent: leadConsent,
+          lang,
+          sessionId: getSessionId(),
+        }),
+      });
+      if (!res.ok) throw new Error("failed");
+      setLeadDone(true);
+    } catch {
+      setLeadError(t.error);
+    } finally {
+      setLeadSending(false);
+    }
+  }
 
   // Stable id for this conversation so the server can group turns into one
   // transcript. Generated lazily on the first send.
@@ -211,6 +309,44 @@ export default function SupportChat() {
               </div>
             ))}
           </div>
+
+          {/* Optional lead capture — appears after the first exchange, hides once sent */}
+          {messages.length > 0 && !leadDone && (
+            <div className="border-t border-slate-800 bg-slate-900/60 px-4 py-3">
+              <p className="mb-2 text-xs text-slate-300">{lt.prompt}</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="email"
+                  value={leadEmail}
+                  onChange={(e) => setLeadEmail(e.target.value)}
+                  placeholder={lt.placeholder}
+                  className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-white placeholder-slate-500 focus:border-gold-500 focus:outline-none"
+                />
+                <button
+                  onClick={() => void submitLead()}
+                  disabled={leadSending || !leadEmail.trim()}
+                  className="shrink-0 rounded-lg bg-gold-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-gold-600 disabled:opacity-40"
+                >
+                  {lt.submit}
+                </button>
+              </div>
+              <label className="mt-2 flex items-start gap-2 text-[11px] leading-tight text-slate-400">
+                <input
+                  type="checkbox"
+                  checked={leadConsent}
+                  onChange={(e) => setLeadConsent(e.target.checked)}
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-gold-500"
+                />
+                <span>{lt.consent}</span>
+              </label>
+              {leadError && <p className="mt-1 text-[11px] text-red-400">{leadError}</p>}
+            </div>
+          )}
+          {leadDone && (
+            <div className="border-t border-slate-800 bg-slate-900/60 px-4 py-2 text-xs text-gold-300">
+              {lt.thanks}
+            </div>
+          )}
 
           {/* Human handoff */}
           <div className="border-t border-slate-800 px-4 py-2">
