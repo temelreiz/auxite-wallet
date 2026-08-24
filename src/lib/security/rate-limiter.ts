@@ -76,6 +76,14 @@ export const supportChatDailyLimiter = new Ratelimit({
   prefix: 'ratelimit:support-chat:daily',
 });
 
+// Destek widget'ı lead/consent kaydı (IP başına) — form spam koruması
+export const supportLeadLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, '10 m'), // 10 kayıt/10 dakika
+  analytics: true,
+  prefix: 'ratelimit:support-lead',
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
