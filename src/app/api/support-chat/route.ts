@@ -4,6 +4,7 @@ import {
   supportChatLimiter,
   supportChatDailyLimiter,
 } from "@/lib/security/rate-limiter";
+import { saveTranscript } from "@/lib/support-chat-store";
 
 // Anthropic SDK needs the Node runtime (not edge).
 export const runtime = "nodejs";
@@ -107,10 +108,16 @@ export async function POST(req: Request) {
     return Response.json({ error: "Invalid JSON." }, { status: 400, headers: cors });
   }
 
-  const messages = sanitize((body as { messages?: unknown })?.messages);
+  const rawMessages = (body as { messages?: unknown })?.messages;
+  const messages = sanitize(rawMessages);
   if (!messages) {
     return Response.json({ error: "No valid messages." }, { status: 400, headers: cors });
   }
+
+  // Optional metadata the widget sends so we can persist the conversation.
+  const sessionId = (body as { sessionId?: unknown })?.sessionId;
+  const lang = (body as { lang?: unknown })?.lang;
+  const referer = req.headers.get("referer");
 
   const client = new Anthropic();
 
@@ -130,8 +137,12 @@ export async function POST(req: Request) {
   const encoder = new TextEncoder();
   const readable = new ReadableStream<Uint8Array>({
     async start(controller) {
+      let assistantReply = "";
       try {
-        stream.on("text", (delta) => controller.enqueue(encoder.encode(delta)));
+        stream.on("text", (delta) => {
+          assistantReply += delta;
+          controller.enqueue(encoder.encode(delta));
+        });
         await stream.finalMessage();
       } catch (err) {
         const msg =
@@ -140,6 +151,18 @@ export async function POST(req: Request) {
             : "\n\n[support assistant error]";
         controller.enqueue(encoder.encode(msg));
       } finally {
+        // Persist the conversation for the admin panel / lead capture. Only when
+        // the client supplied a session id, and never fatal to the response.
+        if (typeof sessionId === "string" && sessionId) {
+          await saveTranscript({
+            sessionId,
+            history: rawMessages,
+            assistantReply,
+            lang: typeof lang === "string" ? lang : null,
+            referer,
+            ip,
+          });
+        }
         controller.close();
       }
     },

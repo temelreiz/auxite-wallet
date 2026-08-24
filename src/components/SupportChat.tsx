@@ -98,6 +98,19 @@ export default function SupportChat() {
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Stable id for this conversation so the server can group turns into one
+  // transcript. Generated lazily on the first send.
+  const sessionIdRef = useRef<string>("");
+  function getSessionId(): string {
+    if (!sessionIdRef.current) {
+      sessionIdRef.current =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `s_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    }
+    return sessionIdRef.current;
+  }
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages, open]);
@@ -114,7 +127,7 @@ export default function SupportChat() {
       const res = await fetch("/api/support-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history }),
+        body: JSON.stringify({ messages: history, sessionId: getSessionId(), lang }),
       });
       if (res.status === 429) {
         setMessages((prev) => {
