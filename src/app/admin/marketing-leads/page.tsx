@@ -107,9 +107,12 @@ export default function MarketingLeadsPage() {
   return (
     <div className="min-h-screen bg-slate-950 px-4 py-8 text-slate-200">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-2 text-sm">
+        <div className="mb-2 flex items-center gap-3 text-sm">
           <Link href="/admin/support-chats" className="text-gold-400 hover:text-gold-300">
             ← Support chats
+          </Link>
+          <Link href="/admin/marketing-campaign" className="text-gold-400 hover:text-gold-300">
+            Compose campaign →
           </Link>
         </div>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">

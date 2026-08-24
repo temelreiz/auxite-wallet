@@ -6,7 +6,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
-import { createHmac, timingSafeEqual } from "crypto";
+import { timingSafeEqual } from "crypto";
+import { SUPPRESSION_SET, unsubscribeToken } from "@/lib/email-suppression";
 
 export const dynamic = "force-dynamic";
 
@@ -14,24 +15,6 @@ const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
-
-const SUPPRESSION_SET = "email:suppressed";
-
-function unsubscribeSecret(): string {
-  return (
-    process.env.UNSUBSCRIBE_SECRET ||
-    process.env.CRON_SECRET ||
-    process.env.NEXTAUTH_SECRET ||
-    "auxite-unsubscribe-fallback"
-  );
-}
-
-function unsubscribeToken(email: string): string {
-  return createHmac("sha256", unsubscribeSecret())
-    .update(email.trim().toLowerCase())
-    .digest("hex")
-    .slice(0, 16);
-}
 
 function tokenValid(email: string, token: string): boolean {
   if (!token || token.length !== 16) return false;

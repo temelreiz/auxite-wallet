@@ -14,8 +14,37 @@
 // event mail the user cannot opt out of while holding an account.
 
 import type { Redis } from "@upstash/redis";
+import { createHmac } from "crypto";
 
 export const SUPPRESSION_SET = "email:suppressed";
+
+// ── Unsubscribe link tokens ────────────────────────────────────────────────
+// HMAC over the email with a stable secret, so the same address always yields
+// the same token (sender and /api/unsubscribe both derive it). Shared here so
+// marketing senders and the unsubscribe route can't drift apart.
+
+function unsubscribeSecret(): string {
+  return (
+    process.env.UNSUBSCRIBE_SECRET ||
+    process.env.CRON_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    "auxite-unsubscribe-fallback"
+  );
+}
+
+export function unsubscribeToken(email: string): string {
+  return createHmac("sha256", unsubscribeSecret())
+    .update(email.trim().toLowerCase())
+    .digest("hex")
+    .slice(0, 16);
+}
+
+/** Full one-click unsubscribe URL for an email (token embedded). */
+export function unsubscribeUrl(email: string): string {
+  const base = process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io";
+  const e = email.trim().toLowerCase();
+  return `${base}/unsubscribe?email=${encodeURIComponent(e)}&token=${unsubscribeToken(e)}`;
+}
 
 /**
  * Load the whole suppression set once as a lowercased Set for O(1),
