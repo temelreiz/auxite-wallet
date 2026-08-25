@@ -51,6 +51,8 @@ interface FormState {
   textColor: string;
   actionType: (typeof ACTION_TYPES)[number];
   actionValue: string;
+  ctaLabel: BannerLocale;
+  dismissLabel: BannerLocale;
   active: boolean;
   priority: number;
   startDate: string;
@@ -66,6 +68,8 @@ const EMPTY_FORM: FormState = {
   textColor: "#ffffff",
   actionType: "screen",
   actionValue: "fund-vault",
+  ctaLabel: {},
+  dismissLabel: {},
   active: true,
   priority: 50,
   startDate: "",
@@ -159,6 +163,8 @@ export default function AdminBannersPage() {
         ? (b.actionType as FormState["actionType"])
         : "none",
       actionValue: b.actionValue || "",
+      ctaLabel: b.ctaLabel || {},
+      dismissLabel: b.dismissLabel || {},
       active: b.active !== false,
       priority: b.priority ?? 50,
       startDate: b.startDate ? b.startDate.slice(0, 10) : "",
@@ -190,6 +196,8 @@ export default function AdminBannersPage() {
       textColor: form.textColor,
       actionType: form.actionType,
       actionValue: form.actionType === "none" ? "" : form.actionValue.trim(),
+      ctaLabel: form.ctaLabel,
+      dismissLabel: form.dismissLabel,
       active: form.active,
       priority: Number(form.priority) || 0,
       startDate: form.startDate ? new Date(form.startDate).toISOString() : undefined,
@@ -414,6 +422,48 @@ export default function AdminBannersPage() {
                 )}
               </div>
 
+              <div>
+                <label className={label}>Buton metinleri (opsiyonel)</label>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <input
+                    className={field}
+                    placeholder="Ana buton — TR (varsayılan: Devam et)"
+                    value={form.ctaLabel.tr || ""}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, ctaLabel: { ...f.ctaLabel, tr: e.target.value } }))
+                    }
+                  />
+                  <input
+                    className={field}
+                    placeholder="Primary — EN (default: Continue)"
+                    value={form.ctaLabel.en || ""}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, ctaLabel: { ...f.ctaLabel, en: e.target.value } }))
+                    }
+                  />
+                  <input
+                    className={field}
+                    placeholder="Kapat butonu — TR (varsayılan: Kapat)"
+                    value={form.dismissLabel.tr || ""}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, dismissLabel: { ...f.dismissLabel, tr: e.target.value } }))
+                    }
+                  />
+                  <input
+                    className={field}
+                    placeholder="Dismiss — EN (default: Dismiss)"
+                    value={form.dismissLabel.en || ""}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, dismissLabel: { ...f.dismissLabel, en: e.target.value } }))
+                    }
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-slate-600">
+                  Boş bırakılırsa bileşenin varsayılan metinleri kullanılır. Diğer diller
+                  TR &rarr; EN sırasıyla geri düşer.
+                </p>
+              </div>
+
               <div className="grid sm:grid-cols-3 gap-4">
                 <div>
                   <label className={label}>Öncelik</label>
@@ -514,7 +564,8 @@ export default function AdminBannersPage() {
                         className="flex-1 px-4 py-2.5 rounded-xl bg-white/95 text-center text-sm font-bold"
                         style={{ color: form.backgroundColor }}
                       >
-                        {previewLang === "tr" ? "Devam et" : "Continue"}
+                        {pickBannerLocale(form.ctaLabel, previewLang) ||
+                          (previewLang === "tr" ? "Devam et" : "Continue")}
                       </div>
                     )}
                     <div
@@ -522,7 +573,8 @@ export default function AdminBannersPage() {
                         form.actionType === "none" ? "flex-1 text-center" : ""
                       }`}
                     >
-                      {previewLang === "tr" ? "Kapat" : "Dismiss"}
+                      {pickBannerLocale(form.dismissLabel, previewLang) ||
+                        (previewLang === "tr" ? "Kapat" : "Dismiss")}
                     </div>
                   </div>
                 </div>

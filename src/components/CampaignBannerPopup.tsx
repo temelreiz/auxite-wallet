@@ -120,6 +120,12 @@ export default function CampaignBannerPopup({ language }: Props) {
 
   const title = pickBannerLocale(banner.title, language);
   const subtitle = pickBannerLocale(banner.subtitle, language);
+  // Campaign-supplied button copy, falling back to the generic defaults so
+  // older records keep working unchanged.
+  const ctaText =
+    pickBannerLocale(banner.ctaLabel, language) || (language === "tr" ? "Devam et" : "Continue");
+  const dismissText =
+    pickBannerLocale(banner.dismissLabel, language) || (language === "tr" ? "Kapat" : "Dismiss");
   const hasAction = banner.actionType === "screen" || banner.actionType === "link";
 
   const act = () => {
@@ -184,7 +190,7 @@ export default function CampaignBannerPopup({ language }: Props) {
                 className="flex-1 px-5 py-3.5 rounded-xl bg-white/95 hover:bg-white transition-colors text-base font-bold"
                 style={{ color: banner.backgroundColor || "#10b981" }}
               >
-                {language === "tr" ? "Devam et" : "Continue"}
+                {ctaText}
               </button>
             )}
             <button
@@ -193,7 +199,7 @@ export default function CampaignBannerPopup({ language }: Props) {
                 hasAction ? "" : "flex-1"
               }`}
             >
-              {language === "tr" ? "Kapat" : "Dismiss"}
+              {dismissText}
             </button>
           </div>
         </div>
