@@ -152,6 +152,12 @@ export async function POST(request: NextRequest) {
           // component defaults at render time.
           ctaLabel: pickLocales(banner.ctaLabel, {}),
           dismissLabel: pickLocales(banner.dismissLabel, {}),
+          // imageUrl and the date window were absent here, so a banner created
+          // with a hero image or a schedule silently lost all three — the
+          // admin form collects them and they never reached storage.
+          imageUrl: banner.imageUrl || undefined,
+          startDate: banner.startDate || undefined,
+          endDate: banner.endDate || undefined,
           backgroundColor: banner.bgColor || banner.backgroundColor || "#10b981",
           textColor: banner.textColor || "#ffffff",
           actionType: banner.actionType || "none",
