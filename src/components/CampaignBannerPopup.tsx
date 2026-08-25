@@ -127,6 +127,10 @@ export default function CampaignBannerPopup({ language }: Props) {
   const dismissText =
     pickBannerLocale(banner.dismissLabel, language) || (language === "tr" ? "Kapat" : "Dismiss");
   const hasAction = banner.actionType === "screen" || banner.actionType === "link";
+  // Arabic is the only RTL locale the wallet ships. Without this the card
+  // renders Arabic copy left-aligned, which reads as broken rather than
+  // merely unstyled.
+  const isRtl = language === "ar";
 
   const act = () => {
     if (banner.actionType === "screen") {
@@ -154,6 +158,7 @@ export default function CampaignBannerPopup({ language }: Props) {
         // Clicking the card itself must not fall through to the backdrop's
         // close handler.
         onClick={(e) => e.stopPropagation()}
+        dir={isRtl ? "rtl" : "ltr"}
         className="relative w-full max-w-md rounded-3xl overflow-hidden shadow-2xl shadow-black/50 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
         style={{
           backgroundColor: banner.backgroundColor || "#10b981",
@@ -163,7 +168,7 @@ export default function CampaignBannerPopup({ language }: Props) {
         <button
           onClick={close}
           aria-label="Kapat"
-          className="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/35 transition-colors"
+          className="absolute top-3 end-3 w-9 h-9 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/35 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
