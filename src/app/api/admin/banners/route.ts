@@ -10,6 +10,8 @@ interface Banner {
   textColor: string;
   actionType: 'none' | 'link' | 'screen' | 'promo';
   actionValue?: string;
+  ctaLabel?: { tr: string; en: string; de?: string; fr?: string; ar?: string; ru?: string };
+  dismissLabel?: { tr: string; en: string; de?: string; fr?: string; ar?: string; ru?: string };
   active: boolean;
   priority: number;
   startDate?: string;
@@ -146,6 +148,10 @@ export async function POST(request: NextRequest) {
             tr: banner.subtitleTr,
             en: banner.subtitleEn,
           }),
+          // Per-campaign button copy; empty locales fall back to the
+          // component defaults at render time.
+          ctaLabel: pickLocales(banner.ctaLabel, {}),
+          dismissLabel: pickLocales(banner.dismissLabel, {}),
           backgroundColor: banner.bgColor || banner.backgroundColor || "#10b981",
           textColor: banner.textColor || "#ffffff",
           actionType: banner.actionType || "none",

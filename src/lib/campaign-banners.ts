@@ -30,6 +30,11 @@ export interface Banner {
   textColor: string;
   actionType: "none" | "link" | "screen" | "promo";
   actionValue?: string;
+  /** Per-campaign button copy. Empty falls back to the component defaults —
+   *  a gold-bonus CTA ("Fund my vault") is wrong on an AUXR announcement, so
+   *  the label belongs to the record, not to the component. */
+  ctaLabel?: BannerLocale;
+  dismissLabel?: BannerLocale;
   active: boolean;
   priority: number;
   startDate?: string;
