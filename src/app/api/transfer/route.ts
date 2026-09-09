@@ -10,6 +10,7 @@ import { getUserLanguage } from "@/lib/user-language";
 import { checkTransferAllowed } from "@/lib/bonus-guard";
 import { notifyTransactionRich } from "@/lib/notification-sender";
 import { acquireBalanceLock, releaseBalanceLock, type BalanceLock } from "@/lib/balance-lock";
+import { assertAccountActive } from "@/lib/security/account-guard";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -387,6 +388,12 @@ export async function POST(request: NextRequest) {
 
     const normalizedFrom = fromAddress.toLowerCase();
     const normalizedTo = toAddress.toLowerCase();
+
+    // Account gate — a frozen / banned sender moves no value.
+    const gate = await assertAccountActive(normalizedFrom);
+    if (!gate.ok) {
+      return NextResponse.json({ error: gate.error, code: gate.code }, { status: 403 });
+    }
 
     // Serialise the sender's balance mutations: the sufficiency checks below
     // read the balance well before multi.exec() debits it, so concurrent
