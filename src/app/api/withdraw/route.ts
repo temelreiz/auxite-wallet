@@ -11,6 +11,7 @@ import { recordAuxmEntry } from "@/lib/auxm-ledger";
 import { blockUSPersonForFeature } from "@/lib/security/us-geofence";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
+import { acquireBalanceLock, releaseBalanceLock, type BalanceLock } from "@/lib/balance-lock";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -133,6 +134,8 @@ async function verify2FA(address: string, code: string): Promise<{ valid: boolea
 }
 
 export async function POST(request: NextRequest) {
+  let balanceLock: BalanceLock | null = null;
+
   try {
     // Kill Switch / Trading Guard
     const withdrawCheck = await checkTradingAllowed('cryptoWithdraw');
@@ -166,6 +169,18 @@ export async function POST(request: NextRequest) {
     if (!address || !coin || !amount || !withdrawAddress) {
       console.error(`❌ Missing fields: address=${!!address}, coin=${!!coin}, amount=${!!amount}, withdrawAddress=${!!withdrawAddress}`);
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // Serialise this user's balance mutations. Both the AUXM redemption path
+    // and the external settlement path read the balance, validate it, then
+    // debit it further down — concurrent withdrawals would each pass the
+    // check against the same funds.
+    balanceLock = await acquireBalanceLock(address, "withdraw");
+    if (!balanceLock) {
+      return NextResponse.json(
+        { error: "Another operation is in progress on your account. Please retry in a few seconds." },
+        { status: 409 }
+      );
     }
 
     if (amount <= 0) {
@@ -705,6 +720,8 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Withdraw error:", error);
     return NextResponse.json({ error: "Withdrawal failed: " + error.message }, { status: 500 });
+  } finally {
+    await releaseBalanceLock(balanceLock);
   }
 }
 

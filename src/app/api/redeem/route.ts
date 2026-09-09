@@ -12,6 +12,7 @@ import { checkTradingAllowed } from '@/lib/trading-guard';
 import { requireKycForWithdraw } from '@/lib/withdrawal-guard';
 import { ethers } from 'ethers';
 import { METAL_TOKENS } from '@/config/contracts-v8';
+import { acquireBalanceLock, releaseBalanceLock, type BalanceLock } from "@/lib/balance-lock";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'physicalredemption@auxite.io';
 
@@ -224,6 +225,8 @@ export async function GET(request: NextRequest) {
 
 // ── POST: Submit redemption request ──
 export async function POST(request: NextRequest) {
+  let balanceLock: BalanceLock | null = null;
+
   try {
     // Kill Switch / Trading Guard
     const redeemCheck = await checkTradingAllowed('metalTrading');
@@ -277,6 +280,17 @@ export async function POST(request: NextRequest) {
           error: `Minimum ${minThreshold}g required for physical redemption of ${upperMetal}`,
         }, { status: 400 });
       }
+    }
+
+    // Serialise this user's balance mutations. The availability check below
+    // runs long before the metal is actually debited, so concurrent
+    // redemptions would each see the full balance and each pass.
+    balanceLock = await acquireBalanceLock(address, "redeem");
+    if (!balanceLock) {
+      return NextResponse.json(
+        { error: 'Another operation is in progress on your account. Please retry in a few seconds.' },
+        { status: 409 }
+      );
     }
 
     // Check balance — hybrid (Redis + on-chain + allocation)
@@ -489,5 +503,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Redemption error:', error);
     return NextResponse.json({ error: error.message || 'Failed to process redemption' }, { status: 500 });
+  } finally {
+    await releaseBalanceLock(balanceLock);
   }
 }

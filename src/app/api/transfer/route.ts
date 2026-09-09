@@ -9,6 +9,7 @@ import { sendTransferSentEmail, sendTransferReceivedEmail } from "@/lib/email-se
 import { getUserLanguage } from "@/lib/user-language";
 import { checkTransferAllowed } from "@/lib/bonus-guard";
 import { notifyTransactionRich } from "@/lib/notification-sender";
+import { acquireBalanceLock, releaseBalanceLock, type BalanceLock } from "@/lib/balance-lock";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -292,6 +293,8 @@ async function checkTransakHoldingPeriod(
 }
 
 export async function POST(request: NextRequest) {
+  let balanceLock: BalanceLock | null = null;
+
   try {
     const { fromAddress, toAddress, token, amount, twoFactorCode } = await request.json();
 
@@ -384,6 +387,19 @@ export async function POST(request: NextRequest) {
 
     const normalizedFrom = fromAddress.toLowerCase();
     const normalizedTo = toAddress.toLowerCase();
+
+    // Serialise the sender's balance mutations: the sufficiency checks below
+    // read the balance well before multi.exec() debits it, so concurrent
+    // transfers would otherwise each pass the check and spend the same funds.
+    // Only the debit side is locked — locking both parties invites deadlock.
+    balanceLock = await acquireBalanceLock(normalizedFrom, "transfer");
+    if (!balanceLock) {
+      return NextResponse.json(
+        { error: "Hesabınızda başka bir işlem sürüyor. Lütfen birkaç saniye sonra tekrar deneyin." },
+        { status: 409 }
+      );
+    }
+
     const tokenKey = token.toLowerCase();
     const tokenUpper = token.toUpperCase();
 
@@ -723,5 +739,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Transfer error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
+  } finally {
+    await releaseBalanceLock(balanceLock);
   }
 }

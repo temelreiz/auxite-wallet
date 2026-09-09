@@ -15,6 +15,7 @@ import { Redis } from "@upstash/redis";
 import { z } from "zod";
 import { validateRequest } from "@/lib/validations";
 import { withRateLimit, tradeLimiter, checkSuspiciousActivity } from "@/lib/security/rate-limiter";
+import { acquireBalanceLock, releaseBalanceLock, type BalanceLock } from "@/lib/balance-lock";
 import { checkTradingAllowed } from "@/lib/trading-guard";
 import { logTrade, logAudit } from "@/lib/security/audit-logger";
 import { getMetalSpread } from "@/lib/spread-config";
@@ -816,6 +817,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
   const userAgent = request.headers.get("user-agent") || "unknown";
+  let balanceLock: BalanceLock | null = null;
 
   try {
     // 1. Rate limiting
@@ -921,7 +923,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Get user balance
+    // 5. Serialise this user's balance mutations.
+    // Everything from the balance read below to the multi.exec() debit is one
+    // critical section. Without this lock, concurrent requests all read the
+    // same balance, all pass the sufficiency check, and all debit — spending
+    // the same funds N times.
+    balanceLock = await acquireBalanceLock(normalizedAddress, "trade");
+    if (!balanceLock) {
+      return NextResponse.json(
+        { error: "Hesabınızda başka bir işlem sürüyor. Lütfen birkaç saniye sonra tekrar deneyin." },
+        { status: 409 }
+      );
+    }
+
+    // 6. Get user balance
     const balanceKey = `user:${normalizedAddress}:balance`;
     const currentBalance = await redis.hgetall(balanceKey);
 
@@ -981,7 +996,7 @@ export async function POST(request: NextRequest) {
       console.log(`   ${fromTokenLower} is custodial, Redis: ${fromBalance}`);
     }
 
-    // 6. Balance check
+    // 7. Balance check
     const availableBalance = fromBalance;
 
     console.log(`📊 Balance Check: required=${fromAmount}, available=${availableBalance}`);
@@ -997,7 +1012,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // 7. CALCULATE & EXECUTE WITH TIER-BASED FEE
+    // 8. CALCULATE & EXECUTE WITH TIER-BASED FEE
     // ═══════════════════════════════════════════════════════════════════════
 
     let toAmount: number;
@@ -1521,7 +1536,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // 8. UPDATE REDIS BALANCES
+    // 9. UPDATE REDIS BALANCES
     // ═══════════════════════════════════════════════════════════════════════
 
     const multi = redis.multi();
@@ -1830,7 +1845,7 @@ export async function POST(request: NextRequest) {
       }
     })();
 
-    // 9. Audit log
+    // 10. Audit log
     await logTrade(
       normalizedAddress,
       ip,
@@ -1842,11 +1857,11 @@ export async function POST(request: NextRequest) {
     );
 
 
-    // 10. Get updated balance
+    // 11. Get updated balance
     const updatedBalance = await redis.hgetall(balanceKey);
 
     // ═══════════════════════════════════════════════════════════════════════
-    // 11. TELEGRAM BİLDİRİMİ - Metal alımlarında admin'e bildirim gönder
+    // 12. TELEGRAM BİLDİRİMİ - Metal alımlarında admin'e bildirim gönder
     // ═══════════════════════════════════════════════════════════════════════
     if (type === "buy" && METALS.includes(toTokenLower)) {
       // Async olarak gönder, response'u bekletme
@@ -1872,7 +1887,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // 11.5 PROCUREMENT QUEUE — Queue metal purchase from KuveytTürk
+    // 12.5 PROCUREMENT QUEUE — Queue metal purchase from KuveytTürk
     // ═══════════════════════════════════════════════════════════════════════
     if (type === "buy" && METALS.includes(toTokenLower)) {
       queueTradeForProcurement({
@@ -1889,7 +1904,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // 11.6 BONUS GUARD — Track purchase toward unlock threshold (500 AUXS equiv)
+    // 12.6 BONUS GUARD — Track purchase toward unlock threshold (500 AUXS equiv)
     // ═══════════════════════════════════════════════════════════════════════
     if (type === "buy" && METALS.includes(toTokenLower)) {
       try {
@@ -1908,7 +1923,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // 11.7 VOLUME BONUS — Apply active "trade $X get Y grams" campaigns.
+    // 12.7 VOLUME BONUS — Apply active "trade $X get Y grams" campaigns.
     // Non-blocking: campaign-claim failures must not roll back the trade.
     // ═══════════════════════════════════════════════════════════════════════
     if (type === "buy" && METALS.includes(toTokenLower)) {
@@ -1938,7 +1953,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // 12. TRADE EXECUTION EMAIL — Institutional confirmation
+    // 13. TRADE EXECUTION EMAIL — Institutional confirmation
     // ═══════════════════════════════════════════════════════════════════════
     let tradeEmail = email;
     let tradeClientName = holderName;
@@ -2042,5 +2057,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ error: "Trade işlemi başarısız", details: error.message }, { status: 500 });
+  } finally {
+    await releaseBalanceLock(balanceLock);
   }
 }
