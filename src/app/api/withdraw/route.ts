@@ -12,6 +12,7 @@ import { blockUSPersonForFeature } from "@/lib/security/us-geofence";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
 import { acquireBalanceLock, releaseBalanceLock, type BalanceLock } from "@/lib/balance-lock";
+import { assertAccountActive } from "@/lib/security/account-guard";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -169,6 +170,12 @@ export async function POST(request: NextRequest) {
     if (!address || !coin || !amount || !withdrawAddress) {
       console.error(`❌ Missing fields: address=${!!address}, coin=${!!coin}, amount=${!!amount}, withdrawAddress=${!!withdrawAddress}`);
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // Account gate — this is the path that actually moves funds off-platform.
+    const gate = await assertAccountActive(address);
+    if (!gate.ok) {
+      return NextResponse.json({ error: gate.error, code: gate.code }, { status: 403 });
     }
 
     // Serialise this user's balance mutations. Both the AUXM redemption path

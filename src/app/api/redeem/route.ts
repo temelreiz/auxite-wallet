@@ -13,6 +13,7 @@ import { requireKycForWithdraw } from '@/lib/withdrawal-guard';
 import { ethers } from 'ethers';
 import { METAL_TOKENS } from '@/config/contracts-v8';
 import { acquireBalanceLock, releaseBalanceLock, type BalanceLock } from "@/lib/balance-lock";
+import { assertAccountActive } from "@/lib/security/account-guard";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'physicalredemption@auxite.io';
 
@@ -280,6 +281,12 @@ export async function POST(request: NextRequest) {
           error: `Minimum ${minThreshold}g required for physical redemption of ${upperMetal}`,
         }, { status: 400 });
       }
+    }
+
+    // Account gate — frozen / banned accounts redeem nothing.
+    const gate = await assertAccountActive(address);
+    if (!gate.ok) {
+      return NextResponse.json({ error: gate.error, code: gate.code }, { status: 403 });
     }
 
     // Serialise this user's balance mutations. The availability check below

@@ -16,6 +16,7 @@ import { z } from "zod";
 import { validateRequest } from "@/lib/validations";
 import { withRateLimit, tradeLimiter, checkSuspiciousActivity } from "@/lib/security/rate-limiter";
 import { acquireBalanceLock, releaseBalanceLock, type BalanceLock } from "@/lib/balance-lock";
+import { assertAccountActive } from "@/lib/security/account-guard";
 import { checkTradingAllowed } from "@/lib/trading-guard";
 import { logTrade, logAudit } from "@/lib/security/audit-logger";
 import { getMetalSpread } from "@/lib/spread-config";
@@ -921,6 +922,12 @@ export async function POST(request: NextRequest) {
         { error: "Şüpheli aktivite tespit edildi" },
         { status: 429 }
       );
+    }
+
+    // 4b. Account gate — frozen / panic / banned accounts move no value.
+    const gate = await assertAccountActive(normalizedAddress);
+    if (!gate.ok) {
+      return NextResponse.json({ error: gate.error, code: gate.code }, { status: 403 });
     }
 
     // 5. Serialise this user's balance mutations.
