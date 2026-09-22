@@ -10,12 +10,12 @@ const translations = {
     title: "Saklama Güvenliği",
     subtitle: "Fiziksel metal varlıklarınız nasıl güvende tutulur",
     backToTrust: "Güven Merkezine Dön",
-    vaultLocations: "Kasa Konumları",
+    vaultLocations: "Hedeflenen Kasa Konumları",
     securityFeatures: "Güvenlik Özellikleri",
-    insuranceCoverage: "Sigorta Kapsamı",
+    insuranceCoverage: "Sigorta Durumu",
     custodyPartners: "Saklama Ortakları",
     launchPhaseNotice: "Launch Phase Bildirimi",
-    launchPhaseDesc: "Platform şu anda launch aşamasındadır. Saklama detayları canlı yayına geçtiğinde güncellenecektir.",
+    launchPhaseDesc: "Auxite launch aşamasındadır. Şu an itibarıyla imzalanmış bir saklama (custody) veya sigorta sözleşmesi bulunmamaktadır; aşağıdaki konumlar hedeflenen saklama konumlarıdır, faal tesis beyanı değildir. Saklama ve sigorta anlaşmaları imzalandığında karşı tarafların adları, sözleşme kapsamları ve doğrulama belgeleri bu sayfada yayınlanacaktır.",
     zurich: "Zürih, İsviçre",
     istanbul: "İstanbul, Türkiye",
     london: "Londra, İngiltere",
@@ -26,7 +26,6 @@ const translations = {
     fullInsurance: "Tam Sigorta",
     vaultCapacity: "Kasa Kapasitesi",
     securityLevel: "Güvenlik Seviyesi",
-    certification: "Sertifikasyon",
     comingSoon: "Yakında",
     maximum: "Maksimum",
     lbmaCertified: "LBMA Sertifikalı",
@@ -37,12 +36,12 @@ const translations = {
     title: "Custody Security",
     subtitle: "How your physical metal assets are kept safe",
     backToTrust: "Back to Trust Center",
-    vaultLocations: "Vault Locations",
+    vaultLocations: "Target Vault Locations",
     securityFeatures: "Security Features",
-    insuranceCoverage: "Insurance Coverage",
+    insuranceCoverage: "Insurance Status",
     custodyPartners: "Custody Partners",
     launchPhaseNotice: "Launch Phase Notice",
-    launchPhaseDesc: "Platform is currently in launch phase. Custody details will be updated once we go live.",
+    launchPhaseDesc: "Auxite is in its launch phase. As of today no custody or insurance agreement has been executed. The locations below are target custody locations, not a representation of active facilities. Once custody and insurance agreements are signed, the counterparty names, scope and verification documents will be published on this page.",
     zurich: "Zurich, Switzerland",
     istanbul: "Istanbul, Turkey",
     london: "London, UK",
@@ -53,7 +52,6 @@ const translations = {
     fullInsurance: "Full Insurance",
     vaultCapacity: "Vault Capacity",
     securityLevel: "Security Level",
-    certification: "Certification",
     comingSoon: "Coming Soon",
     maximum: "Maximum",
     lbmaCertified: "LBMA Certified",
@@ -68,9 +66,7 @@ const vaultLocations = [
     country: "Switzerland", 
     flag: "🇨🇭", 
     metals: ["Gold", "Platinum"],
-    capacity: "10,000 kg",
     security: "maximum",
-    certification: "lbmaCertified",
     color: "from-red-500 to-red-600"
   },
   {
@@ -78,9 +74,7 @@ const vaultLocations = [
     country: "Turkey",
     flag: "🇹🇷",
     metals: ["Gold", "Silver"],
-    capacity: "15,000 kg",
     security: "maximum",
-    certification: "bistApproved",
     color: "from-red-600 to-white"
   },
   { 
@@ -88,9 +82,7 @@ const vaultLocations = [
     country: "UK", 
     flag: "🇬🇧", 
     metals: ["Gold", "Silver", "Platinum"],
-    capacity: "20,000 kg",
     security: "maximum",
-    certification: "lbmaCertified",
     color: "from-blue-600 to-red-600"
   },
   { 
@@ -98,9 +90,7 @@ const vaultLocations = [
     country: "UAE", 
     flag: "🇦🇪", 
     metals: ["Gold", "Palladium"],
-    capacity: "8,000 kg",
     security: "maximum",
-    certification: "dmccCertified",
     color: "from-green-600 to-red-600"
   },
 ];
@@ -109,7 +99,6 @@ const securityFeatures = [
   { icon: "🔒", titleKey: "security247", desc: "Armed guards and surveillance" },
   { icon: "👆", titleKey: "biometricAccess", desc: "Multi-factor authentication" },
   { icon: "🏦", titleKey: "armoredVaults", desc: "Military-grade protection" },
-  { icon: "📋", titleKey: "fullInsurance", desc: "Lloyd's of London coverage" },
 ];
 
 export default function CustodyPage() {
@@ -180,19 +169,8 @@ export default function CustodyPage() {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-slate-500 dark:text-slate-400">{t.vaultCapacity}</p>
-                      <p className="font-medium text-slate-800 dark:text-white">{vault.capacity}</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500 dark:text-slate-400">{t.securityLevel}</p>
-                      <p className="font-medium text-[#2F6F62]">{t[vault.security as keyof typeof t]}</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500 dark:text-slate-400">{t.certification}</p>
-                      <p className="font-medium text-slate-800 dark:text-white">{t[vault.certification as keyof typeof t]}</p>
-                    </div>
+                  <div className="text-sm">
+                    <p className="text-slate-500 dark:text-slate-400">{t.comingSoon}</p>
                   </div>
                 </div>
               </div>
@@ -211,9 +189,9 @@ export default function CustodyPage() {
             <div>
               <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">{t.insuranceCoverage}</h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm">
-                {lang === "tr" 
-                  ? "Tüm fiziksel metal varlıkları, Lloyd's of London tarafından tam değer üzerinden sigortalanmıştır. Bu, hırsızlık, doğal afetler ve diğer risklere karşı koruma sağlar."
-                  : "All physical metal assets are fully insured at full value by Lloyd's of London. This provides protection against theft, natural disasters, and other risks."
+                {lang === "tr"
+                  ? "Şu an itibarıyla yürürlükte olan bir metal sigorta poliçesi bulunmamaktadır. Sigorta kapsamı, saklama sağlayıcısı sözleşmesi ile birlikte kurulacaktır; poliçe yürürlüğe girdiğinde sigortacı adı, kapsamı ve limiti burada yayınlanacaktır."
+                  : "No metal insurance policy is currently in force. Insurance coverage will be put in place together with the custody provider agreement; once a policy is bound, the insurer, scope and limit will be published here."
                 }
               </p>
             </div>

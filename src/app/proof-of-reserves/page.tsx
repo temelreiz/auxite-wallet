@@ -8,7 +8,7 @@
 //   - Surplus / shortfall in grams and USD
 //
 // Designed to be the URL we cite in compliance docs, regulator submissions,
-// and the LBMA audit pack. Static-renderable enough to be archived by
+// and the reserve audit pack. Static-renderable enough to be archived by
 // auditors; live data via fetch on mount + interval.
 // ============================================================================
 
@@ -29,7 +29,7 @@ const T = {
     backed_pill: "Fully Backed",
     reconciling_pill: "Reconciling",
     title: "Proof of Reserves",
-    intro: "Auxite's reserve token (AUXR) is a 55/30/10/5 basket of physically allocated Au, Ag, Pt and Pd held under LBMA Good Delivery standards. Every unit in circulation is backed by the basket grams listed below — read directly from the live reserve ledger.",
+    intro: "Auxite's reserve token (AUXR) is a 55/30/10/5 basket of Au, Ag, Pt and Pd. The basket grams below are read directly from Auxite's own reserve ledger. These figures are self-reported: no independent auditor, custodian or insurer has verified them, and no attestation report has been published to date.",
     stat_circulation: "AUXR in Circulation",
     stat_units: "units",
     stat_marketcap: "Market Cap",
@@ -54,7 +54,7 @@ const T = {
     th_usd: "USD value",
     th_weight: "Live weight",
     nav_row: "NAV (1 AUXR)",
-    footer: 'Operated by Aurum Ledger Limited (HK). Physical bullion held under LBMA Good Delivery custody. Reserve figures above are read in real time from the production reserve ledger and auto-refresh every 60 seconds. For audit inquiries: ',
+    footer: 'Operated by Aurum Ledger Limited, Hong Kong (Company Reg. No. 79809097). Reserve figures above are read in real time from Auxite\'s own production reserve ledger and auto-refresh every 60 seconds; they are self-reported and unaudited. No custodian, insurer or auditor has been appointed to date. For audit inquiries: ',
     last_refresh: "Last refresh:",
     metal_gold: "Gold",
     metal_silver: "Silver",
@@ -67,7 +67,7 @@ const T = {
     backed_pill: "Tamamen Destekli",
     reconciling_pill: "Uzlaştırılıyor",
     title: "Rezerv Kanıtı",
-    intro: "Auxite'ın rezerv tokeni (AUXR), LBMA Good Delivery standartlarında fiziksel olarak tahsis edilmiş Au, Ag, Pt ve Pd metallerinden oluşan %55/30/10/5 oranlı bir sepettir. Dolaşımdaki her bir birim, aşağıda listelenen sepet gramlarıyla desteklenir — canlı rezerv defterinden doğrudan okunmaktadır.",
+    intro: "Auxite'ın rezerv tokeni (AUXR), Au, Ag, Pt ve Pd metallerinden oluşan %55/30/10/5 oranlı bir sepettir. Aşağıdaki sepet gramları doğrudan Auxite'ın kendi rezerv defterinden okunmaktadır. Bu rakamlar şirket beyanıdır: bağımsız bir denetçi, saklamacı veya sigortacı tarafından doğrulanmamıştır ve bugüne kadar yayınlanmış bir attestation raporu yoktur.",
     stat_circulation: "Dolaşımdaki AUXR",
     stat_units: "birim",
     stat_marketcap: "Piyasa Değeri",
@@ -92,7 +92,7 @@ const T = {
     th_usd: "USD değeri",
     th_weight: "Canlı ağırlık",
     nav_row: "NAV (1 AUXR)",
-    footer: "Aurum Ledger Limited (HK) tarafından işletilmektedir. Fiziksel külçeler LBMA Good Delivery saklama standartları altında tutulur. Yukarıdaki rezerv rakamları, üretim rezerv defterinden gerçek zamanlı okunur ve her 60 saniyede bir otomatik yenilenir. Denetim sorgulamaları için: ",
+    footer: "Aurum Ledger Limited, Hong Kong (Şirket Kayıt No. 79809097) tarafından işletilmektedir. Yukarıdaki rezerv rakamları Auxite'ın kendi üretim rezerv defterinden gerçek zamanlı okunur ve her 60 saniyede bir yenilenir; şirket beyanıdır ve denetlenmemiştir. Bugüne kadar atanmış bir saklamacı, sigortacı veya denetçi bulunmamaktadır. Denetim sorgulamaları için: ",
     last_refresh: "Son yenileme:",
     metal_gold: "Altın",
     metal_silver: "Gümüş",

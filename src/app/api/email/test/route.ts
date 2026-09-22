@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         clientName: 'Test Client',
         transactionType: 'Buy',
         metal: 'AUXG',
-        metalName: 'Gold (LBMA Good Delivery)',
+        metalName: 'Gold',
         grams: '2500.0000',
         executionPrice: 'USD 74.21 / g',
         grossConsideration: 'USD 185,525.00',

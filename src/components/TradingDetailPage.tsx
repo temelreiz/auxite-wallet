@@ -328,12 +328,9 @@ export default function TradingDetailPage({
                     </div>
                     <div className="flex justify-between py-2 border-b border-stone-200 dark:border-slate-800">
                       <span className="text-slate-500 dark:text-slate-400">{t("chain")}</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-medium">Ethereum</span>
+                      <span className="text-slate-800 dark:text-slate-200 font-medium">Base</span>
                     </div>
-                    <div className="flex justify-between py-2">
-                      <span className="text-slate-500 dark:text-slate-400">{t("custodian")}</span>
-                      <span className="text-slate-800 dark:text-slate-200 font-medium">Brinks</span>
-                    </div>
+
                   </div>
                 </div>
                 <div className="bg-stone-50 dark:bg-slate-800/30 rounded-xl p-4">

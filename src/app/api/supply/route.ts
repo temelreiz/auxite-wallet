@@ -106,7 +106,8 @@ function auxrPayload(s: Awaited<ReturnType<typeof getAuxrSupply>>) {
     circulatingBasis: s.nonCirculating.length
       ? "totalSupply minus the balances of the declared non-circulating addresses"
       : "no non-circulating addresses declared — circulating equals total supply",
-    backing: "basket of four precious metals, cash-settled at NAV",
+    backingModel: "basket of four precious metals, cash-settled at NAV (issuer's stated backing model)",
+    attestationStatus: "none — no independent reserve attestation has been issued to date",
   };
 }
 
@@ -131,9 +132,10 @@ function tokenPayload(symbol: MetalSymbol, supply: number) {
     supplyMode: SUPPLY_MODE,
     supplySource:
       SUPPLY_MODE === "canonical"
-        ? "canonical totalSupply (per-investor on-chain ownership, daily custodian reconciliation)"
-        : "mirror totalSupply (daily custodian reconciliation)",
-    backing: "1:1 physical metal (1 token = 1 gram)",
+        ? "canonical totalSupply (per-investor on-chain ownership, issuer internal reconciliation)"
+        : "mirror totalSupply (issuer internal reconciliation)",
+    backingModel: "1 token = 1 gram of physical metal (issuer's stated backing model)",
+    attestationStatus: "none — no independent reserve attestation has been issued to date",
   };
 }
 
@@ -200,12 +202,19 @@ export async function GET(request: NextRequest) {
       success: true,
       tokens,
       auxr: auxr ? auxrPayload(auxr) : null,
-      backingRatio: "1:1",
+      backingModel: "1 token = 1 gram of physical metal",
+      attestation: {
+        status: "none",
+        auditor: null,
+        custodian: null,
+        insurer: null,
+        note: "Backing is the issuer's stated model and has not been verified by an independent auditor, custodian or insurer. No attestation report has been published to date.",
+      },
       supplyMode: SUPPLY_MODE,
       source:
         SUPPLY_MODE === "canonical"
-          ? "canonical ERC20 totalSupply on Base Mainnet (per-investor ownership, daily custodian reconciliation = full platform AUM)"
-          : "mirror ERC20 totalSupply on Base Mainnet (daily custodian reconciliation = full platform AUM)",
+          ? "canonical ERC20 totalSupply on Base Mainnet (per-investor ownership, issuer internal reconciliation = full platform AUM)"
+          : "mirror ERC20 totalSupply on Base Mainnet (issuer internal reconciliation = full platform AUM)",
       lastUpdated: new Date().toISOString(),
     });
   } catch (error: any) {

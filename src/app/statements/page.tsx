@@ -292,22 +292,6 @@ export default function StatementsPage() {
           </div>
         </div>
 
-        {/* Custody Info Row */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="bg-white dark:bg-zinc-800/50 rounded-xl p-3 border border-stone-200 dark:border-zinc-700/50 text-center">
-            <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium tracking-wider mb-1">{t.custodian}</p>
-            <p className="text-sm font-semibold text-slate-800 dark:text-white">Brink&apos;s Global</p>
-          </div>
-          <div className="bg-white dark:bg-zinc-800/50 rounded-xl p-3 border border-stone-200 dark:border-zinc-700/50 text-center">
-            <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium tracking-wider mb-1">{t.auditedBy}</p>
-            <p className="text-sm font-semibold text-slate-800 dark:text-white">Bureau Veritas</p>
-          </div>
-          <div className="bg-white dark:bg-zinc-800/50 rounded-xl p-3 border border-stone-200 dark:border-zinc-700/50 text-center">
-            <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium tracking-wider mb-1">{t.jurisdiction}</p>
-            <p className="text-sm font-semibold text-slate-800 dark:text-white">Switzerland</p>
-          </div>
-        </div>
-
         {/* Filter Buttons */}
         <div className="flex gap-2 mb-5">
           {filters.map(f => (

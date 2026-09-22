@@ -327,7 +327,7 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent): Promise<void> {
       const { sendTradeExecutionEmail } = await import("@/lib/email");
       const { getUserLanguage } = await import("@/lib/user-language");
       const metalNameMap: Record<string, string> = {
-        AUXG: "Gold (LBMA Good Delivery)",
+        AUXG: "Gold",
         AUXS: "Silver",
         AUXPT: "Platinum",
         AUXPD: "Palladium",
