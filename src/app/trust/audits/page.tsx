@@ -8,7 +8,7 @@ import { useLanguage } from "@/components/LanguageContext";
 const translations = {
   tr: {
     title: "Denetim Raporları",
-    subtitle: "Bağımsız denetçiler tarafından doğrulanmış güvenlik ve rezerv denetimleri",
+    subtitle: "Güvenlik ve rezerv denetimlerinin durumu",
     backToTrust: "Güven Merkezine Dön",
     upcomingAudits: "Planlanan Denetimler",
     completedAudits: "Tamamlanan Denetimler",
@@ -33,7 +33,7 @@ const translations = {
   },
   en: {
     title: "Audit Reports",
-    subtitle: "Security and reserve audits verified by independent auditors",
+    subtitle: "Status of security and reserve audits",
     backToTrust: "Back to Trust Center",
     upcomingAudits: "Upcoming Audits",
     completedAudits: "Completed Audits",
