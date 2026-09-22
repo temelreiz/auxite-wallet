@@ -203,6 +203,36 @@ export async function GET(request: NextRequest) {
       tokens,
       auxr: auxr ? auxrPayload(auxr) : null,
       backingModel: "1 token = 1 gram of physical metal",
+      // Published so external data consumers do not have to guess which of the
+      // Base deployments is authoritative: only `tokens[].contractAddress`
+      // above is. The generations below were superseded, not burned, and still
+      // carry residual balances.
+      supersededContracts: [
+        {
+          generation: "interim mirror",
+          deployed: "2026-06-09",
+          status: "superseded — residual balances only",
+          addresses: {
+            "AUXG-M": "0x24acdf6dbc53e4e257d1812077e7ba1960b02019",
+            "AUXS-M": "0xb03471ba1616c8c1f772afcfc05966bbd298014e",
+            "AUXPT-M": "0xe5640dcbcb1de6316f9baa8654cfd0e51f3bdd19",
+            "AUXPD-M": "0x1c99a4979d34871d1c4fff0761a2863ec8610cf2",
+          },
+        },
+        {
+          generation: "V8",
+          deployed: "2026-02-02",
+          status: "superseded — residual balances only",
+          reason:
+            "V8 buy() minted only against on-chain USDC purchases, so totalSupply reflected a fraction of platform holdings rather than the whole.",
+          addresses: {
+            AUXG: "0x390164702040B509A3D752243F92C2Ac0318989D",
+            AUXS: "0x82F6EB8Ba5C84c8Fd395b25a7A40ade08F0868aa",
+            AUXPT: "0x119de594170b68561b1761ae1246C5154F94705d",
+            AUXPD: "0xe051B2603617277Ab50C509F5A38C16056C1C908",
+          },
+        },
+      ],
       attestation: {
         status: "none",
         auditor: null,
