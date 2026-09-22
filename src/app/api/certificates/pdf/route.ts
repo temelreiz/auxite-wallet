@@ -1,6 +1,6 @@
 // app/api/certificates/pdf/route.ts
 // CERTIFICATE OF METAL ALLOCATION — Institutional Grade
-// Swiss Private Bank + LBMA Custody Statement Style
+// Institutional custody statement layout
 // NO gradients, NO crypto vibes, NO startup aesthetics
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
@@ -56,19 +56,7 @@ const PURITY_BY_METAL: Record<string, string> = {
   AUXPD: '999.5',
 };
 
-const FORM_BY_METAL: Record<string, string> = {
-  AUXG: 'LBMA Good Delivery',
-  AUXS: 'LBMA Good Delivery',
-  AUXPT: 'LPPM Good Delivery',
-  AUXPD: 'LPPM Good Delivery',
-};
-
-const REFINER_BY_METAL: Record<string, string> = {
-  AUXG: 'LBMA-Listed Refiner',
-  AUXS: 'LBMA-Listed Refiner',
-  AUXPT: 'LPPM-Listed Refiner',
-  AUXPD: 'LPPM-Listed Refiner',
-};
+const NOT_SPECIFIED = 'Not specified';
 
 const VAULT_INFO: Record<string, { name: string; id: string; location: string; country: string }> = {
   IST: { name: 'Vault A – Istanbul Facility', id: 'TR-IST-VAULT-01', location: 'Istanbul', country: 'Turkey' },
@@ -162,8 +150,8 @@ export async function GET(request: NextRequest) {
     };
     const metalInfo = METAL_NAMES[certificate.metal] || { full: certificate.metal, symbol: '' };
     const purity = PURITY_BY_METAL[certificate.metal] || certificate.purity;
-    const form = FORM_BY_METAL[certificate.metal] || 'Good Delivery';
-    const refiner = REFINER_BY_METAL[certificate.metal] || 'Listed Refiner';
+    const form = certificate.form || NOT_SPECIFIED;
+    const refiner = certificate.refiner || NOT_SPECIFIED;
 
     const verifyUrl = `https://vault.auxite.io/verify?cert=${certificate.certificateNumber}`;
 
@@ -213,7 +201,7 @@ export async function GET(request: NextRequest) {
       // Bar traceability
       bars: allocations.length > 0
         ? allocations.map((a, i) => ({
-            refiner: refiner,
+            refiner: a.refiner || refiner,
             serial: a.serialNumber,
             grossWeight: `${parseFloat(a.grams).toFixed(1)}g`,
             fineWeight: `${parseFloat(a.grams).toFixed(1)}g`,
@@ -227,12 +215,12 @@ export async function GET(request: NextRequest) {
 
       // Custody structure
       custody: {
-        custodian: 'Auxite Approved Custodian',
+        custodian: 'Not appointed',
         vaultName: vault.name,
         vaultId: vault.id,
         location: vault.location,
-        structure: 'Bankruptcy-Remote Bailment',
-        audit: 'Independently Verified',
+        structure: 'Not established',
+        audit: 'Not independently verified',
         encumbrance: 'None',
       },
 
@@ -272,7 +260,7 @@ export async function GET(request: NextRequest) {
 
 // ═══════════════════════════════════════════════
 // INSTITUTIONAL CERTIFICATE HTML
-// Swiss Private Bank + LBMA Custody Statement
+// Institutional custody statement
 // ═══════════════════════════════════════════════
 
 function generateInstitutionalCertificateHTML(data: any, autoPrint: boolean = false): string {
@@ -793,11 +781,6 @@ function generateInstitutionalCertificateHTML(data: any, autoPrint: boolean = fa
           <div class="sig-label">Authorized Signatory</div>
           <div class="sig-entity">${data.issuer.name}</div>
         </div>
-        <div class="sig-box">
-          <div class="sig-line"></div>
-          <div class="sig-label">Custody Oversight</div>
-          <div class="sig-entity">Independent Verification</div>
-        </div>
       </div>
     </div>
 
@@ -817,7 +800,8 @@ function generateInstitutionalCertificateHTML(data: any, autoPrint: boolean = fa
       <div class="footer-right">
         This certificate is governed by the Auxite Terms of Service<br>
         and Redemption Policy. In case of discrepancy, the Auxite<br>
-        allocation ledger and custodian records shall prevail.
+        allocation ledger shall prevail. This document is issued by<br>
+        Auxite and has not been verified by an independent auditor.
       </div>
     </div>
     <div class="footer-gold"></div>

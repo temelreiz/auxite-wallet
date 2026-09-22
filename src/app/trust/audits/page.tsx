@@ -27,7 +27,8 @@ const translations = {
     smartContractAudit: "Akıllı Sözleşme Denetimi",
     complianceAudit: "Uyumluluk Denetimi",
     noReportsYet: "Henüz denetim raporu bulunmamaktadır",
-    auditPartners: "Denetim Ortakları",
+    tbd: "Henüz atanmadı",
+    plannedNote: "Aşağıdaki denetimler planlanmıştır. Hiçbir denetim firması henüz görevlendirilmemiş veya sözleşme imzalamamıştır; firma adları sözleşme imzalandığında yayınlanacaktır.",
     comingSoon: "Yakında",
   },
   en: {
@@ -51,24 +52,19 @@ const translations = {
     smartContractAudit: "Smart Contract Audit",
     complianceAudit: "Compliance Audit",
     noReportsYet: "No audit reports available yet",
-    auditPartners: "Audit Partners",
+    tbd: "Not yet appointed",
+    plannedNote: "The audits below are planned. No audit firm has been engaged or signed an agreement to date; firm names will be published once an engagement is executed.",
     comingSoon: "Coming Soon",
   },
 };
 
 const plannedAudits = [
-  { auditor: "Big Four Auditor", scope: "reserveAudit", status: "scheduled", date: "Q2 2026" },
-  { auditor: "CertiK", scope: "smartContractAudit", status: "scheduled", date: "Q2 2026" },
-  { auditor: "Trail of Bits", scope: "securityAudit", status: "scheduled", date: "Q3 2026" },
-  { auditor: "Regulatory Partner", scope: "complianceAudit", status: "scheduled", date: "Q3 2026" },
+  { auditor: "tbd", scope: "reserveAudit", status: "scheduled", date: "Q2 2026" },
+  { auditor: "tbd", scope: "smartContractAudit", status: "scheduled", date: "Q2 2026" },
+  { auditor: "tbd", scope: "securityAudit", status: "scheduled", date: "Q3 2026" },
+  { auditor: "tbd", scope: "complianceAudit", status: "scheduled", date: "Q3 2026" },
 ];
 
-const auditPartners = [
-  { name: "CertiK", specialty: "Smart Contract Security", logo: "🔐" },
-  { name: "Trail of Bits", specialty: "Security Research", logo: "🛡️" },
-  { name: "Deloitte", specialty: "Financial Audit", logo: "📊" },
-  { name: "KPMG", specialty: "Compliance", logo: "✓" },
-];
 
 export default function AuditsPage() {
   const { lang } = useLanguage();
@@ -117,23 +113,10 @@ export default function AuditsPage() {
           </div>
         </div>
 
-        {/* Audit Partners */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-slate-800 dark:text-white mb-4">{t.auditPartners}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {auditPartners.map((partner) => (
-              <div key={partner.name} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-stone-200 dark:border-slate-800 text-center">
-                <div className="text-3xl mb-2">{partner.logo}</div>
-                <h3 className="font-medium text-slate-800 dark:text-white">{partner.name}</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{partner.specialty}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Upcoming Audits */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-slate-800 dark:text-white mb-4">{t.upcomingAudits}</h2>
+          <h2 className="text-xl font-semibold text-slate-800 dark:text-white mb-2">{t.upcomingAudits}</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-3xl">{t.plannedNote}</p>
           <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -149,7 +132,7 @@ export default function AuditsPage() {
                   {plannedAudits.map((audit, idx) => (
                     <tr key={idx}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-medium text-slate-800 dark:text-white">{audit.auditor}</span>
+                        <span className="font-medium text-slate-800 dark:text-white">{t[audit.auditor as keyof typeof t] ?? audit.auditor}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-slate-600 dark:text-slate-400">{t[audit.scope as keyof typeof t]}</span>

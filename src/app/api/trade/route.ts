@@ -1978,7 +1978,7 @@ export async function POST(request: NextRequest) {
 
     if (tradeEmail) {
       const metalNameMap: Record<string, string> = {
-        auxg: 'Gold (LBMA Good Delivery)', auxs: 'Silver', auxpt: 'Platinum', auxpd: 'Palladium',
+        auxg: 'Gold', auxs: 'Silver', auxpt: 'Platinum', auxpd: 'Palladium',
       };
       const metalToken = type === 'buy' ? toTokenLower : fromToken.toLowerCase();
       const metalSymbol = type === 'buy' ? toToken.toUpperCase() : fromToken.toUpperCase();

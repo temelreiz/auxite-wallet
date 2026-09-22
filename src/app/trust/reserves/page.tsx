@@ -119,7 +119,7 @@ const translations: Record<string, Record<string, string>> = {
     quarterly: "Quarterly",
     quarterlyDesc: "Comprehensive custody reports including reconciliation summaries and audit progress.",
     annual: "Annual",
-    annualDesc: "Full-year custody summary with independent auditor findings and reserve confirmation.",
+    annualDesc: "Full-year custody summary and reserve confirmation. Independent auditor findings will be included once an auditor is engaged.",
     // FAQ
     faqTitle: "Frequently Asked Questions",
     faq1Q: "Are reserves fractional?",
@@ -200,7 +200,7 @@ const translations: Record<string, Record<string, string>> = {
     quarterly: "Ceyreklik",
     quarterlyDesc: "Uzlastirma ozetleri ve denetim ilerlemesini iceren kapsamli saklama raporlari.",
     annual: "Yillik",
-    annualDesc: "Bagimsiz denetci bulgulari ve rezerv teyidi ile tam yil saklama ozeti.",
+    annualDesc: "Tam yil saklama ozeti ve rezerv teyidi. Bagimsiz denetci bulgulari, bir denetci gorevlendirildiginde eklenecektir.",
     faqTitle: "Sikca Sorulan Sorular",
     faq1Q: "Rezervler kesirli mi?",
     faq1A: "Hayir. Auxite tam tahsisli model ile calisir. Tokenize edilen her birim, kasalanmis fiziksel metal ile 1:1 (veya uzeri) desteklenir.",

@@ -106,7 +106,8 @@ function auxrPayload(s: Awaited<ReturnType<typeof getAuxrSupply>>) {
     circulatingBasis: s.nonCirculating.length
       ? "totalSupply minus the balances of the declared non-circulating addresses"
       : "no non-circulating addresses declared — circulating equals total supply",
-    backing: "basket of four precious metals, cash-settled at NAV",
+    backingModel: "basket of four precious metals, cash-settled at NAV (issuer's stated backing model)",
+    attestationStatus: "none — no independent reserve attestation has been issued to date",
   };
 }
 
@@ -131,9 +132,10 @@ function tokenPayload(symbol: MetalSymbol, supply: number) {
     supplyMode: SUPPLY_MODE,
     supplySource:
       SUPPLY_MODE === "canonical"
-        ? "canonical totalSupply (per-investor on-chain ownership, daily custodian reconciliation)"
-        : "mirror totalSupply (daily custodian reconciliation)",
-    backing: "1:1 physical metal (1 token = 1 gram)",
+        ? "canonical totalSupply (per-investor on-chain ownership, issuer internal reconciliation)"
+        : "mirror totalSupply (issuer internal reconciliation)",
+    backingModel: "1 token = 1 gram of physical metal (issuer's stated backing model)",
+    attestationStatus: "none — no independent reserve attestation has been issued to date",
   };
 }
 
@@ -200,12 +202,49 @@ export async function GET(request: NextRequest) {
       success: true,
       tokens,
       auxr: auxr ? auxrPayload(auxr) : null,
-      backingRatio: "1:1",
+      backingModel: "1 token = 1 gram of physical metal",
+      // Published so external data consumers do not have to guess which of the
+      // Base deployments is authoritative: only `tokens[].contractAddress`
+      // above is. The generations below were superseded, not burned, and still
+      // carry residual balances.
+      supersededContracts: [
+        {
+          generation: "interim mirror",
+          deployed: "2026-06-09",
+          status: "superseded — residual balances only",
+          addresses: {
+            "AUXG-M": "0x24acdf6dbc53e4e257d1812077e7ba1960b02019",
+            "AUXS-M": "0xb03471ba1616c8c1f772afcfc05966bbd298014e",
+            "AUXPT-M": "0xe5640dcbcb1de6316f9baa8654cfd0e51f3bdd19",
+            "AUXPD-M": "0x1c99a4979d34871d1c4fff0761a2863ec8610cf2",
+          },
+        },
+        {
+          generation: "V8",
+          deployed: "2026-02-02",
+          status: "superseded — residual balances only",
+          reason:
+            "V8 buy() minted only against on-chain USDC purchases, so totalSupply reflected a fraction of platform holdings rather than the whole.",
+          addresses: {
+            AUXG: "0x390164702040B509A3D752243F92C2Ac0318989D",
+            AUXS: "0x82F6EB8Ba5C84c8Fd395b25a7A40ade08F0868aa",
+            AUXPT: "0x119de594170b68561b1761ae1246C5154F94705d",
+            AUXPD: "0xe051B2603617277Ab50C509F5A38C16056C1C908",
+          },
+        },
+      ],
+      attestation: {
+        status: "none",
+        auditor: null,
+        custodian: null,
+        insurer: null,
+        note: "Backing is the issuer's stated model and has not been verified by an independent auditor, custodian or insurer. No attestation report has been published to date.",
+      },
       supplyMode: SUPPLY_MODE,
       source:
         SUPPLY_MODE === "canonical"
-          ? "canonical ERC20 totalSupply on Base Mainnet (per-investor ownership, daily custodian reconciliation = full platform AUM)"
-          : "mirror ERC20 totalSupply on Base Mainnet (daily custodian reconciliation = full platform AUM)",
+          ? "canonical ERC20 totalSupply on Base Mainnet (per-investor ownership, issuer internal reconciliation = full platform AUM)"
+          : "mirror ERC20 totalSupply on Base Mainnet (issuer internal reconciliation = full platform AUM)",
       lastUpdated: new Date().toISOString(),
     });
   } catch (error: any) {

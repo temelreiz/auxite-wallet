@@ -72,8 +72,11 @@ export async function GET(request: NextRequest) {
       summary[m].byVault[v] = (summary[m].byVault[v] || 0) + availableGrams;
     }
 
-    // Token supply = Toplam rezerv (1:1 backing)
-    const tokenSupply = {
+    // Kasa defterindeki fiziksel gram toplami. Bu ALAN TOKEN ARZI DEGILDIR --
+    // token arzi icin /api/supply (on-chain totalSupply) tek kaynaktir. Ikisinin
+    // esitligini iddia eden bir "backingRatio" alani burada uretilmez; teminat
+    // orani ancak bagimsiz bir attestation ile beyan edilebilir.
+    const vaultReserveGrams = {
       AUXG: summary.AUXG?.total || 0,
       AUXS: summary.AUXS?.total || 0,
       AUXPT: summary.AUXPT?.total || 0,
@@ -83,8 +86,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       summary,
-      tokenSupply,
-      backingRatio: '1:1',
+      vaultReserveGrams,
+      note: 'vaultReserveGrams is the internal vault ledger only; it is not a token supply figure and has not been independently attested. On-chain token supply is served by /api/supply.',
       vaults: VAULTS,
       units: METAL_UNITS,
       totalBars: reserves.length,

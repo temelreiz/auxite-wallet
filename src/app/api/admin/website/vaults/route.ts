@@ -59,7 +59,7 @@ const DEFAULT_VAULTS = [
     capacity: '15,000 kg',
     metals: ['AUXG', 'AUXS'],
     coordinates: { x: 48, y: 32 },
-    description: { en: 'LBMA certified London vault (inactive)', tr: 'LBMA sertifikalı Londra kasası (inaktif)' }
+    description: { en: 'London vault (inactive, no custody agreement in place)', tr: 'Londra kasası (inaktif, saklama sözleşmesi yok)' }
   },
 ];
 

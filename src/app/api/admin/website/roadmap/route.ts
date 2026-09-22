@@ -13,7 +13,7 @@ const DEFAULT_ROADMAP = [
     status: 'completed',
     items: [
       { text: { en: 'Smart contract development', tr: 'Akıllı sözleşme geliştirme' }, done: true },
-      { text: { en: 'LBMA vault partnerships', tr: 'LBMA kasa ortaklıkları' }, done: true },
+      { text: { en: 'Accredited vault partnerships', tr: 'Akredite kasa ortaklıkları' }, done: false },
       { text: { en: 'Security audits', tr: 'Güvenlik denetimleri' }, done: true },
       { text: { en: 'Platform beta launch', tr: 'Platform beta lansmanı' }, done: true },
     ]

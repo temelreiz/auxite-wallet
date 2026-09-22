@@ -89,9 +89,9 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
       <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">HOW IT WORKS</p>
       <table style="width:100%;border-collapse:collapse">
         ${step("1", "Deposit", "Fund your vault with crypto (ETH, BTC, USDT, USDC).")}
-        ${step("2", "Allocate", "Convert to tokenized precious metals: Gold (AUXG), Silver (AUXS), Platinum (AUXPT), Palladium (AUXPD). Each token = 1 gram of physically allocated, insured bullion.")}
+        ${step("2", "Allocate", "Convert to tokenized precious metals: Gold (AUXG), Silver (AUXS), Platinum (AUXPT), Palladium (AUXPD). Each token = 1 gram of physically allocated bullion.")}
         ${step("3", "Trade", "Buy and sell metals 24/7. All trades settle instantly against live market prices.")}
-        ${step("4", "Structured Yield", "Lease your allocated metals to verified institutional counterparties through our Yield Architecture. Earn periodic returns (paid in the same metal or USD equivalent) while your metal remains fully allocated and insured in custody. Lease terms range from 90 to 365 days.")}
+        ${step("4", "Structured Yield", "Lease your allocated metals to verified institutional counterparties through our Yield Architecture. Earn periodic returns (paid in the same metal or USD equivalent) while your metal remains fully allocated in custody. Lease terms range from 90 to 365 days.")}
         ${step("5", "Redeem", "Convert back to crypto or request physical delivery at any time.")}
       </table>
       ${bonus("LIMITED TIME OFFER", "Complete KYC verification + deposit $100 minimum to receive <strong>5 AUXG Welcome Bonus</strong>. Liquidity Credits unlock after 30 days or 5x trading volume.")}
@@ -211,7 +211,7 @@ const kycAuxgPromoEN = {
   subject: "Your vault is ready — 5 AUXG Welcome Bonus awaits",
   html: wrap(`
     <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Your vault is open. One step remains.</p>
-    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Verify your identity to claim <strong>5 AUXG Welcome Bonus</strong> — 5 grams of physically allocated, LBMA-certified gold.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Verify your identity to claim <strong>5 AUXG Welcome Bonus</strong> — 5 grams of physically allocated gold.</p>
     <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">VERIFICATION — 60 SECONDS</p>
     <table style="width:100%;border-collapse:collapse">
       ${step("1", "Snap your ID or passport", "Camera-based capture, no upload required.")}
@@ -228,7 +228,7 @@ const kycAuxgPromoTR = {
   subject: "Kasanız hazır — 5 AUXG Hoş Geldin Bonusu sizi bekliyor",
   html: wrap(`
     <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Kasanız açıldı. Bir adım kaldı.</p>
-    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Kimliğinizi doğrulayın ve <strong>5 AUXG Hoş Geldin Bonusu</strong> kazanın — 5 gram fiziksel olarak tahsis edilmiş, LBMA sertifikalı altın.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Kimliğinizi doğrulayın ve <strong>5 AUXG Hoş Geldin Bonusu</strong> kazanın — 5 gram fiziksel olarak tahsis edilmiş altın.</p>
     <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">DOĞRULAMA — 60 SANİYE</p>
     <table style="width:100%;border-collapse:collapse">
       ${step("1", "Kimlik veya pasaport fotoğrafı", "Kameradan çekim, yükleme gerekmez.")}
@@ -245,7 +245,7 @@ const kycAuxgPromoDE = {
   subject: "Ihr Tresor ist bereit — 5 AUXG Willkommensbonus wartet",
   html: wrap(`
     <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Ihr Tresor ist eröffnet. Ein Schritt fehlt.</p>
-    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Verifizieren Sie Ihre Identität für <strong>5 AUXG Willkommensbonus</strong> — 5 Gramm physisch alloziertes, LBMA-zertifiziertes Gold.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Verifizieren Sie Ihre Identität für <strong>5 AUXG Willkommensbonus</strong> — 5 Gramm physisch alloziertes Gold.</p>
     <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">VERIFIZIERUNG — 60 SEKUNDEN</p>
     <table style="width:100%;border-collapse:collapse">
       ${step("1", "Ausweis oder Reisepass", "Kameraerfassung, kein Upload nötig.")}
@@ -262,7 +262,7 @@ const kycAuxgPromoFR = {
   subject: "Votre coffre est prêt — Bonus de bienvenue 5 AUXG vous attend",
   html: wrap(`
     <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Votre coffre est ouvert. Une étape reste.</p>
-    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Vérifiez votre identité pour réclamer le <strong>Bonus de bienvenue 5 AUXG</strong> — 5 grammes d'or physiquement alloué et certifié LBMA.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Vérifiez votre identité pour réclamer le <strong>Bonus de bienvenue 5 AUXG</strong> — 5 grammes d'or physiquement alloué.</p>
     <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">VÉRIFICATION — 60 SECONDES</p>
     <table style="width:100%;border-collapse:collapse">
       ${step("1", "Photo de la pièce d'identité", "Capture par caméra, aucun téléchargement requis.")}
@@ -280,7 +280,7 @@ const kycAuxgPromoAR = {
   html: wrap(`
     <div dir="rtl" style="text-align:right">
     <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">خزنتك مفتوحة. خطوة واحدة متبقية.</p>
-    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">قم بالتحقق من هويتك للحصول على <strong>مكافأة الترحيب 5 AUXG</strong> — 5 جرامات من الذهب المخصص فعليًا والمعتمد من LBMA.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">قم بالتحقق من هويتك للحصول على <strong>مكافأة الترحيب 5 AUXG</strong> — 5 جرامات من الذهب المخصص فعليًا.</p>
     <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">التحقق — 60 ثانية</p>
     <table style="width:100%;border-collapse:collapse">
       ${step("1", "صورة الهوية أو جواز السفر", "التقاط بالكاميرا، لا يلزم التحميل.")}
@@ -298,7 +298,7 @@ const kycAuxgPromoRU = {
   subject: "Хранилище готово — Приветственный бонус 5 AUXG ждёт",
   html: wrap(`
     <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Ваше хранилище открыто. Остался один шаг.</p>
-    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Подтвердите личность, чтобы получить <strong>Приветственный бонус 5 AUXG</strong> — 5 граммов физически выделенного золота с сертификатом LBMA.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Подтвердите личность, чтобы получить <strong>Приветственный бонус 5 AUXG</strong> — 5 граммов физически выделенного золота.</p>
     <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">ВЕРИФИКАЦИЯ — 60 СЕКУНД</p>
     <table style="width:100%;border-collapse:collapse">
       ${step("1", "Фото паспорта или ID", "Захват камерой, загрузка не требуется.")}
@@ -344,7 +344,7 @@ const cardLaunchEN = {
     <table style="width:100%;border-collapse:collapse">
       ${step("1", "Pick a metal", "Gold (AUXG), Silver (AUXS), Platinum (AUXPT), or Palladium (AUXPD).")}
       ${step("2", "Enter amount in USD", "Minimum $30. The card processes the charge instantly.")}
-      ${step("3", "Metal lands in your vault", "Allocated bar + LBMA certificate when ≥ 1 gram.")}
+      ${step("3", "Metal lands in your vault", "Allocated bar + allocation certificate when ≥ 1 gram.")}
     </table>
     ${bonus("HOW IT APPEARS", "Card statement shows AURUM LEDGER. Processing fee included in the displayed total. Refund is available through the vault interface.")}
     ${cta("https://vault.auxite.io/vault", "BUY METAL WITH CARD")}
@@ -361,7 +361,7 @@ const cardLaunchTR = {
     <table style="width:100%;border-collapse:collapse">
       ${step("1", "Bir metal seçin", "Altın (AUXG), Gümüş (AUXS), Platin (AUXPT) veya Paladyum (AUXPD).")}
       ${step("2", "USD tutarını girin", "Minimum $30. Kart anında işlenir.")}
-      ${step("3", "Metal kasanıza yansır", "1 gram ve üzeri için tahsisli bar + LBMA sertifikası.")}
+      ${step("3", "Metal kasanıza yansır", "1 gram ve üzeri için tahsisli bar + tahsis sertifikası.")}
     </table>
     ${bonus("KART EKSTRESİ", "Kart ekstresinde AURUM LEDGER görünür. İşlem ücreti gösterilen toplama dahildir. İade kasa arayüzünden mümkün.")}
     ${cta("https://vault.auxite.io/vault", "KART İLE METAL AL")}
@@ -378,7 +378,7 @@ const cardLaunchDE = {
     <table style="width:100%;border-collapse:collapse">
       ${step("1", "Metall wählen", "Gold (AUXG), Silber (AUXS), Platin (AUXPT) oder Palladium (AUXPD).")}
       ${step("2", "USD-Betrag eingeben", "Mindestens $30. Karte wird sofort belastet.")}
-      ${step("3", "Metall landet im Tresor", "Allozierter Barren + LBMA-Zertifikat ab 1 Gramm.")}
+      ${step("3", "Metall landet im Tresor", "Allozierter Barren + Zuteilungszertifikat ab 1 Gramm.")}
     </table>
     ${bonus("KARTENABRECHNUNG", "Auf Ihrer Kartenabrechnung erscheint AURUM LEDGER. Bearbeitungsgebühr ist im angezeigten Betrag enthalten. Rückerstattung über die Tresoroberfläche möglich.")}
     ${cta("https://vault.auxite.io/vault", "METALL MIT KARTE KAUFEN")}
@@ -395,7 +395,7 @@ const cardLaunchFR = {
     <table style="width:100%;border-collapse:collapse">
       ${step("1", "Choisissez un métal", "Or (AUXG), Argent (AUXS), Platine (AUXPT) ou Palladium (AUXPD).")}
       ${step("2", "Saisissez le montant en USD", "Minimum 30 $. La carte est débitée instantanément.")}
-      ${step("3", "Le métal arrive dans votre coffre", "Lingot alloué + certificat LBMA dès 1 gramme.")}
+      ${step("3", "Le métal arrive dans votre coffre", "Lingot alloué + certificat d'allocation dès 1 gramme.")}
     </table>
     ${bonus("RELEVÉ DE CARTE", "Le relevé affiche AURUM LEDGER. Les frais de traitement sont inclus dans le total affiché. Le remboursement est possible via l'interface du coffre.")}
     ${cta("https://vault.auxite.io/vault", "ACHETER DU MÉTAL PAR CARTE")}
@@ -413,7 +413,7 @@ const cardLaunchAR = {
     <table style="width:100%;border-collapse:collapse">
       ${step("1", "اختر معدنًا", "ذهب (AUXG)، فضة (AUXS)، بلاتين (AUXPT)، أو بالاديوم (AUXPD).")}
       ${step("2", "أدخل المبلغ بالدولار", "الحد الأدنى 30$. تُعالج البطاقة فوراً.")}
-      ${step("3", "يصل المعدن إلى خزنتك", "سبيكة مخصصة + شهادة LBMA من 1 جرام فما فوق.")}
+      ${step("3", "يصل المعدن إلى خزنتك", "سبيكة مخصصة + شهادة تخصيص من 1 جرام فما فوق.")}
     </table>
     ${bonus("كشف البطاقة", "يظهر AURUM LEDGER على كشف البطاقة. رسوم المعالجة مضمنة في المجموع المعروض. الاسترداد متاح عبر واجهة الخزنة.")}
     ${cta("https://vault.auxite.io/vault", "اشترِ المعدن بالبطاقة")}
@@ -431,7 +431,7 @@ const cardLaunchRU = {
     <table style="width:100%;border-collapse:collapse">
       ${step("1", "Выберите металл", "Золото (AUXG), Серебро (AUXS), Платина (AUXPT) или Палладий (AUXPD).")}
       ${step("2", "Введите сумму в USD", "Минимум 30 $. Карта обрабатывается мгновенно.")}
-      ${step("3", "Металл поступает в хранилище", "Выделенный слиток + сертификат LBMA при покупке от 1 грамма.")}
+      ${step("3", "Металл поступает в хранилище", "Выделенный слиток + сертификат распределения при покупке от 1 грамма.")}
     </table>
     ${bonus("ВЫПИСКА ПО КАРТЕ", "В выписке отображается AURUM LEDGER. Комиссия за обработку включена в итоговую сумму. Возврат доступен через интерфейс хранилища.")}
     ${cta("https://vault.auxite.io/vault", "КУПИТЬ МЕТАЛЛ КАРТОЙ")}

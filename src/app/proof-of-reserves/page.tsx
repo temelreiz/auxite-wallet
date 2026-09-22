@@ -8,7 +8,7 @@
 //   - Surplus / shortfall in grams and USD
 //
 // Designed to be the URL we cite in compliance docs, regulator submissions,
-// and the LBMA audit pack. Static-renderable enough to be archived by
+// and the reserve audit pack. Static-renderable enough to be archived by
 // auditors; live data via fetch on mount + interval.
 // ============================================================================
 
@@ -17,6 +17,65 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/LanguageContext";
+
+// ── Contract generations ────────────────────────────────────────────────────
+// Every Base deployment of the metal tokens, canonical set first. Supply is
+// deliberately NOT hardcoded here — /api/supply reads it live from the
+// canonical contracts, and a second hardcoded figure is exactly the kind of
+// contradiction this section exists to remove.
+const BASESCAN = "https://basescan.org/token/";
+
+const CONTRACT_GENERATIONS: {
+  genKey: "gen_canonical" | "gen_mirror" | "gen_v8" | "gen_v6v8";
+  statusKey: "status_canonical" | "status_superseded" | "status_nocontract";
+  deployed: string;
+  rows: { label: string; address: string | null }[];
+}[] = [
+  {
+    genKey: "gen_canonical",
+    statusKey: "status_canonical",
+    deployed: "2026-06-09",
+    rows: [
+      { label: "AUXG", address: "0xCef9D7593E8Ba796eE05C54B8983B7749bB1218a" },
+      { label: "AUXS", address: "0xB0aC63aeD12b5A0Ee710618D99444bf126068c1a" },
+      { label: "AUXPT", address: "0x39F314fb20668997A2ADDaB1eA9236e0072D5E2D" },
+      { label: "AUXPD", address: "0x6e4837fCf158D15ABFdf90b3954D041D452BE832" },
+    ],
+  },
+  {
+    genKey: "gen_mirror",
+    statusKey: "status_superseded",
+    deployed: "2026-06-09",
+    rows: [
+      { label: "AUXG-M", address: "0x24acdf6dbc53e4e257d1812077e7ba1960b02019" },
+      { label: "AUXS-M", address: "0xb03471ba1616c8c1f772afcfc05966bbd298014e" },
+      { label: "AUXPT-M", address: "0xe5640dcbcb1de6316f9baa8654cfd0e51f3bdd19" },
+      { label: "AUXPD-M", address: "0x1c99a4979d34871d1c4fff0761a2863ec8610cf2" },
+    ],
+  },
+  {
+    genKey: "gen_v8",
+    statusKey: "status_superseded",
+    deployed: "2026-02-02",
+    rows: [
+      { label: "AUXG", address: "0x390164702040B509A3D752243F92C2Ac0318989D" },
+      { label: "AUXS", address: "0x82F6EB8Ba5C84c8Fd395b25a7A40ade08F0868aa" },
+      { label: "AUXPT", address: "0x119de594170b68561b1761ae1246C5154F94705d" },
+      { label: "AUXPD", address: "0xe051B2603617277Ab50C509F5A38C16056C1C908" },
+    ],
+  },
+  {
+    genKey: "gen_v6v8",
+    statusKey: "status_nocontract",
+    deployed: "—",
+    rows: [
+      { label: "AUXG", address: "0x28e0938457c5bf02Fe35208b7b1098af7Ec20d91" },
+      { label: "AUXS", address: "0x21583fa6D61Ecbad51C092c4A433511255D29A4E" },
+      { label: "AUXPT", address: "0x0023aBB9822AC52012542278e6E862EF4Ea12616" },
+      { label: "AUXPD", address: "0x3d2F416A30BAcd28D93ACCc1Ee1DB69C27ff9223" },
+    ],
+  },
+];
 
 // ── i18n ────────────────────────────────────────────────────────────────────
 // Page-level translations. Kept inline since this is a single-page document.
@@ -29,7 +88,7 @@ const T = {
     backed_pill: "Fully Backed",
     reconciling_pill: "Reconciling",
     title: "Proof of Reserves",
-    intro: "Auxite's reserve token (AUXR) is a 55/30/10/5 basket of physically allocated Au, Ag, Pt and Pd held under LBMA Good Delivery standards. Every unit in circulation is backed by the basket grams listed below — read directly from the live reserve ledger.",
+    intro: "Auxite's reserve token (AUXR) is a 55/30/10/5 basket of Au, Ag, Pt and Pd. The basket grams below are read directly from Auxite's own reserve ledger. These figures are self-reported: no independent auditor, custodian or insurer has verified them, and no attestation report has been published to date.",
     stat_circulation: "AUXR in Circulation",
     stat_units: "units",
     stat_marketcap: "Market Cap",
@@ -48,13 +107,27 @@ const T = {
     spot: "Spot",
     backing: "Backing",
     section_composition: "Basket Composition (Immutable)",
+    section_contracts: "Token Contracts",
+    contracts_intro: "Auxite metal tokens have been deployed three times on Base. The canonical set below, deployed 9 June 2026, is the reference supply: it is what /api/supply, rwa.xyz and any external data consumer should read. Earlier generations were not burned and still carry residual balances, so more than one contract on Base answers to the symbol AUXG. Only the canonical address is authoritative; the superseded addresses are listed here so that no one has to guess which is which.",
+    contracts_why: "Why the migration: the February 2026 (V8) contracts minted only against on-chain USDC purchases, so their totalSupply reflected a fraction of platform holdings rather than the whole. An interim mirror set (symbols AUXG-M etc.) was added as a reporting layer, then replaced on 9 June 2026 by the canonical AuxiteMetal contracts, which mint per investor so the chain itself records ownership.",
+    th_contract: "Contract",
+    th_status: "Status",
+    th_deployed: "Deployed",
+    status_canonical: "Canonical — live",
+    status_superseded: "Superseded — residual balances only",
+    status_nocontract: "No contract at this address on Base",
+    gen_canonical: "Canonical (AuxiteMetal)",
+    gen_mirror: "Interim mirror",
+    gen_v8: "V8",
+    gen_v6v8: "V5 / V6 (pre-Base)",
+    contracts_supply_note: "Live supply figures are served by /api/supply and are read from these canonical contracts.",
     th_metal: "Metal",
     th_grams: "Grams / AUXR",
     th_spot: "Spot (live)",
     th_usd: "USD value",
     th_weight: "Live weight",
     nav_row: "NAV (1 AUXR)",
-    footer: 'Operated by Aurum Ledger Limited (HK). Physical bullion held under LBMA Good Delivery custody. Reserve figures above are read in real time from the production reserve ledger and auto-refresh every 60 seconds. For audit inquiries: ',
+    footer: 'Operated by Aurum Ledger Limited, Hong Kong (Company Reg. No. 79809097). Reserve figures above are read in real time from Auxite\'s own production reserve ledger and auto-refresh every 60 seconds; they are self-reported and unaudited. No custodian, insurer or auditor has been appointed to date. For audit inquiries: ',
     last_refresh: "Last refresh:",
     metal_gold: "Gold",
     metal_silver: "Silver",
@@ -67,7 +140,7 @@ const T = {
     backed_pill: "Tamamen Destekli",
     reconciling_pill: "Uzlaştırılıyor",
     title: "Rezerv Kanıtı",
-    intro: "Auxite'ın rezerv tokeni (AUXR), LBMA Good Delivery standartlarında fiziksel olarak tahsis edilmiş Au, Ag, Pt ve Pd metallerinden oluşan %55/30/10/5 oranlı bir sepettir. Dolaşımdaki her bir birim, aşağıda listelenen sepet gramlarıyla desteklenir — canlı rezerv defterinden doğrudan okunmaktadır.",
+    intro: "Auxite'ın rezerv tokeni (AUXR), Au, Ag, Pt ve Pd metallerinden oluşan %55/30/10/5 oranlı bir sepettir. Aşağıdaki sepet gramları doğrudan Auxite'ın kendi rezerv defterinden okunmaktadır. Bu rakamlar şirket beyanıdır: bağımsız bir denetçi, saklamacı veya sigortacı tarafından doğrulanmamıştır ve bugüne kadar yayınlanmış bir attestation raporu yoktur.",
     stat_circulation: "Dolaşımdaki AUXR",
     stat_units: "birim",
     stat_marketcap: "Piyasa Değeri",
@@ -86,13 +159,27 @@ const T = {
     spot: "Spot",
     backing: "Karşılık",
     section_composition: "Sepet Bileşimi (Değişmez)",
+    section_contracts: "Token Kontratları",
+    contracts_intro: "Auxite metal tokenları Base üzerinde üç kez deploy edildi. Aşağıdaki kanonik set (9 Haziran 2026) referans arzdır: /api/supply, rwa.xyz ve tüm dış veri tüketicileri bunu okumalıdır. Önceki nesiller yakılmadı ve hâlâ artık bakiye taşıyor; yani Base üzerinde AUXG sembolüne cevap veren birden fazla kontrat var. Yalnızca kanonik adres bağlayıcıdır; hangisinin hangisi olduğu tahmine kalmasın diye devre dışı adresler de burada listelenmiştir.",
+    contracts_why: "Geçişin nedeni: Şubat 2026 (V8) kontratları yalnızca on-chain USDC alımları karşılığında mint ediyordu, dolayısıyla totalSupply platform varlıklarının tamamını değil bir dilimini gösteriyordu. Ara çözüm olarak bir mirror set (AUXG-M vb. sembollü) raporlama katmanı eklendi; 9 Haziran 2026'da bunun yerini, sahipliği zincirin kendisine kaydetmek üzere yatırımcı bazında mint eden kanonik AuxiteMetal kontratları aldı.",
+    th_contract: "Kontrat",
+    th_status: "Durum",
+    th_deployed: "Deploy",
+    status_canonical: "Kanonik — canlı",
+    status_superseded: "Devre dışı — yalnızca artık bakiye",
+    status_nocontract: "Base üzerinde bu adreste kontrat yok",
+    gen_canonical: "Kanonik (AuxiteMetal)",
+    gen_mirror: "Ara mirror",
+    gen_v8: "V8",
+    gen_v6v8: "V5 / V6 (Base öncesi)",
+    contracts_supply_note: "Canlı arz rakamları /api/supply tarafından, bu kanonik kontratlardan okunarak sunulur.",
     th_metal: "Metal",
     th_grams: "Gram / AUXR",
     th_spot: "Spot (canlı)",
     th_usd: "USD değeri",
     th_weight: "Canlı ağırlık",
     nav_row: "NAV (1 AUXR)",
-    footer: "Aurum Ledger Limited (HK) tarafından işletilmektedir. Fiziksel külçeler LBMA Good Delivery saklama standartları altında tutulur. Yukarıdaki rezerv rakamları, üretim rezerv defterinden gerçek zamanlı okunur ve her 60 saniyede bir otomatik yenilenir. Denetim sorgulamaları için: ",
+    footer: "Aurum Ledger Limited, Hong Kong (Şirket Kayıt No. 79809097) tarafından işletilmektedir. Yukarıdaki rezerv rakamları Auxite'ın kendi üretim rezerv defterinden gerçek zamanlı okunur ve her 60 saniyede bir yenilenir; şirket beyanıdır ve denetlenmemiştir. Bugüne kadar atanmış bir saklamacı, sigortacı veya denetçi bulunmamaktadır. Denetim sorgulamaları için: ",
     last_refresh: "Son yenileme:",
     metal_gold: "Altın",
     metal_silver: "Gümüş",
@@ -424,6 +511,64 @@ export default function ProofOfReservesPage() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      {/* Token contracts — canonical set + superseded generations */}
+      <section className="max-w-6xl mx-auto px-6 mb-10">
+        <h2 className="text-xs tracking-widest text-slate-500 mb-3">{upper(t.section_contracts)}</h2>
+        <p className="text-sm text-slate-400 leading-relaxed max-w-4xl mb-3">{t.contracts_intro}</p>
+        <p className="text-sm text-slate-400 leading-relaxed max-w-4xl mb-5">{t.contracts_why}</p>
+
+        <div className="overflow-x-auto rounded-xl border border-white/5">
+          <table className="w-full text-sm">
+            <thead className="bg-white/[0.02] text-slate-400">
+              <tr>
+                <th className="text-left py-3 px-5 font-medium">{t.th_contract}</th>
+                <th className="text-left py-3 px-5 font-medium">{t.th_status}</th>
+                <th className="text-left py-3 px-5 font-medium">{t.th_deployed}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {CONTRACT_GENERATIONS.map((gen) =>
+                gen.rows.map((row, i) => (
+                  <tr key={`${gen.genKey}-${row.label}`} className="border-t border-white/5">
+                    <td className="py-3 px-5">
+                      <span className="text-slate-300">{row.label}</span>
+                      <span className="text-slate-600"> · {t[gen.genKey]}</span>
+                      {row.address && (
+                        <a
+                          className="block font-mono text-[11px] text-[#BFA181] underline break-all"
+                          href={`${BASESCAN}${row.address}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {row.address}
+                        </a>
+                      )}
+                    </td>
+                    <td className="py-3 px-5 align-top">
+                      {i === 0 ? (
+                        <span
+                          className={
+                            gen.statusKey === "status_canonical"
+                              ? "text-emerald-400"
+                              : "text-slate-500"
+                          }
+                        >
+                          {t[gen.statusKey]}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="py-3 px-5 align-top font-mono text-slate-500">
+                      {i === 0 ? gen.deployed : null}
+                    </td>
+                  </tr>
+                )),
+              )}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-[11px] text-slate-600">{t.contracts_supply_note}</p>
       </section>
 
       {/* Footer */}
