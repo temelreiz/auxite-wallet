@@ -85,8 +85,8 @@ const T = {
   en: {
     nav_home: "Home",
     section_basket: "AUXR BASKET",
-    backed_pill: "Fully Backed",
-    reconciling_pill: "Reconciling",
+    backed_pill: (pct: string) => `Ledger: ${pct} · unaudited`,
+    reconciling_pill: (pct: string) => `Ledger: ${pct} · reconciling`,
     title: "Proof of Reserves",
     intro: "Auxite's reserve token (AUXR) is a 55/30/10/5 basket of Au, Ag, Pt and Pd. The basket grams below are read directly from Auxite's own reserve ledger. These figures are self-reported: no independent auditor, custodian or insurer has verified them, and no attestation report has been published to date.",
     stat_circulation: "AUXR in Circulation",
@@ -137,8 +137,8 @@ const T = {
   tr: {
     nav_home: "Ana Sayfa",
     section_basket: "AUXR SEPETİ",
-    backed_pill: "Tamamen Destekli",
-    reconciling_pill: "Uzlaştırılıyor",
+    backed_pill: (pct: string) => `Defter: ${pct} · denetlenmemiş`,
+    reconciling_pill: (pct: string) => `Defter: ${pct} · uzlaştırılıyor`,
     title: "Rezerv Kanıtı",
     intro: "Auxite'ın rezerv tokeni (AUXR), Au, Ag, Pt ve Pd metallerinden oluşan %55/30/10/5 oranlı bir sepettir. Aşağıdaki sepet gramları doğrudan Auxite'ın kendi rezerv defterinden okunmaktadır. Bu rakamlar şirket beyanıdır: bağımsız bir denetçi, saklamacı veya sigortacı tarafından doğrulanmamıştır ve bugüne kadar yayınlanmış bir attestation raporu yoktur.",
     stat_circulation: "Dolaşımdaki AUXR",
@@ -341,7 +341,11 @@ export default function ProofOfReservesPage() {
                 : "bg-amber-500/15 text-amber-400"
             }`}
           >
-            {fullyBacked ? `● ${t.backed_pill}` : `● ${t.reconciling_pill}`}
+            {reserves
+              ? fullyBacked
+                ? t.backed_pill(fmtPct(weakest))
+                : t.reconciling_pill(fmtPct(weakest))
+              : "—"}
           </span>
         </div>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">{t.title}</h1>
