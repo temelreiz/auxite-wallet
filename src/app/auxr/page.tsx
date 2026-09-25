@@ -89,7 +89,7 @@ const T = {
     th_spot: "Spot",
     th_weight: "Weight",
     viewPoR: "View Proof of Reserves →",
-    disclosure: "AUXR is an off-chain reserve token backed by physical bullion in LBMA-compliant custody. Spread is 50 bps each side (1% round-trip). Phase 1A — internal beta. Not yet redeemable for physical bullion.",
+    disclosure: "AUXR is an off-chain reserve token backed by physical bullion in LBMA-compliant custody. Spread is 125 bps each side (2.5% round-trip). Phase 1A — internal beta. Not yet redeemable for physical bullion.",
     success_buy: "Purchase complete",
     success_sell: "Sale complete",
     boughtSummary: (units: string, usd: string) => `${usd} → ${units} AUXR`,
@@ -135,7 +135,7 @@ const T = {
     th_spot: "Spot",
     th_weight: "Ağırlık",
     viewPoR: "Rezerv Kanıtını Gör →",
-    disclosure: "AUXR, LBMA uyumlu saklamada fiziksel külçe ile desteklenen off-chain bir rezerv tokendir. Spread her yönde 50 bps (toplam %1). Phase 1A — iç beta. Henüz fiziksel teslim alınamaz.",
+    disclosure: "AUXR, LBMA uyumlu saklamada fiziksel külçe ile desteklenen off-chain bir rezerv tokendir. Spread her yönde 125 bps (toplam %2,5). Phase 1A — iç beta. Henüz fiziksel teslim alınamaz.",
     success_buy: "Alım tamamlandı",
     success_sell: "Satış tamamlandı",
     boughtSummary: (units: string, usd: string) => `${usd} → ${units} AUXR`,
@@ -457,7 +457,7 @@ export default function AuxrPage() {
                 />
               </div>
               <div className="text-xs text-slate-500 mt-1">
-                ≈ {expectedUnits.toFixed(6)} AUXR · {pricing?.spread.buyBps ?? 50}bps spread
+                ≈ {expectedUnits.toFixed(6)} AUXR · {pricing?.spread.buyBps ?? 125}bps spread
               </div>
 
               {/* Amount presets */}

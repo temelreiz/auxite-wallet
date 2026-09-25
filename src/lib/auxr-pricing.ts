@@ -68,14 +68,14 @@ export const AUXR_GRAMS_PER_UNIT = {
 } as const;
 
 /**
- * Bid/ask spread applied to NAV. 50bps each side ⇒ 1% round-trip — covers
+ * Bid/ask spread applied to NAV. 125bps each side ⇒ 2.5% round-trip — covers
  * inventory management, custody fees, and ops overhead. Comparable to
  * BlackRock GLD intra-day spread or LBMA dealer spread for retail tickets.
  *
  * Phase 2 may dynamic-spread by basket size, time of day, or volatility.
  */
-export const AUXR_BUY_SPREAD = 0.0050;  // +50 bps
-export const AUXR_SELL_SPREAD = 0.0050; // -50 bps
+export const AUXR_BUY_SPREAD = 0.0125;  // +125 bps
+export const AUXR_SELL_SPREAD = 0.0125; // -125 bps
 
 /**
  * Annual management fee (expense ratio), ETF-style. Baked into NAV as a
