@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { QRLoginModal } from "@/components/auth/QRLoginModal";
 import { useLanguage } from "@/components/LanguageContext";
+import { generateMnemonic, mnemonicToAccount, english } from "viem/accounts";
 
 // ============================================
 // BIP39 WORD LIST (TAM 2048 KELİME)
@@ -521,17 +522,24 @@ const STORAGE_KEYS = {
 // ============================================
 // CRYPTO UTILS
 // ============================================
+// Real BIP39 mnemonic (valid checksum, 128-bit entropy) via viem. The old
+// implementation picked 12 random UNIQUE words with no checksum — not a real,
+// importable mnemonic, and its address was a SHA256 hash with no private key
+// (any on-chain funds sent to it were unrecoverable). This produces a genuine
+// wallet whose seed imports into MetaMask/any BIP39 wallet.
 function generateSeedPhrase(): string[] {
-  const words: string[] = [];
-  const usedIndices = new Set<number>();
-  while (words.length < 12) {
-    const randomIndex = Math.floor(Math.random() * BIP39_WORDLIST.length);
-    if (!usedIndices.has(randomIndex)) {
-      usedIndices.add(randomIndex);
-      words.push(BIP39_WORDLIST[randomIndex]);
-    }
+  return generateMnemonic(english).split(" ");
+}
+
+// A phrase is a valid BIP39 mnemonic iff viem can derive an account from it
+// (this enforces the checksum, not just wordlist membership).
+function isValidMnemonic(phrase: string): boolean {
+  try {
+    mnemonicToAccount(phrase);
+    return true;
+  } catch {
+    return false;
   }
-  return words;
 }
 
 async function hashPassword(password: string): Promise<string> {
@@ -542,23 +550,84 @@ async function hashPassword(password: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Real ECDSA address (BIP44 m/44'/60'/0'/0/0) derived from the mnemonic — the
+// same address the seed yields in MetaMask/any standard wallet, so the wallet
+// is genuinely self-custodial and on-chain funds are recoverable.
 async function deriveAddressFromSeed(seedPhrase: string[]): Promise<string> {
-  const seedString = seedPhrase.join(" ");
-  const encoder = new TextEncoder();
-  const data = encoder.encode(seedString);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-  return "0x" + hash.substring(0, 40);
+  return mnemonicToAccount(seedPhrase.join(" ")).address;
 }
 
-function encryptSeed(seedPhrase: string[], password: string): string {
-  // Basit base64 - gerçek uygulamada AES kullanın
-  return btoa(seedPhrase.join(","));
+// ── Seed-at-rest encryption: AES-GCM with a PBKDF2-derived key ────────────────
+// Replaces the old base64 "encryption" (which was plaintext). Format (v2):
+//   "v2:" + base64(salt[16] || iv[12] || ciphertext)
+const SEED_ENC_V2 = "v2:";
+
+async function deriveAesKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(password) as BufferSource,
+    "PBKDF2",
+    false,
+    ["deriveKey"],
+  );
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: salt as BufferSource, iterations: 210000, hash: "SHA-256" },
+    baseKey,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"],
+  );
 }
 
-function decryptSeed(encryptedSeed: string, password: string): string[] | null {
+function bytesToB64(bytes: Uint8Array): string {
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+function b64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function encryptSeed(seedPhrase: string[], password: string): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveAesKey(password, salt);
+  const enc = new TextEncoder();
+  const ct = new Uint8Array(
+    await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv: iv as BufferSource },
+      key,
+      enc.encode(seedPhrase.join(" ")) as BufferSource,
+    ),
+  );
+  const packed = new Uint8Array(salt.length + iv.length + ct.length);
+  packed.set(salt, 0);
+  packed.set(iv, salt.length);
+  packed.set(ct, salt.length + iv.length);
+  return SEED_ENC_V2 + bytesToB64(packed);
+}
+
+async function decryptSeed(encryptedSeed: string, password: string): Promise<string[] | null> {
   try {
+    if (encryptedSeed.startsWith(SEED_ENC_V2)) {
+      const packed = b64ToBytes(encryptedSeed.slice(SEED_ENC_V2.length));
+      const salt = packed.slice(0, 16);
+      const iv = packed.slice(16, 28);
+      const ct = packed.slice(28);
+      const key = await deriveAesKey(password, salt);
+      const pt = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: iv as BufferSource },
+        key,
+        ct as BufferSource,
+      );
+      return new TextDecoder().decode(pt).split(/[ ,]+/).filter(Boolean);
+    }
+    // Legacy v1 (base64 of comma-joined words) — kept so any pre-existing
+    // encrypted seed can still be read; these were never real wallets.
     return atob(encryptedSeed).split(",");
   } catch {
     return null;
@@ -706,7 +775,7 @@ export default function WalletOnboarding({
     }
 
     const passwordHash = await hashPassword(password);
-    const encryptedSeed = encryptSeed(seedPhrase, password);
+    const encryptedSeed = await encryptSeed(seedPhrase, password);
     const address = await deriveAddressFromSeed(seedPhrase);
 
     localStorage.setItem(STORAGE_KEYS.HAS_WALLET, "true");
@@ -728,8 +797,8 @@ export default function WalletOnboarding({
       return;
     }
 
-    const validWords = words.every((word) => BIP39_WORDLIST.includes(word));
-    if (!validWords) {
+    // Real BIP39 validation (enforces the checksum), not just wordlist membership.
+    if (!isValidMnemonic(words.join(" "))) {
       setOnboardingError(t("invalidSeed"));
       return;
     }
