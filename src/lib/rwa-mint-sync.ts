@@ -196,6 +196,27 @@ async function readClaimsByUser(): Promise<Map<string, Record<Metal, number>>> {
 export async function runMintSync(opts: { dryRun?: boolean } = {}): Promise<SyncResult> {
   const execute = process.env.RWA_SYNC_EXECUTE === "true";
   const dryRun = opts.dryRun ?? !execute;
+
+  // ── SAFETY LATCH ────────────────────────────────────────────────────────────
+  // User account addresses are currently KEYLESS SHA256 pseudo-addresses
+  // (see api/auth/register/route.ts: walletAddress = "0x"+SHA256("auxite-wallet-"
+  // +userId)[:40]). Minting canonical metal tokens to them on-chain would
+  // permanently lock the tokens — no private key can ever sign for them (this is
+  // exactly how the 23,100-AUXR founder tranche at 0x8d23… got locked). The
+  // recipients this reconciler mints to (readClaimsByUser) ARE those addresses.
+  // Until every mint target is a verified, real, key-controlled on-chain address,
+  // live execution is hard-blocked here — a second latch beyond RWA_SYNC_EXECUTE.
+  // Set RWA_SYNC_ADDRESSES_VERIFIED_REAL=true ONLY after the account on-chain
+  // address model is fixed and all targets are proven real. Dry-run is unaffected.
+  if (!dryRun && process.env.RWA_SYNC_ADDRESSES_VERIFIED_REAL !== "true") {
+    throw new Error(
+      "rwa-mint-sync live execution blocked: user account addresses are keyless " +
+        "SHA256 pseudo-addresses; minting canonical tokens to them permanently " +
+        "locks the funds. Fix the account on-chain address model first, then set " +
+        "RWA_SYNC_ADDRESSES_VERIFIED_REAL=true.",
+    );
+  }
+
   const date = new Date().toISOString().slice(0, 10);
   const ops: ReconcileOp[] = [];
   const errors: SyncResult["errors"] = [];
