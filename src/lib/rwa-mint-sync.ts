@@ -30,6 +30,7 @@
 import { Redis } from "@upstash/redis";
 import { getVaultTotals, isInitialized, seedHoldingsIfEmpty } from "./vault-inventory";
 import { DEMO_ACCOUNTS } from "./demo-accounts";
+import { getUserOnchainEvmAddress } from "./user-onchain-address";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -149,12 +150,34 @@ const rawToGrams = (r: bigint) => Number(r) / 1000;
 // ── Desired per-user claims (liquid balance + active allocations), per metal ──
 async function readClaimsByUser(): Promise<Map<string, Record<Metal, number>>> {
   const byUser = new Map<string, Record<Metal, number>>();
-  const add = (addr: string, m: Metal, g: number) => {
+
+  // Each account's `walletAddress` is a keyless SHA256 pseudo-address; minting
+  // canonical tokens to it would permanently lock them. Resolve every claim to
+  // the user's REAL, key-controlled on-chain address (deposit HD/KMS infra)
+  // before it becomes a mint target, and drop claims with no real address
+  // rather than ever falling back to the keyless account address.
+  const realCache = new Map<string, string | null>();
+  const resolveReal = async (fake: string): Promise<string | null> => {
+    const k = fake.toLowerCase();
+    if (realCache.has(k)) return realCache.get(k)!;
+    const real = await getUserOnchainEvmAddress(fake);
+    const norm = real ? real.toLowerCase() : null;
+    realCache.set(k, norm);
+    return norm;
+  };
+
+  let skipped = 0;
+  const add = async (accountAddr: string, m: Metal, g: number) => {
     if (!g || g <= 0) return;
-    const a = addr.toLowerCase();
-    if (EXCLUDED.has(a)) return; // skip demo/test accounts — never mint them on-chain
-    if (!byUser.has(a)) byUser.set(a, { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 });
-    byUser.get(a)![m] += g;
+    const fa = accountAddr.toLowerCase();
+    if (EXCLUDED.has(fa)) return; // skip demo/test accounts — never mint them on-chain
+    const real = await resolveReal(fa);
+    if (!real) {
+      skipped++;
+      return; // no real on-chain address → never mint to the keyless account address
+    }
+    if (!byUser.has(real)) byUser.set(real, { AUXG: 0, AUXS: 0, AUXPT: 0, AUXPD: 0 });
+    byUser.get(real)![m] += g;
   };
 
   let cursor: any = 0;
@@ -165,7 +188,7 @@ async function readClaimsByUser(): Promise<Map<string, Record<Metal, number>>> {
       const addr = key.slice("user:".length, key.length - ":balance".length);
       const h = await redis.hgetall(key);
       if (!h) continue;
-      for (const m of METALS) add(addr, m, parseFloat(String((h as any)[FIELD[m]] ?? "0")) || 0);
+      for (const m of METALS) await add(addr, m, parseFloat(String((h as any)[FIELD[m]] ?? "0")) || 0);
     }
   } while (String(cursor) !== "0");
 
@@ -184,10 +207,17 @@ async function readClaimsByUser(): Promise<Map<string, Record<Metal, number>>> {
         if (a?.status !== "active") continue;
         const metal = String(a.metal || "").toUpperCase() as Metal;
         if (!METALS.includes(metal)) continue;
-        add(addr, metal, parseFloat(String(a.grams ?? a.allocatedGrams ?? "0")) || 0);
+        await add(addr, metal, parseFloat(String(a.grams ?? a.allocatedGrams ?? "0")) || 0);
       }
     }
   } while (String(cursor) !== "0");
+
+  if (skipped > 0) {
+    console.warn(
+      `[rwa-mint-sync] skipped ${skipped} claim(s): no real on-chain address resolved ` +
+        `(custody backend not configured or derivation failed); refusing to mint to keyless account addresses.`,
+    );
+  }
 
   return byUser;
 }
@@ -196,6 +226,27 @@ async function readClaimsByUser(): Promise<Map<string, Record<Metal, number>>> {
 export async function runMintSync(opts: { dryRun?: boolean } = {}): Promise<SyncResult> {
   const execute = process.env.RWA_SYNC_EXECUTE === "true";
   const dryRun = opts.dryRun ?? !execute;
+
+  // ── SAFETY LATCH ────────────────────────────────────────────────────────────
+  // User account addresses are currently KEYLESS SHA256 pseudo-addresses
+  // (see api/auth/register/route.ts: walletAddress = "0x"+SHA256("auxite-wallet-"
+  // +userId)[:40]). Minting canonical metal tokens to them on-chain would
+  // permanently lock the tokens — no private key can ever sign for them (this is
+  // exactly how the 23,100-AUXR founder tranche at 0x8d23… got locked). The
+  // recipients this reconciler mints to (readClaimsByUser) ARE those addresses.
+  // Until every mint target is a verified, real, key-controlled on-chain address,
+  // live execution is hard-blocked here — a second latch beyond RWA_SYNC_EXECUTE.
+  // Set RWA_SYNC_ADDRESSES_VERIFIED_REAL=true ONLY after the account on-chain
+  // address model is fixed and all targets are proven real. Dry-run is unaffected.
+  if (!dryRun && process.env.RWA_SYNC_ADDRESSES_VERIFIED_REAL !== "true") {
+    throw new Error(
+      "rwa-mint-sync live execution blocked: user account addresses are keyless " +
+        "SHA256 pseudo-addresses; minting canonical tokens to them permanently " +
+        "locks the funds. Fix the account on-chain address model first, then set " +
+        "RWA_SYNC_ADDRESSES_VERIFIED_REAL=true.",
+    );
+  }
+
   const date = new Date().toISOString().slice(0, 10);
   const ops: ReconcileOp[] = [];
   const errors: SyncResult["errors"] = [];
