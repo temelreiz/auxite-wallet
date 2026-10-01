@@ -177,6 +177,77 @@ async function getFallbackPrices(): Promise<CachedPrices> {
   };
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// SPOT PRICE — single-source market spot for VALUATION / NAV (AUXR navUSD).
+// ----------------------------------------------------------------------------
+// The NAV feed an exchange follows must be ONE consistent source. `getMetalPrices`
+// mixes KuveytTürk bank BUY-rate (primary) with GoldAPI spot (fallback via the
+// circuit breaker): the two sets differ ~1-2.5% and the feed flip-flops between
+// them every time KT hiccups, producing erratic candle wicks. KT's rate is also a
+// Turkish-bank procurement price (with dealer spread) — not a global spot — and
+// can freeze (palladium stuck at 48.73 $/g since 2026-09-28 while spot was ~38).
+//
+// So valuation/NAV uses GoldAPI international spot ONLY, here. KT buy/sell rates
+// stay reserved for the trade-CHARGE path (`getMetalUsdPrice`), their real job.
+// On a fetch failure we serve the LAST-GOOD spot with its ORIGINAL timestamp
+// (never a different source, never a re-stamped stale value), so there is no
+// cross-source jump and genuine staleness remains detectable downstream.
+// ════════════════════════════════════════════════════════════════════════════
+const SPOT_CACHE_KEY = 'metal:spot:cache';
+const SPOT_STALE_KEY = 'metal:spot:stale';
+const SPOT_CACHE_TTL = 60;
+
+const sanePerGram = (d: any): boolean =>
+  !!d && [d.gold, d.silver, d.platinum, d.palladium].every((v) => typeof v === 'number' && v > 0 && v < 500);
+
+async function fetchGoldSpotStrict(): Promise<CachedPrices> {
+  const apiKey = process.env.GOLDAPI_KEY;
+  if (!apiKey) throw new Error('GOLDAPI_KEY not set');
+  const map: Record<string, string> = { XAU: 'gold', XAG: 'silver', XPT: 'platinum', XPD: 'palladium' };
+  const out: any = { timestamp: Date.now() };
+  for (const sym of Object.keys(map)) {
+    const res = await fetch(`https://www.goldapi.io/api/${sym}/USD`, {
+      headers: { 'x-access-token': apiKey },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) throw new Error(`GoldAPI ${sym} ${res.status}`);
+    const data = await res.json();
+    const perGram = Number(data?.price) / TROY_OUNCE_TO_GRAMS;
+    if (!(perGram > 0)) throw new Error(`GoldAPI ${sym} bad price`);
+    out[map[sym]] = perGram;
+  }
+  if (!sanePerGram(out)) throw new Error('GoldAPI spot failed sanity check');
+  return out as CachedPrices;
+}
+
+/**
+ * Market spot ($/gram) for valuation/NAV. Single consistent source (GoldAPI),
+ * 60s cache, last-good stale fallback with original timestamp preserved.
+ */
+export async function getMetalSpotPrices(): Promise<CachedPrices> {
+  const cached = await redis.get(SPOT_CACHE_KEY).catch(() => null);
+  if (cached) {
+    const d = typeof cached === 'string' ? JSON.parse(cached) : cached;
+    if (sanePerGram(d)) return d;
+  }
+  try {
+    const fresh = await fetchGoldSpotStrict();
+    await redis.setex(SPOT_CACHE_KEY, SPOT_CACHE_TTL, JSON.stringify(fresh)).catch(() => {});
+    await redis.set(SPOT_STALE_KEY, JSON.stringify(fresh)).catch(() => {});
+    return fresh;
+  } catch (e) {
+    console.warn('[spot] GoldAPI unavailable, serving last-good spot:', e);
+  }
+  const stale = await redis.get(SPOT_STALE_KEY).catch(() => null);
+  if (stale) {
+    const d = typeof stale === 'string' ? JSON.parse(stale) : stale;
+    if (sanePerGram(d)) return d; // keep ORIGINAL timestamp — do not re-stamp
+  }
+  // Last resort: hardcoded, with timestamp 0 so staleness is unmistakable.
+  console.warn('⚠️ [spot] no cache/stale available, using hardcoded spot (stale ts=0)');
+  return { gold: 145.0, silver: 2.26, platinum: 60.0, palladium: 45.0, timestamp: 0 };
+}
+
 export async function getMetalPrice(metal: string): Promise<number> {
   const prices = await getMetalPrices();
 

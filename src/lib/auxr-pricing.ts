@@ -26,7 +26,7 @@
 // initially.
 // ============================================================================
 
-import { getMetalPrices } from "@/lib/price-cache";
+import { getMetalSpotPrices } from "@/lib/price-cache";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -166,7 +166,11 @@ export interface AuxrPricing {
  * transparent in the UX.
  */
 export async function getAuxrPricing(): Promise<AuxrPricing> {
-  const spot = await getMetalPrices();
+  // NAV uses single-source market spot (GoldAPI) — NOT the KT buy-rate feed,
+  // which mixes a Turkish-bank procurement price with GoldAPI on a circuit
+  // breaker and flip-flops ~1-2.5%, producing erratic candle wicks on the
+  // exchange. KT buy/sell rates stay on the trade-charge path only.
+  const spot = await getMetalSpotPrices();
 
   const goldValue = AUXR_GRAMS_PER_UNIT.gold * spot.gold;
   const silverValue = AUXR_GRAMS_PER_UNIT.silver * spot.silver;
