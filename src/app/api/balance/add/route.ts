@@ -20,6 +20,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getUserBalance } from "@/lib/redis";
+import { getMetalTotals } from "@/lib/allocation-service";
+
+const METALS = ["auxg", "auxs", "auxpt", "auxpd"] as const;
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +33,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Address required" }, { status: 400 });
     }
 
-    const balance = await getUserBalance(address);
-    return NextResponse.json({ success: true, address, balance });
+    const [balance, metalTotals] = await Promise.all([
+      getUserBalance(address),
+      Promise.all(METALS.map((m) => getMetalTotals(address, m))),
+    ]);
+
+    // Spendable grams per metal, in the same shape /api/borrow already returns:
+    // { total, locked, yielding, available }. This is the view the metal-out
+    // guards enforce (assertAvailable), so it is what a client should show as
+    // the usable number — `balance.auxg` is the raw ledger figure and still
+    // counts grams pledged as collateral or out yielding.
+    //
+    // The two are deliberately returned side by side rather than blended:
+    // `balance` is read from the balance hash and `encumbrance` from the
+    // allocation records, and quietly mixing two sources is how a balance ends
+    // up disagreeing with itself.
+    const encumbrance = Object.fromEntries(
+      METALS.map((m, i) => [m, metalTotals[i]]),
+    );
+
+    return NextResponse.json({ success: true, address, balance, encumbrance });
   } catch (error: any) {
     console.error("GET /api/balance/add error:", error);
     return NextResponse.json(
