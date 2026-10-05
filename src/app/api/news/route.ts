@@ -142,10 +142,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
-    const adminPassword = process.env.ADMIN_PASSWORD || "auxite2024";
-    const expectedAuth = "Bearer " + adminPassword;
-    
-    if (authHeader !== expectedAuth) {
+    // No hardcoded fallback: the previous `|| "auxite2024"` meant that if
+    // ADMIN_PASSWORD was ever unset, a publicly known string authorised writes.
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminPassword || authHeader !== `Bearer ${adminPassword}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
