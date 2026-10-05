@@ -125,6 +125,16 @@ export function unfreezeAccount(
     return { success: false, error: 'Hesap zaten aktif' };
   }
 
+  // A freeze placed by the operator (security review, incident response) is not
+  // the account holder's to lift. Previously this function looked only at the
+  // cooldown, so an admin freeze expired into a self-service unfreeze after 24h.
+  if (typeof config.frozenBy === 'string' && config.frozenBy.startsWith('admin')) {
+    return {
+      success: false,
+      error: 'Hesap güvenlik incelemesi nedeniyle donduruldu. Lütfen destek ile iletişime geçin.',
+    };
+  }
+
   // Cooldown kontrolü
   if (config.frozenAt) {
     const frozenTime = new Date(config.frozenAt).getTime();
