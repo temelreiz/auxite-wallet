@@ -496,10 +496,7 @@ export async function POST(request: NextRequest) {
   const envKey = process.env.INTERNAL_API_KEY;
   
   if (apiKey !== envKey) {
-    return NextResponse.json({ 
-      error: "Unauthorized",
-      debug: { received: apiKey, expected: envKey ? "[SET]" : "[NOT SET]" }
-    }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { address, updates, operation = "increment" } = await request.json();

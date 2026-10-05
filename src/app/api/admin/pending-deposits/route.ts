@@ -4,18 +4,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRedis, incrementBalance, addTransaction } from "@/lib/redis";
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+// Validates the admin_session cookie against the session record that
+// /api/admin/auth writes on login. The previous implementation returned true
+// for ANY non-empty cookie value, so any caller could set admin_session=x and
+// reach the POST handler below — which credits user balances.
+async function checkAuth(request: NextRequest): Promise<boolean> {
+  const token = request.cookies.get("admin_session")?.value;
+  if (!token) return false;
 
-function checkAuth(request: NextRequest): boolean {
-  const cookie = request.cookies.get("admin_session")?.value;
-  if (!cookie) return false;
-  // Simple session check
-  return true;
+  const redis = getRedis();
+  try {
+    if (await redis.get(`admin:session:${token}`)) return true;
+  } catch (e) {
+    // A Redis failure must not hand out admin access.
+    console.error("pending-deposits: admin session lookup failed", e);
+    return false;
+  }
+  return false;
 }
 
 // GET: List pending deposits
 export async function GET(request: NextRequest) {
-  if (!checkAuth(request)) {
+  if (!(await checkAuth(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -39,7 +49,7 @@ export async function GET(request: NextRequest) {
 
 // POST: Assign a pending deposit to a user
 export async function POST(request: NextRequest) {
-  if (!checkAuth(request)) {
+  if (!(await checkAuth(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
