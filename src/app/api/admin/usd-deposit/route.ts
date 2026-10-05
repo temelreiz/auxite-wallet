@@ -3,39 +3,21 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { addUsdBalance, getUserBalance } from "@/lib/redis";
+import { requireAdmin } from "@/lib/security/require-user";
 
-// Admin wallet adresleri (environment'tan veya hardcoded)
-const ADMIN_WALLETS = [
-  process.env.ADMIN_WALLET_1?.toLowerCase(),
-  process.env.ADMIN_WALLET_2?.toLowerCase(),
-  // Geliştirme için sabit adres ekleyebilirsiniz
-  // "0x1234...".toLowerCase(),
-].filter(Boolean);
 
 /**
  * POST /api/admin/usd-deposit
  * Body: { targetAddress: string, amount: number, note?: string }
- * Headers: x-wallet-address: admin wallet adresi
+ * Headers: Authorization: Bearer <admin session token>
  */
 export async function POST(request: NextRequest) {
   try {
-    // Admin kontrolü
-    const adminAddress = request.headers.get("x-wallet-address")?.toLowerCase();
-    
-    if (!adminAddress) {
-      return NextResponse.json(
-        { success: false, error: "Wallet address required" },
-        { status: 401 }
-      );
-    }
-
-    // Admin yetkisi kontrolü
-    if (!ADMIN_WALLETS.includes(adminAddress)) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized - Admin access required" },
-        { status: 403 }
-      );
-    }
+    // Authorised by the admin session, not by a wallet address in a header: an
+    // address is public (it is on-chain and in the admin UI), so membership in
+    // an allowlist proved nothing about who was calling.
+    const admin = await requireAdmin(request);
+    if (!admin.ok) return admin.response;
 
     // Body'yi parse et
     const body = await request.json();
@@ -75,7 +57,7 @@ export async function POST(request: NextRequest) {
     const result = await addUsdBalance(
       targetAddress,
       amount,
-      note || `Admin deposit by ${adminAddress.slice(0, 10)}...`
+      note || `Admin deposit by ${admin.user.token.slice(0, 8)}…`
     );
 
     if (!result.success) {
@@ -113,15 +95,8 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    // Admin kontrolü
-    const adminAddress = request.headers.get("x-wallet-address")?.toLowerCase();
-    
-    if (!adminAddress || !ADMIN_WALLETS.includes(adminAddress)) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 403 }
-      );
-    }
+    const admin = await requireAdmin(request);
+    if (!admin.ok) return admin.response;
 
     // Query param'dan address al
     const { searchParams } = new URL(request.url);

@@ -10,6 +10,17 @@ interface AdminUsdDepositProps {
   lang?: "tr" | "en";
 }
 
+// Admin routes authenticate with the session token issued by /api/admin/auth
+// (kept in sessionStorage by the admin shell), not with a wallet address.
+function adminAuthHeaders(): Record<string, string> {
+  try {
+    const token = sessionStorage.getItem("auxite_admin_token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 export function AdminUsdDeposit({ adminAddress, lang = "tr" }: AdminUsdDepositProps) {
   const [targetAddress, setTargetAddress] = useState("");
   const [amount, setAmount] = useState("");
@@ -74,7 +85,7 @@ export function AdminUsdDeposit({ adminAddress, lang = "tr" }: AdminUsdDepositPr
         `/api/admin/usd-deposit?address=${targetAddress}`,
         {
           headers: {
-            "x-wallet-address": adminAddress,
+            ...adminAuthHeaders(),
           },
         }
       );
@@ -111,7 +122,7 @@ export function AdminUsdDeposit({ adminAddress, lang = "tr" }: AdminUsdDepositPr
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": adminAddress,
+          ...adminAuthHeaders(),
         },
         body: JSON.stringify({
           targetAddress,

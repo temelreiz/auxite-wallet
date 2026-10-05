@@ -339,6 +339,17 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
+// /api/security/emergency moved to the login token (phase 1). The other
+// security endpoints still read x-wallet-address and migrate in phase 2/3.
+function emergencyAuthHeaders(): Record<string, string> {
+  try {
+    const token = localStorage.getItem("authToken");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 export default function SecurityPage() {
   const { lang } = useLanguage();
   const { address } = useWallet();
@@ -400,7 +411,7 @@ export default function SecurityPage() {
           fetch(`/api/security/sessions`, { headers: { "x-wallet-address": address } }).catch(() => null),
           fetch(`/api/security/devices`, { headers: { "x-wallet-address": address } }).catch(() => null),
           fetch(`/api/security/logs`, { headers: { "x-wallet-address": address } }).catch(() => null),
-          fetch(`/api/security/emergency`, { headers: { "x-wallet-address": address } }).catch(() => null),
+          fetch(`/api/security/emergency`, { headers: emergencyAuthHeaders() }).catch(() => null),
         ]);
 
         // Load frozen state from backend

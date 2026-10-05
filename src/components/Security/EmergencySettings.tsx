@@ -251,6 +251,17 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
+// /api/security/emergency authenticates with the login token, not with a
+// wallet address in a header — the address identified nobody.
+function authHeaders(): Record<string, string> {
+  try {
+    const token = localStorage.getItem("authToken");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 export function EmergencySettings({ walletAddress }: Props) {
   const { lang } = useLanguage();
   const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
@@ -277,7 +288,7 @@ export function EmergencySettings({ walletAddress }: Props) {
   const fetchData = async () => {
     try {
       const res = await fetch("/api/security/emergency", {
-        headers: { "x-wallet-address": walletAddress },
+        headers: authHeaders(),
       });
       const data = await res.json();
       setConfig(data.config);
@@ -294,7 +305,7 @@ export function EmergencySettings({ walletAddress }: Props) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": walletAddress,
+          ...authHeaders(),
         },
         body: JSON.stringify({
           action: "freeze",
@@ -319,7 +330,7 @@ export function EmergencySettings({ walletAddress }: Props) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": walletAddress,
+          ...authHeaders(),
         },
         body: JSON.stringify({ action: "unfreeze" }),
       });
@@ -340,7 +351,7 @@ export function EmergencySettings({ walletAddress }: Props) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": walletAddress,
+          ...authHeaders(),
         },
         body: JSON.stringify({
           action: "panic",
@@ -367,7 +378,7 @@ export function EmergencySettings({ walletAddress }: Props) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": walletAddress,
+          ...authHeaders(),
         },
         body: JSON.stringify({
           action: "add_contact",
@@ -391,7 +402,7 @@ export function EmergencySettings({ walletAddress }: Props) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": walletAddress,
+          ...authHeaders(),
         },
         body: JSON.stringify({
           action: "remove_contact",
@@ -413,7 +424,7 @@ export function EmergencySettings({ walletAddress }: Props) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": walletAddress,
+          ...authHeaders(),
         },
         body: JSON.stringify({
           action: "set_security_level",

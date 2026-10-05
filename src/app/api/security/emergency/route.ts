@@ -24,18 +24,16 @@ import {
   type RecoveryRequest,
   type EmergencyLog,
 } from '@/lib/security/emergency';
+import { requireUser } from '@/lib/security/require-user';
 
 // GET: Emergency durumunu al
 export async function GET(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    
-    if (!walletAddress) {
-      return NextResponse.json(
-        { error: 'Wallet adresi gerekli' },
-        { status: 401 }
-      );
-    }
+    // Identity comes from the signed login token, never from a header the
+    // caller controls — this endpoint can freeze and unfreeze accounts.
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
 
     // Config al
     const configData = await redis.get(`user:emergency:${walletAddress}`);
@@ -88,16 +86,11 @@ export async function GET(request: NextRequest) {
 // POST: Emergency işlemleri
 export async function POST(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip');
     const userAgent = request.headers.get('user-agent');
-    
-    if (!walletAddress) {
-      return NextResponse.json(
-        { error: 'Wallet adresi gerekli' },
-        { status: 401 }
-      );
-    }
 
     const body = await request.json();
     const { action } = body;
