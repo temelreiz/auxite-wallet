@@ -63,7 +63,15 @@ for (const a of TARGETS) {
   // ── 2. AUXM ledger reversal ──────────────────────────────────────────────
   // auxm is the unit the ledger tracks; zeroing it in the hash without a
   // journal entry would leave auxm:total_minted overstated forever.
-  const auxmBurn = (num(before.auxm) || 0) + (num(before.bonusauxm ?? before.bonusAuxm) || 0);
+  //
+  // Only the `auxm` field is reversed. incrementBalance journals a mint solely
+  // when `updates.auxm` is present (src/lib/redis.ts), so the bonus credit —
+  // which landed in the hash as `bonusauxm`, lowercased by the deleted
+  // /api/balance/add — never reached the journal and has nothing to undo.
+  // Burning it here would overstate auxm:total_burned by that amount, which is
+  // the same class of error this script exists to correct, pointed the other
+  // way.
+  const auxmBurn = num(before.auxm) || 0;
   if (auxmBurn > 0) {
     console.log(`  auxm ledger: burn entry for -${auxmBurn}`);
     if (APPLY) {
