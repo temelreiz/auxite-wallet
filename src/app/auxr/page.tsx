@@ -3,7 +3,6 @@
 // ----------------------------------------------------------------------------
 // Mirrors the mobile (tabs)/auxr screen. Reads:
 //   GET  /api/auxr/price     — live NAV + buy/sell quotes (30s polling)
-//   GET  /api/auxr/reserves  — current backing pool grams
 //   GET  /api/user/balance   — user balances per token
 //   GET  /api/user/profile   — KYC status
 //   POST /api/auxr/buy       — debit AUXM/USDT/USDC, credit AUXR
@@ -41,21 +40,11 @@ type Pricing = {
   constraints: { minPurchaseUSD: number };
 };
 
-type Reserves = {
-  supply: { unitsAUXR: number; marketCapUSD: number };
-  reserves: { grams: { gold: number; silver: number; platinum: number; palladium: number } };
-  required: { grams: { gold: number; silver: number; platinum: number; palladium: number } };
-  backing: {
-    ratio: { gold: number; silver: number; platinum: number; palladium: number; weakest: number };
-    fullyBacked: boolean;
-  };
-};
-
 // ── i18n ─────────────────────────────────────────────────────────────────────
 const T = {
   en: {
     title: "AUXR — Reserve Basket",
-    subtitle: "55% gold · 30% silver · 10% platinum · 5% palladium · physically allocated",
+    subtitle: "55% gold · 30% silver · 10% platinum · 5% palladium · priced at live spot",
     live: "LIVE",
     nav: "NAV per AUXR",
     bid: "Sell",
@@ -74,22 +63,16 @@ const T = {
     minIs: "Minimum",
     insufficient: "Insufficient balance",
     kycRequired: "Identity verification required",
-    kycDesc: "AUXR represents real allocated metal. Complete a 2-minute KYC to trade.",
+    kycDesc: "Complete a 2-minute KYC to trade AUXR.",
     verifyNow: "Verify Identity",
-    backingPool: "Backing Pool",
-    backingSub: (n: string) => `Physical bullion held for ${n} AUXR in circulation. Backed 1:1.`,
-    fullyBacked: "FULLY BACKED",
-    required: "Required",
-    backed: "backed",
-    emptyPool: "Reserves grow as users mint AUXR. We physically procure bullion to back each mint at 1:1.",
     composition: "Basket Composition",
     compositionSub: "Fixed grams per unit. Weights drift naturally with spot prices.",
     th_metal: "Metal",
     th_gpu: "Grams / AUXR",
     th_spot: "Spot",
     th_weight: "Weight",
-    viewPoR: "View Proof of Reserves →",
-    disclosure: "AUXR is an off-chain reserve token backed by physical bullion in LBMA-compliant custody. Spread is 125 bps each side (2.5% round-trip). Phase 1A — internal beta. Not yet redeemable for physical bullion.",
+    viewPoR: "View reserve data (self-reported) →",
+    disclosure: "AUXR gives price exposure to a fixed basket of gold, silver, platinum and palladium, valued at live global spot prices. It is not a claim on physical bullion, no metal is allocated to holders, and it cannot be redeemed for metal — sales settle in cash at NAV minus spread. Reserve figures are self-reported and have not been verified by any independent auditor, custodian or insurer. Spread is 125 bps each side (2.5% round-trip). Not investment advice; the value of AUXR can fall as well as rise.",
     success_buy: "Purchase complete",
     success_sell: "Sale complete",
     boughtSummary: (units: string, usd: string) => `${usd} → ${units} AUXR`,
@@ -101,7 +84,7 @@ const T = {
   },
   tr: {
     title: "AUXR — Rezerv Sepeti",
-    subtitle: "%55 altın · %30 gümüş · %10 platin · %5 paladyum · fiziksel tahsis",
+    subtitle: "%55 altın · %30 gümüş · %10 platin · %5 paladyum · canlı spot fiyatla",
     live: "CANLI",
     nav: "AUXR Başına NAV",
     bid: "Sat",
@@ -120,22 +103,16 @@ const T = {
     minIs: "Minimum",
     insufficient: "Yetersiz bakiye",
     kycRequired: "Kimlik doğrulaması gerekli",
-    kycDesc: "AUXR gerçek tahsisli metali temsil eder. İşlem için 2 dakikalık KYC tamamlayın.",
+    kycDesc: "AUXR alıp satmak için 2 dakikalık KYC tamamlayın.",
     verifyNow: "Kimlik Doğrula",
-    backingPool: "Rezerv Havuzu",
-    backingSub: (n: string) => `Dolaşımdaki ${n} AUXR için tutulan fiziksel külçe. 1:1 desteklenir.`,
-    fullyBacked: "TAM DESTEKLİ",
-    required: "Gerekli",
-    backed: "destekli",
-    emptyPool: "Kullanıcılar AUXR mint ettikçe rezervler büyür. Her mint için 1:1 fiziksel külçe satın alırız.",
     composition: "Sepet Bileşimi",
     compositionSub: "Birim başına sabit gram. Ağırlıklar spot fiyatlarla doğal olarak değişir.",
     th_metal: "Metal",
     th_gpu: "Gram / AUXR",
     th_spot: "Spot",
     th_weight: "Ağırlık",
-    viewPoR: "Rezerv Kanıtını Gör →",
-    disclosure: "AUXR, LBMA uyumlu saklamada fiziksel külçe ile desteklenen off-chain bir rezerv tokendir. Spread her yönde 125 bps (toplam %2,5). Phase 1A — iç beta. Henüz fiziksel teslim alınamaz.",
+    viewPoR: "Rezerv verilerini gör (şirket beyanı) →",
+    disclosure: "AUXR; altın, gümüş, platin ve paladyumdan oluşan sabit bir sepete, canlı küresel spot fiyatlarla fiyat maruziyeti sağlar. Fiziksel külçe üzerinde bir hak değildir, sahiplerine metal tahsis edilmez ve metal olarak teslim alınamaz — satışlar NAV eksi spread üzerinden nakit olarak ödenir. Rezerv rakamları şirket beyanıdır; bağımsız bir denetçi, saklamacı veya sigortacı tarafından doğrulanmamıştır. Spread her yönde 125 bps (toplam %2,5). Yatırım tavsiyesi değildir; AUXR'ın değeri düşebilir de yükselebilir de.",
     success_buy: "Alım tamamlandı",
     success_sell: "Satış tamamlandı",
     boughtSummary: (units: string, usd: string) => `${usd} → ${units} AUXR`,
@@ -182,7 +159,6 @@ export default function AuxrPage() {
   }, []);
 
   const [pricing, setPricing] = useState<Pricing | null>(null);
-  const [reserves, setReserves] = useState<Reserves | null>(null);
   const [balances, setBalances] = useState({ auxm: 0, bonus: 0, usdt: 0, usdc: 0, usd: 0, btc: 0, eth: 0, auxr: 0 });
   const [cryptoPx, setCryptoPx] = useState({ btc: 0, eth: 0 });
   const [kycVerified, setKycVerified] = useState(false);
@@ -202,13 +178,6 @@ export default function AuxrPage() {
       const r = await fetch("/api/auxr/price", { cache: "no-store" });
       const j = await r.json();
       if (j?.success) setPricing(j);
-    } catch {}
-  }, []);
-  const loadReserves = useCallback(async () => {
-    try {
-      const r = await fetch("/api/auxr/reserves", { cache: "no-store" });
-      const j = await r.json();
-      if (j?.success) setReserves(j);
     } catch {}
   }, []);
   const loadCrypto = useCallback(async () => {
@@ -244,12 +213,11 @@ export default function AuxrPage() {
 
   useEffect(() => {
     loadPricing();
-    loadReserves();
     loadUser();
     loadCrypto();
-    const interval = setInterval(() => { loadPricing(); loadReserves(); loadCrypto(); }, 30_000);
+    const interval = setInterval(() => { loadPricing(); loadCrypto(); }, 30_000);
     return () => clearInterval(interval);
-  }, [loadPricing, loadReserves, loadUser, loadCrypto]);
+  }, [loadPricing, loadUser, loadCrypto]);
 
   // Pre-select the rail the user tapped in the vault Liquidity chooser (?fund=).
   useEffect(() => {
@@ -298,7 +266,6 @@ export default function AuxrPage() {
       if (j?.success) {
         setOk({ mode: "buy", units: j.unitsAUXR, usd: buyAmountNum });
         loadUser();
-        loadReserves();
       } else {
         setErr(j?.error || "buy_failed");
       }
@@ -323,7 +290,6 @@ export default function AuxrPage() {
       if (j?.success) {
         setOk({ mode: "sell", units: sellUnitsNum, usd: j.proceedsUSD });
         loadUser();
-        loadReserves();
       } else {
         setErr(j?.error || "sell_failed");
       }
@@ -333,8 +299,6 @@ export default function AuxrPage() {
       setSubmitting(false);
     }
   };
-
-  const fullyBacked = reserves?.backing.fullyBacked ?? false;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
@@ -585,56 +549,12 @@ export default function AuxrPage() {
           )}
         </div>
 
-        {/* Backing Pool */}
-        <div className="rounded-2xl bg-zinc-900/80 border border-white/5 p-6">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-base font-semibold">{t.backingPool}</h2>
-            {fullyBacked && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-semibold tracking-wider">
-                ● {upper(t.fullyBacked)}
-              </span>
-            )}
-          </div>
-          <p className="text-sm text-slate-400 mb-4">
-            {t.backingSub((reserves?.supply.unitsAUXR ?? 0).toLocaleString(undefined, { maximumFractionDigits: 4 }))}
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {METAL_KEYS.map((m) => {
-              const ratio = reserves?.backing.ratio[m] ?? 1;
-              const reserveG = reserves?.reserves.grams[m] ?? 0;
-              const requiredG = reserves?.required.grams[m] ?? 0;
-              const ok = ratio >= 0.9999;
-              return (
-                <div key={m} className="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3">
-                  <div>
-                    <span className="font-semibold" style={{ color: COLORS[m] }}>{SYMBOLS[m]}</span>
-                    <span className="ml-2 text-slate-300">{t.metals[m]}</span>
-                    <div className="text-xs text-slate-500 mt-0.5">
-                      {t.required}: {fmtGrams(requiredG)}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`font-semibold ${ok ? "text-emerald-400" : "text-amber-400"}`}>
-                      {fmtGrams(reserveG)}
-                    </div>
-                    <div className="text-[10px] text-slate-500">
-                      {(ratio * 100).toFixed(2)}% {t.backed}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {reserves && reserves.supply.unitsAUXR === 0 && (
-            <p className="text-xs text-slate-500 mt-3 italic">{t.emptyPool}</p>
-          )}
-          <Link
-            href="/proof-of-reserves"
-            className="inline-block mt-4 text-xs text-[#BFA181] font-semibold hover:underline"
-          >
-            {t.viewPoR}
-          </Link>
-        </div>
+        <Link
+          href="/proof-of-reserves"
+          className="inline-block text-xs text-[#BFA181] font-semibold hover:underline"
+        >
+          {t.viewPoR}
+        </Link>
 
         {/* Composition table */}
         <div className="rounded-2xl bg-zinc-900/80 border border-white/5 overflow-hidden">
