@@ -411,6 +411,17 @@ interface TransactionRecord {
 
 type FundingRail = "crypto" | "bank" | "card" | "otc";
 
+// These routes resolve the account from the login token; the address in the
+// body is no longer trusted. Send the token we already hold.
+function authHeaders(): Record<string, string> {
+  try {
+    const t = localStorage.getItem("authToken");
+    return t ? { Authorization: `Bearer ${t}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 export function FundTab() {
   const { lang } = useLanguage();
   const { address } = useWallet();
@@ -518,7 +529,7 @@ export function FundTab() {
     try {
       const res = await fetch("/api/deposit/claim", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ address, txHash: tx }),
       });
       const data = await res.json();

@@ -17,6 +17,7 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/security/require-user";
 import { assertAccountActive } from "@/lib/security/account-guard";
 import { z } from "zod";
 import type { Address } from "viem";
@@ -94,8 +95,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { address, destination, unitsAUXR, refId, reason } = body;
-  const offChainAddress = address.toLowerCase();
+  const { destination, unitsAUXR, refId, reason } = body;
+
+  // Whose AUXR is being withdrawn is decided by the login token, not by the
+  // request. This route debits an off-chain balance and mints to `destination`
+  // on chain, and it used to take both from the body — so anyone could send
+  // any KYC-verified user's AUXR to a wallet of their choosing. `destination`
+  // stays a body field; that one is legitimately the caller's choice.
+  const auth = requireUser(request);
+  if (!auth.ok) return auth.response;
+  const offChainAddress = auth.user.address;
+
+  if (body.address && String(body.address).toLowerCase() !== offChainAddress) {
+    return NextResponse.json(
+      { success: false, error: "address does not match the authenticated account" },
+      { status: 403 },
+    );
+  }
 
   // A suspended account must not move value. PR #58 added this to trade,
   // transfer, redeem and withdraw but not to the AUXR family, so a banned

@@ -13,6 +13,7 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/security/require-user";
 import { z } from "zod";
 import { getRedis, incrementBalance, addTransaction, getUserBalance } from "@/lib/redis";
 import { verifyHotWalletDeposit } from "@/lib/deposit-verify";
@@ -75,7 +76,20 @@ export async function POST(request: NextRequest) {
   }
 
   const redis = getRedis();
-  const address = body.address.toLowerCase();
+  // On-chain deposits are public, so a claim keyed only on txHash lets anyone
+  // watching the hot wallet credit someone else's incoming funds to themselves.
+  // The claimant is the authenticated user; the header comment above always
+  // said "the logged-in user", but nothing enforced it.
+  const auth = requireUser(request);
+  if (!auth.ok) return auth.response;
+  const address = auth.user.address;
+
+  if (body.address && body.address.toLowerCase() !== address) {
+    return NextResponse.json(
+      { success: false, error: "address does not match the authenticated account" },
+      { status: 403 },
+    );
+  }
   const txHash = body.txHash.trim();
 
   // Caller must be a known user (so we never credit a phantom address).
