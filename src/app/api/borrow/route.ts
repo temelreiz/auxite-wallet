@@ -1,6 +1,7 @@
 // src/app/api/borrow/route.ts
 // AUXITE BORROW — list loans / quote (GET) and create a loan (POST).
 import { NextRequest, NextResponse } from "next/server";
+import { assertAccountActive } from "@/lib/security/account-guard";
 import { isKycVerified } from "@/lib/kyc-limits";
 import { incrementBalance, addTransaction } from "@/lib/redis";
 import { getMetalTotals } from "@/lib/allocation-service";
@@ -73,6 +74,12 @@ export async function POST(request: NextRequest) {
 
     if (!address || !metal || !collateralGrams || !principalUSDC || !termMonths) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // Suspended accounts must not move value through this path either.
+    const gate = await assertAccountActive(address);
+    if (!gate.ok) {
+      return NextResponse.json({ success: false, error: gate.error, code: gate.code }, { status: 403 });
     }
     // T&C — must accept the loan agreement (collateral locked for term + liquidation disclosure).
     if (termsAccepted !== true) {

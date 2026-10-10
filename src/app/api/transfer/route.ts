@@ -395,6 +395,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: gate.error, code: gate.code }, { status: 403 });
     }
 
+    // ...and a suspended account receives none either. Only the sender was
+    // checked before, so a banned account could still be funded from a second
+    // account and then spend through whichever path was still open — which is
+    // exactly what 0x287477…1dbe was doing after being banned.
+    const toGate = await assertAccountActive(normalizedTo);
+    if (!toGate.ok) {
+      return NextResponse.json(
+        { error: "Alıcı hesap işlem yapamaz durumda", code: "recipient_" + toGate.code },
+        { status: 403 },
+      );
+    }
+
     // Serialise the sender's balance mutations: the sufficiency checks below
     // read the balance well before multi.exec() debits it, so concurrent
     // transfers would otherwise each pass the check and spend the same funds.

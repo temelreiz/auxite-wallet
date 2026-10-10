@@ -17,6 +17,7 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { assertAccountActive } from "@/lib/security/account-guard";
 import { z } from "zod";
 import type { Address } from "viem";
 import { isAddress } from "viem";
@@ -95,6 +96,14 @@ export async function POST(request: NextRequest) {
 
   const { address, destination, unitsAUXR, refId, reason } = body;
   const offChainAddress = address.toLowerCase();
+
+  // A suspended account must not move value. PR #58 added this to trade,
+  // transfer, redeem and withdraw but not to the AUXR family, so a banned
+  // account kept buying, selling and could have withdrawn on-chain.
+  const gate = await assertAccountActive(offChainAddress);
+  if (!gate.ok) {
+    return NextResponse.json({ success: false, error: gate.error, code: gate.code }, { status: 403 });
+  }
 
   // 1. Destination validation — must be a valid EVM address (not zero)
   if (!isAddress(destination)) {
