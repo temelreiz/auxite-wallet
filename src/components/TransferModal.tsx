@@ -372,7 +372,7 @@ export function TransferModal({ isOpen, onClose, lang: propLang }: TransferModal
         const refId = `auxr-wd-${(address || "").slice(2, 10)}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const response = await fetch("/api/auxr/withdraw-onchain", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeaders() },
           body: JSON.stringify({ address, destination: recipientAddress, unitsAUXR: amountNum, refId, source: "wallet-transfer" }),
         });
         const data = await response.json();
