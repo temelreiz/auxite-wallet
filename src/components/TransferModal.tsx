@@ -164,6 +164,17 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
+// /api/transfer resolves the sender from the login token; the address in the
+// body is no longer trusted. Send the token we already hold.
+function authHeaders(): Record<string, string> {
+  try {
+    const t = localStorage.getItem("authToken");
+    return t ? { Authorization: `Bearer ${t}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 export function TransferModal({ isOpen, onClose, lang: propLang }: TransferModalProps) {
   const { lang: contextLang } = useLanguage();
   const lang = propLang || contextLang || "en";
@@ -382,7 +393,7 @@ export function TransferModal({ isOpen, onClose, lang: propLang }: TransferModal
           console.log(`📡 Custodial metal transfer: ${amountNum} ${selectedToken} to ${recipientAddress}`);
           const response = await fetch("/api/transfer", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", ...authHeaders() },
             body: JSON.stringify({
               fromAddress: address,
               toAddress: recipientAddress,
@@ -433,7 +444,7 @@ export function TransferModal({ isOpen, onClose, lang: propLang }: TransferModal
           console.log(`📡 Wallet not connected - trying API transfer (custodial)...`);
           const response = await fetch("/api/transfer", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", ...authHeaders() },
             body: JSON.stringify({
               fromAddress: address,
               toAddress: recipientAddress,
@@ -474,7 +485,7 @@ export function TransferModal({ isOpen, onClose, lang: propLang }: TransferModal
         writeContract({ address: tokenInfo.address as `0x${string}`, abi: ERC20_ABI, functionName: "transfer", args: [recipientAddress as `0x${string}`, amountInUnits], gas: BigInt(200000) });
       } else {
         // Off-chain transfer via API
-        const response = await fetch("/api/transfer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fromAddress: address, toAddress: recipientAddress, token: selectedToken, amount: amountNum, twoFactorCode: verified2FACode }) });
+        const response = await fetch("/api/transfer", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ fromAddress: address, toAddress: recipientAddress, token: selectedToken, amount: amountNum, twoFactorCode: verified2FACode }) });
         const data = await response.json();
         if (data.success) {
           setResult("success");

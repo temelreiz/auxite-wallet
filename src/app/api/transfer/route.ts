@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 import { ethers } from "ethers";
 import { METAL_TOKENS } from "@/config/contracts-v8";
@@ -297,11 +298,32 @@ export async function POST(request: NextRequest) {
   let balanceLock: BalanceLock | null = null;
 
   try {
-    const { fromAddress, toAddress, token, amount, twoFactorCode } = await request.json();
+    const body = await request.json();
+    const { toAddress, token, amount, twoFactorCode } = body;
+
+    // The sender is whoever the login token says it is — never a field in the
+    // request. This endpoint used to take fromAddress straight from the body
+    // with nothing proving the caller owned it, and the only barrier was 2FA,
+    // applied solely when the SENDER happened to have it enabled. Any account
+    // without 2FA could therefore be drained by anyone who knew its address.
+    // That is how 0x7cffdf3c…21ed (the App Store review account, no 2FA) was
+    // emptied into a banned account on 2026-10-10.
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const fromAddress = auth.user.address;
+
+    // A body that disagrees with the token is a client bug or an attempt —
+    // either way it must not be silently ignored.
+    if (body.fromAddress && String(body.fromAddress).toLowerCase() !== fromAddress) {
+      return NextResponse.json(
+        { error: "fromAddress does not match the authenticated account" },
+        { status: 403 },
+      );
+    }
 
     console.log("Transfer request:", { fromAddress, toAddress, token, amount, amountType: typeof amount });
 
-    if (!fromAddress || !toAddress || !token || !amount) {
+    if (!toAddress || !token || !amount) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
