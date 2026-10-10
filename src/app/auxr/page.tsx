@@ -139,6 +139,17 @@ function fmtGrams(g: number) {
   return `${g.toFixed(4)} g`;
 }
 
+// These routes resolve the account from the login token; the address in the
+// body is no longer trusted. Send the token we already hold.
+function authHeaders(): Record<string, string> {
+  try {
+    const t = localStorage.getItem("authToken");
+    return t ? { Authorization: `Bearer ${t}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 export default function AuxrPage() {
   const { lang } = useLanguage();
   const t = T[(lang === "tr" ? "tr" : "en") as "en" | "tr"];
@@ -259,7 +270,7 @@ export default function AuxrPage() {
     try {
       const r = await fetch("/api/auxr/buy", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ address, usdAmount: buyAmountNum, paymentToken, source: "web", refId }),
       });
       const j = await r.json();
@@ -283,7 +294,7 @@ export default function AuxrPage() {
     try {
       const r = await fetch("/api/auxr/sell", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ address, unitsAUXR: sellUnitsNum, source: "web", refId }),
       });
       const j = await r.json();

@@ -12,6 +12,17 @@ const METALS = [
 const TERMS = [3, 6, 12];
 const fmt = (n: number, d = 2) => (Number(n) || 0).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 
+// These routes resolve the account from the login token; the address in the
+// body is no longer trusted. Send the token we already hold.
+function authHeaders(): Record<string, string> {
+  try {
+    const t = localStorage.getItem("authToken");
+    return t ? { Authorization: `Bearer ${t}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 export default function BorrowPage() {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,7 +80,7 @@ export default function BorrowPage() {
     setMsg(null); setBusy(true);
     try {
       const r = await fetch("/api/borrow", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ address, metal, collateralGrams: parseFloat(grams), principalUSDC: principal, termMonths: term, termsAccepted: tcAccept, twoFactorCode: twoFA }),
       });
       const j = await r.json();
@@ -89,7 +100,7 @@ export default function BorrowPage() {
     setBusy(true); setMsg(null);
     try {
       const r = await fetch("/api/borrow/repay", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ address, loanId, amountUSDC: parseFloat(amt) }),
       });
       const j = await r.json();

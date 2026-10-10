@@ -2,6 +2,7 @@
 // AUXITE BORROW — repay a loan in USDC (full or partial). Cash-first; on full
 // repayment the collateral is released. Debits the user's USDC balance.
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/security/require-user";
 import { assertAccountActive } from "@/lib/security/account-guard";
 import { incrementBalance, addTransaction, getUserBalance } from "@/lib/redis";
 import { getUserLoans, repayLoan } from "@/lib/borrow-service";
@@ -12,7 +13,20 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { address, loanId, amountUSDC } = body;
+    const { loanId, amountUSDC } = body;
+    // Whose collateral and loan this is comes from the login token, not the
+    // body — assertAccountActive below stops a suspended caller, not an
+    // impersonating one.
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const address = auth.user.address;
+
+    if (body.address && String(body.address).toLowerCase() !== address) {
+      return NextResponse.json(
+        { success: false, error: "address does not match the authenticated account" },
+        { status: 403 },
+      );
+    }
     if (!address || !loanId || !amountUSDC) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
