@@ -561,6 +561,17 @@ interface TransactionRecord {
 // ============================================
 // COMPONENT
 // ============================================
+// /api/transfer resolves the sender from the login token; the address in the
+// body is no longer trusted. Send the token we already hold.
+function authHeaders(): Record<string, string> {
+  try {
+    const t = localStorage.getItem("authToken");
+    return t ? { Authorization: `Bearer ${t}` } : {};
+  } catch {
+    return {};
+  }
+}
+
 export function WithdrawTab() {
   const { lang } = useLanguage();
   const { address: ctxAddress, balances: ctxBalances, stakedAmounts: ctxStaked, allocationAmounts: ctxAllocations, refreshBalances } = useWallet();
@@ -846,7 +857,7 @@ export function WithdrawTab() {
     try {
       const res = await fetch("/api/transfer", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({
           fromAddress: address,
           toAddress: recipient,
