@@ -4,6 +4,7 @@
 // GET: List pending weekend orders for a user
 
 import { NextRequest, NextResponse } from "next/server";
+import { assertAccountActive } from "@/lib/security/account-guard";
 import { Redis } from "@upstash/redis";
 import { isMarketOpen, getMarketStatus } from "@/lib/market-hours";
 import { getUserBalance, incrementBalance, addTransaction } from "@/lib/redis";
@@ -55,6 +56,12 @@ export async function POST(request: NextRequest) {
         { error: "Missing required fields: walletAddress, type, token, amount, estimatedPriceUsd" },
         { status: 400 }
       );
+    }
+
+    // Suspended accounts must not move value through this path either.
+    const gate = await assertAccountActive(walletAddress);
+    if (!gate.ok) {
+      return NextResponse.json({ success: false, error: gate.error, code: gate.code }, { status: 403 });
     }
 
     if (type !== "buy" && type !== "sell") {

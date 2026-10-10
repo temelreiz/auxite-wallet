@@ -11,6 +11,7 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { assertAccountActive } from "@/lib/security/account-guard";
 import { z } from "zod";
 import {
   getUserBalance,
@@ -61,6 +62,14 @@ export async function POST(request: NextRequest) {
 
   const { address, unitsAUXR, source, refId } = body;
   const normalizedAddress = address.toLowerCase();
+
+  // A suspended account must not move value. PR #58 added this to trade,
+  // transfer, redeem and withdraw but not to the AUXR family, so a banned
+  // account kept buying, selling and could have withdrawn on-chain.
+  const gate = await assertAccountActive(normalizedAddress);
+  if (!gate.ok) {
+    return NextResponse.json({ success: false, error: gate.error, code: gate.code }, { status: 403 });
+  }
 
   // Idempotency
   if (refId) {

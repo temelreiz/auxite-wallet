@@ -1,5 +1,6 @@
 // src/app/api/user/convert-usd-usdt/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { assertAccountActive } from "@/lib/security/account-guard";
 import { getUserBalance, incrementBalance, addTransaction } from "@/lib/redis";
 import { blockUSPersonForFeature } from "@/lib/security/us-geofence";
 
@@ -18,6 +19,12 @@ export async function POST(request: NextRequest) {
     // regulated money-movement feature; not offered to US persons pending licensing.
     const usGate = await blockUSPersonForFeature("stablecoinConvert", address, request);
     if (usGate) return usGate;
+
+    // Suspended accounts must not move value through this path either.
+    const gate = await assertAccountActive(address);
+    if (!gate.ok) {
+      return NextResponse.json({ success: false, error: gate.error, code: gate.code }, { status: 403 });
+    }
 
     const body = await request.json();
     const { direction, amount, usdtPrice = 1 } = body;

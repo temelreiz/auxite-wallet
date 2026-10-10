@@ -2,6 +2,7 @@
 // AUXITE BORROW — repay a loan in USDC (full or partial). Cash-first; on full
 // repayment the collateral is released. Debits the user's USDC balance.
 import { NextRequest, NextResponse } from "next/server";
+import { assertAccountActive } from "@/lib/security/account-guard";
 import { incrementBalance, addTransaction, getUserBalance } from "@/lib/redis";
 import { getUserLoans, repayLoan } from "@/lib/borrow-service";
 
@@ -14,6 +15,12 @@ export async function POST(request: NextRequest) {
     const { address, loanId, amountUSDC } = body;
     if (!address || !loanId || !amountUSDC) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // Suspended accounts must not move value through this path either.
+    const gate = await assertAccountActive(address);
+    if (!gate.ok) {
+      return NextResponse.json({ success: false, error: gate.error, code: gate.code }, { status: 403 });
     }
     const amount = parseFloat(amountUSDC);
     if (!(amount > 0)) return NextResponse.json({ error: "amountUSDC must be > 0" }, { status: 400 });
