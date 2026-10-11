@@ -11,6 +11,7 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/security/require-user";
 import { assertAccountActive } from "@/lib/security/account-guard";
 import { z } from "zod";
 import {
@@ -60,8 +61,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { address, unitsAUXR, source, refId } = body;
-  const normalizedAddress = address.toLowerCase();
+  const { unitsAUXR, source, refId } = body;
+  // Whose balance this acts on comes from the login token. Taking it from
+  // the body let anyone act as anyone: assertAccountActive below stops a
+  // SUSPENDED caller, not an impersonating one.
+  const auth = requireUser(request);
+  if (!auth.ok) return auth.response;
+  const normalizedAddress = auth.user.address;
+
+  if (body.address && String(body.address).toLowerCase() !== normalizedAddress) {
+    return NextResponse.json(
+      { success: false, error: "address does not match the authenticated account" },
+      { status: 403 },
+    );
+  }
 
   // A suspended account must not move value. PR #58 added this to trade,
   // transfer, redeem and withdraw but not to the AUXR family, so a banned

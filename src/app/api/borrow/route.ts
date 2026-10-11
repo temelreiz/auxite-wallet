@@ -1,6 +1,7 @@
 // src/app/api/borrow/route.ts
 // AUXITE BORROW — list loans / quote (GET) and create a loan (POST).
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/security/require-user";
 import { assertAccountActive } from "@/lib/security/account-guard";
 import { isKycVerified } from "@/lib/kyc-limits";
 import { incrementBalance, addTransaction } from "@/lib/redis";
@@ -70,7 +71,20 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { address, metal, collateralGrams, principalUSDC, termMonths, termsAccepted, twoFactorCode } = body;
+    const { metal, collateralGrams, principalUSDC, termMonths, termsAccepted, twoFactorCode } = body;
+    // Whose collateral and loan this is comes from the login token, not the
+    // body — assertAccountActive below stops a suspended caller, not an
+    // impersonating one.
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const address = auth.user.address;
+
+    if (body.address && String(body.address).toLowerCase() !== address) {
+      return NextResponse.json(
+        { success: false, error: "address does not match the authenticated account" },
+        { status: 403 },
+      );
+    }
 
     if (!address || !metal || !collateralGrams || !principalUSDC || !termMonths) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
