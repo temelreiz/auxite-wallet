@@ -19,6 +19,7 @@ import { getReserveSnapshot } from "@/lib/auxr-reserve";
 import { liquidBackingUsd } from "@/lib/treasury-balances";
 import { getOnChainTotalSupply, weiToAuxr, isPaused } from "@/lib/auxr-onchain";
 import { getBitmartTicker, getBitmartDepth, computeDepthMetrics, AUXR_SYMBOL } from "@/lib/bitmart";
+import { getLbankMarket, LBANK_AUXR_SYMBOL } from "@/lib/lbank";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -40,6 +41,14 @@ async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
  */
 const CEX_ENABLED = process.env.AUXR_CEX_ENABLED === "1";
 
+/**
+ * LBANK carries the live AUXR/USDT book under the Technical Service Agreement.
+ * It is read unconditionally: BitMart's delisting turned the venue section of
+ * this cockpit off, and AUXR has been trading since with nothing here watching
+ * it. Set AUXR_LBANK_ENABLED=0 only if that listing ends too.
+ */
+const LBANK_ENABLED = process.env.AUXR_LBANK_ENABLED !== "0";
+
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
   if (!auth.authorized) return auth.response!;
@@ -55,6 +64,10 @@ export async function GET(request: NextRequest) {
   ]);
 
   const nav: number | null = pricing?.navUSD ?? null;
+
+  // LBANK needs NAV to anchor its depth bands, so it runs after pricing rather
+  // than alongside it.
+  const lbank = LBANK_ENABLED ? await safe(getLbankMarket(nav), null as any) : null;
   const cexLast: number | null = ticker?.listed ? ticker.last : null;
 
   // Deviation of CEX price from NAV (the key integrity/abnormal-fluctuation signal).
@@ -107,6 +120,29 @@ export async function GET(request: NextRequest) {
       quoteVolume24h: ticker?.quoteVolume24h ?? null,
       deviationBps,
       depth: depthMetrics,
+    },
+    // The live venue. Kept separate from `cex` rather than folded into it:
+    // that block still describes BitMart and reads delisted, and quietly
+    // reusing it would make a dead feed and a live one indistinguishable.
+    lbank: {
+      exchange: "LBANK",
+      symbol: LBANK_AUXR_SYMBOL,
+      enabled: LBANK_ENABLED,
+      listed: !!lbank?.ticker?.listed,
+      last: lbank?.ticker?.last ?? null,
+      bid: lbank?.ticker?.bid ?? null,
+      ask: lbank?.ticker?.ask ?? null,
+      high24h: lbank?.ticker?.high24h ?? null,
+      low24h: lbank?.ticker?.low24h ?? null,
+      change24hPct: lbank?.ticker?.change24hPct ?? null,
+      volume24h: lbank?.ticker?.volume24h ?? null,
+      quoteVolume24h: lbank?.ticker?.quoteVolume24h ?? null,
+      deviationBps: lbank?.deviationBps ?? null,
+      depth: lbank?.metrics ?? null,
+      bookTop: {
+        bids: lbank?.depth?.bids?.slice(0, 8) ?? [],
+        asks: lbank?.depth?.asks?.slice(0, 8) ?? [],
+      },
     },
     reserve: snap
       ? {
