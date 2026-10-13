@@ -292,6 +292,26 @@ export async function GET(request: NextRequest) {
     fired.length ? `⚠️ Active alerts today: ${fired.join(", ")}` : `✅ All green`,
   ].filter(Boolean));
 
+  // Heartbeat. Until now the only evidence this ran was a Telegram message,
+  // so a silent channel and a dead watchdog looked identical — and the daily
+  // digest, the dead-man's switch, only answers that question once a day. This
+  // records every run so the cockpit can say when it last checked.
+  try {
+    await getRedis().set(
+      "auxr:watch:lastRun",
+      JSON.stringify({
+        at: Date.now(),
+        alertsFired: fired,
+        lbankListed: !!ticker?.listed,
+        navRead: nav != null,
+        digestSent,
+      }),
+      { ex: 7 * 24 * 3600 },
+    );
+  } catch (e) {
+    console.error("[auxr-ops-watch] heartbeat write failed", e);
+  }
+
   return NextResponse.json({
     success: true,
     checked: { backing: snap?.backingRatio?.weakest != null, lbankListed: !!ticker?.listed, paused: paused === true },
