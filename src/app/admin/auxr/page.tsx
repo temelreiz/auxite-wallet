@@ -372,10 +372,14 @@ export default function AdminAuxrPage() {
           {sessionExpired ? (
             // Don't claim a listing state we can't actually read.
             <span className="text-red-400">● Session expired</span>
-          ) : ops?.cex?.delisted ? (
-            <span className="text-slate-400">● Delisted — NAV only</span>
+          ) : ops?.lbank?.listed ? (
+            // LBANK carries the live book; BitMart's delisting left the old
+            // badge reading "Delisted" while AUXR was trading elsewhere.
+            <span className="text-emerald-400">● Live on {ops.lbank.exchange}</span>
           ) : ops?.cex?.listed ? (
             <span className="text-emerald-400">● Live on {ops.cex.exchange}</span>
+          ) : ops?.cex?.delisted ? (
+            <span className="text-slate-400">● Delisted — NAV only</span>
           ) : (
             <span className="text-amber-400">● Pre-listing</span>
           )}
@@ -395,6 +399,7 @@ export default function AdminAuxrPage() {
         {(() => {
           const nav = ops?.price?.navUSD;
           const cex = ops?.cex;
+          const lb = ops?.lbank;
           const dev = cex?.deviationBps;
           const devPct = dev != null ? dev / 100 : null;
           const devColor =
@@ -494,6 +499,91 @@ export default function AdminAuxrPage() {
                     <div>
                       <div className="text-xs text-slate-500 mb-1">24h volume</div>
                       <div className="tabular-nums">{cex.quoteVolume24h != null ? fmtUSD(cex.quoteVolume24h) : "—"}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── LBANK: the live venue ──────────────────────────────── */}
+              {lb?.listed && (
+                <div className="mt-6 pt-6 border-t border-white/10">
+                  <div className="flex items-baseline justify-between mb-4">
+                    <div className="text-xs uppercase tracking-widest text-slate-500">
+                      {lb.exchange} · {lb.symbol}
+                    </div>
+                    {lb.deviationBps != null && (
+                      <div
+                        className={`text-xs tabular-nums ${
+                          Math.abs(lb.deviationBps) <= 100
+                            ? "text-emerald-400"
+                            : Math.abs(lb.deviationBps) <= 300
+                              ? "text-amber-400"
+                              : "text-red-400"
+                        }`}
+                      >
+                        NAV&apos;a göre {lb.deviationBps > 0 ? "+" : ""}
+                        {(lb.deviationBps / 100).toFixed(2)}%
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">Son fiyat</div>
+                      <div className="tabular-nums text-lg">{lb.last != null ? fmtUSD(lb.last) : "—"}</div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        bid {lb.bid != null ? fmtUSD(lb.bid) : "—"} · ask {lb.ask != null ? fmtUSD(lb.ask) : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">24s aralık</div>
+                      <div className="tabular-nums">
+                        {lb.low24h != null ? fmtUSD(lb.low24h) : "—"} – {lb.high24h != null ? fmtUSD(lb.high24h) : "—"}
+                      </div>
+                      {lb.change24hPct != null && (
+                        <div className={`text-xs mt-1 ${lb.change24hPct >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                          {lb.change24hPct > 0 ? "+" : ""}{lb.change24hPct}%
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">24s hacim</div>
+                      <div className="tabular-nums">{lb.volume24h != null ? `${lb.volume24h} AUXR` : "—"}</div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        {lb.quoteVolume24h != null ? fmtUSD(lb.quoteVolume24h) : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">Spread</div>
+                      <div className="tabular-nums">
+                        {lb.depth?.spreadBps != null ? `${lb.depth.spreadBps.toFixed(1)} bps` : "—"}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        ±2% {fmtUSD(lb.depth?.bidUsdWithin?.["2"] || 0)} / {fmtUSD(lb.depth?.askUsdWithin?.["2"] || 0)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Top of book. Depth bands summarise; the ladder shows whether
+                      the quotes are one maker's wall or a real two-sided market. */}
+                  <div className="grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <div className="text-slate-500 mb-1">Alış (bid)</div>
+                      {(lb.bookTop?.bids ?? []).map((l: any, i: number) => (
+                        <div key={i} className="flex justify-between tabular-nums text-emerald-400/80">
+                          <span>{fmtUSD(l.price)}</span>
+                          <span className="text-slate-500">{l.size}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <div className="text-slate-500 mb-1">Satış (ask)</div>
+                      {(lb.bookTop?.asks ?? []).map((l: any, i: number) => (
+                        <div key={i} className="flex justify-between tabular-nums text-red-400/80">
+                          <span>{fmtUSD(l.price)}</span>
+                          <span className="text-slate-500">{l.size}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
