@@ -587,6 +587,76 @@ export default function AdminAuxrPage() {
                     </div>
                   </div>
 
+                  {/* Flow split. Volume is the number everyone quotes and the
+                      easiest to manufacture, so it is shown next to what is
+                      left once the machine pattern is removed. */}
+                  {ops?.flow && ops.flow.trades > 0 && (
+                    <div className="mb-4 p-3 rounded-lg bg-black/20 border border-white/5">
+                      <div className="flex items-baseline justify-between mb-2">
+                        <div className="text-xs uppercase tracking-widest text-slate-500">
+                          İşlem akışı · son {ops.flow.windowHours != null ? `${ops.flow.windowHours.toFixed(1)} sa` : "—"}
+                        </div>
+                        <div className="text-xs text-slate-600">{ops.flow.trades} işlem</div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                        <div>
+                          <div className="text-xs text-slate-500 mb-1">Muhtemel MM deseni</div>
+                          <div className="tabular-nums text-slate-400">
+                            {ops.flow.likelyMm.volume.toFixed(2)} AUXR
+                            <span className="text-slate-600 text-xs"> · {ops.flow.likelyMm.trades} işlem</span>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-slate-500 mb-1">Artık (gerçek ilgi vekili)</div>
+                          <div
+                            className={`tabular-nums ${ops.flow.residual.volume > 0 ? "text-emerald-400" : "text-amber-400"}`}
+                          >
+                            {ops.flow.residual.volume.toFixed(2)} AUXR
+                            <span className="text-slate-600 text-xs"> · {ops.flow.residual.trades} işlem</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-slate-500">
+                        <div>
+                          Boyut tekdüzeliği
+                          <div className="tabular-nums text-slate-400">
+                            {ops.flow.diagnostics.sizeUniformity != null
+                              ? ops.flow.diagnostics.sizeUniformity.toFixed(3)
+                              : "—"}
+                          </div>
+                        </div>
+                        <div>
+                          İşlem aralığı
+                          <div className="tabular-nums text-slate-400">
+                            {ops.flow.diagnostics.medianGapSec != null
+                              ? `${ops.flow.diagnostics.medianGapSec.toFixed(1)} sn`
+                              : "—"}
+                          </div>
+                        </div>
+                        <div>
+                          Al/sat dengesizliği
+                          <div className="tabular-nums text-slate-400">
+                            {ops.flow.diagnostics.buySellImbalance != null
+                              ? `${(ops.flow.diagnostics.buySellImbalance * 100).toFixed(1)}%`
+                              : "—"}
+                          </div>
+                        </div>
+                        <div>
+                          24s zincire çıkan
+                          <div className="tabular-nums text-slate-400">
+                            {ops.flow.releasedOnChain24h != null
+                              ? `${ops.flow.releasedOnChain24h} AUXR`
+                              : "—"}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-[11px] text-slate-600 leading-relaxed">
+                        Public veride hesap kimliği yok — bu bir desen ayrımı, kimlik tespiti değil.
+                        &quot;24s zincire çıkan&quot;, organik satışın üst sınırı: AUXR biz salmadan borsaya ulaşamaz.
+                      </div>
+                    </div>
+                  )}
+
                   {/* Top of book. Depth bands summarise; the ladder shows whether
                       the quotes are one maker's wall or a real two-sided market. */}
                   <div className="grid grid-cols-2 gap-4 text-xs">
