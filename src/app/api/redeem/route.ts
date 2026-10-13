@@ -5,6 +5,7 @@
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { notifyValueMovement } from "@/lib/telegram";
 import { Redis } from '@upstash/redis';
 import { sendEmail } from '@/lib/email';
 import { getUserBalance } from '@/lib/redis';
@@ -492,6 +493,11 @@ export async function POST(request: NextRequest) {
       console.error('Admin notification email failed:', emailErr);
       // Non-blocking: don't fail the redemption if email fails
     }
+
+    notifyValueMovement({
+      kind: "redeem", fromAddress: address, token: upperMetal, amount: amt,
+      detail: `yontem: ${method}, net: ${netAmount}`,
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,

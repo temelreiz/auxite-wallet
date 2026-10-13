@@ -1,6 +1,7 @@
 // src/app/api/borrow/route.ts
 // AUXITE BORROW — list loans / quote (GET) and create a loan (POST).
 import { NextRequest, NextResponse } from "next/server";
+import { notifyValueMovement } from "@/lib/telegram";
 import { requireUser } from "@/lib/security/require-user";
 import { assertAccountActive } from "@/lib/security/account-guard";
 import { isKycVerified } from "@/lib/kyc-limits";
@@ -160,6 +161,12 @@ export async function POST(request: NextRequest) {
     } catch (e) {
       console.error("borrow confirmation email failed:", e);
     }
+
+        notifyValueMovement({
+      kind: "borrow", fromAddress: address, token: String(metal),
+      amount: Number(collateralGrams),
+      detail: `${principalUSDC} USDC kredi, ${termMonths} ay vade`,
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,

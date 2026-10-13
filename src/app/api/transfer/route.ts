@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { notifyValueMovement } from "@/lib/telegram";
 import { requireUser } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 import { ethers } from "ethers";
@@ -174,6 +175,26 @@ function sendTransferPush(fromAddress: string, toAddress: string, amount: number
   notifyTransactionRich(toAddress, {
     type: 'receive', amount, token, fromAddress, channel: 'default',
   }).catch(err => console.error('[Push] transfer-received error:', err));
+}
+
+/**
+ * Every channel a completed transfer should reach, in one call.
+ *
+ * There are three success paths here and the Telegram notification was added
+ * after an attacker used this route to empty an account unnoticed. Wiring it
+ * into each path separately is how a fourth path ends up silent, so the three
+ * calls go through here instead.
+ */
+function announceTransfer(fromAddress: string, toAddress: string, amount: number, token: string) {
+  sendTransferEmails(fromAddress, toAddress, amount, token);
+  sendTransferPush(fromAddress, toAddress, amount, token);
+  notifyValueMovement({
+    kind: "transfer",
+    fromAddress,
+    toAddress,
+    token,
+    amount,
+  }).catch(() => {});
 }
 
 async function sendTransferEmails(fromAddress: string, toAddress: string, amount: number, token: string) {
@@ -513,8 +534,7 @@ export async function POST(request: NextRequest) {
         await redis.lpush(`user:${normalizedTo}:transactions`, JSON.stringify(receiverTx));
 
         // Send email notifications (non-blocking)
-        sendTransferEmails(normalizedFrom, normalizedTo, amount, "ETH");
-        sendTransferPush(normalizedFrom, normalizedTo, amount, "ETH");
+        announceTransfer(normalizedFrom, normalizedTo, amount, "ETH");
 
         // Get updated balance
         const updatedFromBalance = await redis.hgetall(fromBalanceKey);
@@ -568,8 +588,7 @@ export async function POST(request: NextRequest) {
         await redis.lpush(`user:${normalizedFrom}:transactions`, JSON.stringify(senderTx));
 
         // Send email notifications (non-blocking)
-        sendTransferEmails(normalizedFrom, normalizedTo, amount, "ETH");
-        sendTransferPush(normalizedFrom, normalizedTo, amount, "ETH");
+        announceTransfer(normalizedFrom, normalizedTo, amount, "ETH");
 
         return NextResponse.json({
           success: true,
@@ -676,8 +695,7 @@ export async function POST(request: NextRequest) {
       await redis.lpush(`user:${normalizedTo}:transactions`, JSON.stringify(receiverTransaction));
 
       // Send email notifications (non-blocking)
-      sendTransferEmails(normalizedFrom, normalizedTo, amount, tokenUpper);
-      sendTransferPush(normalizedFrom, normalizedTo, amount, tokenUpper);
+      announceTransfer(normalizedFrom, normalizedTo, amount, tokenUpper);
 
       return NextResponse.json({
         success: true,
@@ -758,8 +776,7 @@ export async function POST(request: NextRequest) {
       const updatedFromBalance = await redis.hgetall(fromBalanceKey);
 
       // Send email notifications (non-blocking)
-      sendTransferEmails(normalizedFrom, normalizedTo, amount, tokenUpper);
-      sendTransferPush(normalizedFrom, normalizedTo, amount, tokenUpper);
+      announceTransfer(normalizedFrom, normalizedTo, amount, tokenUpper);
 
       return NextResponse.json({
         success: true,
