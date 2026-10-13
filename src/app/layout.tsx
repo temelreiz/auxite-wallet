@@ -9,6 +9,7 @@ import { ToastProvider } from "@/components/ToastProvider";
 import { ToastProvider as UIToastProvider } from "@/components/ui/Toast";
 import { LanguageProvider } from "@/components/LanguageContext";
 import { ChainGuard } from "@/components/ChainGuard";
+import { AuthFetchInstaller } from "@/components/AuthFetchInstaller";
 import { SecurityBanner } from "@/components/SecurityBanner";
 import { CookieConsent } from "@/components/CookieConsent";
 import SupportChat from "@/components/SupportChat";
@@ -181,6 +182,7 @@ export default function RootLayout({
         <ToastProvider>
           <UIToastProvider>
             <Web3Provider>
+              <AuthFetchInstaller />
               <LanguageProvider>
                 <SecurityBanner />
                 <ChainGuard />
