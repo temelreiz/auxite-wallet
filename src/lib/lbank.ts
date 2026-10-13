@@ -154,3 +154,120 @@ export async function getLbankMarket(navUSD: number | null): Promise<LbankMarket
 
   return { ticker, depth, metrics, deviationBps };
 }
+
+// ── Trade flow ──────────────────────────────────────────────────────────────
+
+export interface LbankTrade {
+  ts: number;
+  price: number;
+  amount: number;
+  side: "buy" | "sell";
+  tid: string;
+}
+
+/** Recent public trades, newest first. LBANK caps `size` at 600. */
+export async function getLbankTrades(
+  symbol: string = LBANK_AUXR_SYMBOL,
+  size = 600,
+): Promise<LbankTrade[]> {
+  const d = await lbGet(`/v2/trades.do?symbol=${encodeURIComponent(symbol)}&size=${size}`);
+  if (!Array.isArray(d)) return [];
+  return d
+    .map((t: any) => ({
+      ts: Number(t.date_ms),
+      price: Number(t.price),
+      amount: Number(t.amount),
+      side: t.type === "sell" ? ("sell" as const) : ("buy" as const),
+      tid: String(t.tid ?? ""),
+    }))
+    .filter((t) => Number.isFinite(t.price) && Number.isFinite(t.amount) && t.amount > 0);
+}
+
+export interface FlowSplit {
+  trades: number;
+  windowHours: number | null;
+  /** Trades whose size belongs to a small, heavily repeated set — the shape a
+   *  quoting bot makes. Not proof of who traded: the public feed carries no
+   *  account, so this is a pattern, not an identity. */
+  likelyMm: { trades: number; volume: number };
+  /** Everything else. The best available proxy for real interest. */
+  residual: { trades: number; volume: number };
+  diagnostics: {
+    /** distinct sizes ÷ trades. Near 0 means the same few sizes over and over. */
+    sizeUniformity: number | null;
+    /** median seconds between trades. */
+    medianGapSec: number | null;
+    /** |buy − sell| ÷ total volume. Near 0 means matched both ways. */
+    buySellImbalance: number | null;
+    largestTrade: number | null;
+  };
+}
+
+/**
+ * Splits the public tape into "looks like a quoting bot" and "everything else".
+ *
+ * There is no account id in public data, so this cannot name a counterparty and
+ * does not try to. What it can do is measure the three things that separate a
+ * machine from a person: a machine reuses a handful of order sizes, fires at a
+ * steady cadence, and ends the hour roughly flat. The residual is what is left
+ * once that pattern is removed, and it is the number worth reading as interest.
+ */
+export function classifyFlow(trades: LbankTrade[]): FlowSplit {
+  if (!trades.length) {
+    return {
+      trades: 0, windowHours: null,
+      likelyMm: { trades: 0, volume: 0 },
+      residual: { trades: 0, volume: 0 },
+      diagnostics: { sizeUniformity: null, medianGapSec: null, buySellImbalance: null, largestTrade: null },
+    };
+  }
+
+  const sorted = [...trades].sort((a, b) => b.ts - a.ts);
+  const windowHours = (sorted[0].ts - sorted[sorted.length - 1].ts) / 3_600_000;
+
+  // A size is "repeated" when the same amount shows up often enough that it
+  // cannot be coincidence. Threshold scales with the sample so a quiet hour
+  // does not flag two matching trades as a bot.
+  const counts = new Map<string, number>();
+  for (const t of trades) {
+    const k = t.amount.toFixed(6);
+    counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  const repeatThreshold = Math.max(3, Math.ceil(trades.length / 60));
+
+  const sizes = trades.map((t) => t.amount).sort((a, b) => a - b);
+  const p90 = sizes[Math.floor(sizes.length * 0.9)] ?? Infinity;
+
+  let mmT = 0, mmV = 0, resT = 0, resV = 0;
+  for (const t of trades) {
+    const repeated = (counts.get(t.amount.toFixed(6)) ?? 0) >= repeatThreshold;
+    // Size alone is not enough: a genuine small trade should not be swept up
+    // just for being small, so it must also sit inside the repeated cluster.
+    if (repeated && t.amount <= p90) {
+      mmT += 1; mmV += t.amount;
+    } else {
+      resT += 1; resV += t.amount;
+    }
+  }
+
+  const gaps: number[] = [];
+  for (let i = 1; i < sorted.length; i++) gaps.push((sorted[i - 1].ts - sorted[i].ts) / 1000);
+  gaps.sort((a, b) => a - b);
+
+  const buyVol = trades.filter((t) => t.side === "buy").reduce((s, t) => s + t.amount, 0);
+  const sellVol = trades.filter((t) => t.side === "sell").reduce((s, t) => s + t.amount, 0);
+  const totalVol = buyVol + sellVol;
+
+  return {
+    trades: trades.length,
+    windowHours: Number.isFinite(windowHours) ? windowHours : null,
+    likelyMm: { trades: mmT, volume: mmV },
+    residual: { trades: resT, volume: resV },
+    diagnostics: {
+      sizeUniformity: counts.size / trades.length,
+      medianGapSec: gaps.length ? gaps[Math.floor(gaps.length / 2)] : null,
+      buySellImbalance: totalVol > 0 ? Math.abs(buyVol - sellVol) / totalVol : null,
+      largestTrade: sizes[sizes.length - 1] ?? null,
+    },
+  };
+}

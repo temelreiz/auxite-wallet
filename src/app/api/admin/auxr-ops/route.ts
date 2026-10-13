@@ -20,7 +20,7 @@ import { getReserveSnapshot } from "@/lib/auxr-reserve";
 import { liquidBackingUsd } from "@/lib/treasury-balances";
 import { getOnChainTotalSupply, weiToAuxr, isPaused } from "@/lib/auxr-onchain";
 import { getBitmartTicker, getBitmartDepth, computeDepthMetrics, AUXR_SYMBOL } from "@/lib/bitmart";
-import { getLbankMarket, LBANK_AUXR_SYMBOL } from "@/lib/lbank";
+import { getLbankMarket, getLbankTrades, classifyFlow, LBANK_AUXR_SYMBOL } from "@/lib/lbank";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -73,6 +73,36 @@ export async function GET(request: NextRequest) {
   // When the ops watchdog last ran. Its only previous evidence of life was a
   // Telegram message, so a muted channel and a dead cron were the same thing
   // from here.
+  // Trade flow, split by pattern, plus the hard ceiling on how much selling
+  // could possibly be ours: every AUXR that reaches an exchange passes through
+  // our own on-chain release, and those records carry a 24h expiry — so the
+  // keyspace is already exactly a one-day window.
+  const flow = LBANK_ENABLED ? classifyFlow(await safe(getLbankTrades(), [] as any)) : null;
+
+  const releasedOnChain24h = await safe(
+    (async () => {
+      const redis = getRedis();
+      let cursor: any = 0;
+      let total = 0;
+      for (let i = 0; i < 40; i++) {
+        const [next, keys] = (await redis.scan(cursor, {
+          match: "auxr:withdraw:idempotency:*",
+          count: 500,
+        })) as [any, string[]];
+        for (const k of keys) {
+          const raw = await redis.get(k);
+          const v = typeof raw === "string" ? JSON.parse(raw) : (raw as any);
+          const units = Number(v?.unitsAUXR);
+          if (Number.isFinite(units)) total += units;
+        }
+        cursor = next;
+        if (String(cursor) === "0") break;
+      }
+      return total;
+    })(),
+    null as any,
+  );
+
   const watchdog = await safe(
     (async () => {
       const raw = await getRedis().get("auxr:watch:lastRun");
@@ -134,6 +164,14 @@ export async function GET(request: NextRequest) {
       deviationBps,
       depth: depthMetrics,
     },
+    flow: flow
+      ? {
+          ...flow,
+          // Not a measurement of organic buying — a ceiling on organic
+          // SELLING. AUXR cannot reach an exchange without us releasing it.
+          releasedOnChain24h,
+        }
+      : null,
     watchdog: watchdog
       ? {
           lastRunAt: watchdog.at ?? null,
