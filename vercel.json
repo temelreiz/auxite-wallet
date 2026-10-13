@@ -147,6 +147,10 @@
     {
       "path": "/api/cron/auxr-ops-watch",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/auxr-mint-requests",
+      "schedule": "*/10 * * * *"
     }
   ]
 }
