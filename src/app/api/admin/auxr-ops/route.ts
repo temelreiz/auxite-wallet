@@ -13,6 +13,7 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { getRedis } from "@/lib/redis";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getAuxrPricing } from "@/lib/auxr-pricing";
 import { getReserveSnapshot } from "@/lib/auxr-reserve";
@@ -68,6 +69,18 @@ export async function GET(request: NextRequest) {
   // LBANK needs NAV to anchor its depth bands, so it runs after pricing rather
   // than alongside it.
   const lbank = LBANK_ENABLED ? await safe(getLbankMarket(nav), null as any) : null;
+
+  // When the ops watchdog last ran. Its only previous evidence of life was a
+  // Telegram message, so a muted channel and a dead cron were the same thing
+  // from here.
+  const watchdog = await safe(
+    (async () => {
+      const raw = await getRedis().get("auxr:watch:lastRun");
+      if (!raw) return null;
+      return typeof raw === "string" ? JSON.parse(raw) : raw;
+    })(),
+    null as any,
+  );
   const cexLast: number | null = ticker?.listed ? ticker.last : null;
 
   // Deviation of CEX price from NAV (the key integrity/abnormal-fluctuation signal).
@@ -121,6 +134,15 @@ export async function GET(request: NextRequest) {
       deviationBps,
       depth: depthMetrics,
     },
+    watchdog: watchdog
+      ? {
+          lastRunAt: watchdog.at ?? null,
+          ageSeconds: watchdog.at ? Math.round((Date.now() - watchdog.at) / 1000) : null,
+          alertsFired: watchdog.alertsFired ?? [],
+          lbankListed: watchdog.lbankListed ?? null,
+          digestSent: watchdog.digestSent ?? null,
+        }
+      : null,
     // The live venue. Kept separate from `cex` rather than folded into it:
     // that block still describes BitMart and reads delisted, and quietly
     // reusing it would make a dead feed and a live one indistinguishable.

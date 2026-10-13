@@ -384,6 +384,29 @@ export default function AdminAuxrPage() {
             <span className="text-amber-400">● Pre-listing</span>
           )}
           <span className="text-slate-600"> · auto-refresh 30s</span>
+          {/* Watchdog liveness. The cron's only prior sign of life was a
+              Telegram message, so a muted channel read exactly like a dead
+              cron — and the daily digest only answers that once a day. */}
+          {(() => {
+            const w = ops?.watchdog;
+            if (!w?.ageSeconds && w?.ageSeconds !== 0) {
+              return <span className="text-slate-600"> · <span className="text-amber-400">gözcü: kayıt yok</span></span>;
+            }
+            const mins = Math.round(w.ageSeconds / 60);
+            const stale = w.ageSeconds > 900; // cron runs every 5 min
+            return (
+              <span className="text-slate-600">
+                {" · "}
+                <span className={stale ? "text-red-400" : "text-emerald-400"}>
+                  gözcü: {mins < 1 ? "az önce" : `${mins} dk önce`}
+                  {stale ? " — GECİKMİŞ" : ""}
+                </span>
+                {w.alertsFired?.length ? (
+                  <span className="text-amber-400"> · {w.alertsFired.length} alarm</span>
+                ) : null}
+              </span>
+            );
+          })()}
         </div>
       </nav>
 
