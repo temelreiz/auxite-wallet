@@ -1,5 +1,6 @@
 // app/api/withdraw/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { notifyValueMovement } from "@/lib/telegram";
 import { Redis } from "@upstash/redis";
 import { processWithdraw } from "@/lib/blockchain-service";
 import { sendWithdrawConfirmedEmail, sendWithdrawRequestedEmail } from "@/lib/email-service";
@@ -393,6 +394,11 @@ export async function POST(request: NextRequest) {
         directError: direct.error,
       }));
       console.log(`⏸  AUXM redemption queued (treasury low/error): ${direct.error}`);
+
+      notifyValueMovement({
+        kind: "withdraw", fromAddress: address, token: coin, amount,
+        detail: "AUXM tasfiyesi kuyruga alindi (hazine dusuk)",
+      }).catch(() => {});
 
       return NextResponse.json({
         success: true,

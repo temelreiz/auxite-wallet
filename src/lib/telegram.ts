@@ -249,3 +249,94 @@ export async function sendDailySummary(stats: {
 export async function sendTestMessage(): Promise<boolean> {
   return sendTelegramMessage("✅ Auxite Ops Bot aktif! Test mesajı başarılı.");
 }
+
+/**
+ * On-chain AUXR issuance. Every mint leaves the platform's control the moment
+ * it lands, so this is sent for each one — including the refusals, because a
+ * run of blocked attempts is the shape an attack makes before it succeeds.
+ *
+ * Detection only. The limits in auxr-mint-limits.ts are what actually stop a
+ * mint; this is so somebody knows it happened.
+ */
+export async function notifyAuxrMint(n: {
+  outcome: "minted" | "blocked";
+  userAddress: string;
+  destination: string;
+  unitsAUXR: number;
+  txHash?: string;
+  reason?: string;
+  usedToday?: number;
+  capToday?: number;
+}): Promise<boolean> {
+  const short = (a: string) => `${a.slice(0, 6)}...${a.slice(-4)}`;
+  const time = new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" });
+  const ok = n.outcome === "minted";
+
+  const usage =
+    n.usedToday !== undefined && n.capToday !== undefined
+      ? `\n<b>24s kullanım:</b> ${n.usedToday.toFixed(3)} / ${n.capToday} AUXR`
+      : "";
+  const tx = n.txHash
+    ? `\n<b>Tx:</b> <a href="https://basescan.org/tx/${n.txHash}">${n.txHash.slice(0, 18)}…</a>`
+    : "";
+  const why = n.reason ? `\n<b>Sebep:</b> ${n.reason}` : "";
+
+  const message = `
+${ok ? "⛓️ <b>AUXR ZİNCİRE ÇEKİLDİ</b>" : "🛑 <b>AUXR ÇEKİMİ ENGELLENDİ</b>"}
+
+<b>Hesap:</b> <code>${short(n.userAddress)}</code>
+<b>Hedef:</b> <code>${n.destination}</code>
+<b>Miktar:</b> ${n.unitsAUXR} AUXR${usage}${tx}${why}
+<b>Zaman:</b> ${time}
+${ok ? "\n⚠️ Bu işlem geri alınamaz. Beklenmiyorsa: Safe'ten MINTER_ROLE'ü geri al." : ""}
+`.trim();
+
+  return sendTelegramMessage(message);
+}
+
+/**
+ * Any movement of customer value that is not already covered by a dedicated
+ * notifier.
+ *
+ * The internal transfer path had no notification at all, which is why an
+ * attacker could empty the App Store review account into a suspended account
+ * on 10 October 2026 and have it go unremarked until an exchange told us.
+ * Withdrawals, redemptions and loans were equally silent.
+ *
+ * Deliberately generic: a bespoke formatter per route is how three of these
+ * ended up with none.
+ */
+export async function notifyValueMovement(n: {
+  kind: "transfer" | "withdraw" | "redeem" | "borrow";
+  fromAddress: string;
+  toAddress?: string;
+  token: string;
+  amount: number;
+  detail?: string;
+  email?: string;
+}): Promise<boolean> {
+  const short = (a?: string) =>
+    a ? `${a.slice(0, 6)}...${a.slice(-4)}` : "—";
+  const time = new Date().toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" });
+
+  const head: Record<typeof n.kind, string> = {
+    transfer: "🔄 <b>HESAPLAR ARASI TRANSFER</b>",
+    withdraw: "📤 <b>PLATFORM DIŞINA ÇEKİM</b>",
+    redeem: "📦 <b>FİZİKSEL TESLİM / TASFİYE</b>",
+    borrow: "🏦 <b>TEMİNATLI KREDİ</b>",
+  };
+
+  const to = n.toAddress ? `\n<b>Alıcı:</b> <code>${short(n.toAddress)}</code>` : "";
+  const who = n.email ? `\n<b>E-posta:</b> ${n.email}` : "";
+  const extra = n.detail ? `\n<b>Detay:</b> ${n.detail}` : "";
+
+  return sendTelegramMessage(
+    `
+${head[n.kind]}
+
+<b>Gönderen:</b> <code>${short(n.fromAddress)}</code>${to}
+<b>Tutar:</b> ${n.amount} ${n.token.toUpperCase()}${who}${extra}
+<b>Zaman:</b> ${time}
+`.trim(),
+  );
+}
