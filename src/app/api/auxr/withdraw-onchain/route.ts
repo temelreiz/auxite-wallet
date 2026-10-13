@@ -17,6 +17,7 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { createMintRequest, COSIGN_THRESHOLD, HARD_CEILING } from "@/lib/auxr-mint-requests";
 import { reserveMintAllowance, releaseMintAllowance, DAILY_CAP_PER_ACCOUNT } from "@/lib/auxr-mint-limits";
 import { notifyAuxrMint } from "@/lib/telegram";
 import { requireUser } from "@/lib/security/require-user";
@@ -210,6 +211,40 @@ export async function POST(request: NextRequest) {
   // tells us a mint happened; by then it is on chain and irreversible. These
   // caps are what bound the loss when nobody is awake, which is how 697 AUXR
   // left in six calls between 21:55 and 00:22 without anyone noticing.
+  // Above the co-sign threshold the hot wallet does not mint at all: the AUXR
+  // is held and the mint is left to the Safe. Below it, the daily caps apply.
+  if (unitsAUXR > HARD_CEILING) {
+    return NextResponse.json(
+      { success: false, error: "above_hard_ceiling", code: "above_hard_ceiling", maxAUXR: HARD_CEILING },
+      { status: 400 },
+    );
+  }
+
+  if (unitsAUXR > COSIGN_THRESHOLD) {
+    const created = await createMintRequest({ refId, address: offChainAddress, destination, unitsAUXR });
+    if (!created.ok) {
+      return NextResponse.json({ success: false, error: created.error, code: created.code }, { status: 400 });
+    }
+    await notifyAuxrMint({
+      outcome: "blocked",
+      userAddress: offChainAddress,
+      destination,
+      unitsAUXR,
+      reason: `co-sign required — request ${refId} held for Safe approval`,
+    }).catch(() => {});
+    return NextResponse.json(
+      {
+        success: true,
+        state: created.request.state,
+        refId,
+        requiresCoSignature: true,
+        expiresAt: created.request.expiresAt,
+        message: `Withdrawals above ${COSIGN_THRESHOLD} AUXR are released after approval.`,
+      },
+      { status: 202 },
+    );
+  }
+
   const allowance = await reserveMintAllowance(offChainAddress, unitsAUXR);
   if (!allowance.ok) {
     await notifyAuxrMint({
