@@ -17,6 +17,8 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { reserveMintAllowance, releaseMintAllowance, DAILY_CAP_PER_ACCOUNT } from "@/lib/auxr-mint-limits";
+import { notifyAuxrMint } from "@/lib/telegram";
 import { requireUser } from "@/lib/security/require-user";
 import { assertAccountActive } from "@/lib/security/account-guard";
 import { z } from "zod";
@@ -40,7 +42,10 @@ const MAX_WITHDRAW_AUXR_DEFAULT = 100_000;
 // ── Schema ────────────────────────────────────────────────────────────────────
 
 const BodySchema = z.object({
-  address: z.string().min(10),
+  // Optional: identity comes from the login token. A caller may still send it
+  // and existing clients do, in which case it must match (checked below) — but
+  // requiring it would suggest the field still decides who is withdrawing.
+  address: z.string().min(10).optional(),
   destination: z.string().min(10),
   unitsAUXR: z.number().positive(),
   refId: z.string().min(8).max(128),
@@ -201,6 +206,25 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // 6b. Issuance limits — the layer that actually refuses. A Telegram alert
+  // tells us a mint happened; by then it is on chain and irreversible. These
+  // caps are what bound the loss when nobody is awake, which is how 697 AUXR
+  // left in six calls between 21:55 and 00:22 without anyone noticing.
+  const allowance = await reserveMintAllowance(offChainAddress, unitsAUXR);
+  if (!allowance.ok) {
+    await notifyAuxrMint({
+      outcome: "blocked",
+      userAddress: offChainAddress,
+      destination,
+      unitsAUXR,
+      reason: `${allowance.code}: ${allowance.error}`,
+    }).catch(() => {});
+    return NextResponse.json(
+      { success: false, error: allowance.error, code: allowance.code, ...allowance.detail },
+      { status: 429 },
+    );
+  }
+
   // 7. Bridge execution
   try {
     const record = await withdrawToChain({
@@ -228,8 +252,20 @@ export async function POST(request: NextRequest) {
       await persistIdempotentResult(refId, responseBody);
     }
 
+    await notifyAuxrMint({
+      outcome: "minted",
+      userAddress: offChainAddress,
+      destination,
+      unitsAUXR,
+      txHash: record.mintTxHash || undefined,
+      usedToday: allowance.accountUsed,
+      capToday: DAILY_CAP_PER_ACCOUNT,
+    }).catch(() => {});
+
     return NextResponse.json(responseBody, { status: 200 });
   } catch (e: any) {
+    // A mint that did not happen must not consume the account's daily room.
+    await releaseMintAllowance(offChainAddress, unitsAUXR);
     const message = String(e?.message || e);
     const status = /insufficient/.test(message)
       ? 400
