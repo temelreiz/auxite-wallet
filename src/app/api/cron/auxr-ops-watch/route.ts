@@ -6,7 +6,7 @@
 //  A) ESCALATION alerts — fire Telegram ONLY when something needs a human and
 //     the market maker (Echo Trade) can't/won't self-heal it:
 //       1. Reserve under-collateralised (weakest backing leg < 100%)
-//       2. CEX price deviates from NAV — PERSISTENCE-GATED: only escalates
+//       2. LBANK price deviates from NAV — PERSISTENCE-GATED: only escalates
 //          after the deviation survives N consecutive checks (default 15 min),
 //          giving the MM a window to close it before the operator is pinged.
 //       3. Market-maker spread blowout (wide bid/ask ⇒ Echo Trade not quoting)
@@ -24,7 +24,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getReserveSnapshot } from "@/lib/auxr-reserve";
 import { getAuxrPricing } from "@/lib/auxr-pricing";
-import { getBitmartTicker } from "@/lib/bitmart";
+import { getLbankTicker, getLbankDepth } from "@/lib/lbank";
+import { computeDepthMetrics } from "@/lib/bitmart";
 import { getOnChainTotalSupply, weiToAuxr, isPaused } from "@/lib/auxr-onchain";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { getRedis } from "@/lib/redis";
@@ -38,6 +39,10 @@ const DEVIATION_PERSIST_RUNS = Number(process.env.AUXR_DEVIATION_PERSIST_RUNS ||
 const SPREAD_ALERT_BPS = Number(process.env.AUXR_SPREAD_ALERT_BPS || 200); // 2% MM spread
 const BACKING_ALERT_PCT = Number(process.env.AUXR_BACKING_ALERT_PCT || 99.99);
 const SUPPLY_DRIFT_ALERT = Number(process.env.AUXR_SUPPLY_DRIFT_ALERT || 1); // units
+// Bid depth within 2% of NAV. A tight spread can sit on top of almost nothing:
+// at the time this check was added the book quoted 10.5 bps over 101 USDT of
+// bids, so a holder trying to leave would have moved the price on their own.
+const BID_DEPTH_ALERT_USD = Number(process.env.AUXR_BID_DEPTH_ALERT_USD || 2500);
 // AUXR minted on-chain OUTSIDE the managed off-chain ledger — the founder
 // allocation and MM seed, which are backed externally (founder's own metal) and
 // intentionally never recorded via recordMint. Without accounting for it, the
@@ -126,10 +131,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const [snap, pricing, ticker, chainWei, paused] = await Promise.all([
+  const [snap, pricing, ticker, depth, chainWei, paused] = await Promise.all([
     safe(getReserveSnapshot(), null as any),
     safe(getAuxrPricing(), null as any),
-    safe(getBitmartTicker(), null as any),
+    safe(getLbankTicker(), null as any),
+    safe(getLbankDepth(), null as any),
     safe(getOnChainTotalSupply(), null as unknown as bigint),
     safe(isPaused(), null as any),
   ]);
@@ -154,6 +160,12 @@ export async function GET(request: NextRequest) {
     }
     return ticker.last ?? null;
   })();
+  // LBANK's ticker carries no bid/ask; without filling them from the book the
+  // spread check below silently never fires.
+  if (ticker?.listed && depth?.listed) {
+    ticker.bid = depth.bids[0]?.price ?? null;
+    ticker.ask = depth.asks[0]?.price ?? null;
+  }
   const refLabel = ticker?.bid && ticker?.ask ? "mid" : "last";
 
   // 1. Backing under-collateralised (human must add reserves — always escalate)
@@ -172,7 +184,7 @@ export async function GET(request: NextRequest) {
       const streak = await bumpStreak("deviation");
       if (streak >= DEVIATION_PERSIST_RUNS) {
         const mins = streak * 5;
-        if (await alertOnce("deviation", `🟠 <b>AUXR price vs NAV deviation (sustained ${mins}m)</b>\nCEX (BitMart) ${refLabel}: <b>$${refPrice.toFixed(3)}</b>\nNAV: <b>$${nav.toFixed(3)}</b>\nDeviation: <b>${(devBps / 100).toFixed(2)}%</b> (threshold ${(DEVIATION_ALERT_BPS / 100).toFixed(1)}%)\n→ MM hasn't closed it — check Echo Trade / trigger arb top-up.`)) {
+        if (await alertOnce("deviation", `🟠 <b>AUXR price vs NAV deviation (sustained ${mins}m)</b>\nCEX (LBANK) ${refLabel}: <b>$${refPrice.toFixed(3)}</b>\nNAV: <b>$${nav.toFixed(3)}</b>\nDeviation: <b>${(devBps / 100).toFixed(2)}%</b> (threshold ${(DEVIATION_ALERT_BPS / 100).toFixed(1)}%)\n→ MM hasn't closed it — check Echo Trade / trigger arb top-up.`)) {
           fired.push("deviation");
           await notifyMM(
             `⚠️ <b>AUXR/USDT — price vs NAV</b>\n` +
@@ -199,6 +211,31 @@ export async function GET(request: NextRequest) {
           `⚠️ <b>AUXR/USDT — spread wide</b>\n` +
           `Bid <b>$${ticker.bid}</b> / Ask <b>$${ticker.ask}</b> → <b>${(spreadBps / 100).toFixed(2)}%</b>\n` +
           `→ Quotes look thin or absent. Tightening also lifts the BML depth score.`,
+        );
+      }
+    }
+  }
+
+  // 3b. Bid depth collapse — the side that matters to a holder trying to exit.
+  //
+  // Separate from the spread check because the two fail independently: a maker
+  // can quote 10 bps over a hundred dollars, which looks healthy on every
+  // measure except the only one that matters when someone sells.
+  if (ticker?.listed && depth?.listed && nav && nav > 0) {
+    const m = computeDepthMetrics(depth as any, nav);
+    const bid2 = m.bidUsdWithin?.["2"] ?? 0;
+    if (bid2 < BID_DEPTH_ALERT_USD) {
+      if (
+        await alertOnce(
+          "bid-depth",
+          `🟠 <b>AUXR bid depth thin</b>\nWithin 2% of NAV: <b>$${Math.round(bid2).toLocaleString()}</b> bids / $${Math.round(m.askUsdWithin?.["2"] ?? 0).toLocaleString()} asks (threshold $${BID_DEPTH_ALERT_USD.toLocaleString()})\n→ A holder selling more than this moves the price alone.`,
+        )
+      ) {
+        fired.push("bid-depth");
+        await notifyMM(
+          `⚠️ <b>AUXR/USDT — bid depth thin</b>\n` +
+          `±2% of NAV: <b>$${Math.round(bid2).toLocaleString()}</b> bid vs $${Math.round(m.askUsdWithin?.["2"] ?? 0).toLocaleString()} ask\n` +
+          `→ The book is one-sided. Please add bid-side depth.`,
         );
       }
     }
@@ -233,12 +270,23 @@ export async function GET(request: NextRequest) {
     ? ((refPrice - nav) / nav) * 10000 : null;
   const spreadBps = ticker?.listed && ticker.bid && ticker.ask && ticker.bid > 0
     ? ((ticker.ask - ticker.bid) / ((ticker.bid + ticker.ask) / 2)) * 10000 : null;
+  const depthDigest =
+    ticker?.listed && depth?.listed && nav && nav > 0
+      ? (() => {
+          const m = computeDepthMetrics(depth as any, nav);
+          return `Depth ±2%: bid <b>$${Math.round(m.bidUsdWithin?.["2"] ?? 0).toLocaleString()}</b> / ask $${Math.round(m.askUsdWithin?.["2"] ?? 0).toLocaleString()}`;
+        })()
+      : ``;
+
   const digestSent = await maybeSendDigest([
     nav != null ? `NAV (net): <b>$${nav.toFixed(3)}</b>${pricing?.grossNavUSD != null ? ` · gross $${pricing.grossNavUSD.toFixed(3)}` : ""}` : `NAV: n/a`,
     pricing?.accruedFeePerUnitUSD != null ? `Mgmt fee: ${(pricing.mgmtFeeAnnual * 100).toFixed(2)}%/yr · accrued $${pricing.accruedFeePerUnitUSD.toFixed(4)}/unit` : ``,
     ticker?.listed
-      ? `CEX: <b>$${ticker.last}</b>${devBps != null ? ` · dev ${(devBps / 100).toFixed(2)}%` : ""}${spreadBps != null ? ` · spread ${(spreadBps / 100).toFixed(2)}%` : ""}${ticker.quoteVolume24h != null ? ` · 24h $${Math.round(ticker.quoteVolume24h).toLocaleString()}` : ""}`
-      : `CEX: not listed yet`,
+      ? `LBANK: <b>$${ticker.last}</b>${devBps != null ? ` · dev ${(devBps / 100).toFixed(2)}%` : ""}${spreadBps != null ? ` · spread ${(spreadBps / 100).toFixed(2)}%` : ""}${ticker.quoteVolume24h != null ? ` · 24h $${Math.round(ticker.quoteVolume24h).toLocaleString()}` : ""}`
+      : `LBANK: not listed yet`,
+    // Depth belongs in the daily line, not only in the alert: a book that is
+    // thin every day never crosses a threshold twice and so never alerts twice.
+    depthDigest,
     snap?.backingRatio?.weakest != null ? `Backing (weakest): ${(snap.backingRatio.weakest * 100).toFixed(2)}% · supply ${snap.supplyUnits} AUXR` : ``,
     paused === true ? `⏸️ CONTRACT PAUSED` : ``,
     fired.length ? `⚠️ Active alerts today: ${fired.join(", ")}` : `✅ All green`,
@@ -246,7 +294,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    checked: { backing: snap?.backingRatio?.weakest != null, cexListed: !!ticker?.listed, paused: paused === true },
+    checked: { backing: snap?.backingRatio?.weakest != null, lbankListed: !!ticker?.listed, paused: paused === true },
     alertsFired: fired,
     digestSent,
     timestamp: Date.now(),
