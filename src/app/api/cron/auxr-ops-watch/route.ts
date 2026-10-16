@@ -12,6 +12,7 @@
 //       3. Market-maker spread blowout (wide bid/ask ⇒ Echo Trade not quoting)
 //       4. Contract unexpectedly paused
 //       5. On-chain vs off-chain supply drift beyond tolerance
+//       6. Our own MM (Pionex) silent — no lease renewal from either node
 //
 //  B) DAILY DIGEST heartbeat — once per UTC day, one compact "all-green"
 //     status line (NAV/gross/fee, CEX price+deviation, spread, 24h volume,
@@ -29,6 +30,7 @@ import { computeDepthMetrics } from "@/lib/bitmart";
 import { getOnChainTotalSupply, weiToAuxr, isPaused } from "@/lib/auxr-onchain";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { getRedis } from "@/lib/redis";
+import { lastRenewal } from "@/lib/mm-lease";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -53,6 +55,22 @@ const EXTERNAL_ONCHAIN_SUPPLY = Number(process.env.AUXR_EXTERNAL_ONCHAIN_SUPPLY 
 const DEDUPE_TTL = Number(process.env.AUXR_ALERT_DEDUPE_SECONDS || 1800); // 30 min
 const DIGEST_HOUR_UTC = Number(process.env.AUXR_DIGEST_HOUR_UTC || 8); // 08:00 UTC daily
 const NAV_FEED_URL = process.env.AUXR_NAV_FEED_URL || "https://vault.auxite.io/api/auxr/price";
+const MM_LEASE_VENUE = process.env.AUXR_MM_LEASE_VENUE || "pionex";
+const MM_SILENT_ALERT_SEC = Number(process.env.AUXR_MM_SILENT_ALERT_SEC || 180);
+
+/** Top of the public Pionex AUXR book (no key needed). Null when unlisted. */
+async function getPionexTop(): Promise<{ bid: number | null; ask: number | null } | null> {
+  const res = await fetch("https://api.pionex.com/api/v1/market/depth?symbol=AUXR_USDT&limit=1", {
+    cache: "no-store",
+    signal: AbortSignal.timeout(6000),
+  });
+  const j = await res.json();
+  if (!j?.result) return null;
+  return {
+    bid: j.data?.bids?.[0] ? Number(j.data.bids[0][0]) : null,
+    ask: j.data?.asks?.[0] ? Number(j.data.asks[0][0]) : null,
+  };
+}
 
 /**
  * Market-maker (Echo Trade) Telegram chat. Optional — unset disables the relay.
@@ -262,6 +280,29 @@ export async function GET(request: NextRequest) {
       const implied = (onChainUnits - snap.supplyUnits).toFixed(4);
       if (await alertOnce("supply-drift", `⚠️ <b>AUXR supply drift</b>\nOff-chain ledger: ${snap.supplyUnits}${externalNote} · On-chain: ${onChainUnits}\nDrift: <b>${drift.toFixed(3)} AUXR</b> (threshold ${SUPPLY_DRIFT_ALERT})\n\nIf this is explained by a mint made outside the app, set <code>AUXR_EXTERNAL_ONCHAIN_SUPPLY=${implied}</code>`))
         fired.push("supply-drift");
+    }
+  }
+
+  // 6. Our own market maker gone silent. The MM nodes renew a lease every few
+  // seconds (src/lib/mm-lease.ts); if nobody has renewed for minutes, both
+  // nodes are down. Pionex has no cancel-on-disconnect, so their last quotes
+  // may still be resting at an old NAV — this is the only check that runs
+  // off the MM servers and can say so. Silent until the MM has ever run.
+  const mmBeat = await safe(lastRenewal(MM_LEASE_VENUE), null);
+  if (mmBeat) {
+    const silentSec = (Date.now() - mmBeat.at) / 1000;
+    if (silentSec > MM_SILENT_ALERT_SEC) {
+      const book = await safe(getPionexTop(), null);
+      const bookLine = book
+        ? `Pionex book: bid ${book.bid ?? "—"} / ask ${book.ask ?? "—"}${nav ? ` · NAV ${nav.toFixed(3)}` : ""}`
+        : `Pionex book: unreadable`;
+      if (
+        await alertOnce(
+          "mm-down",
+          `🔴 <b>AUXR market maker DOWN</b>\nNo lease renewal for <b>${Math.round(silentSec / 60)} min</b> (last: ${mmBeat.holder}).\n${bookLine}\n→ Both MM nodes are down. Their last quotes may still be on Pionex at an old NAV — cancel open AUXR orders in the Pionex app, then check the servers.`,
+        )
+      )
+        fired.push("mm-down");
     }
   }
 
