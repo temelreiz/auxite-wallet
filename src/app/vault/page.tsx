@@ -20,6 +20,7 @@ import CampaignBannerPopup from "@/components/CampaignBannerPopup";
 import { useLanguage } from "@/components/LanguageContext";
 import { useWallet } from "@/components/WalletContext";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
+import { trackNewDeposits } from "@/lib/deposit-conversion-tracker";
 
 // Metal icons
 const metalIcons: Record<string, string> = {
@@ -618,6 +619,8 @@ export default function VaultPage() {
       setLoading(false);
       return;
     }
+
+    void trackNewDeposits(address);
 
     try {
       const [balanceRes, allocRes, priceRes, stakeRes, cryptoRes, profileRes, auxrPriceRes] = await Promise.all([
