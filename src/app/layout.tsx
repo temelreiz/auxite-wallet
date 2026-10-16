@@ -172,6 +172,8 @@ export default function RootLayout({
             {`
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
+              // Accept the click id handed over from the auxite.io landing page
+              gtag('set', 'linker', { domains: ['auxite.io', 'vault.auxite.io'], accept_incoming: true });
               gtag('config', '${GOOGLE_ADS_ID}');
             `}
           </Script>
