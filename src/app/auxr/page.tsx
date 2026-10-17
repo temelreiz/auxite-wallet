@@ -72,6 +72,14 @@ const T = {
     th_spot: "Spot",
     th_weight: "Weight",
     viewPoR: "View reserve data (self-reported) →",
+    contract: "Token Contract",
+    contractSub: "AUXR is an ERC-20 token on Base. Always check this address before trading.",
+    network: "Network",
+    networkValue: "Base (chainId 8453) · ERC-20 · 18 decimals",
+    copy: "Copy",
+    copied: "Copied",
+    viewExplorer: "View on Basescan →",
+    whitepaper: "Whitepaper →",
     disclosure: "AUXR gives price exposure to a fixed basket of gold, silver, platinum and palladium, valued at live global spot prices. It is not a claim on physical bullion, no metal is allocated to holders, and it cannot be redeemed for metal — sales settle in cash at NAV minus spread. Reserve figures are self-reported and have not been verified by any independent auditor, custodian or insurer. Spread is 125 bps each side (2.5% round-trip). Not investment advice; the value of AUXR can fall as well as rise.",
     success_buy: "Purchase complete",
     success_sell: "Sale complete",
@@ -112,6 +120,14 @@ const T = {
     th_spot: "Spot",
     th_weight: "Ağırlık",
     viewPoR: "Rezerv verilerini gör (şirket beyanı) →",
+    contract: "Token Kontratı",
+    contractSub: "AUXR, Base ağında bir ERC-20 tokendır. İşlem yapmadan önce bu adresi mutlaka kontrol edin.",
+    network: "Ağ",
+    networkValue: "Base (chainId 8453) · ERC-20 · 18 ondalık",
+    copy: "Kopyala",
+    copied: "Kopyalandı",
+    viewExplorer: "Basescan'de gör →",
+    whitepaper: "Whitepaper →",
     disclosure: "AUXR; altın, gümüş, platin ve paladyumdan oluşan sabit bir sepete, canlı küresel spot fiyatlarla fiyat maruziyeti sağlar. Fiziksel külçe üzerinde bir hak değildir, sahiplerine metal tahsis edilmez ve metal olarak teslim alınamaz — satışlar NAV eksi spread üzerinden nakit olarak ödenir. Rezerv rakamları şirket beyanıdır; bağımsız bir denetçi, saklamacı veya sigortacı tarafından doğrulanmamıştır. Spread her yönde 125 bps (toplam %2,5). Yatırım tavsiyesi değildir; AUXR'ın değeri düşebilir de yükselebilir de.",
     success_buy: "Alım tamamlandı",
     success_sell: "Satış tamamlandı",
@@ -123,6 +139,8 @@ const T = {
     metals: { gold: "Altın", silver: "Gümüş", platinum: "Platin", palladium: "Paladyum" },
   },
 } as const;
+
+const AUXR_CONTRACT = "0xB145B8e9C02193d55454f534f917Cabe704FA042";
 
 const BUY_PRESETS = [30, 100, 250, 500];
 const METAL_KEYS = ["gold", "silver", "platinum", "palladium"] as const;
@@ -170,6 +188,13 @@ export default function AuxrPage() {
   }, []);
 
   const [pricing, setPricing] = useState<Pricing | null>(null);
+  const [copied, setCopied] = useState(false);
+  const copyContract = useCallback(() => {
+    navigator.clipboard?.writeText(AUXR_CONTRACT).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }).catch(() => {});
+  }, []);
   const [balances, setBalances] = useState({ auxm: 0, bonus: 0, usdt: 0, usdc: 0, usd: 0, btc: 0, eth: 0, auxr: 0 });
   const [cryptoPx, setCryptoPx] = useState({ btc: 0, eth: 0 });
   const [kycVerified, setKycVerified] = useState(false);
@@ -602,6 +627,41 @@ export default function AuxrPage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Token contract — listing sites check the address against the official site */}
+        <div className="rounded-2xl bg-zinc-900/80 border border-white/5 p-6">
+          <h2 className="text-base font-semibold">{t.contract}</h2>
+          <p className="text-sm text-slate-400 mt-1">{t.contractSub}</p>
+          <div className="mt-4 text-xs text-slate-500">{upper(t.network)}</div>
+          <div className="text-sm text-slate-300">{t.networkValue}</div>
+          <div className="mt-3 flex items-center gap-3">
+            <code className="font-mono text-sm text-slate-200 break-all">{AUXR_CONTRACT}</code>
+            <button
+              onClick={copyContract}
+              className="shrink-0 px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#BFA181]"
+            >
+              {copied ? t.copied : t.copy}
+            </button>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold">
+            <a
+              href={`https://basescan.org/token/${AUXR_CONTRACT}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#BFA181] hover:underline"
+            >
+              {t.viewExplorer}
+            </a>
+            <a
+              href="/AUXR_Whitepaper.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#BFA181] hover:underline"
+            >
+              {t.whitepaper}
+            </a>
+          </div>
         </div>
 
         <p className="text-[11px] text-slate-500 leading-relaxed max-w-3xl">
