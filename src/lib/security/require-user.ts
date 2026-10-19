@@ -94,3 +94,31 @@ export async function requireAdmin(
     return deny(503, "Auth backend unavailable");
   }
 }
+
+/**
+ * Like `requireUser`, but also accepts a server-to-server caller presenting
+ * `x-api-key: INTERNAL_API_KEY`, which may then name the address it acts for.
+ *
+ * This exists for the recurring-buy and recurring-stake jobs, which call
+ * /api/staking on a customer's behalf and have no login token to present. The
+ * key is required to be non-empty: `INTERNAL_API_KEY` is not configured in
+ * production today, so an equality check against an unset env would otherwise
+ * let a caller sending no header at all match it.
+ */
+export function requireUserOrInternal(
+  request: NextRequest,
+  bodyAddress?: string,
+): AuthResult<AuthedUser & { internal: boolean }> {
+  const apiKey = request.headers.get("x-api-key");
+  const expected = process.env.INTERNAL_API_KEY;
+
+  if (apiKey && expected && apiKey === expected) {
+    const address = bodyAddress?.toLowerCase();
+    if (!address) return deny(400, "address is required for internal calls");
+    return { ok: true, user: { address, internal: true } };
+  }
+
+  const user = requireUser(request);
+  if (!user.ok) return user;
+  return { ok: true, user: { ...user.user, internal: false } };
+}

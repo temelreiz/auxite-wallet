@@ -4,6 +4,8 @@ import { sendStakingAgreementEmail } from "@/lib/email";
 import { stakeOnChain, getUserStakesOnChain, checkDelegationApproval } from "@/lib/staking-service";
 import { getUserLanguage } from "@/lib/user-language";
 import { recordExposureChange, type MetalSymbol } from "@/lib/treasury-exposure";
+import { requireUser } from "@/lib/security/require-user";
+import { assertAccountActive } from "@/lib/security/account-guard";
 
 const METAL_NAMES: Record<string, string> = {
   AUXG: "Gold",
@@ -45,12 +47,11 @@ function formatDate(date: Date): string {
 }
 
 export async function GET(request: NextRequest) {
-  const address = new URL(request.url).searchParams.get("address");
+  const auth = requireUser(request);
+  if (!auth.ok) return auth.response;
+
+  const address = auth.user.address;
   const source = new URL(request.url).searchParams.get("source") || "hybrid";
-  
-  if (!address) {
-    return NextResponse.json({ error: "Address required" }, { status: 400 });
-  }
 
   try {
     // Get on-chain stakes
@@ -107,11 +108,23 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const { address, metal, amount, duration, apy, email, holderName, useOnChain = true } = body;
+  // This route calls stakeOnChain, which moves real tokens. Taking the address
+  // from the body meant an unauthenticated caller could stake someone else's
+  // metal on chain.
+  const auth = requireUser(request);
+  if (!auth.ok) return auth.response;
 
-  if (!address || !metal || !amount) {
+  const body = await request.json();
+  const { metal, amount, duration, apy, email, holderName, useOnChain = true } = body;
+  const address = auth.user.address;
+
+  if (!metal || !amount) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  const gate = await assertAccountActive(address);
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error, code: gate.code }, { status: 403 });
   }
 
   try {

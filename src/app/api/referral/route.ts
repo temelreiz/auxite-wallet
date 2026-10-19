@@ -4,6 +4,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 
+import { requireUser } from "@/lib/security/require-user";
+import { incrementBalance } from "@/lib/redis";
+
 const redis = Redis.fromEnv();
 
 interface ReferralCode {
@@ -249,15 +252,18 @@ export async function POST(request: NextRequest) {
 
 // PATCH - Referral durumunu güncelle (trade sonrası çağrılır)
 export async function PATCH(request: NextRequest) {
+  // `walletAddress` came from the body, so anyone could run the withdraw
+  // action against any account — marking that account's qualified referrals
+  // "rewarded" and paying them into a key nothing reads (see below). The
+  // victim's earnings simply vanished.
+  const auth = requireUser(request);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await request.json();
-    const { walletAddress, tradeAmount, action } = body;
+    const { tradeAmount, action } = body;
 
-    if (!walletAddress) {
-      return NextResponse.json({ error: "walletAddress required" }, { status: 400 });
-    }
-
-    const addressLower = walletAddress.toLowerCase();
+    const addressLower = auth.user.address;
 
     // Withdraw earnings action
     if (action === "withdraw") {
@@ -280,6 +286,17 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: "No pending earnings to withdraw" }, { status: 400 });
       }
 
+      // Read, pay, then rewrite the list is not atomic: concurrent calls all
+      // see the same qualified set and all pay it. One claim per code.
+      const claimKey = `referral:withdraw:claim:${userCode}`;
+      const claimed = await redis.set(claimKey, Date.now().toString(), { nx: true, ex: 60 });
+      if (!claimed) {
+        return NextResponse.json(
+          { error: "A withdrawal is already in progress" },
+          { status: 409 },
+        );
+      }
+
       // Referralları "rewarded" olarak güncelle
       const updatedReferrals = referrals.map((r) =>
         r.status === "qualified" ? { ...r, status: "rewarded" as const, rewardPaidAt: Date.now() } : r
@@ -298,17 +315,20 @@ export async function PATCH(request: NextRequest) {
         await redis.set(codeKey, JSON.stringify(codeData));
       }
 
-      // AUXM bakiyesine ekle
-      const balanceKey = `balance:${addressLower}`;
-      const currentBalance = await redis.hgetall(balanceKey) as Record<string, number>;
-      const newAuxmBalance = (currentBalance?.auxm || 0) + totalPayout;
-      await redis.hset(balanceKey, { auxm: newAuxmBalance });
+      // The payout was being written to `balance:<addr>`, which nothing in the
+      // app reads — balances live at `user:<addr>:balance`. So referrals were
+      // marked "rewarded" and the AUXM went nowhere. Pay through
+      // incrementBalance so it lands on the real key and is journalled in the
+      // AUXM ledger, which a raw hset skips.
+      await incrementBalance(addressLower, { auxm: totalPayout }, {
+        auxmReason: "referral_reward",
+        meta: { code: userCode, referrals: qualifiedReferrals.length },
+      });
 
       return NextResponse.json({
         success: true,
         paidAmount: totalPayout,
         referralsRewarded: qualifiedReferrals.length,
-        newAuxmBalance,
       });
     }
 

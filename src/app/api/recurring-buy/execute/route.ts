@@ -170,8 +170,11 @@ async function executeStake(walletAddress: string, token: string, amount: number
   
   await fetch(baseUrl + '/api/staking', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-wallet-address': walletAddress },
-    body: JSON.stringify({ action: 'stake', token, amount, duration }),
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.INTERNAL_API_KEY || '',
+    },
+    body: JSON.stringify({ action: 'stake', token, amount, duration, address: walletAddress }),
   });
 }
 

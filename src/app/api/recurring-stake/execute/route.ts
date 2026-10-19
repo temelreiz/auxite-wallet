@@ -196,7 +196,12 @@ async function executeStake(walletAddress: string, token: string, amount: number
 
   const response = await fetch(baseUrl + '/api/staking', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-wallet-address': walletAddress },
+    // /api/staking now authenticates its caller. This job has no login
+    // token, so it presents the internal key and names the address.
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.INTERNAL_API_KEY || '',
+    },
     body: JSON.stringify({ action: 'create', metal: token, amount, duration, address: walletAddress }),
   });
 
