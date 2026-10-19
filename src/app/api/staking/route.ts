@@ -6,6 +6,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { joinPool, withdrawFromPool, getUserPools } from "@/lib/leasing/pool-manager";
 import { setTotalAllocated, getUserEncumbrance } from "@/lib/leasing/encumbrance-ledger";
+import { requireUser, requireUserOrInternal } from "@/lib/security/require-user";
+import { assertAccountActive } from "@/lib/security/account-guard";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -89,15 +91,13 @@ interface StakePosition {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export async function GET(request: NextRequest) {
+  // Positions are read for the caller, never for an address they name: the
+  // ?address= parameter let anyone enumerate anyone's staking book.
+  const auth = requireUser(request);
+  if (!auth.ok) return auth.response;
+
   try {
-    const { searchParams } = new URL(request.url);
-    const address = searchParams.get("address");
-
-    if (!address) {
-      return NextResponse.json({ error: "Address required" }, { status: 400 });
-    }
-
-    const normalizedAddress = address.toLowerCase();
+    const normalizedAddress = auth.user.address;
     const stakingKey = `user:${normalizedAddress}:staking`;
 
     // Tüm stake pozisyonlarını al
@@ -173,11 +173,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, address, metal, amount, duration, positionId } = body;
 
-    if (!address) {
-      return NextResponse.json({ error: "Address required" }, { status: 400 });
-    }
+    // Identity came from `address` in the body, so a caller could stake, and
+    // more importantly unstake, on any account. The recurring-buy and
+    // recurring-stake jobs have no login token, so they authenticate with the
+    // internal key and may still name an address.
+    const auth = requireUserOrInternal(request, address);
+    if (!auth.ok) return auth.response;
+    const normalizedAddress = auth.user.address;
 
-    const normalizedAddress = address.toLowerCase();
+    const gate = await assertAccountActive(normalizedAddress);
+    if (!gate.ok) {
+      return NextResponse.json({ error: gate.error, code: gate.code }, { status: 403 });
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // CREATE STAKE
@@ -332,6 +339,25 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Position already withdrawn" }, { status: 400 });
       }
 
+      // The status check above is read from a list, and the position is only
+      // marked withdrawn further down, after the balance has been credited.
+      // Two concurrent calls therefore both saw "active", both credited, and
+      // both marked it withdrawn — stake one gram, fire twenty unstakes, get
+      // twenty back. Claim the position atomically first: SET NX succeeds for
+      // exactly one caller, and the rest are turned away before any money
+      // moves. Same shape as the fix to /api/trade in #57.
+      const claimKey = `user:${normalizedAddress}:unstake:claim:${positionId}`;
+      const claimed = await redis.set(claimKey, Date.now().toString(), {
+        nx: true,
+        ex: 300,
+      });
+      if (!claimed) {
+        return NextResponse.json(
+          { error: "This position is already being withdrawn" },
+          { status: 409 },
+        );
+      }
+
       const now = Date.now();
       const isMatured = now >= targetPosition.endDate;
 
@@ -387,7 +413,14 @@ export async function POST(request: NextRequest) {
       };
       withdrawMulti.lpush(txKey, JSON.stringify(transaction));
 
-      await withdrawMulti.exec();
+      try {
+        await withdrawMulti.exec();
+      } catch (e) {
+        // Nothing moved, so the claim must not outlive the attempt — otherwise
+        // a transient Redis error locks the position for five minutes.
+        await redis.del(claimKey).catch(() => {});
+        throw e;
+      }
 
       // Update position in list (separate to avoid index shift from lpush above)
       // Re-read to get correct index after multi exec

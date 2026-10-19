@@ -3,17 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { assertAccountActive } from "@/lib/security/account-guard";
 import { getUserBalance, incrementBalance, addTransaction } from "@/lib/redis";
 import { blockUSPersonForFeature } from "@/lib/security/us-geofence";
+import { requireUser } from "@/lib/security/require-user";
 
 export async function POST(request: NextRequest) {
   try {
-    const address = request.headers.get("x-wallet-address");
-
-    if (!address) {
-      return NextResponse.json(
-        { success: false, error: "Wallet address required" },
-        { status: 401 }
-      );
-    }
+    // `x-wallet-address` is a string the caller picks, not a credential: this
+    // converted whichever account was named. Both clients already send the
+    // login token, so take the address from there.
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const address = auth.user.address;
 
     // ── US-person regulatory geofence — USD↔USDT stablecoin conversion is a
     // regulated money-movement feature; not offered to US persons pending licensing.
