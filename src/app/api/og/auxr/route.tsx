@@ -67,6 +67,12 @@ export async function GET() {
         </div>
       </div>
     ),
-    { width: 1200, height: 630 },
+    {
+      width: 1200,
+      height: 630,
+      // ImageResponse defaults to "immutable, max-age=1y": the first NAV
+      // would be served for every later share. Cache 5 min, like the data.
+      headers: { "cache-control": "public, max-age=0, s-maxage=300, stale-while-revalidate=60" },
+    },
   );
 }
