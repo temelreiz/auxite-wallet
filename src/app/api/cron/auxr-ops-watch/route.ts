@@ -27,7 +27,14 @@ import { getReserveSnapshot } from "@/lib/auxr-reserve";
 import { getAuxrPricing } from "@/lib/auxr-pricing";
 import { getLbankTicker, getLbankDepth } from "@/lib/lbank";
 import { computeDepthMetrics } from "@/lib/bitmart";
-import { getOnChainTotalSupply, weiToAuxr, isPaused } from "@/lib/auxr-onchain";
+import {
+  getOnChainTotalSupply,
+  getOnChainBalance,
+  weiToAuxr,
+  isPaused,
+  publicClient,
+} from "@/lib/auxr-onchain";
+import type { Address } from "viem";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { getRedis } from "@/lib/redis";
 import { lastRenewal } from "@/lib/mm-lease";
@@ -57,6 +64,32 @@ const DIGEST_HOUR_UTC = Number(process.env.AUXR_DIGEST_HOUR_UTC || 8); // 08:00 
 const NAV_FEED_URL = process.env.AUXR_NAV_FEED_URL || "https://vault.auxite.io/api/auxr/price";
 const MM_LEASE_VENUE = process.env.AUXR_MM_LEASE_VENUE || "pionex";
 const MM_SILENT_ALERT_SEC = Number(process.env.AUXR_MM_SILENT_ALERT_SEC || 180);
+
+// AUXR taken in the October incidents, still sitting where it was sent.
+//
+// There is nothing in the contract that can take it back: AUXR is ERC20 +
+// Burnable + Pausable + Permit + AccessControl, and burnFrom needs the
+// holder's allowance. There is no blacklist and no seize. The only on-chain
+// lever is pause(), which stops every holder and the LBANK market with them.
+//
+// So the lever we actually have is time. Both addresses hold zero ETH and have
+// never sent a transaction, which on Base means the tokens cannot move until
+// somebody funds gas there. That funding is a visible event, and this check
+// exists to not miss it: ETH arriving is the warning, AUXR leaving is the
+// confirmation. Either one is worth being woken up for, because it is the
+// moment a decision about pause() has to be made rather than discussed.
+const STOLEN_ADDRESSES: { address: Address; label: string; expectedUnits: number }[] = [
+  {
+    address: "0xd3f276f6932839a32cb0999673af168fde4f5643" as Address,
+    label: "LBANK deposit (10-11 Oct)",
+    expectedUnits: 697.005479,
+  },
+  {
+    address: "0x52Ef3BB09c75F507b683ED3cFA912bfF7ec6248f" as Address,
+    label: "unknown destination (19-20 Oct)",
+    expectedUnits: 200.2,
+  },
+];
 
 /** Top of the public Pionex AUXR book (no key needed). Null when unlisted. */
 async function getPionexTop(): Promise<{ bid: number | null; ask: number | null } | null> {
@@ -303,6 +336,45 @@ export async function GET(request: NextRequest) {
         )
       )
         fired.push("mm-down");
+    }
+  }
+
+  // 7. The stolen AUXR, and whether it is still stranded.
+  //
+  // Checked every run rather than on a hunch: the window between gas arriving
+  // and the tokens leaving is minutes, and it is the only window in which
+  // pause() is still a choice. Both signals are deduped on the amount, so a
+  // stationary balance stays quiet and a partial move re-alerts.
+  for (const s of STOLEN_ADDRESSES) {
+    const [wei, gas] = await Promise.all([
+      safe(getOnChainBalance(s.address), null as bigint | null),
+      safe(
+        publicClient().getBalance({ address: s.address }),
+        null as bigint | null,
+      ),
+    ]);
+
+    if (gas != null && gas > 0n) {
+      if (
+        await alertOnce(
+          `stolen-gas:${s.address}`,
+          `⛽ <b>Gas landed on a stolen-AUXR address</b>\n${s.label}\n<code>${s.address}</code>\nETH: <b>${(Number(gas) / 1e18).toFixed(6)}</b> · holds ${wei != null ? weiToAuxr(wei).toFixed(4) : "?"} AUXR\n\nThis address had never sent a transaction. Somebody is preparing to move ${s.expectedUnits} AUXR. If it must be stopped, the only lever is <code>pause()</code> from the admin Safe — which halts every holder and the LBANK market too.`,
+        )
+      )
+        fired.push("stolen-gas");
+    }
+
+    if (wei != null) {
+      const units = weiToAuxr(wei);
+      if (units < s.expectedUnits - 0.0001) {
+        if (
+          await alertOnce(
+            `stolen-moved:${s.address}:${units.toFixed(4)}`,
+            `🚨 <b>Stolen AUXR HAS MOVED</b>\n${s.label}\n<code>${s.address}</code>\nWas ${s.expectedUnits} AUXR · now <b>${units.toFixed(4)}</b> (−${(s.expectedUnits - units).toFixed(4)})\n\nTrace the transfer and send the destination to the venue and to the police file.`,
+          )
+        )
+          fired.push("stolen-moved");
+      }
     }
   }
 
