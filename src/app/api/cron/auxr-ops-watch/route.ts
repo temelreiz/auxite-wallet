@@ -31,7 +31,7 @@ import { getOnChainTotalSupply, weiToAuxr, isPaused } from "@/lib/auxr-onchain";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { getRedis } from "@/lib/redis";
 import { lastRenewal } from "@/lib/mm-lease";
-import { followTaint, taintHoldings } from "@/lib/auxr-taint";
+import { followTaint, taintHoldings, claimGasAlert } from "@/lib/auxr-taint";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -348,14 +348,14 @@ export async function GET(request: NextRequest) {
   const holdings = await safe(taintHoldings(), [] as Awaited<ReturnType<typeof taintHoldings>>);
   for (const h of holdings) {
     if (h.units <= 0) continue;
-    if (h.gasEth <= 0) continue;
-    if (
-      await alertOnce(
-        `taint-gas:${h.address}`,
-        `⛽ <b>Gas on a stolen-AUXR address</b>\n<code>${h.address}</code>\n${h.label}\nETH <b>${h.gasEth.toFixed(6)}</b> · holds <b>${h.units.toFixed(4)} AUXR</b>\n\nThis address can now move. Watching for where.`,
-      )
-    )
-      fired.push("taint-gas");
+    // Latched rather than deduped on a timer: the first version re-sent this
+    // every thirty minutes for a condition that had not changed, which is how
+    // an alert stops being read.
+    if (!(await claimGasAlert(h.address, h.gasEth))) continue;
+    await sendTelegramMessage(
+      `⛽ <b>Gas arrived on a stolen-AUXR address</b>\n<code>${h.address}</code>\n${h.label}\nETH <b>${h.gasEth.toFixed(6)}</b> · holds <b>${h.units.toFixed(4)} AUXR</b>\n\nThis address had no gas until now, so it can move. Movements are reported separately as they happen.`,
+    ).catch(() => {});
+    fired.push("taint-gas");
   }
 
   // B) Daily digest heartbeat — passive oversight + dead-man's switch
