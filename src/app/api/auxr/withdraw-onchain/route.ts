@@ -239,7 +239,10 @@ export async function POST(request: NextRequest) {
         refId,
         requiresCoSignature: true,
         expiresAt: created.request.expiresAt,
-        message: `Withdrawals above ${COSIGN_THRESHOLD} AUXR are released after approval.`,
+        message:
+          COSIGN_THRESHOLD > 0
+            ? `Withdrawals above ${COSIGN_THRESHOLD} AUXR are released after approval.`
+            : `Withdrawals are released once approved — usually within a few hours.`,
       },
       { status: 202 },
     );

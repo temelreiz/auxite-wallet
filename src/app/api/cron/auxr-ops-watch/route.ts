@@ -27,7 +27,8 @@ import { getReserveSnapshot } from "@/lib/auxr-reserve";
 import { getAuxrPricing } from "@/lib/auxr-pricing";
 import { getLbankTicker, getLbankDepth } from "@/lib/lbank";
 import { computeDepthMetrics } from "@/lib/bitmart";
-import { getOnChainTotalSupply, weiToAuxr, isPaused } from "@/lib/auxr-onchain";
+import { getOnChainTotalSupply, weiToAuxr, isPaused, isMinter } from "@/lib/auxr-onchain";
+import type { Address } from "viem";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { getRedis } from "@/lib/redis";
 import { lastRenewal } from "@/lib/mm-lease";
@@ -58,6 +59,9 @@ const DIGEST_HOUR_UTC = Number(process.env.AUXR_DIGEST_HOUR_UTC || 8); // 08:00 
 const NAV_FEED_URL = process.env.AUXR_NAV_FEED_URL || "https://vault.auxite.io/api/auxr/price";
 const MM_LEASE_VENUE = process.env.AUXR_MM_LEASE_VENUE || "pionex";
 const MM_SILENT_ALERT_SEC = Number(process.env.AUXR_MM_SILENT_ALERT_SEC || 180);
+// The wallet whose key sits in this process. Checked, not trusted: it is
+// supposed to hold no role at all.
+const HOT_WALLET_FALLBACK = "0xd4cecfdf73cccd0517f576e75be469d75e0a1658";
 
 // The AUXR taken in October is followed in src/lib/auxr-taint.ts: a set that
 // grows as the money moves, rather than a list that goes stale the first time
@@ -356,6 +360,25 @@ export async function GET(request: NextRequest) {
       `⛽ <b>Gas arrived on a stolen-AUXR address</b>\n<code>${h.address}</code>\n${h.label}\nETH <b>${h.gasEth.toFixed(6)}</b> · holds <b>${h.units.toFixed(4)} AUXR</b>\n\nThis address had no gas until now, so it can move. Movements are reported separately as they happen.`,
     ).catch(() => {});
     fired.push("taint-gas");
+  }
+
+  // 8. The hot wallet must not be able to mint.
+  //
+  // This is the control that makes the rest of them unnecessary: minting lives
+  // with the admin Safe, and the key in this process holds no role. It is also
+  // the control most easily undone — one revokeRole's worth of work to put
+  // back, by anyone with the Safe, for a good-sounding reason at two in the
+  // morning. So it is asserted every run rather than assumed.
+  const hotMinter = process.env.AUXR_HOT_WALLET_ADDRESS || HOT_WALLET_FALLBACK;
+  const hotCanMint = await safe(isMinter(hotMinter as Address), null);
+  if (hotCanMint === true) {
+    if (
+      await alertOnce(
+        "hot-minter-role",
+        `🔑 <b>The hot wallet holds MINTER_ROLE again</b>\n<code>${hotMinter}</code>\n\nThis key lives in the web process, which is where every October incident started. If this was not deliberate, revoke it from the Safe:\n<code>revokeRole(MINTER_ROLE, ${hotMinter})</code>\n\nIf it was deliberate, it should not stay that way for long.`,
+      )
+    )
+      fired.push("hot-minter-role");
   }
 
   // B) Daily digest heartbeat — passive oversight + dead-man's switch
