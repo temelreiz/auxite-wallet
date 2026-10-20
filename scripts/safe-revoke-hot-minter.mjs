@@ -87,10 +87,48 @@ console.log("");
 // Refuse to print a transaction that would leave nobody able to mint, or that
 // the Safe could not send anyway. A revoke that strands issuance is worse than
 // the problem it solves.
+// Can the Safe still act? Holding the role is not the same as being able to
+// use it. This Safe went to 2-of-3 on 19 June and has not executed a single
+// transaction since — every one of its eight was signed 1-of-1 under the old
+// threshold. So the 2-of-3 configuration has never been exercised, and
+// "somebody can produce two signatures" is an assumption, not a fact.
+//
+// Revoking on that assumption is the worst outcome available here: the hot
+// wallet is the only other minter, so if the Safe turns out to be unusable,
+// AUXR could never be minted again and every customer withdrawal would be
+// permanently dead. Checked before printing anything.
+let untestedThreshold = false;
+try {
+  const res = await fetch(
+    `https://safe-transaction-base.safe.global/api/v1/safes/${SAFE}/multisig-transactions/?limit=20&executed=true`,
+  );
+  const body = await res.json();
+  const executed = body?.results || [];
+  const atCurrentThreshold = executed.filter(
+    (t) => (t.confirmations || []).length >= Number(threshold),
+  );
+  untestedThreshold = executed.length > 0 && atCurrentThreshold.length === 0;
+  console.log(
+    `  history: ${executed.length} executed, ${atCurrentThreshold.length} of them with ${threshold}+ signatures`,
+  );
+} catch {
+  console.log("  history: could not be read — treat the threshold as untested");
+  untestedThreshold = true;
+}
+console.log("");
+
 const blockers = [];
 if (!hotIsMinter) blockers.push("the hot wallet already holds no MINTER_ROLE — nothing to do");
 if (!safeIsMinter) blockers.push("the Safe does NOT hold MINTER_ROLE — revoking would leave nobody able to mint");
 if (!safeIsAdmin) blockers.push("the Safe does NOT hold DEFAULT_ADMIN_ROLE — it cannot revoke");
+if (untestedThreshold) {
+  blockers.push(
+    `the Safe has never executed anything at its current ${threshold}-signature threshold, so nobody has\n` +
+      "    demonstrated they can sign twice. Prove it first with a harmless transaction —\n" +
+      "    send 0 ETH to one of the owners — because the hot wallet is the only other\n" +
+      "    minter, and revoking it against an unusable Safe ends AUXR issuance forever",
+  );
+}
 
 if (blockers.length) {
   console.log("Not printing a transaction:");
