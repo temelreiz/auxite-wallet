@@ -78,14 +78,26 @@ is worse than the problem it solves.
 
 Then, in order:
 
-1. **Fund the Safe with ETH.** It holds none, so it can send nothing — not the
-   revoke, and not `pause()` in an emergency. 0.01 ETH on Base is ample. Until
-   this is done the emergency lever is theoretical.
-2. Sign the `revokeRole` in the Safe.
-3. Delete `AUXR_MINTER_PRIVATE_KEY` from Vercel, **Production and Preview**. A
+1. Sign the `revokeRole` in the Safe — 2 of 3, and execute from an owner that
+   has gas.
+2. Delete `AUXR_MINTER_PRIVATE_KEY` from Vercel, **Production and Preview**. A
    preview deployment holding a minting key is a live key somewhere nobody
    looks.
-4. Leave `AUXR_ALLOW_HOT_MINT` unset.
+3. Leave `AUXR_ALLOW_HOT_MINT` unset.
+
+### Who pays the gas
+
+The Safe does not. `execTransaction` is called by an owner and that caller
+pays, which is why this Safe has executed eight transactions while holding no
+ETH. An earlier version of this note and of the script checked the Safe's
+balance and reported a working lever — including `pause()` — as unusable. That
+was wrong.
+
+What matters is that at least one owner can execute. Signing is off-chain and
+free, so the other owners need nothing. At the time of writing one of the three
+owners holds about 0.0028 ETH, which is enough for many transactions on Base
+but thin for the only funded signer: an emergency is a bad time to find out the
+one owner who can execute has run out.
 
 Related: [auxr-large-mint-approval.md](./auxr-large-mint-approval.md) for the
 queue the requests land in.
