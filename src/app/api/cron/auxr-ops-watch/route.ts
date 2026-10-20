@@ -27,17 +27,11 @@ import { getReserveSnapshot } from "@/lib/auxr-reserve";
 import { getAuxrPricing } from "@/lib/auxr-pricing";
 import { getLbankTicker, getLbankDepth } from "@/lib/lbank";
 import { computeDepthMetrics } from "@/lib/bitmart";
-import {
-  getOnChainTotalSupply,
-  getOnChainBalance,
-  weiToAuxr,
-  isPaused,
-  publicClient,
-} from "@/lib/auxr-onchain";
-import type { Address } from "viem";
+import { getOnChainTotalSupply, weiToAuxr, isPaused } from "@/lib/auxr-onchain";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { getRedis } from "@/lib/redis";
 import { lastRenewal } from "@/lib/mm-lease";
+import { followTaint, taintHoldings } from "@/lib/auxr-taint";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -65,31 +59,9 @@ const NAV_FEED_URL = process.env.AUXR_NAV_FEED_URL || "https://vault.auxite.io/a
 const MM_LEASE_VENUE = process.env.AUXR_MM_LEASE_VENUE || "pionex";
 const MM_SILENT_ALERT_SEC = Number(process.env.AUXR_MM_SILENT_ALERT_SEC || 180);
 
-// AUXR taken in the October incidents, still sitting where it was sent.
-//
-// There is nothing in the contract that can take it back: AUXR is ERC20 +
-// Burnable + Pausable + Permit + AccessControl, and burnFrom needs the
-// holder's allowance. There is no blacklist and no seize. The only on-chain
-// lever is pause(), which stops every holder and the LBANK market with them.
-//
-// So the lever we actually have is time. Both addresses hold zero ETH and have
-// never sent a transaction, which on Base means the tokens cannot move until
-// somebody funds gas there. That funding is a visible event, and this check
-// exists to not miss it: ETH arriving is the warning, AUXR leaving is the
-// confirmation. Either one is worth being woken up for, because it is the
-// moment a decision about pause() has to be made rather than discussed.
-const STOLEN_ADDRESSES: { address: Address; label: string; expectedUnits: number }[] = [
-  {
-    address: "0xd3f276f6932839a32cb0999673af168fde4f5643" as Address,
-    label: "LBANK deposit (10-11 Oct)",
-    expectedUnits: 697.005479,
-  },
-  {
-    address: "0x52Ef3BB09c75F507b683ED3cFA912bfF7ec6248f" as Address,
-    label: "unknown destination (19-20 Oct)",
-    expectedUnits: 200.2,
-  },
-];
+// The AUXR taken in October is followed in src/lib/auxr-taint.ts: a set that
+// grows as the money moves, rather than a list that goes stale the first time
+// it does. Check 7 below reports movements and what is still held.
 
 /** Top of the public Pionex AUXR book (no key needed). Null when unlisted. */
 async function getPionexTop(): Promise<{ bid: number | null; ask: number | null } | null> {
@@ -339,43 +311,51 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 7. The stolen AUXR, and whether it is still stranded.
+  // 7. The stolen AUXR: where it went, and whether it is still inert.
   //
-  // Checked every run rather than on a hunch: the window between gas arriving
-  // and the tokens leaving is minutes, and it is the only window in which
-  // pause() is still a choice. Both signals are deduped on the amount, so a
-  // stationary balance stays quiet and a partial move re-alerts.
-  for (const s of STOLEN_ADDRESSES) {
-    const [wei, gas] = await Promise.all([
-      safe(getOnChainBalance(s.address), null as bigint | null),
-      safe(
-        publicClient().getBalance({ address: s.address }),
-        null as bigint | null,
-      ),
-    ]);
+  // The point of this check is the pause() decision. Tokens moving between the
+  // thief's own wallets are not worth halting a market over; tokens reaching a
+  // contract are, because that is a swap, a bridge or a deposit — the moment
+  // they stop being inert. So a contract destination is alerted separately and
+  // says so plainly, and a plain wallet is reported without crying wolf.
+  //
+  // Gas is watched too: every one of these addresses started with zero ETH and
+  // no transaction history, so somebody funding gas is the earliest warning
+  // available and it arrives before the transfer does.
+  const taint = await safe(followTaint(), null);
 
-    if (gas != null && gas > 0n) {
+  if (taint) {
+    for (const m of taint.movements) {
+      const label = m.toIsContract
+        ? `🚨 <b>Stolen AUXR moved INTO A CONTRACT</b>`
+        : `⚠️ <b>Stolen AUXR moved</b>`;
+      const advice = m.toIsContract
+        ? `\n\nA contract destination means a swap, a bridge or an exchange deposit — this is the case <code>pause()</code> exists for. The admin Safe needs ETH to send it.`
+        : `\n\nDestination is a plain wallet, so the tokens are being shuffled rather than sold. Added to the watch set; no action unless it reaches a contract or a venue.`;
       if (
         await alertOnce(
-          `stolen-gas:${s.address}`,
-          `⛽ <b>Gas landed on a stolen-AUXR address</b>\n${s.label}\n<code>${s.address}</code>\nETH: <b>${(Number(gas) / 1e18).toFixed(6)}</b> · holds ${wei != null ? weiToAuxr(wei).toFixed(4) : "?"} AUXR\n\nThis address had never sent a transaction. Somebody is preparing to move ${s.expectedUnits} AUXR. If it must be stopped, the only lever is <code>pause()</code> from the admin Safe — which halts every holder and the LBANK market too.`,
+          `taint-move:${m.txHash}`,
+          `${label}\n<b>${m.units.toFixed(4)} AUXR</b>\nfrom <code>${m.from}</code>\nto <code>${m.to}</code>${m.newlyTainted ? " (new)" : ""}\nblock ${m.blockNumber}\n<a href="https://basescan.org/tx/${m.txHash}">tx</a>${advice}`,
         )
       )
-        fired.push("stolen-gas");
+        fired.push(m.toIsContract ? "taint-contract" : "taint-move");
     }
+  }
 
-    if (wei != null) {
-      const units = weiToAuxr(wei);
-      if (units < s.expectedUnits - 0.0001) {
-        if (
-          await alertOnce(
-            `stolen-moved:${s.address}:${units.toFixed(4)}`,
-            `🚨 <b>Stolen AUXR HAS MOVED</b>\n${s.label}\n<code>${s.address}</code>\nWas ${s.expectedUnits} AUXR · now <b>${units.toFixed(4)}</b> (−${(s.expectedUnits - units).toFixed(4)})\n\nTrace the transfer and send the destination to the venue and to the police file.`,
-          )
-        )
-          fired.push("stolen-moved");
-      }
-    }
+  // Gas arriving on an address that has never sent a transaction is the signal
+  // that precedes everything else, so it is checked on every address we hold,
+  // not just the ones that have already moved.
+  const holdings = await safe(taintHoldings(), [] as Awaited<ReturnType<typeof taintHoldings>>);
+  for (const h of holdings) {
+    if (h.units <= 0) continue;
+    if (h.gasEth <= 0) continue;
+    if (
+      await alertOnce(
+        `taint-gas:${h.address}`,
+        `⛽ <b>Gas on a stolen-AUXR address</b>\n<code>${h.address}</code>\n${h.label}\nETH <b>${h.gasEth.toFixed(6)}</b> · holds <b>${h.units.toFixed(4)} AUXR</b>\n\nThis address can now move. Watching for where.`,
+      )
+    )
+      fired.push("taint-gas");
   }
 
   // B) Daily digest heartbeat — passive oversight + dead-man's switch
