@@ -48,12 +48,26 @@ const [MINTER_ROLE, ADMIN_ROLE] = await Promise.all([
   read("DEFAULT_ADMIN_ROLE", []),
 ]);
 
-const [hotIsMinter, safeIsMinter, safeIsAdmin, safeGas] = await Promise.all([
+const SAFE_ABI = [
+  { type: "function", name: "getThreshold", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
+  { type: "function", name: "getOwners", stateMutability: "view", inputs: [], outputs: [{ type: "address[]" }] },
+];
+
+const [hotIsMinter, safeIsMinter, safeIsAdmin, threshold, owners] = await Promise.all([
   read("hasRole", [MINTER_ROLE, HOT]),
   read("hasRole", [MINTER_ROLE, SAFE]),
   read("hasRole", [ADMIN_ROLE, SAFE]),
-  client.getBalance({ address: SAFE }),
+  client.readContract({ address: SAFE, abi: SAFE_ABI, functionName: "getThreshold" }),
+  client.readContract({ address: SAFE, abi: SAFE_ABI, functionName: "getOwners" }),
 ]);
+
+// A Safe does not pay for its own transactions: execTransaction is called by
+// an owner, and that caller pays the gas. So what matters is whether an owner
+// can execute, not what the Safe holds — an earlier version of this script
+// checked the Safe's balance and reported a working lever as unusable.
+const ownerGas = await Promise.all(
+  owners.map(async (o) => ({ owner: o, eth: Number(await client.getBalance({ address: o })) / 1e18 })),
+);
 
 console.log("Current state on Base");
 console.log(`  hot wallet  ${HOT}`);
@@ -61,7 +75,13 @@ console.log(`    MINTER_ROLE          ${hotIsMinter ? "YES — this is what we a
 console.log(`  admin Safe  ${SAFE}`);
 console.log(`    MINTER_ROLE          ${safeIsMinter ? "yes — minting survives the revoke" : "NO"}`);
 console.log(`    DEFAULT_ADMIN_ROLE   ${safeIsAdmin ? "yes — can revoke" : "NO — cannot revoke"}`);
-console.log(`    ETH                  ${(Number(safeGas) / 1e18).toFixed(6)}`);
+console.log(`    threshold            ${threshold} of ${owners.length}`);
+console.log("");
+console.log("  owners — whoever executes pays the gas, not the Safe:");
+for (const { owner, eth } of ownerGas) {
+  const can = eth >= 0.0005;
+  console.log(`    ${owner}  ETH ${eth.toFixed(6)}  ${can ? "can execute" : "can sign (signing is free, off-chain)"}`);
+}
 console.log("");
 
 // Refuse to print a transaction that would leave nobody able to mint, or that
@@ -95,10 +115,22 @@ console.log("");
 console.log(`  Calldata  ${calldata}`);
 console.log("");
 
-if (safeGas === 0n) {
-  console.log("The Safe holds no ETH, so it cannot send this. Fund it first —");
-  console.log("0.01 ETH on Base is far more than enough, and the same gas is what");
-  console.log("pause() would need in an emergency.");
+const executors = ownerGas.filter((o) => o.eth >= 0.0005);
+if (executors.length === 0) {
+  console.log("No owner holds enough ETH on Base to execute. Signing is free, but");
+  console.log("somebody has to send the transaction — fund any one owner with");
+  console.log("0.01 ETH. The Safe itself does not need ETH and never did.");
+  console.log("");
+} else {
+  const thin = executors.every((o) => o.eth < 0.005);
+  console.log(`Execute from ${executors[0].owner} (${executors[0].eth.toFixed(6)} ETH).`);
+  console.log(`Needs ${threshold} signatures; the other owners only sign, which costs nothing.`);
+  if (thin) {
+    console.log("");
+    console.log("That balance is thin. Top it up to 0.01 ETH — the same gas is what");
+    console.log("pause() needs in an emergency, and an emergency is a bad time to");
+    console.log("discover the only funded owner ran out.");
+  }
   console.log("");
 }
 

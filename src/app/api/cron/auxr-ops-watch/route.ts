@@ -33,6 +33,7 @@ import { sendTelegramMessage } from "@/lib/telegram";
 import { getRedis } from "@/lib/redis";
 import { lastRenewal } from "@/lib/mm-lease";
 import { followTaint, taintHoldings, claimGasAlert } from "@/lib/auxr-taint";
+import { scanRoleChanges } from "@/lib/auxr-role-watch";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -334,7 +335,7 @@ export async function GET(request: NextRequest) {
         ? `🚨 <b>Stolen AUXR moved INTO A CONTRACT</b>`
         : `⚠️ <b>Stolen AUXR moved</b>`;
       const advice = m.toIsContract
-        ? `\n\nA contract destination means a swap, a bridge or an exchange deposit — this is the case <code>pause()</code> exists for. The admin Safe needs ETH to send it.`
+        ? `\n\nA contract destination means a swap, a bridge or an exchange deposit — this is the case <code>pause()</code> exists for. Two of three Safe owners must sign; the owner who executes pays the gas, not the Safe.`
         : `\n\nDestination is a plain wallet, so the tokens are being shuffled rather than sold. Added to the watch set; no action unless it reaches a contract or a venue.`;
       if (
         await alertOnce(
@@ -362,13 +363,18 @@ export async function GET(request: NextRequest) {
     fired.push("taint-gas");
   }
 
-  // 8. The hot wallet must not be able to mint.
+  // 8. Who is allowed to mint.
   //
-  // This is the control that makes the rest of them unnecessary: minting lives
-  // with the admin Safe, and the key in this process holds no role. It is also
-  // the control most easily undone — one revokeRole's worth of work to put
-  // back, by anyone with the Safe, for a good-sounding reason at two in the
-  // morning. So it is asserted every run rather than assumed.
+  // This is the control the rest of the design rests on: the web app cannot
+  // mint because its key holds no role. It is also the control most easily
+  // undone — one grantRole, by anyone with the Safe, for a good-sounding
+  // reason at two in the morning. So it is asserted rather than assumed, in
+  // two ways.
+  //
+  // The known wallet is read directly, because that is cheap and specific.
+  // Grants to addresses we have never heard of can only come from events, so
+  // those are scanned too: a plain AccessControl contract cannot be asked who
+  // holds a role, only told when it changes.
   const hotMinter = process.env.AUXR_HOT_WALLET_ADDRESS || HOT_WALLET_FALLBACK;
   const hotCanMint = await safe(isMinter(hotMinter as Address), null);
   if (hotCanMint === true) {
@@ -379,6 +385,27 @@ export async function GET(request: NextRequest) {
       )
     )
       fired.push("hot-minter-role");
+  }
+
+  const roleScan = await safe(scanRoleChanges(), null);
+  for (const c of roleScan?.changes ?? []) {
+    // A revoke is reported too, quietly: it is the good direction, and a
+    // record of when it happened is worth having.
+    const heading = c.unexpected
+      ? `🔑 <b>Someone new can mint AUXR</b>`
+      : c.kind === "granted"
+        ? `🔑 <b>MINTER_ROLE granted to the Safe</b>`
+        : `✅ <b>MINTER_ROLE revoked</b>`;
+    const tail = c.unexpected
+      ? `\n\nOnly the admin Safe is supposed to hold this. If this was key rotation, fine — if it was not, revoke it now:\n<code>revokeRole(MINTER_ROLE, ${c.account})</code>`
+      : ``;
+    if (
+      await alertOnce(
+        `role-change:${c.txHash}:${c.account}`,
+        `${heading}\n<code>${c.account}</code>\ngranted by <code>${c.sender}</code> at block ${c.blockNumber}\n<a href="https://basescan.org/tx/${c.txHash}">tx</a>${tail}`,
+      )
+    )
+      fired.push(c.unexpected ? "role-granted-unexpected" : "role-change");
   }
 
   // B) Daily digest heartbeat — passive oversight + dead-man's switch
