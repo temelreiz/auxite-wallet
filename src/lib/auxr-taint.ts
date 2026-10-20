@@ -28,6 +28,10 @@ import type { Address } from "viem";
 const TAINT_SET = "auxr:taint:addresses";
 const TAINT_META = "auxr:taint:meta";
 const WATERMARK = "auxr:taint:lastBlock";
+/** Addresses we have already reported gas on. Not a TTL dedupe: gas sitting
+ *  on an address is a standing condition, and re-reporting it every half hour
+ *  teaches the reader to ignore the alert that matters. */
+const GAS_NOTIFIED = "auxr:taint:gasNotified";
 
 /** Blocks per run. A five-minute cron sees ~150 on Base; the cap covers a
  *  missed run or two without asking an RPC for a range it will refuse. */
@@ -43,6 +47,14 @@ const SEED: { address: string; label: string }[] = [
   {
     address: "0x52Ef3BB09c75F507b683ED3cFA912bfF7ec6248f",
     label: "first destination (19-20 Oct theft)",
+  },
+  {
+    // The scan starts at the head on first run, so the transfer that proved
+    // this watch was needed happened before the watch could see it. Seeded by
+    // hand rather than backfilled: the history is known, and spending the
+    // getLogs budget to rediscover it would buy nothing.
+    address: "0x9E06B94250aD054d7690B124B6f6173EedF90a1A",
+    label: "10 AUXR test transfer from 0x52Ef3BB0, 23:54 on 19 Oct",
   },
 ];
 
@@ -218,4 +230,22 @@ export async function taintHoldings(): Promise<{
   }
 
   return out.sort((x, y) => y.units - x.units);
+}
+
+/**
+ * Whether the gas on this address is news.
+ *
+ * True once, when gas first appears. Stays false while it sits there, and
+ * becomes true again only if the address is drained to zero and refunded —
+ * which is a second preparation to move, and worth saying so.
+ */
+export async function claimGasAlert(address: string, gasEth: number): Promise<boolean> {
+  const redis = getRedis();
+  const a = address.toLowerCase();
+
+  if (gasEth <= 0) {
+    await redis.srem(GAS_NOTIFIED, a);
+    return false;
+  }
+  return (await redis.sadd(GAS_NOTIFIED, a)) === 1;
 }
