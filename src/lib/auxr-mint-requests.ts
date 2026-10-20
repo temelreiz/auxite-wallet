@@ -29,8 +29,27 @@ const num = (v: string | undefined, d: number) => {
   return Number.isFinite(n) && n > 0 ? n : d;
 };
 
-/** At or below this a withdrawal mints automatically (subject to daily caps). */
-export const COSIGN_THRESHOLD = num(process.env.AUXR_MINT_REVIEW_THRESHOLD, 50);
+/**
+ * At or below this a withdrawal would mint automatically. Zero by default, so
+ * there is no automatic path: every withdrawal is queued for the Safe.
+ *
+ * It was 50, chosen as "larger than any position any customer holds". That was
+ * the right number for a design where the web app mints and the question is
+ * how much it may mint unattended. It is the wrong question. The web app no
+ * longer holds MINTER_ROLE, so the answer is none.
+ *
+ * The cost is real: a withdrawal now waits for a human to sign in the Safe,
+ * hours rather than seconds. Six accounts hold AUXR, 61.84 in total, the
+ * largest position 50 — so today that cost is close to nothing, and this is
+ * the cheapest moment the change will ever be.
+ *
+ * Unlike the other two, this one accepts 0 from the environment; a threshold
+ * is a policy that may legitimately be none.
+ */
+export const COSIGN_THRESHOLD = (() => {
+  const raw = parseFloat(String(process.env.AUXR_MINT_REVIEW_THRESHOLD ?? ""));
+  return Number.isFinite(raw) && raw >= 0 ? raw : 0;
+})();
 /** Above this the product does not offer withdrawal at all. */
 export const HARD_CEILING = num(process.env.AUXR_MINT_HARD_CEILING, 500);
 /** An unsigned request is refunded after this long. */

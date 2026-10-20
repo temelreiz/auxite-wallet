@@ -15,6 +15,52 @@
 
 "use client";
 
+import { encodeFunctionData, keccak256, parseUnits, toBytes } from "viem";
+
+/** Holder of MINTER_ROLE. Minting happens here and nowhere else. */
+const SAFE_ADDRESS = "0xedc9163c5f8a2a76bd1cdda6baa4eb576b481070";
+const AUXR_ADDRESS = "0xB145B8e9C02193d55454f534f917Cabe704FA042";
+
+/** mint(address,uint256,bytes32). Encoded with viem rather than by hand: the
+ *  first draft of this screen used the selector for the two-argument mint. */
+const MINT_ABI = [
+  {
+    type: "function",
+    name: "mint",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+      { name: "refId", type: "bytes32" },
+    ],
+    outputs: [],
+  },
+] as const;
+
+interface MintRequest {
+  refId: string;
+  address: string;
+  destination: string;
+  unitsAUXR: number;
+  state: string;
+  createdAt: string;
+  expiresAt: string;
+  note?: string;
+}
+
+interface SafeTx {
+  safe: string;
+  to: string;
+  value: string;
+  method: string;
+  destination: string;
+  units: number;
+  amountWei: string;
+  refId: string;
+  calldata: string;
+  reason: string;
+}
+
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -97,6 +143,9 @@ export default function AdminAuxrPage() {
   const [mintUnits, setMintUnits] = useState("100");
   const [mintReason, setMintReason] = useState("On-chain mint");
   const [mintTxUrl, setMintTxUrl] = useState<string | null>(null);
+  const [safeTx, setSafeTx] = useState<SafeTx | null>(null);
+  const [requests, setRequests] = useState<MintRequest[]>([]);
+  const [reqSafeTx, setReqSafeTx] = useState<Record<string, SafeTx>>({});
 
   // Adjust form
   const [adjMetal, setAdjMetal] = useState<"gold" | "silver" | "platinum" | "palladium">("gold");
@@ -126,6 +175,89 @@ export default function AdminAuxrPage() {
     }
   }, [adminToken]);
 
+  // With the co-sign threshold at zero every withdrawal lands here, so this
+  // queue is the whole withdrawal pipeline rather than an exception list. It
+  // reloads on the same interval as everything else: a customer waiting on a
+  // signature should not also be waiting on someone to refresh a page.
+  const loadRequests = useCallback(async () => {
+    if (!adminToken) return;
+    try {
+      const r = await fetch("/api/admin/auxr/mint-requests", {
+        headers: { Authorization: `Bearer ${adminToken}` },
+        cache: "no-store",
+      });
+      const j = await r.json();
+      if (j?.success) setRequests(j.open || []);
+    } catch (e: any) {
+      console.warn("[admin/auxr] mint requests fetch failed", e);
+    }
+  }, [adminToken]);
+
+  const decideRequest = async (refId: string, decision: "approve" | "reject") => {
+    if (!adminToken) return setErr("Admin token missing");
+    const req = requests.find((x) => x.refId === refId);
+    if (
+      decision === "reject" &&
+      typeof window !== "undefined" &&
+      !window.confirm(
+        `Reject ${req?.unitsAUXR} AUXR for ${req?.address.slice(0, 10)}…?\n\nThe hold is refunded to their balance.`,
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    try {
+      const r = await fetch("/api/admin/auxr/mint-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({ refId, decision }),
+      });
+      const j = await r.json();
+      if (!j?.success) {
+        setErr(j?.error || "decision_failed");
+      } else {
+        setOkMsg(
+          decision === "approve"
+            ? `${refId} cleared for the Safe — build and sign the mint below`
+            : `${refId} rejected, AUXR refunded`,
+        );
+        // Approving does not mint. Hand over the transaction immediately, so
+        // the operator is not left wondering what "approved" accomplished.
+        if (decision === "approve" && req) buildSafeTxFor(req);
+        await loadRequests();
+      }
+    } catch (e: any) {
+      setErr(e?.message || "decision_failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const buildSafeTxFor = (req: MintRequest) => {
+    const amountWei = parseUnits(String(req.unitsAUXR), 18);
+    const calldata = encodeFunctionData({
+      abi: MINT_ABI,
+      functionName: "mint",
+      args: [req.destination as `0x${string}`, amountWei, keccak256(toBytes(req.refId))],
+    });
+    setReqSafeTx((prev) => ({
+      ...prev,
+      [req.refId]: {
+        safe: SAFE_ADDRESS,
+        to: AUXR_ADDRESS,
+        value: "0",
+        method: "mint(address,uint256,bytes32)",
+        destination: req.destination,
+        units: req.unitsAUXR,
+        amountWei: amountWei.toString(),
+        refId: req.refId,
+        calldata,
+        reason: req.note || "customer withdrawal",
+      },
+    }));
+  };
+
   const loadOps = useCallback(async () => {
     if (!adminToken) return;
     try {
@@ -151,19 +283,20 @@ export default function AdminAuxrPage() {
     if (!adminToken) return;
     let cancelled = false;
     (async () => {
-      await Promise.all([loadSnapshot(), loadEvents(), loadOps()]);
+      await Promise.all([loadSnapshot(), loadEvents(), loadOps(), loadRequests()]);
       if (!cancelled) setLoading(false);
     })();
     const interval = setInterval(() => {
       loadSnapshot();
       loadEvents();
       loadOps();
+      loadRequests();
     }, 30_000);
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [adminToken, loadSnapshot, loadEvents, loadOps]);
+  }, [adminToken, loadSnapshot, loadEvents, loadOps, loadRequests]);
 
   // ── Actions ───────────────────────────────────────────────────────────────
   const seedTreasury = async () => {
@@ -246,63 +379,65 @@ export default function AdminAuxrPage() {
     }
   };
 
-  const submitMintOnchain = async () => {
-    if (!adminToken) return setErr("Admin token missing");
+  // No longer mints. The admin Safe holds MINTER_ROLE and this process does
+  // not, so the useful thing this screen can do is hand the operator the exact
+  // transaction to paste into the Safe — contract, function, arguments and
+  // calldata — rather than a button that reverts.
+  //
+  // Encoded with viem rather than by hand: the first draft of this used the
+  // selector for mint(address,uint256) on a contract whose mint takes three
+  // arguments, which would have produced calldata that reverts after the
+  // operator had already signed it.
+  const buildSafeMintTx = () => {
     const units = parseFloat(mintUnits);
-    if (!mintAddr || !isFinite(units) || units <= 0) {
-      setErr("address + units required");
+    const dest = mintAddr.trim();
+    if (!/^0x[0-9a-fA-F]{40}$/.test(dest)) {
+      setErr("a valid 0x destination address is required");
+      return;
+    }
+    if (!isFinite(units) || units <= 0) {
+      setErr("units required");
       return;
     }
     if (!mintReason || mintReason.length < 4) {
       setErr("reason ≥ 4 chars required");
       return;
     }
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm(
-        `Mint ${units} REAL AUXR on-chain to ${mintAddr}?\n\nThis signs an irreversible mint() transaction. The tokens land in the recipient's on-chain wallet.`
-      )
-    ) {
-      return;
-    }
-    setBusy(true);
     setErr(null);
     setOkMsg(null);
-    setMintTxUrl(null);
-    try {
-      const r = await fetch("/api/admin/auxr/mint-onchain", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${adminToken}`,
+
+    const refId = `admin-${Date.now()}`;
+    const amountWei = parseUnits(String(units), 18);
+    const calldata = encodeFunctionData({
+      abi: [
+        {
+          type: "function",
+          name: "mint",
+          stateMutability: "nonpayable",
+          inputs: [
+            { name: "to", type: "address" },
+            { name: "amount", type: "uint256" },
+            { name: "refId", type: "bytes32" },
+          ],
+          outputs: [],
         },
-        body: JSON.stringify({
-          destination: mintAddr,
-          unitsAUXR: units,
-          reason: mintReason || "On-chain mint",
-        }),
-      });
-      const j = await r.json();
-      if (j?.success) {
-        setOkMsg(
-          `Minted ${units} AUXR on-chain to ${mintAddr.slice(0, 10)}… · tx ${String(
-            j.txHash
-          ).slice(0, 12)}…`
-        );
-        setMintTxUrl(j.explorerUrl || null);
-        setMintAddr("");
-        await loadSnapshot();
-        await loadEvents();
-      } else {
-        setErr(
-          j?.details ? `${j.error}: ${j.details}` : j?.error || "mint_failed"
-        );
-      }
-    } catch (e: any) {
-      setErr(e?.message || "mint_failed");
-    } finally {
-      setBusy(false);
-    }
+      ] as const,
+      functionName: "mint",
+      args: [dest as `0x${string}`, amountWei, keccak256(toBytes(refId))],
+    });
+
+    setSafeTx({
+      safe: SAFE_ADDRESS,
+      to: AUXR_ADDRESS,
+      value: "0",
+      method: "mint(address,uint256,bytes32)",
+      destination: dest,
+      units,
+      amountWei: amountWei.toString(),
+      refId,
+      calldata,
+      reason: mintReason,
+    });
   };
 
   const submitAdjust = async () => {
@@ -805,19 +940,140 @@ export default function AdminAuxrPage() {
           </button>
         </section>
 
-        {/* On-chain Mint */}
-        <section className="rounded-2xl bg-zinc-900/80 border border-emerald-500/30 p-6">
+        {/* Withdrawal queue — every withdrawal lands here */}
+        <section className="rounded-2xl bg-zinc-900/80 border border-sky-500/30 p-6">
           <h2 className="text-base font-semibold mb-1">
-            On-chain Mint{" "}
-            <span className="text-xs font-normal text-emerald-400">
-              (real AUXR → any wallet)
+            Withdrawal queue{" "}
+            <span className="text-xs font-normal text-sky-400">
+              ({requests.length} open)
             </span>
           </h2>
           <p className="text-sm text-slate-400 mb-4">
-            Signs a real <code className="text-xs bg-zinc-800 px-1.5 py-0.5 rounded">mint()</code>{" "}
-            on Base and sends AUXR to any on-chain wallet (e.g. a MetaMask
-            address). The tokens are transferable/withdrawable like any ERC-20.
-            Backing is booked after the tx confirms. Irreversible.
+            Customer AUXR withdrawals, held for Safe co-signature. The balance
+            is already debited, so a request left here is a customer waiting.
+            Approving does not mint — it clears the request and hands you the
+            transaction to sign in the Safe. Rejecting refunds the hold.
+          </p>
+
+          {requests.length === 0 ? (
+            <p className="text-sm text-slate-500">Nothing waiting.</p>
+          ) : (
+            <div className="space-y-3">
+              {requests.map((req) => {
+                const tx = reqSafeTx[req.refId];
+                const expiresIn =
+                  (new Date(req.expiresAt).getTime() - Date.now()) / 3_600_000;
+                return (
+                  <div
+                    key={req.refId}
+                    className="rounded-xl bg-zinc-950 border border-white/5 p-4 text-xs"
+                  >
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2">
+                      <span className="font-semibold text-sm text-white">
+                        {req.unitsAUXR} AUXR
+                      </span>
+                      <span className="font-mono text-slate-400">
+                        {req.address.slice(0, 10)}… → {req.destination.slice(0, 10)}…
+                      </span>
+                      <span
+                        className={
+                          req.state === "awaiting_safe"
+                            ? "text-amber-400"
+                            : "text-sky-400"
+                        }
+                      >
+                        {req.state}
+                      </span>
+                      <span className={expiresIn < 12 ? "text-red-400" : "text-slate-500"}>
+                        {expiresIn > 0
+                          ? `expires in ${Math.round(expiresIn)}h`
+                          : "EXPIRED — will be refunded"}
+                      </span>
+                    </div>
+                    <div className="font-mono text-[10px] text-slate-500 mb-3 break-all">
+                      {req.refId}
+                    </div>
+
+                    <div className="flex gap-2">
+                      {req.state === "pending_triage" && (
+                        <>
+                          <button
+                            disabled={busy}
+                            onClick={() => decideRequest(req.refId, "approve")}
+                            className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-zinc-950 font-semibold px-4 py-1.5 rounded-lg"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            disabled={busy}
+                            onClick={() => decideRequest(req.refId, "reject")}
+                            className="bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-red-400 font-semibold px-4 py-1.5 rounded-lg"
+                          >
+                            Reject &amp; refund
+                          </button>
+                        </>
+                      )}
+                      {req.state === "awaiting_safe" && !tx && (
+                        <button
+                          onClick={() => buildSafeTxFor(req)}
+                          className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-4 py-1.5 rounded-lg"
+                        >
+                          Show Safe transaction
+                        </button>
+                      )}
+                    </div>
+
+                    {tx && (
+                      <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5">
+                        <p className="text-slate-400">
+                          Sign in the Safe{" "}
+                          <code className="text-amber-400">{tx.safe.slice(0, 10)}…</code>:
+                        </p>
+                        <dl className="grid grid-cols-[6rem_1fr] gap-y-1 font-mono break-all">
+                          <dt className="text-slate-500">To</dt>
+                          <dd>{tx.to}</dd>
+                          <dt className="text-slate-500">Function</dt>
+                          <dd>{tx.method}</dd>
+                          <dt className="text-slate-500">amount</dt>
+                          <dd>
+                            {tx.amountWei}
+                            <span className="text-slate-500"> ({tx.units} AUXR)</span>
+                          </dd>
+                        </dl>
+                        <textarea
+                          readOnly
+                          value={tx.calldata}
+                          onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+                          className="w-full h-16 bg-zinc-900 border border-white/5 rounded-lg p-2 font-mono text-[10px]"
+                        />
+                        <p className="text-slate-500">
+                          Settlement is read from the chain, so the request closes
+                          itself once the mint lands — nothing to mark done here.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* On-chain Mint — via the Safe, not from here */}
+        <section className="rounded-2xl bg-zinc-900/80 border border-amber-500/30 p-6">
+          <h2 className="text-base font-semibold mb-1">
+            On-chain Mint{" "}
+            <span className="text-xs font-normal text-amber-400">
+              (prepares a Safe transaction — this panel cannot mint)
+            </span>
+          </h2>
+          <p className="text-sm text-slate-400 mb-4">
+            AUXR is minted by the admin Safe, which holds{" "}
+            <code className="text-xs bg-zinc-800 px-1.5 py-0.5 rounded">MINTER_ROLE</code>.
+            No key in this application can mint, deliberately: every incident in
+            October was an authorisation bug in this process, and a control that
+            lives in the same process as the bug cannot be relied on. This form
+            builds the exact transaction — paste it into the Safe and sign.
           </p>
           <div className="grid md:grid-cols-3 gap-3 mb-3">
             <input
@@ -843,21 +1099,51 @@ export default function AdminAuxrPage() {
             />
           </div>
           <button
-            disabled={busy}
-            onClick={submitMintOnchain}
-            className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-zinc-950 font-semibold px-5 py-2 rounded-lg text-sm"
+            onClick={buildSafeMintTx}
+            className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-5 py-2 rounded-lg text-sm"
           >
-            {busy ? "Minting…" : "Mint On-chain"}
+            Build Safe transaction
           </button>
-          {mintTxUrl && (
-            <a
-              href={mintTxUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block mt-3 text-xs text-emerald-400 hover:underline break-all"
-            >
-              View transaction ↗ {mintTxUrl}
-            </a>
+
+          {safeTx && (
+            <div className="mt-4 rounded-xl bg-zinc-950 border border-amber-500/20 p-4 text-xs space-y-2">
+              <p className="text-slate-400">
+                In the Safe at{" "}
+                <code className="text-amber-400 break-all">{safeTx.safe}</code>, create
+                a new transaction with these values. Two of three owners must sign.
+              </p>
+              <dl className="grid grid-cols-[7rem_1fr] gap-y-1.5 font-mono break-all">
+                <dt className="text-slate-500">To</dt>
+                <dd>{safeTx.to}</dd>
+                <dt className="text-slate-500">Value</dt>
+                <dd>{safeTx.value} ETH</dd>
+                <dt className="text-slate-500">Function</dt>
+                <dd>{safeTx.method}</dd>
+                <dt className="text-slate-500">to</dt>
+                <dd>{safeTx.destination}</dd>
+                <dt className="text-slate-500">amount</dt>
+                <dd>
+                  {safeTx.amountWei}
+                  <span className="text-slate-500"> ({safeTx.units} AUXR)</span>
+                </dd>
+                <dt className="text-slate-500">refId</dt>
+                <dd>{safeTx.refId}</dd>
+              </dl>
+              <div>
+                <p className="text-slate-500 mb-1">
+                  Raw calldata — check the amount above before signing:
+                </p>
+                <textarea
+                  readOnly
+                  value={safeTx.calldata}
+                  onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+                  className="w-full h-20 bg-zinc-900 border border-white/5 rounded-lg p-2 font-mono text-[10px]"
+                />
+              </div>
+              <p className="text-amber-400/80">
+                The Safe needs ETH on Base to send this.
+              </p>
+            </div>
           )}
         </section>
 

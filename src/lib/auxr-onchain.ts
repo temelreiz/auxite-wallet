@@ -302,17 +302,46 @@ export async function isMinter(address: Address): Promise<boolean> {
 // ── Write functions ──────────────────────────────────────────────────────────
 
 /**
+ * Minting from this process is off by default.
+ *
+ * Every incident in October was an authorisation bug in the web app, and the
+ * caps, the kill switch and the alerts that answered them all live in the same
+ * process as the bug. They are downstream of the thing that failed. The only
+ * control that is not is the one that removes the capability: AUXR is minted
+ * by the admin Safe, which holds MINTER_ROLE, and no key in this process can
+ * ask it to.
+ *
+ * So this is a second lock on the same door. The first is on-chain — the hot
+ * wallet's MINTER_ROLE is revoked, so a mint from here reverts. This one means
+ * a future code path that reaches mintOnChain fails loudly on a flag instead
+ * of quietly on a revert nobody reads, and that a re-granted role does not
+ * silently reopen the automatic path.
+ *
+ * Set AUXR_ALLOW_HOT_MINT=true only to operate deliberately, briefly, and with
+ * the reason written down.
+ */
+const HOT_MINT_ENABLED = process.env.AUXR_ALLOW_HOT_MINT === "true";
+
+/**
  * Mint AUXR on-chain to `to`. Caller must hold MINTER_ROLE. The refId is
  * stored on the event so the off-chain ledger can reconcile this mint to
  * the off-chain burn that triggered it.
  *
- * Throws on revert. Returns the mined tx hash.
+ * Refuses unless AUXR_ALLOW_HOT_MINT is set. Throws on revert. Returns the
+ * mined tx hash.
  */
 export async function mintOnChain(params: {
   to: Address;
   amount: bigint;
   refId: string;
 }): Promise<Hash> {
+  if (!HOT_MINT_ENABLED) {
+    throw new Error(
+      "Minting from the web process is disabled. AUXR is minted by the admin Safe " +
+        "(0xedc9163c…481070); withdrawals are queued as mint requests for co-signature. " +
+        "See docs/security/auxr-mint-from-safe-only.md",
+    );
+  }
   const wallet = minterClient();
   const account = wallet.account!;
   const refBytes32 = refIdToBytes32(params.refId);
