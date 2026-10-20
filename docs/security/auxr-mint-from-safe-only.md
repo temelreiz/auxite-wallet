@@ -76,6 +76,27 @@ issuance — it checks that the Safe holds `MINTER_ROLE` and
 `DEFAULT_ADMIN_ROLE` first, because a revoke that leaves nobody able to mint
 is worse than the problem it solves.
 
+### Prove the Safe works before revoking anything
+
+The script refuses to print the transaction until the Safe has executed
+something at its current threshold, and that refusal is the most important
+thing in this file.
+
+The Safe moved to 2-of-3 on 19 June 2026 and has executed nothing since: all
+eight of its transactions were signed 1-of-1 under the old threshold. Two of
+the three owners have never transacted on any chain. So "somebody can produce
+two signatures" was an assumption, and on 20 October it turned out the owner
+keys were not where anyone expected.
+
+That assumption is the expensive one to get wrong. The hot wallet is the only
+other minter. Revoking it against a Safe nobody can sign with would end AUXR
+issuance permanently — every customer withdrawal dead, with no way back,
+because granting a new minter also needs the Safe.
+
+So: first send a harmless transaction from the Safe — 0 ETH to one of the
+owners — and watch two signatures go in and the transaction execute. Only
+then is the revoke safe to sign.
+
 Then, in order:
 
 1. Sign the `revokeRole` in the Safe — 2 of 3, and execute from an owner that
