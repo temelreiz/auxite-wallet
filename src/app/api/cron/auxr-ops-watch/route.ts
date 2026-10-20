@@ -33,7 +33,7 @@ import { sendTelegramMessage } from "@/lib/telegram";
 import { getRedis } from "@/lib/redis";
 import { lastRenewal } from "@/lib/mm-lease";
 import { followTaint, taintHoldings, claimGasAlert } from "@/lib/auxr-taint";
-import { scanRoleChanges } from "@/lib/auxr-role-watch";
+import { scanRoleChanges, observeHotMinter } from "@/lib/auxr-role-watch";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -377,14 +377,22 @@ export async function GET(request: NextRequest) {
   // holds a role, only told when it changes.
   const hotMinter = process.env.AUXR_HOT_WALLET_ADDRESS || HOT_WALLET_FALLBACK;
   const hotCanMint = await safe(isMinter(hotMinter as Address), null);
-  if (hotCanMint === true) {
-    if (
-      await alertOnce(
-        "hot-minter-role",
-        `🔑 <b>The hot wallet holds MINTER_ROLE again</b>\n<code>${hotMinter}</code>\n\nThis key lives in the web process, which is where every October incident started. If this was not deliberate, revoke it from the Safe:\n<code>revokeRole(MINTER_ROLE, ${hotMinter})</code>\n\nIf it was deliberate, it should not stay that way for long.`,
-      )
-    )
-      fired.push("hot-minter-role");
+  if (hotCanMint !== null) {
+    const change = await safe(observeHotMinter(hotCanMint), null);
+    if (change?.kind === "regained") {
+      await sendTelegramMessage(
+        `🔑 <b>The hot wallet can mint again</b>\n<code>${hotMinter}</code>\n\nIt could not, and now it can. This key lives in the web process, which is where every October incident started.\n\nIf this was not deliberate, revoke it from the Safe:\n<code>revokeRole(MINTER_ROLE, ${hotMinter})</code>`,
+      ).catch(() => {});
+      fired.push("hot-minter-regained");
+    } else if (change?.kind === "lost") {
+      await sendTelegramMessage(
+        `✅ <b>The hot wallet can no longer mint</b>\n<code>${hotMinter}</code>\n\nMinting is now the admin Safe's alone. Next: delete <code>AUXR_MINTER_PRIVATE_KEY</code> from Vercel — Production and Preview.`,
+      ).catch(() => {});
+      fired.push("hot-minter-revoked");
+    }
+    // "baseline" and "unchanged" say nothing. Before the revoke is signed the
+    // answer is a known YES, and reporting it every run would be a
+    // notification that nothing has happened.
   }
 
   const roleScan = await safe(scanRoleChanges(), null);
