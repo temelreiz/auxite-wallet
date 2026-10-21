@@ -32,6 +32,7 @@ import type { Address } from "viem";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { getRedis } from "@/lib/redis";
 import { lastRenewal } from "@/lib/mm-lease";
+import { queueOpsDigest } from "@/lib/ops-digest";
 import { followTaint, taintHoldings, claimGasAlert } from "@/lib/auxr-taint";
 import { scanRoleChanges, observeHotMinter } from "@/lib/auxr-role-watch";
 
@@ -97,13 +98,18 @@ async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
   try { return await p; } catch { return fallback; }
 }
 
-/** Send once per condition per TTL window. Returns true if sent. */
-async function alertOnce(key: string, message: string): Promise<boolean> {
+/**
+ * Send once per condition per TTL window. Returns true if sent.
+ * `urgent` alerts go to Telegram; the rest join the daily ops email
+ * (src/lib/ops-digest.ts) — Telegram is kept for things to act on now.
+ */
+async function alertOnce(key: string, message: string, urgent = true): Promise<boolean> {
   try {
     const r = getRedis();
     const ok = await r.set(`auxr:alert:${key}`, Date.now().toString(), { nx: true, ex: DEDUPE_TTL });
     if (ok === null) return false; // already alerted recently
-    await sendTelegramMessage(message);
+    if (urgent) await sendTelegramMessage(message);
+    else await queueOpsDigest(message);
     return true;
   } catch {
     return false;
@@ -145,7 +151,7 @@ async function maybeSendDigest(lines: string[]): Promise<boolean> {
     const r = getRedis();
     const ok = await r.set(`auxr:digest:${day}`, Date.now().toString(), { nx: true, ex: 26 * 3600 });
     if (ok === null) return false; // already sent today
-    await sendTelegramMessage([`📊 <b>AUXR daily status — ${day}</b>`, ...lines].join("\n"));
+    await queueOpsDigest([`📊 <b>AUXR daily status — ${day}</b>`, ...lines].join("\n"));
     return true;
   } catch {
     return false;
@@ -233,7 +239,7 @@ export async function GET(request: NextRequest) {
     const mid = (ticker.bid + ticker.ask) / 2;
     const spreadBps = mid > 0 ? ((ticker.ask - ticker.bid) / mid) * 10000 : 0;
     if (spreadBps >= SPREAD_ALERT_BPS) {
-      if (await alertOnce("spread", `🟡 <b>AUXR MM spread wide</b>\nBid $${ticker.bid} / Ask $${ticker.ask} → spread <b>${(spreadBps / 100).toFixed(2)}%</b> (threshold ${(SPREAD_ALERT_BPS / 100).toFixed(1)}%)\n→ Echo Trade may not be quoting. Also hurts BML depth score.`)) {
+      if (await alertOnce("spread", `🟡 <b>AUXR MM spread wide</b>\nBid $${ticker.bid} / Ask $${ticker.ask} → spread <b>${(spreadBps / 100).toFixed(2)}%</b> (threshold ${(SPREAD_ALERT_BPS / 100).toFixed(1)}%)\n→ Echo Trade may not be quoting. Also hurts BML depth score.`, false)) {
         fired.push("spread");
         await notifyMM(
           `⚠️ <b>AUXR/USDT — spread wide</b>\n` +
@@ -257,6 +263,7 @@ export async function GET(request: NextRequest) {
         await alertOnce(
           "bid-depth",
           `🟠 <b>AUXR bid depth thin</b>\nWithin 2% of NAV: <b>$${Math.round(bid2).toLocaleString()}</b> bids / $${Math.round(m.askUsdWithin?.["2"] ?? 0).toLocaleString()} asks (threshold $${BID_DEPTH_ALERT_USD.toLocaleString()})\n→ A holder selling more than this moves the price alone.`,
+          false,
         )
       ) {
         fired.push("bid-depth");

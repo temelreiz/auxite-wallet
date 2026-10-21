@@ -2,6 +2,7 @@
 // Auxite Ops Telegram Bot - Trade bildirimleri
 
 import { formatAmount } from "@/lib/format";
+import { queueOpsDigest } from "@/lib/ops-digest";
 
 // 🔒 SECURITY: Credentials MUST come from environment variables
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -118,7 +119,8 @@ ${notification.txHash ? `<b>TxHash:</b> <code>${notification.txHash.slice(0, 16)
 📊 <a href="https://vault.auxite.io/admin">Admin Panel</a>
 `;
 
-  return sendTelegramMessage(message.trim());
+  // Routine activity: daily email digest, not Telegram (see ops-digest.ts).
+  return queueOpsDigest(message.trim());
 }
 
 /**
@@ -164,7 +166,8 @@ ${trade.txHash ? `<b>TxHash:</b> <code>${trade.txHash.slice(0, 16)}...</code>` :
 📊 <a href="https://vault.auxite.io/admin?tab=operations">Admin Panel - Operations</a>
 `;
 
-  return sendTelegramMessage(message.trim());
+  // Routine activity: daily email digest, not Telegram (see ops-digest.ts).
+  return queueOpsDigest(message.trim());
 }
 
 /**
@@ -211,7 +214,8 @@ ${n.email ? `<b>Email:</b> ${n.email}` : ""}
 📊 <a href="https://vault.auxite.io/admin/auxr">AUXR Admin Panel</a>
 `;
 
-  return sendTelegramMessage(message.trim());
+  // Routine activity: daily email digest, not Telegram (see ops-digest.ts).
+  return queueOpsDigest(message.trim());
 }
 
 /**
@@ -240,7 +244,8 @@ export async function sendDailySummary(stats: {
 📊 <a href="https://vault.auxite.io/admin">Admin Panel</a>
 `;
 
-  return sendTelegramMessage(message.trim());
+  // Routine activity: daily email digest, not Telegram (see ops-digest.ts).
+  return queueOpsDigest(message.trim());
 }
 
 /**

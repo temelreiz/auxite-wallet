@@ -208,8 +208,8 @@ export async function POST(req: NextRequest) {
     } catch {}
 
     try {
-      const { sendTelegramMessage } = await import("@/lib/telegram");
-      sendTelegramMessage(
+      const { queueOpsDigest } = await import("@/lib/ops-digest");
+      queueOpsDigest(
         `✅ <b>Manual wire credit</b>\n\n` +
         `User: <code>${userAddress.slice(0, 10)}...${userAddress.slice(-4)}</code>\n` +
         `Amount: <b>${amount} ${currency}</b> (~$${usdValue.toFixed(2)})\n` +
