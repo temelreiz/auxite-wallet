@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import crypto from 'crypto';
+import { requireUser } from '@/lib/security/require-user';
 
 interface DeliveryAddress {
   id: string;
@@ -63,10 +64,9 @@ function generateId(): string {
 // GET - Teslimat taleplerini ve adresleri listele
 export async function GET(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
-    }
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type'); // 'requests' | 'addresses' | 'limits'
@@ -105,10 +105,9 @@ export async function GET(request: NextRequest) {
 // POST - Yeni teslimat talebi veya adres ekle
 export async function POST(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
-    }
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
 
     const body = await request.json();
     const { action } = body;
@@ -251,10 +250,9 @@ export async function POST(request: NextRequest) {
 // DELETE - Adres sil veya talebi iptal et
 export async function DELETE(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
-    }
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
