@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireUser } from '@/lib/security/require-user';
 import { redis } from '@/lib/redis';
 import {
   createDefaultKYCData,
@@ -19,7 +20,9 @@ import {
 // GET: KYC durumunu al
 export async function GET(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
     if (!walletAddress) {
       return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
     }
@@ -63,7 +66,9 @@ export async function GET(request: NextRequest) {
 // POST: KYC başvurusu
 export async function POST(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
     if (!walletAddress) {
       return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
     }
@@ -199,7 +204,9 @@ export async function POST(request: NextRequest) {
 // PATCH: Admin tarafından onay/red
 export async function PATCH(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
     const adminKey = request.headers.get('x-admin-key');
 
     // Admin kontrolü (basit örnek)
@@ -272,7 +279,9 @@ export async function PATCH(request: NextRequest) {
 // DELETE: Reset KYC data (development only)
 export async function DELETE(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
     const adminKey = request.headers.get('x-admin-key');
 
     // Only allow in development or with admin key

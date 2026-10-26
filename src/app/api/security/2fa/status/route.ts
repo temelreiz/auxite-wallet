@@ -1,5 +1,6 @@
 // src/app/api/security/2fa/status/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from '@/lib/security/require-user';
 import { Redis } from "@upstash/redis";
 
 const redis = new Redis({
@@ -13,7 +14,9 @@ function get2FAKey(address: string): string {
 
 export async function GET(request: NextRequest) {
   try {
-    const address = request.headers.get("x-wallet-address");
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const address = auth.user.address;
 
     if (!address) {
       return NextResponse.json({ error: "Address required" }, { status: 400 });
