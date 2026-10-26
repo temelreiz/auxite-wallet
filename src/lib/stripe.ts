@@ -53,11 +53,13 @@ export function maxChargeForAddress(userAddress?: string): number {
   return MAX_CHARGE_OVERRIDES[userAddress.toLowerCase()] ?? MAX_CHARGE_USD;
 }
 
-// Card processing buffer added on top of metal spread. Covers Stripe HK
-// fees (~2-3% domestic, 3.4%+ international) + ~2% net margin for us.
-// Was 3% — left us net ~1% after Stripe fee. Bumped to 5% so the card
-// surcharge is genuinely passed to the buyer instead of eaten by Stripe.
-export const CARD_PROCESSING_BUFFER = 0.05; // 5%
+// Card processing buffer added on top of metal spread. Stripe HK charges
+// 3.4% + 0.5% for international cards + HK$2.35 per charge, so the real
+// cost is ~4.9% on a $30 order (the minimum) and ~4.2% on $100.
+// History: 3% ate into margin; 5% (2026-07) put the price ~8% above spot
+// and every card attempt was abandoned on the Stripe sheet. 4.5% (2026-10)
+// stays above cost from ~$50 up and only slightly below it at the minimum.
+export const CARD_PROCESSING_BUFFER = 0.045; // 4.5%
 
 // Presentment currency for the card charge. Metal is always priced in USD;
 // this only controls what currency the buyer's card is charged in. HKD is
