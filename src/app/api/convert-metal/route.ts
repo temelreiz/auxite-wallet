@@ -6,6 +6,7 @@ import { sendTradeExecutionEmail, sendCertificateEmail } from "@/lib/email";
 import { submitForMatching } from "@/lib/matching-engine";
 import { recordExposure, closeHedge } from "@/lib/hedge-engine";
 import { checkOrderAllowed, recordClientAllocation, recordClientDeallocation } from "@/lib/inventory-manager";
+import { createAllocation } from "@/lib/allocation-service";
 import { handleBonusConvert } from "@/lib/bonus-guard";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -370,16 +371,13 @@ export async function POST(request: NextRequest) {
       : process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io";
 
     try {
-      const allocRes = await fetch(`${baseUrl}/api/allocations`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          address: normalizedAddress,
-          metal: toMetalUpper,
-          grams: outputGrams,
-        }),
+      // Called directly: /api/allocations POST is admin-only (it would
+      // otherwise let anyone create metal balance out of nothing).
+      const allocData = await createAllocation({
+        address: normalizedAddress,
+        metal: toMetalUpper,
+        grams: outputGrams,
       });
-      const allocData = await allocRes.json();
 
       if (allocData.success) {
         allocationInfo = {

@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import { createHash } from 'crypto';
+import { requireAdmin } from '@/lib/security/require-user';
 import { createAllocation, generateUID, METAL_NAMES, anchorCertificateBackground } from '@/lib/allocation-service';
 
 export const dynamic = 'force-dynamic';
@@ -78,6 +79,12 @@ export async function GET(request: NextRequest) {
 
 // POST - Yeni allocation oluştur (bar boyutlarına göre parçala)
 export async function POST(request: NextRequest) {
+  // Admin only. Active allocations count toward the metal balance, so a
+  // caller who can create one mints metal for free; trade, exchange and
+  // convert-metal create allocations server-side after debiting payment.
+  const admin = await requireAdmin(request);
+  if (!admin.ok) return admin.response;
+
   try {
     const { address, metal, grams, preferredVault, txHash, email, holderName } = await request.json();
 
@@ -96,6 +103,10 @@ export async function POST(request: NextRequest) {
 
 // DELETE - Allocation'ı release et (satış sonrası rezerve geri döner)
 export async function DELETE(request: NextRequest) {
+  // Admin only: releasing an allocation removes metal from the balance.
+  const admin = await requireAdmin(request);
+  if (!admin.ok) return admin.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const address = searchParams.get('address');
@@ -189,6 +200,11 @@ export async function DELETE(request: NextRequest) {
 
 // PATCH - Allocation'ı başka kullanıcıya transfer et
 export async function PATCH(request: NextRequest) {
+  // Admin only: this moved allocations between any two users with no
+  // authentication, 2FA or ban check. Custodial transfers use /api/transfer.
+  const admin = await requireAdmin(request);
+  if (!admin.ok) return admin.response;
+
   try {
     const body = await request.json();
     const { fromAddress, toAddress, allocationId, grams: transferGrams } = body;

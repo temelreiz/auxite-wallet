@@ -6,6 +6,7 @@ import { sendTradeExecutionEmail, sendCertificateEmail } from "@/lib/email";
 import { submitForMatching } from "@/lib/matching-engine";
 import { recordExposure, closeHedge } from "@/lib/hedge-engine";
 import { checkOrderAllowed, recordClientAllocation, recordClientDeallocation } from "@/lib/inventory-manager";
+import { createAllocation } from "@/lib/allocation-service";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -452,16 +453,13 @@ export async function POST(request: NextRequest) {
     // If BUYING metal, create allocation
     if (METALS.includes(toKey) && toAmount > 0) {
       try {
-        const allocRes = await fetch(`${baseUrl}/api/allocations`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            address: normalizedAddress,
-            metal: toAsset.toUpperCase(),
-            grams: toAmount,
-          }),
+        // Called directly: /api/allocations POST is admin-only (it would
+        // otherwise let anyone create metal balance out of nothing).
+        const allocData = await createAllocation({
+          address: normalizedAddress,
+          metal: toAsset.toUpperCase(),
+          grams: toAmount,
         });
-        const allocData = await allocRes.json();
         console.log("📦 Allocation response:", JSON.stringify(allocData));
         
         if (allocData.success) {
