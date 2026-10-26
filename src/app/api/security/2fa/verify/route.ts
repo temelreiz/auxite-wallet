@@ -1,5 +1,6 @@
 // src/app/api/security/2fa/verify/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from '@/lib/security/require-user';
 import { Redis } from "@upstash/redis";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
@@ -51,7 +52,9 @@ function hashCode(code: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const address = request.headers.get("x-wallet-address");
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const address = auth.user.address;
     const body = await request.json();
     const { code, isBackupCode } = body;
 

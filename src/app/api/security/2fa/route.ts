@@ -2,6 +2,7 @@
 // Backward compatible main route + query param support
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from '@/lib/security/require-user';
 import { Redis } from "@upstash/redis";
 import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
@@ -39,7 +40,9 @@ function hashCode(code: string): string {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const address = searchParams.get("address") || request.headers.get("x-wallet-address");
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const address = auth.user.address;
 
     if (!address) {
       return NextResponse.json({ error: "Address required" }, { status: 400 });
@@ -100,7 +103,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { action, address, code } = body;
+    const { action, code } = body;
+    // The address is the signed-in caller's, never one named in the body.
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const address = auth.user.address;
 
     if (!address) {
       return NextResponse.json({ error: "Address required" }, { status: 400 });

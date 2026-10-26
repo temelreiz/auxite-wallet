@@ -4,12 +4,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireUser } from '@/lib/security/require-user';
 import { redis } from '@/lib/redis';
 import { createApplicant, createAccessToken, getApplicantByExternalId, getApplicantStatus, mapReviewStatusToLevel, mapReviewStatusToKYCStatus } from '@/lib/sumsub';
 
 export async function POST(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
     if (!walletAddress) {
       return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
     }

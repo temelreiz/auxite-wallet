@@ -1,6 +1,6 @@
 // scripts/lowercase-identity-keys.mjs
 //
-// alerts / notifications/subscribe used to key Redis by the raw
+// alerts / notifications/subscribe / security/limits used to key Redis by the raw
 // x-wallet-address header, so some records live under checksummed casing.
 // Those routes now take the address from the login JWT, which is lowercase —
 // copy each mixed-case record to its lowercase key so nobody loses data.
@@ -17,7 +17,7 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN,
 });
 const APPLY = process.argv.includes("--apply");
-const PATTERNS = ["alerts:0x*", "push:subscriptions:0x*", "push:preferences:0x*"];
+const PATTERNS = ["alerts:0x*", "push:subscriptions:0x*", "push:preferences:0x*", "user:limits:0x*"];
 
 const parse = (v) => (typeof v === "string" ? JSON.parse(v) : v);
 const itemKey = (x) => x?.id ?? x?.endpoint ?? x?.token ?? JSON.stringify(x);
