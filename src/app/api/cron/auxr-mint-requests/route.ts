@@ -14,6 +14,7 @@
 // Design note: docs/security/auxr-large-mint-approval.md
 
 import { NextRequest, NextResponse } from "next/server";
+import { isCronRequest } from "@/lib/security/require-user";
 import {
   listOpenRequests,
   isSettledOnChain,
@@ -25,9 +26,7 @@ import { notifyValueMovement } from "@/lib/telegram";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const cronHeader = request.headers.get("x-vercel-cron");
-  const token = request.headers.get("authorization")?.replace("Bearer ", "");
-  if (!cronHeader && token !== process.env.CRON_SECRET) {
+  if (!isCronRequest(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

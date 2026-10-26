@@ -1,18 +1,17 @@
 // Admin: Complete or Fail a settlement order
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/security/require-user';
 import { completeSettlement, failSettlement } from '@/lib/settlement-service';
 import { sendEmail } from '@/lib/email';
 
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'auxite-admin-2024';
 
 export async function POST(request: NextRequest) {
   try {
     // Auth check
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-    if (token !== ADMIN_TOKEN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // ADMIN_TOKEN was never set in production, so this compared against a
+    // default that is in this public repository. Use the admin session.
+    const admin = await requireAdmin(request);
+    if (!admin.ok) return admin.response;
 
     const { orderId, action, reason } = await request.json();
 

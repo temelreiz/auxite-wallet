@@ -1,6 +1,7 @@
 // src/app/api/oracle/route.ts
 // Oracle Price Updater API - Cron job ile çağrılır
 import { NextRequest, NextResponse } from 'next/server';
+import { isCronRequest } from '@/lib/security/require-user';
 import { updateOraclePrices, getOraclePrices } from '@/lib/oracle-updater';
 
 export const dynamic = 'force-dynamic';
@@ -57,16 +58,8 @@ export async function GET(request: NextRequest) {
 // POST - Oracle fiyatlarını güncelle (Cron job veya manual)
 export async function POST(request: NextRequest) {
   try {
-    // Vercel cron'dan gelen istek mi kontrol et
-    const isVercelCron = request.headers.get('x-vercel-cron') === '1';
-    
-    // CRON_SECRET tanımlıysa auth kontrolü yap
-    const cronSecret = process.env.CRON_SECRET;
-    if (cronSecret && !isVercelCron) {
-      const authHeader = request.headers.get('authorization');
-      if (authHeader !== `Bearer ${cronSecret}`) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+    if (!isCronRequest(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     // CRON_SECRET yoksa herkes çağırabilir (development mode)
 
