@@ -218,18 +218,11 @@ async function sendTelegramReply(chatId: number, text: string): Promise<void> {
 }
 
 async function notifyOps(html: string): Promise<void> {
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_OPS_CHAT_ID) return;
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-  await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: TELEGRAM_OPS_CHAT_ID,
-      text: html,
-      parse_mode: "HTML",
-      disable_web_page_preview: true,
-    }),
-  }).catch((e) => console.warn("[Telegram] ops notify failed:", e?.message));
+  // Every support message used to be mirrored into the ops Telegram chat and
+  // buried the real alerts. The AI answers immediately; a human follows up
+  // from the daily ops email (src/lib/ops-digest.ts) or /admin/support-chats.
+  const { queueOpsDigest } = await import("@/lib/ops-digest");
+  await queueOpsDigest(html);
 }
 
 function escapeHtml(s: string): string {

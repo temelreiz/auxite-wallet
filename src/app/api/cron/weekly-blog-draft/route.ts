@@ -18,7 +18,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchMorningNews } from "@/lib/news-pipeline/fetch";
 import { composeWeeklyBlogDraft } from "@/lib/news-pipeline/blog";
 import { writeFile } from "@/lib/blog-github";
-import { sendTelegramMessage } from "@/lib/telegram";
+import { queueOpsDigest } from "@/lib/ops-digest";
 
 export const maxDuration = 300;
 
@@ -135,8 +135,9 @@ export async function GET(request: NextRequest) {
 
   let notifyOk = false;
   try {
-    await sendTelegramMessage(notifyText);
-    notifyOk = true;
+    // A weekly TODO, not an alert: daily ops email (ops-digest.ts).
+    notifyOk = await queueOpsDigest(notifyText);
+    if (!notifyOk) throw new Error("digest queue failed");
   } catch (err: any) {
     console.warn("[blog-pipeline] telegram notify failed:", err?.message);
   }

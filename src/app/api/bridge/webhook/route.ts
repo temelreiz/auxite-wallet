@@ -127,8 +127,8 @@ export async function POST(req: NextRequest) {
 
     // Best-effort admin alert.
     try {
-      const { sendTelegramMessage } = await import("@/lib/telegram");
-      sendTelegramMessage(
+      const { queueOpsDigest } = await import("@/lib/ops-digest");
+      queueOpsDigest(
         `🏦 Bridge off-ramp settled: $${usd.toFixed(2)} USD wired to Wise` +
           (result.matched ? ` (sweep ${result.sweepId})` : " (unmatched — review)")
       ).catch(() => {});
