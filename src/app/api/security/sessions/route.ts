@@ -2,6 +2,7 @@
 // Session Management - Aktif oturumlar yönetimi
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 import { headers } from "next/headers";
 
@@ -57,6 +58,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const walletAddress = searchParams.get("address");
+    const self = requireSelf(request, walletAddress);
+    if (!self.ok) return self.response;
 
     if (!walletAddress) {
       return NextResponse.json({ error: "Address required" }, { status: 400 });
@@ -92,6 +95,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { walletAddress } = body;
+    const self = requireSelf(request, walletAddress);
+    if (!self.ok) return self.response;
 
     if (!walletAddress) {
       return NextResponse.json({ error: "walletAddress required" }, { status: 400 });
@@ -173,6 +178,8 @@ export async function DELETE(request: NextRequest) {
   try {
     const body = await request.json();
     const { walletAddress, sessionId, terminateAll } = body;
+    const self = requireSelf(request, walletAddress);
+    if (!self.ok) return self.response;
 
     if (!walletAddress) {
       return NextResponse.json({ error: "walletAddress required" }, { status: 400 });
@@ -235,6 +242,8 @@ export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
     const { walletAddress } = body;
+    const self = requireSelf(request, walletAddress);
+    if (!self.ok) return self.response;
 
     if (!walletAddress) {
       return NextResponse.json({ error: "walletAddress required" }, { status: 400 });

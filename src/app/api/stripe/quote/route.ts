@@ -26,6 +26,7 @@
 //   { breakdown: { metal, metalName, grams, amountUSD, pricePerGramUSD, ... } }
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import {
@@ -87,6 +88,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Unsupported metal: ${metal}` }, { status: 400 });
     }
     const userAddress = String(body.userAddress || "").toLowerCase();
+    const self = requireSelf(req, userAddress);
+    if (!self.ok) return self.response;
     if (!userAddress) {
       return NextResponse.json({ error: "userAddress required" }, { status: 400 });
     }

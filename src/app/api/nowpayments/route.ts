@@ -1,6 +1,7 @@
 // NOWPayments Payment Creation API
 // Kullanıcı için deposit adresi oluşturur
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 
 export const dynamic = "force-dynamic";
 
@@ -126,6 +127,8 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { coin, address, amount } = body;
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
 
     if (!coin || !address) {
       return NextResponse.json(

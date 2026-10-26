@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 
 const redis = new Redis({
@@ -10,6 +11,8 @@ const redis = new Redis({
 export async function GET(request: NextRequest) {
   try {
     const address = request.nextUrl.searchParams.get("address");
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
 
     if (!address) {
       return NextResponse.json({ error: "Address required" }, { status: 400 });

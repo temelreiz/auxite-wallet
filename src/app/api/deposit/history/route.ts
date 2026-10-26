@@ -1,5 +1,6 @@
 // app/api/deposits/history/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
     const address = searchParams.get("address");
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
     const limit = parseInt(searchParams.get("limit") || "20");
 
     if (!userId && !address) {

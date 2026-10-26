@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { redis } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +9,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const address = searchParams.get("address");
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
     const category = searchParams.get("category");
 
     if (!address) {
@@ -42,6 +45,8 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const { address, notificationId, markAllRead } = await request.json();
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
 
     if (!address) {
       return NextResponse.json({ error: "Address required" }, { status: 400 });

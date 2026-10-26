@@ -2,6 +2,7 @@
 // Transaction History API
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 import { isGenuineDeposit } from "@/lib/genuine-deposit";
 
@@ -13,6 +14,8 @@ const redis = new Redis({
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const address = searchParams.get("address");
+  const self = requireSelf(request, address);
+  if (!self.ok) return self.response;
   const limit = parseInt(searchParams.get("limit") || "20");
   const offset = parseInt(searchParams.get("offset") || "0");
   const typeFilter = searchParams.get("type"); // comma-separated types

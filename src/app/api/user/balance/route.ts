@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 import { getUserBalance, setBalance, incrementBalance, addBonusAuxm, ensureUser } from "@/lib/redis";
 import { ethers } from "ethers";
@@ -355,6 +356,8 @@ async function getHybridBalance(address: string): Promise<{
 
 export async function GET(request: NextRequest) {
   const address = new URL(request.url).searchParams.get("address");
+  const self = requireSelf(request, address);
+  if (!self.ok) return self.response;
   const source = new URL(request.url).searchParams.get("source"); // "redis", "blockchain", or "hybrid" (default)
   
   if (!address) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { createPublicClient, http, formatUnits } from "viem";
 import { base } from "viem/chains";
 import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
@@ -23,6 +24,8 @@ const ERC20_ABI = [
 
 export async function GET(request: NextRequest) {
   const address = new URL(request.url).searchParams.get("address");
+  const self = requireSelf(request, address);
+  if (!self.ok) return self.response;
   if (!address) {
     return NextResponse.json({ error: "Address required" }, { status: 400 });
   }

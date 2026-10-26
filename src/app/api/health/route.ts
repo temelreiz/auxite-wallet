@@ -61,6 +61,12 @@ async function checkMetalPrices(): Promise<CheckResult> {
     });
     const latency = Date.now() - start;
 
+    // The balance API answers only the account's own session; a 401 to this
+    // anonymous probe means the route is up and enforcing auth.
+    if (res.status === 401) {
+      return { status: "ok", latency, note: "auth enforced" };
+    }
+
     if (!res.ok) {
       return { status: "fail", latency, error: `HTTP ${res.status}` };
     }

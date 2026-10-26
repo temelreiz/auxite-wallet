@@ -3,8 +3,8 @@
 //
 // Builds the signed reserve report (reserve-attestation.ts), then commits its
 // hash + per-metal figures on-chain via ReserveAttestation.postAttestation. The
-// signing key (RESERVE_ATTESTOR_KEY) must hold ATTESTOR_ROLE on the contract —
-// it is the independent attestor's key (The Network Firm).
+// signing key (RESERVE_ATTESTOR_KEY) must hold ATTESTOR_ROLE on the contract.
+// It is currently the issuer's own key (self-attestation), not a third party's.
 //
 // Auth:  CRON_SECRET (Bearer).
 // Safety: dry-run by default. Set RESERVE_POST_EXECUTE=true to actually send.

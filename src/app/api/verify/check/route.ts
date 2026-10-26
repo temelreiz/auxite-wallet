@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { redis } from "@/lib/redis";
 
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID!;
@@ -9,6 +10,8 @@ const TWILIO_VERIFY_SID = "VA08d05fab6141b55c1be51bf41743b330";
 export async function POST(req: NextRequest) {
   try {
     const { phone, code, walletAddress } = await req.json();
+    const self = requireSelf(req, walletAddress);
+    if (!self.ok) return self.response;
 
     if (!phone || !code || !walletAddress) {
       return NextResponse.json({ error: "Phone, code, and wallet address required" }, { status: 400 });

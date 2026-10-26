@@ -5,6 +5,7 @@
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireSelf } from '@/lib/security/require-user';
 import {
   getOrCreateFormingPool,
   joinPool,
@@ -25,6 +26,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const address = searchParams.get('address');
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
     const poolId = searchParams.get('poolId');
     const status = searchParams.get('status');
     const summary = searchParams.get('summary');
@@ -84,6 +87,8 @@ export async function POST(request: NextRequest) {
     // ─────────────────────────────────────────────
     if (action === 'join') {
       const { metal, tenor, address, amountOz } = body;
+      const self = requireSelf(request, address);
+      if (!self.ok) return self.response;
 
       if (!metal || !tenor || !address || !amountOz) {
         return NextResponse.json(
@@ -116,6 +121,8 @@ export async function POST(request: NextRequest) {
     // ─────────────────────────────────────────────
     if (action === 'withdraw') {
       const { poolId, address } = body;
+      const self = requireSelf(request, address);
+      if (!self.ok) return self.response;
 
       if (!poolId || !address) {
         return NextResponse.json(
