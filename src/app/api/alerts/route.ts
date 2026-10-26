@@ -7,6 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireUser } from '@/lib/security/require-user';
 import { redis } from '@/lib/redis';
 import {
   createAlert,
@@ -18,10 +19,9 @@ import {
 // GET: Uyarıları listele
 export async function GET(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
-    }
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status'); // active, triggered, all
@@ -63,10 +63,9 @@ export async function GET(request: NextRequest) {
 // POST: Yeni uyarı oluştur
 export async function POST(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
-    }
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
 
     const body = await request.json();
     const { token, targetPrice, direction, expiresInDays, repeat } = body;
@@ -140,10 +139,9 @@ export async function POST(request: NextRequest) {
 // DELETE: Uyarı sil
 export async function DELETE(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
-    }
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
 
     const { searchParams } = new URL(request.url);
     const alertId = searchParams.get('id');
@@ -179,10 +177,9 @@ export async function DELETE(request: NextRequest) {
 // PATCH: Uyarı güncelle (iptal et veya yeniden aktifle)
 export async function PATCH(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
-    }
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
 
     const body = await request.json();
     const { alertId, action, targetPrice, repeat } = body;

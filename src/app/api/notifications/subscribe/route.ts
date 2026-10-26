@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireUser } from '@/lib/security/require-user';
 import { redis } from '@/lib/redis';
 
 // ============================================
@@ -11,10 +12,9 @@ import { redis } from '@/lib/redis';
 // ============================================
 export async function POST(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
-    }
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
 
     const body = await request.json();
     const { endpoint, keys } = body;
@@ -75,10 +75,9 @@ export async function POST(request: NextRequest) {
 // ============================================
 export async function DELETE(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
-    }
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
 
     const { searchParams } = new URL(request.url);
     const endpoint = searchParams.get('endpoint');
@@ -115,10 +114,9 @@ export async function DELETE(request: NextRequest) {
 // ============================================
 export async function GET(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
-    }
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
 
     // Subscription durumu
     const subscriptionsData = await redis.get(`push:subscriptions:${walletAddress}`);
@@ -156,10 +154,9 @@ export async function GET(request: NextRequest) {
 // ============================================
 export async function PATCH(request: NextRequest) {
   try {
-    const walletAddress = request.headers.get('x-wallet-address');
-    if (!walletAddress) {
-      return NextResponse.json({ error: 'Wallet adresi gerekli' }, { status: 401 });
-    }
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const walletAddress = auth.user.address;
 
     const body = await request.json();
     

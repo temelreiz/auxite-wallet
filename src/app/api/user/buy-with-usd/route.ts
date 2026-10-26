@@ -6,6 +6,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { buyWithUsd, getUserBalance } from "@/lib/redis";
 import { notifyTrade } from "@/lib/telegram";
 import { getTokenPrices } from "@/lib/v6-token-service";
+import { requireUser } from "@/lib/security/require-user";
+import { assertAccountActive } from "@/lib/security/account-guard";
+import { acquireBalanceLock, releaseBalanceLock, type BalanceLock } from "@/lib/balance-lock";
 
 // Metal listesi
 const METALS = ["auxg", "auxs", "auxpt", "auxpd"];
@@ -20,24 +23,13 @@ const TOKEN_PRICES: Record<string, number> = {
 };
 
 export async function POST(request: NextRequest) {
+  // Identity comes from the login JWT, never from a header the caller types.
+  const auth = requireUser(request);
+  if (!auth.ok) return auth.response;
+  const normalizedAddress = auth.user.address;
+
+  let balanceLock: BalanceLock | null = null;
   try {
-    const address = request.headers.get("x-wallet-address");
-
-    if (!address) {
-      return NextResponse.json(
-        { success: false, error: "Wallet address required" },
-        { status: 401 }
-      );
-    }
-
-    if (!/^0x[a-fA-F0-9]{40}$/i.test(address)) {
-      return NextResponse.json(
-        { success: false, error: "Invalid wallet address format" },
-        { status: 400 }
-      );
-    }
-
-    const normalizedAddress = address.toLowerCase();
     const body = await request.json();
     const { targetToken, usdAmount, expectedTokenAmount } = body;
 
@@ -66,6 +58,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: "Maximum purchase amount is $100,000" },
         { status: 400 }
+      );
+    }
+
+    const gate = await assertAccountActive(normalizedAddress);
+    if (!gate.ok) {
+      return NextResponse.json({ success: false, error: gate.error, code: gate.code }, { status: 403 });
+    }
+
+    // Serialise this user's balance mutations: buyWithUsd reads the balance,
+    // checks it, then debits — concurrent requests would all pass the check.
+    balanceLock = await acquireBalanceLock(normalizedAddress, "buy-with-usd");
+    if (!balanceLock) {
+      return NextResponse.json(
+        { success: false, error: "Another operation is in progress. Please retry in a few seconds." },
+        { status: 409 }
       );
     }
 
@@ -184,16 +191,18 @@ export async function POST(request: NextRequest) {
       { success: false, error: "Purchase failed" },
       { status: 500 }
     );
+  } finally {
+    await releaseBalanceLock(balanceLock);
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const address = request.headers.get("x-wallet-address");
-
+    // Prices are public; the balance is shown only to its signed-in owner.
+    const auth = requireUser(request);
     let userUsd = 0;
-    if (address && /^0x[a-fA-F0-9]{40}$/i.test(address)) {
-      const balance = await getUserBalance(address.toLowerCase());
+    if (auth.ok) {
+      const balance = await getUserBalance(auth.user.address);
       userUsd = balance.usd;
     }
 
