@@ -3,6 +3,7 @@
 // All calculations done here, frontends just display
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 import { getUserBalance } from "@/lib/redis";
 import { ethers } from "ethers";
@@ -288,6 +289,8 @@ async function getAllocations(address: string): Promise<any[]> {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const address = searchParams.get("address");
+  const self = requireSelf(request, address);
+  if (!self.ok) return self.response;
 
   if (!address) {
     return NextResponse.json({ success: false, error: "Address required" }, { status: 400 });

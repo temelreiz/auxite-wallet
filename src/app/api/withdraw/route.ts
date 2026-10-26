@@ -249,7 +249,10 @@ export async function POST(request: NextRequest) {
         : process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io";
       let auxmBalance = 0;
       try {
-        const balanceRes = await fetch(`${baseUrl}/api/user/balance?address=${normalizedAddr}`);
+        const balanceRes = await fetch(`${baseUrl}/api/user/balance?address=${normalizedAddr}`, {
+        // user/balance only answers the account's own session.
+        headers: { authorization: request.headers.get("authorization") || "" },
+      });
         const balanceData = await balanceRes.json();
         if (balanceData.success && balanceData.balances) {
           auxmBalance = parseFloat(balanceData.balances.auxm || "0");
@@ -504,7 +507,10 @@ export async function POST(request: NextRequest) {
       : process.env.NEXT_PUBLIC_APP_URL || "https://vault.auxite.io";
 
     try {
-      const balanceRes = await fetch(`${baseUrl}/api/user/balance?address=${normalizedAddress}`);
+      const balanceRes = await fetch(`${baseUrl}/api/user/balance?address=${normalizedAddress}`, {
+        // user/balance only answers the account's own session.
+        headers: { authorization: request.headers.get("authorization") || "" },
+      });
       const balanceData = await balanceRes.json();
       if (balanceData.success && balanceData.balances) {
         cryptoBalance = parseFloat(balanceData.balances[balanceFieldKey] || "0");

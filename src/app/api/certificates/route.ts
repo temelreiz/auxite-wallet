@@ -1,6 +1,7 @@
 // app/api/certificates/route.ts
 // Digital Certificate Generation & Management
 import { NextRequest, NextResponse } from 'next/server';
+import { requireSelf } from '@/lib/security/require-user';
 import { redis } from '@/lib/redis';
 
 export const dynamic = 'force-dynamic';
@@ -17,6 +18,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const address = searchParams.get('address');
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
     const certId = searchParams.get('id');
 
     if (certId) {

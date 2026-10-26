@@ -2,6 +2,7 @@
 // Withdrawal Whitelist - Güvenli çekim adresleri yönetimi
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 import { sendSecurityAlertEmail } from "@/lib/email";
 import { getUserLanguage } from "@/lib/user-language";
@@ -23,6 +24,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const walletAddress = searchParams.get("address");
+    const self = requireSelf(request, walletAddress);
+    if (!self.ok) return self.response;
 
     if (!walletAddress) {
       return NextResponse.json({ error: "Address required" }, { status: 400 });
@@ -46,6 +49,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { walletAddress, withdrawAddress, label, network } = body;
+    const self = requireSelf(request, walletAddress);
+    if (!self.ok) return self.response;
 
     if (!walletAddress || !withdrawAddress || !network) {
       return NextResponse.json(
@@ -136,6 +141,8 @@ export async function DELETE(request: NextRequest) {
   try {
     const body = await request.json();
     const { walletAddress, addressId } = body;
+    const self = requireSelf(request, walletAddress);
+    if (!self.ok) return self.response;
 
     if (!walletAddress || !addressId) {
       return NextResponse.json(
@@ -182,6 +189,8 @@ export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
     const { walletAddress, addressId, label, verify } = body;
+    const self = requireSelf(request, walletAddress);
+    if (!self.ok) return self.response;
 
     if (!walletAddress || !addressId) {
       return NextResponse.json(

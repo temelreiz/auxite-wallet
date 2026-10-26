@@ -2,6 +2,7 @@
 // Transaction Export - CSV export
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 
 const redis = Redis.fromEnv();
@@ -25,6 +26,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const walletAddress = searchParams.get("address");
+    const self = requireSelf(request, walletAddress);
+    if (!self.ok) return self.response;
     const format = searchParams.get("format") || "csv";
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
@@ -157,6 +160,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { walletAddress, startDate, endDate, types, format = "csv", lang = "en" } = body;
+    const self = requireSelf(request, walletAddress);
+    if (!self.ok) return self.response;
 
     if (!walletAddress) {
       return NextResponse.json({ error: "walletAddress required" }, { status: 400 });

@@ -13,6 +13,7 @@
 // wise webhook handler with `subType: "bank_wire"`.
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,8 @@ function buildReference(address: string): string {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const address = (searchParams.get("address") || "").toLowerCase();
+  const self = requireSelf(req, address);
+  if (!self.ok) return self.response;
   const limit = Math.min(parseInt(searchParams.get("limit") || "5"), 20);
 
   if (!address || !address.startsWith("0x")) {

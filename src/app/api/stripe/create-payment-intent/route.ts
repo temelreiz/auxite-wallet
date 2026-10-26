@@ -16,6 +16,7 @@
 // payment_intent.succeeded to credit the user's metal balance.
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { blockUSPersonForFeature } from "@/lib/security/us-geofence";
@@ -97,6 +98,8 @@ export async function POST(req: NextRequest) {
     const metal = String(body.metal || "").toUpperCase() as SupportedMetal;
     const mode = String(body.mode || "byGrams") as "byGrams" | "byUsd";
     const userAddress = String(body.userAddress || "").trim().toLowerCase();
+    const self = requireSelf(req, userAddress);
+    if (!self.ok) return self.response;
     const chargeCurrency: ChargeCurrency =
       String(body.currency || "usd").toLowerCase() === "hkd" ? "hkd" : "usd";
 

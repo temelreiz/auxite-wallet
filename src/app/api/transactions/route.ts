@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 import { isGenuineDeposit } from "@/lib/genuine-deposit";
 
@@ -28,6 +29,8 @@ interface Transaction {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const address = searchParams.get("address");
+  const self = requireSelf(request, address);
+  if (!self.ok) return self.response;
   const type = searchParams.get("type");
   const coin = searchParams.get("coin");
   const status = searchParams.get("status");

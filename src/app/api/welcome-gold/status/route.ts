@@ -4,11 +4,14 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { redis } from "@/lib/redis";
 
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
   const walletAddress = req.nextUrl.searchParams.get("address");
+  const self = requireSelf(req, walletAddress);
+  if (!self.ok) return self.response;
 
   let resolvedUserId = userId;
   if (!resolvedUserId && walletAddress) {

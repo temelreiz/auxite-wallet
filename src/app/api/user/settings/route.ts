@@ -2,6 +2,7 @@
 // Kullanıcı ayarları — deposit auto-convert tercihi vs.
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { getRedis } from "@/lib/redis";
 import { getPhoneTiering } from "@/lib/phone-tiering";
 
@@ -15,6 +16,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const address = searchParams.get("address");
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
 
     if (!address) {
       return NextResponse.json({ error: "Missing address" }, { status: 400 });
@@ -68,6 +71,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { address, autoConvertToAuxm, whitelistedAddresses } = body;
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
 
     if (!address) {
       return NextResponse.json({ error: "Missing address" }, { status: 400 });

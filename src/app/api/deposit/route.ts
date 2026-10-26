@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { isHdConfigured, getUserDepositAddresses, armWatch } from "@/lib/hd-deposit";
 import { getOrCreateTronDepositAddress } from "@/lib/tron-deposit";
 import { isKmsConfigured, getOrCreateEvmDepositAddress } from "@/lib/deposit-address";
@@ -25,6 +26,8 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const coin = searchParams.get("coin");
   const userAddress = searchParams.get("address");
+  const self = requireSelf(request, userAddress);
+  if (!self.ok) return self.response;
 
   // Shared hot-wallet fallback (used when no user address or HD not configured).
   const sharedBtc = process.env.HOT_WALLET_BTC_ADDRESS || "bc1qcvdqwjtsmnl92ldhapmyuvfnlj5gfquvj0w3ke";

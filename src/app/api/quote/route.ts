@@ -1,5 +1,6 @@
 // Quote API - Get locked prices for trades
 import { NextRequest, NextResponse } from 'next/server';
+import { requireSelf } from '@/lib/security/require-user';
 import { createQuote, getQuote, getQuoteTimeRemaining } from '@/lib/quote-service';
 
 // GET - Get existing quote
@@ -28,6 +29,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { type, metal, grams, address } = body;
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
 
     if (!type || !metal || !grams || !address) {
       return NextResponse.json({ 

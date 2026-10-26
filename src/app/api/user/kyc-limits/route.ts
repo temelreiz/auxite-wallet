@@ -5,6 +5,7 @@
 // supplying the wallet address (limits are not sensitive info).
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { checkKycLimit, NO_KYC_LIMIT_USD, NO_KYC_CUMULATIVE_30D_USD } from "@/lib/kyc-limits";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +13,8 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const address = (req.nextUrl.searchParams.get("address") || "").trim().toLowerCase();
+  const self = requireSelf(req, address);
+  if (!self.ok) return self.response;
   if (!address || !address.startsWith("0x") || address.length !== 42) {
     return NextResponse.json({ error: "Invalid address" }, { status: 400 });
   }

@@ -1,5 +1,6 @@
 // Coinbase Commerce API - Create Charge
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 
 const redis = new Redis({
@@ -28,6 +29,8 @@ export async function POST(request: NextRequest) {
 
     const body: CreateChargeRequest = await request.json();
     const { address, amount, coin } = body;
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
 
     if (!address || !amount || amount <= 0) {
       return NextResponse.json(
@@ -126,6 +129,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const chargeId = searchParams.get("chargeId");
     const userAddress = searchParams.get("address");
+    const self = requireSelf(request, userAddress);
+    if (!self.ok) return self.response;
 
     if (chargeId) {
       // Get specific charge status
