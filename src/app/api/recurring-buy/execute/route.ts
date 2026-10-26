@@ -1,19 +1,24 @@
 /**
  * Recurring Buy (DCA) Execution API
+ *
+ * Called hourly by /api/cron/execute-all. Runs each active plan whose day and
+ * hour (UTC) match, buying through the user's own routes — see
+ * src/lib/recurring-exec.ts.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
 import { formatAmount } from '@/lib/format';
 import { checkTradingAllowed } from '@/lib/trading-guard';
+import { isCronRequest } from '@/lib/security/require-user';
+import { getBalances, buyMetal, stakeMetal, notify } from '@/lib/recurring-exec';
 
 export async function POST(request: NextRequest) {
-  try {
-    const apiKey = request.headers.get('x-api-key');
-    if (apiKey !== process.env.INTERNAL_API_KEY) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!isCronRequest(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
+  try {
     // Kill Switch / Trading Guard — maintenance'de DCA'lar atlanır
     const tradingCheck = await checkTradingAllowed('metalTrading');
     if (!tradingCheck.allowed) {
@@ -24,12 +29,10 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date();
-    const currentHour = now.getHours();
     const results: any[] = [];
 
-    // Aktif wallet listesini al
     const activeWalletsData = await redis.get('dca:active-wallets');
-    const activeWallets: string[] = activeWalletsData 
+    const activeWallets: string[] = activeWalletsData
       ? (typeof activeWalletsData === 'string' ? JSON.parse(activeWalletsData) : activeWalletsData)
       : [];
 
@@ -42,53 +45,49 @@ export async function POST(request: NextRequest) {
 
       for (const plan of plans) {
         if (plan.status !== 'active') continue;
-        if (plan.hour !== currentHour) continue;
-        if (!checkShouldExecute(plan, now)) continue;
-
-        const balanceKey = plan.paymentSource.replace('_balance', '');
-        const balances = await redis.hgetall('balances:' + walletAddress);
-        const sourceBalance = parseFloat((balances as Record<string, string>)?.[balanceKey] || '0');
-
-        if (sourceBalance < plan.amount) {
-          await sendNotification(walletAddress, {
-            title: 'Duzenli Yatirim Basarisiz',
-            body: plan.token + ' alimi icin yeterli bakiye yok.',
-            type: 'dca_failed'
-          });
-          results.push({ planId: plan.id, status: 'skipped', reason: 'insufficient_balance' });
-          continue;
-        }
+        if (!isDue(plan, now)) continue;
 
         try {
-          const tradeResult = await executeTrade(walletAddress, plan);
+          const sourceKey = plan.paymentSource.replace('_balance', '');
+          const balances = await getBalances(walletAddress);
 
-          if (tradeResult.success) {
-            plan.stats.executionCount++;
-            plan.stats.totalSpent += plan.amount;
-            plan.stats.totalPurchased += tradeResult.toAmount;
-            plan.stats.averagePrice = plan.stats.totalSpent / plan.stats.totalPurchased;
-            plan.stats.nextExecutionAt = calculateNextExecution(plan);
+          if ((balances[sourceKey] || 0) < plan.amount) {
+            await notify(walletAddress, 'Recurring buy skipped', `Not enough ${sourceKey.toUpperCase()} for your ${plan.token} plan.`);
+            results.push({ planId: plan.id, status: 'skipped', reason: 'insufficient_balance' });
+            // Count the slot as handled so it is not retried every hour today.
+            plan.stats.lastAttemptAt = now.toISOString();
+            plan.stats.nextExecutionAt = calculateNextExecution(plan, now);
             updated = true;
-
-            if (plan.autoStake && plan.stakeDuration) {
-              await executeStake(walletAddress, plan.token, tradeResult.toAmount, plan.stakeDuration);
-              await sendNotification(walletAddress, {
-                title: 'Duzenli Yatirim + Biriktirme',
-                body: formatAmount(tradeResult.toAmount, plan.token) + 'g ' + plan.token + ' alindi ve stake edildi.',
-                type: 'dca_stake_success'
-              });
-            } else {
-              await sendNotification(walletAddress, {
-                title: 'Duzenli Yatirim Basarili',
-                body: formatAmount(tradeResult.toAmount, plan.token) + 'g ' + plan.token + ' alindi.',
-                type: 'dca_success'
-              });
-            }
-
-            results.push({ planId: plan.id, status: 'executed', toAmount: tradeResult.toAmount });
-          } else {
-            results.push({ planId: plan.id, status: 'failed', error: tradeResult.error });
+            continue;
           }
+
+          const buy = await buyMetal(walletAddress, plan.paymentSource, plan.token, plan.amount);
+          plan.stats.lastAttemptAt = now.toISOString();
+          updated = true;
+
+          if (!buy.ok) {
+            results.push({ planId: plan.id, status: 'failed', error: buy.error });
+            continue;
+          }
+
+          plan.stats.executionCount++;
+          plan.stats.totalSpent += plan.amount;
+          plan.stats.totalPurchased += buy.grams;
+          plan.stats.averagePrice = plan.stats.totalPurchased > 0 ? plan.stats.totalSpent / plan.stats.totalPurchased : 0;
+          plan.stats.nextExecutionAt = calculateNextExecution(plan, now);
+
+          if (plan.autoStake && plan.stakeDuration) {
+            const stake = await stakeMetal(walletAddress, plan.token, buy.grams, plan.stakeDuration);
+            await notify(
+              walletAddress,
+              'Recurring buy completed',
+              formatAmount(buy.grams, plan.token) + 'g ' + plan.token + (stake.ok ? ' bought and staked.' : ' bought (staking failed).'),
+            );
+          } else {
+            await notify(walletAddress, 'Recurring buy completed', formatAmount(buy.grams, plan.token) + 'g ' + plan.token + ' bought.');
+          }
+
+          results.push({ planId: plan.id, status: 'executed', grams: buy.grams });
         } catch (err: any) {
           results.push({ planId: plan.id, status: 'error', error: err.message });
         }
@@ -109,85 +108,40 @@ export async function POST(request: NextRequest) {
         failed: results.filter(r => r.status === 'failed' || r.status === 'error').length,
       }
     });
-
   } catch (error: any) {
     console.error('DCA execution error:', error);
     return NextResponse.json({ error: error.message || 'Execution failed' }, { status: 500 });
   }
 }
 
-function checkShouldExecute(plan: any, now: Date): boolean {
-  const dayOfWeek = now.getDay();
-  const dayOfMonth = now.getDate();
+/** Due when today matches the plan's schedule, the hour has come (UTC), and today's slot has not run. */
+function isDue(plan: any, now: Date): boolean {
+  if (now.getUTCHours() < (plan.hour ?? 9)) return false;
+  const last = plan.stats?.lastAttemptAt ? new Date(plan.stats.lastAttemptAt) : null;
+  if (last && last.toISOString().slice(0, 10) === now.toISOString().slice(0, 10)) return false;
 
+  const dayOfWeek = now.getUTCDay();
+  const dayOfMonth = now.getUTCDate();
   switch (plan.frequency) {
     case 'daily': return true;
     case 'weekly': return dayOfWeek === (plan.dayOfWeek ?? 1);
-    case 'biweekly':
+    case 'biweekly': {
       const weekOfMonth = Math.ceil(dayOfMonth / 7);
       return dayOfWeek === (plan.dayOfWeek ?? 1) && (weekOfMonth === 1 || weekOfMonth === 3);
+    }
     case 'monthly': return dayOfMonth === (plan.dayOfMonth ?? 1);
     default: return false;
   }
 }
 
-function calculateNextExecution(plan: any): string {
-  const next = new Date();
-  next.setHours(plan.hour, 0, 0, 0);
-
+function calculateNextExecution(plan: any, now: Date): string {
+  const next = new Date(now);
+  next.setUTCHours(plan.hour ?? 9, 0, 0, 0);
   switch (plan.frequency) {
-    case 'daily': next.setDate(next.getDate() + 1); break;
-    case 'weekly': next.setDate(next.getDate() + 7); break;
-    case 'biweekly': next.setDate(next.getDate() + 14); break;
-    case 'monthly': next.setMonth(next.getMonth() + 1); break;
+    case 'daily': next.setUTCDate(next.getUTCDate() + 1); break;
+    case 'weekly': next.setUTCDate(next.getUTCDate() + 7); break;
+    case 'biweekly': next.setUTCDate(next.getUTCDate() + 14); break;
+    case 'monthly': next.setUTCMonth(next.getUTCMonth() + 1); break;
   }
-
   return next.toISOString();
-}
-
-async function executeTrade(walletAddress: string, plan: any) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  
-  const response = await fetch(baseUrl + '/api/trade', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-wallet-address': walletAddress },
-    body: JSON.stringify({
-      address: walletAddress,
-      type: 'buy',
-      fromToken: plan.paymentSource.replace('_balance', '').toUpperCase(),
-      toToken: plan.token,
-      fromAmount: plan.amount,
-      executeOnChain: false,
-    }),
-  });
-
-  const data = await response.json();
-  return { success: response.ok, toAmount: data.toAmount || 0, error: data.error };
-}
-
-async function executeStake(walletAddress: string, token: string, amount: number, duration: number) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  
-  await fetch(baseUrl + '/api/staking', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.INTERNAL_API_KEY || '',
-    },
-    body: JSON.stringify({ action: 'stake', token, amount, duration, address: walletAddress }),
-  });
-}
-
-async function sendNotification(walletAddress: string, notification: { title: string; body: string; type: string }) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  
-  try {
-    await fetch(baseUrl + '/api/notifications/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.INTERNAL_API_KEY || '' },
-      body: JSON.stringify({ walletAddress, ...notification }),
-    });
-  } catch (err) {
-    console.error('Failed to send notification:', err);
-  }
 }

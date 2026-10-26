@@ -559,39 +559,6 @@ export function RecurringStakeManager({
                 <div className="text-slate-800 dark:text-white font-medium">USDT</div>
                 <div className="text-xs text-slate-500 dark:text-slate-500">${usdtBalance.toFixed(2)}</div>
               </button>
-              <button
-                onClick={() => setPaymentSource("eth_balance")}
-                className={`p-3 rounded-xl border transition-colors ${
-                  paymentSource === "eth_balance"
-                    ? "border-[#2F6F62] bg-[#2F6F62]/10"
-                    : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
-                }`}
-              >
-                <div className="text-slate-800 dark:text-white font-medium">ETH</div>
-                <div className="text-xs text-slate-500 dark:text-slate-500">{ethBalance.toFixed(4)}</div>
-              </button>
-              <button
-                onClick={() => setPaymentSource("btc_balance")}
-                className={`p-3 rounded-xl border transition-colors ${
-                  paymentSource === "btc_balance"
-                    ? "border-[#2F6F62] bg-[#2F6F62]/10"
-                    : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
-                }`}
-              >
-                <div className="text-slate-800 dark:text-white font-medium">BTC</div>
-                <div className="text-xs text-slate-500 dark:text-slate-500">{btcBalance.toFixed(6)}</div>
-              </button>
-              <button
-                onClick={() => setPaymentSource("xrp_balance")}
-                className={`p-3 rounded-xl border transition-colors ${
-                  paymentSource === "xrp_balance"
-                    ? "border-[#2F6F62] bg-[#2F6F62]/10"
-                    : "border-stone-300 dark:border-slate-700 hover:border-stone-400 dark:hover:border-slate-600"
-                }`}
-              >
-                <div className="text-slate-800 dark:text-white font-medium">XRP</div>
-                <div className="text-xs text-slate-500 dark:text-slate-500">{xrpBalance.toFixed(2)}</div>
-              </button>
             </div>
           </div>
 

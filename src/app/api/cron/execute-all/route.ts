@@ -5,19 +5,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { isCronRequest } from '@/lib/security/require-user';
 
 export async function GET(request: NextRequest) {
-  // Vercel cron secret kontrolü
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    // Development'ta veya INTERNAL_API_KEY ile de çalışsın
-    const apiKey = request.headers.get('x-api-key');
-    if (apiKey !== process.env.INTERNAL_API_KEY && process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!isCronRequest(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  // NEXT_PUBLIC_BASE_URL is not set in production; it fell back to localhost.
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vault.auxite.io';
   const results: any = {
     timestamp: new Date().toISOString(),
     dca: null,
@@ -30,7 +26,7 @@ export async function GET(request: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.INTERNAL_API_KEY || '',
+        Authorization: `Bearer ${process.env.CRON_SECRET}`,
       },
     });
     results.dca = await dcaResponse.json();
@@ -44,7 +40,7 @@ export async function GET(request: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.INTERNAL_API_KEY || '',
+        Authorization: `Bearer ${process.env.CRON_SECRET}`,
       },
     });
     results.recurringStake = await stakeResponse.json();

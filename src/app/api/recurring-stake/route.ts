@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/security/require-user';
+import { RECURRING_SOURCES } from '@/lib/recurring-exec';
 import { redis } from '@/lib/redis';
 import crypto from 'crypto';
 
@@ -109,6 +110,12 @@ export async function POST(request: NextRequest) {
 
     if (amount <= 0) {
       return NextResponse.json({ error: 'Miktar pozitif olmalı' }, { status: 400 });
+    }
+
+    // The executor can only pay from these; crypto sources had no defined
+    // amount semantics and never ran.
+    if (!(['metal_balance', ...RECURRING_SOURCES] as readonly string[]).includes(paymentSource)) {
+      return NextResponse.json({ error: 'Unsupported payment source' }, { status: 400 });
     }
 
     const validTokens = ['AUXG', 'AUXS', 'AUXPT', 'AUXPD'];
