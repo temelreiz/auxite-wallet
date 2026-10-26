@@ -10,18 +10,13 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { isCronRequest } from "@/lib/security/require-user";
 import { generateHedgeSignals } from "@/lib/abaxx-hedge-signals";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  // Vercel-cron header is set automatically when cron fires.
-  // For manual debug invocation we accept Bearer CRON_SECRET.
-  const cronHeader = req.headers.get("x-vercel-cron");
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
-
-  if (!cronHeader && token !== process.env.CRON_SECRET) {
+  if (!isCronRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

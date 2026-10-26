@@ -122,3 +122,15 @@ export function requireUserOrInternal(
   if (!user.ok) return user;
   return { ok: true, user: { ...user.user, internal: false } };
 }
+
+/**
+ * True for a scheduled job: Vercel Cron sends `Authorization: Bearer
+ * CRON_SECRET` on every invocation when CRON_SECRET is set. The
+ * `x-vercel-cron` header is NOT proof — any client can send it — so it is
+ * deliberately not accepted here. An unset secret denies everything.
+ */
+export function isCronRequest(request: NextRequest): boolean {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return false;
+  return request.headers.get("authorization") === `Bearer ${secret}`;
+}

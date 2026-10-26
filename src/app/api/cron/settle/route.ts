@@ -5,6 +5,7 @@
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { isCronRequest } from '@/lib/security/require-user';
 import { Redis } from '@upstash/redis';
 import { completeSettlement, getSettlementOrder } from '@/lib/settlement-service';
 import { sendEmail } from '@/lib/email';
@@ -20,12 +21,7 @@ const T1_MS = 24 * 60 * 60 * 1000; // 24 hours
 export async function POST(request: NextRequest) {
   try {
     // Auth: Vercel cron header or bearer token
-    const cronHeader = request.headers.get('x-vercel-cron');
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (!cronHeader && token !== cronSecret && token !== (process.env.ADMIN_TOKEN || 'auxite-admin-2024')) {
+    if (!isCronRequest(request)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

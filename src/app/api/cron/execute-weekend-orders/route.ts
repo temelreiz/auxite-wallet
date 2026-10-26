@@ -4,6 +4,7 @@
 // Finds all pending weekend orders, executes at real price, adjusts balances
 
 import { NextRequest, NextResponse } from "next/server";
+import { isCronRequest } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 import { isMarketOpen } from "@/lib/market-hours";
 import { getUserBalance, incrementBalance, addTransaction } from "@/lib/redis";
@@ -172,16 +173,7 @@ async function executeOrder(order: WeekendOrder): Promise<{
 
 export async function GET(request: NextRequest) {
   // Auth check
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  const isAuthorized =
-    authHeader === `Bearer ${cronSecret}` ||
-    request.headers.get("x-api-key") === process.env.INTERNAL_API_KEY ||
-    request.headers.get("x-vercel-cron") !== null ||
-    process.env.NODE_ENV === "development";
-
-  if (!isAuthorized && cronSecret) {
+  if (!isCronRequest(request) && process.env.NODE_ENV !== "development") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
