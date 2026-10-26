@@ -14,6 +14,7 @@ import * as OTPAuth from "otpauth";
 import * as crypto from "crypto";
 import { acquireBalanceLock, releaseBalanceLock, type BalanceLock } from "@/lib/balance-lock";
 import { assertAccountActive } from "@/lib/security/account-guard";
+import { requireUser } from "@/lib/security/require-user";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -148,9 +149,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Identity comes from the login JWT. The body's address was trusted
+    // before, which let anyone withdraw from any account without 2FA.
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const address = auth.user.address;
+
     const body = await request.json();
     // Support both web (address, coin, withdrawAddress) and mobile (fromAddress, token, toAddress) field names
-    const address = body.address || body.fromAddress;
+    const claimed = String(body.address || body.fromAddress || "").toLowerCase();
+    if (claimed && claimed !== address) {
+      console.warn(`🚫 Withdraw address mismatch: token=${address} body=${claimed}`);
+      return NextResponse.json({ error: "Address does not match session" }, { status: 403 });
+    }
     const coin = (body.coin || body.token || "").toUpperCase();
     const amount = body.amount;
     const withdrawAddress = body.withdrawAddress || body.toAddress;
