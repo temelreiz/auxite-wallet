@@ -10,6 +10,7 @@
 
 import { fireConversion } from "@/lib/google-ads-conversion";
 import { logEvent } from "@/lib/analytics";
+import { isGenuineDeposit } from "@/lib/genuine-deposit";
 
 const SEEN_KEY = (address: string) => `auxite_seen_deposits:${address.toLowerCase()}`;
 const MIN_INTERVAL_MS = 60_000;
@@ -70,6 +71,9 @@ export async function trackNewDeposits(address: string | null | undefined): Prom
       const key = depositKey(tx);
       if (!key || seen.has(key)) continue;
       seen.add(key);
+      // Fabricated (debug_add_balance) and internal admin rows must never
+      // reach Google Ads as a deposit conversion.
+      if (!isGenuineDeposit(tx)) continue;
       const usd = depositUsd(tx);
       if (firstRun || usd <= 0) continue;
       const value = Math.round(usd * 100) / 100;

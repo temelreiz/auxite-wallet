@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { isGenuineDeposit } from "@/lib/genuine-deposit";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
     const summary = {
       totalTransactions: total,
       byType: {
-        deposits: transactions.filter(t => t.type === "deposit").length,
+        deposits: transactions.filter(t => isGenuineDeposit(t)).length,
         withdrawals: transactions.filter(t => t.type === "withdraw").length,
         trades: transactions.filter(t => t.type.startsWith("trade_")).length,
         transfers: transactions.filter(t => t.type.startsWith("transfer_")).length,
