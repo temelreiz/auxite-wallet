@@ -3,6 +3,7 @@
 // a clearing pass. Off-chain ledger venue — gated by NAV_CLEARING_ENABLED.
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { NAV_CLEARING_ENABLED, placeOrder } from "@/lib/nav-clearing";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,8 @@ export async function POST(request: NextRequest) {
   }
   try {
     const { address, side, metal, amount } = await request.json();
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
     if (!address || (side !== "buy" && side !== "sell") || !metal || !(Number(amount) > 0)) {
       return NextResponse.json({ error: "address, side (buy|sell), metal, amount required" }, { status: 400 });
     }

@@ -10,6 +10,7 @@ export const maxDuration = 60;
 // ✅ AUXITEER TIER BAZLI FEE ENTEGRASYONU
 // ✅ TELEGRAM BOT BİLDİRİMLERİ
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { executeQuote } from "@/lib/quote-service";
 import { Redis } from "@upstash/redis";
 import { z } from "zod";
@@ -853,6 +854,9 @@ export async function POST(request: NextRequest) {
       ethTransferTxHash,
       optimistic,
     } = validation.data;
+
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
 
     const normalizedAddress = address.toLowerCase();
     const fromTokenLower = fromToken.toLowerCase();

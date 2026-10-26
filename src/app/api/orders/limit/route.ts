@@ -2,6 +2,7 @@
 // Limit Order API - Create, List, Cancel orders
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireSelf } from '@/lib/security/require-user';
 import { 
   createLimitOrder, 
   getUserLimitOrders, 
@@ -69,6 +70,9 @@ export async function POST(request: NextRequest) {
       paymentMethod = 'AUXM',
       expiresInDays = 7 
     } = body;
+
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
     
     // Validation
     if (!address) {
@@ -129,6 +133,8 @@ export async function DELETE(request: NextRequest) {
   try {
     const body = await request.json();
     const { orderId, address } = body;
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
     
     if (!orderId) {
       return NextResponse.json({ error: 'Order ID required' }, { status: 400 });

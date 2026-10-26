@@ -9,6 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/security/require-user";
 import { redis } from "@/lib/redis";
 import {
   grantBonus,
@@ -18,6 +19,12 @@ import {
 } from "@/lib/metal-bonus-service";
 
 export async function POST(req: NextRequest) {
+  // Admin only. No client calls this; the welcome bonus is granted on first
+  // deposit. Open, it let anyone grant the bonus to any user id or email
+  // without a deposit.
+  const admin = await requireAdmin(req);
+  if (!admin.ok) return admin.response;
+
   try {
     const body = await req.json();
     const { userId, walletAddress, deviceId, email } = body;

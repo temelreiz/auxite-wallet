@@ -134,3 +134,23 @@ export function isCronRequest(request: NextRequest): boolean {
   if (!secret) return false;
   return request.headers.get("authorization") === `Bearer ${secret}`;
 }
+
+/**
+ * For routes whose request still names the account it acts on (body
+ * `address`, `walletAddress`, …): the caller must be signed in, and a named
+ * address must be their own. Returns the session address, which callers
+ * should use from here on.
+ */
+export function requireSelf(
+  request: NextRequest,
+  claimed?: unknown,
+): AuthResult<AuthedUser> {
+  const auth = requireUser(request);
+  if (!auth.ok) return auth;
+  const named = typeof claimed === "string" ? claimed.trim().toLowerCase() : "";
+  if (named && named !== auth.user.address) {
+    console.warn(`requireSelf: session ${auth.user.address} named ${named}`);
+    return deny(403, "Address does not match session");
+  }
+  return auth;
+}

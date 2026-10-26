@@ -10,6 +10,7 @@
 // Stablecoin payout is executed by a separate, explicitly authorized treasury
 // settlement step against the recorded order.
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { randomUUID } from "crypto";
 import { Redis } from "@upstash/redis";
 import { ethers } from "ethers";
@@ -142,6 +143,8 @@ export async function POST(request: NextRequest) {
   }
 
   const address = String(body.address || "");
+  const self = requireSelf(request, address);
+  if (!self.ok) return self.response;
   const metalRaw = String(body.metal || "").toUpperCase();
   const amount = parseFloat(String(body.amount || "0"));
   const stablecoin = parseStablecoin(body.stablecoin || null);

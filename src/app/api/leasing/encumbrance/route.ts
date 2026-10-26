@@ -5,6 +5,7 @@
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/security/require-user';
 import {
   getUserEncumbrance,
   getUserLeases,
@@ -81,6 +82,11 @@ export async function GET(request: NextRequest) {
 
 // POST — Admin encumbrance operations
 export async function POST(request: NextRequest) {
+  // Admin only: this sets and reads per-user encumbrance (staking/lease
+  // locks). No client calls it; staking uses the ledger directly.
+  const admin = await requireAdmin(request);
+  if (!admin.ok) return admin.response;
+
   try {
     const body = await request.json();
     const { action } = body;
