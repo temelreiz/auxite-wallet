@@ -113,8 +113,8 @@ function auxrPayload(s: Awaited<ReturnType<typeof getAuxrSupply>>) {
     chain: NETWORK.BASE.name,
     chainId: NETWORK.BASE.chainId,
     decimals: AUXR_DECIMALS,
-    totalSupply: s.total,
-    circulatingSupply: s.circulating,
+    totalSupply: Number(s.total.toFixed(6)),
+    circulatingSupply: Number(s.circulating.toFixed(6)),
     onChainTotalSupply: s.onChainTotal,
     unrecoverable: s.unrecoverable,
     nonCirculating: s.nonCirculating,
@@ -168,7 +168,7 @@ export async function GET(request: NextRequest) {
 
       // CoinGecko / CMC düz metin tek değer formatı
       if (type === "total" || type === "circulating") {
-        return new NextResponse(String(type === "total" ? s.total : s.circulating), {
+        return new NextResponse(String(Number((type === "total" ? s.total : s.circulating).toFixed(6))), {
           status: 200,
           headers: { "Content-Type": "text/plain; charset=utf-8" },
         });
