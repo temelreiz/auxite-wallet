@@ -64,31 +64,45 @@ const SYMBOLS: MetalSymbol[] = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
 const AUXR_ADDRESS = "0xB145B8e9C02193d55454f534f917Cabe704FA042";
 const AUXR_DECIMALS = 18;
 
+// Adresleri özel anahtarı olmayan (dolayısıyla tokenları sonsuza dek hareket
+// edemeyen) bakiyeler. Ekonomik olarak yakılmış sayılır: toplam arzdan düşülür.
+// 0x8d23… web cüzdanının yerel modunda SHA256'dan türetilmiş sahte bir adres;
+// 23.100 AUXR burada kilitli kaldı ve 2026-09-30'da 0x0a5d'ye yeniden basıldı.
+const AUXR_UNRECOVERABLE_ADDRESSES = ["0x8d23E12cAc0f1D2a8c609b973f394396A4Da5011"];
+
+const isAddress = (a: string) => /^0x[0-9a-fA-F]{40}$/.test(a);
+const sameAddress = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+
 function auxrExcludedAddresses(): string[] {
   return (process.env.AUXR_NONCIRCULATING_ADDRESSES || "")
     .split(",")
     .map((a) => a.trim())
-    .filter((a) => /^0x[0-9a-fA-F]{40}$/.test(a));
+    .filter(isAddress)
+    // Unrecoverable addresses are already removed from total supply.
+    .filter((a) => !AUXR_UNRECOVERABLE_ADDRESSES.some((u) => sameAddress(a, u)));
 }
 
 async function getAuxrSupply() {
   const provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
   const contract = new ethers.Contract(AUXR_ADDRESS, ERC20_ABI, provider);
 
-  const rawTotal: bigint = await contract.totalSupply();
-  const excluded = auxrExcludedAddresses();
-  const balances = await Promise.all(
-    excluded.map(async (addr) => ({
-      address: addr,
-      amount: parseFloat(
-        ethers.formatUnits((await contract.balanceOf(addr)) as bigint, AUXR_DECIMALS)
-      ),
-    }))
-  );
+  const balanceOf = async (addr: string) => ({
+    address: addr,
+    amount: parseFloat(
+      ethers.formatUnits((await contract.balanceOf(addr)) as bigint, AUXR_DECIMALS)
+    ),
+  });
 
-  const total = parseFloat(ethers.formatUnits(rawTotal, AUXR_DECIMALS));
+  const rawTotal: bigint = await contract.totalSupply();
+  const [unrecoverable, balances] = await Promise.all([
+    Promise.all(AUXR_UNRECOVERABLE_ADDRESSES.map(balanceOf)),
+    Promise.all(auxrExcludedAddresses().map(balanceOf)),
+  ]);
+
+  const onChainTotal = parseFloat(ethers.formatUnits(rawTotal, AUXR_DECIMALS));
+  const total = onChainTotal - unrecoverable.reduce((sum, b) => sum + b.amount, 0);
   const withheld = balances.reduce((sum, b) => sum + b.amount, 0);
-  return { total, circulating: total - withheld, nonCirculating: balances };
+  return { onChainTotal, total, circulating: total - withheld, unrecoverable, nonCirculating: balances };
 }
 
 function auxrPayload(s: Awaited<ReturnType<typeof getAuxrSupply>>) {
@@ -101,8 +115,11 @@ function auxrPayload(s: Awaited<ReturnType<typeof getAuxrSupply>>) {
     decimals: AUXR_DECIMALS,
     totalSupply: s.total,
     circulatingSupply: s.circulating,
+    onChainTotalSupply: s.onChainTotal,
+    unrecoverable: s.unrecoverable,
     nonCirculating: s.nonCirculating,
-    supplySource: "ERC20 totalSupply() on Base Mainnet",
+    supplySource:
+      "ERC20 totalSupply() on Base Mainnet, minus balances at addresses with no private key (tokens can never move — treated as burned)",
     circulatingBasis: s.nonCirculating.length
       ? "totalSupply minus the balances of the declared non-circulating addresses"
       : "no non-circulating addresses declared — circulating equals total supply",
