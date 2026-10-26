@@ -4,6 +4,7 @@
 // GET: List pending weekend orders for a user
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { assertAccountActive } from "@/lib/security/account-guard";
 import { Redis } from "@upstash/redis";
 import { isMarketOpen, getMarketStatus } from "@/lib/market-hours";
@@ -49,6 +50,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { walletAddress, type, token, amount, estimatedPriceUsd } = body;
+    const self = requireSelf(request, walletAddress);
+    if (!self.ok) return self.response;
 
     // ── VALIDATION ──
     if (!walletAddress || !type || !token || !amount || !estimatedPriceUsd) {

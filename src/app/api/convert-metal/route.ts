@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 import { getTokenPrices } from "@/lib/v6-token-service";
 import { notifyTrade } from "@/lib/telegram";
@@ -126,6 +127,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { address, fromMetal, toMetal, amount: rawAmount } = body;
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
 
     // ── Input Validation ──
     if (!address || !fromMetal || !toMetal || !rawAmount) {

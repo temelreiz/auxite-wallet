@@ -6,6 +6,7 @@
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireSelf, requireUser } from '@/lib/security/require-user';
 import { sendEmail } from '@/lib/email';
 import {
   isSettlementEnabled,
@@ -55,6 +56,8 @@ export async function POST(request: NextRequest) {
     // ── ACTION: QUOTE ──
     if (action === 'quote') {
       const { address, metal, grams, rail } = body;
+      const self = requireSelf(request, address);
+      if (!self.ok) return self.response;
 
       if (!address || !metal || !grams) {
         return NextResponse.json({ error: 'Missing required fields: address, metal, grams' }, { status: 400 });
@@ -97,6 +100,14 @@ export async function POST(request: NextRequest) {
     // ── ACTION: EXECUTE ──
     if (action === 'execute') {
       const { quoteId } = body;
+
+      // The quote names the account; only its owner may execute it.
+      const auth = requireUser(request);
+      if (!auth.ok) return auth.response;
+      const pending = quoteId ? await getSettlementQuote(String(quoteId)) : null;
+      if (pending && pending.address?.toLowerCase() !== auth.user.address) {
+        return NextResponse.json({ error: 'Quote does not belong to this session' }, { status: 403 });
+      }
 
       if (!quoteId) {
         return NextResponse.json({ error: 'Missing quoteId' }, { status: 400 });

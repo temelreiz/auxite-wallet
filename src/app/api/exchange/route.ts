@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 import { getTokenPrices } from "@/lib/v6-token-service";
 import { notifyTrade } from "@/lib/telegram";
@@ -190,6 +191,8 @@ async function getMetalBalance(address: string, metal: string): Promise<number> 
 export async function POST(request: NextRequest) {
   try {
     const { fromAsset, toAsset, fromAmount, toAmount: clientToAmount, address } = await request.json();
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
 
     if (!fromAsset || !toAsset || !fromAmount) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

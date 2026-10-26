@@ -5,6 +5,7 @@
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireSelf } from '@/lib/security/require-user';
 import { notifyValueMovement } from "@/lib/telegram";
 import { Redis } from '@upstash/redis';
 import { sendEmail } from '@/lib/email';
@@ -241,6 +242,8 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { address, metal, amount, method, vault, notes, twoFactorCode } = body;
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
 
     if (!address || !metal || !amount || !method) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });

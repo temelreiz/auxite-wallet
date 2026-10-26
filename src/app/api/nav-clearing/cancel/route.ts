@@ -2,6 +2,7 @@
 // Cancel an open/partial NAV-clearing order; refunds remaining escrow.
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireSelf } from "@/lib/security/require-user";
 import { NAV_CLEARING_ENABLED, cancelOrder } from "@/lib/nav-clearing";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,8 @@ export async function POST(request: NextRequest) {
   }
   try {
     const { address, orderId } = await request.json();
+    const self = requireSelf(request, address);
+    if (!self.ok) return self.response;
     if (!address || !orderId) {
       return NextResponse.json({ error: "address and orderId required" }, { status: 400 });
     }
