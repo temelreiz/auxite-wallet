@@ -33,7 +33,7 @@ import type { Address } from "viem";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { getRedis } from "@/lib/redis";
 import { lastRenewal } from "@/lib/mm-lease";
-import { followTaint, taintHoldings, claimGasAlert } from "@/lib/auxr-taint";
+import { followTaint, taintHoldings, claimGasAlert, STALE_BLOCKS } from "@/lib/auxr-taint";
 import { scanRoleChanges, observeHotMinter } from "@/lib/auxr-role-watch";
 
 export const dynamic = "force-dynamic";
@@ -64,6 +64,8 @@ const MM_SILENT_ALERT_SEC = Number(process.env.AUXR_MM_SILENT_ALERT_SEC || 180);
 // The wallet whose key sits in this process. Checked, not trusted: it is
 // supposed to hold no role at all.
 const HOT_WALLET_FALLBACK = "0xd4cecfdf73cccd0517f576e75be469d75e0a1658";
+/** Mirrors MAX_BLOCKS_PER_RUN in auxr-taint.ts, for the lag message. */
+const MAX_SCAN_PER_RUN = 60_000;
 
 // The AUXR taken in October is followed in src/lib/auxr-taint.ts: a set that
 // grows as the money moves, rather than a list that goes stale the first time
@@ -327,6 +329,24 @@ export async function GET(request: NextRequest) {
   // no transaction history, so somebody funding gas is the earliest warning
   // available and it arrives before the transfer does.
   const taint = await safe(followTaint(), null);
+
+  // A scan that is failing must say so. The previous version wrapped this in
+  // safe() and read the null as a quiet run: the RPC refused every getLogs for
+  // six days, the watermark never moved, 172 AUXR was layered through five
+  // addresses and nothing was reported. Silence from a watcher is the one
+  // reading that must never be treated as calm.
+  if (!taint) {
+    if (await alertOnce("taint-scan-dead", `🔕 <b>Stolen-AUXR scan is not running</b>\nfollowTaint() threw and returned nothing. The watch is blind until this is fixed.`))
+      fired.push("taint-scan-dead");
+  } else if (taint.error) {
+    if (await alertOnce("taint-scan-error", `🔕 <b>Stolen-AUXR scan is failing</b>\nStopped at block ${taint.scannedTo}, <b>${taint.lagBlocks.toLocaleString()} blocks behind</b>.\n<code>${taint.error.slice(0, 300)}</code>`))
+      fired.push("taint-scan-error");
+  } else if (BigInt(taint.lagBlocks) > STALE_BLOCKS) {
+    // No error, just not keeping up — worth saying once, because a watch that
+    // is half a day behind is not the watch we told the exchanges about.
+    if (await alertOnce("taint-scan-lag", `⏳ <b>Stolen-AUXR scan is behind</b>\n${taint.lagBlocks.toLocaleString()} blocks behind the head (last scanned ${taint.scannedTo}).\nIt catches up ${MAX_SCAN_PER_RUN.toLocaleString()} blocks per run; if this does not shrink, the scan is stuck.`))
+      fired.push("taint-scan-lag");
+  }
 
   if (taint) {
     for (const m of taint.movements) {
