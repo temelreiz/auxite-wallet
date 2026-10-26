@@ -33,9 +33,27 @@ const WATERMARK = "auxr:taint:lastBlock";
  *  teaches the reader to ignore the alert that matters. */
 const GAS_NOTIFIED = "auxr:taint:gasNotified";
 
-/** Blocks per run. A five-minute cron sees ~150 on Base; the cap covers a
- *  missed run or two without asking an RPC for a range it will refuse. */
-const MAX_BLOCKS_PER_RUN = 3_000n;
+// Free RPCs each refuse a different getLogs range, and the one configured in
+// BASE_RPC_URL refused ours silently for six days — the scan threw, the error
+// was swallowed upstream, the watermark never advanced and nothing said so.
+// So: several endpoints, a range each will actually accept, and a watermark
+// that moves after every successful chunk rather than only at the end.
+const RPC_ENDPOINTS: { url: string; maxRange: bigint }[] = [
+  ...(process.env.BASE_RPC_URL ? [{ url: process.env.BASE_RPC_URL, maxRange: 9_000n }] : []),
+  { url: "https://base.drpc.org", maxRange: 9_000n },
+  { url: "https://base-mainnet.public.blastapi.io", maxRange: 1_000n },
+  { url: "https://mainnet.base.org", maxRange: 1_000n },
+  { url: "https://1rpc.io/base", maxRange: 45n },
+];
+
+/** Work ceiling for one run. The route allows 30s; this leaves room for the
+ *  rest of the checks and lets a backlog clear over several runs instead of
+ *  timing out on every one of them. */
+const MAX_BLOCKS_PER_RUN = 60_000n;
+
+/** Lag past which the scan is considered broken rather than busy. Base makes
+ *  ~43,200 blocks a day, so this is roughly half a day behind. */
+export const STALE_BLOCKS = 20_000n;
 
 /** Where it started. Seeded on first run and never removed, so the origin of
  *  the trail stays legible after the money has moved on. */
@@ -97,12 +115,72 @@ export async function taintLabel(address: string): Promise<string> {
  * The watermark advances even when a scan finds nothing, and is clamped to the
  * head on first run so a fresh deployment does not try to read the whole chain.
  */
-export async function followTaint(): Promise<{
+export interface TaintScanResult {
   movements: TaintMovement[];
   scannedFrom: number;
   scannedTo: number;
   watching: number;
-}> {
+  /** How far behind the chain head the scan still is. */
+  lagBlocks: number;
+  /** Set when every endpoint refused. The watchdog alerts on this rather than
+   *  letting it pass as a quiet run, which is how six days went by. */
+  error: string | null;
+}
+
+/** One getLogs call, tried across endpoints until one answers. */
+async function getLogsAnywhere(
+  fromBlock: bigint,
+  toBlock: bigint,
+  watching: string[],
+): Promise<{ logs: any[]; url: string } | { error: string }> {
+  const topic0 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+  const pad = (a: string) => "0x" + a.slice(2).toLowerCase().padStart(64, "0");
+  const errors: string[] = [];
+
+  for (const { url } of RPC_ENDPOINTS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "eth_getLogs",
+          params: [
+            {
+              address: AUXR_CONTRACT_ADDRESS,
+              fromBlock: "0x" + fromBlock.toString(16),
+              toBlock: "0x" + toBlock.toString(16),
+              // Topic 1 as an array is an OR across senders, so the node does
+              // the filtering and one call covers the whole set.
+              topics: [topic0, watching.map(pad)],
+            },
+          ],
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+      const json = await res.json();
+      if (json?.error) {
+        errors.push(`${url}: ${json.error.message}`);
+        continue;
+      }
+      return { logs: json.result || [], url };
+    } catch (e: any) {
+      errors.push(`${url}: ${String(e?.message || e).slice(0, 60)}`);
+    }
+  }
+  return { error: errors.join(" | ") };
+}
+
+/**
+ * Scans the blocks since the last run for AUXR leaving any tainted address,
+ * adds every destination to the set, and returns what moved.
+ *
+ * Scans in chunks and saves the watermark after each one, so a run that is
+ * cut short keeps the ground it gained. A backlog therefore clears over
+ * several runs instead of failing whole every time.
+ */
+export async function followTaint(): Promise<TaintScanResult> {
   const redis = getRedis();
   const client = publicClient();
   const watching = await taintedAddresses();
@@ -115,77 +193,84 @@ export async function followTaint(): Promise<{
   // and backfilling it would spend the getLogs budget re-reporting it.
   if (stored == null) {
     await redis.set(WATERMARK, head.toString());
-    return { movements: [], scannedFrom: Number(head), scannedTo: Number(head), watching: watching.length };
+    return {
+      movements: [], scannedFrom: Number(head), scannedTo: Number(head),
+      watching: watching.length, lagBlocks: 0, error: null,
+    };
   }
 
-  const fromBlock = stored + 1n;
-  if (fromBlock > head) {
-    return { movements: [], scannedFrom: Number(fromBlock), scannedTo: Number(head), watching: watching.length };
+  const startBlock = stored + 1n;
+  if (startBlock > head) {
+    return {
+      movements: [], scannedFrom: Number(startBlock), scannedTo: Number(head),
+      watching: watching.length, lagBlocks: 0, error: null,
+    };
   }
-  const toBlock = head - fromBlock > MAX_BLOCKS_PER_RUN ? fromBlock + MAX_BLOCKS_PER_RUN : head;
 
-  const logs = await client.getLogs({
-    address: AUXR_CONTRACT_ADDRESS,
-    fromBlock,
-    toBlock,
-    event: {
-      type: "event",
-      name: "Transfer",
-      inputs: [
-        { name: "from", type: "address", indexed: true },
-        { name: "to", type: "address", indexed: true },
-        { name: "value", type: "uint256", indexed: false },
-      ],
-    },
-    // Indexed, so the node does the filtering — one query for the whole set
-    // rather than one per address.
-    args: { from: watching as Address[] },
-  });
-
+  const ceiling = head - startBlock > MAX_BLOCKS_PER_RUN ? startBlock + MAX_BLOCKS_PER_RUN : head;
   const movements: TaintMovement[] = [];
+  let cursor = startBlock;
+  let error: string | null = null;
+  const chunk = RPC_ENDPOINTS[0]?.maxRange ?? 1_000n;
 
-  for (const log of logs as any[]) {
-    const to = String(log.args.to).toLowerCase();
-    const from = String(log.args.from).toLowerCase();
+  while (cursor <= ceiling) {
+    const to = cursor + chunk - 1n > ceiling ? ceiling : cursor + chunk - 1n;
+    const result = await getLogsAnywhere(cursor, to, watching);
 
-    // A burn is the one movement that is good news: those tokens are gone for
-    // everybody, so it does not taint the zero address.
-    if (to === "0x0000000000000000000000000000000000000000") continue;
+    if ("error" in result) {
+      // Stop here and keep what we have. The watermark already reflects the
+      // chunks that worked, so the next run resumes rather than restarts.
+      error = result.error;
+      break;
+    }
 
-    const newlyTainted = (await redis.sadd(TAINT_SET, to)) === 1;
-    if (newlyTainted) {
-      await redis.hset(TAINT_META, {
-        [to]: `received from ${from.slice(0, 10)}… at block ${log.blockNumber}`,
+    for (const log of result.logs) {
+      const from = ("0x" + log.topics[1].slice(26)).toLowerCase();
+      const to_ = ("0x" + log.topics[2].slice(26)).toLowerCase();
+
+      // A burn is the one movement that is good news: those tokens are gone
+      // for everybody, so it does not taint the zero address.
+      if (to_ === "0x0000000000000000000000000000000000000000") continue;
+
+      const newlyTainted = (await redis.sadd(TAINT_SET, to_)) === 1;
+      if (newlyTainted) {
+        await redis.hset(TAINT_META, {
+          [to_]: `received from ${from.slice(0, 10)}… at block ${parseInt(log.blockNumber, 16)}`,
+        });
+      }
+
+      let toIsContract = false;
+      try {
+        const code = await client.getCode({ address: to_ as Address });
+        toIsContract = !!code && code !== "0x";
+      } catch {
+        // Unknown is reported as not-a-contract rather than failing the scan;
+        // the alert still names the destination, which is the part that matters.
+      }
+
+      movements.push({
+        from,
+        to: to_,
+        units: weiToAuxr(BigInt(log.data)),
+        txHash: String(log.transactionHash),
+        blockNumber: parseInt(log.blockNumber, 16),
+        toIsContract,
+        newlyTainted,
       });
     }
 
-    let toIsContract = false;
-    try {
-      const code = await client.getCode({ address: to as Address });
-      toIsContract = !!code && code !== "0x";
-    } catch {
-      // Unknown is reported as not-a-contract rather than failing the scan; the
-      // alert still names the destination, which is the part that matters.
-    }
-
-    movements.push({
-      from,
-      to,
-      units: weiToAuxr(log.args.value as bigint),
-      txHash: String(log.transactionHash),
-      blockNumber: Number(log.blockNumber),
-      toIsContract,
-      newlyTainted,
-    });
+    await redis.set(WATERMARK, to.toString());
+    cursor = to + 1n;
   }
 
-  await redis.set(WATERMARK, toBlock.toString());
-
+  const reached = cursor - 1n;
   return {
     movements,
-    scannedFrom: Number(fromBlock),
-    scannedTo: Number(toBlock),
+    scannedFrom: Number(startBlock),
+    scannedTo: Number(reached),
     watching: watching.length,
+    lagBlocks: Number(head - reached),
+    error,
   };
 }
 
