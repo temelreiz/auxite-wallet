@@ -27,10 +27,10 @@ import { isCronRequest } from "@/lib/security/require-user";
 import { getReserveSnapshot } from "@/lib/auxr-reserve";
 import { getAuxrPricing } from "@/lib/auxr-pricing";
 import { getLbankTicker, getLbankDepth } from "@/lib/lbank";
-import { computeDepthMetrics } from "@/lib/bitmart";
 import { getOnChainTotalSupply, weiToAuxr, isPaused, isMinter } from "@/lib/auxr-onchain";
 import type { Address } from "viem";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { getAllVenueDepth, depthTransitions, VENUE_LABEL, type VenueDepth } from "@/lib/venue-depth";
 import { getRedis } from "@/lib/redis";
 import { lastRenewal } from "@/lib/mm-lease";
 import { followTaint, taintHoldings, claimGasAlert, STALE_BLOCKS } from "@/lib/auxr-taint";
@@ -45,10 +45,7 @@ const DEVIATION_PERSIST_RUNS = Number(process.env.AUXR_DEVIATION_PERSIST_RUNS ||
 const SPREAD_ALERT_BPS = Number(process.env.AUXR_SPREAD_ALERT_BPS || 200); // 2% MM spread
 const BACKING_ALERT_PCT = Number(process.env.AUXR_BACKING_ALERT_PCT || 99.99);
 const SUPPLY_DRIFT_ALERT = Number(process.env.AUXR_SUPPLY_DRIFT_ALERT || 1); // units
-// Bid depth within 2% of NAV. A tight spread can sit on top of almost nothing:
-// at the time this check was added the book quoted 10.5 bps over 101 USDT of
-// bids, so a holder trying to leave would have moved the price on their own.
-const BID_DEPTH_ALERT_USD = Number(process.env.AUXR_BID_DEPTH_ALERT_USD || 2500);
+// Depth thresholds live in src/lib/venue-depth.ts (AUXR_DEPTH_ALERT_USD[_<VENUE>]).
 // AUXR minted on-chain OUTSIDE the managed off-chain ledger — the founder
 // allocation and MM seed, which are backed externally (founder's own metal) and
 // intentionally never recorded via recordMint. Without accounting for it, the
@@ -245,27 +242,24 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 3b. Bid depth collapse — the side that matters to a holder trying to exit.
+  // 3b. Depth on every venue, both sides, within 2% of NAV.
   //
   // Separate from the spread check because the two fail independently: a maker
-  // can quote 10 bps over a hundred dollars, which looks healthy on every
-  // measure except the only one that matters when someone sells.
-  if (ticker?.listed && depth?.listed && nav && nav > 0) {
-    const m = computeDepthMetrics(depth as any, nav);
-    const bid2 = m.bidUsdWithin?.["2"] ?? 0;
-    if (bid2 < BID_DEPTH_ALERT_USD) {
-      if (
-        await alertOnce(
-          "bid-depth",
-          `🟠 <b>AUXR bid depth thin</b>\nWithin 2% of NAV: <b>$${Math.round(bid2).toLocaleString()}</b> bids / $${Math.round(m.askUsdWithin?.["2"] ?? 0).toLocaleString()} asks (threshold $${BID_DEPTH_ALERT_USD.toLocaleString()})\n→ A holder selling more than this moves the price alone.`,
-        )
-      ) {
-        fired.push("bid-depth");
-        await notifyMM(
-          `⚠️ <b>AUXR/USDT — bid depth thin</b>\n` +
-          `±2% of NAV: <b>$${Math.round(bid2).toLocaleString()}</b> bid vs $${Math.round(m.askUsdWithin?.["2"] ?? 0).toLocaleString()} ask\n` +
-          `→ The book is one-sided. Please add bid-side depth.`,
-        );
+  // can quote 10 bps over a hundred dollars. Reported only when a venue changes
+  // state — the old LBANK-only check re-sent the same "thin" alert every 30
+  // minutes because the book never crossed the line.
+  let venueDepths: VenueDepth[] = [];
+  if (nav && nav > 0) {
+    venueDepths = await safe(getAllVenueDepth(nav), []);
+    const changes = await safe(depthTransitions(venueDepths), []);
+    for (const c of changes) {
+      const name = VENUE_LABEL[c.venue];
+      const nums = `bid <b>$${Math.round(c.bidUsd2).toLocaleString()}</b> / ask <b>$${Math.round(c.askUsd2).toLocaleString()}</b> within 2% of NAV (min $${c.threshold.toLocaleString()} per side)`;
+      if (c.to === "thin") {
+        await sendTelegramMessage(`🟠 <b>AUXR depth thin — ${name}</b>\n${nums}\n→ A buyer or seller larger than this moves the price alone. Don't send campaign traffic here until it recovers.`);
+        fired.push(`depth-${c.venue}`);
+      } else {
+        await sendTelegramMessage(`🟢 <b>AUXR depth recovered — ${name}</b>\n${nums}`);
       }
     }
   }
@@ -440,13 +434,12 @@ export async function GET(request: NextRequest) {
     ? ((refPrice - nav) / nav) * 10000 : null;
   const spreadBps = ticker?.listed && ticker.bid && ticker.ask && ticker.bid > 0
     ? ((ticker.ask - ticker.bid) / ((ticker.bid + ticker.ask) / 2)) * 10000 : null;
-  const depthDigest =
-    ticker?.listed && depth?.listed && nav && nav > 0
-      ? (() => {
-          const m = computeDepthMetrics(depth as any, nav);
-          return `Depth ±2%: bid <b>$${Math.round(m.bidUsdWithin?.["2"] ?? 0).toLocaleString()}</b> / ask $${Math.round(m.askUsdWithin?.["2"] ?? 0).toLocaleString()}`;
-        })()
-      : ``;
+  // Depth belongs in the daily line too: a book that stays thin alerts once.
+  const depthDigest = venueDepths.length
+    ? `Depth ±2%: ` + venueDepths
+        .map((d) => `${VENUE_LABEL[d.venue]} $${Math.round(d.bidUsd2).toLocaleString()}/$${Math.round(d.askUsd2).toLocaleString()}`)
+        .join(" · ")
+    : ``;
 
   const digestSent = await maybeSendDigest([
     nav != null ? `NAV (net): <b>$${nav.toFixed(3)}</b>${pricing?.grossNavUSD != null ? ` · gross $${pricing.grossNavUSD.toFixed(3)}` : ""}` : `NAV: n/a`,
@@ -454,8 +447,6 @@ export async function GET(request: NextRequest) {
     ticker?.listed
       ? `LBANK: <b>$${ticker.last}</b>${devBps != null ? ` · dev ${(devBps / 100).toFixed(2)}%` : ""}${spreadBps != null ? ` · spread ${(spreadBps / 100).toFixed(2)}%` : ""}${ticker.quoteVolume24h != null ? ` · 24h $${Math.round(ticker.quoteVolume24h).toLocaleString()}` : ""}`
       : `LBANK: not listed yet`,
-    // Depth belongs in the daily line, not only in the alert: a book that is
-    // thin every day never crosses a threshold twice and so never alerts twice.
     depthDigest,
     snap?.backingRatio?.weakest != null ? `Backing (weakest): ${(snap.backingRatio.weakest * 100).toFixed(2)}% · supply ${snap.supplyUnits} AUXR` : ``,
     paused === true ? `⏸️ CONTRACT PAUSED` : ``,
