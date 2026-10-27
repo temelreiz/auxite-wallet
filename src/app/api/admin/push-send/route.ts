@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { walletAddress, title, body: messageBody, type, data, broadcast, anon } = body;
+    const platform = body.platform === "android" || body.platform === "ios" ? body.platform : undefined;
 
     if (!title || !messageBody) {
       return NextResponse.json(
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
         type,
         category: type,
         ...data,
-      });
+      }, platform);
       mobileSent = result.totalSent;
       mobileFailed = result.totalFailed;
       recipients = result.userCount;

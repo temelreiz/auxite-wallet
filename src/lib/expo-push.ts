@@ -104,6 +104,8 @@ export async function sendPushToUser(
     badge?: number;
     channelId?: string;
     priority?: "default" | "normal" | "high";
+    /** Only devices on this platform (e.g. AUXR content is Android-only). */
+    platform?: "android" | "ios";
   }
 ): Promise<{ sent: number; failed: number }> {
   const key = `push:mobile:${walletAddress.toLowerCase()}`;
@@ -113,7 +115,10 @@ export async function sendPushToUser(
     return { sent: 0, failed: 0 };
   }
 
-  const tokens: MobilePushToken[] = typeof existingData === 'string' ? JSON.parse(existingData) : existingData as MobilePushToken[];
+  const allTokens: MobilePushToken[] = typeof existingData === 'string' ? JSON.parse(existingData) : existingData as MobilePushToken[];
+  const tokens = options?.platform
+    ? allTokens.filter((t) => (t.platform || "").toLowerCase() === options.platform)
+    : allTokens;
 
   if (tokens.length === 0) {
     return { sent: 0, failed: 0 };
@@ -164,10 +169,13 @@ export async function sendPushToUser(
     }
   });
 
-  // Update tokens if any were removed
+  // Update tokens if any were removed. Rebuild from the full list so a
+  // platform-filtered send never drops the other platform's devices.
   if (validTokens.length < tokens.length) {
-    await redis.set(key, JSON.stringify(validTokens));
-    if (validTokens.length === 0) {
+    const removed = new Set(tokens.filter((t) => !validTokens.includes(t)).map((t) => t.token));
+    const remaining = allTokens.filter((t) => !removed.has(t.token));
+    await redis.set(key, JSON.stringify(remaining));
+    if (remaining.length === 0) {
       await redis.srem("push:mobile:all_users", walletAddress.toLowerCase());
     }
   }
@@ -181,7 +189,8 @@ export async function sendPushToUser(
 export async function broadcastPush(
   title: string,
   body: string,
-  data?: Record<string, unknown>
+  data?: Record<string, unknown>,
+  platform?: "android" | "ios"
 ): Promise<{ totalSent: number; totalFailed: number; userCount: number }> {
   const allUsers = await redis.smembers("push:mobile:all_users");
 
@@ -194,7 +203,7 @@ export async function broadcastPush(
       title,
       body,
       data,
-      { priority: "high" }
+      { priority: "high", platform }
     );
     totalSent += result.sent;
     totalFailed += result.failed;
