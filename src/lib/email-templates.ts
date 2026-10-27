@@ -584,3 +584,117 @@ export function getKycLimitsAnnouncementTemplate(lang: string): { subject: strin
   };
   return emailTemplates[langMap[lang] || "kycLimitsEN"];
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUXR — "now trading on LBANK, Hotcoin and Pionex"
+// Copy rules: no return promises, no physical-backing / custodian / auditor
+// claims for AUXR; risk line + US/UK exclusion in every language.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const AUXR_URL = "https://vault.auxite.io/auxr";
+
+const auxrExchangesEN = {
+  subject: "AUXR is now trading on 3 exchanges",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">AUXR is live on LBANK, Hotcoin and Pionex.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">AUXR is a single token whose value tracks a basket of four precious metals — <strong>gold, silver, platinum and palladium</strong>. Its net asset value (NAV) is published live, and you can now trade it on three exchanges or directly in your Auxite vault.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">WHERE TO TRADE</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("1", "LBANK", "AUXR/USDT")}
+      ${step("2", "Hotcoin", "AUXR/USDT")}
+      ${step("3", "Pionex", "AUXR/USDT")}
+    </table>
+    ${cta(AUXR_URL, "VIEW AUXR & LIVE NAV")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">AUXR is a digital token; its price can fall as well as rise and you may lose money. This email is not investment advice. AUXR is not offered to persons in the United States or the United Kingdom.</p>
+  `),
+};
+
+const auxrExchangesTR = {
+  subject: "AUXR artık 3 borsada işlem görüyor",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">AUXR, LBANK, Hotcoin ve Pionex'te listelendi.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">AUXR, değeri dört değerli metalden oluşan bir sepeti — <strong>altın, gümüş, platin ve paladyum</strong> — takip eden tek bir tokendır. Net aktif değeri (NAV) canlı yayınlanır; artık üç borsada veya doğrudan Auxite kasanızda işlem yapabilirsiniz.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">NEREDE İŞLEM YAPILIR</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("1", "LBANK", "AUXR/USDT")}
+      ${step("2", "Hotcoin", "AUXR/USDT")}
+      ${step("3", "Pionex", "AUXR/USDT")}
+    </table>
+    ${cta(AUXR_URL, "AUXR VE CANLI NAV")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">AUXR dijital bir tokendır; fiyatı düşebilir de yükselebilir de, para kaybedebilirsiniz. Bu e-posta yatırım tavsiyesi değildir. AUXR, ABD ve Birleşik Krallık'taki kişilere sunulmaz.</p>
+  `),
+};
+
+const auxrExchangesDE = {
+  subject: "AUXR wird jetzt an 3 Börsen gehandelt",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">AUXR ist auf LBANK, Hotcoin und Pionex gelistet.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">AUXR ist ein einzelner Token, dessen Wert einem Korb aus vier Edelmetallen folgt — <strong>Gold, Silber, Platin und Palladium</strong>. Der Nettoinventarwert (NAV) wird live veröffentlicht; handeln Sie AUXR jetzt an drei Börsen oder direkt in Ihrem Auxite-Tresor.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">HANDELSPLÄTZE</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("1", "LBANK", "AUXR/USDT")}
+      ${step("2", "Hotcoin", "AUXR/USDT")}
+      ${step("3", "Pionex", "AUXR/USDT")}
+    </table>
+    ${cta(AUXR_URL, "AUXR & LIVE-NAV ANSEHEN")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">AUXR ist ein digitaler Token; sein Preis kann fallen oder steigen, Verluste sind möglich. Diese E-Mail ist keine Anlageberatung. AUXR wird Personen in den USA und im Vereinigten Königreich nicht angeboten.</p>
+  `),
+};
+
+const auxrExchangesFR = {
+  subject: "AUXR est désormais négocié sur 3 plateformes",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">AUXR est listé sur LBANK, Hotcoin et Pionex.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">AUXR est un jeton unique dont la valeur suit un panier de quatre métaux précieux — <strong>or, argent, platine et palladium</strong>. Sa valeur liquidative (NAV) est publiée en direct ; vous pouvez désormais le négocier sur trois plateformes ou directement dans votre coffre Auxite.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">OÙ LE NÉGOCIER</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("1", "LBANK", "AUXR/USDT")}
+      ${step("2", "Hotcoin", "AUXR/USDT")}
+      ${step("3", "Pionex", "AUXR/USDT")}
+    </table>
+    ${cta(AUXR_URL, "VOIR AUXR ET LA NAV EN DIRECT")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">AUXR est un jeton numérique ; son prix peut baisser comme monter et vous pouvez perdre de l'argent. Cet e-mail ne constitue pas un conseil en investissement. AUXR n'est pas proposé aux personnes situées aux États-Unis ou au Royaume-Uni.</p>
+  `),
+};
+
+const auxrExchangesAR = {
+  subject: "يتم تداول AUXR الآن في 3 منصات",
+  html: wrap(`
+    <div dir="rtl" style="text-align:right">
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">AUXR مدرج الآن في LBANK وHotcoin وPionex.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">AUXR رمز واحد تتبع قيمته سلة من أربعة معادن ثمينة — <strong>الذهب والفضة والبلاتين والبالاديوم</strong>. تُنشر قيمة صافي الأصول (NAV) مباشرة، ويمكنك الآن تداوله في ثلاث منصات أو مباشرة من خزنة Auxite الخاصة بك.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">أين يمكن التداول</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("1", "LBANK", "AUXR/USDT")}
+      ${step("2", "Hotcoin", "AUXR/USDT")}
+      ${step("3", "Pionex", "AUXR/USDT")}
+    </table>
+    ${cta(AUXR_URL, "شاهد AUXR وقيمة NAV المباشرة")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">AUXR رمز رقمي؛ قد ينخفض سعره أو يرتفع وقد تخسر أموالك. هذه الرسالة ليست نصيحة استثمارية. لا يُعرض AUXR على الأشخاص في الولايات المتحدة أو المملكة المتحدة.</p>
+    </div>
+  `),
+};
+
+const auxrExchangesRU = {
+  subject: "AUXR теперь торгуется на 3 биржах",
+  html: wrap(`
+    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">AUXR листингован на LBANK, Hotcoin и Pionex.</p>
+    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">AUXR — единый токен, стоимость которого следует за корзиной из четырёх драгоценных металлов — <strong>золота, серебра, платины и палладия</strong>. Стоимость чистых активов (NAV) публикуется в реальном времени; теперь его можно торговать на трёх биржах или прямо в вашем хранилище Auxite.</p>
+    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">ГДЕ ТОРГОВАТЬ</p>
+    <table style="width:100%;border-collapse:collapse">
+      ${step("1", "LBANK", "AUXR/USDT")}
+      ${step("2", "Hotcoin", "AUXR/USDT")}
+      ${step("3", "Pionex", "AUXR/USDT")}
+    </table>
+    ${cta(AUXR_URL, "AUXR И NAV В РЕАЛЬНОМ ВРЕМЕНИ")}
+    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">AUXR — цифровой токен; его цена может как расти, так и падать, возможна потеря средств. Это письмо не является инвестиционной рекомендацией. AUXR не предлагается лицам в США и Великобритании.</p>
+  `),
+};
+
+export function getAuxrExchangesTemplate(lang: string): { subject: string; html: string } {
+  const map: Record<string, { subject: string; html: string }> = {
+    en: auxrExchangesEN, tr: auxrExchangesTR, de: auxrExchangesDE,
+    fr: auxrExchangesFR, ar: auxrExchangesAR, ru: auxrExchangesRU,
+  };
+  return map[lang] || auxrExchangesEN;
+}

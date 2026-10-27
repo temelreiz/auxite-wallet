@@ -8871,6 +8871,74 @@ function PushNotificationsTab() {
   );
 }
 
+function AuxrExchangesCampaignCard() {
+  const [stats, setStats] = useState<any>(null);
+  const [testEmail, setTestEmail] = useState("");
+  const [testLang, setTestLang] = useState("en");
+  const [busy, setBusy] = useState(false);
+  const [log, setLog] = useState<string[]>([]);
+  const url = "/api/admin/email-campaigns/auxr-exchanges";
+  const headers = () => ({
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${sessionStorage.getItem("auxite_admin_token")}`,
+  });
+  const note = (m: string) => setLog((l) => [m, ...l].slice(0, 20));
+
+  const preview = async () => {
+    setBusy(true);
+    try {
+      const r = await (await fetch(url, { headers: headers() })).json();
+      setStats(r);
+    } finally { setBusy(false); }
+  };
+
+  const sendTest = async () => {
+    if (!testEmail.trim()) return;
+    setBusy(true);
+    try {
+      const r = await (await fetch(url, { method: "POST", headers: headers(), body: JSON.stringify({ testEmail: testEmail.trim(), testLang }) })).json();
+      note(r.success ? `Test gönderildi → ${r.to} (${r.language})` : `Hata: ${r.error}`);
+    } finally { setBusy(false); }
+  };
+
+  // Sends in chunks until nothing remains; each chunk only mails people not yet mailed.
+  const sendAll = async () => {
+    if (!confirm(`AUXR duyurusu ${stats?.total ?? "tüm"} kullanıcıya gönderilecek. Emin misiniz?`)) return;
+    setBusy(true);
+    try {
+      for (let round = 0; round < 30; round++) {
+        const r = await (await fetch(url, { method: "POST", headers: headers(), body: JSON.stringify({ send: true, limit: 250 }) })).json();
+        if (!r.success) { note(`Hata: ${r.error}`); break; }
+        note(`Gönderildi ${r.sent} · başarısız ${r.failed} · banlı/donuk atlandı ${r.skippedInactive} · kalan ${r.remaining}`);
+        if (r.remaining <= 0 || (r.sent === 0 && r.skippedInactive === 0)) break;
+      }
+      await preview();
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="bg-slate-900/50 border border-amber-500/30 rounded-xl p-5">
+      <h3 className="text-lg font-semibold mb-1">📣 AUXR — 3 borsa duyurusu</h3>
+      <p className="text-xs text-slate-400 mb-4">Kullanıcının dilinde (EN/TR/DE/FR/AR/RU), tek tıkla abonelikten çıkma linkli. Abonelikten çıkanlar, banlı/donuk hesaplar ve ülkesi ABD/İngiltere olanlar hariç. Kimseye iki kez gitmez.</p>
+      <div className="flex flex-wrap gap-2 mb-3">
+        <button onClick={preview} disabled={busy} className="px-3 py-1.5 rounded-lg text-sm bg-slate-700 hover:bg-slate-600 disabled:opacity-50">Önizle (sayılar)</button>
+        <input value={testEmail} onChange={(e) => setTestEmail(e.target.value)} placeholder="test e-posta" className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm" />
+        <select value={testLang} onChange={(e) => setTestLang(e.target.value)} className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm">
+          {["en", "tr", "de", "fr", "ar", "ru"].map((l) => <option key={l} value={l}>{l.toUpperCase()}</option>)}
+        </select>
+        <button onClick={sendTest} disabled={busy || !testEmail.trim()} className="px-3 py-1.5 rounded-lg text-sm bg-slate-700 hover:bg-slate-600 disabled:opacity-50">Test gönder</button>
+        <button onClick={sendAll} disabled={busy || !stats} className="px-3 py-1.5 rounded-lg text-sm bg-amber-500/20 text-amber-300 border border-amber-500/40 disabled:opacity-50">Herkese gönder</button>
+      </div>
+      {stats && (
+        <p className="text-xs text-slate-300 mb-2">
+          Alıcı: <b>{stats.total}</b> · zaten gönderilen: {stats.alreadySent} · ABD/UK hariç: {stats.excludedCountry} · diller: {Object.entries(stats.byLang || {}).map(([k, v]) => `${k} ${v}`).join(", ")}
+        </p>
+      )}
+      {log.length > 0 && <div className="text-xs text-slate-400 space-y-0.5">{log.map((l, i) => <div key={i}>{l}</div>)}</div>}
+    </div>
+  );
+}
+
 function EmailCampaignsTab() {
   const [segment, setSegment] = useState("all");
   const [subject, setSubject] = useState("");
@@ -8965,6 +9033,7 @@ function EmailCampaignsTab() {
 
   return (
     <div className="space-y-6">
+      <AuxrExchangesCampaignCard />
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">📧 Email Kampanyaları</h2>
         <div className="flex gap-2">
