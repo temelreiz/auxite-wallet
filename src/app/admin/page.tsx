@@ -8532,6 +8532,8 @@ function PushNotificationsTab() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [notifType, setNotifType] = useState("system");
+  const [targetScreen, setTargetScreen] = useState("");
+  const [targetPlatform, setTargetPlatform] = useState("");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
@@ -8573,7 +8575,8 @@ function PushNotificationsTab() {
         title,
         body,
         type: notifType,
-        data: { category: notifType },
+        // Mobile opens data.screen on tap (app/_layout.tsx); empty = default by category.
+        data: { category: notifType, ...(targetScreen ? { screen: targetScreen } : {}) },
       };
 
       if (mode === "single") {
@@ -8581,6 +8584,8 @@ function PushNotificationsTab() {
       } else {
         // For broadcast, we send to all registered users
         payload.broadcast = true;
+        // AUXR is hidden on iOS (App Store 3.1.5(iii)) — AUXR pushes go to Android only.
+        if (targetPlatform) payload.platform = targetPlatform;
       }
 
       const token = sessionStorage.getItem("auxite_admin_token");
@@ -8605,6 +8610,21 @@ function PushNotificationsTab() {
       setSending(false);
     }
   };
+
+  const targetPlatforms = [
+    { value: "", label: "Tüm cihazlar" },
+    { value: "android", label: "Sadece Android" },
+    { value: "ios", label: "Sadece iOS" },
+  ];
+
+  const targetScreens = [
+    { value: "", label: "Varsayılan" },
+    { value: "/(tabs)/auxr", label: "AUXR" },
+    { value: "/(tabs)", label: "Ana sayfa" },
+    { value: "/(tabs)/allocate", label: "Metal al" },
+    { value: "/(tabs)/yield", label: "Getiri" },
+    { value: "/(tabs)/ledger", label: "İşlemler" },
+  ];
 
   const notifTypes = [
     { value: "system", label: "Sistem", icon: "⚙️" },
@@ -8698,6 +8718,48 @@ function PushNotificationsTab() {
                 }`}
               >
                 {t.icon} {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Target platform (broadcast) */}
+        {mode !== "single" && (
+          <div className="mb-4">
+            <label className="block text-xs text-slate-400 mb-1">Platform (AUXR içeriği için Sadece Android)</label>
+            <div className="flex flex-wrap gap-2">
+              {targetPlatforms.map((t) => (
+                <button
+                  key={t.value || "all"}
+                  onClick={() => setTargetPlatform(t.value)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    targetPlatform === t.value
+                      ? "bg-[#2F6F62]/20 text-[#2F6F62] border border-[#2F6F62]/30"
+                      : "bg-slate-800 text-slate-400 border border-slate-700"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Target screen (mobile) */}
+        <div className="mb-4">
+          <label className="block text-xs text-slate-400 mb-1">Tıklayınca açılacak ekran (mobil)</label>
+          <div className="flex flex-wrap gap-2">
+            {targetScreens.map((t) => (
+              <button
+                key={t.value || "default"}
+                onClick={() => setTargetScreen(t.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  targetScreen === t.value
+                    ? "bg-[#2F6F62]/20 text-[#2F6F62] border border-[#2F6F62]/30"
+                    : "bg-slate-800 text-slate-400 border border-slate-700"
+                }`}
+              >
+                {t.label}
               </button>
             ))}
           </div>
