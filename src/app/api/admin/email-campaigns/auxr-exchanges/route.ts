@@ -30,8 +30,8 @@ const FROM = "Auxite <noreply@auxite.io>";
 const SENT_SET = "email:campaigns:auxr-exchanges:sent";
 const RUNS_LIST = "email:campaigns:auxr-exchanges:runs";
 const EXCLUDED_COUNTRIES = new Set(["US", "USA", "GB", "GBR", "UK"]);
-const BATCH_SIZE = 10;
-const BATCH_DELAY_MS = 500;
+const BATCH_SIZE = 100; // Resend batch maximum
+const BATCH_DELAY_MS = 1000;
 const redis = getRedis();
 
 type Recipient = { email: string; language: string; walletAddress: string };
@@ -84,9 +84,9 @@ You are receiving this because you have an Auxite account.
 </p>`;
 }
 
-async function sendOne(r: Recipient): Promise<void> {
+function message(r: Recipient) {
   const tpl = getAuxrExchangesTemplate(r.language);
-  const { error } = await resend.emails.send({
+  return {
     from: FROM,
     to: r.email,
     subject: tpl.subject,
@@ -95,7 +95,11 @@ async function sendOne(r: Recipient): Promise<void> {
       "List-Unsubscribe": `<${unsubscribeUrl(r.email)}>`,
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
     },
-  });
+  };
+}
+
+async function sendOne(r: Recipient): Promise<void> {
+  const { error } = await resend.emails.send(message(r));
   if (error) throw new Error(error.message);
 }
 
@@ -136,27 +140,32 @@ export async function POST(request: NextRequest) {
   let skippedInactive = 0;
   const errors: string[] = [];
 
-  for (let i = 0; i < chunk.length; i += BATCH_SIZE) {
-    await Promise.all(
-      chunk.slice(i, i + BATCH_SIZE).map(async (r) => {
-        // Banned / frozen accounts get no marketing. Mark them handled so
-        // they are not re-checked on every run.
-        if (r.walletAddress && !(await assertAccountActive(r.walletAddress)).ok) {
-          skippedInactive++;
-          await redis.sadd(SENT_SET, r.email);
-          return;
-        }
-        try {
-          await sendOne(r);
-          await redis.sadd(SENT_SET, r.email);
-          sent++;
-        } catch (e: any) {
-          failed++;
-          if (errors.length < 5) errors.push(`${r.email}: ${e?.message || e}`);
-        }
-      }),
-    );
-    if (i + BATCH_SIZE < chunk.length) await new Promise((res) => setTimeout(res, BATCH_DELAY_MS));
+  // Banned / frozen accounts get no marketing. Mark them handled so they are
+  // not re-checked on every run.
+  const deliverable: Recipient[] = [];
+  for (const r of chunk) {
+    if (r.walletAddress && !(await assertAccountActive(r.walletAddress)).ok) {
+      skippedInactive++;
+      await redis.sadd(SENT_SET, r.email);
+    } else {
+      deliverable.push(r);
+    }
+  }
+
+  // Resend's batch endpoint: up to 100 messages per request. Individual sends
+  // ran ~20 requests/s against a ~2/s rate limit and half of them were refused.
+  for (let i = 0; i < deliverable.length; i += BATCH_SIZE) {
+    const group = deliverable.slice(i, i + BATCH_SIZE);
+    try {
+      const { error } = await resend.batch.send(group.map(message));
+      if (error) throw new Error(error.message);
+      await redis.sadd(SENT_SET, group[0].email, ...group.slice(1).map((r) => r.email));
+      sent += group.length;
+    } catch (e: any) {
+      failed += group.length;
+      if (errors.length < 5) errors.push(e?.message || String(e));
+    }
+    if (i + BATCH_SIZE < deliverable.length) await new Promise((res) => setTimeout(res, BATCH_DELAY_MS));
   }
 
   const remaining = pending.length - chunk.length + failed;

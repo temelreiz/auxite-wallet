@@ -8906,11 +8906,22 @@ function AuxrExchangesCampaignCard() {
     if (!confirm(`AUXR duyurusu ${stats?.total ?? "tüm"} kullanıcıya gönderilecek. Emin misiniz?`)) return;
     setBusy(true);
     try {
-      for (let round = 0; round < 30; round++) {
-        const r = await (await fetch(url, { method: "POST", headers: headers(), body: JSON.stringify({ send: true, limit: 250 }) })).json();
+      let stalled = 0;
+      for (let round = 0; round < 40; round++) {
+        let r: any;
+        try {
+          r = await (await fetch(url, { method: "POST", headers: headers(), body: JSON.stringify({ send: true, limit: 300 }) })).json();
+        } catch (e: any) {
+          // A timed-out chunk is safe to retry: the server only mails people not yet mailed.
+          note(`İstek hatası (${e?.message || e}) — tekrar deneniyor`);
+          if (++stalled >= 3) break;
+          continue;
+        }
         if (!r.success) { note(`Hata: ${r.error}`); break; }
-        note(`Gönderildi ${r.sent} · başarısız ${r.failed} · banlı/donuk atlandı ${r.skippedInactive} · kalan ${r.remaining}`);
-        if (r.remaining <= 0 || (r.sent === 0 && r.skippedInactive === 0)) break;
+        note(`Gönderildi ${r.sent} · başarısız ${r.failed} · banlı/donuk atlandı ${r.skippedInactive} · kalan ${r.remaining}${r.sampleErrors?.length ? ` · ${r.sampleErrors[0]}` : ""}`);
+        if (r.remaining <= 0) break;
+        stalled = r.sent === 0 && r.skippedInactive === 0 ? stalled + 1 : 0;
+        if (stalled >= 3) { note("İlerleme yok — durduruldu"); break; }
       }
       await preview();
     } finally { setBusy(false); }
