@@ -590,12 +590,14 @@ export async function sendCertificateEmail(
 // Bilingual: client language notice + English legal text always present
 // ═══════════════════════════════════════════════════════════════
 
+// Staking reward notice. The reward is Auxite's fixed rate — no lease or
+// counterparty income stands behind it, so the note must not say there is.
 const yieldNoticeTranslations: Record<string, string> = {
-  tr: 'Yapılandırılmış getiri programlarına tahsis edilen metaller karşı taraf ve uzlaşma riskine tabi olabilir. Auxite sıkı karşı taraf seçimi ve risk kontrolü uygular. Bu belge elektronik olarak düzenlenmiş ve Auxite saklama defterine kaydedilmiştir.',
-  de: 'Metalle, die strukturierten Ertragsprogrammen zugewiesen sind, können Gegenpartei- und Abwicklungsrisiken unterliegen. Auxite wendet strenge Gegenparteiauswahl und Risikokontrollen an. Dieses Dokument wurde elektronisch erstellt und im Verwahrungsbuch von Auxite erfasst.',
-  fr: 'Les métaux engagés dans des programmes de rendement structuré peuvent être soumis à un risque de contrepartie et de règlement. Auxite maintient une sélection stricte des contreparties et des contrôles de risques. Ce document est émis électroniquement et enregistré dans le registre de conservation d\'Auxite.',
-  ar: 'قد تخضع المعادن الملتزم بها في برامج العائد المهيكل لمخاطر الطرف المقابل والتسوية. تحافظ Auxite على اختيار صارم للأطراف المقابلة وضوابط المخاطر. صدرت هذه الوثيقة إلكترونياً وسُجلت في سجل الحفظ لدى Auxite.',
-  ru: 'Металлы, выделенные в программы структурированной доходности, могут быть подвержены контрагентному и расчётному риску. Auxite применяет строгий отбор контрагентов и контроль рисков. Данный документ выпущен в электронном виде и зафиксирован в реестре хранения Auxite.',
+  tr: 'Ödül, Auxite tarafından ödenen sabit bir orandır. Varlıklarınızın kiralanmasından veya herhangi bir üçüncü taraf gelirinden karşılanmaz; varlıklarınız kimseye ödünç verilmez veya kullandırılmaz. Ödülün ödenmesi Auxite\'a bağlıdır. Bu belge elektronik olarak düzenlenmiş ve Auxite defterine kaydedilmiştir.',
+  de: 'Die Belohnung ist ein fester Satz, der von Auxite gezahlt wird. Sie wird nicht durch die Verleihung Ihrer Vermögenswerte oder durch Erträge Dritter finanziert; Ihre Vermögenswerte werden niemandem verliehen oder überlassen. Die Zahlung der Belohnung hängt von Auxite ab. Dieses Dokument wurde elektronisch erstellt und im Register von Auxite erfasst.',
+  fr: 'La récompense est un taux fixe versé par Auxite. Elle n\'est pas financée par la location de vos actifs ni par un revenu de tiers ; vos actifs ne sont ni prêtés ni mis à disposition de quiconque. Le paiement de la récompense dépend d\'Auxite. Ce document est émis électroniquement et enregistré dans le registre d\'Auxite.',
+  ar: 'المكافأة نسبة ثابتة تدفعها Auxite. لا يتم تمويلها من تأجير أصولك أو من أي دخل لطرف ثالث، ولا تُقرض أصولك أو تُستخدم لدى أي جهة. يعتمد دفع المكافأة على Auxite. صدرت هذه الوثيقة إلكترونياً وسُجلت في سجل Auxite.',
+  ru: 'Вознаграждение — фиксированная ставка, выплачиваемая Auxite. Оно не финансируется за счёт аренды ваших активов или доходов третьих лиц; ваши активы никому не передаются и не предоставляются в пользование. Выплата вознаграждения зависит от Auxite. Данный документ выпущен в электронном виде и зафиксирован в реестре Auxite.',
 };
 
 export async function sendStakingAgreementEmail(
@@ -633,7 +635,7 @@ export async function sendStakingAgreementEmail(
       tenor: 'Yield Tenor',
       returnSettlement: 'Return Settlement',
       atMaturity: 'At Maturity',
-      encumbered: 'During the yield tenor, the referenced metals will be considered encumbered and may not be transferred or redeemed until maturity.',
+      encumbered: 'During the term the assets stay locked in your account and cannot be sold, transferred or redeemed. You may exit early: your principal is returned in full together with half of the reward accrued to that date; the rest of the reward is forfeited.',
       noteIssued: 'A formal Participation Note has been issued and is accessible within your document vault.',
       viewNote: 'View Participation Note',
       desk: 'Auxite Treasury & Structured Yield',
@@ -650,7 +652,7 @@ export async function sendStakingAgreementEmail(
       tenor: 'Getiri Vadesi',
       returnSettlement: 'Getiri Uzlaşması',
       atMaturity: 'Vade Sonunda',
-      encumbered: 'Getiri süresi boyunca, referans verilen metaller teminatlı kabul edilecek ve vadeye kadar transfer edilemez veya itfa edilemeyecektir.',
+      encumbered: 'Süre boyunca varlıklar hesabınızda kilitli kalır; satılamaz, transfer edilemez veya itfa edilemez. Erken çıkış mümkündür: anaparanız, o tarihe kadar biriken ödülün yarısıyla birlikte tam olarak iade edilir; ödülün kalanı iptal edilir.',
       noteIssued: 'Resmi bir Katılım Notu düzenlenmiş olup belge kasanızda erişilebilir durumdadır.',
       viewNote: 'Katılım Notunu Görüntüle',
       desk: 'Auxite Hazine ve Yapılandırılmış Getiri',
@@ -667,7 +669,7 @@ export async function sendStakingAgreementEmail(
       tenor: 'Ertragslaufzeit',
       returnSettlement: 'Ertragsabwicklung',
       atMaturity: 'Bei Fälligkeit',
-      encumbered: 'Während der Ertragslaufzeit gelten die referenzierten Metalle als belastet und können bis zur Fälligkeit nicht übertragen oder eingelöst werden.',
+      encumbered: 'Während der Laufzeit bleiben die Vermögenswerte in Ihrem Konto gesperrt und können nicht verkauft, übertragen oder eingelöst werden. Ein vorzeitiger Ausstieg ist möglich: Ihr Kapital wird vollständig zurückgezahlt, zusammen mit der Hälfte der bis dahin aufgelaufenen Belohnung; der Rest der Belohnung verfällt.',
       noteIssued: 'Eine formelle Partizipationsnote wurde ausgestellt und ist in Ihrem Dokumententresor zugänglich.',
       viewNote: 'Partizipationsnote anzeigen',
       desk: 'Auxite Treasury & Strukturierter Ertrag',
@@ -684,7 +686,7 @@ export async function sendStakingAgreementEmail(
       tenor: 'Durée du rendement',
       returnSettlement: 'Règlement du rendement',
       atMaturity: 'À l\'échéance',
-      encumbered: 'Pendant la durée du rendement, les métaux référencés seront considérés comme grevés et ne pourront être transférés ou rachetés avant l\'échéance.',
+      encumbered: 'Pendant la durée, les actifs restent bloqués sur votre compte et ne peuvent être ni vendus, ni transférés, ni rachetés. Une sortie anticipée est possible : votre capital est restitué intégralement avec la moitié de la récompense acquise à cette date ; le reste de la récompense est perdu.',
       noteIssued: 'Une Note de Participation formelle a été émise et est accessible dans votre coffre de documents.',
       viewNote: 'Voir la Note de Participation',
       desk: 'Auxite Trésorerie & Rendement Structuré',
@@ -701,7 +703,7 @@ export async function sendStakingAgreementEmail(
       tenor: 'مدة العائد',
       returnSettlement: 'تسوية العائد',
       atMaturity: 'عند الاستحقاق',
-      encumbered: 'خلال مدة العائد، ستعتبر المعادن المشار إليها مرهونة ولا يمكن تحويلها أو استردادها حتى الاستحقاق.',
+      encumbered: 'خلال المدة تبقى الأصول مقفلة في حسابك ولا يمكن بيعها أو تحويلها أو استردادها. يمكن الخروج المبكر: يُعاد رأس المال كاملاً مع نصف المكافأة المتراكمة حتى ذلك التاريخ، ويُلغى باقي المكافأة.',
       noteIssued: 'تم إصدار مذكرة مشاركة رسمية وهي متاحة في خزنة المستندات الخاصة بك.',
       viewNote: 'عرض مذكرة المشاركة',
       desk: 'خزينة Auxite والعائد المهيكل',
@@ -718,7 +720,7 @@ export async function sendStakingAgreementEmail(
       tenor: 'Срок доходности',
       returnSettlement: 'Расчет доходности',
       atMaturity: 'При погашении',
-      encumbered: 'В течение срока доходности указанные металлы будут считаться обремененными и не могут быть переведены или погашены до наступления срока.',
+      encumbered: 'В течение срока активы остаются заблокированными на вашем счёте и не могут быть проданы, переведены или погашены. Досрочный выход возможен: основная сумма возвращается полностью вместе с половиной вознаграждения, накопленного на эту дату; остальная часть вознаграждения аннулируется.',
       noteIssued: 'Формальная Записка об Участии выпущена и доступна в вашем хранилище документов.',
       viewNote: 'Посмотреть Записку об Участии',
       desk: 'Казначейство Auxite и Структурированная Доходность',
@@ -737,7 +739,7 @@ export async function sendStakingAgreementEmail(
       </tr>
       <tr>
         <td class="detail-label">${t.quantity}</td>
-        <td class="detail-value">${data.amount}g</td>
+        <td class="detail-value">${data.amount}${String(data.metal).toUpperCase() === 'AUXR' ? ' AUXR' : 'g'}</td>
       </tr>
       <tr>
         <td class="detail-label">${t.leaseRate}</td>
@@ -767,9 +769,7 @@ export async function sendStakingAgreementEmail(
     <a href="${VAULT_URL}/api/staking/agreement?stakeId=${data.stakeId}" class="cta-button">${t.viewNote}</a>
 
     <div class="notice">
-      ${lang !== 'en' ? `${yieldNoticeTranslations[lang] || ''}<br><br>` : ''}Metals committed to structured yield programs may be subject to counterparty and settlement risk.
-      Auxite maintains strict counterparty selection and risk controls. This document is
-      electronically issued and recorded within Auxite's custody ledger.
+      ${lang !== 'en' ? `${yieldNoticeTranslations[lang] || ''}<br><br>` : ''}The reward is a fixed rate paid by Auxite. It is not funded by leasing your assets or by any third-party income, and your assets are not lent or deployed to anyone. Payment of the reward depends on Auxite. This document is electronically issued and recorded within Auxite's ledger.
     </div>
   `;
 

@@ -13,6 +13,7 @@ const METAL_NAMES: Record<string, { full: string; symbol: string }> = {
   AUXS: { full: 'Silver', symbol: 'Ag' },
   AUXPT: { full: 'Platinum', symbol: 'Pt' },
   AUXPD: { full: 'Palladium', symbol: 'Pd' },
+  AUXR: { full: 'Auxite Reserve', symbol: 'AUXR' },
 };
 
 const TERM_LABELS: Record<number, string> = {
@@ -372,7 +373,7 @@ function generateParticipationNoteHTML(data: {
           <div>${data.maturityDate}</div>
         </div>
         <div style="margin-top: 8px;">
-          <div class="label">Lease Tenor</div>
+          <div class="label">Term</div>
           <div>${data.termLabel}</div>
         </div>
       </div>
@@ -402,14 +403,14 @@ function generateParticipationNoteHTML(data: {
             <tr>
               <th>Metal</th>
               <th>Amount</th>
-              <th>Lease Rate</th>
+              <th>Reward Rate</th>
               <th>Type</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td class="bold">${data.metalName} (${data.metalSymbol})</td>
-              <td class="bold">${data.amount} g</td>
+              <td class="bold">${data.amount} ${data.metalSymbol === 'AUXR' ? 'AUXR' : 'g'}</td>
               <td>${data.leaseRate}%</td>
               <td>${data.yieldType}</td>
             </tr>
@@ -419,23 +420,25 @@ function generateParticipationNoteHTML(data: {
 
       <!-- Structure Statement -->
       <div class="structure-statement">
-        The client has elected to participate in a metals leasing facility whereby allocated metals
-        are temporarily deployed to approved institutional counterparties.
+        The client has elected to lock the assets referenced herein for a fixed term in return
+        for a fixed reward paid by Auxite. The assets remain in the client's account and are not
+        lent, leased or deployed to any third party.
       </div>
 
       <!-- Risk Disclosure -->
       <div class="section">
         <div class="section-title">Risk Disclosure</div>
         <div class="risk-disclosure">
-          Leased metals may be subject to counterparty and settlement risk. Auxite maintains
-          strict counterparty selection and risk controls.
+          The reward is an obligation of Auxite. It is not funded by leasing the assets or by
+          any third-party income, and its payment depends on Auxite. The market value of the
+          assets may fall during the term.
         </div>
       </div>
 
       <!-- Encumbrance Statement -->
       <div class="encumbrance-statement">
-        During the lease tenor, the metals referenced herein are considered encumbered
-        and may not be transferred or redeemed until maturity.
+        During the term the assets referenced herein are locked in the client's account and
+        may not be sold, transferred or redeemed, except by early exit as set out below.
       </div>
 
       <!-- Return Mechanics -->
@@ -444,23 +447,19 @@ function generateParticipationNoteHTML(data: {
         <div class="return-grid">
           <div class="return-item">
             <div class="label">Return Settlement</div>
-            <div class="value">At Maturity</div>
+            <div class="value">At Maturity (automatic)</div>
           </div>
           <div class="return-item">
             <div class="label">Settlement Method</div>
-            <div class="value">Metal Credited</div>
+            <div class="value">Same Asset Credited</div>
           </div>
           <div class="return-item">
             <div class="label">Early Exit</div>
-            <div class="value">Not Permitted</div>
+            <div class="value">Permitted — principal + 50% of reward accrued to date</div>
           </div>
         </div>
       </div>
 
-      <!-- Collateral / Hedge Line -->
-      <div class="risk-disclosure" style="margin-top: 16px;">
-        Leasing activity may be supported by collateral arrangements and market hedging strategies.
-      </div>
 
       <!-- Key Terms -->
       <div class="section">
@@ -475,7 +474,7 @@ function generateParticipationNoteHTML(data: {
             <div class="field-value">${data.endDate}</div>
           </div>
           <div class="field">
-            <div class="field-label">Lease Tenor</div>
+            <div class="field-label">Term</div>
             <div class="field-value">${data.lockDays} Days</div>
           </div>
           <div class="field">

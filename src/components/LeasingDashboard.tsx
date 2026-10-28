@@ -19,7 +19,7 @@ interface LeasingDashboardProps {
 const translations: Record<string, Record<string, string>> = {
   tr: {
     metalStaking: "Kıymetli Maden Yapılandırılmış Getiri Programı",
-    stakeAndEarn: "Kurumsal kıymetli maden yapılandırılmış getiri programlarına katılın",
+    stakeAndEarn: "Metalinizi veya AUXR'ınızı sabit bir süre kilitleyin, sabit bir ödül kazanın",
     totalLocked: "Toplam Taahhüt",
     activePositions: "Aktif Pozisyonlar",
     annualEarnings: "Yıllık Getiri",
@@ -29,7 +29,7 @@ const translations: Record<string, Record<string, string>> = {
     myPositions: "Pozisyonlarım",
     autoInvest: "Otomatik Tahsis",
     availableOffers: "Getiri Programları",
-    selectMetalTokens: "Fiziksel destekli metal varlıklarınızı seçin ve getiri programlarına katılın",
+    selectMetalTokens: "Sabit ödül için stake edeceğiniz varlığı seçin",
     stakeEarn: "Sermaye Tahsis Et",
     minAmount: "Esnek Tahsis",
     months: "Ay",
@@ -44,20 +44,20 @@ const translations: Record<string, Record<string, string>> = {
     howItWorks: "Nasıl Çalışır",
     step1: "Tahsis edilmiş metal varlıklarınızı seçin",
     step2: "3, 6 veya 12 aylık vade seçin",
-    step3: "SOFR + GOFO bazlı getiri kazanın",
+    step3: "Vade sonunda otomatik ödenen sabit bir ödül kazanın",
     step4: "Vade sonunda otomatik geri alma",
-    features: "Kurumsal Özellikler",
-    insured: "Sigortalı Saklama",
-    institutional: "Kurumsal Seviye",
-    transparent: "Denetlenmiş",
+    features: "Temel Koşullar",
+    insured: "Sabit Oran",
+    institutional: "Erken Çıkış İmkânı",
+    transparent: "Vadede Otomatik Ödeme",
     physical: "Fiziksel Destekli",
-    metalYield: "Metal Cinsinden Getiri",
+    metalYield: "Aynı Varlıkla Ödenir",
     onChain: "Zincir Üstü",
-    yieldBenchmark: "Getiri oranları kurumsal kıymetli maden pazarlarından türetilmiştir",
+    yieldBenchmark: "Sabit ödül oranı Auxite tarafından belirlenir ve ödenir. Varlıklarınız üçüncü taraflara kiralanmaz.",
   },
   en: {
     metalStaking: "Precious Metals Structured Yield Program",
-    stakeAndEarn: "Participate in institutional precious metals structured yield programs",
+    stakeAndEarn: "Lock your metal or AUXR for a fixed term and earn a fixed reward",
     totalLocked: "Total Committed",
     activePositions: "Active Positions",
     annualEarnings: "Annual Returns",
@@ -67,7 +67,7 @@ const translations: Record<string, Record<string, string>> = {
     myPositions: "My Positions",
     autoInvest: "Auto-Allocate",
     availableOffers: "Yield Programs",
-    selectMetalTokens: "Select your physically-backed metal holdings and participate in yield programs",
+    selectMetalTokens: "Choose an asset to stake for a fixed reward",
     stakeEarn: "Deploy Capital",
     minAmount: "Flexible Allocation",
     months: "Mo",
@@ -82,20 +82,20 @@ const translations: Record<string, Record<string, string>> = {
     howItWorks: "How It Works",
     step1: "Select your allocated metal holdings",
     step2: "Choose 3, 6 or 12 month term",
-    step3: "Earn yield based on SOFR + GOFO benchmarks",
+    step3: "Earn a fixed reward, paid automatically at maturity",
     step4: "Automatic redemption at term end",
-    features: "Institutional Features",
-    insured: "Insured Custody",
-    institutional: "Institutional-Grade",
-    transparent: "Audited",
+    features: "Key Terms",
+    insured: "Fixed Rate",
+    institutional: "Early Exit Available",
+    transparent: "Automatic Payout at Maturity",
     physical: "Physically Backed",
-    metalYield: "Returns in Metal",
+    metalYield: "Paid in the Same Asset",
     onChain: "On-Chain",
-    yieldBenchmark: "Yield rates derived from institutional precious metals markets",
+    yieldBenchmark: "Fixed reward rate set and paid by Auxite. Your assets are not leased to third parties.",
   },
   de: {
     metalStaking: "Edelmetall-Strukturierte Rendite",
-    stakeAndEarn: "Nehmen Sie an institutionellen Edelmetall-Renditeprogrammen teil",
+    stakeAndEarn: "Sperren Sie Ihr Metall oder AUXR für eine feste Laufzeit und erhalten Sie eine feste Belohnung",
     totalLocked: "Gesamt Gebunden",
     activePositions: "Aktive Positionen",
     annualEarnings: "Jährliche Erträge",
@@ -105,7 +105,7 @@ const translations: Record<string, Record<string, string>> = {
     myPositions: "Meine Positionen",
     autoInvest: "Auto-Allokation",
     availableOffers: "Rendite-Programme",
-    selectMetalTokens: "Wählen Sie Ihre physisch gedeckten Metallbestände und nehmen Sie an Renditeprogrammen teil",
+    selectMetalTokens: "Wählen Sie einen Vermögenswert, den Sie für eine feste Belohnung staken möchten",
     stakeEarn: "Kapital Einsetzen",
     minAmount: "Flexible Allokation",
     months: "Mo",
@@ -120,20 +120,20 @@ const translations: Record<string, Record<string, string>> = {
     howItWorks: "So funktioniert's",
     step1: "Wählen Sie Ihre allokierten Metallbestände",
     step2: "Wählen Sie 3, 6 oder 12 Monate Laufzeit",
-    step3: "Verdienen Sie Rendite basierend auf SOFR + GOFO",
+    step3: "Erhalten Sie eine feste Belohnung, automatisch bei Fälligkeit ausgezahlt",
     step4: "Automatische Rücknahme am Laufzeitende",
-    features: "Institutionelle Merkmale",
-    insured: "Versicherte Verwahrung",
-    institutional: "Institutioneller Standard",
-    transparent: "Geprüft",
+    features: "Wichtige Bedingungen",
+    insured: "Fester Satz",
+    institutional: "Vorzeitiger Ausstieg Möglich",
+    transparent: "Automatische Auszahlung bei Fälligkeit",
     physical: "Physisch Gedeckt",
-    metalYield: "Erträge in Metall",
+    metalYield: "Im Selben Vermögenswert Ausgezahlt",
     onChain: "On-Chain",
-    yieldBenchmark: "Rendite-Raten abgeleitet aus institutionellen Edelmetallmärkten",
+    yieldBenchmark: "Fester Belohnungssatz, festgelegt und gezahlt von Auxite. Ihre Vermögenswerte werden nicht an Dritte verliehen.",
   },
   fr: {
     metalStaking: "Rendement Structuré des Métaux Précieux",
-    stakeAndEarn: "Participez aux programmes institutionnels de rendement structuré",
+    stakeAndEarn: "Bloquez votre métal ou vos AUXR pour une durée fixe et recevez une récompense fixe",
     totalLocked: "Total Engagé",
     activePositions: "Positions Actives",
     annualEarnings: "Rendements Annuels",
@@ -143,7 +143,7 @@ const translations: Record<string, Record<string, string>> = {
     myPositions: "Mes Positions",
     autoInvest: "Auto-Allocation",
     availableOffers: "Programmes de Rendement",
-    selectMetalTokens: "Sélectionnez vos avoirs métalliques et participez aux programmes de rendement",
+    selectMetalTokens: "Choisissez un actif à staker pour une récompense fixe",
     stakeEarn: "Déployer le Capital",
     minAmount: "Allocation Flexible",
     months: "Mois",
@@ -158,20 +158,20 @@ const translations: Record<string, Record<string, string>> = {
     howItWorks: "Comment ça marche",
     step1: "Sélectionnez vos avoirs métalliques alloués",
     step2: "Choisissez une durée de 3, 6 ou 12 mois",
-    step3: "Gagnez des rendements basés sur SOFR + GOFO",
+    step3: "Recevez une récompense fixe, versée automatiquement à l'échéance",
     step4: "Rachat automatique à la fin du terme",
-    features: "Caractéristiques Institutionnelles",
-    insured: "Garde Assurée",
-    institutional: "Niveau Institutionnel",
-    transparent: "Audité",
+    features: "Conditions Clés",
+    insured: "Taux Fixe",
+    institutional: "Sortie Anticipée Possible",
+    transparent: "Paiement Automatique à l'Échéance",
     physical: "Adossé Physiquement",
-    metalYield: "Rendements en Métal",
+    metalYield: "Payé dans le Même Actif",
     onChain: "On-Chain",
-    yieldBenchmark: "Taux de rendement dérivés des marchés institutionnels de métaux précieux",
+    yieldBenchmark: "Taux de récompense fixe, fixé et versé par Auxite. Vos actifs ne sont pas loués à des tiers.",
   },
   ar: {
     metalStaking: "برنامج العائد المهيكل للمعادن الثمينة",
-    stakeAndEarn: "شارك في برامج العائد المهيكل المؤسسية للمعادن الثمينة",
+    stakeAndEarn: "اقفل معدنك أو AUXR لمدة محددة واحصل على مكافأة ثابتة",
     totalLocked: "إجمالي الالتزام",
     activePositions: "المراكز النشطة",
     annualEarnings: "العوائد السنوية",
@@ -181,7 +181,7 @@ const translations: Record<string, Record<string, string>> = {
     myPositions: "مراكزي",
     autoInvest: "التخصيص التلقائي",
     availableOffers: "برامج العائد",
-    selectMetalTokens: "اختر حيازاتك المعدنية وشارك في برامج العائد",
+    selectMetalTokens: "اختر أصلاً لتخزينه مقابل مكافأة ثابتة",
     stakeEarn: "نشر رأس المال",
     minAmount: "تخصيص مرن",
     months: "شهر",
@@ -196,20 +196,20 @@ const translations: Record<string, Record<string, string>> = {
     howItWorks: "كيف يعمل",
     step1: "اختر حيازاتك المعدنية المخصصة",
     step2: "اختر مدة 3 أو 6 أو 12 شهراً",
-    step3: "اكسب عائداً بناءً على SOFR + GOFO",
+    step3: "احصل على مكافأة ثابتة تُدفع تلقائياً عند الاستحقاق",
     step4: "استرداد تلقائي في نهاية المدة",
-    features: "الميزات المؤسسية",
-    insured: "حفظ مؤمّن",
-    institutional: "مستوى مؤسسي",
-    transparent: "مدقق",
+    features: "الشروط الأساسية",
+    insured: "نسبة ثابتة",
+    institutional: "إمكانية الخروج المبكر",
+    transparent: "دفع تلقائي عند الاستحقاق",
     physical: "مدعوم فعلياً",
-    metalYield: "عوائد بالمعدن",
+    metalYield: "تُدفع بنفس الأصل",
     onChain: "على السلسلة",
-    yieldBenchmark: "معدلات العائد مشتقة من أسواق المعادن الثمينة المؤسسية",
+    yieldBenchmark: "نسبة مكافأة ثابتة تحددها وتدفعها Auxite. لا تُؤجَّر أصولك لأطراف ثالثة.",
   },
   ru: {
     metalStaking: "Структурированная Доходность Драгоценных Металлов",
-    stakeAndEarn: "Участвуйте в институциональных программах доходности драгоценных металлов",
+    stakeAndEarn: "Заблокируйте металл или AUXR на фиксированный срок и получите фиксированное вознаграждение",
     totalLocked: "Всего Обязательств",
     activePositions: "Активные Позиции",
     annualEarnings: "Годовые Доходы",
@@ -219,7 +219,7 @@ const translations: Record<string, Record<string, string>> = {
     myPositions: "Мои Позиции",
     autoInvest: "Авто-аллокация",
     availableOffers: "Программы Доходности",
-    selectMetalTokens: "Выберите ваши металлические активы и участвуйте в программах доходности",
+    selectMetalTokens: "Выберите актив для стейкинга с фиксированным вознаграждением",
     stakeEarn: "Разместить Капитал",
     minAmount: "Гибкая Аллокация",
     months: "Мес",
@@ -234,16 +234,16 @@ const translations: Record<string, Record<string, string>> = {
     howItWorks: "Как это работает",
     step1: "Выберите ваши аллоцированные металлические активы",
     step2: "Выберите срок 3, 6 или 12 месяцев",
-    step3: "Зарабатывайте доход на основе SOFR + GOFO",
+    step3: "Получите фиксированное вознаграждение, выплачиваемое автоматически при погашении",
     step4: "Автоматическое погашение в конце срока",
-    features: "Институциональные Особенности",
-    insured: "Застрахованное Хранение",
-    institutional: "Институциональный Уровень",
-    transparent: "Проверенный",
+    features: "Основные Условия",
+    insured: "Фиксированная Ставка",
+    institutional: "Досрочный Выход Возможен",
+    transparent: "Автоматическая Выплата при Погашении",
     physical: "Физически Обеспеченный",
-    metalYield: "Доходы в Металле",
+    metalYield: "Выплата в Том же Активе",
     onChain: "В Сети",
-    yieldBenchmark: "Ставки доходности получены из институциональных рынков драгоценных металлов",
+    yieldBenchmark: "Фиксированная ставка вознаграждения устанавливается и выплачивается Auxite. Ваши активы не передаются третьим лицам.",
   },
 };
 
@@ -311,9 +311,8 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
       {/* PRIORITY 5: Structured Metal Yield Badge */}
       <div className="mb-3 flex items-center justify-between">
         <div className="yield-positioning-badge">
-          <span>{isAuxr ? "Staking Reward" : "Structured Metal Yield"}</span>
+          <span>{isAuxr ? "Staking Reward" : "Fixed-Rate Staking"}</span>
         </div>
-        {!isAuxr && <span className="yield-benchmark-tag">SOFR + GOFO</span>}
       </div>
 
       <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -354,7 +353,7 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
             <div className="apy-tooltip-content" style={{ opacity: 1, visibility: 'visible' }}>
               {isAuxr
                 ? (t.auxrRewardNote || "Fixed reward rate paid by Auxite for locking AUXR. Not backed by a metal lease. Capacity is limited.")
-                : (t.yieldBenchmark || "Yield rates derived from institutional precious metals markets and short-term benchmark rates.")}
+                : t.yieldBenchmark}
             </div>
           )}
         </div>
@@ -441,11 +440,6 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
               <p className="text-xs sm:text-sm text-slate-400">{t.stakeAndEarn}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-slate-800/50 border border-[#d4a574]/20 self-start md:self-auto">
-            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#d4a574] animate-pulse"></div>
-            <span className="text-xs sm:text-sm text-slate-400">{engine === 'yield_builder' ? 'Counterparty Blend' : 'NY Fed + Calculated'}</span>
-            <span className="text-sm sm:text-lg font-bold text-[#E7D2A8]">SOFR: {(safeRates?.sofr || 3.66).toFixed(2)}%</span>
-          </div>
         </div>
 
         {/* Stats Grid - Neutral/Gold for yield metrics */}
@@ -486,22 +480,22 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">{availableOffers.map((offer) => <MetalOfferCard key={offer.metal} offer={offer} formatAPYRange={formatAPYRange} onAllocate={() => handleOpenModal(offer)} t={t} />)}</div>
             )}
 
-            {/* Counterparty Trust & Risk Disclosure */}
+            {/* How the reward works — Auxite pays it; nothing is leased out */}
             <div className="mt-4 space-y-2">
               <p className="text-[10px] sm:text-xs text-center text-slate-400 dark:text-slate-500">
                 {lang === 'tr'
-                  ? 'Kurumsal karşı taraflar, kıymetli maden bankaları ve metal finansman masalarını içermektedir.'
-                  : 'Institutional counterparties include bullion banks and metal financing desks.'}
+                  ? 'Ödüller Auxite tarafından sabit oranla ödenir. Varlıklarınız kiralanmaz veya üçüncü taraflara verilmez; süre boyunca hesabınızda kilitli kalır.'
+                  : 'Rewards are paid by Auxite at a fixed rate. Your assets are not leased or lent to third parties; they stay locked in your account for the term.'}
               </p>
               <p className="text-[9px] sm:text-[10px] text-center text-slate-400 dark:text-slate-500 italic">
                 {lang === 'tr'
-                  ? 'Gelir programlarına tahsis edilen sermaye, karşı taraf riskine tabi olabilir.'
-                  : 'Capital deployed into income programs may be subject to counterparty risk.'}
+                  ? 'Ödülün ödenmesi Auxite\'a bağlıdır; varlıkların piyasa değeri süre içinde düşebilir.'
+                  : 'Payment of the reward depends on Auxite; the market value of your assets may fall during the term.'}
               </p>
               <p className="text-[9px] sm:text-[10px] text-center text-slate-500 dark:text-slate-400 font-medium">
                 {lang === 'tr'
-                  ? 'Oranlar kurumsal metal finansman piyasalarından türetilmiştir ve değişkenlik gösterebilir.'
-                  : 'Rates are derived from institutional metal financing markets and may vary.'}
+                  ? 'Erken çıkışta anaparanın tamamı ve o ana kadar biriken ödülün yarısı ödenir.'
+                  : 'Early exit returns your full principal and half of the reward accrued so far.'}
               </p>
             </div>
           </div>
@@ -549,7 +543,7 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
               <span className="text-xs sm:text-sm font-medium text-[#d4a574]">{t.features}</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-              {[{ icon: "🔒", key: "insured" }, { icon: "🏢", key: "institutional" }, { icon: "📊", key: "transparent" }, { icon: "📦", key: "physical" }, { icon: "💰", key: "metalYield" }, { icon: "⛓️", key: "onChain" }].map((item, i) => (
+              {[{ icon: "📌", key: "insured" }, { icon: "↩️", key: "institutional" }, { icon: "⏱️", key: "transparent" }, { icon: "💰", key: "metalYield" }].map((item, i) => (
                 <div key={i} className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400"><span>{item.icon}</span><span>{t[item.key]}</span></div>
               ))}
             </div>
