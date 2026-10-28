@@ -31,6 +31,7 @@ interface LeaseRatesResponse {
   silver: MetalLeaseRates;
   platinum: MetalLeaseRates;
   palladium: MetalLeaseRates;
+  auxr: MetalLeaseRates;
   lastUpdated: string;
   sofr: number;
   gofo?: number;
@@ -102,6 +103,19 @@ const METAL_CONFIGS = {
     tvl: 150000,
     rateKey: "palladium" as const,
   },
+  AUXR: {
+    symbol: "AUXR",
+    nameEn: "Auxite Reserve",
+    nameTr: "Auxite Reserve",
+    icon: "/auxr_icon.png",
+    // Custody-only: there is no AUXR staking contract.
+    metalTokenAddress: "",
+    contractAddress: "",
+    minAmount: 0.1,
+    maxAmount: 0,
+    tvl: 0,
+    rateKey: "auxr" as const,
+  },
 };
 
 const FALLBACK_RATES: LeaseRatesResponse = {
@@ -109,6 +123,7 @@ const FALLBACK_RATES: LeaseRatesResponse = {
   silver: { "3m": 1.23, "6m": 1.73, "12m": 2.23 },
   platinum: { "3m": 2.03, "6m": 2.53, "12m": 3.03 },
   palladium: { "3m": 1.83, "6m": 2.33, "12m": 2.83 },
+  auxr: { "3m": 2.0, "6m": 2.5, "12m": 3.0 },
   lastUpdated: "2025-01-20",
   sofr: 4.33,
   gofo: 1.5,
@@ -128,29 +143,41 @@ export function useLeaseRates(options: UseLeaseRatesOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
   const [engine, setEngine] = useState<string>('unknown');
+  const [minAmounts, setMinAmounts] = useState<Record<string, number>>({});
+  const [paused, setPaused] = useState(false);
 
   const fetchRates = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch("/api/lease-rates", {
-        cache: "no-store",
-      });
+      // The staking ledger's own rates — the ones a stake is opened at.
+      const response = await fetch("/api/staking/products", { cache: "no-store" });
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
 
       const data = await response.json();
-
-      if (data.success && data.rates) {
-        setRates(data.rates);
-        setLastFetch(new Date());
-        if (data.engine) setEngine(data.engine);
-      } else {
+      if (!data.success || !Array.isArray(data.assets)) {
         throw new Error(data.error || "Invalid response");
       }
+
+      const next: LeaseRatesResponse = { ...FALLBACK_RATES, lastUpdated: new Date().toISOString(), source: "Auxite staking" };
+      const mins: Record<string, number> = {};
+      for (const a of data.assets) {
+        const cfg = (METAL_CONFIGS as Record<string, { rateKey: string }>)[a.asset];
+        if (!cfg) continue;
+        const r: MetalLeaseRates = { "3m": 0, "6m": 0, "12m": 0 };
+        for (const p of a.periods) r[`${p.months}m` as "3m" | "6m" | "12m"] = p.apy;
+        (next as any)[cfg.rateKey] = r;
+        mins[a.asset] = a.min;
+      }
+      setRates(next);
+      setMinAmounts(mins);
+      setPaused(!!data.paused);
+      setLastFetch(new Date());
+      setEngine("staking-ledger");
     } catch (err) {
       console.error("Failed to fetch lease rates:", err);
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -206,7 +233,7 @@ export function useLeaseRates(options: UseLeaseRatesOptions = {}) {
           isRange: metalRates["12m_range"] || false,
         },
       ],
-      minAmount: config.minAmount,
+      minAmount: minAmounts[key] ?? config.minAmount,
       maxAmount: config.maxAmount,
       tvl: config.tvl,
       lastUpdated: rates.lastUpdated,
@@ -243,6 +270,7 @@ export function useLeaseRates(options: UseLeaseRatesOptions = {}) {
     engine,
     sofr: rates.sofr,
     gofo: rates.gofo,
+    paused,
     refresh: fetchRates,
   };
 }
