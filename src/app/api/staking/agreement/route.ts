@@ -3,6 +3,8 @@
 // Swiss Private Bank + Structured Note Style
 // NO gradients, NO crypto vibes, NO startup aesthetics
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
+import { verifyNoteSignature } from '@/lib/staking/note-link';
 import { redis } from '@/lib/redis';
 import { formatAmount } from '@/lib/format';
 
@@ -546,6 +548,14 @@ export async function GET(request: NextRequest) {
     if (!stakeId) {
       return NextResponse.json({ error: 'stakeId required' }, { status: 400 });
     }
+    // Opened from an email, so there is no login token: the link carries an
+    // HMAC of the stakeId instead. No valid signature, no note.
+    if (!verifyNoteSignature(stakeId, searchParams.get('sig'))) {
+      return new NextResponse(
+        '<!doctype html><meta charset="utf-8"><title>Auxite</title><p style="font-family:sans-serif;padding:24px">This link is invalid or has expired. Please contact support@auxite.io for a copy of your Participation Note.</p>',
+        { status: 403, headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+      );
+    }
 
     const stake = await redis.hgetall(`stake:${stakeId}`) as any;
     if (!stake || !stake.id) {
@@ -601,8 +611,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST — Generate participation note with custom data (preview/testing)
+// POST — Generate participation note with custom data (preview/testing).
+// Admin only: open, it rendered an official-looking note with any content a
+// caller chose, on our domain.
 export async function POST(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (!auth.authorized) return auth.response!;
   try {
     const body = await request.json();
 
