@@ -16,10 +16,10 @@ const STORAGE_KEYS = {
 const translations: Record<string, Record<string, string>> = {
   tr: {
     pageTitle: "Kıymetli Maden Yapılandırılmış Getiri Programı",
-    pageDesc: "Kurumsal kıymetli maden getiri programlarına katılın",
+    pageDesc: "Varlığınızı sabit bir süre kilitleyin, sabit bir ödül kazanın",
     walletRequired: "Giriş Gerekli",
     connectWalletDesc: "Getiri programına katılmak için hesabınıza giriş yapın",
-    yieldBadge: "SOFR + GOFO Tabanlı",
+    yieldBadge: "Sabit Oranlı Stake",
     signIn: "Giriş Yap",
     createAccount: "Hesap Oluştur",
     yieldFormula: "Getiri = SOFR - GOFO + Platform Marjı",
@@ -30,16 +30,16 @@ const translations: Record<string, Record<string, string>> = {
     step2Title: "Vade Seçin",
     step2Desc: "3, 6 veya 12 aylık vade seçeneklerinden birini seçin",
     step3Title: "Getiri Elde Edin",
-    step3Desc: "SOFR + GOFO bazlı kurumsal yapılandırılmış getiri elde edin",
+    step3Desc: "Vade sonunda otomatik ödenen sabit bir ödül kazanın",
     securedBy: "NY Fed SOFR ile Desteklenir",
     realTimeRates: "Gerçek Zamanlı Oranlar",
   },
   en: {
     pageTitle: "Precious Metals Structured Yield Program",
-    pageDesc: "Participate in institutional precious metals yield programs",
+    pageDesc: "Lock your asset for a fixed term and earn a fixed reward",
     walletRequired: "Sign In Required",
     connectWalletDesc: "Sign in to your account to access yield programs",
-    yieldBadge: "SOFR + GOFO Based",
+    yieldBadge: "Fixed-Rate Staking",
     signIn: "Sign In",
     createAccount: "Create Account",
     yieldFormula: "Yield = SOFR - GOFO + Platform Margin",
@@ -50,16 +50,16 @@ const translations: Record<string, Record<string, string>> = {
     step2Title: "Choose Term",
     step2Desc: "Select from 3, 6, or 12 month term options",
     step3Title: "Earn Returns",
-    step3Desc: "Earn institutional yield returns based on SOFR + GOFO",
+    step3Desc: "Earn a fixed reward, paid automatically at maturity",
     securedBy: "Secured by NY Fed SOFR",
     realTimeRates: "Real-Time Rates",
   },
   de: {
     pageTitle: "Edelmetall-Strukturierte Rendite",
-    pageDesc: "Nehmen Sie an institutionellen Edelmetall-Rendite-Programmen teil",
+    pageDesc: "Sperren Sie Ihren Vermögenswert für eine feste Laufzeit und erhalten Sie eine feste Belohnung",
     walletRequired: "Anmeldung erforderlich",
     connectWalletDesc: "Melden Sie sich an, um auf Rendite-Programme zuzugreifen",
-    yieldBadge: "SOFR + GOFO Basiert",
+    yieldBadge: "Staking mit Festzins",
     signIn: "Anmelden",
     createAccount: "Konto erstellen",
     yieldFormula: "Rendite = SOFR - GOFO + Plattformmarge",
@@ -70,16 +70,16 @@ const translations: Record<string, Record<string, string>> = {
     step2Title: "Laufzeit wählen",
     step2Desc: "Wählen Sie aus 3, 6 oder 12 Monaten Laufzeit",
     step3Title: "Erträge erhalten",
-    step3Desc: "Erhalten Sie institutionelle Rendite-Erträge basierend auf SOFR + GOFO",
+    step3Desc: "Erhalten Sie eine feste Belohnung, automatisch bei Fälligkeit ausgezahlt",
     securedBy: "Gesichert durch NY Fed SOFR",
     realTimeRates: "Echtzeit-Kurse",
   },
   fr: {
     pageTitle: "Rendement Structuré des Métaux Précieux",
-    pageDesc: "Participez aux programmes institutionnels de rendement structuré des métaux précieux",
+    pageDesc: "Bloquez votre actif pour une durée fixe et recevez une récompense fixe",
     walletRequired: "Connexion requise",
     connectWalletDesc: "Connectez-vous pour accéder aux programmes de rendement",
-    yieldBadge: "Basé sur SOFR + GOFO",
+    yieldBadge: "Staking à Taux Fixe",
     signIn: "Se connecter",
     createAccount: "Créer un compte",
     yieldFormula: "Rendement = SOFR - GOFO + Marge Plateforme",
@@ -90,16 +90,16 @@ const translations: Record<string, Record<string, string>> = {
     step2Title: "Choisir la durée",
     step2Desc: "Sélectionnez parmi les options de 3, 6 ou 12 mois",
     step3Title: "Obtenir des rendements",
-    step3Desc: "Obtenez des rendements structurés institutionnels basés sur SOFR + GOFO",
+    step3Desc: "Recevez une récompense fixe, versée automatiquement à l'échéance",
     securedBy: "Sécurisé par NY Fed SOFR",
     realTimeRates: "Taux en temps réel",
   },
   ar: {
     pageTitle: "العائد المهيكل للمعادن الثمينة",
-    pageDesc: "شارك في برامج العائد المهيكل للمعادن الثمينة المؤسسية",
+    pageDesc: "اقفل أصلك لمدة محددة واحصل على مكافأة ثابتة",
     walletRequired: "تسجيل الدخول مطلوب",
     connectWalletDesc: "سجل دخولك للوصول إلى برامج العائد",
-    yieldBadge: "مبني على SOFR + GOFO",
+    yieldBadge: "تخزين بنسبة ثابتة",
     signIn: "تسجيل الدخول",
     createAccount: "إنشاء حساب",
     yieldFormula: "العائد = SOFR - GOFO + هامش المنصة",
@@ -110,16 +110,16 @@ const translations: Record<string, Record<string, string>> = {
     step2Title: "اختر المدة",
     step2Desc: "اختر من خيارات 3 أو 6 أو 12 شهرًا",
     step3Title: "احصل على العوائد",
-    step3Desc: "احصل على عوائد مهيكلة مؤسسية بناءً على SOFR + GOFO",
+    step3Desc: "احصل على مكافأة ثابتة تُدفع تلقائياً عند الاستحقاق",
     securedBy: "مؤمن بواسطة NY Fed SOFR",
     realTimeRates: "أسعار في الوقت الفعلي",
   },
   ru: {
     pageTitle: "Структурированная Доходность Драгоценных Металлов",
-    pageDesc: "Участвуйте в институциональных программах доходности драгоценных металлов",
+    pageDesc: "Заблокируйте актив на фиксированный срок и получите фиксированное вознаграждение",
     walletRequired: "Требуется вход",
     connectWalletDesc: "Войдите в аккаунт для доступа к программам доходности",
-    yieldBadge: "На базе SOFR + GOFO",
+    yieldBadge: "Стейкинг с Фиксированной Ставкой",
     signIn: "Войти",
     createAccount: "Создать аккаунт",
     yieldFormula: "Доход = SOFR - GOFO + Маржа Платформы",
@@ -130,7 +130,7 @@ const translations: Record<string, Record<string, string>> = {
     step2Title: "Выбрать срок",
     step2Desc: "Выберите из вариантов на 3, 6 или 12 месяцев",
     step3Title: "Получить доходы",
-    step3Desc: "Получайте институциональные доходы от структурированной доходности на основе SOFR + GOFO",
+    step3Desc: "Получите фиксированное вознаграждение, выплачиваемое автоматически при погашении",
     securedBy: "Обеспечено NY Fed SOFR",
     realTimeRates: "Котировки в реальном времени",
   },
@@ -143,7 +143,7 @@ export default function StakePage() {
   const [localWalletAddress, setLocalWalletAddress] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch real-time SOFR + GOFO rates
+  // Staking rates (the ledger's own, via /api/staking/products)
   const { sofr, gofo, leaseOffers, isLoading: ratesLoading, lastUpdated, source, formatAPYRange } = useLeaseRates({ lang: lang as "tr" | "en" });
 
   useEffect(() => {
@@ -180,7 +180,7 @@ export default function StakePage() {
                 {t.pageDesc}
               </p>
             </div>
-            {/* SOFR + GOFO Badge */}
+            {/* Fixed-rate badge */}
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#BFA181]/10 border border-[#BFA181]/20">
               <div className="w-2 h-2 rounded-full bg-[#BFA181] animate-pulse"></div>
               <span className="text-xs font-medium text-[#BFA181] dark:text-[#BFA181]">{t.yieldBadge}</span>
@@ -259,62 +259,6 @@ export default function StakePage() {
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* Yield Formula Info - Institutional Navy + Gold */}
-            <div className="rounded-2xl border border-slate-700/30 bg-slate-900/50 dark:bg-slate-900/80 p-5 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#d4a574]/20 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-[#d4a574]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-slate-200">{t.institutionalGrade}</div>
-                    <div className="text-xs text-slate-400">{t.securedBy}</div>
-                  </div>
-                </div>
-                <div className="px-4 py-2 rounded-lg bg-slate-800 border border-[#d4a574]/20">
-                  <code className="text-xs sm:text-sm font-mono text-[#E7D2A8]">
-                    APY = SOFR - GOFO + Margin
-                  </code>
-                </div>
-              </div>
-            </div>
-
-            {/* SOFR + GOFO Live Display */}
-            <div className="rounded-2xl border border-[#BFA181]/20 bg-gradient-to-r from-[#BFA181]/10 to-orange-50 dark:from-[#BFA181]/5 dark:to-orange-500/5 p-5 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#BFA181]/20 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-[#BFA181] dark:text-[#BFA181]">{t.realTimeRates}</div>
-                    <div className="text-xs text-[#BFA181] dark:text-[#BFA181]">{source || "NY Fed + Calculated"}</div>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <div className="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-[#BFA181]/20">
-                    <div className="text-[10px] text-slate-500 uppercase tracking-wide">SOFR</div>
-                    <div className="text-lg font-bold text-[#BFA181] dark:text-[#BFA181]">{sofr?.toFixed(2) || "4.33"}%</div>
-                  </div>
-                  <div className="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-[#BFA181]/20">
-                    <div className="text-[10px] text-slate-500 uppercase tracking-wide">GOFO</div>
-                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{gofo?.toFixed(2) || "1.50"}%</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* APY Formula Display */}
-              <div className="p-3 rounded-lg bg-white/50 dark:bg-slate-800/50 border border-[#BFA181]/10 mb-4">
-                <code className="text-xs sm:text-sm font-mono text-slate-600 dark:text-slate-400">
-                  Base Rate = {sofr?.toFixed(2) || "4.33"}% (SOFR) - {gofo?.toFixed(2) || "1.50"}% (GOFO) = <span className="text-[#D4B47A] font-bold">{((sofr || 4.33) - (gofo || 1.5)).toFixed(2)}%</span>
-                </code>
               </div>
             </div>
 
