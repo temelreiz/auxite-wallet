@@ -3,6 +3,9 @@ import { redis } from "@/lib/redis";
 import { sendStakingAgreementEmail } from "@/lib/email";
 import { getUserStakesOnChain, checkDelegationApproval } from "@/lib/staking-service";
 import { openStake, readPositions, type StakePosition } from "@/lib/staking/ledger";
+import { noteUrl } from "@/lib/staking/note-link";
+
+const NOTE_BASE_URL = "https://vault.auxite.io";
 import { getUserLanguage } from "@/lib/user-language";
 import { recordExposureChange, METALS, type MetalSymbol } from "@/lib/treasury-exposure";
 import { requireUser } from "@/lib/security/require-user";
@@ -121,6 +124,14 @@ export async function GET(request: NextRequest) {
     const delegationStatus: Record<string, boolean> = {};
     for (const metal of ["AUXG", "AUXS", "AUXPT", "AUXPD"]) {
       delegationStatus[metal] = await checkDelegationApproval(address, metal);
+    }
+
+    // Each position carries its signed Participation Note link: the note is
+    // opened in a browser with no login token, and the signature is what
+    // lets it through (src/lib/staking/note-link.ts). The caller is already
+    // authenticated as the owner here, so handing them the link is safe.
+    for (const st of allStakes) {
+      if (st && st.id) st.noteUrl = noteUrl(NOTE_BASE_URL, String(st.id));
     }
 
     return NextResponse.json({
@@ -253,7 +264,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      stake: newStake,
+      stake: { ...newStake, noteUrl: noteUrl(NOTE_BASE_URL, stakeId) },
       agreementNo,
       onChain: false,
       txHash: null,
