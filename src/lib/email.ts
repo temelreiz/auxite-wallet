@@ -5,6 +5,7 @@
 // Think: Private bank statement, NOT fintech campaign
 
 import { Resend } from 'resend';
+import { noteUrl } from './staking/note-link';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@auxite.io';
@@ -766,7 +767,7 @@ export async function sendStakingAgreementEmail(
     <p>${t.encumbered}</p>
     <p>${t.noteIssued}</p>
 
-    <a href="${VAULT_URL}/api/staking/agreement?stakeId=${data.stakeId}" class="cta-button">${t.viewNote}</a>
+    <a href="${noteUrl(VAULT_URL, data.stakeId)}" class="cta-button">${t.viewNote}</a>
 
     <div class="notice">
       ${lang !== 'en' ? `${yieldNoticeTranslations[lang] || ''}<br><br>` : ''}The reward is a fixed rate paid by Auxite. It is not funded by leasing your assets or by any third-party income, and your assets are not lent or deployed to anyone. Payment of the reward depends on Auxite. This document is electronically issued and recorded within Auxite's ledger.
