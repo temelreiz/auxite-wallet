@@ -3,7 +3,7 @@
 // Institutional custody statement layout
 // NO gradients, NO crypto vibes, NO startup aesthetics
 import { NextRequest, NextResponse } from 'next/server';
-import { DOCUMENT_ISSUER } from '@/lib/issuer';
+import { DOCUMENT_ISSUER, DOCUMENT_VAULT } from '@/lib/issuer';
 import { redis } from '@/lib/redis';
 import { createHash } from 'crypto';
 import QRCode from 'qrcode';
@@ -58,13 +58,6 @@ const PURITY_BY_METAL: Record<string, string> = {
 };
 
 const NOT_SPECIFIED = 'Not specified';
-
-const VAULT_INFO: Record<string, { name: string; id: string; location: string; country: string }> = {
-  IST: { name: 'Vault A – Istanbul Facility', id: 'TR-IST-VAULT-01', location: 'Istanbul', country: 'Turkey' },
-  ZH: { name: 'Vault B – Zurich Facility', id: 'CH-ZRH-VAULT-01', location: 'Zurich', country: 'Switzerland' },
-  DB: { name: 'Vault C – Dubai Facility', id: 'AE-DXB-VAULT-01', location: 'Dubai', country: 'UAE' },
-  LN: { name: 'Vault D – London Facility', id: 'UK-LDN-VAULT-01', location: 'London', country: 'United Kingdom' },
-};
 
 // Issuing entity: src/lib/issuer.ts (one entity for every vault).
 
@@ -137,12 +130,8 @@ export async function GET(request: NextRequest) {
     }
 
     const certHash = generateCertificateHash(certificate);
-    const vault = VAULT_INFO[certificate.vault] || {
-      name: `Vault – ${certificate.vaultName || certificate.vault}`,
-      id: `${certificate.vault}-VAULT-01`,
-      location: certificate.vaultName || certificate.vault,
-      country: '',
-    };
+    // Metal is held in Istanbul; the stored vault code is not trusted (src/lib/issuer.ts).
+    const vault = DOCUMENT_VAULT;
     const metalInfo = METAL_NAMES[certificate.metal] || { full: certificate.metal, symbol: '' };
     const purity = PURITY_BY_METAL[certificate.metal] || certificate.purity;
     const form = certificate.form || NOT_SPECIFIED;

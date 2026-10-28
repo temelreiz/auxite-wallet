@@ -1,7 +1,7 @@
 // app/api/certificates/verify/route.ts
 // Certificate Verification API with On-Chain Verification
 import { NextRequest, NextResponse } from 'next/server';
-import { DOCUMENT_ISSUER } from '@/lib/issuer';
+import { DOCUMENT_ISSUER, DOCUMENT_VAULT } from '@/lib/issuer';
 import { redis } from '@/lib/redis';
 import { createHash } from 'crypto';
 
@@ -27,13 +27,6 @@ function maskUid(uid: string): string {
   if (!uid || uid.length < 6) return uid;
   return uid.substring(0, 4) + '****' + uid.substring(uid.length - 2);
 }
-
-const VAULT_NAMES: Record<string, string> = {
-  IST: 'Istanbul',
-  ZH: 'Zurich',
-  DB: 'Dubai',
-  LN: 'London',
-};
 
 const METAL_NAMES: Record<string, string> = {
   AUXG: 'Gold',
@@ -120,8 +113,8 @@ export async function GET(request: NextRequest) {
         metalName: METAL_NAMES[certificate.metal] || certificate.metal,
         grams: certificate.grams,
         serialNumber: certificate.serialNumber,
-        vault: certificate.vault,
-        vaultName: VAULT_NAMES[certificate.vault] || certificate.vaultName || certificate.vault,
+        vault: DOCUMENT_VAULT.code,
+        vaultName: DOCUMENT_VAULT.location,
         purity: certificate.purity,
         issuedAt: certificate.issuedAt,
         issuer: DOCUMENT_ISSUER.name,
