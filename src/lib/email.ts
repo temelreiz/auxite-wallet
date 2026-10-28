@@ -1,5 +1,5 @@
 // lib/email.ts
-// INSTITUTIONAL EMAIL SERVICE — Auxite Precious Metals AG
+// INSTITUTIONAL EMAIL SERVICE — Auxite Kıymetli Madenler Ticaret A.Ş.
 // Swiss Private Bank Style — Plain, Dense, Structured
 // NO gradients, NO crypto vibes, NO marketing banners
 // Think: Private bank statement, NOT fintech campaign

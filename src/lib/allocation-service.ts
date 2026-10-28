@@ -1,6 +1,7 @@
 // lib/allocation-service.ts
 // Shared allocation creation logic - used by both /api/trade and /api/allocations
 import { redis } from '@/lib/redis';
+import { DOCUMENT_ISSUER } from '@/lib/issuer';
 import { createHash } from 'crypto';
 import { sendCertificateEmail } from '@/lib/email';
 import { getUserLanguage } from '@/lib/user-language';
@@ -252,7 +253,7 @@ export async function createAllocation(params: CreateAllocationParams): Promise<
     barCount: allocations.length.toString(),
     issuedAt: now,
     status: "active",
-    issuer: "Auxite Precious Metals AG",
+    issuer: DOCUMENT_ISSUER.name,
     document_language: documentLanguage,
     allocationEventId: `ALLOC-EVT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
     ledgerReference: `AUX-LEDGER-${new Date().getFullYear()}-${Math.floor(Math.random() * 999999).toString().padStart(6, '0')}`,

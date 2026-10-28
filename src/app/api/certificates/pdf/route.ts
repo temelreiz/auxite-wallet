@@ -3,6 +3,7 @@
 // Institutional custody statement layout
 // NO gradients, NO crypto vibes, NO startup aesthetics
 import { NextRequest, NextResponse } from 'next/server';
+import { DOCUMENT_ISSUER } from '@/lib/issuer';
 import { redis } from '@/lib/redis';
 import { createHash } from 'crypto';
 import QRCode from 'qrcode';
@@ -65,13 +66,7 @@ const VAULT_INFO: Record<string, { name: string; id: string; location: string; c
   LN: { name: 'Vault D – London Facility', id: 'UK-LDN-VAULT-01', location: 'London', country: 'United Kingdom' },
 };
 
-// Vault-based issuer entities — jurisdiction-specific legal entities
-const ISSUER_BY_VAULT: Record<string, { name: string; address: string }> = {
-  IST: { name: 'Auxite Kıymetli Madenler Ticaret A.Ş.', address: 'Istanbul, Turkey' },
-  ZH:  { name: 'Auxite Precious Metals AG', address: 'Zurich, Switzerland' },
-  DB:  { name: 'Auxite Precious Metals Trading LLC', address: 'Dubai, UAE' },
-  LN:  { name: 'Auxite Kıymetli Madenler Ticaret A.Ş.', address: 'Istanbul, Turkey' },
-};
+// Issuing entity: src/lib/issuer.ts (one entity for every vault).
 
 // ═══════════════════════════════════════════════
 // LANGUAGE LOCK — Certificate issuance language is a legal artifact.
@@ -238,10 +233,7 @@ export async function GET(request: NextRequest) {
       },
 
       // Issuer — vault-based entity
-      issuer: ISSUER_BY_VAULT[certificate.vault] || {
-        name: 'Auxite Precious Metals AG',
-        address: 'Zurich, Switzerland',
-      },
+      issuer: DOCUMENT_ISSUER,
     };
 
     if (format === 'html' || format === 'pdf') {
