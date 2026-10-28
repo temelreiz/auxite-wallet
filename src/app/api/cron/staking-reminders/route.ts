@@ -5,7 +5,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
-import { recordExposureChange, type MetalSymbol } from "@/lib/treasury-exposure";
+import { recordExposureChange, METALS, type MetalSymbol } from "@/lib/treasury-exposure";
+import { settleStake } from "@/lib/staking/ledger";
 import { getAccruedReward } from "@/lib/yield-accounting";
 
 const redis = Redis.fromEnv();
@@ -56,7 +57,6 @@ export async function GET(request: NextRequest) {
         results.usersChecked++;
 
         const positions = await redis.lrange(stakingKey, 0, -1);
-        let updated = false;
 
         for (let i = 0; i < positions.length; i++) {
           const pos: StakePosition = typeof positions[i] === "string"
@@ -71,73 +71,43 @@ export async function GET(request: NextRequest) {
           // ─── MATURITY: Vadesi dolmuş pozisyonları tamamla ───
           if (pos.endDate <= now) {
             try {
-              // Prefer the new accrual ledger when it has positive grams
-              // (Phase 2/3 hedge income), otherwise fall back to the
-              // legacy promised `expectedReward`. This keeps existing
-              // stakes paying out exactly as before until real income
-              // sources come online.
-              let reward = pos.expectedReward;
+              // Prefer the accrual ledger when it has booked real income for
+              // this position; otherwise the promised expectedReward.
+              let rewardOverride: number | undefined;
               try {
                 const accrued = await getAccruedReward(pos.id);
-                if (accrued > 0) reward = accrued;
+                if (accrued > 0) rewardOverride = accrued;
               } catch { /* best-effort */ }
-              const totalReturn = pos.amount + reward;
 
-              // Bakiyeye geri ekle (principal + full reward)
-              const balanceKey = `user:${address}:balance`;
-              const multi = redis.multi();
-              multi.hincrbyfloat(balanceKey, pos.metal, totalReturn);
-
-              // Platform yield tracking
-              if (reward > 0) {
-                multi.hincrbyfloat(`platform:yield:paid:${pos.metal}`, "total", reward);
-                multi.hincrbyfloat(`platform:yield:paid:${pos.metal}`, "count", 1);
+              // settleStake flips the position and pays it in one atomic step
+              // under the user's balance lock. It used to be paid here and
+              // marked "completed", while a user withdraw only refused
+              // "withdrawn" — so a matured position could be paid twice.
+              const settled = await settleStake({ address, positionId: pos.id, onlyIfMatured: true, rewardOverride });
+              if (!settled.ok) {
+                // 409 = the user or another run got there first; try again next run.
+                if (settled.status !== 409) results.errors.push(`maturity:${pos.id}: ${settled.error}`);
+                continue;
               }
+              const reward = settled.reward;
+              const totalReturn = settled.principal + reward;
 
-              // Platform staked tracking
-              multi.hincrbyfloat(`platform:staked:${pos.metal}`, "active", -pos.amount);
-
-              // Transaction kaydı
-              const txKey = `user:${address}:transactions`;
-              multi.lpush(txKey, JSON.stringify({
-                id: `maturity_${now}_${Math.random().toString(36).substr(2, 9)}`,
-                type: "unstake",
-                metal: pos.metal.toUpperCase(),
-                amount: pos.amount.toString(),
-                reward: reward.toFixed(6),
-                totalReturn: totalReturn.toFixed(6),
-                isEarly: false,
-                status: "completed",
-                timestamp: now,
-                originalPositionId: pos.id,
-                auto: true,
-              }));
-
-              await multi.exec();
-
-              // Treasury exposure ledger — locked balance shrinks by
-              // principal, total grows by the reward we just minted to
-              // the user. Best-effort; doesn't block the maturity flow.
-              try {
-                await recordExposureChange({
-                  metal: pos.metal.toUpperCase() as MetalSymbol,
-                  type: "unstake",
-                  amount: pos.amount,
-                  rewardGrams: reward,
-                  refId: pos.id,
-                  walletAddress: address,
-                  reason: `maturity:reward=${reward.toFixed(6)}g`,
-                });
-              } catch (expErr: any) {
-                console.warn(`[treasury] exposure record failed (non-fatal):`, expErr?.message);
+              // Treasury exposure ledger (metals only) — best-effort.
+              if ((METALS as string[]).includes(pos.metal.toUpperCase())) {
+                try {
+                  await recordExposureChange({
+                    metal: pos.metal.toUpperCase() as MetalSymbol,
+                    type: "unstake",
+                    amount: pos.amount,
+                    rewardGrams: reward,
+                    refId: pos.id,
+                    walletAddress: address,
+                    reason: `maturity:reward=${reward.toFixed(6)}`,
+                  });
+                } catch (expErr: any) {
+                  console.warn(`[treasury] exposure record failed (non-fatal):`, expErr?.message);
+                }
               }
-
-              // Pozisyonu güncelle
-              pos.status = "completed";
-              pos.actualReward = reward;
-              pos.withdrawnAt = now;
-              await redis.lset(stakingKey, i, JSON.stringify(pos));
-              updated = true;
 
               results.matured++;
 

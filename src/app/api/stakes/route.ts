@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/redis";
 import { sendStakingAgreementEmail } from "@/lib/email";
-import { stakeOnChain, getUserStakesOnChain, checkDelegationApproval } from "@/lib/staking-service";
+import { getUserStakesOnChain, checkDelegationApproval } from "@/lib/staking-service";
+import { openStake, readPositions, type StakePosition } from "@/lib/staking/ledger";
 import { getUserLanguage } from "@/lib/user-language";
-import { recordExposureChange, type MetalSymbol } from "@/lib/treasury-exposure";
+import { recordExposureChange, METALS, type MetalSymbol } from "@/lib/treasury-exposure";
 import { requireUser } from "@/lib/security/require-user";
 import { assertAccountActive } from "@/lib/security/account-guard";
 
@@ -12,7 +13,30 @@ const METAL_NAMES: Record<string, string> = {
   AUXS: "Silver",
   AUXPT: "Platinum",
   AUXPD: "Palladium",
+  AUXR: "Auxite Reserve",
 };
+
+/** Ledger position → the shape the web app has always read from this route. */
+function toLegacyShape(p: StakePosition, documentLanguage?: string) {
+  return {
+    id: p.id,
+    agreementNo: p.agreementNo || p.id,
+    metal: p.metal.toUpperCase(),
+    amount: Number(p.amount).toFixed(4),
+    duration: p.duration,
+    durationMonths: p.durationMonths || Math.round(p.duration / 30),
+    apy: Number(p.apy).toFixed(2),
+    startDate: new Date(p.startDate).toISOString(),
+    endDate: new Date(p.endDate).toISOString(),
+    status: p.status,
+    createdAt: new Date(p.startDate).toISOString(),
+    onChain: false,
+    txHash: null,
+    stakeCode: null,
+    ...(documentLanguage ? { document_language: documentLanguage } : {}),
+    source: "ledger",
+  };
+}
 
 // Helper: Get user email from Redis (same pattern as transfer/withdraw)
 async function getUserEmail(address: string): Promise<{ email?: string; name?: string }> {
@@ -73,8 +97,11 @@ export async function GET(request: NextRequest) {
       if (!Array.isArray(redisStakes)) redisStakes = [];
     }
 
-    // Merge stakes (on-chain takes priority)
-    const allStakes = [...onChainStakes];
+    // Merge stakes (on-chain takes priority), then the ledger's positions.
+    const allStakes: any[] = [...onChainStakes];
+    if (source === "redis" || source === "hybrid") {
+      for (const p of await readPositions(address)) allStakes.push(toLegacyShape(p));
+    }
     
     // Add Redis stakes that aren't on-chain
     for (const rs of redisStakes) {
@@ -129,97 +156,33 @@ export async function POST(request: NextRequest) {
 
   try {
     const amountNum = parseFloat(amount);
+    const agreementNo = generateAgreementNo();
 
-    // ── LOCK GUARD (Auxite Borrow) ───────────────────────────────────────────
-    // Staking moves metal into the YIELDING state → grams must be AVAILABLE (not
-    // locked as borrow collateral, not already staked). One gram, one job.
-    // (addYielding marking + existing-stake backfill = Phase 4.)
-    {
-      const { assertAvailable } = await import("@/lib/allocation-service");
-      const guard = await assertAvailable(address, metal, amountNum);
-      if (!guard.ok) {
-        return NextResponse.json({ success: false, error: guard.error, available: guard.available, locked: guard.locked, yielding: guard.yielding }, { status: 400 });
-      }
+    // The custody stake goes through the staking ledger. It used to try a
+    // server-side on-chain stake against the retired V8 tokens (which custody
+    // accounts never hold) and then fall back to a Redis record that took its
+    // APY from this request's body and never locked the metal — so the same
+    // grams could be staked and still sold. The ledger sets the rate itself,
+    // locks metals through the yielding encumbrance, and debits AUXR.
+    const opened = await openStake({ address, asset: metal, amount: amountNum, duration: Number(duration), agreementNo });
+    if (!opened.ok) {
+      const { ok: _ok, status, ...rest } = opened;
+      return NextResponse.json({ success: false, ...rest }, { status });
     }
-
-    const durationMonths = duration === 91 ? 3 : duration === 181 ? 6 : duration === 366 ? 12 : duration;
-    
-    let stakeResult: any = null;
-    let agreementNo = generateAgreementNo();
-    let stakeId = `STAKE_${Date.now()}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-
-    // Try on-chain staking first
-    if (useOnChain) {
-      console.log(`🔄 Attempting on-chain stake: ${amountNum}g ${metal} for ${durationMonths} months`);
-      
-      stakeResult = await stakeOnChain(
-        address,
-        metal as "AUXG" | "AUXS" | "AUXPT" | "AUXPD",
-        amountNum,
-        durationMonths as 3 | 6 | 12,
-        false, // compounding
-        0 // allocationId
-      );
-
-      if (stakeResult.success) {
-        console.log(`✅ On-chain stake successful: ${stakeResult.txHash}`);
-        stakeId = stakeResult.shortCode || stakeResult.stakeCode || stakeId;
-        agreementNo = stakeResult.shortCode || agreementNo;
-      } else {
-        console.log(`⚠️ On-chain stake failed: ${stakeResult.error}`);
-        // If delegation not approved, return error with instructions
-        if (stakeResult.error?.includes("delegation")) {
-          return NextResponse.json({
-            success: false,
-            error: "Delegation not approved",
-            message: "Please approve delegation in your wallet first. Call approveDelegation() on the token contract.",
-            needsDelegation: true,
-            metal,
-          }, { status: 400 });
-        }
-        // Fall back to Redis for other errors
-        console.log(`⚠️ Falling back to Redis stake`);
-      }
-    }
-
-    // Save to Redis (either as backup or primary if on-chain failed)
-    const key = `stakes:${address.toLowerCase()}`;
-    const existingData = await redis.get(key);
-    const existing = existingData ? (typeof existingData === "string" ? JSON.parse(existingData) : existingData) : [];
-    const stakes = Array.isArray(existing) ? existing : [];
-
-    const lockDays = durationMonths === 3 ? 91 : durationMonths === 6 ? 181 : 366;
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + lockDays);
-
-    const apyPercent = apy || "2.0";
+    const position = opened.position;
+    const stakeId = position.id;
+    const durationMonths = position.durationMonths;
+    const lockDays = position.duration;
+    const apyPercent = position.apy.toFixed(2);
+    const startDate = new Date(position.startDate);
+    const endDate = new Date(position.endDate);
 
     // Language lock: capture client language at agreement creation (immutable legal artifact)
     const documentLanguage = await getUserLanguage(address.toLowerCase());
 
-    const newStake = {
-      id: stakeId,
-      agreementNo,
-      metal,
-      amount: amountNum.toFixed(4),
-      duration: lockDays,
-      durationMonths,
-      apy: apyPercent,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      status: "active",
-      createdAt: new Date().toISOString(),
-      onChain: stakeResult?.success || false,
-      txHash: stakeResult?.txHash || null,
-      stakeCode: stakeResult?.stakeCode || null,
-      document_language: documentLanguage,
-    };
+    const newStake = toLegacyShape(position, documentLanguage);
 
-    stakes.push(newStake);
-    await redis.set(key, JSON.stringify(stakes));
-
-    // Save stake details separately
+    // Participation-note details (read by /api/staking/agreement).
     await redis.hset(`stake:${stakeId}`, {
       ...newStake,
       userAddress: address.toLowerCase(),
@@ -228,9 +191,9 @@ export async function POST(request: NextRequest) {
     // Treasury exposure ledger — record the lock so Phase 2 hedge engine and
     // /api/admin/treasury/exposure can see it. Best-effort; never block the
     // stake creation if the ledger write itself fails.
-    try {
+    if (METALS.includes(String(metal).toUpperCase() as MetalSymbol)) try {
       await recordExposureChange({
-        metal: metal as MetalSymbol,
+        metal: String(metal).toUpperCase() as MetalSymbol,
         type: "stake",
         amount: amountNum,
         refId: stakeId,
@@ -241,7 +204,7 @@ export async function POST(request: NextRequest) {
       console.warn(`[treasury] exposure record failed (non-fatal):`, expErr?.message);
     }
 
-    console.log(`✅ Stake saved: ${stakeId} - ${amount} ${metal} for ${lockDays} days (onChain: ${newStake.onChain})`);
+    console.log(`✅ Stake saved: ${stakeId} - ${amount} ${metal} for ${lockDays} days`);
 
     // Send email — auto-retrieve from Redis if not provided in body
     let userEmail = email;
@@ -292,11 +255,9 @@ export async function POST(request: NextRequest) {
       success: true,
       stake: newStake,
       agreementNo,
-      onChain: stakeResult?.success || false,
-      txHash: stakeResult?.txHash || null,
-      message: stakeResult?.success 
-        ? "Stake created on-chain successfully" 
-        : "Stake created (off-chain)",
+      onChain: false,
+      txHash: null,
+      message: "Stake created",
     });
   } catch (error: any) {
     console.error("Stake creation error:", error);
