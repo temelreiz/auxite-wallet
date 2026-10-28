@@ -1,11 +1,12 @@
 // src/app/api/staking/route.ts
-// Metal Staking API - AUXG, AUXS, AUXPT, AUXPD staking
+// Staking API - AUXG, AUXS, AUXPT, AUXPD and AUXR
 // Integrated with Leasing Engine: pools + encumbrance
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
-import { joinPool, withdrawFromPool, getUserPools } from "@/lib/leasing/pool-manager";
-import { setTotalAllocated, getUserEncumbrance } from "@/lib/leasing/encumbrance-ledger";
+import { withdrawFromPool, getUserPools } from "@/lib/leasing/pool-manager";
+import { getUserEncumbrance } from "@/lib/leasing/encumbrance-ledger";
+import { openStake, settleStake, STAKING_PRODUCTS } from "@/lib/staking/ledger";
 import { requireUser, requireUserOrInternal } from "@/lib/security/require-user";
 import { assertAccountActive } from "@/lib/security/account-guard";
 
@@ -13,42 +14,6 @@ const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
-
-// Staking yapılabilir metaller
-const STAKEABLE_METALS = ["auxg", "auxs", "auxpt", "auxpd"];
-
-// Duration to tenor mapping for pool system
-const DURATION_TO_TENOR: Record<number, string> = {
-  30: '3M',   // Short term → 3M pool
-  90: '3M',
-  91: '3M',
-  180: '6M',
-  181: '6M',
-  365: '12M',
-  366: '12M',
-};
-
-// Duration labels
-const DURATION_LABELS: Record<number, string> = {
-  30: "1 Ay", 90: "3 Ay", 91: "3 Ay",
-  180: "6 Ay", 181: "6 Ay",
-  365: "1 Yıl", 366: "1 Yıl",
-};
-
-// APY oranları — yield-builder / lease-rates ile senkronize
-// Bu oranlar frontend'de gösterilen oranlarla aynı olmalı
-const APY_RATES: Record<string, Record<string, number>> = {
-  auxg:  { '3M': 1.53, '6M': 2.03, '12M': 2.53 },
-  auxs:  { '3M': 1.23, '6M': 1.73, '12M': 2.23 },
-  auxpt: { '3M': 2.03, '6M': 2.53, '12M': 3.03 },
-  auxpd: { '3M': 1.83, '6M': 2.33, '12M': 2.83 },
-};
-
-function getApy(metal: string, duration: number): number {
-  const tenor = DURATION_TO_TENOR[duration];
-  if (!tenor) return 2.0;
-  return APY_RATES[metal.toLowerCase()]?.[tenor] || 2.0;
-}
 
 // Legacy STAKING_TIERS for backward compat (GET response uses this for generic display)
 const STAKING_TIERS: Record<number, { apy: number; label: string }> = {
@@ -61,13 +26,10 @@ const STAKING_TIERS: Record<number, { apy: number; label: string }> = {
   366: { apy: 2.53, label: "1 Yıl" },
 };
 
-// Minimum stake miktarları (gram)
-const MIN_STAKE: Record<string, number> = {
-  auxg: 1,
-  auxs: 5,
-  auxpt: 0.5,
-  auxpd: 0.5,
-};
+// Minimum stake amounts (grams; AUXR in tokens) — from the ledger's products.
+const MIN_STAKE: Record<string, number> = Object.fromEntries(
+  Object.entries(STAKING_PRODUCTS).map(([k, v]) => [k, v.min]),
+);
 
 interface StakePosition {
   id: string;
@@ -186,277 +148,57 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: gate.error, code: gate.code }, { status: 403 });
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CREATE STAKE
-    // ─────────────────────────────────────────────────────────────────────────
+    // Both actions go through the staking ledger: server-side rate, the
+    // shared balance lock, the yielding encumbrance for metals, and an atomic
+    // settle that can pay a position only once.
     if (action === "create" || !action) {
       if (!metal || !amount || !duration) {
         return NextResponse.json({ error: "Metal, amount, and duration required" }, { status: 400 });
       }
-
-      const metalLower = metal.toLowerCase();
-      const metalUpper = metal.toUpperCase();
-
-      if (!STAKEABLE_METALS.includes(metalLower)) {
-        return NextResponse.json({ error: "Invalid metal for staking" }, { status: 400 });
+      const res = await openStake({ address: normalizedAddress, asset: metal, amount: Number(amount), duration: Number(duration) });
+      if (!res.ok) {
+        const { ok: _ok, status, ...rest } = res;
+        return NextResponse.json(rest, { status });
       }
-
-      if (!DURATION_LABELS[duration]) {
-        return NextResponse.json({
-          error: "Invalid duration. Valid options: 30, 90, 180, 365 days"
-        }, { status: 400 });
-      }
-
-      const minAmount = MIN_STAKE[metalLower] || 0.1;
-      if (amount < minAmount) {
-        return NextResponse.json({
-          error: `Minimum stake for ${metalUpper} is ${minAmount}g`
-        }, { status: 400 });
-      }
-
-      // Balance check — balance is now properly deducted on stake,
-      // so available = actual Redis balance (no need to subtract staked positions)
-      const balanceKey = `user:${normalizedAddress}:balance`;
-      const currentBalance = await redis.hget(balanceKey, metalLower);
-      const availableBalance = parseFloat(currentBalance as string || "0");
-      const now = Date.now();
-
-      const stakingKey = `user:${normalizedAddress}:staking`;
-
-      if (availableBalance < amount) {
-        return NextResponse.json({
-          error: `Insufficient ${metalUpper} balance`,
-          available: availableBalance,
-          required: amount,
-        }, { status: 400 });
-      }
-
-      // Create stake position — metal-specific APY from yield-builder rates
-      const apy = getApy(metalLower, duration);
-      const label = DURATION_LABELS[duration] || `${duration} Gün`;
-      const endDate = now + (duration * 24 * 60 * 60 * 1000);
-      const expectedReward = (amount * apy / 100) * (duration / 365);
-
-      const position: StakePosition = {
-        id: `stake_${now}_${Math.random().toString(36).substr(2, 9)}`,
-        metal: metalLower,
-        amount,
-        duration,
-        apy,
-        startDate: now,
-        endDate,
-        expectedReward,
-        status: "active",
-      };
-
-      // ── LEASING ENGINE INTEGRATION ──
-      // 1. Update encumbrance ledger with staked amount (not total balance)
-      try {
-        await setTotalAllocated(normalizedAddress, metalUpper, amount);
-      } catch (e) {
-        console.warn('Encumbrance ledger update failed (non-blocking):', e);
-      }
-
-      // 2. Join the appropriate leasing pool
-      const tenor = DURATION_TO_TENOR[duration] || '6M';
-      try {
-        const poolResult = await joinPool(metalUpper, tenor, normalizedAddress, amount);
-        if (poolResult.success && poolResult.pool) {
-          position.poolId = poolResult.pool.id;
-          position.leaseId = poolResult.member?.leaseId;
-        }
-      } catch (e) {
-        console.warn('Pool join failed (non-blocking, stake still created):', e);
-      }
-
-      // Save stake position AND lock the balance
-      const multi = redis.multi();
-
-      // ── CRITICAL FIX: Deduct staked amount from available balance ──
-      multi.hincrbyfloat(balanceKey, metalLower, -amount);
-
-      // Track total staked per metal for treasury visibility
-      multi.hincrbyfloat(`platform:staked:${metalLower}`, "total", amount);
-      multi.hincrbyfloat(`platform:staked:${metalLower}`, "active", amount);
-
-      multi.lpush(stakingKey, JSON.stringify(position));
-
-      const txKey = `user:${normalizedAddress}:transactions`;
-      const transaction = {
-        id: position.id,
-        type: "stake",
-        metal: metalUpper,
-        amount: amount.toString(),
-        duration,
-        apy,
-        expectedReward: expectedReward.toFixed(6),
-        status: "active",
-        timestamp: now,
-        endDate,
-        poolId: position.poolId || null,
-      };
-      multi.lpush(txKey, JSON.stringify(transaction));
-
-      await multi.exec();
-
-      console.log(`✅ Stake created: ${amount}g ${metalUpper} for ${duration} days @ ${apy}% APY${position.poolId ? ` (Pool: ${position.poolId})` : ''}`);
-
+      const p = res.position;
+      console.log(`✅ Stake created: ${p.amount} ${p.metal.toUpperCase()} for ${p.duration} days @ ${p.apy}% APY`);
       return NextResponse.json({
         success: true,
-        position,
-        message: `${amount}g ${metalUpper} staked for ${label} at ${apy}% APY`,
+        position: p,
+        message: `${p.amount} ${p.metal.toUpperCase()} staked for ${p.durationMonths} months at ${p.apy}% APY`,
       });
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // WITHDRAW (Early or Matured)
-    // ─────────────────────────────────────────────────────────────────────────
     if (action === "withdraw") {
       if (!positionId) {
         return NextResponse.json({ error: "Position ID required" }, { status: 400 });
       }
-
-      const stakingKey = `user:${normalizedAddress}:staking`;
-      const positions = await redis.lrange(stakingKey, 0, -1);
-
-      let targetIndex = -1;
-      let targetPosition: StakePosition | null = null;
-
-      for (let i = 0; i < positions.length; i++) {
-        const pos = typeof positions[i] === 'string' ? JSON.parse(positions[i] as string) : positions[i];
-        if (pos.id === positionId) {
-          targetIndex = i;
-          targetPosition = pos;
-          break;
-        }
+      const res = await settleStake({ address: normalizedAddress, positionId });
+      if (!res.ok) {
+        const { ok: _ok, status, ...rest } = res;
+        return NextResponse.json(rest, { status });
       }
-
-      if (!targetPosition || targetIndex === -1) {
-        return NextResponse.json({ error: "Position not found" }, { status: 404 });
-      }
-
-      if (targetPosition.status === "withdrawn") {
-        return NextResponse.json({ error: "Position already withdrawn" }, { status: 400 });
-      }
-
-      // The status check above is read from a list, and the position is only
-      // marked withdrawn further down, after the balance has been credited.
-      // Two concurrent calls therefore both saw "active", both credited, and
-      // both marked it withdrawn — stake one gram, fire twenty unstakes, get
-      // twenty back. Claim the position atomically first: SET NX succeeds for
-      // exactly one caller, and the rest are turned away before any money
-      // moves. Same shape as the fix to /api/trade in #57.
-      const claimKey = `user:${normalizedAddress}:unstake:claim:${positionId}`;
-      const claimed = await redis.set(claimKey, Date.now().toString(), {
-        nx: true,
-        ex: 300,
-      });
-      if (!claimed) {
-        return NextResponse.json(
-          { error: "This position is already being withdrawn" },
-          { status: 409 },
-        );
-      }
-
-      const now = Date.now();
-      const isMatured = now >= targetPosition.endDate;
-
-      let actualReward = 0;
-      if (isMatured) {
-        actualReward = targetPosition.expectedReward;
-      } else {
-        const elapsed = now - targetPosition.startDate;
-        const totalDuration = targetPosition.endDate - targetPosition.startDate;
-        const progress = elapsed / totalDuration;
-        actualReward = targetPosition.expectedReward * progress * 0.5; // 50% penalty
-      }
-
-      targetPosition.status = "withdrawn";
-      targetPosition.withdrawnAt = now;
-      targetPosition.actualReward = actualReward;
-
-      const totalReturn = targetPosition.amount + actualReward;
-      const balanceKey = `user:${normalizedAddress}:balance`;
-      const metalKey = targetPosition.metal;
-
-      // ── Use atomic multi to prevent race conditions ──
-      const withdrawMulti = redis.multi();
-
-      // Return principal + reward to user balance
-      withdrawMulti.hincrbyfloat(balanceKey, metalKey, totalReturn);
-
-      // Track reward paid from platform yield reserve
-      if (actualReward > 0) {
-        withdrawMulti.hincrbyfloat(`platform:yield:paid:${metalKey}`, "total", actualReward);
-        withdrawMulti.hincrbyfloat(`platform:yield:paid:${metalKey}`, "count", 1);
-      }
-
-      // Update platform staked tracking
-      withdrawMulti.hincrbyfloat(`platform:staked:${metalKey}`, "active", -targetPosition.amount);
-
-      // ── Fix race condition: use sentinel-based update instead of raw lset ──
-      // Mark position as withdrawn with unique sentinel to verify correct update
-      const updatedPosition = JSON.stringify(targetPosition);
-
-      const txKey = `user:${normalizedAddress}:transactions`;
-      const transaction = {
-        id: `unstake_${now}_${Math.random().toString(36).substr(2, 9)}`,
-        type: "unstake",
-        metal: targetPosition.metal.toUpperCase(),
-        amount: targetPosition.amount.toString(),
-        reward: actualReward.toFixed(6),
-        totalReturn: totalReturn.toFixed(6),
-        isEarly: !isMatured,
-        status: "completed",
-        timestamp: now,
-        originalPositionId: positionId,
-      };
-      withdrawMulti.lpush(txKey, JSON.stringify(transaction));
-
-      try {
-        await withdrawMulti.exec();
-      } catch (e) {
-        // Nothing moved, so the claim must not outlive the attempt — otherwise
-        // a transient Redis error locks the position for five minutes.
-        await redis.del(claimKey).catch(() => {});
-        throw e;
-      }
-
-      // Update position in list (separate to avoid index shift from lpush above)
-      // Re-read to get correct index after multi exec
-      const freshPositions = await redis.lrange(stakingKey, 0, -1);
-      for (let i = 0; i < freshPositions.length; i++) {
-        const pos = typeof freshPositions[i] === 'string' ? JSON.parse(freshPositions[i] as string) : freshPositions[i];
-        if (pos.id === positionId && pos.status !== "withdrawn") {
-          await redis.lset(stakingKey, i, updatedPosition);
-          break;
-        }
-      }
-
-      // ── LEASING ENGINE INTEGRATION ──
-      // Withdraw from pool if joined
-      if (targetPosition.poolId) {
+      if (res.position.poolId) {
         try {
-          await withdrawFromPool(targetPosition.poolId, normalizedAddress);
+          await withdrawFromPool(res.position.poolId, normalizedAddress);
         } catch (e) {
-          console.warn('Pool withdrawal failed (non-blocking):', e);
+          console.warn("Pool withdrawal failed (non-blocking):", e);
         }
       }
-
-      console.log(`✅ Stake withdrawn: ${targetPosition.amount}g ${targetPosition.metal.toUpperCase()} + ${actualReward.toFixed(6)}g reward`);
-
+      const unit = res.position.metal.toUpperCase();
+      const total = res.principal + res.reward;
       return NextResponse.json({
         success: true,
         withdrawal: {
-          principal: targetPosition.amount,
-          reward: actualReward,
-          total: totalReturn,
-          isEarly: !isMatured,
-          penalty: !isMatured ? "50% reward penalty" : null,
+          principal: res.principal,
+          reward: res.reward,
+          total,
+          isEarly: res.isEarly,
+          penalty: res.isEarly ? "50% reward penalty" : null,
         },
-        message: isMatured
-          ? `Stake matured! Received ${totalReturn.toFixed(6)}g ${targetPosition.metal.toUpperCase()}`
-          : `Early withdrawal: ${totalReturn.toFixed(6)}g ${targetPosition.metal.toUpperCase()} (50% reward penalty applied)`,
+        message: res.isEarly
+          ? `Early withdrawal: ${total.toFixed(6)} ${unit} (50% reward penalty applied)`
+          : `Stake matured! Received ${total.toFixed(6)} ${unit}`,
       });
     }
 

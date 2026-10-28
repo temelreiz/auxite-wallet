@@ -604,7 +604,7 @@ export function PositionsTab({ address: propAddress }: PositionsTabProps) {
               stakeCode: s.stakeCode || s.id || '',
               shortCode: s.agreementNo || s.id || '',
               staker: address,
-              metal: s.metal === 'AUXG' ? 'Gold' : s.metal === 'AUXS' ? 'Silver' : s.metal === 'AUXPT' ? 'Platinum' : 'Palladium',
+              metal: s.metal === 'AUXG' ? 'Gold' : s.metal === 'AUXS' ? 'Silver' : s.metal === 'AUXPT' ? 'Platinum' : s.metal === 'AUXR' ? 'Auxite Reserve' : 'Palladium',
               metalSymbol: (s.metal || 'AUXG').toUpperCase(),
               amountGrams,
               startDate,

@@ -6,6 +6,7 @@
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
 import {
   submitQuote,
   getActiveQuotes,
@@ -64,7 +65,11 @@ export async function GET(request: NextRequest) {
 }
 
 // POST — Submit new quote or expire stale quotes
+// Quotes feed the yield-builder that sets the rates users are shown, so only
+// an admin may add or withdraw them (both handlers were open to anyone).
 export async function POST(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (!auth.authorized) return auth.response!;
   try {
     const body = await request.json();
     const { action } = body;
@@ -133,6 +138,8 @@ export async function POST(request: NextRequest) {
 
 // DELETE — Withdraw a quote
 export async function DELETE(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (!auth.authorized) return auth.response!;
   try {
     const { searchParams } = new URL(request.url);
     const quoteId = searchParams.get('quoteId');

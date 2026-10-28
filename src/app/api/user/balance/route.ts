@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { encumberedStakeAmounts } from "@/lib/staking/ledger";
 import { requireSelf } from "@/lib/security/require-user";
 import { Redis } from "@upstash/redis";
 import { getUserBalance, setBalance, incrementBalance, addBonusAuxm, ensureUser } from "@/lib/redis";
@@ -157,41 +158,18 @@ async function getAllocationAmounts(address: string): Promise<Record<string, num
   return allocations;
 }
 
-// Get staked amounts from active staking positions
+// Metal grams held by active stakes. Ledger stakes keep their grams in the
+// allocations and mark them "yielding", so the view hides them here. Older
+// positions were already debited from the balance hash when opened, and
+// subtracting them again showed users less metal than they had.
 async function getStakedAmounts(address: string): Promise<Record<string, number>> {
-  const staked: Record<string, number> = {
-    auxg: 0,
-    auxs: 0,
-    auxpt: 0,
-    auxpd: 0,
-  };
-  
+  const staked: Record<string, number> = { auxg: 0, auxs: 0, auxpt: 0, auxpd: 0 };
   try {
-    // Get all staking positions for this user
-    const stakingKey = `user:${address.toLowerCase()}:staking`;
-    const positions = await redisClient.lrange(stakingKey, 0, -1);
-    
-    const now = Date.now();
-    
-    for (const pos of positions) {
-      try {
-        const position = typeof pos === 'string' ? JSON.parse(pos) : pos;
-        
-        // Only count active positions that haven't been withdrawn
-        if (position.status === 'active' && position.endDate > now) {
-          const metal = position.metal.toLowerCase();
-          if (staked.hasOwnProperty(metal)) {
-            staked[metal] += position.amount || 0;
-          }
-        }
-      } catch (e) {
-        // Skip invalid positions
-      }
-    }
+    const held = await encumberedStakeAmounts(address);
+    for (const m of Object.keys(staked)) staked[m] = held[m] || 0;
   } catch (e) {
     console.error('Error getting staked amounts:', e);
   }
-  
   return staked;
 }
 
