@@ -1,6 +1,7 @@
 // app/api/certificates/route.ts
 // Digital Certificate Generation & Management
 import { NextRequest, NextResponse } from 'next/server';
+import { DOCUMENT_ISSUER } from '@/lib/issuer';
 import { requireSelf } from '@/lib/security/require-user';
 import { redis } from '@/lib/redis';
 
@@ -106,8 +107,8 @@ export async function POST(request: NextRequest) {
       txHash: txHash || '',
       issuedAt,
       status: 'active',
-      issuer: 'Auxite Precious Metals AG',
-      issuerAddress: 'Zurich, Switzerland',
+      issuer: DOCUMENT_ISSUER.name,
+      issuerAddress: DOCUMENT_ISSUER.address,
     };
 
     // Sertifikayı kaydet

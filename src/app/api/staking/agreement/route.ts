@@ -3,6 +3,7 @@
 // Swiss Private Bank + Structured Note Style
 // NO gradients, NO crypto vibes, NO startup aesthetics
 import { NextRequest, NextResponse } from 'next/server';
+import { DOCUMENT_ISSUER } from '@/lib/issuer';
 import { requireAdmin } from '@/lib/admin-auth';
 import { verifyNoteSignature } from '@/lib/staking/note-link';
 import { redis } from '@/lib/redis';
@@ -24,13 +25,7 @@ const TERM_LABELS: Record<number, string> = {
   366: '12 Months',
 };
 
-// Vault-based issuer entities — jurisdiction-specific legal entities
-const ISSUER_BY_VAULT: Record<string, { name: string; address: string }> = {
-  IST: { name: 'Auxite Kıymetli Madenler Ticaret A.Ş.', address: 'Istanbul, Turkey' },
-  ZH:  { name: 'Auxite Precious Metals AG', address: 'Zurich, Switzerland' },
-  DB:  { name: 'Auxite Precious Metals Trading LLC', address: 'Dubai, UAE' },
-  LN:  { name: 'Auxite Kıymetli Madenler Ticaret A.Ş.', address: 'Istanbul, Turkey' },
-};
+// Issuing entity: src/lib/issuer.ts (one entity for every vault).
 
 function generateNoteId(): string {
   const year = new Date().getFullYear();
@@ -593,8 +588,8 @@ export async function GET(request: NextRequest) {
       leaseRate: stake.apy || stake.apyPercent || '0',
       yieldType: 'Fixed',
       issueDate: formatDateFull(stake.createdAt || new Date()),
-      issuerEntity: (ISSUER_BY_VAULT[stake.vault] || ISSUER_BY_VAULT['ZH']).name,
-      issuerAddress: (ISSUER_BY_VAULT[stake.vault] || ISSUER_BY_VAULT['ZH']).address,
+      issuerEntity: DOCUMENT_ISSUER.name,
+      issuerAddress: DOCUMENT_ISSUER.address,
     };
 
     if (format === 'json') {
@@ -654,8 +649,8 @@ export async function POST(request: NextRequest) {
       leaseRate: apy,
       yieldType: 'Fixed',
       issueDate: formatDateFull(new Date()),
-      issuerEntity: (ISSUER_BY_VAULT[vault] || ISSUER_BY_VAULT['ZH']).name,
-      issuerAddress: (ISSUER_BY_VAULT[vault] || ISSUER_BY_VAULT['ZH']).address,
+      issuerEntity: DOCUMENT_ISSUER.name,
+      issuerAddress: DOCUMENT_ISSUER.address,
     };
 
     const html = generateParticipationNoteHTML(data);

@@ -1,6 +1,7 @@
 // app/api/certificates/verify/route.ts
 // Certificate Verification API with On-Chain Verification
 import { NextRequest, NextResponse } from 'next/server';
+import { DOCUMENT_ISSUER } from '@/lib/issuer';
 import { redis } from '@/lib/redis';
 import { createHash } from 'crypto';
 
@@ -123,7 +124,7 @@ export async function GET(request: NextRequest) {
         vaultName: VAULT_NAMES[certificate.vault] || certificate.vaultName || certificate.vault,
         purity: certificate.purity,
         issuedAt: certificate.issuedAt,
-        issuer: certificate.issuer || 'Auxite Precious Metals AG',
+        issuer: DOCUMENT_ISSUER.name,
         status: certificate.status,
       },
       blockchain: {
