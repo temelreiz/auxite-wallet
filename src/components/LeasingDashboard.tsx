@@ -289,8 +289,8 @@ function StatsCard({ label, value, suffix, color, icon, trend, t }: { label: str
 function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; formatAPYRange: (offer: any) => string; onAllocate: () => void; t: Record<string, string> }) {
   const [isHovered, setIsHovered] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
-  const metalGradients: Record<string, string> = { AUXG: "from-[#C6A15B]/10 via-transparent to-transparent", AUXS: "from-[#A6B0BF]/10 via-transparent to-transparent", AUXPT: "from-[#8FA3B8]/10 via-transparent to-transparent", AUXPD: "from-[#6E7C8A]/10 via-transparent to-transparent" };
-  const metalColors: Record<string, string> = { AUXG: "#C6A15B", AUXS: "#A6B0BF", AUXPT: "#8FA3B8", AUXPD: "#6E7C8A" };
+  const metalGradients: Record<string, string> = { AUXG: "from-[#C6A15B]/10 via-transparent to-transparent", AUXS: "from-[#A6B0BF]/10 via-transparent to-transparent", AUXPT: "from-[#8FA3B8]/10 via-transparent to-transparent", AUXPD: "from-[#6E7C8A]/10 via-transparent to-transparent", AUXR: "from-[#BFA181]/10 via-transparent to-transparent" };
+  const metalColors: Record<string, string> = { AUXG: "#C6A15B", AUXS: "#A6B0BF", AUXPT: "#8FA3B8", AUXPD: "#6E7C8A", AUXR: "#BFA181" };
   const metalCertifications: Record<string, string> = { AUXG: "LBMA Good Delivery", AUXS: "LBMA Good Delivery", AUXPT: "LPPM Approved", AUXPD: "LPPM Approved" };
 
   // Metal icon mapping
@@ -298,8 +298,12 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
     AUXG: "/auxg_icon.png",
     AUXS: "/auxs_icon.png",
     AUXPT: "/auxpt_icon.png",
-    AUXPD: "/auxpd_icon.png"
+    AUXPD: "/auxpd_icon.png",
+    AUXR: "/auxr_icon.png"
   };
+  // AUXR is a NAV-referenced basket token with no metal lease behind it: no
+  // "structured metal yield" / SOFR+GOFO framing and no bullion certification.
+  const isAuxr = offer.metal === "AUXR";
 
   return (
     <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} className={`rounded-lg sm:rounded-xl border backdrop-blur-sm p-4 sm:p-6 transition-all duration-300 ${isHovered ? "-translate-y-0.5" : "border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm dark:shadow-none"}`} style={isHovered ? { borderColor: `${metalColors[offer.metal] || '#d4a574'}80`, boxShadow: `0 4px 12px ${metalColors[offer.metal] || '#d4a574'}15` } : {}}>
@@ -307,9 +311,9 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
       {/* PRIORITY 5: Structured Metal Yield Badge */}
       <div className="mb-3 flex items-center justify-between">
         <div className="yield-positioning-badge">
-          <span>Structured Metal Yield</span>
+          <span>{isAuxr ? "Staking Reward" : "Structured Metal Yield"}</span>
         </div>
-        <span className="yield-benchmark-tag">SOFR + GOFO</span>
+        {!isAuxr && <span className="yield-benchmark-tag">SOFR + GOFO</span>}
       </div>
 
       <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -348,7 +352,9 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
           {/* APY Tooltip */}
           {showTooltip && (
             <div className="apy-tooltip-content" style={{ opacity: 1, visibility: 'visible' }}>
-              {t.yieldBenchmark || "Yield rates derived from institutional precious metals markets and short-term benchmark rates."}
+              {isAuxr
+                ? (t.auxrRewardNote || "Fixed reward rate paid by Auxite for locking AUXR. Not backed by a metal lease. Capacity is limited.")
+                : (t.yieldBenchmark || "Yield rates derived from institutional precious metals markets and short-term benchmark rates.")}
             </div>
           )}
         </div>
@@ -373,7 +379,7 @@ function MetalOfferCard({ offer, formatAPYRange, onAllocate, t }: { offer: any; 
         </div>
         <div className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-stone-100 dark:bg-slate-800/30">
           <div className="text-[10px] sm:text-xs text-slate-500">TVL</div>
-          <div className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">${offer.tvl.toLocaleString()}</div>
+          <div className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">{offer.tvl ? `$${offer.tvl.toLocaleString()}` : "—"}</div>
         </div>
       </div>
 
@@ -407,7 +413,7 @@ export function LeasingDashboard({ walletAddress, isWalletConnected: propIsConne
 
   // Use leaseOffers from the hook (yield builder → blended rates with range support)
   // Apply translated names
-  const metalNameMap: Record<string, string> = { AUXG: t.gold, AUXS: t.silver, AUXPT: t.platinum, AUXPD: t.palladium };
+  const metalNameMap: Record<string, string> = { AUXG: t.gold, AUXS: t.silver, AUXPT: t.platinum, AUXPD: t.palladium, AUXR: "Auxite Reserve" };
   const availableOffers = leaseOffers.map(offer => ({
     ...offer,
     name: metalNameMap[offer.metal] || offer.name,

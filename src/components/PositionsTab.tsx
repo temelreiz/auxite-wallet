@@ -10,18 +10,28 @@ interface PositionsTabProps {
   address?: string;
 }
 
+/** A position from /api/stakes. `ledger` positions settle through
+ *  /api/staking; `legacy` ones (pre-ledger custody records) cannot be
+ *  withdrawn from here. On-chain positions have no `kind`. */
+type UiStake = FormattedStake & { positionId?: string; kind?: "ledger" | "legacy" };
+
 const metalIcons: Record<string, string> = {
   AUXG: "/auxg_icon.png",
   AUXS: "/auxs_icon.png",
   AUXPT: "/auxpt_icon.png",
   AUXPD: "/auxpd_icon.png",
+  AUXR: "/auxr_icon.png",
 };
+
+/** Grams for metals; AUXR is counted in tokens. */
+const unitOf = (symbol?: string) => (symbol === "AUXR" ? " AUXR" : "g");
 
 const metalColors: Record<string, string> = {
   AUXG: "text-[#BFA181]",
   AUXS: "text-slate-400",
   AUXPT: "text-cyan-400",
   AUXPD: "text-rose-400",
+  AUXR: "text-[#BFA181]",
 };
 
 const metalBgColors: Record<string, string> = {
@@ -29,6 +39,7 @@ const metalBgColors: Record<string, string> = {
   AUXS: "from-slate-400/20 to-slate-500/10",
   AUXPT: "from-cyan-400/20 to-cyan-500/10",
   AUXPD: "from-rose-400/20 to-rose-500/10",
+  AUXR: "from-[#BFA181]/20 to-[#BFA181]/5",
 };
 
 // 6-language translations
@@ -58,7 +69,7 @@ const translations: Record<string, Record<string, string>> = {
     earlyWithdraw: "Erken Çekim",
     penalty: "Ceza",
     confirmWithdraw: "Çekimi Onayla",
-    withdrawWarning: "Bu stake henüz vadesi dolmamış. Erken çekim yaparsanız %5 ceza uygulanacaktır.",
+    withdrawWarning: "Bu pozisyonun vadesi henüz dolmadı. Erken çekimde anaparanın tamamını ve o ana kadar kazanılan ödülün yarısını alırsınız; diğer yarısı iptal edilir.",
     cancel: "İptal",
     progress: "İlerleme",
     compounding: "Bileşik",
@@ -95,7 +106,7 @@ const translations: Record<string, Record<string, string>> = {
     earlyWithdraw: "Early Withdrawal",
     penalty: "Penalty",
     confirmWithdraw: "Confirm Withdrawal",
-    withdrawWarning: "This yield position has not matured yet. Early withdrawal will incur a 5% penalty.",
+    withdrawWarning: "This position has not matured yet. If you withdraw early you receive your full principal and half of the reward earned so far; the other half is forfeited.",
     cancel: "Cancel",
     progress: "Progress",
     compounding: "Compounding",
@@ -132,7 +143,7 @@ const translations: Record<string, Record<string, string>> = {
     earlyWithdraw: "Vorzeitige Abhebung",
     penalty: "Strafe",
     confirmWithdraw: "Abhebung Bestätigen",
-    withdrawWarning: "Diese Renditeposition ist noch nicht fällig. Bei vorzeitiger Abhebung fällt eine Strafe von 5% an.",
+    withdrawWarning: "Diese Position ist noch nicht fällig. Bei vorzeitiger Abhebung erhalten Sie Ihr volles Kapital und die Hälfte der bisher verdienten Belohnung; die andere Hälfte verfällt.",
     cancel: "Abbrechen",
     progress: "Fortschritt",
     compounding: "Zinseszins",
@@ -169,7 +180,7 @@ const translations: Record<string, Record<string, string>> = {
     earlyWithdraw: "Retrait Anticipé",
     penalty: "Pénalité",
     confirmWithdraw: "Confirmer le Retrait",
-    withdrawWarning: "Ce rendement n'est pas encore arrivé à échéance. Un retrait anticipé entraînera une pénalité de 5%.",
+    withdrawWarning: "Cette position n'est pas encore arrivée à échéance. En cas de retrait anticipé, vous récupérez la totalité du capital et la moitié de la récompense acquise jusqu'ici ; l'autre moitié est perdue.",
     cancel: "Annuler",
     progress: "Progression",
     compounding: "Composition",
@@ -206,7 +217,7 @@ const translations: Record<string, Record<string, string>> = {
     earlyWithdraw: "سحب مبكر",
     penalty: "غرامة",
     confirmWithdraw: "تأكيد السحب",
-    withdrawWarning: "هذا العائد لم ينضج بعد. السحب المبكر سيترتب عليه غرامة 5%.",
+    withdrawWarning: "لم يحن موعد استحقاق هذا المركز بعد. عند السحب المبكر تسترد رأس المال كاملاً ونصف المكافأة المكتسبة حتى الآن، ويُلغى النصف الآخر.",
     cancel: "إلغاء",
     progress: "التقدم",
     compounding: "تجميع",
@@ -243,7 +254,7 @@ const translations: Record<string, Record<string, string>> = {
     earlyWithdraw: "Досрочный Вывод",
     penalty: "Штраф",
     confirmWithdraw: "Подтвердить Вывод",
-    withdrawWarning: "Эта позиция еще не созрела. Досрочный вывод повлечет штраф 5%.",
+    withdrawWarning: "Срок этой позиции еще не наступил. При досрочном выводе вы получаете всю основную сумму и половину накопленного вознаграждения; вторая половина аннулируется.",
     cancel: "Отмена",
     progress: "Прогресс",
     compounding: "Компаундинг",
@@ -267,7 +278,7 @@ function PositionCard({
   isClaiming,
   isCompounding,
 }: {
-  stake: FormattedStake;
+  stake: UiStake;
   onUnstake: (id: number) => void;
   onClaim: (id: number) => void;
   onCompound: (id: number) => void;
@@ -332,7 +343,7 @@ function PositionCard({
                   )}
                 </div>
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {stake.amountGrams.toFixed(2)}g · {stake.durationMonths} {t("months")}
+                  {stake.amountGrams.toFixed(2)}{unitOf(stake.metalSymbol)} · {stake.durationMonths} {t("months")}
                 </div>
               </div>
             </div>
@@ -342,7 +353,7 @@ function PositionCard({
                 {stake.apyPercent.toFixed(2)}% {t("apy")}
               </div>
               <div className="text-sm text-slate-500 dark:text-slate-400">
-                +{formatAmount(stake.expectedRewardGrams, stake.metalSymbol)}g {t("earned").toLowerCase()}
+                +{formatAmount(stake.expectedRewardGrams, stake.metalSymbol)}{unitOf(stake.metalSymbol)} {t("earned").toLowerCase()}
               </div>
             </div>
           </div>
@@ -401,23 +412,23 @@ function PositionCard({
         <div className="px-5 py-3 grid grid-cols-3 gap-4 border-t border-slate-200/50 dark:border-slate-700/50">
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">{t("principal")}</div>
-            <div className="font-semibold text-slate-800 dark:text-white">{formatAmount(stake.amountGrams, stake.metalSymbol)}g</div>
+            <div className="font-semibold text-slate-800 dark:text-white">{formatAmount(stake.amountGrams, stake.metalSymbol)}{unitOf(stake.metalSymbol)}</div>
           </div>
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">{t("reward")}</div>
-            <div className="font-semibold text-[#2F6F62] dark:text-[#2F6F62]">+{formatAmount(stake.expectedRewardGrams, stake.metalSymbol)}g</div>
+            <div className="font-semibold text-[#2F6F62] dark:text-[#2F6F62]">+{formatAmount(stake.expectedRewardGrams, stake.metalSymbol)}{unitOf(stake.metalSymbol)}</div>
           </div>
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">{t("claimable")}</div>
-            <div className="font-semibold text-purple-600 dark:text-purple-400">{formatAmount(stake.claimableRewardGrams, stake.metalSymbol)}g</div>
+            <div className="font-semibold text-purple-600 dark:text-purple-400">{formatAmount(stake.claimableRewardGrams, stake.metalSymbol)}{unitOf(stake.metalSymbol)}</div>
           </div>
         </div>
 
-        {/* Actions */}
-        {stake.active && (
+        {/* Actions — pre-ledger custody records have no withdraw path here */}
+        {stake.active && stake.kind !== "legacy" && (
           <div className="p-4 bg-white/30 dark:bg-slate-900/30 border-t border-slate-200/50 dark:border-slate-700/50">
             <div className="flex gap-2 flex-wrap">
-              {stake.isMatured ? (
+              {stake.isMatured || stake.kind === "ledger" ? (
                 <button
                   onClick={handleWithdraw}
                   disabled={isUnstaking}
@@ -436,7 +447,7 @@ function PositionCard({
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      {t("withdraw")}
+                      {stake.isMatured ? t("withdraw") : t("earlyWithdraw")}
                     </>
                   )}
                 </button>
@@ -521,7 +532,7 @@ function PositionCard({
               </p>
               <div className="p-3 rounded-lg bg-[#BFA181]/10 border border-[#BFA181]/20 text-center">
                 <span className="text-sm text-[#BFA181] dark:text-[#BFA181] font-medium">
-                  {t("penalty")}: 5% ({formatAmount(stake.amountGrams * 0.05, stake.metalSymbol)}g)
+                  {t("penalty")}: {formatAmount(stake.expectedRewardGrams * (stake.progress / 100) * 0.5, stake.metalSymbol)}{unitOf(stake.metalSymbol)}
                 </span>
               </div>
             </div>
@@ -566,7 +577,8 @@ export function PositionsTab({ address: propAddress }: PositionsTabProps) {
   } = useStaking();
 
   // Custody/API-based positions
-  const [apiPositions, setApiPositions] = useState<FormattedStake[]>([]);
+  const [apiPositions, setApiPositions] = useState<UiStake[]>([]);
+  const [apiUnstaking, setApiUnstaking] = useState(false);
   const [apiLoading, setApiLoading] = useState(false);
 
   const fetchApiPositions = useCallback(async () => {
@@ -577,7 +589,7 @@ export function PositionsTab({ address: propAddress }: PositionsTabProps) {
       const data = await res.json();
       if (data.success && data.stakes) {
         const now = Date.now();
-        const formatted: FormattedStake[] = data.stakes
+        const formatted: UiStake[] = data.stakes
           .filter((s: any) => s.status === 'active')
           .map((s: any) => {
             const startDate = new Date(s.startDate);
@@ -620,7 +632,9 @@ export function PositionsTab({ address: propAddress }: PositionsTabProps) {
               progress,
               timeRemaining,
               isMatured,
-            } as FormattedStake;
+              positionId: s.id,
+              kind: s.source === 'ledger' ? 'ledger' : 'legacy',
+            } as UiStake;
           });
         setApiPositions(formatted);
       }
@@ -646,6 +660,27 @@ export function PositionsTab({ address: propAddress }: PositionsTabProps) {
 
   // Handler functions
   const handleUnstake = async (stakeId: number) => {
+    // Custody positions settle through the staking ledger, not the contract.
+    const api = apiPositions.find((p) => p.id === stakeId);
+    if (api) {
+      if (api.kind !== 'ledger' || !api.positionId) return;
+      setApiUnstaking(true);
+      try {
+        const res = await fetch('/api/staking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'withdraw', positionId: api.positionId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) alert(data.error || 'Withdrawal failed');
+        await fetchApiPositions();
+      } catch (err) {
+        console.error("Unstake failed:", err);
+      } finally {
+        setApiUnstaking(false);
+      }
+      return;
+    }
     try {
       await unstake(stakeId);
     } catch (err) {
@@ -725,7 +760,7 @@ export function PositionsTab({ address: propAddress }: PositionsTabProps) {
             onUnstake={handleUnstake}
             onClaim={handleClaim}
             onCompound={handleCompound}
-            isUnstaking={isUnstaking}
+            isUnstaking={isUnstaking || apiUnstaking}
             isClaiming={isClaiming}
             isCompounding={isCompounding}
           />

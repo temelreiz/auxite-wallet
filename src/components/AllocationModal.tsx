@@ -371,13 +371,13 @@ function EarningsCalculator({ amount, apy, days, metalSymbol }: {
         <div>
           <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{t("afterPeriod")}</div>
           <div className="text-base sm:text-lg font-bold text-[#C6A15B] dark:text-[#C6A15B]">
-            +{formatAmount(earnings, metalSymbol)}g
+            +{formatAmount(earnings, metalSymbol)}{unitOf(metalSymbol)}
           </div>
         </div>
         <div>
           <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{t("totalLabel")}</div>
           <div className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
-            {formatAmount(total, metalSymbol)}g
+            {formatAmount(total, metalSymbol)}{unitOf(metalSymbol)}
           </div>
         </div>
       </div>
@@ -455,14 +455,18 @@ function StakeCodeDisplay({ stakeCode, shortCode, txHash }: {
   );
 }
 
+/** Grams for metals; AUXR is counted in tokens. */
+const unitOf = (symbol?: string) => (symbol === 'AUXR' ? ' AUXR' : 'g');
+
 function AllocationModal({ isOpen, onClose, offer }: AllocationModalProps) {
   const { lang } = useLanguage();
   const t = (key: string) => (translations as any)[lang]?.[key] || (translations as any).en[key] || key;
   const { address: externalAddress, isConnected: isExternalConnected } = useAccount();
   const { balances, address: walletCtxAddress, isConnected: isWalletConnected } = useWallet();
 
-  // Determine wallet mode: custody (API-based) vs on-chain
-  const isCustodyMode = isWalletConnected && !isExternalConnected;
+  // Determine wallet mode: custody (API-based) vs on-chain. AUXR has no
+  // staking contract, so it is always staked from the in-app balance.
+  const isCustodyMode = isWalletConnected && (!isExternalConnected || offer?.metal === 'AUXR');
   const activeAddress = isCustodyMode ? walletCtxAddress : externalAddress;
 
   // Staking hook (only used in on-chain mode)
@@ -697,7 +701,7 @@ function AllocationModal({ isOpen, onClose, offer }: AllocationModalProps) {
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder={`${t("minAllocation")}: ${offer.minAmount}g`}
+                placeholder={`${t("minAllocation")}: ${offer.minAmount}${unitOf(offer.metal)}`}
                 disabled={isApproving || isStaking}
                 className="w-full px-3 sm:px-4 py-3 sm:py-4 pr-16 sm:pr-20 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#C6A15B] transition-colors disabled:opacity-50 text-base sm:text-lg font-medium"
               />
@@ -720,7 +724,7 @@ function AllocationModal({ isOpen, onClose, offer }: AllocationModalProps) {
               </span>
               {amountNum > 0 && amountNum < offer.minAmount && (
                 <span className="text-[10px] sm:text-xs text-red-400">
-                  {t("minAllocation")}: {offer.minAmount}g {offer.metal}
+                  {t("minAllocation")}: {offer.minAmount}{unitOf(offer.metal)}{offer.metal === 'AUXR' ? '' : ` ${offer.metal}`}
                 </span>
               )}
             </div>
