@@ -12,7 +12,6 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { METAL_TOKENS, ORACLE_ADDRESS } from "@/config/contracts-v8";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
 import BlogManager from "@/components/admin/BlogManager";
-import RentalTab from "@/components/admin/RentalTab";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -418,7 +417,6 @@ const TABS = [
   { id: "siteVaults", label: "Kasalar", icon: "🏛️" },
   { id: "risk", label: "Risk", icon: "🛡️" },
   { id: "leasing", label: "Leasing", icon: "🏦" },
-  { id: "rental", label: "Itera Araç", icon: "🚗" },
   { id: "treasury", label: "AUXM Treasury", icon: "🏛️" },
   { id: "reserveControl", label: "Reserve Control", icon: "⚖️" },
   { id: "depositMonitor", label: "Deposits & Sweep", icon: "💸" },
@@ -5926,10 +5924,6 @@ export default function AdminDashboard() {
 
           {activeTab === "leasing" && (
             <LeasingEngineTab />
-          )}
-
-          {activeTab === "rental" && (
-            <RentalTab />
           )}
 
           {activeTab === "treasury" && (
