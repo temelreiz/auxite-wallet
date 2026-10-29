@@ -25,6 +25,10 @@
   ],
   "crons": [
     {
+      "path": "/api/cron/auxr-campaign-push",
+      "schedule": "0 14,15,16 * * *"
+    },
+    {
       "path": "/api/cron/auxr-weekly-push",
       "schedule": "0 14 * * 1"
     },
