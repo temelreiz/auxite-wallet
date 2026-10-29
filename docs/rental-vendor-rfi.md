@@ -9,12 +9,12 @@ INVERS'e platform soruları yerine yalnızca telematik bölümü gönderilir.
 
 ---
 
-**Subject:** RFI — free-floating car-sharing pilot in Türkiye (40 vehicles, 24 months)
+**Subject:** RFI — free-floating car-sharing pilot in Türkiye (50 vehicles, 24 months)
 
 Hello [Name / team],
 
 We are [Company], and we are preparing a free-floating car-sharing pilot in
-[city], Türkiye. We will own and operate the fleet ourselves and are looking for a
+Istanbul, Türkiye. We will own and operate the fleet ourselves and are looking for a
 white-label platform (customer app, booking and billing, operator console) and
 compatible telematics.
 
@@ -24,7 +24,7 @@ and we will reconcile it with third-party audited figures. Data access through y
 platform is therefore our most important selection criterion.
 
 **Pilot scope**
-- Fleet: 30–50 vehicles, one model, B/C-segment hatchback ([EV / hybrid / ICE — TBD])
+- Fleet: about 50 vehicles, **70% electric / 30% full hybrid (non-plug-in)**, B and C segment, one model per segment and powertrain (4 models in total; candidates: [model list])
 - Model: free-floating within a geofenced zone of 2–3 districts, per-minute/hour pricing
 - Term: 24 months, with a planned expansion to 2–3 segments and more vehicles afterwards
 - Timeline: platform selection in [month], closed beta around [month], public launch around [month]
@@ -42,13 +42,17 @@ platform is therefore our most important selection criterion.
 
 **Also helpful**
 - Field-operations module (cleaning, refuelling/charging, relocation tasks with costs), and whether this data is available via API
+- **EV support:** remote state-of-charge reading, low-charge alerts, charging-station locations in the app, and in-app credits for users who end a trip at a partner charger
+- **Charge-dependent trip-end rule:** can the app block ending a trip below a configurable charge level (e.g. 40%) unless the car is parked at a designated charger **and charging has started** (confirmed via telematics)?
+- Integration with charge point operators (start/stop charging from the app, or importing charging sessions per vehicle)
+- Mixed EV and hybrid fleet in one zone, with different tariffs by vehicle segment
 - Before/after trip damage photos and incident records
 - Dynamic pricing by time and zone
 - A sandbox environment and API documentation we can test against **before signing**
 - Support hours that cover Türkiye (UTC+3)
 - Reference customers of similar size, ideally in Türkiye or nearby markets
 
-**Commercials — please quote for 40 vehicles over 24 months**
+**Commercials — please quote for 50 vehicles over 24 months**
 - One-time setup and onboarding fees
 - Monthly fees (per vehicle, per trip, minimums) and which plan tier includes API/webhook access
 - Telematics hardware, installation and connectivity costs, if you provide them
@@ -72,18 +76,18 @@ Ortak metnin "Also helpful" bölümünden sonra eklenir.
 
 **ATOM Mobility**
 - Public sources disagree on whether you offer an open API. Which plan includes API access, and do you offer webhooks? Can you share the API documentation?
-- Car-sharing plans are quote-only: what is the setup fee and monthly fee for 40 cars on the plan that includes the API?
+- Car-sharing plans are quote-only: what is the setup fee and monthly fee for 50 cars on the plan that includes the API?
 
 **MOQO**
-- API access starts on the Pro plan and the branded app is an add-on from Plus. What would Pro + branded app cost for 40 vehicles?
+- API access starts on the Pro plan and the branded app is an add-on from Plus. What would Pro + branded app cost for 50 vehicles?
 - Do you support free-floating zones, or only station-based and round-trip models?
 
 **Vulog**
-- We understand Vulog usually works with larger operators and OEMs. Do you offer a pilot or starter package for about 40 vehicles, with a path to larger volumes?
+- We understand Vulog usually works with larger operators and OEMs. Do you offer a pilot or starter package for about 50 vehicles, with a path to larger volumes?
 - Which telematics providers do you integrate with today (e.g. INVERS, OEM connected-car)?
 
 **INVERS** (send only the telematics questions from the shared text and these)
-- CloudBoxx price per vehicle, installation and monthly connectivity for 40 vehicles in Türkiye. Do you have a local installation partner?
+- CloudBoxx price per vehicle, installation and monthly connectivity for 50 vehicles (35 EV, 15 hybrid) in Türkiye. Do you have a local installation partner?
 - Does OneAPI provide webhooks or push events for trip/booking-relevant vehicle events, or only the Events API? Can we read data directly while a third-party platform (e.g. ATOM, MOQO, Vulog) controls the vehicles?
 - Compatibility with our candidate vehicle models: [model list]
 
