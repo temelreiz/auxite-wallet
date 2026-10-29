@@ -32,7 +32,7 @@ de 2. aşamadaki satışın en güçlü pazarlama materyalidir.
 | Konu | Pilot için öneri | Gerekçe |
 |---|---|---|
 | Segment | **Saatlik paylaşımlı araç (car-sharing, "kullan-bırak")** | Kullanıcı uygulamadan aracı bulur, telefonla açar, saat/dakika bazlı öder, bırakır. Gelir sözleşmeye değil talebe bağlı; pilotun asıl ölçeceği şey bu talep. |
-| Bırakma modeli | **Bölge içi serbest bırakma (free-floating), tek şehir, sınırlı bölge** | İstasyon tabanlı model daha kolay işletilir ama kullanıcı deneyimi zayıf. Pilotta bölgeyi dar tutup (ör. 2–3 ilçe) dağılma ve yeniden konumlandırma maliyetini sınırlarız. |
+| Bırakma modeli | **Bölge içi serbest bırakma (free-floating), İstanbul, iki yakada iki bölge** — **karar verildi** (2026-10-29) | Avrupa: Beşiktaş + Şişli (Nişantaşı). Anadolu: Kadıköy + Ataşehir. Bölge tasarımı, yakalar arası yolculuk ve park §12'de. |
 | Filo büyüklüğü | **30–50 araç** | Saatlik modelde gelir araç başına değil, bölgedeki **araç yoğunluğuna** bağlıdır: kullanıcı 5 dakika yürüme mesafesinde araç bulamazsa uygulamayı bırakır. 20 aracın altı talebi ölçmeye yetmez. Buna karşılık yolculuk sayısı yüksek olduğundan hasar/kullanım istatistiği hızlı oluşur. |
 | Araç tipi | **%70 elektrikli / %30 tam hibrit (HEV); B ve C segment** — **karar verildi** (2026-10-29) | Ayrıntı, hücre dağılımı ve self-servis enerji modeli §11'de. Pilot aynı zamanda EV ile hibritin birim ekonomisini ve artık değerini yan yana ölçer. |
 | Operatör / teknoloji | **Kendi filomuz + hazır car-sharing yazılımı** (white-label kullanıcı uygulaması + telematik kutusu + operatör paneli) — **karar verildi** | Operasyonu biz yürütüyoruz; uygulama, anahtarsız açma, rezervasyon ve faturalama sıfırdan yazılmıyor (§10). Auxite'in işi: veri hattı, NAV, rezervler ve yatırım yapısı. |
@@ -274,7 +274,10 @@ Kurulum dahil gerçekçi süre ~8–9 ay.
 - [ ] **Yazılım sağlayıcı:** §10'daki kriterlerle 2–3 aday değerlendirilip seçilecek
 - [ ] **OpCo:** Yeni şirket mi, grup içi mevcut bir şirket mi? Kiralama/car-sharing için gereken ruhsat/izinler (avukat)
 - [x] **Saha operasyonu:** Tam zamanlı ekip yok; enerji self-servis (§11.3), kalan işler çağrı üzerine taşeron (2026-10-29)
-- [ ] **Bölge:** Şehir **İstanbul** (2026-10-29); hangi ilçeler? Park izinleri (belediye anlaşması) gerekli mi?
+- [x] **Bölge:** İstanbul — Beşiktaş, Şişli (Nişantaşı), Kadıköy, Ataşehir (2026-10-29) — §12
+- [ ] **Bölge sınırları:** §12.1'deki çekirdek mahalle listesinin onayı
+- [ ] **Park:** İSPARK / özel otopark anlaşması ve İBB izin durumu (§12.4)
+- [ ] **Havalimanları:** Pilotta kapalı mı, ücretli özel bölge mi? (§12.3)
 - [ ] **Ülke ve SPV yapısı:** Araçlar hangi ülkede, SPV nerede kurulacak?
 - [x] **Enerji karışımı ve segment:** %70 EV / %30 tam hibrit, B + C segment (2026-10-29) — §11
 - [ ] **Filo büyüklüğü:** 40 mı 50 mi? (§11.1 — 50 öneriliyor)
@@ -531,3 +534,83 @@ Enerji karışımı her şehir için o şehrin şarj altyapısına ve iklimine g
 
 Her yeni şehir için ön koşul: o şehirde ayrılmış nokta verebilecek bir CPO ve İstanbul
 pilotundan gelen hücre bazlı birim ekonomisi.
+
+## 12. İstanbul pilot bölgesi
+
+**Karar (2026-10-29):** Beşiktaş, Şişli (Nişantaşı bölgesi), Kadıköy, Ataşehir.
+
+Bu dört ilçe **iki ayrı bölge** oluşturur, çünkü arada Boğaz var:
+
+| Bölge | İlçeler | Profil |
+|---|---|---|
+| **Avrupa** | Beşiktaş + Şişli (Nişantaşı) | Yoğun, yüksek gelirli, iş + eğlence; park çok kıt |
+| **Anadolu** | Kadıköy + Ataşehir | Kadıköy: yoğun konut + eğlence; Ataşehir: finans merkezi (İFM) + konut |
+
+### 12.1 Bölge sınırları: ilçenin tamamı değil, çekirdek
+
+50 araç dört ilçenin tamamına dağılırsa yoğunluk çok düşer; kullanıcı yürüme mesafesinde
+araç bulamaz. Bu yüzden bölge **çekirdek mahallelerle** başlar, talep verisine göre genişletilir.
+Taslak (onay bekliyor):
+
+| İlçe | Çekirdek (taslak) |
+|---|---|
+| Beşiktaş | Beşiktaş merkez, Ortaköy, Levent, Etiler, Akatlar |
+| Şişli | Nişantaşı, Teşvikiye, Maçka, Harbiye |
+| Kadıköy | Moda, Kadıköy merkez, Fenerbahçe, Caddebostan, Göztepe, Erenköy |
+| Ataşehir | Atatürk Mah. / İFM çevresi, Barbaros, Küçükbakkalköy |
+
+**Araç dağılımı (50 araç):** Avrupa 26, Anadolu 24. Her bölgede 4 hücrenin (EV-B, EV-C,
+HEV-B, HEV-C) hepsi bulunur, böylece hücre karşılaştırması bölge etkisiyle karışmaz.
+
+**Ayrılmış şarj noktaları (8–10):** Her ilçede en az 2. Avrupa ve Anadolu'ya eşit dağılır.
+
+### 12.2 Yakalar arası yolculuk — en büyük operasyon riski
+
+Kullanıcı Kadıköy'den Nişantaşı'na gidip aracı orada bırakabilir. Saha ekibi olmadığı için
+araçlar bir yakada birikirse geri taşıyacak kimse yoktur (sabah Anadolu → Avrupa, akşam
+tersi akış beklenir).
+
+| Kural | Açıklama |
+|---|---|
+| **Yakalar arası bitirmeye izin var** | Yasaklamak kullanıcı değerini öldürür; Kadıköy–Nişantaşı tam hedef kitle yolculuğu. |
+| **Köprü/tünel geçiş ücreti kullanıcıya** | Araçta HGS; geçiş telematik/HGS kaydıyla yolculuğa eklenir. Avrasya Tüneli pahalı olduğu için uygulamada gösterilir. |
+| **Dinamik dengeleme teşviki** | Bir yakada araç oranı hedefin (ör. %52/%48) dışına çıkınca, ters yöne giden yolculuğa indirim / dakika kredisi. |
+| **Dengesizlik eşiği** | Teşvik yetmezse ve bir yakada araç sayısı %35'in altına düşerse, çağrı üzerine taşeron transferi (son çare, `OpsTask: relocate`). |
+
+**Ölçülecek:** yakalar arası yolculuk oranı, saatlik yaka dengesizliği, teşvik maliyeti,
+taşeron transfer sayısı. Bu, 2. aşamada başka şehirlerin (İzmir'de körfez gibi) tasarımına
+da girdi olur.
+
+### 12.3 Havalimanları
+
+İstanbul Havalimanı (Avrupa, ~40 km) ve Sabiha Gökçen (Anadolu, ~35 km) bölgelerin dışında.
+Havalimanı yolculukları uzun ve kârlı, ama araç bölgeden çok uzakta kalır ve geri getirecek
+ekip yok.
+
+**Öneri:** Pilotun ilk 3 ayında havalimanında yolculuk bitirmek kapalı (gidip dönmek
+serbest). 3. aydan sonra **ücretli özel bölge** olarak açılması değerlendirilir:
+bitirme ücreti + oradan bölgeye dönen yolculuğa indirim. Karar, ilk 3 ayın yaka dengesi
+verisine göre.
+
+### 12.4 Park
+
+Free-floating modelin bu ilçelerdeki en zor kısmı park. Nişantaşı, Beşiktaş merkez ve
+Moda'da sokakta yasal park yeri çok kıt; kullanıcı yolculuğu bitiremezse model çalışmaz.
+
+| Seçenek | Not |
+|---|---|
+| **İSPARK anlaşması** | Bölgedeki İSPARK otoparklarında Itera araçlarına tanımlı yerler; araç başı aylık abonelik. Ayrılmış şarj noktalarının da buralarda olması idealdir. |
+| **Özel otopark / AVM / plaza otoparkı** | Ataşehir ve Levent'te plaza otoparkları; kurumsal ortaklık (çalışanlara indirim karşılığı park yeri). |
+| **Sokak parkı** | Yasal yerlerde serbest; park cezası kullanıcıya yansıtılır (§6 ceza geri tahsilat metriği). |
+
+Uygulama, yolculuğu bitirirken en yakın **anlaşmalı park noktalarını** gösterir. Nişantaşı
+ve Beşiktaş merkez için anlaşmalı park olmadan pilot başlatılmamalı.
+
+**Yasal not:** Paylaşımlı araçların sokakta park etmesi için İBB veya ilçe belediyesi
+izni/protokolü gerekip gerekmediği avukatla ve belediyeyle teyit edilmeli.
+
+### 12.5 Rekabet
+
+Martı, TikTak (Getir Araç dahil) ve Yoyo bu ilçelerde aktif olabilir. Mevcut araç
+yoğunlukları uygulamalarından kontrol edilmeli. Itera'nın farkı: aynı bölgede ayrılmış
+şarj noktası ve anlaşmalı park; yani kullanıcının "aracı nereye bırakacağım" derdini çözmek.
