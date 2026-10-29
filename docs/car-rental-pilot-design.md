@@ -34,7 +34,7 @@ de 2. aşamadaki satışın en güçlü pazarlama materyalidir.
 | Segment | **Saatlik paylaşımlı araç (car-sharing, "kullan-bırak")** | Kullanıcı uygulamadan aracı bulur, telefonla açar, saat/dakika bazlı öder, bırakır. Gelir sözleşmeye değil talebe bağlı; pilotun asıl ölçeceği şey bu talep. |
 | Bırakma modeli | **Bölge içi serbest bırakma (free-floating), tek şehir, sınırlı bölge** | İstasyon tabanlı model daha kolay işletilir ama kullanıcı deneyimi zayıf. Pilotta bölgeyi dar tutup (ör. 2–3 ilçe) dağılma ve yeniden konumlandırma maliyetini sınırlarız. |
 | Filo büyüklüğü | **30–50 araç** | Saatlik modelde gelir araç başına değil, bölgedeki **araç yoğunluğuna** bağlıdır: kullanıcı 5 dakika yürüme mesafesinde araç bulamazsa uygulamayı bırakır. 20 aracın altı talebi ölçmeye yetmez. Buna karşılık yolculuk sayısı yüksek olduğundan hasar/kullanım istatistiği hızlı oluşur. |
-| Araç tipi | **%70 elektrikli / %30 fosil yakıtlı; B ve C segment** — **karar verildi** (2026-10-29) | Ayrıntı ve hücre bazında dağılım §11'de. Pilot aynı zamanda EV ile fosil yakıtın birim ekonomisini yan yana ölçer. |
+| Araç tipi | **%70 elektrikli / %30 tam hibrit (HEV); B ve C segment** — **karar verildi** (2026-10-29) | Ayrıntı, hücre dağılımı ve self-servis enerji modeli §11'de. Pilot aynı zamanda EV ile hibritin birim ekonomisini ve artık değerini yan yana ölçer. |
 | Operatör / teknoloji | **Kendi filomuz + hazır car-sharing yazılımı** (white-label kullanıcı uygulaması + telematik kutusu + operatör paneli) — **karar verildi** | Operasyonu biz yürütüyoruz; uygulama, anahtarsız açma, rezervasyon ve faturalama sıfırdan yazılmıyor (§10). Auxite'in işi: veri hattı, NAV, rezervler ve yatırım yapısı. |
 | Para birimi | Muhasebe: yerel para; NAV ve raporlama: **USD** | Token USD bazlı olacak. Kur riskini pilotta ölçmek, 2. aşamada hedge kararının girdisi. |
 
@@ -273,14 +273,14 @@ Kurulum dahil gerçekçi süre ~8–9 ay.
 - [x] **Operatör modeli:** Kendi filo + hazır car-sharing yazılımı (2026-10-28)
 - [ ] **Yazılım sağlayıcı:** §10'daki kriterlerle 2–3 aday değerlendirilip seçilecek
 - [ ] **OpCo:** Yeni şirket mi, grup içi mevcut bir şirket mi? Kiralama/car-sharing için gereken ruhsat/izinler (avukat)
-- [ ] **Saha operasyonu:** Kendi ekip mi, taşeron mu? (temizlik, şarj/yakıt, konumlandırma, hasar kontrolü)
-- [ ] **Şehir ve bölge:** Hangi şehir, hangi ilçeler? Park izinleri (belediye anlaşması) gerekli mi?
+- [x] **Saha operasyonu:** Tam zamanlı ekip yok; enerji self-servis (§11.3), kalan işler çağrı üzerine taşeron (2026-10-29)
+- [ ] **Bölge:** Şehir **İstanbul** (2026-10-29); hangi ilçeler? Park izinleri (belediye anlaşması) gerekli mi?
 - [ ] **Ülke ve SPV yapısı:** Araçlar hangi ülkede, SPV nerede kurulacak?
-- [x] **Enerji karışımı ve segment:** %70 EV / %30 fosil, B + C segment (2026-10-29) — §11
+- [x] **Enerji karışımı ve segment:** %70 EV / %30 tam hibrit, B + C segment (2026-10-29) — §11
 - [ ] **Filo büyüklüğü:** 40 mı 50 mi? (§11.1 — 50 öneriliyor)
 - [ ] **Araç modelleri:** Her hücre için tek model; telematik uyumu RFI cevaplarına göre (§11.2)
-- [ ] **Şarj ortağı:** 1 ana + 1 yedek CPO ile filo anlaşması (§11.3)
-- [ ] **Akaryakıt ortağı:** Filo yakıt kartı sağlayıcısı (§11.4)
+- [ ] **Şarj ortağı:** 1 ana CPO (8–10 ayrılmış AC nokta) + 1 yedek kurumsal hesap (§11.4)
+- [ ] **Akaryakıt ortağı:** Hibritler için filo yakıt kartı sağlayıcısı (§11.5)
 - [ ] **Sigorta:** Saatlik paylaşımlı kullanım için poliçe (birçok standart filo poliçesi bunu kapsamaz)
 - [ ] **Pilot sermayesi:** Şirket kaynağı mı, ilişkili taraflar mı? (Dış yatırımcı → hukuki görüş öncesi risk)
 - [ ] **Fiyatlandırma:** Dakika/saat/km ücreti, paketler; operatör mü belirliyor biz mi?
@@ -387,104 +387,147 @@ tercih edilmeli; platform değişirse araçlar yeniden donatılmaz.
 
 ## 11. Filo karışımı ve enerji modeli
 
-**Karar (2026-10-29):** %70 elektrikli, %30 fosil yakıtlı; B ve C segment. Elektrikli
-araçlar için şarj operatörleriyle (CPO) anlaşma yapılacak.
+**Karar (2026-10-29, revize):** %70 elektrikli (EV), %30 **tam hibrit** (HEV, fişe takılmayan);
+B ve C segment. Enerji **self-servis**: şarj ve yakıt mümkün olduğunca kullanıcıya bırakılır,
+tam zamanlı saha ekibi kurulmaz.
 
-Bu karar pilota ikinci bir soru ekliyor: *saatlik paylaşımda EV mi, fosil yakıt mı daha
-kârlı?* Bu cevap 2. aşamadaki filo alımının ve token yapısının ana girdisi olacak.
+**Neden %100 EV değil:** İki risk tek sepete girerdi:
+1. **Artık değer riski.** Token getirisinin önemli kısmı vade sonundaki araç satışından gelir.
+   Türkiye'de ikinci el EV piyasası sığ; batarya sağlığı kaygısı ve hızlı model yenilenmesi
+   fiyatları belirsizleştiriyor. Hibritin ikinci el likiditesi ve artık değeri yüksek; bu
+   riski dengeler.
+2. **Şarj noktası darboğazı.** Kullanıcı ayrılmış şarj noktasını dolu bulursa yolculuğu
+   bitiremez. İlk aylarda nokta sayısı/doluluk bilinmiyor; hibritler bu dönemin sigortası.
+
+**Neden benzinli değil hibrit:** Şarj gerektirmez (self-servis modele uyar), İstanbul'un
+dur-kalk trafiğinde benzinliden çok daha az yakar, menzili uzun olduğu için yakıt nadiren
+gerekir ve ikinci el değeri güçlüdür.
+
+**Pilotun cevaplayacağı soru:** *EV, hibrite göre artık değer ve şarj kaybını karşılayacak
+kadar fazla kazandırıyor mu?* 2. aşamada İstanbul'da EV oranının %85–100'e çıkıp
+çıkmayacağına bu cevap karar verir.
 
 ### 11.1 Hücreler ve araç sayısı
 
-Filo 4 hücreye bölünür. Her hücre kendi içinde karşılaştırılabilir olsun diye **her
-hücrede tek model** kullanılır.
+Filo 4 hücreye bölünür; her hücrede **tek model** kullanılır.
 
 | Hücre | 40 araç | **50 araç (önerilen)** | Rolü |
 |---|---|---|---|
 | EV-B | 16 | **20** | Kısa şehir içi yolculuk, filonun ana gövdesi |
-| EV-C | 12 | **15** | Daha uzun yolculuk, aile/eşya, daha yüksek dakika ücreti |
-| Fosil-B | 6 | **8** | EV-B ile karşılaştırma grubu |
-| Fosil-C | 6 | **7** | Şehir dışı/uzun yolculuk, şarj kaygısı olan kullanıcı |
-| **Toplam** | 28 EV / 12 fosil | **35 EV / 15 fosil** | |
+| EV-C | 12 | **15** | Daha uzun yolculuk, havalimanı, aile/eşya |
+| HEV-B | 6 | **8** | EV-B ile karşılaştırma grubu |
+| HEV-C | 6 | **7** | Uzun/şehir dışı yolculuk, şarj kaygısı olan kullanıcı |
+| **Toplam** | 28 EV / 12 HEV | **35 EV / 15 HEV** | |
 
-**Neden 50 öneriyorum:** 40 araçta fosil hücreleri 6'şar araçta kalıyor. Bir aracın
-kazaya karışması veya serviste kalması o hücrenin aylık sonucunu %15–20 oynatır; EV/fosil
-karşılaştırması güvenilir olmaz. 50 araçta en küçük hücre 7–8 araç. Daha da sağlam bir
-karşılaştırma isteniyorsa fosil hücreleri 10'ar araca çıkarılır (filo ~55).
+**Neden 50:** 40 araçta hibrit hücreleri 6'şar araçta kalıyor; bir aracın kazası veya
+servisi o hücrenin aylık sonucunu %15–20 oynatır. 50 araçta en küçük hücre 7–8 araç.
 
-**Fiyatlandırma:** C segment dakika/saat ücreti B'nin üstünde. EV ve fosil aynı segmentte
-**aynı fiyattan** başlar; böylece kullanıcının tercihi fiyat farkıyla değil, araç tipiyle
-ölçülür. 3. aydan sonra fiyat testi yapılabilir.
+**Fiyatlandırma:** C segment dakika/saat ücreti B'nin üstünde. EV ve hibrit aynı segmentte
+**aynı fiyattan** başlar; kullanıcının tercihi fiyatla değil araç tipiyle ölçülür.
 
 ### 11.2 Model seçimi
 
-Model seçimi telematik uyumuna bağlıdır: anahtarsız açma ve **EV'de şarj seviyesinin**
-uzaktan okunabilmesi şart. Bu yüzden model kararı RFI cevaplarından sonra verilir.
-Türkiye pazarında bakılacak adaylar (bulunabilirlik ve fiyat teyit edilmeli):
+Model seçimi telematik uyumuna bağlıdır: anahtarsız açma, km, konum ve **EV'de şarj
+seviyesi + "şarj başladı" sinyali** uzaktan okunabilmeli (§11.3'teki kural buna dayanıyor).
+Model kararı RFI cevaplarından sonra verilir. Bakılacak adaylar (bulunabilirlik, fiyat ve
+güncel ÖTV teyit edilmeli):
 
 | Hücre | Adaylar |
 |---|---|
 | EV-B | Renault 5 E-Tech, Citroën ë-C3, BYD Dolphin Surf |
 | EV-C | Togg T10X / T10F, MG4, BYD Dolphin |
-| Fosil-B | Renault Clio, Toyota Yaris |
-| Fosil-C | Fiat Egea, Toyota Corolla |
+| HEV-B | Toyota Yaris Hybrid, Renault Clio E-Tech |
+| HEV-C | Toyota Corolla Hybrid, Toyota C-HR Hybrid |
 
-**Togg notu:** Yerli marka olması pazarlama ve kullanıcı güveni açısından güçlü, Trugo
-şarj ağıyla da doğal bir ortaklık zemini var. Ama telematik/API erişimi (INVERS veya
-fabrika telematiği) mutlaka teyit edilmeli; edilemiyorsa seçilmez.
+**Togg notu:** Yerli marka; Trugo şarj ağıyla doğal ortaklık zemini. Telematik/API erişimi
+teyit edilmezse seçilmez.
 
-Kriterler: telematik uyumu > toplam sahip olma maliyeti (alış, sigorta, bakım, artık
-değer) > menzil (EV-B ≥ 300 km WLTP) > şarj hızı (DC ≥ 50 kW) > kullanıcı çekiciliği.
+Kriterler: telematik uyumu > toplam sahip olma maliyeti (alış, sigorta, bakım, **artık
+değer**) > menzil (EV-B ≥ 300 km WLTP) > kullanıcı çekiciliği.
 
-### 11.3 Şarj modeli
+### 11.3 Self-servis enerji modeli
 
-**Üç katmanlı şarj:**
+Saatlik yolculuklar 20–40 dakika sürdüğü için "dolu al dolu bırak" uygulanmaz: EV'de
+kullanıcıyı 30–60 dakika şarjda bekletir, araçlar zaten dolu teslim alınmaz. Bunun yerine
+**şarj seviyesine göre değişen kural:**
 
-1. **Kullanıcı şarjı (teşvikli):** Kullanıcı yolculuğu bölge içindeki anlaşmalı bir
-   istasyonda bitirip aracı şarja takarsa hesabına dakika kredisi yüklenir. Saha
-   operasyonu maliyetini en çok düşüren katman budur.
-2. **Saha ekibi şarjı:** Şarjı belirli bir eşiğin (ör. %25) altına düşen araçlar saha
-   ekibi tarafından en yakın anlaşmalı DC istasyona götürülür.
-3. **Gece depo şarjı (opsiyonel):** OpCo'nun bir otopark/depo noktasında AC şarj
-   ünitelerinde gece şarj. kWh maliyeti en düşük katman, ama araç toplama maliyeti var.
-   Pilotun 3. ayında 1. ve 2. katmanın verisine göre karar verilir.
+| Durum | Kural |
+|---|---|
+| **EV, şarj ≥ %40** | Bölge içinde her yere bırakılabilir (free-floating) |
+| **EV, şarj < %40** | Yolculuk **yalnızca Itera'ya ayrılmış bir şarj noktasında, kablo takılı** iken bitirilebilir. Telematik "şarj başladı" sinyali gelmeden uygulama yolculuğu kapatmaz. Kullanıcı **dakika kredisi** kazanır. |
+| **EV, şarj < %40 ve en yakın ayrılmış nokta dolu** | Uygulama bir sonraki boş noktaya yönlendirir; ek mesafe ücretsizdir ve kredi artar. Hiçbiri boş değilse yolculuk normal bitirilir, olay kaydedilir (darboğaz metriği). |
+| **HEV** | Free-floating. Araçta filo yakıt kartı. Depo %25'in altındaysa yakıt alan kullanıcı kredi kazanır. |
+| **Uzun kiralama (≥ 4 saat / günlük paket)** | **Aldığın seviyede bırak.** Eksik kWh/litre, servis ücretiyle faturalanır. |
+| **Herkes** | Araç %15'in altında bırakılamaz (EV) / depo boş bırakılamaz (HEV); bırakılırsa ceza ücreti. |
 
-**CPO filo anlaşmasında istenecekler:**
+%40 eşiği başlangıç değeridir; araç günde 3–5 kısa yolculuk yaptığı için, kullanıcıların
+şarj ettiği yolculuk oranı ve kullanılamazlık verisine göre aylık ayarlanır.
 
-| # | Madde | Neden |
+**Ayrılmış şarj noktaları:** 35 EV için pilot bölgesinde **8–10 ayrılmış nokta** (≈4 araca 1).
+Araçlar kısa yolculuklar arasında zaten beklediği için **AC (7–22 kW) yeterli**; DC yalnızca
+yedek. Noktaların kurulumu ve işletmesi CPO'da kalır, Itera'nın altyapı yatırımı olmaz
+(Autolib'in altyapı maliyeti altında kapanmasından çıkan ders).
+
+**Kalan saha işi** (enerji dışı): temizlik, hasar kontrolü, bölge dışına çıkmış aracın
+geri getirilmesi. Bunlar da kısmen self-servis:
+- Yolculuk başı ve sonu zorunlu fotoğraf (hasar ve temizlik kanıtı)
+- Kullanıcının bir önceki kullanıcıyı/aracın durumunu puanlaması → temizlik görevi tetikler
+- Kalan iş için tam zamanlı ekip yerine **çağrı üzerine çalışan taşeron** (görev başı ücret → `OpsTask` maliyeti)
+
+### 11.4 Şarj operatörü (CPO) anlaşması
+
+Pilot için asıl ihtiyaç **indirim değil, kapasite**: kullanıcı ayrılmış noktayı boş bulmazsa
+self-servis model çöker.
+
+| # | Talep | Öncelik |
 |---|---|---|
-| 1 | **Filo indirimli kWh tarifesi** (AC ve DC ayrı) | EV birim ekonomisinin en büyük kalemi |
-| 2 | **Araç başına filo kartı/RFID** veya uygulama içinden şarj başlatma | Kullanıcı ve saha ekibi kişisel kartını kullanmaz |
-| 3 | **Şarj oturumu verisi API veya aylık CSV ile:** araç/kart, istasyon, başlangıç-bitiş, kWh, tutar | `CashEvent: charging` kayıtları ve kWh/km metriği |
-| 4 | **Tek aylık fatura**, araç kırılımlı | Muhasebe ve SPV gider dağılımı |
-| 5 | Pilot bölgesinde **ayrılmış/öncelikli park yeri** | Kullanıcı şarjı katmanının çalışması için |
-| 6 | Bölgedeki istasyonların **çalışırlık/doluluk verisi** | Saha ekibinin boşa gitmemesi |
-| 7 | Pilot süresince sabit fiyat veya üst sınır | 6 aylık verinin fiyat değişikliğiyle bozulmaması |
+| 1 | Pilot bölgesinde **8–10 Itera'ya ayrılmış AC şarj noktası** (işaretli park yeri, uygulamada rezervasyon) | **Zorunlu** |
+| 2 | Telematik veya CPO API'si üzerinden **"şarj başladı" doğrulaması** | **Zorunlu** |
+| 3 | Kullanıcının kendi kartı olmadan şarj başlatabilmesi (araç başına filo kartı/RFID veya otomatik başlatma) | **Zorunlu** |
+| 4 | Şarj oturumu verisi API veya aylık CSV: araç, nokta, başlangıç-bitiş, kWh, tutar | **Zorunlu** |
+| 5 | Araç kırılımlı tek aylık fatura | Zorunlu |
+| 6 | Noktaların çalışırlık/doluluk verisi (uygulamada gösterim için) | Önemli |
+| 7 | Pilot süresince sabit kWh fiyatı veya üst sınır | Önemli |
+| 8 | Filo indirimi | 3. aydan sonra, gerçek tüketim verisiyle |
 
-**Ortak sayısı:** Bir ana CPO (bölgede en yoğun ağa sahip olan) + bir yedek. Tek ortakla
-istasyon arızası veya doluluk riski yüksek; ikiden fazlası veri ve fatura entegrasyonunu
-çoğaltır. Türkiye'de görüşülecek büyük ağlar: ZES, Eşarj, Trugo, Voltrun, Sharz.net.
-Seçim, pilot bölgesindeki DC istasyon sayısına göre yapılır.
+**Ortak sayısı:** 1 ana CPO (ayrılmış noktalar) + 1 yedek (kurumsal hesap, ayrılmış nokta
+yok). Görüşülecek ağlar: ZES, Eşarj, Trugo, Voltrun, Sharz.net. Seçimi, ayrılmış nokta
+verebilme isteği ve pilot bölgesindeki mevcut istasyon yoğunluğu belirler.
 
-**Yasal not:** Depo şarjı yalnızca kendi filomuz içinse şarj hizmeti lisansı gerekmeyebilir;
-EPDK mevzuatına göre avukatla teyit edilmeli.
+**Yasal not:** Ayrılmış noktalar CPO'nun lisansı altında işletildiği için Itera'nın şarj
+hizmeti lisansına ihtiyacı olmaması beklenir; EPDK mevzuatına göre avukatla teyit edilmeli.
 
-### 11.4 Fosil yakıtlı araçlar
+### 11.5 Hibrit araçlar için yakıt
 
-- **Filo yakıt kartı** (araç başına tanımlı, plaka/km doğrulamalı, günlük limitli).
-  Kullanıcı yakıt alırsa kredi kazanır; kart yalnızca o araca yakıt verir.
+- **Filo yakıt kartı**: araç başına tanımlı, plaka doğrulamalı, günlük limitli; yalnızca o araca yakıt verir.
 - Yakıt kartı portalından aylık işlem verisi → `CashEvent: fuel`.
-- Yakıt suistimali takibi: telematikten gelen depo seviyesi artışı ile kart işlemindeki
-  litre karşılaştırılır.
+- Suistimal kontrolü: telematikten gelen depo seviyesi artışı ile kart işlemindeki litre karşılaştırılır.
 
-### 11.5 Ek metrikler (EV vs. fosil)
+### 11.6 Ek metrikler (EV vs. HEV)
 
-§6'daki tüm metrikler **hücre bazında** raporlanır. Bunlara ek olarak:
+§6'daki tüm metrikler **hücre bazında** raporlanır. Ek olarak:
 
 | Metrik | Tanım |
 |---|---|
-| Enerji maliyeti / km | EV: şarj tutarı / km · Fosil: yakıt tutarı / km |
-| Enerji operasyon maliyeti / yolculuk | şarj/yakıt için saha ekibi süresi ve maliyeti |
-| Kullanıcı şarj oranı | kullanıcının şarja taktığı yolculuk / toplam yolculuk |
-| Şarj nedeniyle kullanılamazlık | şarjda veya düşük şarjda geçen saat / toplam saat |
-| Kullanıcı tercihi | aynı bölgede EV ve fosil aynı anda müsaitken hangisinin seçildiği |
-| Artık değer sapması | EV ve fosil ayrı ayrı (EV artık değeri daha belirsiz) |
+| Enerji maliyeti / km | EV: şarj tutarı / km · HEV: yakıt tutarı / km |
+| Kullanıcı şarj oranı | kullanıcının şarja taktığı yolculuk / toplam EV yolculuğu |
+| Şarj darboğazı | ayrılmış noktalar dolu olduğu için yönlendirilen veya şarjsız bitirilen yolculuk |
+| Şarj nedeniyle kullanılamazlık | şarjda veya < %15'te geçen saat / toplam saat |
+| Enerji teşvik maliyeti | verilen dakika kredisinin parasal karşılığı / yolculuk |
+| Taşeron maliyeti / yolculuk | `OpsTask` toplamı / yolculuk |
+| Kullanıcı tercihi | aynı bölgede EV ve HEV aynı anda müsaitken hangisinin seçildiği |
+| Artık değer sapması | EV ve HEV ayrı ayrı (EV artık değeri daha belirsiz) |
+
+### 11.7 Şehirlere genişleme
+
+Enerji karışımı her şehir için o şehrin şarj altyapısına ve iklimine göre ayrı belirlenir.
+
+| Şehir | Öneri |
+|---|---|
+| **İstanbul (pilot)** | %70 EV / %30 HEV. Veri iyi çıkarsa 2. aşamada %85–100 EV. |
+| **Ankara** | Mesafeler uzun, kış soğuk (soğukta batarya menzili düşer). Başlangıçta ör. %50 / %50. |
+| **İzmir** | İklim EV için en uygunu. İstanbul verisiyle doğrudan %70+ EV başlanabilir. |
+| **Bursa** | Togg'un üretim yeri (Gemlik); Togg/Trugo ile yerel ortaklık zemini — yerinde doğrulanmalı. |
+
+Her yeni şehir için ön koşul: o şehirde ayrılmış nokta verebilecek bir CPO ve İstanbul
+pilotundan gelen hücre bazlı birim ekonomisi.

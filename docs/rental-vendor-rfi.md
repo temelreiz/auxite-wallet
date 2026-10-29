@@ -14,7 +14,7 @@ INVERS'e platform soruları yerine yalnızca telematik bölümü gönderilir.
 Hello [Name / team],
 
 We are [Company], and we are preparing a free-floating car-sharing pilot in
-[city], Türkiye. We will own and operate the fleet ourselves and are looking for a
+Istanbul, Türkiye. We will own and operate the fleet ourselves and are looking for a
 white-label platform (customer app, booking and billing, operator console) and
 compatible telematics.
 
@@ -24,7 +24,7 @@ and we will reconcile it with third-party audited figures. Data access through y
 platform is therefore our most important selection criterion.
 
 **Pilot scope**
-- Fleet: about 50 vehicles, **70% electric / 30% petrol**, B and C segment, one model per segment and powertrain (4 models in total; candidates: [model list])
+- Fleet: about 50 vehicles, **70% electric / 30% full hybrid (non-plug-in)**, B and C segment, one model per segment and powertrain (4 models in total; candidates: [model list])
 - Model: free-floating within a geofenced zone of 2–3 districts, per-minute/hour pricing
 - Term: 24 months, with a planned expansion to 2–3 segments and more vehicles afterwards
 - Timeline: platform selection in [month], closed beta around [month], public launch around [month]
@@ -43,8 +43,9 @@ platform is therefore our most important selection criterion.
 **Also helpful**
 - Field-operations module (cleaning, refuelling/charging, relocation tasks with costs), and whether this data is available via API
 - **EV support:** remote state-of-charge reading, low-charge alerts, charging-station locations in the app, and in-app credits for users who end a trip at a partner charger
+- **Charge-dependent trip-end rule:** can the app block ending a trip below a configurable charge level (e.g. 40%) unless the car is parked at a designated charger **and charging has started** (confirmed via telematics)?
 - Integration with charge point operators (start/stop charging from the app, or importing charging sessions per vehicle)
-- Mixed EV and petrol fleet in one zone, with different tariffs by vehicle segment
+- Mixed EV and hybrid fleet in one zone, with different tariffs by vehicle segment
 - Before/after trip damage photos and incident records
 - Dynamic pricing by time and zone
 - A sandbox environment and API documentation we can test against **before signing**
@@ -86,7 +87,7 @@ Ortak metnin "Also helpful" bölümünden sonra eklenir.
 - Which telematics providers do you integrate with today (e.g. INVERS, OEM connected-car)?
 
 **INVERS** (send only the telematics questions from the shared text and these)
-- CloudBoxx price per vehicle, installation and monthly connectivity for 50 vehicles (35 EV, 15 petrol) in Türkiye. Do you have a local installation partner?
+- CloudBoxx price per vehicle, installation and monthly connectivity for 50 vehicles (35 EV, 15 hybrid) in Türkiye. Do you have a local installation partner?
 - Does OneAPI provide webhooks or push events for trip/booking-relevant vehicle events, or only the Events API? Can we read data directly while a third-party platform (e.g. ATOM, MOQO, Vulog) controls the vehicles?
 - Compatibility with our candidate vehicle models: [model list]
 
