@@ -2,10 +2,10 @@
 // /proof-of-reserves — public Proof-of-Reserves dashboard
 // ----------------------------------------------------------------------------
 // Reads /api/auxr/reserves + /api/auxr/price every 60s and renders:
-//   - Outstanding AUXR supply + market cap
-//   - Grams reserved per component vs grams required for current supply
-//   - Backing ratio per metal + an overall "fully backed" badge
-//   - Surplus / shortfall in grams and USD
+//   - AUXR owed: off-chain ledger + Base supply
+//   - Grams held per the latest issuer-reported holdings statement vs grams
+//     required for the AUXR owed
+//   - Backing status: no statement / stale / under-backed / backed
 //
 // Designed to be the URL we cite in compliance docs, regulator submissions,
 // and the reserve audit pack. Static-renderable enough to be archived by
@@ -85,24 +85,32 @@ const T = {
   en: {
     nav_home: "Home",
     section_basket: "AUXR BASKET",
-    backed_pill: (pct: string) => `Ledger: ${pct} · unaudited`,
-    reconciling_pill: (pct: string) => `Ledger: ${pct} · reconciling`,
+    status_pill: {
+      no_statement: "No holdings statement published",
+      stale: "Holdings statement out of date",
+      under_backed: "Under-backed · issuer-reported",
+      backed: "Backed · issuer-reported, unaudited",
+    },
     title: "Proof of Reserves",
-    intro: "Auxite's reserve token (AUXR) is a 55/30/10/5 basket of Au, Ag, Pt and Pd. The basket grams below are read directly from Auxite's own reserve ledger. These figures are self-reported: no independent auditor, custodian or insurer has verified them, and no attestation report has been published to date.",
-    stat_circulation: "AUXR in Circulation",
+    intro: "Auxite's reserve token (AUXR) tracks a 55/30/10/5 basket of Au, Ag, Pt and Pd and is cash-settled at NAV. Below, the AUXR owed (balances in the Auxite app plus tokens on Base) is compared with the holdings in Auxite's latest holdings statement. Holdings are issuer-reported: no independent auditor, custodian or insurer has verified them, and no attestation report has been published to date.",
+    stat_circulation: "AUXR Owed",
     stat_units: "units",
-    stat_marketcap: "Market Cap",
+    stat_split: (app: string, base: string) => `app ${app} · Base ${base}`,
+    stat_marketcap: "Owed at NAV",
     stat_navsub: (nav: string) => `NAV ${nav} / unit`,
-    stat_reserves: "Reserves Value",
+    stat_reserves: "Holdings Value",
     stat_atspot: "at spot prices",
+    stat_statement: (d: string) => `statement as of ${d}`,
+    stat_nostatement: "no statement",
     stat_weakest: "Weakest Backing",
     stat_okrange: "≥ 100%",
     stat_warn: "needs review",
+    stat_none: "not reported",
     section_backing: "Backing Detail",
     target_weight: (pct: string) => `Target weight: ${pct}%`,
-    reserves: "Reserves",
+    reserves: "Held",
     required: "Required",
-    surplus: "Surplus",
+    surplus: "Surplus / shortfall",
     per_auxr: "Per AUXR",
     spot: "Spot",
     backing: "Backing",
@@ -127,7 +135,7 @@ const T = {
     th_usd: "USD value",
     th_weight: "Live weight",
     nav_row: "NAV (1 AUXR)",
-    footer: 'Operated by Aurum Ledger Limited, Hong Kong (Company Reg. No. 79809097). Reserve figures above are read in real time from Auxite\'s own production reserve ledger and auto-refresh every 60 seconds; they are self-reported and unaudited. No custodian, insurer or auditor has been appointed to date. For audit inquiries: ',
+    footer: 'Operated by Aurum Ledger Limited, Hong Kong (Company Reg. No. 79809097). AUXR owed is read live from Auxite\'s ledger and from Base; holdings come from Auxite\'s latest holdings statement. Figures refresh every 60 seconds; holdings are issuer-reported and unaudited, and a statement older than the stated maximum age is not counted as backing. No custodian, insurer or auditor has been appointed to date. For audit inquiries: ',
     last_refresh: "Last refresh:",
     metal_gold: "Gold",
     metal_silver: "Silver",
@@ -137,24 +145,32 @@ const T = {
   tr: {
     nav_home: "Ana Sayfa",
     section_basket: "AUXR SEPETİ",
-    backed_pill: (pct: string) => `Defter: ${pct} · denetlenmemiş`,
-    reconciling_pill: (pct: string) => `Defter: ${pct} · uzlaştırılıyor`,
+    status_pill: {
+      no_statement: "Varlık beyanı yayınlanmadı",
+      stale: "Varlık beyanı güncel değil",
+      under_backed: "Karşılık eksik · şirket beyanı",
+      backed: "Karşılıklı · şirket beyanı, denetlenmemiş",
+    },
     title: "Rezerv Kanıtı",
-    intro: "Auxite'ın rezerv tokeni (AUXR), Au, Ag, Pt ve Pd metallerinden oluşan %55/30/10/5 oranlı bir sepettir. Aşağıdaki sepet gramları doğrudan Auxite'ın kendi rezerv defterinden okunmaktadır. Bu rakamlar şirket beyanıdır: bağımsız bir denetçi, saklamacı veya sigortacı tarafından doğrulanmamıştır ve bugüne kadar yayınlanmış bir attestation raporu yoktur.",
-    stat_circulation: "Dolaşımdaki AUXR",
+    intro: "Auxite'ın rezerv tokeni (AUXR), Au, Ag, Pt ve Pd metallerinden oluşan %55/30/10/5 oranlı bir sepeti izler ve NAV üzerinden nakit uzlaşılır. Aşağıda borçlu olunan AUXR (Auxite uygulamasındaki bakiyeler ile Base üzerindeki tokenlar), Auxite'ın son varlık beyanındaki varlıklarla karşılaştırılır. Varlıklar şirket beyanıdır: bağımsız bir denetçi, saklamacı veya sigortacı tarafından doğrulanmamıştır ve bugüne kadar yayınlanmış bir attestation raporu yoktur.",
+    stat_circulation: "Borçlu Olunan AUXR",
     stat_units: "birim",
-    stat_marketcap: "Piyasa Değeri",
+    stat_split: (app: string, base: string) => `uygulama ${app} · Base ${base}`,
+    stat_marketcap: "NAV ile Yükümlülük",
     stat_navsub: (nav: string) => `NAV ${nav} / birim`,
-    stat_reserves: "Rezerv Değeri",
+    stat_reserves: "Varlık Değeri",
     stat_atspot: "spot fiyatlarda",
+    stat_statement: (d: string) => `beyan tarihi ${d}`,
+    stat_nostatement: "beyan yok",
     stat_weakest: "En Zayıf Karşılık",
     stat_okrange: "≥ %100",
     stat_warn: "inceleme gerekli",
+    stat_none: "beyan edilmedi",
     section_backing: "Karşılık Detayı",
     target_weight: (pct: string) => `Hedef ağırlık: %${pct}`,
-    reserves: "Rezerv",
+    reserves: "Tutulan",
     required: "Gerekli",
-    surplus: "Fazla",
+    surplus: "Fazla / eksik",
     per_auxr: "AUXR Başına",
     spot: "Spot",
     backing: "Karşılık",
@@ -179,7 +195,7 @@ const T = {
     th_usd: "USD değeri",
     th_weight: "Canlı ağırlık",
     nav_row: "NAV (1 AUXR)",
-    footer: "Aurum Ledger Limited, Hong Kong (Şirket Kayıt No. 79809097) tarafından işletilmektedir. Yukarıdaki rezerv rakamları Auxite'ın kendi üretim rezerv defterinden gerçek zamanlı okunur ve her 60 saniyede bir yenilenir; şirket beyanıdır ve denetlenmemiştir. Bugüne kadar atanmış bir saklamacı, sigortacı veya denetçi bulunmamaktadır. Denetim sorgulamaları için: ",
+    footer: "Aurum Ledger Limited, Hong Kong (Şirket Kayıt No. 79809097) tarafından işletilmektedir. Borçlu olunan AUXR, Auxite'ın defterinden ve Base'den canlı okunur; varlıklar Auxite'ın son varlık beyanından gelir. Rakamlar her 60 saniyede bir yenilenir; varlıklar şirket beyanıdır ve denetlenmemiştir. Belirtilen azami süreden eski bir beyan karşılık sayılmaz. Bugüne kadar atanmış bir saklamacı, sigortacı veya denetçi bulunmamaktadır. Denetim sorgulamaları için: ",
     last_refresh: "Son yenileme:",
     metal_gold: "Altın",
     metal_silver: "Gümüş",
@@ -188,12 +204,16 @@ const T = {
   },
 } as const;
 
+type BackingStatus = "no_statement" | "stale" | "under_backed" | "backed";
+
 type Reserves = {
   success: true;
-  supply: { unitsAUXR: number; marketCapUSD: number };
+  status: BackingStatus;
+  supply: { unitsAUXR: number; offChainUnits: number; onChainUnits: number; marketCapUSD: number };
   reserves: {
     grams: { gold: number; silver: number; platinum: number; palladium: number };
     totalValueUSD: number;
+    statementAsOf: string | null;
   };
   required: {
     grams: { gold: number; silver: number; platinum: number; palladium: number };
@@ -205,7 +225,7 @@ type Reserves = {
       platinum: number;
       palladium: number;
       weakest: number;
-    };
+    } | null;
     fullyBacked: boolean;
     surplusGrams: {
       gold: number;
@@ -301,7 +321,9 @@ export default function ProofOfReservesPage() {
   }, []);
 
   const fullyBacked = reserves?.backing.fullyBacked ?? false;
-  const weakest = reserves?.backing.ratio.weakest ?? 1;
+  const ratios = reserves?.backing.ratio ?? null;
+  const statementDate = reserves?.reserves.statementAsOf?.slice(0, 10) ?? null;
+  const fmtUnits = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
   return (
     // lang="en" forces CSS `text-transform: uppercase` to apply English
@@ -341,11 +363,7 @@ export default function ProofOfReservesPage() {
                 : "bg-amber-500/15 text-amber-400"
             }`}
           >
-            {reserves
-              ? fullyBacked
-                ? t.backed_pill(fmtPct(weakest))
-                : t.reconciling_pill(fmtPct(weakest))
-              : "—"}
+            {reserves ? t.status_pill[reserves.status] : "—"}
           </span>
         </div>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">{t.title}</h1>
@@ -362,7 +380,7 @@ export default function ProofOfReservesPage() {
         <Stat
           label={upper(t.stat_circulation)}
           value={reserves ? reserves.supply.unitsAUXR.toLocaleString(undefined, { maximumFractionDigits: 4 }) : "—"}
-          sub={t.stat_units}
+          sub={reserves ? t.stat_split(fmtUnits(reserves.supply.offChainUnits), fmtUnits(reserves.supply.onChainUnits)) : t.stat_units}
         />
         <Stat
           label={upper(t.stat_marketcap)}
@@ -371,13 +389,13 @@ export default function ProofOfReservesPage() {
         />
         <Stat
           label={upper(t.stat_reserves)}
-          value={reserves ? fmtUSD(reserves.reserves.totalValueUSD) : "—"}
-          sub={t.stat_atspot}
+          value={reserves && statementDate ? fmtUSD(reserves.reserves.totalValueUSD) : "—"}
+          sub={statementDate ? t.stat_statement(statementDate) : t.stat_nostatement}
         />
         <Stat
           label={upper(t.stat_weakest)}
-          value={reserves ? fmtPct(weakest) : "—"}
-          sub={fullyBacked ? t.stat_okrange : t.stat_warn}
+          value={ratios ? fmtPct(ratios.weakest) : "—"}
+          sub={!ratios ? t.stat_none : fullyBacked ? t.stat_okrange : t.stat_warn}
           accent={fullyBacked ? "ok" : "warn"}
         />
       </section>
@@ -387,7 +405,7 @@ export default function ProofOfReservesPage() {
         <h2 className="text-xs tracking-widest text-slate-500 mb-3">{upper(t.section_backing)}</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {METALS.map(({ key, symbol, color }) => {
-            const ratio = reserves?.backing.ratio[key] ?? 1;
+            const ratio = ratios ? ratios[key] : null;
             const reserveG = reserves?.reserves.grams[key] ?? 0;
             const requiredG = reserves?.required.grams[key] ?? 0;
             const surplusG = reserves?.backing.surplusGrams[key] ?? 0;
@@ -396,8 +414,8 @@ export default function ProofOfReservesPage() {
             const weight = pricing?.basket.weights[key] ?? 0;
             const metalLabel = t[`metal_${key}` as `metal_${typeof key}`];
 
-            const ratioOK = ratio >= 0.9999;
-            const ratioPct = Math.min(ratio * 100, 200); // cap for sane bar width
+            const ratioOK = ratio != null && ratio >= 0.9999;
+            const ratioPct = ratio != null ? Math.min(ratio * 100, 100) : 0;
 
             return (
               <div
@@ -417,7 +435,7 @@ export default function ProofOfReservesPage() {
                 <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm mb-4">
                   <div>
                     <div className="text-slate-500 text-xs mb-1">{t.reserves}</div>
-                    <div className="font-semibold">{fmtGrams(reserveG)}</div>
+                    <div className="font-semibold">{ratios ? fmtGrams(reserveG) : "—"}</div>
                   </div>
                   <div>
                     <div className="text-slate-500 text-xs mb-1">{t.required}</div>
@@ -425,14 +443,18 @@ export default function ProofOfReservesPage() {
                   </div>
                   <div>
                     <div className="text-slate-500 text-xs mb-1">{t.surplus}</div>
-                    <div
-                      className={`font-semibold ${
-                        surplusG >= 0 ? "text-emerald-400" : "text-red-400"
-                      }`}
-                    >
-                      {surplusG >= 0 ? "+" : ""}
-                      {fmtGrams(surplusG)}
-                    </div>
+                    {ratios ? (
+                      <div
+                        className={`font-semibold ${
+                          surplusG >= 0 ? "text-emerald-400" : "text-red-400"
+                        }`}
+                      >
+                        {surplusG >= 0 ? "+" : "−"}
+                        {fmtGrams(Math.abs(surplusG))}
+                      </div>
+                    ) : (
+                      <div className="font-semibold">—</div>
+                    )}
                   </div>
                   <div>
                     <div className="text-slate-500 text-xs mb-1">{t.per_auxr}</div>
@@ -449,7 +471,7 @@ export default function ProofOfReservesPage() {
                         ratioOK ? "text-emerald-400" : "text-amber-400"
                       }`}
                     >
-                      {fmtPct(ratio)}
+                      {ratio != null ? fmtPct(ratio) : "—"}
                     </div>
                   </div>
                 </div>

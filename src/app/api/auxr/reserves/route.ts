@@ -1,63 +1,57 @@
 // ============================================================================
 // GET /api/auxr/reserves
 // ----------------------------------------------------------------------------
-// Public Proof-of-Reserves endpoint. Returns:
-//   - Outstanding AUXR supply (units)
-//   - Grams of each metal currently reserved
-//   - Grams required to fully back current supply
-//   - Backing ratio per metal + weakest leg
-//   - USD value of reserves vs market cap
+// Public Proof-of-Reserves endpoint. Compares what is owed (AUXR on the
+// off-chain ledger plus AUXR on Base) with the latest issuer-reported holdings
+// statement. See src/lib/auxr-backing.ts.
 //
-// This is the data structure consumed by:
-//   - Public PoR page at /proof-of-reserves
-//   - Mobile app About → AUXR Reserves screen
-//   - Third-party auditors (Sumsub, LBMA Good Delivery reviewers)
+// `backing.fullyBacked` is true ONLY with a statement newer than the max age
+// that covers every basket metal. With no statement it is false and the
+// ratios are null; the figures are issuer-reported and not audited either way.
 //
-// Caching: 60s edge cache. PoR doesn't need to update instantly — the
-// reserve snapshot only moves on mint/burn events.
+// Consumed by /proof-of-reserves, /admin/auxr and the mobile app (web view).
+// Caching: 60s edge cache.
 // ============================================================================
 
 import { NextResponse } from "next/server";
-import { getReserveSnapshot } from "@/lib/auxr-reserve";
+import { getBackingReport, STATEMENT_MAX_AGE_DAYS } from "@/lib/auxr-backing";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const snap = await getReserveSnapshot();
-
-    // Compute a derived "fully backed" flag with a tiny tolerance band for
-    // floating-point noise. Below 99.99% is a real under-collateralization.
-    const FULLY_BACKED_THRESHOLD = 0.9999;
-    const fullyBacked = snap.backingRatio.weakest >= FULLY_BACKED_THRESHOLD;
+    const r = await getBackingReport();
 
     return NextResponse.json(
       {
         success: true,
+        status: r.status,
         supply: {
-          unitsAUXR: snap.supplyUnits,
-          marketCapUSD: snap.marketCapUSD,
+          unitsAUXR: r.liability.totalUnits,
+          offChainUnits: r.liability.offChainUnits,
+          onChainUnits: r.liability.onChainUnits,
+          unrecoverableUnits: r.liability.unrecoverableUnits,
+          marketCapUSD: r.liabilityUSD,
         },
         reserves: {
-          grams: snap.reservesGrams,
-          totalValueUSD: snap.reservesUSD,
+          grams: r.heldGrams,
+          totalValueUSD: r.heldUSD,
+          basis: "issuer_reported_statement",
+          statementAsOf: r.statementAsOf ? new Date(r.statementAsOf).toISOString() : null,
+          statementAgeDays: r.statementAgeDays != null ? Math.floor(r.statementAgeDays) : null,
+          maxAgeDays: STATEMENT_MAX_AGE_DAYS,
         },
         required: {
-          grams: snap.requiredGrams,
+          grams: r.requiredGrams,
         },
         backing: {
-          ratio: snap.backingRatio,
-          fullyBacked,
-          // Surplus = reserves minus required, in grams. Positive = healthy.
-          surplusGrams: {
-            gold: snap.reservesGrams.gold - snap.requiredGrams.gold,
-            silver: snap.reservesGrams.silver - snap.requiredGrams.silver,
-            platinum: snap.reservesGrams.platinum - snap.requiredGrams.platinum,
-            palladium: snap.reservesGrams.palladium - snap.requiredGrams.palladium,
-          },
+          ratio: r.ratio,
+          fullyBacked: r.fullyBacked,
+          surplusGrams: r.surplusGrams,
         },
-        timestamp: snap.lastUpdated,
+        attestation: "none — holdings are issuer-reported and have not been independently verified",
+        timestamp: r.timestamp,
       },
       {
         headers: {
@@ -68,8 +62,8 @@ export async function GET() {
   } catch (e: any) {
     console.error("[/api/auxr/reserves] error:", e);
     return NextResponse.json(
-      { success: false, error: e?.message || "reserves_unavailable" },
-      { status: 500 }
+      { success: false, error: "reserves_unavailable" },
+      { status: 503 }
     );
   }
 }

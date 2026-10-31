@@ -68,18 +68,38 @@ const TREASURY_ADDRESS = "0x0000000000000000000000000000000000a11a11";
 
 type Snapshot = {
   success: true;
-  supply: { unitsAUXR: number; marketCapUSD: number };
+  status: "no_statement" | "stale" | "under_backed" | "backed";
+  supply: { unitsAUXR: number; offChainUnits: number; onChainUnits: number; marketCapUSD: number };
   reserves: {
     grams: { gold: number; silver: number; platinum: number; palladium: number };
     totalValueUSD: number;
+    statementAsOf: string | null;
+    statementAgeDays: number | null;
+    maxAgeDays: number;
   };
   required: {
     grams: { gold: number; silver: number; platinum: number; palladium: number };
   };
   backing: {
-    ratio: { gold: number; silver: number; platinum: number; palladium: number; weakest: number };
+    ratio: { gold: number; silver: number; platinum: number; palladium: number; weakest: number } | null;
     fullyBacked: boolean;
   };
+};
+
+type BackingStatementRow = {
+  grams: { gold: number; silver: number; platinum: number; palladium: number };
+  asOf: number;
+  reference: string;
+  note?: string;
+  enteredBy: string;
+  enteredAt: number;
+};
+
+const STATUS_LABEL: Record<Snapshot["status"], string> = {
+  no_statement: "No holdings statement",
+  stale: "Statement stale",
+  under_backed: "Under-backed",
+  backed: "Backed (issuer-reported)",
 };
 
 type EventRow = {
@@ -146,6 +166,13 @@ export default function AdminAuxrPage() {
   const [safeTx, setSafeTx] = useState<SafeTx | null>(null);
   const [requests, setRequests] = useState<MintRequest[]>([]);
   const [reqSafeTx, setReqSafeTx] = useState<Record<string, SafeTx>>({});
+
+  // Holdings statement form (the only source of public "held" figures)
+  const [stmtGrams, setStmtGrams] = useState({ gold: "", silver: "", platinum: "", palladium: "" });
+  const [stmtAsOf, setStmtAsOf] = useState("");
+  const [stmtRef, setStmtRef] = useState("");
+  const [stmtNote, setStmtNote] = useState("");
+  const [stmtHistory, setStmtHistory] = useState<BackingStatementRow[]>([]);
 
   // Adjust form
   const [adjMetal, setAdjMetal] = useState<"gold" | "silver" | "platinum" | "palladium">("gold");
@@ -438,6 +465,65 @@ export default function AdminAuxrPage() {
       calldata,
       reason: mintReason,
     });
+  };
+
+  const loadStatements = useCallback(async () => {
+    if (!adminToken) return;
+    try {
+      const r = await fetch("/api/admin/auxr/backing-statement", {
+        headers: { Authorization: `Bearer ${adminToken}` },
+        cache: "no-store",
+      });
+      const j = await r.json();
+      if (j?.success) setStmtHistory(j.history || []);
+    } catch {
+      // History is informational; the form still works without it.
+    }
+  }, [adminToken]);
+
+  useEffect(() => {
+    loadStatements();
+  }, [loadStatements]);
+
+  const submitStatement = async () => {
+    if (!adminToken) return setErr("Admin token missing");
+    const grams = {
+      gold: parseFloat(stmtGrams.gold),
+      silver: parseFloat(stmtGrams.silver),
+      platinum: parseFloat(stmtGrams.platinum),
+      palladium: parseFloat(stmtGrams.palladium),
+    };
+    if (Object.values(grams).some((g) => !isFinite(g) || g < 0)) {
+      setErr("Enter grams ≥ 0 for all four metals (0 if none held)");
+      return;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(stmtAsOf)) return setErr("As-of date required");
+    if (stmtRef.trim().length < 3) return setErr("Statement reference required (≥3 chars)");
+    setBusy(true);
+    setErr(null);
+    setOkMsg(null);
+    try {
+      const r = await fetch("/api/admin/auxr/backing-statement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({ grams, asOf: stmtAsOf, reference: stmtRef, note: stmtNote || undefined }),
+      });
+      const j = await r.json();
+      if (j?.success) {
+        setOkMsg(`Holdings statement as of ${stmtAsOf} recorded`);
+        setStmtGrams({ gold: "", silver: "", platinum: "", palladium: "" });
+        setStmtRef("");
+        setStmtNote("");
+        await loadSnapshot();
+        await loadStatements();
+      } else {
+        setErr(j?.details || j?.error || "statement_failed");
+      }
+    } catch (e: any) {
+      setErr(e?.message || "statement_failed");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const submitAdjust = async () => {
@@ -822,14 +908,24 @@ export default function AdminAuxrPage() {
 
         {/* Snapshot */}
         <section>
-          <h2 className="text-xs uppercase tracking-widest text-slate-500 mb-3">Live Snapshot</h2>
+          <h2 className="text-xs uppercase tracking-widest text-slate-500 mb-3">
+            Live Snapshot{snapshot ? ` · ${STATUS_LABEL[snapshot.status]}` : ""}
+          </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Stat label="Supply" value={snapshot ? snapshot.supply.unitsAUXR.toFixed(4) : "—"} sub="AUXR" />
-            <Stat label="Market Cap" value={snapshot ? fmtUSD(snapshot.supply.marketCapUSD) : "—"} />
-            <Stat label="Reserves USD" value={snapshot ? fmtUSD(snapshot.reserves.totalValueUSD) : "—"} />
+            <Stat
+              label="Owed"
+              value={snapshot ? snapshot.supply.unitsAUXR.toFixed(4) : "—"}
+              sub={snapshot ? `app ${snapshot.supply.offChainUnits.toFixed(2)} · Base ${snapshot.supply.onChainUnits.toFixed(2)}` : "AUXR"}
+            />
+            <Stat label="Owed at NAV" value={snapshot ? fmtUSD(snapshot.supply.marketCapUSD) : "—"} />
+            <Stat
+              label="Held USD"
+              value={snapshot ? fmtUSD(snapshot.reserves.totalValueUSD) : "—"}
+              sub={snapshot?.reserves.statementAsOf ? `statement ${snapshot.reserves.statementAsOf.slice(0, 10)}` : "no statement"}
+            />
             <Stat
               label="Weakest Backing"
-              value={snapshot ? `${(snapshot.backing.ratio.weakest * 100).toFixed(2)}%` : "—"}
+              value={snapshot?.backing.ratio ? `${(snapshot.backing.ratio.weakest * 100).toFixed(2)}%` : "—"}
               accent={snapshot?.backing.fullyBacked ? "ok" : "warn"}
             />
           </div>
@@ -1147,12 +1243,96 @@ export default function AdminAuxrPage() {
           )}
         </section>
 
+        {/* Holdings Statement */}
+        <section className="rounded-2xl bg-zinc-900/80 border border-[#BFA181]/30 p-6">
+          <h2 className="text-base font-semibold mb-1">Holdings Statement</h2>
+          <p className="text-sm text-slate-400 mb-4">
+            Grams of each metal (or metal-equivalent hedge position) actually held for AUXR, copied
+            from bank / broker statements. This is the only source of the public &quot;held&quot; figures
+            on /proof-of-reserves. A statement older than {snapshot?.reserves.maxAgeDays ?? 35} days
+            stops counting as backing. Reference and note stay internal.
+          </p>
+          <div className="grid md:grid-cols-4 gap-3 mb-3">
+            {(["gold", "silver", "platinum", "palladium"] as const).map((m) => (
+              <input
+                key={m}
+                type="number"
+                step="0.001"
+                min="0"
+                value={stmtGrams[m]}
+                onChange={(e) => setStmtGrams((g) => ({ ...g, [m]: e.target.value }))}
+                placeholder={`${m} grams`}
+                className="bg-zinc-800 border border-white/5 rounded-lg px-3 py-2 text-sm"
+              />
+            ))}
+          </div>
+          <div className="grid md:grid-cols-3 gap-3 mb-3">
+            <input
+              type="date"
+              value={stmtAsOf}
+              onChange={(e) => setStmtAsOf(e.target.value)}
+              className="bg-zinc-800 border border-white/5 rounded-lg px-3 py-2 text-sm"
+            />
+            <input
+              type="text"
+              value={stmtRef}
+              onChange={(e) => setStmtRef(e.target.value)}
+              placeholder="Statement / document reference"
+              className="bg-zinc-800 border border-white/5 rounded-lg px-3 py-2 text-sm"
+            />
+            <input
+              type="text"
+              value={stmtNote}
+              onChange={(e) => setStmtNote(e.target.value)}
+              placeholder="Note (optional)"
+              className="bg-zinc-800 border border-white/5 rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
+          <button
+            disabled={busy}
+            onClick={submitStatement}
+            className="bg-[#BFA181] text-zinc-950 hover:bg-[#d4b896] disabled:opacity-40 font-semibold px-5 py-2 rounded-lg text-sm"
+          >
+            Record Statement
+          </button>
+          {stmtHistory.length > 0 && (
+            <table className="w-full text-xs mt-5">
+              <thead className="text-slate-500 uppercase tracking-wider">
+                <tr>
+                  <th className="text-left py-2">As of</th>
+                  <th className="text-right py-2">Au</th>
+                  <th className="text-right py-2">Ag</th>
+                  <th className="text-right py-2">Pt</th>
+                  <th className="text-right py-2">Pd</th>
+                  <th className="text-left py-2 pl-4">Reference</th>
+                  <th className="text-left py-2">Entered</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stmtHistory.map((h) => (
+                  <tr key={h.enteredAt} className="border-t border-white/5">
+                    <td className="py-2">{new Date(h.asOf).toISOString().slice(0, 10)}</td>
+                    <td className="text-right font-mono">{fmtGrams(h.grams.gold)}</td>
+                    <td className="text-right font-mono">{fmtGrams(h.grams.silver)}</td>
+                    <td className="text-right font-mono">{fmtGrams(h.grams.platinum)}</td>
+                    <td className="text-right font-mono">{fmtGrams(h.grams.palladium)}</td>
+                    <td className="py-2 pl-4 text-slate-400">{h.reference}</td>
+                    <td className="py-2 text-slate-500">
+                      {new Date(h.enteredAt).toISOString().slice(0, 16).replace("T", " ")} · {h.enteredBy.slice(0, 8)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+
         {/* Manual Reserve Adjust */}
         <section className="rounded-2xl bg-zinc-900/80 border border-white/5 p-6">
           <h2 className="text-base font-semibold mb-1">Manual Reserve Adjust</h2>
           <p className="text-sm text-slate-400 mb-4">
-            Top up reserves (e.g. physical bullion arrival) or write down (audit reconciliation).
-            Does NOT change supply.
+            Adjusts the internal earmark ledger only (auxr:reserves:*). It no longer feeds the public
+            backing figures; record real holdings with the Holdings Statement above. Does NOT change supply.
           </p>
           <div className="grid md:grid-cols-3 gap-3 mb-3">
             <select
