@@ -78,9 +78,10 @@ export async function sendExpoPushBatch(
  * One Expo request. Never throws: a failed request yields error tickets so
  * one bad chunk doesn't abort a broadcast. Tokens from more than one Expo
  * project in a chunk are rejected as a whole (PUSH_TOO_MANY_EXPERIENCE_IDS);
- * the chunk is then split per project and resent.
+ * the chunk is then split per project and resent. 429/5xx are retried
+ * up to three times.
  */
-async function sendChunk(chunk: ExpoPushMessage[], depth = 0): Promise<ExpoPushTicket[]> {
+async function sendChunk(chunk: ExpoPushMessage[], depth = 0, attempt = 0): Promise<ExpoPushTicket[]> {
   const fail = (message: string): ExpoPushTicket[] =>
     chunk.map(() => ({ status: "error" as const, message }));
   try {
@@ -98,6 +99,12 @@ async function sendChunk(chunk: ExpoPushMessage[], depth = 0): Promise<ExpoPushT
     let result: any;
     try { result = JSON.parse(text); } catch { result = null; }
     console.log(`[ExpoPush] Batch response (${chunk.length} msgs, HTTP ${response.status}):`, text.slice(0, 500));
+
+    // Expo answers 429/5xx (often with an HTML body) under load; retry with backoff.
+    if ((response.status === 429 || response.status >= 500) && attempt < 3) {
+      await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt));
+      return sendChunk(chunk, depth, attempt + 1);
+    }
 
     if (Array.isArray(result?.data)) return result.data;
 
