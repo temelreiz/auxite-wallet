@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DOCUMENT_ISSUER, DOCUMENT_VAULT } from '@/lib/issuer';
 import { redis } from '@/lib/redis';
+import { requireSelf } from '@/lib/security/require-user';
 import { createHash } from 'crypto';
 import QRCode from 'qrcode';
 
@@ -59,6 +60,12 @@ const PURITY_BY_METAL: Record<string, string> = {
 
 const NOT_SPECIFIED = 'Not specified';
 
+const LATEST_SIGN_IN_HTML = `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Auxite</title></head>
+<body style="font-family:-apple-system,system-ui,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;padding:16px">
+<div style="max-width:420px;text-align:center"><h1 style="font-size:18px">Sertifikanızı uygulamadan açın</h1>
+<p style="color:#94a3b8;font-size:14px">Güvenliğiniz için sertifikalar artık yalnızca giriş yapmış hesap sahibine gösteriliyor. Uygulamayı güncelleyip <b>Belgeler</b> bölümünden sertifikanızı görüntüleyebilirsiniz.</p>
+<p style="color:#94a3b8;font-size:13px">For your security, certificates are now shown only to the signed-in account holder. Please update the app and open your certificate from <b>Documents</b>.</p></div></body></html>`;
+
 // Issuing entity: src/lib/issuer.ts (one entity for every vault).
 
 // ═══════════════════════════════════════════════
@@ -76,14 +83,33 @@ export async function GET(request: NextRequest) {
     let certNumber = searchParams.get('certNumber');
     const format = searchParams.get('format') || 'json';
     const metal = searchParams.get('metal');
-    const address = searchParams.get('address');
+    let address = searchParams.get('address');
 
     if (!certNumber) {
       return NextResponse.json({ error: 'certNumber required' }, { status: 400 });
     }
 
-    // Support "latest" — find user's most recent certificate for the given metal
-    if (certNumber === 'latest' && address) {
+    // Support "latest" — find user's most recent certificate for the given metal.
+    // Looking a certificate up by address is owner-only: without this anyone
+    // who knows an address could read that user's holdings and bar serials.
+    // Lookup by certificate number stays public (QR / verify page).
+    if (certNumber === 'latest') {
+      const self = requireSelf(request, address);
+      if (!self.ok) {
+        // A link opened in a browser cannot send the Bearer token; such
+        // callers should get the number from GET /api/certificates first.
+        // Counted so any remaining caller shows up.
+        const day = new Date().toISOString().slice(0, 10);
+        redis.incr(`metrics:cert-latest:unauthenticated:${day}`).catch(() => {});
+        if (format === 'html') {
+          return new NextResponse(LATEST_SIGN_IN_HTML, {
+            status: 401,
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          });
+        }
+        return self.response;
+      }
+      address = self.user.address;
       const userUid = await redis.get(`user:address:${address.toLowerCase()}`) as string;
       if (!userUid) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
