@@ -26,6 +26,7 @@ import {
   NETWORK,
   type MetalSymbol,
 } from "@/config/contracts-v8";
+import { AUXR_UNRECOVERABLE_ADDRESSES } from "@/lib/auxr-backing";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -64,11 +65,9 @@ const SYMBOLS: MetalSymbol[] = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
 const AUXR_ADDRESS = "0xB145B8e9C02193d55454f534f917Cabe704FA042";
 const AUXR_DECIMALS = 18;
 
-// Adresleri özel anahtarı olmayan (dolayısıyla tokenları sonsuza dek hareket
-// edemeyen) bakiyeler. Ekonomik olarak yakılmış sayılır: toplam arzdan düşülür.
-// 0x8d23… web cüzdanının yerel modunda SHA256'dan türetilmiş sahte bir adres;
-// 23.100 AUXR burada kilitli kaldı ve 2026-09-30'da 0x0a5d'ye yeniden basıldı.
-const AUXR_UNRECOVERABLE_ADDRESSES = ["0x8d23E12cAc0f1D2a8c609b973f394396A4Da5011"];
+// Özel anahtarı olmayan adresler (tokenlar asla hareket edemez) ekonomik olarak
+// yakılmış sayılır ve toplam arzdan düşülür. Liste /api/auxr/reserves ile
+// ortaktır: src/lib/auxr-backing.ts.
 
 const isAddress = (a: string) => /^0x[0-9a-fA-F]{40}$/.test(a);
 const sameAddress = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
