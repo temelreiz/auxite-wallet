@@ -41,6 +41,8 @@ export interface PushResult {
   sent: number;
   failed: number;
   optedOut: number;
+  /** First error message from Expo, when any message failed. */
+  error?: string;
 }
 
 /** Send one title/body to every Android device of every opted-in user. */
@@ -76,5 +78,6 @@ export async function sendAuxrPushToAndroid(title: string, body: string): Promis
 
   const tickets = messages.length ? await sendExpoPushBatch(messages) : [];
   const sent = tickets.filter((t) => t.status === "ok").length;
-  return { devices: messages.length, sent, failed: messages.length - sent, optedOut };
+  const error = tickets.find((t) => t.status !== "ok")?.message;
+  return { devices: messages.length, sent, failed: messages.length - sent, optedOut, ...(error ? { error } : {}) };
 }
