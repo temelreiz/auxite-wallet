@@ -690,7 +690,7 @@ export default function AdminAuxrPage() {
                   <div className={`text-2xl font-semibold tabular-nums ${fullyBacked ? "text-emerald-400" : backingPct != null ? "text-red-400" : "text-slate-500"}`}>
                     {backingPct != null ? `${backingPct.toFixed(2)}%` : "—"}
                   </div>
-                  <div className="text-xs text-slate-500 mt-1">{fullyBacked ? "fully backed" : backingPct != null ? "UNDER-COLLATERALISED" : "—"}</div>
+                  <div className="text-xs text-slate-500 mt-1">{fullyBacked ? "fully backed (issuer-reported)" : backingPct != null ? (ops?.reserve?.status === "stale" ? "statement stale" : "UNDER-COLLATERALISED") : "no holdings statement"}</div>
                 </div>
               </div>
 

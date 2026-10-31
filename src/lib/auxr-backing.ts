@@ -196,3 +196,94 @@ export async function getBackingReport(): Promise<BackingReport> {
   for (const m of BASKET_METALS) spotUSDPerGram[m] = pricing.components[m].spotUSDPerGram;
   return computeBackingReport({ liability, statement, spotUSDPerGram, navUSD: pricing.navUSD, now: Date.now() });
 }
+
+// ── Transition alerts ────────────────────────────────────────────────────────
+//
+// The watchdog runs every 5 minutes. A standing condition reported every run
+// is spam that stops being read, so we store the last state and notify only
+// when it changes. Routine changes go by email; Telegram only when backing
+// turns into a real shortfall.
+
+const ALERT_STATE_KEY = "auxr:backing:alertState";
+/** Days before the max age at which a statement counts as due. */
+export const STATEMENT_DUE_WARNING_DAYS = 5;
+const REPORT_TO = process.env.AUXR_BACKING_REPORT_TO || process.env.EOD_REPORT_TO || "bs@auxite.io";
+
+export type BackingAlertState = BackingStatus | "statement_due";
+
+/** Pure: the state an alert is keyed on. A fresh statement nearing max age is "statement_due". */
+export function backingAlertState(r: BackingReport): BackingAlertState {
+  if (
+    (r.status === "backed" || r.status === "under_backed") &&
+    r.statementAgeDays != null &&
+    r.statementAgeDays > STATEMENT_MAX_AGE_DAYS - STATEMENT_DUE_WARNING_DAYS
+  ) {
+    return r.status === "backed" ? "statement_due" : "under_backed";
+  }
+  return r.status;
+}
+
+const STATE_TEXT: Record<BackingAlertState, string> = {
+  no_statement: "Varlık beyanı yok: AUXR karşılığı kamuya 'beyan yok' olarak görünüyor.",
+  stale: `Varlık beyanı ${STATEMENT_MAX_AGE_DAYS} günden eski: karşılık sayılmıyor.`,
+  statement_due: `Varlık beyanının süresi ${STATEMENT_DUE_WARNING_DAYS} gün içinde doluyor: yeni beyan girin.`,
+  under_backed: "Karşılık eksik: en az bir metalde tutulan gram, gereken gramın altında.",
+  backed: "Karşılık tam (şirket beyanına göre).",
+};
+
+const fmtG = (g: number) => (Math.abs(g) >= 1000 ? `${(g / 1000).toFixed(3)} kg` : `${g.toFixed(3)} g`);
+
+function reportEmailHtml(r: BackingReport, prev: string | null, next: BackingAlertState): string {
+  const rows = BASKET_METALS.map((m) => {
+    const ratio = r.ratio ? `${(r.ratio[m] * 100).toFixed(2)}%` : "—";
+    return `<tr><td>${m}</td><td align="right">${fmtG(r.requiredGrams[m])}</td><td align="right">${r.statementAsOf ? fmtG(r.heldGrams[m]) : "—"}</td><td align="right">${r.statementAsOf ? fmtG(r.surplusGrams[m]) : "—"}</td><td align="right">${ratio}</td></tr>`;
+  }).join("");
+  return (
+    `<p><b>${STATE_TEXT[next]}</b></p>` +
+    `<p>Önceki durum: ${prev ?? "kayıt yok"} → yeni durum: <b>${next}</b></p>` +
+    `<ul>` +
+    `<li>Borçlu olunan: ${r.liability.totalUnits.toFixed(2)} AUXR (uygulama ${r.liability.offChainUnits.toFixed(2)} · Base ${r.liability.onChainUnits.toFixed(2)})</li>` +
+    `<li>NAV ile yükümlülük: $${Math.round(r.liabilityUSD).toLocaleString("en-US")}</li>` +
+    `<li>Beyandaki varlık değeri: ${r.statementAsOf ? `$${Math.round(r.heldUSD).toLocaleString("en-US")}` : "—"}</li>` +
+    `<li>Beyan tarihi: ${r.statementAsOf ? new Date(r.statementAsOf).toISOString().slice(0, 10) : "yok"}</li>` +
+    `</ul>` +
+    `<table cellpadding="4" style="border-collapse:collapse;font-family:monospace;font-size:12px">` +
+    `<tr><th align="left">metal</th><th>gereken</th><th>tutulan</th><th>fark</th><th>oran</th></tr>${rows}</table>` +
+    `<p>Beyan girişi: https://vault.auxite.io/admin/auxr (Holdings Statement)</p>`
+  );
+}
+
+/**
+ * Compare the report's alert state with the last stored one and notify on a
+ * change. Returns the new state and whether anything was sent.
+ */
+export async function notifyBackingTransition(
+  r: BackingReport,
+  deps: {
+    sendEmail: (o: { to: string; subject: string; html: string }) => Promise<unknown>;
+    sendTelegram: (msg: string) => Promise<unknown>;
+  },
+): Promise<{ state: BackingAlertState; previous: string | null; notified: boolean }> {
+  const next = backingAlertState(r);
+  const previous = ((await redis.get(ALERT_STATE_KEY)) as string | null) ?? null;
+  if (previous === next) return { state: next, previous, notified: false };
+
+  // Store first: a failing mail provider must not turn into an email per run.
+  await redis.set(ALERT_STATE_KEY, next);
+
+  await deps
+    .sendEmail({
+      to: REPORT_TO,
+      subject: `AUXR karşılık durumu: ${next}`,
+      html: reportEmailHtml(r, previous, next),
+    })
+    .catch((e) => console.error("[auxr-backing] transition email failed:", e));
+
+  if (next === "under_backed") {
+    const weakest = r.ratio ? `${(r.ratio.weakest * 100).toFixed(2)}%` : "—";
+    await deps
+      .sendTelegram(`🔴 <b>AUXR under-backed</b>\nWeakest leg: <b>${weakest}</b>\nOwed: ${r.liability.totalUnits.toFixed(2)} AUXR · details by email`)
+      .catch(() => {});
+  }
+  return { state: next, previous, notified: true };
+}

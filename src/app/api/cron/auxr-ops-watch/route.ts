@@ -5,7 +5,9 @@
 //
 //  A) ESCALATION alerts — fire Telegram ONLY when something needs a human and
 //     the market maker (Echo Trade) can't/won't self-heal it:
-//       1. Reserve under-collateralised (weakest backing leg < 100%)
+//       1. Backing status change (owed AUXR vs the holdings statement, see
+//          src/lib/auxr-backing.ts) — email on every change, Telegram only
+//          when it turns under-backed
 //       2. LBANK price deviates from NAV — PERSISTENCE-GATED: only escalates
 //          after the deviation survives N consecutive checks (default 15 min),
 //          giving the MM a window to close it before the operator is pinged.
@@ -25,6 +27,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isCronRequest } from "@/lib/security/require-user";
 import { getReserveSnapshot } from "@/lib/auxr-reserve";
+import { getBackingReport, notifyBackingTransition } from "@/lib/auxr-backing";
+import { sendEmail } from "@/lib/email";
 import { getAuxrPricing } from "@/lib/auxr-pricing";
 import { getLbankTicker, getLbankDepth } from "@/lib/lbank";
 import { getOnChainTotalSupply, weiToAuxr, isPaused, isMinter } from "@/lib/auxr-onchain";
@@ -43,7 +47,6 @@ export const maxDuration = 30;
 const DEVIATION_ALERT_BPS = Number(process.env.AUXR_DEVIATION_ALERT_BPS || 300); // 3%
 const DEVIATION_PERSIST_RUNS = Number(process.env.AUXR_DEVIATION_PERSIST_RUNS || 3); // ×5min = 15min
 const SPREAD_ALERT_BPS = Number(process.env.AUXR_SPREAD_ALERT_BPS || 200); // 2% MM spread
-const BACKING_ALERT_PCT = Number(process.env.AUXR_BACKING_ALERT_PCT || 99.99);
 const SUPPLY_DRIFT_ALERT = Number(process.env.AUXR_SUPPLY_DRIFT_ALERT || 1); // units
 // Depth thresholds live in src/lib/venue-depth.ts (AUXR_DEPTH_ALERT_USD[_<VENUE>]).
 // AUXR minted on-chain OUTSIDE the managed off-chain ledger — the founder
@@ -157,8 +160,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const [snap, pricing, ticker, depth, chainWei, paused] = await Promise.all([
+  // `snap` is the off-chain ledger, used only for supply drift below. Its
+  // reserve grams follow mints by construction, so backing comes from
+  // `backing` (owed vs the holdings statement) instead.
+  const [snap, backing, pricing, ticker, depth, chainWei, paused] = await Promise.all([
     safe(getReserveSnapshot(), null as any),
+    safe(getBackingReport(), null),
     safe(getAuxrPricing(), null as any),
     safe(getLbankTicker(), null as any),
     safe(getLbankDepth(), null as any),
@@ -194,13 +201,16 @@ export async function GET(request: NextRequest) {
   }
   const refLabel = ticker?.bid && ticker?.ask ? "mid" : "last";
 
-  // 1. Backing under-collateralised (human must add reserves — always escalate)
-  if (snap?.backingRatio?.weakest != null) {
-    const weakestPct = snap.backingRatio.weakest * 100;
-    if (weakestPct < BACKING_ALERT_PCT) {
-      if (await alertOnce("backing", `🔴 <b>AUXR backing breach</b>\nWeakest leg: <b>${weakestPct.toFixed(2)}%</b> (threshold ${BACKING_ALERT_PCT}%)\nSupply: ${snap.supplyUnits} AUXR · Reserves: $${Math.round(snap.reservesUSD || 0).toLocaleString()}`))
-        fired.push("backing");
-    }
+  // 1. Backing status — notify on change only
+  if (backing) {
+    const t = await safe(
+      notifyBackingTransition(backing, {
+        sendEmail,
+        sendTelegram: (msg) => sendTelegramMessage(msg),
+      }),
+      null,
+    );
+    if (t?.notified) fired.push(`backing:${t.state}`);
   }
 
   // 2. CEX price deviation from NAV — persistence-gated (give the MM time first)
@@ -448,7 +458,9 @@ export async function GET(request: NextRequest) {
       ? `LBANK: <b>$${ticker.last}</b>${devBps != null ? ` · dev ${(devBps / 100).toFixed(2)}%` : ""}${spreadBps != null ? ` · spread ${(spreadBps / 100).toFixed(2)}%` : ""}${ticker.quoteVolume24h != null ? ` · 24h $${Math.round(ticker.quoteVolume24h).toLocaleString()}` : ""}`
       : `LBANK: not listed yet`,
     depthDigest,
-    snap?.backingRatio?.weakest != null ? `Backing (weakest): ${(snap.backingRatio.weakest * 100).toFixed(2)}% · supply ${snap.supplyUnits} AUXR` : ``,
+    backing
+      ? `Backing: ${backing.status}${backing.ratio ? ` · weakest ${(backing.ratio.weakest * 100).toFixed(2)}%` : ""} · owed ${backing.liability.totalUnits.toFixed(2)} AUXR`
+      : `Backing: n/a`,
     paused === true ? `⏸️ CONTRACT PAUSED` : ``,
     fired.length ? `⚠️ Active alerts today: ${fired.join(", ")}` : `✅ All green`,
   ].filter(Boolean));
@@ -475,7 +487,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    checked: { backing: snap?.backingRatio?.weakest != null, lbankListed: !!ticker?.listed, paused: paused === true },
+    checked: { backing: backing?.status ?? null, lbankListed: !!ticker?.listed, paused: paused === true },
     alertsFired: fired,
     digestSent,
     timestamp: Date.now(),

@@ -7259,7 +7259,7 @@ function ReserveControlTab() {
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-sm font-bold text-slate-300">AUXR physical reserve — neyimiz var / neyimiz yok</h3>
-          {rc && <span className={`text-xs font-bold px-2 py-0.5 rounded ${rc.weakestBackingPct >= 100 ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>Backing {Number(rc.weakestBackingPct || 0).toFixed(1)}%</span>}
+          {rc && <span className={`text-xs font-bold px-2 py-0.5 rounded ${rc.weakestBackingPct != null && rc.weakestBackingPct >= 100 ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>{rc.weakestBackingPct != null ? `Backing ${Number(rc.weakestBackingPct).toFixed(1)}%` : "Backing: varlık beyanı yok"}</span>}
         </div>
         <p className="text-[11px] text-slate-500 mb-4">AUXR satışı arttıkça owe edilen fiziksel metal büyür. Açık (gap) = procure etmemiz gereken miktar. NAV {usd(rc?.nav, 4)}.</p>
         {!rc || rc.supplyUnits === 0 ? (
@@ -7290,7 +7290,7 @@ function ReserveControlTab() {
                 ))}
               </tbody>
             </table>
-            <p className="text-[11px] text-slate-500 mt-3">Reserve USD: {usd(rc.reservesUSD)} · Market cap: {usd(rc.marketCapUSD)}. &quot;Held&quot; gramlar reserve ledger'dan gelir (procure edince güncellenir).</p>
+            <p className="text-[11px] text-slate-500 mt-3">Reserve USD: {usd(rc.reservesUSD)} · Market cap: {usd(rc.marketCapUSD)}. &quot;Held&quot; gramlar /admin/auxr&apos;deki son varlık beyanından (Holdings Statement) gelir; borçlu olunan = uygulama defteri + Base arzı.</p>
           </div>
         )}
       </div>

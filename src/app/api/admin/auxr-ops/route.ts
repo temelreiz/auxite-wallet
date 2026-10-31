@@ -5,7 +5,7 @@
 //   • NAV + bid/ask (from the pricing engine)
 //   • Live BitMart AUXR/USDT price + order-book depth (CEX)
 //   • Price↔NAV deviation (the abnormal-fluctuation / BML risk signal)
-//   • Reserve coverage — owed vs held grams, weakest backing leg
+//   • Reserve coverage — owed AUXR vs the holdings statement (auxr-backing.ts)
 //   • Supply — off-chain ledger vs on-chain totalSupply (drift check)
 //   • Liquid treasury backing (USD)
 //
@@ -16,7 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getAuxrPricing } from "@/lib/auxr-pricing";
-import { getReserveSnapshot } from "@/lib/auxr-reserve";
+import { getBackingReport } from "@/lib/auxr-backing";
 import { liquidBackingUsd } from "@/lib/treasury-balances";
 import { getOnChainTotalSupply, weiToAuxr, isPaused } from "@/lib/auxr-onchain";
 import { getBitmartTicker, getBitmartDepth, computeDepthMetrics, AUXR_SYMBOL } from "@/lib/bitmart";
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 
   const [pricing, snap, backing, chainSupplyWei, paused, ticker, depth] = await Promise.all([
     safe(getAuxrPricing(), null as any),
-    safe(getReserveSnapshot(), null as any),
+    safe(getBackingReport(), null),
     safe(liquidBackingUsd(), null as any),
     safe(getOnChainTotalSupply(), null as unknown as bigint),
     safe(isPaused(), null as any),
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
   const depthMetrics = depth?.listed && nav ? computeDepthMetrics(depth, nav) : null;
 
   // Supply: off-chain ledger vs on-chain totalSupply
-  const offChainSupply: number | null = snap?.supplyUnits ?? null;
+  const offChainSupply: number | null = snap?.liability.offChainUnits ?? null;
   const onChainSupply: number | null =
     chainSupplyWei != null ? weiToAuxr(chainSupplyWei as bigint) : null;
 
@@ -206,14 +206,16 @@ export async function GET(request: NextRequest) {
     },
     reserve: snap
       ? {
-          supplyUnits: snap.supplyUnits,
-          reservesUSD: snap.reservesUSD,
-          marketCapUSD: snap.marketCapUSD,
-          weakestBackingPct: snap.backingRatio?.weakest != null ? snap.backingRatio.weakest * 100 : null,
-          fullyBacked: snap.backingRatio?.weakest != null ? snap.backingRatio.weakest >= 0.9999 : null,
-          backingRatio: snap.backingRatio ?? null,
-          reservesGrams: snap.reservesGrams ?? null,
-          requiredGrams: snap.requiredGrams ?? null,
+          status: snap.status,
+          supplyUnits: snap.liability.totalUnits,
+          reservesUSD: snap.statementAsOf ? snap.heldUSD : null,
+          marketCapUSD: snap.liabilityUSD,
+          weakestBackingPct: snap.ratio ? snap.ratio.weakest * 100 : null,
+          fullyBacked: snap.fullyBacked,
+          backingRatio: snap.ratio,
+          reservesGrams: snap.heldGrams,
+          requiredGrams: snap.requiredGrams,
+          statementAsOf: snap.statementAsOf,
         }
       : null,
     supply: {

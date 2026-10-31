@@ -3,7 +3,14 @@
  * the ledger it read added basket grams on every mint. These tests pin the
  * replacement: no statement, or an old one, must never read as backed.
  */
-jest.mock("@/lib/redis", () => ({ redis: {}, getRedis: () => ({}) }));
+const store = new Map<string, unknown>();
+jest.mock("@/lib/redis", () => ({
+  redis: {
+    get: jest.fn(async (k: string) => store.get(k) ?? null),
+    set: jest.fn(async (k: string, v: unknown) => void store.set(k, v)),
+  },
+  getRedis: () => ({}),
+}));
 jest.mock("@/lib/auxr-onchain", () => ({}));
 jest.mock("@/lib/auxr-reserve", () => ({}));
 jest.mock("@/lib/auxr-pricing", () => ({
@@ -11,7 +18,13 @@ jest.mock("@/lib/auxr-pricing", () => ({
   getAuxrPricing: jest.fn(),
 }));
 
-import { computeBackingReport, STATEMENT_MAX_AGE_DAYS, type BackingStatement } from "@/lib/auxr-backing";
+import {
+  computeBackingReport,
+  backingAlertState,
+  notifyBackingTransition,
+  STATEMENT_MAX_AGE_DAYS,
+  type BackingStatement,
+} from "@/lib/auxr-backing";
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = Date.parse("2026-10-31T00:00:00Z");
@@ -62,5 +75,38 @@ describe("computeBackingReport", () => {
   it("values held grams at spot", () => {
     const r = run(statement({ gold: 1, silver: 10, platinum: 1, palladium: 1 }));
     expect(r.heldUSD).toBe(100 + 10 + 30 + 30);
+  });
+});
+
+describe("backing alerts", () => {
+  const full = { gold: 50, silver: 1000, platinum: 10, palladium: 5 };
+  beforeEach(() => store.clear());
+
+  it("flags a backed statement nearing its max age as due", () => {
+    expect(backingAlertState(run(statement(full, 1)))).toBe("backed");
+    expect(backingAlertState(run(statement(full, STATEMENT_MAX_AGE_DAYS - 2)))).toBe("statement_due");
+  });
+
+  it("notifies once per change, not once per run", async () => {
+    const sendEmail = jest.fn(async () => ({}));
+    const sendTelegram = jest.fn(async () => ({}));
+    const deps = { sendEmail, sendTelegram };
+
+    expect((await notifyBackingTransition(run(null), deps)).notified).toBe(true);
+    expect((await notifyBackingTransition(run(null), deps)).notified).toBe(false);
+    expect(sendEmail).toHaveBeenCalledTimes(1);
+    expect(sendTelegram).not.toHaveBeenCalled();
+
+    const short = run(statement({ ...full, silver: 10 }));
+    const t = await notifyBackingTransition(short, deps);
+    expect(t).toMatchObject({ state: "under_backed", previous: "no_statement", notified: true });
+    expect(sendEmail).toHaveBeenCalledTimes(2);
+    expect(sendTelegram).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the new state when the email fails", async () => {
+    const deps = { sendEmail: jest.fn(async () => { throw new Error("down"); }), sendTelegram: jest.fn(async () => ({})) };
+    await notifyBackingTransition(run(null), deps);
+    expect((await notifyBackingTransition(run(null), deps)).notified).toBe(false);
   });
 });
