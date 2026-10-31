@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getAuxrPricing } from "@/lib/auxr-pricing";
-import { getReserveSnapshot } from "@/lib/auxr-reserve";
+import { getBackingReport } from "@/lib/auxr-backing";
 import {
   baseTreasury,
   tronTreasuryBalances,
@@ -47,10 +47,10 @@ export async function GET(request: NextRequest) {
 
   const r = getRedis();
 
-  // AUXR pricing + reserve snapshot (owe vs held vs coverage).
+  // AUXR pricing + backing report (owed vs the holdings statement).
   const [pricing, snap, base, tron, btc, spot] = await Promise.all([
     getAuxrPricing().catch(() => null),
-    getReserveSnapshot().catch(() => null),
+    getBackingReport().catch(() => null),
     baseTreasury(),
     tronTreasuryBalances(),
     btcTreasury(),
@@ -128,14 +128,16 @@ export async function GET(request: NextRequest) {
   const comp = pricing?.components;
   const reserve = snap
     ? {
-        supplyUnits: snap.supplyUnits,
+        status: snap.status,
+        statementAsOf: snap.statementAsOf,
+        supplyUnits: snap.liability.totalUnits,
         nav,
-        marketCapUSD: snap.marketCapUSD,
-        reservesUSD: snap.reservesUSD,
-        weakestBackingPct: (snap.backingRatio.weakest || 0) * 100,
+        marketCapUSD: snap.liabilityUSD,
+        reservesUSD: snap.heldUSD,
+        weakestBackingPct: snap.ratio ? snap.ratio.weakest * 100 : null,
         metals: metals.map((m) => {
           const owed = snap.requiredGrams[m] || 0;
-          const held = snap.reservesGrams[m] || 0;
+          const held = snap.heldGrams[m] || 0;
           const spotG = comp ? comp[m].spotUSDPerGram : 0;
           return {
             metal: m,
@@ -161,8 +163,8 @@ export async function GET(request: NextRequest) {
     clients: {
       userCount,
       totalAumUSD: totalAum,
-      totalAuxrUnits: snap?.supplyUnits ?? sumAuxrUnits,
-      auxrMarketCapUSD: snap?.marketCapUSD ?? sumAuxrUnits * nav,
+      totalAuxrUnits: snap?.liability.totalUnits ?? sumAuxrUnits,
+      auxrMarketCapUSD: snap?.liabilityUSD ?? sumAuxrUnits * nav,
     },
     auxmLedger,
     auxrReserve: reserve,
