@@ -1,9 +1,13 @@
 // src/app/api/cron/auxr-campaign-push/route.ts
 //
-// 15-day AUXR push campaign: 30 Oct – 13 Nov 2026, daily 14:00 UTC, Android
+// 15-day AUXR push campaign: 31 Oct – 14 Nov 2026, daily 14:00 UTC, Android
 // only (see src/lib/auxr-push.ts). Mondays are skipped because the weekly NAV
 // push goes out then — nobody gets two AUXR pushes in a day. That leaves 13
-// campaign messages, one per non-Monday day, in order.
+// campaign messages, one per non-Monday day, in order. (Planned start was
+// 30 Oct; that send failed, so the schedule moved a day to keep all 13.)
+//
+// 15:00 and 16:00 are retries: the daily claim is released when nothing was
+// delivered, so a failed 14:00 run is retried instead of skipping the day.
 //
 // Stop at any time: SET auxr:campaign-push:halt 1
 //
@@ -18,8 +22,8 @@ import { getAuxrFeed, sendAuxrPushToAndroid, type AuxrFeed } from "@/lib/auxr-pu
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-const START = "2026-10-30";
-const END = "2026-11-13";
+const START = "2026-10-31";
+const END = "2026-11-14";
 const HALT_KEY = "auxr:campaign-push:halt";
 
 type Msg = { title: string; body: string } | ((f: AuxrFeed) => { title: string; body: string });
@@ -82,9 +86,27 @@ export async function GET(request: NextRequest) {
     msg = m;
   }
 
-  const result = await sendAuxrPushToAndroid(msg.title, msg.body);
+  const log = async (entry: Record<string, unknown>) => {
+    await redis.lpush("auxr:campaign-push:runs", JSON.stringify({ at: Date.now(), day, index: idx + 1, title: msg.title, ...entry }));
+    await redis.ltrim("auxr:campaign-push:runs", 0, 29);
+  };
+
+  let result;
+  try {
+    result = await sendAuxrPushToAndroid(msg.title, msg.body);
+  } catch (e) {
+    await redis.del(`auxr:campaign-push:sent:${day}`);
+    const error = e instanceof Error ? e.message : String(e);
+    await log({ error });
+    return NextResponse.json({ success: false, day, error }, { status: 500 });
+  }
+  if (result.devices > 0 && result.sent === 0) {
+    await redis.del(`auxr:campaign-push:sent:${day}`);
+    await log({ ...result, error: "nothing delivered; claim released for retry" });
+    return NextResponse.json({ success: false, day, ...result }, { status: 502 });
+  }
+
   const summary = { day, index: idx + 1, of: MESSAGES.length, title: msg.title, ...result };
-  await redis.lpush("auxr:campaign-push:runs", JSON.stringify({ at: Date.now(), ...summary }));
-  await redis.ltrim("auxr:campaign-push:runs", 0, 29);
+  await log(result as unknown as Record<string, unknown>);
   return NextResponse.json({ success: true, ...summary });
 }

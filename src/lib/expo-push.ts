@@ -68,8 +68,22 @@ export async function sendExpoPushBatch(
 
   // Expo API allows max 100 messages per request
   for (let i = 0; i < messages.length; i += 100) {
-    const chunk = messages.slice(i, i + 100);
+    tickets.push(...(await sendChunk(messages.slice(i, i + 100))));
+  }
 
+  return tickets;
+}
+
+/**
+ * One Expo request. Never throws: a failed request yields error tickets so
+ * one bad chunk doesn't abort a broadcast. Tokens from more than one Expo
+ * project in a chunk are rejected as a whole (PUSH_TOO_MANY_EXPERIENCE_IDS);
+ * the chunk is then split per project and resent.
+ */
+async function sendChunk(chunk: ExpoPushMessage[], depth = 0): Promise<ExpoPushTicket[]> {
+  const fail = (message: string): ExpoPushTicket[] =>
+    chunk.map(() => ({ status: "error" as const, message }));
+  try {
     const response = await fetch(EXPO_PUSH_URL, {
       method: "POST",
       headers: {
@@ -78,16 +92,30 @@ export async function sendExpoPushBatch(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(chunk),
+      signal: AbortSignal.timeout(20_000),
     });
+    const text = await response.text();
+    let result: any;
+    try { result = JSON.parse(text); } catch { result = null; }
+    console.log(`[ExpoPush] Batch response (${chunk.length} msgs, HTTP ${response.status}):`, text.slice(0, 500));
 
-    const result = await response.json();
-    console.log(`[ExpoPush] Batch response (${chunk.length} msgs):`, JSON.stringify(result).slice(0, 500));
-    if (result.data) {
-      tickets.push(...result.data);
+    if (Array.isArray(result?.data)) return result.data;
+
+    const multi = result?.errors?.find((e: any) => e?.code === "PUSH_TOO_MANY_EXPERIENCE_IDS");
+    if (multi?.details && depth === 0) {
+      const tickets = new Map<ExpoPushMessage, ExpoPushTicket>();
+      for (const tokens of Object.values(multi.details) as string[][]) {
+        const group = chunk.filter((m) => tokens.includes(String(m.to)));
+        const res = await sendChunk(group, depth + 1);
+        group.forEach((m, k) => tickets.set(m, res[k]));
+      }
+      return chunk.map((m) => tickets.get(m) ?? { status: "error", message: "unsent" });
     }
+    return fail(result?.errors?.[0]?.message || `HTTP ${response.status}`);
+  } catch (e) {
+    console.error("[ExpoPush] Batch request failed:", e);
+    return fail(e instanceof Error ? e.message : String(e));
   }
-
-  return tickets;
 }
 
 /**
