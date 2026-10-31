@@ -29,12 +29,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Fallback: accept walletAddress from body (for mobile where auth token may not be ready)
+    // A walletAddress in the body is not trusted: it let any device subscribe
+    // to another wallet's notifications. Such registrations are stored as
+    // anonymous below and get linked once the app re-registers with a Bearer
+    // token. Still counted, to see when old app builds have gone.
     if (!walletAddress && body.walletAddress) {
-      walletAddress = body.walletAddress;
-      // Counted so the fallback can be removed once the app update that sends
-      // a Bearer token has reached the installed base (it lets any device
-      // subscribe to another wallet's notifications).
       const day = new Date().toISOString().slice(0, 10);
       redis.incr(`metrics:push-token:body-fallback:${day}`).catch(() => {});
     }
