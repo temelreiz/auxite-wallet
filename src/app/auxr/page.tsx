@@ -40,6 +40,19 @@ type Pricing = {
   constraints: { minPurchaseUSD: number };
 };
 
+// Where AUXR/USDT trades, for visitors without an account. Toobit's market
+// opens 2 Nov 2026 10:00 UTC; until then its link is hidden.
+const EXCHANGES: { name: string; url: string; opensAt?: number }[] = [
+  { name: "LBANK", url: "https://www.lbank.com/trade/auxr_usdt" },
+  { name: "Hotcoin", url: "https://www.hotcoin.com/en_US/trade/exchange/?tradeCode=auxr_usdt" },
+  { name: "Pionex", url: "https://www.pionex.com/en/trade/AUXR_USDT/Bot" },
+  { name: "Toobit", url: "https://www.toobit.com/en-US/spot/AUXR_USDT", opensAt: Date.parse("2026-11-02T10:00:00Z") },
+];
+
+// Attribution params an ad click lands with; carried to sign-up so the
+// account records where it came from.
+const ATTRIBUTION_PARAMS = ["utm_source", "utm_medium", "utm_campaign", "source", "promo"];
+
 // ── i18n ─────────────────────────────────────────────────────────────────────
 const T = {
   en: {
@@ -87,6 +100,12 @@ const T = {
     soldSummary: (units: string, usd: string) => `${units} AUXR → ${usd}`,
     done: "Done",
     connect_prompt: "Connect your account to trade AUXR.",
+    visitor_title: "Buy AUXR",
+    visitor_desc: "Buy and sell at NAV ± spread in the Auxite app, or trade AUXR/USDT on an exchange.",
+    create_account: "Create account",
+    log_in: "Log in",
+    on_exchange: "Or trade AUXR/USDT on",
+    visitor_note: "Exchanges are independent third parties. AUXR is not offered to US or UK persons. Not investment advice.",
     demo_prompt: "Switch to a live account to trade AUXR.",
     metals: { gold: "Gold", silver: "Silver", platinum: "Platinum", palladium: "Palladium" },
   },
@@ -135,6 +154,12 @@ const T = {
     soldSummary: (units: string, usd: string) => `${units} AUXR → ${usd}`,
     done: "Tamam",
     connect_prompt: "AUXR alıp satmak için hesabınızı bağlayın.",
+    visitor_title: "AUXR al",
+    visitor_desc: "Auxite uygulamasında NAV ± spread ile alıp satın ya da bir borsada AUXR/USDT işlem yapın.",
+    create_account: "Hesap oluştur",
+    log_in: "Giriş yap",
+    on_exchange: "Ya da AUXR/USDT işlem yapın:",
+    visitor_note: "Borsalar bağımsız üçüncü taraflardır. AUXR ABD veya Birleşik Krallık'taki kişilere sunulmaz. Yatırım tavsiyesi değildir.",
     demo_prompt: "AUXR alıp satmak için canlı hesaba geçin.",
     metals: { gold: "Altın", silver: "Gümüş", platinum: "Platin", palladium: "Paladyum" },
   },
@@ -185,6 +210,18 @@ export default function AuxrPage() {
   useEffect(() => {
     const a = typeof window === "undefined" ? null : localStorage.getItem("auxite_wallet_address");
     if (a) setAddress(a);
+  }, []);
+
+  const [registerHref, setRegisterHref] = useState("/auth/register");
+  useEffect(() => {
+    const from = new URLSearchParams(window.location.search);
+    const keep = new URLSearchParams();
+    for (const k of ATTRIBUTION_PARAMS) {
+      const v = from.get(k);
+      if (v) keep.set(k, v);
+    }
+    const q = keep.toString();
+    if (q) setRegisterHref(`/auth/register?${q}`);
   }, []);
 
   const [pricing, setPricing] = useState<Pricing | null>(null);
@@ -410,7 +447,33 @@ export default function AuxrPage() {
 
           {/* Gates */}
           {!address ? (
-            <div className="text-center py-8 text-slate-400">{t.connect_prompt}</div>
+            <div className="text-center py-6">
+              <div className="text-slate-200 font-semibold mb-1">{t.visitor_title}</div>
+              <div className="text-sm text-slate-400 mb-5 max-w-md mx-auto">{t.visitor_desc}</div>
+              <div className="flex flex-wrap justify-center gap-3 mb-6">
+                <Link href={registerHref} className="px-5 py-2.5 rounded-lg bg-[#BFA181] text-zinc-950 font-semibold text-sm hover:bg-[#D4B47A]">
+                  {t.create_account}
+                </Link>
+                <Link href="/auth/login" className="px-5 py-2.5 rounded-lg border border-white/15 text-slate-200 font-semibold text-sm hover:border-white/30">
+                  {t.log_in}
+                </Link>
+              </div>
+              <div className="text-xs text-slate-500 mb-2">{t.on_exchange}</div>
+              <div className="flex flex-wrap justify-center gap-2 mb-4">
+                {EXCHANGES.filter((x) => !x.opensAt || Date.now() >= x.opensAt).map((x) => (
+                  <a
+                    key={x.name}
+                    href={x.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-md border border-white/10 text-sm text-slate-300 hover:border-[#BFA181]/60 hover:text-[#BFA181]"
+                  >
+                    {x.name}
+                  </a>
+                ))}
+              </div>
+              <div className="text-[11px] text-slate-500 max-w-md mx-auto">{t.visitor_note}</div>
+            </div>
           ) : isDemoMode ? (
             <div className="text-center py-8 text-slate-400">{t.demo_prompt}</div>
           ) : !kycVerified ? (
