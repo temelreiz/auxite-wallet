@@ -11,6 +11,10 @@
 //
 // Stop at any time: SET auxr:campaign-push:halt 1
 //
+// Toobit opened AUXR/USDT on 2 Nov 10:00 UTC; messages from 3 Nov on name all
+// four venues (message 3 announces it, replacing a NAV message — the last
+// message still carries the NAV).
+//
 // Copy rules: facts only — no predictions, returns, urgency, or backing /
 // custody claims. Numbers come from the live feed at send time.
 
@@ -33,9 +37,9 @@ const pct = (n: number) => `${Math.round(n)}%`;
 const MESSAGES: Msg[] = [
   { title: "AUXR is live on 3 exchanges", body: "One token tracking gold, silver, platinum & palladium. Now on LBANK, Hotcoin and Pionex." },
   { title: "One token, four metals", body: "Each AUXR tracks fixed grams of gold, silver, platinum and palladium. Tap to see the basket." },
-  (f) => ({ title: `AUXR NAV today: $${f.nav.toFixed(2)}`, body: "NAV = grams × live spot prices, published 24/7. Check it any time in the app." }),
+  { title: "AUXR is now on Toobit", body: "AUXR/USDT opened on Toobit on 2 Nov — alongside LBANK, Hotcoin and Pionex. Not investment advice." },
   { title: "Why a basket?", body: "Gold, silver, platinum and palladium move differently. AUXR tracks all four in a single token." },
-  { title: "Where to trade AUXR", body: "AUXR/USDT on LBANK, Hotcoin and Pionex — or in the Auxite app at NAV ± spread. Not investment advice." },
+  { title: "Where to trade AUXR", body: "AUXR/USDT on LBANK, Hotcoin, Pionex and Toobit — or in the Auxite app at NAV ± spread. Not investment advice." },
   (f) => ({ title: "Gold in the AUXR basket", body: `Gold is about ${pct(f.weights.gold)} of AUXR's value today. Tap to see every metal's live weight.` }),
   { title: "No rebalancing, by design", body: "AUXR tracks fixed grams per token, so weights drift with metal prices. See the rules in the app." },
   { title: "Built on Base", body: "AUXR is an ERC-20 on Base: verified contract, no transfer tax, no max-wallet limits." },

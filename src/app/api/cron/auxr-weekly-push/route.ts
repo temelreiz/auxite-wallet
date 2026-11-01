@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
   const body =
     `NAV $${nav.toFixed(2)}` +
     (change !== null ? ` (${change >= 0 ? "+" : ""}${change.toFixed(1)}% w/w)` : "") +
-    ` · gold, silver, platinum & palladium basket. Trade on LBANK, Hotcoin, Pionex or in the app.`;
+    ` · gold, silver, platinum & palladium basket. Trade on LBANK, Hotcoin, Pionex, Toobit or in the app.`;
 
   const result = await sendAuxrPushToAndroid(title, body);
   const summary = { week, nav, change, ...result };

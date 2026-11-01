@@ -12,8 +12,8 @@
 import { getRedis } from "@/lib/redis";
 import { getLbankDepth } from "@/lib/lbank";
 
-export type Venue = "lbank" | "pionex" | "hotcoin";
-export const VENUES: Venue[] = ["lbank", "pionex", "hotcoin"];
+export type Venue = "lbank" | "pionex" | "hotcoin" | "toobit";
+export const VENUES: Venue[] = ["lbank", "pionex", "hotcoin", "toobit"];
 
 export interface VenueDepth {
   venue: Venue;
@@ -45,6 +45,10 @@ async function book(venue: Venue): Promise<{ bids: Level[]; asks: Level[] } | nu
     const j = await fetchJson("https://api.pionex.com/api/v1/market/depth?symbol=AUXR_USDT&limit=100");
     return j?.result ? { bids: levels(j.data?.bids), asks: levels(j.data?.asks) } : null;
   }
+  if (venue === "toobit") {
+    const j = await fetchJson("https://api.toobit.com/quote/v1/depth?symbol=AUXRUSDT&limit=100");
+    return j?.b ? { bids: levels(j.b), asks: levels(j.a) } : null;
+  }
   const j = await fetchJson("https://api.hotcoinfin.com/v1/depth?symbol=auxr_usdt&step=60");
   const d = j?.data?.depth;
   return d ? { bids: levels(d.bids), asks: levels(d.asks) } : null;
@@ -60,13 +64,16 @@ function measure(venue: Venue, b: { bids: Level[]; asks: Level[] }, nav: number)
   return { venue, bidUsd2, askUsd2, spreadBps };
 }
 
-/** Depth on every venue; a venue whose API fails is left out, not reported as empty. */
+/** Depth on every venue; a venue whose API fails or whose book is empty is left out. */
 export async function getAllVenueDepth(nav: number): Promise<VenueDepth[]> {
   const out = await Promise.all(
     VENUES.map(async (v) => {
       try {
         const b = await book(v);
-        return b ? measure(v, b, nav) : null;
+        // An empty book means the market is not trading (e.g. before a listing
+        // opens), not that depth collapsed.
+        if (!b || (b.bids.length === 0 && b.asks.length === 0)) return null;
+        return measure(v, b, nav);
       } catch {
         return null;
       }
@@ -118,4 +125,4 @@ export async function depthTransitions(
   return changes;
 }
 
-export const VENUE_LABEL: Record<Venue, string> = { lbank: "LBANK", pionex: "Pionex", hotcoin: "Hotcoin" };
+export const VENUE_LABEL: Record<Venue, string> = { lbank: "LBANK", pionex: "Pionex", hotcoin: "Hotcoin", toobit: "Toobit" };
