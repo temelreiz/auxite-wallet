@@ -21,7 +21,12 @@
 //     backing, supply). Doubles as a DEAD-MAN'S SWITCH: if the digest stops
 //     arriving, the watchdog itself is down — silence no longer reads as safe.
 //
-// Alerts are de-duplicated via Redis flags with TTL. Read-only (no trading).
+// Standing conditions alert on CHANGE, not on every run: each check keeps its
+// last state in Redis and speaks when entering a bad state and when leaving
+// it. A 30-minute TTL dedupe re-sent the same supply-drift, MM-down and
+// scan-failing messages around the clock for days (Nov 2026), which is how an
+// alert channel stops being read. One-off events (a stolen-AUXR transfer, a
+// role grant) still alert once per event. Read-only (no trading).
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
@@ -65,7 +70,7 @@ const MM_SILENT_ALERT_SEC = Number(process.env.AUXR_MM_SILENT_ALERT_SEC || 180);
 // supposed to hold no role at all.
 const HOT_WALLET_FALLBACK = "0xd4cecfdf73cccd0517f576e75be469d75e0a1658";
 /** Mirrors MAX_BLOCKS_PER_RUN in auxr-taint.ts, for the lag message. */
-const MAX_SCAN_PER_RUN = 60_000;
+const MAX_SCAN_PER_RUN = 100_000;
 
 // The AUXR taken in October is followed in src/lib/auxr-taint.ts: a set that
 // grows as the money moves, rather than a list that goes stale the first time
@@ -110,6 +115,23 @@ async function alertOnce(key: string, message: string): Promise<boolean> {
     return true;
   } catch {
     return false;
+  }
+}
+
+/**
+ * Latched state for a standing condition. Returns the previous state and
+ * records the new one. `null` previous means this is the first observation:
+ * callers stay silent then, because the condition was either fine or already
+ * reported under the old TTL scheme.
+ */
+async function transition(key: string, state: string): Promise<{ prev: string | null; changed: boolean }> {
+  try {
+    const r = getRedis();
+    const prev = ((await r.get(`auxr:state:${key}`)) as string | null) ?? null;
+    if (prev !== state) await r.set(`auxr:state:${key}`, state);
+    return { prev, changed: prev !== null && prev !== state };
+  } catch {
+    return { prev: null, changed: false };
   }
 }
 
@@ -220,7 +242,7 @@ export async function GET(request: NextRequest) {
       const streak = await bumpStreak("deviation");
       if (streak >= DEVIATION_PERSIST_RUNS) {
         const mins = streak * 5;
-        if (await alertOnce("deviation", `🟠 <b>AUXR price vs NAV deviation (sustained ${mins}m)</b>\nCEX (LBANK) ${refLabel}: <b>$${refPrice.toFixed(3)}</b>\nNAV: <b>$${nav.toFixed(3)}</b>\nDeviation: <b>${(devBps / 100).toFixed(2)}%</b> (threshold ${(DEVIATION_ALERT_BPS / 100).toFixed(1)}%)\n→ MM hasn't closed it — check Echo Trade / trigger arb top-up.`)) {
+        if ((await transition("deviation", "out")).changed && await sendTelegramMessage(`🟠 <b>AUXR price vs NAV deviation (sustained ${mins}m)</b>\nCEX (LBANK) ${refLabel}: <b>$${refPrice.toFixed(3)}</b>\nNAV: <b>$${nav.toFixed(3)}</b>\nDeviation: <b>${(devBps / 100).toFixed(2)}%</b> (threshold ${(DEVIATION_ALERT_BPS / 100).toFixed(1)}%)\n→ MM hasn't closed it — check Echo Trade / trigger arb top-up.`).then(() => true, () => false)) {
           fired.push("deviation");
           await notifyMM(
             `⚠️ <b>AUXR/USDT — price vs NAV</b>\n` +
@@ -233,6 +255,9 @@ export async function GET(request: NextRequest) {
       }
     } else {
       await resetStreak("deviation");
+      if ((await transition("deviation", "ok")).changed) {
+        await sendTelegramMessage(`🟢 <b>AUXR back within ${(DEVIATION_ALERT_BPS / 100).toFixed(1)}% of NAV</b>\nCEX (LBANK) ${refLabel}: $${refPrice.toFixed(3)} · NAV $${nav.toFixed(3)}`).catch(() => {});
+      }
     }
   }
 
@@ -240,8 +265,12 @@ export async function GET(request: NextRequest) {
   if (ticker?.listed && ticker.bid && ticker.ask && ticker.bid > 0) {
     const mid = (ticker.bid + ticker.ask) / 2;
     const spreadBps = mid > 0 ? ((ticker.ask - ticker.bid) / mid) * 10000 : 0;
-    if (spreadBps >= SPREAD_ALERT_BPS) {
-      if (await alertOnce("spread", `🟡 <b>AUXR MM spread wide</b>\nBid $${ticker.bid} / Ask $${ticker.ask} → spread <b>${(spreadBps / 100).toFixed(2)}%</b> (threshold ${(SPREAD_ALERT_BPS / 100).toFixed(1)}%)\n→ Echo Trade may not be quoting. Also hurts BML depth score.`)) {
+    const spreadT = await transition("spread", spreadBps >= SPREAD_ALERT_BPS ? "wide" : "ok");
+    if (spreadT.changed && spreadBps < SPREAD_ALERT_BPS) {
+      await sendTelegramMessage(`🟢 <b>AUXR spread back to normal</b>\nBid $${ticker.bid} / Ask $${ticker.ask} → ${(spreadBps / 100).toFixed(2)}%`).catch(() => {});
+    }
+    if (spreadT.changed && spreadBps >= SPREAD_ALERT_BPS) {
+      if (await sendTelegramMessage(`🟡 <b>AUXR MM spread wide</b>\nBid $${ticker.bid} / Ask $${ticker.ask} → spread <b>${(spreadBps / 100).toFixed(2)}%</b> (threshold ${(SPREAD_ALERT_BPS / 100).toFixed(1)}%)\n→ Echo Trade may not be quoting. Also hurts BML depth score.`).then(() => true, () => false)) {
         fired.push("spread");
         await notifyMM(
           `⚠️ <b>AUXR/USDT — spread wide</b>\n` +
@@ -275,9 +304,15 @@ export async function GET(request: NextRequest) {
   }
 
   // 4. Contract paused
-  if (paused === true) {
-    if (await alertOnce("paused", `⏸️ <b>AUXR contract is PAUSED</b>\nAll transfers/mints/burns halted on-chain. Confirm this is intentional.`))
+  if (paused !== null) {
+    const t = await transition("paused", paused === true ? "paused" : "live");
+    // Unlike the others, a pause seen on the very first run is still worth saying.
+    if (paused === true && (t.changed || t.prev === null)) {
+      await sendTelegramMessage(`⏸️ <b>AUXR contract is PAUSED</b>\nAll transfers/mints/burns halted on-chain. Confirm this is intentional.`).catch(() => {});
       fired.push("paused");
+    } else if (paused !== true && t.changed) {
+      await sendTelegramMessage(`▶️ <b>AUXR contract unpaused</b>`).catch(() => {});
+    }
   }
 
   // 5. Supply drift (off-chain ledger + known external issuance vs on-chain)
@@ -286,15 +321,21 @@ export async function GET(request: NextRequest) {
     onChainUnits = weiToAuxr(chainWei as bigint);
     const expected = snap.supplyUnits + EXTERNAL_ONCHAIN_SUPPLY;
     const drift = Math.abs(expected - onChainUnits);
-    if (drift > SUPPLY_DRIFT_ALERT) {
+    // The drift is a standing number, explained or not. Alert when it MOVES by
+    // more than the threshold since the last report — that is a new mint or
+    // burn outside the app, which is what this check exists to catch.
+    const r = getRedis();
+    const lastRaw = await safe(r.get("auxr:state:supply-drift") as Promise<unknown>, null);
+    const last = lastRaw == null ? null : Number(lastRaw);
+    if (last === null || Math.abs(drift - last) > SUPPLY_DRIFT_ALERT) {
+      await safe(r.set("auxr:state:supply-drift", drift.toFixed(4)), null);
+    }
+    if (last !== null && Math.abs(drift - last) > SUPPLY_DRIFT_ALERT) {
       const externalNote = EXTERNAL_ONCHAIN_SUPPLY ? ` (+${EXTERNAL_ONCHAIN_SUPPLY} external)` : "";
-      // Mints made through the cockpit bump BOTH ledgers via recordMint(), so
-      // this figure is normally constant. It only shifts when AUXR is minted
-      // outside the app — which is exactly what this alert exists to catch.
       // Spell out the implied value so reconciling is a copy-paste, not arithmetic.
       const implied = (onChainUnits - snap.supplyUnits).toFixed(4);
-      if (await alertOnce("supply-drift", `⚠️ <b>AUXR supply drift</b>\nOff-chain ledger: ${snap.supplyUnits}${externalNote} · On-chain: ${onChainUnits}\nDrift: <b>${drift.toFixed(3)} AUXR</b> (threshold ${SUPPLY_DRIFT_ALERT})\n\nIf this is explained by a mint made outside the app, set <code>AUXR_EXTERNAL_ONCHAIN_SUPPLY=${implied}</code>`))
-        fired.push("supply-drift");
+      await sendTelegramMessage(`⚠️ <b>AUXR supply drift changed</b>\nWas ${last.toFixed(3)} AUXR, now <b>${drift.toFixed(3)} AUXR</b> (${drift > last ? "+" : ""}${(drift - last).toFixed(3)})\nOff-chain ledger: ${snap.supplyUnits}${externalNote} · On-chain: ${onChainUnits}\n\nOn-chain supply moved without the app recording it. If it was a deliberate mint outside the app, set <code>AUXR_EXTERNAL_ONCHAIN_SUPPLY=${implied}</code>`).catch(() => {});
+      fired.push("supply-drift");
     }
   }
 
@@ -306,18 +347,18 @@ export async function GET(request: NextRequest) {
   const mmBeat = await safe(lastRenewal(MM_LEASE_VENUE), null);
   if (mmBeat) {
     const silentSec = (Date.now() - mmBeat.at) / 1000;
-    if (silentSec > MM_SILENT_ALERT_SEC) {
+    const t = await transition("mm", silentSec > MM_SILENT_ALERT_SEC ? "down" : "up");
+    if (t.changed && silentSec > MM_SILENT_ALERT_SEC) {
       const book = await safe(getPionexTop(), null);
       const bookLine = book
         ? `Pionex book: bid ${book.bid ?? "—"} / ask ${book.ask ?? "—"}${nav ? ` · NAV ${nav.toFixed(3)}` : ""}`
         : `Pionex book: unreadable`;
-      if (
-        await alertOnce(
-          "mm-down",
-          `🔴 <b>AUXR market maker DOWN</b>\nNo lease renewal for <b>${Math.round(silentSec / 60)} min</b> (last: ${mmBeat.holder}).\n${bookLine}\n→ Both MM nodes are down. Their last quotes may still be on Pionex at an old NAV — cancel open AUXR orders in the Pionex app, then check the servers.`,
-        )
-      )
-        fired.push("mm-down");
+      await sendTelegramMessage(
+        `🔴 <b>AUXR market maker DOWN</b>\nNo lease renewal for <b>${Math.round(silentSec / 60)} min</b> (last: ${mmBeat.holder}).\n${bookLine}\n→ Both MM nodes are down. Their last quotes may still be on Pionex at an old NAV — cancel open AUXR orders in the Pionex app, then check the servers.`,
+      ).catch(() => {});
+      fired.push("mm-down");
+    } else if (t.changed) {
+      await sendTelegramMessage(`🟢 <b>AUXR market maker back</b>\nLease renewed by ${mmBeat.holder}.`).catch(() => {});
     }
   }
 
@@ -339,17 +380,21 @@ export async function GET(request: NextRequest) {
   // six days, the watermark never moved, 172 AUXR was layered through five
   // addresses and nothing was reported. Silence from a watcher is the one
   // reading that must never be treated as calm.
-  if (!taint) {
-    if (await alertOnce("taint-scan-dead", `🔕 <b>Stolen-AUXR scan is not running</b>\nfollowTaint() threw and returned nothing. The watch is blind until this is fixed.`))
-      fired.push("taint-scan-dead");
-  } else if (taint.error) {
-    if (await alertOnce("taint-scan-error", `🔕 <b>Stolen-AUXR scan is failing</b>\nStopped at block ${taint.scannedTo}, <b>${taint.lagBlocks.toLocaleString()} blocks behind</b>.\n<code>${taint.error.slice(0, 300)}</code>`))
-      fired.push("taint-scan-error");
-  } else if (BigInt(taint.lagBlocks) > STALE_BLOCKS) {
-    // No error, just not keeping up — worth saying once, because a watch that
-    // is half a day behind is not the watch we told the exchanges about.
-    if (await alertOnce("taint-scan-lag", `⏳ <b>Stolen-AUXR scan is behind</b>\n${taint.lagBlocks.toLocaleString()} blocks behind the head (last scanned ${taint.scannedTo}).\nIt catches up ${MAX_SCAN_PER_RUN.toLocaleString()} blocks per run; if this does not shrink, the scan is stuck.`))
-      fired.push("taint-scan-lag");
+  const scanState = !taint ? "dead" : taint.error ? "failing" : BigInt(taint.lagBlocks) > STALE_BLOCKS ? "behind" : "ok";
+  const scanT = await transition("taint-scan", scanState);
+  if (scanT.changed) {
+    if (scanState === "dead") {
+      await sendTelegramMessage(`🔕 <b>Stolen-AUXR scan is not running</b>\nfollowTaint() threw and returned nothing. The watch is blind until this is fixed.`).catch(() => {});
+    } else if (scanState === "failing" && taint?.error) {
+      await sendTelegramMessage(`🔕 <b>Stolen-AUXR scan is failing</b>\nStopped at block ${taint.scannedTo}, <b>${taint.lagBlocks.toLocaleString()} blocks behind</b>.\n<code>${taint.error.slice(0, 300)}</code>`).catch(() => {});
+    } else if (scanState === "behind" && taint) {
+      // No error, just not keeping up — a watch half a day behind is not the
+      // watch we told the exchanges about.
+      await sendTelegramMessage(`⏳ <b>Stolen-AUXR scan is behind</b>\n${taint.lagBlocks.toLocaleString()} blocks behind the head (last scanned ${taint.scannedTo}).\nIt catches up ${MAX_SCAN_PER_RUN.toLocaleString()} blocks per run; if this does not shrink, the scan is stuck.`).catch(() => {});
+    } else if (scanState === "ok") {
+      await sendTelegramMessage(`🟢 <b>Stolen-AUXR scan caught up</b>\nScanning to the head again.`).catch(() => {});
+    }
+    if (scanState !== "ok") fired.push(`taint-scan-${scanState}`);
   }
 
   if (taint) {
