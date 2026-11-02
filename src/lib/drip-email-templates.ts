@@ -2,7 +2,7 @@
 // Email Drip Campaign Templates — 6 languages (en, tr, de, fr, ar, ru)
 // Matches the institutional design of existing Auxite emails
 
-import { kycWelcomeGrams } from "@/lib/kyc-reminder-content";
+import { renderKycReminderEmail } from "@/lib/kyc-reminder-content";
 
 const VAULT_URL = "https://vault.auxite.io";
 
@@ -89,67 +89,6 @@ interface DripContent {
   ctaText: string;
   ctaUrl: string;
 }
-
-// ══════════════════════════════════════════════════════════════════════════════
-// DAY 3 — KYC REMINDER
-// ══════════════════════════════════════════════════════════════════════════════
-
-const day3Content: Record<string, DripContent> = {
-  en: {
-    subject: "Activate Your Welcome Gold — {G}g AUXG Waiting",
-    title: "Your Gold Is Waiting",
-    body: `<p>You registered with Auxite and unlocked your Welcome Gold.</p>
-${highlight("Complete KYC verification to <strong>activate your {G} AUXG Welcome Gold</strong> and unlock full platform access. Your gold is available for use within the platform.")}
-<p>Verification takes less than 2 minutes. All you need is a valid ID document.</p>`,
-    ctaText: "ACTIVATE GOLD",
-    ctaUrl: VAULT_URL,
-  },
-  tr: {
-    subject: "Hoş Geldin Altınınızı Aktive Edin — {G}g AUXG Bekliyor",
-    title: "Altınınız Sizi Bekliyor",
-    body: `<p>Auxite'e kayıt oldunuz ve Hoş Geldin Altınınızı açtınız.</p>
-${highlight("KYC doğrulamasını tamamlayarak <strong>{G} AUXG Hoş Geldin Altınınızı aktive edin</strong> ve platform özelliklerinin tamamına erişin. Altınınız platform içi kullanım için hazır.")}
-<p>Doğrulama işlemi 2 dakikadan kısa sürer. Tek ihtiyacınız geçerli bir kimlik belgesi.</p>`,
-    ctaText: "ALTINI AKTİVE ET",
-    ctaUrl: VAULT_URL,
-  },
-  de: {
-    subject: "Aktivieren Sie Ihr Willkommensgold — {G}g AUXG wartet",
-    title: "Ihr Gold wartet",
-    body: `<p>Sie haben sich bei Auxite registriert und Ihr Willkommensgold freigeschaltet.</p>
-${highlight("Schließen Sie die KYC-Verifizierung ab, um <strong>Ihre {G} AUXG Willkommensgold zu aktivieren</strong> und vollen Zugang zur Plattform zu erhalten. Ihr Gold ist für die Nutzung innerhalb der Plattform verfügbar.")}
-<p>Die Verifizierung dauert weniger als 2 Minuten. Sie benötigen lediglich ein gültiges Ausweisdokument.</p>`,
-    ctaText: "GOLD AKTIVIEREN",
-    ctaUrl: VAULT_URL,
-  },
-  fr: {
-    subject: "Activez votre Or de Bienvenue — {G}g AUXG en attente",
-    title: "Votre Or vous attend",
-    body: `<p>Vous vous êtes inscrit sur Auxite et avez débloqué votre Or de Bienvenue.</p>
-${highlight("Complétez la vérification KYC pour <strong>activer vos {G} AUXG d'Or de Bienvenue</strong> et débloquer l'accès complet à la plateforme. Votre or est disponible pour utilisation au sein de la plateforme.")}
-<p>La vérification prend moins de 2 minutes. Il vous suffit d'un document d'identité valide.</p>`,
-    ctaText: "ACTIVER L'OR",
-    ctaUrl: VAULT_URL,
-  },
-  ar: {
-    subject: "فعّل ذهب الترحيب — {G}غ AUXG في انتظارك",
-    title: "ذهبك في انتظارك",
-    body: `<p>لقد سجلت في Auxite وفتحت ذهب الترحيب الخاص بك.</p>
-${highlight("أكمل التحقق من هويتك (KYC) لـ<strong>تفعيل {G} AUXG ذهب الترحيب</strong> وفتح الوصول الكامل للمنصة. ذهبك متاح للاستخدام داخل المنصة.")}
-<p>التحقق يستغرق أقل من دقيقتين. كل ما تحتاجه هو وثيقة هوية صالحة.</p>`,
-    ctaText: "فعّل الذهب",
-    ctaUrl: VAULT_URL,
-  },
-  ru: {
-    subject: "Активируйте приветственное золото — {G}г AUXG ждёт",
-    title: "Ваше золото ждёт",
-    body: `<p>Вы зарегистрировались в Auxite и разблокировали приветственное золото.</p>
-${highlight("Пройдите KYC-верификацию, чтобы <strong>активировать ваши {G} AUXG приветственного золота</strong> и получить полный доступ к платформе. Ваше золото доступно для использования внутри платформы.")}
-<p>Верификация занимает менее 2 минут. Вам понадобится только действующий документ.</p>`,
-    ctaText: "АКТИВИРОВАТЬ ЗОЛОТО",
-    ctaUrl: VAULT_URL,
-  },
-};
 
 // ══════════════════════════════════════════════════════════════════════════════
 // DAY 5 — MARKET HOOK
@@ -274,105 +213,15 @@ ${highlight("Торгуйте по <strong>рыночным ценам в реа
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
-// DAY 14 — URGENCY / BONUS EXPIRING
-// ══════════════════════════════════════════════════════════════════════════════
-
-const day14Content: Record<string, DripContent> = {
-  en: {
-    subject: "Your Welcome Gold Expires Soon — Activate Now",
-    title: "Don't Miss Your Gold",
-    body: `<p>It's been two weeks since you joined Auxite. Your <strong>{G} AUXG Welcome Gold</strong> is waiting to be activated.</p>
-${highlight("Complete KYC verification to <strong>activate your Welcome Gold</strong> and unlock full platform access. Add funds to grow your position beyond your welcome gold.")}
-<p>Once verified, you'll also unlock:</p>
-<ul style="color:#444;font-size:13px;line-height:2">
-  <li><strong>2% deposit bonus</strong> in metal credits</li>
-  <li><strong>Structured Yield</strong> — earn on your metals</li>
-  <li><strong>Full trading</strong> — buy, sell, convert all metals</li>
-</ul>`,
-    ctaText: "ACTIVATE GOLD",
-    ctaUrl: VAULT_URL,
-  },
-  tr: {
-    subject: "Hoş Geldin Altınınızın Süresi Doluyor — Şimdi Aktive Edin",
-    title: "Altınınızı Kaçırmayın",
-    body: `<p>Auxite'e katılmanızın üzerinden iki hafta geçti. <strong>{G} AUXG Hoş Geldin Altınız</strong> aktive edilmeyi bekliyor.</p>
-${highlight("KYC doğrulamasını tamamlayarak <strong>Hoş Geldin Altınınızı aktive edin</strong> ve platformun tüm özelliklerine erişin. Yatırım yaparak pozisyonunuzu büyütün.")}
-<p>Doğrulandıktan sonra ayrıca şunların kilidini açarsınız:</p>
-<ul style="color:#444;font-size:13px;line-height:2">
-  <li>Metal kredilerinde <strong>%2 yatırım bonusu</strong></li>
-  <li><strong>Yapılandırılmış Getiri</strong> — metallerinizden kazanç elde edin</li>
-  <li><strong>Tam ticaret</strong> — tüm metalleri alın, satın, dönüştürün</li>
-</ul>`,
-    ctaText: "ALTINI AKTİVE ET",
-    ctaUrl: VAULT_URL,
-  },
-  de: {
-    subject: "Ihr Willkommensgold läuft bald ab — Jetzt aktivieren",
-    title: "Verpassen Sie Ihr Gold nicht",
-    body: `<p>Es sind zwei Wochen seit Ihrer Registrierung bei Auxite vergangen. Ihre <strong>{G} AUXG Willkommensgold</strong> wartet auf Aktivierung.</p>
-${highlight("Schließen Sie die KYC-Verifizierung ab, um <strong>Ihr Willkommensgold zu aktivieren</strong> und vollen Zugang zur Plattform zu erhalten. Zahlen Sie ein, um Ihre Position auszubauen.")}
-<p>Nach der Verifizierung schalten Sie außerdem frei:</p>
-<ul style="color:#444;font-size:13px;line-height:2">
-  <li><strong>2% Einzahlungsbonus</strong> in Metallguthaben</li>
-  <li><strong>Strukturierte Rendite</strong> — verdienen Sie mit Ihren Metallen</li>
-  <li><strong>Voller Handel</strong> — kaufen, verkaufen, konvertieren Sie alle Metalle</li>
-</ul>`,
-    ctaText: "GOLD AKTIVIEREN",
-    ctaUrl: VAULT_URL,
-  },
-  fr: {
-    subject: "Votre Or de Bienvenue expire bientôt — Activez maintenant",
-    title: "Ne manquez pas votre Or",
-    body: `<p>Cela fait deux semaines que vous avez rejoint Auxite. Vos <strong>{G} AUXG d'Or de Bienvenue</strong> attendent d'être activés.</p>
-${highlight("Complétez la vérification KYC pour <strong>activer votre Or de Bienvenue</strong> et débloquer l'accès complet à la plateforme. Ajoutez des fonds pour développer votre position.")}
-<p>Une fois vérifié, vous débloquerez également :</p>
-<ul style="color:#444;font-size:13px;line-height:2">
-  <li><strong>Bonus de dépôt de 2%</strong> en crédits métal</li>
-  <li><strong>Rendement Structuré</strong> — gagnez sur vos métaux</li>
-  <li><strong>Trading complet</strong> — achetez, vendez, convertissez tous les métaux</li>
-</ul>`,
-    ctaText: "ACTIVER L'OR",
-    ctaUrl: VAULT_URL,
-  },
-  ar: {
-    subject: "ذهب الترحيب سينتهي قريباً — فعّله الآن",
-    title: "لا تفوّت ذهبك",
-    body: `<p>مرّ أسبوعان منذ انضمامك إلى Auxite. <strong>{G} AUXG ذهب الترحيب</strong> في انتظار التفعيل.</p>
-${highlight("أكمل التحقق من هويتك لـ<strong>تفعيل ذهب الترحيب</strong> وفتح الوصول الكامل للمنصة. أضف الأموال لتوسيع مركزك.")}
-<p>بعد التحقق، ستفتح أيضاً:</p>
-<ul style="color:#444;font-size:13px;line-height:2;direction:rtl;text-align:right">
-  <li><strong>مكافأة إيداع 2%</strong> في اعتمادات المعادن</li>
-  <li><strong>العائد المهيكل</strong> — اربح من معادنك</li>
-  <li><strong>تداول كامل</strong> — اشترِ وبع وحوّل جميع المعادن</li>
-</ul>`,
-    ctaText: "فعّل الذهب",
-    ctaUrl: VAULT_URL,
-  },
-  ru: {
-    subject: "Ваше приветственное золото скоро истечёт — Активируйте сейчас",
-    title: "Не упустите золото",
-    body: `<p>Прошло две недели с момента вашей регистрации в Auxite. Ваши <strong>{G} AUXG приветственного золота</strong> ждут активации.</p>
-${highlight("Пройдите KYC-верификацию, чтобы <strong>активировать приветственное золото</strong> и получить полный доступ к платформе. Пополните счёт, чтобы расширить свою позицию.")}
-<p>После верификации вы также разблокируете:</p>
-<ul style="color:#444;font-size:13px;line-height:2">
-  <li><strong>2% бонус на депозит</strong> в металлических кредитах</li>
-  <li><strong>Структурированная доходность</strong> — зарабатывайте на металлах</li>
-  <li><strong>Полный трейдинг</strong> — покупайте, продавайте, конвертируйте все металлы</li>
-</ul>`,
-    ctaText: "АКТИВИРОВАТЬ ЗОЛОТО",
-    ctaUrl: VAULT_URL,
-  },
-};
-
-// ══════════════════════════════════════════════════════════════════════════════
 // STAGE CONFIG & EXPORT
 // ══════════════════════════════════════════════════════════════════════════════
 
-const stageContentMap: Record<DripStage, Record<string, DripContent>> = {
-  day3_kyc: day3Content,
+// day3_kyc and day14_urgency are the "verify your account" email from
+// kyc-reminder-content.ts. Their old copy promised welcome gold for verifying
+// (and that it "expires"), but KYC approval grants no gold.
+const stageContentMap: Record<"day5_market" | "day7_demo", Record<string, DripContent>> = {
   day5_market: day5Content,
   day7_demo: day7Content,
-  day14_urgency: day14Content,
 };
 
 export const DRIP_SCHEDULE: { stage: DripStage; daysSinceRegistration: number }[] = [
@@ -385,17 +234,16 @@ export const DRIP_SCHEDULE: { stage: DripStage; daysSinceRegistration: number }[
 /**
  * Get a drip email for a given stage and language.
  */
-export function getDripEmail(stage: DripStage, language: string): DripEmail {
+export function getDripEmail(
+  stage: DripStage,
+  language: string,
+  opts: { daysSinceSignup: number; unsubscribeUrl: string },
+): DripEmail {
+  if (stage === "day3_kyc" || stage === "day14_urgency") {
+    return renderKycReminderEmail(language, opts.daysSinceSignup, opts.unsubscribeUrl);
+  }
   const contentMap = stageContentMap[stage];
-  const raw = contentMap[language] || contentMap.en;
-  // {G} = welcome gold actually granted at KYC (a portion of it under the
-  // split gate), so the day-3 email doesn't promise more than verifying pays.
-  const g = String(kycWelcomeGrams());
-  const content = {
-    ...raw,
-    subject: raw.subject.replaceAll("{G}", g),
-    body: raw.body.replaceAll("{G}", g),
-  };
+  const content = contentMap[language] || contentMap.en;
 
   const html = generateDripEmailHTML({
     title: content.title,
