@@ -230,7 +230,7 @@ export async function getAuxrPricing(): Promise<AuxrPricing> {
  * Also returns the per-metal grams that get reserved for backing this
  * mint, so the reserve tracker can be updated atomically.
  */
-export async function quoteBuy(usdAmount: number): Promise<{
+export async function quoteBuy(usdAmount: number, spreadOverride?: number): Promise<{
   usdAmount: number;
   unitsAUXR: number;
   buyPriceUSD: number;
@@ -248,14 +248,16 @@ export async function quoteBuy(usdAmount: number): Promise<{
   }
 
   const pricing = await getAuxrPricing();
-  const unitsAUXR = usdAmount / pricing.buyPriceUSD;
+  // Authorised participants trade at a narrower spread (src/lib/auxr-ap.ts).
+  const buyPriceUSD = spreadOverride != null ? pricing.navUSD * (1 + spreadOverride) : pricing.buyPriceUSD;
+  const unitsAUXR = usdAmount / buyPriceUSD;
 
   return {
     usdAmount,
     unitsAUXR,
-    buyPriceUSD: pricing.buyPriceUSD,
+    buyPriceUSD,
     navUSD: pricing.navUSD,
-    spreadUSD: (pricing.buyPriceUSD - pricing.navUSD) * unitsAUXR,
+    spreadUSD: (buyPriceUSD - pricing.navUSD) * unitsAUXR,
     metalsReservedGrams: {
       gold: unitsAUXR * AUXR_GRAMS_PER_UNIT.gold,
       silver: unitsAUXR * AUXR_GRAMS_PER_UNIT.silver,
@@ -269,7 +271,7 @@ export async function quoteBuy(usdAmount: number): Promise<{
  * Convert a units-of-AUXR sell into USD proceeds the user receives, given
  * current sell spread. Used by Sell endpoint.
  */
-export async function quoteSell(unitsAUXR: number): Promise<{
+export async function quoteSell(unitsAUXR: number, spreadOverride?: number): Promise<{
   unitsAUXR: number;
   proceedsUSD: number;
   sellPriceUSD: number;
@@ -287,14 +289,15 @@ export async function quoteSell(unitsAUXR: number): Promise<{
   }
 
   const pricing = await getAuxrPricing();
-  const proceedsUSD = unitsAUXR * pricing.sellPriceUSD;
+  const sellPriceUSD = spreadOverride != null ? pricing.navUSD * (1 - spreadOverride) : pricing.sellPriceUSD;
+  const proceedsUSD = unitsAUXR * sellPriceUSD;
 
   return {
     unitsAUXR,
     proceedsUSD,
-    sellPriceUSD: pricing.sellPriceUSD,
+    sellPriceUSD,
     navUSD: pricing.navUSD,
-    spreadUSD: (pricing.navUSD - pricing.sellPriceUSD) * unitsAUXR,
+    spreadUSD: (pricing.navUSD - sellPriceUSD) * unitsAUXR,
     metalsReleasedGrams: {
       gold: unitsAUXR * AUXR_GRAMS_PER_UNIT.gold,
       silver: unitsAUXR * AUXR_GRAMS_PER_UNIT.silver,

@@ -27,6 +27,7 @@ import { redis } from "@/lib/redis";
 import { getAuxrSupply, type AuxrBasketMetal } from "@/lib/auxr-reserve";
 import { AUXR_GRAMS_PER_UNIT, getAuxrPricing } from "@/lib/auxr-pricing";
 import { getOnChainBalance, getOnChainTotalSupply, weiToAuxr } from "@/lib/auxr-onchain";
+import { inventoryUnits } from "@/lib/auxr-ap";
 
 export const BASKET_METALS: AuxrBasketMetal[] = ["gold", "silver", "platinum", "palladium"];
 
@@ -87,13 +88,16 @@ const zeroGrams = (): Grams => ({ gold: 0, silver: 0, platinum: 0, palladium: 0 
 // ── Liability ────────────────────────────────────────────────────────────────
 
 export async function getAuxrLiability(): Promise<AuxrLiability> {
-  const [offChainUnits, totalWei, keyless] = await Promise.all([
+  const [offChainUnits, totalWei, keyless, inventory] = await Promise.all([
     getAuxrSupply(),
     getOnChainTotalSupply(),
     Promise.all(AUXR_UNRECOVERABLE_ADDRESSES.map((a) => getOnChainBalance(a as Address))),
+    // Unsold AP inventory is the issuer's own stock, not owed to anyone.
+    // If it cannot be read it is left in, which overstates the liability.
+    inventoryUnits().catch(() => 0),
   ]);
   const unrecoverableUnits = keyless.reduce((sum: number, w: bigint) => sum + weiToAuxr(w), 0);
-  const onChainUnits = weiToAuxr(totalWei) - unrecoverableUnits;
+  const onChainUnits = weiToAuxr(totalWei) - unrecoverableUnits - inventory;
   return {
     offChainUnits,
     onChainUnits,

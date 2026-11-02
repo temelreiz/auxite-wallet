@@ -27,6 +27,7 @@ import {
   type MetalSymbol,
 } from "@/config/contracts-v8";
 import { AUXR_UNRECOVERABLE_ADDRESSES } from "@/lib/auxr-backing";
+import { existingInventoryAddress } from "@/lib/auxr-ap";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -93,9 +94,14 @@ async function getAuxrSupply() {
   });
 
   const rawTotal: bigint = await contract.totalSupply();
+  // The AP inventory wallet (src/lib/auxr-ap.ts) is issuer stock until an
+  // AP takes it, so it is withheld like the treasury.
+  const inventory = await existingInventoryAddress().catch(() => null);
+  const excluded = auxrExcludedAddresses();
+  if (inventory && !excluded.some((a) => sameAddress(a, inventory))) excluded.push(inventory);
   const [unrecoverable, balances] = await Promise.all([
     Promise.all(AUXR_UNRECOVERABLE_ADDRESSES.map(balanceOf)),
-    Promise.all(auxrExcludedAddresses().map(balanceOf)),
+    Promise.all(excluded.map(balanceOf)),
   ]);
 
   const onChainTotal = parseFloat(ethers.formatUnits(rawTotal, AUXR_DECIMALS));

@@ -22,6 +22,7 @@ import {
 } from "@/lib/redis";
 import { quoteSell } from "@/lib/auxr-pricing";
 import { recordBurn } from "@/lib/auxr-reserve";
+import { getAp, recordApFlow, AP_SPREAD } from "@/lib/auxr-ap";
 import { notifyAuxrTrade } from "@/lib/telegram";
 import { notifyAuxrTradePush } from "@/lib/notification-sender";
 
@@ -117,17 +118,24 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const quote = await quoteSell(unitsAUXR);
+  // Authorised participants redeem at the AP spread and are paid in USDT,
+  // which they can withdraw; everyone else gets AUXM at the retail spread.
+  const ap = await getAp(normalizedAddress);
+  const quote = await quoteSell(unitsAUXR, ap ? AP_SPREAD : undefined);
 
   // Execute: burn AUXR, credit AUXM. Proceeds go to paid auxm (not bonus)
   // because bonus is one-way (only ever credited by promotional flow).
   const balanceKey = `user:${normalizedAddress}:balance`;
   const pipe = getRedis().pipeline();
   pipe.hincrbyfloat(balanceKey, "auxr", -unitsAUXR);
-  pipe.hincrbyfloat(balanceKey, "auxm", quote.proceedsUSD);
-  pipe.hset(balanceKey, {
-    totalAuxm: balance.auxm + quote.proceedsUSD + balance.bonusAuxm,
-  });
+  if (ap) {
+    pipe.hincrbyfloat(balanceKey, "usdt", quote.proceedsUSD);
+  } else {
+    pipe.hincrbyfloat(balanceKey, "auxm", quote.proceedsUSD);
+    pipe.hset(balanceKey, {
+      totalAuxm: balance.auxm + quote.proceedsUSD + balance.bonusAuxm,
+    });
+  }
   await pipe.exec();
 
   try {
@@ -141,10 +149,15 @@ export async function POST(request: NextRequest) {
     console.error("[/api/auxr/sell] reserve burn failed:", e);
   }
 
+  if (ap) {
+    await recordApFlow({ side: "sell", ap, units: unitsAUXR, navUSD: quote.navUSD, priceUSD: quote.sellPriceUSD, refId })
+      .catch((e) => console.error("[/api/auxr/sell] AP flow record failed:", e));
+  }
+
   const txId = await addTransaction(normalizedAddress, {
     type: "swap",
     fromToken: "AUXR",
-    toToken: "AUXM",
+    toToken: ap ? "USDT" : "AUXM",
     fromAmount: unitsAUXR,
     toAmount: quote.proceedsUSD,
     status: "completed",
