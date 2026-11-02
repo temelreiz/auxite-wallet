@@ -38,18 +38,29 @@ const GAS_NOTIFIED = "auxr:taint:gasNotified";
 // was swallowed upstream, the watermark never advanced and nothing said so.
 // So: several endpoints, a range each will actually accept, and a watermark
 // that moves after every successful chunk rather than only at the end.
+//
+// Re-measured 2 Nov 2026 after the scan fell ~300k blocks behind: Alchemy's
+// free tier (BASE_RPC_URL) and Blast allow 10 blocks, dRPC's free plan rejects
+// every range, mainnet.base.org rate-limits. publicnode answered 50,000.
+// A paid endpoint can be added with BASE_LOGS_RPC_URL (+ _RANGE).
 const RPC_ENDPOINTS: { url: string; maxRange: bigint }[] = [
-  ...(process.env.BASE_RPC_URL ? [{ url: process.env.BASE_RPC_URL, maxRange: 9_000n }] : []),
+  ...(process.env.BASE_LOGS_RPC_URL
+    ? [{ url: process.env.BASE_LOGS_RPC_URL, maxRange: BigInt(process.env.BASE_LOGS_RPC_RANGE || "10000") }]
+    : []),
+  { url: "https://base-rpc.publicnode.com", maxRange: 50_000n },
   { url: "https://base.drpc.org", maxRange: 9_000n },
-  { url: "https://base-mainnet.public.blastapi.io", maxRange: 1_000n },
   { url: "https://mainnet.base.org", maxRange: 1_000n },
-  { url: "https://1rpc.io/base", maxRange: 45n },
 ];
+
+/** An endpoint with a smaller range than the chunk is still tried, split into
+ *  sub-ranges, but only up to this many calls — past that it cannot finish in
+ *  time and the next endpoint is a better bet. */
+const MAX_SUBCALLS = 10n;
 
 /** Work ceiling for one run. The route allows 30s; this leaves room for the
  *  rest of the checks and lets a backlog clear over several runs instead of
  *  timing out on every one of them. */
-const MAX_BLOCKS_PER_RUN = 60_000n;
+const MAX_BLOCKS_PER_RUN = 100_000n;
 
 /** Lag past which the scan is considered broken rather than busy. Base makes
  *  ~43,200 blocks a day, so this is roughly half a day behind. */
@@ -127,46 +138,64 @@ export interface TaintScanResult {
   error: string | null;
 }
 
-/** One getLogs call, tried across endpoints until one answers. */
+/** One eth_getLogs request against one endpoint. */
+async function getLogsFrom(
+  url: string,
+  fromBlock: bigint,
+  toBlock: bigint,
+  watching: string[],
+): Promise<any[]> {
+  const topic0 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+  const pad = (a: string) => "0x" + a.slice(2).toLowerCase().padStart(64, "0");
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "eth_getLogs",
+      params: [
+        {
+          address: AUXR_CONTRACT_ADDRESS,
+          fromBlock: "0x" + fromBlock.toString(16),
+          toBlock: "0x" + toBlock.toString(16),
+          // Topic 1 as an array is an OR across senders, so the node does
+          // the filtering and one call covers the whole set.
+          topics: [topic0, watching.map(pad)],
+        },
+      ],
+    }),
+    signal: AbortSignal.timeout(8000),
+  });
+  const json = await res.json();
+  if (json?.error) throw new Error(json.error.message);
+  return json.result || [];
+}
+
+/** getLogs over a range, tried across endpoints until one answers. Each
+ *  endpoint is asked in pieces no larger than the range it accepts. */
 async function getLogsAnywhere(
   fromBlock: bigint,
   toBlock: bigint,
   watching: string[],
 ): Promise<{ logs: any[]; url: string } | { error: string }> {
-  const topic0 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-  const pad = (a: string) => "0x" + a.slice(2).toLowerCase().padStart(64, "0");
   const errors: string[] = [];
+  const span = toBlock - fromBlock + 1n;
 
-  for (const { url } of RPC_ENDPOINTS) {
+  for (const { url, maxRange } of RPC_ENDPOINTS) {
+    if ((span + maxRange - 1n) / maxRange > MAX_SUBCALLS) {
+      errors.push(`${url}: range ${maxRange} too small for ${span} blocks`);
+      continue;
+    }
     try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "eth_getLogs",
-          params: [
-            {
-              address: AUXR_CONTRACT_ADDRESS,
-              fromBlock: "0x" + fromBlock.toString(16),
-              toBlock: "0x" + toBlock.toString(16),
-              // Topic 1 as an array is an OR across senders, so the node does
-              // the filtering and one call covers the whole set.
-              topics: [topic0, watching.map(pad)],
-            },
-          ],
-        }),
-        signal: AbortSignal.timeout(8000),
-      });
-      const json = await res.json();
-      if (json?.error) {
-        errors.push(`${url}: ${json.error.message}`);
-        continue;
+      const logs: any[] = [];
+      for (let from = fromBlock; from <= toBlock; from += maxRange) {
+        const to = from + maxRange - 1n > toBlock ? toBlock : from + maxRange - 1n;
+        logs.push(...(await getLogsFrom(url, from, to, watching)));
       }
-      return { logs: json.result || [], url };
+      return { logs, url };
     } catch (e: any) {
-      errors.push(`${url}: ${String(e?.message || e).slice(0, 60)}`);
+      errors.push(`${url}: ${String(e?.message || e).slice(0, 120)}`);
     }
   }
   return { error: errors.join(" | ") };
@@ -211,7 +240,7 @@ export async function followTaint(): Promise<TaintScanResult> {
   const movements: TaintMovement[] = [];
   let cursor = startBlock;
   let error: string | null = null;
-  const chunk = RPC_ENDPOINTS[0]?.maxRange ?? 1_000n;
+  const chunk = RPC_ENDPOINTS.reduce((m, e) => (e.maxRange > m ? e.maxRange : m), 1_000n);
 
   while (cursor <= ceiling) {
     const to = cursor + chunk - 1n > ceiling ? ceiling : cursor + chunk - 1n;
