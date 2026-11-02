@@ -17,7 +17,9 @@
 //     anywhere else, so a stolen AP login cannot send AUXR to a new wallet.
 //   - The inventory wallet only holds AUXR; it has no role on the contract.
 //     Minting stays with the admin Safe, which refills it in batches. The
-//     most a compromised inventory key can lose is what it holds.
+//     most a compromised inventory key can lose is what it holds. Its key is
+//     AUXR_AP_INVENTORY_PRIVATE_KEY (scripts/setup-ap-inventory.mjs writes it
+//     to Vercel without printing it) — AWS KMS is no longer in use.
 //   - Per-AP daily withdrawal cap.
 //   - Every AP buy and sell emails the hedge desk the grams to buy or sell,
 //     because AUXR issued here is not hedged automatically.
@@ -28,7 +30,6 @@
 import { getRedis } from "@/lib/redis";
 import { sendEmail } from "@/lib/email";
 import { AUXR_GRAMS_PER_UNIT } from "@/lib/auxr-pricing";
-import { createCustodialWallet, getWalletAddress, sendERC20 } from "@/lib/kms-wallet";
 import { AUXR_CONTRACT_ADDRESS, getOnChainBalance, weiToAuxr } from "@/lib/auxr-onchain";
 import { recordBurn, recordMint } from "@/lib/auxr-reserve";
 import { acquireBalanceLock, releaseBalanceLock } from "@/lib/balance-lock";
@@ -44,7 +45,6 @@ export const INVENTORY_TARGET = Number(process.env.AUXR_AP_INVENTORY_TARGET ?? 6
 export const INVENTORY_LOW = Number(process.env.AUXR_AP_INVENTORY_LOW ?? 150);
 
 const HEDGE_EMAIL = process.env.AUXR_HEDGE_EMAIL || "bs@auxite.io";
-const INVENTORY_WALLET_ID = "auxr-ap-inventory";
 const AP_KEY = "auxr:ap:accounts";
 const FLOWS_KEY = "auxr:ap:flows";
 const NET_KEY = "auxr:ap:net-units";
@@ -90,20 +90,45 @@ export async function removeAp(address: string): Promise<void> {
 
 // ── Inventory wallet ─────────────────────────────────────────────────────────
 
-/** Address of the inventory wallet; created (KMS-encrypted key) on first call. */
-export async function inventoryAddress(): Promise<string> {
-  return (await getWalletAddress(INVENTORY_WALLET_ID)) ?? (await createCustodialWallet(INVENTORY_WALLET_ID)).address;
+function inventorySigner(provider?: ethers.Provider): ethers.Wallet | null {
+  const key = process.env.AUXR_AP_INVENTORY_PRIVATE_KEY;
+  if (!key) return null;
+  return new ethers.Wallet(key.startsWith("0x") ? key : `0x${key}`, provider);
 }
 
-/** Inventory address without creating it — for read paths. */
+/** Address of the inventory wallet, or null until its key is configured. */
 export async function existingInventoryAddress(): Promise<string | null> {
-  return getWalletAddress(INVENTORY_WALLET_ID);
+  return inventorySigner()?.address.toLowerCase() ?? null;
+}
+
+/** Same as existingInventoryAddress, but a missing key is an error. */
+export async function inventoryAddress(): Promise<string> {
+  const a = await existingInventoryAddress();
+  if (!a) throw new Error("AUXR_AP_INVENTORY_PRIVATE_KEY is not set");
+  return a;
 }
 
 export async function inventoryUnits(): Promise<number> {
   const addr = await existingInventoryAddress();
   if (!addr) return 0;
   return weiToAuxr(await getOnChainBalance(addr as Address));
+}
+
+/** Transfer AUXR from inventory and wait for one confirmation. */
+async function transferFromInventory(to: string, units: number): Promise<{ success: boolean; txHash: string; error?: string }> {
+  const provider = new ethers.JsonRpcProvider(BASE_RPC);
+  const signer = inventorySigner(provider);
+  if (!signer) return { success: false, txHash: "", error: "inventory key not configured" };
+  const token = new ethers.Contract(
+    AUXR_CONTRACT_ADDRESS,
+    ["function transfer(address to, uint256 amount) returns (bool)"],
+    signer,
+  );
+  const tx = await token.transfer(to, ethers.parseUnits(units.toFixed(18), 18));
+  const receipt = await tx.wait(1);
+  return receipt?.status === 1
+    ? { success: true, txHash: tx.hash }
+    : { success: false, txHash: tx.hash, error: "transfer reverted" };
 }
 
 // ── Hedge desk ───────────────────────────────────────────────────────────────
@@ -218,8 +243,7 @@ export async function withdrawFromInventory(p: {
     await releaseBalanceLock(lock);
   }
 
-  const provider = new ethers.JsonRpcProvider(BASE_RPC);
-  const sent = await sendERC20(INVENTORY_WALLET_ID, p.ap.destination, AUXR_CONTRACT_ADDRESS, p.units, 18, provider)
+  const sent = await transferFromInventory(p.ap.destination, p.units)
     .catch((e) => ({ txHash: "", success: false, error: String(e?.message || e) }));
 
   if (!sent.success) {
