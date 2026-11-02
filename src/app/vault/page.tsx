@@ -126,7 +126,7 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerificationDesc: "Verify via certificate number or QR code",
     noLiquidity: "No liquidity balance yet", total: "Total",
     structuredYield: "Structured Yield", yieldValue: "Yield Value",
-    kycRequired: "Identity Verification Required", kycRequiredDesc: "Complete KYC to activate your 5 AUXG Welcome Gold!",
+    kycRequired: "Identity Verification Required", kycRequiredDesc: "Complete KYC to unlock full access and higher limits.",
     kycPending: "KYC Under Review", kycPendingDesc: "Your verification is being reviewed",
     kycAction: "Verify Now",
   },
@@ -202,7 +202,7 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerificationDesc: "Sertifika numarası veya QR kod ile doğrulayın",
     noLiquidity: "Henüz likidite bakiyesi yok", total: "Toplam",
     structuredYield: "Yapılandırılmış Getiri", yieldValue: "Getiri Değeri",
-    kycRequired: "Kimlik Doğrulama Gerekli", kycRequiredDesc: "KYC'nizi tamamlayarak 5 AUXG Hoş Geldin Altınızı aktive edin!",
+    kycRequired: "Kimlik Doğrulama Gerekli", kycRequiredDesc: "KYC'nizi tamamlayarak tam erişim ve yüksek limitlerin kilidini açın.",
     kycPending: "KYC İnceleniyor", kycPendingDesc: "Doğrulamanız inceleniyor",
     kycAction: "Doğrula",
   },
@@ -278,7 +278,7 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerificationDesc: "Verifizieren Sie per Zertifikatsnummer oder QR-Code",
     noLiquidity: "Noch kein Liquiditätssaldo", total: "Gesamt",
     structuredYield: "Strukturierter Ertrag", yieldValue: "Ertragswert",
-    kycRequired: "Identitätsprüfung erforderlich", kycRequiredDesc: "KYC abschließen, um 5 AUXG Willkommensgold zu aktivieren!",
+    kycRequired: "Identitätsprüfung erforderlich", kycRequiredDesc: "KYC abschließen, um vollen Zugang und höhere Limits freizuschalten.",
     kycPending: "KYC wird überprüft", kycPendingDesc: "Ihre Verifizierung wird überprüft",
     kycAction: "Jetzt verifizieren",
   },
@@ -354,7 +354,7 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerificationDesc: "Vérifiez par numéro de certificat ou code QR",
     noLiquidity: "Pas encore de solde de liquidité", total: "Total",
     structuredYield: "Rendement structuré", yieldValue: "Valeur du rendement",
-    kycRequired: "Vérification d'identité requise", kycRequiredDesc: "Complétez le KYC pour activer vos 5 AUXG d'Or de Bienvenue !",
+    kycRequired: "Vérification d'identité requise", kycRequiredDesc: "Complétez le KYC pour débloquer l'accès complet et des limites plus élevées.",
     kycPending: "KYC en cours d'examen", kycPendingDesc: "Votre vérification est en cours",
     kycAction: "Vérifier",
   },
@@ -430,7 +430,7 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerificationDesc: "التحقق عبر رقم الشهادة أو رمز QR",
     noLiquidity: "لا يوجد رصيد سيولة بعد", total: "الإجمالي",
     structuredYield: "العائد المهيكل", yieldValue: "قيمة العائد",
-    kycRequired: "مطلوب التحقق من الهوية", kycRequiredDesc: "أكمل KYC لتفعيل 5 AUXG ذهب الترحيب!",
+    kycRequired: "مطلوب التحقق من الهوية", kycRequiredDesc: "أكمل KYC لفتح الوصول الكامل وحدود أعلى.",
     kycPending: "KYC قيد المراجعة", kycPendingDesc: "يتم مراجعة التحقق الخاص بك",
     kycAction: "تحقق الآن",
   },
@@ -506,7 +506,7 @@ const translations: Record<string, Record<string, string>> = {
     custodyVerificationDesc: "Проверьте по номеру сертификата или QR-коду",
     noLiquidity: "Баланс ликвидности пока отсутствует", total: "Итого",
     structuredYield: "Структурированный доход", yieldValue: "Стоимость дохода",
-    kycRequired: "Требуется проверка личности", kycRequiredDesc: "Пройдите KYC, чтобы активировать 5 AUXG приветственное золото!",
+    kycRequired: "Требуется проверка личности", kycRequiredDesc: "Пройдите KYC, чтобы открыть полный доступ и повышенные лимиты.",
     kycPending: "KYC на рассмотрении", kycPendingDesc: "Ваша верификация рассматривается",
     kycAction: "Подтвердить",
   },
@@ -515,7 +515,7 @@ const translations: Record<string, Record<string, string>> = {
 export default function VaultPage() {
   const { lang } = useLanguage();
   const t = translations[lang] || translations.en;
-  const { isDemoMode, demoBalance, demoAllocations, welcomeGoldStatus, exitDemoMode } = useWallet();
+  const { isDemoMode, demoBalance, demoAllocations, exitDemoMode } = useWallet();
 
   // Auxite Vault Wallet - no external wallet connect
   const [address, setAddress] = useState<string | null>(null);
@@ -819,45 +819,6 @@ export default function VaultPage() {
             >
               {{ en: 'Go Live', tr: 'Gerçek Hesap Aç', de: 'Live starten', fr: 'Passer au réel', ar: 'ابدأ الحقيقي', ru: 'Начать' }[lang] || 'Go Live'}
             </button>
-          </div>
-        )}
-
-        {/* ═══ WELCOME GOLD WIDGET ═══ */}
-        {welcomeGoldStatus === 'pending' && (
-          <div className="flex items-center gap-3 py-3 px-4 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/30">
-            <div className="w-10 h-10 rounded-full bg-[#BFA181]/20 flex items-center justify-center">
-              <span className="text-lg">💎</span>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-[#BFA181]">
-                {{ en: '5 AUXG Welcome Gold', tr: '5 AUXG Hoş Geldin Altını', de: '5 AUXG Willkommensgold', fr: '5 AUXG Or de Bienvenue', ar: '5 AUXG ذهب الترحيب', ru: '5 AUXG приветственное золото' }[lang] || '5 AUXG Welcome Gold'}
-              </p>
-              <p className="text-xs text-slate-400">
-                {{ en: 'Make your first trade to unlock', tr: 'İlk işleminizi yaparak altınınızı açın', de: 'Machen Sie Ihren ersten Trade', fr: 'Faites votre premier trade', ar: 'قم بأول تداول لفتح ذهبك', ru: 'Совершите первую сделку' }[lang] || 'Make your first trade to unlock'}
-              </p>
-            </div>
-            <a href="/allocate" className="px-3 py-1.5 bg-[#BFA181] text-[#0B0B0D] rounded-lg text-xs font-bold hover:opacity-90">
-              {{ en: 'Trade', tr: 'İşlem Yap', de: 'Handeln', fr: 'Négocier', ar: 'تداول', ru: 'Торговать' }[lang] || 'Trade'}
-            </a>
-          </div>
-        )}
-
-        {(welcomeGoldStatus === 'demo_unlocked' || welcomeGoldStatus === 'unlocked') && (
-          <div className="flex items-center gap-3 py-3 px-4 rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/30">
-            <div className="w-10 h-10 rounded-full bg-[#BFA181]/25 flex items-center justify-center">
-              <span className="text-lg">💎</span>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-[#BFA181]">
-                {{ en: '5 AUXG Welcome Gold', tr: '5 AUXG Hoş Geldin Altını', de: '5 AUXG Willkommensgold', fr: '5 AUXG Or de Bienvenue', ar: '5 AUXG ذهب الترحيب', ru: '5 AUXG приветственное золото' }[lang] || '5 AUXG Welcome Gold'}
-              </p>
-              <p className="text-xs text-slate-400">
-                {{ en: 'Platform use only', tr: 'Platform içi kullanım', de: 'Plattformnutzung', fr: 'Utilisation plateforme', ar: 'استخدام المنصة', ru: 'Использование на платформе' }[lang] || 'Platform use only'}
-              </p>
-            </div>
-            <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-bold">
-              {{ en: 'Active', tr: 'Aktif', de: 'Aktiv', fr: 'Actif', ar: 'نشط', ru: 'Активно' }[lang] || 'Active'}
-            </span>
           </div>
         )}
 

@@ -32,7 +32,7 @@ const translations: Record<string, Record<string, string>> = {
     signingIn: "Giriş yapılıyor...",
     brandTagline: "DİJİTAL VARLIK SAKLAMA",
     startWithGold: "Altınla Başla",
-    tryDemoDesc: "5g Hoş Geldin Altını ile demo deneyin",
+    tryDemoDesc: "Sanal bakiyeyle demo deneyin — yatırım gerekmez",
   },
   en: {
     title: "Client Sign In",
@@ -51,7 +51,7 @@ const translations: Record<string, Record<string, string>> = {
     signingIn: "Signing in...",
     brandTagline: "DIGITAL ASSET CUSTODY",
     startWithGold: "Start with Gold",
-    tryDemoDesc: "Try demo with 5g Welcome Gold",
+    tryDemoDesc: "Try the demo with a virtual balance — no deposit needed",
   },
   de: {
     title: "Kundenlogin",
@@ -70,7 +70,7 @@ const translations: Record<string, Record<string, string>> = {
     signingIn: "Anmeldung...",
     brandTagline: "DIGITALE VERMÖGENSVERWALTUNG",
     startWithGold: "Start mit Gold",
-    tryDemoDesc: "Demo mit 5g Willkommensgold testen",
+    tryDemoDesc: "Demo mit virtuellem Guthaben testen — ohne Einzahlung",
   },
   fr: {
     title: "Connexion Client",
@@ -89,7 +89,7 @@ const translations: Record<string, Record<string, string>> = {
     signingIn: "Connexion...",
     brandTagline: "GARDE D'ACTIFS NUMÉRIQUES",
     startWithGold: "Commencer avec l'Or",
-    tryDemoDesc: "Essayez la demo avec 5g d'Or de Bienvenue",
+    tryDemoDesc: "Essayez la démo avec un solde virtuel — sans dépôt",
   },
   ar: {
     title: "تسجيل دخول العميل",
@@ -108,7 +108,7 @@ const translations: Record<string, Record<string, string>> = {
     signingIn: "جاري تسجيل الدخول...",
     brandTagline: "حفظ الأصول الرقمية",
     startWithGold: "ابدأ بالذهب",
-    tryDemoDesc: "جرب العرض التوضيحي مع 5غ ذهب ترحيب",
+    tryDemoDesc: "جرّب العرض التوضيحي برصيد افتراضي — دون إيداع",
   },
   ru: {
     title: "Вход клиента",
@@ -127,7 +127,7 @@ const translations: Record<string, Record<string, string>> = {
     signingIn: "Вход...",
     brandTagline: "ХРАНЕНИЕ ЦИФРОВЫХ АКТИВОВ",
     startWithGold: "Начать с золота",
-    tryDemoDesc: "Попробуйте демо с 5г приветственного золота",
+    tryDemoDesc: "Попробуйте демо с виртуальным балансом — без депозита",
   },
 };
 

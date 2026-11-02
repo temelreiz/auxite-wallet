@@ -1,6 +1,9 @@
 // src/lib/email-templates.ts
 // Email campaign templates in all supported languages
 
+import { kycReminderEmail, renderKycReminderEmail } from "@/lib/kyc-reminder-content";
+import { unsubscribeUrl } from "@/lib/email-suppression";
+
 const HEADER = `<div style="font-family:Georgia,serif;background:#f5f5f5;padding:20px;color:#1a1a1a"><div style="max-width:600px;margin:0 auto;background:#fff"><div style="height:3px;background:#C5A55A"></div><div style="padding:28px 30px"><img src="https://vault.auxite.io/auxite-logo-new.png" alt="Auxite" width="120" style="display:block;width:120px;height:auto;margin-bottom:20px"/>`;
 const FOOTER = `<p style="font-size:10px;color:#999;margin-top:20px;font-style:italic">This message serves as an operational communication. Please do not reply.</p></div><div style="padding:16px 30px;border-top:1px solid #e5e5e5;text-align:center"><p style="font-size:9px;color:#aaa;margin:4px 0">Aurum Ledger Ltd &middot; Hong Kong</p></div><div style="height:2px;background:#C5A55A"></div></div></div>`;
 
@@ -14,6 +17,13 @@ function step(num: string, title: string, desc: string) {
 
 function cta(url: string, text: string) {
   return `<a href="${url}" style="display:inline-block;background:#1a1a1a;color:#fff!important;padding:12px 24px;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:1px;margin:16px 0">${text}</a>`;
+}
+
+/** First-deposit match note (the only sign-up reward actually paid), or "" while it is off. */
+function firstDepositNote(lang: string): string {
+  const m = kycReminderEmail(lang, 0).match;
+  const label: Record<string, string> = { en: "FIRST DEPOSIT", tr: "İLK YATIRIM", de: "ERSTE EINZAHLUNG", fr: "PREMIER DÉPÔT", ar: "الإيداع الأول", ru: "ПЕРВЫЙ ДЕПОЗИТ" };
+  return m ? bonus(label[lang] || label.en, m) : "";
 }
 
 function bonus(title: string, text: string) {
@@ -66,12 +76,12 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
   // EXISTING TEMPLATES
   // ═══════════════════════════════════════════════════════════════
   kycReminder: {
-    subject: "Complete Your Verification — Earn 5 AUXG Bonus",
-    html: wrap(`<p style="font-size:13px;color:#444;line-height:1.7">Complete your identity verification (KYC) and make your first deposit of $100 or more to receive <strong>5 AUXG Welcome Bonus</strong>.</p><p style="font-size:13px;color:#444;line-height:1.7">Your bonus credits will unlock after 30 days or upon reaching 5x trading volume.</p>${cta("https://vault.auxite.io", "VERIFY NOW")}`),
+    subject: "Complete your Auxite account verification",
+    html: wrap(`<p style="font-size:13px;color:#444;line-height:1.7">Your Auxite account is open but not verified yet. Verification takes about two minutes with a valid ID and unlocks full access and higher limits.</p>${firstDepositNote("en")}${cta("https://vault.auxite.io/kyc", "VERIFY NOW")}`),
   },
   welcomeBonus: {
-    subject: "Welcome to Auxite — Your 5 AUXG Bonus Awaits",
-    html: wrap(`<p style="font-size:13px;color:#444;line-height:1.7">Thank you for joining Auxite. You are now enrolled in our <strong>Liquidity Credits Programme</strong>.</p><p style="font-size:13px;color:#444;line-height:1.7"><strong>Welcome Bonus:</strong> 5 AUXG upon KYC + $100 deposit<br/><strong>Deposit Bonus:</strong> 2% in metal credits<br/><strong>Referral Bonus:</strong> 0.5% of referred deposit</p>${cta("https://vault.auxite.io", "ACCESS YOUR VAULT")}`),
+    subject: "Welcome to Auxite",
+    html: wrap(`<p style="font-size:13px;color:#444;line-height:1.7">Thank you for joining Auxite. Verify your identity, then fund your vault to start allocating to gold, silver, platinum and palladium.</p>${firstDepositNote("en")}${cta("https://vault.auxite.io", "GET STARTED")}`),
   },
   marketUpdate: {
     subject: "Precious Metals Market Update — Auxite",
@@ -94,7 +104,7 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
         ${step("4", "Staking", "Lock your metal or AUXR for 3, 6 or 12 months and earn a fixed reward paid by Auxite, credited in the same asset at maturity. Early exit is available.")}
         ${step("5", "Redeem", "Convert back to crypto or request physical delivery at any time.")}
       </table>
-      ${bonus("LIMITED TIME OFFER", "Complete KYC verification + deposit $100 minimum to receive <strong>5 AUXG Welcome Bonus</strong>. Liquidity Credits unlock after 30 days or 5x trading volume.")}
+      ${firstDepositNote("en")}
       ${cta("https://vault.auxite.io", "GET STARTED")}
     `),
   },
@@ -112,7 +122,7 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
         ${step("4", "Stake", "Metalinizi veya AUXR'ınızı 3, 6 ya da 12 ay kilitleyin; Auxite tarafından ödenen ve vade sonunda aynı varlıkla hesabınıza geçen sabit bir ödül kazanın. Erken çıkış mümkündür.")}
         ${step("5", "Geri Alım", "İstediğiniz zaman kriptoya dönüştürün veya fiziksel teslimat talep edin.")}
       </table>
-      ${bonus("SINIRLI SÜRE TEKLİFİ", "KYC doğrulamasını tamamlayın + minimum 100$ yatırım yaparak <strong>5 AUXG Hoş Geldin Bonusu</strong> kazanın. Likidite Kredileri 30 gün sonra veya 5x işlem hacmiyle açılır.")}
+      ${firstDepositNote("tr")}
       ${cta("https://vault.auxite.io", "BAŞLAYIN")}
     `),
   },
@@ -130,7 +140,7 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
         ${step("4", "Staking", "Bloquez votre métal ou vos AUXR pendant 3, 6 ou 12 mois et recevez une récompense fixe versée par Auxite, créditée dans le même actif à l'échéance. Une sortie anticipée est possible.")}
         ${step("5", "Rachat", "Convertissez en crypto ou demandez une livraison physique à tout moment.")}
       </table>
-      ${bonus("OFFRE LIMITÉE", "Complétez votre vérification KYC + dépôt minimum de 100$ pour recevoir un <strong>Bonus de Bienvenue de 5 AUXG</strong>. Les Crédits de Liquidité se débloquent après 30 jours ou 5x volume de trading.")}
+      ${firstDepositNote("fr")}
       ${cta("https://vault.auxite.io", "COMMENCEZ")}
     `),
   },
@@ -148,7 +158,7 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
         ${step("4", "Staking", "Sperren Sie Ihr Metall oder AUXR für 3, 6 oder 12 Monate und erhalten Sie eine feste, von Auxite gezahlte Belohnung, die bei Fälligkeit im selben Vermögenswert gutgeschrieben wird. Ein vorzeitiger Ausstieg ist möglich.")}
         ${step("5", "Einlösung", "Jederzeit in Krypto umwandeln oder physische Lieferung anfordern.")}
       </table>
-      ${bonus("ZEITLICH BEGRENZTES ANGEBOT", "KYC-Verifizierung abschließen + Mindesteinzahlung von 100$ für einen <strong>Willkommensbonus von 5 AUXG</strong>. Liquiditätsguthaben werden nach 30 Tagen oder 5-fachem Handelsvolumen freigeschaltet.")}
+      ${firstDepositNote("de")}
       ${cta("https://vault.auxite.io", "LOSLEGEN")}
     `),
   },
@@ -166,7 +176,7 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
         ${step("4", "التخزين", "اقفل معدنك أو AUXR لمدة 3 أو 6 أو 12 شهراً واحصل على مكافأة ثابتة تدفعها Auxite وتُضاف بنفس الأصل عند الاستحقاق. يمكن الخروج المبكر.")}
         ${step("5", "الاسترداد", "حوّل إلى عملات مشفرة أو اطلب التسليم الفعلي في أي وقت.")}
       </table>
-      ${bonus("عرض لفترة محدودة", "أكمل التحقق من هويتك (KYC) + إيداع 100$ كحد أدنى للحصول على <strong>مكافأة ترحيبية 5 AUXG</strong>. تُفتح اعتمادات السيولة بعد 30 يوماً أو 5 أضعاف حجم التداول.")}
+      ${firstDepositNote("ar")}
       ${cta("https://vault.auxite.io", "ابدأ الآن")}
     `),
   },
@@ -184,7 +194,7 @@ export const emailTemplates: Record<string, { subject: string; html: string }> =
         ${step("4", "Стейкинг", "Заблокируйте металл или AUXR на 3, 6 или 12 месяцев и получите фиксированное вознаграждение от Auxite, зачисляемое в том же активе при погашении. Досрочный выход возможен.")}
         ${step("5", "Выкуп", "Конвертируйте обратно в криптовалюту или запросите физическую доставку.")}
       </table>
-      ${bonus("ОГРАНИЧЕННОЕ ПРЕДЛОЖЕНИЕ", "Пройдите верификацию KYC + внесите депозит от 100$ для получения <strong>Приветственного бонуса 5 AUXG</strong>. Кредиты ликвидности разблокируются через 30 дней или при 5-кратном торговом объёме.")}
+      ${firstDepositNote("ru")}
       ${cta("https://vault.auxite.io", "НАЧНИТЕ")}
     `),
   },
@@ -207,128 +217,11 @@ export function getWelcomeTemplate(lang: string): { subject: string; html: strin
 // KYC + AUXG PROMO — multi-language broadcast for stuck-funnel users
 // ═══════════════════════════════════════════════════════════════
 
-const kycAuxgPromoEN = {
-  subject: "Your vault is ready — 5 AUXG Welcome Bonus awaits",
-  html: wrap(`
-    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Your vault is open. One step remains.</p>
-    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Verify your identity to claim <strong>5 AUXG Welcome Bonus</strong> — 5 grams of physically allocated gold.</p>
-    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">VERIFICATION — 60 SECONDS</p>
-    <table style="width:100%;border-collapse:collapse">
-      ${step("1", "Snap your ID or passport", "Camera-based capture, no upload required.")}
-      ${step("2", "Selfie + liveness check", "Quick face scan to verify it's you.")}
-      ${step("3", "Approval email", "Typical wait 5-10 minutes.")}
-    </table>
-    ${bonus("WHY VERIFY", "5 AUXG bonus unlocks on first allocation or $100+ deposit. Plus: $50K/month withdrawal limit, right to physical metal redemption, monthly holding statements.")}
-    ${cta("https://vault.auxite.io/kyc-verification", "VERIFY MY IDENTITY")}
-    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Limited-time welcome campaign. Bonus credits unlock per programme terms.</p>
-  `),
-};
-
-const kycAuxgPromoTR = {
-  subject: "Kasanız hazır — 5 AUXG Hoş Geldin Bonusu sizi bekliyor",
-  html: wrap(`
-    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Kasanız açıldı. Bir adım kaldı.</p>
-    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Kimliğinizi doğrulayın ve <strong>5 AUXG Hoş Geldin Bonusu</strong> kazanın — 5 gram fiziksel olarak tahsis edilmiş altın.</p>
-    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">DOĞRULAMA — 60 SANİYE</p>
-    <table style="width:100%;border-collapse:collapse">
-      ${step("1", "Kimlik veya pasaport fotoğrafı", "Kameradan çekim, yükleme gerekmez.")}
-      ${step("2", "Selfie + canlılık kontrolü", "Sizin olduğunuzu doğrulamak için hızlı yüz tarama.")}
-      ${step("3", "Onay e-postası", "Tipik bekleme 5-10 dakika.")}
-    </table>
-    ${bonus("NEDEN DOĞRULAYIN", "5 AUXG bonus, ilk allocation veya $100+ yatırımda açılır. Ayrıca: aylık $50K withdrawal limiti, fiziksel altın talep hakkı, aylık varlık raporları.")}
-    ${cta("https://vault.auxite.io/kyc-verification", "KİMLİĞİMİ DOĞRULA")}
-    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Sınırlı süreli hoş geldin kampanyası. Bonus kredileri program koşullarına göre açılır.</p>
-  `),
-};
-
-const kycAuxgPromoDE = {
-  subject: "Ihr Tresor ist bereit — 5 AUXG Willkommensbonus wartet",
-  html: wrap(`
-    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Ihr Tresor ist eröffnet. Ein Schritt fehlt.</p>
-    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Verifizieren Sie Ihre Identität für <strong>5 AUXG Willkommensbonus</strong> — 5 Gramm physisch alloziertes Gold.</p>
-    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">VERIFIZIERUNG — 60 SEKUNDEN</p>
-    <table style="width:100%;border-collapse:collapse">
-      ${step("1", "Ausweis oder Reisepass", "Kameraerfassung, kein Upload nötig.")}
-      ${step("2", "Selfie + Liveness-Check", "Schneller Gesichtsscan zur Bestätigung.")}
-      ${step("3", "Bestätigungs-E-Mail", "Übliche Wartezeit 5-10 Minuten.")}
-    </table>
-    ${bonus("WARUM VERIFIZIEREN", "5 AUXG Bonus wird mit erster Allokation oder $100+ Einzahlung freigeschaltet. Plus: $50K/Monat Auszahlungslimit, Recht auf physische Auslieferung, monatliche Kontoauszüge.")}
-    ${cta("https://vault.auxite.io/kyc-verification", "IDENTITÄT VERIFIZIEREN")}
-    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Befristete Willkommenskampagne. Bonus-Guthaben werden gemäß den Programmbedingungen freigegeben.</p>
-  `),
-};
-
-const kycAuxgPromoFR = {
-  subject: "Votre coffre est prêt — Bonus de bienvenue 5 AUXG vous attend",
-  html: wrap(`
-    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Votre coffre est ouvert. Une étape reste.</p>
-    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Vérifiez votre identité pour réclamer le <strong>Bonus de bienvenue 5 AUXG</strong> — 5 grammes d'or physiquement alloué.</p>
-    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">VÉRIFICATION — 60 SECONDES</p>
-    <table style="width:100%;border-collapse:collapse">
-      ${step("1", "Photo de la pièce d'identité", "Capture par caméra, aucun téléchargement requis.")}
-      ${step("2", "Selfie + contrôle de vivacité", "Scan facial rapide pour confirmer votre identité.")}
-      ${step("3", "E-mail d'approbation", "Attente typique de 5-10 minutes.")}
-    </table>
-    ${bonus("POURQUOI VÉRIFIER", "Le bonus 5 AUXG s'active à la première allocation ou un dépôt de $100+. Plus : limite de retrait $50K/mois, droit à la livraison physique, relevés mensuels.")}
-    ${cta("https://vault.auxite.io/kyc-verification", "VÉRIFIER MON IDENTITÉ")}
-    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Campagne de bienvenue à durée limitée. Crédits bonus déverrouillés selon les conditions du programme.</p>
-  `),
-};
-
-const kycAuxgPromoAR = {
-  subject: "خزنتك جاهزة — مكافأة الترحيب 5 AUXG بانتظارك",
-  html: wrap(`
-    <div dir="rtl" style="text-align:right">
-    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">خزنتك مفتوحة. خطوة واحدة متبقية.</p>
-    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">قم بالتحقق من هويتك للحصول على <strong>مكافأة الترحيب 5 AUXG</strong> — 5 جرامات من الذهب المخصص فعليًا.</p>
-    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">التحقق — 60 ثانية</p>
-    <table style="width:100%;border-collapse:collapse">
-      ${step("1", "صورة الهوية أو جواز السفر", "التقاط بالكاميرا، لا يلزم التحميل.")}
-      ${step("2", "صورة شخصية + فحص نابض", "مسح وجهي سريع للتأكيد.")}
-      ${step("3", "بريد الموافقة", "الانتظار النموذجي 5-10 دقائق.")}
-    </table>
-    ${bonus("لماذا التحقق", "تُفعَّل مكافأة 5 AUXG عند أول تخصيص أو إيداع 100$+ . بالإضافة إلى: حد سحب 50 ألف $/شهر، حق استرداد المعدن المادي، كشوف حسابات شهرية.")}
-    ${cta("https://vault.auxite.io/kyc-verification", "تحقق من هويتي")}
-    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">حملة ترحيب لفترة محدودة. تُفتح الأرصدة وفقًا لشروط البرنامج.</p>
-    </div>
-  `),
-};
-
-const kycAuxgPromoRU = {
-  subject: "Хранилище готово — Приветственный бонус 5 AUXG ждёт",
-  html: wrap(`
-    <p style="font-size:15px;color:#1a1a1a;font-weight:600;margin:0 0 12px">Ваше хранилище открыто. Остался один шаг.</p>
-    <p style="font-size:13px;color:#444;line-height:1.7;margin:0 0 20px">Подтвердите личность, чтобы получить <strong>Приветственный бонус 5 AUXG</strong> — 5 граммов физически выделенного золота.</p>
-    <p style="font-size:12px;letter-spacing:1.5px;color:#888;margin:0 0 12px;font-weight:600">ВЕРИФИКАЦИЯ — 60 СЕКУНД</p>
-    <table style="width:100%;border-collapse:collapse">
-      ${step("1", "Фото паспорта или ID", "Захват камерой, загрузка не требуется.")}
-      ${step("2", "Селфи + проверка живости", "Быстрое сканирование лица для подтверждения.")}
-      ${step("3", "Письмо с одобрением", "Обычное ожидание 5-10 минут.")}
-    </table>
-    ${bonus("ЗАЧЕМ ВЕРИФИЦИРОВАТЬСЯ", "Бонус 5 AUXG активируется при первой аллокации или депозите от $100. Также: лимит вывода $50K/мес, право на физическую выдачу, ежемесячные отчёты.")}
-    ${cta("https://vault.auxite.io/kyc-verification", "ВЕРИФИЦИРОВАТЬСЯ")}
-    <p style="font-size:11px;color:#888;line-height:1.6;margin:20px 0 0">Приветственная кампания ограничена по времени. Бонусы разблокируются согласно условиям программы.</p>
-  `),
-};
-
-emailTemplates.kycAuxgPromoEN = kycAuxgPromoEN;
-emailTemplates.kycAuxgPromoTR = kycAuxgPromoTR;
-emailTemplates.kycAuxgPromoDE = kycAuxgPromoDE;
-emailTemplates.kycAuxgPromoFR = kycAuxgPromoFR;
-emailTemplates.kycAuxgPromoAR = kycAuxgPromoAR;
-emailTemplates.kycAuxgPromoRU = kycAuxgPromoRU;
-
-// Get KYC+AUXG promo template by user language
-export function getKycAuxgPromoTemplate(lang: string): { subject: string; html: string } {
-  const langMap: Record<string, string> = {
-    en: "kycAuxgPromoEN",
-    tr: "kycAuxgPromoTR",
-    de: "kycAuxgPromoDE",
-    fr: "kycAuxgPromoFR",
-    ar: "kycAuxgPromoAR",
-    ru: "kycAuxgPromoRU",
-  };
-  return emailTemplates[langMap[lang] || "kycAuxgPromoEN"];
+// KYC reminder broadcast. Was a separate "5 AUXG Welcome Bonus awaits" email,
+// but verifying grants no gold, so it now sends the same honest reminder as
+// the KYC cron (kyc-reminder-content.ts).
+export function getKycAuxgPromoTemplate(lang: string, email?: string): { subject: string; html: string } {
+  return renderKycReminderEmail(lang, 60, email ? unsubscribeUrl(email) : "https://vault.auxite.io/unsubscribe");
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

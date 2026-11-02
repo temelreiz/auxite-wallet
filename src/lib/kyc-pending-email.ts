@@ -74,7 +74,7 @@ export async function runKycPendingEmailBlast(opts: {
     if (await redis.get(flagKey)) { cooled++; continue; }
 
     try {
-      const tpl = getKycAuxgPromoTemplate(lang);
+      const tpl = getKycAuxgPromoTemplate(lang, email);
       await resend.emails.send({ from: FROM, to: email, subject: tpl.subject, html: tpl.html });
       sent++;
       await redis.set(flagKey, "1", { ex: cooldown * 24 * 60 * 60 });

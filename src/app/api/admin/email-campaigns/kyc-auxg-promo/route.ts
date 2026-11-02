@@ -1,6 +1,6 @@
 // src/app/api/admin/email-campaigns/kyc-auxg-promo/route.ts
 // Dedicated multi-language campaign:
-//   "Your vault is ready — 5 AUXG Welcome Bonus awaits"
+//   the honest KYC reminder (getKycAuxgPromoTemplate → kyc-reminder-content)
 // Targets users who registered but haven't completed KYC.
 // Picks subject + HTML per user.language automatically.
 
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
   // ── TEST MODE ──
   if (testEmail) {
     const lang = (testLang || "en").toLowerCase();
-    const tpl = getKycAuxgPromoTemplate(lang);
+    const tpl = getKycAuxgPromoTemplate(lang, testEmail);
     const result = await resend.emails.send({
       from: FROM,
       to: testEmail,
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     const batch = recipients.slice(i, i + BATCH_SIZE);
 
     await Promise.all(batch.map(async (r) => {
-      const tpl = getKycAuxgPromoTemplate(r.language);
+      const tpl = getKycAuxgPromoTemplate(r.language, r.email);
       try {
         await resend.emails.send({
           from: FROM,
