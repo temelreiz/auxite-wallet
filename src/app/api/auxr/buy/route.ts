@@ -30,6 +30,7 @@ import {
 } from "@/lib/redis";
 import { quoteBuy, AUXR_MIN_PURCHASE_USD } from "@/lib/auxr-pricing";
 import { recordMint } from "@/lib/auxr-reserve";
+import { getAp, recordApFlow, AP_SPREAD } from "@/lib/auxr-ap";
 import { notifyAuxrTrade } from "@/lib/telegram";
 import { notifyAuxrTradePush } from "@/lib/notification-sender";
 import { sendTradeExecutionEmail } from "@/lib/email";
@@ -235,7 +236,8 @@ export async function POST(request: NextRequest) {
   // mint reflects the price the user actually sees in the next moment.
   // Volatility risk is minimal because /api/auxr/price polling caches
   // for 30s; same horizon as this quote.
-  const quote = await quoteBuy(usdAmount);
+  const ap = await getAp(normalizedAddress);
+  const quote = await quoteBuy(usdAmount, ap ? AP_SPREAD : undefined);
 
   // Execute the swap atomically: debit the chosen rail, credit AUXR.
   const balanceKey = `user:${normalizedAddress}:balance`;
@@ -281,6 +283,11 @@ export async function POST(request: NextRequest) {
     });
   } catch (e) {
     console.error("[/api/auxr/buy] reserve mint failed:", e);
+  }
+
+  if (ap) {
+    await recordApFlow({ side: "buy", ap, units: quote.unitsAUXR, navUSD: quote.navUSD, priceUSD: quote.buyPriceUSD, refId })
+      .catch((e) => console.error("[/api/auxr/buy] AP flow record failed:", e));
   }
 
   // Transaction record (for user history screen).

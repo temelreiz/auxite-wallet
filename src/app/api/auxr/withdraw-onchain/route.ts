@@ -28,6 +28,7 @@ import { isAddress } from "viem";
 import { redis, getUserBalance } from "@/lib/redis";
 import { withdrawToChain, getWithdrawRecord } from "@/lib/auxr-bridge";
 import { isPaused } from "@/lib/auxr-onchain";
+import { getAp, withdrawFromInventory } from "@/lib/auxr-ap";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -205,6 +206,33 @@ export async function POST(request: NextRequest) {
       },
       { status: 400 }
     );
+  }
+
+  // 6a. Authorised participants take AUXR from the pre-minted inventory —
+  // no mint, no Safe wait — and only to the one destination registered for
+  // them, so a stolen AP login cannot redirect it (src/lib/auxr-ap.ts).
+  const ap = await getAp(offChainAddress);
+  if (ap) {
+    if (destination.toLowerCase() !== ap.destination) {
+      return NextResponse.json(
+        { success: false, error: "ap_destination_mismatch", code: "ap_destination_mismatch" },
+        { status: 403 },
+      );
+    }
+    const res = await withdrawFromInventory({ ap, units: unitsAUXR, refId });
+    if (!res.ok) {
+      return NextResponse.json({ success: false, error: res.error, code: res.error, ...res.detail }, { status: res.status });
+    }
+    const out = { success: true, state: "completed", refId, txHash: res.txHash, destination: res.destination, unitsAUXR, source: "ap-inventory" };
+    if (!res.replay) await persistIdempotentResult(refId, out);
+    await notifyAuxrMint({
+      outcome: "minted",
+      userAddress: offChainAddress,
+      destination,
+      unitsAUXR,
+      reason: `AP inventory transfer (${ap.label}) tx ${res.txHash}`,
+    }).catch(() => {});
+    return NextResponse.json(out, { status: 200 });
   }
 
   // 6b. Issuance limits — the layer that actually refuses. A Telegram alert
