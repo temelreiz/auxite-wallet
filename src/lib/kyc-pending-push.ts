@@ -5,27 +5,14 @@
 
 import { Redis } from "@upstash/redis";
 import { sendPushToUser } from "@/lib/expo-push";
+import { kycReminderPush } from "@/lib/kyc-reminder-content";
 import { resolveUserTimezone, getLocalHour } from "@/lib/timezones";
 
 const redis = Redis.fromEnv();
 const COOLDOWN_DAYS = 3; // per-user cooldown so repeat runs don't spam
 
-export const KYC_TITLES: Record<string, string> = {
-  en: "🏆 Your 5 AUXG bonus is waiting",
-  tr: "🏆 5 AUXG bonusunuz sizi bekliyor",
-  de: "🏆 Ihr 5 AUXG Bonus wartet",
-  fr: "🏆 Votre bonus 5 AUXG vous attend",
-  ar: "🏆 مكافأة 5 AUXG بانتظارك",
-  ru: "🏆 Ваш бонус 5 AUXG ждёт",
-};
-export const KYC_BODIES: Record<string, string> = {
-  en: "Verify your identity in 60 seconds — unlock the bonus and your $50K/month withdrawal limit.",
-  tr: "60 saniyede kimliğinizi doğrulayın — bonusu ve $50K aylık çekim limitinizi açın.",
-  de: "Identität in 60 Sekunden verifizieren — Bonus und $50K Limit freischalten.",
-  fr: "Vérifiez votre identité en 60 secondes — débloquez le bonus et la limite $50K/mois.",
-  ar: "تحقق من هويتك في 60 ثانية — افتح المكافأة وحد السحب $50K/شهر.",
-  ru: "Подтвердите личность за 60 секунд — разблокируйте бонус и лимит $50K/мес.",
-};
+// Copy lives in kyc-reminder-content.ts: the old "Your 5 AUXG bonus is waiting"
+// promised gold that verifying does not grant.
 
 export interface KycBlastResult {
   dryRun: boolean;
@@ -86,8 +73,7 @@ export async function runKycPendingBlast(opts: {
     const flagKey = `kyc:pending:push:${addr}`;
     if (await redis.get(flagKey)) { cooled++; continue; }
 
-    const title = KYC_TITLES[lang] || KYC_TITLES.en;
-    const body = KYC_BODIES[lang] || KYC_BODIES.en;
+    const { title, body } = kycReminderPush(lang);
     try {
       const r = await sendPushToUser(addr, title, body, { type: "kyc_reminder", category: "kyc", screen: "/kyc-verification" });
       if (r.sent > 0) {

@@ -32,7 +32,7 @@ DEPOSIT:
 - Crypto only: USDT, USDC, ETH, BTC on Base network (USDT also on Tron TRC-20)
 - Bank wire: Coming soon
 - No minimum deposit required
-- Complete KYC to activate your 5 AUXG Welcome Gold
+- After KYC, the first crypto deposit of $100 or more earns a 5% match in gold (up to $50). There is no welcome gold for verifying; never promise one.
 
 PRICING:
 - Live market prices during weekdays

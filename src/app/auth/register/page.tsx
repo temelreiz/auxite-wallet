@@ -57,7 +57,7 @@ const translations: Record<string, Record<string, string>> = {
     preferredLanguage: "Tercih Edilen İletişim Dili",
     languageHint: "Yasal belgeler ve saklama kayıtları için kullanılır",
     startWithGold: "Altınla Başla",
-    tryDemoDesc: "5g Hoş Geldin Altını ile demo deneyin",
+    tryDemoDesc: "Sanal bakiyeyle demo deneyin — yatırım gerekmez",
   },
   en: {
     checkYourEmail: "Check Your Email",
@@ -92,7 +92,7 @@ const translations: Record<string, Record<string, string>> = {
     preferredLanguage: "Preferred Communication Language",
     languageHint: "Used for legal documents and custody records",
     startWithGold: "Start with Gold",
-    tryDemoDesc: "Try demo with 5g Welcome Gold",
+    tryDemoDesc: "Try the demo with a virtual balance — no deposit needed",
   },
   de: {
     checkYourEmail: "Überprüfen Sie Ihre E-Mail",
@@ -127,7 +127,7 @@ const translations: Record<string, Record<string, string>> = {
     preferredLanguage: "Bevorzugte Kommunikationssprache",
     languageHint: "Für rechtliche Dokumente und Verwahrungsunterlagen",
     startWithGold: "Start mit Gold",
-    tryDemoDesc: "Demo mit 5g Willkommensgold testen",
+    tryDemoDesc: "Demo mit virtuellem Guthaben testen — ohne Einzahlung",
   },
   fr: {
     checkYourEmail: "Vérifiez votre e-mail",
@@ -162,7 +162,7 @@ const translations: Record<string, Record<string, string>> = {
     preferredLanguage: "Langue de communication préférée",
     languageHint: "Utilisée pour les documents juridiques et les registres de conservation",
     startWithGold: "Commencer avec l'Or",
-    tryDemoDesc: "Essayez la demo avec 5g d'Or de Bienvenue",
+    tryDemoDesc: "Essayez la démo avec un solde virtuel — sans dépôt",
   },
   ar: {
     checkYourEmail: "تحقق من بريدك الإلكتروني",
@@ -197,7 +197,7 @@ const translations: Record<string, Record<string, string>> = {
     preferredLanguage: "لغة التواصل المفضلة",
     languageHint: "تُستخدم للمستندات القانونية وسجلات الحفظ",
     startWithGold: "ابدأ بالذهب",
-    tryDemoDesc: "جرب العرض التوضيحي مع 5غ ذهب ترحيب",
+    tryDemoDesc: "جرّب العرض التوضيحي برصيد افتراضي — دون إيداع",
   },
   ru: {
     checkYourEmail: "Проверьте вашу почту",
@@ -232,7 +232,7 @@ const translations: Record<string, Record<string, string>> = {
     preferredLanguage: "Предпочтительный язык общения",
     languageHint: "Используется для юридических документов и записей хранения",
     startWithGold: "Начать с золота",
-    tryDemoDesc: "Попробуйте демо с 5г приветственного золота",
+    tryDemoDesc: "Попробуйте демо с виртуальным балансом — без депозита",
   },
 };
 

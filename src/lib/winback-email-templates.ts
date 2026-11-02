@@ -6,6 +6,14 @@
 //
 // EN + TR only (95% of base is EN, 0.5% is TR; other langs use EN fallback).
 
+import { kycReminderEmail } from "@/lib/kyc-reminder-content";
+
+/** The first-deposit match (the only sign-up reward actually paid), or "". */
+function firstDepositLine(lang: string): string {
+  const m = kycReminderEmail(lang, 0).match;
+  return m ? `<p>${m}</p>` : "";
+}
+
 const VAULT_URL = "https://vault.auxite.io";
 
 function unsubscribeUrl(email: string, token: string): string {
@@ -79,12 +87,12 @@ interface WinbackContent {
 // ──────────────────────────────────────────────────────────────────────────────
 // COHORT 2 — signed up, no KYC, no deposit, ≥14d old
 // New angle vs day3_kyc: acknowledges time passed, surfaces concrete platform
-// progress (Wise bank wire now live), keeps the welcome-gold lever
+// progress (Wise bank wire now live), names the first-deposit match (verifying itself grants no gold)
 // ──────────────────────────────────────────────────────────────────────────────
 
 const cohort2Content: Record<string, WinbackContent> = {
   en: {
-    subject: "We've expanded — and your 5 AUXG is still here",
+    subject: "We've expanded — your Auxite account is still open",
     title: "A quick update from Auxite",
     bodyHtml: `<p>You opened an account with Auxite a while back. Since then, we've been busy:</p>
 <ul style="color:#444;font-size:13px;line-height:1.9;padding-left:20px">
@@ -92,13 +100,13 @@ const cohort2Content: Record<string, WinbackContent> = {
   <li><strong>Card purchases</strong> — Apple Pay, Google Pay, Visa/Mastercard, instant settlement</li>
   <li><strong>Crypto rails</strong> — USDC, USDT, BTC, ETH on Base and Bitcoin networks</li>
 </ul>
-${highlight("Your <strong>5 AUXG Welcome Gold</strong> (~$430 at current spot) is still reserved for you. Activation takes one step: complete KYC verification (under 2 minutes with a valid ID).")}
+${highlight("Your account is still open. To use it, complete KYC verification (about 2 minutes with a valid ID).")}${firstDepositLine("en")}
 <p>If precious metals aren't for you anymore, no hard feelings — there's an unsubscribe link below.</p>`,
-    ctaText: "ACTIVATE MY GOLD",
+    ctaText: "VERIFY MY ACCOUNT",
     ctaUrl: `${VAULT_URL}?utm_source=email&utm_medium=winback&utm_campaign=cohort2_nokyc_v1`,
   },
   tr: {
-    subject: "Genişledik — 5 AUXG'in hâlâ burada",
+    subject: "Genişledik — Auxite hesabınız hâlâ açık",
     title: "Auxite'ten kısa bir güncelleme",
     bodyHtml: `<p>Bir süre önce Auxite'e hesap açtınız. O zamandan beri biraz büyüdük:</p>
 <ul style="color:#444;font-size:13px;line-height:1.9;padding-left:20px">
@@ -106,9 +114,9 @@ ${highlight("Your <strong>5 AUXG Welcome Gold</strong> (~$430 at current spot) i
   <li><strong>Kart ile alım</strong> — Apple Pay, Google Pay, Visa/Mastercard, anlık settlement</li>
   <li><strong>Kripto rail'leri</strong> — USDC, USDT, BTC, ETH (Base + Bitcoin ağları)</li>
 </ul>
-${highlight("<strong>5 AUXG Hoş Geldin Altınınız</strong> (mevcut spot fiyatla ~$430) hâlâ sizin için ayrılmış durumda. Aktivasyon tek adım: KYC doğrulamasını tamamlayın (geçerli kimlikle 2 dakikadan az sürer).")}
+${highlight("Hesabınız hâlâ açık. Kullanmak için KYC doğrulamasını tamamlayın (geçerli kimlikle yaklaşık 2 dakika).")}${firstDepositLine("tr")}
 <p>Değerli metaller artık ilginizi çekmiyorsa sorun değil — alttaki link'le aboneliği iptal edebilirsiniz.</p>`,
-    ctaText: "ALTINI AKTİVE ET",
+    ctaText: "HESABIMI DOĞRULA",
     ctaUrl: `${VAULT_URL}?utm_source=email&utm_medium=winback&utm_campaign=cohort2_nokyc_v1`,
   },
 };
@@ -140,7 +148,7 @@ ${highlight("You can now fund your vault in three ways. Pick the one that fits."
     </td>
   </tr>
 </table>
-<p>Your 5 AUXG Welcome Gold is already in your vault. Add to your position whenever you're ready.</p>
+${firstDepositLine("en")}
 <p style="font-size:12px;color:#888;font-style:italic">Most first-time buyers start small to see how it works. There's no minimum to start exploring.</p>`,
     ctaText: "OPEN FUND VAULT",
     ctaUrl: `${VAULT_URL}/fund-vault?utm_source=email&utm_medium=winback&utm_campaign=cohort3_kycdone_v1`,
@@ -166,7 +174,7 @@ ${highlight("Şimdi vault'unuzu üç farklı yolla fonlayabilirsiniz. Size uyan�
     </td>
   </tr>
 </table>
-<p>5 AUXG Hoş Geldin Altınınız zaten vault'unuzda. Hazır olduğunuzda pozisyonunuza ekleyebilirsiniz.</p>
+${firstDepositLine("tr")}
 <p style="font-size:12px;color:#888;font-style:italic">İlk kez yatırım yapanlar genellikle küçük başlıyor. Keşfetmeye başlamak için minimum tutar yok.</p>`,
     ctaText: "FUND VAULT'A GİT",
     ctaUrl: `${VAULT_URL}/fund-vault?utm_source=email&utm_medium=winback&utm_campaign=cohort3_kycdone_v1`,
