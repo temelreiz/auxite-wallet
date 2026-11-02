@@ -59,6 +59,13 @@ async function userHasDeposited(walletAddress: string): Promise<boolean> {
   return false;
 }
 
+/** KYC approved or under review — the KYC reminder no longer applies */
+async function kycStarted(walletAddress: string): Promise<boolean> {
+  const raw = await redis.get(`kyc:${walletAddress.toLowerCase()}`);
+  const kyc = raw ? (typeof raw === "string" ? JSON.parse(raw) : raw) : null;
+  return ["approved", "pending", "under_review"].includes((kyc as any)?.status);
+}
+
 /** Send a single drip email via Resend */
 async function sendDripEmail(
   to: string,
@@ -196,6 +203,11 @@ export async function GET(request: NextRequest) {
           // Skip if already sent
           if (sentSet.has(stage)) {
             skippedAlreadySent++;
+            continue;
+          }
+
+          // "Verify your account" makes no sense once KYC is done or in review
+          if (stage === "day3_kyc" && walletAddress && (await kycStarted(walletAddress))) {
             continue;
           }
 
