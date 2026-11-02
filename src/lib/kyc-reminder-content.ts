@@ -166,8 +166,22 @@ export function kycReminderEmail(language: string, daysSinceSignup: number): Kyc
     },
   };
 
+  // Accounts opened months ago: "it's been 40 weeks" reads like a nag, so
+  // past a month the intro just states the account isn't verified.
+  const longAgo: Record<ReminderLang, string> = {
+    en: "Your Auxite account is open but not verified yet.",
+    tr: "Auxite hesabınız açık ancak henüz doğrulanmadı.",
+    de: "Ihr Auxite-Konto ist eröffnet, aber noch nicht verifiziert.",
+    fr: "Votre compte Auxite est ouvert mais pas encore vérifié.",
+    ar: "حسابك في Auxite مفتوح لكنه لم يتم التحقق منه بعد.",
+    ru: "Ваш аккаунт Auxite открыт, но ещё не подтверждён.",
+  };
   const x = t[L];
-  return { ...x, match: m ? x.match(m.pct, m.min, m.cap) : null };
+  return {
+    ...x,
+    intro: daysSinceSignup > 31 ? longAgo[L] : x.intro,
+    match: m ? x.match(m.pct, m.min, m.cap) : null,
+  };
 }
 
 /** Rendered reminder email, same house style as the drip emails. */
