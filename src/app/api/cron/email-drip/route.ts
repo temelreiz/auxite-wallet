@@ -11,6 +11,7 @@ import {
   getDripEmail,
   type DripStage,
 } from "@/lib/drip-email-templates";
+import { unsubscribeUrl } from "@/lib/email-suppression";
 
 const redis = Redis.fromEnv();
 const resend = process.env.RESEND_API_KEY
@@ -70,14 +71,16 @@ async function kycStarted(walletAddress: string): Promise<boolean> {
 async function sendDripEmail(
   to: string,
   stage: DripStage,
-  language: string
+  language: string,
+  daysSinceSignup: number,
 ): Promise<boolean> {
   if (!resend) {
     console.warn("[Drip] Resend not configured, skipping email");
     return false;
   }
 
-  const { subject, html } = getDripEmail(stage, language);
+  const unsub = unsubscribeUrl(to);
+  const { subject, html } = getDripEmail(stage, language, { daysSinceSignup, unsubscribeUrl: unsub });
 
   try {
     const { error } = await resend.emails.send({
@@ -85,6 +88,10 @@ async function sendDripEmail(
       to,
       subject,
       html,
+      headers: {
+        "List-Unsubscribe": `<${unsub}>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
     });
 
     if (error) {
@@ -207,12 +214,12 @@ export async function GET(request: NextRequest) {
           }
 
           // "Verify your account" makes no sense once KYC is done or in review
-          if (stage === "day3_kyc" && walletAddress && (await kycStarted(walletAddress))) {
+          if ((stage === "day3_kyc" || stage === "day14_urgency") && walletAddress && (await kycStarted(walletAddress))) {
             continue;
           }
 
           // Send the email
-          const success = await sendDripEmail(email, stage, language);
+          const success = await sendDripEmail(email, stage, language, days);
           if (success) {
             // Mark as sent
             await redis.sadd(`drip:${email}:sent`, stage);

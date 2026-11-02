@@ -2,19 +2,14 @@
 // Copy for the "verify your account" reminders (push every other day, email on
 // a few later days — see src/app/api/cron/kyc-reminder-push/route.ts).
 //
-// The welcome-gold amount is read from BONUS_CONFIG rather than written into
-// the copy: with SPLIT_GATE_ENABLED only a portion of it is granted at KYC, and
-// promising the full 5 AUXG for verifying would be a promise we don't keep.
+// No gold is promised for verifying: KYC approval grants nothing on its own
+// (welcome gold is only credited by /api/welcome-gold after a demo trade, and
+// almost never has been). The only reward named is the first-deposit match,
+// read from BONUS_CONFIG and shown only while it is enabled.
 
 import { BONUS_CONFIG } from "@/lib/metal-bonus-service";
 
 export type ReminderLang = "en" | "tr" | "de" | "fr" | "ar" | "ru";
-
-/** Grams of AUXG actually granted when KYC is approved. */
-export function kycWelcomeGrams(): number {
-  const portion = BONUS_CONFIG.splitGateEnabled ? BONUS_CONFIG.welcomeKycPortionPct / 100 : 1;
-  return Math.round(BONUS_CONFIG.welcomeBonusAuxg * portion * 100) / 100;
-}
 
 /** First-deposit match line, or null when the match is off. */
 function matchTerms(): { pct: number; min: number; cap: number } | null {
@@ -34,16 +29,17 @@ function lang(l: string): ReminderLang {
 // ── Push ─────────────────────────────────────────────────────────────────────
 
 export function kycReminderPush(language: string): { title: string; body: string } {
-  const g = kycWelcomeGrams();
-  const t: Record<ReminderLang, { title: string; body: string }> = {
-    en: { title: `Verify your account — ${g} g gold is waiting`, body: "About 2 minutes with a valid ID. Protects your account and unlocks full access, higher limits and your welcome gold." },
-    tr: { title: `Hesabınızı doğrulayın — ${g} g altın sizi bekliyor`, body: "Geçerli bir kimlikle yaklaşık 2 dakika. Hesabınızı korur; tam erişim, yüksek limit ve hoş geldin altınınızı açar." },
-    de: { title: `Konto verifizieren — ${g} g Gold warten`, body: "Etwa 2 Minuten mit gültigem Ausweis. Schützt Ihr Konto und schaltet vollen Zugang, höhere Limits und Ihr Willkommensgold frei." },
-    fr: { title: `Vérifiez votre compte — ${g} g d'or vous attendent`, body: "Environ 2 minutes avec une pièce d'identité. Protège votre compte et débloque l'accès complet, des limites plus élevées et votre or de bienvenue." },
-    ar: { title: `وثّق حسابك — ${g} غ من الذهب بانتظارك`, body: "حوالي دقيقتين بوثيقة هوية صالحة. يحمي حسابك ويفتح الوصول الكامل وحدوداً أعلى وذهب الترحيب." },
-    ru: { title: `Подтвердите аккаунт — вас ждёт ${g} г золота`, body: "Около 2 минут с действующим документом. Защищает аккаунт и открывает полный доступ, повышенные лимиты и приветственное золото." },
+  const m = matchTerms();
+  const t: Record<ReminderLang, { title: string; body: string; match: string }> = {
+    en: { title: "Verify your Auxite account", body: "About 2 minutes with a valid ID. Protects your account and unlocks full access and higher limits.", match: ` Your first deposit then earns a ${m?.pct}% gold match.` },
+    tr: { title: "Auxite hesabınızı doğrulayın", body: "Geçerli bir kimlikle yaklaşık 2 dakika. Hesabınızı korur; tam erişim ve yüksek limitleri açar.", match: ` Ardından ilk yatırımınıza altın olarak %${m?.pct} bonus.` },
+    de: { title: "Verifizieren Sie Ihr Auxite-Konto", body: "Etwa 2 Minuten mit gültigem Ausweis. Schützt Ihr Konto und schaltet vollen Zugang und höhere Limits frei.", match: ` Ihre erste Einzahlung erhält dann ${m?.pct}% Bonus in Gold.` },
+    fr: { title: "Vérifiez votre compte Auxite", body: "Environ 2 minutes avec une pièce d'identité. Protège votre compte et débloque l'accès complet et des limites plus élevées.", match: ` Votre premier dépôt reçoit ensuite ${m?.pct} % de bonus en or.` },
+    ar: { title: "وثّق حسابك في Auxite", body: "حوالي دقيقتين بوثيقة هوية صالحة. يحمي حسابك ويفتح الوصول الكامل وحدوداً أعلى.", match: ` بعدها يحصل أول إيداع لك على مكافأة ${m?.pct}% بالذهب.` },
+    ru: { title: "Подтвердите аккаунт Auxite", body: "Около 2 минут с действующим документом. Защищает аккаунт и открывает полный доступ и повышенные лимиты.", match: ` Затем первый депозит получит бонус ${m?.pct}% золотом.` },
   };
-  return t[lang(language)];
+  const x = t[lang(language)];
+  return { title: x.title, body: m ? x.body + x.match : x.body };
 }
 
 // ── Email ────────────────────────────────────────────────────────────────────
@@ -62,105 +58,98 @@ export interface KycReminderEmailText {
 }
 
 export function kycReminderEmail(language: string, daysSinceSignup: number): KycReminderEmailText {
-  const g = kycWelcomeGrams();
   const m = matchTerms();
   const weeks = Math.max(1, Math.floor(daysSinceSignup / 7));
   const L = lang(language);
 
   const t: Record<ReminderLang, Omit<KycReminderEmailText, "match"> & { match: (p: number, min: number, cap: number) => string }> = {
     en: {
-      subject: `Verify your Auxite account — ${g} g welcome gold is waiting`,
+      subject: "Complete your Auxite account verification",
       title: "Complete your verification",
       intro: weeks === 1 ? "It's been a week since you opened your Auxite account, and it isn't verified yet." : `It's been ${weeks} weeks since you opened your Auxite account, and it isn't verified yet.`,
       reasonsTitle: "Why verify?",
       reasons: [
         "<strong>Account security</strong> — protects your account from unauthorised activity.",
         "<strong>Full access</strong> — allocation, withdrawals and higher limits.",
-        `<strong>Welcome gold</strong> — ${g} g AUXG is credited when your verification is approved.`,
       ],
       stepsTitle: "Three steps, about two minutes",
       steps: ["Sign in to your Auxite account.", "Upload a valid ID document — your data is encrypted.", "Wait for approval, usually within minutes."],
-      match: (p, min, cap) => `After verification, your first deposit of $${min} or more earns a ${p}% match in gold (up to $${cap}).`,
+      match: (p, min, cap) => `After verification, your first crypto deposit of $${min} or more earns a ${p}% match in gold (up to $${cap}).`,
       cta: "VERIFY MY ACCOUNT",
       footnote: "Bonuses are subject to the platform's terms and eligibility.",
     },
     tr: {
-      subject: `Auxite hesabınızı doğrulayın — ${g} g hoş geldin altını sizi bekliyor`,
+      subject: "Auxite hesabınızın doğrulamasını tamamlayın",
       title: "Doğrulamanızı tamamlayın",
       intro: weeks === 1 ? "Auxite hesabınızı açalı bir hafta oldu ve hesabınız henüz doğrulanmadı." : `Auxite hesabınızı açalı ${weeks} hafta oldu ve hesabınız henüz doğrulanmadı.`,
       reasonsTitle: "Neden doğrulamalısınız?",
       reasons: [
         "<strong>Hesap güvenliği</strong> — hesabınızı yetkisiz işlemlere karşı korur.",
         "<strong>Tam erişim</strong> — tahsis, çekim ve daha yüksek limitler.",
-        `<strong>Hoş geldin altını</strong> — doğrulamanız onaylanınca ${g} g AUXG hesabınıza yüklenir.`,
       ],
       stepsTitle: "Üç adım, yaklaşık iki dakika",
       steps: ["Auxite hesabınıza giriş yapın.", "Geçerli bir kimlik belgesi yükleyin — verileriniz şifrelenir.", "Onayı bekleyin, genellikle birkaç dakika sürer."],
-      match: (p, min, cap) => `Doğrulamadan sonra ${min}$ ve üzeri ilk yatırımınıza altın olarak %${p} ek bonus verilir (en fazla ${cap}$).`,
+      match: (p, min, cap) => `Doğrulamadan sonra ${min}$ ve üzeri ilk kripto yatırımınıza altın olarak %${p} ek bonus verilir (en fazla ${cap}$).`,
       cta: "HESABIMI DOĞRULA",
       footnote: "Bonuslar platform koşullarına ve uygunluğa tabidir.",
     },
     de: {
-      subject: `Verifizieren Sie Ihr Auxite-Konto — ${g} g Willkommensgold warten`,
+      subject: "Schließen Sie die Verifizierung Ihres Auxite-Kontos ab",
       title: "Schließen Sie Ihre Verifizierung ab",
       intro: weeks === 1 ? "Vor einer Woche haben Sie Ihr Auxite-Konto eröffnet; es ist noch nicht verifiziert." : `Vor ${weeks} Wochen haben Sie Ihr Auxite-Konto eröffnet; es ist noch nicht verifiziert.`,
       reasonsTitle: "Warum verifizieren?",
       reasons: [
         "<strong>Kontosicherheit</strong> — schützt Ihr Konto vor unbefugten Aktivitäten.",
         "<strong>Voller Zugang</strong> — Allokation, Auszahlungen und höhere Limits.",
-        `<strong>Willkommensgold</strong> — ${g} g AUXG werden nach Freigabe der Verifizierung gutgeschrieben.`,
       ],
       stepsTitle: "Drei Schritte, etwa zwei Minuten",
       steps: ["Melden Sie sich bei Ihrem Auxite-Konto an.", "Laden Sie einen gültigen Ausweis hoch — Ihre Daten werden verschlüsselt.", "Warten Sie auf die Freigabe, meist innerhalb von Minuten."],
-      match: (p, min, cap) => `Nach der Verifizierung erhält Ihre erste Einzahlung ab $${min} einen Bonus von ${p}% in Gold (bis zu $${cap}).`,
+      match: (p, min, cap) => `Nach der Verifizierung erhält Ihre erste Krypto-Einzahlung ab $${min} einen Bonus von ${p}% in Gold (bis zu $${cap}).`,
       cta: "KONTO VERIFIZIEREN",
       footnote: "Boni unterliegen den Bedingungen der Plattform und der Berechtigung.",
     },
     fr: {
-      subject: `Vérifiez votre compte Auxite — ${g} g d'or de bienvenue vous attendent`,
+      subject: "Finalisez la vérification de votre compte Auxite",
       title: "Finalisez votre vérification",
       intro: weeks === 1 ? "Vous avez ouvert votre compte Auxite il y a une semaine et il n'est pas encore vérifié." : `Vous avez ouvert votre compte Auxite il y a ${weeks} semaines et il n'est pas encore vérifié.`,
       reasonsTitle: "Pourquoi vérifier ?",
       reasons: [
         "<strong>Sécurité du compte</strong> — protège votre compte contre toute activité non autorisée.",
         "<strong>Accès complet</strong> — allocation, retraits et limites plus élevées.",
-        `<strong>Or de bienvenue</strong> — ${g} g d'AUXG sont crédités à l'approbation de votre vérification.`,
       ],
       stepsTitle: "Trois étapes, environ deux minutes",
       steps: ["Connectez-vous à votre compte Auxite.", "Téléchargez une pièce d'identité valide — vos données sont chiffrées.", "Attendez l'approbation, généralement en quelques minutes."],
-      match: (p, min, cap) => `Après vérification, votre premier dépôt de ${min} $ ou plus reçoit un bonus de ${p} % en or (jusqu'à ${cap} $).`,
+      match: (p, min, cap) => `Après vérification, votre premier dépôt crypto de ${min} $ ou plus reçoit un bonus de ${p} % en or (jusqu'à ${cap} $).`,
       cta: "VÉRIFIER MON COMPTE",
       footnote: "Les bonus sont soumis aux conditions de la plateforme et à l'éligibilité.",
     },
     ar: {
-      subject: `وثّق حسابك في Auxite — ${g} غ من ذهب الترحيب بانتظارك`,
+      subject: "أكمل التحقق من حسابك في Auxite",
       title: "أكمل التحقق من حسابك",
       intro: weeks === 1 ? "مر أسبوع على فتح حسابك في Auxite ولم يتم التحقق منه بعد." : `مرت ${weeks} أسابيع على فتح حسابك في Auxite ولم يتم التحقق منه بعد.`,
       reasonsTitle: "لماذا التحقق؟",
       reasons: [
         "<strong>أمان الحساب</strong> — يحمي حسابك من أي نشاط غير مصرح به.",
         "<strong>وصول كامل</strong> — التخصيص والسحب وحدود أعلى.",
-        `<strong>ذهب الترحيب</strong> — تُضاف ${g} غ من AUXG عند الموافقة على التحقق.`,
       ],
       stepsTitle: "ثلاث خطوات، حوالي دقيقتين",
       steps: ["سجّل الدخول إلى حسابك في Auxite.", "ارفع وثيقة هوية صالحة — بياناتك مشفرة.", "انتظر الموافقة، عادةً خلال دقائق."],
-      match: (p, min, cap) => `بعد التحقق، يحصل أول إيداع لك بقيمة ${min}$ أو أكثر على مكافأة ${p}% بالذهب (حتى ${cap}$).`,
+      match: (p, min, cap) => `بعد التحقق، يحصل أول إيداع عملات مشفرة لك بقيمة ${min}$ أو أكثر على مكافأة ${p}% بالذهب (حتى ${cap}$).`,
       cta: "وثّق حسابي",
       footnote: "تخضع المكافآت لشروط المنصة والأهلية.",
     },
     ru: {
-      subject: `Подтвердите аккаунт Auxite — вас ждёт ${g} г приветственного золота`,
+      subject: "Завершите верификацию аккаунта Auxite",
       title: "Завершите верификацию",
       intro: weeks === 1 ? "Прошла неделя с открытия вашего аккаунта Auxite, а он ещё не подтверждён." : `Прошло ${weeks} нед. с открытия вашего аккаунта Auxite, а он ещё не подтверждён.`,
       reasonsTitle: "Зачем проходить верификацию?",
       reasons: [
         "<strong>Безопасность</strong> — защищает аккаунт от несанкционированных действий.",
         "<strong>Полный доступ</strong> — размещение, вывод и повышенные лимиты.",
-        `<strong>Приветственное золото</strong> — ${g} г AUXG зачисляется после одобрения верификации.`,
       ],
       stepsTitle: "Три шага, около двух минут",
       steps: ["Войдите в аккаунт Auxite.", "Загрузите действующий документ — данные шифруются.", "Дождитесь одобрения, обычно в течение нескольких минут."],
-      match: (p, min, cap) => `После верификации первый депозит от $${min} получает бонус ${p}% золотом (до $${cap}).`,
+      match: (p, min, cap) => `После верификации первый криптодепозит от $${min} получает бонус ${p}% золотом (до $${cap}).`,
       cta: "ПОДТВЕРДИТЬ АККАУНТ",
       footnote: "Бонусы предоставляются в соответствии с условиями платформы.",
     },
