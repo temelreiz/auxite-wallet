@@ -7,14 +7,14 @@
 //   POST {action:"add", address, label, destination}
 //   POST {action:"remove", address}
 //
-// The first GET creates the inventory wallet (KMS-encrypted key) so the Safe
-// has an address to mint to.
+// The inventory address comes from AUXR_AP_INVENTORY_PRIVATE_KEY
+// (scripts/setup-ap-inventory.mjs); null until it is set.
 
 import { NextRequest, NextResponse } from "next/server";
 import { isAddress } from "viem";
 import { requireAdmin } from "@/lib/security/require-user";
 import {
-  listAps, setAp, removeAp, inventoryAddress, inventoryUnits, apNetUnits, recentApFlows,
+  listAps, setAp, removeAp, existingInventoryAddress, inventoryUnits, apNetUnits, recentApFlows,
   AP_SPREAD, AP_DAILY_CAP, INVENTORY_TARGET, INVENTORY_LOW,
 } from "@/lib/auxr-ap";
 
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   const admin = await requireAdmin(request);
   if (!admin.ok) return admin.response;
   const [aps, address, units, net, flows] = await Promise.all([
-    listAps(), inventoryAddress(), inventoryUnits().catch(() => null), apNetUnits(), recentApFlows(20),
+    listAps(), existingInventoryAddress(), inventoryUnits().catch(() => null), apNetUnits(), recentApFlows(20),
   ]);
   return NextResponse.json({
     success: true,
