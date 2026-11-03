@@ -34,7 +34,6 @@ const metalIcons: Record<string, string> = {
 const cryptoAssets = [
   { symbol: "USDC", name: "USD Coin", color: "#2775CA", icon: "$" },
   { symbol: "USDT", name: "Tether", color: "#26A17B", icon: "₮" },
-  { symbol: "USD", name: "US Dollar", color: "#2F6F62", icon: "$" },
   { symbol: "BTC", name: "Bitcoin", color: "#F7931A", icon: "₿" },
   { symbol: "ETH", name: "Ethereum", color: "#627EEA", icon: "Ξ" },
 ];
@@ -537,6 +536,9 @@ export default function VaultPage() {
   const [showAuxmRedeemModal, setShowAuxmRedeemModal] = useState(false);
   const [showBuyMetalCardModal, setShowBuyMetalCardModal] = useState(false);
   const [cryptoBalances, setCryptoBalances] = useState<Record<string, number>>({});
+  // Liquidity lists show one USD cash line: settlement (AUXM) + the separate
+  // usd field. Display only — each balance keeps its own field and flows.
+  const cashBalance = settlementBalance + (cryptoBalances.usd || 0);
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
   const [buyChooser, setBuyChooser] = useState<{ symbol: string; name: string; color: string } | null>(null);
   const [showProtection, setShowProtection] = useState(false);
@@ -1374,7 +1376,7 @@ export default function VaultPage() {
               </div>
 
               {/* Section 2 — Liquidity (Cash & Crypto) */}
-              {(settlementBalance > 0 || cryptoAssets.some(c => (cryptoBalances[c.symbol.toLowerCase()] || 0) > 0)) && (
+              {(cashBalance > 0 || cryptoAssets.some(c => (cryptoBalances[c.symbol.toLowerCase()] || 0) > 0)) && (
                 <div>
                   <div className="flex items-center gap-2 mb-3 pt-4 border-t border-stone-200 dark:border-slate-700">
                     <div className="w-2 h-2 rounded-full bg-[#2F6F62]" />
@@ -1384,8 +1386,8 @@ export default function VaultPage() {
                   </div>
 
                   <div className="space-y-2">
-                    {/* AUXM Settlement Balance Row */}
-                    {settlementBalance > 0 && (
+                    {/* Cash balance row (settlement + usd) */}
+                    {cashBalance > 0 && (
                       <div className="flex items-center justify-between p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors">
                         <div className="flex items-center gap-3">
                           <div className="w-11 h-11 rounded-full bg-indigo-500/15 flex items-center justify-center">
@@ -1397,10 +1399,10 @@ export default function VaultPage() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatCurrency(settlementBalance)}</p>
+                          <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatCurrency(cashBalance)}</p>
                           <div className="flex items-center gap-1.5 justify-end">
                             <p className="text-xs text-[#2F6F62] font-medium">
-                              {settlementBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {t.auxmUnit}
+                              {cashBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {t.auxmUnit}
                             </p>
                             <span className="px-1.5 py-0.5 bg-[#2F6F62]/10 rounded text-[8px] font-semibold text-[#2F6F62]">
                               {t.available}
@@ -1684,7 +1686,6 @@ export default function VaultPage() {
         const cryptoOrder: Array<{ key: string; label: string }> = [
           { key: 'usdc', label: 'USDC' },
           { key: 'usdt', label: 'USDT' },
-          { key: 'usd', label: 'USD' },
           { key: 'btc', label: 'BTC' },
           { key: 'eth', label: 'ETH' },
         ];
@@ -1709,13 +1710,13 @@ export default function VaultPage() {
               <p className="text-xs text-slate-500 dark:text-slate-400 text-center mb-6">{t.availableLiquidityDesc}</p>
 
               <div className="space-y-3">
-                {settlementBalance > 0 && (
+                {cashBalance > 0 && (
                   <div className="flex items-center justify-between p-3 bg-[#2F6F62]/5 rounded-lg">
                     <div>
                       <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t.settlementBalance}</span>
                       <span className="block text-[10px] text-slate-500">{t.auxmUnit} · {t.auxmPeg}</span>
                     </div>
-                    <span className="text-sm font-bold text-[#2F6F62]">{formatCurrency(settlementBalance)}</span>
+                    <span className="text-sm font-bold text-[#2F6F62]">{formatCurrency(cashBalance)}</span>
                   </div>
                 )}
                 {cryptoList.map(c => (
@@ -1736,7 +1737,7 @@ export default function VaultPage() {
                     <span className="text-sm font-bold text-[#2F6F62]">{formatCurrency(h.available * h.price)}</span>
                   </div>
                 ))}
-                {settlementBalance === 0 && cryptoList.length === 0 && unallocatedMetalList.length === 0 && (
+                {cashBalance === 0 && cryptoList.length === 0 && unallocatedMetalList.length === 0 && (
                   <div className="text-center py-6">
                     <p className="text-sm text-slate-500">{t.noLiquidity}</p>
                   </div>
