@@ -173,6 +173,11 @@ export async function GET(request: NextRequest) {
 
       // CoinGecko / CMC düz metin tek değer formatı
       if (type === "total" || type === "circulating") {
+        // CoinGecko's supply API spec asks for JSON in this shape ({"result":"…"},
+        // as its own /supply endpoints); plain text stays the default for CMC.
+        if (searchParams.get("format") === "json") {
+          return NextResponse.json({ result: (type === "total" ? s.total : s.circulating).toFixed(6) });
+        }
         return new NextResponse(String(Number((type === "total" ? s.total : s.circulating).toFixed(6))), {
           status: 200,
           headers: { "Content-Type": "text/plain; charset=utf-8" },
