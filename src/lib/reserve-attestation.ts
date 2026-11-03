@@ -7,9 +7,9 @@
 //   1. Build a canonical report from getReserveSnapshot() (reserves vs. the
 //      grams required to back outstanding supply, per metal).
 //   2. Deterministically hash it (keccak256 of canonical JSON) → reportHash.
-//   3. Sign reportHash with the attestor key (EIP-191). The signer is meant to
-//      be the independent attestor (The Network Firm); anyone with the public
-//      address can verify the signature.
+//   3. Sign reportHash with the attestor key (EIP-191). Today this is the
+//      issuer's own key (self-attestation, no independent third party); anyone
+//      with the public address can verify the signature.
 //   4. The SAME reportHash + per-metal figures are posted on-chain via
 //      ReserveAttestation.sol (toMetalInputs()), so the on-chain feed and the
 //      off-chain signed report are bound by one hash.
@@ -25,8 +25,8 @@ import { getLivePrices } from "@/lib/live-prices";
 // The live canonical metal tokens (per-investor AuxiteMetal, 0xCef9…). The PoR
 // attests the REAL on-chain supply of these tokens, not the off-chain AUXR
 // basket ledger. Model: 1 token = 1 gram of allocated physical metal, so
-// on-chain supply IS the reserve figure (100% backed by construction); the
-// independent physical verification is the CPA attestor's job.
+// on-chain supply IS the reserve figure (100% backed by construction). This is
+// an issuer self-attestation: it does not independently verify vault grams.
 const METAL_SYMBOLS = ["AUXG", "AUXS", "AUXPT", "AUXPD"] as const;
 type MetalSym = (typeof METAL_SYMBOLS)[number];
 
@@ -66,7 +66,7 @@ export interface AttestationReport {
   version: typeof ATTESTATION_VERSION;
   /** Attestor-reported as-of time (unix seconds). */
   asOf: number;
-  /** Label of the independent attestor. */
+  /** Label of the attestor (currently the issuer itself). */
   attestor: string;
   metals: AttestationMetal[];
   /** USD value of reserves at attestation time (informational, not hashed-critical). */
@@ -86,7 +86,7 @@ export interface SignedAttestation {
   signer: string | null;
 }
 
-const ATTESTOR_LABEL = process.env.RESERVE_ATTESTOR_LABEL || "The Network Firm";
+const ATTESTOR_LABEL = process.env.RESERVE_ATTESTOR_LABEL || "Auxite (issuer self-attestation)";
 
 // ── Canonicalization & hashing ────────────────────────────────────────────────
 
