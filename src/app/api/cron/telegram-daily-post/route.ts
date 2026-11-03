@@ -8,7 +8,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
-import { buildDailyPost, dailyKind, type Spot } from "@/lib/telegram-daily-post";
+import { buildDailyPost, buyRewardPromo, dailyKind, type Spot } from "@/lib/telegram-daily-post";
+import { CAMPAIGN, campaignActive } from "@/lib/auxr-buy-reward";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -79,7 +80,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const text = buildDailyPost(now, prices, prev);
+  const promo = campaignActive(now.getTime()) ? buyRewardPromo(CAMPAIGN.endAt, CAMPAIGN.settleAt) : undefined;
+  const text = buildDailyPost(now, prices, prev, promo);
   const r = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
