@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
-import { buildDailyPost, dailyKind, type Spot } from "@/lib/telegram-daily-post";
+import { buildDailyPost, dailyKind, type Metal, type Spot } from "@/lib/telegram-daily-post";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -31,16 +31,19 @@ async function snapshot(date: string): Promise<Spot | undefined> {
 /**
  * The app's own buy price (/api/prices "prices", spread included), so the
  * number in the post is the number a reader sees after tapping the link.
- * Null when the feed is unreachable, malformed or stale.
+ * Null when the feed is unreachable, malformed or stale. `paused` lists metals
+ * the price guard has stopped trading in; the post leaves those out.
  */
-async function appPrices(): Promise<Spot | null> {
+async function appPrices(): Promise<{ prices: Spot; paused: Metal[] } | null> {
   try {
     const res = await fetch(`${APP_URL}/api/prices`, { cache: "no-store", signal: AbortSignal.timeout(10000) });
-    const p = (await res.json()) as { prices?: Record<string, number>; timestamp?: number };
+    const p = (await res.json()) as { prices?: Record<string, number>; paused?: string[]; timestamp?: number };
     const g = p.prices || {};
     const s = { gold: g.AUXG, silver: g.AUXS, platinum: g.AUXPT, palladium: g.AUXPD };
     const sane = Object.values(s).every((v) => typeof v === "number" && v > 0 && v < 500);
-    if (sane && p.timestamp && Date.now() - p.timestamp < MAX_PRICE_AGE_MS) return s as Spot;
+    const name: Record<string, Metal> = { AUXG: "gold", AUXS: "silver", AUXPT: "platinum", AUXPD: "palladium" };
+    const paused = (p.paused || []).map((x) => name[x]).filter(Boolean);
+    if (sane && p.timestamp && Date.now() - p.timestamp < MAX_PRICE_AGE_MS) return { prices: s as Spot, paused };
   } catch {
     // fall through to the fact post
   }
@@ -65,7 +68,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ skipped: "already posted today" });
   }
 
-  const prices = await appPrices();
+  const feed = await appPrices();
+  const prices = feed?.prices ?? null;
   const kind = dailyKind(now);
   let prev: Spot | undefined;
   if (prices && kind !== "fact") {
@@ -79,7 +83,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const text = buildDailyPost(now, prices, prev);
+  const text = buildDailyPost(now, prices, prev, feed?.paused);
   const r = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

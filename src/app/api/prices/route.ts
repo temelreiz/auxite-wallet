@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { calculateAllExecutionPrices, getPricingConfig, roundPrice, roundPriceOz } from "@/lib/pricing-engine";
 import { getMetalPricesInUsd, getUsdTlRate, getAuxiteMetalRates } from "@/lib/kuveytturk-service";
+import { getPausedMetals, getMetalSpotPrices } from "@/lib/price-cache";
 
 const GOLDAPI_URL = "https://www.goldapi.io/api";
 const GOLDAPI_KEY = process.env.GOLDAPI_KEY || "";
@@ -164,6 +165,23 @@ export async function GET() {
       }
     }
 
+    // A metal whose KT quote has drifted from spot cannot be traded (the
+    // charge path refuses it, see metal-price-guard.ts). Show the market spot
+    // for it instead of the broken KT number, and tell clients it is paused.
+    let paused: string[] = [];
+    if (source === "kuveytturk" && priceData) {
+      const list = await withTimeout(getPausedMetals(), 5000, []);
+      if (list.length) {
+        const spot = await withTimeout(getMetalSpotPrices(), 4000, null);
+        const key: Record<string, "gold" | "silver" | "platinum" | "palladium"> = { AUXG: "gold", AUXS: "silver", AUXPT: "platinum", AUXPD: "palladium" };
+        for (const { symbol } of list) {
+          const g = spot?.[key[symbol]];
+          if (g && g > 0) priceData[symbol] = { price: g * TROY_OZ_TO_GRAM, change: 0 };
+          paused.push(symbol);
+        }
+      }
+    }
+
     // Fetch pricing config
     const pricingConfig = await withTimeout(getPricingConfig(), 4000, { volatilityMode: "normal" } as any);
 
@@ -232,6 +250,7 @@ export async function GET() {
       executionPrices,
       spotPrices,
       changes,
+      paused,
       // KuveytTürk specific data
       ...(tlPrices && { tlPrices }),
       ...(usdTlRate && { usdTlRate }),
