@@ -1,7 +1,7 @@
 // Price Cache - Cache metal prices to avoid API rate limits
 import { Redis } from '@upstash/redis';
 import { getMetalPricesInUsd } from './kuveytturk-service';
-import { assessKtDeviation, notePauseState, MetalPricePausedError, type DeviationVerdict } from './metal-price-guard';
+import { assessKtDeviation, notePriceSource, type DeviationVerdict } from './metal-price-guard';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -282,37 +282,60 @@ function toAuxSymbol(metal: string): 'AUXG' | 'AUXS' | 'AUXPT' | 'AUXPD' | null 
 
 const SPOT_KEY = { AUXG: 'gold', AUXS: 'silver', AUXPT: 'platinum', AUXPD: 'palladium' } as const;
 
+// Metals always charged at GoldAPI spot, never at KT. Palladium: KT's quote
+// has been unusable for weeks (~$50/g against ~$30/g spot). Comma-separated
+// symbols; set to an empty string to put every metal back on KT.
+const ALWAYS_SPOT = new Set(
+  (process.env.SPOT_PRICED_METALS ?? 'AUXPD').split(',').map((s) => s.trim().toUpperCase()).filter(Boolean),
+);
+
+/** Fresh-enough GoldAPI spot for a metal, or null (hardcoded last resort has ts 0). */
+async function spotFor(symbol: keyof typeof SPOT_KEY): Promise<number | null> {
+  const spot = await getMetalSpotPrices().catch(() => null);
+  const g = spot?.[SPOT_KEY[symbol]];
+  return spot && spot.timestamp > 0 && g && g > 0 ? g : null;
+}
+
 async function ktVerdict(symbol: keyof typeof SPOT_KEY, buy: number, sell: number): Promise<DeviationVerdict> {
   const spot = await getMetalSpotPrices().catch(() => null);
   const v = assessKtDeviation(buy, sell, spot?.[SPOT_KEY[symbol]], spot?.timestamp ?? 0);
-  notePauseState(symbol, v).catch(() => {});
+  notePriceSource(symbol, v).catch(() => {});
   return v;
 }
 
 /**
- * Metals whose KT quote is too far from spot to trade on (see
- * metal-price-guard.ts). Empty when KT is unreachable: trading then runs on
- * spot, which needs no guard.
+ * Metals priced off spot right now: the ALWAYS_SPOT ones, plus any whose KT
+ * quote is too far from spot (see metal-price-guard.ts). With KT unreachable
+ * only the ALWAYS_SPOT ones are listed; the rest then fall back to spot anyway.
  */
-export async function getPausedMetals(): Promise<Array<{ symbol: string; deviation: number }>> {
+export async function getSpotPricedMetals(): Promise<Array<{ symbol: string; deviation: number; spot: number }>> {
+  const symbols = Object.keys(SPOT_KEY) as Array<keyof typeof SPOT_KEY>;
+  const out: Array<{ symbol: string; deviation: number; spot: number }> = [];
+  for (const symbol of symbols.filter((x) => ALWAYS_SPOT.has(x))) {
+    const g = await spotFor(symbol);
+    if (g) out.push({ symbol, deviation: 0, spot: g });
+  }
   let kt: Awaited<ReturnType<typeof getMetalPricesInUsd>>;
   try {
     kt = await fetchKtBounded();
   } catch {
-    return [];
+    return out;
   }
-  const out: Array<{ symbol: string; deviation: number }> = [];
-  for (const symbol of Object.keys(SPOT_KEY) as Array<keyof typeof SPOT_KEY>) {
+  for (const symbol of symbols.filter((x) => !ALWAYS_SPOT.has(x))) {
     const r = kt[symbol];
     if (!r || !(r.buyRateUSD > 0)) continue;
     const v = await ktVerdict(symbol, r.buyRateUSD, r.sellRateUSD);
-    if (v.paused) out.push({ symbol, deviation: v.deviation! });
+    if (v.useSpot) out.push({ symbol, deviation: v.deviation!, spot: v.spot! });
   }
   return out;
 }
 
 export async function getMetalUsdPrice(metal: string, type: 'buy' | 'sell'): Promise<number> {
   const symbol = toAuxSymbol(metal);
+  if (symbol && ALWAYS_SPOT.has(symbol)) {
+    const g = await spotFor(symbol);
+    if (g) return g;
+  }
   if (symbol) {
     let r: Awaited<ReturnType<typeof getMetalPricesInUsd>>[string] | undefined;
     try {
@@ -326,10 +349,11 @@ export async function getMetalUsdPrice(metal: string, type: 'buy' | 'sell'): Pro
     }
     const p = r ? (type === 'buy' ? r.buyRateUSD : r.sellRateUSD) : 0;
     if (r && p > 0) {
-      // Outside the try on purpose: a paused metal must fail the trade, not
-      // fall back to spot (we would sell below our KT procurement cost).
+      // A KT quote far off spot is priced at spot instead (same number for
+      // buy and sell; the admin spread is applied on top by the caller). Not
+      // getMetalPrice below: that reads KT first and would return it again.
       const v = await ktVerdict(symbol, r.buyRateUSD, r.sellRateUSD);
-      if (v.paused) throw new MetalPricePausedError(symbol, v.deviation!);
+      if (v.useSpot) return v.spot!;
       return p;
     }
   }

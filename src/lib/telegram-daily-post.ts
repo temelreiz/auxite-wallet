@@ -33,8 +33,8 @@ function pct(now: number, prev?: number): string {
   return ` ${arrow} ${p >= 0 ? "+" : ""}${p.toFixed(2)}%`;
 }
 
-function priceLines(spot: Spot, prev?: Spot, omit: string[] = []): string {
-  return METALS.filter((m) => !omit.includes(m.key)).map((m) => {
+function priceLines(spot: Spot, prev?: Spot): string {
+  return METALS.map((m) => {
     const g = spot[m.key];
     return `${m.emoji} <b>${m.en}</b> · ${m.ar} · ${m.ru}\n$${usd(g * OZ, g * OZ < 100)}/oz · $${usd(g, true)}/g${pct(g, prev?.[m.key])}`;
   }).join("\n\n");
@@ -82,10 +82,9 @@ export function dailyKind(now: Date): DailyKind {
 
 /**
  * Build the post. `prev` is the last weekday snapshot for "prices" and the previous
- * Friday's for "weekly"; without it the change column is left out. `omit`
- * drops metals that cannot be traded right now (paused by the price guard).
+ * Friday's for "weekly"; without it the change column is left out.
  */
-export function buildDailyPost(now: Date, spot: Spot | null, prev?: Spot, omit: Metal[] = []): string {
+export function buildDailyPost(now: Date, spot: Spot | null, prev?: Spot): string {
   const kind = dailyKind(now);
   const date = now.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
   const cta = `\n\n🔗 <a href="${LINK}">vault.auxite.io</a>`;
@@ -96,7 +95,7 @@ export function buildDailyPost(now: Date, spot: Spot | null, prev?: Spot, omit: 
   }
 
   if (kind === "weekly") {
-    return `📊 <b>Weekly recap · ملخص الأسبوع · Итоги недели</b> — ${date}\n\n${priceLines(spot, prev, omit)}\n\n${block({
+    return `📊 <b>Weekly recap · ملخص الأسبوع · Итоги недели</b> — ${date}\n\n${priceLines(spot, prev)}\n\n${block({
       en: "Change over the past seven days. Markets reopen Monday.",
       ar: "التغير خلال الأيام السبعة الماضية. تفتح الأسواق يوم الاثنين.",
       ru: "Изменение за последние семь дней. Рынки откроются в понедельник.",
@@ -104,5 +103,5 @@ export function buildDailyPost(now: Date, spot: Spot | null, prev?: Spot, omit: 
   }
 
   const line = WEEKDAY_LINES[(now.getUTCDay() - 1) % WEEKDAY_LINES.length];
-  return `📈 <b>Precious metals today · المعادن الثمينة اليوم · Металлы сегодня</b> — ${date}\n\n${priceLines(spot, prev, omit)}\n\n${block(line)}${cta}`;
+  return `📈 <b>Precious metals today · المعادن الثمينة اليوم · Металлы сегодня</b> — ${date}\n\n${priceLines(spot, prev)}\n\n${block(line)}${cta}`;
 }

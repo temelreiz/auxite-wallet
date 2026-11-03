@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireSelf } from '@/lib/security/require-user';
 import { createQuote, getQuote, getQuoteTimeRemaining } from '@/lib/quote-service';
-import { pausedErrorBody } from '@/lib/metal-price-guard';
 
 // GET - Get existing quote
 export async function GET(request: NextRequest) {
@@ -51,8 +50,6 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    const paused = pausedErrorBody(error);
-    if (paused) return NextResponse.json(paused, { status: 503 });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
