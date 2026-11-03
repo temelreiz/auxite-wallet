@@ -1,20 +1,19 @@
 // src/lib/metal-price-guard.ts
-// Pauses trading in a metal whose KuveytTürk quote has drifted away from the
-// international spot. KT is the venue we procure from, so its rate is normally
-// the right charge price; but a frozen or broken KT quote (palladium stuck at
+// Prices a metal off international spot when its KuveytTürk quote has drifted
+// away from it. KT is the venue we procure from, so its rate is normally the
+// right charge price; but a frozen or broken KT quote (palladium stuck at
 // ~$50/g for weeks while spot was ~$30) would sell to users at a price no
-// market supports, and buy back from them at one we cannot resell at.
+// market supports. The metal keeps trading, on spot, until KT comes back in
+// line. AUXR is not affected: its NAV is always spot (auxr-pricing.ts).
 //
 // The comparison uses the KT bid/ask MID against spot. KT's ask alone sits a
 // few percent above spot for every metal (bank spread plus the TL→USD leg), so
-// comparing the ask would pause healthy metals too.
+// comparing the ask would switch healthy metals too.
 //
-// No reference = no verdict: when spot is missing or stale the guard stays
-// open, since KT itself is the primary price and blocking on a dead GoldAPI
-// would take all trading down.
+// No reference = no verdict: when spot is missing or stale, KT stays the price.
 //
-// Ops are emailed when a metal enters or leaves the paused state (on the
-// transition only, never on every check).
+// Ops are emailed when a metal switches source (on the transition only, never
+// on every check).
 
 import { Redis } from '@upstash/redis';
 import { sendEmail } from '@/lib/email';
@@ -32,18 +31,13 @@ const REPORT_TO = process.env.EOD_REPORT_TO || 'bs@auxite.io';
 
 const NAMES: Record<string, string> = { AUXG: 'Altın', AUXS: 'Gümüş', AUXPT: 'Platin', AUXPD: 'Paladyum' };
 
-export class MetalPricePausedError extends Error {
-  constructor(public metal: string, public deviation: number) {
-    super(`${metal} trading paused: KuveytTürk price deviates ${(deviation * 100).toFixed(1)}% from spot`);
-    this.name = 'MetalPricePausedError';
-  }
-}
-
 export interface DeviationVerdict {
-  paused: boolean;
+  /** True when the KT quote is too far from spot: charge spot instead. */
+  useSpot: boolean;
   /** (KT mid − spot) / spot, or null when there is no usable spot. */
   deviation: number | null;
   ktMid: number;
+  /** Fresh spot, USD per gram; null when there is none. */
   spot: number | null;
 }
 
@@ -56,40 +50,28 @@ export function assessKtDeviation(
 ): DeviationVerdict {
   const ktMid = ktSell > 0 ? (ktBuy + ktSell) / 2 : ktBuy;
   const fresh = spotTimestamp > 0 && now - spotTimestamp < MAX_SPOT_AGE_MS;
-  if (!fresh || !spot || !(spot > 0) || !(ktMid > 0)) return { paused: false, deviation: null, ktMid, spot: null };
+  if (!fresh || !spot || !(spot > 0) || !(ktMid > 0)) return { useSpot: false, deviation: null, ktMid, spot: null };
   const deviation = (ktMid - spot) / spot;
-  return { paused: Math.abs(deviation) > MAX_KT_DEVIATION, deviation, ktMid, spot };
+  return { useSpot: Math.abs(deviation) > MAX_KT_DEVIATION, deviation, ktMid, spot };
 }
 
-/** Record the verdict; email ops only when the paused state flips. */
-export async function notePauseState(symbol: string, v: DeviationVerdict): Promise<void> {
+/** Record the verdict; email ops only when the price source flips. */
+export async function notePriceSource(symbol: string, v: DeviationVerdict): Promise<void> {
   if (v.deviation === null) return;
-  const key = `metal:price-guard:${symbol}`;
-  const next = v.paused ? 'paused' : 'ok';
+  const key = `metal:price-source:${symbol}`;
+  const next = v.useSpot ? 'spot' : 'kt';
   const prev = await redis.getset(key, next).catch(() => null);
-  if (prev === next || (prev === null && next === 'ok')) return;
+  if (prev === next || (prev === null && next === 'kt')) return;
   const pct = `${v.deviation >= 0 ? '+' : ''}${(v.deviation * 100).toFixed(1)}%`;
   const name = NAMES[symbol] || symbol;
   await sendEmail({
     to: REPORT_TO,
-    subject: v.paused
-      ? `${name} alım-satımı DURDURULDU: KT fiyatı spottan ${pct} sapıyor`
-      : `${name} alım-satımı yeniden açıldı (KT–spot farkı ${pct})`,
+    subject: v.useSpot
+      ? `${name} spot fiyata geçti: KT fiyatı spottan ${pct} sapıyor`
+      : `${name} yeniden KT fiyatında (KT–spot farkı ${pct})`,
     html: `<p>${name} (${symbol}) — KT orta fiyat $${v.ktMid.toFixed(2)}/g, spot $${v.spot!.toFixed(2)}/g, fark ${pct} (eşik ±${(MAX_KT_DEVIATION * 100).toFixed(0)}%).</p>
-<p>${v.paused
-      ? 'Fiyat KT\'den alındığı için bu metalde alım ve satım otomatik olarak durduruldu; diğer metaller etkilenmez. KT fiyatı spota yaklaşınca kendiliğinden açılır.'
-      : 'KT fiyatı yeniden spotla uyumlu; alım-satım otomatik olarak açıldı.'}</p>`,
+<p>${v.useSpot
+      ? 'Bu metal artık KT yerine uluslararası spot fiyat + marjla alınıp satılıyor. KT\'den tedarik maliyeti spottan yüksekse her satışta fark bizden çıkar; KT fiyatını kontrol et. KT spota yaklaşınca kendiliğinden KT\'ye döner.'
+      : 'KT fiyatı yeniden spotla uyumlu; bu metal tekrar KT fiyatıyla işlem görüyor.'}</p>`,
   }).catch((e) => console.error('[metal-price-guard] alert email failed:', e));
-}
-
-const NAMES_EN: Record<string, string> = { AUXG: 'Gold', AUXS: 'Silver', AUXPT: 'Platinum', AUXPD: 'Palladium' };
-
-/** Client-facing body for a route that hit a paused metal, or null for any other error. */
-export function pausedErrorBody(e: unknown): { error: string; code: 'metal_paused'; metal: string } | null {
-  if (!(e instanceof MetalPricePausedError)) return null;
-  return {
-    error: `${NAMES[e.metal] || e.metal} alım-satımı fiyat doğrulaması nedeniyle geçici olarak durduruldu. / ${NAMES_EN[e.metal] || e.metal} trading is temporarily paused while its price is verified.`,
-    code: 'metal_paused',
-    metal: e.metal,
-  };
 }

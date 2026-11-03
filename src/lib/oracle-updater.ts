@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 import { getSpreadConfig, applySpread } from './spread-config';
 import { ORACLE_ADDRESS } from '@/config/contracts-v8';
 import { getMetalPricesInUsd } from './kuveytturk-service';
+import { getMetalUsdPrice } from './price-cache';
 
 const ORACLE_ABI = [
   'function updateAllPrices(uint256 goldE6, uint256 silverE6, uint256 platinumE6, uint256 palladiumE6, uint256 ethE6) external',
@@ -39,7 +40,9 @@ async function fetchKuveytTurkPrices(): Promise<MetalPrices | null> {
     const gold = metalPricesUsd.AUXG?.buyRateUSD;
     const silver = metalPricesUsd.AUXS?.buyRateUSD;
     const platinum = metalPricesUsd.AUXPT?.buyRateUSD;
-    const palladium = metalPricesUsd.AUXPD?.buyRateUSD;
+    // Same source as the trade charge: palladium is priced off GoldAPI spot
+    // (KT's palladium quote is unusable, see SPOT_PRICED_METALS in price-cache).
+    const palladium = await getMetalUsdPrice('AUXPD', 'buy').catch(() => 0);
 
     if (!gold || !silver || !platinum || !palladium) {
       console.warn('⚠️ KuveytTurk incomplete data for oracle');
