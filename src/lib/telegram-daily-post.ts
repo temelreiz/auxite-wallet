@@ -1,7 +1,8 @@
 // src/lib/telegram-daily-post.ts
 // Text for the daily post on the public @auxite channel (EN / AR / RU in one
 // post, matching the languages the channel is advertised in).
-//   Mon–Fri  app buy prices (spread included, as on vault.auxite.io) with
+//   Mon–Fri  app buy prices (spread included, as on vault.auxite.io, hence
+//            "Auxite prices", not market prices) with
 //            the change since the previous snapshot
 //   Sat      weekly recap (change vs. the previous Friday)
 //   Sun      a precious-metals fact, rotating weekly
@@ -42,7 +43,7 @@ function priceLines(spot: Spot, prev?: Spot): string {
 
 // One line per weekday so the daily post is not identical every morning.
 const WEEKDAY_LINES: { en: string; ar: string; ru: string }[] = [
-  { en: "Buy precious metals from 1 gram at market prices.", ar: "اشترِ المعادن الثمينة بدءاً من غرام واحد بأسعار السوق.", ru: "Покупайте драгоценные металлы от 1 грамма по рыночной цене." },
+  { en: "Buy precious metals from 1 gram.", ar: "اشترِ المعادن الثمينة بدءاً من غرام واحد.", ru: "Покупайте драгоценные металлы от 1 грамма." },
   { en: "Gold, silver, platinum and palladium in one account.", ar: "الذهب والفضة والبلاتين والبلاديوم في حساب واحد.", ru: "Золото, серебро, платина и палладий в одном аккаунте." },
   { en: "Physical delivery of your metal is available on request.", ar: "إمكانية الاستلام الفعلي لمعادنك عند الطلب.", ru: "Физическая доставка металла доступна по запросу." },
   { en: "Track your metals in the Auxite app or on the web.", ar: "تابع معادنك في تطبيق Auxite أو على الويب.", ru: "Следите за металлами в приложении Auxite или на сайте." },
@@ -82,12 +83,13 @@ export function dailyKind(now: Date): DailyKind {
 
 /**
  * Build the post. `prev` is the last weekday snapshot for "prices" and the previous
- * Friday's for "weekly"; without it the change column is left out.
+ * Friday's for "weekly"; without it the change column is left out. `promo`
+ * (e.g. a running campaign) is added above the link on every kind of post.
  */
-export function buildDailyPost(now: Date, spot: Spot | null, prev?: Spot): string {
+export function buildDailyPost(now: Date, spot: Spot | null, prev?: Spot, promo?: string): string {
   const kind = dailyKind(now);
   const date = now.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
-  const cta = `\n\n🔗 <a href="${LINK}">vault.auxite.io</a>`;
+  const cta = `${promo ? `\n\n${promo}` : ""}\n\n🔗 <a href="${LINK}">vault.auxite.io</a>`;
 
   if (kind === "fact" || !spot) {
     const f = FACTS[isoWeek(now) % FACTS.length];
@@ -103,5 +105,18 @@ export function buildDailyPost(now: Date, spot: Spot | null, prev?: Spot): strin
   }
 
   const line = WEEKDAY_LINES[(now.getUTCDay() - 1) % WEEKDAY_LINES.length];
-  return `📈 <b>Precious metals today · المعادن الثمينة اليوم · Металлы сегодня</b> — ${date}\n\n${priceLines(spot, prev)}\n\n${block(line)}${cta}`;
+  return `📈 <b>Auxite prices today · أسعار Auxite اليوم · Цены Auxite сегодня</b> — ${date}\n\n${priceLines(spot, prev)}\n\n${block(line)}${cta}`;
+}
+
+/** Reminder for the AUXR buy campaign while it runs (rules: auxr-buy-reward.ts). */
+export function buyRewardPromo(endAt: number, holdUntil: number): string {
+  // endAt is exclusive, so the last day shown is the day before it.
+  const fmt = (t: number, locale: string) => new Date(t).toLocaleDateString(locale, { day: "numeric", month: "long", timeZone: "UTC" });
+  const end = (l: string) => fmt(endAt - 1, l);
+  const hold = (l: string) => fmt(holdUntil, l);
+  return `🎁 ${block({
+    en: `AUXR Buy Rewards: 0.05 AUXR for every $100 of AUXR you buy, up to 0.5 AUXR, until ${end("en-GB")}. Hold until ${hold("en-GB")}. Web and Android only (iOS app not available yet) · KYC · not for US/UK persons.`,
+    ar: `مكافآت شراء AUXR: ‏0.05 AUXR مقابل كل 100 دولار من مشتريات AUXR، حتى 0.5 AUXR، حتى ${end("ar")}. احتفظ بها حتى ${hold("ar")}. عبر الويب وأندرويد فقط (تطبيق iOS غير متاح بعد) · KYC · غير متاحة لمواطني أو مقيمي الولايات المتحدة والمملكة المتحدة.`,
+    ru: `Бонусы за покупку AUXR: 0,05 AUXR за каждые $100 покупки AUXR, до 0,5 AUXR, до ${end("ru-RU")}. Держите до ${hold("ru-RU")}. Только веб и Android (iOS пока недоступно) · KYC · не для лиц из США/Великобритании.`,
+  })}`;
 }

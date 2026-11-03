@@ -28,7 +28,8 @@ import { readPositions } from "@/lib/staking/ledger";
 export const CAMPAIGN = {
   id: "nov26",
   startAt: Date.parse("2026-11-04T00:00:00Z"),
-  endAt: Date.parse("2026-11-18T00:00:00Z"),
+  // Announced as "4–18 November", so 18 Nov is the last full day.
+  endAt: Date.parse("2026-11-19T00:00:00Z"),
   settleAt: Date.parse("2026-11-25T00:00:00Z"),
   STEP_USD: 100,
   AUXR_PER_STEP: 0.05,
