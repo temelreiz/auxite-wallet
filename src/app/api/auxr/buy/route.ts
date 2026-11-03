@@ -28,7 +28,7 @@ import {
   getRedis,
   addTransaction,
 } from "@/lib/redis";
-import { quoteBuy, AUXR_MIN_PURCHASE_USD } from "@/lib/auxr-pricing";
+import { quoteBuy, AUXR_MIN_PURCHASE_USD, StaleNavError } from "@/lib/auxr-pricing";
 import { recordMint } from "@/lib/auxr-reserve";
 import { getAp, recordApFlow, AP_SPREAD } from "@/lib/auxr-ap";
 import { notifyAuxrTrade } from "@/lib/telegram";
@@ -237,7 +237,18 @@ export async function POST(request: NextRequest) {
   // Volatility risk is minimal because /api/auxr/price polling caches
   // for 30s; same horizon as this quote.
   const ap = await getAp(normalizedAddress);
-  const quote = await quoteBuy(usdAmount, ap ? AP_SPREAD : undefined);
+  let quote: Awaited<ReturnType<typeof quoteBuy>>;
+  try {
+    quote = await quoteBuy(usdAmount, ap ? AP_SPREAD : undefined);
+  } catch (e) {
+    if (e instanceof StaleNavError) {
+      return NextResponse.json(
+        { success: false, error: "nav_stale", ageSeconds: e.ageSeconds },
+        { status: 503 }
+      );
+    }
+    throw e;
+  }
 
   // Execute the swap atomically: debit the chosen rail, credit AUXR.
   const balanceKey = `user:${normalizedAddress}:balance`;

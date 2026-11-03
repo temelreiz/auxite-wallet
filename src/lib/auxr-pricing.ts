@@ -27,6 +27,26 @@
 // ============================================================================
 
 import { getMetalSpotPrices } from "@/lib/price-cache";
+import { NAV_MAX_AGE_SECONDS } from "@/lib/nav-redemption";
+
+/**
+ * Thrown when a narrow-spread (authorised participant) quote would use a NAV
+ * older than NAV_MAX_AGE_SECONDS. Retail's 125 bps absorbs a stale price; at
+ * 25 bps a stale NAV during a metals move is a free option against the
+ * treasury, so AP quotes halt instead.
+ */
+export class StaleNavError extends Error {
+  constructor(public readonly ageSeconds: number) {
+    super(`AUXR: NAV is ${ageSeconds}s old (max ${NAV_MAX_AGE_SECONDS}s for AP quotes)`);
+    this.name = "StaleNavError";
+  }
+}
+
+function assertFreshNavForOverride(timestamp: number, spreadOverride?: number): void {
+  if (spreadOverride == null) return;
+  const ageSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if (!(timestamp > 0) || ageSeconds > NAV_MAX_AGE_SECONDS) throw new StaleNavError(ageSeconds);
+}
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -248,6 +268,7 @@ export async function quoteBuy(usdAmount: number, spreadOverride?: number): Prom
   }
 
   const pricing = await getAuxrPricing();
+  assertFreshNavForOverride(pricing.timestamp, spreadOverride);
   // Authorised participants trade at a narrower spread (src/lib/auxr-ap.ts).
   const buyPriceUSD = spreadOverride != null ? pricing.navUSD * (1 + spreadOverride) : pricing.buyPriceUSD;
   const unitsAUXR = usdAmount / buyPriceUSD;
@@ -289,6 +310,7 @@ export async function quoteSell(unitsAUXR: number, spreadOverride?: number): Pro
   }
 
   const pricing = await getAuxrPricing();
+  assertFreshNavForOverride(pricing.timestamp, spreadOverride);
   const sellPriceUSD = spreadOverride != null ? pricing.navUSD * (1 - spreadOverride) : pricing.sellPriceUSD;
   const proceedsUSD = unitsAUXR * sellPriceUSD;
 
