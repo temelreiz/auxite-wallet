@@ -20,7 +20,7 @@ import {
   getRedis,
   addTransaction,
 } from "@/lib/redis";
-import { quoteSell } from "@/lib/auxr-pricing";
+import { quoteSell, StaleNavError } from "@/lib/auxr-pricing";
 import { recordBurn } from "@/lib/auxr-reserve";
 import { getAp, recordApFlow, AP_SPREAD } from "@/lib/auxr-ap";
 import { notifyAuxrTrade } from "@/lib/telegram";
@@ -121,7 +121,18 @@ export async function POST(request: NextRequest) {
   // Authorised participants redeem at the AP spread and are paid in USDT,
   // which they can withdraw; everyone else gets AUXM at the retail spread.
   const ap = await getAp(normalizedAddress);
-  const quote = await quoteSell(unitsAUXR, ap ? AP_SPREAD : undefined);
+  let quote: Awaited<ReturnType<typeof quoteSell>>;
+  try {
+    quote = await quoteSell(unitsAUXR, ap ? AP_SPREAD : undefined);
+  } catch (e) {
+    if (e instanceof StaleNavError) {
+      return NextResponse.json(
+        { success: false, error: "nav_stale", ageSeconds: e.ageSeconds },
+        { status: 503 }
+      );
+    }
+    throw e;
+  }
 
   // Execute: burn AUXR, credit AUXM. Proceeds go to paid auxm (not bonus)
   // because bonus is one-way (only ever credited by promotional flow).
