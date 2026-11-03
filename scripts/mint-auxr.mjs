@@ -19,20 +19,18 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 // ── Mint parameters — EDIT HERE if you need different values ─────────────────
-const RECIPIENT = "0x728771961934d994148071Bbc4857F768D82519E"; // new Ledger
-const AMOUNT_AUXR = "150";  // human units; AUXR has 18 decimals
+const RECIPIENT = "0x0a5dFC442Ba42a83f3f2F040025E1b4B0b625Fe3"; // Auxite treasury (real EOA, nonce=2, verified controllable)
+const AMOUNT_AUXR = "23100";  // full founder-tranche replacement (0x8d23 locked). CHANGE this line for a different amount.
 const DECIMALS = 18;
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BROADCAST = process.argv.includes("--broadcast");
 
-const CHAIN = process.env.AUXR_CHAIN || "baseSepolia";
-const RPC =
-  CHAIN === "base"
-    ? process.env.BASE_RPC_URL || "https://mainnet.base.org"
-    : process.env.BASE_SEPOLIA_RPC || "https://sepolia.base.org";
-const CONTRACT = process.env.AUXR_CONTRACT_ADDRESS;
-const MINTER_PK = process.env.AUXR_MINTER_PRIVATE_KEY;
+const CHAIN = "base"; // forced: one-off MAINNET founder-replacement mint
+const RPC = process.env.BASE_RPC_URL || "https://mainnet.base.org";
+const CONTRACT = process.env.AUXR_CONTRACT_ADDRESS || "0xB145B8e9C02193d55454f534f917Cabe704FA042";
+// Minter key: .env.local stores it as ANCHOR_PRIVATE_KEY / PRIVATE_KEY (both = 0xD4ce…1658, holds MINTER_ROLE)
+const MINTER_PK = process.env.AUXR_MINTER_PRIVATE_KEY || process.env.ANCHOR_PRIVATE_KEY || process.env.PRIVATE_KEY;
 
 // mint(address to, uint256 amount, bytes32 refId) + role check helpers
 const ABI = [

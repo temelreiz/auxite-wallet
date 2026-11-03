@@ -9,7 +9,9 @@ import { requireSelf } from '@/lib/security/require-user';
 import { notifyValueMovement } from "@/lib/telegram";
 import { Redis } from '@upstash/redis';
 import { sendEmail } from '@/lib/email';
-import { getUserBalance } from '@/lib/redis';
+import { getUserBalance, incrementBalance } from '@/lib/redis';
+import { getMetalPrices } from '@/lib/price-cache';
+import { NAV_MAX_AGE_SECONDS } from '@/lib/nav-redemption';
 import { checkTradingAllowed } from '@/lib/trading-guard';
 import { requireKycForWithdraw } from '@/lib/withdrawal-guard';
 import { ethers } from 'ethers';
@@ -124,6 +126,36 @@ const VAULTS = [
 ];
 
 type RedemptionMethod = 'cash' | 'pickup' | 'courier' | 'vault_transfer';
+
+// ── KYC tier per method ──
+// Tier maps the stored KYC level (kyc:{address}.level): basic=1, verified=2,
+// enhanced=3. requireKycForWithdraw already gates on an approved status; this
+// adds the per-method level the config advertises (courier = tier 2).
+const KYC_LEVEL_TIER: Record<string, number> = { none: 0, basic: 1, verified: 2, enhanced: 3 };
+const METHOD_MIN_KYC_TIER: Record<RedemptionMethod, number> = {
+  cash: 1,
+  pickup: 1,
+  courier: 2,
+  vault_transfer: 2,
+};
+
+async function getKycTier(address: string): Promise<number> {
+  try {
+    const raw = await redis.get(`kyc:${address.toLowerCase()}`);
+    if (!raw) return 0;
+    const kyc = typeof raw === 'string' ? JSON.parse(raw) : (raw as any);
+    return KYC_LEVEL_TIER[String(kyc?.level || 'none').toLowerCase()] ?? 0;
+  } catch {
+    return 0; // fail closed
+  }
+}
+
+const METAL_PRICE_KEY: Record<string, 'gold' | 'silver' | 'platinum' | 'palladium'> = {
+  AUXG: 'gold',
+  AUXS: 'silver',
+  AUXPT: 'platinum',
+  AUXPD: 'palladium',
+};
 
 // ── GET: Redemption config + user eligibility ──
 export async function GET(request: NextRequest) {
@@ -277,6 +309,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Physical redemption is currently unavailable' }, { status: 403 });
     }
 
+    const kycTier = await getKycTier(address);
+    if (kycTier < METHOD_MIN_KYC_TIER[method as RedemptionMethod]) {
+      return NextResponse.json({
+        error: `KYC tier ${METHOD_MIN_KYC_TIER[method as RedemptionMethod]} required for ${method} redemption`,
+        code: 'kyc_tier_insufficient',
+        kycTier,
+      }, { status: 403 });
+    }
+
     // Physical methods require minimum threshold
     if (method !== 'cash') {
       const minThreshold = MIN_THRESHOLDS[upperMetal] || 100;
@@ -356,6 +397,31 @@ export async function POST(request: NextRequest) {
     const netAmount = amt - fee;
     const sla = SLA[upperMetal] || { min: 5, max: 15 };
 
+    // Cash settlement is priced at live NAV and debits the custodial ledger
+    // only. Allocated or on-chain grams can't be cash-settled here: debiting
+    // the ledger for them would leave the allocation/token in place.
+    let cashPricePerGram = 0;
+    if (method === 'cash') {
+      const ledgerBal = parseFloat(String((await getUserBalance(address) as any)[upperMetal.toLowerCase()] || 0));
+      if (amt > ledgerBal + 1e-9) {
+        return NextResponse.json({
+          error: 'Cash settlement is limited to your custodial balance. Deposit on-chain or allocated metal first.',
+          code: 'insufficient_custodial_balance',
+          custodialBalance: ledgerBal,
+        }, { status: 400 });
+      }
+      const priceKey = METAL_PRICE_KEY[upperMetal];
+      const prices = priceKey ? await getMetalPrices() : null;
+      const ageSeconds = prices ? (Date.now() - prices.timestamp) / 1000 : Infinity;
+      cashPricePerGram = prices && priceKey ? prices[priceKey] : 0;
+      if (!(cashPricePerGram > 0) || ageSeconds > NAV_MAX_AGE_SECONDS) {
+        return NextResponse.json({
+          error: 'Live price unavailable — cash settlement paused. Please retry shortly.',
+          code: 'nav_stale',
+        }, { status: 503 });
+      }
+    }
+
     // Create redemption request
     const redemptionId = `RDM_${Date.now()}_${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
 
@@ -371,7 +437,7 @@ export async function POST(request: NextRequest) {
       vault: vault || null,
       notes: notes || '',
       status: method === 'cash' ? 'processing' : 'pending_approval',
-      kycTier: 1, // TODO: actual KYC check
+      kycTier,
       sla,
       createdAt: new Date().toISOString(),
       timestamp: Date.now(),
@@ -390,15 +456,17 @@ export async function POST(request: NextRequest) {
 
     // For cash settlement, process immediately (deduct balance)
     if (method === 'cash') {
-      const newBal = bal - amt;
-      await redis.hset(balKey, { [upperMetal.toLowerCase()]: newBal.toString() });
-
-      // Credit AUXM equivalent
-      const metalPrices: Record<string, number> = { AUXG: 95, AUXS: 1.1, AUXPT: 32, AUXPD: 35 };
-      const price = metalPrices[upperMetal] || 95;
+      // Debit the metal and credit AUXM at live NAV in one increment. The old
+      // code wrote `hybridBalance - amt` over the ledger field, which folded
+      // on-chain and allocated grams into the custodial balance.
+      const price = cashPricePerGram;
       const auxmCredit = netAmount * price;
-      const currentAuxm = parseFloat(await redis.hget(balKey, 'auxm') as string || '0');
-      await redis.hset(balKey, { auxm: (currentAuxm + auxmCredit).toString() });
+      const ok = await incrementBalance(
+        address,
+        { [upperMetal.toLowerCase()]: -amt, auxm: auxmCredit } as any,
+        { auxmReason: 'cash_redemption', counterAsset: upperMetal, counterAmount: amt, refTxId: redemptionId, meta: { navPerGram: price } },
+      );
+      if (!ok) throw new Error('Balance update failed');
 
       // Log transaction
       const tx = {

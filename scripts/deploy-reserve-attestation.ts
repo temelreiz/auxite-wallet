@@ -17,7 +17,7 @@
 //   ATTESTATION_ATTESTOR  — independent attestor signing key address
 //                           (ATTESTOR_ROLE). Defaults to zero address (grant
 //                           later via the admin). This is the address derived
-//                           from RESERVE_ATTESTOR_KEY held by The Network Firm.
+//                           from RESERVE_ATTESTOR_KEY.
 //
 // After deploy:
 //   1. Verify:  npx hardhat verify --network <net> <ADDRESS> <ADMIN> <ATTESTOR>
