@@ -52,6 +52,8 @@ import type { Address, Hash } from "viem";
 import { redis } from "@/lib/redis";
 import { incrementBalance, getUserBalance } from "@/lib/redis";
 import { recordBurn, recordMint } from "@/lib/auxr-reserve";
+import { resolveApSource } from "@/lib/auxr-ap";
+import { taintedAddresses } from "@/lib/auxr-taint";
 import {
   auxrToWei,
   weiToAuxr,
@@ -307,7 +309,26 @@ export async function acknowledgeDepositFromChain(params: {
   // attribute deposits to whoever's wallet matches `fromAddress`. Future:
   // also accept memo-based attribution.
   if (record.state === "seen") {
-    const attributed = await findUserByWallet(fromAddress);
+    let attributed = await findUserByWallet(fromAddress);
+    if (!attributed) {
+      // Authorised participants redeem from registered source wallets
+      // (src/lib/auxr-ap.ts). User wallets win: they are checked first.
+      const match = await resolveApSource(fromAddress);
+      if (match.status === "active") {
+        const tainted = (await taintedAddresses()).map((a) => a.toLowerCase());
+        if (tainted.includes(fromAddress.toLowerCase())) {
+          await alert("SEV1", `AUXR deposit from tainted AP source ${fromAddress} — held for manual review`, {
+            txHash, ap: match.ap.address, amountWei: amountWei.toString(),
+          });
+        } else {
+          attributed = match.ap.address;
+        }
+      } else if (match.status === "cooling_down") {
+        await alert("WARN", `AUXR deposit from AP source ${fromAddress} still in cooldown — held for manual review`, {
+          txHash, ap: match.source.apAddress, activeAt: match.source.activeAt, amountWei: amountWei.toString(),
+        });
+      }
+    }
     if (!attributed) {
       record.state = "skipped_unattributed";
       record.updatedAt = Date.now();
@@ -411,7 +432,7 @@ async function readDeposit(
  * primary wallet address). Mirrors how the rest of the codebase identifies
  * users; returns null when no matching account exists.
  */
-async function findUserByWallet(addr: Address): Promise<string | null> {
+export async function findUserByWallet(addr: Address): Promise<string | null> {
   const lower = addr.toLowerCase();
 
   // Direct wallet-keyed records: try the user:{addr}:meta hash first.
