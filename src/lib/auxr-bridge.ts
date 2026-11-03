@@ -51,6 +51,7 @@
 import type { Address, Hash } from "viem";
 import { redis } from "@/lib/redis";
 import { incrementBalance, getUserBalance } from "@/lib/redis";
+import { debitIfAvailable } from "@/lib/balance-debit";
 import { recordBurn, recordMint } from "@/lib/auxr-reserve";
 import { resolveApSource } from "@/lib/auxr-ap";
 import { taintedAddresses } from "@/lib/auxr-taint";
@@ -183,16 +184,16 @@ export async function withdrawToChain(params: {
   // the same Redis call). Skip if a previous attempt already debited.
   if (record.state === "pending") {
     try {
-      const balance = await getUserBalance(walletAddressOffChain);
-      if (balance.auxr < unitsAUXR - 1e-9) {
+      // Check and debit in one step (was read-then-debit: concurrent
+      // withdrawals could both pass against the same balance).
+      const debit = await debitIfAvailable(walletAddressOffChain, "auxr", unitsAUXR);
+      if (!debit.ok) {
         record.state = "failed_off_chain";
-        record.error = `insufficient off-chain balance: have ${balance.auxr}, need ${unitsAUXR}`;
+        record.error = `insufficient off-chain balance: have ${debit.available}, need ${unitsAUXR}`;
         record.updatedAt = Date.now();
         await writeWithdraw(record);
         throw new Error(record.error);
       }
-
-      await incrementBalance(walletAddressOffChain, { auxr: -unitsAUXR });
       await recordBurn({
         unitsAUXR,
         refId: `bridge-withdraw:${refId}`,

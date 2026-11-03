@@ -11,6 +11,7 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { acquireBalanceLock, releaseBalanceLock } from "@/lib/balance-lock";
 import { requireUser } from "@/lib/security/require-user";
 import { assertAccountActive } from "@/lib/security/account-guard";
 import { z } from "zod";
@@ -106,8 +107,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // The balance check and the debit below are separate steps; without the
+  // per-user lock (the one trade / transfer / withdraw take) concurrent
+  // requests could all pass the check against the same balance.
+  const balanceLock = await acquireBalanceLock(normalizedAddress, "auxr-sell");
+  if (!balanceLock) {
+    return NextResponse.json(
+      { success: false, error: "operation_in_progress" },
+      { status: 409 }
+    );
+  }
   const balance = await getUserBalance(normalizedAddress);
   if (balance.auxr < unitsAUXR - 1e-9) {
+    await releaseBalanceLock(balanceLock);
     return NextResponse.json(
       {
         success: false,
@@ -127,11 +139,13 @@ export async function POST(request: NextRequest) {
     quote = await quoteSell(unitsAUXR, ap ? AP_SPREAD : undefined);
   } catch (e) {
     if (e instanceof StaleNavError) {
+      await releaseBalanceLock(balanceLock);
       return NextResponse.json(
         { success: false, error: "nav_stale", ageSeconds: e.ageSeconds },
         { status: 503 }
       );
     }
+    await releaseBalanceLock(balanceLock);
     throw e;
   }
 
@@ -149,6 +163,7 @@ export async function POST(request: NextRequest) {
     });
   }
   await pipe.exec();
+  await releaseBalanceLock(balanceLock);
 
   try {
     await recordBurn({
