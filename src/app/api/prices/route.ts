@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { calculateAllExecutionPrices, getPricingConfig, roundPrice, roundPriceOz } from "@/lib/pricing-engine";
+import { getSpreadConfig, applySpread } from "@/lib/spread-config";
 import { getMetalPricesInUsd, getUsdTlRate, getAuxiteMetalRates } from "@/lib/kuveytturk-service";
 import { getSpotPricedMetals } from "@/lib/price-cache";
 
@@ -205,13 +206,28 @@ export async function GET() {
       changes[symbol] = apiData?.change || 0;
     }
 
-    // Calculate execution prices using Hybrid Pricing Engine
-    const execResults = await withTimeout(calculateAllExecutionPrices(spotPerGram, 0), 5000, {} as any);
-
-    for (const [symbol, result] of Object.entries(execResults) as Array<
-      [string, { executionPrice: number }]
-    >) {
-      executionPrices[symbol] = roundPrice(result.executionPrice, symbol);
+    // Execution (buy) price = the base above plus the admin buy spread, the
+    // same formula the trade charge uses (getTokenPrices / createQuote), so
+    // the listed price is the price paid. It used to come from the pricing
+    // engine, whose margins differ (palladium: a $4.20/g floor), and the list
+    // showed 1.5–5% less than the charge for gold, silver and platinum.
+    const spreads = await withTimeout(getSpreadConfig(), 4000, null);
+    const SPREAD_KEY = { AUXG: "gold", AUXS: "silver", AUXPT: "platinum", AUXPD: "palladium" } as const;
+    for (const symbol of Object.keys(spotPerGram)) {
+      const buySpread = spreads?.metals?.[SPREAD_KEY[symbol as keyof typeof SPREAD_KEY]]?.buy;
+      if (typeof buySpread === "number") {
+        executionPrices[symbol] = roundPrice(applySpread(spotPerGram[symbol], "buy", buySpread), symbol);
+      }
+    }
+    // Spread config unreachable: fall back to the pricing engine rather than
+    // return no price at all.
+    const missing = Object.keys(spotPerGram).filter((s) => !(s in executionPrices));
+    if (missing.length) {
+      const execResults = await withTimeout(calculateAllExecutionPrices(spotPerGram, 0), 5000, {} as any);
+      for (const symbol of missing) {
+        const r = (execResults as Record<string, { executionPrice: number }>)[symbol];
+        if (r) executionPrices[symbol] = roundPrice(r.executionPrice, symbol);
+      }
     }
 
     const hasRealData = priceData !== null && Object.keys(priceData).length > 0;
