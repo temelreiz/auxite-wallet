@@ -85,7 +85,80 @@ export async function setAp(ap: Omit<ApAccount, "addedAt">): Promise<ApAccount> 
 }
 
 export async function removeAp(address: string): Promise<void> {
-  await getRedis().hdel(AP_KEY, address.toLowerCase());
+  const a = address.toLowerCase();
+  await getRedis().hdel(AP_KEY, a);
+  for (const s of await listApSources(a)) await removeApSource(s.source);
+}
+
+// ── Source addresses (redeem attribution) ────────────────────────────────────
+//
+// The deposit scanner credits a deposit only when it comes from a known user
+// wallet. An AP's AUXR sits on an exchange and leaves from the exchange's hot
+// wallet, so its redemptions landed in manual review. An AP registers its own
+// wallets (the ones it withdraws to from the exchange) as sources; deposits
+// from them are credited to the AP.
+//
+// Controls:
+//   - A source maps to one AP and can't be a user's wallet (the scanner checks
+//     user wallets first anyway) or the AP's exchange destination.
+//   - A new source is only honoured after AP_SOURCE_COOLDOWN_MS. A deposit
+//     sent sooner stays in manual review, so a hijacked admin session can't
+//     redirect deposits the moment it adds an address.
+//   - Tainted addresses (auxr-taint) are never credited through this path.
+// Crediting only ever moves AUXR the AP actually sent; nothing is minted.
+
+const SOURCES_KEY = "auxr:ap:sources"; // hash: source → ApSource JSON
+
+/** Hours a newly added source waits before deposits from it are credited. */
+export const AP_SOURCE_COOLDOWN_MS = Number(process.env.AUXR_AP_SOURCE_COOLDOWN_HOURS ?? 24) * 60 * 60 * 1000;
+
+export interface ApSource {
+  source: string;     // on-chain wallet the AP redeems from
+  apAddress: string;  // AP's Auxite account
+  addedAt: number;
+  activeAt: number;   // addedAt + cooldown
+}
+
+export async function listApSources(apAddress?: string): Promise<ApSource[]> {
+  const all = ((await getRedis().hgetall(SOURCES_KEY)) || {}) as Record<string, unknown>;
+  const list = Object.values(all).map((v) => parse<ApSource>(v)).filter((x): x is ApSource => !!x);
+  return apAddress ? list.filter((s) => s.apAddress === apAddress.toLowerCase()) : list;
+}
+
+export type AddApSourceResult =
+  | { ok: true; source: ApSource }
+  | { ok: false; error: "ap_not_found" | "source_is_destination" | "source_taken" };
+
+export async function addApSource(apAddress: string, source: string, now = Date.now()): Promise<AddApSourceResult> {
+  const ap = await getAp(apAddress);
+  if (!ap) return { ok: false, error: "ap_not_found" };
+  const s = source.toLowerCase();
+  if (s === ap.destination) return { ok: false, error: "source_is_destination" };
+  const rec: ApSource = { source: s, apAddress: ap.address, addedAt: now, activeAt: now + AP_SOURCE_COOLDOWN_MS };
+  // hsetnx: a source already mapped (to this or another AP) is never re-pointed
+  // or re-timed; remove it first.
+  const set = await getRedis().hsetnx(SOURCES_KEY, s, JSON.stringify(rec));
+  if (!set) return { ok: false, error: "source_taken" };
+  return { ok: true, source: rec };
+}
+
+export async function removeApSource(source: string): Promise<void> {
+  await getRedis().hdel(SOURCES_KEY, source.toLowerCase());
+}
+
+export type ApSourceMatch =
+  | { status: "active"; ap: ApAccount; source: ApSource }
+  | { status: "cooling_down"; source: ApSource }
+  | { status: "none" };
+
+/** Resolve a depositing wallet to an AP through its registered sources. */
+export async function resolveApSource(fromAddress: string, now = Date.now()): Promise<ApSourceMatch> {
+  const src = parse<ApSource>(await getRedis().hget(SOURCES_KEY, fromAddress.toLowerCase()));
+  if (!src) return { status: "none" };
+  const ap = await getAp(src.apAddress);
+  if (!ap) return { status: "none" };
+  if (now < src.activeAt) return { status: "cooling_down", source: src };
+  return { status: "active", ap, source: src };
 }
 
 // ── Inventory wallet ─────────────────────────────────────────────────────────
