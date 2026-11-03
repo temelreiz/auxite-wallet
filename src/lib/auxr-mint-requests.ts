@@ -21,6 +21,7 @@
 // means "larger than anything any customer currently holds needs a human".
 
 import { getRedis, getUserBalance, incrementBalance } from "@/lib/redis";
+import { debitIfAvailable } from "@/lib/balance-debit";
 import { getOnChainBalance } from "@/lib/auxr-onchain";
 import type { Address } from "viem";
 
@@ -133,12 +134,12 @@ export async function createMintRequest(params: {
   const existing = await getMintRequest(refId);
   if (existing) return { ok: true, request: existing };
 
-  const balance = await getUserBalance(address);
-  if (balance.auxr < unitsAUXR - 1e-9) {
+  // Check and debit in one step: two concurrent requests used to both pass
+  // a read-then-debit check against the same balance.
+  const debit = await debitIfAvailable(address, "auxr", unitsAUXR);
+  if (!debit.ok) {
     return { ok: false, code: "insufficient_balance", error: "Insufficient AUXR balance." };
   }
-
-  await incrementBalance(address, { auxr: -unitsAUXR });
 
   const now = new Date();
   const request: MintRequest = {

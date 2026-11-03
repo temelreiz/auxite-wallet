@@ -19,6 +19,7 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { acquireBalanceLock, releaseBalanceLock } from "@/lib/balance-lock";
 import { requireUser } from "@/lib/security/require-user";
 import { assertAccountActive } from "@/lib/security/account-guard";
 import { z } from "zod";
@@ -187,6 +188,16 @@ export async function POST(request: NextRequest) {
 
   // Balance check on the chosen rail. Pegged tokens (auxm/usdt/usdc/usd) map
   // 1:1 to USD; btc/eth are valued at spot and debited in token units.
+  // The balance check and the debit below are separate steps; without the
+  // per-user lock (the one trade / transfer / withdraw take) concurrent
+  // requests could all pass the check against the same balance.
+  const balanceLock = await acquireBalanceLock(normalizedAddress, "auxr-buy");
+  if (!balanceLock) {
+    return NextResponse.json(
+      { success: false, error: "operation_in_progress" },
+      { status: 409 }
+    );
+  }
   const balance = await getUserBalance(normalizedAddress);
 
   let availableForRail = 0; // always in USD, compared against usdAmount
@@ -209,6 +220,7 @@ export async function POST(request: NextRequest) {
     const spot = await getCryptoSpot();
     spotPrice = paymentToken === "btc" ? spot.btc : spot.eth;
     if (!spotPrice || spotPrice <= 0) {
+      await releaseBalanceLock(balanceLock);
       return NextResponse.json(
         { success: false, error: "price_unavailable", paymentToken },
         { status: 503 }
@@ -221,6 +233,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (availableForRail < usdAmount) {
+    await releaseBalanceLock(balanceLock);
     return NextResponse.json(
       {
         success: false,
@@ -243,11 +256,13 @@ export async function POST(request: NextRequest) {
     quote = await quoteBuy(usdAmount, ap ? AP_SPREAD : undefined);
   } catch (e) {
     if (e instanceof StaleNavError) {
+      await releaseBalanceLock(balanceLock);
       return NextResponse.json(
         { success: false, error: "nav_stale", ageSeconds: e.ageSeconds },
         { status: 503 }
       );
     }
+    await releaseBalanceLock(balanceLock);
     throw e;
   }
 
@@ -282,6 +297,7 @@ export async function POST(request: NextRequest) {
   pipe.hincrbyfloat(balanceKey, "auxr", quote.unitsAUXR);
 
   await pipe.exec();
+  await releaseBalanceLock(balanceLock);
 
   // Update reserves + propagate to treasury exposure. Best-effort — if
   // this fails the balance change has already been committed, so we log
