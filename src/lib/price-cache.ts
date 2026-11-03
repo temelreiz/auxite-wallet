@@ -1,6 +1,7 @@
 // Price Cache - Cache metal prices to avoid API rate limits
 import { Redis } from '@upstash/redis';
 import { getMetalPricesInUsd } from './kuveytturk-service';
+import { assessKtDeviation, notePauseState, MetalPricePausedError, type DeviationVerdict } from './metal-price-guard';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -279,19 +280,57 @@ function toAuxSymbol(metal: string): 'AUXG' | 'AUXS' | 'AUXPT' | 'AUXPD' | null 
   }
 }
 
+const SPOT_KEY = { AUXG: 'gold', AUXS: 'silver', AUXPT: 'platinum', AUXPD: 'palladium' } as const;
+
+async function ktVerdict(symbol: keyof typeof SPOT_KEY, buy: number, sell: number): Promise<DeviationVerdict> {
+  const spot = await getMetalSpotPrices().catch(() => null);
+  const v = assessKtDeviation(buy, sell, spot?.[SPOT_KEY[symbol]], spot?.timestamp ?? 0);
+  notePauseState(symbol, v).catch(() => {});
+  return v;
+}
+
+/**
+ * Metals whose KT quote is too far from spot to trade on (see
+ * metal-price-guard.ts). Empty when KT is unreachable: trading then runs on
+ * spot, which needs no guard.
+ */
+export async function getPausedMetals(): Promise<Array<{ symbol: string; deviation: number }>> {
+  let kt: Awaited<ReturnType<typeof getMetalPricesInUsd>>;
+  try {
+    kt = await fetchKtBounded();
+  } catch {
+    return [];
+  }
+  const out: Array<{ symbol: string; deviation: number }> = [];
+  for (const symbol of Object.keys(SPOT_KEY) as Array<keyof typeof SPOT_KEY>) {
+    const r = kt[symbol];
+    if (!r || !(r.buyRateUSD > 0)) continue;
+    const v = await ktVerdict(symbol, r.buyRateUSD, r.sellRateUSD);
+    if (v.paused) out.push({ symbol, deviation: v.deviation! });
+  }
+  return out;
+}
+
 export async function getMetalUsdPrice(metal: string, type: 'buy' | 'sell'): Promise<number> {
   const symbol = toAuxSymbol(metal);
   if (symbol) {
+    let r: Awaited<ReturnType<typeof getMetalPricesInUsd>>[string] | undefined;
     try {
       // Bound KT — no internal timeout, so a hung KT would stall the whole
       // request path (this is the price call on the Stripe PI creation path).
       // Race a 4s deadline so a hang falls through to GoldAPI spot instead.
       const kt = await fetchKtBounded(); // 15s-cached inside KT + 4s deadline + circuit breaker
-      const r = kt[symbol];
-      const p = r ? (type === 'buy' ? r.buyRateUSD : r.sellRateUSD) : 0;
-      if (p && p > 0) return p;
+      r = kt[symbol];
     } catch (e) {
       console.warn(`⚠️ KT price unavailable for ${metal} (${type}), falling back to spot:`, e);
+    }
+    const p = r ? (type === 'buy' ? r.buyRateUSD : r.sellRateUSD) : 0;
+    if (r && p > 0) {
+      // Outside the try on purpose: a paused metal must fail the trade, not
+      // fall back to spot (we would sell below our KT procurement cost).
+      const v = await ktVerdict(symbol, r.buyRateUSD, r.sellRateUSD);
+      if (v.paused) throw new MetalPricePausedError(symbol, v.deviation!);
+      return p;
     }
   }
   // Fallback: GoldAPI international spot (single mid price, no bid/ask split)

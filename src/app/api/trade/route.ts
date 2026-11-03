@@ -19,6 +19,7 @@ import { withRateLimit, tradeLimiter, checkSuspiciousActivity } from "@/lib/secu
 import { acquireBalanceLock, releaseBalanceLock, type BalanceLock } from "@/lib/balance-lock";
 import { assertAccountActive } from "@/lib/security/account-guard";
 import { checkTradingAllowed } from "@/lib/trading-guard";
+import { pausedErrorBody } from "@/lib/metal-price-guard";
 import { logTrade, logAudit } from "@/lib/security/audit-logger";
 import { getMetalSpread } from "@/lib/spread-config";
 import { getUserTier, calculateTierFee, getDefaultTier } from "@/lib/auxiteer-service";
@@ -807,6 +808,8 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: any) {
+    const paused = pausedErrorBody(error);
+    if (paused) return NextResponse.json(paused, { status: 503 });
     console.error("Trade preview error:", error);
     return NextResponse.json({ error: "Preview failed" }, { status: 500 });
   }
@@ -2056,6 +2059,8 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
+    const paused = pausedErrorBody(error);
+    if (paused) return NextResponse.json(paused, { status: 503 });
     console.error("Trade error:", error);
 
     await logAudit({
