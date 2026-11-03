@@ -25,6 +25,9 @@
 //   NEXT_PUBLIC_AUX*_CANONICAL canonical addresses (fallback: deployed consts)
 //   RWA_VAULT_AUX*_G           total physical vault grams per metal (AUM)
 //   RWA_TREASURY_ADDRESS       Safe holding unsold reserve (fallback: known Safe)
+//   RWA_MINT_GUARD_ADDRESS     MintGuard (optional). When set, the signer holds
+//                              OPERATOR_ROLE on the guard instead of MINTER_ROLE
+//                              on the tokens, and every mint/burn is capped per day
 //
 // Decimals: 3 (1g = 1000 raw units).
 import { Redis } from "@upstash/redis";
@@ -53,6 +56,8 @@ const CANONICAL_FALLBACK: Record<Metal, string> = {
 function tokenAddr(m: Metal): string {
   return (process.env[`NEXT_PUBLIC_${m}_CANONICAL`] || CANONICAL_FALLBACK[m]).toLowerCase();
 }
+
+const MINT_GUARD = process.env.RWA_MINT_GUARD_ADDRESS?.trim().toLowerCase() || "";
 
 const TREASURY = (
   process.env.RWA_TREASURY_ADDRESS || "0xEdC9163c5f8A2a76BD1CdDa6BAA4Eb576B481070"
@@ -321,15 +326,23 @@ export async function runMintSync(opts: { dryRun?: boolean } = {}): Promise<Sync
     }
     try {
       const fn = kind === "mint" ? "mint" : "burnFrom";
-      const data = encodeFunctionData({
-        abi: [{ name: fn, type: "function", stateMutability: "nonpayable", inputs: [{ name: "a", type: "address" }, { name: "amount", type: "uint256" }], outputs: [] }],
-        functionName: fn,
-        args: [account as `0x${string}`, amount],
-      });
+      // Via MintGuard the token address becomes the first argument.
+      const data = MINT_GUARD
+        ? encodeFunctionData({
+            abi: [{ name: fn, type: "function", stateMutability: "nonpayable", inputs: [{ name: "token", type: "address" }, { name: "a", type: "address" }, { name: "amount", type: "uint256" }], outputs: [] }],
+            functionName: fn,
+            args: [tokenAddr(m) as `0x${string}`, account as `0x${string}`, amount],
+          })
+        : encodeFunctionData({
+            abi: [{ name: fn, type: "function", stateMutability: "nonpayable", inputs: [{ name: "a", type: "address" }, { name: "amount", type: "uint256" }], outputs: [] }],
+            functionName: fn,
+            args: [account as `0x${string}`, amount],
+          });
       if (nextNonce === undefined) {
         nextNonce = await publicClient.getTransactionCount({ address: signer.account.address, blockTag: "pending" });
       }
-      const hash = await signer.sendTransaction({ to: tokenAddr(m) as `0x${string}`, data, value: 0n, nonce: nextNonce });
+      const to = (MINT_GUARD || tokenAddr(m)) as `0x${string}`;
+      const hash = await signer.sendTransaction({ to, data, value: 0n, nonce: nextNonce });
       nextNonce++; // accepted into the mempool with this nonce
       const rcpt = await publicClient.waitForTransactionReceipt({ hash, timeout: 90_000 });
       if (rcpt.status !== "success") throw new Error(`reverted ${hash}`);
