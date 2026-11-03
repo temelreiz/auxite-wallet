@@ -1,169 +1,82 @@
-# AUXR Authorized Participant (AP) Tier — Design
+# AUXR Authorized Participants — Gaps in the Live Gateway
 
-**Status:** Design, not implemented.
+**Status:** Gap analysis. The AP gateway itself is live (#153, #154).
 **Owner:** bs / Aurum Ledger Limited (Hong Kong)
 **Last updated:** 2026-11-03
 
----
-
-## Problem
-
-AUXR's secondary price on Base should stay within a narrow band around NAV.
-That only happens if someone can profitably arbitrage the gap, at size, fast.
-Today the loop exists but is built for retail:
-
-| Leg | Today | Why it fails as a peg |
-|---|---|---|
-| DEX > NAV (create) | AUXM → `/api/auxr/buy` (+125 bps) → `/api/auxr/withdraw-onchain` | 250 AUXR/day per account, 1,000 AUXR/day global (`auxr-mint-limits.ts`), manual review above 100, cosign, hard ceiling 500 |
-| DEX < NAV (redeem) | send AUXR to deposit address → scanner credits → `/api/auxr/sell` (−125 bps) → AUXM → `/api/withdraw` to USDC | 4 hops, deposit only attributed from the user's primary wallet, AUXM intermediate, extra withdraw fee and delay |
-| NAV redemption engine | `/api/redeem/nav` + `cron/nav-redemption-settle` | covers AUXG/AUXS/AUXPT/AUXPD only — **not AUXR** |
-
-Round-trip cost is ~250 bps plus fees and settlement risk, so the peg band is
-roughly ±2–3% at best and collapses entirely once the 1,000 AUXR/day global cap
-is hit (~$100k).
-
-## Goal
-
-- A small set of contracted, KYB'd market makers ("APs") can **create** and
-  **redeem** AUXR directly against USDC at NAV ± a tight AP spread.
-- Settlement in minutes, on-chain, to and from whitelisted addresses only.
-- Capacity sized to the reserve, not to retail anti-fraud caps.
-- Retail limits and flows are unchanged.
-
-Target band: **±25–50 bps** around NAV.
-
-## Non-goals
-
-- No change to `AUXR.sol`. Existing `MINTER_ROLE` mint and `burnWithRef` are enough.
-- No AP access to fiat rails.
-- No AP-funded volume programmes. APs quote and arbitrage; they do not trade with
-  themselves (see Agreement terms).
+This replaces an earlier draft that designed an AP tier from scratch without
+the gateway in `src/lib/auxr-ap.ts`. Only what the gateway does not cover is
+left here.
 
 ---
 
-## AP registry
+## What the gateway already does
 
-Redis hash `auxr:ap:{apId}` (managed via a new admin route, audit-logged):
+| Area | Implementation |
+|---|---|
+| Registry | `auxr:ap:accounts`, admin `/api/admin/auxr/ap` (add / remove) |
+| Spread | `AUXR_AP_SPREAD` 25 bps each side via `quoteBuy` / `quoteSell` overrides |
+| Create | `/api/auxr/buy` at NAV + 25 bps (AUXM / USDT / USDC rails), then `/api/auxr/withdraw-onchain` transfers from the pre-minted inventory wallet, no Safe wait |
+| Create controls | one registered destination per AP (`ap_destination_mismatch`), `AUXR_AP_DAILY_CAP` 300/day, inventory target 600 / low 150 |
+| Redeem | AP sends AUXR back, scanner credits and burns, `/api/auxr/sell` at NAV − 25 bps paid in withdrawable USDT |
+| Hedge | every AP buy/sell emails the hedge desk the basket grams; net position `auxr:ap:net-units` |
+| Supply | inventory excluded from liability and `/api/supply` circulating supply |
 
-```ts
-interface AuthorizedParticipant {
-  apId: string;                 // slug, e.g. "mm-acme"
-  entity: string;               // legal name
-  agreementRef: string;         // signed AP agreement id
-  kybStatus: "approved";        // KYB of the entity; KYC "enhanced" on signers
-  status: "active" | "suspended";
-  primaryAddress: string;       // Auxite account used for auth
-  depositAddresses: string[];   // on-chain addresses allowed to burn/deposit
-  payoutAddresses: string[];    // on-chain addresses allowed to receive USDC/AUXR
-  spreadBps: { create: number; redeem: number };   // e.g. 35 / 35
-  limits: {
-    perOrderAuxr: number;       // e.g. 2,500
-    dailyCreateAuxr: number;    // e.g. 10,000
-    dailyRedeemAuxr: number;    // e.g. 10,000
-  };
-  createdAt: number;
-  updatedAt: number;
-}
-```
+## Gaps
 
-- Address lists change only via admin route + Telegram alert + 24h cooldown
-  before a new payout address is usable.
-- `auxr:ap:by-address:{address}` → `apId` index for scanner attribution.
-- A suspended AP is rejected at every entry point (same pattern as
-  `assertAccountActive`).
+### 1. Redeem attribution from exchange wallets
 
-## Flow 1 — Create (DEX price > NAV)
+`acknowledgeDepositFromChain` credits a deposit only when `fromAddress` is a
+known Auxite user wallet (`findUserByWallet`). An AP's AUXR sits on the
+exchange; a withdrawal from there comes from the exchange's hot wallet, which
+is not the AP's account, so the deposit is `skipped_unattributed` and waits for
+manual review. Creating is instant; redeeming is not, so the AP can only push
+the price **down** to NAV quickly, not up.
 
-1. `POST /api/auxr/ap/create/quote { units }` → quote at `NAV × (1 + create bps)`,
-   locked for 60s. Uses `getAuxrPricing()`; refuses if NAV is older than
-   `NAV_MAX_AGE_SECONDS` (300s) — same circuit breaker as `nav-redemption.ts`.
-2. AP sends USDC on Base to the treasury address with the quote id in a
-   companion `POST /api/auxr/ap/create/confirm { quoteId, txHash }`.
-3. Worker verifies the USDC transfer (amount, sender ∈ `depositAddresses`,
-   confirmations), then checks:
-   - AP daily/per-order limits
-   - AP global cap (separate pool from retail `DAILY_CAP_GLOBAL`)
-   - **reserve headroom**: post-mint liability must stay covered by the latest
-     backing statement (`getBackingReport()`). No headroom → order waits for the
-     treasury metal purchase and is filled after it lands.
-4. Mint `units` to the AP's payout address via the existing `MINTER_ROLE` path
-   (`auxr-mint-requests` / MintGuard), `refId = orderId`.
-   AP orders within the AP's pre-approved limits skip per-order manual review;
-   orders above `perOrderAuxr` still go to cosign.
-5. `recordMint` updates the reserve ledger; treasury buys the basket metals.
+**Fix:** let each AP register one or more *source* addresses (its own EOA the
+exchange withdraws to). The scanner attributes transfers or burns from a
+registered source to that AP. The AP flow becomes: exchange → own EOA →
+deposit/burn → credited automatically. Same cooldown and alerting as the
+destination address when a source is added.
 
-If the quote expires before USDC arrives, the order is re-priced at fill time
-and the AP may cancel for a refund to the sending address.
+### 2. No NAV staleness guard on AP pricing
 
-## Flow 2 — Redeem (DEX price < NAV)
+`getAuxrPricing()` uses whatever the metal price cache returns, including the
+stale fallback. Retail has 125 bps of spread to absorb a stale NAV; an AP has
+25 bps. A stale NAV during a fast metals move is a free option against the
+treasury.
 
-1. `POST /api/auxr/ap/redeem/quote { units }` → quote at `NAV × (1 − redeem bps)`,
-   locked 60s, returns `orderId` (bytes32).
-2. AP calls `AUXR.burnWithRef(amount, orderId)` from an address in
-   `depositAddresses`. No custodial deposit, no AUXM.
-3. Scanner (extend `cron/scan-auxr-deposits` to also read `AuxrBurned` events)
-   matches `refId → orderId`, checks sender and amount.
-4. Order goes to the existing settlement queue; extend
-   `cron/nav-redemption-settle` with an `auxr_ap` order type that pays USDC via
-   `processWithdraw(..., "base")` to a whitelisted payout address. The metal debit
-   step becomes a reserve `recordBurn` instead.
-5. Burns that don't match an open order (wrong sender, expired, unknown refId)
-   are held for manual review — tokens are already destroyed, so the AP is paid
-   at the order's quote after review, or at the lower of quote and NAV at review
-   time if the quote had expired.
+**Fix:** for AP quotes, refuse when the price timestamp is older than
+`NAV_MAX_AGE_SECONDS` (300s, `src/lib/nav-redemption.ts`), the same breaker
+NAV redemption and cash settlement already use.
 
-## Pricing and limits
+### 3. Capacity
 
-| Parameter | Proposed start | Notes |
-|---|---|---|
-| AP create / redeem spread | 35 / 35 bps | vs 125 bps retail |
-| Quote TTL | 60s | |
-| NAV max age | 300s | shared constant |
-| Per-order cap | 2,500 AUXR | above → cosign |
-| Per-AP daily | 10,000 AUXR each side | |
-| AP global daily | 25,000 AUXR each side | separate from retail cap |
-| USDC float for redemptions | ≥ 1 day of AP redeem cap | treasury ops |
+300 AUXR/day per AP and a 600 AUXR inventory (~$30k / ~$60k at NAV ~$100) are
+enough for today's books ($400–750 within 2% of NAV per venue) but cap how far
+an AP can arbitrage a DEX pool or a larger CEX move. Raise per AP through the
+registry rather than the global env, once hedging is automated
+(see the hedge gap below).
 
-All values in env / registry, not code.
+### 4. Hedge is manual
 
-## Risk controls
+Every AP flow emails grams to hedge by hand. At 25 bps the treasury carries
+metal price risk from the AP trade until the hedge is placed. This is the
+existing hedge gap, not AP-specific, but tighter AP spreads make it bite
+sooner.
 
-- Whitelisted addresses only, both directions; payout address change cooldown.
-- Kill switch: `checkTradingAllowed("metalTrading")` plus a dedicated
-  `config:auxr:ap:enabled`.
-- Reserve headroom check on every create; backing alert state
-  (`backingAlertState`) at `critical` halts creates.
-- Taint check (`auxr-taint.ts`) on every redeem sender.
-- Telegram + email on each AP order; daily AP reconciliation (orders ↔ mints/burns
-  ↔ USDC transfers) attached to the monthly backing statement.
-- MINTER_ROLE remains behind MintGuard / Safe; AP flow never holds a key itself.
+### 5. AP agreement (legal, not code)
 
-## AP agreement terms (legal)
+- KYB of the entity, beneficial owners, sanctions screening.
+- Quoting obligation (band and minimum depth per venue, including the Aerodrome
+  pool once it exists).
+- **Prohibition on wash trading, self-matching and volume inflation**, with
+  audit rights and termination. Market-abuse rules and exchange listing
+  reviews (Binance Alpha) both look for this.
 
-- KYB, beneficial owners, sanctions screening; signers at KYC `enhanced`.
-- Obligation to quote two-sided on the Aerodrome AUXR/USDC pool within an agreed
-  band and minimum depth.
-- **Prohibition on wash trading, self-matching and volume inflation**, with audit
-  rights and termination. Required both for market-abuse rules and for exchange
-  listing reviews (Binance flags this on-chain).
-- Fees, settlement SLA, error/refund handling for mismatched burns.
+## Proposed order
 
-## Implementation plan
-
-1. `src/lib/auxr-ap.ts` — registry types, getters, limit accounting (pattern of
-   `auxr-mint-limits.ts`), unit tests.
-2. `src/app/api/admin/auxr/ap/route.ts` — CRUD + audit log.
-3. `src/app/api/auxr/ap/{create,redeem}/{quote,confirm}` routes.
-4. Scanner: `AuxrBurned` event support + AP attribution.
-5. Settlement: `auxr_ap` order type in `nav-redemption-settle` (dry-run default
-   stays).
-6. Admin panel tab under `admin/auxr`.
-7. Staging run with one AP at low limits, then raise.
-
-## Open decisions
-
-- Spread and cap starting values.
-- USDT in addition to USDC?
-- Who funds the USDC redemption float and how large.
-- Whether the AP agreement is signed by Aurum Ledger Limited directly or an SPV
-  (see `institutional-readiness-spv-audit.md`).
+1. NAV staleness guard on AP quotes (small change in `auxr-pricing` callers).
+2. Source-address registry and scanner attribution.
+3. AP agreement template.
+4. Per-AP caps in the registry; raise once hedging is automated.
