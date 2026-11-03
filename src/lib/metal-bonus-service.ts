@@ -19,45 +19,56 @@ import { redis, getRedis } from '@/lib/redis';
 // CONFIGURATION
 // ═══════════════════════════════════════════════════════════════
 
+// Numeric env value, or the fallback when unset or unreadable. Tolerates a
+// trailing "%" or spaces ("5%", " 5 "); anything else that is not a finite,
+// non-negative number falls back, so a mistyped value can never turn a rate
+// into NaN (which renders as "NaN%" and makes every cap comparison false).
+function envNumber(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === '') return fallback;
+  const n = Number(raw.replace(/[%\s]/g, ''));
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
 export const BONUS_CONFIG = {
   // Feature flag
   enabled: process.env.BONUS_SYSTEM_V2_ENABLED !== 'false',
 
   // Deposit Bonus
-  depositBonusPercent: parseFloat(process.env.DEPOSIT_BONUS_PERCENT || '2'),
-  minDepositForBonus: parseFloat(process.env.MIN_DEPOSIT_FOR_BONUS || '50'),
+  depositBonusPercent: envNumber('DEPOSIT_BONUS_PERCENT', 2),
+  minDepositForBonus: envNumber('MIN_DEPOSIT_FOR_BONUS', 50),
 
   // Welcome Gold (Start With Gold campaign)
-  welcomeBonusAuxg: parseFloat(process.env.WELCOME_BONUS_AUXG || '5'),
-  welcomeBonusAuxs: parseFloat(process.env.WELCOME_BONUS_AUXS || '10'), // Legacy
-  minDepositForWelcome: parseFloat(process.env.MIN_DEPOSIT_FOR_WELCOME || '100'),
+  welcomeBonusAuxg: envNumber('WELCOME_BONUS_AUXG', 5),
+  welcomeBonusAuxs: envNumber('WELCOME_BONUS_AUXS', 10), // Legacy
+  minDepositForWelcome: envNumber('MIN_DEPOSIT_FOR_WELCOME', 100),
 
   // Split-gate incentive redesign — grant only a portion of the welcome gold at
   // KYC and reward the rest at first deposit. OFF by default so enabling it is an
   // explicit, reversible env change (no silent economic shift on deploy).
   // See grantFirstDepositRewards() for the deposit-side reward.
   splitGateEnabled: process.env.SPLIT_GATE_ENABLED === 'true',
-  welcomeKycPortionPct: parseFloat(process.env.WELCOME_KYC_PORTION_PCT || '40'),
+  welcomeKycPortionPct: envNumber('WELCOME_KYC_PORTION_PCT', 40),
 
   // First-deposit match — a boosted, one-time match on the user's first
   // qualifying deposit (distinct from the ongoing depositBonusPercent). OFF by
   // default; flip FIRST_DEPOSIT_MATCH_ENABLED=true to activate.
   firstDepositMatchEnabled: process.env.FIRST_DEPOSIT_MATCH_ENABLED === 'true',
-  firstDepositMatchPercent: parseFloat(process.env.FIRST_DEPOSIT_MATCH_PERCENT || '5'),
-  firstDepositMatchMinUsd: parseFloat(process.env.FIRST_DEPOSIT_MATCH_MIN_USD || '100'),
-  firstDepositMatchCapUsd: parseFloat(process.env.FIRST_DEPOSIT_MATCH_CAP_USD || '50'),
+  firstDepositMatchPercent: envNumber('FIRST_DEPOSIT_MATCH_PERCENT', 5),
+  firstDepositMatchMinUsd: envNumber('FIRST_DEPOSIT_MATCH_MIN_USD', 100),
+  firstDepositMatchCapUsd: envNumber('FIRST_DEPOSIT_MATCH_CAP_USD', 50),
   firstDepositMatchMetal: (process.env.FIRST_DEPOSIT_MATCH_METAL || 'AUXG') as 'AUXG',
 
   // Referral Bonus
-  referralBonusPercent: parseFloat(process.env.REFERRAL_BONUS_PERCENT || '0.5'),
+  referralBonusPercent: envNumber('REFERRAL_BONUS_PERCENT', 0.5),
 
   // Unlock Conditions (Hybrid: time OR volume)
   unlockDays: parseInt(process.env.BONUS_UNLOCK_DAYS || '30'),
-  volumeMultiplier: parseFloat(process.env.BONUS_VOLUME_MULTIPLIER || '5'),
+  volumeMultiplier: envNumber('BONUS_VOLUME_MULTIPLIER', 5),
 
   // Cost Controls
-  maxBonusPerUserUsd: parseFloat(process.env.MAX_BONUS_PER_USER_USD || '100'),
-  globalCapUsd: parseFloat(process.env.GLOBAL_CAP_USD || '50000'),
+  maxBonusPerUserUsd: envNumber('MAX_BONUS_PER_USER_USD', 100),
+  globalCapUsd: envNumber('GLOBAL_CAP_USD', 50000),
 
   // Campaign
   campaignDurationDays: parseInt(process.env.CAMPAIGN_DURATION_DAYS || '30'),
