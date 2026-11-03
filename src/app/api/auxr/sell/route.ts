@@ -23,6 +23,7 @@ import {
 import { quoteSell, StaleNavError } from "@/lib/auxr-pricing";
 import { recordBurn } from "@/lib/auxr-reserve";
 import { getAp, recordApFlow, AP_SPREAD } from "@/lib/auxr-ap";
+import { recordCampaignTrade } from "@/lib/auxr-buy-reward";
 import { notifyAuxrTrade } from "@/lib/telegram";
 import { notifyAuxrTradePush } from "@/lib/notification-sender";
 
@@ -164,6 +165,9 @@ export async function POST(request: NextRequest) {
     await recordApFlow({ side: "sell", ap, units: unitsAUXR, navUSD: quote.navUSD, priceUSD: quote.sellPriceUSD, refId })
       .catch((e) => console.error("[/api/auxr/sell] AP flow record failed:", e));
   }
+
+  await recordCampaignTrade(normalizedAddress, "sell", quote.proceedsUSD, unitsAUXR, !!ap)
+    .catch((e) => console.error("[/api/auxr/sell] campaign record failed:", e));
 
   const txId = await addTransaction(normalizedAddress, {
     type: "swap",
