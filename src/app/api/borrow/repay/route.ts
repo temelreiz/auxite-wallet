@@ -4,8 +4,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/security/require-user";
 import { assertAccountActive } from "@/lib/security/account-guard";
-import { incrementBalance, addTransaction, getUserBalance } from "@/lib/redis";
-import { getUserLoans, repayLoan } from "@/lib/borrow-service";
+import { addTransaction } from "@/lib/redis";
+import { repayLoan } from "@/lib/borrow-service";
 
 export const dynamic = "force-dynamic";
 
@@ -39,29 +39,15 @@ export async function POST(request: NextRequest) {
     const amount = parseFloat(amountUSDC);
     if (!(amount > 0)) return NextResponse.json({ error: "amountUSDC must be > 0" }, { status: 400 });
 
-    // Find the loan + how much is owed (cap the payment so we never over-debit).
-    const loans = await getUserLoans(address);
-    const loan = loans.find((l) => l.id === loanId);
-    if (!loan) return NextResponse.json({ error: "Loan not found for this user" }, { status: 404 });
-    if (loan.status !== "active") return NextResponse.json({ error: `Loan already ${loan.status}` }, { status: 400 });
-
-    const pay = Math.min(amount, loan.owed);
-
-    // Repayment is in CASH (USDC) — check the user has it.
-    const bal = await getUserBalance(address);
-    const usdc = Number((bal as any)?.usdc || 0);
-    if (usdc + 1e-6 < pay) {
-      return NextResponse.json({ error: `Insufficient USDC: need ${pay}, have ${usdc}. Top up to repay.`, needUSDC: pay, haveUSDC: usdc }, { status: 400 });
-    }
-
-    // Debit the user's USDC, then apply the repayment (releases collateral if closed).
-    await incrementBalance(address, { usdc: -pay } as any);
-    const res = await repayLoan(loanId, pay);
+    // Owner check, USDC check-and-debit and the loan update all happen in
+    // repayLoan under the user's balance lock — the old read-then-debit here
+    // let two concurrent repayments both pass the balance check.
+    const res = await repayLoan(address, loanId, amount);
     if (!res.ok) {
-      // refund on failure
-      await incrementBalance(address, { usdc: pay } as any);
-      return NextResponse.json({ error: res.error || "Repayment failed" }, { status: 400 });
+      return NextResponse.json({ error: res.error || "Repayment failed" }, { status: res.status || 400 });
     }
+    const pay = res.paid!;
+    const loan = { metal: res.metal };
 
     await addTransaction(address, {
       type: "borrow_repay",

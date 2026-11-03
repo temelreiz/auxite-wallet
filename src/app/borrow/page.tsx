@@ -8,7 +8,11 @@ const METALS = [
   { sym: "AUXS", name: "Silver" },
   { sym: "AUXPT", name: "Platinum" },
   { sym: "AUXPD", name: "Palladium" },
+  { sym: "AUXR", name: "Auxite Reserve" },
 ];
+/** Metals are pledged in grams; AUXR in units (in-app balance only). */
+const unitOf = (sym: string) => (sym === "AUXR" ? " AUXR" : "g");
+const decOf = (sym: string) => (sym === "AUXR" ? 4 : 3);
 const TERMS = [3, 6, 12];
 const fmt = (n: number, d = 2) => (Number(n) || 0).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 
@@ -86,7 +90,7 @@ export default function BorrowPage() {
       const j = await r.json();
       if (!r.ok || !j.success) { setMsg({ ok: false, text: j.error || "Borrow failed" }); }
       else {
-        setMsg({ ok: true, text: `Borrowed ${fmt(j.disbursedUSDC)} USDC against ${fmt(parseFloat(grams), 3)}g ${metal}. ${fmt(parseFloat(grams), 3)}g locked.` });
+        setMsg({ ok: true, text: `Borrowed ${fmt(j.disbursedUSDC)} USDC against ${fmt(parseFloat(grams), decOf(metal))}${unitOf(metal)}${metal === "AUXR" ? "" : ` ${metal}`}, held as collateral until repaid.` });
         setGrams(""); setBorrowAmt(""); setTcAccept(false); setTwoFA("");
         fetchData();
       }
@@ -94,7 +98,7 @@ export default function BorrowPage() {
     setBusy(false);
   };
 
-  const doRepay = async (loanId: string, owed: number) => {
+  const doRepay = async (loanId: string, owed: number, sym: string) => {
     const amt = prompt(`Repay how much USDC? (owed: ${fmt(owed)})`, owed.toFixed(2));
     if (!amt) return;
     setBusy(true); setMsg(null);
@@ -105,7 +109,7 @@ export default function BorrowPage() {
       });
       const j = await r.json();
       if (!r.ok || !j.success) setMsg({ ok: false, text: j.error || "Repay failed" });
-      else setMsg({ ok: true, text: j.closed ? `Loan repaid — ${fmt(j.releasedGrams, 3)}g released ✓` : `Paid ${fmt(j.paidUSDC)} USDC — ${fmt(j.remainingOwed)} remaining` });
+      else setMsg({ ok: true, text: j.closed ? `Loan repaid — ${fmt(j.releasedGrams, decOf(sym))}${unitOf(sym)} returned ✓` : `Paid ${fmt(j.paidUSDC)} USDC — ${fmt(j.remainingOwed)} remaining` });
       fetchData();
     } catch (e: any) { setMsg({ ok: false, text: e?.message || "error" }); }
     setBusy(false);
@@ -120,7 +124,7 @@ export default function BorrowPage() {
       <TopNav />
       <div className="border-b border-stone-200 dark:border-slate-800 bg-white dark:bg-slate-900/30">
         <div className="max-w-3xl mx-auto px-4 py-5">
-          <h1 className="text-lg sm:text-xl font-bold">Borrow against your metal</h1>
+          <h1 className="text-lg sm:text-xl font-bold">Borrow against your metal or AUXR</h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Unlock USDC without selling — your metal stays yours.</p>
         </div>
       </div>
@@ -145,8 +149,8 @@ export default function BorrowPage() {
               <h2 className="font-semibold">New loan</h2>
 
               <div>
-                <label className="text-xs text-slate-500">Collateral metal</label>
-                <div className="grid grid-cols-4 gap-2 mt-1">
+                <label className="text-xs text-slate-500">Collateral</label>
+                <div className="grid grid-cols-5 gap-2 mt-1">
                   {METALS.map((m) => (
                     <button key={m.sym} onClick={() => setMetal(m.sym)}
                       className={`py-2 rounded-xl text-xs font-medium border ${metal === m.sym ? "border-[#BFA181] bg-[#BFA181]/10 text-[#BFA181]" : "border-stone-200 dark:border-slate-700 text-slate-500"}`}>
@@ -158,9 +162,12 @@ export default function BorrowPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-500">Collateral (grams)</label>
-                  <input type="number" value={grams} onChange={(e) => setGrams(e.target.value)} placeholder="100"
+                  <label className="text-xs text-slate-500">Collateral ({metal === "AUXR" ? "AUXR, in-app balance" : "grams"})</label>
+                  <input type="number" value={grams} onChange={(e) => setGrams(e.target.value)} placeholder={metal === "AUXR" ? "1" : "100"}
                     className="w-full mt-1 px-3 py-2 rounded-xl border border-stone-200 dark:border-slate-700 bg-transparent" />
+                  {data?.balances?.[metal] && (
+                    <p className="text-[11px] text-slate-400 mt-1">Available: {fmt(data.balances[metal].available, decOf(metal))}{unitOf(metal)}</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs text-slate-500">Term</label>
@@ -193,20 +200,21 @@ export default function BorrowPage() {
                 <div className="rounded-xl bg-stone-50 dark:bg-slate-800/50 p-3 text-sm space-y-1">
                   <Row k="Origination fee (1%)" v={`−$${fmt(origFee)}`} />
                   <Row k="You receive" v={`$${fmt(net)}`} strong />
-                  <Row k="Liquidation price" v={`$${fmt(liqPrice)}/g`} />
-                  <Row k="Locked collateral" v={`${fmt(parseFloat(grams), 3)}g ${metal}`} />
+                  <Row k="Liquidation price" v={`$${fmt(liqPrice)}/${metal === "AUXR" ? "AUXR" : "g"}`} />
+                  <Row k="Locked collateral" v={`${fmt(parseFloat(grams), decOf(metal))}${unitOf(metal)}${metal === "AUXR" ? "" : ` ${metal}`}`} />
                 </div>
               )}
 
               {/* T&C + 2FA */}
               <label className="flex items-start gap-2 text-xs text-slate-500">
                 <input type="checkbox" checked={tcAccept} onChange={(e) => setTcAccept(e.target.checked)} className="mt-0.5" />
-                <span>I accept the loan Terms: my {metal} collateral is <b>locked for the term</b> (cannot be sold, withdrawn, converted, transferred or staked), and is <b>liquidated at NAV</b> if I don't repay or the price falls to the liquidation level.</span>
+                <span>I accept the loan Terms: my {metal} collateral is <b>locked for the term</b> (cannot be sold, withdrawn, converted, transferred or staked). If the price falls to the liquidation level or the loan is unpaid at maturity, I get a margin call by email and have <b>{data?.marginCallGraceHours ?? 24} hours</b> to repay; after that, enough collateral to cover the debt plus a 2% fee is <b>liquidated at NAV</b> and the rest is returned to me.</span>
               </label>
               <input value={twoFA} onChange={(e) => setTwoFA(e.target.value)} placeholder="2FA code"
                 className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-slate-700 bg-transparent text-sm" />
 
-              <button disabled={busy || !(principal > 0) || !tcAccept || !twoFA}
+              {data?.paused && <p className="text-sm text-red-500">New loans are temporarily paused.</p>}
+              <button disabled={busy || !!data?.paused || !(principal > 0) || !tcAccept || !twoFA}
                 onClick={doBorrow}
                 className="w-full py-3 rounded-xl font-semibold bg-[#BFA181] text-white disabled:opacity-40">
                 {busy ? "…" : `Borrow $${fmt(net)} USDC`}
@@ -222,14 +230,19 @@ export default function BorrowPage() {
               {(data?.loans || []).map((l: any) => (
                 <div key={l.id} className={`${card} p-4 space-y-2`}>
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">{fmt(l.collateralGrams, 3)}g {l.metal}</span>
+                    <span className="font-semibold">{fmt(l.collateralGrams, decOf(l.metal))}{unitOf(l.metal)}{l.metal === "AUXR" ? "" : ` ${l.metal}`}</span>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-[#BFA181]/10 text-[#BFA181]">{l.status}</span>
                   </div>
                   <Row k="Borrowed" v={`$${fmt(l.principalUSDC)} @ ${(l.apr * 100).toFixed(0)}% · ${l.termMonths}mo`} />
                   <Row k="Owed now" v={`$${fmt(l.owed)}`} strong />
-                  <Row k="Liquidation price" v={`$${fmt(l.liquidationPrice)}/g`} />
+                  <Row k="Liquidation price" v={`$${fmt(l.liquidationPrice)}/${l.metal === "AUXR" ? "AUXR" : "g"}`} />
                   <Row k="Maturity" v={new Date(l.maturityDate).toLocaleDateString()} />
-                  <button disabled={busy} onClick={() => doRepay(l.id, l.owed)}
+                  {l.marginCallAt && (
+                    <p className="text-xs text-red-500">
+                      Margin call — repay by {new Date(new Date(l.marginCallAt).getTime() + (data?.marginCallGraceHours ?? 24) * 3_600_000).toLocaleString()} or collateral will be liquidated.
+                    </p>
+                  )}
+                  <button disabled={busy} onClick={() => doRepay(l.id, l.owed, l.metal)}
                     className="w-full mt-1 py-2 rounded-xl text-sm font-medium border border-[#BFA181] text-[#BFA181] disabled:opacity-40">
                     Repay
                   </button>
