@@ -14,6 +14,8 @@ export type ReminderLang = "en" | "tr" | "de" | "fr" | "ar" | "ru";
 /** First-deposit match line, or null when the match is off. */
 function matchTerms(): { pct: number; min: number; cap: number } | null {
   if (!BONUS_CONFIG.enabled || !BONUS_CONFIG.firstDepositMatchEnabled) return null;
+  const nums = [BONUS_CONFIG.firstDepositMatchPercent, BONUS_CONFIG.firstDepositMatchMinUsd, BONUS_CONFIG.firstDepositMatchCapUsd];
+  if (!nums.every((n) => Number.isFinite(n) && n > 0)) return null; // never print "NaN%"
   return {
     pct: BONUS_CONFIG.firstDepositMatchPercent,
     min: BONUS_CONFIG.firstDepositMatchMinUsd,
