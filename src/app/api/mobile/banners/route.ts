@@ -14,6 +14,9 @@ interface Banner {
   priority: number;
   startDate?: string;
   endDate?: string;
+  /** Where the banner may show. Unset = everywhere. The mobile app sends
+   *  X-Client-Platform (ios|android); a request without it is the web. */
+  platforms?: Array<'web' | 'android' | 'ios'>;
   createdAt: string;
   updatedAt: string;
 }
@@ -65,13 +68,19 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const platform = searchParams.get("platform");
+    const platform = (
+      request.headers.get("x-client-platform") || searchParams.get("platform") || "web"
+    ).toLowerCase();
     const activeOnly = searchParams.get("active") === "true";
 
     let filteredBanners = bannersData.banners;
 
+    // Display requests (active=true) also get the platform filter; the admin
+    // list asks without it and sees every banner.
     if (activeOnly) {
-      filteredBanners = filteredBanners.filter(b => b.active);
+      filteredBanners = filteredBanners.filter(
+        (b) => b.active && (!b.platforms?.length || b.platforms.includes(platform as "web" | "android" | "ios")),
+      );
     }
 
     filteredBanners.sort((a, b) => b.priority - a.priority);
