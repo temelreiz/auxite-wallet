@@ -17,31 +17,46 @@ const emailRedis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 import {
-  BORROW_PARAMS, APR_BY_TERM, VALID_TERMS, POOL_CAP_USDC, MIN_LOAN_USDC,
-  ORIGINATION_FEE, LIQUIDATION_FEE,
-  quoteLoan, createLoan, getUserLoans, getPool,
+  BORROW_PARAMS, BORROW_ASSETS, APR_BY_TERM, VALID_TERMS, POOL_CAP_USDC, MIN_LOAN_USDC,
+  ORIGINATION_FEE, LIQUIDATION_FEE, MARGIN_CALL_GRACE_MS,
+  quoteLoan, createLoan, getUserLoans, getPool, isBorrowPaused, unitOf,
 } from "@/lib/borrow-service";
+import { getUserBalance } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
-const BORROW_METALS = ["AUXG", "AUXS", "AUXPT", "AUXPD"];
+const BORROW_METALS = BORROW_ASSETS.filter((a) => a !== "AUXR");
 
-// GET /api/borrow?address=0x..               → user's loans + pool + params
-// GET /api/borrow?address=&metal=&grams=&term= → + a live quote
+// GET /api/borrow                         → the caller's loans + pool + params
+// GET /api/borrow?metal=&grams=&term=     → + a live quote
+// It used to take ?address= with no login, so anyone could read anyone's
+// loans and balances. The caller is now the token's account; an ?address=
+// naming someone else is refused.
 export async function GET(request: NextRequest) {
   try {
+    const auth = requireUser(request);
+    if (!auth.ok) return auth.response;
+    const address = auth.user.address;
     const sp = request.nextUrl.searchParams;
-    const address = sp.get("address");
-    if (!address) return NextResponse.json({ error: "address required" }, { status: 400 });
+    const asked = sp.get("address");
+    if (asked && asked.toLowerCase() !== address) {
+      return NextResponse.json({ error: "address does not match the authenticated account" }, { status: 403 });
+    }
 
-    const [loans, pool, balArr] = await Promise.all([
+    const [loans, pool, balArr, userBal, paused] = await Promise.all([
       getUserLoans(address),
       getPool(),
       Promise.all(BORROW_METALS.map((m) => getMetalTotals(address, m))),
+      getUserBalance(address),
+      isBorrowPaused(),
     ]);
-    // Per-metal collateral available to pledge (total − already locked − yielding).
+    // Collateral available to pledge: metals = allocations − locked − yielding;
+    // AUXR = the in-app balance (pledged units already sit inside their loans).
     const balances: Record<string, { total: number; locked: number; yielding: number; available: number }> =
       Object.fromEntries(BORROW_METALS.map((m, i) => [m, balArr[i]]));
+    const auxrInLoans = loans.filter((l) => l.metal === "AUXR").reduce((t, l) => t + l.collateralGrams, 0);
+    const auxrFree = Math.max(0, Number((userBal as any)?.auxr || 0));
+    balances.AUXR = { total: auxrFree + auxrInLoans, locked: auxrInLoans, yielding: 0, available: auxrFree };
 
     let quote = null;
     const metal = sp.get("metal");
@@ -52,7 +67,10 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      loans, pool, quote, balances,
+      loans, pool, quote, balances, paused,
+      assets: BORROW_ASSETS,
+      units: Object.fromEntries(BORROW_ASSETS.map((a) => [a, unitOf(a)])),
+      marginCallGraceHours: MARGIN_CALL_GRACE_MS / 3_600_000,
       params: BORROW_PARAMS,
       aprByTerm: APR_BY_TERM,
       validTerms: VALID_TERMS,
@@ -155,7 +173,9 @@ export async function POST(request: NextRequest) {
       const email = (userData as any)?.email as string | undefined;
       if (email) {
         const lang = await getUserLanguage(address);
-        const collateral = `${Number(result.loan.collateralGrams).toFixed(3)} ${result.loan.metal}`;
+        const collateral = result.loan.metal === "AUXR"
+          ? `${Number(result.loan.collateralGrams).toFixed(4)} AUXR`
+          : `${Number(result.loan.collateralGrams).toFixed(3)}g ${result.loan.metal}`;
         await sendBorrowConfirmedEmail(email, ((userData as any)?.name as string) || "Client", net.toFixed(2), collateral, lang);
       }
     } catch (e) {
