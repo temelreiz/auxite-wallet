@@ -25,6 +25,7 @@ jest.mock("@/lib/auxr-pricing", () => ({ AUXR_GRAMS_PER_UNIT: {} }));
 jest.mock("@/lib/auxr-onchain", () => ({}));
 jest.mock("@/lib/auxr-reserve", () => ({}));
 jest.mock("@/lib/balance-lock", () => ({}));
+jest.mock("@/lib/auxr-role-watch", () => ({ EXPECTED_MINTER: "0xedc9163c5f8a2a76bd1cdda6baa4eb576b481070" }));
 
 import {
   setAp, removeAp, addApSource, resolveApSource, listApSources, AP_SOURCE_COOLDOWN_MS,
@@ -65,6 +66,21 @@ describe("AP redeem sources", () => {
     expect(await addApSource(AP, DEST, T0)).toEqual({ ok: false, error: "source_is_destination" });
     expect(await addApSource("0x00000000000000000000000000000000000000ff", SRC, T0))
       .toEqual({ ok: false, error: "ap_not_found" });
+  });
+
+  it("refuses the admin Safe and the founder treasury as sources", async () => {
+    for (const s of [
+      "0xEdC9163c5f8A2a76BD1CdDa6BAA4Eb576B481070",
+      "0x0a5dFC442Ba42a83f3f2F040025E1b4B0b625Fe3",
+    ]) {
+      expect(await addApSource(AP, s, T0)).toEqual({ ok: false, error: "source_protected" });
+    }
+  });
+
+  it("never resolves a protected wallet stored before it was protected", async () => {
+    const safe = "0xedc9163c5f8a2a76bd1cdda6baa4eb576b481070";
+    h("auxr:ap:sources").set(safe, JSON.stringify({ source: safe, apAddress: AP, addedAt: 0, activeAt: 0 }));
+    expect((await resolveApSource(safe, T0)).status).toBe("none");
   });
 
   it("drops an AP's sources when the AP is removed", async () => {
