@@ -94,7 +94,7 @@ export default function CampaignBannerCarousel({ language }: Props) {
                     {title}
                   </div>
                   {!!subtitle && (
-                    <div className="text-sm opacity-90 line-clamp-2">
+                    <div className="text-sm opacity-90 line-clamp-3">
                       {subtitle}
                     </div>
                   )}
