@@ -18,6 +18,14 @@ const nextConfig = {
         destination: "/legal/privacy",
         permanent: true,
       },
+      // Short link for the Telegram channel (posts, bio, images). Temporary
+      // (302) so the target can move when the campaign ends without browsers
+      // caching the old one; the UTM tags keep the clicks attributable.
+      {
+        source: "/tg",
+        destination: "/auxr?utm_source=telegram&utm_medium=channel&utm_campaign=tg_short",
+        permanent: false,
+      },
     ];
   },
 
