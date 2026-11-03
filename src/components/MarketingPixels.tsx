@@ -1,7 +1,7 @@
 "use client";
 
-// MarketingPixels — the X and Meta advertising pixels, gated behind analytics
-// consent.
+// MarketingPixels — the X, Meta and Microsoft (Bing UET) advertising tags,
+// gated behind analytics consent.
 //
 // These two are pure marketing trackers with no essential function, so under
 // GDPR they must not load until the user opts in. They previously sat inline
@@ -25,6 +25,8 @@ import {
 
 const X_PIXEL_ID = process.env.NEXT_PUBLIC_X_PIXEL_ID || "";
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "875602632179249";
+/** Microsoft Ads UET tag (account G107C28T); same tag as auxite.io. */
+const BING_UET_ID = process.env.NEXT_PUBLIC_BING_UET_ID || "187285572";
 
 export default function MarketingPixels() {
   const [consented, setConsented] = useState(false);
@@ -60,6 +62,23 @@ export default function MarketingPixels() {
             a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))
             }(window,document,'script');
             twq('config','${X_PIXEL_ID}');
+          `}
+        </Script>
+      )}
+
+      {/* Microsoft Ads UET — src/lib/bing-uet.ts fires the sign_up and
+          purchase events the Microsoft conversion goals match on. */}
+      {BING_UET_ID && (
+        <Script id="bing-uet" strategy="afterInteractive">
+          {`
+            (function(w,d,t,r,u){var f,n,i;w[u]=w[u]||[],f=function(){
+            var o={ti:"${BING_UET_ID}",enableAutoSpaTracking:true};
+            o.q=w[u],w[u]=new UET(o),w[u].push("pageLoad")},
+            n=d.createElement(t),n.src=r,n.async=1,
+            n.onload=n.onreadystatechange=function(){var s=this.readyState;
+            s&&s!=="loaded"&&s!=="complete"||(f(),n.onload=n.onreadystatechange=null)},
+            i=d.getElementsByTagName(t)[0],i.parentNode.insertBefore(n,i)
+            })(window,document,"script","https://bat.bing.net/bat.js","uetq");
           `}
         </Script>
       )}
