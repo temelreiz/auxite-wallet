@@ -13,6 +13,7 @@ import { useLanguage } from "@/components/LanguageContext";
 import { useWallet } from "@/components/WalletContext";
 import { fireConversion } from "@/lib/google-ads-conversion";
 import { fireXConversion } from "@/lib/x-pixel";
+import { fireBingConversion } from "@/lib/bing-uet";
 
 const LANGUAGE_OPTIONS = [
   { code: 'en', label: 'English' },
@@ -361,6 +362,7 @@ export default function RegisterPage() {
       // Same conversion to X — this is the event the Website Conversions
       // campaign optimises against, so it has to fire from the same place.
       fireXConversion("signup", { transactionId: data?.user?.id });
+      fireBingConversion("signup");
 
     } catch (err) {
       setError(t('connectionError'));

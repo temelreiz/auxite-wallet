@@ -26,6 +26,7 @@ import { formatAmount } from "@/lib/format";
 import { logEvent } from "@/lib/analytics";
 import { fireConversion } from "@/lib/google-ads-conversion";
 import { fireXConversion } from "@/lib/x-pixel";
+import { fireBingConversion } from "@/lib/bing-uet";
 
 // ── Stripe.js singleton (lazy, browser-only) ───────────────────────────────
 // loadStripe must only run in the browser (it injects a <script>). Even
@@ -541,6 +542,7 @@ export function BuyMetalCardModal({ isOpen, onClose }: BuyMetalCardModalProps) {
                       currency: "USD",
                       transactionId: paymentIntentId || undefined,
                     });
+                    fireBingConversion("purchase", { value: quote.amountUSD, currency: "USD" });
                     await refreshBalances();
                   }}
                   onError={(msg) => {
