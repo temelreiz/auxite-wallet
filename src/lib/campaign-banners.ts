@@ -39,6 +39,8 @@ export interface Banner {
   priority: number;
   startDate?: string;
   endDate?: string;
+  /** Where the banner may show; unset = everywhere. Filtered server-side. */
+  platforms?: Array<"web" | "android" | "ios">;
 }
 
 interface BannersResponse {
