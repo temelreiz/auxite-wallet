@@ -159,7 +159,7 @@ export async function creditUserDeposit(params: CreditParams): Promise<CreditRes
       if (email) {
         const { sendDepositConfirmedEmail } = await import("./email-service");
         const emailAmount = autoConvert ? amountUsd.toFixed(2) : String(amount);
-        const emailToken = autoConvert ? "AUXM" : coin;
+        const emailToken = autoConvert ? "USD" : coin;
         sendDepositConfirmedEmail(
           email,
           userData?.name || "Client",

@@ -34,7 +34,6 @@ const metalIcons: Record<string, string> = {
 const cryptoAssets = [
   { symbol: "USDC", name: "USD Coin", color: "#2775CA", icon: "$" },
   { symbol: "USDT", name: "Tether", color: "#26A17B", icon: "₮" },
-  { symbol: "USD", name: "US Dollar", color: "#2F6F62", icon: "$" },
   { symbol: "BTC", name: "Bitcoin", color: "#F7931A", icon: "₿" },
   { symbol: "ETH", name: "Ethereum", color: "#627EEA", icon: "Ξ" },
 ];
@@ -95,15 +94,15 @@ const translations: Record<string, Record<string, string>> = {
     protectionStatus: "PROTECTION STATUS", protectionLevel: "Protection Level",
     elite: "ELITE", vaultSuspended: "VAULT SUSPENDED",
     vaultSuspendedShort: "All operations halted", vaultId: "Vault ID",
-    settlementBalance: "Settlement Balance", auxmUnit: "AUXM",
-    auxmPrimaryCapital: "Internal settlement unit for capital movement",
+    settlementBalance: "Cash Balance", auxmUnit: "USD",
+    auxmPrimaryCapital: "Available for metal allocation and withdrawals",
     auxmPeg: "USD equivalent", fullyReserved: "Fully Reserved",
-    offBalanceSheet: "Off-Balance Sheet", fundVault: "Fund Vault", withdrawAuxm: "Convert & Withdraw",
+    offBalanceSheet: "Off-Balance Sheet", fundVault: "Fund Vault", withdrawAuxm: "Withdraw Cash",
     buyMetalCardTitle: "Buy Precious Metals with Card",
     buyMetalCardDesc: "Instant gold, silver, platinum & palladium purchase. Allocated to your vault.",
     buyMetalCardCta: "Buy with Card",
-    auxmDisclaimer: "AUXM is an internal settlement unit used within the Auxite infrastructure. It is not directly transferable; on withdrawal it is sent to your wallet as USDC, USDT, ETH, or BTC (1 AUXM = 1 USD).",
-    transferToSettlement: "Transfer to Settlement",
+    auxmDisclaimer: "Your cash balance is held in USD and can be used to allocate metal or withdrawn to your wallet as USDC, USDT, ETH or BTC.",
+    transferToSettlement: "Transfer to Cash Balance",
     capitalClarity: "CAPITAL STATUS", settledCapital: "Settled", encumbered: "Encumbered",
     institutionalArchitecture: "Built on institutional custody architecture.",
     trustBar: "FULLY ALLOCATED  •  SEGREGATED  •  INSURED",
@@ -171,15 +170,15 @@ const translations: Record<string, Record<string, string>> = {
     protectionStatus: "KORUMA DURUMU", protectionLevel: "Koruma Seviyesi",
     elite: "ELITE", vaultSuspended: "KASA ASKIYA ALINDI",
     vaultSuspendedShort: "Tüm işlemler durduruldu", vaultId: "Kasa ID",
-    settlementBalance: "Takas Bakiyesi", auxmUnit: "AUXM",
-    auxmPrimaryCapital: "Sermaye hareketi için dahili takas birimi",
+    settlementBalance: "Nakit Bakiye", auxmUnit: "USD",
+    auxmPrimaryCapital: "Metal tahsisi ve çekimler için kullanılabilir",
     auxmPeg: "USD eşdeğeri", fullyReserved: "Tam Rezervli",
-    offBalanceSheet: "Bilanço Dışı", fundVault: "Kasayı Fonla", withdrawAuxm: "Dönüştür & Çek",
+    offBalanceSheet: "Bilanço Dışı", fundVault: "Kasayı Fonla", withdrawAuxm: "Nakit Çek",
     buyMetalCardTitle: "Kredi Kartı ile Değerli Metal Al",
     buyMetalCardDesc: "Anında altın, gümüş, platin ve paladyum alımı. Kasana doğrudan tahsis edilir.",
     buyMetalCardCta: "Kart ile Al",
-    auxmDisclaimer: "AUXM, Auxite altyapısı içinde kullanılan dahili takas birimidir. Doğrudan transfer edilemez; cüzdanına çekmek istersen USDC, USDT, ETH veya BTC olarak gönderilir (1 AUXM = 1 USD).",
-    transferToSettlement: "Takasa Transfer Et",
+    auxmDisclaimer: "Nakit bakiyeniz USD cinsindendir; metal tahsisinde kullanılabilir veya cüzdanınıza USDC, USDT, ETH ya da BTC olarak çekilebilir.",
+    transferToSettlement: "Nakit Bakiyeye Aktar",
     capitalClarity: "SERMAYE DURUMU", settledCapital: "Takas Edilmiş", encumbered: "Bloke",
     institutionalArchitecture: "Kurumsal saklama mimarisi üzerine inşa edilmiştir.",
     trustBar: "TAM TAHSİSLİ  •  AYRILMIŞ  •  SİGORTALI",
@@ -247,15 +246,15 @@ const translations: Record<string, Record<string, string>> = {
     protectionStatus: "SCHUTZSTATUS", protectionLevel: "Schutzniveau",
     elite: "ELITE", vaultSuspended: "TRESOR GESPERRT",
     vaultSuspendedShort: "Alle Operationen gestoppt", vaultId: "Tresor-ID",
-    settlementBalance: "Abwicklungssaldo", auxmUnit: "AUXM",
-    auxmPrimaryCapital: "Interne Abwicklungseinheit für Kapitalbewegung",
+    settlementBalance: "Barguthaben", auxmUnit: "USD",
+    auxmPrimaryCapital: "Verfügbar für Metallallokationen und Auszahlungen",
     auxmPeg: "USD-Äquivalent", fullyReserved: "Vollständig reserviert",
-    offBalanceSheet: "Außerbilanziell", fundVault: "Tresor finanzieren", withdrawAuxm: "Umwandeln & Abheben",
+    offBalanceSheet: "Außerbilanziell", fundVault: "Tresor finanzieren", withdrawAuxm: "Barguthaben auszahlen",
     buyMetalCardTitle: "Edelmetalle mit Karte kaufen",
     buyMetalCardDesc: "Sofortiger Kauf von Gold, Silber, Platin & Palladium. Direkt in Ihren Tresor allokiert.",
     buyMetalCardCta: "Mit Karte kaufen",
-    auxmDisclaimer: "AUXM ist eine interne Verrechnungseinheit innerhalb der Auxite-Infrastruktur. Es ist nicht direkt übertragbar; bei einer Abhebung wird es als USDC, USDT, ETH oder BTC an Ihre Wallet gesendet (1 AUXM = 1 USD).",
-    transferToSettlement: "Zur Abwicklung überweisen",
+    auxmDisclaimer: "Ihr Barguthaben wird in USD geführt und kann für Metallallokationen genutzt oder als USDC, USDT, ETH oder BTC an Ihre Wallet ausgezahlt werden.",
+    transferToSettlement: "Auf Barguthaben übertragen",
     capitalClarity: "KAPITALSTATUS", settledCapital: "Abgewickelt", encumbered: "Belastet",
     institutionalArchitecture: "Aufgebaut auf institutioneller Verwahrungsarchitektur.",
     trustBar: "VOLL ZUGETEILT  •  GETRENNT  •  VERSICHERT",
@@ -323,15 +322,15 @@ const translations: Record<string, Record<string, string>> = {
     protectionStatus: "STATUT DE PROTECTION", protectionLevel: "Niveau de protection",
     elite: "ÉLITE", vaultSuspended: "COFFRE SUSPENDU",
     vaultSuspendedShort: "Toutes les opérations arrêtées", vaultId: "ID du coffre",
-    settlementBalance: "Solde de règlement", auxmUnit: "AUXM",
-    auxmPrimaryCapital: "Unité de règlement interne pour les mouvements de capitaux",
+    settlementBalance: "Solde en espèces", auxmUnit: "USD",
+    auxmPrimaryCapital: "Disponible pour l'allocation de métaux et les retraits",
     auxmPeg: "Équivalent USD", fullyReserved: "Entièrement réservé",
-    offBalanceSheet: "Hors bilan", fundVault: "Financer le coffre", withdrawAuxm: "Convertir & Retirer",
+    offBalanceSheet: "Hors bilan", fundVault: "Financer le coffre", withdrawAuxm: "Retirer des espèces",
     buyMetalCardTitle: "Acheter des métaux précieux par carte",
     buyMetalCardDesc: "Achat instantané d'or, d'argent, de platine et de palladium. Alloué à votre coffre.",
     buyMetalCardCta: "Acheter par carte",
-    auxmDisclaimer: "AUXM est une unité de règlement interne au sein de l'infrastructure Auxite. Il n'est pas directement transférable ; lors d'un retrait, il est envoyé à votre portefeuille en USDC, USDT, ETH ou BTC (1 AUXM = 1 USD).",
-    transferToSettlement: "Transférer au règlement",
+    auxmDisclaimer: "Votre solde en espèces est libellé en USD ; il peut servir à allouer du métal ou être retiré sur votre portefeuille en USDC, USDT, ETH ou BTC.",
+    transferToSettlement: "Transférer vers le solde en espèces",
     capitalClarity: "STATUT DU CAPITAL", settledCapital: "Réglé", encumbered: "Grevé",
     institutionalArchitecture: "Construit sur une architecture de conservation institutionnelle.",
     trustBar: "ENTIÈREMENT ALLOUÉ  •  SÉPARÉ  •  ASSURÉ",
@@ -399,15 +398,15 @@ const translations: Record<string, Record<string, string>> = {
     protectionStatus: "حالة الحماية", protectionLevel: "مستوى الحماية",
     elite: "نخبة", vaultSuspended: "الخزنة معلقة",
     vaultSuspendedShort: "جميع العمليات متوقفة", vaultId: "معرف الخزنة",
-    settlementBalance: "رصيد التسوية", auxmUnit: "AUXM",
-    auxmPrimaryCapital: "وحدة تسوية داخلية لحركة رأس المال",
+    settlementBalance: "الرصيد النقدي", auxmUnit: "USD",
+    auxmPrimaryCapital: "متاح لتخصيص المعادن وعمليات السحب",
     auxmPeg: "معادل الدولار", fullyReserved: "محجوز بالكامل",
-    offBalanceSheet: "خارج الميزانية", fundVault: "تمويل الخزنة", withdrawAuxm: "تحويل وسحب",
+    offBalanceSheet: "خارج الميزانية", fundVault: "تمويل الخزنة", withdrawAuxm: "سحب النقد",
     buyMetalCardTitle: "اشترِ المعادن الثمينة بالبطاقة",
     buyMetalCardDesc: "شراء فوري للذهب والفضة والبلاتين والبالاديوم. يُخصص مباشرة إلى خزنتك.",
     buyMetalCardCta: "اشترِ بالبطاقة",
-    auxmDisclaimer: "AUXM هي وحدة تسوية داخلية ضمن بنية Auxite. ليست قابلة للتحويل مباشرة؛ عند السحب تُرسل إلى محفظتك كـ USDC أو USDT أو ETH أو BTC (1 AUXM = 1 USD).",
-    transferToSettlement: "تحويل إلى التسوية",
+    auxmDisclaimer: "رصيدك النقدي مقوَّم بالدولار الأمريكي ويمكن استخدامه لتخصيص المعادن أو سحبه إلى محفظتك بعملة USDC أو USDT أو ETH أو BTC.",
+    transferToSettlement: "تحويل إلى الرصيد النقدي",
     capitalClarity: "حالة رأس المال", settledCapital: "مسوّى", encumbered: "مرهون",
     institutionalArchitecture: "مبني على بنية حفظ مؤسسية.",
     trustBar: "مخصص بالكامل  •  منفصل  •  مؤمَّن",
@@ -475,15 +474,15 @@ const translations: Record<string, Record<string, string>> = {
     protectionStatus: "СТАТУС ЗАЩИТЫ", protectionLevel: "Уровень защиты",
     elite: "ЭЛИТА", vaultSuspended: "ХРАНИЛИЩЕ ПРИОСТАНОВЛЕНО",
     vaultSuspendedShort: "Все операции остановлены", vaultId: "ID хранилища",
-    settlementBalance: "Расчётный баланс", auxmUnit: "AUXM",
-    auxmPrimaryCapital: "Внутренняя расчётная единица для движения капитала",
+    settlementBalance: "Денежный баланс", auxmUnit: "USD",
+    auxmPrimaryCapital: "Доступно для покупки металла и вывода",
     auxmPeg: "Эквивалент USD", fullyReserved: "Полностью зарезервировано",
-    offBalanceSheet: "Внебалансовый", fundVault: "Пополнить хранилище", withdrawAuxm: "Конвертация и вывод",
+    offBalanceSheet: "Внебалансовый", fundVault: "Пополнить хранилище", withdrawAuxm: "Вывести средства",
     buyMetalCardTitle: "Купите драгоценные металлы картой",
     buyMetalCardDesc: "Мгновенная покупка золота, серебра, платины и палладия. Зачисляется в ваше хранилище.",
     buyMetalCardCta: "Купить картой",
-    auxmDisclaimer: "AUXM — внутренняя расчётная единица в инфраструктуре Auxite. Не передаётся напрямую; при выводе отправляется на ваш кошелёк как USDC, USDT, ETH или BTC (1 AUXM = 1 USD).",
-    transferToSettlement: "Перевести на расчёт",
+    auxmDisclaimer: "Денежный баланс ведётся в USD; его можно использовать для покупки металла или вывести на кошелёк в USDC, USDT, ETH или BTC.",
+    transferToSettlement: "Перевести на денежный баланс",
     capitalClarity: "СТАТУС КАПИТАЛА", settledCapital: "Рассчитано", encumbered: "Обременено",
     institutionalArchitecture: "Построено на институциональной архитектуре хранения.",
     trustBar: "ПОЛНОСТЬЮ РАСПРЕДЕЛЕНО  •  СЕГРЕГИРОВАНО  •  ЗАСТРАХОВАНО",
@@ -537,6 +536,9 @@ export default function VaultPage() {
   const [showAuxmRedeemModal, setShowAuxmRedeemModal] = useState(false);
   const [showBuyMetalCardModal, setShowBuyMetalCardModal] = useState(false);
   const [cryptoBalances, setCryptoBalances] = useState<Record<string, number>>({});
+  // Liquidity lists show one USD cash line: settlement (AUXM) + the separate
+  // usd field. Display only — each balance keeps its own field and flows.
+  const cashBalance = settlementBalance + (cryptoBalances.usd || 0);
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
   const [buyChooser, setBuyChooser] = useState<{ symbol: string; name: string; color: string } | null>(null);
   const [showProtection, setShowProtection] = useState(false);
@@ -1374,7 +1376,7 @@ export default function VaultPage() {
               </div>
 
               {/* Section 2 — Liquidity (Cash & Crypto) */}
-              {(settlementBalance > 0 || cryptoAssets.some(c => (cryptoBalances[c.symbol.toLowerCase()] || 0) > 0)) && (
+              {(cashBalance > 0 || cryptoAssets.some(c => (cryptoBalances[c.symbol.toLowerCase()] || 0) > 0)) && (
                 <div>
                   <div className="flex items-center gap-2 mb-3 pt-4 border-t border-stone-200 dark:border-slate-700">
                     <div className="w-2 h-2 rounded-full bg-[#2F6F62]" />
@@ -1384,8 +1386,8 @@ export default function VaultPage() {
                   </div>
 
                   <div className="space-y-2">
-                    {/* AUXM Settlement Balance Row */}
-                    {settlementBalance > 0 && (
+                    {/* Cash balance row (settlement + usd) */}
+                    {cashBalance > 0 && (
                       <div className="flex items-center justify-between p-3 rounded-lg hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors">
                         <div className="flex items-center gap-3">
                           <div className="w-11 h-11 rounded-full bg-indigo-500/15 flex items-center justify-center">
@@ -1397,10 +1399,10 @@ export default function VaultPage() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatCurrency(settlementBalance)}</p>
+                          <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatCurrency(cashBalance)}</p>
                           <div className="flex items-center gap-1.5 justify-end">
                             <p className="text-xs text-[#2F6F62] font-medium">
-                              {settlementBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {t.auxmUnit}
+                              {cashBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {t.auxmUnit}
                             </p>
                             <span className="px-1.5 py-0.5 bg-[#2F6F62]/10 rounded text-[8px] font-semibold text-[#2F6F62]">
                               {t.available}
@@ -1684,7 +1686,6 @@ export default function VaultPage() {
         const cryptoOrder: Array<{ key: string; label: string }> = [
           { key: 'usdc', label: 'USDC' },
           { key: 'usdt', label: 'USDT' },
-          { key: 'usd', label: 'USD' },
           { key: 'btc', label: 'BTC' },
           { key: 'eth', label: 'ETH' },
         ];
@@ -1709,13 +1710,13 @@ export default function VaultPage() {
               <p className="text-xs text-slate-500 dark:text-slate-400 text-center mb-6">{t.availableLiquidityDesc}</p>
 
               <div className="space-y-3">
-                {settlementBalance > 0 && (
+                {cashBalance > 0 && (
                   <div className="flex items-center justify-between p-3 bg-[#2F6F62]/5 rounded-lg">
                     <div>
                       <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t.settlementBalance}</span>
                       <span className="block text-[10px] text-slate-500">{t.auxmUnit} · {t.auxmPeg}</span>
                     </div>
-                    <span className="text-sm font-bold text-[#2F6F62]">{formatCurrency(settlementBalance)}</span>
+                    <span className="text-sm font-bold text-[#2F6F62]">{formatCurrency(cashBalance)}</span>
                   </div>
                 )}
                 {cryptoList.map(c => (
@@ -1736,7 +1737,7 @@ export default function VaultPage() {
                     <span className="text-sm font-bold text-[#2F6F62]">{formatCurrency(h.available * h.price)}</span>
                   </div>
                 ))}
-                {settlementBalance === 0 && cryptoList.length === 0 && unallocatedMetalList.length === 0 && (
+                {cashBalance === 0 && cryptoList.length === 0 && unallocatedMetalList.length === 0 && (
                   <div className="text-center py-6">
                     <p className="text-sm text-slate-500">{t.noLiquidity}</p>
                   </div>

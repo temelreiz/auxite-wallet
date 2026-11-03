@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
+import { displayAsset } from "@/lib/display-asset";
 
 // ============================================
 // CAPITAL LEDGER - Institutional audit-friendly ledger view
@@ -447,7 +448,7 @@ export default function LedgerPage() {
     const rows = filteredData.map(item => [
       item.referenceId || item.id,
       getEventLabel(item.type),
-      item.asset,
+      displayAsset(item.asset),
       item.amount,
       mapStatus(item.status),
       formatTimestamp(item.timestamp)
@@ -584,7 +585,7 @@ export default function LedgerPage() {
                       <span className="text-sm font-medium text-slate-800 dark:text-white">{getEventLabel(item.type)}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="text-sm font-semibold text-slate-800 dark:text-white">{item.asset?.toUpperCase()}</span>
+                      <span className="text-sm font-semibold text-slate-800 dark:text-white">{displayAsset(item.asset?.toUpperCase())}</span>
                     </div>
                     <div className="flex flex-col justify-center">
                       <span className="text-sm font-medium text-slate-800 dark:text-white">
@@ -621,7 +622,7 @@ export default function LedgerPage() {
                       {getStatusBadge(item.status)}
                     </div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm font-semibold text-slate-800 dark:text-white">{item.asset?.toUpperCase()}</span>
+                      <span className="text-sm font-semibold text-slate-800 dark:text-white">{displayAsset(item.asset?.toUpperCase())}</span>
                       <div className="text-right">
                         <span className="text-sm font-semibold text-slate-800 dark:text-white">
                           {formatAmount(item.amount, item.asset)}

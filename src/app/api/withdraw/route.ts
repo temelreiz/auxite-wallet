@@ -232,13 +232,13 @@ export async function POST(request: NextRequest) {
       const payoutAsset = String(body.payoutAsset || "USDC").toUpperCase() as AuxmPayoutAsset;
       if (!AUXM_PAYOUT_ASSETS.includes(payoutAsset)) {
         return NextResponse.json({
-          error: `Unsupported payout asset for AUXM. Choose one of: ${AUXM_PAYOUT_ASSETS.join(", ")}`,
+          error: `Unsupported payout asset for cash withdrawals. Choose one of: ${AUXM_PAYOUT_ASSETS.join(", ")}`,
         }, { status: 400 });
       }
 
       // Min withdrawal in AUXM (= USD)
       if (amount < 10) {
-        return NextResponse.json({ error: "Minimum AUXM withdrawal is 10 AUXM ($10)" }, { status: 400 });
+        return NextResponse.json({ error: "Minimum cash withdrawal is $10" }, { status: 400 });
       }
 
       const normalizedAddr = address.toLowerCase();
@@ -265,7 +265,7 @@ export async function POST(request: NextRequest) {
 
       if (amount > auxmBalance) {
         return NextResponse.json({
-          error: "Insufficient AUXM balance",
+          error: "Insufficient cash balance",
           required: amount,
           available: auxmBalance,
         }, { status: 400 });
@@ -310,7 +310,7 @@ export async function POST(request: NextRequest) {
       const netPayout = payoutAmount - payoutFee;
       if (netPayout <= 0) {
         return NextResponse.json({
-          error: `AUXM amount too small after fees. Minimum payout: ${payoutFee} ${payoutAsset}`,
+          error: `Amount too small after fees. Minimum payout: ${payoutFee} ${payoutAsset}`,
         }, { status: 400 });
       }
 

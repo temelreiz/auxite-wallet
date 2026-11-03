@@ -28,7 +28,7 @@ const DEFAULT_NEWS: NewsData = {
     {
       id: "1",
       title: "Auxite Wallet Lansmanı Gerçekleşti!",
-      description: "Değerli metal yatırımlarınızı dijitalleştirin. %2 AUXM bonus kampanyamız devam ediyor.",
+      description: "Değerli metal yatırımlarınızı dijitalleştirin. %2 nakit bonus kampanyamız devam ediyor.",
       source: "Auxite",
       date: "2 Aralık 2024",
       icon: "gift",
@@ -57,7 +57,7 @@ const DEFAULT_NEWS: NewsData = {
     {
       id: "1",
       title: "Auxite Wallet Launch!",
-      description: "Digitize your precious metal investments. Our 2% AUXM bonus campaign continues.",
+      description: "Digitize your precious metal investments. Our 2% cash bonus campaign continues.",
       source: "Auxite",
       date: "Dec 2, 2024",
       icon: "gift",

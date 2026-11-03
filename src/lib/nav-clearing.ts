@@ -145,7 +145,7 @@ export async function placeOrder(
     await debit(maker, m, amount); // lock grams
   } else {
     const have = await balOf(maker, "auxm");
-    if (have < amount) throw new Error("insufficient AUXM balance");
+    if (have < amount) throw new Error("insufficient cash balance");
     await debit(maker, "auxm", amount); // lock AUXM
   }
 

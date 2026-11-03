@@ -29,7 +29,7 @@ sell, hold, deposit and withdraw.
 ## Supported metals & tokens
 - Gold (AUXG), Silver (AUXS), Platinum (AUXPT), Palladium (AUXPD) — each backed
   by allocated physical metal.
-- AUXM — Auxite's internal balance used for fiat funding and settlement.
+- Cash balance (USD) — shown to users as "Cash Balance" (internally called AUXM; if a user asks about "AUXM", it is this same USD cash balance). Used for fiat funding and settlement.
 - Metal holdings are allocated and held with custodial partners; reserves are
   independently attested.
 
@@ -53,7 +53,7 @@ sell, hold, deposit and withdraw.
   with the transaction reference.
 
 ## Withdrawals & redemption
-- Users can withdraw their AUXM balance to crypto (e.g. USDC/USDT/ETH) from the
+- Users can withdraw their cash balance to crypto (e.g. USDC/USDT/ETH) from the
   app's withdraw flow.
 - Withdrawal availability, networks and minimums are shown in the app.
 - For withdrawal issues or anything account-specific, route to human support.

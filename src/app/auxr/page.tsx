@@ -67,6 +67,7 @@ const T = {
     amountUSD: "Amount (USD)",
     amountAUXR: "Amount (AUXR)",
     payWith: "Pay with",
+    cashRail: "Cash",
     available: "Available",
     receive: "You receive",
     proceedsLabel: "You receive",
@@ -121,6 +122,7 @@ const T = {
     amountUSD: "Tutar (USD)",
     amountAUXR: "Miktar (AUXR)",
     payWith: "Ödeme aracı",
+    cashRail: "Nakit",
     available: "Kullanılabilir",
     receive: "Alacağınız",
     proceedsLabel: "Alacağınız",
@@ -314,7 +316,7 @@ export default function AuxrPage() {
     : paymentToken === "btc" ? balances.btc * cryptoPx.btc
     : balances.eth * cryptoPx.eth;
   const railLabel =
-    paymentToken === "auxm" ? "AUXM"
+    paymentToken === "auxm" ? t.cashRail
     : paymentToken === "usdt" ? "USDT"
     : paymentToken === "usdc" ? "USDC"
     : paymentToken === "usd" ? "USD"
@@ -545,7 +547,7 @@ export default function AuxrPage() {
                 <label className="text-xs text-slate-500 tracking-wider">{upper(t.payWith)}</label>
                 <div className="grid grid-cols-3 gap-2 mt-1">
                   {([
-                    { key: "auxm" as const, label: "AUXM", bal: totalAuxm },
+                    { key: "auxm" as const, label: t.cashRail, bal: totalAuxm },
                     { key: "usdt" as const, label: "USDT", bal: balances.usdt },
                     { key: "usdc" as const, label: "USDC", bal: balances.usdc },
                     { key: "usd" as const, label: "USD", bal: balances.usd },
@@ -618,7 +620,7 @@ export default function AuxrPage() {
                 <span className="text-base text-slate-500 font-semibold">AUXR</span>
               </div>
               <div className="text-xs text-slate-500 mt-1">
-                ≈ {fmtUSD(expectedProceeds)} AUXM
+                ≈ {fmtUSD(expectedProceeds)}
               </div>
               <button
                 onClick={() => setSellUnits(String(balances.auxr))}

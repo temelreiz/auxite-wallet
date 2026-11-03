@@ -414,7 +414,7 @@ export async function PATCH(request: NextRequest) {
       qualified: true,
       bonusGiven: REFERRAL_BONUS,
       referrerReward: REFERRAL_BONUS * tierInfo.rate,
-      message: `Referral qualified! You received $${REFERRAL_BONUS} AUXM bonus.`,
+      message: `Referral qualified! You received a $${REFERRAL_BONUS} cash bonus.`,
     });
   } catch (error: any) {
     console.error("Referral PATCH error:", error);

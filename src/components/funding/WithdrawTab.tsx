@@ -6,6 +6,7 @@ import { useWallet } from "@/components/WalletContext";
 import { TwoFactorGate } from "@/components/TwoFactorGate";
 import { FeePreviewPanel } from "./FeePreviewPanel";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
+import { displayAsset } from "@/lib/display-asset";
 
 // ============================================
 // TRANSLATIONS (6 languages)
@@ -39,7 +40,7 @@ const translations: Record<string, Record<string, string>> = {
     externalDesc: "Harici olarak transfer edilen varlıklar artık Auxite saklama yapıları altında tutulmayacaktır.",
     metalBlockedTitle: "Metal Varlıklar Harici Transfer Edilemez",
     metalBlockedDesc: "Metal varlıklar doğrudan harici transfere uygun değildir.",
-    sellToAuxm: "AUXM'ye Sat",
+    sellToAuxm: "Nakde Sat",
     physicalRedemption: "Fiziksel İtfa",
     // Internal form
     recipientLabel: "Auxite Hesap ID / E-posta",
@@ -124,7 +125,7 @@ const translations: Record<string, Record<string, string>> = {
     externalDesc: "Assets transferred externally will no longer be held within Auxite custody structures.",
     metalBlockedTitle: "Metal Assets Cannot Be Transferred Externally",
     metalBlockedDesc: "Metal assets are not eligible for direct external transfer.",
-    sellToAuxm: "Sell to AUXM",
+    sellToAuxm: "Sell to Cash",
     physicalRedemption: "Physical Redemption",
     recipientLabel: "Auxite Account ID / Email",
     enterRecipient: "Enter account ID or email",
@@ -202,7 +203,7 @@ const translations: Record<string, Record<string, string>> = {
     externalDesc: "Extern übertragene Vermögenswerte werden nicht mehr in Auxite-Verwahrungsstrukturen gehalten.",
     metalBlockedTitle: "Metallvermögen kann nicht extern transferiert werden",
     metalBlockedDesc: "Metallvermögen ist nicht für direkten externen Transfer berechtigt.",
-    sellToAuxm: "Zu AUXM verkaufen",
+    sellToAuxm: "In Barguthaben verkaufen",
     physicalRedemption: "Physische Einlösung",
     recipientLabel: "Auxite Konto-ID / E-Mail",
     enterRecipient: "Konto-ID oder E-Mail eingeben",
@@ -278,7 +279,7 @@ const translations: Record<string, Record<string, string>> = {
     externalDesc: "Les actifs transférés en externe ne seront plus détenus dans les structures de garde Auxite.",
     metalBlockedTitle: "Les Métaux ne Peuvent pas être Transférés en Externe",
     metalBlockedDesc: "Les métaux ne sont pas éligibles au transfert externe direct.",
-    sellToAuxm: "Vendre en AUXM",
+    sellToAuxm: "Vendre contre des espèces",
     physicalRedemption: "Rachat Physique",
     recipientLabel: "ID de Compte Auxite / Email",
     enterRecipient: "Entrez l'ID de compte ou l'email",
@@ -354,7 +355,7 @@ const translations: Record<string, Record<string, string>> = {
     externalDesc: "الأصول المحولة خارجياً لن تبقى ضمن هياكل حفظ Auxite.",
     metalBlockedTitle: "لا يمكن تحويل المعادن خارجياً",
     metalBlockedDesc: "الأصول المعدنية غير مؤهلة للتحويل الخارجي المباشر.",
-    sellToAuxm: "بيع إلى AUXM",
+    sellToAuxm: "بيع مقابل النقد",
     physicalRedemption: "استرداد مادي",
     recipientLabel: "معرف حساب Auxite / البريد الإلكتروني",
     enterRecipient: "أدخل معرف الحساب أو البريد الإلكتروني",
@@ -430,7 +431,7 @@ const translations: Record<string, Record<string, string>> = {
     externalDesc: "Активы, переведенные вовне, больше не будут храниться в структурах хранения Auxite.",
     metalBlockedTitle: "Металлические активы не могут быть переведены вовне",
     metalBlockedDesc: "Металлические активы не подлежат прямому внешнему переводу.",
-    sellToAuxm: "Продать в AUXM",
+    sellToAuxm: "Продать за наличные",
     physicalRedemption: "Физический Выкуп",
     recipientLabel: "ID Аккаунта Auxite / Email",
     enterRecipient: "Введите ID аккаунта или email",
@@ -501,7 +502,7 @@ interface AssetConfig {
 }
 
 const ALL_ASSETS: AssetConfig[] = [
-  { symbol: "AUXM", name: "Settlement Balance", icon: "◈", color: "#BFA181", unit: "", balanceKey: "auxm" },
+  { symbol: "AUXM", name: "Cash Balance", icon: "◈", color: "#BFA181", unit: "", balanceKey: "auxm" },
   { symbol: "AUXR", name: "AUXR", icon: "◆", iconImg: "/auxr_icon.png", color: "#BFA181", unit: "", balanceKey: "auxr" },
   { symbol: "USDT", name: "Tether", icon: "₮", color: "#26A17B", unit: "", balanceKey: "usdt" },
   { symbol: "USDC", name: "USD Coin", icon: "$", color: "#2775CA", unit: "", balanceKey: "usdc" },
@@ -813,7 +814,7 @@ export function WithdrawTab() {
       // External
       const config = WITHDRAW_NETWORKS[selectedAsset!];
       if (config && amt < config.minWithdraw) {
-        setError(`${t.minimumAmount}: ${config.minWithdraw} ${selectedAsset}`);
+        setError(`${t.minimumAmount}: ${config.minWithdraw} ${displayAsset(selectedAsset)}`);
         return false;
       }
       if (!destinationAddress || destinationAddress.length < 10) {
@@ -1083,7 +1084,7 @@ export function WithdrawTab() {
                   {asset.icon}
                 </div>
               )}
-              <p className="text-sm font-semibold text-slate-800 dark:text-white">{asset.symbol}</p>
+              <p className="text-sm font-semibold text-slate-800 dark:text-white">{displayAsset(asset.symbol)}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">{asset.name}</p>
               <p className={`text-xs font-medium mt-1 ${hasBalance ? "text-[#2F6F62]" : "text-slate-400"}`}>
                 {hasBalance ? formatBal(available, asset.symbol) : "0"}
@@ -1111,7 +1112,7 @@ export function WithdrawTab() {
     return (
       <div>
         <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-1">{t.assetBalance}</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">{selectedAsset} — {asset.name}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">{displayAsset(selectedAsset)} — {asset.name}</p>
 
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6 mb-6">
           {/* Asset Header */}
@@ -1222,7 +1223,7 @@ export function WithdrawTab() {
     return (
       <div>
         <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-1">{t.transferType}</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">{selectedAsset}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">{displayAsset(selectedAsset)}</p>
 
         <div className="space-y-3 mb-6">
           {/* Internal Custody Transfer — always available */}
@@ -1318,7 +1319,7 @@ export function WithdrawTab() {
         <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-1">
           {transferType === "internal" ? t.internalCustodyTransfer : t.externalSettlementTransfer}
         </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">{selectedAsset} — {asset.name}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">{displayAsset(selectedAsset)} — {asset.name}</p>
 
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-stone-200 dark:border-slate-800 p-6 mb-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1516,7 +1517,7 @@ export function WithdrawTab() {
                   <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
                     style={{ backgroundColor: asset.color }}>{asset.icon}</div>
                 )}
-                <span className="text-sm font-semibold text-slate-800 dark:text-white">{selectedAsset}</span>
+                <span className="text-sm font-semibold text-slate-800 dark:text-white">{displayAsset(selectedAsset)}</span>
               </div>
             </div>
 
@@ -1542,7 +1543,7 @@ export function WithdrawTab() {
               <>
                 <div className="flex items-center justify-between py-2 border-t border-stone-100 dark:border-slate-800">
                   <span className="text-sm text-slate-500 dark:text-slate-400">{t.networkFee}</span>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{fee} {selectedAsset}</span>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{fee} {displayAsset(selectedAsset)}</span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-t border-stone-100 dark:border-slate-800">
                   <span className="text-sm text-slate-500 dark:text-slate-400">{t.platformFee}</span>

@@ -499,7 +499,7 @@ export async function POST(request: NextRequest) {
 
     // ── Admin Notification Email ──
     const methodLabels: Record<string, string> = {
-      cash: 'Cash Settlement (AUXM)',
+      cash: 'Cash Settlement (USD)',
       pickup: 'Vault Pickup',
       courier: 'Insured Courier',
       vault_transfer: 'Vault Transfer',

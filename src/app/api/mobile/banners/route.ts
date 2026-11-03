@@ -44,8 +44,8 @@ const DEFAULT_BANNERS: Banner[] = [
   },
   {
     id: "auxm-bonus",
-    title: { tr: "🎁 %2 AUXM Bonus", en: "🎁 2% AUXM Bonus", de: "🎁 2% AUXM Bonus", fr: "🎁 2% Bonus AUXM", ar: "🎁 مكافأة AUXM 2%", ru: "🎁 2% бонус AUXM" },
-    subtitle: { tr: "AUXM ile işlem yap, bonus kazan!", en: "Trade with AUXM, earn bonus!", de: "Handel mit AUXM, verdiene Bonus!", fr: "Tradez avec AUXM, gagnez des bonus!", ar: "تداول باستخدام AUXM واربح مكافآت!", ru: "Торгуйте с AUXM, получайте бонусы!" },
+    title: { tr: "🎁 %2 Nakit Bonus", en: "🎁 2% Cash Bonus", de: "🎁 2% Bar-Bonus", fr: "🎁 2% de bonus en espèces", ar: "🎁 مكافأة نقدية 2%", ru: "🎁 2% денежный бонус" },
+    subtitle: { tr: "Nakit bakiyenle işlem yap, bonus kazan!", en: "Trade with your cash balance, earn bonus!", de: "Mit Barguthaben handeln, Bonus verdienen!", fr: "Tradez avec votre solde en espèces, gagnez des bonus!", ar: "تداول برصيدك النقدي واربح مكافآت!", ru: "Торгуйте с денежного баланса, получайте бонусы!" },
     backgroundColor: "#10b981",
     textColor: "#ffffff",
     actionType: "screen",

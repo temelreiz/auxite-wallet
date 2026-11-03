@@ -8,6 +8,7 @@ import webpush from 'web-push';
 import { redis } from '@/lib/redis';
 import { getUserLanguage } from '@/lib/user-language';
 import { sendPushToUser } from '@/lib/expo-push';
+import { displayAsset } from './display-asset';
 
 type LangCode = 'en' | 'tr' | 'de' | 'fr' | 'ar' | 'ru';
 
@@ -606,7 +607,7 @@ export async function notifyAuxrTradePush(
   const lang = getLang(await getUserLanguage(walletAddress));
   const units = data.unitsAUXR < 1 ? data.unitsAUXR.toFixed(6) : data.unitsAUXR.toFixed(4);
   const usd = data.usdAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const pay = (data.paymentToken || 'AUXM').toUpperCase();
+  const pay = displayAsset((data.paymentToken || 'AUXM').toUpperCase());
 
   const bodies: Record<'buy' | 'sell', Record<LangCode, string>> = {
     buy: {
@@ -618,12 +619,12 @@ export async function notifyAuxrTradePush(
       ru: `Куплено ${units} AUXR за ${pay} ($${usd})`,
     },
     sell: {
-      en: `${units} AUXR sold for $${usd} AUXM`,
-      tr: `${units} AUXR satıldı, $${usd} AUXM alındı`,
-      de: `${units} AUXR für $${usd} AUXM verkauft`,
-      fr: `${units} AUXR vendu pour $${usd} AUXM`,
-      ar: `تم بيع ${units} AUXR مقابل $${usd} AUXM`,
-      ru: `Продано ${units} AUXR за $${usd} AUXM`,
+      en: `${units} AUXR sold for $${usd}`,
+      tr: `${units} AUXR satıldı, $${usd} nakit bakiyenize eklendi`,
+      de: `${units} AUXR für $${usd} verkauft`,
+      fr: `${units} AUXR vendu pour $${usd}`,
+      ar: `تم بيع ${units} AUXR مقابل $${usd}`,
+      ru: `Продано ${units} AUXR за $${usd}`,
     },
   };
 
@@ -656,7 +657,7 @@ function buildWireCreditBody(
   data: { fiatAmount: number; fiatCurrency: string; auxmCredited: number },
 ): string {
   const fiat = `${fmtMoney(data.fiatAmount)} ${data.fiatCurrency}`;
-  const auxm = `${fmtMoney(data.auxmCredited)} AUXM`;
+  const auxm = `${fmtMoney(data.auxmCredited)} USD`;
   switch (lang) {
     case 'tr': return `${fiat} havale alındı, ${auxm} bakiyenize eklendi.`;
     case 'de': return `${fiat} Überweisung empfangen, ${auxm} Ihrem Guthaben gutgeschrieben.`;

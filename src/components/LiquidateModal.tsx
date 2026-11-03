@@ -20,6 +20,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useLanguage } from "@/components/LanguageContext";
+import { displayAsset } from "@/lib/display-asset";
 
 // ============================================
 // TYPES
@@ -363,7 +364,7 @@ const translations: Record<string, Record<string, string>> = {
 // ============================================
 
 const settlementOptions: { id: SettlementType; label: string; icon: string; color: string }[] = [
-  { id: "AUXM", label: "AUXM", icon: "◈", color: "indigo" },
+  { id: "AUXM", label: "USD", icon: "◈", color: "indigo" },
   { id: "USDT", label: "USDT", icon: "₮", color: "emerald" },
   { id: "BTC", label: "BTC", icon: "₿", color: "amber" },
   { id: "ETH", label: "ETH", icon: "Ξ", color: "blue" },
@@ -901,7 +902,7 @@ export default function LiquidateModal({ isOpen, onClose, metal, address, onSucc
               <div className="border-t border-stone-200 dark:border-slate-700 pt-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-slate-500">{t.settlementType}</span>
-                  <span className="text-sm font-semibold text-slate-800 dark:text-white">{settlement}</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-white">{displayAsset(settlement)}</span>
                 </div>
               </div>
               <div className="border-t border-stone-200 dark:border-slate-700 pt-3">

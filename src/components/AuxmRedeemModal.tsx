@@ -27,18 +27,18 @@ import { logEvent } from "@/lib/analytics";
 // ────────────────────────────────────────────────────────────────────────────
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    title: "Dönüştür & Çek",
-    subtitle: "AUXM bakiyesini kripto olarak cüzdanına çek",
+    title: "Nakit Çek",
+    subtitle: "Nakit bakiyeni kripto olarak cüzdanına çek",
     confirmTx: "İşlemi onayla",
-    auxmBalance: "AUXM Bakiyesi",
+    auxmBalance: "Nakit Bakiye",
     receiveAs: "Hangi Kripto Olarak Alacaksın?",
-    amount: "AUXM Miktarı",
+    amount: "Tutar (USD)",
     walletAddress: "Cüzdan Adresi",
     network: "Ağ",
     youWillReceive: "Alacağın",
     networkFee: "Ağ Ücreti",
     netReceive: "Net Alacak",
-    insufficientBalance: "Yetersiz AUXM bakiyesi",
+    insufficientBalance: "Yetersiz nakit bakiye",
     minimum: "Minimum çekim",
     address: "Adres",
     verifyAddress: "Adresi kontrol et. İşlem geri alınamaz.",
@@ -56,23 +56,23 @@ const translations: Record<string, Record<string, string>> = {
     usdValue: "USD Değeri",
     rate: "Dönüşüm Oranı",
     comingSoon: "Yakında",
-    auxmInfo: "AUXM, Auxite içinde dahili takas birimidir. Çekim sırasında seçtiğin kripto'ya 1 AUXM = 1 USD oranıyla çevrilir ve adresine gönderilir.",
-    notTransferable: "AUXM doğrudan transfer edilemez",
+    auxmInfo: "Nakit bakiyen USD cinsindendir. Çekimde seçtiğin kriptoya güncel kurdan çevrilir ve adresine gönderilir.",
+    notTransferable: "Kripto olarak cüzdanına gönderilir",
     redeemableAs: "USDC/USDT/ETH/BTC olarak çekilebilir",
   },
   en: {
-    title: "Convert & Withdraw",
-    subtitle: "Redeem your AUXM balance as crypto to your wallet",
+    title: "Withdraw Cash",
+    subtitle: "Withdraw your cash balance to your wallet as crypto",
     confirmTx: "Confirm transaction",
-    auxmBalance: "AUXM Balance",
+    auxmBalance: "Cash Balance",
     receiveAs: "Receive as which crypto?",
-    amount: "AUXM Amount",
+    amount: "Amount (USD)",
     walletAddress: "Wallet Address",
     network: "Network",
     youWillReceive: "You will receive",
     networkFee: "Network Fee",
     netReceive: "Net Receive",
-    insufficientBalance: "Insufficient AUXM balance",
+    insufficientBalance: "Insufficient cash balance",
     minimum: "Minimum",
     address: "Address",
     verifyAddress: "Verify address. This cannot be reversed.",
@@ -90,73 +90,73 @@ const translations: Record<string, Record<string, string>> = {
     usdValue: "USD Value",
     rate: "Conversion Rate",
     comingSoon: "Coming Soon",
-    auxmInfo: "AUXM is an internal settlement unit within Auxite. On withdrawal it is converted to your selected crypto at 1 AUXM = 1 USD and sent to your address.",
-    notTransferable: "AUXM is not directly transferable",
+    auxmInfo: "Your cash balance is held in USD. On withdrawal it is converted to your selected crypto at the current rate and sent to your address.",
+    notTransferable: "Sent to your wallet as crypto",
     redeemableAs: "Redeemable as USDC/USDT/ETH/BTC",
   },
   de: {
-    title: "Umwandeln & Abheben", subtitle: "AUXM-Guthaben als Krypto auf Ihre Wallet abheben",
-    confirmTx: "Transaktion bestätigen", auxmBalance: "AUXM-Guthaben",
-    receiveAs: "Als welche Krypto erhalten?", amount: "AUXM-Betrag",
+    title: "Barguthaben auszahlen", subtitle: "Barguthaben als Krypto auf Ihre Wallet auszahlen",
+    confirmTx: "Transaktion bestätigen", auxmBalance: "Barguthaben",
+    receiveAs: "Als welche Krypto erhalten?", amount: "Betrag (USD)",
     walletAddress: "Wallet-Adresse", network: "Netzwerk", youWillReceive: "Sie erhalten",
     networkFee: "Netzwerkgebühr", netReceive: "Netto-Empfang",
-    insufficientBalance: "Unzureichendes AUXM-Guthaben", minimum: "Minimum",
+    insufficientBalance: "Unzureichendes Barguthaben", minimum: "Minimum",
     address: "Adresse", verifyAddress: "Adresse prüfen. Nicht rückgängig.",
     continue: "Weiter", processing: "Verarbeitung...", confirmWithdrawal: "Abhebung bestätigen",
     withdrawalStarted: "Abhebung gestartet!", withdrawalQueued: "Abhebung in Warteschlange",
     queuedExplain: "Hot-Wallet-Liquidität gering. Wird nach Auffüllen automatisch abgeschlossen (24-72h).",
     error: "Fehler!", txComplete: "10-30 Minuten", close: "Schließen", max: "MAX", back: "Zurück",
     usdValue: "USD-Wert", rate: "Umrechnungskurs", comingSoon: "Demnächst",
-    auxmInfo: "AUXM ist eine interne Verrechnungseinheit innerhalb von Auxite. Bei Abhebung wird sie zu 1 AUXM = 1 USD in die gewählte Krypto umgerechnet.",
-    notTransferable: "AUXM ist nicht direkt übertragbar", redeemableAs: "Einlösbar als USDC/USDT/ETH/BTC",
+    auxmInfo: "Ihr Barguthaben wird in USD geführt. Bei der Auszahlung wird es zum aktuellen Kurs in die gewählte Krypto umgerechnet und an Ihre Adresse gesendet.",
+    notTransferable: "Als Krypto an Ihre Wallet gesendet", redeemableAs: "Einlösbar als USDC/USDT/ETH/BTC",
   },
   fr: {
-    title: "Convertir & Retirer", subtitle: "Convertir votre solde AUXM en crypto sur votre portefeuille",
-    confirmTx: "Confirmer la transaction", auxmBalance: "Solde AUXM",
-    receiveAs: "Recevoir en quelle crypto?", amount: "Montant AUXM",
+    title: "Retirer des espèces", subtitle: "Retirer votre solde en espèces en crypto sur votre portefeuille",
+    confirmTx: "Confirmer la transaction", auxmBalance: "Solde en espèces",
+    receiveAs: "Recevoir en quelle crypto?", amount: "Montant (USD)",
     walletAddress: "Adresse du portefeuille", network: "Réseau", youWillReceive: "Vous recevrez",
     networkFee: "Frais de réseau", netReceive: "Réception nette",
-    insufficientBalance: "Solde AUXM insuffisant", minimum: "Minimum",
+    insufficientBalance: "Solde en espèces insuffisant", minimum: "Minimum",
     address: "Adresse", verifyAddress: "Vérifiez l'adresse. Non réversible.",
     continue: "Continuer", processing: "Traitement...", confirmWithdrawal: "Confirmer le retrait",
     withdrawalStarted: "Retrait commencé!", withdrawalQueued: "Retrait en file d'attente",
     queuedExplain: "Liquidité du hot wallet faible. Se terminera automatiquement après ravitaillement (24-72h).",
     error: "Erreur!", txComplete: "10-30 minutes", close: "Fermer", max: "MAX", back: "Retour",
     usdValue: "Valeur USD", rate: "Taux de conversion", comingSoon: "Bientôt disponible",
-    auxmInfo: "AUXM est une unité de règlement interne au sein d'Auxite. Lors du retrait, il est converti en crypto choisi au taux de 1 AUXM = 1 USD.",
-    notTransferable: "AUXM n'est pas directement transférable", redeemableAs: "Convertible en USDC/USDT/ETH/BTC",
+    auxmInfo: "Votre solde en espèces est libellé en USD. Lors du retrait, il est converti dans la crypto choisie au cours actuel et envoyé à votre adresse.",
+    notTransferable: "Envoyé en crypto sur votre portefeuille", redeemableAs: "Convertible en USDC/USDT/ETH/BTC",
   },
   ar: {
-    title: "تحويل وسحب", subtitle: "استرداد رصيد AUXM كعملة مشفرة إلى محفظتك",
-    confirmTx: "تأكيد المعاملة", auxmBalance: "رصيد AUXM",
-    receiveAs: "استلم بأي عملة مشفرة؟", amount: "كمية AUXM",
+    title: "سحب النقد", subtitle: "اسحب رصيدك النقدي كعملة مشفرة إلى محفظتك",
+    confirmTx: "تأكيد المعاملة", auxmBalance: "الرصيد النقدي",
+    receiveAs: "استلم بأي عملة مشفرة؟", amount: "المبلغ (USD)",
     walletAddress: "عنوان المحفظة", network: "الشبكة", youWillReceive: "ستستلم",
     networkFee: "رسوم الشبكة", netReceive: "صافي الاستلام",
-    insufficientBalance: "رصيد AUXM غير كافٍ", minimum: "الحد الأدنى",
+    insufficientBalance: "الرصيد النقدي غير كافٍ", minimum: "الحد الأدنى",
     address: "العنوان", verifyAddress: "تحقق من العنوان. لا يمكن التراجع.",
     continue: "متابعة", processing: "جاري المعالجة...", confirmWithdrawal: "تأكيد السحب",
     withdrawalStarted: "بدأ السحب!", withdrawalQueued: "السحب في قائمة الانتظار",
     queuedExplain: "سيولة المحفظة الساخنة منخفضة. سيكتمل تلقائياً بعد إعادة التمويل (24-72 ساعة).",
     error: "خطأ!", txComplete: "10-30 دقيقة", close: "إغلاق", max: "الأقصى", back: "رجوع",
     usdValue: "القيمة بالدولار", rate: "سعر التحويل", comingSoon: "قريباً",
-    auxmInfo: "AUXM هي وحدة تسوية داخلية ضمن Auxite. عند السحب يتم تحويلها إلى العملة المشفرة المختارة بسعر 1 AUXM = 1 USD.",
-    notTransferable: "AUXM غير قابل للتحويل المباشر", redeemableAs: "قابل للاسترداد كـ USDC/USDT/ETH/BTC",
+    auxmInfo: "رصيدك النقدي مقوَّم بالدولار الأمريكي. عند السحب يُحوَّل إلى العملة المشفرة المختارة بالسعر الحالي ويُرسل إلى عنوانك.",
+    notTransferable: "يُرسل إلى محفظتك كعملة مشفرة", redeemableAs: "قابل للاسترداد كـ USDC/USDT/ETH/BTC",
   },
   ru: {
-    title: "Конвертация и вывод", subtitle: "Вывести баланс AUXM как криптовалюту на ваш кошелек",
-    confirmTx: "Подтвердить транзакцию", auxmBalance: "Баланс AUXM",
-    receiveAs: "Получить в какой криптовалюте?", amount: "Сумма AUXM",
+    title: "Вывести средства", subtitle: "Вывести денежный баланс на кошелёк в криптовалюте",
+    confirmTx: "Подтвердить транзакцию", auxmBalance: "Денежный баланс",
+    receiveAs: "Получить в какой криптовалюте?", amount: "Сумма (USD)",
     walletAddress: "Адрес кошелька", network: "Сеть", youWillReceive: "Вы получите",
     networkFee: "Комиссия сети", netReceive: "Чистый доход",
-    insufficientBalance: "Недостаточный баланс AUXM", minimum: "Минимум",
+    insufficientBalance: "Недостаточно средств на денежном балансе", minimum: "Минимум",
     address: "Адрес", verifyAddress: "Проверьте адрес. Необратимо.",
     continue: "Продолжить", processing: "Обработка...", confirmWithdrawal: "Подтвердить вывод",
     withdrawalStarted: "Вывод начат!", withdrawalQueued: "Вывод в очереди",
     queuedExplain: "Ликвидность горячего кошелька низкая. Завершится автоматически после пополнения (24-72ч).",
     error: "Ошибка!", txComplete: "10-30 минут", close: "Закрыть", max: "МАКС", back: "Назад",
     usdValue: "Стоимость в USD", rate: "Курс конвертации", comingSoon: "Скоро",
-    auxmInfo: "AUXM — это внутренняя расчетная единица в Auxite. При выводе конвертируется в выбранную криптовалюту по курсу 1 AUXM = 1 USD.",
-    notTransferable: "AUXM напрямую не передается", redeemableAs: "Можно вывести как USDC/USDT/ETH/BTC",
+    auxmInfo: "Денежный баланс ведётся в USD. При выводе он конвертируется в выбранную криптовалюту по текущему курсу и отправляется на ваш адрес.",
+    notTransferable: "Отправляется на кошелёк в криптовалюте", redeemableAs: "Можно вывести как USDC/USDT/ETH/BTC",
   },
 };
 
@@ -474,8 +474,8 @@ export function AuxmRedeemModal({ isOpen, onClose }: AuxmRedeemModalProps) {
                       </span>
                     </div>
                     <span className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
-                      {formatAmount(auxmBalance, "AUXM")}{" "}
-                      <span className="text-xs text-indigo-500">AUXM</span>
+                      ${formatAmount(auxmBalance, "AUXM")}{" "}
+                      <span className="text-xs text-indigo-500">USD</span>
                     </span>
                   </div>
                 </div>
@@ -579,7 +579,7 @@ export function AuxmRedeemModal({ isOpen, onClose }: AuxmRedeemModalProps) {
                     <div className="flex justify-between text-[10px] sm:text-xs">
                       <span className="text-slate-500">{t("rate")}</span>
                       <span className="text-slate-600 dark:text-slate-400">
-                        1 AUXM = {formatAmount(conversionRate, payoutAsset)} {payoutAsset}
+                        1 USD = {formatAmount(conversionRate, payoutAsset)} {payoutAsset}
                       </span>
                     </div>
                     <div className="flex justify-between text-xs sm:text-sm mt-1">
@@ -610,14 +610,14 @@ export function AuxmRedeemModal({ isOpen, onClose }: AuxmRedeemModalProps) {
                 {!meetsMinimum && amountNum > 0 && canAfford && (
                   <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/30">
                     <p className="text-xs sm:text-sm text-[#BFA181]">
-                      ⚠️ {t("minimum")}: {MIN_AUXM} AUXM
+                      ⚠️ {t("minimum")}: ${MIN_AUXM}
                     </p>
                   </div>
                 )}
                 {amountNum > 0 && assetEnabled && canAfford && meetsMinimum && !netReceivePositive && (
                   <div className="p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-[#BFA181]/10 border border-[#BFA181]/30">
                     <p className="text-xs sm:text-sm text-[#BFA181]">
-                      ⚠️ {t("minimum")}: {MIN_AUXM} AUXM
+                      ⚠️ {t("minimum")}: ${MIN_AUXM}
                     </p>
                   </div>
                 )}
@@ -634,7 +634,7 @@ export function AuxmRedeemModal({ isOpen, onClose }: AuxmRedeemModalProps) {
                   <div className="flex justify-between">
                     <span className="text-slate-600 dark:text-slate-400">{t("amount")}</span>
                     <span className="text-slate-800 dark:text-white font-semibold">
-                      {formatAmount(amountNum, "AUXM")} AUXM
+                      ${formatAmount(amountNum, "AUXM")}
                     </span>
                   </div>
                   <div className="flex justify-between">
