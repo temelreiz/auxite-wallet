@@ -7,6 +7,7 @@ import { useLanguage } from "@/components/LanguageContext";
 import { useWallet } from "@/components/WalletContext";
 import { TwoFactorGate } from "@/components/TwoFactorGate";
 import { formatAmount } from "@/lib/format";
+import { displayAsset } from "@/lib/display-asset";
 
 // ============================================
 // METAL CONVERSION — Institutional Bullion Bank
@@ -21,7 +22,7 @@ const TOKENS = [
   { symbol: "AUXS", name: "Silver", nameTr: "Gümüş", icon: "/auxs_icon.png", color: "#94A3B8", balanceKey: "auxs", kind: "metal" },
   { symbol: "AUXPT", name: "Platinum", nameTr: "Platin", icon: "/auxpt_icon.png", color: "#CBD5E1", balanceKey: "auxpt", kind: "metal" },
   { symbol: "AUXPD", name: "Palladium", nameTr: "Paladyum", icon: "/auxpd_icon.png", color: "#64748B", balanceKey: "auxpd", kind: "metal" },
-  { symbol: "AUXM", name: "Settlement (USD)", nameTr: "Bakiye (USD)", icon: null, color: "#2F6F62", balanceKey: "auxm", kind: "auxm" },
+  { symbol: "AUXM", name: "Cash Balance (USD)", nameTr: "Nakit Bakiye (USD)", icon: null, color: "#2F6F62", balanceKey: "auxm", kind: "auxm" },
   { symbol: "USDT", name: "Tether", nameTr: "Tether", icon: null, color: "#26A17B", balanceKey: "usdt", kind: "crypto" },
   { symbol: "USDC", name: "USD Coin", nameTr: "USD Coin", icon: null, color: "#2775CA", balanceKey: "usdc", kind: "crypto" },
   { symbol: "BTC", name: "Bitcoin", nameTr: "Bitcoin", icon: null, color: "#F7931A", balanceKey: "btc", kind: "crypto" },
@@ -56,7 +57,7 @@ const tradeType = (from: string, to: string): string => {
 const translations: Record<string, Record<string, string>> = {
   tr: {
     title: "Dönüştür",
-    subtitle: "Metal, AUXM ve kripto arasında dönüşüm yapın",
+    subtitle: "Metal, nakit ve kripto arasında dönüşüm yapın",
     convertFrom: "Kaynak Metal",
     convertTo: "Hedef Metal",
     selectSource: "Dönüştürmek istediğiniz metali seçin",
@@ -82,7 +83,7 @@ const translations: Record<string, Record<string, string>> = {
     executionMethod: "İşlem Yöntemi",
     monetarySettlement: "Auxite likidite ağı üzerinden parasal takas",
     settlementCurrency: "Takas Birimi",
-    auxmInternal: "AUXM (Dahili)",
+    auxmInternal: "Nakit Bakiye (USD)",
     certificateAction: "Sertifika İşlemi",
     certRevoke: "Kaynak sertifika iptal edilir. Yeni sertifika düzenlenir.",
     confirmCheckbox: "Bu dönüşümün onaylandıktan sonra kesin olduğunu anlıyorum.",
@@ -111,7 +112,7 @@ const translations: Record<string, Record<string, string>> = {
   },
   en: {
     title: "Convert",
-    subtitle: "Convert between metals, AUXM and crypto",
+    subtitle: "Convert between metals, cash and crypto",
     convertFrom: "Convert From",
     convertTo: "Convert To",
     selectSource: "Select the metal you want to convert",
@@ -137,7 +138,7 @@ const translations: Record<string, Record<string, string>> = {
     executionMethod: "Execution Method",
     monetarySettlement: "Monetary settlement via Auxite liquidity network",
     settlementCurrency: "Settlement Currency",
-    auxmInternal: "AUXM (Internal)",
+    auxmInternal: "Cash Balance (USD)",
     certificateAction: "Certificate Action",
     certRevoke: "Source certificate revoked. New certificate issued.",
     confirmCheckbox: "I understand this conversion is final once executed.",
@@ -192,7 +193,7 @@ const translations: Record<string, Record<string, string>> = {
     executionMethod: "Ausführungsmethode",
     monetarySettlement: "Monetäre Abwicklung über das Auxite-Liquiditätsnetzwerk",
     settlementCurrency: "Abwicklungswährung",
-    auxmInternal: "AUXM (Intern)",
+    auxmInternal: "Barguthaben (USD)",
     certificateAction: "Zertifikatsmaßnahme",
     certRevoke: "Quellzertifikat widerrufen. Neues Zertifikat ausgestellt.",
     confirmCheckbox: "Ich verstehe, dass diese Umwandlung nach Ausführung endgültig ist.",
@@ -247,7 +248,7 @@ const translations: Record<string, Record<string, string>> = {
     executionMethod: "Méthode d'Exécution",
     monetarySettlement: "Règlement monétaire via le réseau de liquidité Auxite",
     settlementCurrency: "Devise de Règlement",
-    auxmInternal: "AUXM (Interne)",
+    auxmInternal: "Solde en espèces (USD)",
     certificateAction: "Action Certificat",
     certRevoke: "Certificat source révoqué. Nouveau certificat émis.",
     confirmCheckbox: "Je comprends que cette conversion est définitive une fois exécutée.",
@@ -302,7 +303,7 @@ const translations: Record<string, Record<string, string>> = {
     executionMethod: "طريقة التنفيذ",
     monetarySettlement: "تسوية نقدية عبر شبكة سيولة Auxite",
     settlementCurrency: "عملة التسوية",
-    auxmInternal: "AUXM (داخلي)",
+    auxmInternal: "الرصيد النقدي (USD)",
     certificateAction: "إجراء الشهادة",
     certRevoke: "تم إلغاء شهادة المصدر. تم إصدار شهادة جديدة.",
     confirmCheckbox: "أفهم أن هذا التحويل نهائي بمجرد تنفيذه.",
@@ -357,7 +358,7 @@ const translations: Record<string, Record<string, string>> = {
     executionMethod: "Метод исполнения",
     monetarySettlement: "Денежный расчёт через сеть ликвидности Auxite",
     settlementCurrency: "Валюта расчёта",
-    auxmInternal: "AUXM (Внутренний)",
+    auxmInternal: "Денежный баланс (USD)",
     certificateAction: "Действие с сертификатом",
     certRevoke: "Исходный сертификат аннулирован. Выпущен новый сертификат.",
     confirmCheckbox: "Я понимаю, что эта конвертация необратима после исполнения.",
@@ -680,13 +681,13 @@ export function MetalConversionTab() {
             <div className="text-center">
               {fromMetalCfg && <TokenBadge cfg={fromMetalCfg} size={40} className="mx-auto mb-1" />}
               <p className="text-sm font-semibold text-slate-800 dark:text-white">{success.fromGrams}{unitFor(success.from)}</p>
-              <p className="text-xs text-slate-500">{fromMetalCfg?.symbol}</p>
+              <p className="text-xs text-slate-500">{displayAsset(fromMetalCfg?.symbol)}</p>
             </div>
             <svg className="w-5 h-5 text-[#BFA181]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
             <div className="text-center">
               {toMetalCfg && <TokenBadge cfg={toMetalCfg} size={40} className="mx-auto mb-1" />}
               <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatAmount(success.toGrams, success.to)}{unitFor(success.to)}</p>
-              <p className="text-xs text-slate-500">{toMetalCfg?.symbol}</p>
+              <p className="text-xs text-slate-500">{displayAsset(toMetalCfg?.symbol)}</p>
             </div>
           </div>
           <div className="flex gap-3 justify-center">
@@ -743,7 +744,7 @@ export function MetalConversionTab() {
                   <div className="flex items-center gap-3 mb-2">
                     <TokenBadge cfg={metal} size={44} />
                     <div>
-                      <p className="font-bold text-slate-800 dark:text-white">{metal.symbol}</p>
+                      <p className="font-bold text-slate-800 dark:text-white">{displayAsset(metal.symbol)}</p>
                       <p className="text-xs text-slate-500">{lang === "tr" ? metal.nameTr : metal.name}</p>
                     </div>
                   </div>
@@ -791,7 +792,7 @@ export function MetalConversionTab() {
                   }`}
                 >
                   <TokenBadge cfg={metal} size={36} className="mx-auto mb-1" />
-                  <p className="text-sm font-bold text-slate-800 dark:text-white">{metal.symbol}</p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-white">{displayAsset(metal.symbol)}</p>
                   <p className="text-[10px] text-slate-500">{lang === "tr" ? metal.nameTr : metal.name}</p>
                 </button>
               );
@@ -867,7 +868,7 @@ export function MetalConversionTab() {
               <span className="text-sm text-slate-500">{t.source}</span>
               <div className="flex items-center gap-2">
                 <TokenBadge cfg={fromCfg} size={24} />
-                <span className="font-bold text-slate-800 dark:text-white">{parsedAmount}{unitFor(fromCfg.symbol)} {fromCfg.symbol}</span>
+                <span className="font-bold text-slate-800 dark:text-white">{parsedAmount}{unitFor(fromCfg.symbol)} {displayAsset(fromCfg.symbol)}</span>
               </div>
             </div>
             {/* Target */}
@@ -875,7 +876,7 @@ export function MetalConversionTab() {
               <span className="text-sm text-slate-500">{t.target}</span>
               <div className="flex items-center gap-2">
                 <TokenBadge cfg={toCfg} size={24} />
-                <span className="font-bold text-[#BFA181]">{formatAmount(estimatedOutput, toCfg.symbol)}{unitFor(toCfg.symbol)} {toCfg.symbol}</span>
+                <span className="font-bold text-[#BFA181]">{formatAmount(estimatedOutput, toCfg.symbol)}{unitFor(toCfg.symbol)} {displayAsset(toCfg.symbol)}</span>
               </div>
             </div>
             <div className="h-px bg-stone-200 dark:bg-slate-800" />
@@ -948,11 +949,11 @@ export function MetalConversionTab() {
               <div className="p-4 rounded-xl bg-stone-50 dark:bg-slate-800 mb-4 space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-slate-500">{t.from}</span>
-                  <span className="font-semibold text-slate-800 dark:text-white">{parsedAmount}{unitFor(fromCfg.symbol)} {fromCfg.symbol}</span>
+                  <span className="font-semibold text-slate-800 dark:text-white">{parsedAmount}{unitFor(fromCfg.symbol)} {displayAsset(fromCfg.symbol)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-slate-500">{t.toEstimated}</span>
-                  <span className="font-semibold text-[#BFA181]">{formatAmount(estimatedOutput, toCfg.symbol)}{unitFor(toCfg.symbol)} {toCfg.symbol}</span>
+                  <span className="font-semibold text-[#BFA181]">{formatAmount(estimatedOutput, toCfg.symbol)}{unitFor(toCfg.symbol)} {displayAsset(toCfg.symbol)}</span>
                 </div>
                 <div className="h-px bg-stone-200 dark:bg-slate-700" />
                 <p className="text-xs text-slate-500">{t.monetarySettlement}</p>

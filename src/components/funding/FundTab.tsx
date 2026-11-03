@@ -535,7 +535,7 @@ export function FundTab() {
       const data = await res.json();
       if (res.ok && data.success) {
         const credited = data.autoConverted
-          ? `${Number(data.amountUsd).toFixed(2)} AUXM`
+          ? `${Number(data.amountUsd).toFixed(2)} USD`
           : `${data.amount} ${data.coin}`;
         setClaimMsg({ type: "success", text: `${ct.success}: +${credited}` });
         setClaimTx("");

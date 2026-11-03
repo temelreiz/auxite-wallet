@@ -40,10 +40,10 @@ const translations: Record<string, Record<string, string>> = {
     certificateVerifyDesc: "Tahsis sertifikalarınızın orijinalliğini doğrulayın.",
     // Settlement
     settlementArchitecture: "Takas Mimarisi",
-    auxmSettlement: "AUXM Takas Birimi",
-    auxmSettlementDesc: "AUXM, Auxite altyapısı içinde yalnızca takas amaçlı kullanılan dahili bir birimdir. Kripto para veya stablecoin değildir.",
+    auxmSettlement: "Nakit Bakiye",
+    auxmSettlementDesc: "Yatırılan fonlar USD cinsinden nakit bakiyenize eklenir; metal tahsisinde kullanılır veya USDC/USDT olarak çekilebilir.",
     settlementFlow: "Takas Akışı",
-    settlementFlowDesc: "Fon Yatırma → AUXM Kredilendirme → Metal Tahsisi. Tüm tahsisler takas edilmiş sermaye ile yapılır.",
+    settlementFlowDesc: "Fon Yatırma → Nakit Bakiye → Metal Tahsisi. Tüm tahsisler takas edilmiş sermaye ile yapılır.",
     settlementFinality: "Takas Kesinliği",
     settlementFinalityDesc: "Bir kez tahsis edildikten sonra, pozisyonunuz nihai ve geri alınamaz. Takas kesinliği kurumsal standartta garantilenir.",
     // Compliance
@@ -81,7 +81,7 @@ const translations: Record<string, Record<string, string>> = {
     cashSettlementFinality: "İptal Edilemez Kesinlik",
     cashSettlementFinalityDesc: "Fiyat kilidi onaylandıktan sonra takas iptal edilemez. Bu, piyasa manipülasyonunu ve önceden alım satımı önler.",
     cashSettlementRails: "Takas Kanalları",
-    cashSettlementRailsDesc: "Gelirler AUXM (dahili) veya USDT aracılığıyla yatırılır. Günlük takas limiti geçerlidir.",
+    cashSettlementRailsDesc: "Gelirler nakit bakiyenize (USD) veya USDT olarak yatırılır. Günlük takas limiti geçerlidir.",
     cashSettlementAudit: "Denetim İzi",
     cashSettlementAuditDesc: "Fiyat, zaman damgası, tutar ve takas durumu dahil olmak üzere tam denetim izi tutulur.",
     cashSettlementQuoteLock: "120 saniyelik fiyat kilidi",
@@ -125,10 +125,10 @@ const translations: Record<string, Record<string, string>> = {
     certificateVerifyDesc: "Verify the authenticity of your allocation certificates.",
     // Settlement
     settlementArchitecture: "Settlement Architecture",
-    auxmSettlement: "AUXM Settlement Unit",
-    auxmSettlementDesc: "AUXM is an internal unit used exclusively for settlement within the Auxite infrastructure. It is not a cryptocurrency or stablecoin.",
+    auxmSettlement: "Cash Balance",
+    auxmSettlementDesc: "Deposited funds are credited to your cash balance in USD, which is used to allocate metal or can be withdrawn as USDC/USDT.",
     settlementFlow: "Settlement Flow",
-    settlementFlowDesc: "Fund Deposit → AUXM Credit → Metal Allocation. All allocations are made with settled capital.",
+    settlementFlowDesc: "Fund Deposit → Cash Balance → Metal Allocation. All allocations are made with settled capital.",
     settlementFinality: "Settlement Finality",
     settlementFinalityDesc: "Once allocated, your position is final and irrevocable. Settlement finality is guaranteed at institutional standard.",
     // Compliance
@@ -161,7 +161,7 @@ const translations: Record<string, Record<string, string>> = {
     cashSettlementFinality: "Non-Cancelable Finality",
     cashSettlementFinalityDesc: "Once the price lock is confirmed, the settlement cannot be canceled. This prevents market manipulation and front-running.",
     cashSettlementRails: "Settlement Rails",
-    cashSettlementRailsDesc: "Proceeds are credited via AUXM (internal) or USDT. A daily settlement cap applies.",
+    cashSettlementRailsDesc: "Proceeds are credited to your cash balance (USD) or as USDT. A daily settlement cap applies.",
     cashSettlementAudit: "Audit Trail",
     cashSettlementAuditDesc: "A full audit trail is maintained including price, timestamp, amount, and settlement status.",
     cashSettlementQuoteLock: "120-second price quote lock",
@@ -206,10 +206,10 @@ const translations: Record<string, Record<string, string>> = {
     certificateVerify: "Zertifikatsverifizierung",
     certificateVerifyDesc: "Uberprufen Sie die Echtheit Ihrer Zuteilungszertifikate.",
     settlementArchitecture: "Abwicklungsarchitektur",
-    auxmSettlement: "AUXM-Abwicklungseinheit",
-    auxmSettlementDesc: "AUXM ist eine interne Einheit, die ausschliesslich fur die Abwicklung innerhalb der Auxite-Infrastruktur verwendet wird. Es ist keine Kryptowahrung oder Stablecoin.",
+    auxmSettlement: "Barguthaben",
+    auxmSettlementDesc: "Eingezahlte Mittel werden Ihrem Barguthaben in USD gutgeschrieben; es dient der Metallallokation oder kann als USDC/USDT ausgezahlt werden.",
     settlementFlow: "Abwicklungsablauf",
-    settlementFlowDesc: "Einzahlung → AUXM-Gutschrift → Metallzuteilung. Alle Zuteilungen erfolgen mit abgewickeltem Kapital.",
+    settlementFlowDesc: "Einzahlung → Barguthaben → Metallzuteilung. Alle Zuteilungen erfolgen mit abgewickeltem Kapital.",
     settlementFinality: "Abwicklungsendgultigkeit",
     settlementFinalityDesc: "Nach Zuteilung ist Ihre Position endgultig und unwiderruflich. Die Abwicklungsendgultigkeit wird auf institutionellem Niveau garantiert.",
     cashSettlement: "Barabwicklung",
@@ -222,7 +222,7 @@ const translations: Record<string, Record<string, string>> = {
     cashSettlementFinality: "Unwiderrufliche Endgultigkeit",
     cashSettlementFinalityDesc: "Nach Bestatigung der Preissperre kann die Abwicklung nicht storniert werden. Dies verhindert Marktmanipulation und Front-Running.",
     cashSettlementRails: "Abwicklungskanale",
-    cashSettlementRailsDesc: "Erlose werden uber AUXM (intern) oder USDT gutgeschrieben. Ein tagliches Abwicklungslimit gilt.",
+    cashSettlementRailsDesc: "Erlöse werden Ihrem Barguthaben (USD) oder als USDT gutgeschrieben. Ein tägliches Abwicklungslimit gilt.",
     cashSettlementAudit: "Prufpfad",
     cashSettlementAuditDesc: "Ein vollstandiger Prufpfad wird gefuhrt, einschliesslich Preis, Zeitstempel, Betrag und Abwicklungsstatus.",
     cashSettlementQuoteLock: "120-Sekunden-Preissperre",
@@ -282,10 +282,10 @@ const translations: Record<string, Record<string, string>> = {
     certificateVerify: "Verification de Certificat",
     certificateVerifyDesc: "Verifiez l'authenticite de vos certificats d'allocation.",
     settlementArchitecture: "Architecture de Reglement",
-    auxmSettlement: "Unite de Reglement AUXM",
-    auxmSettlementDesc: "AUXM est une unite interne utilisee exclusivement pour le reglement au sein de l'infrastructure Auxite. Ce n'est ni une cryptomonnaie ni un stablecoin.",
+    auxmSettlement: "Solde en espèces",
+    auxmSettlementDesc: "Les fonds déposés sont crédités sur votre solde en espèces en USD, utilisé pour allouer du métal ou retirable en USDC/USDT.",
     settlementFlow: "Flux de Reglement",
-    settlementFlowDesc: "Depot → Credit AUXM → Allocation Metal. Toutes les allocations sont effectuees avec du capital regle.",
+    settlementFlowDesc: "Dépôt → Solde en espèces → Allocation de métal. Toutes les allocations sont effectuées avec du capital réglé.",
     settlementFinality: "Finalite du Reglement",
     settlementFinalityDesc: "Une fois alloue, votre position est definitive et irrevocable. La finalite du reglement est garantie au niveau institutionnel.",
     cashSettlement: "Reglement en Especes",
@@ -298,7 +298,7 @@ const translations: Record<string, Record<string, string>> = {
     cashSettlementFinality: "Finalite Non-Annulable",
     cashSettlementFinalityDesc: "Une fois le verrouillage du prix confirme, le reglement ne peut etre annule. Cela empeche la manipulation du marche et le front-running.",
     cashSettlementRails: "Canaux de Reglement",
-    cashSettlementRailsDesc: "Le produit est credite via AUXM (interne) ou USDT. Un plafond quotidien de reglement s'applique.",
+    cashSettlementRailsDesc: "Le produit est crédité sur votre solde en espèces (USD) ou en USDT. Un plafond quotidien de règlement s'applique.",
     cashSettlementAudit: "Piste d'Audit",
     cashSettlementAuditDesc: "Une piste d'audit complete est maintenue incluant prix, horodatage, montant et statut du reglement.",
     cashSettlementQuoteLock: "Verrouillage du prix pendant 120 secondes",
@@ -358,10 +358,10 @@ const translations: Record<string, Record<string, string>> = {
     certificateVerify: "التحقق من الشهادة",
     certificateVerifyDesc: "تحقق من صحة شهادات التخصيص الخاصة بك.",
     settlementArchitecture: "بنية التسوية",
-    auxmSettlement: "وحدة تسوية AUXM",
-    auxmSettlementDesc: "AUXM هي وحدة داخلية تُستخدم حصرياً للتسوية ضمن بنية Auxite التحتية. ليست عملة مشفرة أو عملة مستقرة.",
+    auxmSettlement: "الرصيد النقدي",
+    auxmSettlementDesc: "تُضاف الأموال المودعة إلى رصيدك النقدي بالدولار الأمريكي، ويُستخدم لتخصيص المعادن أو يمكن سحبه بعملة USDC/USDT.",
     settlementFlow: "تدفق التسوية",
-    settlementFlowDesc: "إيداع الأموال → رصيد AUXM → تخصيص المعادن. جميع التخصيصات تتم برأس مال مُسوّى.",
+    settlementFlowDesc: "إيداع الأموال → الرصيد النقدي → تخصيص المعادن. جميع التخصيصات تتم برأس مال مُسوّى.",
     settlementFinality: "نهائية التسوية",
     settlementFinalityDesc: "بمجرد التخصيص، يكون مركزك نهائياً وغير قابل للإلغاء. نهائية التسوية مضمونة بمعايير مؤسسية.",
     cashSettlement: "التسوية النقدية",
@@ -374,7 +374,7 @@ const translations: Record<string, Record<string, string>> = {
     cashSettlementFinality: "نهائية غير قابلة للإلغاء",
     cashSettlementFinalityDesc: "بمجرد تأكيد تثبيت السعر، لا يمكن إلغاء التسوية. هذا يمنع التلاعب بالسوق والتداول المسبق.",
     cashSettlementRails: "قنوات التسوية",
-    cashSettlementRailsDesc: "يُضاف العائد عبر AUXM (داخلي) أو USDT. ينطبق حد تسوية يومي.",
+    cashSettlementRailsDesc: "يُضاف العائد إلى رصيدك النقدي (USD) أو بعملة USDT. ينطبق حد تسوية يومي.",
     cashSettlementAudit: "مسار التدقيق",
     cashSettlementAuditDesc: "يتم الاحتفاظ بمسار تدقيق كامل يشمل السعر والطابع الزمني والمبلغ وحالة التسوية.",
     cashSettlementQuoteLock: "تثبيت عرض السعر لمدة 120 ثانية",
@@ -434,10 +434,10 @@ const translations: Record<string, Record<string, string>> = {
     certificateVerify: "Верификация Сертификата",
     certificateVerifyDesc: "Проверьте подлинность ваших сертификатов распределения.",
     settlementArchitecture: "Архитектура Расчетов",
-    auxmSettlement: "Расчетная Единица AUXM",
-    auxmSettlementDesc: "AUXM — внутренняя единица, используемая исключительно для расчетов в инфраструктуре Auxite. Это не криптовалюта и не стейблкоин.",
+    auxmSettlement: "Денежный баланс",
+    auxmSettlementDesc: "Внесённые средства зачисляются на денежный баланс в USD; он используется для покупки металла или может быть выведен в USDC/USDT.",
     settlementFlow: "Поток Расчетов",
-    settlementFlowDesc: "Внесение средств → Кредит AUXM → Распределение металла. Все распределения осуществляются с помощью рассчитанного капитала.",
+    settlementFlowDesc: "Внесение средств → Денежный баланс → Распределение металла. Все распределения осуществляются с рассчитанным капиталом.",
     settlementFinality: "Окончательность Расчета",
     settlementFinalityDesc: "После распределения ваша позиция окончательна и безотзывна. Окончательность расчета гарантируется на институциональном уровне.",
     cashSettlement: "Денежный Расчет",
@@ -450,7 +450,7 @@ const translations: Record<string, Record<string, string>> = {
     cashSettlementFinality: "Безотзывная Окончательность",
     cashSettlementFinalityDesc: "После подтверждения фиксации цены расчет не может быть отменен. Это предотвращает манипуляции рынком и фронтраннинг.",
     cashSettlementRails: "Каналы Расчета",
-    cashSettlementRailsDesc: "Выручка зачисляется через AUXM (внутренний) или USDT. Применяется дневной лимит расчетов.",
+    cashSettlementRailsDesc: "Выручка зачисляется на денежный баланс (USD) или в USDT. Применяется дневной лимит расчётов.",
     cashSettlementAudit: "Аудиторский След",
     cashSettlementAuditDesc: "Ведется полный аудиторский след, включая цену, временную метку, сумму и статус расчета.",
     cashSettlementQuoteLock: "Фиксация котировки на 120 секунд",
@@ -691,7 +691,7 @@ export default function TrustCenterPage() {
                   </svg>
                   <div className="px-4 py-3 bg-[#2F6F62]/20 border border-[#2F6F62]/30 rounded-lg text-center">
                     <p className="text-xs text-[#2F6F62] dark:text-[#2F6F62] mb-1">Step 2</p>
-                    <p className="font-semibold text-[#2F6F62] dark:text-[#2F6F62]">AUXM Credit</p>
+                    <p className="font-semibold text-[#2F6F62] dark:text-[#2F6F62]">Cash Balance Credit</p>
                     <p className="text-xs text-[#2F6F62]/70">Settled Capital</p>
                   </div>
                   <svg className="w-6 h-6 text-[#2F6F62] rotate-90 md:rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -727,9 +727,9 @@ export default function TrustCenterPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <p className="text-sm font-medium text-blue-600 dark:text-blue-400">AUXM Settlement Unit</p>
+                    <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Cash Balance</p>
                     <p className="text-xs text-blue-600/80 dark:text-blue-400/80 mt-1">
-                      AUXM is an internal settlement unit used exclusively within the Auxite infrastructure. It is denominated in USD value for settlement purposes only. It is not a cryptocurrency, stablecoin, or transferable asset outside the Auxite ecosystem.
+                      Your cash balance is held in USD. It is used to allocate metal and can be withdrawn to your wallet as USDC or USDT; it is not a separate token.
                     </p>
                   </div>
                 </div>
@@ -771,7 +771,7 @@ export default function TrustCenterPage() {
                   <div className="px-4 py-3 bg-[#2F6F62]/20 border border-[#2F6F62]/30 rounded-lg text-center">
                     <p className="text-xs text-[#2F6F62] mb-1">Step 3</p>
                     <p className="font-semibold text-[#2F6F62]">Proceeds Credited</p>
-                    <p className="text-xs text-[#2F6F62]/70">T+1 via AUXM/USDT</p>
+                    <p className="text-xs text-[#2F6F62]/70">T+1 to cash balance (USD) or USDT</p>
                   </div>
                 </div>
 

@@ -181,7 +181,7 @@ export function WireActivityCard({ walletAddress, onOpenWireModal }: Props) {
                   </p>
                 </div>
                 <span className="text-sm font-bold text-[#BFA181] whitespace-nowrap">
-                  +{fmt(w.auxmCredited, "AUXM")}
+                  +{fmt(w.auxmCredited, "USD")}
                 </span>
               </li>
             ))}

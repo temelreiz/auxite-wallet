@@ -262,7 +262,7 @@ export async function POST(req: NextRequest) {
           const { sendNotification } = await import("@/lib/notification-sender");
           sendNotification(userAddress, "deposit", {
             title: "🔒 KYC Required for Wire",
-            body: `Your ${amount} ${currency} wire is on hold pending KYC verification. Complete KYC to release ${auxmCredit} AUXM.`,
+            body: `Your ${amount} ${currency} wire is on hold pending KYC verification. Complete KYC to release $${auxmCredit} to your cash balance.`,
             icon: "/icons/icon-192x192.png",
             tag: `wire-kyc-${resourceId}`,
             data: {

@@ -27,7 +27,7 @@ const T: Record<string, Record<string, string>> = {
     buy: "Buy",
     nav: "NAV (USD/gram)",
     sellAmt: "Grams to sell",
-    buyAmt: "AUXM to spend",
+    buyAmt: "USD to spend",
     place: "Place order",
     placing: "Placing…",
     book: "Order book",
@@ -44,7 +44,7 @@ const T: Record<string, Record<string, string>> = {
     buy: "Al",
     nav: "NAV (USD/gram)",
     sellAmt: "Satılacak gram",
-    buyAmt: "Harcanacak AUXM",
+    buyAmt: "Harcanacak USD",
     place: "Emir ver",
     placing: "Gönderiliyor…",
     book: "Emir defteri",
@@ -222,7 +222,7 @@ export default function TradeNavPage() {
                   {buys.length === 0 && <p className="text-slate-400">—</p>}
                   {buys.map((o) => (
                     <p key={o.id} className="text-slate-600 dark:text-slate-400">
-                      {o.remaining.toFixed(2)} AUXM
+                      {o.remaining.toFixed(2)} USD
                     </p>
                   ))}
                 </div>
@@ -245,7 +245,7 @@ export default function TradeNavPage() {
                 <div key={o.id} className="flex items-center justify-between py-1.5 text-xs border-b border-stone-100 dark:border-slate-800 last:border-0">
                   <span className="text-slate-600 dark:text-slate-400">
                     {o.side === "sell" ? t.sell : t.buy} {o.metal} ·{" "}
-                    {o.side === "sell" ? `${o.remaining.toFixed(4)} g` : `${o.remaining.toFixed(2)} AUXM`}
+                    {o.side === "sell" ? `${o.remaining.toFixed(4)} g` : `${o.remaining.toFixed(2)} USD`}
                   </span>
                   <button onClick={() => cancel(o.id)} className="text-red-500 hover:text-red-600 font-medium">
                     {t.cancel}

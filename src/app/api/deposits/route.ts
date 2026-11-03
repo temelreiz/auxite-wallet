@@ -258,7 +258,7 @@ export async function POST(request: NextRequest) {
       success: true,
       deposit,
       message: deposit.status === "confirmed"
-        ? `Deposit confirmed! ${auxmAmount.toFixed(2)} AUXM credited.`
+        ? `Deposit confirmed! $${auxmAmount.toFixed(2)} credited to your cash balance.`
         : `Deposit pending. ${confirmations}/${requiredConfirmations} confirmations.`,
     });
 

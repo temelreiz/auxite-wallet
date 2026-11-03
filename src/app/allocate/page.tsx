@@ -12,6 +12,7 @@ import TopNav from "@/components/TopNav";
 import { useLanguage } from "@/components/LanguageContext";
 import { useWallet } from "@/components/WalletContext";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
+import { displayAsset } from "@/lib/display-asset";
 
 // ============================================
 // TRANSLATIONS
@@ -308,7 +309,7 @@ const METALS = [
 ];
 
 const FUNDING_SOURCES = [
-  { symbol: "AUXM", name: "Settlement Balance", tier: "primary" },
+  { symbol: "AUXM", name: "Cash Balance", tier: "primary" },
   { symbol: "USDC", name: "USD Coin", tier: "secondary" },
   { symbol: "USDT", name: "Tether", tier: "secondary" },
   { symbol: "BTC", name: "Bitcoin", tier: "tertiary" },
@@ -711,12 +712,12 @@ export default function AllocatePage() {
               </div>
               <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
                 <span className="text-sm text-slate-500">{t.fundingSource}</span>
-                <span className="text-sm font-semibold text-slate-800 dark:text-white">{selectedSource}</span>
+                <span className="text-sm font-semibold text-slate-800 dark:text-white">{displayAsset(selectedSource)}</span>
               </div>
               {!isStablecoinSource && (
                 <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
                   <span className="text-sm text-slate-500">{lang === 'tr' ? 'Kripto Miktarı' : 'Crypto Amount'}</span>
-                  <span className="text-sm font-semibold text-slate-800 dark:text-white">{inputAmount} {selectedSource}</span>
+                  <span className="text-sm font-semibold text-slate-800 dark:text-white">{inputAmount} {displayAsset(selectedSource)}</span>
                 </div>
               )}
               <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
@@ -741,8 +742,8 @@ export default function AllocatePage() {
               </div>
               {cryptoPerGram > 0 && (
                 <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
-                  <span className="text-sm text-[#BFA181]">{lang === 'tr' ? 'Gram Başına' : 'Per Gram'} ({selectedSource})</span>
-                  <span className="text-sm font-bold text-[#BFA181]">{formatAmount(cryptoPerGram, selectedSource)} {selectedSource}</span>
+                  <span className="text-sm text-[#BFA181]">{lang === 'tr' ? 'Gram Başına' : 'Per Gram'} ({displayAsset(selectedSource)})</span>
+                  <span className="text-sm font-bold text-[#BFA181]">{formatAmount(cryptoPerGram, selectedSource)} {displayAsset(selectedSource)}</span>
                 </div>
               )}
               <div className="flex justify-between py-3 border-b border-stone-100 dark:border-slate-800">
@@ -1068,7 +1069,7 @@ export default function AllocatePage() {
                     : "bg-stone-50 dark:bg-slate-800 border-stone-200 dark:border-slate-700 hover:border-[#BFA181]/50"
                 }`}
               >
-                <span className="text-sm font-semibold text-slate-800 dark:text-white">{source.symbol}</span>
+                <span className="text-sm font-semibold text-slate-800 dark:text-white">{displayAsset(source.symbol)}</span>
                 <span className="text-[10px] text-green-500 dark:text-green-400 font-mono mt-0.5">
                   {(userBalances[source.symbol] || 0) > 0
                     ? (source.symbol === "BTC" ? (userBalances[source.symbol] || 0).toFixed(6) : source.symbol === "ETH" ? (userBalances[source.symbol] || 0).toFixed(4) : (userBalances[source.symbol] || 0).toLocaleString("en-US", { maximumFractionDigits: 2 }))
@@ -1085,7 +1086,7 @@ export default function AllocatePage() {
             {t.capitalDeployed}
           </p>
           <div className="flex items-center bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl px-4 h-14 mb-4">
-            <span className="text-slate-400 mr-3 text-sm font-semibold">{selectedSource}</span>
+            <span className="text-slate-400 mr-3 text-sm font-semibold">{displayAsset(selectedSource)}</span>
             <input
               type="number"
               value={amount}
@@ -1106,11 +1107,11 @@ export default function AllocatePage() {
           {/* Crypto price info */}
           {!isStablecoinSource && cryptoUsdPrice > 0 && (
             <div className="flex items-center flex-wrap gap-1 px-3 py-2 bg-stone-50 dark:bg-slate-800 rounded-lg mb-4">
-              <span className="text-[11px] text-slate-500 font-semibold">1 {selectedSource}</span>
+              <span className="text-[11px] text-slate-500 font-semibold">1 {displayAsset(selectedSource)}</span>
               <span className="text-[11px] text-slate-800 dark:text-white font-bold">= {formatUSD(cryptoUsdPrice)}</span>
               {cryptoPerGram > 0 && (
                 <span className="text-[10px] text-[#BFA181] font-medium ml-1">
-                  ({cryptoPerGram.toFixed(selectedSource === "BTC" ? 6 : 4)} {selectedSource}/g {metalInfo?.symbol || ""})
+                  ({cryptoPerGram.toFixed(selectedSource === "BTC" ? 6 : 4)} {displayAsset(selectedSource)}/g {metalInfo?.symbol || ""})
                 </span>
               )}
             </div>
@@ -1136,9 +1137,9 @@ export default function AllocatePage() {
             {/* Execution price in asset terms — shown for ALL funding sources */}
             {cryptoPerGram > 0 && (
               <div className="flex justify-between">
-                <span className="text-sm text-[#BFA181]">{lang === 'tr' ? 'Gram Başına' : 'Per Gram'} ({selectedSource})</span>
+                <span className="text-sm text-[#BFA181]">{lang === 'tr' ? 'Gram Başına' : 'Per Gram'} ({displayAsset(selectedSource)})</span>
                 <span className="text-sm font-bold text-[#BFA181]">
-                  {formatAmount(cryptoPerGram, selectedSource)} {selectedSource}
+                  {formatAmount(cryptoPerGram, selectedSource)} {displayAsset(selectedSource)}
                 </span>
               </div>
             )}

@@ -45,8 +45,8 @@ const translations: Record<string, Record<string, string>> = {
     fundingSources: "FONLAMA KAYNAKLARI",
     bankWire: "Banka Havalesi",
     bankWireDesc: "Uluslararası banka transferi",
-    auxmFunding: "AUXM ile Fonla",
-    auxmFundingDesc: "Dahili takas birimi ile anında fonlama",
+    auxmFunding: "Nakit Bakiye ile Fonla",
+    auxmFundingDesc: "Nakit bakiyenizle anında fonlama",
     cryptoFunding: "DİJİTAL VARLIK FONLAMA",
     settlementTime: "Takas Süresi",
     businessDays: "iş günü",
@@ -74,21 +74,21 @@ const translations: Record<string, Record<string, string>> = {
     generatingAddress: "Adres oluşturuluyor...",
 
     // AUXM Modal
-    auxmTitle: "AUXM ile Fonla",
-    auxmSubtitle: "AUXM dahili takas birimi ile anında fonlama",
-    auxmBalance: "AUXM Bakiyeniz",
+    auxmTitle: "Nakit Bakiye ile Fonla",
+    auxmSubtitle: "Nakit bakiyenizle anında fonlama",
+    auxmBalance: "Nakit Bakiyeniz",
     auxmAmount: "Fonlama Miktarı",
-    auxmRate: "AUXM Kuru",
+    auxmRate: "Birim",
     auxmEquivalent: "USD Karşılığı",
     auxmFund: "Kasayı Fonla",
-    auxmInsufficient: "Yetersiz AUXM bakiyesi",
-    auxmMin: "Min. 100 AUXM",
-    auxmNote: "AUXM, yalnızca Auxite altyapısı içinde kullanılan dahili takas birimidir.",
+    auxmInsufficient: "Yetersiz nakit bakiye",
+    auxmMin: "Min. $100",
+    auxmNote: "Nakit bakiyeniz USD cinsindendir; metal tahsisinde kullanılabilir veya USDC/USDT olarak çekilebilir.",
 
     // Settlement
     settlementCredit: "Takas Kredisi",
-    fundsSettled: "Fonlar takas bakiyenize kredilenecektir.",
-    creditedAsAuxm: "AUXM olarak kredilenir",
+    fundsSettled: "Fonlar nakit bakiyenize eklenecektir.",
+    creditedAsAuxm: "Nakit bakiyenize USD olarak eklenir",
     custodyNote: "Dijital varlıklar, tahsis için kullanılana kadar saklama altında tutulur.",
     fundsCredited: "Fonlar alındıktan sonra hesabınıza aktarılır.",
 
@@ -110,8 +110,8 @@ const translations: Record<string, Record<string, string>> = {
     fundingSources: "FUNDING SOURCES",
     bankWire: "Bank Wire",
     bankWireDesc: "International bank transfer",
-    auxmFunding: "Fund with AUXM",
-    auxmFundingDesc: "Instant funding with internal settlement unit",
+    auxmFunding: "Fund with Cash Balance",
+    auxmFundingDesc: "Instant funding from your cash balance",
     cryptoFunding: "DIGITAL ASSET FUNDING",
     settlementTime: "Settlement",
     businessDays: "business days",
@@ -139,21 +139,21 @@ const translations: Record<string, Record<string, string>> = {
     generatingAddress: "Generating address...",
 
     // AUXM Modal
-    auxmTitle: "Fund with AUXM",
-    auxmSubtitle: "Instant funding with AUXM internal settlement unit",
-    auxmBalance: "Your AUXM Balance",
+    auxmTitle: "Fund with Cash Balance",
+    auxmSubtitle: "Instant funding from your cash balance",
+    auxmBalance: "Your Cash Balance",
     auxmAmount: "Funding Amount",
-    auxmRate: "AUXM Rate",
+    auxmRate: "Denomination",
     auxmEquivalent: "USD Equivalent",
     auxmFund: "Fund Vault",
-    auxmInsufficient: "Insufficient AUXM balance",
-    auxmMin: "Min. 100 AUXM",
-    auxmNote: "AUXM is an internal settlement unit used exclusively within the Auxite infrastructure.",
+    auxmInsufficient: "Insufficient cash balance",
+    auxmMin: "Min. $100",
+    auxmNote: "Your cash balance is held in USD and can be used to allocate metal or withdrawn as USDC/USDT.",
 
     // Settlement
     settlementCredit: "Settlement Credit",
-    fundsSettled: "Funds will be credited to your settlement balance.",
-    creditedAsAuxm: "Credited as AUXM",
+    fundsSettled: "Funds will be credited to your cash balance.",
+    creditedAsAuxm: "Credited to your cash balance in USD",
     custodyNote: "Digital assets are held in custody until deployed for allocation.",
     fundsCredited: "Funds are credited upon receipt.",
 
@@ -175,8 +175,8 @@ const translations: Record<string, Record<string, string>> = {
     fundingSources: "FINANZIERUNGSQUELLEN",
     bankWire: "Banküberweisung",
     bankWireDesc: "Internationale Banküberweisung",
-    auxmFunding: "Mit AUXM Aufladen",
-    auxmFundingDesc: "Sofortige Finanzierung mit interner Abrechnungseinheit",
+    auxmFunding: "Mit Barguthaben aufladen",
+    auxmFundingDesc: "Sofortige Finanzierung aus Ihrem Barguthaben",
     cryptoFunding: "DIGITALE VERMÖGENSWERTE",
     settlementTime: "Abwicklung",
     businessDays: "Werktage",
@@ -198,19 +198,19 @@ const translations: Record<string, Record<string, string>> = {
     warningTitle: "WICHTIGER HINWEIS",
     warningText: "Senden Sie nur über das {network} Netzwerk. Die Verwendung eines anderen Netzwerks kann zu dauerhaftem Verlust führen.",
     generatingAddress: "Adresse wird generiert...",
-    auxmTitle: "Mit AUXM Aufladen",
-    auxmSubtitle: "Sofortige Finanzierung mit AUXM",
-    auxmBalance: "Ihr AUXM Guthaben",
+    auxmTitle: "Mit Barguthaben aufladen",
+    auxmSubtitle: "Sofortige Finanzierung aus Ihrem Barguthaben",
+    auxmBalance: "Ihr Barguthaben",
     auxmAmount: "Finanzierungsbetrag",
-    auxmRate: "AUXM Kurs",
+    auxmRate: "Währung",
     auxmEquivalent: "USD Äquivalent",
     auxmFund: "Tresor Aufladen",
-    auxmInsufficient: "Unzureichendes AUXM Guthaben",
-    auxmMin: "Min. 100 AUXM",
-    auxmNote: "AUXM ist eine interne Abrechnungseinheit.",
+    auxmInsufficient: "Unzureichendes Barguthaben",
+    auxmMin: "Min. $100",
+    auxmNote: "Ihr Barguthaben wird in USD geführt und kann für Metallallokationen genutzt oder als USDC/USDT ausgezahlt werden.",
     settlementCredit: "Abrechnungskredit",
-    fundsSettled: "Mittel werden Ihrem Abrechnungssaldo gutgeschrieben.",
-    creditedAsAuxm: "Als AUXM gutgeschrieben",
+    fundsSettled: "Mittel werden Ihrem Barguthaben gutgeschrieben.",
+    creditedAsAuxm: "Ihrem Barguthaben in USD gutgeschrieben",
     custodyNote: "Digitale Vermögenswerte werden bis zur Zuweisung verwahrt.",
     fundsCredited: "Mittel werden nach Erhalt gutgeschrieben.",
     pendingSettlement: "Abwicklung Ausstehend",
@@ -230,8 +230,8 @@ const translations: Record<string, Record<string, string>> = {
     fundingSources: "SOURCES DE FINANCEMENT",
     bankWire: "Virement Bancaire",
     bankWireDesc: "Virement bancaire international",
-    auxmFunding: "Financer avec AUXM",
-    auxmFundingDesc: "Financement instantané avec unité de règlement interne",
+    auxmFunding: "Financer avec le solde en espèces",
+    auxmFundingDesc: "Financement instantané depuis votre solde en espèces",
     cryptoFunding: "FINANCEMENT ACTIFS NUMÉRIQUES",
     settlementTime: "Règlement",
     businessDays: "jours ouvrables",
@@ -253,19 +253,19 @@ const translations: Record<string, Record<string, string>> = {
     warningTitle: "AVERTISSEMENT IMPORTANT",
     warningText: "Envoyez uniquement via le réseau {network}. L'utilisation d'un autre réseau peut entraîner une perte permanente.",
     generatingAddress: "Génération de l'adresse...",
-    auxmTitle: "Financer avec AUXM",
-    auxmSubtitle: "Financement instantané avec AUXM",
-    auxmBalance: "Votre Solde AUXM",
+    auxmTitle: "Financer avec le solde en espèces",
+    auxmSubtitle: "Financement instantané depuis votre solde en espèces",
+    auxmBalance: "Votre solde en espèces",
     auxmAmount: "Montant du Financement",
-    auxmRate: "Taux AUXM",
+    auxmRate: "Devise",
     auxmEquivalent: "Équivalent USD",
     auxmFund: "Alimenter le Coffre",
-    auxmInsufficient: "Solde AUXM insuffisant",
-    auxmMin: "Min. 100 AUXM",
-    auxmNote: "AUXM est une unité de règlement interne.",
+    auxmInsufficient: "Solde en espèces insuffisant",
+    auxmMin: "Min. $100",
+    auxmNote: "Votre solde en espèces est libellé en USD ; il peut servir à allouer du métal ou être retiré en USDC/USDT.",
     settlementCredit: "Crédit de Règlement",
     fundsSettled: "Les fonds seront crédités à votre solde.",
-    creditedAsAuxm: "Crédité en AUXM",
+    creditedAsAuxm: "Crédité sur votre solde en espèces en USD",
     custodyNote: "Les actifs numériques sont conservés jusqu'à l'allocation.",
     fundsCredited: "Les fonds sont crédités à réception.",
     pendingSettlement: "Règlement en Attente",
@@ -285,8 +285,8 @@ const translations: Record<string, Record<string, string>> = {
     fundingSources: "مصادر التمويل",
     bankWire: "تحويل بنكي",
     bankWireDesc: "تحويل بنكي دولي",
-    auxmFunding: "التمويل بـ AUXM",
-    auxmFundingDesc: "تمويل فوري بوحدة التسوية الداخلية",
+    auxmFunding: "التمويل من الرصيد النقدي",
+    auxmFundingDesc: "تمويل فوري من رصيدك النقدي",
     cryptoFunding: "تمويل الأصول الرقمية",
     settlementTime: "التسوية",
     businessDays: "أيام عمل",
@@ -308,19 +308,19 @@ const translations: Record<string, Record<string, string>> = {
     warningTitle: "تحذير مهم",
     warningText: "أرسل فقط عبر شبكة {network}. قد يؤدي استخدام شبكة مختلفة إلى خسارة دائمة.",
     generatingAddress: "جاري إنشاء العنوان...",
-    auxmTitle: "التمويل بـ AUXM",
-    auxmSubtitle: "تمويل فوري بـ AUXM",
-    auxmBalance: "رصيد AUXM الخاص بك",
+    auxmTitle: "التمويل من الرصيد النقدي",
+    auxmSubtitle: "تمويل فوري من رصيدك النقدي",
+    auxmBalance: "رصيدك النقدي",
     auxmAmount: "مبلغ التمويل",
-    auxmRate: "سعر AUXM",
+    auxmRate: "العملة",
     auxmEquivalent: "ما يعادله بالدولار",
     auxmFund: "تمويل الخزينة",
-    auxmInsufficient: "رصيد AUXM غير كافٍ",
-    auxmMin: "الحد الأدنى 100 AUXM",
-    auxmNote: "AUXM هي وحدة تسوية داخلية.",
+    auxmInsufficient: "الرصيد النقدي غير كافٍ",
+    auxmMin: "الحد الأدنى 100$",
+    auxmNote: "رصيدك النقدي مقوَّم بالدولار الأمريكي ويمكن استخدامه لتخصيص المعادن أو سحبه بعملة USDC/USDT.",
     settlementCredit: "ائتمان التسوية",
     fundsSettled: "سيتم إضافة الأموال إلى رصيدك.",
-    creditedAsAuxm: "يُضاف كـ AUXM",
+    creditedAsAuxm: "يُضاف إلى رصيدك النقدي بالدولار",
     custodyNote: "يتم الاحتفاظ بالأصول الرقمية حتى التخصيص.",
     fundsCredited: "تُضاف الأموال عند الاستلام.",
     pendingSettlement: "تسوية معلقة",
@@ -340,8 +340,8 @@ const translations: Record<string, Record<string, string>> = {
     fundingSources: "ИСТОЧНИКИ ФИНАНСИРОВАНИЯ",
     bankWire: "Банковский Перевод",
     bankWireDesc: "Международный банковский перевод",
-    auxmFunding: "Пополнить с AUXM",
-    auxmFundingDesc: "Мгновенное пополнение с внутренней расчетной единицей",
+    auxmFunding: "Пополнить с денежного баланса",
+    auxmFundingDesc: "Мгновенное пополнение с денежного баланса",
     cryptoFunding: "ЦИФРОВЫЕ АКТИВЫ",
     settlementTime: "Расчет",
     businessDays: "рабочих дней",
@@ -363,19 +363,19 @@ const translations: Record<string, Record<string, string>> = {
     warningTitle: "ВАЖНОЕ ПРЕДУПРЕЖДЕНИЕ",
     warningText: "Отправляйте только через сеть {network}. Использование другой сети может привести к потере средств.",
     generatingAddress: "Генерация адреса...",
-    auxmTitle: "Пополнить с AUXM",
-    auxmSubtitle: "Мгновенное пополнение с AUXM",
-    auxmBalance: "Ваш Баланс AUXM",
+    auxmTitle: "Пополнить с денежного баланса",
+    auxmSubtitle: "Мгновенное пополнение с денежного баланса",
+    auxmBalance: "Ваш денежный баланс",
     auxmAmount: "Сумма Пополнения",
-    auxmRate: "Курс AUXM",
+    auxmRate: "Валюта",
     auxmEquivalent: "Эквивалент USD",
     auxmFund: "Пополнить Хранилище",
-    auxmInsufficient: "Недостаточный баланс AUXM",
-    auxmMin: "Мин. 100 AUXM",
-    auxmNote: "AUXM - внутренняя расчетная единица.",
+    auxmInsufficient: "Недостаточно средств на денежном балансе",
+    auxmMin: "Мин. $100",
+    auxmNote: "Денежный баланс ведётся в USD; его можно использовать для покупки металла или вывести в USDC/USDT.",
     settlementCredit: "Расчетный Кредит",
     fundsSettled: "Средства будут зачислены на ваш баланс.",
-    creditedAsAuxm: "Зачисляется как AUXM",
+    creditedAsAuxm: "Зачисляется на денежный баланс в USD",
     custodyNote: "Цифровые активы хранятся до распределения.",
     fundsCredited: "Средства зачисляются при получении.",
     pendingSettlement: "Ожидание Расчета",
@@ -534,7 +534,7 @@ export function AddFundsModal({
             <span className="text-slate-300">→</span>
             <div className="text-center">
               <span className="text-[#BFA181] text-lg">◈</span>
-              <p className="text-xs text-[#BFA181] mt-1">AUXM</p>
+              <p className="text-xs text-[#BFA181] mt-1">USD</p>
             </div>
             <span className="text-slate-300">→</span>
             <div className="text-center">
@@ -696,7 +696,7 @@ export function AddFundsModal({
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <p className="font-semibold text-slate-800 dark:text-white">{t("auxmFunding")}</p>
-                        <span className="text-xs font-semibold text-[#BFA181]">AUXM</span>
+                        <span className="text-xs font-semibold text-[#BFA181]">USD</span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400">{t("auxmFundingDesc")}</p>
                       <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
@@ -787,8 +787,7 @@ export function AddFundsModal({
                   <span className="text-2xl text-[#BFA181]">◈</span>
                   <span className="text-sm text-slate-500 dark:text-slate-400">{t("auxmBalance")}</span>
                 </div>
-                <p className="text-3xl font-bold text-[#BFA181]">{auxmBalance.toLocaleString()} AUXM</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">≈ ${auxmBalance.toLocaleString()} USD</p>
+                <p className="text-3xl font-bold text-[#BFA181]">${auxmBalance.toLocaleString()}</p>
               </div>
 
               {/* Amount Input */}
@@ -810,7 +809,7 @@ export function AddFundsModal({
                   >
                     MAX
                   </button>
-                  <span className="flex-shrink-0 text-sm font-semibold text-[#BFA181]">AUXM</span>
+                  <span className="flex-shrink-0 text-sm font-semibold text-[#BFA181]">USD</span>
                 </div>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t("auxmMin")}</p>
               </div>
@@ -1206,11 +1205,11 @@ export function BankWirePanel({
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               {lang === "tr"
                 ? currency === "USD"
-                  ? "Havale geldiğinde otomatik olarak AUXM bakiyenize 1 USD = 1 AUXM kuruyla işlenir. İşlem süresi: 1-3 iş günü."
-                  : `Havale geldiğinde otomatik olarak AUXM bakiyenize işlenir. ${currency} için günlük FX kuru uygulanır (1 AUXM = 1 USD). İşlem süresi: 1-3 iş günü.`
+                  ? "Havale geldiğinde otomatik olarak nakit bakiyenize USD olarak işlenir. İşlem süresi: 1-3 iş günü."
+                  : `Havale geldiğinde otomatik olarak nakit bakiyenize USD olarak işlenir. ${currency} için günlük FX kuru uygulanır. İşlem süresi: 1-3 iş günü.`
                 : currency === "USD"
-                  ? "Once the wire arrives, it is automatically credited to your AUXM balance at 1 USD = 1 AUXM. Processing time: 1-3 business days."
-                  : `Once the wire arrives, it is automatically credited to your AUXM balance. ${currency} is converted at the daily FX rate (1 AUXM = 1 USD). Processing time: 1-3 business days.`}
+                  ? "Once the wire arrives, it is automatically credited to your cash balance in USD. Processing time: 1-3 business days."
+                  : `Once the wire arrives, it is automatically credited to your cash balance in USD. ${currency} is converted to USD at the daily FX rate. Processing time: 1-3 business days.`}
             </p>
           </div>
 

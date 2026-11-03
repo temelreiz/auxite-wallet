@@ -14,8 +14,8 @@ export const CAMPAIGN_CONFIG = {
     endDate: new Date("2026-01-01T00:00:00Z"), // 30 gün
     name: "Launch Bonus",
     description: {
-      tr: "Lansman kampanyası: Tüm yatırımlarda %2 AUXM bonus!",
-      en: "Launch campaign: 2% AUXM bonus on all deposits!"
+      tr: "Lansman kampanyası: Tüm yatırımlarda %2 nakit bonus!",
+      en: "Launch campaign: 2% cash bonus on all deposits!"
     }
   },
   
@@ -202,13 +202,13 @@ export function calculateAuxmBonus(depositAmountUsd: number): BonusCalculation {
   
   if (isLaunchCampaign) {
     message = {
-      tr: `🚀 Lansman bonusu: +${bonusAmount.toFixed(2)} AUXM (%${bonusPercent})`,
-      en: `🚀 Launch bonus: +${bonusAmount.toFixed(2)} AUXM (${bonusPercent}%)`
+      tr: `🚀 Lansman bonusu: +$${bonusAmount.toFixed(2)} (%${bonusPercent})`,
+      en: `🚀 Launch bonus: +$${bonusAmount.toFixed(2)} (${bonusPercent}%)`
     };
   } else if (bonusPercent > 0) {
     message = {
-      tr: `🎁 ${tierName} bonus: +${bonusAmount.toFixed(2)} AUXM (%${bonusPercent})`,
-      en: `🎁 ${tierName} bonus: +${bonusAmount.toFixed(2)} AUXM (${bonusPercent}%)`
+      tr: `🎁 ${tierName} bonus: +$${bonusAmount.toFixed(2)} (%${bonusPercent})`,
+      en: `🎁 ${tierName} bonus: +$${bonusAmount.toFixed(2)} (${bonusPercent}%)`
     };
   } else {
     message = {
@@ -219,8 +219,8 @@ export function calculateAuxmBonus(depositAmountUsd: number): BonusCalculation {
   
   // Bonus kullanım notu
   const bonusNote = bonusAmount > 0 ? {
-    tr: "⚠️ Bonus AUXM sadece metal alımında (AUXG, AUXS, AUXPT, AUXPD) kullanılabilir.",
-    en: "⚠️ Bonus AUXM can only be used for metal purchases (AUXG, AUXS, AUXPT, AUXPD)."
+    tr: "⚠️ Bonus bakiye sadece metal alımında (AUXG, AUXS, AUXPT, AUXPD) kullanılabilir.",
+    en: "⚠️ Bonus balance can only be used for metal purchases (AUXG, AUXS, AUXPT, AUXPD)."
   } : { tr: "", en: "" };
   
   return {
@@ -255,7 +255,7 @@ export function calculateMetalPurchase(
   // Yeterli bakiye var mı?
   if (totalCost > totalAvailable) {
     return {
-      error: `Insufficient balance. Need ${totalCost.toFixed(2)} AUXM, have ${totalAvailable.toFixed(2)} AUXM`
+      error: `Insufficient balance. Need $${totalCost.toFixed(2)}, have $${totalAvailable.toFixed(2)}`
     };
   }
   
@@ -298,8 +298,8 @@ export function getWithdrawableAuxm(userBalance: UserBalance): {
     withdrawable: userBalance.auxm,
     bonusLocked: userBalance.bonusAuxm,
     message: userBalance.bonusAuxm > 0 ? {
-      tr: `${userBalance.bonusAuxm.toFixed(2)} Bonus AUXM metal alımı için ayrılmıştır ve çekilemez.`,
-      en: `${userBalance.bonusAuxm.toFixed(2)} Bonus AUXM is reserved for metal purchases and cannot be withdrawn.`
+      tr: `$${userBalance.bonusAuxm.toFixed(2)} bonus bakiye metal alımı için ayrılmıştır ve çekilemez.`,
+      en: `$${userBalance.bonusAuxm.toFixed(2)} bonus balance is reserved for metal purchases and cannot be withdrawn.`
     } : {
       tr: "",
       en: ""
@@ -327,8 +327,8 @@ export function getActiveCampaignInfo(): {
     timeLeft: getLaunchCampaignTimeLeft(),
     description: CAMPAIGN_CONFIG.launch.description,
     bonusUsageNote: {
-      tr: "Bonus AUXM sadece metal alımında kullanılabilir",
-      en: "Bonus AUXM can only be used for metal purchases"
+      tr: "Bonus bakiye sadece metal alımında kullanılabilir",
+      en: "Bonus balance can only be used for metal purchases"
     }
   };
 }
@@ -380,8 +380,8 @@ export function formatUserBalance(balance: UserBalance, lang: "tr" | "en" = "en"
     hasBonusAuxm,
     bonusTooltip: hasBonusAuxm 
       ? (lang === "tr" 
-          ? `${balance.bonusAuxm.toFixed(2)} Bonus AUXM (sadece metal alımında)` 
-          : `${balance.bonusAuxm.toFixed(2)} Bonus AUXM (metal purchases only)`)
+          ? `$${balance.bonusAuxm.toFixed(2)} bonus bakiye (sadece metal alımında)` 
+          : `$${balance.bonusAuxm.toFixed(2)} bonus balance (metal purchases only)`)
       : ""
   };
 }

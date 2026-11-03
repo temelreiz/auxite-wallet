@@ -40,7 +40,7 @@ const translations: Record<string, Record<string, string>> = {
     selectMethod: "REDEMPTION METHOD",
     selectMethodDesc: "Choose how you want to receive your physical metals",
     cashSettlement: "Cash Settlement",
-    cashSettlementDesc: "Instant conversion to AUXM at live spot price. No minimum for cash.",
+    cashSettlementDesc: "Instant conversion to your cash balance (USD) at live spot price. No minimum for cash.",
     vaultPickup: "Vault Pickup",
     vaultPickupDesc: "Collect fabricated bars/coins from a designated vault location.",
     insuredCourier: "Insured Courier",
@@ -158,7 +158,7 @@ const translations: Record<string, Record<string, string>> = {
     selectMethod: "TESLIMAT YÖNTEMİ",
     selectMethodDesc: "Fiziksel metallerinizi nasıl almak istediğinizi seçin",
     cashSettlement: "Nakit Takas",
-    cashSettlementDesc: "Canlı spot fiyattan anlık AUXM dönüşümü. Nakit için minimum yok.",
+    cashSettlementDesc: "Canlı spot fiyattan nakit bakiyenize (USD) anlık dönüşüm. Nakit için minimum yok.",
     vaultPickup: "Kasadan Teslim",
     vaultPickupDesc: "Belirlenen kasa lokasyonundan üretilmiş külçe/sikkeleri teslim alın.",
     insuredCourier: "Sigortalı Kurye",
@@ -268,7 +268,7 @@ const translations: Record<string, Record<string, string>> = {
     selectMethod: "EINLÖSUNGSMETHODE",
     selectMethodDesc: "Wählen Sie wie Sie Ihre physischen Metalle erhalten möchten",
     cashSettlement: "Barausgleich",
-    cashSettlementDesc: "Sofortige Umrechnung in AUXM zum Live-Spotpreis. Kein Minimum für Bar.",
+    cashSettlementDesc: "Sofortige Umrechnung in Ihr Barguthaben (USD) zum Live-Spotpreis. Kein Minimum für Bar.",
     vaultPickup: "Tresorabholung",
     vaultPickupDesc: "Gefertigte Barren/Münzen an einem bestimmten Tresorstandort abholen.",
     insuredCourier: "Versicherter Kurier",
@@ -378,7 +378,7 @@ const translations: Record<string, Record<string, string>> = {
     selectMethod: "MÉTHODE DE RACHAT",
     selectMethodDesc: "Choisissez comment vous souhaitez recevoir vos métaux physiques",
     cashSettlement: "Règlement en espèces",
-    cashSettlementDesc: "Conversion instantanée en AUXM au prix spot en direct. Pas de minimum pour les espèces.",
+    cashSettlementDesc: "Conversion instantanée vers votre solde en espèces (USD) au prix spot en direct. Pas de minimum pour les espèces.",
     vaultPickup: "Retrait au coffre",
     vaultPickupDesc: "Récupérer les lingots/pièces fabriqués dans un coffre désigné.",
     insuredCourier: "Coursier assuré",
@@ -488,7 +488,7 @@ const translations: Record<string, Record<string, string>> = {
     selectMethod: "طريقة الاسترداد",
     selectMethodDesc: "اختر كيف تريد استلام معادنك المادية",
     cashSettlement: "تسوية نقدية",
-    cashSettlementDesc: "تحويل فوري إلى AUXM بسعر السوق المباشر. لا حد أدنى للنقد.",
+    cashSettlementDesc: "تحويل فوري إلى رصيدك النقدي (USD) بسعر السوق المباشر. لا حد أدنى للنقد.",
     vaultPickup: "الاستلام من الخزنة",
     vaultPickupDesc: "استلام السبائك/العملات المصنعة من موقع خزنة محدد.",
     insuredCourier: "ناقل مؤمن",
@@ -598,7 +598,7 @@ const translations: Record<string, Record<string, string>> = {
     selectMethod: "МЕТОД ПОГАШЕНИЯ",
     selectMethodDesc: "Выберите как вы хотите получить физические металлы",
     cashSettlement: "Расчёт наличными",
-    cashSettlementDesc: "Мгновенная конвертация в AUXM по спотовой цене. Нет минимума для наличных.",
+    cashSettlementDesc: "Мгновенная конвертация на денежный баланс (USD) по спотовой цене. Нет минимума для наличных.",
     vaultPickup: "Получение в хранилище",
     vaultPickupDesc: "Получить изготовленные слитки/монеты в указанном хранилище.",
     insuredCourier: "Страховой курьер",
@@ -1606,8 +1606,8 @@ export default function RedeemPage() {
                         <span className="text-xs font-bold text-[#2F6F62]">Ⓜ</span>
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-800 dark:text-white">AUXM</p>
-                        <p className="text-[10px] text-slate-400">Internal</p>
+                        <p className="text-sm font-bold text-slate-800 dark:text-white">USD</p>
+                        <p className="text-[10px] text-slate-400">Cash balance</p>
                       </div>
                     </div>
                   </button>

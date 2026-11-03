@@ -38,7 +38,7 @@ const METAL_LABELS: Record<string, { en: string; tr: string; symbol: string; uni
   auxs:  { en: 'Silver (AUXS)', tr: 'Gümüş (AUXS)', symbol: 'AUXS', unit: 'g' },
   auxpt: { en: 'Platinum (AUXPT)', tr: 'Platin (AUXPT)', symbol: 'AUXPT', unit: 'g' },
   auxpd: { en: 'Palladium (AUXPD)', tr: 'Paladyum (AUXPD)', symbol: 'AUXPD', unit: 'g' },
-  auxm:  { en: 'AUXM Token', tr: 'AUXM Token', symbol: 'AUXM', unit: '' },
+  auxm:  { en: 'Cash Balance (USD)', tr: 'Nakit Bakiye (USD)', symbol: 'USD', unit: '' },
   eth:   { en: 'Ethereum (ETH)', tr: 'Ethereum (ETH)', symbol: 'ETH', unit: '' },
   btc:   { en: 'Bitcoin (BTC)', tr: 'Bitcoin (BTC)', symbol: 'BTC', unit: '' },
   xrp:   { en: 'Ripple (XRP)', tr: 'Ripple (XRP)', symbol: 'XRP', unit: '' },

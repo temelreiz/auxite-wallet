@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // Create charge via Coinbase Commerce API
     const chargeData = {
-      name: "AUXM Deposit",
+      name: "Auxite Cash Deposit (USD)",
       description: `Deposit ${amount} USD to Auxite Wallet`,
       pricing_type: "fixed_price",
       local_price: {
