@@ -17,6 +17,7 @@ import { Redis } from "@upstash/redis";
 import Stripe from "stripe";
 import { stripe, type SupportedMetal, METAL_NAME } from "@/lib/stripe";
 import { recordCardFundingHold, releaseCardHoldByPaymentIntent } from "@/lib/withdrawal-guard";
+import { cardStepKey, recordCardStep } from "@/lib/activation-funnel";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -206,6 +207,8 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent): Promise<void> {
   } catch (e) {
     console.error("[stripe/webhook] recordCardFundingHold failed (non-blocking):", e);
   }
+
+  await recordCardStep(redis, "paid", userAddress);
 
   console.log(
     `[stripe/webhook] ✅ ${userAddress.slice(0, 10)}... +${grams.toFixed(4)}g ${metal} ` +
@@ -445,6 +448,13 @@ async function handleChargeRefunded(charge: Stripe.Charge): Promise<void> {
     await releaseCardHoldByPaymentIntent(userAddress, piId);
   } catch (e) {
     console.error("[stripe/webhook] releaseCardHoldByPaymentIntent failed (non-blocking):", e);
+  }
+
+  // A refunded purchase is not a first purchase in the funnel report.
+  try {
+    await redis.zrem(cardStepKey("paid"), userAddress);
+  } catch (e) {
+    console.warn("[stripe/webhook] funnel refund not recorded:", e);
   }
 
   await redis.lpush(`user:${userAddress}:transactions`, JSON.stringify({

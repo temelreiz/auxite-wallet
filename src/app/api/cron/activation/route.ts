@@ -8,6 +8,11 @@
 //   deposit     — verified, never funded. Days 1, 4, 9 and 16 after approval
 //                 (the approval email itself goes out on day 0). Stops at the
 //                 first deposit.
+//   first_buy   — signed up, no KYC started, never funded. Card purchases are
+//                 open to them up to the no-KYC limits. Day 1 after sign-up. No
+//                 bonus is offered, so this cannot attract bonus hunters.
+//   why_stopped — one-question survey, email only: day 10 for first_buy, day 16
+//                 for kyc_finish. Sent once per account.
 //
 // Only people who reached that point in the last WINDOW_DAYS are in scope: the
 // early-2026 backlog was already sent the one-shot winback and is left alone.
@@ -27,7 +32,7 @@ import { sendPushToUser } from "@/lib/expo-push";
 import { renderActivationEmail, activationPush, type ActivationStage } from "@/lib/activation-content";
 import { loadSuppressedEmails, isEmailSuppressed, unsubscribeUrl } from "@/lib/email-suppression";
 import { assertAccountActive } from "@/lib/security/account-guard";
-import { DAY_MS as DAY, isFunded, isoWeek, FUNDED_ZSET, FUNDED_SEEDED } from "@/lib/activation-funnel";
+import { DAY_MS as DAY, isFunded, isoWeek, FUNDED_ZSET, FUNDED_SEEDED, SCHEDULES, trackOf, whyUrl } from "@/lib/activation-funnel";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -40,34 +45,6 @@ const WINDOW_DAYS = 30;
 const BATCH = 40;
 const SEND_GAP_MS = 600;
 const MIN_GAP_DAYS = 3; // stay under Resend's 2 requests/second
-
-const KYC_FINISH: { stage: ActivationStage; day: number }[] = [
-  { stage: "kyc_finish_1", day: 2 },
-  { stage: "kyc_finish_2", day: 5 },
-  { stage: "kyc_finish_3", day: 12 },
-];
-const DEPOSIT: { stage: ActivationStage; day: number }[] = [
-  { stage: "deposit_1", day: 1 },
-  { stage: "deposit_2", day: 4 },
-  { stage: "deposit_3", day: 9 },
-  { stage: "deposit_4", day: 16 },
-];
-
-function ts(v: unknown): number {
-  if (!v) return 0;
-  const n = typeof v === "number" ? v : Date.parse(String(v));
-  return Number.isFinite(n) ? n : 0;
-}
-
-/** When the user got to the point this track starts from, and which track. */
-function trackOf(kyc: any): { track: "kyc_finish" | "deposit"; since: number } | null {
-  if (!kyc) return null;
-  if (kyc.status === "pending") return { track: "kyc_finish", since: ts(kyc.createdAt) || ts(kyc.updatedAt) };
-  if (kyc.status === "approved") {
-    return { track: "deposit", since: ts(kyc.verification?.reviewedAt) || ts(kyc.personalInfo?.verifiedAt) || ts(kyc.updatedAt) };
-  }
-  return null;
-}
 
 export async function GET(request: NextRequest) {
   if (request.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -98,7 +75,7 @@ export async function GET(request: NextRequest) {
           redis.hgetall(`user:${addr}:balance`) as Promise<Record<string, unknown> | null>,
         ]);
         const kyc = kycRaw ? (typeof kycRaw === "string" ? JSON.parse(kycRaw) : kycRaw) : null;
-        return { email: key.replace("auth:user:", ""), language: String(u?.language || "en"), addr, kyc, bal };
+        return { email: key.replace("auth:user:", ""), language: String(u?.language || "en"), createdAt: u?.createdAt, addr, kyc, bal };
       }),
     );
 
@@ -112,13 +89,12 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      const t = trackOf(u.kyc);
+      const t = trackOf(u.kyc, u.createdAt);
       if (!t || !t.since || now - t.since > WINDOW_DAYS * DAY) continue;
       stats.inScope++;
 
       const age = Math.floor((now - t.since) / DAY);
-      const schedule = t.track === "kyc_finish" ? KYC_FINISH : DEPOSIT;
-      const due = schedule.filter((s) => s.day <= age);
+      const due = SCHEDULES[t.track].filter((s) => s.day <= age);
       if (!due.length) continue;
 
       const sentKey = `activation:${u.addr}:sent`;
@@ -146,7 +122,7 @@ export async function GET(request: NextRequest) {
       let delivered = false;
       if (resend && u.email.includes("@") && !isEmailSuppressed(suppressed, u.email)) {
         const unsub = unsubscribeUrl(u.email);
-        const { subject, html } = renderActivationEmail(next.stage, u.language, unsub);
+        const { subject, html } = renderActivationEmail(next.stage, u.language, unsub, whyUrl(u.email, u.language));
         try {
           await new Promise((r) => setTimeout(r, SEND_GAP_MS));
           const { error } = await resend.emails.send({
@@ -165,15 +141,17 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      const push = activationPush(next.stage, u.language);
-      try {
-        const r = await sendPushToUser(u.addr, push.title, push.body, { type: "activation", stage: next.stage, screen: push.screen });
-        if (r.sent > 0) {
-          stats.pushed++;
-          delivered = true;
+      if (next.stage !== "why_stopped") {
+        const push = activationPush(next.stage, u.language);
+        try {
+          const r = await sendPushToUser(u.addr, push.title, push.body, { type: "activation", stage: next.stage, screen: push.screen });
+          if (r.sent > 0) {
+            stats.pushed++;
+            delivered = true;
+          }
+        } catch (e: any) {
+          failures.push(`${u.addr}:push: ${e?.message || e}`);
         }
-      } catch (e: any) {
-        failures.push(`${u.addr}:push: ${e?.message || e}`);
       }
 
       if (delivered) await redis.hincrby(`activation:sent:${week}`, next.stage, 1);

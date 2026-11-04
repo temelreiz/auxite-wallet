@@ -33,6 +33,7 @@ import {
 } from "@/lib/stripe";
 import { checkTradingAllowed } from "@/lib/trading-guard";
 import { checkKycLimit } from "@/lib/kyc-limits";
+import { recordCardStep } from "@/lib/activation-funnel";
 import { getClientIP } from "@/lib/security/rate-limiter";
 
 // Anti-card-testing rate limiter. Fraudsters create one PI per stolen
@@ -216,6 +217,8 @@ export async function POST(req: NextRequest) {
       description: `Auxite — ${grams.toFixed(4)}g ${METAL_NAME[metal]}`,
       metadata,
     });
+
+    await recordCardStep(redis, "intent", userAddress);
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,

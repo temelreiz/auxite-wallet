@@ -16,7 +16,8 @@ import { BONUS_CONFIG } from "@/lib/metal-bonus-service";
 export type ActivationLang = "en" | "tr" | "ar";
 export type ActivationStage =
   | "kyc_finish_1" | "kyc_finish_2" | "kyc_finish_3"
-  | "deposit_1" | "deposit_2" | "deposit_3" | "deposit_4";
+  | "deposit_1" | "deposit_2" | "deposit_3" | "deposit_4"
+  | "first_buy" | "why_stopped";
 
 const VAULT = "https://vault.auxite.io";
 const KYC_URL = `${VAULT}/kyc`;
@@ -50,6 +51,7 @@ interface Copy {
   title: string;
   paragraphs: string[];
   bullets?: string[];
+  risk?: string;
   showMatch: boolean;
   cta: string;
   url: string;
@@ -79,6 +81,70 @@ const CUSTODY: Record<ActivationLang, string[]> = {
 };
 
 function copy(stage: ActivationStage, L: ActivationLang): Copy {
+  if (stage === "first_buy") {
+    const t = {
+      en: {
+        subject: "Buy your first gram of gold by card",
+        title: "Your account is open",
+        paragraphs: [
+          "You can buy physical metal by card now, without verifying your ID first: up to $500 per purchase and $1,000 in any 30 days, where available in your country.",
+          "Verification is only needed to go above those limits or to send, redeem or withdraw. Card purchases are held for up to 7 days before they can leave your account.",
+        ],
+        risk: "Unregulated. Value can go down as well as up.",
+        cta: "BUY BY CARD",
+        push: { title: "Your account is open", body: "Buy physical gold by card from $30. No ID needed up to $500." },
+      },
+      tr: {
+        subject: "İlk gram altınınızı kartla alın",
+        title: "Hesabınız açıldı",
+        paragraphs: [
+          "Artık kimlik doğrulamadan kartla fiziksel metal alabilirsiniz: ülkenizde mümkünse işlem başına 500$, 30 günde en fazla 1.000$.",
+          "Kimlik doğrulaması yalnızca bu limitleri aşmak veya göndermek, geri almak ya da çekmek için gerekir. Kartla alımlar hesaptan çıkmadan önce en fazla 7 gün bekletilir.",
+        ],
+        risk: "Düzenlemeye tabi değildir. Değeri düşebilir veya yükselebilir.",
+        cta: "KARTLA AL",
+        push: { title: "Hesabınız açıldı", body: "30$'dan başlayan tutarlarla kartla fiziksel altın alın. 500$'a kadar kimlik gerekmez." },
+      },
+      ar: {
+        subject: "اشترِ أول غرام من الذهب بالبطاقة",
+        title: "تم فتح حسابك",
+        paragraphs: [
+          "يمكنك الآن شراء المعدن الفعلي بالبطاقة دون التحقق من هويتك أولاً: حتى 500$ لكل عملية و1,000$ خلال أي 30 يوماً، حيثما كان ذلك متاحاً في بلدك.",
+          "لا يلزم التحقق إلا لتجاوز هذه الحدود أو للإرسال أو الاسترداد أو السحب. تبقى مشتريات البطاقة محجوزة لمدة تصل إلى 7 أيام قبل أن تتمكن من مغادرة حسابك.",
+        ],
+        risk: "غير خاضع للتنظيم. قد تنخفض القيمة أو ترتفع.",
+        cta: "اشترِ بالبطاقة",
+        push: { title: "تم فتح حسابك", body: "اشترِ ذهباً فعلياً بالبطاقة ابتداءً من 30$. لا حاجة للهوية حتى 500$." },
+      },
+    }[L];
+    return { ...t, bullets: CUSTODY[L], showMatch: false, url: FUND_URL, screen: "/(tabs)/allocate" };
+  }
+
+  if (stage === "why_stopped") {
+    const t = {
+      en: {
+        subject: "One quick question",
+        title: "What stopped you?",
+        paragraphs: ["You opened an Auxite account but haven't bought anything yet. One tap tells us why, so we can fix it. Nobody will follow up with you about your answer."],
+        cta: "ANSWER IN ONE TAP",
+      },
+      tr: {
+        subject: "Kısa bir soru",
+        title: "Sizi ne durdurdu?",
+        paragraphs: ["Auxite hesabı açtınız ama henüz bir şey almadınız. Tek dokunuşla nedenini söylerseniz düzeltebiliriz. Cevabınız için kimse size ulaşmayacak."],
+        cta: "TEK DOKUNUŞLA CEVAPLA",
+      },
+      ar: {
+        subject: "سؤال سريع",
+        title: "ما الذي أوقفك؟",
+        paragraphs: ["فتحت حساباً في Auxite لكنك لم تشترِ شيئاً بعد. أخبرنا بالسبب بنقرة واحدة لنتمكن من إصلاحه. لن يتواصل معك أحد بشأن إجابتك."],
+        cta: "أجب بنقرة واحدة",
+      },
+    }[L];
+    // Email only: the cron sends no push for this stage, and the link is per user.
+    return { ...t, showMatch: false, url: "", push: { title: "", body: "" }, screen: "" };
+  }
+
   const kycPush = {
     en: { title: "Your verification isn't finished", body: "You started verifying your Auxite account. It takes about 2 minutes to finish." },
     tr: { title: "Doğrulamanız tamamlanmadı", body: "Auxite hesabınızı doğrulamaya başladınız. Tamamlamak yaklaşık 2 dakika sürer." },
@@ -290,9 +356,11 @@ export function renderActivationEmail(
   stage: ActivationStage,
   language: string,
   unsubscribeLink: string,
+  surveyLink?: string,
 ): { subject: string; html: string } {
   const L = activationLang(language);
   const c = copy(stage, L);
+  const url = stage === "why_stopped" ? surveyLink || VAULT : c.url;
   const dir = L === "ar" ? "rtl" : "ltr";
   const side = dir === "rtl" ? "right" : "left";
   const match = c.showMatch ? matchLine(L) : null;
@@ -315,7 +383,8 @@ export function renderActivationEmail(
         ${c.paragraphs.map((p) => `<p>${p}</p>`).join("")}
         ${c.bullets ? `<ul style="padding-${side}:18px;margin:0;">${c.bullets.map((b) => `<li style="margin:0 0 8px 0">${b}</li>`).join("")}</ul>` : ""}
         ${match ? `<div style="background:#fafafa;border-${side}:3px solid #C5A55A;padding:14px 18px;margin:18px 0"><p style="font-size:13px;color:#444;margin:0;line-height:1.7">${match}</p></div>` : ""}
-        <div style="text-align:center;margin:24px 0"><a href="${c.url}" style="display:inline-block;background:#1a1a1a;color:#fff!important;padding:12px 28px;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase">${c.cta}</a></div>
+        <div style="text-align:center;margin:24px 0"><a href="${url}" style="display:inline-block;background:#1a1a1a;color:#fff!important;padding:12px 28px;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase">${c.cta}</a></div>
+        ${c.risk ? `<p style="font-size:11px;color:#666;margin:16px 0 0;">${c.risk}</p>` : ""}
         ${match ? `<p style="font-size:10px;color:#999;margin-top:24px;padding-top:16px;border-top:1px solid #eee;font-style:italic;">${footnote}</p>` : ""}
       </td></tr>
       <tr><td style="padding:16px 30px;border-top:1px solid #e5e5e5;text-align:center;">
