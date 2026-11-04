@@ -13,6 +13,8 @@ import {
 } from "@/lib/drip-email-templates";
 import { unsubscribeUrl } from "@/lib/email-suppression";
 
+import { assertAccountActive } from "@/lib/security/account-guard";
+
 const redis = Redis.fromEnv();
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
@@ -189,6 +191,8 @@ export async function GET(request: NextRequest) {
             skippedDeposited++;
             continue;
           }
+          // Frozen or banned accounts get no marketing.
+          if (!(await assertAccountActive(walletAddress)).ok) continue;
         }
 
         // 4. Calculate days since registration

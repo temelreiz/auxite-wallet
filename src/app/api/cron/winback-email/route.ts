@@ -25,6 +25,7 @@ import {
   getWinbackEmail,
   type WinbackStage,
 } from "@/lib/winback-email-templates";
+import { assertAccountActive } from "@/lib/security/account-guard";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -130,6 +131,10 @@ export async function GET(request: NextRequest) {
 
       // Depositors are converted — never win-back
       if (await hasDeposited(addr)) continue;
+
+      // Frozen or banned accounts (fraud rings included) get no marketing: an
+      // "your vault is ready, deposit" email reads as an invitation back in.
+      if (!(await assertAccountActive(addr)).ok) continue;
 
       const approved = await isApproved(addr);
       const stage: WinbackStage = approved ? "cohort3_kyc_done" : "cohort2_no_kyc";
