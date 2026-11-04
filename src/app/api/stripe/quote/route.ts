@@ -41,6 +41,7 @@ import {
 } from "@/lib/stripe";
 import { checkTradingAllowed } from "@/lib/trading-guard";
 import { checkKycLimit } from "@/lib/kyc-limits";
+import { recordCardStep } from "@/lib/activation-funnel";
 import { getClientIP } from "@/lib/security/rate-limiter";
 
 // Quoting is cheap and price-discovery, so the limit is generous —
@@ -149,6 +150,8 @@ export async function POST(req: NextRequest) {
         { status: 403 },
       );
     }
+
+    await recordCardStep(redis, "quote", userAddress);
 
     const charge = toChargeAmount(amountUSD, chargeCurrency);
     return NextResponse.json({

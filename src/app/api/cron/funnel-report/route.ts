@@ -3,11 +3,13 @@
 // the accounts opened in the last 7 and 30 days, split by acquisition source,
 // plus the first deposits seen this week and what the activation series sent.
 // "Funded" is any positive balance, the same test the drip and activation use.
+// The card funnel and the first-purchase count leave out internal accounts; the
+// target is at least 3 real first card purchases in 28 days.
 
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { sendEmail } from "@/lib/email";
-import { DAY_MS, isFunded, isoWeek, FUNDED_ZSET } from "@/lib/activation-funnel";
+import { DAY_MS, isFunded, isoWeek, FUNDED_ZSET, WHY_HASH, WHY_REASONS, cardStepKey, isFunnelExcluded, type CardStep } from "@/lib/activation-funnel";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -85,6 +87,19 @@ export async function GET(request: NextRequest) {
   const sendsLast7: Record<string, number> = {};
   for (const s of sends) for (const [k, v] of Object.entries(s || {})) sendsLast7[k] = (sendsLast7[k] || 0) + Number(v);
 
+  // Card funnel: first time each real account reached each step.
+  const cardCount = async (step: CardStep, days: number) => {
+    const addrs = (await redis.zrange(cardStepKey(step), now - days * DAY_MS, now, { byScore: true })) as string[];
+    return addrs.filter((a) => !isFunnelExcluded(addrInfo.get(a)?.email));
+  };
+  const cardRow = async (days: number) => {
+    const [quote, intent, paid] = await Promise.all([cardCount("quote", days), cardCount("intent", days), cardCount("paid", days)]);
+    return { quote: quote.length, intent: intent.length, paid };
+  };
+  const [card7, card28] = await Promise.all([cardRow(7), cardRow(28)]);
+  const whyAnswers = ((await redis.hgetall(WHY_HASH)) || {}) as Record<string, unknown>;
+  const whyCounts = WHY_REASONS.map((r) => [r, Object.values(whyAnswers).filter((v) => v === r).length] as const);
+
   const pct = (a: number, b: number) => (b ? `${((a / b) * 100).toFixed(1)}%` : "—");
   const td = 'style="padding:4px 10px;border-bottom:1px solid #eee;text-align:right"';
   const th = 'style="padding:4px 10px;border-bottom:1px solid #ccc;text-align:right;font-weight:600"';
@@ -106,8 +121,23 @@ export async function GET(request: NextRequest) {
     ? Object.entries(sendsLast7).sort().map(([k, v]) => `${k}: ${v}`).join(" · ")
     : "none";
 
+  const paidList = card28.paid.length
+    ? `<ul>${card28.paid
+        .map((a) => {
+          const i = addrInfo.get(a);
+          return `<li>${i?.email || a} — signed up ${i?.created ? new Date(i.created).toISOString().slice(0, 10) : "?"}, source ${i?.source || "?"}</li>`;
+        })
+        .join("")}</ul>`
+    : "<p>None.</p>";
+
   const html = `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#222;font-size:14px">
 <h2 style="font-size:17px">Auxite funnel — week ${isoWeek(now)}</h2>
+<p><b>Real first card purchases, last 28 days: ${card28.paid.length} (target: at least 3)</b></p>
+${paidList}
+<table style="border-collapse:collapse;font-size:13px;margin:6px 0 18px"><tr><th style="padding:4px 10px;border-bottom:1px solid #ccc;text-align:left">First time at each step</th><th ${th}>Saw card price</th><th ${th}>Started payment</th><th ${th}>Paid</th></tr>
+<tr><td style="padding:4px 10px;border-bottom:1px solid #eee">Last 7 days</td><td ${td}>${card7.quote}</td><td ${td}>${card7.intent}</td><td ${td}>${card7.paid.length}</td></tr>
+<tr><td style="padding:4px 10px;border-bottom:1px solid #eee">Last 28 days</td><td ${td}>${card28.quote}</td><td ${td}>${card28.intent}</td><td ${td}>${card28.paid.length}</td></tr></table>
+<p><b>Why people stopped (all answers):</b> ${whyCounts.map(([r, n]) => `${r}: ${n}`).join(" · ")}</p>
 <p><b>First deposits this week: ${firstDeposits.length}</b></p>
 ${depositList}
 <h3 style="font-size:15px;margin-top:20px">Sign-ups by cohort (status today)</h3>
@@ -117,9 +147,9 @@ ${table(sorted(bySource7))}
 <h3 style="font-size:15px">Last 30 days by source</h3>
 ${table(sorted(bySource30))}
 <p><b>Activation series sends (this + last ISO week):</b> ${sendList}</p>
-<p style="color:#888;font-size:12px">Funded = any positive balance today, including internal and test accounts. "KYC started" includes anyone who opened verification.</p>
+<p style="color:#888;font-size:12px">Funded = any positive balance today, including internal and test accounts. "KYC started" includes anyone who opened verification. Card steps cover app and web, exclude @auxite.io and FUNNEL_EXCLUDE_EMAILS, and start from this report's first deployment; a refund removes the purchase. Check the listed emails for test accounts.</p>
 </div>`;
 
-  await sendEmail({ to: TO, subject: `Auxite funnel ${isoWeek(now)}: ${d7.signups} sign-ups, ${d7.approved} KYC, ${firstDeposits.length} first deposits`, html });
-  return NextResponse.json({ success: true, to: TO, d7, d30, total, firstDeposits: firstDeposits.length, sendsLast7 });
+  await sendEmail({ to: TO, subject: `Auxite funnel ${isoWeek(now)}: ${d7.signups} sign-ups, ${d7.approved} KYC, ${firstDeposits.length} first deposits, ${card28.paid.length}/3 first card buys`, html });
+  return NextResponse.json({ success: true, to: TO, d7, d30, total, firstDeposits: firstDeposits.length, sendsLast7, card7: { ...card7, paid: card7.paid.length }, card28: { ...card28, paid: card28.paid.length }, whyCounts: Object.fromEntries(whyCounts) });
 }
