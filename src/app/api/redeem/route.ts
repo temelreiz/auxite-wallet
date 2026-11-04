@@ -13,7 +13,7 @@ import { getUserBalance, incrementBalance } from '@/lib/redis';
 import { getMetalPrices } from '@/lib/price-cache';
 import { NAV_MAX_AGE_SECONDS } from '@/lib/nav-redemption';
 import { checkTradingAllowed } from '@/lib/trading-guard';
-import { requireKycForWithdraw } from '@/lib/withdrawal-guard';
+import { requireKycForWithdraw, assertCardHoldAllowsAsset } from '@/lib/withdrawal-guard';
 import { ethers } from 'ethers';
 import { METAL_TOKENS } from '@/config/contracts-v8';
 import { acquireBalanceLock, releaseBalanceLock, type BalanceLock } from "@/lib/balance-lock";
@@ -343,6 +343,12 @@ export async function POST(request: NextRequest) {
         { error: 'Another operation is in progress on your account. Please retry in a few seconds.' },
         { status: 409 }
       );
+    }
+
+    // Card-funded hold — redemption must not take out value still unsettled.
+    const cardHold = await assertCardHoldAllowsAsset(address, upperMetal, amt);
+    if (!cardHold.ok) {
+      return NextResponse.json({ error: cardHold.error, code: cardHold.code, details: cardHold.details }, { status: 403 });
     }
 
     // Check balance — hybrid (Redis + on-chain + allocation)

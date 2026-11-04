@@ -17,7 +17,7 @@ import { ethers } from "ethers";
 import { getUserBalance } from "@/lib/redis";
 import { getMetalPrices } from "@/lib/price-cache";
 import { checkTradingAllowed } from "@/lib/trading-guard";
-import { requireKycForWithdraw } from "@/lib/withdrawal-guard";
+import { requireKycForWithdraw, assertCardHoldAllowsAsset } from "@/lib/withdrawal-guard";
 import { METAL_TOKENS } from "@/config/contracts-v8";
 import {
   quoteNavRedemption,
@@ -172,6 +172,16 @@ export async function POST(request: NextRequest) {
   if (!kyc.ok) {
     return NextResponse.json(
       { success: false, error: kyc.code || "kyc_required", message: kyc.error },
+      { status: 403 }
+    );
+  }
+
+  // 2a. Card-funded hold — the order pays out later, but value still unsettled
+  //     must not be queued for payout at all.
+  const cardHold = await assertCardHoldAllowsAsset(address, metal, amount);
+  if (!cardHold.ok) {
+    return NextResponse.json(
+      { success: false, error: cardHold.code, message: cardHold.error, details: cardHold.details },
       { status: 403 }
     );
   }
