@@ -1,10 +1,10 @@
 /**
- * With on-chain trades enabled, /api/trade pays crypto out of platform wallets.
- * Those conversions follow the withdrawal rules; conversions that only credit the
- * balance do not.
+ * Conversions to crypto only change the balance: nothing is sent from a platform
+ * wallet or through NOWPayments, even with on-chain trades enabled. Paying out
+ * and crediting the balance as well would pay the same amount twice.
  */
 const hashes = new Map<string, Record<string, string>>();
-const lists = new Map<string, string[]>();
+const multiOps: [string, string, number][] = [];
 jest.mock("@upstash/redis", () => ({
   Redis: jest.fn().mockImplementation(() => ({
     get: async () => null,
@@ -13,15 +13,19 @@ jest.mock("@upstash/redis", () => ({
     hgetall: async (k: string) => hashes.get(k) ?? null,
     hset: async () => 1,
     hincrbyfloat: async () => 0,
-    lpush: async (k: string, v: string) => { lists.set(k, [v, ...(lists.get(k) ?? [])]); return 1; },
-    lrange: async (k: string) => lists.get(k) ?? [],
+    lpush: async () => 1,
+    lrange: async () => [],
     ltrim: async () => "OK",
-    del: async (k: string) => Number(lists.delete(k)),
-    rpush: async (k: string, ...v: string[]) => { lists.set(k, [...(lists.get(k) ?? []), ...v]); return v.length; },
     expire: async () => 1,
     multi: () => {
       const m: any = new Proxy({}, {
-        get: (_t, p) => (p === "exec" ? async () => [] : () => m),
+        get: (_t, p) => {
+          if (p === "exec") return async () => [];
+          if (p === "hincrbyfloat") {
+            return (k: string, f: string, d: number) => { multiOps.push([k, f, d]); return m; };
+          }
+          return () => m;
+        },
       });
       return m;
     },
@@ -35,29 +39,31 @@ jest.mock("next/server", () => ({
 }));
 
 const sendTransaction = jest.fn(async () => "0xtx");
-jest.mock("viem", () => {
-  const client = {
+jest.mock("viem", () => ({
+  createPublicClient: () => ({
     getBalance: async () => BigInt(10) ** BigInt(21),
     getGasPrice: async () => BigInt(1),
-    waitForTransactionReceipt: async () => ({ status: "success" }),
-  };
-  return {
-    createPublicClient: () => client,
-    createWalletClient: () => ({
-      account: { address: "0xhot" },
-      sendTransaction: (...a: unknown[]) => (sendTransaction as any)(...a),
-    }),
-    http: () => ({}),
-    formatUnits: () => "1",
-    formatEther: () => "1",
-    parseEther: () => BigInt(1),
-  };
-});
+    waitForTransactionReceipt: async () => ({}),
+  }),
+  createWalletClient: () => ({
+    account: { address: "0xhot" },
+    sendTransaction: (...a: unknown[]) => (sendTransaction as any)(...a),
+  }),
+  http: () => ({}),
+  formatUnits: () => "1",
+  formatEther: () => "1",
+  parseEther: () => BigInt(1),
+}));
 jest.mock("viem/accounts", () => ({ privateKeyToAccount: () => ({ address: "0xhot" }) }));
 jest.mock("viem/chains", () => ({ base: {}, mainnet: {} }));
 
-let verified = false;
-jest.mock("@/lib/kyc-limits", () => ({ isKycVerified: async () => verified }));
+const createCryptoPayout = jest.fn(async () => ({ success: true, payoutId: "p" }));
+jest.mock("@/lib/nowpayments-service", () => ({
+  createCryptoPayout: (...a: unknown[]) => (createCryptoPayout as any)(...a),
+  checkPayoutBalance: async () => ({ sufficient: true }),
+}));
+
+jest.mock("@/lib/kyc-limits", () => ({ isKycVerified: async () => true }));
 jest.mock("@/lib/security/require-user", () => ({ requireSelf: () => ({ ok: true }) }));
 jest.mock("@/lib/security/rate-limiter", () => ({
   withRateLimit: async () => null,
@@ -104,7 +110,6 @@ jest.mock("@/lib/spread-config", () => ({ getMetalSpread: async () => ({ buy: 1,
 jest.mock("@/lib/bonus-guard", () => ({ recordVolume: jest.fn(async () => undefined) }));
 jest.mock("@/config/contracts-v8", () => ({ METAL_TOKENS: {}, USDT_ADDRESS: "0x0" }));
 jest.mock("@/lib/telegram", () => ({ notifyTrade: jest.fn(async () => undefined) }));
-jest.mock("@/lib/nowpayments-service", () => ({ createCryptoPayout: jest.fn(), checkPayoutBalance: jest.fn() }));
 jest.mock("@/lib/procurement-pipeline", () => ({ queueTradeForProcurement: jest.fn(async () => undefined) }));
 jest.mock("@/lib/auxm-ledger", () => ({ recordAuxmEntry: jest.fn(async () => undefined) }));
 
@@ -115,59 +120,45 @@ process.env.HOT_WALLET_ETH_PRIVATE_KEY = "0xkey";
 // Required, not imported: the route reads the flag when it loads, and imports
 // would run before the assignment above.
 const { POST } = require("../route");
-const { recordCardFundingHold } = require("@/lib/withdrawal-guard");
 
 const trade = (body: Record<string, unknown>) =>
   POST({ headers: { get: () => null }, json: async () => ({ address: ADDRESS, ...body }) });
 const balanceKey = `user:${ADDRESS}:balance`;
+const credited = (field: string) =>
+  multiOps.filter(([k, f, d]) => k === balanceKey && f === field && d > 0).reduce((n, [, , d]) => n + d, 0);
 
 beforeEach(() => {
   hashes.clear();
-  lists.clear();
+  multiOps.length = 0;
   sendTransaction.mockClear();
-  verified = false;
+  createCryptoPayout.mockClear();
   jest.spyOn(console, "log").mockImplementation(() => undefined);
   jest.spyOn(console, "error").mockImplementation(() => undefined);
 });
 
-describe("POST /api/trade with on-chain payouts", () => {
-  it("does not pay ETH out to an unverified account", async () => {
+describe("POST /api/trade conversions to crypto", () => {
+  it("credits AUXM to ETH once, with no on-chain send", async () => {
     hashes.set(balanceKey, { auxm: "500" });
     const res = await trade({ type: "buy", fromToken: "AUXM", toToken: "ETH", fromAmount: 500 });
-    expect(res.status).toBe(403);
-    expect((await res.json()).code).toBe("kyc_required");
+    expect(res.status).toBe(200);
     expect(sendTransaction).not.toHaveBeenCalled();
+    expect(credited("eth")).toBeCloseTo(0.2475, 6); // $495 after the 1% fee, at $2,000
   });
 
-  it("does not pay ETH out for metal bought by an unverified account", async () => {
+  it("credits metal to ETH once, with no on-chain send", async () => {
     hashes.set(balanceKey, { auxg: "2" });
-    const res = await trade({ type: "sell", fromToken: "AUXG", toToken: "ETH", fromAmount: 2 });
-    expect(res.status).toBe(403);
-    expect((await res.json()).code).toBe("kyc_required");
+    const res = await trade({ type: "sell", fromToken: "AUXG", toToken: "ETH", fromAmount: 2, executeOnChain: false });
+    expect(res.status).toBe(200);
     expect(sendTransaction).not.toHaveBeenCalled();
+    expect(credited("eth")).toBeCloseTo(0.1188, 6); // $237.60 after the 1% fee, at $2,000
   });
 
-  it("does not pay out value still under the card hold", async () => {
-    verified = true;
-    hashes.set(balanceKey, { auxg: "2" });
-    await recordCardFundingHold(ADDRESS, 240, "pi_1");
-    const res = await trade({ type: "sell", fromToken: "AUXG", toToken: "ETH", fromAmount: 2 });
-    expect(res.status).toBe(403);
-    expect((await res.json()).code).toBe("card_funding_hold");
-    expect(sendTransaction).not.toHaveBeenCalled();
-  });
-
-  it("pays out to a verified account with no holds", async () => {
-    verified = true;
+  it.each(["BTC", "XRP", "SOL"])("does not pay %s through NOWPayments", async (token) => {
     hashes.set(balanceKey, { auxm: "500" });
-    await trade({ type: "buy", fromToken: "AUXM", toToken: "ETH", fromAmount: 500 });
-    expect(sendTransaction).toHaveBeenCalledTimes(1);
-  });
-
-  it("leaves conversions that only credit the balance open to unverified accounts", async () => {
-    hashes.set(balanceKey, { auxg: "2" });
-    const res = await trade({ type: "sell", fromToken: "AUXG", toToken: "AUXM", fromAmount: 2 });
-    expect(res.status).not.toBe(403);
-    expect(sendTransaction).not.toHaveBeenCalled();
+    hashes.set(`user:${ADDRESS}:info`, { [`${token.toLowerCase()}Wallet`]: "external-wallet" });
+    const res = await trade({ type: "buy", fromToken: "AUXM", toToken: token, fromAmount: 500 });
+    expect(res.status).toBe(200);
+    expect(createCryptoPayout).not.toHaveBeenCalled();
+    expect(credited(token.toLowerCase())).toBeGreaterThan(0);
   });
 });
