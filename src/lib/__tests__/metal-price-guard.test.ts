@@ -1,8 +1,8 @@
 /**
  * Metal pricing source: palladium is always GoldAPI spot; any other metal
  * whose KuveytTürk mid drifts more than 5% from spot is priced at spot until KT
- * comes back, the rest keep their KT price, and ops hear about each switch
- * once. Numbers are the live ones from 2026-11-03.
+ * comes back, the rest keep their KT price, and a switch is never emailed.
+ * Numbers are the live ones from 2026-11-03.
  */
 const store = new Map<string, string>();
 const sent: { subject: string }[] = [];
@@ -58,18 +58,17 @@ describe("metal price source", () => {
     expect((await getSpotPricedMetals()).map((p) => p.symbol)).toEqual(["AUXPD"]);
   });
 
-  it("switches a drifting KT metal to spot and back, emailing once per switch", async () => {
+  it("switches a drifting KT metal to spot and back without emailing", async () => {
     kt.AUXPT = { buyRateUSD: 60, sellRateUSD: 56 };
     await expect(getMetalUsdPrice("AUXPT", "buy")).resolves.toBe(45.98);
     await getMetalUsdPrice("AUXPT", "sell");
     await flush();
-    expect(sent).toHaveLength(1);
-    expect(sent[0].subject).toMatch(/Platin spot fiyata geçti/);
+    expect(store.get("metal:price-source:AUXPT")).toBe("spot");
 
     kt.AUXPT = { buyRateUSD: 48.55, sellRateUSD: 44.64 };
     await expect(getMetalUsdPrice("AUXPT", "buy")).resolves.toBe(48.55);
     await flush();
-    expect(sent).toHaveLength(2);
-    expect(sent[1].subject).toMatch(/Platin yeniden KT fiyatında/);
+    expect(store.get("metal:price-source:AUXPT")).toBe("kt");
+    expect(sent).toHaveLength(0);
   });
 });
