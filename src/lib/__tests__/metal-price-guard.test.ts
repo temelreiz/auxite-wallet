@@ -71,4 +71,23 @@ describe("metal price source", () => {
     expect(store.get("metal:price-source:AUXPT")).toBe("kt");
     expect(sent).toHaveLength(0);
   });
+
+  it("does not flip between sources while KT hovers between the two thresholds", async () => {
+    const between = { buyRateUSD: 49.8, sellRateUSD: 45.84 }; // mid +4%
+    kt.AUXPT = between;
+    await expect(getMetalUsdPrice("AUXPT", "buy")).resolves.toBe(49.8); // still KT
+    await flush();
+
+    kt.AUXPT = { buyRateUSD: 50.7, sellRateUSD: 46.78 }; // mid +6%
+    await expect(getMetalUsdPrice("AUXPT", "buy")).resolves.toBe(45.98); // to spot
+    await flush();
+
+    kt.AUXPT = between;
+    await expect(getMetalUsdPrice("AUXPT", "buy")).resolves.toBe(45.98); // stays on spot
+    await flush();
+    expect(store.get("metal:price-source:AUXPT")).toBe("spot");
+
+    kt.AUXPT = { buyRateUSD: 48.55, sellRateUSD: 44.64 }; // mid +1.3%
+    await expect(getMetalUsdPrice("AUXPT", "buy")).resolves.toBe(48.55); // back to KT
+  });
 });
