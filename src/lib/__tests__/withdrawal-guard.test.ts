@@ -28,11 +28,14 @@ const spotPrice = jest.fn(async (c: string) => {
 jest.mock("@/lib/v6-token-service", () => ({ getTokenPrices: (m: string) => tokenPrices(m) }));
 jest.mock("@/lib/crypto-liquidation-service", () => ({ getCryptoSpotPrice: (c: string) => spotPrice(c) }));
 jest.mock("@/lib/allocation-service", () => ({ getAvailable: async (_a: string, m: string) => free[m] ?? 0 }));
-jest.mock("@/lib/kyc-limits", () => ({ isKycVerified: async () => true }));
+let verified = true;
+jest.mock("@/lib/kyc-limits", () => ({ isKycVerified: async () => verified }));
+jest.mock("@/lib/auxr-pricing", () => ({ getAuxrPricing: async () => ({ sellPriceUSD: 80 }) }));
 
 import {
   assertCardHoldAllows,
   assertCardHoldAllowsAsset,
+  assertValueMayLeave,
   recordCardFundingHold,
   usdValueOf,
 } from "@/lib/withdrawal-guard";
@@ -114,5 +117,34 @@ describe("assertCardHoldAllowsAsset", () => {
     setBalance({ auxm: "10000" });
     const r = await assertCardHoldAllows(A, NaN);
     expect(r.code).toBe("card_hold_check_failed");
+  });
+
+  it("values AUXR by its sell price and counts it toward the account", async () => {
+    await recordCardFundingHold(A, 400, "pi_1");
+    setBalance({ auxr: "10" }); // $800
+    await expect(assertCardHoldAllowsAsset(A, "AUXR", 5)).resolves.toEqual({ ok: true });
+    const tooMuch = await assertCardHoldAllowsAsset(A, "AUXR", 6);
+    expect(tooMuch.code).toBe("card_funding_hold");
+  });
+});
+
+describe("assertValueMayLeave", () => {
+  afterEach(() => { verified = true; });
+
+  it("requires KYC even with no holds", async () => {
+    verified = false;
+    const r = await assertValueMayLeave(A, "AUXM", 1);
+    expect(r.code).toBe("kyc_required");
+  });
+
+  it("then applies the card hold", async () => {
+    await recordCardFundingHold(A, 100, "pi_1");
+    setBalance({ auxm: "100" });
+    const r = await assertValueMayLeave(A, "AUXM", 100);
+    expect(r.code).toBe("card_funding_hold");
+  });
+
+  it("allows a verified account with no holds", async () => {
+    await expect(assertValueMayLeave(A, "AUXM", 100)).resolves.toEqual({ ok: true });
   });
 });

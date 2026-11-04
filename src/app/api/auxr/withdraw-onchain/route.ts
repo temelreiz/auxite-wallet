@@ -29,6 +29,7 @@ import { redis, getUserBalance } from "@/lib/redis";
 import { withdrawToChain, getWithdrawRecord } from "@/lib/auxr-bridge";
 import { isPaused } from "@/lib/auxr-onchain";
 import { getAp, withdrawFromInventory } from "@/lib/auxr-ap";
+import { assertCardHoldAllowsAsset } from "@/lib/withdrawal-guard";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -192,6 +193,16 @@ export async function POST(request: NextRequest) {
   const replay = await readIdempotentResult(refId);
   if (replay) {
     return NextResponse.json(replay, { status: 200 });
+  }
+
+  // 5a. Card-funded hold — after the replay, so a retry of a finished withdrawal
+  //     still gets its original answer.
+  const cardHold = await assertCardHoldAllowsAsset(offChainAddress, "AUXR", unitsAUXR);
+  if (!cardHold.ok) {
+    return NextResponse.json(
+      { success: false, error: cardHold.code, message: cardHold.error, details: cardHold.details },
+      { status: 403 }
+    );
   }
 
   // 6. Off-chain balance sanity check before delegating

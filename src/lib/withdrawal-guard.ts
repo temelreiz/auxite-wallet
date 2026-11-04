@@ -14,6 +14,7 @@ import { isKycVerified } from "@/lib/kyc-limits";
 import { getTokenPrices } from "@/lib/v6-token-service";
 import { getCryptoSpotPrice } from "@/lib/crypto-liquidation-service";
 import { getAvailable } from "@/lib/allocation-service";
+import { getAuxrPricing } from "@/lib/auxr-pricing";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -120,6 +121,7 @@ async function getAccountUsdValue(address: string): Promise<number> {
     const amt = n(c);
     if (amt) { try { const p = await getCryptoSpotPrice(c); if (p > 0) usd += amt * p; } catch {} }
   }
+  if (n("auxr")) { try { usd += n("auxr") * ((await getAuxrPricing()).sellPriceUSD || 0); } catch {} }
   for (const m of METALS) {
     let grams = n(m);
     try { grams += await getAvailable(address, m); } catch {}
@@ -135,9 +137,18 @@ export async function usdValueOf(coin: string, amount: number): Promise<number> 
   if (["usdt", "usdc", "auxm", "usd"].includes(c)) return amount;
   const price = METALS.includes(c)
     ? (await getTokenPrices(c)).bidPerGram
-    : await getCryptoSpotPrice(c);
+    : c === "auxr"
+      ? (await getAuxrPricing()).sellPriceUSD
+      : await getCryptoSpotPrice(c);
   if (!(price > 0)) throw new Error(`No USD price for ${c}`);
   return amount * price;
+}
+
+// Both rules for `amount` units of `coin` leaving the platform.
+export async function assertValueMayLeave(address: string, coin: string, amount: number): Promise<GuardResult> {
+  const kyc = await requireKycForWithdraw(address);
+  if (!kyc.ok) return kyc;
+  return assertCardHoldAllowsAsset(address, coin, amount);
 }
 
 // Enforce the hold for `amount` units of `coin` leaving the account. Fails CLOSED

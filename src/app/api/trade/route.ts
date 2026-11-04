@@ -41,6 +41,7 @@ import { createCryptoPayout, checkPayoutBalance } from "@/lib/nowpayments-servic
 import { queueTradeForProcurement } from "@/lib/procurement-pipeline";
 import { getCryptoSpotPrice } from "@/lib/crypto-liquidation-service";
 import { recordAuxmEntry } from "@/lib/auxm-ledger";
+import { assertValueMayLeave } from "@/lib/withdrawal-guard";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CRYPTO PRICE HELPER - Direkt Binance'den fiyat al
@@ -1020,6 +1021,18 @@ export async function POST(request: NextRequest) {
         available: availableBalance,
         token: fromToken.toUpperCase(),
       }, { status: 400 });
+    }
+
+    // 7b. With on-chain trades enabled, these conversions pay out from platform
+    // wallets instead of crediting the balance, so they follow the withdrawal rules.
+    const paysOutOnChain = BLOCKCHAIN_ENABLED
+      && ["eth", "btc", "xrp", "sol"].includes(toTokenLower)
+      && (METALS.includes(fromTokenLower) || fromTokenLower === "auxm");
+    if (paysOutOnChain) {
+      const outbound = await assertValueMayLeave(normalizedAddress, fromTokenLower, fromAmount);
+      if (!outbound.ok) {
+        return NextResponse.json({ error: outbound.error, code: outbound.code, details: outbound.details }, { status: 403 });
+      }
     }
 
     // ═══════════════════════════════════════════════════════════════════════
