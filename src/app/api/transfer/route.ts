@@ -13,6 +13,7 @@ import { checkTransferAllowed } from "@/lib/bonus-guard";
 import { notifyTransactionRich } from "@/lib/notification-sender";
 import { acquireBalanceLock, releaseBalanceLock, type BalanceLock } from "@/lib/balance-lock";
 import { assertAccountActive } from "@/lib/security/account-guard";
+import { requireKycForWithdraw, assertCardHoldAllowsAsset } from "@/lib/withdrawal-guard";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -450,6 +451,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // KYC gate — a transfer moves value out of the account just like a
+    // withdrawal, so it follows the same rule as /api/withdraw.
+    const kycGate = await requireKycForWithdraw(normalizedFrom);
+    if (!kycGate.ok) {
+      return NextResponse.json({ error: kycGate.error, code: kycGate.code }, { status: 403 });
+    }
+
     // Serialise the sender's balance mutations: the sufficiency checks below
     // read the balance well before multi.exec() debits it, so concurrent
     // transfers would otherwise each pass the check and spend the same funds.
@@ -460,6 +468,13 @@ export async function POST(request: NextRequest) {
         { error: "Hesabınızda başka bir işlem sürüyor. Lütfen birkaç saniye sonra tekrar deneyin." },
         { status: 409 }
       );
+    }
+
+    // Card-funded hold — checked on the sender, because the hold does not follow
+    // the value: moved to a second account, it could be withdrawn from there.
+    const cardHold = await assertCardHoldAllowsAsset(normalizedFrom, token, Number(amount));
+    if (!cardHold.ok) {
+      return NextResponse.json({ error: cardHold.error, code: cardHold.code, details: cardHold.details }, { status: 403 });
     }
 
     const tokenKey = token.toLowerCase();

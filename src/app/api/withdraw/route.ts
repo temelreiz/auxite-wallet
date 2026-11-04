@@ -7,7 +7,7 @@ import { sendWithdrawConfirmedEmail, sendWithdrawRequestedEmail } from "@/lib/em
 import { getUserLanguage } from "@/lib/user-language";
 import { checkTradingAllowed } from "@/lib/trading-guard";
 import { getWithdrawFee, getMinWithdraw } from "@/lib/withdraw-fees";
-import { requireKycForWithdraw, assertCardHoldAllows, usdValueOf } from "@/lib/withdrawal-guard";
+import { requireKycForWithdraw, assertCardHoldAllows, assertCardHoldAllowsAsset } from "@/lib/withdrawal-guard";
 import { recordAuxmEntry } from "@/lib/auxm-ledger";
 import { blockUSPersonForFeature } from "@/lib/security/us-geofence";
 import * as OTPAuth from "otpauth";
@@ -572,7 +572,7 @@ export async function POST(request: NextRequest) {
     const txKey = `user:${normalizedAddress}:transactions`;
 
     // ── P2: CARD-FUNDED HOLD — block extracting unsettled card value.
-    const cryptoHold = await assertCardHoldAllows(normalizedAddress, await usdValueOf(coin, amount));
+    const cryptoHold = await assertCardHoldAllowsAsset(normalizedAddress, coin, amount);
     if (!cryptoHold.ok) {
       return NextResponse.json({ error: cryptoHold.error, code: cryptoHold.code, details: cryptoHold.details }, { status: 403 });
     }

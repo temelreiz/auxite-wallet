@@ -13,6 +13,8 @@ import { Redis } from "@upstash/redis";
 import { isKycVerified } from "@/lib/kyc-limits";
 import { getTokenPrices } from "@/lib/v6-token-service";
 import { getCryptoSpotPrice } from "@/lib/crypto-liquidation-service";
+import { getAvailable } from "@/lib/allocation-service";
+import { getAuxrPricing } from "@/lib/auxr-pricing";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -23,6 +25,7 @@ const redis = new Redis({
 const HOLD_DAYS = Math.max(0, parseInt(process.env.CARD_FUNDING_HOLD_DAYS || "7", 10) || 7);
 const HOLD_MS = HOLD_DAYS * 24 * 60 * 60 * 1000;
 const cardHoldKey = (a: string) => `user:${a.toLowerCase()}:card_holds`;
+const METALS = ["auxg", "auxs", "auxpt", "auxpd"];
 
 export interface GuardResult {
   ok: boolean;
@@ -43,7 +46,7 @@ export async function requireKycForWithdraw(address: string): Promise<GuardResul
   return {
     ok: false,
     code: "kyc_required",
-    error: "Para çekmek için kimlik doğrulaması (KYC) gerekli. Lütfen önce KYC'yi tamamlayın.",
+    error: "Varlık göndermek veya çekmek için kimlik doğrulaması (KYC) gerekli. Lütfen önce KYC'yi tamamlayın.",
   };
 }
 
@@ -107,6 +110,9 @@ export async function getHeldUsd(address: string): Promise<{ heldUsd: number; ea
 }
 
 // Total USD value of an account: metals (bid/g) + stables + crypto (spot).
+// Metal = the Redis (sub-gram) balance + allocated grams not locked or yielding;
+// whole grams live only in allocations, so the balance hash alone undercounts.
+// A price failure values that asset at 0, which can only tighten the hold.
 async function getAccountUsdValue(address: string): Promise<number> {
   const bal = (await redis.hgetall(`user:${address.toLowerCase()}:balance`)) || {};
   const n = (k: string) => { const v = parseFloat((bal as any)[k]); return Number.isFinite(v) ? v : 0; };
@@ -115,19 +121,47 @@ async function getAccountUsdValue(address: string): Promise<number> {
     const amt = n(c);
     if (amt) { try { const p = await getCryptoSpotPrice(c); if (p > 0) usd += amt * p; } catch {} }
   }
-  for (const m of ["auxg", "auxs", "auxpt", "auxpd"]) {
-    const amt = n(m);
-    if (amt) { try { const pr = await getTokenPrices(m); usd += amt * (pr.bidPerGram || 0); } catch {} }
+  if (n("auxr")) { try { usd += n("auxr") * ((await getAuxrPricing()).sellPriceUSD || 0); } catch {} }
+  for (const m of METALS) {
+    let grams = n(m);
+    try { grams += await getAvailable(address, m); } catch {}
+    if (grams) { try { const pr = await getTokenPrices(m); usd += grams * (pr.bidPerGram || 0); } catch {} }
   }
   return usd;
 }
 
-// USD value of a withdrawal of `amount` units of `coin`.
+// USD value of `amount` units of `coin`. Throws when there is no price: treating
+// grams or coins as dollars would undervalue the move and let it past the hold.
 export async function usdValueOf(coin: string, amount: number): Promise<number> {
   const c = (coin || "").toLowerCase();
   if (["usdt", "usdc", "auxm", "usd"].includes(c)) return amount;
-  try { const p = await getCryptoSpotPrice(c); if (p > 0) return amount * p; } catch {}
-  return amount; // best-effort fallback
+  const price = METALS.includes(c)
+    ? (await getTokenPrices(c)).bidPerGram
+    : c === "auxr"
+      ? (await getAuxrPricing()).sellPriceUSD
+      : await getCryptoSpotPrice(c);
+  if (!(price > 0)) throw new Error(`No USD price for ${c}`);
+  return amount * price;
+}
+
+// Both rules for `amount` units of `coin` leaving the platform.
+export async function assertValueMayLeave(address: string, coin: string, amount: number): Promise<GuardResult> {
+  const kyc = await requireKycForWithdraw(address);
+  if (!kyc.ok) return kyc;
+  return assertCardHoldAllowsAsset(address, coin, amount);
+}
+
+// Enforce the hold for `amount` units of `coin` leaving the account. Fails CLOSED
+// when an active hold cannot be checked; with no holds it never needs a price.
+export async function assertCardHoldAllowsAsset(address: string, coin: string, amount: number): Promise<GuardResult> {
+  try {
+    const { heldUsd } = await getHeldUsd(address);
+    if (heldUsd <= 0) return { ok: true };
+    return await assertCardHoldAllows(address, await usdValueOf(coin, amount));
+  } catch (e) {
+    console.error("[withdrawal-guard] card hold check failed:", e);
+    return { ok: false, code: "card_hold_check_failed", error: "Kart bekletme kontrolü başarısız. Lütfen tekrar deneyin." };
+  }
 }
 
 // Enforce the hold: a withdrawal may not remove value that's still card-held.
@@ -135,6 +169,9 @@ export async function usdValueOf(coin: string, amount: number): Promise<number> 
 export async function assertCardHoldAllows(address: string, withdrawUsd: number): Promise<GuardResult> {
   const { heldUsd, earliestRelease } = await getHeldUsd(address);
   if (heldUsd <= 0) return { ok: true };
+  if (!Number.isFinite(withdrawUsd)) {
+    return { ok: false, code: "card_hold_check_failed", error: "Kart bekletme kontrolü başarısız. Lütfen tekrar deneyin." };
+  }
 
   const totalUsd = await getAccountUsdValue(address);
   const availableUsd = totalUsd - heldUsd;
