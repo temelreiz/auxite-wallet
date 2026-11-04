@@ -1,7 +1,7 @@
 // Price Cache - Cache metal prices to avoid API rate limits
 import { Redis } from '@upstash/redis';
 import { getMetalPricesInUsd } from './kuveytturk-service';
-import { assessKtDeviation, notePriceSource, type DeviationVerdict } from './metal-price-guard';
+import { assessKtDeviation, isOnSpot, notePriceSource, type DeviationVerdict } from './metal-price-guard';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -297,8 +297,8 @@ async function spotFor(symbol: keyof typeof SPOT_KEY): Promise<number | null> {
 }
 
 async function ktVerdict(symbol: keyof typeof SPOT_KEY, buy: number, sell: number): Promise<DeviationVerdict> {
-  const spot = await getMetalSpotPrices().catch(() => null);
-  const v = assessKtDeviation(buy, sell, spot?.[SPOT_KEY[symbol]], spot?.timestamp ?? 0);
+  const [spot, onSpot] = await Promise.all([getMetalSpotPrices().catch(() => null), isOnSpot(symbol)]);
+  const v = assessKtDeviation(buy, sell, spot?.[SPOT_KEY[symbol]], spot?.timestamp ?? 0, Date.now(), onSpot);
   notePriceSource(symbol, v).catch(() => {});
   return v;
 }

@@ -12,8 +12,9 @@
 //
 // No reference = no verdict: when spot is missing or stale, KT stays the price.
 //
-// A switch of source is logged, not emailed: KT's evening spread hovers around
-// the threshold, so a metal can flip many times a day.
+// Two thresholds, so a quote hovering around one does not flip the price back
+// and forth: a metal moves to spot past MAX_KT_DEVIATION and returns to KT only
+// inside RETURN_KT_DEVIATION. A switch of source is logged, not emailed.
 
 import { Redis } from '@upstash/redis';
 
@@ -25,6 +26,10 @@ const redis = new Redis({
 export const MAX_KT_DEVIATION = Number(process.env.METAL_PRICE_MAX_DEVIATION) > 0
   ? Number(process.env.METAL_PRICE_MAX_DEVIATION)
   : 0.05;
+export const RETURN_KT_DEVIATION = Math.min(
+  MAX_KT_DEVIATION,
+  Number(process.env.METAL_PRICE_RETURN_DEVIATION) > 0 ? Number(process.env.METAL_PRICE_RETURN_DEVIATION) : 0.03,
+);
 const MAX_SPOT_AGE_MS = 60 * 60 * 1000;
 
 export interface DeviationVerdict {
@@ -43,12 +48,19 @@ export function assessKtDeviation(
   spot: number | undefined,
   spotTimestamp: number,
   now = Date.now(),
+  currentlySpot = false,
 ): DeviationVerdict {
   const ktMid = ktSell > 0 ? (ktBuy + ktSell) / 2 : ktBuy;
   const fresh = spotTimestamp > 0 && now - spotTimestamp < MAX_SPOT_AGE_MS;
   if (!fresh || !spot || !(spot > 0) || !(ktMid > 0)) return { useSpot: false, deviation: null, ktMid, spot: null };
   const deviation = (ktMid - spot) / spot;
-  return { useSpot: Math.abs(deviation) > MAX_KT_DEVIATION, deviation, ktMid, spot };
+  const limit = currentlySpot ? RETURN_KT_DEVIATION : MAX_KT_DEVIATION;
+  return { useSpot: Math.abs(deviation) > limit, deviation, ktMid, spot };
+}
+
+/** Whether this metal is on spot now. Unreadable state counts as KT. */
+export async function isOnSpot(symbol: string): Promise<boolean> {
+  return (await redis.get(`metal:price-source:${symbol}`).catch(() => null)) === 'spot';
 }
 
 /** Record the verdict; log only when the price source flips. */
