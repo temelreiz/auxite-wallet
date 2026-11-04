@@ -22,8 +22,7 @@ import { checkTradingAllowed } from "@/lib/trading-guard";
 import { logTrade, logAudit } from "@/lib/security/audit-logger";
 import { getMetalSpread } from "@/lib/spread-config";
 import { getUserTier, calculateTierFee, getDefaultTier } from "@/lib/auxiteer-service";
-import { createPublicClient, createWalletClient, http, formatUnits, formatEther, parseEther } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { createPublicClient, http, formatUnits, formatEther } from "viem";
 import { base, mainnet } from "viem/chains";
 import {
   updateOraclePrices,
@@ -37,11 +36,9 @@ import {
 import { recordVolume } from "@/lib/bonus-guard";
 import { METAL_TOKENS, USDT_ADDRESS } from "@/config/contracts-v8";
 import { notifyTrade } from "@/lib/telegram";
-import { createCryptoPayout, checkPayoutBalance } from "@/lib/nowpayments-service";
 import { queueTradeForProcurement } from "@/lib/procurement-pipeline";
 import { getCryptoSpotPrice } from "@/lib/crypto-liquidation-service";
 import { recordAuxmEntry } from "@/lib/auxm-ledger";
-import { assertValueMayLeave } from "@/lib/withdrawal-guard";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CRYPTO PRICE HELPER - Direkt Binance'den fiyat al
@@ -309,91 +306,6 @@ const mainnetClient = createPublicClient({
 
 // Keep publicClient for backward compatibility
 const publicClient = baseClient;
-
-// Hot wallet for ETH transfers (Mainnet)
-const HOT_WALLET_PRIVATE_KEY = process.env.HOT_WALLET_ETH_PRIVATE_KEY;
-
-// Create wallet client for ETH transfers
-function getMainnetWalletClient() {
-  if (!HOT_WALLET_PRIVATE_KEY) {
-    throw new Error("HOT_WALLET_ETH_PRIVATE_KEY not configured");
-  }
-  const account = privateKeyToAccount(HOT_WALLET_PRIVATE_KEY as `0x${string}`);
-  return createWalletClient({
-    account,
-    chain: mainnet,
-    transport: http(ETH_RPC_URL, { timeout: 30000 }),
-  });
-}
-
-// ETH payouts go out on BASE (cheap gas, working public RPC, and where the hot
-// wallet actually holds ETH) — consistent with withdrawETH/USDT/USDC. Mainnet
-// ETH via the demo Alchemy key was unreliable + the mainnet hot wallet is empty.
-function getBaseWalletClient() {
-  if (!HOT_WALLET_PRIVATE_KEY) {
-    throw new Error("HOT_WALLET_ETH_PRIVATE_KEY not configured");
-  }
-  const account = privateKeyToAccount(HOT_WALLET_PRIVATE_KEY as `0x${string}`);
-  return createWalletClient({
-    account,
-    chain: base,
-    transport: http(BASE_RPC_URL, { timeout: 30000 }),
-  });
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ETH TRANSFER FUNCTION (Hot Wallet → User)
-// ═══════════════════════════════════════════════════════════════════════════
-
-async function sendEthToUser(
-  toAddress: string,
-  amountEth: number
-): Promise<{ success: boolean; txHash?: string; error?: string }> {
-  try {
-    const walletClient = getBaseWalletClient();
-    const account = walletClient.account;
-
-    if (!account) {
-      return { success: false, error: "Wallet account not found" };
-    }
-
-    // Check hot wallet balance (Base)
-    const hotWalletBalance = await baseClient.getBalance({ address: account.address });
-    const amountWei = parseEther(amountEth.toString());
-
-    // Estimate gas (Base)
-    const gasPrice = await baseClient.getGasPrice();
-    const gasLimit = BigInt(21000);
-    const gasCost = gasLimit * gasPrice;
-    
-    const totalRequired = amountWei + gasCost;
-    
-    console.log(`💸 ETH Transfer: ${amountEth} ETH to ${toAddress}`);
-    console.log(`   Hot wallet balance: ${formatEther(hotWalletBalance)} ETH`);
-    console.log(`   Required (incl. gas): ${formatEther(totalRequired)} ETH`);
-    
-    if (hotWalletBalance < totalRequired) {
-      return { 
-        success: false, 
-        error: `Insufficient hot wallet balance. Available: ${formatEther(hotWalletBalance)} ETH, Required: ${formatEther(totalRequired)} ETH` 
-      };
-    }
-    
-    // Send transaction
-    const txHash = await walletClient.sendTransaction({
-      to: toAddress as `0x${string}`,
-      value: amountWei,
-      gas: gasLimit,
-    });
-    
-    console.log(`✅ ETH Transfer TX: ${txHash}`);
-    
-    return { success: true, txHash };
-  } catch (error: any) {
-    console.error("ETH Transfer error:", error);
-    return { success: false, error: error.message };
-  }
-}
 
 // Token addresses from central config
 const TOKEN_ADDRESSES: Record<string, `0x${string}`> = {
@@ -1023,18 +935,6 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 7b. With on-chain trades enabled, these conversions pay out from platform
-    // wallets instead of crediting the balance, so they follow the withdrawal rules.
-    const paysOutOnChain = BLOCKCHAIN_ENABLED
-      && ["eth", "btc", "xrp", "sol"].includes(toTokenLower)
-      && (METALS.includes(fromTokenLower) || fromTokenLower === "auxm");
-    if (paysOutOnChain) {
-      const outbound = await assertValueMayLeave(normalizedAddress, fromTokenLower, fromAmount);
-      if (!outbound.ok) {
-        return NextResponse.json({ error: outbound.error, code: outbound.code, details: outbound.details }, { status: 403 });
-      }
-    }
-
     // ═══════════════════════════════════════════════════════════════════════
     // 8. CALCULATE & EXECUTE WITH TIER-BASED FEE
     // ═══════════════════════════════════════════════════════════════════════
@@ -1334,99 +1234,13 @@ export async function POST(request: NextRequest) {
       console.log(`   Net USD: $${netValueUsd.toFixed(2)}`);
       console.log(`   Crypto: ${toAmount.toFixed(6)} ${toToken} @ $${cryptoPrice}`);
       
-      // 6. For ETH: Transfer from hot wallet to user (non-custodial)
-      if (toTokenLower === "eth" && BLOCKCHAIN_ENABLED) {
-        console.log(`💸 Sending ${toAmount.toFixed(6)} ETH to ${address}...`);
-        const ethTransfer = await sendEthToUser(address, toAmount);
-        if (!ethTransfer.success) {
-          console.error(`❌ ETH transfer failed: ${ethTransfer.error}`);
-          return NextResponse.json({ 
-            error: `ETH transferi başarısız: ${ethTransfer.error}`,
-          }, { status: 500 });
-        }
-        
-        txHash = ethTransfer.txHash;
-        blockchainResult = { 
-          executed: true, 
-          ethTransferTxHash: ethTransfer.txHash,
-          payoutETH: toAmount,
-          payoutUSD: netValueUsd,
-          note: "Metal deducted from Redis, ETH sent to user wallet"
-        };
-        console.log(`✅ ETH sent to user: ${ethTransfer.txHash}`);
-      } else if ((toTokenLower === "btc" || toTokenLower === "xrp" || toTokenLower === "sol") && BLOCKCHAIN_ENABLED) {
-        // For BTC/XRP/SOL: Use NOWPayments for payout
-        console.log(`💸 Processing ${toAmount.toFixed(8)} ${toToken.toUpperCase()} payout via NOWPayments...`);
-
-        // Check if user has external wallet address
-        const userInfo = await redis.hgetall(`user:${normalizedAddress}:info`);
-        const externalWallet = userInfo?.[`${toTokenLower}Wallet`] as string;
-
-        if (externalWallet) {
-          // User has external wallet - send via NOWPayments
-          console.log(`📤 External ${toToken.toUpperCase()} wallet found: ${externalWallet}`);
-
-          // Check NOWPayments balance first
-          const balanceCheck = await checkPayoutBalance(toTokenLower as 'btc' | 'xrp' | 'sol', toAmount);
-
-          if (!balanceCheck.sufficient) {
-            console.warn(`⚠️ NOWPayments ${toToken.toUpperCase()} balance insufficient. Available: ${balanceCheck.available}, Required: ${toAmount}`);
-            // Fall back to custodial (credit to Redis)
-            blockchainResult = {
-              executed: false,
-              reason: `NOWPayments ${toToken.toUpperCase()} balance insufficient. Credited to custodial balance.`,
-              payoutUSD: netValueUsd,
-              custodial: true,
-            };
-          } else {
-            // Proceed with NOWPayments payout
-            const payoutResult = await createCryptoPayout(
-              toTokenLower as 'btc' | 'xrp' | 'sol',
-              externalWallet,
-              toAmount
-            );
-
-            if (payoutResult.success) {
-              txHash = payoutResult.payoutId;
-              blockchainResult = {
-                executed: true,
-                nowpaymentsPayoutId: payoutResult.payoutId,
-                payoutCrypto: toAmount,
-                payoutUSD: netValueUsd,
-                externalWallet: externalWallet,
-                note: `Metal sold, ${toToken.toUpperCase()} sent to external wallet via NOWPayments`
-              };
-              console.log(`✅ ${toToken.toUpperCase()} payout initiated: ${payoutResult.payoutId}`);
-            } else {
-              console.error(`❌ NOWPayments payout failed: ${payoutResult.error}`);
-              // Fall back to custodial
-              blockchainResult = {
-                executed: false,
-                reason: `NOWPayments payout failed: ${payoutResult.error}. Credited to custodial balance.`,
-                payoutUSD: netValueUsd,
-                custodial: true,
-              };
-            }
-          }
-        } else {
-          // No external wallet - credit to Redis (custodial)
-          console.log(`📥 No external ${toToken.toUpperCase()} wallet - crediting to custodial balance`);
-          blockchainResult = {
-            executed: false,
-            reason: "No external wallet configured - credited to custodial balance",
-            payoutUSD: netValueUsd,
-            custodial: true,
-          };
-        }
-      } else {
-        // Blockchain disabled or unknown crypto - credit to Redis (custodial)
-        blockchainResult = {
-          executed: false,
-          reason: "Custodial crypto - credited to Redis balance",
-          payoutUSD: netValueUsd,
-          custodial: true,
-        };
-      }
+      // 6. Conversions only change the balance; value leaves through /api/withdraw.
+      blockchainResult = {
+        executed: false,
+        reason: "Custodial crypto - credited to Redis balance",
+        payoutUSD: netValueUsd,
+        custodial: true,
+      };
     }
     // ───────────────────────────────────────────────────────────────────────
     // CRYPTO → AUXM - TIER BAZLI FEE
@@ -1465,84 +1279,8 @@ export async function POST(request: NextRequest) {
       console.log(`   Net: ${netAuxm.toFixed(2)} AUXM = $${netAuxm.toFixed(2)}`);
       console.log(`   To: ${toAmount.toFixed(8)} ${toToken.toUpperCase()} @ $${cryptoPrice}`);
 
-      // For ETH: Transfer from hot wallet
-      if (toTokenLower === "eth" && BLOCKCHAIN_ENABLED) {
-        console.log(`💸 Sending ${toAmount.toFixed(6)} ETH to ${address}...`);
-        const ethTransfer = await sendEthToUser(address, toAmount);
-        if (!ethTransfer.success) {
-          console.error(`❌ ETH transfer failed: ${ethTransfer.error}`);
-          return NextResponse.json({
-            error: `ETH transferi başarısız: ${ethTransfer.error}`,
-          }, { status: 500 });
-        }
-
-        txHash = ethTransfer.txHash;
-        blockchainResult = {
-          executed: true,
-          ethTransferTxHash: ethTransfer.txHash,
-          payoutETH: toAmount,
-          payoutUSD: netAuxm,
-          note: "AUXM converted, ETH sent to user wallet"
-        };
-        console.log(`✅ ETH sent to user: ${ethTransfer.txHash}`);
-      }
-      // For BTC/XRP/SOL: Use NOWPayments
-      else if ((toTokenLower === "btc" || toTokenLower === "xrp" || toTokenLower === "sol") && BLOCKCHAIN_ENABLED) {
-        console.log(`💸 Processing ${toAmount.toFixed(8)} ${toToken.toUpperCase()} payout via NOWPayments...`);
-
-        const userInfo = await redis.hgetall(`user:${normalizedAddress}:info`);
-        const externalWallet = userInfo?.[`${toTokenLower}Wallet`] as string;
-
-        if (externalWallet) {
-          const balanceCheck = await checkPayoutBalance(toTokenLower as 'btc' | 'xrp' | 'sol', toAmount);
-
-          if (!balanceCheck.sufficient) {
-            console.warn(`⚠️ NOWPayments ${toToken.toUpperCase()} balance insufficient`);
-            blockchainResult = {
-              executed: false,
-              reason: `NOWPayments balance insufficient. Credited to custodial balance.`,
-              payoutUSD: netAuxm,
-              custodial: true,
-            };
-          } else {
-            const payoutResult = await createCryptoPayout(
-              toTokenLower as 'btc' | 'xrp' | 'sol',
-              externalWallet,
-              toAmount
-            );
-
-            if (payoutResult.success) {
-              txHash = payoutResult.payoutId;
-              blockchainResult = {
-                executed: true,
-                nowpaymentsPayoutId: payoutResult.payoutId,
-                payoutCrypto: toAmount,
-                payoutUSD: netAuxm,
-                externalWallet: externalWallet,
-                note: `AUXM converted, ${toToken.toUpperCase()} sent via NOWPayments`
-              };
-              console.log(`✅ ${toToken.toUpperCase()} payout initiated: ${payoutResult.payoutId}`);
-            } else {
-              console.error(`❌ NOWPayments payout failed: ${payoutResult.error}`);
-              blockchainResult = {
-                executed: false,
-                reason: `NOWPayments payout failed. Credited to custodial balance.`,
-                payoutUSD: netAuxm,
-                custodial: true,
-              };
-            }
-          }
-        } else {
-          blockchainResult = {
-            executed: false,
-            reason: "No external wallet - credited to custodial balance",
-            payoutUSD: netAuxm,
-            custodial: true,
-          };
-        }
-      } else {
-        blockchainResult = { executed: false, reason: "Off-chain AUXM conversion", custodial: true };
-      }
+      // Conversions only change the balance; value leaves through /api/withdraw.
+      blockchainResult = { executed: false, reason: "Custodial crypto - credited to Redis balance", payoutUSD: netAuxm, custodial: true };
     }
     // ───────────────────────────────────────────────────────────────────────
     // CRYPTO → CRYPTO (YASAK)

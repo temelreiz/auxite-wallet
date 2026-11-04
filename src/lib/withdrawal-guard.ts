@@ -144,13 +144,6 @@ export async function usdValueOf(coin: string, amount: number): Promise<number> 
   return amount * price;
 }
 
-// Both rules for `amount` units of `coin` leaving the platform.
-export async function assertValueMayLeave(address: string, coin: string, amount: number): Promise<GuardResult> {
-  const kyc = await requireKycForWithdraw(address);
-  if (!kyc.ok) return kyc;
-  return assertCardHoldAllowsAsset(address, coin, amount);
-}
-
 // Enforce the hold for `amount` units of `coin` leaving the account. Fails CLOSED
 // when an active hold cannot be checked; with no holds it never needs a price.
 export async function assertCardHoldAllowsAsset(address: string, coin: string, amount: number): Promise<GuardResult> {
