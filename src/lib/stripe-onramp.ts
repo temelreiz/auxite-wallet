@@ -22,9 +22,9 @@ export function onrampSessionParams(evm: string, btc: string, customerIp?: strin
     [`wallet_addresses[${BASE_WALLET_KEY}]`]: evm,
     "wallet_addresses[bitcoin]": btc,
     lock_wallet_address: "true",
-    destination_network: "base",
-    destination_currency: "usdc",
   };
+  // No default network or currency: Stripe doesn't offer every pair in every
+  // region (no Base in the EU), so it picks from these lists per customer.
   ONRAMP_NETWORKS.forEach((n, i) => (params[`destination_networks[${i}]`] = n));
   ONRAMP_CURRENCIES.forEach((c, i) => (params[`destination_currencies[${i}]`] = c));
   if (customerIp && customerIp !== "unknown") params.customer_ip_address = customerIp;
