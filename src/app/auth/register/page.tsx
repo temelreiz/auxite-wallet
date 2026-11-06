@@ -26,9 +26,6 @@ const LANGUAGE_OPTIONS = [
 
 const translations: Record<string, Record<string, string>> = {
   tr: {
-    checkYourEmail: "E-postanızı Kontrol Edin",
-    verificationLinkSent: "Doğrulama bağlantısı gönderildi:",
-    clickLinkToVerify: "Hesabınızı doğrulamak ve başlamak için e-postadaki bağlantıya tıklayın.",
     backToLogin: "Girişe Dön",
     createAccountTitle: "Hesap Oluştur",
     joinAuxite: "Bugün Auxite'a katılın",
@@ -61,9 +58,6 @@ const translations: Record<string, Record<string, string>> = {
     tryDemoDesc: "Sanal bakiyeyle demo deneyin — yatırım gerekmez",
   },
   en: {
-    checkYourEmail: "Check Your Email",
-    verificationLinkSent: "We've sent a verification link to",
-    clickLinkToVerify: "Click the link in the email to verify your account and get started.",
     backToLogin: "Back to Login",
     createAccountTitle: "Create Account",
     joinAuxite: "Join Auxite today",
@@ -96,9 +90,6 @@ const translations: Record<string, Record<string, string>> = {
     tryDemoDesc: "Try the demo with a virtual balance — no deposit needed",
   },
   de: {
-    checkYourEmail: "Überprüfen Sie Ihre E-Mail",
-    verificationLinkSent: "Wir haben einen Bestätigungslink gesendet an",
-    clickLinkToVerify: "Klicken Sie auf den Link in der E-Mail, um Ihr Konto zu bestätigen und loszulegen.",
     backToLogin: "Zurück zur Anmeldung",
     createAccountTitle: "Konto erstellen",
     joinAuxite: "Treten Sie Auxite heute bei",
@@ -131,9 +122,6 @@ const translations: Record<string, Record<string, string>> = {
     tryDemoDesc: "Demo mit virtuellem Guthaben testen — ohne Einzahlung",
   },
   fr: {
-    checkYourEmail: "Vérifiez votre e-mail",
-    verificationLinkSent: "Nous avons envoyé un lien de vérification à",
-    clickLinkToVerify: "Cliquez sur le lien dans l'e-mail pour vérifier votre compte et commencer.",
     backToLogin: "Retour à la connexion",
     createAccountTitle: "Créer un compte",
     joinAuxite: "Rejoignez Auxite aujourd'hui",
@@ -166,9 +154,6 @@ const translations: Record<string, Record<string, string>> = {
     tryDemoDesc: "Essayez la démo avec un solde virtuel — sans dépôt",
   },
   ar: {
-    checkYourEmail: "تحقق من بريدك الإلكتروني",
-    verificationLinkSent: "لقد أرسلنا رابط التحقق إلى",
-    clickLinkToVerify: "انقر على الرابط في البريد الإلكتروني للتحقق من حسابك والبدء.",
     backToLogin: "العودة لتسجيل الدخول",
     createAccountTitle: "إنشاء حساب",
     joinAuxite: "انضم إلى Auxite اليوم",
@@ -201,9 +186,6 @@ const translations: Record<string, Record<string, string>> = {
     tryDemoDesc: "جرّب العرض التوضيحي برصيد افتراضي — دون إيداع",
   },
   ru: {
-    checkYourEmail: "Проверьте вашу почту",
-    verificationLinkSent: "Мы отправили ссылку для подтверждения на",
-    clickLinkToVerify: "Нажмите на ссылку в письме, чтобы подтвердить аккаунт и начать работу.",
     backToLogin: "Вернуться к входу",
     createAccountTitle: "Создать аккаунт",
     joinAuxite: "Присоединяйтесь к Auxite сегодня",
@@ -270,7 +252,6 @@ export default function RegisterPage() {
   const [preferredLang, setPreferredLang] = useState(lang);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState('');
   const turnstileRef = useRef<HTMLDivElement>(null);
 
@@ -353,8 +334,6 @@ export default function RegisterPage() {
         return;
       }
 
-      // Show success message
-      setSuccess(true);
       // Google Ads conversion — fired on the client right after the API
       // returns success. No-op if NEXT_PUBLIC_GOOGLE_ADS_LABEL_SIGNUP is
       // unset, so this is safe to ship before the env vars land.
@@ -363,6 +342,10 @@ export default function RegisterPage() {
       // campaign optimises against, so it has to fire from the same place.
       fireXConversion("signup", { transactionId: data?.user?.id });
       fireBingConversion("signup");
+
+      // Straight to the code screen. sent=1: the signup email already carries
+      // the code, so that page must not send a second one and void it.
+      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}&sent=1`);
 
     } catch (err) {
       setError(t('connectionError'));
@@ -378,33 +361,6 @@ export default function RegisterPage() {
   const handleGoogleLogin = () => {
     window.location.href = `/api/auth/google/redirect`;
   };
-
-  // Success State
-  if (success) {
-    return (
-      <div className="min-h-screen bg-stone-100 dark:bg-slate-950 flex items-center justify-center p-4">
-        <div className="w-full max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#2F6F62]/20 mb-6">
-            <Mail className="w-10 h-10 text-[#2F6F62]" />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-3">{t('checkYourEmail')}</h1>
-          <p className="text-slate-500 dark:text-slate-400 mb-2">
-            {t('verificationLinkSent')}
-          </p>
-          <p className="text-[#BFA181] font-medium mb-8">{email}</p>
-          <p className="text-sm text-slate-500 mb-6">
-            {t('clickLinkToVerify')}
-          </p>
-          <Link
-            href="/auth/login"
-            className="inline-flex items-center justify-center px-6 py-3 bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 text-slate-800 dark:text-white font-medium rounded-xl hover:bg-stone-50 dark:hover:bg-slate-800 transition-colors"
-          >
-            {t('backToLogin')}
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-stone-100 dark:bg-slate-950 flex flex-col">
