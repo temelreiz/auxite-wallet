@@ -50,6 +50,8 @@ describe("/api/admin/partners", () => {
     expect(body.overview.url).toBe("https://engine.test/admin/overview");
     expect(body.orders.url).toContain("/admin/orders");
     expect(body.certificates.url).toContain("/admin/certificates");
+    expect(body.applications.url).toContain("/admin/applications");
+    expect(body.fiatOrders.url).toContain("/admin/fiat-orders");
     expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer engine-key");
   });
 
@@ -78,6 +80,26 @@ describe("/api/admin/partners", () => {
     const added = await post({ action: "add", id: "abc", wallet: "0x1", brand: "ABC" });
     expect(added.status).toBe(201);
     expect(fetchMock.mock.calls[1][0]).toBe("https://engine.test/admin/partners");
+  });
+
+  it("maps approve and reject to the application routes", async () => {
+    fetchMock.mockImplementation(async () => engineReply({ status: "approved" }));
+    await post({ action: "approve", wallet: "0xabc" });
+    await post({ action: "reject", wallet: "0xabc", note: "Missing documents" });
+    expect(fetchMock.mock.calls[0][0]).toBe("https://engine.test/admin/applications/0xabc/approve");
+    expect(fetchMock.mock.calls[1][0]).toBe("https://engine.test/admin/applications/0xabc/reject");
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ note: "Missing documents" });
+  });
+
+  it("forwards a confirmed transfer with its amount and bank reference", async () => {
+    fetchMock.mockImplementation(async () => engineReply({ status: "delivered" }));
+    await post({ action: "fiat-confirm", reference: "AXP1", amountTry: "60000", bankReference: "B1", extra: "ignored" });
+    expect(fetchMock.mock.calls[0][0]).toBe("https://engine.test/admin/fiat-orders/AXP1/confirm");
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ amountTry: "60000", bankReference: "B1" });
+    await post({ action: "fiat-retry", reference: "AXP1" });
+    await post({ action: "fiat-cancel", reference: "AXP1" });
+    expect(fetchMock.mock.calls[1][0]).toContain("/AXP1/retry");
+    expect(fetchMock.mock.calls[2][0]).toContain("/AXP1/cancel");
   });
 
   it("can't be steered to another engine path through the partner id", async () => {

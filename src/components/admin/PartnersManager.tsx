@@ -61,6 +61,32 @@ interface CertificateRow {
   issuedAt: string;
 }
 
+interface ApplicationRow {
+  wallet: string;
+  company: string;
+  brand: string;
+  prefix: string;
+  email: string;
+  country: string;
+  status: string;
+  note: string | null;
+  created_at: number;
+}
+
+interface FiatOrderRow {
+  reference: string;
+  partnerId: string;
+  metal: string;
+  requestedTry: string;
+  receivedTry: string | null;
+  grams: string | null;
+  status: string;
+  note: string | null;
+  txHash: string | null;
+  bankReference: string | null;
+  createdAt: string;
+}
+
 interface PartnersData {
   overview: {
     environment: string;
@@ -71,6 +97,8 @@ interface PartnersData {
   };
   orders: OrderRow[];
   certificates: CertificateRow[];
+  applications: ApplicationRow[];
+  fiatOrders: FiatOrderRow[];
 }
 
 const METAL_LABEL: Record<string, string> = { gold: 'Altın', silver: 'Gümüş', platinum: 'Platin', palladium: 'Paladyum' };
@@ -81,6 +109,10 @@ const STATUS_LABEL: Record<string, string> = {
   active: 'Aktif',
   partially_released: 'Kısmen düştü',
   released: 'Kapandı',
+  awaiting_funds: 'Havale bekleniyor',
+  funded: 'Para geldi, teslim edilmedi',
+  delivered: 'Teslim edildi',
+  cancelled: 'İptal edildi',
 };
 
 const CARD = 'bg-slate-800/50 border border-slate-700 rounded-xl p-4';
@@ -103,6 +135,8 @@ export default function PartnersManager({ adminToken }: { adminToken: string }) 
   const [busy, setBusy] = useState(false);
   const [spreadDrafts, setSpreadDrafts] = useState<Record<string, string>>({});
   const [newPartner, setNewPartner] = useState({ id: '', brand: '', wallet: '', spreadPercent: '1' });
+  const [transfers, setTransfers] = useState<Record<string, { amountTry: string; bankReference: string }>>({});
+  const [rejectNotes, setRejectNotes] = useState<Record<string, string>>({});
   const [createdKey, setCreatedKey] = useState<{ id: string; apiKey: string } | null>(null);
 
   const load = useCallback(async () => {
@@ -208,6 +242,103 @@ export default function PartnersManager({ adminToken }: { adminToken: string }) 
             Kaydettim, kapat
           </button>
         </div>
+      )}
+
+      {data && data.applications.some((a) => a.status === 'pending') && (
+        <section className="space-y-3">
+          <h3 className="font-semibold">Bekleyen başvurular</h3>
+          {data.applications
+            .filter((a) => a.status === 'pending')
+            .map((a) => (
+              <div key={a.wallet} className={`${CARD} border-amber-600`}>
+                <div className="grid md:grid-cols-4 gap-3 text-sm">
+                  <div><div className="text-slate-400">Şirket</div>{a.company}</div>
+                  <div><div className="text-slate-400">Marka</div>{a.brand}</div>
+                  <div><div className="text-slate-400">Token kodu</div>{a.prefix}</div>
+                  <div><div className="text-slate-400">Ülke</div>{a.country}</div>
+                  <div className="md:col-span-2"><div className="text-slate-400">E-posta</div>{a.email}</div>
+                  <div className="md:col-span-2"><div className="text-slate-400">Cüzdan</div><span className="break-all">{a.wallet}</span></div>
+                </div>
+                <div className="flex gap-2 mt-4 flex-wrap">
+                  <button
+                    disabled={busy}
+                    onClick={() => act({ action: 'approve', wallet: a.wallet }, `${a.brand} onaylandı, tokenları açıldı`)}
+                    className="px-3 py-1.5 text-sm bg-emerald-700 hover:bg-emerald-600 rounded-lg disabled:opacity-50"
+                  >
+                    Onayla ve tokenları aç
+                  </button>
+                  <input
+                    aria-label={`${a.brand} ret sebebi`}
+                    placeholder="Ret sebebi (şirket görür)"
+                    className={`${INPUT} flex-1 min-w-48`}
+                    value={rejectNotes[a.wallet] ?? ''}
+                    onChange={(e) => setRejectNotes({ ...rejectNotes, [a.wallet]: e.target.value })}
+                  />
+                  <button
+                    disabled={busy}
+                    onClick={() => act({ action: 'reject', wallet: a.wallet, note: rejectNotes[a.wallet] }, `${a.brand} reddedildi`)}
+                    className="px-3 py-1.5 text-sm bg-red-800 hover:bg-red-700 rounded-lg disabled:opacity-50"
+                  >
+                    Reddet
+                  </button>
+                </div>
+              </div>
+            ))}
+        </section>
+      )}
+
+      {data && data.fiatOrders.length > 0 && (
+        <section className="space-y-3">
+          <h3 className="font-semibold">Havale siparişleri</h3>
+          <p className="text-sm text-slate-400">
+            Alıcı: Auxite Kıymetli Madenler Ticaret A.Ş. Gelen tutarı ve banka referansını yalnızca hesap hareketinde gördükten sonra girin: teslim hemen yapılır ve geri alınamaz.
+          </p>
+          {data.fiatOrders.map((order) => {
+            const draft = transfers[order.reference] ?? { amountTry: order.requestedTry, bankReference: '' };
+            const setDraft = (patch: Partial<typeof draft>) =>
+              setTransfers({ ...transfers, [order.reference]: { ...draft, ...patch } });
+            return (
+              <div key={order.reference} className={CARD}>
+                <div className="grid md:grid-cols-5 gap-3 text-sm">
+                  <div><div className="text-slate-400">Referans</div><span className="font-mono text-xs">{order.reference}</span></div>
+                  <div><div className="text-slate-400">Şirket</div>{order.partnerId}</div>
+                  <div><div className="text-slate-400">Metal</div>{METAL_LABEL[order.metal] ?? order.metal}</div>
+                  <div><div className="text-slate-400">Tutar</div>{order.receivedTry ?? order.requestedTry} TL{order.grams ? ` · ${order.grams} g` : ''}</div>
+                  <div><div className="text-slate-400">Durum</div>{STATUS_LABEL[order.status] ?? order.status}</div>
+                </div>
+                {order.note && <div className="text-sm text-amber-300 mt-2">{order.note}</div>}
+                {order.status === 'awaiting_funds' && (
+                  <div className="flex gap-2 mt-3 flex-wrap items-center">
+                    <input aria-label={`${order.reference} gelen tutar`} placeholder="Gelen tutar (TL)" className={`${INPUT} w-36`} inputMode="decimal"
+                      value={draft.amountTry} onChange={(e) => setDraft({ amountTry: e.target.value })} />
+                    <input aria-label={`${order.reference} banka referansı`} placeholder="Banka işlem referansı" className={`${INPUT} flex-1 min-w-48`}
+                      value={draft.bankReference} onChange={(e) => setDraft({ bankReference: e.target.value })} />
+                    <button disabled={busy || !draft.bankReference.trim()}
+                      onClick={() => act({ action: 'fiat-confirm', reference: order.reference, amountTry: draft.amountTry.trim().replace(',', '.'), bankReference: draft.bankReference.trim() }, `${order.reference} işlendi`)}
+                      className="px-3 py-1.5 text-sm bg-emerald-700 hover:bg-emerald-600 rounded-lg disabled:opacity-50">
+                      Para geldi, teslim et
+                    </button>
+                    <button disabled={busy} onClick={() => act({ action: 'fiat-cancel', reference: order.reference }, `${order.reference} iptal edildi`)}
+                      className="px-3 py-1.5 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg disabled:opacity-50">
+                      İptal
+                    </button>
+                  </div>
+                )}
+                {order.status === 'funded' && (
+                  <button disabled={busy} onClick={() => act({ action: 'fiat-retry', reference: order.reference }, `${order.reference} yeniden denendi`)}
+                    className="mt-3 px-3 py-1.5 text-sm bg-amber-500 hover:bg-amber-400 text-black rounded-lg disabled:opacity-50">
+                    Teslimi yeniden dene
+                  </button>
+                )}
+                {order.txHash && overview && (
+                  <a className="block mt-2 text-sm text-amber-400 hover:underline" href={`${explorerUrl}/tx/${order.txHash}`} target="_blank" rel="noreferrer">
+                    {shortHash(order.txHash)}
+                  </a>
+                )}
+              </div>
+            );
+          })}
+        </section>
       )}
 
       {overview && (

@@ -21,14 +21,16 @@ export async function GET(request: NextRequest) {
   if (!admin.ok) return admin.response;
 
   try {
-    const [overview, orders, certificates] = await Promise.all([
+    const [overview, orders, certificates, applications, fiatOrders] = await Promise.all([
       callPartnersEngine("/admin/overview"),
       callPartnersEngine("/admin/orders?limit=100"),
       callPartnersEngine("/admin/certificates?limit=50"),
+      callPartnersEngine("/admin/applications"),
+      callPartnersEngine("/admin/fiat-orders"),
     ]);
-    const failed = [overview, orders, certificates].find((r) => r.status !== 200);
+    const failed = [overview, orders, certificates, applications, fiatOrders].find((r) => r.status !== 200);
     if (failed) return NextResponse.json(failed.body, { status: failed.status });
-    return NextResponse.json({ overview: overview.body, orders: orders.body, certificates: certificates.body });
+    return NextResponse.json({ overview: overview.body, orders: orders.body, certificates: certificates.body, applications: applications.body, fiatOrders: fiatOrders.body });
   } catch (error) {
     return unavailable(error);
   }
@@ -52,6 +54,24 @@ export async function POST(request: NextRequest) {
         break;
       case "spread":
         result = await callPartnersEngine(`/admin/partners/${partner}/spread`, { method: "POST", body: { spreadBps: body.spreadBps } });
+        break;
+      case "approve":
+        result = await callPartnersEngine(`/admin/applications/${encodeURIComponent(String(body.wallet ?? ""))}/approve`, { method: "POST", body: {} });
+        break;
+      case "reject":
+        result = await callPartnersEngine(`/admin/applications/${encodeURIComponent(String(body.wallet ?? ""))}/reject`, { method: "POST", body: { note: body.note } });
+        break;
+      case "fiat-confirm":
+        result = await callPartnersEngine(`/admin/fiat-orders/${encodeURIComponent(String(body.reference ?? ""))}/confirm`, {
+          method: "POST",
+          body: { amountTry: body.amountTry, bankReference: body.bankReference },
+        });
+        break;
+      case "fiat-retry":
+        result = await callPartnersEngine(`/admin/fiat-orders/${encodeURIComponent(String(body.reference ?? ""))}/retry`, { method: "POST", body: {} });
+        break;
+      case "fiat-cancel":
+        result = await callPartnersEngine(`/admin/fiat-orders/${encodeURIComponent(String(body.reference ?? ""))}/cancel`, { method: "POST", body: {} });
         break;
       case "add":
         result = await callPartnersEngine("/admin/partners", {
