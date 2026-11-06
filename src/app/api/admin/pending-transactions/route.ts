@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
     try {
       const buckets: Array<{ key: string; bucket: string }> = [
         { key: "procurement:queue:pending", bucket: "pending" },
-        { key: "procurement:queue:manual_review", bucket: "manual_review" },
+        { key: "procurement:manual_review", bucket: "manual_review" },
       ];
       for (const { key, bucket } of buckets) {
         const ids = await redis.lrange(key, 0, 99);
