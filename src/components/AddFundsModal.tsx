@@ -38,6 +38,17 @@ const COIN_MAPPING: Record<string, string> = {
   usdc: "USDC",
 };
 
+const ONRAMP_ENABLED = process.env.NEXT_PUBLIC_STRIPE_ONRAMP_ENABLED === "true";
+
+const ONRAMP_COPY: Record<string, { title: string; desc: string; error: string }> = {
+  en: { title: "Buy Crypto with Stripe", desc: "Stripe handles payment and verification. Fees shown before you pay. Delivered to your Auxite deposit address.", error: "This option is not available right now." },
+  tr: { title: "Stripe ile Kripto Al", desc: "Ödeme ve doğrulamayı Stripe yapar. Ücretler ödemeden önce gösterilir. Auxite yatırma adresinize gönderilir.", error: "Bu seçenek şu anda kullanılamıyor." },
+  de: { title: "Krypto mit Stripe kaufen", desc: "Stripe übernimmt Zahlung und Prüfung. Gebühren werden vor der Zahlung angezeigt. Lieferung an Ihre Auxite-Einzahlungsadresse.", error: "Diese Option ist derzeit nicht verfügbar." },
+  fr: { title: "Acheter des cryptos avec Stripe", desc: "Stripe gère le paiement et la vérification. Frais affichés avant le paiement. Livraison à votre adresse de dépôt Auxite.", error: "Cette option n'est pas disponible pour le moment." },
+  ar: { title: "شراء العملات المشفرة عبر Stripe", desc: "تتولى Stripe الدفع والتحقق. تظهر الرسوم قبل الدفع. يتم الإرسال إلى عنوان إيداع Auxite الخاص بك.", error: "هذا الخيار غير متاح حالياً." },
+  ru: { title: "Купить криптовалюту через Stripe", desc: "Оплату и проверку выполняет Stripe. Комиссии показаны до оплаты. Доставка на ваш депозитный адрес Auxite.", error: "Этот вариант сейчас недоступен." },
+};
+
 const translations: Record<string, Record<string, string>> = {
   tr: {
     title: "Kasayı Fonla",
@@ -415,6 +426,31 @@ export function AddFundsModal({
   const [activeModal, setActiveModal] = useState<"main" | "bank" | "auxm" | "crypto">(getInitialModal());
   const [selectedCrypto, setSelectedCrypto] = useState<typeof CRYPTO_SOURCES[0] | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [onrampLoading, setOnrampLoading] = useState(false);
+  const [onrampError, setOnrampError] = useState<string | null>(null);
+
+  const handleOnramp = async () => {
+    setOnrampLoading(true);
+    setOnrampError(null);
+    // Opened before the request so the browser doesn't treat it as a popup.
+    const tab = window.open("", "_blank");
+    try {
+      const res = await fetch("/api/stripe/onramp-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userAddress: walletAddress }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error);
+      if (tab) tab.location.href = data.url;
+      else window.location.href = data.url;
+    } catch {
+      tab?.close();
+      setOnrampError(ONRAMP_COPY[lang]?.error ?? ONRAMP_COPY.en.error);
+    } finally {
+      setOnrampLoading(false);
+    }
+  };
   const [auxmAmount, setAuxmAmount] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
 
@@ -714,6 +750,24 @@ export function AddFundsModal({
               <div>
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider mb-3">{t("cryptoFunding")}</p>
                 <div className="space-y-3">
+                  {ONRAMP_ENABLED && walletAddress && (
+                    <div>
+                      <button
+                        onClick={handleOnramp}
+                        disabled={onrampLoading}
+                        className="w-full p-4 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[#BFA181]/50 transition-all flex items-center gap-4 text-left disabled:opacity-60"
+                      >
+                        <div className="flex-1">
+                          <p className="font-semibold text-slate-800 dark:text-white">{ONRAMP_COPY[lang]?.title ?? ONRAMP_COPY.en.title}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{ONRAMP_COPY[lang]?.desc ?? ONRAMP_COPY.en.desc}</p>
+                        </div>
+                        <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                      {onrampError && <p className="text-xs text-red-500 mt-1">{onrampError}</p>}
+                    </div>
+                  )}
                   {CRYPTO_SOURCES.map((crypto) => (
                     <button
                       key={crypto.id}
