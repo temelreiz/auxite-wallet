@@ -33,6 +33,7 @@ import { AUXR_GRAMS_PER_UNIT } from "@/lib/auxr-pricing";
 import { AUXR_CONTRACT_ADDRESS, getOnChainBalance, weiToAuxr } from "@/lib/auxr-onchain";
 import { recordBurn, recordMint } from "@/lib/auxr-reserve";
 import { acquireBalanceLock, releaseBalanceLock } from "@/lib/balance-lock";
+import { EXPECTED_MINTER } from "@/lib/auxr-role-watch";
 import { ethers } from "ethers";
 import type { Address } from "viem";
 
@@ -112,6 +113,18 @@ const SOURCES_KEY = "auxr:ap:sources"; // hash: source → ApSource JSON
 /** Hours a newly added source waits before deposits from it are credited. */
 export const AP_SOURCE_COOLDOWN_MS = Number(process.env.AUXR_AP_SOURCE_COOLDOWN_HOURS ?? 24) * 60 * 60 * 1000;
 
+/**
+ * Issuer wallets that must never be an AP source. Burning AUXR counts as a
+ * deposit here, so if the Safe or the treasury were a source, an issuer burn
+ * (e.g. the 897 AUXR ghost-supply burn of 2026-10-20) would be credited to
+ * the AP as sellable AUXR. Extra addresses: AUXR_AP_SOURCE_BLOCKLIST (comma).
+ */
+export const PROTECTED_SOURCES: string[] = [
+  EXPECTED_MINTER, // admin Safe, holds MINTER_ROLE
+  "0x0a5dfc442ba42a83f3f2f040025e1b4b0b625fe3", // founder treasury EOA
+  ...(process.env.AUXR_AP_SOURCE_BLOCKLIST || "").split(","),
+].map((a) => a.trim().toLowerCase()).filter(Boolean);
+
 export interface ApSource {
   source: string;     // on-chain wallet the AP redeems from
   apAddress: string;  // AP's Auxite account
@@ -127,13 +140,14 @@ export async function listApSources(apAddress?: string): Promise<ApSource[]> {
 
 export type AddApSourceResult =
   | { ok: true; source: ApSource }
-  | { ok: false; error: "ap_not_found" | "source_is_destination" | "source_taken" };
+  | { ok: false; error: "ap_not_found" | "source_is_destination" | "source_protected" | "source_taken" };
 
 export async function addApSource(apAddress: string, source: string, now = Date.now()): Promise<AddApSourceResult> {
   const ap = await getAp(apAddress);
   if (!ap) return { ok: false, error: "ap_not_found" };
   const s = source.toLowerCase();
   if (s === ap.destination) return { ok: false, error: "source_is_destination" };
+  if (PROTECTED_SOURCES.includes(s)) return { ok: false, error: "source_protected" };
   const rec: ApSource = { source: s, apAddress: ap.address, addedAt: now, activeAt: now + AP_SOURCE_COOLDOWN_MS };
   // hsetnx: a source already mapped (to this or another AP) is never re-pointed
   // or re-timed; remove it first.
@@ -154,7 +168,9 @@ export type ApSourceMatch =
 /** Resolve a depositing wallet to an AP through its registered sources. */
 export async function resolveApSource(fromAddress: string, now = Date.now()): Promise<ApSourceMatch> {
   const src = parse<ApSource>(await getRedis().hget(SOURCES_KEY, fromAddress.toLowerCase()));
-  if (!src) return { status: "none" };
+  // Checked again here so a protected wallet stored before it was protected
+  // is still never credited.
+  if (!src || PROTECTED_SOURCES.includes(src.source)) return { status: "none" };
   const ap = await getAp(src.apAddress);
   if (!ap) return { status: "none" };
   if (now < src.activeAt) return { status: "cooling_down", source: src };
