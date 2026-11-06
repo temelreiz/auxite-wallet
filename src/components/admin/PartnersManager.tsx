@@ -61,6 +61,18 @@ interface CertificateRow {
   issuedAt: string;
 }
 
+interface ApplicationRow {
+  wallet: string;
+  company: string;
+  brand: string;
+  prefix: string;
+  email: string;
+  country: string;
+  status: string;
+  note: string | null;
+  created_at: number;
+}
+
 interface PartnersData {
   overview: {
     environment: string;
@@ -71,6 +83,7 @@ interface PartnersData {
   };
   orders: OrderRow[];
   certificates: CertificateRow[];
+  applications: ApplicationRow[];
 }
 
 const METAL_LABEL: Record<string, string> = { gold: 'Altın', silver: 'Gümüş', platinum: 'Platin', palladium: 'Paladyum' };
@@ -103,6 +116,7 @@ export default function PartnersManager({ adminToken }: { adminToken: string }) 
   const [busy, setBusy] = useState(false);
   const [spreadDrafts, setSpreadDrafts] = useState<Record<string, string>>({});
   const [newPartner, setNewPartner] = useState({ id: '', brand: '', wallet: '', spreadPercent: '1' });
+  const [rejectNotes, setRejectNotes] = useState<Record<string, string>>({});
   const [createdKey, setCreatedKey] = useState<{ id: string; apiKey: string } | null>(null);
 
   const load = useCallback(async () => {
@@ -208,6 +222,49 @@ export default function PartnersManager({ adminToken }: { adminToken: string }) 
             Kaydettim, kapat
           </button>
         </div>
+      )}
+
+      {data && data.applications.some((a) => a.status === 'pending') && (
+        <section className="space-y-3">
+          <h3 className="font-semibold">Bekleyen başvurular</h3>
+          {data.applications
+            .filter((a) => a.status === 'pending')
+            .map((a) => (
+              <div key={a.wallet} className={`${CARD} border-amber-600`}>
+                <div className="grid md:grid-cols-4 gap-3 text-sm">
+                  <div><div className="text-slate-400">Şirket</div>{a.company}</div>
+                  <div><div className="text-slate-400">Marka</div>{a.brand}</div>
+                  <div><div className="text-slate-400">Token kodu</div>{a.prefix}</div>
+                  <div><div className="text-slate-400">Ülke</div>{a.country}</div>
+                  <div className="md:col-span-2"><div className="text-slate-400">E-posta</div>{a.email}</div>
+                  <div className="md:col-span-2"><div className="text-slate-400">Cüzdan</div><span className="break-all">{a.wallet}</span></div>
+                </div>
+                <div className="flex gap-2 mt-4 flex-wrap">
+                  <button
+                    disabled={busy}
+                    onClick={() => act({ action: 'approve', wallet: a.wallet }, `${a.brand} onaylandı, tokenları açıldı`)}
+                    className="px-3 py-1.5 text-sm bg-emerald-700 hover:bg-emerald-600 rounded-lg disabled:opacity-50"
+                  >
+                    Onayla ve tokenları aç
+                  </button>
+                  <input
+                    aria-label={`${a.brand} ret sebebi`}
+                    placeholder="Ret sebebi (şirket görür)"
+                    className={`${INPUT} flex-1 min-w-48`}
+                    value={rejectNotes[a.wallet] ?? ''}
+                    onChange={(e) => setRejectNotes({ ...rejectNotes, [a.wallet]: e.target.value })}
+                  />
+                  <button
+                    disabled={busy}
+                    onClick={() => act({ action: 'reject', wallet: a.wallet, note: rejectNotes[a.wallet] }, `${a.brand} reddedildi`)}
+                    className="px-3 py-1.5 text-sm bg-red-800 hover:bg-red-700 rounded-lg disabled:opacity-50"
+                  >
+                    Reddet
+                  </button>
+                </div>
+              </div>
+            ))}
+        </section>
       )}
 
       {overview && (
