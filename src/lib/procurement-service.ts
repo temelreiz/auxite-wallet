@@ -416,6 +416,24 @@ export async function getProcurementOrder(orderId: string): Promise<ProcurementO
 }
 
 // ============================================
+// LIST ORDERS BY STATUS LIST
+// ============================================
+
+export const PROCUREMENT_LISTS = ['pending', 'converting', 'purchasing', 'completed', 'failed', 'manualReview'] as const;
+export type ProcurementList = (typeof PROCUREMENT_LISTS)[number];
+
+/** Read only. Newest first. `total` can exceed the orders returned. */
+export async function listProcurementOrders(
+  list: ProcurementList,
+  limit: number,
+): Promise<{ total: number; orders: ProcurementOrder[] }> {
+  const key = KEYS[list];
+  const [total, ids] = await Promise.all([redis.llen(key), redis.lrange(key, 0, limit - 1)]);
+  const orders = await Promise.all(ids.map((id) => getProcurementOrder(id as string)));
+  return { total: total || 0, orders: orders.filter((order): order is ProcurementOrder => order !== null) };
+}
+
+// ============================================
 // BATCH PENDING ORDERS
 // ============================================
 // Groups pending orders by metal for efficient purchasing
