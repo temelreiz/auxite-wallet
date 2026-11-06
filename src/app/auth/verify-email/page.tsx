@@ -16,6 +16,7 @@ const translations: Record<string, Record<string, string>> = {
     emailVerified: "E-posta Dogrulandı!",
     emailVerifiedDesc: "E-posta adresiniz basarıyla dogrulandı. Artık Auxite hesabınızın tum ozelliklerine erisebilirsiniz.",
     goToDashboard: "Panele Git",
+    fundVault: "Kasan\u0131 Fonla",
     alreadyVerified: "Zaten Dogrulanmıs",
     alreadyVerifiedDesc: "Bu e-posta adresi zaten dogrulanmıs. Hesabınıza giris yapabilirsiniz.",
     signIn: "Giris Yap",
@@ -42,6 +43,7 @@ const translations: Record<string, Record<string, string>> = {
     emailVerified: "Email Verified!",
     emailVerifiedDesc: "Your email has been successfully verified. You can now access all features of your Auxite account.",
     goToDashboard: "Go to Dashboard",
+    fundVault: "Fund Your Vault",
     alreadyVerified: "Already Verified",
     alreadyVerifiedDesc: "This email address has already been verified. You can sign in to your account.",
     signIn: "Sign In",
@@ -68,6 +70,7 @@ const translations: Record<string, Record<string, string>> = {
     emailVerified: "E-Mail bestatigt!",
     emailVerifiedDesc: "Ihre E-Mail-Adresse wurde erfolgreich bestatigt. Sie konnen jetzt auf alle Funktionen Ihres Auxite-Kontos zugreifen.",
     goToDashboard: "Zum Dashboard",
+    fundVault: "Tresor aufladen",
     alreadyVerified: "Bereits bestatigt",
     alreadyVerifiedDesc: "Diese E-Mail-Adresse wurde bereits bestatigt. Sie konnen sich in Ihrem Konto anmelden.",
     signIn: "Anmelden",
@@ -94,6 +97,7 @@ const translations: Record<string, Record<string, string>> = {
     emailVerified: "E-mail verifie !",
     emailVerifiedDesc: "Votre adresse e-mail a ete verifiee avec succes. Vous pouvez maintenant acceder a toutes les fonctionnalites de votre compte Auxite.",
     goToDashboard: "Aller au tableau de bord",
+    fundVault: "Alimenter votre coffre",
     alreadyVerified: "Deja verifie",
     alreadyVerifiedDesc: "Cette adresse e-mail a deja ete verifiee. Vous pouvez vous connecter a votre compte.",
     signIn: "Se connecter",
@@ -120,6 +124,7 @@ const translations: Record<string, Record<string, string>> = {
     emailVerified: "\u062a\u0645 \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u0628\u0631\u064a\u062f \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a!",
     emailVerifiedDesc: "\u062a\u0645 \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0628\u0631\u064a\u062f\u0643 \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a \u0628\u0646\u062c\u0627\u062d.",
     goToDashboard: "\u0627\u0644\u0630\u0647\u0627\u0628 \u0625\u0644\u0649 \u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u062d\u0643\u0645",
+    fundVault: "\u062a\u0645\u0648\u064a\u0644 \u062e\u0632\u0646\u062a\u0643",
     alreadyVerified: "\u062a\u0645 \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0633\u0628\u0642\u0627\u064b",
     alreadyVerifiedDesc: "\u062a\u0645 \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0647\u0630\u0627 \u0627\u0644\u0628\u0631\u064a\u062f \u0645\u0633\u0628\u0642\u0627\u064b.",
     signIn: "\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644",
@@ -146,6 +151,7 @@ const translations: Record<string, Record<string, string>> = {
     emailVerified: "\u042d\u043b\u0435\u043a\u0442\u0440\u043e\u043d\u043d\u0430\u044f \u043f\u043e\u0447\u0442\u0430 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0430!",
     emailVerifiedDesc: "\u0412\u0430\u0448 \u0430\u0434\u0440\u0435\u0441 \u0443\u0441\u043f\u0435\u0448\u043d\u043e \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d.",
     goToDashboard: "\u041f\u0435\u0440\u0435\u0439\u0442\u0438 \u0432 \u043f\u0430\u043d\u0435\u043b\u044c",
+    fundVault: "\u041f\u043e\u043f\u043e\u043b\u043d\u0438\u0442\u044c \u0445\u0440\u0430\u043d\u0438\u043b\u0438\u0449\u0435",
     alreadyVerified: "\u0423\u0436\u0435 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u043e",
     alreadyVerifiedDesc: "\u042d\u0442\u043e\u0442 \u0430\u0434\u0440\u0435\u0441 \u0443\u0436\u0435 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d.",
     signIn: "\u0412\u043e\u0439\u0442\u0438",
@@ -177,6 +183,7 @@ export default function VerifyEmailPage() {
 
   const token = searchParams.get('token');
   const email = searchParams.get('email');
+  const codeAlreadySent = searchParams.get('sent') === '1';
 
   // Mode: 'token' = auto-verify via link, 'code' = manual 6-digit code entry
   const mode = token ? 'token' : 'code';
@@ -197,16 +204,28 @@ export default function VerifyEmailPage() {
       setStatus('error');
       setError(t('invalidLink'));
     } else if (mode === 'code' && email) {
-      // Auto-fire a fresh verification code on landing. Users get
-      // here either from registration (code already sent — duplicate
-      // is fine, the old one gets superseded) or from a sign-in
-      // attempt where the existing code is stale/expired/forgotten.
+      // Auto-fire a fresh verification code on landing when coming from a
+      // sign-in attempt, where the existing code is stale/expired/forgotten.
       // Without this, users sat staring at an empty 6-digit input
       // waiting for a mail that never came; the "Resend Code" button
-      // was easy to miss.
-      autoSendCode();
+      // was easy to miss. Registration already sent one (sent=1); a second
+      // would void the code in the email they are about to open.
+      if (!codeAlreadySent) autoSendCode();
     }
   }, [token, email]);
+
+  // Same session the login page sets up. Without the wallet keys the app has
+  // no address after verifying, and the card purchase can't be submitted.
+  const saveSession = (data: any) => {
+    if (!data.token) return;
+    localStorage.setItem('authToken', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    if (data.user?.walletAddress) {
+      localStorage.setItem('auxite_wallet_address', data.user.walletAddress);
+      localStorage.setItem('auxite_wallet_mode', 'custody');
+      window.dispatchEvent(new Event('walletChanged'));
+    }
+  };
 
   // Sends a code on landing, only once per page-mount (the resend-code
   // backend is rate-limited too, but burning a couple of attempts on
@@ -235,10 +254,7 @@ export default function VerifyEmailPage() {
           setStatus('already');
         } else {
           setStatus('success');
-          if (data.token) {
-            localStorage.setItem('authToken', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-          }
+          saveSession(data);
         }
       } else {
         setStatus('error');
@@ -272,10 +288,7 @@ export default function VerifyEmailPage() {
           setStatus('already');
         } else {
           setStatus('success');
-          if (data.token) {
-            localStorage.setItem('authToken', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-          }
+          saveSession(data);
         }
       } else {
         setError(data.error || t('invalidCode'));
@@ -366,7 +379,7 @@ export default function VerifyEmailPage() {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-500/20 mb-6">
               <Mail className="w-10 h-10 text-amber-500" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-3">{t('emailNotVerified')}</h1>
+            <h1 className="text-2xl font-bold text-white mb-3">{t(codeAlreadySent ? 'enterCode' : 'emailNotVerified')}</h1>
             <p className="text-slate-400 mb-2">{t('enterCodeDesc')}</p>
             <p className="text-slate-500 text-sm">{t('codeSentTo')} <span className="text-white">{email}</span></p>
           </div>
@@ -445,11 +458,16 @@ export default function VerifyEmailPage() {
             {t('emailVerifiedDesc')}
           </p>
           <Link
-            href="/"
+            href="/fund-vault"
             className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-[#2F6F62] to-[#2F6F62] text-white font-semibold rounded-xl hover:from-[#2F6F62] hover:to-[#2F6F62]/80 transition-all"
           >
-            {t('goToDashboard')}
+            {t('fundVault')}
           </Link>
+          <div className="mt-4">
+            <Link href="/" className="text-slate-500 hover:text-slate-300 text-sm transition-colors">
+              {t('goToDashboard')}
+            </Link>
+          </div>
         </div>
       </div>
     );

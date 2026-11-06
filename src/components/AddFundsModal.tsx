@@ -645,7 +645,7 @@ export function AddFundsModal({
                         <p className="font-semibold text-slate-800 dark:text-white">{lang === 'tr' ? 'Kartla Satın Al' : 'Buy with Card'}</p>
                         <span className="text-xs font-semibold text-[#2F6F62]">Visa / Mastercard</span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{lang === 'tr' ? 'Kredi veya banka kartıyla anında kripto satın alın' : 'Buy crypto instantly with credit or debit card'}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{lang === 'tr' ? 'Kredi veya banka kartıyla anında altın ve değerli metal alın' : 'Buy gold and precious metals instantly with credit or debit card'}</p>
                       <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                         {lang === 'tr' ? 'İşlem süresi' : 'Processing'}: <span className="text-[#2F6F62]">{lang === 'tr' ? '1-5 dakika' : '1-5 minutes'}</span>
                       </p>
