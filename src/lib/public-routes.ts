@@ -11,3 +11,7 @@ export function isPublicMarketingPath(pathname: string | null): boolean {
     (p) => pathname === p || pathname?.startsWith(`${p}/`)
   );
 }
+
+export function isAdminPath(pathname: string | null): boolean {
+  return pathname === "/admin" || !!pathname?.startsWith("/admin/");
+}
