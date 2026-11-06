@@ -12,6 +12,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { METAL_TOKENS, ORACLE_ADDRESS } from "@/config/contracts-v8";
 import { formatAmount, getDecimalPlaces } from '@/lib/format';
 import BlogManager from "@/components/admin/BlogManager";
+import PartnersManager from "@/components/admin/PartnersManager";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -404,6 +405,7 @@ const TABS = [
   { id: "spreads", label: "Spread", icon: "💹" },
   { id: "oracle", label: "Oracle", icon: "🔮" },
   { id: "wallet", label: "Hot Wallet", icon: "💰" },
+  { id: "partners", label: "Partners", icon: "🤝" },
   { id: "banners", label: "Banner", icon: "🖼️" },
   { id: "campaigns", label: "Kampanya", icon: "🎁" },
   { id: "alerts", label: "Duyuru", icon: "📢" },
@@ -6844,6 +6846,18 @@ export default function AdminDashboard() {
           {/* BLOG MANAGER — manages /blog posts on auxite.io via GitHub API.
               Requires GITHUB_REPO_TOKEN env var on Vercel (fine-grained PAT,
               contents:write on temelreiz/auxite-website). */}
+          {activeTab === "partners" && (
+            <div className="bg-slate-900/40 border border-slate-700 rounded-2xl p-6">
+              <PartnersManager
+                adminToken={
+                  typeof window !== 'undefined'
+                    ? sessionStorage.getItem('auxite_admin_token') || ''
+                    : ''
+                }
+              />
+            </div>
+          )}
+
           {activeTab === "blog" && (
             <div className="bg-slate-900/40 border border-slate-700 rounded-2xl p-6">
               <BlogManager
