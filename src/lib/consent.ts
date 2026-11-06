@@ -52,9 +52,7 @@ export function hasAnalyticsConsent(): boolean {
 }
 
 /**
- * Mirror the stored decision onto window so the GA4 inline script in
- * layout.tsx sees it on every load, not just the one where the banner was
- * clicked. Safe to call repeatedly.
+ * Mirror the stored decision onto window. Safe to call repeatedly.
  */
 export function applyConsentToWindow(): void {
   if (typeof window === "undefined") return;
@@ -66,6 +64,13 @@ export function notifyConsentChanged(): void {
   if (typeof window === "undefined") return;
   applyConsentToWindow();
   try {
+    const choice = hasAnalyticsConsent() ? "granted" : "denied";
+    (window as any).gtag?.("consent", "update", {
+      analytics_storage: choice,
+      ad_storage: choice,
+      ad_user_data: choice,
+      ad_personalization: choice,
+    });
     window.dispatchEvent(new Event(CONSENT_CHANGED_EVENT));
   } catch {}
 }

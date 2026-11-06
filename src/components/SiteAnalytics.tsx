@@ -5,6 +5,7 @@
 
 import Script from "next/script";
 import { usePathname } from "next/navigation";
+import { CONSENT_STORAGE_KEY } from "@/lib/consent";
 import { isAdminPath } from "@/lib/public-routes";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "";
@@ -16,8 +17,28 @@ export default function SiteAnalytics() {
   const pathname = usePathname();
   if (isAdminPath(pathname)) return null;
 
+  if (!GA_ID && !GOOGLE_ADS_ID) return null;
+
   return (
     <>
+      {/* Runs before the tags are configured, so Google never gets more than the
+          visitor's stored choice allows. notifyConsentChanged() updates it later. */}
+      <Script id="google-consent-default" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          window.gtag = gtag;
+          var consent = null;
+          try { consent = JSON.parse(localStorage.getItem('${CONSENT_STORAGE_KEY}')); } catch (e) {}
+          var choice = consent && consent.analytics === true ? 'granted' : 'denied';
+          gtag('consent', 'default', {
+            analytics_storage: choice,
+            ad_storage: choice,
+            ad_user_data: choice,
+            ad_personalization: choice,
+          });
+        `}
+      </Script>
       {/* Google Analytics 4 */}
       {GA_ID && (
         <>
@@ -32,12 +53,6 @@ export default function SiteAnalytics() {
                 anonymize_ip: true,
                 cookie_flags: 'SameSite=None;Secure',
               });
-              // Respect cookie consent
-              if (!window.auxite_analytics_consent) {
-                gtag('consent', 'default', {
-                  analytics_storage: 'denied',
-                });
-              }
             `}
           </Script>
         </>
