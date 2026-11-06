@@ -4280,10 +4280,68 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* Metal Spread: the live buy/sell margin */}
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-2">💹 Metal Spread (canlı fiyat)</h3>
+                <p className="text-xs text-slate-500 mb-4">Müşterinin alış ve satış fiyatını bu oranlar belirler. Alış: maliyet × (1 + alış %). Kartla alımda üstüne kart farkı eklenir.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { key: 'gold', symbol: 'AUXG', name: 'Auxite Gold', icon: '🥇' },
+                    { key: 'silver', symbol: 'AUXS', name: 'Auxite Silver', icon: '🥈' },
+                    { key: 'platinum', symbol: 'AUXPT', name: 'Auxite Platinum', icon: '⬜' },
+                    { key: 'palladium', symbol: 'AUXPD', name: 'Auxite Palladium', icon: '🔶' },
+                  ].map((metal) => {
+                    const values = spreadConfig.metals[metal.key as keyof MetalSpreadSettings];
+                    const setValue = (side: 'buy' | 'sell', value: number) => setSpreadConfigState({
+                      ...spreadConfig,
+                      metals: { ...spreadConfig.metals, [metal.key]: { ...values, [side]: value } },
+                    });
+                    return (
+                      <div key={metal.key} className="p-4 bg-slate-800/50 rounded-xl">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-xl">{metal.icon}</span>
+                          <span className="font-medium">{metal.name}</span>
+                          <span className="text-xs text-slate-500">{metal.symbol}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1">Alış %</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={values.buy}
+                              onChange={(e) => setValue('buy', parseFloat(e.target.value))}
+                              className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1">Satış %</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={values.sell}
+                              onChange={(e) => setValue('sell', parseFloat(e.target.value))}
+                              className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-white text-sm"
+                            />
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleSpreadUpdate('metal', metal.key)}
+                          disabled={spreadLoading || spreadSaving === `metal-${metal.key}`}
+                          className="mt-3 w-full py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg text-sm font-medium disabled:opacity-50"
+                        >
+                          {spreadSaving === `metal-${metal.key}` ? "Kaydediliyor..." : "Kaydet"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Metal Base Margin + Absolute Floor */}
               <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                <h3 className="font-semibold mb-2">🥇 Base Margin + Absolute Floor</h3>
-                <p className="text-xs text-slate-500 mb-4">Floor yoksa tek trade zarar yazdırır. Floor = hedge slippage + liquidity gap + fill risk koruması.</p>
+                <h3 className="font-semibold mb-2">🥇 Base Margin + Absolute Floor (yedek)</h3>
+                <p className="text-xs text-slate-500 mb-4">Canlı alış fiyatını bu alan belirlemez; spread ayarı okunamazsa yedek olarak kullanılır. Floor = hedge slippage + liquidity gap + fill risk koruması.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
                     { key: 'gold', symbol: 'AUXG', name: 'Auxite Gold', icon: '🥇', defBase: 0.95, defFloor: 1.25 },
