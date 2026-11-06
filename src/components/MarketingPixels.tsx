@@ -17,6 +17,8 @@
 
 import Script from "next/script";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { isAdminPath } from "@/lib/public-routes";
 import {
   CONSENT_CHANGED_EVENT,
   applyConsentToWindow,
@@ -29,6 +31,7 @@ const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "875602632179249"
 const BING_UET_ID = process.env.NEXT_PUBLIC_BING_UET_ID || "187285572";
 
 export default function MarketingPixels() {
+  const pathname = usePathname();
   const [consented, setConsented] = useState(false);
 
   useEffect(() => {
@@ -45,7 +48,7 @@ export default function MarketingPixels() {
     return () => window.removeEventListener(CONSENT_CHANGED_EVENT, onChange);
   }, []);
 
-  if (!consented) return null;
+  if (!consented || isAdminPath(pathname)) return null;
 
   return (
     <>

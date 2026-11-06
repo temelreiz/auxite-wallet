@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { isPublicMarketingPath } from "@/lib/public-routes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, http, createConfig } from "wagmi";
-import { mainnet, sepolia, baseSepolia } from "wagmi/chains";
+import { base, mainnet, sepolia, baseSepolia } from "wagmi/chains";
 import { RainbowKitProvider, darkTheme, connectorsForWallets } from "@rainbow-me/rainbowkit";
 import { metaMaskWallet, coinbaseWallet, walletConnectWallet, rainbowWallet } from "@rainbow-me/rainbowkit/wallets";
 import { WalletProvider } from "@/components/WalletContext";
@@ -36,8 +36,9 @@ const connectors = connectorsForWallets(
 
 const config = createConfig({
   connectors,
-  chains: [mainnet, sepolia, baseSepolia],
+  chains: [base, mainnet, sepolia, baseSepolia],
   transports: {
+    [base.id]: http(),
     [mainnet.id]: http(),
     [sepolia.id]: http(),
     [baseSepolia.id]: http(),
@@ -116,7 +117,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
             accentColorForeground: "white",
             borderRadius: "medium",
           })}
-          initialChain={APP_CHAIN.chainId === mainnet.id ? mainnet : sepolia}
+          initialChain={APP_CHAIN.chainId === base.id ? base : sepolia}
           modalSize="compact"
           appInfo={{
             appName: "Auxite Wallet",

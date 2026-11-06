@@ -14,19 +14,14 @@ import { SecurityBanner } from "@/components/SecurityBanner";
 import { CookieConsent } from "@/components/CookieConsent";
 import SupportChat from "@/components/SupportChat";
 import RadioWidget from "@/components/RadioWidget";
-import Script from "next/script";
 import MarketingPixels from "@/components/MarketingPixels";
+import SiteAnalytics from "@/components/SiteAnalytics";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const dynamic = "force-dynamic";
-
-const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "";
-// Google Ads conversion tag (AW-XXXXXXXXXX). Set in Vercel env; if empty
-// the tag never loads and src/lib/google-ads-conversion.ts no-ops.
-const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID || "";
 
 export const metadata: Metadata = {
   title: {
@@ -140,44 +135,7 @@ export default function RootLayout({
         className={`${inter.className} antialiased bg-stone-100 dark:bg-zinc-950`}
         suppressHydrationWarning
       >
-        {/* Google Analytics 4 */}
-        {GA_ID && (
-          <>
-            <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
-            <Script id="ga4-init" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${GA_ID}', {
-                  page_path: window.location.pathname,
-                  anonymize_ip: true,
-                  cookie_flags: 'SameSite=None;Secure',
-                });
-                // Respect cookie consent
-                if (!window.auxite_analytics_consent) {
-                  gtag('consent', 'default', {
-                    analytics_storage: 'denied',
-                  });
-                }
-              `}
-            </Script>
-          </>
-        )}
-        {/* Google Ads conversion tag — shares the gtag() global with GA4.
-            Loaded only when NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID is set so
-            ad-blocker users / dev environments don't see extra requests. */}
-        {GOOGLE_ADS_ID && (
-          <Script id="google-ads-init" strategy="afterInteractive">
-            {`
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              // Accept the click id handed over from the auxite.io landing page
-              gtag('set', 'linker', { domains: ['auxite.io', 'vault.auxite.io'], accept_incoming: true });
-              gtag('config', '${GOOGLE_ADS_ID}');
-            `}
-          </Script>
-        )}
+        <SiteAnalytics />
         {/* X + Meta advertising pixels — mounted through a client component so
             they only load once the user has accepted analytics cookies. */}
         <MarketingPixels />

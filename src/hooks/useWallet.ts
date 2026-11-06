@@ -7,7 +7,7 @@ import {
   useSwitchChain,
   useConnections,
 } from "wagmi";
-import { mainnet, sepolia, baseSepolia } from "wagmi/chains";
+import { base, mainnet, sepolia, baseSepolia } from "wagmi/chains";
 import type { Chain } from "wagmi/chains";
 
 /**
@@ -36,7 +36,7 @@ export type WalletInfo = {
   connectionsCount: number;
 };
 
-const SUPPORTED_CHAINS: Chain[] = [mainnet, sepolia, baseSepolia];
+const SUPPORTED_CHAINS: Chain[] = [base, mainnet, sepolia, baseSepolia];
 
 /** Resolve chain object from chainId. Falls back to Sepolia. */
 function resolveChain(chainId: number | undefined): Chain {
