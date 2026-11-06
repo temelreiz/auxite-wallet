@@ -6,7 +6,8 @@
 // after we removed Play Store availability. The middleware short-
 // circuits at the edge so they never touch Vercel functions or
 // Upstash — pure cost savings, zero downside (no legitimate revenue
-// has ever come from these countries on this product).
+// has ever come from these countries on this product). It also refuses
+// the prohibited jurisdictions in the sanctions policy (src/lib/geo-block.ts).
 //
 // Cloudflare WAF should be the primary block (cheaper, runs before
 // Vercel). This middleware is defense-in-depth in case the WAF rule
@@ -15,23 +16,7 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-// ISO-3166 alpha-2 codes for the click-farm cohort observed in
-// Firebase Analytics. Easy to extend.
-const BLOCKED_COUNTRIES = new Set([
-  'BD', // Bangladesh
-  'NP', // Nepal
-  'ET', // Ethiopia
-  'DZ', // Algeria
-  'MM', // Myanmar
-  'SD', // Sudan
-  'TD', // Chad
-  'CD', // Congo-Kinshasa
-  'VE', // Venezuela
-  'IN', // India
-  'PK', // Pakistan (frequently same fraud rings)
-  'NG', // Nigeria
-]);
+import { isGeoBlocked } from '@/lib/geo-block';
 
 // Paths exempt from the geo-block. Public marketing pages, auth
 // flows that legit users might recover into, and the unsubscribe
@@ -52,8 +37,10 @@ export function middleware(req: NextRequest) {
     req.headers.get('x-vercel-ip-country') ||
     req.headers.get('cf-ipcountry') ||
     '';
+  // Only Vercel sends the region, so the Ukraine regions depend on it.
+  const region = req.headers.get('x-vercel-ip-country-region');
 
-  if (!country || !BLOCKED_COUNTRIES.has(country.toUpperCase())) {
+  if (!isGeoBlocked(country, region)) {
     return NextResponse.next();
   }
 
